@@ -43,7 +43,7 @@ import org.springframework.stereotype.Component;
  * @since Feb 11, 2013
  */
 @Component
-public class ContainerServiceImpl extends AbstractService implements ContainerService {
+public class ContainerServiceImpl extends AbstractService implements ContainerService<Session> {
 
     private static final Logger LOGGER = getLogger(ContainerServiceImpl.class);
 

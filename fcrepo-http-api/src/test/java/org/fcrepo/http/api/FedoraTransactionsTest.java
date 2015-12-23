@@ -57,13 +57,13 @@ public class FedoraTransactionsTest {
     private Session regularSession;
 
     @Mock
-    private Transaction mockTx;
+    private Transaction<Object> mockTx;
 
     @Mock
     private HttpServletRequest mockRequest;
 
     @Mock
-    private TransactionService mockTxService;
+    private TransactionService<Object> mockTxService;
 
     @Mock
     private Principal mockPrincipal;

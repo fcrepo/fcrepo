@@ -18,8 +18,6 @@ package org.fcrepo.kernel.api.services;
 import java.io.IOException;
 import java.io.InputStream;
 
-import javax.jcr.Session;
-
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.utils.iterators.RdfStream;
 
@@ -27,14 +25,14 @@ import org.fcrepo.kernel.api.utils.iterators.RdfStream;
  * @author bbpennel
  * @since Feb 20, 2014
  */
-public interface NodeService extends Service<FedoraResource> {
+public interface NodeService<AccessType> extends Service<FedoraResource, AccessType> {
     /**
      * Copy an existing object from the source path to the destination path
      * @param session the session
      * @param source the source
      * @param destination the destination
      */
-    void copyObject(Session session, String source, String destination);
+    void copyObject(AccessType session, String source, String destination);
 
     /**
      * Move an existing object from the source path to the destination path
@@ -42,18 +40,18 @@ public interface NodeService extends Service<FedoraResource> {
      * @param source the source
      * @param destination the destination
      */
-    void moveObject(Session session, String source, String destination);
+    void moveObject(AccessType session, String source, String destination);
 
     /**
      * @param session the session
      * @return RDFStream of node types
      */
-    RdfStream getNodeTypes(final Session session);
+    RdfStream getNodeTypes(final AccessType session);
 
     /**
      * @param session the session
      * @param cndStream the cnd stream
      * @throws IOException if IO exception occurred
      */
-    void registerNodeTypes(final Session session, final InputStream cndStream) throws IOException;
+    void registerNodeTypes(final AccessType session, final InputStream cndStream) throws IOException;
 }

@@ -47,7 +47,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 
 @Component
-public class VersionServiceImpl extends AbstractService implements VersionService {
+public class VersionServiceImpl extends AbstractService implements VersionService<Session> {
 
     private static final Logger LOGGER = getLogger(VersionService.class);
 

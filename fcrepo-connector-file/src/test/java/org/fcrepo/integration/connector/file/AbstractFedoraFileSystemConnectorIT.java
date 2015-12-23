@@ -93,13 +93,13 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     protected Repository repo;
 
     @Inject
-    protected NodeService nodeService;
+    protected NodeService<Session> nodeService;
 
     @Inject
-    protected ContainerService containerService;
+    protected ContainerService<Session> containerService;
 
     @Inject
-    protected BinaryService binaryService;
+    protected BinaryService<Session> binaryService;
 
     /**
      * Gets the path (relative to the filesystem federation) of a directory

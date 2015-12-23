@@ -62,7 +62,7 @@ public class FedoraExportTest {
     private JcrXmlSerializer mockJcrXmlSerializer;
 
     @Mock
-    private ContainerService mockContainerService;
+    private ContainerService<?> mockContainerService;
 
     @Mock
     private FedoraResource mockResource;

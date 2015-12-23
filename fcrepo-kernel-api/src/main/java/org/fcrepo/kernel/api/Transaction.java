@@ -16,24 +16,17 @@
 package org.fcrepo.kernel.api;
 
 import java.util.Date;
-
-import javax.jcr.Session;
+import java.util.function.Supplier;
 
 /**
  * @author bbpennel
  * @since Feb 18, 2014
  */
-public interface Transaction {
+public interface Transaction<AccessType> extends Supplier<AccessType> {
 
     public static enum State {
         DIRTY, NEW, COMMITED, ROLLED_BACK
     }
-
-    /**
-     * Get the transaction-aware session
-     * @return transaction-aware session
-     */
-    Session getSession();
 
     /**
      * Get the date this transaction was created

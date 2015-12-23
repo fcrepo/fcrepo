@@ -104,10 +104,10 @@ public class HeadersJMSIT implements MessageListener {
     private Repository repository;
 
     @Inject
-    private BinaryService binaryService;
+    private BinaryService<Session> binaryService;
 
     @Inject
-    private ContainerService containerService;
+    private ContainerService<Session> containerService;
 
     @Inject
     private ActiveMQConnectionFactory connectionFactory;

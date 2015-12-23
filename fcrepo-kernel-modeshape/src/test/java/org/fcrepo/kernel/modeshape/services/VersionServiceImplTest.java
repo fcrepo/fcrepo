@@ -46,7 +46,7 @@ public class VersionServiceImplTest {
     public static final String EXAMPLE_VERSIONED_PATH = "/example-versioned";
     public static final String EXAMPLE_UNVERSIONED_PATH = "/example-unversioned";
 
-    private VersionService testObj;
+    private VersionService<Session> testObj;
 
     @Mock
     private Session mockSession;

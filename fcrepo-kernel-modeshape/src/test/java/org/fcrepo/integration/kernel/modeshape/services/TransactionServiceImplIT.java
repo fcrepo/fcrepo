@@ -46,23 +46,23 @@ public class TransactionServiceImplIT extends AbstractIT {
     private Repository repository;
 
     @Inject
-    NodeService nodeService;
+    NodeService<Session> nodeService;
 
     @Inject
-    ContainerService containerService;
+    ContainerService<Session> containerService;
 
     @Inject
-    TransactionService transactionService;
+    TransactionService<Session> transactionService;
 
     @Test
     public void testGetTransaction() throws RepositoryException {
         final Session session = repository.login();
         try {
-            final Transaction t1 = transactionService.beginTransaction(session, "fedoraAdmin");
+            final Transaction<Session> t1 = transactionService.beginTransaction(session, "fedoraAdmin");
             assertNotNull(t1);
             assertTrue(transactionService.exists(t1.getId()));
 
-            final Transaction t2 = transactionService.getTransaction(session);
+            final Transaction<Session> t2 = transactionService.getTransaction(session);
             assertNotNull(t2);
             assertEquals(t1.getId(), t2.getId());
         } finally {
@@ -74,11 +74,11 @@ public class TransactionServiceImplIT extends AbstractIT {
     public void testGetTransactionUser() throws RepositoryException {
         final Session session = repository.login();
         try {
-            final Transaction t1 = transactionService.beginTransaction(session, "fedoraAdmin");
+            final Transaction<Session> t1 = transactionService.beginTransaction(session, "fedoraAdmin");
             assertNotNull(t1);
             assertTrue(transactionService.exists(t1.getId()));
 
-            final Transaction t2 = transactionService.getTransaction(t1.getId(), "fedoraAdmin");
+            final Transaction<Session> t2 = transactionService.getTransaction(t1.getId(), "fedoraAdmin");
             assertNotNull(t2);
             assertEquals(t1.getId(), t2.getId());
         } finally {
@@ -91,7 +91,7 @@ public class TransactionServiceImplIT extends AbstractIT {
         final String pid = getRandomPid();
         final Session session = repository.login();
         try {
-            final Transaction t = transactionService.beginTransaction(session, "fedoraAdmin");
+            final Transaction<Session> t = transactionService.beginTransaction(session, "fedoraAdmin");
             final Session txSession = TxAwareSession.newInstance(session, t.getId());
             containerService.findOrCreate(txSession, "/" + pid);
 
@@ -114,7 +114,7 @@ public class TransactionServiceImplIT extends AbstractIT {
         final String pid = getRandomPid();
         final Session session = repository.login();
         try {
-            final Transaction t = transactionService.beginTransaction(session, "fedoraAdmin");
+            final Transaction<Session> t = transactionService.beginTransaction(session, "fedoraAdmin");
             final Session txSession = TxAwareSession.newInstance(session, t.getId());
             containerService.findOrCreate(txSession, "/" + pid);
 
@@ -137,7 +137,7 @@ public class TransactionServiceImplIT extends AbstractIT {
         final String pid = getRandomPid();
         final Session session = repository.login();
         try {
-            final Transaction t = transactionService.beginTransaction(session, "fedoraAdmin");
+            final Transaction<Session> t = transactionService.beginTransaction(session, "fedoraAdmin");
             final Session txSession = TxAwareSession.newInstance(session, t.getId());
             containerService.findOrCreate(txSession, "/" + pid);
 

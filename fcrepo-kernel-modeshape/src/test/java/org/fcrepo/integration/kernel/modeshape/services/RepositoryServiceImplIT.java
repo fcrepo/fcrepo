@@ -52,7 +52,7 @@ public class RepositoryServiceImplIT extends AbstractIT {
     private RepositoryService repositoryService;
 
     @Inject
-    private BinaryService binaryService;
+    private BinaryService<Session> binaryService;
 
     @Test
     public void testGetAllObjectsDatastreamSize() throws RepositoryException, InvalidChecksumException {

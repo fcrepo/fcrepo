@@ -67,7 +67,7 @@ public class NodeServiceImplTest {
     @Mock
     private PropertyIterator mockEmptyIterator;
 
-    private NodeService testObj;
+    private NodeService<Session> testObj;
 
     @Mock
     private NamespaceRegistry mockNameReg;

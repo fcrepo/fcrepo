@@ -54,7 +54,7 @@ public class FedoraTransactions extends FedoraBaseResource {
     private static final Logger LOGGER = getLogger(FedoraTransactions.class);
 
     @Autowired
-    private TransactionService txService;
+    private TransactionService<Session> txService;
 
     @Inject
     protected Session session;
@@ -72,7 +72,7 @@ public class FedoraTransactions extends FedoraBaseResource {
                                       @Context final HttpServletRequest req) throws URISyntaxException {
 
         if (session instanceof TxSession) {
-            final Transaction t = txService.getTransaction(session);
+            final Transaction<Session> t = txService.getTransaction(session);
             LOGGER.debug("renewing transaction {}", t.getId());
             t.updateExpiryDate();
             return noContent().expires(t.getExpires()).build();
@@ -88,7 +88,7 @@ public class FedoraTransactions extends FedoraBaseResource {
             userName = userPrincipal.getName();
         }
 
-        final Transaction t = txService.beginTransaction(session, userName);
+        final Transaction<Session> t = txService.beginTransaction(session, userName);
         LOGGER.info("Created transaction '{}'", t.getId());
 
         return created(new URI(translator().toDomain("/tx:" + t.getId()).toString())).expires(

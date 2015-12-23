@@ -16,9 +16,6 @@
 package org.fcrepo.http.commons.exceptionhandlers;
 
 import java.net.URI;
-import java.net.URISyntaxException;
-
-import javax.jcr.RepositoryException;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.UriInfo;
 
@@ -49,7 +46,7 @@ public class ConstraintViolationExceptionMapperTest {
     private ConstraintViolationExceptionMapper mapper;
 
     @Before
-    public void setUp() throws RepositoryException, URISyntaxException {
+    public void setUp() {
         this.mockInfo = getUriInfoImpl();
     }
 

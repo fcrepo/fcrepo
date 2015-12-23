@@ -15,15 +15,13 @@
  */
 package org.fcrepo.kernel.api.services;
 
-import javax.jcr.Session;
-
 import org.fcrepo.kernel.api.Transaction;
 
 /**
  * @author bbpennel
  * @since Feb 20, 2014
  */
-public interface TransactionService {
+public interface TransactionService<AccessType> {
 
     /**
      * Check for expired transactions and remove them
@@ -33,11 +31,11 @@ public interface TransactionService {
     /**
      * Create a new Transaction and add it to the currently open ones
      *
-     * @param sess The session to use for this Transaction
+     * @param access The access object to use for this Transaction
      * @param userName the user name
      * @return the {@link Transaction}
      */
-    Transaction beginTransaction(Session sess, String userName);
+    Transaction<AccessType> beginTransaction(AccessType access, String userName);
 
     /**
      * Receive an open {@link Transaction} for a given user
@@ -47,15 +45,15 @@ public interface TransactionService {
      * @return the {@link Transaction}
      * with this user
      */
-    Transaction getTransaction(final String txId, final String userName);
+    Transaction<AccessType> getTransaction(final String txId, final String userName);
 
     /**
      * Get the current Transaction for a session
      *
-     * @param session the session
+     * @param access an object providing access to the repository
      * @return transaction
      */
-    Transaction getTransaction(Session session);
+    Transaction<AccessType> getTransaction(AccessType access);
 
     /**
      * Check if a Transaction exists
@@ -71,7 +69,7 @@ public interface TransactionService {
      * @param txid the id of the {@link Transaction}
      * @return transaction
      */
-    Transaction commit(String txid);
+    Transaction<AccessType> commit(String txid);
 
     /**
      * Roll a {@link Transaction} back
@@ -79,6 +77,6 @@ public interface TransactionService {
      * @param txid the id of the {@link Transaction}
      * @return the {@link Transaction} object
      */
-    Transaction rollback(String txid);
+    Transaction<AccessType> rollback(String txid);
 
 }

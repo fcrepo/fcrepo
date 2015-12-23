@@ -28,7 +28,6 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 import javax.ws.rs.core.Request;
@@ -54,10 +53,10 @@ public class FedoraVersionsTest {
     private FedoraVersions testObj;
 
     @Mock
-    private NodeService mockNodes;
+    private NodeService<?> mockNodes;
 
     @Mock
-    VersionService mockVersions;
+    VersionService<Object> mockVersions;
 
     @Mock
     private Node mockNode;
@@ -65,7 +64,7 @@ public class FedoraVersionsTest {
     @Mock
     private NodeType mockNodeType;
 
-    private Session mockSession;
+    private Object mockSession;
 
     @Mock
     private FedoraResourceImpl mockResource;
@@ -76,8 +75,8 @@ public class FedoraVersionsTest {
     @Mock
     private Variant mockVariant;
 
-    private String path = "/some/path";
-    private String versionLabel = "someLabel";
+    private final String path = "/some/path";
+    private final String versionLabel = "someLabel";
 
     @Before
     public void setUp() throws Exception {
@@ -94,11 +93,12 @@ public class FedoraVersionsTest {
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
 
         setField(testObj, "idTranslator",
-                new HttpResourceConverter(mockSession, UriBuilder.fromUri("http://localhost/fcrepo/{path: .*}")));
+                new HttpResourceConverter((Session) mockSession, UriBuilder.fromUri(
+                        "http://localhost/fcrepo/{path: .*}")));
     }
 
     @Test
-    public void testRevertToVersion() throws RepositoryException {
+    public void testRevertToVersion() {
         doReturn(path).when(testObj).unversionedResourcePath();
         final Response response = testObj.revertToVersion();
         verify(mockVersions).revertToVersion(mockSession, path, versionLabel);
@@ -106,13 +106,13 @@ public class FedoraVersionsTest {
     }
 
     @Test (expected = PathNotFoundException.class)
-    public void testRevertToVersionFailure() throws RepositoryException {
+    public void testRevertToVersionFailure() {
         doThrow(PathNotFoundException.class).when(testObj).unversionedResourcePath();
         testObj.revertToVersion();
     }
 
     @Test
-    public void testRemoveVersion() throws RepositoryException {
+    public void testRemoveVersion() {
         doReturn(path).when(testObj).unversionedResourcePath();
         final Response response = testObj.removeVersion();
         verify(mockVersions).removeVersion(mockSession, path, versionLabel);
@@ -120,7 +120,7 @@ public class FedoraVersionsTest {
     }
 
     @Test (expected = PathNotFoundException.class)
-    public void testRemoveVersionFailure() throws RepositoryException {
+    public void testRemoveVersionFailure() {
         doThrow(PathNotFoundException.class).when(testObj).unversionedResourcePath();
         testObj.removeVersion();
     }

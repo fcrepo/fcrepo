@@ -56,10 +56,10 @@ public class FedoraVersioningTest {
     private FedoraVersioning testObj;
 
     @Mock
-    private NodeService mockNodes;
+    private NodeService<?> mockNodes;
 
     @Mock
-    VersionService mockVersions;
+    VersionService<?> mockVersions;
 
     @Mock
     SessionFactory mockSessionFactory;
@@ -109,11 +109,10 @@ public class FedoraVersioningTest {
 
 
     @Test
-    @SuppressWarnings("unchecked")
     public void testGetVersionList() {
         when(mockRequest.selectVariant(POSSIBLE_RDF_VARIANTS)).thenReturn(
                 mockVariant);
-        when(mockNodes.find(any(Session.class), anyString())).thenReturn(
+        when(mockNodes.find(any(), anyString())).thenReturn(
                 mockResource);
         when(mockResource.getTriples(any(IdentifierConverter.class), eq(VersionsRdfContext.class)))
                 .thenReturn(mockRdfStream);

@@ -35,7 +35,6 @@ import java.io.IOException;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -109,10 +108,9 @@ public class FedoraVersions extends ContentExposingResource {
      * Reverts the resource at the given path to the version specified by
      * the label.
      * @return response
-     * @throws RepositoryException if repository exception occurred
      */
     @PATCH
-    public Response revertToVersion() throws RepositoryException {
+    public Response revertToVersion() {
         LOGGER.info("Reverting {} to version {}.", path,
                 label);
         versionService.revertToVersion(session, unversionedResourcePath(), label);
@@ -122,10 +120,9 @@ public class FedoraVersions extends ContentExposingResource {
     /**
      * Removes the version specified by the label.
      * @return 204 No Content
-     * @throws RepositoryException if repository exception occurred
     **/
     @DELETE
-    public Response removeVersion() throws RepositoryException {
+    public Response removeVersion() {
         LOGGER.info("Removing {} version {}.", path, label);
         versionService.removeVersion(session, unversionedResourcePath(), label);
         return noContent().build();

@@ -142,13 +142,13 @@ public class FedoraLdpTest {
     private IdentifierConverter<Resource, FedoraResource> idTranslator;
 
     @Mock
-    private NodeService mockNodeService;
+    private NodeService<Object> mockNodeService;
 
     @Mock
-    private ContainerService mockContainerService;
+    private ContainerService<Object> mockContainerService;
 
     @Mock
-    private BinaryService mockBinaryService;
+    private BinaryService<Object> mockBinaryService;
 
     @Mock
     private FedoraHttpConfiguration mockHttpConfiguration;
@@ -198,7 +198,6 @@ public class FedoraLdpTest {
         when(mockHeaders.getHeaderString("user-agent")).thenReturn("Test UserAgent");
     }
 
-    @SuppressWarnings("unchecked")
     private FedoraResource setResource(final Class<? extends FedoraResource> klass) throws RepositoryException {
         final FedoraResource mockResource = mock(klass);
 
@@ -560,7 +559,6 @@ public class FedoraLdpTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void testGetWithBinaryDescription() throws RepositoryException, IOException {
 
         final NonRdfSourceDescription mockResource
@@ -695,7 +693,6 @@ public class FedoraLdpTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void testPatchBinaryDescription() throws RepositoryException, MalformedRdfException, IOException {
 
         final NonRdfSourceDescription mockObject = (NonRdfSourceDescription)setResource(NonRdfSourceDescription.class);

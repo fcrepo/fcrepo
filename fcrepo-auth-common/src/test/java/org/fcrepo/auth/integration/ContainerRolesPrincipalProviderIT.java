@@ -91,7 +91,7 @@ public class ContainerRolesPrincipalProviderIT {
         for (final Privilege p : rootPrivs) {
             logger.debug("got priv: " + p.getName());
         }
-        final ContainerService os = new ContainerServiceImpl();
+        final ContainerService<Session> os = new ContainerServiceImpl();
         os.findOrCreate(session, "/myobject");
         verify(fad, atLeastOnce()).hasPermission(any(Session.class), any(Path.class), any(String[].class));
     }

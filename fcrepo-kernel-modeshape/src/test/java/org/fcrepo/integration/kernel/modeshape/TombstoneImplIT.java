@@ -44,10 +44,10 @@ public class TombstoneImplIT extends AbstractIT {
     Repository repo;
 
     @Inject
-    NodeService nodeService;
+    NodeService<Session> nodeService;
 
     @Inject
-    ContainerService containerService;
+    ContainerService<Session> containerService;
 
     private Session session;
 

@@ -18,6 +18,7 @@ package org.fcrepo.http.commons;
 import java.util.function.Supplier;
 
 import javax.inject.Inject;
+import javax.jcr.Session;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.UriInfo;
@@ -64,25 +65,25 @@ public class AbstractResource {
      * The JCR node service
      */
     @Inject
-    protected NodeService nodeService;
+    protected NodeService<Session> nodeService;
 
     /**
      * The repository object service
      */
     @Inject
-    protected ContainerService containerService;
+    protected ContainerService<Session> containerService;
 
     /**
      * The bitstream service
      */
     @Inject
-    protected BinaryService binaryService;
+    protected BinaryService<Session> binaryService;
 
     /**
      * The version service
      */
     @Inject
-    protected VersionService versionService;
+    protected VersionService<Session> versionService;
 
     @Inject
     @Optional

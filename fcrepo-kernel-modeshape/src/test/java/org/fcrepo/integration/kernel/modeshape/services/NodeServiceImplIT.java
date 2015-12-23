@@ -39,7 +39,7 @@ public class NodeServiceImplIT extends AbstractIT {
     private Repository repository;
 
     @Inject
-    NodeService nodeService;
+    NodeService<Session> nodeService;
 
     @Test(expected = FedoraInvalidNamespaceException.class)
     public void testExistsWithBadNamespace() throws RepositoryException {

@@ -16,44 +16,43 @@
 package org.fcrepo.kernel.api.services;
 
 import javax.jcr.Node;
-import javax.jcr.Session;
 
 /**
  * @author bbpennel
  * @author barmintor
  * @since Feb 21, 2014
  */
-public interface Service<T> {
+public interface Service<ResourceType, AccessType> {
     /**
-     * Test whether T exists at the given path in the
+     * Test whether a resource type exists at the given path in the
      * repository
      *
      * @param path the path
-     * @param session the session
-     * @return whether T exists at the given path
+     * @param access the session
+     * @return whether resource exists at the given path
      */
-    public boolean exists(final Session session, final String path);
+    public boolean exists(final AccessType access, final String path);
     /**
-     * Retrieve an existing T instance by session and path
+     * Retrieve an existing T instance by access and path
      *
      * @param path jcr path to the node
-     * @param session the session
-     * @return retrieved T
+     * @param access the session
+     * @return retrieved resource
      */
-    public T find(final Session session, final String path);
+    public ResourceType find(final AccessType access, final String path);
     /**
      * Retrieve a T instance by session and path
      *
-     * @param session the session
+     * @param access the session
      * @param path jcr path to the node
-     * @return retrieved T
+     * @return retrieved resource
      */
-    public T findOrCreate(final Session session, final String path);
+    public ResourceType findOrCreate(final AccessType access, final String path);
     /**
-     * Retrieve a T instance from a node
+     * Retrieve a resource instance from a node
      *
      * @param node the node
-     * @return node as T
+     * @return node as ResourceType
      */
-    public T cast(Node node);
+    public ResourceType cast(Node node);
 }

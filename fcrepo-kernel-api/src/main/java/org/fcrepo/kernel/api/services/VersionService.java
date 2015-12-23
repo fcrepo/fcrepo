@@ -15,43 +15,41 @@
  */
 package org.fcrepo.kernel.api.services;
 
-import javax.jcr.Session;
-
 /**
  * @author bbpennel
  * @since Feb 19, 2014
  */
-public interface VersionService {
+public interface VersionService<AccessType> {
 
     /**
      * Explicitly creates a version for the nodes at each path provided.
      *
-     * @param session the session in which the node resides
+     * @param access the access through which the node resides
      * @param absPath absolute paths to the node
      * @param label a label to be applied to the new version
      * @return the identifier
      */
-    String createVersion(Session session, String absPath, String label);
+    String createVersion(AccessType access, String absPath, String label);
 
     /**
      * Reverts the node to the version identified by the label.  This method
      * will throw a PathNotFoundException if no version with the given label is
      * found.
      *
-     * @param session the session in which the node resides
+     * @param access the access through which the node resides
      * @param absPath the path to the node whose version is to be reverted
      * @param label identifies the historic version
      */
-    void revertToVersion(Session session, String absPath, String label);
+    void revertToVersion(AccessType access, String absPath, String label);
 
     /**
      * Remove a version of a node.  This method will throw a PathNotFoundException
      * if no version with the given label is found.
      *
-     * @param session the session in which the node resides
+     * @param access the access through which the node resides
      * @param absPath the path to the node whose version is to be removed
      * @param label identifies the historic version by label or id
      */
-    void removeVersion(Session session, String absPath, String label);
+    void removeVersion(AccessType access, String absPath, String label);
 
 }

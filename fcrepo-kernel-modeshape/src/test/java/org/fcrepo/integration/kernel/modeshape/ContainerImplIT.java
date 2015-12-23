@@ -58,7 +58,7 @@ public class ContainerImplIT extends AbstractIT {
     Repository repo;
 
     @Inject
-    ContainerService containerService;
+    ContainerService<Session> containerService;
 
     private Session session;
 

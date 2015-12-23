@@ -60,10 +60,10 @@ public class SessionFactoryTest {
     private Repository mockRepo;
 
     @Mock
-    private TransactionService mockTxService;
+    private TransactionService<Session> mockTxService;
 
     @Mock
-    private Transaction mockTx;
+    private Transaction<Session> mockTx;
 
     @Mock
     private HttpServletRequest mockRequest;
@@ -103,16 +103,16 @@ public class SessionFactoryTest {
     @Test
     public void testGetSessionFromTransaction() {
         when(mockRequest.getPathInfo()).thenReturn("/tx:123/some/path");
-        when(mockTx.getSession()).thenReturn(mock(Session.class));
+        when(mockTx.get()).thenReturn(mock(Session.class));
         when(mockTxService.getTransaction("123", null)).thenReturn(mockTx);
         final Session session = testObj.getSessionFromTransaction(mockRequest, "123");
-        assertEquals(mockTx.getSession(), session);
+        assertEquals(mockTx.get(), session);
     }
 
     @Test
     public void testGetSessionThrowException() {
         when(mockRequest.getPathInfo()).thenReturn("/tx:123/some/path");
-        when(mockTx.getSession()).thenReturn(mock(Session.class));
+        when(mockTx.get()).thenReturn(mock(Session.class));
         when(mockTxService.getTransaction("123", null)).thenThrow(
                 new TransactionMissingException(""));
         try {
