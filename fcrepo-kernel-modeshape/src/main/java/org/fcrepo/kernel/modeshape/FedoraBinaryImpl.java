@@ -49,8 +49,6 @@ import java.net.URISyntaxException;
 import java.util.Collection;
 
 import static com.codahale.metrics.MetricRegistry.name;
-import static org.fcrepo.kernel.api.FedoraTypes.HAS_MIME_TYPE;
-import static org.fcrepo.kernel.api.FedoraTypes.FILENAME;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFedoraBinary;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;

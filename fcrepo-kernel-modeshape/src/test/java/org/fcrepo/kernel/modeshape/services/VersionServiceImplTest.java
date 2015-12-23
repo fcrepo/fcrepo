@@ -23,7 +23,6 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import javax.jcr.Node;
-import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
@@ -33,6 +32,7 @@ import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionIterator;
 import javax.jcr.version.VersionManager;
 
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.services.VersionService;
 import org.junit.Before;
 import org.junit.Test;
@@ -102,7 +102,7 @@ public class VersionServiceImplTest {
         verify(mockVersionManager, never()).checkpoint(EXAMPLE_VERSIONED_PATH);
     }
 
-    @Test(expected = PathNotFoundException.class)
+    @Test(expected = RepositoryRuntimeException.class)
     public void testRevertToUnknownVersion() throws RepositoryException {
         final String versionUUID = "uuid";
         final VersionManager mockVersionManager = mock(VersionManager.class);
@@ -147,7 +147,7 @@ public class VersionServiceImplTest {
         verify(mockVersionManager, never()).checkpoint("/example");
     }
 
-    @Test(expected = PathNotFoundException.class)
+    @Test(expected = RepositoryRuntimeException.class)
     public void testRemoveUnknownVersion() throws RepositoryException {
         final String versionUUID = "uuid";
         final VersionManager mockVersionManager = mock(VersionManager.class);

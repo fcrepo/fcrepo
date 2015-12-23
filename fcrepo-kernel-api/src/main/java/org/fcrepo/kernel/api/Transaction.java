@@ -17,7 +17,6 @@ package org.fcrepo.kernel.api;
 
 import java.util.Date;
 
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 /**
@@ -51,9 +50,8 @@ public interface Transaction {
     /**
      * Get the state of this transaction
      * @return transaction state
-     * @throws RepositoryException if repository exception occurred
      */
-    State getState() throws RepositoryException;
+    State getState();
 
     /**
      * Get the Date when this transaction is expired and can be

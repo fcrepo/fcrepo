@@ -101,11 +101,15 @@ public class TransactionImpl implements Transaction {
      * @see org.fcrepo.kernel.api.Transaction#getState()
      */
     @Override
-    public State getState() throws RepositoryException {
-        if (this.session != null && this.session.hasPendingChanges()) {
-            return DIRTY;
+    public State getState() {
+        try {
+            if (this.session != null && this.session.hasPendingChanges()) {
+                return DIRTY;
+            }
+            return state;
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
-        return state;
     }
 
     /* (non-Javadoc)

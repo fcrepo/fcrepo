@@ -19,6 +19,7 @@ import java.io.InputStream;
 
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 
 /**
  * A {@link org.fcrepo.kernel.api.utils.CacheEntry} for simple Binary objects
@@ -43,8 +44,12 @@ public class BinaryCacheEntry extends BasicCacheEntry {
      * @see org.fcrepo.kernel.api.utils.CacheEntry#getInputStream()
      */
     @Override
-    public InputStream getInputStream() throws RepositoryException {
-        return property.getBinary().getStream();
+    public InputStream getInputStream() {
+        try {
+            return property.getBinary().getStream();
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     /*
@@ -52,8 +57,12 @@ public class BinaryCacheEntry extends BasicCacheEntry {
      * @see org.fcrepo.kernel.api.utils.CacheEntry#getExternalIdentifier()
      */
     @Override
-    public String getExternalIdentifier() throws RepositoryException {
-        return property.getPath();
+    public String getExternalIdentifier() {
+        try {
+            return property.getPath();
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     protected Property property() {
