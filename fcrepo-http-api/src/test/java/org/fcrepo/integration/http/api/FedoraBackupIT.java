@@ -20,6 +20,7 @@ import static java.util.UUID.randomUUID;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
@@ -85,4 +86,36 @@ public class FedoraBackupIT extends AbstractResourceIT {
         // check that we made it
         assertEquals(OK.getStatusCode(), getStatus(new HttpGet(serverAddress + objName)));
     }
+
+    @Test
+    public void backupNotFromRoot() throws Exception {
+        final String objName = randomUUID().toString();
+
+        // Create object
+        createObjectAndClose(objName);
+        // Create datastream
+        createDatastream(objName, "testDS", text);
+        // Verify object exists
+        assertEquals(OK.getStatusCode(), getStatus(new HttpGet(serverAddress + objName)));
+
+        // back it up from the object
+        final File requestedDir = createTempDir();
+        logger.debug("Backing up repository to {}", requestedDir.getCanonicalPath());
+        final HttpPost backupObjectRequest = new HttpPost(serverAddress + objName + "/fcr:backup");
+        backupObjectRequest.setEntity(new StringEntity(requestedDir.getCanonicalPath()));
+
+        try (CloseableHttpResponse backupResponse = execute(backupObjectRequest)) {
+            assertEquals(BAD_REQUEST.getStatusCode(), getStatus(backupResponse));
+        }
+
+        // back it up from the datastream
+        final HttpPost backupDatastreamRequest = new HttpPost(serverAddress + objName + "/testDS/fcr:backup");
+        backupDatastreamRequest.setEntity(new StringEntity(requestedDir.getCanonicalPath()));
+
+        try (CloseableHttpResponse backupResponse = execute(backupDatastreamRequest)) {
+            assertEquals(BAD_REQUEST.getStatusCode(), getStatus(backupResponse));
+        }
+
+    }
+
 }
