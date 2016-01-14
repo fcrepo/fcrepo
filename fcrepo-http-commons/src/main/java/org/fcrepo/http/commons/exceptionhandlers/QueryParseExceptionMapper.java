@@ -46,7 +46,7 @@ ExceptionMapper<QueryParseException> {
     @Override
     public Response toResponse(final QueryParseException e) {
 
-        LOGGER.debug("Captured a query parse exception {}", e.getMessage());
+        LOGGER.error("Captured a query parse exception {}", e.getMessage());
         if (e.getMessage().matches(".* Unresolved prefixed name: .*")) {
             final Pattern namespacePattern =
                 Pattern.compile("Unresolved prefixed name: (\\w+:\\w+)");

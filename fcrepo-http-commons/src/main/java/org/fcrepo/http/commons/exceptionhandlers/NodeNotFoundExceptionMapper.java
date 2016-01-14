@@ -40,7 +40,7 @@ public class NodeNotFoundExceptionMapper implements
 
     @Override
     public Response toResponse(final NodeNotFoundException e) {
-        LOGGER.debug(
+        LOGGER.error(
                 "NodeNotFoundException intercepted by NodeNotFoundExceptionMapper: \n", e);
         return status(NOT_FOUND).build();
     }

@@ -39,7 +39,7 @@ public class WebApplicationExceptionMapper implements
 
     @Override
     public Response toResponse(final WebApplicationException e) {
-        LOGGER.debug(
+        LOGGER.error(
                 "WebApplicationException intercepted by WebApplicationExceptionMapper: \n", e);
 
         final String msg = null == e.getCause() ? e.getMessage() : e.getCause().getMessage();
