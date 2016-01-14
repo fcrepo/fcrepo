@@ -38,7 +38,7 @@ public class BackupExceptionMapper implements ExceptionMapper<BackupException> {
 
     @Override
     public Response toResponse(final BackupException e) {
-        LOGGER.trace("BackupExceptionMapper caught an exception: {}", e.getMessage());
+        LOGGER.error("BackupExceptionMapper caught an exception: {}", e.getMessage());
         return status(BAD_REQUEST).entity(e.getMessage()).build();
     }
 

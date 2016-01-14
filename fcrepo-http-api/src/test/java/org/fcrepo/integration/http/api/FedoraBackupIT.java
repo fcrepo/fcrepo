@@ -103,18 +103,12 @@ public class FedoraBackupIT extends AbstractResourceIT {
         logger.debug("Backing up repository to {}", requestedDir.getCanonicalPath());
         final HttpPost backupObjectRequest = new HttpPost(serverAddress + objName + "/fcr:backup");
         backupObjectRequest.setEntity(new StringEntity(requestedDir.getCanonicalPath()));
-
-        try (CloseableHttpResponse backupResponse = execute(backupObjectRequest)) {
-            assertEquals(BAD_REQUEST.getStatusCode(), getStatus(backupResponse));
-        }
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(execute(backupObjectRequest)));
 
         // back it up from the datastream
         final HttpPost backupDatastreamRequest = new HttpPost(serverAddress + objName + "/testDS/fcr:backup");
         backupDatastreamRequest.setEntity(new StringEntity(requestedDir.getCanonicalPath()));
-
-        try (CloseableHttpResponse backupResponse = execute(backupDatastreamRequest)) {
-            assertEquals(BAD_REQUEST.getStatusCode(), getStatus(backupResponse));
-        }
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(execute(backupDatastreamRequest)));
 
     }
 
