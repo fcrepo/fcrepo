@@ -40,7 +40,7 @@ public class InvalidResourceIdentifierExceptionMapper implements ExceptionMapper
 
     @Override
     public Response toResponse(final InvalidResourceIdentifierException e) {
-        LOGGER.error("InvalidResourceIdentifierExceptionMapper caught exception: {}", e.getMessage());
+        LOGGER.error("InvalidResourceIdentifierExceptionMapper caught an exception: {}", e.getMessage());
         return status(BAD_REQUEST).entity(e.getMessage()).build();
     }
 }
