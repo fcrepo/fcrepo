@@ -40,7 +40,7 @@ public class DocumentStoreExceptionMapper implements
 
     @Override
     public Response toResponse(final DocumentStoreException e) {
-        LOGGER.debug(
+        LOGGER.error(
                 "DocumentStoreException intercepted by DocumentStoreExceptionMapper: \n", e);
         return status(INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
     }
