@@ -2138,6 +2138,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableGraphStore graph = getGraphStore(getObjMethod(pid))) {
             assertFalse("Found the literal we tried to delete!", graph.contains(ANY,createURI(location), DC_TITLE,
                     createLiteral(longLiteral)));
+        }
     }
 
     @Test

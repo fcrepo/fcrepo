@@ -23,7 +23,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
-import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
 
 import java.util.Calendar;
 import java.util.function.Predicate;

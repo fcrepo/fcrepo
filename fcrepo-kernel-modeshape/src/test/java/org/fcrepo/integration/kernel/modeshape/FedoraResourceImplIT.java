@@ -43,7 +43,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.MODE_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedPredicate.uncheck;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -529,7 +528,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     @Test (expected = InvalidPrefixException.class)
     public void testInvalidPrefixSparqlUpdateValidation() throws RepositoryException {
-        final String pid = UUID.randomUUID().toString();
+        final String pid = getRandomPid().toString();
         final FedoraResource object =
                 containerService.findOrCreate(session, pid);
         object.updateProperties(

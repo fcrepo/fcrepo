@@ -47,14 +47,6 @@ public interface FedoraTypes {
 
     String FEDORA_LASTMODIFIED = "fedora:lastModified";
 
-    String JCR_LASTMODIFIED = "jcr:lastModified";
-
-    String JCR_CONTENT = "jcr:content";
-
-    String JCR_CREATED = "jcr:created";
-
-    String JCR_CREATEDBY = "jcr:createdBy";
-
     String FILENAME = "ebucore:filename";
 
     String HAS_MIME_TYPE = "ebucore:hasMimeType";
