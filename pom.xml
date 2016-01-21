@@ -4,13 +4,13 @@
   <parent>
     <groupId>org.fcrepo</groupId>
     <artifactId>fcrepo-parent</artifactId>
-    <version>4.5.0</version>
+    <version>4.5.1-SNAPSHOT</version>
     <relativePath>./fcrepo-parent</relativePath>
   </parent>
 
   <groupId>org.fcrepo</groupId>
   <artifactId>fcrepo</artifactId>
-  <version>4.5.0</version>
+  <version>4.5.1-SNAPSHOT</version>
   <name>Fedora Commons 4</name>
   <description>Parent project for Fedora Commons Repository</description>
   <url>http://fedorarepository.org</url>
@@ -755,7 +755,7 @@
     <connection>scm:git:git://github.com/${project_organization}/${project_name}.git</connection>
     <developerConnection>scm:git:git@github.com:${project_organization}/${project_name}.git</developerConnection>
     <url>https://github.com/${project_organization}/${project_name}</url>
-    <tag>fcrepo-4.5.0</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <issueManagement>
