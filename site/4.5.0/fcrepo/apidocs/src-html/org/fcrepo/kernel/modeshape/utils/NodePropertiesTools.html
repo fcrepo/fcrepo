@@ -1,0 +1,325 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/**<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright 2015 DuraSpace, Inc.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> *<a name="line.3"></a>
+<span class="sourceLineNo">004</span> * Licensed under the Apache License, Version 2.0 (the "License");<a name="line.4"></a>
+<span class="sourceLineNo">005</span> * you may not use this file except in compliance with the License.<a name="line.5"></a>
+<span class="sourceLineNo">006</span> * You may obtain a copy of the License at<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *     http://www.apache.org/licenses/LICENSE-2.0<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> * Unless required by applicable law or agreed to in writing, software<a name="line.10"></a>
+<span class="sourceLineNo">011</span> * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.11"></a>
+<span class="sourceLineNo">012</span> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.12"></a>
+<span class="sourceLineNo">013</span> * See the License for the specific language governing permissions and<a name="line.13"></a>
+<span class="sourceLineNo">014</span> * limitations under the License.<a name="line.14"></a>
+<span class="sourceLineNo">015</span> */<a name="line.15"></a>
+<span class="sourceLineNo">016</span>package org.fcrepo.kernel.modeshape.utils;<a name="line.16"></a>
+<span class="sourceLineNo">017</span><a name="line.17"></a>
+<span class="sourceLineNo">018</span>import static java.util.Arrays.asList;<a name="line.18"></a>
+<span class="sourceLineNo">019</span>import static java.util.Arrays.stream;<a name="line.19"></a>
+<span class="sourceLineNo">020</span>import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getReferencePropertyName;<a name="line.20"></a>
+<span class="sourceLineNo">021</span>import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isExternalNode;<a name="line.21"></a>
+<span class="sourceLineNo">022</span>import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalReferenceProperty;<a name="line.22"></a>
+<span class="sourceLineNo">023</span>import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isMultivaluedProperty;<a name="line.23"></a>
+<span class="sourceLineNo">024</span>import static org.fcrepo.kernel.modeshape.utils.UncheckedPredicate.uncheck;<a name="line.24"></a>
+<span class="sourceLineNo">025</span>import static org.slf4j.LoggerFactory.getLogger;<a name="line.25"></a>
+<span class="sourceLineNo">026</span><a name="line.26"></a>
+<span class="sourceLineNo">027</span>import java.util.ArrayList;<a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.util.List;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.util.concurrent.atomic.AtomicBoolean;<a name="line.29"></a>
+<span class="sourceLineNo">030</span><a name="line.30"></a>
+<span class="sourceLineNo">031</span>import org.apache.commons.lang3.StringUtils;<a name="line.31"></a>
+<span class="sourceLineNo">032</span><a name="line.32"></a>
+<span class="sourceLineNo">033</span>import javax.jcr.Node;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>import javax.jcr.Property;<a name="line.34"></a>
+<span class="sourceLineNo">035</span>import javax.jcr.PropertyType;<a name="line.35"></a>
+<span class="sourceLineNo">036</span>import javax.jcr.RepositoryException;<a name="line.36"></a>
+<span class="sourceLineNo">037</span>import javax.jcr.Value;<a name="line.37"></a>
+<span class="sourceLineNo">038</span><a name="line.38"></a>
+<span class="sourceLineNo">039</span>import com.hp.hpl.jena.rdf.model.Resource;<a name="line.39"></a>
+<span class="sourceLineNo">040</span><a name="line.40"></a>
+<span class="sourceLineNo">041</span>import org.fcrepo.kernel.api.models.FedoraResource;<a name="line.41"></a>
+<span class="sourceLineNo">042</span>import org.fcrepo.kernel.api.exception.IdentifierConversionException;<a name="line.42"></a>
+<span class="sourceLineNo">043</span>import org.fcrepo.kernel.api.exception.NoSuchPropertyDefinitionException;<a name="line.43"></a>
+<span class="sourceLineNo">044</span>import org.fcrepo.kernel.api.identifiers.IdentifierConverter;<a name="line.44"></a>
+<span class="sourceLineNo">045</span>import org.slf4j.Logger;<a name="line.45"></a>
+<span class="sourceLineNo">046</span><a name="line.46"></a>
+<span class="sourceLineNo">047</span>/**<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * Tools for replacing, appending and deleting JCR node properties<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * @author Chris Beer<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * @author ajs6f<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * @since May 10, 2013<a name="line.51"></a>
+<span class="sourceLineNo">052</span> */<a name="line.52"></a>
+<span class="sourceLineNo">053</span>public class NodePropertiesTools {<a name="line.53"></a>
+<span class="sourceLineNo">054</span><a name="line.54"></a>
+<span class="sourceLineNo">055</span>    private static final Logger LOGGER = getLogger(NodePropertiesTools.class);<a name="line.55"></a>
+<span class="sourceLineNo">056</span><a name="line.56"></a>
+<span class="sourceLineNo">057</span>    /**<a name="line.57"></a>
+<span class="sourceLineNo">058</span>     * Given a JCR node, property and value, either:<a name="line.58"></a>
+<span class="sourceLineNo">059</span>     *  - if the property is single-valued, replace the existing property with<a name="line.59"></a>
+<span class="sourceLineNo">060</span>     *    the new value<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     *  - if the property is multivalued, append the new value to the property<a name="line.61"></a>
+<span class="sourceLineNo">062</span>     * @param node the JCR node<a name="line.62"></a>
+<span class="sourceLineNo">063</span>     * @param propertyName a name of a JCR property (either pre-existing or<a name="line.63"></a>
+<span class="sourceLineNo">064</span>     *   otherwise)<a name="line.64"></a>
+<span class="sourceLineNo">065</span>     * @param newValue the JCR value to insert<a name="line.65"></a>
+<span class="sourceLineNo">066</span>     * @throws RepositoryException if repository exception occurred<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     */<a name="line.67"></a>
+<span class="sourceLineNo">068</span>    public void appendOrReplaceNodeProperty(final Node node, final String propertyName, final Value newValue)<a name="line.68"></a>
+<span class="sourceLineNo">069</span>        throws RepositoryException {<a name="line.69"></a>
+<span class="sourceLineNo">070</span><a name="line.70"></a>
+<span class="sourceLineNo">071</span>        final Property property;<a name="line.71"></a>
+<span class="sourceLineNo">072</span><a name="line.72"></a>
+<span class="sourceLineNo">073</span>        // if it already exists, we can take some shortcuts<a name="line.73"></a>
+<span class="sourceLineNo">074</span>        if (node.hasProperty(propertyName)) {<a name="line.74"></a>
+<span class="sourceLineNo">075</span><a name="line.75"></a>
+<span class="sourceLineNo">076</span>            property = node.getProperty(propertyName);<a name="line.76"></a>
+<span class="sourceLineNo">077</span><a name="line.77"></a>
+<span class="sourceLineNo">078</span>            if (property.isMultiple()) {<a name="line.78"></a>
+<span class="sourceLineNo">079</span>                LOGGER.debug("Appending value {} to {} property {}", newValue,<a name="line.79"></a>
+<span class="sourceLineNo">080</span>                             PropertyType.nameFromValue(property.getType()),<a name="line.80"></a>
+<span class="sourceLineNo">081</span>                             propertyName);<a name="line.81"></a>
+<span class="sourceLineNo">082</span><a name="line.82"></a>
+<span class="sourceLineNo">083</span>                // if the property is multi-valued, go ahead and append to it.<a name="line.83"></a>
+<span class="sourceLineNo">084</span>                final List&lt;Value&gt; newValues = new ArrayList&lt;&gt;(asList(node.getProperty(propertyName).getValues()));<a name="line.84"></a>
+<span class="sourceLineNo">085</span><a name="line.85"></a>
+<span class="sourceLineNo">086</span>                if (!newValues.contains(newValue)) {<a name="line.86"></a>
+<span class="sourceLineNo">087</span>                    newValues.add(newValue);<a name="line.87"></a>
+<span class="sourceLineNo">088</span>                    property.setValue(newValues.toArray(new Value[newValues.size()]));<a name="line.88"></a>
+<span class="sourceLineNo">089</span>                }<a name="line.89"></a>
+<span class="sourceLineNo">090</span>            } else {<a name="line.90"></a>
+<span class="sourceLineNo">091</span>                // or we'll just overwrite its single value<a name="line.91"></a>
+<span class="sourceLineNo">092</span>                LOGGER.debug("Overwriting {} property {} with new value {}", PropertyType.nameFromValue(property<a name="line.92"></a>
+<span class="sourceLineNo">093</span>                        .getType()), propertyName, newValue);<a name="line.93"></a>
+<span class="sourceLineNo">094</span>                property.setValue(newValue);<a name="line.94"></a>
+<span class="sourceLineNo">095</span>            }<a name="line.95"></a>
+<span class="sourceLineNo">096</span>        } else {<a name="line.96"></a>
+<span class="sourceLineNo">097</span>            // we're creating a new property on this node, so we check whether it should be multi-valued<a name="line.97"></a>
+<span class="sourceLineNo">098</span>            boolean isMultiple = true;<a name="line.98"></a>
+<span class="sourceLineNo">099</span>            try {<a name="line.99"></a>
+<span class="sourceLineNo">100</span>                isMultiple = isMultivaluedProperty(node, propertyName);<a name="line.100"></a>
+<span class="sourceLineNo">101</span>            } catch (final NoSuchPropertyDefinitionException e) {<a name="line.101"></a>
+<span class="sourceLineNo">102</span>                // simply represents a new kind of property on this node<a name="line.102"></a>
+<span class="sourceLineNo">103</span>            }<a name="line.103"></a>
+<span class="sourceLineNo">104</span>            if (isMultiple) {<a name="line.104"></a>
+<span class="sourceLineNo">105</span>                LOGGER.debug("Creating new multivalued {} property {} with " +<a name="line.105"></a>
+<span class="sourceLineNo">106</span>                             "initial value [{}]",<a name="line.106"></a>
+<span class="sourceLineNo">107</span>                             PropertyType.nameFromValue(newValue.getType()),<a name="line.107"></a>
+<span class="sourceLineNo">108</span>                             propertyName, newValue);<a name="line.108"></a>
+<span class="sourceLineNo">109</span>                property = node.setProperty(propertyName, new Value[]{newValue}, newValue.getType());<a name="line.109"></a>
+<span class="sourceLineNo">110</span>            } else {<a name="line.110"></a>
+<span class="sourceLineNo">111</span>                LOGGER.debug("Creating new single-valued {} property {} with " +<a name="line.111"></a>
+<span class="sourceLineNo">112</span>                             "initial value {}",<a name="line.112"></a>
+<span class="sourceLineNo">113</span>                             PropertyType.nameFromValue(newValue.getType()),<a name="line.113"></a>
+<span class="sourceLineNo">114</span>                             propertyName, newValue);<a name="line.114"></a>
+<span class="sourceLineNo">115</span>                property = node.setProperty(propertyName, newValue, newValue.getType());<a name="line.115"></a>
+<span class="sourceLineNo">116</span>            }<a name="line.116"></a>
+<span class="sourceLineNo">117</span>        }<a name="line.117"></a>
+<span class="sourceLineNo">118</span><a name="line.118"></a>
+<span class="sourceLineNo">119</span>        if (!property.isMultiple() &amp;&amp; !isInternalReferenceProperty.test(property)) {<a name="line.119"></a>
+<span class="sourceLineNo">120</span>            final String referencePropertyName = getReferencePropertyName(propertyName);<a name="line.120"></a>
+<span class="sourceLineNo">121</span>            if (node.hasProperty(referencePropertyName)) {<a name="line.121"></a>
+<span class="sourceLineNo">122</span>                node.getProperty(referencePropertyName).remove();<a name="line.122"></a>
+<span class="sourceLineNo">123</span>            }<a name="line.123"></a>
+<span class="sourceLineNo">124</span>        }<a name="line.124"></a>
+<span class="sourceLineNo">125</span>    }<a name="line.125"></a>
+<span class="sourceLineNo">126</span><a name="line.126"></a>
+<span class="sourceLineNo">127</span>    /**<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     * Add a reference placeholder from one node to another in-domain resource<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     * @param idTranslator the id translator<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     * @param node the node<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     * @param propertyName the property name<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     * @param resource the resource<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * @throws RepositoryException if repository exception occurred<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     */<a name="line.134"></a>
+<span class="sourceLineNo">135</span>    public void addReferencePlaceholders(final IdentifierConverter&lt;Resource,FedoraResource&gt; idTranslator,<a name="line.135"></a>
+<span class="sourceLineNo">136</span>                                          final Node node,<a name="line.136"></a>
+<span class="sourceLineNo">137</span>                                          final String propertyName,<a name="line.137"></a>
+<span class="sourceLineNo">138</span>                                          final Resource resource) throws RepositoryException {<a name="line.138"></a>
+<span class="sourceLineNo">139</span><a name="line.139"></a>
+<span class="sourceLineNo">140</span>        try {<a name="line.140"></a>
+<span class="sourceLineNo">141</span>            final Node refNode = idTranslator.convert(resource).getNode();<a name="line.141"></a>
+<span class="sourceLineNo">142</span><a name="line.142"></a>
+<span class="sourceLineNo">143</span>            if (isExternalNode.test(refNode)) {<a name="line.143"></a>
+<span class="sourceLineNo">144</span>                // we can't apply REFERENCE properties to external resources<a name="line.144"></a>
+<span class="sourceLineNo">145</span>                return;<a name="line.145"></a>
+<span class="sourceLineNo">146</span>            }<a name="line.146"></a>
+<span class="sourceLineNo">147</span><a name="line.147"></a>
+<span class="sourceLineNo">148</span>            final String referencePropertyName = getReferencePropertyName(propertyName);<a name="line.148"></a>
+<span class="sourceLineNo">149</span><a name="line.149"></a>
+<span class="sourceLineNo">150</span>            if (!isMultivaluedProperty(node, propertyName)) {<a name="line.150"></a>
+<span class="sourceLineNo">151</span>                if (node.hasProperty(referencePropertyName)) {<a name="line.151"></a>
+<span class="sourceLineNo">152</span>                    node.getProperty(referencePropertyName).remove();<a name="line.152"></a>
+<span class="sourceLineNo">153</span>                }<a name="line.153"></a>
+<span class="sourceLineNo">154</span><a name="line.154"></a>
+<span class="sourceLineNo">155</span>                if (node.hasProperty(propertyName)) {<a name="line.155"></a>
+<span class="sourceLineNo">156</span>                    node.getProperty(propertyName).remove();<a name="line.156"></a>
+<span class="sourceLineNo">157</span>                }<a name="line.157"></a>
+<span class="sourceLineNo">158</span>            }<a name="line.158"></a>
+<span class="sourceLineNo">159</span><a name="line.159"></a>
+<span class="sourceLineNo">160</span>            final Value v = node.getSession().getValueFactory().createValue(refNode, true);<a name="line.160"></a>
+<span class="sourceLineNo">161</span>            appendOrReplaceNodeProperty(node, referencePropertyName, v);<a name="line.161"></a>
+<span class="sourceLineNo">162</span><a name="line.162"></a>
+<span class="sourceLineNo">163</span>        } catch (final IdentifierConversionException e) {<a name="line.163"></a>
+<span class="sourceLineNo">164</span>            // no-op<a name="line.164"></a>
+<span class="sourceLineNo">165</span>        }<a name="line.165"></a>
+<span class="sourceLineNo">166</span>    }<a name="line.166"></a>
+<span class="sourceLineNo">167</span><a name="line.167"></a>
+<span class="sourceLineNo">168</span>    /**<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     * Remove a reference placeholder that links one node to another in-domain resource<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     * @param idTranslator the id translator<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     * @param node the node<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     * @param propertyName the property name<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     * @param resource the resource<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     * @throws RepositoryException if repository exception occurred<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     */<a name="line.175"></a>
+<span class="sourceLineNo">176</span>    public void removeReferencePlaceholders(final IdentifierConverter&lt;Resource,FedoraResource&gt; idTranslator,<a name="line.176"></a>
+<span class="sourceLineNo">177</span>                                             final Node node,<a name="line.177"></a>
+<span class="sourceLineNo">178</span>                                             final String propertyName,<a name="line.178"></a>
+<span class="sourceLineNo">179</span>                                             final Resource resource) throws RepositoryException {<a name="line.179"></a>
+<span class="sourceLineNo">180</span><a name="line.180"></a>
+<span class="sourceLineNo">181</span>        final String referencePropertyName = getReferencePropertyName(propertyName);<a name="line.181"></a>
+<span class="sourceLineNo">182</span><a name="line.182"></a>
+<span class="sourceLineNo">183</span>        final Node refNode = idTranslator.convert(resource).getNode();<a name="line.183"></a>
+<span class="sourceLineNo">184</span>        final Value v = node.getSession().getValueFactory().createValue(refNode, true);<a name="line.184"></a>
+<span class="sourceLineNo">185</span>        removeNodeProperty(node, referencePropertyName, v);<a name="line.185"></a>
+<span class="sourceLineNo">186</span>    }<a name="line.186"></a>
+<span class="sourceLineNo">187</span>    /**<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     * Given a JCR node, property and value, remove the value (if it exists)<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     * from the property, and remove the<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     * property if no values remove<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     *<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     * @param node the JCR node<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     * @param propertyName a name of a JCR property (either pre-existing or<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     *   otherwise)<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     * @param valueToRemove the JCR value to remove<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     * @throws RepositoryException if repository exception occurred<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     */<a name="line.197"></a>
+<span class="sourceLineNo">198</span>    public void removeNodeProperty(final Node node, final String propertyName, final Value valueToRemove)<a name="line.198"></a>
+<span class="sourceLineNo">199</span>        throws RepositoryException {<a name="line.199"></a>
+<span class="sourceLineNo">200</span>        LOGGER.debug("Request to remove {}", valueToRemove);<a name="line.200"></a>
+<span class="sourceLineNo">201</span>        // if the property doesn't exist, we don't need to worry about it.<a name="line.201"></a>
+<span class="sourceLineNo">202</span>        if (node.hasProperty(propertyName)) {<a name="line.202"></a>
+<span class="sourceLineNo">203</span><a name="line.203"></a>
+<span class="sourceLineNo">204</span>            final Property property = node.getProperty(propertyName);<a name="line.204"></a>
+<span class="sourceLineNo">205</span>            final String strValueToRemove = valueToRemove.getString();<a name="line.205"></a>
+<span class="sourceLineNo">206</span><a name="line.206"></a>
+<span class="sourceLineNo">207</span>            if (property.isMultiple()) {<a name="line.207"></a>
+<span class="sourceLineNo">208</span>                final AtomicBoolean remove = new AtomicBoolean();<a name="line.208"></a>
+<span class="sourceLineNo">209</span>                final Value[] newValues = stream(node.getProperty(propertyName).getValues()).filter(uncheck(v -&gt; {<a name="line.209"></a>
+<span class="sourceLineNo">210</span>                    final String strVal = v.getString();<a name="line.210"></a>
+<span class="sourceLineNo">211</span><a name="line.211"></a>
+<span class="sourceLineNo">212</span>                    LOGGER.debug("v is '{}', valueToRemove is '{}'", v, strValueToRemove );<a name="line.212"></a>
+<span class="sourceLineNo">213</span>                    if (strVal.equals(strValueToRemove)) {<a name="line.213"></a>
+<span class="sourceLineNo">214</span>                        remove.set(true);<a name="line.214"></a>
+<span class="sourceLineNo">215</span>                        return false;<a name="line.215"></a>
+<span class="sourceLineNo">216</span>                    }<a name="line.216"></a>
+<span class="sourceLineNo">217</span><a name="line.217"></a>
+<span class="sourceLineNo">218</span>                    return true;<a name="line.218"></a>
+<span class="sourceLineNo">219</span>                })).toArray(Value[]::new);<a name="line.219"></a>
+<span class="sourceLineNo">220</span><a name="line.220"></a>
+<span class="sourceLineNo">221</span>                // we only need to update the property if we did anything.<a name="line.221"></a>
+<span class="sourceLineNo">222</span>                if (remove.get()) {<a name="line.222"></a>
+<span class="sourceLineNo">223</span>                    if (newValues.length == 0) {<a name="line.223"></a>
+<span class="sourceLineNo">224</span>                        LOGGER.debug("Removing property '{}'", propertyName);<a name="line.224"></a>
+<span class="sourceLineNo">225</span>                        property.remove();<a name="line.225"></a>
+<span class="sourceLineNo">226</span>                    } else {<a name="line.226"></a>
+<span class="sourceLineNo">227</span>                        LOGGER.debug("Removing value '{}' from property '{}'", strValueToRemove, propertyName);<a name="line.227"></a>
+<span class="sourceLineNo">228</span>                        property.setValue(newValues);<a name="line.228"></a>
+<span class="sourceLineNo">229</span>                    }<a name="line.229"></a>
+<span class="sourceLineNo">230</span>                } else {<a name="line.230"></a>
+<span class="sourceLineNo">231</span>                    LOGGER.debug("Value not removed from property name '{}' (value '{}')", propertyName,<a name="line.231"></a>
+<span class="sourceLineNo">232</span>                            strValueToRemove);<a name="line.232"></a>
+<span class="sourceLineNo">233</span>                    throw new RepositoryException ("Property '" + propertyName + "': Unable to remove value '" +<a name="line.233"></a>
+<span class="sourceLineNo">234</span>                            StringUtils.substring(strValueToRemove, 0, 50) + "...'");<a name="line.234"></a>
+<span class="sourceLineNo">235</span>                }<a name="line.235"></a>
+<span class="sourceLineNo">236</span>            } else {<a name="line.236"></a>
+<span class="sourceLineNo">237</span><a name="line.237"></a>
+<span class="sourceLineNo">238</span>                final String strPropVal = property.getValue().getString();<a name="line.238"></a>
+<span class="sourceLineNo">239</span><a name="line.239"></a>
+<span class="sourceLineNo">240</span>                LOGGER.debug("Removing string '{}'", strValueToRemove);<a name="line.240"></a>
+<span class="sourceLineNo">241</span>                if (StringUtils.equals(strPropVal, strValueToRemove)) {<a name="line.241"></a>
+<span class="sourceLineNo">242</span>                    LOGGER.debug("single value: Removing value from property '{}'", propertyName);<a name="line.242"></a>
+<span class="sourceLineNo">243</span>                    property.remove();<a name="line.243"></a>
+<span class="sourceLineNo">244</span>                } else {<a name="line.244"></a>
+<span class="sourceLineNo">245</span>                    LOGGER.debug("Value not removed from property name '{}' (property value: '{}';compare value: '{}')",<a name="line.245"></a>
+<span class="sourceLineNo">246</span>                            propertyName, strPropVal, strValueToRemove);<a name="line.246"></a>
+<span class="sourceLineNo">247</span>                    throw new RepositoryException("Property '" + propertyName + "': Unable to remove value '" +<a name="line.247"></a>
+<span class="sourceLineNo">248</span>                            StringUtils.substring(strValueToRemove, 0, 50) + "'");<a name="line.248"></a>
+<span class="sourceLineNo">249</span>                }<a name="line.249"></a>
+<span class="sourceLineNo">250</span>            }<a name="line.250"></a>
+<span class="sourceLineNo">251</span>        }<a name="line.251"></a>
+<span class="sourceLineNo">252</span>    }<a name="line.252"></a>
+<span class="sourceLineNo">253</span>}<a name="line.253"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>
