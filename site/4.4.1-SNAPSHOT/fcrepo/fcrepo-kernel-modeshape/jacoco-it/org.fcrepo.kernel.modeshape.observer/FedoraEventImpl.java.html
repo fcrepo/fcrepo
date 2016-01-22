@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>FedoraEventImpl.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation (ModeShape)</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.observer</a> &gt; <span class="el_source">FedoraEventImpl.java</span></div><h1>FedoraEventImpl.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2015 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.observer;
+
+import static com.google.common.base.MoreObjects.toStringHelper;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.collect.Sets.union;
+import static org.fcrepo.kernel.api.utils.EventType.valueOf;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+import static java.util.Collections.singleton;
+import static java.util.stream.Collectors.toList;
+import static javax.jcr.observation.Event.PROPERTY_ADDED;
+import static javax.jcr.observation.Event.PROPERTY_CHANGED;
+import static javax.jcr.observation.Event.PROPERTY_REMOVED;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.observation.Event;
+
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.observer.FedoraEvent;
+import org.fcrepo.kernel.api.services.functions.HierarchicalIdentifierSupplier;
+import org.fcrepo.kernel.api.services.functions.UniqueValueSupplier;
+import org.fcrepo.kernel.api.utils.EventType;
+
+/**
+ * A very simple abstraction to prevent event-driven machinery downstream from the repository from relying directly
+ * on a JCR interface {@link Event}. Can represent either a single JCR event or several.
+ *
+ * @author ajs6f
+ * @since Feb 19, 2013
+ */
+public class FedoraEventImpl implements FedoraEvent {
+
+    private Event e;
+    private final String eventID;
+
+<span class="fc" id="L55">    private Set&lt;EventType&gt; eventTypes = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L56">    private Set&lt;String&gt; eventProperties = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L57">    private static final List&lt;Integer&gt; PROPERTY_TYPES = Arrays.asList(PROPERTY_ADDED, PROPERTY_CHANGED,</span>
+<span class="fc" id="L58">            PROPERTY_REMOVED);</span>
+
+<span class="fc" id="L60">    private static final UniqueValueSupplier pidMinter = new DefaultPathMinter();</span>
+
+    /**
+     * Wrap a JCR Event with our FedoraEvent decorators
+     *
+     * @param e the JCR event
+     */
+<span class="fc" id="L67">    public FedoraEventImpl(final Event e) {</span>
+<span class="pc bpc" id="L68" title="1 of 2 branches missed.">        checkArgument(e != null, &quot;null cannot support a FedoraEvent!&quot;);</span>
+<span class="fc" id="L69">        eventID = pidMinter.get();</span>
+<span class="fc" id="L70">        this.e = e;</span>
+<span class="fc" id="L71">    }</span>
+
+    /**
+     * Create a FedoraEvent from an existing FedoraEvent object
+     * Note: Only the wrapped JCR event is passed on to the new object.
+     *
+     * @param e the given fedora event
+     */
+<span class="fc" id="L79">    public FedoraEventImpl(final FedoraEvent e) {</span>
+<span class="pc bpc" id="L80" title="1 of 2 branches missed.">        checkArgument(e != null, &quot;null cannot support a FedoraEvent!&quot;);</span>
+<span class="fc" id="L81">        eventID = e.getEventID();</span>
+<span class="fc" id="L82">        this.e = ((FedoraEventImpl)e).e;</span>
+<span class="fc" id="L83">    }</span>
+
+    /**
+     * @return the event types of the underlying JCR {@link Event}s
+     */
+    @Override
+    public Set&lt;EventType&gt; getTypes() {
+<span class="fc" id="L90">        final EventType type = valueOf(e.getType());</span>
+<span class="pc bpc" id="L91" title="1 of 2 branches missed.">        return eventTypes != null ? union(singleton(type), eventTypes) : singleton(type);</span>
+    }
+
+    /**
+     * @param type the type
+     * @return this object for continued use
+     */
+    @Override
+    public FedoraEvent addType(final EventType type) {
+<span class="fc" id="L100">        eventTypes.add(type);</span>
+<span class="fc" id="L101">        return this;</span>
+    }
+
+    /**
+     * @return the property names of the underlying JCR property {@link Event}s
+    **/
+    @Override
+    public Set&lt;String&gt; getProperties() {
+<span class="fc" id="L109">        return eventProperties;</span>
+    }
+
+    /**
+     * Add a property name to this event
+     * @param property property name
+     * @return this object for continued use
+    **/
+    @Override
+    public FedoraEvent addProperty( final String property ) {
+<span class="fc" id="L119">        eventProperties.add(property);</span>
+<span class="fc" id="L120">        return this;</span>
+    }
+
+    /**
+     * @return the path of the underlying JCR {@link Event}s
+     */
+    @Override
+    public String getPath() {
+<span class="fc" id="L128">        return getPath(e);</span>
+    }
+
+    /**
+     * Get the path of the node related to this event (removing property names
+     * from the end of property nodes).
+     * @param e JCR Event
+     * @return the node path for this event
+    **/
+    public static String getPath(final Event e) {
+        try {
+            final String path;
+<span class="fc bfc" id="L140" title="All 2 branches covered.">            if (PROPERTY_TYPES.contains(e.getType())) {</span>
+<span class="fc" id="L141">                path = e.getPath().substring(0, e.getPath().lastIndexOf(&quot;/&quot;));</span>
+            } else {
+<span class="fc" id="L143">                path = e.getPath();</span>
+            }
+<span class="fc" id="L145">            return path.replaceAll(&quot;/&quot; + JCR_CONTENT, &quot;&quot;);</span>
+<span class="nc" id="L146">        } catch (RepositoryException e1) {</span>
+<span class="nc" id="L147">            throw new RepositoryRuntimeException(&quot;Error getting event path!&quot;, e1);</span>
+        }
+    }
+
+    /**
+     * @return the user ID of the underlying JCR {@link Event}s
+     */
+    @Override
+    public String getUserID() {
+<span class="fc" id="L156">        return e.getUserID();</span>
+    }
+
+    /**
+     * @return the user data of the underlying JCR {@link Event}s
+     */
+    @Override
+    public String getUserData() {
+        try {
+<span class="nc" id="L165">            return e.getUserData();</span>
+<span class="nc" id="L166">        } catch (RepositoryException e1) {</span>
+<span class="nc" id="L167">            throw new RepositoryRuntimeException(&quot;Error getting event userData!&quot;, e1);</span>
+        }
+    }
+
+    /**
+     * @return the date of the underlying JCR {@link Event}s
+     */
+    @Override
+    public long getDate() {
+        try {
+<span class="nc" id="L177">            return e.getDate();</span>
+<span class="nc" id="L178">        } catch (RepositoryException e1) {</span>
+<span class="nc" id="L179">            throw new RepositoryRuntimeException(&quot;Error getting event date!&quot;, e1);</span>
+        }
+    }
+
+    /**
+     * Get the event ID.
+     * @return Event identifier to use for building event URIs (e.g., in an external triplestore).
+    **/
+    @Override
+    public String getEventID() {
+<span class="fc" id="L189">        return eventID;</span>
+    }
+
+    @Override
+    public String toString() {
+
+<span class="nc" id="L195">        return toStringHelper(this)</span>
+<span class="nc" id="L196">            .add(&quot;Event types:&quot;, String.join(&quot;,&quot;, getTypes().stream()</span>
+<span class="nc" id="L197">                            .map(EventType::getName)</span>
+<span class="nc" id="L198">                            .collect(toList())))</span>
+<span class="nc" id="L199">            .add(&quot;Event properties:&quot;, String.join(&quot;,&quot;, eventProperties))</span>
+<span class="nc" id="L200">            .add(&quot;Path:&quot;, getPath())</span>
+<span class="nc" id="L201">            .add(&quot;Date: &quot;, getDate()).toString();</span>
+    }
+
+<span class="fc" id="L204">    private static class DefaultPathMinter implements HierarchicalIdentifierSupplier { }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

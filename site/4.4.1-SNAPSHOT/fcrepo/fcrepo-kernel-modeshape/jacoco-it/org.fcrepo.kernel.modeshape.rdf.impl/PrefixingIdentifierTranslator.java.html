@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>PrefixingIdentifierTranslator.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation (ModeShape)</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.rdf.impl</a> &gt; <span class="el_source">PrefixingIdentifierTranslator.java</span></div><h1>PrefixingIdentifierTranslator.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2015 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.rdf.impl;
+
+import static com.google.common.collect.Lists.newArrayList;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+
+import com.google.common.base.Converter;
+import com.google.common.collect.Lists;
+
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+
+import com.hp.hpl.jena.rdf.model.Resource;
+
+import org.fcrepo.kernel.modeshape.identifiers.HashConverter;
+import org.fcrepo.kernel.modeshape.identifiers.NamespaceConverter;
+import org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+
+import java.util.List;
+
+/**
+ * A very simple {@link IdentifierConverter} which translates JCR paths into Fedora subjects with
+ * a configurable resource namespace (e.g., a baseURL).  When a REST API context is available for
+ * constructing URIs, org.fcrepo.http.commons.api.rdf.HttpResourceConverter should be used instead.
+ *
+ * @author barmintor
+ * @author ajs6f
+ * @author escowles
+ * @since 2015-04-24
+ */
+public class PrefixingIdentifierTranslator extends IdentifierConverter&lt;Resource, FedoraResource&gt; {
+
+
+<span class="fc" id="L52">    private static final NodeResourceConverter nodeResourceConverter = new NodeResourceConverter();</span>
+
+    private final String resourceNamespace;
+    private final Session session;
+
+    /**
+     * Construct the graph with the provided resource namespace, which will translate JCR paths into
+     * URIs prefixed with that namespace.  Should only be used when a REST API context is not available
+     * for constructing URIs.
+     * @param session Session to lookup nodes
+     * @param resourceNamespace Resource namespace (i.e., base URL)
+    **/
+<span class="fc" id="L64">    public PrefixingIdentifierTranslator(final Session session, final String resourceNamespace) {</span>
+<span class="fc" id="L65">        this.session = session;</span>
+<span class="fc" id="L66">        this.resourceNamespace = resourceNamespace;</span>
+<span class="fc" id="L67">        setTranslationChain();</span>
+<span class="fc" id="L68">    }</span>
+
+
+<span class="fc" id="L71">    protected Converter&lt;String, String&gt; forward = identity();</span>
+<span class="fc" id="L72">    protected Converter&lt;String, String&gt; reverse = identity();</span>
+
+    /*
+     * TODO: much of what happens with chains of translators inside these converters should be factored
+     * out into some abstract class, or post Java 8, default implementation.
+     */
+    private void setTranslationChain() {
+
+<span class="fc bfc" id="L80" title="All 2 branches covered.">        for (final Converter&lt;String, String&gt; t : minimalTranslationChain) {</span>
+<span class="fc" id="L81">            forward = forward.andThen(t);</span>
+<span class="fc" id="L82">        }</span>
+<span class="fc bfc" id="L83" title="All 2 branches covered.">        for (final Converter&lt;String, String&gt; t : Lists.reverse(minimalTranslationChain)) {</span>
+<span class="fc" id="L84">            reverse = reverse.andThen(t.reverse());</span>
+<span class="fc" id="L85">        }</span>
+<span class="fc" id="L86">    }</span>
+
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L90">    private static final List&lt;Converter&lt;String, String&gt;&gt; minimalTranslationChain =</span>
+<span class="fc" id="L91">            newArrayList((Converter&lt;String, String&gt;) new NamespaceConverter(),</span>
+                    (Converter&lt;String, String&gt;) new HashConverter()
+            );
+
+    @Override
+    protected FedoraResource doForward(final Resource subject) {
+        try {
+<span class="pc bpc" id="L98" title="1 of 2 branches missed.">            if (!inDomain(subject)) {</span>
+<span class="nc" id="L99">                throw new RepositoryRuntimeException(&quot;Subject &quot; + subject + &quot; is not in this repository&quot;);</span>
+            }
+
+<span class="fc" id="L102">            return nodeResourceConverter.convert(session.getNode(asString(subject)));</span>
+<span class="fc" id="L103">        } catch (final RepositoryException e) {</span>
+<span class="fc" id="L104">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    @Override
+    protected Resource doBackward(final FedoraResource resource) {
+<span class="fc" id="L110">        final String absPath = resource.getPath();</span>
+
+<span class="fc" id="L112">        return toDomain(absPath);</span>
+    }
+
+    @Override
+    public boolean inDomain(final Resource subject) {
+<span class="pc bpc" id="L117" title="1 of 4 branches missed.">        return subject.isURIResource() &amp;&amp; subject.getURI().startsWith(resourceNamespace);</span>
+    }
+
+    @Override
+    public Resource toDomain(final String absPath) {
+        final String relativePath;
+
+<span class="pc bpc" id="L124" title="1 of 2 branches missed.">        if (absPath.startsWith(&quot;/&quot;)) {</span>
+<span class="fc" id="L125">            relativePath = absPath.substring(1);</span>
+        } else {
+<span class="nc" id="L127">            relativePath = absPath;</span>
+        }
+<span class="fc" id="L129">        return createResource(resourceNamespace + reverse.convert(relativePath));</span>
+    }
+
+    @Override
+    public String asString(final Resource subject) {
+<span class="pc bpc" id="L134" title="1 of 2 branches missed.">        if (!inDomain(subject)) {</span>
+<span class="nc" id="L135">            return null;</span>
+        }
+
+<span class="fc" id="L138">        final String path = subject.getURI().substring(resourceNamespace.length() - 1);</span>
+
+<span class="fc" id="L140">        final String absPath = forward.convert(path);</span>
+
+<span class="pc bpc" id="L142" title="1 of 2 branches missed.">        if (absPath.isEmpty()) {</span>
+<span class="nc" id="L143">            return &quot;/&quot;;</span>
+        }
+<span class="fc" id="L145">        return absPath;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

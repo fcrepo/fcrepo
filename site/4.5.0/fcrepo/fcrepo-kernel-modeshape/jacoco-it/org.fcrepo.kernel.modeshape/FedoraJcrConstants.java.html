@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>FedoraJcrConstants.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation (ModeShape)</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape</a> &gt; <span class="el_source">FedoraJcrConstants.java</span></div><h1>FedoraJcrConstants.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2015 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape;
+
+/**
+ * Convenience class with constants for commonly used JCR types.
+ *
+ * @author ajs6f
+ * @author acoburn
+ * @since Apr 25, 2013
+ */
+public final class FedoraJcrConstants {
+
+    public static final String JCR_LASTMODIFIED = &quot;jcr:lastModified&quot;;
+
+    public static final String JCR_CREATED = &quot;jcr:created&quot;;
+
+    public static final String JCR_CREATEDBY = &quot;jcr:createdBy&quot;;
+
+    public static final String JCR_FROZEN_NODE = &quot;jcr:frozenNode&quot;;
+
+    public static final String FROZEN_NODE = &quot;nt:frozenNode&quot;;
+
+    public static final String FROZEN_MIXIN_TYPES = &quot;jcr:frozenMixinTypes&quot;;
+
+    public static final String FROZEN_PRIMARY_TYPE = &quot;jcr:frozenPrimaryType&quot;;
+
+    public static final String ROOT = &quot;mode:root&quot;;
+
+    public static final String VERSIONABLE = &quot;mix:versionable&quot;;
+
+<span class="nc" id="L45">    private FedoraJcrConstants() {</span>
+        // Prevent instantiation
+<span class="nc" id="L47">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

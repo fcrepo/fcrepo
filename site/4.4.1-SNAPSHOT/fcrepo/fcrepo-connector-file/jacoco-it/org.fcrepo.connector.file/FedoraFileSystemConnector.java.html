@@ -1,0 +1,349 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>FedoraFileSystemConnector.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository FileSystem Connector Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.connector.file</a> &gt; <span class="el_source">FedoraFileSystemConnector.java</span></div><h1>FedoraFileSystemConnector.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2015 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.connector.file;
+
+import static java.lang.System.currentTimeMillis;
+import static org.fcrepo.kernel.api.FedoraTypes.CONTENT_DIGEST;
+import static org.fcrepo.kernel.api.FedoraTypes.CONTENT_SIZE;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.api.utils.ContentDigest.asURI;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
+import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
+import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
+import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
+import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
+
+import java.io.File;
+import java.net.URI;
+import java.util.Date;
+import java.util.HashMap;
+import java.io.IOException;
+import java.util.Map;
+
+import com.google.common.annotations.VisibleForTesting;
+
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.infinispan.schematic.document.Document;
+import org.modeshape.connector.filesystem.FileSystemConnector;
+import org.modeshape.jcr.api.value.DateTime;
+import org.modeshape.jcr.api.nodetype.NodeTypeManager;
+import org.modeshape.jcr.spi.federation.DocumentChanges;
+import org.modeshape.jcr.spi.federation.DocumentReader;
+import org.modeshape.jcr.spi.federation.DocumentWriter;
+import org.modeshape.jcr.value.BinaryValue;
+import org.modeshape.jcr.value.Name;
+import org.modeshape.jcr.value.Property;
+import org.modeshape.jcr.value.basic.BasicSingleValueProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.jcr.NamespaceRegistry;
+import javax.jcr.RepositoryException;
+
+/**
+ * This class extends the {@link FileSystemConnector} to enable the autocreation of Fedora-specific datastream and
+ * content properties.
+ *
+ * @author Andrew Woods
+ *         Date: 1/30/14
+ */
+<span class="fc" id="L67">public class FedoraFileSystemConnector extends FileSystemConnector {</span>
+
+<span class="fc" id="L69">    private static final Logger LOGGER = LoggerFactory.getLogger(FedoraFileSystemConnector.class);</span>
+
+    private static final String DELIMITER = &quot;/&quot;;
+    private static final String JCR_CONTENT = &quot;jcr:content&quot;;
+    private static final String JCR_CONTENT_SUFFIX = DELIMITER + JCR_CONTENT;
+
+    /**
+     * The string path for a {@link File} object that represents the top-level directory in which properties are
+     * stored.  This is optional for this connector, but if set allows properties to be cached (greatly
+     * improving performance) for even read-only connectors.  When this property is specified the extraPropertiesStore
+     * should be null (not specified) as it would be overridden by this.
+     */
+    private String propertiesDirectoryPath;
+    private File propertiesDirectory;
+
+    @Override
+    public void initialize(final NamespaceRegistry registry,
+                           final NodeTypeManager nodeTypeManager) throws IOException {
+        try {
+<span class="fc" id="L88">            super.initialize(registry, nodeTypeManager);</span>
+<span class="nc" id="L89">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L90">            throw new RepositoryRuntimeException(&quot;Error initializing FedoraFileSystemConnector!&quot;, e);</span>
+<span class="fc" id="L91">        }</span>
+
+<span class="fc bfc" id="L93" title="All 2 branches covered.">        if (propertiesDirectoryPath != null) {</span>
+<span class="fc" id="L94">           propertiesDirectory = new File(propertiesDirectoryPath);</span>
+<span class="pc bpc" id="L95" title="2 of 4 branches missed.">            if (!propertiesDirectory.exists() || !propertiesDirectory.isDirectory()) {</span>
+<span class="nc" id="L96">                throw new RepositoryRuntimeException(&quot;Configured \&quot;propertiesDirectory\&quot;, &quot; + propertiesDirectoryPath</span>
+                        + &quot;, does not exist or is not a directory.&quot;);
+<span class="pc bpc" id="L98" title="2 of 4 branches missed.">            } else if ( !propertiesDirectory.canRead() || !propertiesDirectory.canWrite() ) {</span>
+<span class="nc" id="L99">                throw new RepositoryRuntimeException(&quot;Configured \&quot;propertiesDirectory\&quot;, &quot; + propertiesDirectoryPath</span>
+                        + &quot;, should be readable and writable.&quot;);
+            }
+<span class="pc bpc" id="L102" title="1 of 2 branches missed.">            if (extraPropertiesStore() != null) {</span>
+<span class="fc" id="L103">                LOGGER.warn(&quot;Extra properties store was specified but won't be used!&quot;);</span>
+            }
+<span class="fc" id="L105">            setExtraPropertiesStore(new ExternalJsonSidecarExtraPropertyStore(this, translator(), propertiesDirectory));</span>
+        }
+<span class="fc" id="L107">    }</span>
+
+    /**
+     * This method returns the object/document for the node with the federated arg 'id'.
+     *
+     * Additionally, this method adds Fedora datastream and content properties to the result of the parent class
+     * implementation.
+     */
+    @Override
+    public Document getDocumentById(final String id) {
+<span class="fc" id="L117">        LOGGER.debug(&quot;Getting Federated document: {}&quot;, id);</span>
+<span class="pc bpc" id="L118" title="2 of 4 branches missed.">        if (null == id || id.isEmpty()) {</span>
+<span class="nc" id="L119">            LOGGER.warn(&quot;Can not get document with null id&quot;);</span>
+<span class="nc" id="L120">            return null;</span>
+        }
+
+<span class="fc" id="L123">        final Document doc = super.getDocumentById(id);</span>
+<span class="pc bpc" id="L124" title="1 of 2 branches missed.">        if ( doc == null ) {</span>
+<span class="nc" id="L125">            LOGGER.debug(&quot;Non-existent node, document is null: {}&quot;, id);</span>
+<span class="nc" id="L126">            return doc;</span>
+        }
+
+<span class="fc" id="L129">        final DocumentReader docReader = readDocument(doc);</span>
+<span class="fc" id="L130">        final DocumentWriter docWriter = writeDocument(doc);</span>
+<span class="fc" id="L131">        final long lastmod = fileFor(id).lastModified();</span>
+<span class="fc" id="L132">        LOGGER.debug(&quot;Adding lastModified={}&quot;, lastmod);</span>
+<span class="fc" id="L133">        docWriter.addProperty(JCR_LASTMODIFIED, lastmod);</span>
+
+<span class="fc" id="L135">        final String primaryType = docReader.getPrimaryTypeName();</span>
+
+<span class="pc bpc" id="L137" title="1 of 2 branches missed.">        if (!docReader.getMixinTypeNames().contains(FEDORA_RESOURCE)) {</span>
+<span class="fc" id="L138">            LOGGER.trace(&quot;Adding mixin: {}, to {}&quot;, FEDORA_RESOURCE, id);</span>
+<span class="fc" id="L139">            docWriter.addMixinType(FEDORA_RESOURCE);</span>
+        }
+
+        // Is Fedora Datastream?
+<span class="fc bfc" id="L143" title="All 2 branches covered.">        if (primaryType.equals(NT_FILE)) {</span>
+<span class="fc" id="L144">            decorateDatastreamNode(docReader, docWriter);</span>
+
+        // Is Fedora Content?
+<span class="fc bfc" id="L147" title="All 2 branches covered.">        } else if (primaryType.equals(NT_RESOURCE)) {</span>
+<span class="fc" id="L148">            decorateContentNode(docReader, docWriter, fileFor(id));</span>
+
+        // Is Fedora Object?
+<span class="pc bpc" id="L151" title="1 of 2 branches missed.">        } else if (primaryType.equals(NT_FOLDER)) {</span>
+<span class="fc" id="L152">            decorateObjectNode(docReader, docWriter);</span>
+        }
+
+<span class="fc" id="L155">        return docWriter.document();</span>
+    }
+
+    /**
+     * Checks whether internally managed properties can and should be stored to
+     * an ExtraPropertiesStore.
+     * @return whether internally managed properties can and should be stored to
+     */
+    protected boolean shouldCacheProperties() {
+<span class="pc bpc" id="L164" title="2 of 6 branches missed.">        return extraPropertiesStore() != null &amp;&amp; (!isReadonly() || this.propertiesDirectory != null);</span>
+    }
+
+
+    /**
+     * Pass-thru to the parent class in order to make this function public
+     *
+     * @param id the node ID to test
+     * @return whether the id corresponds to the root location
+     */
+    @Override
+    public boolean isRoot(final String id) {
+<span class="fc" id="L176">        return super.isRoot(id);</span>
+    }
+
+    /**
+     * Pass-thru to the parent class in order to make this function public
+     *
+     * @param file the file used to compute a sha1 hash
+     * @return the sha1 hash of the file contents
+     */
+    @Override
+    public String sha1(final File file) {
+<span class="fc" id="L187">        final String cachedSha1 = getCachedSha1(file);</span>
+<span class="fc bfc" id="L188" title="All 2 branches covered.">        if (cachedSha1 == null) {</span>
+<span class="fc" id="L189">            return computeAndCacheSha1(file);</span>
+        }
+<span class="fc" id="L191">        return cachedSha1;</span>
+    }
+
+    private String getCachedSha1(final File file) {
+<span class="fc" id="L195">        final String id = idFor(file) + JCR_CONTENT_SUFFIX;</span>
+<span class="pc bpc" id="L196" title="1 of 2 branches missed.">        if (extraPropertiesStore() != null) {</span>
+<span class="fc" id="L197">            final Map&lt;Name, Property&gt; extraProperties = extraPropertiesStore().getProperties(id);</span>
+<span class="fc" id="L198">            final Name digestName = nameFrom(CONTENT_DIGEST);</span>
+<span class="fc bfc" id="L199" title="All 2 branches covered.">            if (extraProperties.containsKey(digestName)) {</span>
+<span class="fc bfc" id="L200" title="All 2 branches covered.">                if (!hasBeenModifiedSincePropertiesWereStored(file, extraProperties.get(nameFrom(JCR_CREATED)))) {</span>
+<span class="fc" id="L201">                    LOGGER.trace(&quot;Found sha1 for {} in extra properties store.&quot;, id);</span>
+<span class="fc" id="L202">                    final String uriStr = ((URI) extraProperties.get(digestName).getFirstValue()).toString();</span>
+<span class="fc" id="L203">                    return uriStr.substring(uriStr.indexOf(&quot;sha1:&quot;) + 5);</span>
+                }
+            }
+<span class="fc" id="L206">        } else {</span>
+<span class="nc" id="L207">            LOGGER.trace(&quot;No cache configured to contain object hashes.&quot;);</span>
+        }
+<span class="fc" id="L209">        return null;</span>
+    }
+
+    private String computeAndCacheSha1(final File file) {
+<span class="fc" id="L213">        final String id = idFor(file) + JCR_CONTENT_SUFFIX;</span>
+<span class="fc" id="L214">        LOGGER.trace(&quot;Computing sha1 for {}.&quot;, id);</span>
+<span class="fc" id="L215">        final String sha1 = super.sha1(file);</span>
+<span class="fc bfc" id="L216" title="All 2 branches covered.">        if (shouldCacheProperties()) {</span>
+<span class="fc" id="L217">            final Map&lt;Name, Property&gt; updateMap = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L218">            final Property digestProperty = new BasicSingleValueProperty(nameFrom(CONTENT_DIGEST),</span>
+<span class="fc" id="L219">                    asURI(&quot;SHA-1&quot;, sha1));</span>
+<span class="fc" id="L220">            final Property digestDateProperty = new BasicSingleValueProperty(nameFrom(JCR_CREATED),</span>
+<span class="fc" id="L221">                    factories().getDateFactory().create(file.lastModified()));</span>
+<span class="fc" id="L222">            updateMap.put(digestProperty.getName(), digestProperty);</span>
+<span class="fc" id="L223">            updateMap.put(digestDateProperty.getName(), digestDateProperty);</span>
+<span class="fc" id="L224">            extraPropertiesStore().updateProperties(id, updateMap);</span>
+        }
+<span class="fc" id="L226">        return sha1;</span>
+    }
+
+    private static void decorateObjectNode(final DocumentReader docReader, final DocumentWriter docWriter) {
+<span class="pc bpc" id="L230" title="1 of 2 branches missed.">        if (!docReader.getMixinTypeNames().contains(FEDORA_CONTAINER)) {</span>
+<span class="fc" id="L231">            LOGGER.trace(&quot;Adding mixin: {}, to {}&quot;, FEDORA_CONTAINER, docReader.getDocumentId());</span>
+<span class="fc" id="L232">            docWriter.addMixinType(FEDORA_CONTAINER);</span>
+        }
+<span class="fc" id="L234">    }</span>
+
+    private static void decorateDatastreamNode(final DocumentReader docReader, final DocumentWriter docWriter) {
+<span class="pc bpc" id="L237" title="1 of 2 branches missed.">        if (!docReader.getMixinTypeNames().contains(FEDORA_NON_RDF_SOURCE_DESCRIPTION)) {</span>
+<span class="fc" id="L238">            LOGGER.trace(&quot;Adding mixin: {}, to {}&quot;, FEDORA_NON_RDF_SOURCE_DESCRIPTION, docReader.getDocumentId());</span>
+<span class="fc" id="L239">            docWriter.addMixinType(FEDORA_NON_RDF_SOURCE_DESCRIPTION);</span>
+        }
+<span class="fc" id="L241">    }</span>
+
+    private static void decorateContentNode(final DocumentReader docReader,
+                                            final DocumentWriter docWriter,
+                                            final File file) {
+<span class="pc bpc" id="L246" title="1 of 2 branches missed.">        if (!docReader.getMixinTypeNames().contains(FEDORA_BINARY)) {</span>
+<span class="fc" id="L247">            LOGGER.trace(&quot;Adding mixin: {}, to {}&quot;, FEDORA_BINARY, docReader.getDocumentId());</span>
+<span class="fc" id="L248">            docWriter.addMixinType(FEDORA_BINARY);</span>
+        }
+
+<span class="fc bfc" id="L251" title="All 2 branches covered.">        if (null == docReader.getProperty(CONTENT_DIGEST)</span>
+<span class="pc bpc" id="L252" title="1 of 2 branches missed.">                || hasBeenModifiedSincePropertiesWereStored(file, docReader.getProperty(JCR_CREATED))) {</span>
+<span class="fc" id="L253">            final BinaryValue binaryValue = getBinaryValue(docReader);</span>
+<span class="fc" id="L254">            final String dsChecksum = binaryValue.getHexHash();</span>
+<span class="fc" id="L255">            final String dsURI = asURI(&quot;SHA-1&quot;, dsChecksum).toString();</span>
+
+<span class="fc" id="L257">            LOGGER.trace(&quot;Adding {} property of {} to {}&quot;, CONTENT_DIGEST, dsURI, docReader.getDocumentId());</span>
+<span class="fc" id="L258">            docWriter.addProperty(CONTENT_DIGEST, dsURI);</span>
+        }
+
+<span class="pc bpc" id="L261" title="1 of 2 branches missed.">        if (null == docReader.getProperty(CONTENT_SIZE)) {</span>
+<span class="fc" id="L262">            final long binarySize = file.length();</span>
+<span class="fc" id="L263">            LOGGER.trace(&quot;Adding {} property of {} to {}&quot;, CONTENT_SIZE, binarySize, docReader.getDocumentId());</span>
+<span class="fc" id="L264">            docWriter.addProperty(CONTENT_SIZE, binarySize);</span>
+        }
+
+<span class="fc" id="L267">        LOGGER.debug(&quot;Decorated data property at path: {}&quot;, docReader.getDocumentId());</span>
+<span class="fc" id="L268">    }</span>
+
+    private static boolean hasBeenModifiedSincePropertiesWereStored(final File file, final Property lastModified) {
+<span class="pc bpc" id="L271" title="1 of 2 branches missed.">        if (lastModified == null) {</span>
+<span class="nc" id="L272">            LOGGER.trace(&quot;Hash for {} has not been computed yet.&quot;, file.getName());</span>
+<span class="nc" id="L273">            return true;</span>
+        }
+<span class="fc" id="L275">        final DateTime datetime = (DateTime) lastModified.getFirstValue();</span>
+<span class="fc bfc" id="L276" title="All 2 branches covered.">        if (datetime.toDate().equals(new Date(file.lastModified()))) {</span>
+<span class="fc" id="L277">            return false;</span>
+        }
+<span class="fc" id="L279">        LOGGER.trace(&quot;{} has been modified ({}) since hash was last computed ({}).&quot;, file.getName(),</span>
+<span class="fc" id="L280">                new Date(file.lastModified()), datetime.toDate());</span>
+<span class="fc" id="L281">        return true;</span>
+    }
+
+    private static BinaryValue getBinaryValue(final DocumentReader docReader) {
+<span class="fc" id="L285">        final Property binaryProperty = docReader.getProperty(JCR_DATA);</span>
+<span class="fc" id="L286">        return (BinaryValue) binaryProperty.getFirstValue();</span>
+    }
+
+    /* Override write operations to also update the parent file's timestamp, so
+       its Last-Modified header correctly reflects changes to children. */
+    @Override
+    public boolean removeDocument( final String id ) {
+<span class="nc bnc" id="L293" title="All 2 branches missed.">        if ( super.removeDocument(id) ) {</span>
+<span class="nc" id="L294">            touchParent(id);</span>
+<span class="nc" id="L295">            return true;</span>
+        }
+<span class="nc" id="L297">        return false;</span>
+    }
+
+    @Override
+    public void storeDocument( final Document document ) {
+<span class="nc" id="L302">        super.storeDocument( document );</span>
+<span class="nc" id="L303">        touchParent(readDocument(document).getDocumentId());</span>
+<span class="nc" id="L304">    }</span>
+
+    @Override
+    public void updateDocument( final DocumentChanges changes ) {
+<span class="nc" id="L308">        super.updateDocument( changes );</span>
+<span class="nc" id="L309">        touchParent( changes.getDocumentId() );</span>
+<span class="nc" id="L310">    }</span>
+
+    /**
+     * Find the parent file, and set its timestamp to the current time.  This
+     * timestamp will be used for populating the Last-Modified header.
+     * @param id the id
+    **/
+    protected void touchParent( final String id ) {
+<span class="nc bnc" id="L318" title="All 2 branches missed.">        if (!isRoot(id)) {</span>
+<span class="nc" id="L319">            final File file = fileFor(id);</span>
+<span class="nc" id="L320">            final File parent = file.getParentFile();</span>
+<span class="nc" id="L321">            parent.setLastModified(currentTimeMillis());</span>
+        }
+<span class="nc" id="L323">    }</span>
+
+    /* Overriding so unit test can mock. */
+    @Override
+    @VisibleForTesting
+    protected File fileFor( final String id ) {
+<span class="fc" id="L329">        return super.fileFor(id);</span>
+    }
+    @Override
+    @VisibleForTesting
+    protected DocumentReader readDocument( final Document document ) {
+<span class="fc" id="L334">        return super.readDocument(document);</span>
+    }
+
+    /* Overriding to make the FedoraFileSystemConnector is always read-only. */
+    @Override
+    public boolean isReadonly() {
+<span class="fc" id="L340">        return true;</span>
+    }
+
+    @Override
+    public boolean isContentNode(final String id) {
+<span class="fc" id="L345">        return super.isContentNode(id);</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

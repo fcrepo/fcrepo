@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>NodeTypeRdfContext.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation (ModeShape)</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.rdf.impl</a> &gt; <span class="el_source">NodeTypeRdfContext.java</span></div><h1>NodeTypeRdfContext.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2015 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.rdf.impl;
+
+import static com.google.common.collect.ImmutableList.copyOf;
+import static com.google.common.collect.Iterators.forArray;
+import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
+import static com.hp.hpl.jena.graph.Triple.create;
+import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static com.hp.hpl.jena.vocabulary.RDFS.Class;
+import static com.hp.hpl.jena.vocabulary.RDFS.label;
+import static com.hp.hpl.jena.vocabulary.RDFS.subClassOf;
+import static org.fcrepo.kernel.modeshape.rdf.impl.mappings.ItemDefinitionToTriples.getResource;
+import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.Iterator;
+import java.util.function.Predicate;
+
+import com.google.common.collect.Collections2;
+import com.google.common.collect.Iterators;
+import com.hp.hpl.jena.graph.Node;
+
+import org.fcrepo.kernel.modeshape.rdf.impl.mappings.NodeDefinitionToTriples;
+import org.fcrepo.kernel.modeshape.rdf.impl.mappings.PropertyDefinitionToTriples;
+import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+
+import org.slf4j.Logger;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.nodetype.ItemDefinition;
+import javax.jcr.nodetype.NodeType;
+import javax.jcr.nodetype.NodeTypeManager;
+
+/**
+ * Assemble {@link com.hp.hpl.jena.graph.Triple}s derived from the {@link NodeType}s in a repository.
+ *
+ * @author cbeer
+ */
+public class NodeTypeRdfContext extends RdfStream {
+
+<span class="nc" id="L55">    private static final Logger LOGGER = getLogger(NodeTypeRdfContext.class);</span>
+
+<span class="nc" id="L57">    private static final Predicate&lt;ItemDefinition&gt; isWildcardResidualDefinition = x -&gt; x.getName().equals(&quot;*&quot;);</span>
+
+    /**
+     * Convert the NodeTypeManager to an RDF stream, including both primary and
+     * mixin node types.
+     *
+     * @param nodeTypeManager the node type manager
+     * @throws RepositoryException if repository exception occurred
+     */
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public NodeTypeRdfContext(final NodeTypeManager nodeTypeManager) throws RepositoryException {
+<span class="nc" id="L68">        super();</span>
+
+<span class="nc" id="L70">        concat(new NodeTypeRdfContext(nodeTypeManager.getPrimaryNodeTypes()));</span>
+<span class="nc" id="L71">        concat(new NodeTypeRdfContext(nodeTypeManager.getMixinNodeTypes()));</span>
+<span class="nc" id="L72">    }</span>
+
+    /**
+     * Convert a NodeType iterator into an RDF stream
+     *
+     * @param nodeTypeIterator the node type iterator
+     * @throws RepositoryException if repository exception occurred
+     */
+    public NodeTypeRdfContext(final Iterator&lt;NodeType&gt; nodeTypeIterator)
+        throws RepositoryException {
+<span class="nc" id="L82">        super();</span>
+
+<span class="nc bnc" id="L84" title="All 2 branches missed.">        while (nodeTypeIterator.hasNext()) {</span>
+<span class="nc" id="L85">            concat(new NodeTypeRdfContext(nodeTypeIterator.next()));</span>
+        }
+<span class="nc" id="L87">    }</span>
+
+    /**
+     * Convert a NodeType into an RDF stream by capturing the supertypes, node
+     * definitions, and property definitions of the type as RDFS triples.
+     *
+     * @param nodeType the node type
+     * @throws RepositoryException if repository exception occurred
+     */
+    public NodeTypeRdfContext(final NodeType nodeType)
+        throws RepositoryException {
+<span class="nc" id="L98">        super();</span>
+
+<span class="nc" id="L100">        final Node nodeTypeResource = getResource(nodeType).asNode();</span>
+<span class="nc" id="L101">        final String nodeTypeName = nodeType.getName();</span>
+
+<span class="nc" id="L103">        LOGGER.trace(&quot;Adding triples for nodeType: {} with URI: {}&quot;,</span>
+<span class="nc" id="L104">                nodeTypeName, nodeTypeResource.getURI());</span>
+
+<span class="nc" id="L106">        concat(Collections2.transform(copyOf(nodeType.getDeclaredSupertypes()),</span>
+<span class="nc" id="L107">                    uncheck((final NodeType x) -&gt; {</span>
+<span class="nc" id="L108">                        final Node supertypeNode = getResource(x).asNode();</span>
+<span class="nc" id="L109">                        LOGGER.trace(</span>
+                                &quot;Adding triple for nodeType: {} with subclass: {}&quot;,
+<span class="nc" id="L111">                                nodeTypeName, supertypeNode.getURI());</span>
+<span class="nc" id="L112">                        return create(nodeTypeResource,</span>
+<span class="nc" id="L113">                                subClassOf.asNode(), supertypeNode);</span>
+                    })::apply));
+
+<span class="nc" id="L116">        concat(Iterators.concat(</span>
+<span class="nc" id="L117">            Iterators.transform(Iterators.filter(</span>
+<span class="nc" id="L118">                forArray(nodeType.getDeclaredChildNodeDefinitions()),</span>
+<span class="nc" id="L119">                isWildcardResidualDefinition.negate()::test),</span>
+                (new NodeDefinitionToTriples(nodeTypeResource))::apply)));
+
+<span class="nc" id="L122">        concat(Iterators.concat(</span>
+<span class="nc" id="L123">            Iterators.transform(Iterators.filter(</span>
+<span class="nc" id="L124">                forArray(nodeType.getDeclaredPropertyDefinitions()),</span>
+<span class="nc" id="L125">                isWildcardResidualDefinition.negate()::test),</span>
+                (new PropertyDefinitionToTriples(nodeTypeResource))::apply)));
+
+<span class="nc" id="L128">        concat(create(nodeTypeResource, type.asNode(), Class.asNode()), create(</span>
+<span class="nc" id="L129">                nodeTypeResource, label.asNode(), createLiteral(nodeTypeName)));</span>
+<span class="nc" id="L130">    }</span>
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>
