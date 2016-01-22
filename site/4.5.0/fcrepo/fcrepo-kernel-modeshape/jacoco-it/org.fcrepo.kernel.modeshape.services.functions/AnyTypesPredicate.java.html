@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>AnyTypesPredicate.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation (ModeShape)</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.services.functions</a> &gt; <span class="el_source">AnyTypesPredicate.java</span></div><h1>AnyTypesPredicate.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2015 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.services.functions;
+
+import static com.google.common.collect.ImmutableList.copyOf;
+import static java.util.Arrays.asList;
+import static java.util.Objects.requireNonNull;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_MIXIN_TYPES;
+import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.isFrozen;
+import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.property2values;
+import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
+import static org.fcrepo.kernel.modeshape.utils.UncheckedPredicate.uncheck;
+
+import java.util.Collection;
+import java.util.List;
+import javax.jcr.Node;
+import javax.jcr.Property;
+import javax.jcr.RepositoryException;
+import javax.jcr.Value;
+
+import org.fcrepo.kernel.modeshape.utils.UncheckedPredicate;
+
+
+/**
+ * Predicate to match nodes with any of the given mixin types
+ * @author armintor@gmail.com
+ * @author ajs6f
+ *
+ */
+public class AnyTypesPredicate implements UncheckedPredicate&lt;Node&gt; {
+    protected final Collection&lt;String&gt; nodeTypes;
+
+    /**
+     * True if any of the types specified match.
+     * @param types the types
+     */
+<span class="fc" id="L50">    public AnyTypesPredicate(final String...types) {</span>
+<span class="fc" id="L51">        nodeTypes = asList(types);</span>
+<span class="fc" id="L52">    }</span>
+
+    @Override
+    public boolean testThrows(final Node input) throws RepositoryException {
+<span class="fc" id="L56">        requireNonNull(input, &quot;null node has no types!&quot;);</span>
+<span class="pc bpc" id="L57" title="3 of 4 branches missed.">        if (isFrozen.test(input) &amp;&amp; input.hasProperty(FROZEN_MIXIN_TYPES)) {</span>
+<span class="nc" id="L58">            final Property frozenTypesProperty = input.getProperty(FROZEN_MIXIN_TYPES);</span>
+<span class="nc" id="L59">            final List&lt;Value&gt; values = copyOf(property2values.apply(frozenTypesProperty));</span>
+<span class="nc bnc" id="L60" title="All 2 branches missed.">            if (values.stream().map(uncheck(Value::getString)).anyMatch(nodeTypes::contains)) {</span>
+<span class="nc" id="L61">                return true;</span>
+            }
+        }
+<span class="fc" id="L64">        return nodeTypes.stream().anyMatch(uncheck(input::isNodeType));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

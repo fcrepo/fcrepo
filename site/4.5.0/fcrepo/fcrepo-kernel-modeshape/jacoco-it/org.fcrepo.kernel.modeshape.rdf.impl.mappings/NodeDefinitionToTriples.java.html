@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>NodeDefinitionToTriples.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation (ModeShape)</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.rdf.impl.mappings</a> &gt; <span class="el_source">NodeDefinitionToTriples.java</span></div><h1>NodeDefinitionToTriples.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2015 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.rdf.impl.mappings;
+
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.Triple;
+import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import org.slf4j.Logger;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.nodetype.NodeDefinition;
+import javax.jcr.nodetype.NodeType;
+import java.util.Iterator;
+
+import static com.google.common.base.Throwables.propagate;
+import static com.hp.hpl.jena.graph.Triple.create;
+import static com.hp.hpl.jena.vocabulary.RDFS.range;
+import static org.slf4j.LoggerFactory.getLogger;
+
+/**
+ * Utility for moving Node Definitions into RDFS triples
+ * @author cbeer
+ */
+public class NodeDefinitionToTriples extends ItemDefinitionToTriples&lt;NodeDefinition&gt; {
+
+<span class="nc" id="L39">    private static final Logger LOGGER = getLogger(NodeDefinitionToTriples.class);</span>
+
+    /**
+     * Translate ItemDefinitions into triples. The definitions will hang off
+     * the provided RDF Node
+     * @param domain the domain
+     */
+    public NodeDefinitionToTriples(final Node domain) {
+<span class="nc" id="L47">        super(domain);</span>
+<span class="nc" id="L48">    }</span>
+
+    @Override
+    public Iterator&lt;Triple&gt; apply(final NodeDefinition input) {
+
+        try {
+
+<span class="nc" id="L55">            final Node propertyDefinitionNode = getResource(input).asNode();</span>
+
+<span class="nc" id="L57">            final NodeType[] requiredPrimaryTypes = input.getRequiredPrimaryTypes();</span>
+
+<span class="nc bnc" id="L59" title="All 2 branches missed.">            if (requiredPrimaryTypes.length &gt; 1) {</span>
+                // TODO we can express this as an OWL unionOf. But should we?
+<span class="nc" id="L61">                LOGGER.trace(</span>
+                        &quot;Skipping RDFS:range for {} with multiple primary types&quot;,
+<span class="nc" id="L63">                        propertyDefinitionNode.getName());</span>
+<span class="nc bnc" id="L64" title="All 2 branches missed.">            } else if (requiredPrimaryTypes.length == 1) {</span>
+<span class="nc" id="L65">                LOGGER.trace(&quot;Adding RDFS:range for {} with primary types {}&quot;,</span>
+<span class="nc" id="L66">                             input.getName(),</span>
+<span class="nc" id="L67">                             requiredPrimaryTypes[0].getName());</span>
+<span class="nc" id="L68">                return new RdfStream(create(propertyDefinitionNode, range</span>
+<span class="nc" id="L69">                        .asNode(), getResource(requiredPrimaryTypes[0])</span>
+<span class="nc" id="L70">                        .asNode())).concat(super.apply(input));</span>
+            } else {
+<span class="nc" id="L72">                LOGGER.trace(&quot;Skipping RDFS:range for {} with no required primary types&quot;);</span>
+            }
+<span class="nc" id="L74">            return super.apply(input);</span>
+
+<span class="nc" id="L76">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L77">            throw propagate(e);</span>
+        }
+
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

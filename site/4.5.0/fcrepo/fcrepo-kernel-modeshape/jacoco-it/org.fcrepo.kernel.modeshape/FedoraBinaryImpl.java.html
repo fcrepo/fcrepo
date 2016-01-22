@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>FedoraBinaryImpl.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation (ModeShape)</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape</a> &gt; <span class="el_source">FedoraBinaryImpl.java</span></div><h1>FedoraBinaryImpl.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2015 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape;
+
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Timer;
+import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.api.models.FedoraBinary;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
+import org.fcrepo.kernel.api.utils.ContentDigest;
+import org.fcrepo.kernel.api.utils.FixityResult;
+import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import org.fcrepo.kernel.modeshape.rdf.impl.FixityRdfContext;
+import org.fcrepo.kernel.modeshape.utils.impl.CacheEntryFactory;
+import org.fcrepo.metrics.RegistryService;
+import org.modeshape.jcr.api.Binary;
+import org.modeshape.jcr.api.ValueFactory;
+import org.slf4j.Logger;
+
+import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
+import javax.jcr.Property;
+import javax.jcr.RepositoryException;
+import javax.jcr.version.Version;
+import javax.jcr.version.VersionHistory;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Collection;
+
+import static com.codahale.metrics.MetricRegistry.name;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFedoraBinary;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
+import static org.slf4j.LoggerFactory.getLogger;
+
+/**
+ * @author cabeer
+ * @since 9/19/14
+ */
+public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary {
+
+<span class="nc" id="L63">    private static final Logger LOGGER = getLogger(FedoraBinaryImpl.class);</span>
+
+
+<span class="nc" id="L66">    static final RegistryService registryService = RegistryService.getInstance();</span>
+<span class="nc" id="L67">    static final Counter fixityCheckCounter</span>
+<span class="nc" id="L68">            = registryService.getMetrics().counter(name(FedoraBinary.class, &quot;fixity-check-counter&quot;));</span>
+
+<span class="nc" id="L70">    static final Timer timer = registryService.getMetrics().timer(</span>
+<span class="nc" id="L71">            name(NonRdfSourceDescription.class, &quot;fixity-check-time&quot;));</span>
+
+<span class="nc" id="L73">    static final Histogram contentSizeHistogram =</span>
+<span class="nc" id="L74">            registryService.getMetrics().histogram(name(FedoraBinary.class, &quot;content-size&quot;));</span>
+
+    /**
+     * Wrap an existing Node as a Fedora Binary
+     * @param node the node
+     */
+    public FedoraBinaryImpl(final Node node) {
+<span class="nc" id="L81">        super(node);</span>
+
+<span class="nc bnc" id="L83" title="All 2 branches missed.">        if (node.isNew()) {</span>
+<span class="nc" id="L84">            initializeNewBinaryProperties();</span>
+        }
+<span class="nc" id="L86">    }</span>
+
+    private void initializeNewBinaryProperties() {
+        try {
+<span class="nc" id="L90">            decorateContentNode(node);</span>
+<span class="nc" id="L91">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L92">            LOGGER.warn(&quot;Count not decorate {} with FedoraBinary properties: {}&quot;, node, e);</span>
+<span class="nc" id="L93">        }</span>
+<span class="nc" id="L94">    }</span>
+
+    @Override
+    public NonRdfSourceDescription getDescription() {
+        try {
+<span class="nc" id="L99">            return new NonRdfSourceDescriptionImpl(getNode().getParent());</span>
+<span class="nc" id="L100">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L101">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    /*
+         * (non-Javadoc)
+         * @see org.fcrepo.kernel.api.models.FedoraBinary#getContent()
+         */
+    @Override
+    public InputStream getContent() {
+        try {
+<span class="nc" id="L112">            return getBinaryContent().getStream();</span>
+<span class="nc" id="L113">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L114">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraBinary#getBinaryContent()
+     */
+    @Override
+    public javax.jcr.Binary getBinaryContent() {
+        try {
+<span class="nc" id="L125">            return getProperty(JCR_DATA).getBinary();</span>
+<span class="nc" id="L126">        } catch (final PathNotFoundException e) {</span>
+<span class="nc" id="L127">            throw new PathNotFoundRuntimeException(e);</span>
+<span class="nc" id="L128">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L129">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraBinary#setContent(java.io.InputStream,
+     * java.lang.String, java.net.URI, java.lang.String,
+     * org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint)
+     */
+    @Override
+    public void setContent(final InputStream content, final String contentType,
+                           final URI checksum, final String originalFileName,
+                           final StoragePolicyDecisionPoint storagePolicyDecisionPoint)
+            throws InvalidChecksumException {
+
+        try {
+<span class="nc" id="L146">            final Node contentNode = getNode();</span>
+
+<span class="nc bnc" id="L148" title="All 2 branches missed.">            if (contentNode.canAddMixin(FEDORA_BINARY)) {</span>
+<span class="nc" id="L149">                contentNode.addMixin(FEDORA_BINARY);</span>
+            }
+
+<span class="nc bnc" id="L152" title="All 2 branches missed.">            if (contentType != null) {</span>
+<span class="nc" id="L153">                contentNode.setProperty(HAS_MIME_TYPE, contentType);</span>
+            }
+
+<span class="nc bnc" id="L156" title="All 2 branches missed.">            if (originalFileName != null) {</span>
+<span class="nc" id="L157">                contentNode.setProperty(FILENAME, originalFileName);</span>
+            }
+
+<span class="nc" id="L160">            LOGGER.debug(&quot;Created content node at path: {}&quot;, contentNode.getPath());</span>
+
+<span class="nc" id="L162">            String hint = null;</span>
+
+<span class="nc bnc" id="L164" title="All 2 branches missed.">            if (storagePolicyDecisionPoint != null) {</span>
+<span class="nc" id="L165">                hint = storagePolicyDecisionPoint.evaluatePolicies(node);</span>
+            }
+<span class="nc" id="L167">            final ValueFactory modevf =</span>
+<span class="nc" id="L168">                    (ValueFactory) node.getSession().getValueFactory();</span>
+<span class="nc" id="L169">            final Binary binary = modevf.createBinary(content, hint);</span>
+
+        /*
+         * This next line of code deserves explanation. If we chose for the
+         * simpler line: Property dataProperty =
+         * contentNode.setProperty(JCR_DATA, requestBodyStream); then the JCR
+         * would not block on the stream's completion, and we would return to
+         * the requester before the mutation to the repo had actually completed.
+         * So instead we use createBinary(requestBodyStream), because its
+         * contract specifies: &quot;The passed InputStream is closed before this
+         * method returns either normally or because of an exception.&quot; which
+         * lets us block and not return until the job is done! The simpler code
+         * may still be useful to us for an asynchronous method that we develop
+         * later.
+         */
+<span class="nc" id="L184">            final Property dataProperty = contentNode.setProperty(JCR_DATA, binary);</span>
+
+<span class="nc" id="L186">            final String dsChecksum = binary.getHexHash();</span>
+<span class="nc" id="L187">            final URI uriChecksumString = ContentDigest.asURI(&quot;SHA-1&quot;, dsChecksum);</span>
+<span class="nc bnc" id="L188" title="All 2 branches missed.">            if (checksum != null &amp;&amp;</span>
+<span class="nc bnc" id="L189" title="All 2 branches missed.">                    !checksum.equals(uriChecksumString)) {</span>
+<span class="nc" id="L190">                LOGGER.debug(&quot;Failed checksum test&quot;);</span>
+<span class="nc" id="L191">                throw new InvalidChecksumException(&quot;Checksum Mismatch of &quot; +</span>
+                        uriChecksumString + &quot; and &quot; + checksum);
+            }
+
+<span class="nc" id="L195">            decorateContentNode(contentNode);</span>
+
+<span class="nc" id="L197">            LOGGER.debug(&quot;Created data property at path: {}&quot;, dataProperty.getPath());</span>
+
+<span class="nc" id="L199">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L200">            throw new RepositoryRuntimeException(e);</span>
+<span class="nc" id="L201">        }</span>
+<span class="nc" id="L202">    }</span>
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraBinary#getContentSize()
+     */
+    @Override
+    public long getContentSize() {
+        try {
+<span class="nc bnc" id="L211" title="All 2 branches missed.">            if (hasProperty(CONTENT_SIZE)) {</span>
+<span class="nc" id="L212">                return getProperty(CONTENT_SIZE).getLong();</span>
+            }
+<span class="nc" id="L214">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L215">            LOGGER.info(&quot;Could not get contentSize(): {}&quot;, e.getMessage());</span>
+<span class="nc" id="L216">        }</span>
+
+<span class="nc" id="L218">        return -1L;</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraBinary#getContentDigest()
+     */
+    @Override
+    public URI getContentDigest() {
+        try {
+<span class="nc bnc" id="L228" title="All 2 branches missed.">            if (hasProperty(CONTENT_DIGEST)) {</span>
+<span class="nc" id="L229">                return new URI(getProperty(CONTENT_DIGEST).getString());</span>
+            }
+<span class="nc" id="L231">        } catch (final RepositoryException | URISyntaxException e) {</span>
+<span class="nc" id="L232">            LOGGER.info(&quot;Could not get content digest: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L233">        }</span>
+
+<span class="nc" id="L235">        return ContentDigest.missingChecksum();</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraBinary#getMimeType()
+     */
+    @Override
+    public String getMimeType() {
+        try {
+<span class="nc bnc" id="L245" title="All 2 branches missed.">            if (hasProperty(HAS_MIME_TYPE)) {</span>
+<span class="nc" id="L246">                return getProperty(HAS_MIME_TYPE).getString();</span>
+            }
+<span class="nc" id="L248">            return &quot;application/octet-stream&quot;;</span>
+<span class="nc" id="L249">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L250">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraBinary#getFilename()
+     */
+    @Override
+    public String getFilename() {
+        try {
+<span class="nc bnc" id="L261" title="All 2 branches missed.">            if (hasProperty(FILENAME)) {</span>
+<span class="nc" id="L262">                return getProperty(FILENAME).getString();</span>
+            }
+<span class="nc" id="L264">            return node.getParent().getName();</span>
+<span class="nc" id="L265">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L266">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    @Override
+    public RdfStream getFixity(final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator) {
+<span class="nc" id="L272">        return getFixity(idTranslator, getContentDigest(), getContentSize());</span>
+    }
+
+    @Override
+    public RdfStream getFixity(final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator,
+                               final URI digestUri,
+                               final long size) {
+
+<span class="nc" id="L280">        fixityCheckCounter.inc();</span>
+
+<span class="nc" id="L282">        try (final Timer.Context context = timer.time()) {</span>
+
+<span class="nc" id="L284">            LOGGER.debug(&quot;Checking resource: &quot; + getPath());</span>
+
+<span class="nc" id="L286">            final String algorithm = ContentDigest.getAlgorithm(digestUri);</span>
+
+<span class="nc bnc" id="L288" title="All 2 branches missed.">            final long contentSize = size &lt; 0 ? getBinaryContent().getSize() : size;</span>
+
+<span class="nc" id="L290">            final Collection&lt;FixityResult&gt; fixityResults</span>
+<span class="nc" id="L291">                    = CacheEntryFactory.forProperty(getProperty(JCR_DATA)).checkFixity(algorithm);</span>
+
+<span class="nc" id="L293">            return new FixityRdfContext(this, idTranslator, fixityResults, digestUri, contentSize);</span>
+<span class="nc bnc" id="L294" title="All 8 branches missed.">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L295">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    /**
+     * When deleting the binary, we also need to clean up the description document.
+     */
+    @Override
+    public void delete() {
+<span class="nc" id="L304">        final NonRdfSourceDescription description = getDescription();</span>
+
+<span class="nc" id="L306">        super.delete();</span>
+
+<span class="nc" id="L308">        description.delete();</span>
+<span class="nc" id="L309">    }</span>
+
+    @Override
+    public Version getBaseVersion() {
+<span class="nc" id="L313">        return getDescription().getBaseVersion();</span>
+    }
+
+    private static void decorateContentNode(final Node contentNode) throws RepositoryException {
+<span class="nc bnc" id="L317" title="All 2 branches missed.">        if (contentNode == null) {</span>
+<span class="nc" id="L318">            LOGGER.warn(&quot;{} node appears to be null!&quot;, JCR_CONTENT);</span>
+<span class="nc" id="L319">            return;</span>
+        }
+<span class="nc bnc" id="L321" title="All 2 branches missed.">        if (contentNode.canAddMixin(FEDORA_BINARY)) {</span>
+<span class="nc" id="L322">            contentNode.addMixin(FEDORA_BINARY);</span>
+        }
+
+<span class="nc bnc" id="L325" title="All 2 branches missed.">        if (contentNode.hasProperty(JCR_DATA)) {</span>
+<span class="nc" id="L326">            final Property dataProperty = contentNode.getProperty(JCR_DATA);</span>
+<span class="nc" id="L327">            final Binary binary = (Binary) dataProperty.getBinary();</span>
+<span class="nc" id="L328">            final String dsChecksum = binary.getHexHash();</span>
+
+<span class="nc" id="L330">            contentSizeHistogram.update(dataProperty.getLength());</span>
+
+<span class="nc" id="L332">            contentNode.setProperty(CONTENT_SIZE, dataProperty.getLength());</span>
+<span class="nc" id="L333">            contentNode.setProperty(CONTENT_DIGEST, ContentDigest.asURI(&quot;SHA-1&quot;, dsChecksum).toString());</span>
+
+<span class="nc" id="L335">            LOGGER.debug(&quot;Decorated data property at path: {}&quot;, dataProperty.getPath());</span>
+        }
+<span class="nc" id="L337">    }</span>
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraResource#getVersionHistory()
+     */
+    @Override
+    public VersionHistory getVersionHistory() {
+        try {
+<span class="nc" id="L346">            return getSession().getWorkspace().getVersionManager().getVersionHistory(getDescription().getPath());</span>
+<span class="nc" id="L347">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L348">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+
+    @Override
+    public boolean isVersioned() {
+<span class="nc" id="L355">        return getDescription().isVersioned();</span>
+    }
+
+    @Override
+    public void enableVersioning() {
+<span class="nc" id="L360">        super.enableVersioning();</span>
+<span class="nc" id="L361">        getDescription().enableVersioning();</span>
+<span class="nc" id="L362">    }</span>
+
+    @Override
+    public void disableVersioning() {
+<span class="nc" id="L366">        super.disableVersioning();</span>
+<span class="nc" id="L367">        getDescription().disableVersioning();</span>
+<span class="nc" id="L368">    }</span>
+
+    /**
+     * Check if the given node is a Fedora binary
+     * @param node the given node
+     * @return whether the given node is a Fedora binary
+     */
+    public static boolean hasMixin(final Node node) {
+<span class="nc" id="L376">        return isFedoraBinary.test(node);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

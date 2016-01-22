@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>PropertyConverter.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation (ModeShape)</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.rdf.converters</a> &gt; <span class="el_source">PropertyConverter.java</span></div><h1>PropertyConverter.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2015 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.rdf.converters;
+
+import com.google.common.base.Converter;
+import com.google.common.collect.ImmutableBiMap;
+import com.hp.hpl.jena.rdf.model.Property;
+import com.hp.hpl.jena.rdf.model.Resource;
+
+import org.fcrepo.kernel.api.exception.FedoraInvalidNamespaceException;
+import org.modeshape.jcr.api.NamespaceRegistry;
+import org.modeshape.jcr.api.Namespaced;
+import org.slf4j.Logger;
+
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+
+import java.util.Map;
+
+import static com.google.common.base.Throwables.propagate;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
+import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getJcrNamespaceForRDFNamespace;
+import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getReferencePropertyOriginalName;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalReferenceProperty;
+import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaceRegistry;
+import static org.slf4j.LoggerFactory.getLogger;
+
+
+/**
+ * Convert between RDF properties and JCR properties
+ * @author cabeer
+ * @since 10/8/14
+ */
+<span class="pc bpc" id="L48" title="1 of 2 branches missed.">public class PropertyConverter extends Converter&lt;javax.jcr.Property, Property&gt; {</span>
+<span class="fc" id="L49">    private static final Logger LOGGER = getLogger(PropertyConverter.class);</span>
+
+    @Override
+    protected Property doForward(final javax.jcr.Property property) {
+<span class="fc" id="L53">        LOGGER.trace(&quot;Creating predicate for property: {}&quot;,</span>
+                property);
+        try {
+<span class="pc bpc" id="L56" title="1 of 2 branches missed.">            if (property instanceof Namespaced) {</span>
+<span class="fc" id="L57">                final Namespaced nsProperty = (Namespaced) property;</span>
+<span class="fc" id="L58">                final String uri = nsProperty.getNamespaceURI();</span>
+<span class="fc" id="L59">                final String localName = nsProperty.getLocalName();</span>
+                final String rdfLocalName;
+
+<span class="fc bfc" id="L62" title="All 2 branches covered.">                if (isInternalReferenceProperty.test(property)) {</span>
+<span class="fc" id="L63">                    rdfLocalName = getReferencePropertyOriginalName(localName);</span>
+                } else {
+<span class="fc" id="L65">                    rdfLocalName = localName;</span>
+                }
+<span class="fc" id="L67">                return createProperty(</span>
+<span class="fc" id="L68">                        getRDFNamespaceForJcrNamespace(uri),</span>
+                        rdfLocalName);
+            }
+<span class="nc" id="L71">            return createProperty(property.getName());</span>
+<span class="nc" id="L72">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L73">            throw propagate(e);</span>
+        }
+
+    }
+
+    @Override
+    protected javax.jcr.Property doBackward(final Property property) {
+<span class="nc" id="L80">        throw new UnsupportedOperationException();</span>
+    }
+
+    /**
+     * Given an RDF predicate value (namespace URI + local name), figure out
+     * what JCR property to use
+     *
+     * @param node the JCR node we want a property for
+     * @param predicate the predicate to map to a property name
+     * @param namespaceMapping prefix to uri namespace mapping
+     * @return the JCR property name
+     * @throws RepositoryException if repository exception occurred
+     */
+    public static String getPropertyNameFromPredicate(final Node node,
+                                                      final Resource predicate,
+                                                      final Map&lt;String, String&gt; namespaceMapping)
+            throws RepositoryException {
+
+<span class="fc" id="L98">        final NamespaceRegistry namespaceRegistry = (NamespaceRegistry)getNamespaceRegistry(node.getSession());</span>
+
+<span class="fc" id="L100">        return getPropertyNameFromPredicate(namespaceRegistry,</span>
+                predicate, namespaceMapping);
+    }
+
+    /**
+     * Get the JCR property name for an RDF predicate
+     *
+     * @param namespaceRegistry the namespace registry
+     * @param predicate the predicate to map to a property name
+     * @param namespaceMapping the namespace mapping
+     * @return JCR property name for an RDF predicate
+     * @throws RepositoryException if repository exception occurred
+     */
+    public static String getPropertyNameFromPredicate(final NamespaceRegistry namespaceRegistry,
+                                                      final Resource predicate,
+                                                      final Map&lt;String, String&gt; namespaceMapping)
+            throws RepositoryException {
+
+        // reject if update request contains any fcr namespaces
+<span class="pc bpc" id="L119" title="2 of 4 branches missed.">        if (namespaceMapping != null &amp;&amp; namespaceMapping.containsKey(&quot;fcr&quot;)) {</span>
+<span class="nc" id="L120">            throw new FedoraInvalidNamespaceException(&quot;Invalid fcr namespace properties &quot; + predicate + &quot;.&quot;);</span>
+        }
+
+<span class="fc" id="L123">        final String rdfNamespace = predicate.getNameSpace();</span>
+
+        // log warning if the user-supplied namespace doesn't match value from predicate.getNameSpace(),
+        // e.g., if the Jena method returns &quot;http://&quot; for &quot;http://myurl.org&quot; (no terminating character).
+<span class="pc bpc" id="L127" title="1 of 4 branches missed.">        if (namespaceMapping != null &amp;&amp; !namespaceMapping.containsValue(rdfNamespace)) {</span>
+<span class="fc" id="L128">            LOGGER.warn(&quot;The namespace of predicate: {} was possibly misinterpreted as: {}.&quot;</span>
+                    , predicate, rdfNamespace);
+        }
+
+<span class="fc" id="L132">        final String rdfLocalname = predicate.getLocalName();</span>
+
+        final String prefix;
+
+<span class="pc bpc" id="L136" title="2 of 4 branches missed.">        assert (namespaceRegistry != null);</span>
+
+<span class="fc" id="L138">        final String namespace = getJcrNamespaceForRDFNamespace(rdfNamespace);</span>
+
+<span class="fc bfc" id="L140" title="All 2 branches covered.">        if (namespaceRegistry.isRegisteredUri(namespace)) {</span>
+<span class="fc" id="L141">            LOGGER.debug(&quot;Discovered namespace: {} in namespace registry.&quot;,namespace);</span>
+<span class="fc" id="L142">            prefix = namespaceRegistry.getPrefix(namespace);</span>
+        } else {
+<span class="fc" id="L144">            LOGGER.debug(&quot;Didn't discover namespace: {} in namespace registry.&quot;,namespace);</span>
+<span class="fc" id="L145">            final ImmutableBiMap&lt;String, String&gt; nsMap =</span>
+<span class="fc" id="L146">                    ImmutableBiMap.copyOf(namespaceMapping);</span>
+<span class="fc bfc" id="L147" title="All 2 branches covered.">            if (nsMap.containsValue(namespace)) {</span>
+<span class="fc" id="L148">                LOGGER.debug(&quot;Discovered namespace: {} in namespace map: {}.&quot;, namespace,</span>
+                        nsMap);
+<span class="fc" id="L150">                prefix = nsMap.inverse().get(namespace);</span>
+<span class="fc" id="L151">                namespaceRegistry.registerNamespace(prefix, namespace);</span>
+            } else {
+<span class="fc" id="L153">                prefix = namespaceRegistry.registerNamespace(namespace);</span>
+            }
+        }
+
+<span class="fc" id="L157">        final String propertyName = prefix + &quot;:&quot; + rdfLocalname;</span>
+
+<span class="fc" id="L159">        LOGGER.debug(&quot;Took RDF predicate {} and translated it to JCR property {}&quot;, namespace, propertyName);</span>
+
+<span class="fc" id="L161">        return propertyName;</span>
+
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>VersionServiceImpl.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation (ModeShape)</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.services</a> &gt; <span class="el_source">VersionServiceImpl.java</span></div><h1>VersionServiceImpl.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2015 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.services;
+
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.services.VersionService;
+import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
+import org.slf4j.Logger;
+import org.springframework.stereotype.Component;
+
+import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.Workspace;
+import javax.jcr.version.LabelExistsVersionException;
+import javax.jcr.version.Version;
+import javax.jcr.version.VersionException;
+import javax.jcr.version.VersionHistory;
+import javax.jcr.version.VersionManager;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.VERSIONABLE;
+import static org.slf4j.LoggerFactory.getLogger;
+
+/**
+ * This service exposes management of node versioning.  Instead of invoking
+ * the JCR VersionManager methods, this provides a level of indirection that
+ * allows for special handling of features built on top of JCR such as user
+ * transactions.
+ * @author Mike Durbin
+ */
+
+@Component
+<span class="nc" id="L50">public class VersionServiceImpl extends AbstractService implements VersionService {</span>
+
+<span class="nc" id="L52">    private static final Logger LOGGER = getLogger(VersionService.class);</span>
+
+<span class="nc" id="L54">    private static final Pattern invalidLabelPattern = Pattern.compile(&quot;[~#@*+%{}&lt;&gt;\\[\\]|\&quot;^]&quot;);</span>
+
+    @Override
+    public String createVersion(final Session session, final String absPath, final String label) {
+        try {
+<span class="nc" id="L59">            final Node node = session.getNode(absPath);</span>
+<span class="nc bnc" id="L60" title="All 2 branches missed.">            if (!isVersioningEnabled(node)) {</span>
+<span class="nc" id="L61">                enableVersioning(node);</span>
+            }
+<span class="nc" id="L63">            return checkpoint(session, absPath, label);</span>
+<span class="nc" id="L64">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L65">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    @Override
+    public void revertToVersion(final Session session, final String absPath, final String label) {
+<span class="nc" id="L71">        final Workspace workspace = session.getWorkspace();</span>
+        try {
+<span class="nc" id="L73">            final Version v = getVersionForLabel(workspace, absPath, label);</span>
+<span class="nc bnc" id="L74" title="All 2 branches missed.">            if (v == null) {</span>
+<span class="nc" id="L75">                throw new PathNotFoundException(&quot;Unknown version \&quot;&quot; + label + &quot;\&quot;!&quot;);</span>
+            }
+<span class="nc" id="L77">            final VersionManager versionManager = workspace.getVersionManager();</span>
+<span class="nc" id="L78">            final Version preRevertVersion = versionManager.checkin(absPath);</span>
+
+            try {
+<span class="nc" id="L81">                preRevertVersion.getContainingHistory().addVersionLabel(preRevertVersion.getName(),</span>
+<span class="nc" id="L82">                        getPreRevertVersionLabel(label, preRevertVersion.getContainingHistory()), false);</span>
+<span class="nc" id="L83">            } catch (final LabelExistsVersionException e) {</span>
+                // fall-back behavior is to leave an unlabeled version
+<span class="nc" id="L85">            }</span>
+<span class="nc" id="L86">            versionManager.restore(v, true);</span>
+<span class="nc" id="L87">            versionManager.checkout(absPath);</span>
+<span class="nc" id="L88">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L89">            throw new RepositoryRuntimeException(e);</span>
+<span class="nc" id="L90">        }</span>
+<span class="nc" id="L91">    }</span>
+
+    /**
+     * When we revert to a version, we snapshot first so that the &quot;revert&quot; action can be undone,
+     * this method generates a label suitable for that snapshot version to make it clear why
+     * it shows up in user's version history.
+     * @param targetLabel
+     * @param history
+     * @return
+     * @throws RepositoryException
+     */
+    private static String getPreRevertVersionLabel(final String targetLabel, final VersionHistory history)
+            throws RepositoryException {
+<span class="nc" id="L104">        final String baseLabel = &quot;auto-snapshot-before-&quot; + targetLabel;</span>
+<span class="nc bnc" id="L105" title="All 2 branches missed.">        for (int i = 0; i &lt; Integer.MAX_VALUE; i ++) {</span>
+<span class="nc bnc" id="L106" title="All 2 branches missed.">            final String label = baseLabel + (i == 0 ? &quot;&quot; : &quot;-&quot; + i);</span>
+<span class="nc bnc" id="L107" title="All 2 branches missed.">            if (!history.hasVersionLabel(label)) {</span>
+<span class="nc" id="L108">                return label;</span>
+            }
+        }
+<span class="nc" id="L111">        return baseLabel;</span>
+    }
+
+    @Override
+    public void removeVersion(final Session session, final String absPath, final String label) {
+<span class="nc" id="L116">        final Workspace workspace = session.getWorkspace();</span>
+        try {
+<span class="nc" id="L118">            final Version v = getVersionForLabel(workspace, absPath, label);</span>
+<span class="nc bnc" id="L119" title="All 2 branches missed.">            if (v == null) {</span>
+<span class="nc" id="L120">                throw new PathNotFoundException(&quot;Unknown version \&quot;&quot; + label + &quot;\&quot;!&quot;);</span>
+<span class="nc bnc" id="L121" title="All 2 branches missed.">            } else if (workspace.getVersionManager().getBaseVersion(absPath).equals(v) ) {</span>
+<span class="nc" id="L122">                throw new VersionException(&quot;Cannot remove most recent version snapshot.&quot;);</span>
+            } else {
+                // remove labels
+<span class="nc" id="L125">                final VersionHistory history = v.getContainingHistory();</span>
+<span class="nc" id="L126">                final String[] versionLabels = history.getVersionLabels(v);</span>
+<span class="nc bnc" id="L127" title="All 2 branches missed.">                for ( final String versionLabel : versionLabels ) {</span>
+<span class="nc" id="L128">                    LOGGER.debug(&quot;Removing label: {}&quot;, versionLabel);</span>
+<span class="nc" id="L129">                    history.removeVersionLabel( versionLabel );</span>
+                }
+<span class="nc" id="L131">                history.removeVersion( v.getName() );</span>
+            }
+<span class="nc" id="L133">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L134">            throw new RepositoryRuntimeException(e);</span>
+<span class="nc" id="L135">        }</span>
+<span class="nc" id="L136">    }</span>
+
+
+    private static Version getVersionForLabel(final Workspace workspace, final String absPath,
+                                       final String label) throws RepositoryException {
+        // first see if there's a version label
+<span class="nc" id="L142">        final VersionHistory history = workspace.getVersionManager().getVersionHistory(absPath);</span>
+
+<span class="nc bnc" id="L144" title="All 2 branches missed.">        if (history.hasVersionLabel(label)) {</span>
+<span class="nc" id="L145">            return history.getVersionByLabel(label);</span>
+        }
+<span class="nc" id="L147">        return null;</span>
+    }
+
+    private static boolean isVersioningEnabled(final Node n) throws RepositoryException {
+<span class="nc bnc" id="L151" title="All 6 branches missed.">        return n.isNodeType(VERSIONABLE) || (FedoraBinaryImpl.hasMixin(n) &amp;&amp; isVersioningEnabled(n.getParent()));</span>
+    }
+
+    private static void enableVersioning(final Node node) throws RepositoryException {
+<span class="nc" id="L155">        node.addMixin(VERSIONABLE);</span>
+
+<span class="nc bnc" id="L157" title="All 2 branches missed.">        if (FedoraBinaryImpl.hasMixin(node)) {</span>
+<span class="nc" id="L158">            node.getParent().addMixin(VERSIONABLE);</span>
+        }
+<span class="nc" id="L160">        node.getSession().save();</span>
+<span class="nc" id="L161">    }</span>
+
+    private static String checkpoint(final Session session, final String absPath, final String label)
+            throws RepositoryException {
+<span class="nc bnc" id="L165" title="All 2 branches missed.">        if (!validLabel(label)) {</span>
+<span class="nc" id="L166">            throw new VersionException(&quot;Invalid label: &quot; + label);</span>
+        }
+
+<span class="nc" id="L169">        LOGGER.trace(&quot;Setting version checkpoint for {}&quot;, absPath);</span>
+<span class="nc" id="L170">        final Workspace workspace = session.getWorkspace();</span>
+<span class="nc" id="L171">        final VersionManager versionManager = workspace.getVersionManager();</span>
+<span class="nc" id="L172">        final VersionHistory versionHistory = versionManager.getVersionHistory(absPath);</span>
+<span class="nc bnc" id="L173" title="All 2 branches missed.">        if (versionHistory.hasVersionLabel(label)) {</span>
+<span class="nc" id="L174">            throw new LabelExistsVersionException(&quot;The specified label \&quot;&quot; + label</span>
+                    + &quot;\&quot; is already assigned to another version of this resource!&quot;);
+        }
+<span class="nc" id="L177">        final Version v = versionManager.checkpoint(absPath);</span>
+<span class="nc bnc" id="L178" title="All 2 branches missed.">        if (v == null) {</span>
+<span class="nc" id="L179">            return null;</span>
+        }
+<span class="nc" id="L181">        versionHistory.addVersionLabel(v.getName(), label, false);</span>
+<span class="nc" id="L182">        return v.getFrozenNode().getIdentifier();</span>
+    }
+
+    private static boolean validLabel(final String label) {
+<span class="nc" id="L186">        final Matcher matcher = invalidLabelPattern.matcher(label);</span>
+<span class="nc bnc" id="L187" title="All 2 branches missed.">        return !matcher.find();</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

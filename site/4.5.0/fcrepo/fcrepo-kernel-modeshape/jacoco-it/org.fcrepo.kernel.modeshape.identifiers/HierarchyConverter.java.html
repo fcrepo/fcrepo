@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>HierarchyConverter.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation (ModeShape)</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.identifiers</a> &gt; <span class="el_source">HierarchyConverter.java</span></div><h1>HierarchyConverter.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2015 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.identifiers;
+
+import static com.google.common.base.Joiner.on;
+import static com.google.common.base.Splitter.fixedLength;
+import static com.google.common.collect.Iterables.concat;
+import static com.google.common.collect.Iterables.getLast;
+import static com.google.common.collect.Lists.transform;
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
+import static java.util.UUID.randomUUID;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.List;
+
+import org.fcrepo.kernel.api.identifiers.InternalIdentifierConverter;
+import org.slf4j.Logger;
+
+/**
+ * Injects and extracts segments of hierarchy before the last segment of a
+ * multi-part identifier to ensure efficient performance of the JCR.
+ *
+ * @author ajs6f
+ * @since Mar 26, 2014
+ */
+<span class="nc" id="L41">public class HierarchyConverter extends InternalIdentifierConverter {</span>
+
+    public static final String DEFAULT_SEPARATOR = &quot;/&quot;;
+
+<span class="nc" id="L45">    private String separator = DEFAULT_SEPARATOR;</span>
+
+<span class="nc" id="L47">    private String prefix = &quot;&quot;;</span>
+
+    private static final int DEFAULT_LENGTH = 2;
+
+    private static final int DEFAULT_COUNT = 4;
+
+<span class="nc" id="L53">    private int length = DEFAULT_LENGTH;</span>
+
+<span class="nc" id="L55">    private int levels = DEFAULT_COUNT;</span>
+
+<span class="nc" id="L57">    private static final Logger log = getLogger(HierarchyConverter.class);</span>
+
+    /*
+     * (non-Javadoc)
+     * @see com.google.common.base.Converter#doBackward(java.lang.Object)
+     */
+    @Override
+    protected String doBackward(final String flat) {
+<span class="nc" id="L65">        log.debug(&quot;Converting incoming identifier: {}&quot;, flat);</span>
+<span class="nc" id="L66">        final List&lt;String&gt; hierarchySegments = createHierarchySegments();</span>
+<span class="nc" id="L67">        final List&lt;String&gt; flatSegments = asList(flat.split(separator));</span>
+<span class="nc" id="L68">        List&lt;String&gt; firstSegments = emptyList();</span>
+<span class="nc" id="L69">        List&lt;String&gt; lastSegment = emptyList();</span>
+<span class="nc bnc" id="L70" title="All 2 branches missed.">        if (flatSegments.size() == 0) {</span>
+            // either empty identifier or separator identifier
+<span class="nc" id="L72">            return on(separator).join(hierarchySegments);</span>
+        }
+<span class="nc bnc" id="L74" title="All 2 branches missed.">        if (flatSegments.size() &gt; 1) {</span>
+<span class="nc" id="L75">            lastSegment = singletonList(getLast(flatSegments));</span>
+<span class="nc" id="L76">            firstSegments = flatSegments.subList(0, flatSegments.size() - 1);</span>
+        } else {
+            // just one segment
+<span class="nc" id="L79">            lastSegment = singletonList(flatSegments.get(0));</span>
+        }
+<span class="nc" id="L81">        final Iterable&lt;String&gt; allSegments = concat(firstSegments, hierarchySegments, lastSegment);</span>
+
+<span class="nc" id="L83">        return on(separator).join(allSegments);</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see com.google.common.base.Converter#doForward(java.lang.Object)
+     */
+    @Override
+    protected String doForward(final String hierarchical) {
+<span class="nc" id="L92">        log.debug(&quot;Converting outgoing identifier: {}&quot;, hierarchical);</span>
+<span class="nc" id="L93">        final List&lt;String&gt; segments = asList(hierarchical.split(separator));</span>
+<span class="nc bnc" id="L94" title="All 2 branches missed.">        if (segments.size() &lt;= levels) {</span>
+            // must be a root identifier
+<span class="nc" id="L96">            return &quot;&quot;;</span>
+        }
+<span class="nc" id="L98">        List&lt;String&gt; firstSegments = emptyList();</span>
+<span class="nc" id="L99">        List&lt;String&gt; lastSegment = emptyList();</span>
+<span class="nc bnc" id="L100" title="All 2 branches missed.">        if (segments.size() &gt; levels + 1) {</span>
+            // we subtract one for the final segment, then levels for the
+            // inserted hierarchy segments we want to remove
+<span class="nc" id="L103">            firstSegments = segments.subList(0, segments.size() - 1 - levels);</span>
+<span class="nc" id="L104">            lastSegment = singletonList(getLast(segments));</span>
+        } else {
+            // just the trailing non-hierarchical segment
+<span class="nc" id="L107">            lastSegment = singletonList(getLast(segments));</span>
+        }
+<span class="nc" id="L109">        return on(separator).join(concat(firstSegments, lastSegment));</span>
+    }
+
+    private List&lt;String&gt; createHierarchySegments() {
+        // offers a list of segments sliced out of a UUID, each prefixed
+<span class="nc bnc" id="L114" title="All 2 branches missed.">        if (levels == 0) {</span>
+<span class="nc" id="L115">            return emptyList();</span>
+        }
+<span class="nc" id="L117">        return transform(fixedLength(length).splitToList(createHierarchyCharacterBlock()), x -&gt; prefix + x);</span>
+    }
+
+    private CharSequence createHierarchyCharacterBlock() {
+<span class="nc" id="L121">        return randomUUID().toString().replace(&quot;-&quot;, &quot;&quot;).substring(0, length * levels);</span>
+    }
+
+    /**
+     * @param sep the separator to use
+     */
+    public void setSeparator(final String sep) {
+<span class="nc" id="L128">        this.separator = sep;</span>
+<span class="nc" id="L129">    }</span>
+
+    /**
+     * @param l the length to set
+     */
+    public void setLength(final int l) {
+<span class="nc bnc" id="L135" title="All 2 branches missed.">        if (l &lt; 1) {</span>
+<span class="nc" id="L136">            throw new IllegalArgumentException(&quot;Segment length must be at least one!&quot;);</span>
+        }
+<span class="nc" id="L138">        this.length = l;</span>
+<span class="nc" id="L139">    }</span>
+
+    /**
+     * @param l the levels to set
+     */
+    public void setLevels(final int l) {
+<span class="nc" id="L145">        this.levels = l;</span>
+<span class="nc" id="L146">    }</span>
+
+    /**
+     * @param p the prefix to set
+     */
+    public void setPrefix(final String p) {
+<span class="nc" id="L152">        this.prefix = p;</span>
+<span class="nc" id="L153">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

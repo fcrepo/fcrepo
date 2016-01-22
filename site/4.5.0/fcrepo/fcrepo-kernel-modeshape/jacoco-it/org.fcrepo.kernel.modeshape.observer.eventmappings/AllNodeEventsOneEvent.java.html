@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>AllNodeEventsOneEvent.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation (ModeShape)</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.observer.eventmappings</a> &gt; <span class="el_source">AllNodeEventsOneEvent.java</span></div><h1>AllNodeEventsOneEvent.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2015 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.observer.eventmappings;
+
+import static com.google.common.collect.Multimaps.index;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
+import static java.util.Arrays.asList;
+import static javax.jcr.observation.Event.PROPERTY_ADDED;
+import static javax.jcr.observation.Event.PROPERTY_CHANGED;
+import static javax.jcr.observation.Event.PROPERTY_REMOVED;
+
+import java.util.Iterator;
+import java.util.List;
+import java.util.function.Function;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.observation.Event;
+
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.observer.FedoraEvent;
+import org.fcrepo.kernel.api.observer.eventmappings.InternalExternalEventMapper;
+import org.fcrepo.kernel.modeshape.observer.FedoraEventImpl;
+
+import org.slf4j.Logger;
+
+import com.google.common.collect.Multimap;
+
+/**
+ * Maps all JCR {@link Event}s concerning one JCR node to one {@link FedoraEvent}. Adds the types of those JCR events
+ * together to calculate the final type of the emitted FedoraEvent.
+ * TODO stop aggregating events in the heap, if possible
+ *
+ * @author ajs6f
+ * @since Feb 27, 2014
+ */
+<span class="nc" id="L51">public class AllNodeEventsOneEvent implements InternalExternalEventMapper {</span>
+
+<span class="nc" id="L53">    private static final List&lt;Integer&gt; PROPERTY_EVENT_TYPES = asList(PROPERTY_ADDED, PROPERTY_CHANGED,</span>
+<span class="nc" id="L54">            PROPERTY_REMOVED);</span>
+
+<span class="nc" id="L56">    private final static Logger LOGGER = getLogger(AllNodeEventsOneEvent.class);</span>
+
+    /**
+     * Extracts an identifier from a JCR {@link Event} by building an id from nodepath and user to collapse multiple
+     * events from repository mutations
+     */
+<span class="nc" id="L62">    private static final Function&lt;Event, String&gt; EXTRACT_NODE_ID = uncheck(ev -&gt; {</span>
+<span class="nc" id="L63">            final FedoraEvent event = new FedoraEventImpl(ev);</span>
+<span class="nc" id="L64">            final String id = event.getPath() + &quot;-&quot; + event.getUserID();</span>
+<span class="nc" id="L65">            LOGGER.debug(&quot;Sorting an event by identifier: {}&quot;, id);</span>
+<span class="nc" id="L66">            return id;</span>
+    });
+
+    @Override
+    public Iterator&lt;FedoraEvent&gt; apply(final Iterator&lt;Event&gt; events) {
+<span class="nc" id="L71">        return new FedoraEventIterator(events);</span>
+    }
+
+<span class="nc" id="L74">    private static class FedoraEventIterator implements Iterator&lt;FedoraEvent&gt; {</span>
+
+        // JCR events in a Multimap keyed by identifier
+        private final Multimap&lt;String, Event&gt; sortedEvents;
+
+        private final Iterator&lt;String&gt; ids;
+
+<span class="nc" id="L81">        public FedoraEventIterator(final Iterator&lt;Event&gt; events) {</span>
+<span class="nc" id="L82">            sortedEvents = index(events, EXTRACT_NODE_ID::apply);</span>
+<span class="nc" id="L83">            ids = sortedEvents.keySet().iterator();</span>
+<span class="nc" id="L84">        }</span>
+
+        @Override
+        public boolean hasNext() {
+<span class="nc" id="L88">            return ids.hasNext();</span>
+        }
+
+        @Override
+        public FedoraEvent next() {
+<span class="nc" id="L93">            final Iterator&lt;Event&gt; nodeSpecificEvents = sortedEvents.get(ids.next()).iterator();</span>
+            // we can safely call next() immediately on nodeSpecificEvents because if there was no event at all, there
+            // would appear no entry in our Multimap under this key
+<span class="nc" id="L96">            final Event firstEvent = nodeSpecificEvents.next();</span>
+
+<span class="nc" id="L98">            final FedoraEvent fedoraEvent = new FedoraEventImpl(firstEvent);</span>
+
+<span class="nc" id="L100">            addProperty(fedoraEvent, firstEvent);</span>
+<span class="nc bnc" id="L101" title="All 2 branches missed.">            while (nodeSpecificEvents.hasNext()) {</span>
+                // add the event type and property name to the event we are building up to emit
+                // we could aggregate other information here if that seems useful
+<span class="nc" id="L104">                final Event otherEvent = nodeSpecificEvents.next();</span>
+<span class="nc" id="L105">                fedoraEvent.addType(FedoraEventImpl.valueOf(otherEvent.getType()));</span>
+<span class="nc" id="L106">                addProperty(fedoraEvent, otherEvent);</span>
+<span class="nc" id="L107">            }</span>
+<span class="nc" id="L108">            return fedoraEvent;</span>
+        }
+
+        @Override
+        public void remove() {
+            // the underlying Multimap is immutable anyway
+<span class="nc" id="L114">            throw new UnsupportedOperationException();</span>
+        }
+
+        private static void addProperty( final FedoraEvent fedoraEvent, final Event ev ) {
+            try {
+<span class="nc bnc" id="L119" title="All 2 branches missed.">                if ( ev.getPath().contains(JCR_CONTENT)) {</span>
+<span class="nc" id="L120">                    fedoraEvent.addProperty(&quot;fedora:hasContent&quot;);</span>
+                }
+<span class="nc bnc" id="L122" title="All 2 branches missed.">                if (PROPERTY_EVENT_TYPES.contains(ev.getType())) {</span>
+<span class="nc" id="L123">                    final String eventPath = ev.getPath();</span>
+<span class="nc" id="L124">                    fedoraEvent.addProperty(eventPath.substring(eventPath.lastIndexOf('/') + 1));</span>
+<span class="nc" id="L125">                } else {</span>
+<span class="nc" id="L126">                    LOGGER.trace(&quot;Not adding non-event property: {}, {}&quot;, fedoraEvent, ev);</span>
+                }
+<span class="nc" id="L128">            } catch (final RepositoryException e) {</span>
+<span class="nc" id="L129">                throw new RepositoryRuntimeException(e);</span>
+<span class="nc" id="L130">            }</span>
+<span class="nc" id="L131">        }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>
