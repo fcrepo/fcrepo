@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>FedoraExport.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api</a> &gt; <span class="el_source">FedoraExport.java</span></div><h1>FedoraExport.java</h1><pre class="source lang-java linenums">/**
+ * Copyright 2015 DuraSpace, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.http.api;
+
+import static java.lang.Boolean.parseBoolean;
+import static javax.ws.rs.core.Response.ok;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.io.OutputStream;
+
+import javax.inject.Inject;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.serialization.FedoraObjectSerializer;
+import org.fcrepo.serialization.InvalidSerializationFormatException;
+import org.fcrepo.serialization.SerializerUtil;
+import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+
+/**
+ * Serialization for nodes
+ *
+ * @author awoods
+ */
+@Scope(&quot;request&quot;)
+@Path(&quot;/{path: .*}/fcr:export&quot;)
+<span class="fc" id="L53">public class FedoraExport extends FedoraBaseResource {</span>
+
+    @Autowired
+    protected SerializerUtil serializers;
+
+    @Inject
+    protected Session session;
+
+<span class="fc" id="L61">    private static final Logger LOGGER = getLogger(FedoraExport.class);</span>
+
+    /**
+     * Export an object with the given format, e.g.: GET
+     * /path/to/object/fcr:export?format=jcr/xml : the node as JCR/XML
+     *
+     * @param externalPath the external path
+     * @param format the format string
+     * @param skipBinary the value whether skip binary
+     * @param recurse the value whether recurse
+     * @return object in the given format
+     */
+    @GET
+    public Response exportObject(
+        @PathParam(&quot;path&quot;) final String externalPath,
+        @QueryParam(&quot;format&quot;) @DefaultValue(&quot;jcr/xml&quot;) final String format,
+        @QueryParam(&quot;skipBinary&quot;) @DefaultValue(&quot;true&quot;) final String skipBinary,
+        @QueryParam(&quot;recurse&quot;) @DefaultValue(&quot;false&quot;) final String recurse) {
+
+<span class="fc" id="L80">        final FedoraResource resource = getResourceFromPath(externalPath);</span>
+
+<span class="fc" id="L82">        LOGGER.debug(&quot;Requested object serialization for {} using serialization format {}&quot;, resource, format);</span>
+
+<span class="fc" id="L84">        final FedoraObjectSerializer serializer =</span>
+<span class="fc" id="L85">            serializers.getSerializer(format);</span>
+
+<span class="fc" id="L87">        return ok().type(serializer.getMediaType()).entity(</span>
+<span class="fc" id="L88">                new StreamingOutput() {</span>
+
+                    @Override
+                    public void write(final OutputStream out)
+                        throws IOException {
+
+                        try {
+<span class="fc" id="L95">                            LOGGER.debug(&quot;Selecting from serializer map: {}&quot;, serializers);</span>
+<span class="fc" id="L96">                            LOGGER.debug(&quot;Retrieved serializer for format: {}&quot;, format);</span>
+<span class="fc" id="L97">                            serializer.serialize(resource,</span>
+                                                 out,
+<span class="fc" id="L99">                                                 parseBoolean(skipBinary),</span>
+<span class="fc" id="L100">                                                 parseBoolean(recurse));</span>
+<span class="fc" id="L101">                            LOGGER.info(&quot;Serialized to {}, '{}'&quot;, format, externalPath);</span>
+<span class="nc" id="L102">                        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L103">                            throw new WebApplicationException(e);</span>
+<span class="fc" id="L104">                        } catch (InvalidSerializationFormatException e) {</span>
+<span class="fc" id="L105">                            throw new BadRequestException(e.getMessage());</span>
+<span class="fc" id="L106">                        }</span>
+<span class="fc" id="L107">                    }</span>
+<span class="fc" id="L108">                }).build();</span>
+
+    }
+
+    @Override
+    protected Session session() {
+<span class="fc" id="L114">        return session;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>
