@@ -67,10 +67,11 @@ public abstract class RDFMediaType extends MediaType {
 
     public static final List<Variant> POSSIBLE_RDF_VARIANTS = mediaTypes(
             RDF_XML_TYPE, TURTLE_TYPE, N3_TYPE, N3_ALT2_TYPE, NTRIPLES_TYPE, APPLICATION_XML_TYPE,
-            TEXT_PLAIN_TYPE, TURTLE_X_TYPE, JSON_LD_TYPE).add().build();
+            TEXT_PLAIN_TYPE, TURTLE_X_TYPE, JSON_LD_TYPE, TEXT_HTML_TYPE, APPLICATION_XHTML_XML_TYPE).add().build();
 
     public static final String POSSIBLE_RDF_RESPONSE_VARIANTS_STRING[] = {
-        TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, TEXT_PLAIN, APPLICATION_XML, TURTLE_X, JSON_LD };
+            TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, TEXT_PLAIN, APPLICATION_XML, TURTLE_X, JSON_LD, TEXT_HTML,
+            APPLICATION_XHTML_XML};
 
     private static MediaType typeFromString(final String type) {
         return new MediaType(type.split("/")[0], type.split("/")[1]);
