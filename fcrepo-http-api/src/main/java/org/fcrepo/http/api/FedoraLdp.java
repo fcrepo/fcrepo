@@ -103,7 +103,6 @@ import org.springframework.context.annotation.Scope;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
 import static com.google.common.base.Strings.nullToEmpty;
 
 /**
@@ -204,8 +203,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         LOGGER.info("GET resource '{}'", externalPath);
 
-        final ImmutableList<MediaType> acceptableMediaTypes =
-                new ImmutableList.Builder<MediaType>().addAll(headers.getAcceptableMediaTypes()).build();
+        final List<MediaType> acceptableMediaTypes = headers.getAcceptableMediaTypes();
 
         if (acceptableMediaTypes.size() > 0) {
 
@@ -223,8 +221,8 @@ public class FedoraLdp extends ContentExposingResource {
                     x.isWildcardType() || possibleVariants.stream().anyMatch(t -> t.getMediaType().isCompatible(x)));
 
             if (!match) {
-                 LOGGER.info("Unable to produce content in the requested mime-type(s): " );
-                 acceptableMediaTypes.stream().forEach(x -> LOGGER.info(x.toString()));
+                LOGGER.info("Unable to produce content in the requested mime-type(s): " );
+                acceptableMediaTypes.stream().forEach(x -> LOGGER.info("MediaType: ", x));
 
                 return notAcceptable(possibleVariants).build();
             }
