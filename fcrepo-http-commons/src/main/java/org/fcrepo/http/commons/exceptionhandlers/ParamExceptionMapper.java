@@ -38,7 +38,7 @@ public class ParamExceptionMapper implements ExceptionMapper<ParamException> {
 
     @Override
     public Response toResponse(final ParamException e) {
-        LOGGER.error("ParamException intercepted by ParamExceptionMapper: \n", e);
+        LOGGER.error("ParamException intercepted by ParamExceptionMapper: {}\n", e.getMessage());
 
         final StringBuilder msg = new StringBuilder("Error parsing parameter: ");
         msg.append(e.getParameterName());

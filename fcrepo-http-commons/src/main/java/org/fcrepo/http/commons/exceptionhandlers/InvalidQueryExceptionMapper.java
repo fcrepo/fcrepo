@@ -41,7 +41,7 @@ public class InvalidQueryExceptionMapper implements
     @Override
     public Response toResponse(final InvalidQueryException e) {
         LOGGER.error(
-                "InvalidQueryException intercepted by InvalidQueryExceptionMapper: \n", e);
+                "InvalidQueryException intercepted by InvalidQueryExceptionMapper: {}\n", e.getMessage());
         return status(BAD_REQUEST).entity(e.getMessage()).build();
     }
 }

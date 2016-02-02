@@ -41,7 +41,7 @@ public class ValueFormatExceptionMapper implements
     @Override
     public Response toResponse(final ValueFormatException e) {
         LOGGER.error(
-                "ValueFormatException intercepted by ValueFormatExceptionMapper: \n", e);
+                "ValueFormatException intercepted by ValueFormatExceptionMapper: {}\n", e.getMessage());
         return status(BAD_REQUEST).entity(e.getMessage()).build();
     }
 }
