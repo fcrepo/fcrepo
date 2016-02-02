@@ -42,13 +42,10 @@ public class InvalidSerializationFormatExceptionMapper implements
 
     @Override
     public Response toResponse(final InvalidSerializationFormatException e) {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("InvalidSerializationFormatException intercepted by InvalidSerializationFormatExceptionMapper"
-                    + (e.getMessage() != null ? ": " + e.getMessage() : "."), e);
-        } else {
-            LOGGER.info("InvalidSerializationFormatException intercepted by InvalidSerializationFormatExceptionMapper"
+
+        LOGGER.error("InvalidSerializationFormatException intercepted by InvalidSerializationFormatExceptionMapper"
                     + (e.getMessage() != null ? ": " + e.getMessage() : "."));
-        }
+
         return status(BAD_REQUEST).entity(e.getMessage()).build();
     }
 }

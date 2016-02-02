@@ -40,7 +40,7 @@ public class InvalidPrefixExceptionMapper implements ExceptionMapper<InvalidPref
 
     @Override
     public Response toResponse(final InvalidPrefixException e) {
-        LOGGER.trace("FedoraInvalidPrefixExceptionMapper caught an exception: {}", e.getMessage());
+        LOGGER.error("FedoraInvalidPrefixExceptionMapper caught an exception: {}", e.getMessage());
         return status(BAD_REQUEST).entity(e.getMessage()).build();
     }
 
