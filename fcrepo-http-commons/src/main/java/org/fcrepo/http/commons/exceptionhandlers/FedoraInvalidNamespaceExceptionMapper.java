@@ -40,7 +40,7 @@ public class FedoraInvalidNamespaceExceptionMapper implements ExceptionMapper<Fe
 
     @Override
     public Response toResponse(final FedoraInvalidNamespaceException e) {
-        LOGGER.trace("NamespaceExceptionMapper caught an exception: {}", e.getMessage());
+        LOGGER.error("NamespaceExceptionMapper caught an exception: {}", e.getMessage());
         return status(BAD_REQUEST).entity(e.getMessage()).build();
     }
 
