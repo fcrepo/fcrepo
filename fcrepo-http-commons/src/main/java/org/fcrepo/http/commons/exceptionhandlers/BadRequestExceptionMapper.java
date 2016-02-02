@@ -39,7 +39,7 @@ public class BadRequestExceptionMapper implements ExceptionMapper<BadRequestExce
 
     @Override
     public Response toResponse(final BadRequestException e) {
-        LOGGER.trace("BadRequestExceptionMapper caught and exception: {}", e.getMessage());
+        LOGGER.error("BadRequestExceptionMapper caught an exception: {}", e.getMessage());
         return status(BAD_REQUEST).entity(e.getMessage()).build();
     }
 
