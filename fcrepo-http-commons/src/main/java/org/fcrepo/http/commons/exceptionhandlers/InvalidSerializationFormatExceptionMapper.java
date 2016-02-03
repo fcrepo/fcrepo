@@ -43,8 +43,9 @@ public class InvalidSerializationFormatExceptionMapper implements
     @Override
     public Response toResponse(final InvalidSerializationFormatException e) {
 
-        LOGGER.error("InvalidSerializationFormatException intercepted by InvalidSerializationFormatExceptionMapper"
-                    + (e.getMessage() != null ? ": " + e.getMessage() : "."));
+        LOGGER.error(
+                "InvalidSerializationFormatException intercepted by InvalidSerializationFormatExceptionMapper: {}\n",
+                e.getMessage());
 
         return status(BAD_REQUEST).entity(e.getMessage()).build();
     }

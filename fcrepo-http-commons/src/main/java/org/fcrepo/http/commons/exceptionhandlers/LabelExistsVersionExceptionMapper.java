@@ -41,8 +41,8 @@ public class LabelExistsVersionExceptionMapper implements ExceptionMapper<LabelE
 
     @Override
     public Response toResponse(final LabelExistsVersionException e) {
-        LOGGER.error("LabelExistsVersionException intercepted by LabelExistsVersionExceptionMapper"
-                    + (e.getMessage() != null ? ": " + e.getMessage() : "."));
+        LOGGER.error("LabelExistsVersionException intercepted by LabelExistsVersionExceptionMapper: {}\n",
+                    e.getMessage());
 
         return status(CONFLICT).entity(e.getMessage()).build();
     }
