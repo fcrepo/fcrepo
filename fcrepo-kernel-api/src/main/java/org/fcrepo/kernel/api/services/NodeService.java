@@ -15,13 +15,9 @@
  */
 package org.fcrepo.kernel.api.services;
 
-import java.io.IOException;
-import java.io.InputStream;
-
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.RdfStream;
 
 /**
  * @author bbpennel
@@ -43,19 +39,4 @@ public interface NodeService extends Service<FedoraResource> {
      * @param destination the destination
      */
     void moveObject(Session session, String source, String destination);
-
-    /**
-     * @param session the session
-     * @return RDFStream of node types
-     */
-    @Deprecated
-    RdfStream getNodeTypes(final Session session);
-
-    /**
-     * @param session the session
-     * @param cndStream the cnd stream
-     * @throws IOException if IO exception occurred
-     */
-    @Deprecated
-    void registerNodeTypes(final Session session, final InputStream cndStream) throws IOException;
 }

@@ -203,12 +203,6 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         webClient.getOptions().setThrowExceptionOnFailingStatusCode(throwExceptionOnFailingStatusCode);
     }
 
-    @Test
-    public void testNodeTypes() throws IOException {
-        final HtmlPage page = javascriptlessWebClient.getPage(serverAddress + "fcr:nodetypes");
-        assertTrue(page.asText().contains("fedora:Container"));
-    }
-
     /**
      * This test walks through the steps for creating an object, setting some
      * metadata, creating a version, updating that metadata, viewing the

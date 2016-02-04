@@ -131,7 +131,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
         LOGGER.trace("Assembling a map of node primary types -> templates...");
         final ImmutableMap.Builder<String, Template> templatesMapBuilder = builder();
 
-        of("jcr:nodetypes", "fcr:versions", "fcr:fixity", "default")
+        of("fcr:versions", "fcr:fixity", "default")
             .forEach(key -> templatesMapBuilder.put(key, velocity.getTemplate(getTemplateLocation(key))));
 
         templatesMap = templatesMapBuilder
