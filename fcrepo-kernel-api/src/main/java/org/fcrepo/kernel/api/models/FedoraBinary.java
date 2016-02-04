@@ -21,7 +21,6 @@ import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.api.utils.iterators.RdfStream;
 
-import javax.jcr.Binary;
 import java.io.InputStream;
 import java.net.URI;
 
@@ -35,12 +34,6 @@ public interface FedoraBinary extends NonRdfSource {
      * @return The InputStream of content associated with this datastream.
      */
     InputStream getContent();
-
-
-    /**
-     * @return The Binary content associated with this datastream.
-     */
-    Binary getBinaryContent();
 
     /**
      * Sets the content of this Datastream.

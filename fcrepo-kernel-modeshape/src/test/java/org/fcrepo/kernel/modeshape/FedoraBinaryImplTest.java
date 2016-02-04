@@ -25,7 +25,6 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.modeshape.jcr.api.ValueFactory;
 
-import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
@@ -125,17 +124,6 @@ public class FedoraBinaryImplTest implements FedoraTypes {
         final String actual = IOUtils.toString(testObj.getContent());
         assertEquals(expected, actual);
         verify(mockContent).getProperty(JCR_DATA);
-    }
-
-    @Test
-    public void testGetBinaryContent() throws RepositoryException {
-        final Binary mockBinary = mock(Binary.class);
-        final Property mockProperty = mock(Property.class);
-        getContentNodeMock(mockContent, "abc");
-        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
-        when(mockContent.getProperty(JCR_DATA)).thenReturn(mockProperty);
-        when(mockProperty.getBinary()).thenReturn(mockBinary);
-        assertEquals(mockBinary, testObj.getBinaryContent());
     }
 
     @Test

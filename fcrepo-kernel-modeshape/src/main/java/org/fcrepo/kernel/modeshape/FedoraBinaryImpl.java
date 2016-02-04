@@ -115,12 +115,11 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.fcrepo.kernel.api.models.FedoraBinary#getBinaryContent()
+    /**
+     * Retrieve the JCR Binary object
+     * @return a JCR-wrapped Binary object
      */
-    @Override
-    public javax.jcr.Binary getBinaryContent() {
+    private javax.jcr.Binary getBinaryContent() {
         try {
             return getProperty(JCR_DATA).getBinary();
         } catch (final PathNotFoundException e) {

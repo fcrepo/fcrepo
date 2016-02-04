@@ -52,8 +52,6 @@ import java.util.function.Predicate;
 
 import javax.inject.Inject;
 import javax.jcr.AccessDeniedException;
-import javax.jcr.Binary;
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
@@ -141,8 +139,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     StoragePolicyDecisionPoint storagePolicyDecisionPoint;
 
     protected FedoraResource resource;
-
-    private static final long MAX_BUFFER_SIZE = 10240000;
 
     private static final Predicate<Triple> IS_MANAGED_TYPE = t -> t.getPredicate().equals(type.asNode()) &&
             isManagedNamespace.test(t.getObject().getNameSpace());
@@ -349,35 +345,11 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                     builder = status(REQUESTED_RANGE_NOT_SATISFIABLE)
                             .header("Content-Range", contentRangeValue);
                 } else {
-                    final long rangeStart = range.start();
-                    final long rangeSize = range.size() == -1 ? contentSize - rangeStart : range.size();
-                    final long remainingBytes = contentSize - rangeStart;
-                    final long bufSize = rangeSize < remainingBytes ? rangeSize : remainingBytes;
+                    final RangeRequestInputStream rangeInputStream =
+                            new RangeRequestInputStream(binary.getContent(), range.start(), range.size());
 
-                    if (bufSize < MAX_BUFFER_SIZE) {
-                        // Small size range content retrieval use javax.jcr.Binary to improve performance
-                        final byte[] buf = new byte[(int) bufSize];
-
-                        final Binary binaryContent = binary.getBinaryContent();
-                        try {
-                            binaryContent.read(buf, rangeStart);
-                        } catch (final RepositoryException e1) {
-                            throw new RepositoryRuntimeException(e1);
-                        }
-                        binaryContent.dispose();
-
-                        builder = status(PARTIAL_CONTENT).entity(buf)
-                                .header("Content-Range", contentRangeValue);
-                    } else {
-                        // For large range content retrieval, go with the InputStream class to balance
-                        // the memory usage, though this is a rare case in range content retrieval.
-                        final InputStream content = binary.getContent();
-                        final RangeRequestInputStream rangeInputStream =
-                                new RangeRequestInputStream(content, range.start(), range.size());
-
-                        builder = status(PARTIAL_CONTENT).entity(rangeInputStream)
-                                .header("Content-Range", contentRangeValue);
-                    }
+                    builder = status(PARTIAL_CONTENT).entity(rangeInputStream)
+                            .header("Content-Range", contentRangeValue);
                 }
 
             } else {
