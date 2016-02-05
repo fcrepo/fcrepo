@@ -15,6 +15,7 @@
  */
 package org.fcrepo.kernel.modeshape;
 
+
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Iterators.concat;
 import static com.google.common.collect.Iterators.filter;
@@ -25,11 +26,13 @@ import static com.hp.hpl.jena.update.UpdateAction.execute;
 import static com.hp.hpl.jena.update.UpdateFactory.create;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.joining;
+import static java.util.TimeZone.getTimeZone;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_MIXIN_TYPES;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIED;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.isFrozen;
@@ -47,6 +50,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -71,6 +75,7 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.NamespaceRegistry;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Converter;
 import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -274,6 +279,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     public void setURIProperty(final String relPath, final URI value) {
         try {
             getNode().setProperty(relPath, value.toString(), PropertyType.URI);
+            touch();
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -337,7 +343,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     public Date getCreatedDate() {
         try {
             if (hasProperty(JCR_CREATED)) {
-                return new Date(getProperty(JCR_CREATED).getDate().getTimeInMillis());
+                return new Date(getTimestamp(JCR_CREATED, 0L));
             }
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
@@ -354,9 +360,13 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @Override
     public Date getLastModifiedDate() {
 
+        final Date createdDate = getCreatedDate();
         try {
-            if (hasProperty(JCR_LASTMODIFIED)) {
-                return new Date(getProperty(JCR_LASTMODIFIED).getDate().getTimeInMillis());
+            final long created = createdDate == null ? 0L : createdDate.getTime();
+            if (hasProperty(FEDORA_LASTMODIFIED)) {
+                return new Date(getTimestamp(FEDORA_LASTMODIFIED, created));
+            } else if (hasProperty(JCR_LASTMODIFIED)) {
+                return new Date(getTimestamp(JCR_LASTMODIFIED, created));
             }
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
@@ -365,7 +375,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         }
         LOGGER.debug("Could not get last modified date property for node {}", node);
 
-        final Date createdDate = getCreatedDate();
         if (createdDate != null) {
             LOGGER.trace("Using created date for last modified date for node {}", node);
             return createdDate;
@@ -373,7 +382,29 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
         return null;
     }
+    private long getTimestamp(final String property, final long created) throws RepositoryException {
+        LOGGER.trace("Using {} date", property);
+        final long timestamp = getProperty(property).getDate().getTimeInMillis();
+        if (timestamp < created && created > 0L && !isFrozenResource()) {
+            LOGGER.trace("Updating {} with later created date", property);
+            getNode().setProperty(property, created);
+            return created;
+        }
+        return timestamp;
+    }
 
+    /**
+     * Set the last-modified date to the current date.
+     */
+    @VisibleForTesting
+    public void touch() {
+        try {
+            getNode().setProperty(FEDORA_LASTMODIFIED, Calendar.getInstance(getTimeZone("UTC")));
+        } catch (final RepositoryException e) {
+            LOGGER.error("Exception caught when trying to update lastModified date: {}", e.getMessage());
+            throw new RepositoryRuntimeException(e);
+        }
+    }
 
     @Override
     public boolean hasType(final String type) {
@@ -483,6 +514,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         execute(request, model);
 
         listener.assertNoExceptions();
+        touch();
     }
 
     @Override
@@ -593,6 +625,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         if (exceptions.length() > 0) {
             throw new MalformedRdfException(exceptions.toString());
         }
+
+        touch();
     }
 
     /* (non-Javadoc)

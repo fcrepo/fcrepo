@@ -23,7 +23,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
-import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
 
 import java.util.Calendar;
 import java.util.function.Predicate;
@@ -128,11 +127,12 @@ public class ContainerImplTest implements FedoraTypes {
 
     @Test
     public void testGetLastModified() throws RepositoryException {
-        when(mockObjNode.hasProperty(JCR_LASTMODIFIED)).thenReturn(true);
-        when(mockObjNode.getProperty(JCR_LASTMODIFIED)).thenReturn(mockProp);
+        when(mockObjNode.hasProperty(JCR_CREATED)).thenReturn(false);
+        when(mockObjNode.hasProperty(FEDORA_LASTMODIFIED)).thenReturn(true);
+        when(mockObjNode.getProperty(FEDORA_LASTMODIFIED)).thenReturn(mockProp);
         when(mockProp.getDate()).thenReturn(Calendar.getInstance());
         testContainer.getLastModifiedDate();
-        verify(mockObjNode).getProperty(JCR_LASTMODIFIED);
+        verify(mockObjNode).getProperty(FEDORA_LASTMODIFIED);
     }
 
     @Test

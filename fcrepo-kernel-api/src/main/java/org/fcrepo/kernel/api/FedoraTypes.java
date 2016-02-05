@@ -45,6 +45,8 @@ public interface FedoraTypes {
 
     String LDP_INSERTED_CONTENT_RELATION = "ldp:insertedContentRelation";
 
+    String FEDORA_LASTMODIFIED = "fedora:lastModified";
+
     String FILENAME = "ebucore:filename";
 
     String HAS_MIME_TYPE = "ebucore:hasMimeType";
