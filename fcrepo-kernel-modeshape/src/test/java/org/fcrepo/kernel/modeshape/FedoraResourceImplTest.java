@@ -43,7 +43,6 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
@@ -53,7 +52,6 @@ import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
-import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
@@ -440,16 +438,8 @@ public class FedoraResourceImplTest {
     @Test
     public void testGetProperty() throws RepositoryException {
         when(mockNode.getProperty("xyz")).thenReturn(mockProp);
-        final Property actual = testObj.getProperty("xyz");
+        final Property actual = testObj.getNode().getProperty("xyz");
         assertEquals(mockProp, actual);
-    }
-
-    @Test
-    public void testSetURIProperty() throws URISyntaxException, RepositoryException {
-        final String prop = "premis:hasEventRelatedObject";
-        final String uri = "http://localhost:8080/rest/1";
-        testObj.setURIProperty(prop, new URI(uri));
-        verify(mockNode).setProperty(prop, uri, PropertyType.URI);
     }
 
     @Test

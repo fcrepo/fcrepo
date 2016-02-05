@@ -54,7 +54,6 @@ import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
@@ -779,23 +778,6 @@ public class FedoraResourceImplIT extends AbstractIT {
         containerService.findOrCreate(session, "/" + pid + "/#/a");
 
         assertFalse(container.getChildren().hasNext());
-    }
-
-    @Test
-    public void testSetURIProperty() throws URISyntaxException, RepositoryException {
-        final String pid1 = getRandomPid();
-        final String pid2 = getRandomPid();
-        final String prop = "premis:hasEventRelatedObject";
-        final FedoraResource resource1 = containerService.findOrCreate(session, "/" + pid1);
-        final FedoraResource resource2 = containerService.findOrCreate(session, "/" + pid2);
-        final String uri = createGraphSubjectNode(resource2).getURI();
-        resource1.setURIProperty(prop, new URI(uri));
-        resource2.delete();
-        session.save();
-
-        // URI property should survive the linked resource being deleted
-        assertTrue(resource1.hasProperty(prop));
-        assertEquals(resource1.getProperty(prop).getString(), uri);
     }
 
     @Test
