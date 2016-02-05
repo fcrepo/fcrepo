@@ -15,12 +15,13 @@
  */
 package org.fcrepo.kernel.modeshape.utils;
 
+import static java.util.stream.Collectors.joining;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.jcr.AccessDeniedException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.ConstraintViolationException;
 import org.fcrepo.kernel.api.exception.IncorrectTripleSubjectException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
@@ -42,7 +43,6 @@ import com.hp.hpl.jena.vocabulary.RDF;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.StringJoiner;
 
 /**
  * Listen to Jena statement events, and when the statement is changed in the
@@ -121,6 +121,8 @@ public class JcrPropertyStatementListener extends StatementListener {
             jcrRdfTools.addProperty(resource, property, objectNode, input.getModel().getNsPrefixMap());
         } catch (final ConstraintViolationException e) {
             throw e;
+        } catch (final javax.jcr.AccessDeniedException e) {
+            throw new AccessDeniedException(e);
         } catch (final RepositoryException | RepositoryRuntimeException e) {
             exceptions.add(e);
         }
@@ -193,19 +195,10 @@ public class JcrPropertyStatementListener extends StatementListener {
 
     /**
      * Assert that no exceptions were thrown while this listener was processing change
-     * @throws MalformedRdfException if malformed rdf exception occurred
-     * @throws javax.jcr.AccessDeniedException if access denied exception occurred
      */
-    public void assertNoExceptions() throws MalformedRdfException, AccessDeniedException {
+    public void assertNoExceptions() {
         if (!exceptions.isEmpty()) {
-            final StringJoiner sb = new StringJoiner("\n");
-            for (final Exception e : exceptions) {
-                sb.add(e.getMessage());
-                if (e instanceof AccessDeniedException) {
-                    throw new AccessDeniedException(sb.toString());
-                }
-            }
-            throw new MalformedRdfException(sb.toString());
+            throw new MalformedRdfException(exceptions.stream().map(Exception::getMessage).collect(joining("\n")));
         }
     }
 }

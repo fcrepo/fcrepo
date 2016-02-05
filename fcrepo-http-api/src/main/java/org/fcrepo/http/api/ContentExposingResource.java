@@ -62,7 +62,6 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import javax.inject.Inject;
-import javax.jcr.AccessDeniedException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
@@ -602,8 +601,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     protected void patchResourcewithSparql(final FedoraResource resource,
             final String requestBody,
-            final RdfStream resourceTriples)
-                    throws MalformedRdfException, AccessDeniedException {
+            final RdfStream resourceTriples) {
         if (resource instanceof NonRdfSourceDescription) {
             // update the described resource instead
             ((NonRdfSourceDescription) resource).getDescribedResource()

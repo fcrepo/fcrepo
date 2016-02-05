@@ -63,7 +63,6 @@ import java.util.Map;
 
 import javax.inject.Inject;
 import javax.annotation.PostConstruct;
-import javax.jcr.AccessDeniedException;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.ws.rs.BadRequestException;
@@ -91,6 +90,7 @@ import javax.ws.rs.core.Variant.VariantListBuilder;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
+import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -403,15 +403,13 @@ public class FedoraLdp extends ContentExposingResource {
      *
      * @param requestBodyStream the request body stream
      * @return 201
-     * @throws MalformedRdfException if malformed rdf exception occurred
-     * @throws AccessDeniedException if exception updating property occurred
      * @throws IOException if IO exception occurred
      */
     @PATCH
     @Consumes({contentTypeSPARQLUpdate})
     @Timed
     public Response updateSparql(@ContentLocation final InputStream requestBodyStream)
-            throws IOException, MalformedRdfException, AccessDeniedException {
+            throws IOException {
 
         if (null == requestBodyStream) {
             throw new BadRequestException("SPARQL-UPDATE requests must have content!");
@@ -441,6 +439,8 @@ public class FedoraLdp extends ContentExposingResource {
             return noContent().build();
         } catch (final IllegalArgumentException iae) {
             throw new BadRequestException(iae.getMessage());
+        } catch (final AccessDeniedException e) {
+            throw e;
         } catch ( final RuntimeException ex ) {
             final Throwable cause = ex.getCause();
             if (cause instanceof PathNotFoundException) {
@@ -449,9 +449,6 @@ public class FedoraLdp extends ContentExposingResource {
             }
             throw ex;
         }  catch (final RepositoryException e) {
-            if (e instanceof AccessDeniedException) {
-                throw new AccessDeniedException(e.getMessage());
-            }
             throw new RepositoryRuntimeException(e);
         }
     }

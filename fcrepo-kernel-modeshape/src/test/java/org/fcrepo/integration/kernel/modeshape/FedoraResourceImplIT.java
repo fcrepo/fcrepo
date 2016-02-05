@@ -68,7 +68,6 @@ import java.util.List;
 import java.util.UUID;
 
 import javax.inject.Inject;
-import javax.jcr.AccessDeniedException;
 import javax.jcr.Value;
 import javax.jcr.nodetype.NodeTypeDefinition;
 import javax.jcr.nodetype.NodeTypeTemplate;
@@ -86,6 +85,7 @@ import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
 import org.apache.commons.io.IOUtils;
+import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.InvalidPrefixException;
@@ -366,7 +366,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testUpdatingObjectGraph() throws MalformedRdfException, AccessDeniedException {
+    public void testUpdatingObjectGraph() {
 
         final Node subject = createURI("info:fedora/testObjectGraphUpdates");
         final FedoraResource object =
