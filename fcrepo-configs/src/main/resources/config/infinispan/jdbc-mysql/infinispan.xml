@@ -38,7 +38,7 @@
           <jdbc:string-keyed-table prefix="ispn_entry"
                                    create-on-start="true"
                                    drop-on-exit="false">
-            <jdbc:id-column name="id" type="VARCHAR(255) CHARACTER SET latin1 COLLATE latin1_general_cs"/>
+            <jdbc:id-column name="id" type="VARCHAR(255)"/>
             <jdbc:data-column name="datum" type="LONGBLOB"/>
             <jdbc:timestamp-column name="version" type="BIGINT"/>
           </jdbc:string-keyed-table>
