@@ -129,6 +129,21 @@
       <version>1.4.01</version>
     </dependency>
 
+    <!--MySQL dependencies-->
+    <dependency>
+      <groupId>com.mchange</groupId>
+      <artifactId>c3p0</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>mysql</groupId>
+      <artifactId>mysql-connector-java</artifactId>
+      <version>5.1.38</version>
+    </dependency>
+    <dependency>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-cachestore-jdbc</artifactId>
+    </dependency>
+
     <!-- test gear -->
     <dependency>
       <groupId>org.springframework</groupId>
