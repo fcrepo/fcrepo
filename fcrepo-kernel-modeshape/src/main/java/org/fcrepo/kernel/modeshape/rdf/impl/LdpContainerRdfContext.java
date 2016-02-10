@@ -100,7 +100,7 @@ public class LdpContainerRdfContext extends NodeRdfContext {
         final com.hp.hpl.jena.graph.Node memberRelation;
 
         if (container.hasProperty(LDP_HAS_MEMBER_RELATION)) {
-            final Property property = container.getProperty(LDP_HAS_MEMBER_RELATION);
+            final Property property = container.getNode().getProperty(LDP_HAS_MEMBER_RELATION);
             memberRelation = createURI(property.getString());
         } else if (container.hasType(LDP_BASIC_CONTAINER)) {
             memberRelation = LDP_MEMBER.asNode();
@@ -112,7 +112,7 @@ public class LdpContainerRdfContext extends NodeRdfContext {
 
         if (container.hasType(LDP_INDIRECT_CONTAINER)) {
             if (container.hasProperty(LDP_INSERTED_CONTENT_RELATION)) {
-                insertedContainerProperty = container.getProperty(LDP_INSERTED_CONTENT_RELATION).getString();
+                insertedContainerProperty = container.getNode().getProperty(LDP_INSERTED_CONTENT_RELATION).getString();
             } else {
                 return emptyIterator();
             }
@@ -144,7 +144,7 @@ public class LdpContainerRdfContext extends NodeRdfContext {
                     }
 
                     final PropertyValueIterator values =
-                            new PropertyValueIterator(child.getProperty(insertedContentProperty));
+                            new PropertyValueIterator(child.getNode().getProperty(insertedContentProperty));
 
                     return Iterators.transform(values, v -> create(subject(), memberRelation,
                             new ValueConverter(session(), translator()).convert(v).asNode()));

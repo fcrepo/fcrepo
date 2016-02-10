@@ -72,7 +72,7 @@ public class LdpIsMemberOfRdfContext extends NodeRdfContext {
     }
 
     private void concatIsMemberOfRelation(final FedoraResource container) throws RepositoryException {
-        final Property property = container.getProperty(LDP_IS_MEMBER_OF_RELATION);
+        final Property property = container.getNode().getProperty(LDP_IS_MEMBER_OF_RELATION);
 
         final Resource memberRelation = createResource(property.getString());
         final Node membershipResource = getMemberResource(container);
@@ -85,7 +85,7 @@ public class LdpIsMemberOfRdfContext extends NodeRdfContext {
 
         if (container.hasType(LDP_INDIRECT_CONTAINER)) {
             if (container.hasProperty(LDP_INSERTED_CONTENT_RELATION)) {
-                insertedContainerProperty = container.getProperty(LDP_INSERTED_CONTENT_RELATION).getString();
+                insertedContainerProperty = container.getNode().getProperty(LDP_INSERTED_CONTENT_RELATION).getString();
             } else {
                 return;
             }
@@ -104,7 +104,7 @@ public class LdpIsMemberOfRdfContext extends NodeRdfContext {
             }
 
             final PropertyValueIterator values
-                    = new PropertyValueIterator(resource().getProperty(insertedContentProperty));
+                    = new PropertyValueIterator(resource().getNode().getProperty(insertedContentProperty));
 
             final Iterator<RDFNode> insertedContentRelations = Iterators.filter(
                     Iterators.transform(values, valueConverter),
@@ -125,7 +125,7 @@ public class LdpIsMemberOfRdfContext extends NodeRdfContext {
         final Node membershipResource;
 
         if (parent.hasProperty(LDP_MEMBER_RESOURCE)) {
-            final Property memberResource = parent.getProperty(LDP_MEMBER_RESOURCE);
+            final Property memberResource = parent.getNode().getProperty(LDP_MEMBER_RESOURCE);
 
             if (REFERENCE_TYPES.contains(memberResource.getType())) {
                 membershipResource = nodeConverter().convert(memberResource.getNode()).asNode();
