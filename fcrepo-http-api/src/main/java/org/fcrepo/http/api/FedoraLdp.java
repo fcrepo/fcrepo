@@ -191,14 +191,14 @@ public class FedoraLdp extends ContentExposingResource {
      * Retrieve the node profile
      *
      * @param rangeValue the range value
-     * @return triples for the specified node
+     * @return a binary or the triples for the specified node
      * @throws IOException if IO exception occurred
      */
     @GET
     @Produces({TURTLE + ";qs=10", JSON_LD + ";qs=8",
             N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
             TEXT_HTML, APPLICATION_XHTML_XML})
-    public Response describe(@HeaderParam("Range") final String rangeValue) throws IOException {
+    public Response getResource(@HeaderParam("Range") final String rangeValue) throws IOException {
         checkCacheControlHeaders(request, servletResponse, resource(), session);
 
         LOGGER.info("GET resource '{}'", externalPath);
