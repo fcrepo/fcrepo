@@ -18,25 +18,27 @@ package org.fcrepo.http.api;
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
+import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
-import static javax.ws.rs.core.Response.created;
-import static javax.ws.rs.core.Response.notAcceptable;
-import static javax.ws.rs.core.Response.noContent;
-import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.NOT_IMPLEMENTED;
+import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.noContent;
+import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
+import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_PAIRTREE;
@@ -51,7 +53,6 @@ import java.net.URI;
 import java.net.URLDecoder;
 import java.util.Arrays;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Map;
 
 import javax.annotation.PostConstruct;
@@ -80,11 +81,9 @@ import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilderException;
-import javax.ws.rs.core.Variant;
 
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
-import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -177,7 +176,6 @@ public class FedoraLdp extends ContentExposingResource {
 
     /**
      * Outputs information about the supported HTTP methods, etc.
-     *
      * @return the outputs information about the supported HTTP methods, etc.
      */
     @OPTIONS
@@ -193,44 +191,21 @@ public class FedoraLdp extends ContentExposingResource {
      * Retrieve the node profile
      *
      * @param rangeValue the range value
-     * @return the binary or the triples for the specified node
+     * @return triples for the specified node
      * @throws IOException if IO exception occurred
      */
     @GET
-    @Produces({TURTLE + ";qs=10", "*/*"})
+    @Produces({TURTLE + ";qs=10", JSON_LD + ";qs=8",
+            N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
+            TEXT_HTML, APPLICATION_XHTML_XML})
     public Response describe(@HeaderParam("Range") final String rangeValue) throws IOException {
         checkCacheControlHeaders(request, servletResponse, resource(), session);
 
         LOGGER.info("GET resource '{}'", externalPath);
-
-        final List<MediaType> acceptableMediaTypes = headers.getAcceptableMediaTypes();
-
-        if (acceptableMediaTypes.size() > 0) {
-
-            final List<Variant> possibleVariants = new ArrayList();
-            if (resource() instanceof FedoraBinary) {
-                final String lang = null;
-                final String enc = null;
-                possibleVariants.add(new Variant(MediaType.valueOf(((FedoraBinary) resource()).getMimeType()),
-                        lang, enc));
-            } else {
-                possibleVariants.addAll(RDFMediaType.POSSIBLE_RDF_VARIANTS);
-            }
-
-            final boolean match = acceptableMediaTypes.stream().anyMatch(x ->
-                    x.isWildcardType() || possibleVariants.stream().anyMatch(t -> t.getMediaType().isCompatible(x)));
-
-            if (!match) {
-                LOGGER.info("Unable to produce content in the requested mime-type(s): " );
-                acceptableMediaTypes.stream().forEach(x -> LOGGER.info("MediaType: ", x));
-
-                return notAcceptable(possibleVariants).build();
-            }
-        }
         addResourceHttpHeaders(resource());
 
         final RdfStream rdfStream = new RdfStream().session(session)
-            .topic(translator().reverse().convert(resource()).asNode());
+                    .topic(translator().reverse().convert(resource()).asNode());
 
         return getContent(rangeValue, getChildrenLimit(), rdfStream);
 
