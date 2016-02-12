@@ -160,7 +160,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
      * @throws RepositoryException
      */
     private Iterator<Iterator<FedoraResource>> nodeToGoodChildren(final Node input) throws RepositoryException {
-        @SuppressWarnings("unchecked")
         final Iterator<Node> allChildren = input.getNodes();
         final Iterator<Node> children = filter(allChildren, nastyChildren.negate()::test);
         return transform(children, (new Function<Node, Iterator<FedoraResource>>() {
@@ -255,9 +254,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @Override
     public void delete() {
         try {
-            @SuppressWarnings("unchecked")
             final Iterator<Property> references = node.getReferences();
-            @SuppressWarnings("unchecked")
             final Iterator<Property> weakReferences = node.getWeakReferences();
             final Iterator<Property> inboundProperties = Iterators.concat(references, weakReferences);
 
@@ -401,7 +398,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         }
     }
 
-    private Function<String, URI> nodeTypeNameToURI = uncheck(name -> {
+    private final Function<String, URI> nodeTypeNameToURI = uncheck(name -> {
         final String prefix = name.split(":")[0];
         final String typeName = name.split(":")[1];
         final String namespace = getSession().getWorkspace().getNamespaceRegistry().getURI(prefix);
@@ -695,7 +692,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
      *
      * @see <a href="https://jira.duraspace.org/browse/FCREPO-1409"> FCREPO-1409 </a> for details.
      */
-    private Collection<IllegalArgumentException> checkInvalidPredicates(final UpdateRequest request) {
+    private static Collection<IllegalArgumentException> checkInvalidPredicates(final UpdateRequest request) {
         return request.getOperations().stream()
                 .flatMap(x -> {
                     if (x instanceof UpdateModify) {

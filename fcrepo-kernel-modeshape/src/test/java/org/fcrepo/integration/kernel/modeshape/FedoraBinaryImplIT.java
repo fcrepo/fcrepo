@@ -70,10 +70,10 @@ public class FedoraBinaryImplIT extends AbstractIT {
     Repository repo;
 
     @Inject
-    BinaryService binaryService;
+    BinaryService<Session> binaryService;
 
     @Inject
-    ContainerService containerService;
+    ContainerService<Session> containerService;
 
     private IdentifierConverter<Resource, FedoraResource> idTranslator;
 

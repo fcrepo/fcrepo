@@ -48,10 +48,10 @@ public class BinaryServiceImplIT extends AbstractIT {
     private Repository repository;
 
     @Inject
-    ContainerService containerService;
+    ContainerService<Session> containerService;
 
     @Inject
-    BinaryService binaryService;
+    BinaryService<Session> binaryService;
 
     @Test
     public void testCreateDatastreamNode() throws Exception {

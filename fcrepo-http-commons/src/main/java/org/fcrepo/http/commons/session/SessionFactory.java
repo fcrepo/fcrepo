@@ -68,7 +68,7 @@ public class SessionFactory {
     private Repository repo;
 
     @Inject
-    private TransactionService transactionService;
+    private TransactionService<Session> transactionService;
 
     /**
      * Default constructor
@@ -82,8 +82,7 @@ public class SessionFactory {
      * @param repo the repository
      * @param transactionService the transaction service
      */
-    public SessionFactory(final Repository repo,
-            final TransactionService transactionService) {
+    public SessionFactory(final Repository repo, final TransactionService<Session> transactionService) {
         this.repo = repo;
         this.transactionService = transactionService;
     }
@@ -169,12 +168,12 @@ public class SessionFactory {
             userName = userPrincipal.getName();
         }
 
-        final Transaction transaction =
+        final Transaction<Session> transaction =
                 transactionService.getTransaction(txId, userName);
         LOGGER.debug(
                 "Returning a session in the transaction {} for user {}",
                 transaction, userName);
-        return transaction.getSession();
+        return transaction.get();
 
     }
 

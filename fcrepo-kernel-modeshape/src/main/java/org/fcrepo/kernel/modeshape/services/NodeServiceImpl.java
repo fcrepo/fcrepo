@@ -44,7 +44,7 @@ import org.springframework.stereotype.Component;
  * @since May 9, 2013
  */
 @Component
-public class NodeServiceImpl extends AbstractService implements NodeService {
+public class NodeServiceImpl extends AbstractService implements NodeService<Session> {
 
     private static final Logger LOGGER = getLogger(NodeServiceImpl.class);
 

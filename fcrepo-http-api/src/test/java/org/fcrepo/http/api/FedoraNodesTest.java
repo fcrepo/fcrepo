@@ -74,13 +74,13 @@ public class FedoraNodesTest {
     FedoraNodes testObj;
 
     @Mock
-    private ContainerService mockObjects;
+    private ContainerService<Object> mockObjects;
 
     @Mock
-    private NodeService mockNodes;
+    private NodeService<Object> mockNodes;
 
     @Mock
-    private VersionService mockVersions;
+    private VersionService<?> mockVersions;
 
     @Mock
     private Node mockNode;
@@ -122,7 +122,7 @@ public class FedoraNodesTest {
     @Mock
     private ValueFactory mockValueFactory;
 
-    private String path = "/some/path";
+    private final String path = "/some/path";
 
     @Before
     public void setUp() throws Exception {

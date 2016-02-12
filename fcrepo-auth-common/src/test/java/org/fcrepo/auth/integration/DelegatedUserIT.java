@@ -94,7 +94,7 @@ public class DelegatedUserIT {
                 ((Principal) session.getAttribute(FedoraAuthorizationDelegate.FEDORA_USER_PRINCIPAL)).getName());
 
         // try to create an object, this should fail because it is being executed as a non-admin user
-        final ContainerService os = new ContainerServiceImpl();
+        final ContainerService<Session> os = new ContainerServiceImpl();
         try {
             os.findOrCreate(session, "/myobject");
         } catch (final RepositoryRuntimeException e) {

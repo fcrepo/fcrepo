@@ -41,7 +41,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * @since 10/10/14
  */
 @Component
-public class BinaryServiceImpl extends AbstractService implements BinaryService {
+public class BinaryServiceImpl extends AbstractService implements BinaryService<Session> {
 
     private static final Logger LOGGER = getLogger(BinaryServiceImpl.class);
 

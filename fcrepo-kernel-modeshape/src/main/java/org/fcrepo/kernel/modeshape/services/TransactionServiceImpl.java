@@ -51,7 +51,7 @@ import org.springframework.stereotype.Component;
  * @author ajs6f
  */
 @Component
-public class TransactionServiceImpl extends AbstractService implements TransactionService {
+public class TransactionServiceImpl extends AbstractService implements TransactionService<Session> {
 
     private static final Logger LOGGER = getLogger(TransactionServiceImpl.class);
 
@@ -65,7 +65,7 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
      * be either persisted or written to a distributed map or sth, not just this
      * plain hashmap that follows
      */
-    private static Map<String, Transaction> transactions = new ConcurrentHashMap<>();
+    private static Map<String, Transaction<Session>> transactions = new ConcurrentHashMap<>();
 
     public static final long REAP_INTERVAL = 1000;
 
@@ -114,8 +114,8 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
      * @return the {@link Transaction}
      */
     @Override
-    public Transaction beginTransaction(final Session sess, final String userName) {
-        final Transaction tx = new TransactionImpl(sess, userName);
+    public Transaction<Session> beginTransaction(final Session sess, final String userName) {
+        final Transaction<Session> tx = new TransactionImpl(sess, userName);
         final String txId = tx.getId();
         transactions.put(txId, tx);
         try {
@@ -127,8 +127,8 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
     }
 
     @Override
-    public Transaction getTransaction(final String txId, final String userName) {
-        final Transaction tx = transactions.computeIfAbsent(txId, s -> {
+    public Transaction<Session> getTransaction(final String txId, final String userName) {
+        final Transaction<Session> tx = transactions.computeIfAbsent(txId, s -> {
             throw new TransactionMissingException("Transaction with id: " + s + " is not available");
         });
         if (!tx.isAssociatedWithUser(userName)) {
@@ -146,7 +146,7 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
      * @throws TransactionMissingException if transaction missing exception occurred
      */
     @Override
-    public Transaction getTransaction(final Session session) {
+    public Transaction<Session> getTransaction(final Session session) {
         final String txId = getCurrentTransactionId(session);
 
         if (txId == null) {
@@ -193,8 +193,8 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
      * @param txid the id of the {@link Transaction}
      */
     @Override
-    public Transaction commit(final String txid) {
-        final Transaction tx = transactions.remove(txid);
+    public Transaction<Session> commit(final String txid) {
+        final Transaction<Session> tx = transactions.remove(txid);
         if (tx == null) {
             throw new TransactionMissingException("Transaction with id " + txid +
                     " is not available");
@@ -210,8 +210,8 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
      * @return the {@link Transaction} object
      */
     @Override
-    public Transaction rollback(final String txid) {
-        final Transaction tx = transactions.remove(txid);
+    public Transaction<Session> rollback(final String txid) {
+        final Transaction<Session> tx = transactions.remove(txid);
         if (tx == null) {
             throw new TransactionMissingException("Transaction with id " + txid +
                     " is not available");

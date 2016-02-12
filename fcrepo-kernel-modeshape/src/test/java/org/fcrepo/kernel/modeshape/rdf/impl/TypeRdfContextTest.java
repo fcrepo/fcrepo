@@ -98,7 +98,7 @@ public class TypeRdfContextTest {
     private static final String mockMixinSuperNodeTypeName = "someMixinSuperType";
 
     @Before
-    public void setUp() throws RepositoryException {
+    public void setUp() {
         initMocks(this);
         final List<URI> types = new ArrayList<>();
         types.add(URI.create(REPOSITORY_NAMESPACE + "somePrimaryType"));

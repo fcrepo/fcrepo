@@ -23,6 +23,6 @@ import org.fcrepo.kernel.api.models.Container;
  * @author bbpennel
  * @since Feb 20, 2014
  */
-public interface ContainerService extends Service<Container> {
+public interface ContainerService<AccessType> extends Service<Container, AccessType> {
 
 }

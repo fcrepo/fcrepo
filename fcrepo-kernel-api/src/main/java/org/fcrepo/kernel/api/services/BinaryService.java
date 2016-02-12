@@ -21,6 +21,6 @@ import org.fcrepo.kernel.api.models.FedoraBinary;
  * @author cabeer
  * @since 10/10/14
  */
-public interface BinaryService extends Service<FedoraBinary> {
+public interface BinaryService<AccessType> extends Service<FedoraBinary, AccessType> {
 
 }

@@ -60,10 +60,10 @@ public class TransactionServiceImplTest {
 
     private static final String ANOTHER_USER_NAME = "another";
 
-    TransactionService service;
+    TransactionService<Session> service;
 
     @Mock
-    private Transaction mockTx;
+    private Transaction<Session> mockTx;
 
     @Mock
     private Session mockSession;
@@ -77,8 +77,8 @@ public class TransactionServiceImplTest {
                 TransactionServiceImpl.class.getDeclaredField("transactions");
         txsField.setAccessible(true);
         @SuppressWarnings("unchecked")
-        final Map<String, Transaction> txs =
-                (Map<String, Transaction>) txsField
+        final Map<String, Transaction<Session>> txs =
+                (Map<String, Transaction<Session>>) txsField
                         .get(TransactionService.class);
         txs.put(IS_A_TX, mockTx);
     }
@@ -100,8 +100,8 @@ public class TransactionServiceImplTest {
     }
 
     @Test
-    public void testCreateTx() throws Exception {
-        final Transaction tx = service.beginTransaction(mockSession, USER_NAME);
+    public void testCreateTx() {
+        final Transaction<Session> tx = service.beginTransaction(mockSession, USER_NAME);
         assertNotNull(tx);
         assertNotNull(tx.getCreated());
         assertNotNull(tx.getId());
@@ -110,26 +110,26 @@ public class TransactionServiceImplTest {
     }
 
     @Test
-    public void testGetTx() throws Exception {
-        final Transaction tx = service.getTransaction(IS_A_TX, null);
+    public void testGetTx() {
+        final Transaction<Session> tx = service.getTransaction(IS_A_TX, null);
         assertNotNull(tx);
     }
 
     @Test(expected = TransactionMissingException.class)
     public void testHijackingNotPossible() {
-        final Transaction tx = service.beginTransaction(mockSession, USER_NAME);
+        final Transaction<Session> tx = service.beginTransaction(mockSession, USER_NAME);
         service.getTransaction(tx.getId(), ANOTHER_USER_NAME);
     }
 
     @Test(expected = TransactionMissingException.class)
     public void testHijackingNotPossibleWithAnonUser() {
-        final Transaction tx = service.beginTransaction(mockSession, USER_NAME);
+        final Transaction<Session> tx = service.beginTransaction(mockSession, USER_NAME);
         service.getTransaction(tx.getId(), null);
     }
 
     @Test(expected = TransactionMissingException.class)
     public void testHijackingNotPossibleWhenStartedAnonUser() {
-        final Transaction tx = service.beginTransaction(mockSession, null);
+        final Transaction<Session> tx = service.beginTransaction(mockSession, null);
         service.getTransaction(tx.getId(), USER_NAME);
     }
 
@@ -141,7 +141,7 @@ public class TransactionServiceImplTest {
     @Test
     public void testGetTxForSession() throws Exception {
         when(mockSession.getNamespaceURI(FCREPO4_TX_ID)).thenReturn(IS_A_TX);
-        final Transaction tx = service.getTransaction(mockSession);
+        final Transaction<Session> tx = service.getTransaction(mockSession);
         assertEquals(IS_A_TX, tx.getId());
     }
 
@@ -159,27 +159,27 @@ public class TransactionServiceImplTest {
 
     @Test
     public void testCommitTx() {
-        final Transaction tx = service.commit(IS_A_TX);
+        final Transaction<Session> tx = service.commit(IS_A_TX);
         assertNotNull(tx);
         verify(mockTx).commit();
     }
 
     @Test(expected = TransactionMissingException.class)
-    public void testCommitRemovedTransaction() throws Exception {
-        final Transaction tx = service.commit(IS_A_TX);
+    public void testCommitRemovedTransaction() {
+        final Transaction<Session> tx = service.commit(IS_A_TX);
         service.getTransaction(tx.getId(), null);
     }
 
     @Test
     public void testRollbackTx() {
-        final Transaction tx = service.rollback(IS_A_TX);
+        final Transaction<Session> tx = service.rollback(IS_A_TX);
         assertNotNull(tx);
         verify(mockTx).rollback();
     }
 
     @Test(expected = TransactionMissingException.class)
-    public void testRollbackRemovedTransaction() throws Exception {
-        final Transaction tx = service.rollback(IS_A_TX);
+    public void testRollbackRemovedTransaction() {
+        final Transaction<Session> tx = service.rollback(IS_A_TX);
         service.getTransaction(tx.getId(), null);
     }
 

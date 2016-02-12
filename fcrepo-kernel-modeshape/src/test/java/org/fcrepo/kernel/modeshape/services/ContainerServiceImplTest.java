@@ -58,7 +58,7 @@ public class ContainerServiceImplTest implements FedoraTypes {
     @Mock
     private NodeType mockNodeType;
 
-    private ContainerService testObj;
+    private ContainerService<Session> testObj;
 
     @Mock
     private JcrTools mockJcrTools;

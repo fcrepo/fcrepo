@@ -39,7 +39,7 @@ public class SessionProvider implements Factory<Session> {
     @Inject
     SessionFactory sessionFactory;
 
-    private HttpServletRequest request;
+    private final HttpServletRequest request;
 
     /**
      * Create a new session provider for a request

@@ -41,7 +41,7 @@ public class AbstractResourceTest {
     private AbstractResource testObj;
 
     @Mock
-    private NodeService mockNodes;
+    private NodeService<?> mockNodes;
 
     @Mock
     private Supplier<String> mockPids;

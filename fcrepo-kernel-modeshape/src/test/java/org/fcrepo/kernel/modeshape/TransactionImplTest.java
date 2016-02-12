@@ -43,7 +43,7 @@ import org.mockito.Mock;
  */
 public class TransactionImplTest {
 
-    private Transaction testObj;
+    private Transaction<Session> testObj;
 
     private static final String USER_NAME = "test";
 

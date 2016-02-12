@@ -125,16 +125,16 @@ public class FedoraResourceImplIT extends AbstractIT {
     Repository repo;
 
     @Inject
-    NodeService nodeService;
+    NodeService<Session> nodeService;
 
     @Inject
-    ContainerService containerService;
+    ContainerService<Session> containerService;
 
     @Inject
-    BinaryService binaryService;
+    BinaryService<Session> binaryService;
 
     @Inject
-    VersionService versionService;
+    VersionService<Session> versionService;
 
     private Session session;
 
@@ -387,7 +387,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetRootObjectTypes() throws RepositoryException {
+    public void testGetRootObjectTypes() {
 
         final FedoraResource object = nodeService.find(session, "/");
 
@@ -400,7 +400,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetObjectTypes() throws RepositoryException {
+    public void testGetObjectTypes() {
 
         final FedoraResource object =
             containerService.findOrCreate(session, "/testObjectVersionGraph");
@@ -651,7 +651,6 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         object.replaceProperties(subjects, model, object.getTriples(subjects, PropertiesRdfContext.class));
 
-        @SuppressWarnings("unchecked")
         final Iterator<javax.jcr.Property> properties = object.getNode().getProperties();
 
         final UnmodifiableIterator<javax.jcr.Property> relation

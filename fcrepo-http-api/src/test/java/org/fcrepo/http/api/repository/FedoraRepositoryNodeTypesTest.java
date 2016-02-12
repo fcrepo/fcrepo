@@ -45,7 +45,7 @@ public class FedoraRepositoryNodeTypesTest {
     private FedoraRepositoryNodeTypes testObj;
 
     @Mock
-    private NodeService mockNodes;
+    private NodeService<Object> mockNodes;
 
     @Mock
     private InputStream mockInputStream;

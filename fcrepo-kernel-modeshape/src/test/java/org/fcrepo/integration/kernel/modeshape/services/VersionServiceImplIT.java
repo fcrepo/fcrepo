@@ -44,13 +44,13 @@ public class VersionServiceImplIT extends AbstractIT {
     private Repository repository;
 
     @Inject
-    NodeService nodeService;
+    NodeService<Session> nodeService;
 
     @Inject
-    ContainerService containerService;
+    ContainerService<Session> containerService;
 
     @Inject
-    VersionService versionService;
+    VersionService<Session> versionService;
 
     private static final String LABEL = "label";
     private static final String SECOND_LABEL = "second-label";

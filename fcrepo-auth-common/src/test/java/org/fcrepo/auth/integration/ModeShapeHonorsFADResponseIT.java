@@ -104,7 +104,7 @@ public class ModeShapeHonorsFADResponseIT {
         for (final Privilege p : rootPrivs) {
             logger.debug("got priv: " + p.getName());
         }
-        final ContainerService os = new ContainerServiceImpl();
+        final ContainerService<Session> os = new ContainerServiceImpl();
         os.findOrCreate(session, "/myobject");
         verify(fad, atLeastOnce()).hasPermission(any(Session.class), any(Path.class), any(String[].class));
     }
@@ -125,7 +125,7 @@ public class ModeShapeHonorsFADResponseIT {
 
         final ServletCredentials credentials = new ServletCredentials(request);
         final Session session = repo.login(credentials);
-        final ContainerService os = new ContainerServiceImpl();
+        final ContainerService<Session> os = new ContainerServiceImpl();
         try {
             os.findOrCreate(session, "/myobject");
         } catch (final RepositoryRuntimeException e) {

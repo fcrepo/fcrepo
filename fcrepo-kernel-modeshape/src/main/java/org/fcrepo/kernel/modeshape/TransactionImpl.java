@@ -37,7 +37,7 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
  *
  * @author bbpennel
  */
-public class TransactionImpl implements Transaction {
+public class TransactionImpl implements Transaction<Session> {
 
     // the default timeout is 3 minutes
     public static final long DEFAULT_TIMEOUT = 3L * 60L * 1000L;
@@ -76,7 +76,7 @@ public class TransactionImpl implements Transaction {
      * @see org.fcrepo.kernel.api.Transaction#getSession()
      */
     @Override
-    public Session getSession() {
+    public Session get() {
         updateExpiryDate();
         return TxAwareSession.newInstance(session, id);
     }
