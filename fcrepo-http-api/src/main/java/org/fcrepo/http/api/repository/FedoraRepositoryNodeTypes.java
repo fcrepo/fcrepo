@@ -19,6 +19,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
+import static javax.ws.rs.core.Response.ok;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
@@ -32,10 +33,10 @@ import javax.jcr.Session;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Response;
 
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
-import org.fcrepo.kernel.api.utils.iterators.RdfStream;
 import org.springframework.context.annotation.Scope;
 
 import com.codahale.metrics.annotation.Timed;
@@ -60,8 +61,9 @@ public class FedoraRepositoryNodeTypes extends AbstractResource {
                       TEXT_HTML, APPLICATION_XHTML_XML, JSON_LD})
     @Timed
     @HtmlTemplate("jcr:nodetypes")
-    public RdfStream getNodeTypes() {
-        return nodeService.getNodeTypes(session).session(session);
+    public Response getNodeTypes() {
+        return ok(nodeService.getNodeTypes(session).session(session))
+            .header("Warning", "This endpoint is deprecated and will be removed in a future version.").build();
     }
 
 }
