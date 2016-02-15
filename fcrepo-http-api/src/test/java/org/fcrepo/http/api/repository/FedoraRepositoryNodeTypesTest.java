@@ -18,6 +18,7 @@ package org.fcrepo.http.api.repository;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -27,6 +28,7 @@ import java.io.InputStream;
 import java.net.URI;
 
 import javax.jcr.Session;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
@@ -78,8 +80,10 @@ public class FedoraRepositoryNodeTypesTest {
     public void itShouldRetrieveNodeTypes() {
         when(mockNodes.getNodeTypes(mockSession)).thenReturn(mockRdfStream);
 
-        final RdfStream nodeTypes = testObj.getNodeTypes();
+        final Response response = testObj.getNodeTypes();
+        final RdfStream nodeTypes = (RdfStream) response.getEntity();
 
+        assertTrue("Contains Warning header", response.getHeaders().containsKey("Warning"));
         assertEquals("Got wrong triples!", mockRdfStream, nodeTypes);
 
     }

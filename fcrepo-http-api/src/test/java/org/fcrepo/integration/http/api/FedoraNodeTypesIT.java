@@ -17,7 +17,7 @@ package org.fcrepo.integration.http.api;
 
 
 import org.apache.http.client.methods.HttpGet;
-
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.fcrepo.http.commons.test.util.CloseableGraphStore;
 
 import org.junit.Test;
@@ -28,9 +28,11 @@ import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static com.hp.hpl.jena.vocabulary.RDFS.Class;
+import static org.apache.http.util.EntityUtils.consume;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -51,6 +53,14 @@ public class FedoraNodeTypesIT  extends AbstractResourceIT {
                     createURI(REPOSITORY_NAMESPACE + "Container"), type.asNode(), Class.asNode()));
             assertTrue(graphStore.contains(ANY,
                     createURI(REPOSITORY_NAMESPACE + "NonRdfSourceDescription"), type.asNode(), Class.asNode()));
+        }
+    }
+
+    @Test
+    public void testWarningHeader() throws IOException {
+        try (final CloseableHttpResponse response = execute(getObjMethod("/fcr:nodetypes"))) {
+            consume(response.getEntity());
+            assertNotNull("Missing Warning header", response.getFirstHeader("Warning"));
         }
     }
 
