@@ -182,7 +182,7 @@ public class FedoraNodes extends ContentExposingResource {
             }
 
             LOGGER.info("Move from '{}' to '{}'", source, destination);
-            nodeService.moveObject(session, resource().getPath(), destination);
+            nodeService.moveObject(session, source, destination);
             session.save();
             return created(new URI(destinationUri)).build();
         } catch (final RepositoryRuntimeException e) {
