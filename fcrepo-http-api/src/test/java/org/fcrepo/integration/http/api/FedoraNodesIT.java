@@ -134,6 +134,47 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertEquals(PRECONDITION_FAILED.getStatusCode(), getStatus(request));
     }
 
+    @Test
+    public void testMoveBinary() throws IOException {
+        final String id = getRandomUniqueId();
+        final String oldLocation = getLocation(putDSMethod(id, "oldName", "test content"));
+        final String newLocation = getLocation(postObjMethod()) + "/newName";
+
+        final HttpMove request = new HttpMove(oldLocation);
+        request.addHeader("Destination", newLocation);
+        assertEquals(CREATED.getStatusCode(), getStatus(request));
+
+        assertEquals(OK.getStatusCode(), getStatus(new HttpGet(newLocation)));
+        assertEquals(GONE.getStatusCode(), getStatus(new HttpGet(oldLocation)));
+    }
+
+    @Test
+    public void testRenameBinary() throws IOException {
+        final String id = getRandomUniqueId();
+        final String oldLocation = getLocation(putDSMethod(id, "oldName", "test content"));
+        final String newLocation = oldLocation + "2";
+
+        final HttpMove request = new HttpMove(oldLocation);
+        request.addHeader("Destination", newLocation);
+        assertEquals(CREATED.getStatusCode(), getStatus(request));
+
+        assertEquals(OK.getStatusCode(), getStatus(new HttpGet(newLocation)));
+        assertEquals(GONE.getStatusCode(), getStatus(new HttpGet(oldLocation)));
+    }
+
+    @Test
+    public void testRenameContainer() throws IOException {
+        final String oldLocation = getLocation(postObjMethod());
+        final String newLocation = oldLocation + "2";
+
+        final HttpMove request = new HttpMove(oldLocation);
+        request.addHeader("Destination", newLocation);
+        assertEquals(CREATED.getStatusCode(), getStatus(request));
+
+        assertEquals(OK.getStatusCode(), getStatus(new HttpGet(newLocation)));
+        assertEquals(GONE.getStatusCode(), getStatus(new HttpGet(oldLocation)));
+    }
+
     @NotThreadSafe // HttpRequestBase is @NotThreadSafe
     private class HttpCopy extends HttpRequestBase {
 
