@@ -20,6 +20,7 @@ import java.util.stream.Stream;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
 import com.hp.hpl.jena.graph.Graph;
+import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.sparql.graph.GraphFactory;
 import org.junit.Test;
@@ -37,6 +38,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class GraphDifferencerTest {
 
+    private Node subject = createURI("x");
     private Triple t_xyz = new Triple(createURI("x"), createURI("y"), createURI("z"));
     private Triple t_abc = new Triple(createURI("a"), createURI("b"), createURI("c"));
     private Triple t_typed_string = new Triple(createURI("i"),
@@ -59,7 +61,7 @@ public class GraphDifferencerTest {
         final Graph graph = GraphFactory.createDefaultGraph();
         graph.add(t_xyz);
 
-        final GraphDifferencer diff = new GraphDifferencer(graph, new DefaultRdfStream(of(t_xyz)));
+        final GraphDifferencer diff = new GraphDifferencer(graph, new DefaultRdfStream(subject, of(t_xyz)));
 
         final Stream<Triple> removed = diff.difference();
         final Stream<Triple> added = diff.notCommon();
@@ -75,10 +77,11 @@ public class GraphDifferencerTest {
     @Test
     public void testRemoveOne() {
 
+        final Node subject = createURI("subject");
         final Graph graph = GraphFactory.createDefaultGraph();
         graph.add(t_xyz);
 
-        final GraphDifferencer diff = new GraphDifferencer(graph, new DefaultRdfStream(of(t_xyz, t_abc)));
+        final GraphDifferencer diff = new GraphDifferencer(graph, new DefaultRdfStream(subject, of(t_xyz, t_abc)));
 
         final Stream<Triple> removed = diff.difference();
         final Stream<Triple> added = diff.notCommon();
@@ -98,7 +101,7 @@ public class GraphDifferencerTest {
         graph.add(t_abc);
         graph.add(t_xyz);
 
-        final GraphDifferencer diff = new GraphDifferencer(graph, new DefaultRdfStream(of(t_xyz)));
+        final GraphDifferencer diff = new GraphDifferencer(graph, new DefaultRdfStream(subject, of(t_xyz)));
 
         final Stream<Triple> removed = diff.difference();
         final Stream<Triple> added = diff.notCommon();
@@ -117,7 +120,7 @@ public class GraphDifferencerTest {
         final Graph graph = GraphFactory.createDefaultGraph();
         graph.add(t_xyz);
 
-        final GraphDifferencer diff = new GraphDifferencer(graph, new DefaultRdfStream(of(t_abc)));
+        final GraphDifferencer diff = new GraphDifferencer(graph, new DefaultRdfStream(subject, of(t_abc)));
 
         final Stream<Triple> removed = diff.difference();
         final Stream<Triple> added = diff.notCommon();
@@ -136,7 +139,7 @@ public class GraphDifferencerTest {
         final Graph graph = GraphFactory.createDefaultGraph();
         graph.add(t_untyped_string);
 
-        final GraphDifferencer diff = new GraphDifferencer(graph, new DefaultRdfStream(of(t_typed_string)));
+        final GraphDifferencer diff = new GraphDifferencer(graph, new DefaultRdfStream(subject, of(t_typed_string)));
 
         final Stream<Triple> removed = diff.difference();
         final Stream<Triple> added = diff.notCommon();
@@ -154,7 +157,7 @@ public class GraphDifferencerTest {
         final Graph graph = GraphFactory.createDefaultGraph();
         graph.add(t_int_equivalent);
 
-        final GraphDifferencer diff = new GraphDifferencer(graph, new DefaultRdfStream(of(t_int)));
+        final GraphDifferencer diff = new GraphDifferencer(graph, new DefaultRdfStream(subject, of(t_int)));
 
         final Stream<Triple> removed = diff.difference();
         final Stream<Triple> added = diff.notCommon();

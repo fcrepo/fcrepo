@@ -50,7 +50,7 @@ import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-import org.fcrepo.kernel.api.rdf.RdfStream;
+import org.fcrepo.kernel.api.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -82,7 +82,7 @@ public class RdfStreamStreamingOutputTest {
     @Mock
     private Node mockNode;
 
-    private final RdfStream testRdfStream = new DefaultRdfStream(of(triple));
+    private final RdfStream testRdfStream = new DefaultRdfStream(triple.getSubject(), of(triple));
 
     private final Map<String, String> testNamespaces = new HashMap<>();
 
@@ -126,7 +126,7 @@ public class RdfStreamStreamingOutputTest {
     }
 
     public void assertOutputContainsTriple(final Triple expected) throws IOException {
-        final RdfStream input = new DefaultRdfStream(of(expected));
+        final RdfStream input = new DefaultRdfStream(expected.getSubject(), of(expected));
         try (final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             new RdfStreamStreamingOutput(input, testNamespaces, testMediaType).write(output);
             try (
@@ -144,7 +144,7 @@ public class RdfStreamStreamingOutputTest {
     public void testWriteWithNamespace() throws IOException {
         final Map<String, String> namespaces = new HashMap<>();
         namespaces.put("a", "info:a");
-        final RdfStream input = new DefaultRdfStream();
+        final RdfStream input = new DefaultRdfStream(triple.getSubject(), of(triple));
         try (final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             new RdfStreamStreamingOutput(input, namespaces, RDFMediaType.TURTLE_TYPE).write(output);
             final String s = output.toString("UTF-8");
@@ -157,7 +157,7 @@ public class RdfStreamStreamingOutputTest {
     public void testWriteWithXmlnsNamespace() throws IOException {
         final Map<String, String> namespaces = new HashMap<>();
         namespaces.put("xmlns", "info:a");
-        final RdfStream input = new DefaultRdfStream();
+        final RdfStream input = new DefaultRdfStream(triple.getSubject(), of(triple));
         try (final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             new RdfStreamStreamingOutput(input, namespaces, RDFMediaType.TURTLE_TYPE).write(output);
             final String s = output.toString("UTF-8");
@@ -175,7 +175,7 @@ public class RdfStreamStreamingOutputTest {
     @Test
     public void testWriteWithBlankSubject() throws IOException {
 
-        final RdfStream input = new DefaultRdfStream(of(create(createResource().asNode(),
+        final RdfStream input = new DefaultRdfStream(createResource().asNode(), of(create(createResource().asNode(),
                 createURI("info:testPredicate"),
                 createTypedLiteral(0).asNode())));
         try (final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
@@ -193,7 +193,7 @@ public class RdfStreamStreamingOutputTest {
     @Test
     public void testWriteWithBlankObject() throws IOException {
 
-        final RdfStream input = new DefaultRdfStream(of(create(createResource().asNode(),
+        final RdfStream input = new DefaultRdfStream(createResource().asNode(), of(create(createResource().asNode(),
                 createURI("info:testPredicate"),
                 createResource().asNode())));
         try (final ByteArrayOutputStream output = new ByteArrayOutputStream()) {

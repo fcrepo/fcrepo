@@ -18,7 +18,7 @@ package org.fcrepo.kernel.modeshape.rdf.impl;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createStatement;
-import static org.fcrepo.kernel.api.rdf.RdfCollectors.toModel;
+import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;

@@ -51,7 +51,7 @@ import javax.jcr.nodetype.PropertyDefinition;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.api.rdf.RdfStream;
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.junit.Before;
@@ -112,6 +112,7 @@ public class RdfAdderTest {
     private static final Triple mixinTriple = create(mockNodeSubject.asNode(),
             type.asNode(), mixinObject.asNode());
 
+    private static final com.hp.hpl.jena.graph.Node testSubject = createURI("subject");
 
     private static final Statement mixinStmnt = m.asStatement(mixinTriple);
 
@@ -143,7 +144,7 @@ public class RdfAdderTest {
     @Test
     public void testAddingWithNotYetDefinedNamespace() throws Exception {
         // we drop our stream namespace map
-        testStream = new DefaultRdfStream(mockTriples);
+        testStream = new DefaultRdfStream(testSubject, mockTriples);
         when(
                 mockSession
                         .getNamespacePrefix(getJcrNamespaceForRDFNamespace(type
@@ -155,7 +156,7 @@ public class RdfAdderTest {
     @Test
     public void testAddingWithRepoNamespace() throws Exception {
         // we drop our stream namespace map
-        testStream = new DefaultRdfStream(mockTriples);
+        testStream = new DefaultRdfStream(testSubject, mockTriples);
         when(
                 mockSession
                         .getNamespacePrefix(getJcrNamespaceForRDFNamespace(type
@@ -227,7 +228,7 @@ public class RdfAdderTest {
         when(mockGraphSubjects.reverse()).thenReturn(mockReverseGraphSubjects);
         //TODO? when(mockReverseGraphSubjects.convert(mockNode)).thenReturn(mockNodeSubject);
         resource = new FedoraResourceImpl(mockNode);
-        testStream = new DefaultRdfStream(mockTriples);
+        testStream = new DefaultRdfStream(testSubject, mockTriples);
     }
 
     private FedoraResource resource;

@@ -28,7 +28,7 @@ import javax.jcr.Session;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.rdf.RdfStream;
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.fcrepo.kernel.modeshape.rdf.impl.NodeTypeRdfContext;

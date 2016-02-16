@@ -30,8 +30,8 @@ import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.api.rdf.RdfContext;
-import org.fcrepo.kernel.api.rdf.RdfStream;
+import org.fcrepo.kernel.api.RdfContext;
+import org.fcrepo.kernel.api.RdfStream;
 
 import com.hp.hpl.jena.rdf.model.Model;
 

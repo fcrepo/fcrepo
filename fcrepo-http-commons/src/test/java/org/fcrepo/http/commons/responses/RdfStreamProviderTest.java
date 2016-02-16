@@ -38,7 +38,7 @@ import javax.jcr.Workspace;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 
-import org.fcrepo.kernel.api.rdf.RdfStream;
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.junit.Before;
 import org.junit.Test;
@@ -101,7 +101,7 @@ public class RdfStreamProviderTest {
         final Triple t =
             create(createURI("info:test"), createURI("property:test"),
                     createURI("info:test"));
-        final RdfStream rdfStream = new DefaultRdfStream(of(t));
+        final RdfStream rdfStream = new DefaultRdfStream(createURI("info:test"), of(t));
         final Map<String, String> namespaces = new HashMap<>();
         final RdfNamespacedStream nsStream = new RdfNamespacedStream(rdfStream, namespaces);
         byte[] result;

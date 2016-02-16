@@ -18,12 +18,8 @@ package org.fcrepo.http.api;
 
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
-import static java.util.EnumSet.of;
-import static java.util.Spliterator.IMMUTABLE;
-import static java.util.Spliterators.spliteratorUnknownSize;
 import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.empty;
-import static java.util.stream.StreamSupport.stream;
 import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.Response.ok;
@@ -43,19 +39,12 @@ import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
-import static org.fcrepo.kernel.api.rdf.RdfContext.ACL;
-import static org.fcrepo.kernel.api.rdf.RdfContext.CHILDREN;
-import static org.fcrepo.kernel.api.rdf.RdfContext.CONTENT;
-import static org.fcrepo.kernel.api.rdf.RdfContext.HASH_URI;
-import static org.fcrepo.kernel.api.rdf.RdfContext.LDP;
-import static org.fcrepo.kernel.api.rdf.RdfContext.LDP_CONTAINMENT;
-import static org.fcrepo.kernel.api.rdf.RdfContext.LDP_MEMBERSHIP;
-import static org.fcrepo.kernel.api.rdf.RdfContext.PARENT;
-import static org.fcrepo.kernel.api.rdf.RdfContext.PROPERTIES;
-import static org.fcrepo.kernel.api.rdf.RdfContext.RDF_TYPE;
-import static org.fcrepo.kernel.api.rdf.RdfContext.REFERENCES;
-import static org.fcrepo.kernel.api.rdf.RdfContext.ROOT;
-import static org.fcrepo.kernel.api.rdf.RdfContext.SKOLEM;
+import static org.fcrepo.kernel.api.RdfContext.PROPERTIES;
+import static org.fcrepo.kernel.api.RdfContext.SERVER_MANAGED;
+import static org.fcrepo.kernel.api.RdfContext.EMBED_RESOURCES;
+import static org.fcrepo.kernel.api.RdfContext.INBOUND_REFERENCES;
+import static org.fcrepo.kernel.api.RdfContext.LDP_MEMBERSHIP;
+import static org.fcrepo.kernel.api.RdfContext.LDP_CONTAINMENT;
 import static org.fcrepo.kernel.modeshape.rdf.ManagedRdf.isManagedTriple;
 import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaces;
 
@@ -102,9 +91,9 @@ import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
-import org.fcrepo.kernel.api.rdf.RdfContext;
+import org.fcrepo.kernel.api.RdfContext;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-import org.fcrepo.kernel.api.rdf.RdfStream;
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.modeshape.services.TransactionServiceImpl;
 
@@ -189,7 +178,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
                 outputStream = new RdfNamespacedStream(
                         new DefaultRdfStream(rdfStream.topic(), concat(rdfStream,
-                            DefaultRdfStream.fromModel(inputModel))),
+                            DefaultRdfStream.fromModel(rdfStream.topic(), inputModel))),
                         getNamespaces(session()));
             } else {
 
@@ -253,59 +242,49 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         final List<Stream<Triple>> streams = new ArrayList<>();
 
-        if (ldpPreferences.prefersServerManaged()) {
-            streams.add(getTriples(LDP));
-        }
-
-        streams.add(getTriples(RDF_TYPE).filter(tripleFilter));
         streams.add(getTriples(PROPERTIES).filter(tripleFilter));
 
-        if (!returnPreference.getValue().equals("minimal")) {
+        if (returnPreference.getValue().equals("minimal")) {
+            if (ldpPreferences.prefersServerManaged()) {
+                streams.add(getTriples(SERVER_MANAGED)
+                    .filter(x -> x.getPredicate().equals(type) &&
+                            x.getObject().getURI().startsWith(LDP_NAMESPACE)));
+            }
+        } else {
 
             // Additional server-managed triples about this resource
             if (ldpPreferences.prefersServerManaged()) {
-                streams.add(getTriples(ACL));
-                streams.add(getTriples(ROOT));
-                streams.add(getTriples(CONTENT));
-                streams.add(getTriples(PARENT));
+                streams.add(getTriples(SERVER_MANAGED));
             }
 
             // containment triples about this resource
             if (ldpPreferences.prefersContainment()) {
                 if (limit == -1) {
-                    streams.add(getTriples(CHILDREN));
+                    streams.add(getTriples(LDP_CONTAINMENT));
                 } else {
-                    streams.add(getTriples(CHILDREN).limit(limit));
+                    streams.add(getTriples(LDP_CONTAINMENT).limit(limit));
                 }
             }
 
             // LDP container membership triples for this resource
             if (ldpPreferences.prefersMembership()) {
-                streams.add(getTriples(LDP_CONTAINMENT));
                 streams.add(getTriples(LDP_MEMBERSHIP));
             }
 
-            // Embed all hash and blank nodes
-            // using IS_MANAGED_TRIPLE directly to avoid Prefer header logic (we never want them for hash fragments)
-            streams.add(getTriples(HASH_URI).filter(IS_MANAGED_TRIPLE.negate()));
-            streams.add(getTriples(SKOLEM).filter(tripleFilter));
-
             // Include inbound references to this object
             if (ldpPreferences.prefersReferences()) {
-                streams.add(getTriples(REFERENCES));
+                streams.add(getTriples(INBOUND_REFERENCES));
             }
 
             // Embed the children of this object
             if (ldpPreferences.prefersEmbed()) {
-
-                final Stream<FedoraResource> children = stream(spliteratorUnknownSize(resource().getChildren(),
-                            IMMUTABLE), false);
-                streams.add(children.flatMap(child -> child.getTriples(translator(), of(RDF_TYPE, PROPERTIES, SKOLEM)))
-                    .filter(tripleFilter));
+                streams.add(getTriples(EMBED_RESOURCES));
             }
         }
 
-        final RdfStream rdfStream = new DefaultRdfStream(streams.stream().reduce(empty(), Stream::concat));
+        final RdfStream rdfStream = new DefaultRdfStream(
+                translator().reverse().convert(resource()).asNode(),
+                streams.stream().reduce(empty(), Stream::concat));
 
         if (httpTripleUtil != null && ldpPreferences.prefersServerManaged()) {
             return httpTripleUtil.addHttpComponentModelsForResourceToStream(rdfStream, resource(), uriInfo,

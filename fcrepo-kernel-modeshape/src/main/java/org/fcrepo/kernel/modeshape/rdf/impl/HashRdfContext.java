@@ -15,24 +15,24 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
+import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.rdf.RdfContext;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
-import java.util.EnumSet;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import static java.util.EnumSet.of;
-import static org.fcrepo.kernel.api.rdf.RdfContext.RDF_TYPE;
-import static org.fcrepo.kernel.api.rdf.RdfContext.PROPERTIES;
-import static org.fcrepo.kernel.api.rdf.RdfContext.SKOLEM;
-import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
+import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
+import static org.fcrepo.kernel.api.RdfContext.PROPERTIES;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
+import static org.fcrepo.kernel.modeshape.rdf.ManagedRdf.isManagedTriple;
+import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
 
 /**
  * @author cabeer
@@ -41,8 +41,10 @@ import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.node
  */
 public class HashRdfContext extends NodeRdfContext {
 
+    private static final Predicate<Triple> IS_MANAGED_TYPE = t -> t.getPredicate().equals(type.asNode()) &&
+            isManagedNamespace.test(t.getObject().getNameSpace());
 
-    private static final EnumSet<RdfContext> contexts = of(RDF_TYPE, PROPERTIES, SKOLEM);
+    private static final Predicate<Triple> IS_MANAGED_TRIPLE = IS_MANAGED_TYPE.or(isManagedTriple);
 
     /**
      * Default constructor.
@@ -57,7 +59,8 @@ public class HashRdfContext extends NodeRdfContext {
         super(resource, idTranslator);
 
         this.stream = getNodeStream(resource)
-                .flatMap(n -> nodeConverter.convert(n).getTriples(idTranslator, contexts));
+                .flatMap(n -> nodeConverter.convert(n).getTriples(idTranslator, PROPERTIES))
+                .filter(IS_MANAGED_TRIPLE.negate());
     }
 
     @SuppressWarnings("unchecked")

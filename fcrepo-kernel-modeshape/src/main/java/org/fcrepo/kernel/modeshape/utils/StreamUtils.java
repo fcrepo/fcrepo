@@ -35,7 +35,6 @@ public class StreamUtils {
      * @param <T> the type of the Stream
      * @return the stream
      */
-    @SuppressWarnings("unchecked")
     public static <T> Stream<T> iteratorToStream(final Iterator<T> iterator) {
         return iteratorToStream(iterator, false);
     }
@@ -48,7 +47,6 @@ public class StreamUtils {
      * @param parallel whether to parallelize the stream
      * @return the stream
      */
-    @SuppressWarnings("unchecked")
     public static <T> Stream<T> iteratorToStream(final Iterator<T> iterator, final Boolean parallel) {
         return stream(spliteratorUnknownSize(iterator, IMMUTABLE), parallel);
     }

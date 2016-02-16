@@ -18,7 +18,7 @@ package org.fcrepo.kernel.api.models;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.api.rdf.RdfStream;
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 
 import java.io.InputStream;

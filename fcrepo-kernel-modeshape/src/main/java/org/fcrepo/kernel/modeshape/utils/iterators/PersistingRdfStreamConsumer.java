@@ -36,7 +36,7 @@ import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.api.rdf.RdfStream;
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.modeshape.rdf.JcrRdfTools;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.slf4j.Logger;
@@ -132,7 +132,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
     public void consume() throws MalformedRdfException {
         stream.forEach(t -> {
             final Statement s = m.asStatement(t);
-            LOGGER.debug("Operating triple {}.", s);
+            LOGGER.debug("Operating on triple {}.", s);
 
             try {
                 operateOnTriple(s);

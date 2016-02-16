@@ -47,7 +47,7 @@ import javax.jcr.nodetype.PropertyDefinition;
 
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.rdf.RdfStream;
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.junit.Before;
@@ -170,7 +170,7 @@ public class RdfRemoverTest {
         when(mockGraphSubjects.reverse()).thenReturn(mockReverseGraphSubjects);
         // TODO? when(mockReverseGraphSubjects.convert(mockNode)).thenReturn(mockNodeSubject);
         resource = new FedoraResourceImpl(mockNode);
-        testStream = new DefaultRdfStream(mockTriples);
+        testStream = new DefaultRdfStream(createURI("subject"), mockTriples);
     }
 
 

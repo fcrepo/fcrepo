@@ -39,7 +39,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.LDP_HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_INSERTED_CONTENT_RELATION;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_MEMBER_RESOURCE;
-import static org.fcrepo.kernel.api.rdf.RdfCollectors.toModel;
+import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeToResource;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;

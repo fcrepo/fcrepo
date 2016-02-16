@@ -18,7 +18,7 @@ package org.fcrepo.kernel.modeshape.rdf.impl;
 import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBES;
 import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.JCR_NAMESPACE;
-import static org.fcrepo.kernel.api.rdf.RdfCollectors.toModel;
+import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;

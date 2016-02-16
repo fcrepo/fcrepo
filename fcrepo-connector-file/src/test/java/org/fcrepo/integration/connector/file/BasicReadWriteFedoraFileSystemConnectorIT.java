@@ -26,8 +26,9 @@ import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.fcrepo.kernel.api.rdf.RdfContext.PROPERTIES;
+import static org.fcrepo.kernel.api.RdfContext.PROPERTIES;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -71,7 +72,8 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
                     "'some-test-name' }";
 
             // Write the properties
-            object.updateProperties(new DefaultIdentifierTranslator(session), sparql, new DefaultRdfStream());
+            object.updateProperties(new DefaultIdentifierTranslator(session), sparql,
+                    new DefaultRdfStream(createURI("info:fedora" + testFilePath())));
 
             // Verify
             final Property property = object.getNode().getProperty("fedora:name");
@@ -99,7 +101,8 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
 
             // Write the properties
             final DefaultIdentifierTranslator graphSubjects = new DefaultIdentifierTranslator(session);
-            object.updateProperties(graphSubjects, sparql, new DefaultRdfStream());
+            object.updateProperties(graphSubjects, sparql, new DefaultRdfStream(
+                        createURI("info:fedora" + testFilePath())));
 
             // Verify property exists
             final Property property = object.getNode().getProperty("fedora:remove");

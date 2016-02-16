@@ -17,7 +17,7 @@ package org.fcrepo.http.commons.responses;
 
 import java.util.Map;
 
-import org.fcrepo.kernel.api.rdf.RdfStream;
+import org.fcrepo.kernel.api.RdfStream;
 
 /**
  * A simple type to collect an RdfStream and associated Namespace mappings

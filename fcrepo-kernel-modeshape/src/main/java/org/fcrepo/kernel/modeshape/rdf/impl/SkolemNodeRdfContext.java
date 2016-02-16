@@ -20,7 +20,6 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.api.rdf.RdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.mappings.PropertyValueIterator;
 import org.slf4j.Logger;
 
@@ -31,15 +30,11 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 
-import java.util.EnumSet;
 import java.util.Objects;
 import java.util.stream.Stream;
 import java.util.function.Function;
 
-import static java.util.EnumSet.of;
-import static org.fcrepo.kernel.api.rdf.RdfContext.RDF_TYPE;
-import static org.fcrepo.kernel.api.rdf.RdfContext.PROPERTIES;
-import static org.fcrepo.kernel.api.rdf.RdfContext.SKOLEM;
+import static org.fcrepo.kernel.api.RdfContext.PROPERTIES;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.modeshape.rdf.converters.ValueConverter.nodeForValue;
 import static org.fcrepo.kernel.modeshape.rdf.impl.ReferencesRdfContext.REFERENCE_TYPES;
@@ -59,8 +54,6 @@ public class SkolemNodeRdfContext extends NodeRdfContext {
 
     private static final Logger LOGGER = getLogger(SkolemNodeRdfContext.class);
 
-    private static final EnumSet<RdfContext> contexts = of(RDF_TYPE, PROPERTIES, SKOLEM);
-
     /**
      * Default constructor.
      *
@@ -74,7 +67,7 @@ public class SkolemNodeRdfContext extends NodeRdfContext {
         super(resource, idTranslator);
 
         this.stream = getBlankNodes(resource).flatMap(n -> nodeConverter.convert(n).getTriples(idTranslator,
-                    contexts));
+                    PROPERTIES));
     }
 
     @SuppressWarnings("unchecked")

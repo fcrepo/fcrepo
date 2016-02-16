@@ -92,7 +92,7 @@ import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-import org.fcrepo.kernel.api.rdf.RdfStream;
+import org.fcrepo.kernel.api.RdfStream;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -352,7 +352,7 @@ public class FedoraLdp extends ContentExposingResource {
         final RdfStream resourceTriples;
 
         if (resource.isNew()) {
-            resourceTriples = new DefaultRdfStream();
+            resourceTriples = new DefaultRdfStream(translator().reverse().convert(resource()).asNode());
         } else {
             resourceTriples = getResourceTriples();
         }
@@ -429,7 +429,7 @@ public class FedoraLdp extends ContentExposingResource {
             final RdfStream resourceTriples;
 
             if (resource().isNew()) {
-                resourceTriples = new DefaultRdfStream();
+                resourceTriples = new DefaultRdfStream(translator().reverse().convert(resource()).asNode());
             } else {
                 resourceTriples = getResourceTriples();
             }
@@ -547,7 +547,7 @@ public class FedoraLdp extends ContentExposingResource {
         final RdfStream resourceTriples;
 
         if (result.isNew()) {
-            resourceTriples = new DefaultRdfStream();
+            resourceTriples = new DefaultRdfStream(translator().reverse().convert(resource()).asNode());
         } else {
             resourceTriples = getResourceTriples();
         }

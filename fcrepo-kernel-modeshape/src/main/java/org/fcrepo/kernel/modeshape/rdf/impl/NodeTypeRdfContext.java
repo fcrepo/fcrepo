@@ -18,6 +18,7 @@ package org.fcrepo.kernel.modeshape.rdf.impl;
 import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.of;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static com.hp.hpl.jena.vocabulary.RDFS.Class;
@@ -66,7 +67,7 @@ public class NodeTypeRdfContext extends DefaultRdfStream {
      * @throws RepositoryException if repository exception occurred
      */
     public NodeTypeRdfContext(final NodeTypeManager nodeTypeManager) throws RepositoryException {
-        super((Node)null);
+        super(createURI("fedora:info/"));
         this.stream = getNodeTypes(nodeTypeManager).flatMap(getTriplesFromNodeType);
     }
 
@@ -77,7 +78,7 @@ public class NodeTypeRdfContext extends DefaultRdfStream {
      * @param nodeTypes the node types
      */
     public NodeTypeRdfContext(final Stream<NodeType> nodeTypes) {
-        super((Node)null);
+        super(createURI("fedora:info/"));
         this.stream = nodeTypes.flatMap(getTriplesFromNodeType);
     }
 
@@ -88,7 +89,7 @@ public class NodeTypeRdfContext extends DefaultRdfStream {
      * @param nodeType the node type
      */
     public NodeTypeRdfContext(final NodeType nodeType) {
-        super((Node)null);
+        super(createURI("fedora:info/"));
         this.stream = getTriplesFromNodeType.apply(nodeType);
     }
 

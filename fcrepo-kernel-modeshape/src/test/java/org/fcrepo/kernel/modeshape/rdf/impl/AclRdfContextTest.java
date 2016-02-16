@@ -35,7 +35,7 @@ import java.security.AccessControlException;
 
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDboolean;
 import static org.fcrepo.kernel.api.RdfLexicon.WRITABLE;
-import static org.fcrepo.kernel.api.rdf.RdfCollectors.toModel;
+import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;

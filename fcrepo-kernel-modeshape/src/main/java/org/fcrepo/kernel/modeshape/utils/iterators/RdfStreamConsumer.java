@@ -18,7 +18,7 @@ package org.fcrepo.kernel.modeshape.utils.iterators;
 import com.hp.hpl.jena.graph.Triple;
 
 /**
- * {@link IteratorConsumer} specific to {@link org.fcrepo.kernel.api.rdf.RdfStream}s.
+ * {@link IteratorConsumer} specific to {@link org.fcrepo.kernel.api.RdfStream}s.
  *
  * @author ajs6f
  * @since Oct 24, 2013

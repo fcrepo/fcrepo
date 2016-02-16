@@ -36,7 +36,7 @@ import javax.jcr.Session;
 
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.rdf.RdfStream;
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 import org.junit.Before;
@@ -62,7 +62,8 @@ public class PersistingRdfStreamConsumerTest {
     @Test
     public void testConsumeAsync() {
 
-        final RdfStream testStream = new DefaultRdfStream(of(profferedStatements).map(Statement::asTriple));
+        final RdfStream testStream = new DefaultRdfStream(createURI("subject"),
+                of(profferedStatements).map(Statement::asTriple));
 
         final Set<Statement> rejectedStatements =
             newHashSet(profferedStatements);

@@ -21,30 +21,17 @@ import static java.util.stream.Stream.empty;
 import static java.util.stream.StreamSupport.stream;
 
 import java.util.Comparator;
-import java.util.Iterator;
-import java.util.Optional;
-import java.util.Spliterator;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.BinaryOperator;
+import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.IntFunction;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
-import java.util.function.ToDoubleFunction;
-import java.util.function.ToIntFunction;
-import java.util.function.ToLongFunction;
-import java.util.stream.Collector;
-import java.util.stream.DoubleStream;
-import java.util.stream.IntStream;
-import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Statement;
+import org.fcrepo.kernel.api.utils.WrappingStream;
+import org.fcrepo.kernel.api.RdfStream;
 
 /**
  * Implementation of a context-bearing RDF stream
@@ -52,17 +39,9 @@ import com.hp.hpl.jena.rdf.model.Statement;
  * @author acoburn
  * @since Dec 6, 2015
  */
-public class DefaultRdfStream implements RdfStream {
+public class DefaultRdfStream extends WrappingStream<Triple> implements RdfStream {
 
-    protected Stream<Triple> stream;
     protected final Node node;
-
-    /**
-     * Create an empty RdfStream
-     */
-    public DefaultRdfStream() {
-        this(empty());
-    }
 
     /**
      * Create an RdfStream
@@ -74,31 +53,13 @@ public class DefaultRdfStream implements RdfStream {
 
     /**
      * Create an RdfStream
-     *
-     * @param stream a stream of triples
-     */
-    public DefaultRdfStream(final Stream<Triple> stream) {
-        this.node = null;
-        this.stream = stream;
-    }
-
-    /**
-     * Create an RdfStream
      * @param node the topic of the stream
      * @param stream the incoming stream
      */
     public DefaultRdfStream(final Node node, final Stream<Triple> stream) {
+        Objects.requireNonNull(node);
         this.node = node;
         this.stream = stream;
-    }
-
-    /**
-     * Create an RdfStream from an existing Model.
-     * @param model An input Model
-     * @return a new RdfStream object
-     */
-    public static RdfStream fromModel(final Model model) {
-        return fromModel((Node)null, model);
     }
 
     /**
@@ -118,32 +79,6 @@ public class DefaultRdfStream implements RdfStream {
     }
 
     @Override
-    public boolean allMatch(final Predicate<? super Triple> predicate) {
-        return stream.allMatch(predicate);
-    }
-
-    @Override
-    public boolean anyMatch(final Predicate<? super Triple> predicate) {
-        return stream.anyMatch(predicate);
-    }
-
-    @Override
-    public <R, A> R collect(final Collector<? super Triple, A, R> collector) {
-        return stream.collect(collector);
-    }
-
-    @Override
-    public <R> R collect(final Supplier<R> supplier, final BiConsumer<R, ? super Triple> accumulator,
-            final BiConsumer<R,R> combiner) {
-        return stream.collect(supplier, accumulator, combiner);
-    }
-
-    @Override
-    public long count() {
-        return stream.count();
-    }
-
-    @Override
     public RdfStream distinct() {
         return new DefaultRdfStream(topic(), stream.distinct());
     }
@@ -154,104 +89,13 @@ public class DefaultRdfStream implements RdfStream {
     }
 
     @Override
-    public Optional<Triple> findAny() {
-        return stream.findAny();
-    }
-
-    @Override
-    public Optional<Triple> findFirst() {
-        return stream.findFirst();
-    }
-
-    @Override
-    public <R> Stream<R> flatMap(final Function<? super Triple, ? extends Stream<? extends R>> mapper) {
-        return stream.flatMap(mapper);
-    }
-
-    @Override
-    public DoubleStream flatMapToDouble(final Function<? super Triple, ? extends DoubleStream> mapper) {
-        return stream.flatMapToDouble(mapper);
-    }
-
-    @Override
-    public IntStream flatMapToInt(final Function<? super Triple, ? extends IntStream> mapper) {
-        return stream.flatMapToInt(mapper);
-    }
-
-    @Override
-    public LongStream flatMapToLong(final Function<? super Triple, ? extends LongStream> mapper) {
-        return stream.flatMapToLong(mapper);
-    }
-
-    @Override
-    public void forEach(final Consumer<? super Triple> action) {
-        stream.forEach(action);
-    }
-
-    @Override
-    public void forEachOrdered(final Consumer<? super Triple> action) {
-        stream.forEachOrdered(action);
-    }
-
-    @Override
     public RdfStream limit(final long maxSize) {
         return new DefaultRdfStream(topic(), stream.limit(maxSize));
     }
 
     @Override
-    public <R> Stream<R> map(final Function<? super Triple,? extends R> mapper) {
-        return stream.map(mapper);
-    }
-
-    @Override
-    public DoubleStream mapToDouble(final ToDoubleFunction<? super Triple> mapper) {
-        return stream.mapToDouble(mapper);
-    }
-
-    @Override
-    public IntStream mapToInt(final ToIntFunction<? super Triple> mapper) {
-        return stream.mapToInt(mapper);
-    }
-
-    @Override
-    public LongStream mapToLong(final ToLongFunction<? super Triple> mapper) {
-        return stream.mapToLong(mapper);
-    }
-
-    @Override
-    public Optional<Triple> max(final Comparator<? super Triple> comparator) {
-        return stream.max(comparator);
-    }
-
-    @Override
-    public Optional<Triple> min(final Comparator<? super Triple> comparator) {
-        return stream.min(comparator);
-    }
-
-    @Override
-    public boolean noneMatch(final Predicate<? super Triple> predicate) {
-        return stream.noneMatch(predicate);
-    }
-
-    @Override
     public RdfStream peek(final Consumer<? super Triple> action) {
         return new DefaultRdfStream(topic(), stream.peek(action));
-    }
-
-    @Override
-    public Optional<Triple> reduce(final BinaryOperator<Triple> accumulator) {
-        return stream.reduce(accumulator);
-    }
-
-    @Override
-    public Triple reduce(final Triple identity, final BinaryOperator<Triple> accumulator) {
-        return stream.reduce(identity, accumulator);
-    }
-
-    @Override
-    public <U> U reduce(final U identity, final BiFunction<U,? super Triple,U> accumulator,
-            final BinaryOperator<U> combiner) {
-        return stream.reduce(identity, accumulator, combiner);
     }
 
     @Override
@@ -270,33 +114,8 @@ public class DefaultRdfStream implements RdfStream {
     }
 
     @Override
-    public Object[] toArray() {
-        return stream.toArray();
-    }
-
-    @Override
-    public <A> A[] toArray(final IntFunction<A[]> generator) {
-        return stream.toArray(generator);
-    }
-
-    @Override
-    public void close() {
-        stream.close();
-    }
-
-    @Override
     public RdfStream onClose(final Runnable closeHandler) {
         return new DefaultRdfStream(topic(), stream.onClose(closeHandler));
-    }
-
-    @Override
-    public boolean isParallel() {
-        return stream.isParallel();
-    }
-
-    @Override
-    public Iterator<Triple> iterator() {
-        return stream.iterator();
     }
 
     @Override
@@ -307,11 +126,6 @@ public class DefaultRdfStream implements RdfStream {
     @Override
     public RdfStream sequential() {
         return new DefaultRdfStream(topic(), stream.sequential());
-    }
-
-    @Override
-    public Spliterator<Triple> spliterator() {
-        return stream.spliterator();
     }
 
     @Override

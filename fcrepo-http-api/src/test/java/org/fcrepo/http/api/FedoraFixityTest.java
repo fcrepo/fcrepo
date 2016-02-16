@@ -15,6 +15,7 @@
  */
 package org.fcrepo.http.api;
 
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.junit.Assert.assertEquals;
@@ -34,7 +35,7 @@ import javax.ws.rs.core.UriInfo;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-import org.fcrepo.kernel.api.rdf.RdfStream;
+import org.fcrepo.kernel.api.RdfStream;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -82,7 +83,7 @@ public class FedoraFixityTest {
     @Ignore("This is an absurd test. It should be removed or substantially changed.")
     @SuppressWarnings("unchecked")
     public void testGetDatastreamFixity() {
-        final RdfStream expected = new DefaultRdfStream();
+        final RdfStream expected = new DefaultRdfStream(createURI("subject"));
 
         when(mockBinary.getFixity(any(IdentifierConverter.class))).thenReturn(expected);
 

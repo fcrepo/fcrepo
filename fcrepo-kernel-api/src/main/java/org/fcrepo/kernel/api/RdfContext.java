@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.rdf;
+package org.fcrepo.kernel.api;
 
 /**
  * A collection of RDF contexts that can be used to extract triples from FedoraResources
@@ -23,49 +23,28 @@ package org.fcrepo.kernel.api.rdf;
  */
 public enum RdfContext {
 
-    /* Acl Context */
-    ACL,
+    /* User-created properties Context */
+    PROPERTIES,
 
-    /* Child Context */
-    CHILDREN,
-
-    /* Binary Content Context */
-    CONTENT,
+    /* Versions Context */
+    VERSIONS,
 
     /* Fixity Context */
     FIXITY,
 
-    /* HashURI Context */
-    HASH_URI,
+    /* fedora:EmbedResources Context: embedded child resources */
+    EMBED_RESOURCES,
 
-    /* LDP Containment Context */
-    LDP_CONTAINMENT,
+    /* fedora:InboundReferences Context: assertions from other Fedora resources */
+    INBOUND_REFERENCES,
 
-    /* LDP Membership Context */
+    /* fedora:ServerManaged Context: all server-managed triples */
+    SERVER_MANAGED,
+
+    /* fedora:PreferMembership Context: ldp membership triples */
     LDP_MEMBERSHIP,
 
-    /* LDP Type Context */
-    LDP,
-
-    /* Parent Resource Context */
-    PARENT,
-
-    /* Rdf Properties Context */
-    PROPERTIES,
-
-    /* Rdf Type Context */
-    RDF_TYPE,
-
-    /* Inbound References Context */
-    REFERENCES,
-
-    /* Repository Root Context */
-    ROOT,
-
-    /* Skokem Node Context */
-    SKOLEM,
-
-    /* Versioning Context */
-    VERSIONS
+    /* fedora:PreferContainment Context: ldp containment triples */
+    LDP_CONTAINMENT
 }
 

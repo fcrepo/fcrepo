@@ -23,7 +23,7 @@ import javax.jcr.Session;
 
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.api.rdf.RdfStream;
+import org.fcrepo.kernel.api.RdfStream;
 import org.slf4j.Logger;
 
 import com.hp.hpl.jena.rdf.model.Resource;

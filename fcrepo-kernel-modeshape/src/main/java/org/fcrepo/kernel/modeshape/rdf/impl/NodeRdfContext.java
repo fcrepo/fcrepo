@@ -27,7 +27,7 @@ import com.google.common.base.Converter;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
- * {@link org.fcrepo.kernel.api.rdf.RdfStream} that holds contexts related to a specific {@link Node}.
+ * {@link org.fcrepo.kernel.api.RdfStream} that holds contexts related to a specific {@link Node}.
  *
  * @author ajs6f
  * @since Oct 10, 2013

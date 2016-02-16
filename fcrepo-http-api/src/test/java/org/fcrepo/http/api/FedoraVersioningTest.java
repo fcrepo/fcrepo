@@ -15,7 +15,8 @@
  */
 package org.fcrepo.http.api;
 
-import static org.fcrepo.kernel.api.rdf.RdfContext.VERSIONS;
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
+import static org.fcrepo.kernel.api.RdfContext.VERSIONS;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_VARIANTS;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
@@ -42,7 +43,7 @@ import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-import org.fcrepo.kernel.api.rdf.RdfStream;
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.api.services.VersionService;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
@@ -78,7 +79,7 @@ public class FedoraVersioningTest {
     @Mock
     private FedoraResourceImpl mockResource;
 
-    private final RdfStream mockRdfStream = new DefaultRdfStream();
+    private final RdfStream mockRdfStream = new DefaultRdfStream(createURI("subject"));
 
     @Mock
     private Request mockRequest;

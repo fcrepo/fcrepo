@@ -41,7 +41,7 @@ import org.fcrepo.kernel.api.utils.FixityResult;
 import com.hp.hpl.jena.graph.Triple;
 
 /**
- * An {@link org.fcrepo.kernel.api.rdf.RdfStream} containing information about the fixity of a
+ * An {@link org.fcrepo.kernel.api.RdfStream} containing information about the fixity of a
  * {@link org.fcrepo.kernel.api.models.FedoraBinary}.
  *
  * @author ajs6f

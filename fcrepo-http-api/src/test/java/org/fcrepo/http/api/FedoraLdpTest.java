@@ -42,7 +42,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
-import static org.fcrepo.kernel.api.rdf.RdfCollectors.toModel;
+import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -93,8 +93,8 @@ import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-import org.fcrepo.kernel.api.rdf.RdfContext;
-import org.fcrepo.kernel.api.rdf.RdfStream;
+import org.fcrepo.kernel.api.RdfContext;
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.ContainerService;
 import org.fcrepo.kernel.api.services.NodeService;
@@ -226,7 +226,8 @@ public class FedoraLdpTest {
         when(mockResource.getTriples(eq(idTranslator), any(RdfContext.class))).thenAnswer(new Answer<RdfStream>() {
             @Override
             public RdfStream answer(final InvocationOnMock invocationOnMock) {
-                return new DefaultRdfStream(of(Triple.create(createURI(invocationOnMock.getMock().toString()),
+                return new DefaultRdfStream(createURI(invocationOnMock.getMock().toString()),
+                        of(Triple.create(createURI(invocationOnMock.getMock().toString()),
                                                    createURI("called"),
                                                    createURI(invocationOnMock.getArguments()[1].toString()))
                         ));
@@ -389,7 +390,7 @@ public class FedoraLdpTest {
         final List<String> rdfNodes = transform(newArrayList(model.listObjects()), RDFNode::toString);
 
         assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
-                "LDP_CONTAINMENT", "LDP_MEMBERSHIP", "LDP", "RDF_TYPE", "PROPERTIES", "CHILDREN", "ACL", "PARENT")));
+                "LDP_CONTAINMENT", "LDP_MEMBERSHIP", "PROPERTIES", "SERVER_MANAGED")));
     }
 
     @Test
@@ -405,7 +406,7 @@ public class FedoraLdpTest {
 
         final List<String> rdfNodes = transform(newArrayList(model.listObjects()), RDFNode::toString);
         assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
-                "LDP_CONTAINMENT", "LDP_MEMBERSHIP", "LDP", "RDF_TYPE", "PROPERTIES", "CHILDREN", "ACL", "PARENT")));
+                "LDP_CONTAINMENT", "LDP_MEMBERSHIP", "PROPERTIES", "SERVER_MANAGED")));
     }
 
 
@@ -451,14 +452,13 @@ public class FedoraLdpTest {
         final Model model = entity.stream.collect(toModel());
         final List<String> rdfNodes = transform(newArrayList(model.listObjects()), RDFNode::toString);
 
-        assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
-                        "RDF_TYPE", "PROPERTIES")));
+        assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of("PROPERTIES")));
+
+        assertFalse("Included non-minimal contexts",
+                rdfNodes.contains("LDP_MEMBERSHIP"));
 
         assertFalse("Included non-minimal contexts",
                 rdfNodes.contains("LDP_CONTAINMENT"));
-
-        assertFalse("Included non-minimal contexts",
-                rdfNodes.contains("CHILDREN"));
 
     }
 
@@ -475,10 +475,10 @@ public class FedoraLdpTest {
         final Model model = entity.stream.collect(toModel());
         final List<String> rdfNodes = transform(newArrayList(model.listObjects()), RDFNode::toString);
         assertTrue("Should include membership contexts",
-                rdfNodes.contains("LDP_CONTAINMENT"));
+                rdfNodes.contains("LDP_MEMBERSHIP"));
 
         assertFalse("Should not include containment contexts",
-                rdfNodes.contains("CHILDREN"));
+                rdfNodes.contains("LDP_CONTAINMENT"));
 
     }
 
@@ -495,12 +495,10 @@ public class FedoraLdpTest {
         final List<String> rdfNodes = transform(newArrayList(model.listObjects()), RDFNode::toString);
 
         assertFalse("Should not include membership contexts",
-                rdfNodes.contains("LDP_CONTAINMENT"));
-        assertFalse("Should not include membership contexts",
                 rdfNodes.contains("LDP_MEMBERSHIP"));
 
         assertTrue("Should include containment contexts",
-                rdfNodes.contains("CHILDREN"));
+                rdfNodes.contains("LDP_CONTAINMENT"));
     }
 
     @Test
@@ -560,8 +558,10 @@ public class FedoraLdpTest {
         final NonRdfSourceDescription mockResource
                 = (NonRdfSourceDescription)setResource(NonRdfSourceDescription.class);
         when(mockResource.getDescribedResource()).thenReturn(mockBinary);
-        when(mockBinary.getTriples(eq(idTranslator), any(RdfContext.class))).thenReturn(new DefaultRdfStream());
-        when(mockBinary.getTriples(eq(idTranslator), any(EnumSet.class))).thenReturn(new DefaultRdfStream(of(new Triple
+        when(mockBinary.getTriples(eq(idTranslator), any(RdfContext.class)))
+            .thenReturn(new DefaultRdfStream(createURI("mockBinary")));
+        when(mockBinary.getTriples(eq(idTranslator), any(EnumSet.class)))
+            .thenReturn(new DefaultRdfStream(createURI("mockBinary"), of(new Triple
                 (createURI("mockBinary"), createURI("called"), createURI("child:properties")))));
         final Response actual = testObj.describe(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
@@ -577,7 +577,7 @@ public class FedoraLdpTest {
         final List<String> rdfNodes = transform(newArrayList(model.listObjects()), RDFNode::toString);
         log.info("Found RDF objects\n{}", rdfNodes);
         assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
-                "LDP_CONTAINMENT", "LDP_MEMBERSHIP", "LDP", "RDF_TYPE", "PROPERTIES", "CHILDREN", "ACL", "PARENT")));
+                "LDP_CONTAINMENT", "LDP_MEMBERSHIP", "PROPERTIES", "SERVER_MANAGED")));
 
     }
 
@@ -592,6 +592,8 @@ public class FedoraLdpTest {
     @Test
     public void testPutNewObject() throws Exception {
         setField(testObj, "externalPath", "some/path");
+        final FedoraBinary mockObject = (FedoraBinary)setResource(FedoraBinary.class);
+        doReturn(mockObject).when(testObj).resource();
         when(mockContainer.isNew()).thenReturn(true);
 
         when(mockNodeService.exists(mockSession, "/some/path")).thenReturn(false);
@@ -612,6 +614,8 @@ public class FedoraLdpTest {
     public void testPutNewObjectWithRdf() throws Exception {
 
         setField(testObj, "externalPath", "some/path");
+        final FedoraBinary mockObject = (FedoraBinary)setResource(FedoraBinary.class);
+        doReturn(mockObject).when(testObj).resource();
         when(mockContainer.isNew()).thenReturn(true);
 
         when(mockNodeService.exists(mockSession, "/some/path")).thenReturn(false);
@@ -627,6 +631,8 @@ public class FedoraLdpTest {
     @Test
     public void testPutNewBinary() throws Exception {
         setField(testObj, "externalPath", "some/path");
+        final FedoraBinary mockObject = (FedoraBinary)setResource(FedoraBinary.class);
+        doReturn(mockObject).when(testObj).resource();
         when(mockBinary.isNew()).thenReturn(true);
 
         when(mockNodeService.exists(mockSession, "/some/path")).thenReturn(false);
@@ -687,9 +693,11 @@ public class FedoraLdpTest {
         final NonRdfSourceDescription mockObject = (NonRdfSourceDescription)setResource(NonRdfSourceDescription.class);
         when(mockObject.getDescribedResource()).thenReturn(mockBinary);
 
-        when(mockBinary.getTriples(eq(idTranslator), any(RdfContext.class))).thenReturn(new DefaultRdfStream());
-        when(mockBinary.getTriples(eq(idTranslator), any(EnumSet.class))).thenReturn(
-                new DefaultRdfStream(of(new Triple(createURI("mockBinary"), createURI("called"),
+        when(mockBinary.getTriples(eq(idTranslator), any(RdfContext.class)))
+            .thenReturn(new DefaultRdfStream(createURI("mockBinary")));
+        when(mockBinary.getTriples(eq(idTranslator), any(EnumSet.class)))
+            .thenReturn(new DefaultRdfStream(createURI("mockBinary"),
+                        of(new Triple(createURI("mockBinary"), createURI("called"),
                             createURI("child:properties")))));
 
         doReturn(mockObject).when(testObj).resource();

@@ -47,7 +47,7 @@ import static com.hp.hpl.jena.vocabulary.RDFS.subClassOf;
 import static java.util.Collections.singletonList;
 import static javax.jcr.PropertyType.REFERENCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.fcrepo.kernel.api.rdf.RdfCollectors.toModel;
+import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.modeshape.rdf.impl.mappings.ItemDefinitionToTriples.getResource;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;

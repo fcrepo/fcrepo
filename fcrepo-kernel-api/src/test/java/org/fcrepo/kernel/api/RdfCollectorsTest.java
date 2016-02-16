@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.rdf;
+package org.fcrepo.kernel.api;
 
 import static java.util.Arrays.asList;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;

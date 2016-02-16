@@ -24,7 +24,7 @@ import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.status;
 import static org.apache.commons.lang3.StringUtils.isBlank;
-import static org.fcrepo.kernel.api.rdf.RdfContext.VERSIONS;
+import static org.fcrepo.kernel.api.RdfContext.VERSIONS;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;

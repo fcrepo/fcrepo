@@ -34,6 +34,7 @@ import static com.hp.hpl.jena.sparql.graph.GraphFactory.createDefaultGraph;
  * after exhaustion, sets containing (A - (A ∩ B)) and (A ∩ B) are available.
  *
  * @author ajs6f
+ * @author acoburn
  * @since Oct 24, 2013
  */
 public class GraphDifferencer {

@@ -25,6 +25,7 @@ import java.util.List;
 
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
+import org.fcrepo.kernel.api.RdfStream;
 import org.junit.Test;
 
 /**

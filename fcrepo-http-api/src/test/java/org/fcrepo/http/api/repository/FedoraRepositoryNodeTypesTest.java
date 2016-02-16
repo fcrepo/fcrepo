@@ -15,6 +15,7 @@
  */
 package org.fcrepo.http.api.repository;
 
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.junit.Assert.assertEquals;
@@ -34,8 +35,9 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import com.hp.hpl.jena.graph.Node;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-import org.fcrepo.kernel.api.rdf.RdfStream;
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.junit.Before;
@@ -56,7 +58,9 @@ public class FedoraRepositoryNodeTypesTest {
     @Mock
     private InputStream mockInputStream;
 
-    private final RdfStream mockRdfStream = new DefaultRdfStream();
+    private final Node testSubject = createURI("subject");
+
+    private final RdfStream mockRdfStream = new DefaultRdfStream(testSubject);
 
     private Session mockSession;
 
@@ -93,10 +97,10 @@ public class FedoraRepositoryNodeTypesTest {
         when(mockNodes.getNodeTypes(mockSession)).thenReturn(mockRdfStream);
 
         final Response response = testObj.getNodeTypes();
-        final RdfStream nodeTypes = (RdfStream) response.getEntity();
+        final RdfNamespacedStream nodeTypes = (RdfNamespacedStream) response.getEntity();
 
         assertTrue("Contains Warning header", response.getHeaders().containsKey("Warning"));
-        assertEquals("Got wrong triples!", mockRdfStream, nodeTypes);
+        assertEquals("Got wrong triples!", mockRdfStream, nodeTypes.stream);
 
     }
 

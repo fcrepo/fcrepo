@@ -16,6 +16,7 @@
 package org.fcrepo.integration.kernel.modeshape;
 
 import static java.net.URI.create;
+import static java.util.EnumSet.noneOf;
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
@@ -42,12 +43,11 @@ import static org.fcrepo.kernel.api.RdfLexicon.MIX_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.MODE_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.fcrepo.kernel.api.rdf.RdfContext.PROPERTIES;
-import static org.fcrepo.kernel.api.rdf.RdfContext.REFERENCES;
-import static org.fcrepo.kernel.api.rdf.RdfContext.RDF_TYPE;
-import static org.fcrepo.kernel.api.rdf.RdfContext.ROOT;
-import static org.fcrepo.kernel.api.rdf.RdfContext.VERSIONS;
-import static org.fcrepo.kernel.api.rdf.RdfCollectors.toModel;
+import static org.fcrepo.kernel.api.RdfContext.INBOUND_REFERENCES;
+import static org.fcrepo.kernel.api.RdfContext.PROPERTIES;
+import static org.fcrepo.kernel.api.RdfContext.SERVER_MANAGED;
+import static org.fcrepo.kernel.api.RdfContext.VERSIONS;
+import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedPredicate.uncheck;
 import static org.junit.Assert.assertEquals;
@@ -94,7 +94,8 @@ import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.api.services.ContainerService;
 import org.fcrepo.kernel.api.services.VersionService;
-import org.fcrepo.kernel.api.rdf.RdfStream;
+import org.fcrepo.kernel.api.RdfContext;
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
@@ -193,7 +194,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     public void testRepositoryRootGraph() {
 
         final FedoraResource object = nodeService.find(session, "/");
-        final Graph graph = object.getTriples(subjects, ROOT).collect(toModel()).getGraph();
+        final Graph graph = object.getTriples(subjects, SERVER_MANAGED).collect(toModel()).getGraph();
 
         final Node s = createGraphSubjectNode(object);
 
@@ -215,7 +216,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final String pid = "/" + getRandomPid();
         final FedoraResource object =
             containerService.findOrCreate(session, pid);
-        final Graph graph = object.getTriples(subjects, PROPERTIES).collect(toModel()).getGraph();
+        final Graph graph = object.getTriples(subjects, SERVER_MANAGED).collect(toModel()).getGraph();
 
         // jcr property
         Node s = createGraphSubjectNode(object);
@@ -307,7 +308,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Node p = createProperty(RDF_NAMESPACE + "type").asNode();
         final Node o = createProperty("info:fedora/test/aSupertype").asNode();
         assertTrue("supertype test:aSupertype not found inherited in test:testInher!",
-                object.getTriples(subjects, RDF_TYPE).collect(toModel()).getGraph().contains(s, p, o));
+                object.getTriples(subjects, PROPERTIES).collect(toModel()).getGraph().contains(s, p, o));
     }
 
     @Test
@@ -358,12 +359,13 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testUpdatingObjectGraph() throws MalformedRdfException, AccessDeniedException {
 
+        final Node subject = createURI("info:fedora/testObjectGraphUpdates");
         final FedoraResource object =
             containerService.findOrCreate(session, "/testObjectGraphUpdates");
 
         object.updateProperties(subjects, "INSERT { " + "<"
                 + createGraphSubjectNode(object).getURI() + "> "
-                + "<info:fcrepo/zyx> \"a\" } WHERE {} ", new DefaultRdfStream());
+                + "<info:fcrepo/zyx> \"a\" } WHERE {} ", object.getTriples(subjects, noneOf(RdfContext.class)));
 
         // jcr property
         final Resource s = createResource(createGraphSubjectNode(object).getURI());
@@ -378,7 +380,7 @@ public class FedoraResourceImplIT extends AbstractIT {
                 + createGraphSubjectNode(object).getURI() + "> "
                 + "<info:fcrepo/zyx> \"b\" } " + "WHERE { " + "<"
                 + createGraphSubjectNode(object).getURI() + "> "
-                + "<info:fcrepo/zyx> ?o } ", DefaultRdfStream.fromModel(model));
+                + "<info:fcrepo/zyx> ?o } ", DefaultRdfStream.fromModel(subject, model));
 
         model = object.getTriples(subjects, PROPERTIES).collect(toModel());
 
@@ -461,7 +463,7 @@ public class FedoraResourceImplIT extends AbstractIT {
                         + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n"
                         + "PREFIX fedora: <" + REPOSITORY_NAMESPACE + ">\n"
                         + "INSERT { <> fedora:isPartOf <" + subjects.toDomain("/some-path") + ">}"
-                        + "WHERE { }", new DefaultRdfStream());
+                        + "WHERE { }", object.getTriples(subjects, noneOf(RdfContext.class)));
     }
 
     @Test(expected = AccessDeniedException.class)
@@ -472,7 +474,7 @@ public class FedoraResourceImplIT extends AbstractIT {
             object.updateProperties(
                     subjects,
                     "INSERT { <> <http://purl.org/dc/elements/1.1/title> \"test-original\". }"
-                            + " WHERE { }", new DefaultRdfStream());
+                            + " WHERE { }", object.getTriples(subjects, noneOf(RdfContext.class)));
         } catch (final AccessDeniedException e) {
             fail("Should fail at update, not create property");
         }
@@ -486,7 +488,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         object.updateProperties(
                 subjects,
                 "INSERT { <> <http://purl.org/dc/elements/1.1/title> \"test-update\". }"
-                        + " WHERE { }", new DefaultRdfStream());
+                        + " WHERE { }", object.getTriples(subjects, noneOf(RdfContext.class)));
     }
 
     @Test (expected = IllegalArgumentException.class)
@@ -498,7 +500,7 @@ public class FedoraResourceImplIT extends AbstractIT {
                 subjects,
                 "INSERT { <> <http://myurl.org/title/> \"fancy title\" . \n" +
                 " <> <http://myurl.org/title/> \"fancy title 2\" . } WHERE { }",
-                new DefaultRdfStream());
+                object.getTriples(subjects, noneOf(RdfContext.class)));
     }
 
     @Test (expected = InvalidPrefixException.class)
@@ -510,12 +512,12 @@ public class FedoraResourceImplIT extends AbstractIT {
                 subjects,
                 "PREFIX pcdm: <http://pcdm.org/models#>\n"
                         + "INSERT { <> a pcdm:Object}\n"
-                        + "WHERE { }", new DefaultRdfStream());
+                        + "WHERE { }", object.getTriples(subjects, noneOf(RdfContext.class)));
         object.updateProperties(
                 subjects,
                 "PREFIX pcdm: <http://garbage.org/models#>\n"
                         + "INSERT { <> a pcdm:Garbage}\n"
-                        + "WHERE { }", new DefaultRdfStream());
+                        + "WHERE { }", object.getTriples(subjects, noneOf(RdfContext.class)));
     }
 
     @Test
@@ -526,7 +528,7 @@ public class FedoraResourceImplIT extends AbstractIT {
                 subjects,
                 "INSERT { <> <http://myurl.org/title> \"fancy title/\" . \n" +
                 " <> <http://myurl.org/title> \"fancy title 2<br/>\" . } WHERE { }",
-                new DefaultRdfStream());
+                object.getTriples(subjects, noneOf(RdfContext.class)));
     }
 
     @Test
@@ -539,7 +541,7 @@ public class FedoraResourceImplIT extends AbstractIT {
                         "}; INSERT DATA {" +
                         "<> <http://purl.org/dc/elements/1.1/title> \"Example Managed binary datastream\" ." +
                         "}",
-                new DefaultRdfStream());
+                object.getTriples(subjects, noneOf(RdfContext.class)));
     }
 
     @Test (expected = IllegalArgumentException.class)
@@ -552,7 +554,7 @@ public class FedoraResourceImplIT extends AbstractIT {
                         "}; INSERT DATA {" +
                         "<> <http://purl.org/dc/elements/1.1/title/> \"Example Managed binary datastream\" ." +
                         "}",
-                new DefaultRdfStream());
+                object.getTriples(subjects, noneOf(RdfContext.class)));
     }
 
     @Test
@@ -563,7 +565,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         object.updateProperties(
                 subjects,
                 "INSERT { <> <http://myurl.org/title> \"5\" . } WHERE { }",
-                new DefaultRdfStream());
+                object.getTriples(subjects, noneOf(RdfContext.class)));
     }
 
     @Test
@@ -575,7 +577,7 @@ public class FedoraResourceImplIT extends AbstractIT {
                 subjects,
                 "PREFIX dsc:<http://myurl.org/title> \n" +
                         "INSERT { <> dsc:p \"ccc\" } WHERE { }",
-                new DefaultRdfStream());
+                object.getTriples(subjects, noneOf(RdfContext.class)));
     }
 
     @Test
@@ -585,7 +587,8 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         object.updateProperties(subjects, "INSERT { <"
                 + createGraphSubjectNode(object).getURI() + "> <" + RDF.type
-                + "> <http://some/uri> } WHERE { }", new DefaultRdfStream());
+                + "> <http://some/uri> } WHERE { }", object.getTriples(subjects,
+                    noneOf(RdfContext.class)));
         assertTrue(object.getNode().isNodeType("{http://some/}uri"));
     }
 
@@ -596,12 +599,12 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         object.updateProperties(subjects, "INSERT { <"
                 + createGraphSubjectNode(object).getURI() + "> <" + RDF.type
-                + "> <http://some/uri> } WHERE { }", object.getTriples(subjects, RDF_TYPE));
+                + "> <http://some/uri> } WHERE { }", object.getTriples(subjects, PROPERTIES));
         assertTrue(object.getNode().isNodeType("{http://some/}uri"));
 
         object.updateProperties(subjects, "DELETE { <"
                 + createGraphSubjectNode(object).getURI() + "> <" + RDF.type
-                + "> <http://some/uri> } WHERE { }", object.getTriples(subjects, RDF_TYPE));
+                + "> <http://some/uri> } WHERE { }", object.getTriples(subjects, PROPERTIES));
         assertFalse(object.getNode().isNodeType("{http://some/}uri"));
     }
 
@@ -628,7 +631,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         session.save();
 
-        final Model model = object.getTriples(subjects, REFERENCES).collect(toModel());
+        final Model model = object.getTriples(subjects, INBOUND_REFERENCES).collect(toModel());
 
         assertTrue(
             model.contains(subjects.reverse().convert(subject),
@@ -678,7 +681,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final String pid = getRandomPid();
         final Container object = containerService.findOrCreate(session, pid);
         final RdfStream triples = object.getTriples(subjects, PROPERTIES);
-        final Model model = triples.asModel();
+        final Model model = triples.collect(toModel());
 
         final Resource hashResource = createResource(createGraphSubjectNode(object).getURI() + "#foo");
         final Property dcTitle = model.createProperty("http://purl.org/dc/elements/1.1/title");
@@ -690,7 +693,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         final Model updatedModel = object.getTriples(subjects, PROPERTIES).collect(toModel());
         updatedModel.remove(hashResource, dcTitle, titleValue);
-        object.replaceProperties(subjects, updatedModel, object.getTriples(subjects, PROPERTIES);)
+        object.replaceProperties(subjects, updatedModel, object.getTriples(subjects, PROPERTIES));
         assertEquals(0, object.getNode().getNode("#").getNodes().getSize());
     }
 
@@ -937,7 +940,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         session.save();
 
-        final Model model1 = referent1.getTriples(subjects, REFERENCES).collect(toModel());
+        final Model model1 = referent1.getTriples(subjects, INBOUND_REFERENCES).collect(toModel());
 
         assertTrue(model1.contains(subjects.reverse().convert(subject),
                 createProperty("info:fedora/test/fakeRel"),
@@ -950,7 +953,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         // This is the test! Ensure that only the delete resource is removed from the "subject" container.
         referent2.delete();
 
-        final Model model2 = referent1.getTriples(subjects, REFERENCES).collect(toModel());
+        final Model model2 = referent1.getTriples(subjects, INBOUND_REFERENCES).collect(toModel());
 
         assertTrue(model2.contains(subjects.reverse().convert(subject),
             createProperty("info:fedora/test/fakeRel"),

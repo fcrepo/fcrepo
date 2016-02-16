@@ -64,7 +64,9 @@ public class FedoraRepositoryNodeTypes extends AbstractResource {
     @Timed
     @HtmlTemplate("jcr:nodetypes")
     public Response getNodeTypes() {
-        return ok(nodeService.getNodeTypes(session).session(session))
+        return ok(new RdfNamespacedStream(
+                      nodeService.getNodeTypes(session),
+                      getNamespaces(session)))
             .header("Warning", "This endpoint is deprecated and will be removed in the 4.6.0 release.").build();
     }
 
