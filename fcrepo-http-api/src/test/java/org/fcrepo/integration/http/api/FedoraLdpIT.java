@@ -2219,4 +2219,13 @@ public class FedoraLdpIT extends AbstractResourceIT {
             }
         }
     }
+
+    @Test
+    public void testPathsWithBrackets() {
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(deleteObjMethod("%5bfoo")));
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(getObjMethod("%5bfoo")));
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(patchObjMethod("%5bfoo")));
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(postObjMethod("%5bfoo")));
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(putObjMethod("%5bfoo")));
+    }
 }
