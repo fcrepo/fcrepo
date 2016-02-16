@@ -91,6 +91,7 @@ import org.fcrepo.kernel.api.services.VersionService;
 import org.fcrepo.kernel.api.utils.iterators.RdfStream;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
+import org.fcrepo.kernel.modeshape.rdf.impl.HashRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.ReferencesRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.RootRdfContext;
@@ -671,6 +672,28 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     }
 
+    @Test
+    public void testReplacePropertiesHashURIs() throws RepositoryException {
+        final String pid = getRandomPid();
+        final Container object = containerService.findOrCreate(session, pid);
+        final RdfStream triples = object.getTriples(subjects, PropertiesRdfContext.class);
+        final Model model = triples.asModel();
+
+        final Resource hashResource = createResource(createGraphSubjectNode(object).getURI() + "#foo");
+        final Property dcTitle = model.createProperty("http://purl.org/dc/elements/1.1/title");
+        final Literal titleValue = model.createLiteral("xyz");
+
+        model.add(hashResource, dcTitle, titleValue);
+        object.replaceProperties(subjects, model, object.getTriples(subjects, PropertiesRdfContext.class));
+        assertEquals(1, object.getNode().getNode("#").getNodes().getSize());
+
+        final Model updatedModel = object.getTriples(subjects, PropertiesRdfContext.class)
+                .concat(object.getTriples(subjects, HashRdfContext.class)).asModel();
+        updatedModel.remove(hashResource, dcTitle, titleValue);
+        object.replaceProperties(subjects, updatedModel, object.getTriples(subjects, PropertiesRdfContext.class)
+                                                          .concat(object.getTriples(subjects, HashRdfContext.class)));
+        assertEquals(0, object.getNode().getNode("#").getNodes().getSize());
+    }
 
     @Test
     public void testDeleteObject() throws RepositoryException {
