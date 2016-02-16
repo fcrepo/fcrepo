@@ -581,8 +581,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             if (node.hasNode("#")) {
                 for (final Iterator<Node> hashNodes = node.getNode("#").getNodes(); hashNodes.hasNext(); ) {
                     final Node n = hashNodes.next();
-                    final Iterator userProps = Iterators.filter(n.getProperties(),
-                            p -> !isManagedPredicate.test(propertyConverter.convert((Property)p)));
+                    final Iterator<Property> userProps = Iterators.filter((Iterator<Property>)n.getProperties(),
+                            p -> !isManagedPredicate.test(propertyConverter.convert(p)));
                     if ( !userProps.hasNext() ) {
                         LOGGER.debug("Removing empty hash URI node: {}", n.getName());
                         n.remove();
@@ -590,7 +590,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                 }
             }
         } catch (RepositoryException ex) {
-            LOGGER.warn("Error removing empty fragments: {}", ex.toString());
+            throw new RepositoryRuntimeException("Error removing empty fragments", ex);
         }
     }
 
