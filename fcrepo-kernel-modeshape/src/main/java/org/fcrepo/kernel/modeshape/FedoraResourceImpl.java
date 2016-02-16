@@ -27,6 +27,7 @@ import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.joining;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_MIXIN_TYPES;
@@ -86,6 +87,7 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.utils.iterators.GraphDifferencingIterator;
 import org.fcrepo.kernel.api.utils.iterators.RdfStream;
+import org.fcrepo.kernel.modeshape.rdf.converters.PropertyConverter;
 import org.fcrepo.kernel.modeshape.utils.JcrPropertyStatementListener;
 import org.fcrepo.kernel.modeshape.utils.UncheckedPredicate;
 import org.fcrepo.kernel.modeshape.utils.iterators.RdfAdder;
@@ -110,6 +112,8 @@ import com.hp.hpl.jena.update.UpdateRequest;
 public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraResource {
 
     private static final Logger LOGGER = getLogger(FedoraResourceImpl.class);
+
+    private static final PropertyConverter propertyConverter = new PropertyConverter();
 
     protected Node node;
 
@@ -455,6 +459,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         model.setNsPrefixes(request.getPrefixMapping());
         execute(request, model);
 
+        removeEmptyFragments();
+
         listener.assertNoExceptions();
     }
 
@@ -563,8 +569,28 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             exceptions.append(e.getMessage());
         }
 
+        removeEmptyFragments();
+
         if (exceptions.length() > 0) {
             throw new MalformedRdfException(exceptions.toString());
+        }
+    }
+
+    private void removeEmptyFragments() {
+        try {
+            if (node.hasNode("#")) {
+                for (final Iterator<Node> hashNodes = node.getNode("#").getNodes(); hashNodes.hasNext(); ) {
+                    final Node n = hashNodes.next();
+                    final Iterator userProps = Iterators.filter(n.getProperties(),
+                            p -> !isManagedPredicate.test(propertyConverter.convert((Property)p)));
+                    if ( !userProps.hasNext() ) {
+                        LOGGER.debug("Removing empty hash URI node: {}", n.getName());
+                        n.remove();
+                    }
+                }
+            }
+        } catch (RepositoryException ex) {
+            LOGGER.warn("Error removing empty fragments: {}", ex.toString());
         }
     }
 
