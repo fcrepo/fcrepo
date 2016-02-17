@@ -54,8 +54,8 @@ public class PropertiesRdfContext extends NodeRdfContext {
                                 final IdentifierConverter<Resource, FedoraResource> idTranslator)
         throws RepositoryException {
         super(resource, idTranslator);
-        this.stream = triplesFromProperties(resource,
-                new PropertyToTriple(resource.getNode().getSession(), translator()));
+        concat(triplesFromProperties(resource,
+                new PropertyToTriple(resource.getNode().getSession(), translator())));
     }
 
     @SuppressWarnings("unchecked")

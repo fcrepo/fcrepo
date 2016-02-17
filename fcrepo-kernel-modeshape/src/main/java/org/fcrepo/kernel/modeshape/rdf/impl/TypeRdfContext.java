@@ -62,8 +62,8 @@ public class TypeRdfContext extends NodeRdfContext {
                 other.accept(create(subject(), type.asNode(), createURI(MIX_NAMESPACE + "versionable")));
             }
         }
-        this.stream = Stream.concat(
+        concat(Stream.concat(
                 resource.getTypes().stream().map(uri -> create(subject(), type.asNode(), createURI(uri.toString()))),
-                other.build());
+                other.build()));
     }
 }

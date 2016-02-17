@@ -27,7 +27,6 @@ import javax.jcr.RepositoryException;
 
 import java.util.Iterator;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 import static java.util.stream.Stream.of;
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDint;
@@ -64,12 +63,11 @@ public class ChildrenRdfContext extends NodeRdfContext {
 
             // Count the number of children
             final Iterator<FedoraResource> childrenCounter = resource().getChildren();
-            this.stream = Stream.concat(
-                    of(createNumChildrenTriple(Iterators.size(childrenCounter))),
-                    iteratorToStream(resource().getChildren()).map(child2triple));
+            concat(of(createNumChildrenTriple(Iterators.size(childrenCounter))));
+            concat(iteratorToStream(resource().getChildren()).map(child2triple));
 
         } else {
-            this.stream = of(createNumChildrenTriple(0));
+            concat(of(createNumChildrenTriple(0)));
         }
 
 

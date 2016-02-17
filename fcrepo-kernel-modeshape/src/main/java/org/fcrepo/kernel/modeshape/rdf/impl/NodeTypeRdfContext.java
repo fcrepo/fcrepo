@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
-import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.of;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
@@ -68,7 +67,7 @@ public class NodeTypeRdfContext extends DefaultRdfStream {
      */
     public NodeTypeRdfContext(final NodeTypeManager nodeTypeManager) throws RepositoryException {
         super(createURI("fedora:info/"));
-        this.stream = getNodeTypes(nodeTypeManager).flatMap(getTriplesFromNodeType);
+        concat(getNodeTypes(nodeTypeManager).flatMap(getTriplesFromNodeType));
     }
 
     /**
@@ -79,7 +78,7 @@ public class NodeTypeRdfContext extends DefaultRdfStream {
      */
     public NodeTypeRdfContext(final Stream<NodeType> nodeTypes) {
         super(createURI("fedora:info/"));
-        this.stream = nodeTypes.flatMap(getTriplesFromNodeType);
+        concat(nodeTypes.flatMap(getTriplesFromNodeType));
     }
 
     /**
@@ -90,12 +89,12 @@ public class NodeTypeRdfContext extends DefaultRdfStream {
      */
     public NodeTypeRdfContext(final NodeType nodeType) {
         super(createURI("fedora:info/"));
-        this.stream = getTriplesFromNodeType.apply(nodeType);
+        concat(getTriplesFromNodeType.apply(nodeType));
     }
 
     @SuppressWarnings("unchecked")
     private static Stream<NodeType> getNodeTypes(final NodeTypeManager manager) throws RepositoryException {
-         return concat(
+         return Stream.concat(
                 iteratorToStream(manager.getPrimaryNodeTypes()),
                 iteratorToStream(manager.getMixinNodeTypes()));
     }
@@ -104,8 +103,8 @@ public class NodeTypeRdfContext extends DefaultRdfStream {
         final Node nodeTypeResource = getResource(nodeType).asNode();
         final String nodeTypeName = nodeType.getName();
 
-        return concat(
-            concat(
+        return Stream.concat(
+            Stream.concat(
                 Arrays.stream(nodeType.getDeclaredSupertypes())
                     .map(uncheck((final NodeType x) -> {
                         final Node supertypeNode = getResource(x).asNode();
@@ -117,7 +116,7 @@ public class NodeTypeRdfContext extends DefaultRdfStream {
                 Arrays.stream(nodeType.getDeclaredChildNodeDefinitions())
                     .filter(isWildcardResidualDefinition.negate())
                     .flatMap((new NodeDefinitionToTriples(nodeTypeResource))::apply)),
-            concat(
+            Stream.concat(
                 Arrays.stream(nodeType.getDeclaredPropertyDefinitions())
                     .filter(isWildcardResidualDefinition.negate())
                     .flatMap((new PropertyDefinitionToTriples(nodeTypeResource))::apply),

@@ -69,7 +69,7 @@ public class LdpIsMemberOfRdfContext extends NodeRdfContext {
         if (container != null
                 && (container.hasType(LDP_DIRECT_CONTAINER) || container.hasType(LDP_INDIRECT_CONTAINER))
                 && container.hasProperty(LDP_IS_MEMBER_OF_RELATION)) {
-            this.stream = concatIsMemberOfRelation(container);
+            concat(concatIsMemberOfRelation(container));
         }
     }
 

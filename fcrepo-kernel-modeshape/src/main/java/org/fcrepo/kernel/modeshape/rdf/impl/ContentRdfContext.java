@@ -50,11 +50,11 @@ public class ContentRdfContext extends NodeRdfContext {
             final Node subject = uriFor(resource());
             final Node contentSubject = uriFor(contentNode);
             // add triples representing parent-to-content-child relationship
-            this.stream = of(create(subject, DESCRIBES.asNode(), contentSubject));
+            concat(of(create(subject, DESCRIBES.asNode(), contentSubject)));
 
         } else if (resource instanceof FedoraBinary) {
             final FedoraResource description = ((FedoraBinary) resource).getDescription();
-            this.stream = of(create(uriFor(resource), DESCRIBED_BY.asNode(), uriFor(description)));
+            concat(of(create(uriFor(resource), DESCRIBED_BY.asNode(), uriFor(description))));
         }
     }
 }

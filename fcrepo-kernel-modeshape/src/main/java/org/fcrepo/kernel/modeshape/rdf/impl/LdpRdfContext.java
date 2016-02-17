@@ -66,7 +66,7 @@ public class LdpRdfContext extends NodeRdfContext {
                 builder.accept(defaultContainerContext());
             }
         }
-        this.stream = builder.build();
+        concat(builder.build());
     }
 
     private Triple typeContext() {

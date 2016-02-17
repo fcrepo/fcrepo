@@ -51,6 +51,6 @@ public class AclRdfContext extends NodeRdfContext {
         } catch ( final AccessControlException ex ) {
             writable = false;
         }
-        this.stream = of(create(subject(), WRITABLE.asNode(), createLiteral(String.valueOf(writable), XSDboolean)));
+        concat(of(create(subject(), WRITABLE.asNode(), createLiteral(String.valueOf(writable), XSDboolean))));
     }
 }

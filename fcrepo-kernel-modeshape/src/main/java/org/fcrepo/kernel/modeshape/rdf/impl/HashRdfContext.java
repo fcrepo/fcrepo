@@ -58,9 +58,9 @@ public class HashRdfContext extends NodeRdfContext {
             throws RepositoryException {
         super(resource, idTranslator);
 
-        this.stream = getNodeStream(resource)
+        concat(getNodeStream(resource)
                 .flatMap(n -> nodeConverter.convert(n).getTriples(idTranslator, PROPERTIES))
-                .filter(IS_MANAGED_TRIPLE.negate());
+                .filter(IS_MANAGED_TRIPLE.negate()));
     }
 
     @SuppressWarnings("unchecked")

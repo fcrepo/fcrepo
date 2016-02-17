@@ -62,7 +62,7 @@ public class RootRdfContext extends NodeRdfContext {
         super(resource, idTranslator);
 
         if (resource().hasType(ROOT)) {
-            this.stream = getRepositoryTriples();
+            concat(getRepositoryTriples());
         }
     }
 

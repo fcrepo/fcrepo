@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
-import static java.util.stream.Stream.concat;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.modeshape.rdf.converters.ValueConverter.nodeForValue;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
@@ -66,7 +65,7 @@ public class ReferencesRdfContext extends NodeRdfContext {
         throws RepositoryException {
         super(resource, idTranslator);
         property2triple = new PropertyToTriple(resource.getNode().getSession(), idTranslator);
-        this.stream = putReferencesIntoContext(resource.getNode());
+        concat(putReferencesIntoContext(resource.getNode()));
     }
 
     private final Predicate<Triple> INBOUND = t -> {
@@ -78,7 +77,7 @@ public class ReferencesRdfContext extends NodeRdfContext {
        members of an IndirectContainer and generate the appropriate inbound references. */
     @SuppressWarnings("unchecked")
     private Stream<Triple> putReferencesIntoContext(final Node node) throws RepositoryException {
-        return concat(
+        return Stream.concat(
             getAllReferences(node).flatMap(property2triple),
             getAllReferences(node).flatMap(uncheck((final Property x) -> {
                     return iteratorToStream(new PropertyValueIterator(x.getParent().getProperties()))
@@ -93,6 +92,6 @@ public class ReferencesRdfContext extends NodeRdfContext {
 
     @SuppressWarnings("unchecked")
     private Stream<Property> getAllReferences(final Node node) throws RepositoryException {
-        return concat(iteratorToStream(node.getReferences()), iteratorToStream(node.getWeakReferences()));
+        return Stream.concat(iteratorToStream(node.getReferences()), iteratorToStream(node.getWeakReferences()));
     }
 }

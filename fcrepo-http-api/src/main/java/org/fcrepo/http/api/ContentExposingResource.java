@@ -18,6 +18,7 @@ package org.fcrepo.http.api;
 
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static java.util.EnumSet.of;
 import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.empty;
 import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
@@ -39,12 +40,13 @@ import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
-import static org.fcrepo.kernel.api.RdfContext.PROPERTIES;
-import static org.fcrepo.kernel.api.RdfContext.SERVER_MANAGED;
 import static org.fcrepo.kernel.api.RdfContext.EMBED_RESOURCES;
 import static org.fcrepo.kernel.api.RdfContext.INBOUND_REFERENCES;
-import static org.fcrepo.kernel.api.RdfContext.LDP_MEMBERSHIP;
 import static org.fcrepo.kernel.api.RdfContext.LDP_CONTAINMENT;
+import static org.fcrepo.kernel.api.RdfContext.LDP_MEMBERSHIP;
+import static org.fcrepo.kernel.api.RdfContext.MINIMAL;
+import static org.fcrepo.kernel.api.RdfContext.PROPERTIES;
+import static org.fcrepo.kernel.api.RdfContext.SERVER_MANAGED;
 import static org.fcrepo.kernel.modeshape.rdf.ManagedRdf.isManagedTriple;
 import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaces;
 
@@ -54,6 +56,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -242,15 +245,15 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         final List<Stream<Triple>> streams = new ArrayList<>();
 
-        streams.add(getTriples(PROPERTIES).filter(tripleFilter));
 
         if (returnPreference.getValue().equals("minimal")) {
+            streams.add(getTriples(of(PROPERTIES, MINIMAL)).filter(tripleFilter));
+
             if (ldpPreferences.prefersServerManaged()) {
-                streams.add(getTriples(SERVER_MANAGED)
-                    .filter(x -> x.getPredicate().equals(type) &&
-                            x.getObject().getURI().startsWith(LDP_NAMESPACE)));
+                streams.add(getTriples(of(SERVER_MANAGED, MINIMAL)));
             }
         } else {
+            streams.add(getTriples(PROPERTIES).filter(tripleFilter));
 
             // Additional server-managed triples about this resource
             if (ldpPreferences.prefersServerManaged()) {
@@ -359,6 +362,14 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                     .build();
 
         }
+
+    protected RdfStream getTriples(final EnumSet<RdfContext> x) {
+        return getTriples(resource(), x);
+    }
+
+    protected RdfStream getTriples(final FedoraResource resource, final EnumSet<RdfContext> x) {
+        return resource.getTriples(translator(), x);
+    }
 
     protected RdfStream getTriples(final RdfContext x) {
         return getTriples(resource(), x);

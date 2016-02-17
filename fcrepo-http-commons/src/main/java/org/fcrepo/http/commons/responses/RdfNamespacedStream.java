@@ -15,6 +15,8 @@
  */
 package org.fcrepo.http.commons.responses;
 
+import static java.util.Objects.requireNonNull;
+
 import java.util.Map;
 
 import org.fcrepo.kernel.api.RdfStream;
@@ -38,6 +40,8 @@ public class RdfNamespacedStream {
      * @param namespaces the namespace mapping
      */
     public RdfNamespacedStream(final RdfStream stream, final Map<String, String> namespaces) {
+        requireNonNull(stream);
+        requireNonNull(namespaces);
         this.stream = stream;
         this.namespaces = namespaces;
     }

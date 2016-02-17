@@ -74,8 +74,8 @@ public class LdpContainerRdfContext extends NodeRdfContext {
             throws RepositoryException {
         super(resource, idTranslator);
 
-        this.stream = getMembershipContext(resource)
-                .flatMap(uncheck(p -> memberRelations(nodeConverter.convert(p.getParent()))));
+        concat(getMembershipContext(resource)
+                .flatMap(uncheck(p -> memberRelations(nodeConverter.convert(p.getParent())))));
     }
 
     @SuppressWarnings("unchecked")

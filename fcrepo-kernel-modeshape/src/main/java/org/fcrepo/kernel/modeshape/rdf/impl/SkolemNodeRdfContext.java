@@ -66,8 +66,8 @@ public class SkolemNodeRdfContext extends NodeRdfContext {
             throws RepositoryException {
         super(resource, idTranslator);
 
-        this.stream = getBlankNodes(resource).flatMap(n -> nodeConverter.convert(n).getTriples(idTranslator,
-                    PROPERTIES));
+        concat(getBlankNodes(resource).flatMap(n -> nodeConverter.convert(n).getTriples(idTranslator,
+                    PROPERTIES)));
     }
 
     @SuppressWarnings("unchecked")

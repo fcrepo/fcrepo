@@ -54,7 +54,7 @@ public class ParentRdfContext extends NodeRdfContext {
             // The parent node of a frozen node for a versionable resource is not a node we want to link to because it
             // is in the jcr:system space
             if (!resource().isFrozenResource() || !resource().getUnfrozenResource().hasType(VERSIONABLE)) {
-                this.stream = of(create(subject(), HAS_PARENT.asNode(), uriFor(resource().getContainer())));
+                concat(of(create(subject(), HAS_PARENT.asNode(), uriFor(resource().getContainer()))));
             }
         }
     }

@@ -59,8 +59,6 @@ public class VersionsRdfContext extends DefaultRdfStream {
 
     private final IdentifierConverter<Resource, FedoraResource> idTranslator;
 
-    private final Node subject;
-
     private static final Logger LOGGER = getLogger(VersionsRdfContext.class);
 
     /**
@@ -75,9 +73,8 @@ public class VersionsRdfContext extends DefaultRdfStream {
         throws RepositoryException {
         super(idTranslator.reverse().convert(resource).asNode());
         this.idTranslator = idTranslator;
-        this.subject = idTranslator.reverse().convert(resource).asNode();
         this.versionHistory = resource.getVersionHistory();
-        this.stream = versionTriples();
+        concat(versionTriples());
     }
 
     @SuppressWarnings("unchecked")
@@ -90,22 +87,22 @@ public class VersionsRdfContext extends DefaultRdfStream {
                 final String[] labels = versionHistory.getVersionLabels(v);
                 if (labels.length == 0) {
                     LOGGER.warn("An unlabeled version for {} was found!  Omitting from version listing!",
-                        subject.getURI());
+                        topic().getURI());
                 } else if (labels.length > 1) {
-                    LOGGER.info("Multiple version labels found for {}!  Using first label, \"{}\".", subject.getURI());
+                    LOGGER.info("Multiple version labels found for {}!  Using first label, \"{}\".", topic().getURI());
                 }
                 return labels.length > 0;
             }))
             .flatMap(UncheckedFunction.uncheck((final Version v) -> {
                 final String[] labels = versionHistory.getVersionLabels(v);
                 final Node versionSubject
-                        = createProperty(subject + "/" + FCR_VERSIONS + "/" + labels[0]).asNode();
+                        = createProperty(topic() + "/" + FCR_VERSIONS + "/" + labels[0]).asNode();
 
                 return Stream.concat(
                         Arrays.stream(labels).map(x -> create(versionSubject, HAS_VERSION_LABEL.asNode(),
                                 createLiteral(x))),
 
-                        Stream.of(create(subject, HAS_VERSION.asNode(), versionSubject),
+                        Stream.of(create(topic(), HAS_VERSION.asNode(), versionSubject),
                             create(versionSubject, CREATED_DATE.asNode(),
                                 createTypedLiteral(v.getCreated()).asNode())));
             }));

@@ -65,7 +65,7 @@ public class FixityRdfContext extends NodeRdfContext {
                             final long size) {
         super(resource, idTranslator);
 
-        this.stream = StreamSupport.stream(blobs.spliterator(), false).flatMap(uncheck(blob -> {
+        concat(StreamSupport.stream(blobs.spliterator(), false).flatMap(uncheck(blob -> {
             final com.hp.hpl.jena.graph.Node resultSubject =
                     createURI(subject().getURI() + "#fixity/" + Calendar.getInstance().getTimeInMillis());
             final List<Triple> b = new ArrayList<>();
@@ -81,7 +81,7 @@ public class FixityRdfContext extends NodeRdfContext {
             b.add(create(resultSubject, HAS_SIZE.asNode(),createTypedLiteral(blob.getComputedSize()).asNode()));
 
             return b.stream();
-        }));
+        })));
     }
 
 }

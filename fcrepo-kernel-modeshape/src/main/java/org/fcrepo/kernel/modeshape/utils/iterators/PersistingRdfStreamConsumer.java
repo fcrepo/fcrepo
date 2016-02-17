@@ -117,11 +117,6 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
             }
             return true;
         };
-        // we fail on non-Fedora RDF
-//new RdfAdder(idTranslator, getSession(), replacementStream
-        //-                    .withThisContext(differencer.notCommon())).consume();
-//+            new RdfAdder(idTranslator, getSession(), new DefaultRdfStream(replacementStream.topic(),
-            //+                        differencer.notCommon())).consume();
 
         this.stream = new DefaultRdfStream(stream.topic(), stream.filter(isFedoraSubjectTriple));
 

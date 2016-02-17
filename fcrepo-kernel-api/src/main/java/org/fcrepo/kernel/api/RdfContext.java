@@ -23,6 +23,9 @@ package org.fcrepo.kernel.api;
  */
 public enum RdfContext {
 
+    /* A Minimal representation of Rdf Triples */
+    MINIMAL,
+
     /* User-created properties Context */
     PROPERTIES,
 

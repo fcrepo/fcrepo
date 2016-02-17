@@ -217,13 +217,7 @@ public class FedoraLdpTest {
     @SuppressWarnings("unchecked")
     private FedoraResource setResource(final Class<? extends FedoraResource> klass) throws RepositoryException {
         final FedoraResource mockResource = mock(klass);
-
-        doReturn(mockResource).when(testObj).resource();
-        when(mockResource.getNode()).thenReturn(mockNode);
-        when(mockResource.getPath()).thenReturn(path);
-        when(mockNode.getPath()).thenReturn(path);
-        when(mockResource.getEtagValue()).thenReturn("");
-        when(mockResource.getTriples(eq(idTranslator), any(RdfContext.class))).thenAnswer(new Answer<RdfStream>() {
+        final Answer answer = new Answer<RdfStream>() {
             @Override
             public RdfStream answer(final InvocationOnMock invocationOnMock) {
                 return new DefaultRdfStream(createURI(invocationOnMock.getMock().toString()),
@@ -232,7 +226,15 @@ public class FedoraLdpTest {
                                                    createURI(invocationOnMock.getArguments()[1].toString()))
                         ));
             }
-        });
+        };
+
+        doReturn(mockResource).when(testObj).resource();
+        when(mockResource.getNode()).thenReturn(mockNode);
+        when(mockResource.getPath()).thenReturn(path);
+        when(mockNode.getPath()).thenReturn(path);
+        when(mockResource.getEtagValue()).thenReturn("");
+        when(mockResource.getTriples(eq(idTranslator), any(EnumSet.class))).thenAnswer(answer);
+        when(mockResource.getTriples(eq(idTranslator), any(RdfContext.class))).thenAnswer(answer);
 
         return mockResource;
     }
@@ -452,7 +454,8 @@ public class FedoraLdpTest {
         final Model model = entity.stream.collect(toModel());
         final List<String> rdfNodes = transform(newArrayList(model.listObjects()), RDFNode::toString);
 
-        assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of("PROPERTIES")));
+        assertTrue("Expected RDF contexts missing", rdfNodes.stream()
+                .filter(x -> x.contains("PROPERTIES") && x.contains("MINIMAL")).findFirst().isPresent());
 
         assertFalse("Included non-minimal contexts",
                 rdfNodes.contains("LDP_MEMBERSHIP"));
