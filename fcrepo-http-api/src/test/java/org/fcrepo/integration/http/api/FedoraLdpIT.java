@@ -85,6 +85,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -109,6 +110,7 @@ import java.util.Optional;
 
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.Variant;
 
 import com.google.common.collect.Iterators;
@@ -2153,6 +2155,47 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableGraphStore graph = getGraphStore(getObjMethod(pid))) {
             assertFalse("Found the literal we tried to delete!", graph.contains(ANY,createURI(location), DC_TITLE,
                     createLiteral(longLiteral)));
+        }
+    }
+
+    @Test
+    public void testCreationResponseDefault() throws Exception {
+        testCreationResponse(null, null, CREATED, "text/plain");
+        testCreationResponse(null, "application/ld+json", NOT_ACCEPTABLE, "text/html");
+    }
+
+    @Test
+    public void testCreationResponseMinimal() throws Exception {
+        testCreationResponse("minimal", null, CREATED, null);
+        testCreationResponse("minimal", "application/ld+json", CREATED, null);
+    }
+
+    @Test
+    public void testCreationResponseRepresentation() throws Exception {
+        testCreationResponse("representation", null, CREATED, "text/turtle");
+        testCreationResponse("representation", "application/ld+json", CREATED, "application/ld+json");
+    }
+
+    private void testCreationResponse(final String prefer,
+                                      final String accept,
+                                      final Status expectedStatus,
+                                      final String expectedType) throws Exception {
+
+        final HttpPost createMethod = new HttpPost(serverAddress);
+        if (prefer != null) {
+            createMethod.addHeader("Prefer", "return=" + prefer);
+        }
+        if (accept != null) {
+            createMethod.addHeader("Accept", accept);
+        }
+
+        try (final CloseableHttpResponse createResponse = execute(createMethod)) {
+            assertEquals(expectedStatus.getStatusCode(), createResponse.getStatusLine().getStatusCode());
+            if (expectedType == null) {
+                assertNull(createResponse.getFirstHeader("Content-Type"));
+            } else {
+                assertTrue(createResponse.getFirstHeader("Content-Type").getValue().startsWith(expectedType));
+            }
         }
     }
 }
