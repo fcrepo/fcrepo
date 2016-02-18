@@ -35,15 +35,15 @@
             <jdbc:data-source jndi-url="jndi:jdbc/ispn"/>
           -->
           <!-- custom database connection pool -->
-          <jdbc:connection-pool connection-url="jdbc:mysql://${fcrepo.ispn.mysql.host:localhost}:${fcrepo.ispn.mysql.port:3306}/ispn?createDatabaseIfNotExist=true"
-                                driver="com.mysql.jdbc.Driver"
-                                username="${fcrepo.ispn.mysql.username}"
-                                password="${fcrepo.ispn.mysql.password}"/>
+          <jdbc:connection-pool connection-url="jdbc:postgresql://${fcrepo.ispn.postgresql.host:localhost}:${fcrepo.ispn.postgresql.port:5432}/ispn"
+                                driver="org.postgresql.Driver"
+                                username="${fcrepo.ispn.postgresql.username}"
+                                password="${fcrepo.ispn.postgresql.password}"/>
           <jdbc:string-keyed-table prefix="ispn_entry"
                                    create-on-start="true"
                                    drop-on-exit="false">
             <jdbc:id-column name="id" type="VARCHAR(255)"/>
-            <jdbc:data-column name="datum" type="LONGBLOB"/>
+            <jdbc:data-column name="datum" type="BYTEA"/>
             <jdbc:timestamp-column name="version" type="BIGINT"/>
           </jdbc:string-keyed-table>
 
