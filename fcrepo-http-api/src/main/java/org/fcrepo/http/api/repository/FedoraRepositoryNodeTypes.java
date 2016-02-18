@@ -63,7 +63,7 @@ public class FedoraRepositoryNodeTypes extends AbstractResource {
     @HtmlTemplate("jcr:nodetypes")
     public Response getNodeTypes() {
         return ok(nodeService.getNodeTypes(session).session(session))
-            .header("Warning", "This endpoint is deprecated and will be removed in a future version.").build();
+            .header("Warning", "This endpoint is deprecated and will be removed in the 4.6.0 release.").build();
     }
 
 }
