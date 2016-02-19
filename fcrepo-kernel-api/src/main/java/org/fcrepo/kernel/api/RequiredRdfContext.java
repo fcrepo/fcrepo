@@ -21,7 +21,7 @@ package org.fcrepo.kernel.api;
  * @author acoburn
  * @since Dec 4, 2015
  */
-public enum RdfContext {
+public enum RequiredRdfContext implements TripleCategory {
 
     /* A Minimal representation of Rdf Triples */
     MINIMAL,

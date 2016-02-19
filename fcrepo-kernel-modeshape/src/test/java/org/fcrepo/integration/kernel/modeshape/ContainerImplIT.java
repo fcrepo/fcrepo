@@ -16,10 +16,10 @@
 package org.fcrepo.integration.kernel.modeshape;
 
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
-import static java.util.EnumSet.noneOf;
+import static java.util.Collections.emptySet;
 import static java.util.regex.Pattern.compile;
 import static org.apache.commons.io.IOUtils.toInputStream;
-import static org.fcrepo.kernel.api.RdfContext.PROPERTIES;
+import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getReferencePropertyName;
 import static org.junit.Assert.assertEquals;
@@ -40,7 +40,6 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.services.ContainerService;
-import org.fcrepo.kernel.api.RdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 
 import org.junit.Before;
@@ -201,7 +200,7 @@ public class ContainerImplIT extends AbstractIT {
         try {
             object.updateProperties(subjects, "INSERT DATA { <> <info:some-property> <relative-url> . \n" +
                     "<> <info:some-other-property> <another-relative-url> }",
-                    object.getTriples(subjects, noneOf(RdfContext.class)));
+                    object.getTriples(subjects, emptySet()));
         } catch (final MalformedRdfException ex) {
             e = ex;
         }
@@ -224,7 +223,7 @@ public class ContainerImplIT extends AbstractIT {
                 "TTL");
         MalformedRdfException e = null;
         try {
-            object.replaceProperties(subjects, model, object.getTriples(subjects, noneOf(RdfContext.class)));
+            object.replaceProperties(subjects, model, object.getTriples(subjects, emptySet()));
         } catch (final MalformedRdfException ex) {
             e = ex;
         }
