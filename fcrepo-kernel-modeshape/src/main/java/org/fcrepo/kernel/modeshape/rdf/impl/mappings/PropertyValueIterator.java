@@ -65,7 +65,10 @@ public class PropertyValueIterator extends AbstractIterator<Value> {
 
                 if (property.isMultiple()) {
                     currentValues = Iterators.forArray(property.getValues());
-                    return currentValues.next();
+                    if (currentValues.hasNext()) {
+                        return currentValues.next();
+                    }
+                    return endOfData();
                 }
                 currentValues = null;
                 return property.getValue();

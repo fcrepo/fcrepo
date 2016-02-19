@@ -47,6 +47,10 @@ public class PropertyValueIteratorTest {
     @Mock
     private Property mockMultivaluedProperty;
 
+
+    @Mock
+    private Property mockMultivaluedEmptyProperty;
+
     @Mock
     private Value value1;
 
@@ -65,6 +69,9 @@ public class PropertyValueIteratorTest {
         when(mockMultivaluedProperty.isMultiple()).thenReturn(true);
         when(mockMultivaluedProperty.getValues()).thenReturn(new Value[] { value2, value3 });
         propertyIterator = of(mockProperty, mockMultivaluedProperty).iterator();
+
+        when(mockMultivaluedEmptyProperty.isMultiple()).thenReturn(true);
+        when(mockMultivaluedEmptyProperty.getValues()).thenReturn(new Value[] {});
     }
 
     @Test
@@ -78,6 +85,13 @@ public class PropertyValueIteratorTest {
         testObj = new PropertyValueIterator(mockMultivaluedProperty);
         final List<Value> values = newArrayList(testObj);
         assertTrue(values.containsAll(of(value2, value3)));
+    }
+
+    @Test
+    public void testMultiValueSingleEmptyProperty() {
+        testObj = new PropertyValueIterator(mockMultivaluedEmptyProperty);
+        final List<Value> values = newArrayList(testObj);
+        assertTrue(values.isEmpty());
     }
 
     @Test
