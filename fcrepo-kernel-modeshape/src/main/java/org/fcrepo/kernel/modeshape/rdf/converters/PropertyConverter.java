@@ -124,7 +124,7 @@ public class PropertyConverter extends Converter<javax.jcr.Property, Property> {
 
         // log warning if the user-supplied namespace doesn't match value from predicate.getNameSpace(),
         // e.g., if the Jena method returns "http://" for "http://myurl.org" (no terminating character).
-        if (namespaceMapping != null && !namespaceMapping.containsValue(rdfNamespace)) {
+        if (namespaceMapping != null && namespaceMapping.size() > 0 && !namespaceMapping.containsValue(rdfNamespace)) {
             LOGGER.warn("The namespace of predicate: {} was possibly misinterpreted as: {}."
                     , predicate, rdfNamespace);
         }
