@@ -47,13 +47,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anySetOf;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
@@ -93,15 +93,16 @@ import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-import org.fcrepo.kernel.api.RdfContext;
+import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.ContainerService;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.invocation.InvocationOnMock;
+import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -117,6 +118,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
  * @author cabeer
  * @author ajs6f
  */
+@RunWith(MockitoJUnitRunner.class)
 public class FedoraLdpTest {
 
     private final String path = "/some/path";
@@ -173,7 +175,6 @@ public class FedoraLdpTest {
 
     @Before
     public void setUp() throws RepositoryException {
-        initMocks(this);
         testObj = spy(new FedoraLdp(path));
 
         mockResponse = new MockHttpServletResponse();
@@ -214,27 +215,21 @@ public class FedoraLdpTest {
         when(mockHeaders.getHeaderString("user-agent")).thenReturn("Test UserAgent");
     }
 
-    @SuppressWarnings("unchecked")
     private FedoraResource setResource(final Class<? extends FedoraResource> klass) throws RepositoryException {
         final FedoraResource mockResource = mock(klass);
-        final Answer answer = new Answer<RdfStream>() {
-            @Override
-            public RdfStream answer(final InvocationOnMock invocationOnMock) {
-                return new DefaultRdfStream(createURI(invocationOnMock.getMock().toString()),
-                        of(Triple.create(createURI(invocationOnMock.getMock().toString()),
-                                                   createURI("called"),
-                                                   createURI(invocationOnMock.getArguments()[1].toString()))
-                        ));
-            }
-        };
+        final Answer<RdfStream> answer = invocationOnMock -> new DefaultRdfStream(
+                createURI(invocationOnMock.getMock().toString()),
+                of(Triple.create(createURI(invocationOnMock.getMock().toString()),
+                        createURI("called"),
+                        createURI(invocationOnMock.getArguments()[1].toString()))));
 
         doReturn(mockResource).when(testObj).resource();
         when(mockResource.getNode()).thenReturn(mockNode);
         when(mockResource.getPath()).thenReturn(path);
         when(mockNode.getPath()).thenReturn(path);
         when(mockResource.getEtagValue()).thenReturn("");
-        when(mockResource.getTriples(eq(idTranslator), any(EnumSet.class))).thenAnswer(answer);
-        when(mockResource.getTriples(eq(idTranslator), any(RdfContext.class))).thenAnswer(answer);
+        when(mockResource.getTriples(eq(idTranslator), anySetOf(TripleCategory.class))).thenAnswer(answer);
+        when(mockResource.getTriples(eq(idTranslator), any(TripleCategory.class))).thenAnswer(answer);
 
         return mockResource;
     }
@@ -561,7 +556,7 @@ public class FedoraLdpTest {
         final NonRdfSourceDescription mockResource
                 = (NonRdfSourceDescription)setResource(NonRdfSourceDescription.class);
         when(mockResource.getDescribedResource()).thenReturn(mockBinary);
-        when(mockBinary.getTriples(eq(idTranslator), any(RdfContext.class)))
+        when(mockBinary.getTriples(eq(idTranslator), any(TripleCategory.class)))
             .thenReturn(new DefaultRdfStream(createURI("mockBinary")));
         when(mockBinary.getTriples(eq(idTranslator), any(EnumSet.class)))
             .thenReturn(new DefaultRdfStream(createURI("mockBinary"), of(new Triple
@@ -696,7 +691,7 @@ public class FedoraLdpTest {
         final NonRdfSourceDescription mockObject = (NonRdfSourceDescription)setResource(NonRdfSourceDescription.class);
         when(mockObject.getDescribedResource()).thenReturn(mockBinary);
 
-        when(mockBinary.getTriples(eq(idTranslator), any(RdfContext.class)))
+        when(mockBinary.getTriples(eq(idTranslator), any(TripleCategory.class)))
             .thenReturn(new DefaultRdfStream(createURI("mockBinary")));
         when(mockBinary.getTriples(eq(idTranslator), any(EnumSet.class)))
             .thenReturn(new DefaultRdfStream(createURI("mockBinary"),

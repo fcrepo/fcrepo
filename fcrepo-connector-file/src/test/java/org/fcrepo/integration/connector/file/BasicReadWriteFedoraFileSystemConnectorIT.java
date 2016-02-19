@@ -28,7 +28,7 @@ import javax.jcr.Session;
 
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.fcrepo.kernel.api.RdfContext.PROPERTIES;
+import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;

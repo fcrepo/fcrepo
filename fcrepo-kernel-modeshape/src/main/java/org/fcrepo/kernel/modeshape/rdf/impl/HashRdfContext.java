@@ -29,7 +29,7 @@ import java.util.stream.Stream;
 
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
-import static org.fcrepo.kernel.api.RdfContext.PROPERTIES;
+import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.modeshape.rdf.ManagedRdf.isManagedTriple;
 import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
