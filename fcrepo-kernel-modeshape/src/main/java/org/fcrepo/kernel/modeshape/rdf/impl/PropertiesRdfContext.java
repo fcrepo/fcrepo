@@ -61,9 +61,8 @@ public class PropertiesRdfContext extends NodeRdfContext {
     @SuppressWarnings("unchecked")
     private static Stream<Triple> triplesFromProperties(final FedoraResource n, final PropertyToTriple propertyToTriple)
             throws RepositoryException {
-        LOGGER.warn("Creating triples for node: {}", n);
+        LOGGER.trace("Creating triples for node: {}", n);
         return iteratorToStream(n.getNode().getProperties())
-            .peek(x -> LOGGER.warn("Property: {}", x))
             .filter(isInternalProperty.negate())
             .flatMap(propertyToTriple);
     }
