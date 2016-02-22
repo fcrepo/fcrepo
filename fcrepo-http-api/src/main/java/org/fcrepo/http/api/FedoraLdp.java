@@ -592,7 +592,19 @@ public class FedoraLdp extends ContentExposingResource {
         return createUpdateResponse(resource, true);
     }
 
-    private Response createUpdateResponse(final FedoraResource resource, final boolean created) throws IOException {
+    /**
+     * Create the appropriate response after a create or update request is processed.  When a resource is created,
+     * examine the Prefer and Accept headers to determine whether to include a representation.  By default, the
+     * URI for the created resource is return as plain text.  If a minimal response is requested, then no body is
+     * returned.  If a non-minimal return is requested, return the RDF for the created resource in the appropriate
+     * RDF serialization.
+     *
+     * @param resource The created or updated Fedora resource.
+     * @param created True for a newly-created resource, false for an updated resource.
+     * @return 204 No Content (for updated resources), 201 Created (for created resources) including the resource
+     *    URI or content depending on Prefer headers.
+     */
+    private Response createUpdateResponse(final FedoraResource resource, final boolean created) {
         addCacheControlHeaders(servletResponse, resource, session);
         addResourceLinkHeaders(resource, created);
         if (!created) {
@@ -603,8 +615,9 @@ public class FedoraLdp extends ContentExposingResource {
         final Response.ResponseBuilder builder = created(location);
 
         if (prefer == null || !prefer.hasReturn()) {
-            if (acceptsPlainText()) {
-                return builder.type(TEXT_PLAIN_TYPE).entity(location.toString()).build();
+            final MediaType acceptablePlainText = acceptabePlainTextMediaType();
+            if (acceptablePlainText != null) {
+                return builder.type(acceptablePlainText).entity(location.toString()).build();
             } else {
                 return notAcceptable(mediaTypes(TEXT_PLAIN_TYPE).build()).build();
             }
@@ -622,19 +635,23 @@ public class FedoraLdp extends ContentExposingResource {
         }
     }
 
-    private boolean acceptsPlainText() {
-        final List<String> acceptHeaders = headers.getRequestHeader(HttpHeaders.ACCEPT);
-        if (acceptHeaders == null || acceptHeaders.size() == 0) {
-            return true;
+    /**
+     * Returns an acceptable plain text media type if possible, or null if not.
+     */
+    private MediaType acceptabePlainTextMediaType() {
+        final List<MediaType> acceptable = headers.getAcceptableMediaTypes();
+        if (acceptable == null || acceptable.size() == 0) {
+            return TEXT_PLAIN_TYPE;
         } else {
-            final List<String> accept = Arrays.asList(acceptHeaders.get(0).split(","));
-            for (final String type : accept ) {
-                if (type.contains(TEXT_PLAIN) || type.contains(WILDCARD)) {
-                    return true;
+            for (final MediaType type : acceptable ) {
+                if (type.isWildcardType() || (type.isCompatible(TEXT_PLAIN_TYPE) && type.isWildcardSubtype())) {
+                    return TEXT_PLAIN_TYPE;
+                } else if (type.isCompatible(TEXT_PLAIN_TYPE)) {
+                    return type;
                 }
             }
         }
-        return false;
+        return null;
     }
 
     @Override
