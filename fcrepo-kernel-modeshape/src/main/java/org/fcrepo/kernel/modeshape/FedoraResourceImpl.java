@@ -15,9 +15,6 @@
  */
 package org.fcrepo.kernel.modeshape;
 
-import static com.google.common.collect.Iterators.concat;
-import static com.google.common.collect.Iterators.filter;
-import static com.google.common.collect.Iterators.singletonIterator;
 import static com.google.common.collect.Iterators.transform;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.hp.hpl.jena.update.UpdateAction.execute;
@@ -154,8 +151,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
     private static Function<FedoraResource, Function<IdentifierConverter<Resource, FedoraResource>, Function<Boolean,
             Stream<Triple>>>> getEmbeddedResourceTriples = resource -> translator -> uncheck(_minimal -> {
-        return iteratorToStream(resource.getChildren())
-                .flatMap(child -> child.getTriples(translator, RdfContext.PROPERTIES));
+        return resource.getChildren().flatMap(child -> child.getTriples(translator, RdfContext.PROPERTIES));
     });
 
     private static Function<FedoraResource, Function<IdentifierConverter<Resource, FedoraResource>, Function<Boolean,
@@ -242,9 +238,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
      * @see org.fcrepo.kernel.api.models.FedoraResource#getChildren()
      */
     @Override
-    public Iterator<FedoraResource> getChildren() {
+    public Stream<FedoraResource> getChildren() {
         try {
-            return concat(nodeToGoodChildren(node));
+            return nodeToGoodChildren(node);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -256,24 +252,15 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
      * @return
      * @throws RepositoryException
      */
-    private Iterator<Iterator<FedoraResource>> nodeToGoodChildren(final Node input) throws RepositoryException {
-        @SuppressWarnings("unchecked")
-        final Iterator<Node> allChildren = input.getNodes();
-        final Iterator<Node> children = filter(allChildren, nastyChildren.negate()::test);
-        return transform(children, (new Function<Node, Iterator<FedoraResource>>() {
-
-            @Override
-            public Iterator<FedoraResource> apply(final Node input) {
-                try {
-                    if (input.isNodeType(FEDORA_PAIRTREE)) {
-                        return concat(nodeToGoodChildren(input));
-                    }
-                    return singletonIterator(nodeToObjectBinaryConverter.convert(input));
-                } catch (final RepositoryException e) {
-                    throw new RepositoryRuntimeException(e);
+    @SuppressWarnings("unchecked")
+    private Stream<FedoraResource> nodeToGoodChildren(final Node input) throws RepositoryException {
+        return iteratorToStream(input.getNodes()).filter(nastyChildren.negate())
+            .flatMap(uncheck((final Node x) -> {
+                if (x.isNodeType(FEDORA_PAIRTREE)) {
+                    return nodeToGoodChildren(x);
                 }
-            }
-        })::apply);
+                return Stream.of(nodeToObjectBinaryConverter.convert(x));
+            }));
     }
 
     /**
