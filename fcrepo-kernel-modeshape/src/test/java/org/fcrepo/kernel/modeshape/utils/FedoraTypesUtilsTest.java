@@ -296,12 +296,12 @@ public class FedoraTypesUtilsTest {
         // single-valued
         when(mockProperty.isMultiple()).thenReturn(false);
         when(mockProperty.getValue()).thenReturn(mockValue);
-        assertEquals("Found wrong Value!", property2values.apply(mockProperty).next(), mockValue);
+        assertEquals("Found wrong Value!", property2values.apply(mockProperty).iterator().next(), mockValue);
         // multi-valued
         when(mockProperty.isMultiple()).thenReturn(true);
         when(mockProperty.getValues()).thenReturn(
                 new Value[] {mockValue, mockValue2});
-        final Iterator<Value> testIterator = property2values.apply(mockProperty);
+        final Iterator<Value> testIterator = property2values.apply(mockProperty).iterator();
         assertEquals("Found wrong Value!", testIterator.next(), mockValue);
         assertEquals("Found wrong Value!", testIterator.next(), mockValue2);
 

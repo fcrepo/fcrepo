@@ -21,12 +21,11 @@ import javax.jcr.Value;
 
 import org.fcrepo.kernel.modeshape.utils.UncheckedFunction;
 
-import java.util.Iterator;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
-import static com.google.common.collect.Iterators.forArray;
-import static com.google.common.collect.Iterators.singletonIterator;
+import static java.util.stream.Stream.of;
 import static javax.jcr.PropertyType.BINARY;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_NODE;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
@@ -42,11 +41,11 @@ public final class JcrPropertyFunctions {
     }
 
     /**
-     * Constructs an {@link java.util.Iterator} of {@link javax.jcr.Value}s from any {@link javax.jcr.Property},
+     * Constructs an {@link java.util.stream.Stream} of {@link javax.jcr.Value}s from any {@link javax.jcr.Property},
      * multi- or single-valued.
      */
-    public static Function<Property, Iterator<Value>> property2values = UncheckedFunction.uncheck(
-            (final Property p) -> p.isMultiple() ? forArray(p.getValues()) : singletonIterator(p.getValue()));
+    public static Function<Property, Stream<Value>> property2values = UncheckedFunction.uncheck(
+            (final Property p) -> p.isMultiple() ? of(p.getValues()) : of(p.getValue()));
 
     /**
      * Check if a JCR property is a binary jcr:data property
