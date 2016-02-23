@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
-import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -33,6 +32,7 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.Workspace;
 
+import static java.util.stream.Stream.of;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_HAS_MEMBER_RELATION;
@@ -134,7 +134,7 @@ public class LdpContainerRdfContextTest {
     public void testLdpResourceWithBasicContainer() throws RepositoryException {
         when(mockResource.hasType(LDP_BASIC_CONTAINER)).thenReturn(true);
         when(mockNode.getReferences(LDP_MEMBER_RESOURCE)).thenReturn(new TestPropertyIterator());
-        when(mockResource.getChildren()).thenReturn(Iterators.singletonIterator(mockResource));
+        when(mockResource.getChildren()).thenReturn(of(mockResource));
         when(mockChild.getName()).thenReturn("b");
         when(mockChild.getPath()).thenReturn("/b");
         testObj = new LdpContainerRdfContext(mockResource, subjects);

@@ -18,8 +18,8 @@ package org.fcrepo.kernel.api.models;
 import java.net.URI;
 import java.util.Date;
 import java.util.EnumSet;
-import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Stream;
 
 import javax.jcr.AccessDeniedException;
 import javax.jcr.Node;
@@ -54,9 +54,9 @@ public interface FedoraResource {
 
     /**
      * Get the children of this resource
-     * @return iterator
+     * @return a stream of Fedora resources
      */
-    Iterator<FedoraResource> getChildren();
+    Stream<FedoraResource> getChildren();
 
     /**
      * Get the container of this resource

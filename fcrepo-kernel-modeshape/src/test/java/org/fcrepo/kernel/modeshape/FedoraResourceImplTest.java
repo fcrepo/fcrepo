@@ -45,8 +45,9 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import java.net.URI;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
@@ -368,19 +369,19 @@ public class FedoraResourceImplTest {
     @Test
     public void testGetChildrenWithEmptyChildren() throws RepositoryException {
         when(mockNode.getNodes()).thenReturn(nodeIterator());
-        final Iterator<FedoraResource> children = testObj.getChildren();
+        final Stream<FedoraResource> children = testObj.getChildren();
 
-        assertFalse("Expected an empty iterator", children.hasNext());
+        assertFalse("Expected an empty stream", children.findFirst().isPresent());
     }
 
     @Test
     public void testGetChildrenWithChildren() throws RepositoryException {
         when(mockNode.getNodes()).thenReturn(nodeIterator(mockChild));
         when(mockChild.getName()).thenReturn("x");
-        final Iterator<FedoraResource> children = testObj.getChildren();
+        final Optional<FedoraResource> child = testObj.getChildren().findFirst();
 
-        assertTrue("Expected an iterator with values", children.hasNext());
-        assertEquals("Expected to find the child", mockChild, children.next().getNode());
+        assertTrue("Expected a stream with values", child.isPresent());
+        assertEquals("Expected to find the child", mockChild, child.get().getNode());
     }
 
     @Test
@@ -388,8 +389,8 @@ public class FedoraResourceImplTest {
         when(mockNode.getNodes()).thenReturn(nodeIterator(mockChild));
         when(mockChild.isNodeType("mode:system")).thenReturn(true);
         when(mockChild.getName()).thenReturn("x");
-        final Iterator<FedoraResource> children = testObj.getChildren();
-        assertFalse("Expected an empty iterator", children.hasNext());
+        final Stream<FedoraResource> children = testObj.getChildren();
+        assertFalse("Expected an empty stream", children.findFirst().isPresent());
     }
 
     @Test
@@ -397,16 +398,16 @@ public class FedoraResourceImplTest {
         when(mockNode.getNodes()).thenReturn(nodeIterator(mockChild));
         when(mockChild.isNodeType(FEDORA_TOMBSTONE)).thenReturn(true);
         when(mockChild.getName()).thenReturn("x");
-        final Iterator<FedoraResource> children = testObj.getChildren();
-        assertFalse("Expected an empty iterator", children.hasNext());
+        final Stream<FedoraResource> children = testObj.getChildren();
+        assertFalse("Expected an empty stream", children.findFirst().isPresent());
     }
 
     @Test
     public void testGetChildrenExcludesJcrContent() throws RepositoryException {
         when(mockNode.getNodes()).thenReturn(nodeIterator(mockChild));
         when(mockChild.getName()).thenReturn(JCR_CONTENT);
-        final Iterator<FedoraResource> children = testObj.getChildren();
-        assertFalse("Expected an empty iterator", children.hasNext());
+        final Stream<FedoraResource> children = testObj.getChildren();
+        assertFalse("Expected an empty stream", children.findFirst().isPresent());
     }
 
     @Test

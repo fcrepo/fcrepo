@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
-import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -27,21 +26,20 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import java.util.Iterator;
-
+import static java.util.stream.Stream.of;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 /**
  * ChildrenRdfContextTest class.
@@ -49,6 +47,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
  * @author awoods
  * @since 2015-11-28
  */
+@RunWith(MockitoJUnitRunner.class)
 public class ChildrenRdfContextTest {
 
     @Mock
@@ -66,14 +65,21 @@ public class ChildrenRdfContextTest {
     @Mock
     private Session mockSession;
 
+    @Mock
+    private FedoraResource mockRes1;
+
+    @Mock
+    private FedoraResource mockRes2;
+
+    @Mock
+    private FedoraResource mockRes3;
+
     private IdentifierConverter<Resource, FedoraResource> idTranslator;
 
     private static final String RDF_PATH = "/resource/path";
 
     @Before
     public void setUp() throws RepositoryException {
-        initMocks(this);
-
         // Mock RDF Source
         when(mockResource.getNode()).thenReturn(mockResourceNode);
         when(mockResourceNode.getSession()).thenReturn(mockSession);
@@ -101,8 +107,13 @@ public class ChildrenRdfContextTest {
 
     @Test
     public void testChildren() throws RepositoryException {
+        when(mockRes1.getPath()).thenReturn(RDF_PATH + "/res1");
+        when(mockRes2.getPath()).thenReturn(RDF_PATH + "/res2");
+        when(mockRes3.getPath()).thenReturn(RDF_PATH + "/res3");
         when(mockResourceNode.hasNodes()).thenReturn(true);
-        when(mockResource.getChildren()).thenReturn(childrenIterator());
+        when(mockResource.getChildren()).thenReturn(
+                    of(mockRes1, mockRes2, mockRes3),
+                    of(mockRes1, mockRes2, mockRes3));
 
         final Model results = new ChildrenRdfContext(mockResource, idTranslator).collect(toModel());
         final Resource subject = idTranslator.reverse().convert(mockResource);
@@ -115,10 +126,6 @@ public class ChildrenRdfContextTest {
         assertEquals(3, stmt.getInt());
 
         assertFalse("There should not have been a second statement!", stmts.hasNext());
-    }
-
-    private Iterator<FedoraResource> childrenIterator() {
-        return Iterators.forArray(mock(FedoraResource.class), mock(FedoraResource.class), mock(FedoraResource.class));
     }
 
 }

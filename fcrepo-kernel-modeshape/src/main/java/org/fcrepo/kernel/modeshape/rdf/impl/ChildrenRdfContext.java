@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
-import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
@@ -25,16 +24,12 @@ import org.slf4j.Logger;
 
 import javax.jcr.RepositoryException;
 
-import java.util.Iterator;
-import java.util.function.Function;
-
 import static java.util.stream.Stream.of;
-import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDint;
+import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDlong;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_CHILD_COUNT;
-import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -62,29 +57,20 @@ public class ChildrenRdfContext extends NodeRdfContext {
             LOGGER.trace("Found children of this resource: {}", resource.getPath());
 
             // Count the number of children
-            final Iterator<FedoraResource> childrenCounter = resource().getChildren();
-            concat(of(createNumChildrenTriple(Iterators.size(childrenCounter))));
-            concat(iteratorToStream(resource().getChildren()).map(child2triple));
-
+            concat(of(createNumChildrenTriple(resource().getChildren().count())));
+            concat(resource().getChildren().peek(child -> LOGGER.trace("Creating triple for child node: {}", child))
+                    .map(child -> create(subject(), CONTAINS.asNode(), child instanceof NonRdfSourceDescription ?
+                            uriFor(((NonRdfSourceDescription) child).getDescribedResource()) : uriFor(child))));
         } else {
             concat(of(createNumChildrenTriple(0)));
         }
 
-
     }
 
-    private Triple createNumChildrenTriple(final int numChildren) {
+    private Triple createNumChildrenTriple(final long numChildren) {
         return create(subject(),
                 HAS_CHILD_COUNT.asNode(),
-                createTypedLiteral(Integer.toString(numChildren), XSDint).asNode());
+                createTypedLiteral(Long.toString(numChildren), XSDlong).asNode());
     }
 
-    private final Function<FedoraResource, Triple> child2triple = child -> {
-
-        final com.hp.hpl.jena.graph.Node childSubject = child instanceof NonRdfSourceDescription ?
-                uriFor(((NonRdfSourceDescription) child).getDescribedResource()) : uriFor(child);
-
-        LOGGER.trace("Creating triple for child node: {}", child);
-        return create(subject(), CONTAINS.asNode(), childSubject);
-    };
 }
