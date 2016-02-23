@@ -15,13 +15,12 @@
  */
 package org.fcrepo.kernel.modeshape;
 
-import static com.google.common.collect.Iterators.transform;
-import static com.google.common.collect.Lists.newArrayList;
 import static com.hp.hpl.jena.update.UpdateAction.execute;
 import static com.hp.hpl.jena.update.UpdateFactory.create;
 import static java.util.Arrays.asList;
 import static java.util.EnumSet.of;
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Stream.empty;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
@@ -343,15 +342,11 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
             while (inboundProperties.hasNext()) {
                 final Property prop = inboundProperties.next();
-                final List<Value> newVals = new ArrayList<>();
-                final Iterator<Value> propIt = property2values.apply(prop);
-                while (propIt.hasNext()) {
-                    final Value v = propIt.next();
-                    if (!node.equals(getSession().getNodeByIdentifier(v.getString()))) {
-                        newVals.add(v);
-                        LOGGER.trace("Keeping multivalue reference property when deleting node");
-                    }
-                }
+                final List<Value> newVals = property2values.apply(prop).filter(
+                        UncheckedPredicate.uncheck(value ->
+                            !node.equals(getSession().getNodeByIdentifier(value.getString()))))
+                    .collect(toList());
+
                 if (newVals.size() == 0) {
                     prop.remove();
                 } else {
@@ -432,10 +427,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     public boolean hasType(final String type) {
         try {
             if (isFrozen.test(node) && hasProperty(FROZEN_MIXIN_TYPES)) {
-                final List<String> types = newArrayList(
-                    transform(property2values.apply(getProperty(FROZEN_MIXIN_TYPES)), uncheck(Value::getString)::apply)
-                );
-                return types.contains(type);
+                return property2values.apply(getProperty(FROZEN_MIXIN_TYPES)).map(uncheck(Value::getString))
+                    .anyMatch(type::equals);
             }
             return node.isNodeType(type);
         } catch (final PathNotFoundException e) {
