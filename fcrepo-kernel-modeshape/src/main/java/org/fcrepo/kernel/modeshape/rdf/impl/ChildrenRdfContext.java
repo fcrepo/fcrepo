@@ -58,9 +58,9 @@ public class ChildrenRdfContext extends NodeRdfContext {
 
             // Count the number of children
             concat(of(createNumChildrenTriple(resource().getChildren().count())));
-            concat(resource().getChildren().peek(x -> LOGGER.info("Creating triple for child node: {}", x))
-                    .map(x -> create(subject(), CONTAINS.asNode(), x instanceof NonRdfSourceDescription ?
-                            uriFor(((NonRdfSourceDescription) x).getDescribedResource()) : uriFor(x))));
+            concat(resource().getChildren().peek(child -> LOGGER.trace("Creating triple for child node: {}", child))
+                    .map(child -> create(subject(), CONTAINS.asNode(), child instanceof NonRdfSourceDescription ?
+                            uriFor(((NonRdfSourceDescription) child).getDescribedResource()) : uriFor(child))));
         } else {
             concat(of(createNumChildrenTriple(0)));
         }

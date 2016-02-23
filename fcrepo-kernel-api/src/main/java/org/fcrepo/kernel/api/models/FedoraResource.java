@@ -54,7 +54,7 @@ public interface FedoraResource {
 
     /**
      * Get the children of this resource
-     * @return iterator
+     * @return a stream of Fedora resources
      */
     Stream<FedoraResource> getChildren();
 

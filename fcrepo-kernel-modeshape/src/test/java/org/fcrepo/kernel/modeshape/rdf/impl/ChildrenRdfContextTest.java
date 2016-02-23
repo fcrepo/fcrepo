@@ -26,7 +26,9 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -37,9 +39,7 @@ import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 /**
  * ChildrenRdfContextTest class.
@@ -47,6 +47,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
  * @author awoods
  * @since 2015-11-28
  */
+@RunWith(MockitoJUnitRunner.class)
 public class ChildrenRdfContextTest {
 
     @Mock
@@ -64,14 +65,21 @@ public class ChildrenRdfContextTest {
     @Mock
     private Session mockSession;
 
+    @Mock
+    private FedoraResource mockRes1;
+
+    @Mock
+    private FedoraResource mockRes2;
+
+    @Mock
+    private FedoraResource mockRes3;
+
     private IdentifierConverter<Resource, FedoraResource> idTranslator;
 
     private static final String RDF_PATH = "/resource/path";
 
     @Before
     public void setUp() throws RepositoryException {
-        initMocks(this);
-
         // Mock RDF Source
         when(mockResource.getNode()).thenReturn(mockResourceNode);
         when(mockResourceNode.getSession()).thenReturn(mockSession);
@@ -99,9 +107,6 @@ public class ChildrenRdfContextTest {
 
     @Test
     public void testChildren() throws RepositoryException {
-        final FedoraResource mockRes1 = mock(FedoraResource.class);
-        final FedoraResource mockRes2 = mock(FedoraResource.class);
-        final FedoraResource mockRes3 = mock(FedoraResource.class);
         when(mockRes1.getPath()).thenReturn(RDF_PATH + "/res1");
         when(mockRes2.getPath()).thenReturn(RDF_PATH + "/res2");
         when(mockRes3.getPath()).thenReturn(RDF_PATH + "/res3");
