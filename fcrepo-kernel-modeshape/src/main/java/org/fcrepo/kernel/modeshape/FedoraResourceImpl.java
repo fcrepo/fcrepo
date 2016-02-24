@@ -343,7 +343,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             while (inboundProperties.hasNext()) {
                 final Property prop = inboundProperties.next();
                 final List<Value> newVals = property2values.apply(prop).filter(
-                        UncheckedPredicate.uncheck(x -> !node.equals(getSession().getNodeByIdentifier(x.getString()))))
+                        UncheckedPredicate.uncheck(value ->
+                            !node.equals(getSession().getNodeByIdentifier(value.getString()))))
                     .collect(toList());
 
                 if (newVals.size() == 0) {
