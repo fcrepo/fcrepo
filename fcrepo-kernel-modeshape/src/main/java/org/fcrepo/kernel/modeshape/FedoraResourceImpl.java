@@ -151,8 +151,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         return min.reduce(empty(), Stream::concat);
     });
 
-    private static Function<FedoraResource, Function<IdentifierConverter<Resource, FedoraResource>, Function<Boolean, Stream<Triple>>>> getEmbeddedResourceTriples =
-            resource -> translator -> uncheck(minimal ->
+    private static Function<FedoraResource, Function<IdentifierConverter<Resource, FedoraResource>, Function<Boolean,
+            Stream<Triple>>>> getEmbeddedResourceTriples = resource -> translator -> uncheck(minimal ->
             resource.getChildren().flatMap(child -> child.getTriples(translator, PROPERTIES)));
 
     private static Function<FedoraResource, Function<IdentifierConverter<Resource, FedoraResource>, Function<Boolean,
