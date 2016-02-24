@@ -16,7 +16,8 @@
 package org.fcrepo.kernel.api;
 
 /**
- * A collection of RDF contexts that can be used to extract triples from FedoraResources
+ * A collection of RDF contexts that can be used to extract triples from FedoraResources. All implementations of the
+ * Fedora kernel are required to support these {@link TripleCategory}s, but may choose to support others.
  *
  * @author acoburn
  * @since Dec 4, 2015
