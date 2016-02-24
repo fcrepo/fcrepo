@@ -21,20 +21,20 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
-import org.fcrepo.kernel.api.exception.TransactionMissingException;
+import org.fcrepo.kernel.api.exception.SessionMissingException;
 
 /**
- * If a transaction is requested that has been closed (or never existed), just
+ * If a session is requested that has been closed (or never existed), just
  * return an HTTP 410 Gone.
  *
  * @author awoods
  */
 @Provider
-public class TransactionMissingExceptionMapper implements
-        ExceptionMapper<TransactionMissingException> {
+public class SessionMissingExceptionMapper implements
+        ExceptionMapper<SessionMissingException> {
 
     @Override
-    public Response toResponse(final TransactionMissingException exception) {
+    public Response toResponse(final SessionMissingException exception) {
         return status(GONE).entity(exception.getMessage()).build();
     }
 }

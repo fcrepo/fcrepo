@@ -24,7 +24,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
-import org.fcrepo.kernel.api.exception.TransactionMissingException;
+import org.fcrepo.kernel.api.exception.SessionMissingException;
 import org.slf4j.Logger;
 
 /**
@@ -46,9 +46,9 @@ public class WildcardExceptionMapper implements ExceptionMapper<Exception> {
     @Override
     public Response toResponse(final Exception e) {
 
-        if (e.getCause() instanceof TransactionMissingException) {
-            return new TransactionMissingExceptionMapper()
-                    .toResponse((TransactionMissingException) e.getCause());
+        if (e.getCause() instanceof SessionMissingException) {
+            return new SessionMissingExceptionMapper()
+                    .toResponse((SessionMissingException) e.getCause());
         }
 
         if ( e.getCause() instanceof RepositoryException) {

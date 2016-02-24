@@ -36,7 +36,7 @@ import javax.jcr.Session;
 
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.exception.TransactionMissingException;
+import org.fcrepo.kernel.api.exception.SessionMissingException;
 import org.fcrepo.kernel.api.services.TransactionService;
 
 import org.junit.Before;
@@ -115,26 +115,26 @@ public class TransactionServiceImplTest {
         assertNotNull(tx);
     }
 
-    @Test(expected = TransactionMissingException.class)
+    @Test(expected = SessionMissingException.class)
     public void testHijackingNotPossible() {
         final Transaction tx = service.beginTransaction(mockSession, USER_NAME);
         service.getTransaction(tx.getId(), ANOTHER_USER_NAME);
     }
 
-    @Test(expected = TransactionMissingException.class)
+    @Test(expected = SessionMissingException.class)
     public void testHijackingNotPossibleWithAnonUser() {
         final Transaction tx = service.beginTransaction(mockSession, USER_NAME);
         service.getTransaction(tx.getId(), null);
     }
 
-    @Test(expected = TransactionMissingException.class)
+    @Test(expected = SessionMissingException.class)
     public void testHijackingNotPossibleWhenStartedAnonUser() {
         final Transaction tx = service.beginTransaction(mockSession, null);
         service.getTransaction(tx.getId(), USER_NAME);
     }
 
-    @Test(expected = TransactionMissingException.class)
-    public void testGetNonTx() throws TransactionMissingException {
+    @Test(expected = SessionMissingException.class)
+    public void testGetNonTx() throws SessionMissingException {
         service.getTransaction(NOT_A_TX, null);
     }
 
@@ -145,7 +145,7 @@ public class TransactionServiceImplTest {
         assertEquals(IS_A_TX, tx.getId());
     }
 
-    @Test(expected = TransactionMissingException.class)
+    @Test(expected = SessionMissingException.class)
     public void testGetTxForNonTxSession() throws RepositoryException {
         when(mockSession.getNamespaceURI(FCREPO4_TX_ID)).thenThrow(new NamespaceException(""));
         service.getTransaction(mockSession);
@@ -164,7 +164,7 @@ public class TransactionServiceImplTest {
         verify(mockTx).commit();
     }
 
-    @Test(expected = TransactionMissingException.class)
+    @Test(expected = SessionMissingException.class)
     public void testCommitRemovedTransaction() throws Exception {
         final Transaction tx = service.commit(IS_A_TX);
         service.getTransaction(tx.getId(), null);
@@ -177,18 +177,18 @@ public class TransactionServiceImplTest {
         verify(mockTx).rollback();
     }
 
-    @Test(expected = TransactionMissingException.class)
+    @Test(expected = SessionMissingException.class)
     public void testRollbackRemovedTransaction() throws Exception {
         final Transaction tx = service.rollback(IS_A_TX);
         service.getTransaction(tx.getId(), null);
     }
 
-    @Test(expected = TransactionMissingException.class)
+    @Test(expected = SessionMissingException.class)
     public void testRollbackWithNonTx() {
         service.rollback(NOT_A_TX);
     }
 
-    @Test(expected = TransactionMissingException.class)
+    @Test(expected = SessionMissingException.class)
     public void testCommitWithNonTx() {
         service.commit(NOT_A_TX);
     }

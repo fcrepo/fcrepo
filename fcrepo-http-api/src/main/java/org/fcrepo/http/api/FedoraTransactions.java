@@ -25,8 +25,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
 
-import javax.inject.Inject;
-import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -55,9 +53,6 @@ public class FedoraTransactions extends FedoraBaseResource {
 
     @Autowired
     private TransactionService txService;
-
-    @Inject
-    protected Session session;
 
     /**
      * Create a new transaction resource and add it to the registry
@@ -153,10 +148,5 @@ public class FedoraTransactions extends FedoraBaseResource {
             txService.rollback(txId);
         }
         return noContent().build();
-    }
-
-    @Override
-    protected Session session() {
-        return session;
     }
 }

@@ -21,9 +21,7 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
-import javax.inject.Inject;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -42,9 +40,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class FedoraTombstones extends FedoraBaseResource {
 
     private static final Logger LOGGER = getLogger(FedoraTombstones.class);
-
-    @Inject
-    protected Session session;
 
     @PathParam("path") protected String externalPath;
 
@@ -86,11 +81,4 @@ public class FedoraTombstones extends FedoraBaseResource {
     protected FedoraResource resource() {
         return translator().convert(translator().toDomain(externalPath));
     }
-
-
-    @Override
-    protected Session session() {
-        return session;
-    }
-
 }

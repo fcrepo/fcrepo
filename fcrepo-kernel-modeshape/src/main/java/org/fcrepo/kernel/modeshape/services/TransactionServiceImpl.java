@@ -33,7 +33,7 @@ import com.google.common.collect.ImmutableSet;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TxSession;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.exception.TransactionMissingException;
+import org.fcrepo.kernel.api.exception.SessionMissingException;
 import org.fcrepo.kernel.api.services.TransactionService;
 import org.fcrepo.kernel.modeshape.TransactionImpl;
 
@@ -129,10 +129,10 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
     @Override
     public Transaction getTransaction(final String txId, final String userName) {
         final Transaction tx = transactions.computeIfAbsent(txId, s -> {
-            throw new TransactionMissingException("Transaction with id: " + s + " is not available");
+            throw new SessionMissingException("Transaction with id: " + s + " is not available");
         });
         if (!tx.isAssociatedWithUser(userName)) {
-            throw new TransactionMissingException("Transaction with id " +
+            throw new SessionMissingException("Transaction with id " +
                         txId + " is not available for user " + userName);
         }
         return tx;
@@ -143,18 +143,18 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
      *
      * @param session the session
      * @return the given session's current Transaction
-     * @throws TransactionMissingException if transaction missing exception occurred
+     * @throws SessionMissingException if transaction missing exception occurred
      */
     @Override
     public Transaction getTransaction(final Session session) {
         final String txId = getCurrentTransactionId(session);
 
         if (txId == null) {
-            throw new TransactionMissingException(
+            throw new SessionMissingException(
                     "Transaction is not available");
         }
         return transactions.computeIfAbsent(txId, s -> {
-            throw new TransactionMissingException("Transaction with id: " + s + " is not available");
+            throw new SessionMissingException("Transaction with id: " + s + " is not available");
         });
     }
 
@@ -196,7 +196,7 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
     public Transaction commit(final String txid) {
         final Transaction tx = transactions.remove(txid);
         if (tx == null) {
-            throw new TransactionMissingException("Transaction with id " + txid +
+            throw new SessionMissingException("Transaction with id " + txid +
                     " is not available");
         }
         tx.commit();
@@ -213,7 +213,7 @@ public class TransactionServiceImpl extends AbstractService implements Transacti
     public Transaction rollback(final String txid) {
         final Transaction tx = transactions.remove(txid);
         if (tx == null) {
-            throw new TransactionMissingException("Transaction with id " + txid +
+            throw new SessionMissingException("Transaction with id " + txid +
                     " is not available");
         }
         tx.rollback();

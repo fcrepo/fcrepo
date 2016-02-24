@@ -61,12 +61,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import javax.annotation.PostConstruct;
 import javax.inject.Inject;
+import javax.annotation.PostConstruct;
 import javax.jcr.AccessDeniedException;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.Consumes;
@@ -123,10 +122,6 @@ import static com.google.common.base.Strings.nullToEmpty;
 @Scope("request")
 @Path("/{path: .*}")
 public class FedoraLdp extends ContentExposingResource {
-
-
-    @Inject
-    protected Session session;
 
     private static final Logger LOGGER = getLogger(FedoraLdp.class);
 
@@ -777,11 +772,6 @@ public class FedoraLdp extends ContentExposingResource {
         }
 
         return result;
-    }
-
-    @Override
-    protected Session session() {
-        return session;
     }
 
     private String mintNewPid(final String slug) {

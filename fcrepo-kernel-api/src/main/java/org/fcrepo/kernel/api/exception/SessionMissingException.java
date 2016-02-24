@@ -20,7 +20,7 @@ package org.fcrepo.kernel.api.exception;
  *
  * @author awoods
  */
-public class TransactionMissingException extends RepositoryRuntimeException {
+public class SessionMissingException extends RepositoryRuntimeException {
 
     private static final long serialVersionUID = 2139084821001303830L;
 
@@ -28,7 +28,7 @@ public class TransactionMissingException extends RepositoryRuntimeException {
      *
      * @param s the exception message
      */
-    public TransactionMissingException(final String s) {
+    public SessionMissingException(final String s) {
         super(s);
     }
 }

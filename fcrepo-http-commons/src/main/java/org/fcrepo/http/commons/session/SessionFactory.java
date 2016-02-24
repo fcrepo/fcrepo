@@ -16,7 +16,7 @@
 package org.fcrepo.http.commons.session;
 
 import static java.util.Objects.requireNonNull;
-import static javax.ws.rs.core.Response.Status.GONE;
+//import static javax.ws.rs.core.Response.Status.GONE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.security.Principal;
@@ -28,10 +28,10 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.BadRequestException;
-import javax.ws.rs.ClientErrorException;
+//import javax.ws.rs.ClientErrorException;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.exception.TransactionMissingException;
+import org.fcrepo.kernel.api.exception.SessionMissingException;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.services.TransactionService;
 
@@ -127,8 +127,10 @@ public class SessionFactory {
             } else {
                 session = getSessionFromTransaction(servletRequest, txId);
             }
-        } catch (final TransactionMissingException e) {
-            throw new ClientErrorException(GONE, e);
+        } catch (final SessionMissingException e) {
+            LOGGER.warn("Transaction missing: {}", e.getMessage());
+            return null;
+            //throw new ClientErrorException(GONE, e);
         } catch (final RepositoryException e) {
             throw new BadRequestException(e);
         }

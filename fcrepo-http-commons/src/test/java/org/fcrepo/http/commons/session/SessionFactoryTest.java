@@ -32,7 +32,7 @@ import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
 
 import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.exception.TransactionMissingException;
+import org.fcrepo.kernel.api.exception.SessionMissingException;
 import org.fcrepo.kernel.api.services.TransactionService;
 import org.junit.Before;
 import org.junit.Test;
@@ -114,13 +114,13 @@ public class SessionFactoryTest {
         when(mockRequest.getPathInfo()).thenReturn("/tx:123/some/path");
         when(mockTx.getSession()).thenReturn(mock(Session.class));
         when(mockTxService.getTransaction("123", null)).thenThrow(
-                new TransactionMissingException(""));
+                new SessionMissingException(""));
         try {
             testObj.getSession(mockRequest);
         } catch (final RuntimeException e) {
             final Throwable rootCause = Throwables.getRootCause(e);
             assertTrue("TransactionMissionException expected",
-                    rootCause instanceof TransactionMissingException);
+                    rootCause instanceof SessionMissingException);
         }
     }
 
