@@ -25,11 +25,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import javax.annotation.PostConstruct;
-import javax.inject.Inject;
 import javax.jcr.ItemExistsException;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.HeaderParam;
@@ -60,9 +58,6 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
 @Scope("request")
 @Path("/{path: .*}")
 public class FedoraNodes extends ContentExposingResource {
-
-    @Inject
-    protected Session session;
 
     private static final Logger LOGGER = getLogger(FedoraNodes.class);
 
@@ -199,11 +194,6 @@ public class FedoraNodes extends ContentExposingResource {
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
-    }
-
-    @Override
-    protected Session session() {
-        return session;
     }
 
     @Override

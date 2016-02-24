@@ -25,10 +25,8 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import javax.inject.Inject;
 import javax.jcr.ItemExistsException;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -54,9 +52,6 @@ import org.springframework.context.annotation.Scope;
 @Scope("prototype")
 @Path("/{path: .*}/fcr:import")
 public class FedoraImport extends FedoraBaseResource {
-
-    @Inject
-    protected Session session;
 
     @Autowired
     protected SerializerUtil serializers;
@@ -98,8 +93,4 @@ public class FedoraImport extends FedoraBaseResource {
         }
     }
 
-    @Override
-    protected Session session() {
-        return session;
-    }
 }

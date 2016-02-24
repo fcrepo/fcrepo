@@ -18,8 +18,6 @@ package org.fcrepo.http.api.repository;
 import org.fcrepo.http.api.FedoraExport;
 import org.springframework.context.annotation.Scope;
 
-import javax.inject.Inject;
-import javax.jcr.Session;
 import javax.ws.rs.Path;
 
 /**
@@ -38,8 +36,4 @@ import javax.ws.rs.Path;
 @Path("/fcr:export")
 @Deprecated
 public class FedoraRepositoryExport extends FedoraExport {
-
-    @Inject
-    protected Session session;
-
 }

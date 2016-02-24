@@ -38,9 +38,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
 
-import javax.inject.Inject;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -73,9 +71,6 @@ import com.google.common.annotations.VisibleForTesting;
 @Scope("request")
 @Path("/{path: .*}/fcr:versions")
 public class FedoraVersioning extends FedoraBaseResource {
-
-    @Inject
-    protected Session session;
 
     private static final Logger LOGGER = getLogger(FedoraVersioning.class);
 
@@ -191,8 +186,4 @@ public class FedoraVersioning extends FedoraBaseResource {
         return resource;
     }
 
-    @Override
-    protected Session session() {
-        return session;
-    }
 }

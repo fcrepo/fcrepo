@@ -22,9 +22,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import javax.inject.Inject;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -54,9 +52,6 @@ public class FedoraExport extends FedoraBaseResource {
 
     @Autowired
     protected SerializerUtil serializers;
-
-    @Inject
-    protected Session session;
 
     private static final Logger LOGGER = getLogger(FedoraExport.class);
 
@@ -109,8 +104,4 @@ public class FedoraExport extends FedoraBaseResource {
 
     }
 
-    @Override
-    protected Session session() {
-        return session;
-    }
 }

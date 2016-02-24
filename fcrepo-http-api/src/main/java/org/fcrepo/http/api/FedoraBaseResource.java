@@ -23,12 +23,14 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import org.apache.commons.lang3.StringUtils;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
+import org.fcrepo.kernel.api.exception.SessionMissingException;
 import org.fcrepo.kernel.api.exception.TombstoneException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.Tombstone;
 import org.slf4j.Logger;
 
+import javax.inject.Inject;
 import javax.jcr.Session;
 import javax.jcr.observation.ObservationManager;
 import javax.ws.rs.core.HttpHeaders;
@@ -44,9 +46,10 @@ abstract public class FedoraBaseResource extends AbstractResource {
 
     private static final Logger LOGGER = getLogger(FedoraBaseResource.class);
 
-    protected IdentifierConverter<Resource, FedoraResource> idTranslator;
+    @Inject
+    protected Session session;
 
-    protected abstract Session session();
+    protected IdentifierConverter<Resource, FedoraResource> idTranslator;
 
     protected IdentifierConverter<Resource, FedoraResource> translator() {
         if (idTranslator == null) {
@@ -104,8 +107,8 @@ abstract public class FedoraBaseResource extends AbstractResource {
                 json.put("userAgent", headers.getHeaderString("user-agent"));
             }
             obs.setUserData(mapper.writeValueAsString(json));
-        } catch ( final Exception ex ) {
-            LOGGER.warn("Error setting baseURL", ex);
+        } catch (final Exception ex) {
+            LOGGER.warn("Error setting baseURL", ex.getMessage());
         }
     }
 
@@ -121,5 +124,12 @@ abstract public class FedoraBaseResource extends AbstractResource {
             return uriInfo.getBaseUriBuilder().uri(propBaseURL).toString();
         }
         return "";
+    }
+
+    protected Session session() {
+        if (session == null) {
+            throw new SessionMissingException("Invalid session");
+        }
+        return session;
     }
 }

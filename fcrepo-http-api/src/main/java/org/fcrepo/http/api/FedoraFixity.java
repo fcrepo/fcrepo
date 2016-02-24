@@ -29,8 +29,6 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaces;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.inject.Inject;
-import javax.jcr.Session;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
@@ -58,9 +56,6 @@ import com.codahale.metrics.annotation.Timed;
 public class FedoraFixity extends ContentExposingResource {
 
     private static final Logger LOGGER = getLogger(FedoraFixity.class);
-
-    @Inject
-    protected Session session;
 
     @PathParam("path") protected String externalPath;
 
@@ -105,11 +100,6 @@ public class FedoraFixity extends ContentExposingResource {
                 new DefaultRdfStream(asNode(resource()),
                     ((FedoraBinary)resource()).getFixity(translator())),
                 getNamespaces(session()));
-    }
-
-    @Override
-    protected Session session() {
-        return session;
     }
 
     @Override
