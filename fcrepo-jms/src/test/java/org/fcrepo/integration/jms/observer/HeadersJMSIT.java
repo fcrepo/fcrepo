@@ -26,7 +26,7 @@ import static org.fcrepo.jms.headers.DefaultMessageFactory.PROPERTIES_HEADER_NAM
 import static org.fcrepo.jms.headers.DefaultMessageFactory.TIMESTAMP_HEADER_NAME;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.fcrepo.kernel.api.RdfContext.PROPERTIES;
+import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.jgroups.util.UUID.randomUUID;
 import static org.slf4j.LoggerFactory.getLogger;
 

@@ -17,8 +17,9 @@ package org.fcrepo.kernel.api.models;
 
 import java.net.URI;
 import java.util.Date;
-import java.util.EnumSet;
+
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import javax.jcr.AccessDeniedException;
@@ -30,7 +31,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.api.RdfContext;
+import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.RdfStream;
 
 import com.hp.hpl.jena.rdf.model.Model;
@@ -138,7 +139,7 @@ public interface FedoraResource {
      * @return the rdf properties of this object using the provided context
      */
     RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-                         final RdfContext context);
+                         final TripleCategory context);
 
     /**
      * Return the RDF properties of this object using the provided contexts
@@ -147,7 +148,7 @@ public interface FedoraResource {
      * @return the rdf properties of this object
      */
     RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-                         final EnumSet<RdfContext> contexts);
+                         final Set<? extends TripleCategory> contexts);
 
     /**
      * Get the JCR Base version for the node
