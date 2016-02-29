@@ -102,7 +102,7 @@ public class FedoraFixity extends ContentExposingResource {
 
         LOGGER.info("Get fixity for '{}'", externalPath);
         return new RdfNamespacedStream(
-                new DefaultRdfStream(translator().reverse().convert(resource()).asNode(),
+                new DefaultRdfStream(asNode(resource()),
                     ((FedoraBinary)resource()).getFixity(translator())),
                 getNamespaces(session()));
     }

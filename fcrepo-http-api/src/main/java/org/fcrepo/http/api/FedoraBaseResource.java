@@ -18,6 +18,7 @@ package org.fcrepo.http.api;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.annotations.VisibleForTesting;
+import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.apache.commons.lang3.StringUtils;
 import org.fcrepo.http.commons.AbstractResource;
@@ -54,6 +55,16 @@ abstract public class FedoraBaseResource extends AbstractResource {
         }
 
         return idTranslator;
+    }
+
+    /**
+     * This is a helper method for using the idTranslator to convert this resource into an associated Jena Node.
+     *
+     * @param resource to be converted into a Jena Node
+     * @return the Jena node
+     */
+    protected Node asNode(final FedoraResource resource) {
+        return translator().reverse().convert(resource).asNode();
     }
 
     /**

@@ -213,7 +213,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         LOGGER.info("GET resource '{}'", externalPath);
 
-        final RdfStream rdfStream = new DefaultRdfStream(translator().reverse().convert(resource()).asNode());
+        final RdfStream rdfStream = new DefaultRdfStream(asNode(resource()));
 
         // If requesting a binary, check the mime-type if "Accept:" header is present.
         // (This needs to be done before setting up response headers, as getContent
@@ -367,7 +367,7 @@ public class FedoraLdp extends ContentExposingResource {
         final boolean created = resource.isNew();
 
         if (created) {
-            resourceTriples = new DefaultRdfStream(translator().reverse().convert(resource()).asNode());
+            resourceTriples = new DefaultRdfStream(asNode(resource()));
         } else {
             resourceTriples = getResourceTriples();
         }
@@ -439,7 +439,7 @@ public class FedoraLdp extends ContentExposingResource {
             final RdfStream resourceTriples;
 
             if (resource().isNew()) {
-                resourceTriples = new DefaultRdfStream(translator().reverse().convert(resource()).asNode());
+                resourceTriples = new DefaultRdfStream(asNode(resource()));
             } else {
                 resourceTriples = getResourceTriples();
             }
@@ -557,7 +557,7 @@ public class FedoraLdp extends ContentExposingResource {
         final RdfStream resourceTriples;
 
         if (resource.isNew()) {
-            resourceTriples = new DefaultRdfStream(translator().reverse().convert(resource()).asNode());
+            resourceTriples = new DefaultRdfStream(asNode(resource()));
         } else {
             resourceTriples = getResourceTriples();
         }
@@ -636,8 +636,7 @@ public class FedoraLdp extends ContentExposingResource {
                 prefer.getReturn().addResponseHeaders(servletResponse);
             }
             final RdfNamespacedStream rdfStream = new RdfNamespacedStream(
-                new DefaultRdfStream(translator().reverse().convert(resource()).asNode(), getResourceTriples()),
-                getNamespaces(session()));
+                new DefaultRdfStream(asNode(resource()), getResourceTriples()), getNamespaces(session()));
             return builder.entity(rdfStream).build();
         }
     }

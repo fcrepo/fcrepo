@@ -149,7 +149,7 @@ public class FedoraVersions extends ContentExposingResource {
         LOGGER.trace("Getting version profile for: {} at version: {}", path,
                 label);
         checkCacheControlHeaders(request, servletResponse, resource(), session);
-        final RdfStream rdfStream = new DefaultRdfStream(translator().reverse().convert(resource()).asNode());
+        final RdfStream rdfStream = new DefaultRdfStream(asNode(resource()));
         return getContent(rangeValue, rdfStream);
     }
 

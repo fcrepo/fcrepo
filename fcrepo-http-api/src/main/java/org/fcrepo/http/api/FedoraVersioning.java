@@ -178,7 +178,7 @@ public class FedoraVersioning extends FedoraBaseResource {
         }
 
         return new RdfNamespacedStream(new DefaultRdfStream(
-                translator().reverse().convert(resource()).asNode(),
+                asNode(resource()),
                 resource().getTriples(translator(), VERSIONS)),
                 getNamespaces(session()));
     }
