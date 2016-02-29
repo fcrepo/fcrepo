@@ -15,18 +15,18 @@
  */
 package org.fcrepo.http.api.responses;
 
+import static java.util.stream.Stream.of;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
 import static com.google.common.collect.ImmutableMap.builder;
 import static com.hp.hpl.jena.graph.Node.ANY;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static org.apache.commons.lang3.StringUtils.isBlank;
-import static org.fcrepo.kernel.api.RdfLexicon.JCR_NAMESPACE;
+import static com.hp.hpl.jena.sparql.util.graph.GraphUtils.multiValueURI;
+import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
-import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -37,18 +37,12 @@ import java.io.Writer;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Properties;
 
 import javax.annotation.PostConstruct;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.nodetype.NodeType;
-import javax.jcr.nodetype.NodeTypeIterator;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -56,7 +50,6 @@ import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.rdf.model.Model;
@@ -69,11 +62,8 @@ import org.apache.velocity.tools.generic.FieldTool;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.http.commons.responses.ViewHelpers;
-import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.api.RdfLexicon;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Simple HTML provider for RdfNamespacedStreams
@@ -85,9 +75,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Produces({TEXT_HTML, APPLICATION_XHTML_XML})
 public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespacedStream> {
 
-
-    @Autowired
-    SessionFactory sessionFactory;
 
     @javax.ws.rs.core.Context
     UriInfo uriInfo;
@@ -143,44 +130,19 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
 
         LOGGER.trace("Assembling a map of node primary types -> templates...");
         final ImmutableMap.Builder<String, Template> templatesMapBuilder = builder();
-        final Session session = sessionFactory.getInternalSession();
-        try {
-            // we search all of the possible node primary types and mixins
-            for (final NodeTypeIterator primaryNodeTypes =
-                         session.getWorkspace().getNodeTypeManager()
-                                 .getPrimaryNodeTypes(); primaryNodeTypes.hasNext();) {
-                final NodeType primaryNodeType =
-                    primaryNodeTypes.nextNodeType();
-                final String primaryNodeTypeName =
-                    primaryNodeType.getName();
 
-                // Create a list of the primary type and all its parents
-                final List<NodeType> nodeTypesList = new ArrayList<>();
-                nodeTypesList.add(primaryNodeType);
-                nodeTypesList.addAll(Arrays.asList(primaryNodeType.getSupertypes()));
+        of("jcr:nodetypes", "fcr:versions", "fcr:fixity", "default")
+            .forEach(key -> templatesMapBuilder.put(key, velocity.getTemplate(getTemplateLocation(key))));
 
-                // Find a template that matches the primary type or one of its parents
-                nodeTypesList.stream()
-                             .map(NodeType::getName)
-                             .filter(x -> !isBlank(x) && velocity.resourceExists(getTemplateLocation(x)))
-                             .findFirst()
-                             .ifPresent(x -> addTemplate(primaryNodeTypeName, x, templatesMapBuilder));
-            }
+        templatesMap = templatesMapBuilder
+            .put(REPOSITORY_NAMESPACE + "RepositoryRoot", velocity.getTemplate(getTemplateLocation("root")))
+            .put(REPOSITORY_NAMESPACE + "Binary", velocity.getTemplate(getTemplateLocation("binary")))
+            .put(REPOSITORY_NAMESPACE + "Version", velocity.getTemplate(getTemplateLocation("resource")))
+            .put(REPOSITORY_NAMESPACE + "Pairtree", velocity.getTemplate(getTemplateLocation("resource")))
+            .put(REPOSITORY_NAMESPACE + "Container", velocity.getTemplate(getTemplateLocation("resource")))
+            .put(LDP_NAMESPACE + "NonRdfSource", velocity.getTemplate(getTemplateLocation("binary")))
+            .put(LDP_NAMESPACE + "RdfSource", velocity.getTemplate(getTemplateLocation("resource"))).build();
 
-            final List<String> otherTemplates =
-                    ImmutableList.of("jcr:nodetypes", "node", "fcr:versions", "fcr:fixity");
-
-            for (final String key : otherTemplates) {
-                final Template template =
-                    velocity.getTemplate(getTemplateLocation(key));
-                templatesMapBuilder.put(key, template);
-            }
-
-            templatesMap = templatesMapBuilder.build();
-
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
         LOGGER.trace("Assembled template map.");
         LOGGER.trace("HtmlProvider initialization complete.");
     }
@@ -228,40 +190,12 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
     private Template getTemplate(final Model rdf, final Node subject,
                                  final List<Annotation> annotations) {
 
-        Optional<Template> template = annotations.stream()
-                                  .filter(x -> x instanceof HtmlTemplate)
-                                  .map(x -> ((HtmlTemplate) x).value())
-                                  .filter(templatesMap::containsKey)
-                                  .map(templatesMap::get)
-                                  .findFirst();
-
-        if (!template.isPresent()) {
-            LOGGER.trace("Attempting to discover mixin types of node for resource in question: {}", subject);
-            template = rdf.listObjectsOfProperty(createResource(subject.getURI()),
-                                                 createProperty(getRDFNamespaceForJcrNamespace(JCR_NAMESPACE) +
-                                                     "mixinTypes"))
-                          .toList().stream()
-                          .map(x -> x.asLiteral().getLexicalForm())
-                          .filter(templatesMap::containsKey)
-                          .map(templatesMap::get)
-                          .findFirst();
-        }
-
-        if (template.isPresent()) {
-            LOGGER.debug("Choosing template: {}", template.get().getName());
-            return template.get();
-        } else {
-            LOGGER.trace("Attempting to discover primary type of node for resource in question: {}", subject);
-            return rdf.listObjectsOfProperty(createResource(subject.getURI()),
-                                             createProperty(getRDFNamespaceForJcrNamespace(JCR_NAMESPACE) +
-                                                     "primaryType"))
-                          .toList().stream()
-                          .map(x -> x.asLiteral().getLexicalForm())
-                          .filter(templatesMap::containsKey)
-                          .map(templatesMap::get)
-                          .findFirst()
-                          .orElse(templatesMap.get("node"));
-        }
+        final String tplName = annotations.stream().filter(x -> x instanceof HtmlTemplate)
+            .map(x -> ((HtmlTemplate) x).value()).filter(templatesMap::containsKey).findFirst()
+            .orElseGet(() -> multiValueURI(rdf.getResource(subject.getURI()), type).stream()
+                    .filter(templatesMap::containsKey).findFirst().orElse("default"));
+        LOGGER.debug("Using template: {}", tplName);
+        return templatesMap.get(tplName);
     }
 
     @Override
@@ -281,18 +215,6 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
                         final MediaType mediaType) {
         // we don't know in advance how large the result might be
         return -1;
-    }
-
-    private void addTemplate(final String primaryNodeTypeName, final String templateNodeTypeName,
-                             final ImmutableMap.Builder<String, Template> templatesMapBuilder) {
-        final String templateLocation = getTemplateLocation(templateNodeTypeName);
-        final Template template =
-            velocity.getTemplate(templateLocation);
-        template.setName(templateLocation);
-        LOGGER.debug("Found template: {}", templateLocation);
-        templatesMapBuilder.put(primaryNodeTypeName, template);
-        LOGGER.debug("which we will use for nodes with primary type: {}",
-                     primaryNodeTypeName);
     }
 
     private static String getTemplateLocation(final String nodeTypeName) {

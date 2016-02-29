@@ -13,7 +13,7 @@
 </head>
 
 
-<body class="nt_resource">
+<body class="fcrepo_resource">
 <div  id="main" class="container" resource="$topic.getURI()">
     #parse("views/common-node-header.vsl")
 
