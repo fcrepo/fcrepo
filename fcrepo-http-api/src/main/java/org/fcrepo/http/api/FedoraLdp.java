@@ -340,7 +340,6 @@ public class FedoraLdp extends ContentExposingResource {
         checkLinkForLdpResourceCreation(link);
 
         final FedoraResource resource;
-        final Response.ResponseBuilder response;
 
         final String path = toPath(translator(), externalPath);
 
@@ -352,15 +351,10 @@ public class FedoraLdp extends ContentExposingResource {
 
         if (nodeService.exists(session, path)) {
             resource = resource();
-            response = noContent();
         } else {
             final MediaType effectiveContentType
                     = requestBodyStream == null || requestContentType == null ? null : contentType;
             resource = createFedoraResource(path, effectiveContentType, contentDisposition);
-
-            final URI location = getUri(resource);
-
-            response = created(location).entity(location.toString());
         }
 
         if (httpConfiguration.putRequiresIfMatch() && StringUtils.isBlank(ifMatch) && !resource.isNew()) {
