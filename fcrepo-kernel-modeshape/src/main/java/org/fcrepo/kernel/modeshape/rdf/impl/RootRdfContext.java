@@ -15,6 +15,7 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
+import static java.util.stream.Stream.of;
 import static com.hp.hpl.jena.graph.Node.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
@@ -74,7 +75,8 @@ public class RootRdfContext extends NodeRdfContext {
 
         final Stream.Builder<Triple> b = Stream.builder();
 
-        b.accept(create(subject(), type.asNode(), createURI(REPOSITORY_NAMESPACE + "RepositoryRoot")));
+        of("RepositoryRoot", "Resource", "Container").forEach(x ->
+            b.accept(create(subject(), type.asNode(), createURI(REPOSITORY_NAMESPACE + x))));
 
         /*
             FIXME: removing due to performance problems, esp. w/ many files on federated filesystem
