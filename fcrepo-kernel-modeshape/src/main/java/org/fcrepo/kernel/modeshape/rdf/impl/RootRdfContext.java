@@ -16,7 +16,7 @@
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
 import static java.util.stream.Stream.of;
-import static com.hp.hpl.jena.graph.Node.createURI;
+import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
