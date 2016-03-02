@@ -23,6 +23,7 @@ import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static javax.jcr.PropertyType.BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
@@ -206,6 +207,10 @@ public class FedoraResourceImplIT extends AbstractIT {
         p = HAS_NODE_TYPE.asNode();
         o = createLiteral(FEDORA_RESOURCE);
         assertFalse(graph.contains(s, p, o));
+
+        assertTrue(graph.contains(s, type.asNode(), createURI(REPOSITORY_NAMESPACE + "Resource")));
+        assertTrue(graph.contains(s, type.asNode(), createURI(REPOSITORY_NAMESPACE + "RepositoryRoot")));
+        assertTrue(graph.contains(s, type.asNode(), createURI(REPOSITORY_NAMESPACE + "Container")));
 
     }
 
