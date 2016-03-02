@@ -40,13 +40,13 @@ import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
-import static org.fcrepo.kernel.api.RdfContext.EMBED_RESOURCES;
-import static org.fcrepo.kernel.api.RdfContext.INBOUND_REFERENCES;
-import static org.fcrepo.kernel.api.RdfContext.LDP_CONTAINMENT;
-import static org.fcrepo.kernel.api.RdfContext.LDP_MEMBERSHIP;
-import static org.fcrepo.kernel.api.RdfContext.MINIMAL;
-import static org.fcrepo.kernel.api.RdfContext.PROPERTIES;
-import static org.fcrepo.kernel.api.RdfContext.SERVER_MANAGED;
+import static org.fcrepo.kernel.api.RequiredRdfContext.EMBED_RESOURCES;
+import static org.fcrepo.kernel.api.RequiredRdfContext.INBOUND_REFERENCES;
+import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_CONTAINMENT;
+import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_MEMBERSHIP;
+import static org.fcrepo.kernel.api.RequiredRdfContext.MINIMAL;
+import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
+import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
 import static org.fcrepo.kernel.modeshape.rdf.ManagedRdf.isManagedTriple;
 import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaces;
 
@@ -56,8 +56,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -94,7 +94,7 @@ import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
-import org.fcrepo.kernel.api.RdfContext;
+import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
@@ -362,19 +362,19 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         }
 
-    protected RdfStream getTriples(final EnumSet<RdfContext> x) {
+    protected RdfStream getTriples(final Set<? extends TripleCategory> x) {
         return getTriples(resource(), x);
     }
 
-    protected RdfStream getTriples(final FedoraResource resource, final EnumSet<RdfContext> x) {
+    protected RdfStream getTriples(final FedoraResource resource, final Set<? extends TripleCategory> x) {
         return resource.getTriples(translator(), x);
     }
 
-    protected RdfStream getTriples(final RdfContext x) {
+    protected RdfStream getTriples(final TripleCategory x) {
         return getTriples(resource(), x);
     }
 
-    protected RdfStream getTriples(final FedoraResource resource, final RdfContext x) {
+    protected RdfStream getTriples(final FedoraResource resource, final TripleCategory x) {
         return resource.getTriples(translator(), x);
     }
 
