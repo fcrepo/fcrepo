@@ -10,7 +10,7 @@
 </head>
 
 
-<body  class="nt_folder">
+<body  class="fcrepo_resource">
   <div  id="main" class="container" resource="$topic.getURI()">
     #parse("views/common-node-header.vsl")
     <div class="col-md-12">

@@ -69,16 +69,41 @@ public class FedoraHtmlIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testGetTemplate() throws IOException {
+    public void testGetContainerTemplate() throws IOException {
         final String pid = getRandomUniqueId();
         createObject(pid);
-        addMixin(pid, REPOSITORY_NAMESPACE + "Resource");
+        addMixin(pid, REPOSITORY_NAMESPACE + "Container");
 
         final HttpGet method = new HttpGet(serverAddress + pid);
         method.addHeader("Accept", "text/html");
         try (final CloseableHttpResponse response = execute(method)) {
             final String html = EntityUtils.toString(response.getEntity());
-            assertTrue(contains(html, "class=\"nt_folder\""));
+            assertTrue(contains(html, "class=\"fcrepo_resource\""));
         }
     }
+
+    @Test
+    public void testGetBinaryTemplate() throws IOException {
+        final String pid = getRandomUniqueId();
+        createDatastream(pid, "file", "binary content");
+
+        final HttpGet method = new HttpGet(serverAddress + pid + "/file/fcr:metadata");
+        method.addHeader("Accept", "text/html");
+        try (final CloseableHttpResponse response = execute(method)) {
+            final String html = EntityUtils.toString(response.getEntity());
+            assertTrue(contains(html, "class=\"fcrepo_binary\""));
+        }
+    }
+
+    @Test
+    public void testGetRootTemplate() throws IOException {
+
+        final HttpGet method = new HttpGet(serverAddress);
+        method.addHeader("Accept", "text/html");
+        try (final CloseableHttpResponse response = execute(method)) {
+            final String html = EntityUtils.toString(response.getEntity());
+            assertTrue(contains(html, "class=\"fcrepo_root\""));
+        }
+    }
+
 }

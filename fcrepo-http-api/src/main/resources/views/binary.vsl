@@ -15,7 +15,7 @@
 </head>
 
 
-<body class="nt_file">
+<body class="fcrepo_binary">
 <div  id="main" class="container" resource="$topic.getURI()">
     #parse("views/common-node-header.vsl")
 

@@ -30,7 +30,6 @@
         org.apache.jena.riot.*,
         org.apache.velocity.*,
         org.glassfish.jersey.media.multipart,
-        org.modeshape.jcr.api.*,
 
         org.springframework.beans.*,
         org.springframework.stereotype,

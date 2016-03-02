@@ -1,4 +1,4 @@
-.mode_root #action_delete {
+.fcrepo_root #action_delete {
     display: none;
 }
 
@@ -6,11 +6,11 @@ body {
     padding-bottom: 40px;
 }
 
-.nt_file #action_create, .nt_resource #action_create {
+.fcrepo_binary #action_create {
     display: none;
 }
 
-.nt_file #action_import, .nt_resource #action_import {
+.fcrepo_binary #action_import, .fcrepo_resource #action_import {
     display: none;
 }
 

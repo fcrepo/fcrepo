@@ -11,7 +11,7 @@
 </head>
 
 
-<body class="mode_root">
+<body class="fcrepo_root">
 <div id="main" resource="$topic.getURI()">
 
     #parse("views/common-node-header.vsl")

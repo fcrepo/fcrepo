@@ -18,11 +18,11 @@ package org.fcrepo.http.api.responses;
 import static java.util.stream.Stream.of;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
+import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static java.util.Collections.singletonMap;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
-import static org.fcrepo.kernel.api.RdfLexicon.JCR_NAMESPACE;
-import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
+import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaces;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -101,15 +101,13 @@ public class StreamingBaseHtmlProviderTest {
                             createURI("test:predicate"),
                             createLiteral("test:object")),
                     new Triple(createURI("test:subject"),
-                            createURI(getRDFNamespaceForJcrNamespace(JCR_NAMESPACE) + "primaryType"),
-                            createLiteral("nt:file")))),
+                            type.asNode(), createURI(REPOSITORY_NAMESPACE + "Binary")))),
                 getNamespaces(mockSession));
 
         testData2 = new RdfNamespacedStream(
                 new DefaultRdfStream(createURI("test:subject2"), of(
                     new Triple(createURI("test:subject2"),
-                            createURI(getRDFNamespaceForJcrNamespace(JCR_NAMESPACE) + "mixinTypes"),
-                            createLiteral("childOf:ntFile")))),
+                            type.asNode(), createURI(REPOSITORY_NAMESPACE + "Container")))),
                 getNamespaces(mockSession));
         final UriInfo info = Mockito.mock(UriInfo.class);
         setField(testProvider, "uriInfo", info);
@@ -157,7 +155,7 @@ public class StreamingBaseHtmlProviderTest {
                 return "I am pretending to merge a template for you.";
             }
         }).when(mockTemplate).merge(isA(Context.class), isA(Writer.class));
-        setField(testProvider, "templatesMap", singletonMap("nt:file",
+        setField(testProvider, "templatesMap", singletonMap(REPOSITORY_NAMESPACE + "Binary",
                 mockTemplate));
         testProvider.writeTo(testData, RdfNamespacedStream.class, mock(Type.class),
                 new Annotation[]{}, MediaType.valueOf("text/html"),
@@ -213,8 +211,7 @@ public class StreamingBaseHtmlProviderTest {
         }).when(mockTemplate).merge(isA(Context.class), isA(Writer.class));
 
         setField(testProvider, "templatesMap",
-                 ImmutableMap.of("childOf:ntFile", mockTemplate,
-                    "grandchildOf:ntFile", mockTemplate));
+                 ImmutableMap.of(REPOSITORY_NAMESPACE + "Container", mockTemplate));
         testProvider.writeTo(testData2, RdfNamespacedStream.class, mock(Type.class),
                 new Annotation[] {}, MediaType
                         .valueOf("text/html"),
