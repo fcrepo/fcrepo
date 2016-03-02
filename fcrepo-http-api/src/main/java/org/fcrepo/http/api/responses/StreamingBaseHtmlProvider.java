@@ -196,9 +196,8 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
                 final List<String> types = multiValueURI(rdf.getResource(subject.getURI()), type);
                 if (types.contains(REPOSITORY_NAMESPACE + "RepositoryRoot")) {
                     return REPOSITORY_NAMESPACE + "RepositoryRoot";
-                } else {
-                    return types.stream().filter(templatesMap::containsKey).findFirst().orElse("default");
                 }
+                return types.stream().filter(templatesMap::containsKey).findFirst().orElse("default");
             });
         LOGGER.debug("Using template: {}", tplName);
         return templatesMap.get(tplName);
