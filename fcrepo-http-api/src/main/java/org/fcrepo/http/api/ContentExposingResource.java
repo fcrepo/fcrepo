@@ -48,7 +48,7 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.MINIMAL;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
 import static org.fcrepo.kernel.modeshape.rdf.ManagedRdf.isManagedTriple;
-import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaces;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -475,11 +475,11 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         final FedoraResource mutableResource = resource instanceof NonRdfSourceDescription
                 ? ((NonRdfSourceDescription) resource).getDescribedResource() : resource;
-        final EntityTag etag = new EntityTag(mutableResource.getEtagValue());
+        final EntityTag etag = new EntityTag(mutableResource.getEtagValue(), true);
         final Date date = mutableResource.getLastModifiedDate();
 
         if (!etag.getValue().isEmpty()) {
-            servletResponse.addHeader("ETag", etag.toString());
+            servletResponse.addHeader("ETag", mutableResource.hasType(FEDORA_NON_RDF_SOURCE_DESCRIPTION) ? "" : "W/" ) + etag);
         }
 
         if (date != null) {
@@ -515,7 +515,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             return;
         }
 
-        final EntityTag etag = new EntityTag(resource.getEtagValue());
+        final EntityTag etag = new EntityTag(resource.getEtagValue(), true);
         final Date date = resource.getLastModifiedDate();
         final Date roundedDate = new Date();
 
