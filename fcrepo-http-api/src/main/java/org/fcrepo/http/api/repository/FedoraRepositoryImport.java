@@ -15,8 +15,6 @@
  */
 package org.fcrepo.http.api.repository;
 
-import javax.inject.Inject;
-import javax.jcr.Session;
 import javax.ws.rs.Path;
 
 import org.fcrepo.http.api.FedoraImport;
@@ -37,8 +35,4 @@ import org.springframework.context.annotation.Scope;
 @Path("/fcr:import")
 @Deprecated
 public class FedoraRepositoryImport extends FedoraImport {
-
-    @Inject
-    protected Session session;
-
 }

@@ -15,8 +15,6 @@
  */
 package org.fcrepo.http.api.repository;
 
-import javax.inject.Inject;
-import javax.jcr.Session;
 import javax.ws.rs.Path;
 
 import org.fcrepo.http.api.FedoraTransactions;
@@ -32,7 +30,4 @@ import org.springframework.context.annotation.Scope;
 @Scope("prototype")
 @Path("/fcr:tx")
 public class FedoraRepositoryTransactions extends FedoraTransactions {
-
-    @Inject
-    protected Session session;
 }
