@@ -291,7 +291,7 @@ public class FedoraLdp extends ContentExposingResource {
             @HeaderParam("Content-Disposition") final ContentDisposition contentDisposition,
             @HeaderParam("If-Match") final String ifMatch,
             @HeaderParam("Link") final String link)
-            throws IOException, InvalidChecksumException, MalformedRdfException {
+            throws InvalidChecksumException, MalformedRdfException {
         return createOrReplaceObjectRdf(requestContentType, requestBodyStream,
             checksum, contentDisposition, ifMatch, link, null);
     }
@@ -330,7 +330,7 @@ public class FedoraLdp extends ContentExposingResource {
             @HeaderParam("If-Match") final String ifMatch,
             @HeaderParam("Link") final String link,
             @HeaderParam("Digest") final String digest)
-            throws IOException, InvalidChecksumException, MalformedRdfException {
+            throws InvalidChecksumException, MalformedRdfException {
 
         checkLinkForLdpResourceCreation(link);
 
