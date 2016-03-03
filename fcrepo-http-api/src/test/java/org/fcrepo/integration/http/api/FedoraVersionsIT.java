@@ -458,7 +458,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
             final Node subject = createURI(serverAddress + pid + "/" + dsid);
             assertFalse("Node must not have versionable mixin.", originalObjectProperties.contains(ANY,
                     subject, type.asNode(), createURI(MIX_NAMESPACE + "versionable")));
-            assertFalse("Node is expected to contain hasVersions triple.", originalObjectProperties.contains(ANY,
+            assertFalse("Node must not contain any hasVersions triples.", originalObjectProperties.contains(ANY,
                     subject, HAS_VERSION_HISTORY.asNode(), ANY));
         }
         // creating a version should succeed
