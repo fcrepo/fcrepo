@@ -45,8 +45,8 @@ import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATEDBY;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_FROZEN_NODE;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIEDBY;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
-import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.VERSIONABLE;
 import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.isBinaryContentProperty;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedPredicate.uncheck;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
@@ -78,22 +78,11 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
             FROZEN_MIXIN_TYPES,
             FROZEN_PRIMARY_TYPE);
 
-    private static Set<String> protectedProperties = of(
+    private static Set<String> validJcrProperties = of(
             JCR_CREATED,
             JCR_CREATEDBY,
-            JCR_LASTMODIFIED);
-
-    private static Set<String> protectedTypes = of(
-            "mix:created",
-            "mix:lastModified",
-            "mix:referenceable",
-            "mix:simpleVersionable",
-            "nt:base",
-            "nt:folder",
-            "nt:hierarchyNode",
-            VERSIONABLE,
-            ROOT,
-            FROZEN_NODE);
+            JCR_LASTMODIFIED,
+            JCR_LASTMODIFIEDBY);
 
     /**
      * Predicate for determining whether this {@link Node} is a {@link org.fcrepo.kernel.api.models.Container}.
@@ -132,6 +121,13 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
             p.getName().endsWith(REFERENCE_PROPERTY_SUFFIX));
 
     /**
+     *  Check whether a type should be internal.
+     */
+    public static Predicate<String> hasInternalNamespace = type ->
+        type.startsWith("jcr:") || type.startsWith("mode:") || type.startsWith("nt:") ||
+            type.startsWith("mix:");
+
+    /**
      * Check whether a property is protected (ie, cannot be modified directly) but
      * is not one we've explicitly chosen to include.
      */
@@ -144,9 +140,10 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
             // another mechanism in place to make clear that
             // things cannot be edited.
             return false;
-        } else {
-            return !protectedProperties.contains(p.getName());
+        } else if (validJcrProperties.contains(p.getName())) {
+            return false;
         }
+        return hasInternalNamespace.test(p.getName());
     });
 
     /**
@@ -156,11 +153,6 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
     public static Predicate<Property> isInternalProperty = isBinaryContentProperty
                             .or(isProtectedAndShouldBeHidden::test)
                             .or(uncheck(p -> privateProperties.contains(p.getName())));
-
-    /**
-     *  Check whether a type should be internal.
-     */
-    public static Predicate<NodeType> isInternalType = uncheck(p -> protectedTypes.contains(p.getName()));
 
     /**
      * Check if a node is "internal" and should not be exposed e.g. via the REST

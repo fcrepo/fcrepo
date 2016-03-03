@@ -168,13 +168,14 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     @Test
     public void testRandomNodeGraph() {
-        final FedoraResource object =
-            containerService.findOrCreate(session, "/testNodeGraph");
-
+        final FedoraResource object = containerService.findOrCreate(session, "/testNodeGraph");
         final Node s = subjects.reverse().convert(object).asNode();
-        final Node p = HAS_PRIMARY_TYPE.asNode();
-        final Node o = createLiteral("nt:folder");
-        assertFalse(object.getTriples(subjects, PROPERTIES).collect(toModel()).getGraph().contains(s, p, o));
+        final Model rdf = object.getTriples(subjects, PROPERTIES).collect(toModel());
+
+        assertFalse(rdf.getGraph().contains(s, HAS_PRIMARY_IDENTIFIER.asNode(), ANY));
+        assertFalse(rdf.getGraph().contains(s, HAS_PRIMARY_TYPE.asNode(), ANY));
+        assertFalse(rdf.getGraph().contains(s, HAS_NODE_TYPE.asNode(), ANY));
+        assertFalse(rdf.getGraph().contains(s, HAS_MIXIN_TYPE.asNode(), ANY));
     }
 
     @Test
