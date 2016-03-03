@@ -64,7 +64,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.jcr.AccessDeniedException;
 import javax.jcr.ItemNotFoundException;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
@@ -87,6 +86,7 @@ import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.ConstraintViolationException;
 import org.fcrepo.kernel.api.exception.InvalidPrefixException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;

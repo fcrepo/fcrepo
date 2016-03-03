@@ -63,7 +63,6 @@ import java.util.Map;
 
 import javax.inject.Inject;
 import javax.annotation.PostConstruct;
-import javax.jcr.AccessDeniedException;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.ws.rs.BadRequestException;
@@ -91,6 +90,7 @@ import javax.ws.rs.core.Variant;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
+import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -405,15 +405,13 @@ public class FedoraLdp extends ContentExposingResource {
      *
      * @param requestBodyStream the request body stream
      * @return 201
-     * @throws MalformedRdfException if malformed rdf exception occurred
-     * @throws AccessDeniedException if exception updating property occurred
      * @throws IOException if IO exception occurred
      */
     @PATCH
     @Consumes({contentTypeSPARQLUpdate})
     @Timed
     public Response updateSparql(@ContentLocation final InputStream requestBodyStream)
-            throws IOException, MalformedRdfException, AccessDeniedException {
+            throws IOException {
 
         if (null == requestBodyStream) {
             throw new BadRequestException("SPARQL-UPDATE requests must have content!");
@@ -449,6 +447,8 @@ public class FedoraLdp extends ContentExposingResource {
             return noContent().build();
         } catch (final IllegalArgumentException iae) {
             throw new BadRequestException(iae.getMessage());
+        } catch (final AccessDeniedException e) {
+            throw e;
         } catch ( final RuntimeException ex ) {
             final Throwable cause = ex.getCause();
             if (cause instanceof PathNotFoundException) {
@@ -457,9 +457,6 @@ public class FedoraLdp extends ContentExposingResource {
             }
             throw ex;
         }  catch (final RepositoryException e) {
-            if (e instanceof AccessDeniedException) {
-                throw new AccessDeniedException(e.getMessage());
-            }
             throw new RepositoryRuntimeException(e);
         }
     }
@@ -479,8 +476,6 @@ public class FedoraLdp extends ContentExposingResource {
      * @return 201
      * @throws InvalidChecksumException if invalid checksum exception occurred
      * @throws IOException if IO exception occurred
-     * @throws MalformedRdfException if malformed rdf exception occurred
-     * @throws AccessDeniedException if access denied in creating resource
      */
     public Response createObject(@QueryParam("checksum") final String checksum,
                                  @HeaderParam("Content-Disposition") final ContentDisposition contentDisposition,
@@ -488,7 +483,7 @@ public class FedoraLdp extends ContentExposingResource {
                                  @HeaderParam("Slug") final String slug,
                                  @ContentLocation final InputStream requestBodyStream,
                                  @HeaderParam("Link") final String link)
-            throws InvalidChecksumException, IOException, MalformedRdfException, AccessDeniedException {
+            throws InvalidChecksumException, IOException {
         return createObject(checksum, contentDisposition, requestContentType, slug, requestBodyStream, link, null);
     }
     /**
@@ -507,8 +502,6 @@ public class FedoraLdp extends ContentExposingResource {
      * @return 201
      * @throws InvalidChecksumException if invalid checksum exception occurred
      * @throws IOException if IO exception occurred
-     * @throws MalformedRdfException if malformed rdf exception occurred
-     * @throws AccessDeniedException if access denied in creating resource
      */
     @POST
     @Consumes({MediaType.APPLICATION_OCTET_STREAM + ";qs=1001", WILDCARD})
@@ -523,7 +516,7 @@ public class FedoraLdp extends ContentExposingResource {
                                  @ContentLocation final InputStream requestBodyStream,
                                  @HeaderParam("Link") final String link,
                                  @HeaderParam("Digest") final String digest)
-            throws InvalidChecksumException, IOException, MalformedRdfException, AccessDeniedException {
+            throws InvalidChecksumException, IOException {
 
         checkLinkForLdpResourceCreation(link);
 
