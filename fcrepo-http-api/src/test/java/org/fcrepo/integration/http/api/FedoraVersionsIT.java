@@ -427,12 +427,14 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         final Node subject = createURI(serverAddress + id);
         try (final CloseableGraphStore originalObjectProperties = getContent(serverAddress + id)) {
             assertFalse("Node must not have versionable mixin.", originalObjectProperties.contains(ANY,
-                    subject, type.asNode(), createURI(MIX_NAMESPACE + "versionable")));
+                    subject, HAS_VERSION_HISTORY.asNode(), ANY));
         }
         postObjectVersion(id, "label");
         try (final CloseableGraphStore updatedObjectProperties = getContent(serverAddress + id)) {
             assertTrue("Node is expected to contain hasVersions triple.", updatedObjectProperties.contains(ANY,
                     subject, HAS_VERSION_HISTORY.asNode(), ANY));
+            assertFalse("Node must not have versionable mixin.", updatedObjectProperties.contains(ANY,
+                    subject, type.asNode(), createURI(MIX_NAMESPACE + "versionable")));
         }
     }
 
@@ -453,9 +455,11 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         // datastream should not be versionable
         try (final CloseableGraphStore originalObjectProperties =
                 getContent(serverAddress + pid + "/" + dsid + "/fcr:metadata")) {
-            assertFalse("Node must not have versionable mixin.",
-                    originalObjectProperties.contains(ANY, createURI(serverAddress + pid + "/" + dsid),
-                            type.asNode(), createURI(MIX_NAMESPACE + "versionable")));
+            final Node subject = createURI(serverAddress + pid + "/" + dsid);
+            assertFalse("Node must not have versionable mixin.", originalObjectProperties.contains(ANY,
+                    subject, type.asNode(), createURI(MIX_NAMESPACE + "versionable")));
+            assertFalse("Node must not contain any hasVersions triples.", originalObjectProperties.contains(ANY,
+                    subject, HAS_VERSION_HISTORY.asNode(), ANY));
         }
         // creating a version should succeed
         final HttpPost httpPost = new HttpPost(serverAddress + pid + "/" + dsid + "/fcr:versions");
@@ -477,9 +481,8 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         // datastream should then be versionable
         try (final CloseableGraphStore updatedDSProperties =
                 getContent(serverAddress + pid + "/" + dsid + "/fcr:metadata")) {
-            assertTrue("Node must have versionable mixin.", updatedDSProperties.contains(ANY,
-                    createURI(serverAddress + pid + "/" + dsid), type.asNode(),
-                    createURI(MIX_NAMESPACE + "versionable")));
+            assertTrue("Node is expected to contain hasVersions triple.", updatedDSProperties.contains(
+                    ANY, createURI(serverAddress + pid + "/" + dsid), HAS_VERSION_HISTORY.asNode(), ANY));
         }
         // update the content
         final String updatedContent = "This is the updated content";

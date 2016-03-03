@@ -41,9 +41,9 @@ import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.node
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.isFrozen;
 import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.property2values;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.hasInternalNamespace;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFrozenNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalNode;
-import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalType;
 import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaceRegistry;
 import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
@@ -451,10 +451,10 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                 .forEach(nodeTypes::add);
 
             final List<URI> types = nodeTypes.stream()
-                .filter(isInternalType.negate())
                 .map(uncheck(NodeType::getName))
+                .filter(hasInternalNamespace.negate())
                 .distinct()
-                .map(nodeTypeNameToURI::apply)
+                .map(nodeTypeNameToURI)
                 .peek(x -> LOGGER.debug("node has rdf:type {}", x))
                 .collect(Collectors.toList());
 

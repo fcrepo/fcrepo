@@ -26,6 +26,8 @@ public final class FedoraJcrConstants {
 
     public static final String JCR_LASTMODIFIED = "jcr:lastModified";
 
+    public static final String JCR_LASTMODIFIEDBY = "jcr:lastModifiedBy";
+
     public static final String JCR_CREATED = "jcr:created";
 
     public static final String JCR_CREATEDBY = "jcr:createdBy";

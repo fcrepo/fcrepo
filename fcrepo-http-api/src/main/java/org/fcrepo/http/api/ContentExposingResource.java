@@ -40,6 +40,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
+import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicateURI;
 import static org.fcrepo.kernel.api.RequiredRdfContext.EMBED_RESOURCES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_CONTAINMENT;
@@ -47,7 +48,6 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_MEMBERSHIP;
 import static org.fcrepo.kernel.api.RequiredRdfContext.MINIMAL;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
-import static org.fcrepo.kernel.modeshape.rdf.ManagedRdf.isManagedTriple;
 import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaces;
 
 import java.io.IOException;
@@ -140,7 +140,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     private static final Predicate<Triple> IS_MANAGED_TYPE = t -> t.getPredicate().equals(type.asNode()) &&
             isManagedNamespace.test(t.getObject().getNameSpace());
-    private static final Predicate<Triple> IS_MANAGED_TRIPLE = IS_MANAGED_TYPE.or(isManagedTriple::test);
+    private static final Predicate<Triple> IS_MANAGED_TRIPLE = IS_MANAGED_TYPE
+        .or(t -> isManagedPredicateURI.test(t.getPredicate().getURI()));
 
     protected abstract String externalPath();
 

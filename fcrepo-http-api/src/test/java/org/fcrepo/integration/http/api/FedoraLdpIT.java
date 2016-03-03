@@ -73,6 +73,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.HAS_PRIMARY_IDENTIFIER;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.JCR_NT_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_MEMBER;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
@@ -1351,6 +1352,26 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final Iterator<Quad> iterator =
                     graphStore.find(ANY, createURI(location), HAS_MIXIN_TYPE.asNode(), ANY);
             assertFalse("Graph should not contain a mixinType!", iterator.hasNext());
+        }
+    }
+
+    @Test
+    public void testGetObjectGraphLacksJcrTypes() throws Exception {
+        final String location = getLocation(postObjMethod());
+        final HttpGet getObjMethod = new HttpGet(location);
+        try (final CloseableGraphStore graphStore = getGraphStore(getObjMethod)) {
+            graphStore.find(ANY, createURI(location), type.asNode(), ANY).forEachRemaining(q -> {
+                    final Node o = q.asTriple().getObject();
+                    assertTrue("Type should be a URI", o.isURI());
+                    assertFalse("Graph should not contain an internal JCR type",
+                        o.getURI().startsWith(JCR_NAMESPACE));
+                    assertFalse("Graph should not contain an internal JCR type",
+                        o.getURI().startsWith(MODE_NAMESPACE));
+                    assertFalse("Graph should not contain an internal JCR type",
+                        o.getURI().startsWith(MIX_NAMESPACE));
+                    assertFalse("Graph should not contain an internal JCR type",
+                        o.getURI().startsWith(JCR_NT_NAMESPACE));
+                });
         }
     }
 
