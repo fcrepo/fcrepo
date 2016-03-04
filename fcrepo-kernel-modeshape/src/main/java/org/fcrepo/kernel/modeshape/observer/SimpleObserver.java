@@ -38,9 +38,8 @@ import javax.jcr.observation.Event;
 import javax.jcr.observation.EventListener;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.observer.EventFilter;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
-import org.fcrepo.kernel.api.observer.eventmappings.InternalExternalEventMapper;
+import org.fcrepo.kernel.modeshape.observer.eventmappings.InternalExternalEventMapper;
 
 import org.modeshape.jcr.api.Repository;
 import org.slf4j.Logger;

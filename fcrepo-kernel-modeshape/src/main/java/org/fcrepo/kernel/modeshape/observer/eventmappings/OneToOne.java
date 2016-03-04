@@ -26,7 +26,6 @@ import java.util.Iterator;
 import javax.jcr.observation.Event;
 
 import org.fcrepo.kernel.api.observer.FedoraEvent;
-import org.fcrepo.kernel.api.observer.eventmappings.InternalExternalEventMapper;
 import org.fcrepo.kernel.modeshape.observer.FedoraEventImpl;
 
 /**

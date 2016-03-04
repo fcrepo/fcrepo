@@ -13,20 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.observer.eventmappings;
+package org.fcrepo.kernel.modeshape.observer;
 
-import java.util.Iterator;
-import java.util.function.Function;
+import java.util.function.Predicate;
 
 import javax.jcr.observation.Event;
 
-import org.fcrepo.kernel.api.observer.FedoraEvent;
-
 /**
- * Maps {@link Iterator}s of {@link Event}s to {@link Iterator}s of {@link FedoraEvent}s according to some algorithm
+ * Filter JCR events to remove extraneous events
  *
+ * @author eddies
  * @author ajs6f
- * @since Feb 27, 2014
+ * @since Feb 7, 2013
  */
-public interface InternalExternalEventMapper extends Function<Iterator<Event>, Iterator<FedoraEvent>> {
+public interface EventFilter extends Predicate<Event> {
 }
