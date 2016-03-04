@@ -29,7 +29,6 @@ import javax.jcr.nodetype.NodeType;
 import javax.jcr.observation.Event;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.observer.EventFilter;
 
 import org.slf4j.Logger;
 

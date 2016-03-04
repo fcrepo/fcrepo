@@ -31,9 +31,8 @@ import javax.jcr.observation.Event;
 import javax.jcr.observation.EventIterator;
 import javax.jcr.observation.ObservationManager;
 
-import org.fcrepo.kernel.modeshape.observer.eventmappings.OneToOne;
-import org.fcrepo.kernel.api.observer.EventFilter;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
+import org.fcrepo.kernel.modeshape.observer.eventmappings.OneToOne;
 
 import org.junit.Before;
 import org.junit.Test;
