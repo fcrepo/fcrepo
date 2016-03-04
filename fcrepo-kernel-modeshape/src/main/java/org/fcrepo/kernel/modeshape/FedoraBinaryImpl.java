@@ -342,7 +342,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     @Override
     public VersionHistory getVersionHistory() {
         try {
-            return getSession().getWorkspace().getVersionManager().getVersionHistory(getDescription().getPath());
+            return getVersionManager().getVersionHistory(getDescription().getPath());
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }

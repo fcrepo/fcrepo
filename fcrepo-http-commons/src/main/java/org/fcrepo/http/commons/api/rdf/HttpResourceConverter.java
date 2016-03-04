@@ -25,7 +25,6 @@ import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.modeshape.services.TransactionServiceImpl.getCurrentTransactionId;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getClosestExistingAncestor;
-import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFrozenNode;
 import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.validatePath;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -320,36 +319,31 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
     }
 
     private static String getPath(final FedoraResource resource) {
-        if (isFrozenNode.test(resource)) {
-            try {
+        if (resource.isFrozenResource()) {
+            // the versioned resource we're in
+            final FedoraResource versionableFrozenResource = resource.getVersionedAncestor();
 
-                // the versioned resource we're in
-                final FedoraResource versionableFrozenResource = resource.getVersionedAncestor();
+            // the unfrozen equivalent for the versioned resource
+            final FedoraResource unfrozenVersionableResource = versionableFrozenResource.getUnfrozenResource();
 
-                // the unfrozen equivalent for the versioned resource
-                final FedoraResource unfrozenVersionableResource = versionableFrozenResource.getUnfrozenResource();
+            // the label for this version
+            final String versionLabel = versionableFrozenResource.getVersionLabelOfFrozenResource();
 
-                // the identifier for this version (by default, the UUID for the versioned resource)
-                final String versionIdentifier = versionableFrozenResource.getNode().getIdentifier();
+            // the path to this resource within the versioning tree
+            final String pathWithinVersionable;
 
-                // the path to this resource within the versioning tree
-                final String pathWithinVersionable;
-
-                if (!resource.equals(versionableFrozenResource)) {
-                    pathWithinVersionable = getRelativePath(resource, versionableFrozenResource);
-                } else {
-                    pathWithinVersionable = "";
-                }
-
-                // and, finally, the path we want to expose in the URI
-                final String path = unfrozenVersionableResource.getPath()
-                        + "/" + FCR_VERSIONS
-                        + "/" + versionIdentifier
-                        + pathWithinVersionable;
-                return path.startsWith("/") ? path : "/" + path;
-            } catch (final RepositoryException e) {
-                throw new RepositoryRuntimeException(e);
+            if (!resource.equals(versionableFrozenResource)) {
+                pathWithinVersionable = getRelativePath(resource, versionableFrozenResource);
+            } else {
+                pathWithinVersionable = "";
             }
+
+            // and, finally, the path we want to expose in the URI
+            final String path = unfrozenVersionableResource.getPath()
+                    + "/" + FCR_VERSIONS
+                    + (versionLabel != null ? "/" + versionLabel : "")
+                    + pathWithinVersionable;
+            return path.startsWith("/") ? path : "/" + path;
         }
         return resource.getPath();
     }

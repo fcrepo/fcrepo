@@ -242,4 +242,11 @@ public interface FedoraResource {
      * @return the node for this object at the version provided
      */
     Node getNodeVersion(String label);
+
+    /**
+     * This method returns the version label of this frozen resource.
+     * If this resource is not frozen, null is returned.
+     * @return version label
+     */
+    String getVersionLabelOfFrozenResource();
 }
