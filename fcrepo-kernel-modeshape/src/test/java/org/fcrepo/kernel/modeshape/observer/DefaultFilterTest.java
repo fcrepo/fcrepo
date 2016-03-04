@@ -19,6 +19,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
@@ -68,6 +69,10 @@ public class DefaultFilterTest {
     private NodeType fedoraDatastream;
     @Mock
     private NodeType fedoraBinary;
+    @Mock
+    private NodeType modeshapeRootType;
+    @Mock
+    private NodeType modeshapeFolderType;
 
     @Before
     public void setUp() {
@@ -76,35 +81,48 @@ public class DefaultFilterTest {
         when(fedoraContainer.toString()).thenReturn(FEDORA_CONTAINER);
         when(fedoraDatastream.toString()).thenReturn(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
         when(fedoraBinary.toString()).thenReturn(FEDORA_BINARY);
+        when(modeshapeRootType.toString()).thenReturn(ROOT);
+        when(modeshapeFolderType.toString()).thenReturn("nt:folder");
     }
 
     @Test
     public void shouldApplyToResource() throws RepositoryException {
+        when(mockEvent.getPrimaryNodeType()).thenReturn(modeshapeFolderType);
         when(mockEvent.getMixinNodeTypes()).thenReturn(new NodeType[] { fedoraResource });
         assertTrue(testObj.test(mockEvent));
     }
 
     @Test
     public void shouldApplyToObject() throws RepositoryException {
+        when(mockEvent.getPrimaryNodeType()).thenReturn(modeshapeFolderType);
         when(mockEvent.getMixinNodeTypes()).thenReturn(new NodeType[] {fedoraContainer});
         assertTrue(testObj.test(mockEvent));
     }
 
     @Test
     public void shouldApplyToDatastream() throws RepositoryException {
+        when(mockEvent.getPrimaryNodeType()).thenReturn(modeshapeFolderType);
         when(mockEvent.getMixinNodeTypes()).thenReturn(new NodeType[] { fedoraDatastream });
         assertTrue(testObj.test(mockEvent));
     }
 
     @Test
     public void shouldApplyToBinary() throws RepositoryException {
+        when(mockEvent.getPrimaryNodeType()).thenReturn(modeshapeFolderType);
         when(mockEvent.getMixinNodeTypes()).thenReturn(new NodeType[] { fedoraBinary });
         assertTrue(testObj.test(mockEvent));
     }
 
+    @Test
+    public void shouldApplyToRoot() throws RepositoryException {
+        when(mockEvent.getPrimaryNodeType()).thenReturn(modeshapeRootType);
+        when(mockEvent.getMixinNodeTypes()).thenReturn(new NodeType[] { });
+        assertTrue(testObj.test(mockEvent));
+    }
 
     @Test
     public void shouldNotApplyToNonFedoraNodes() throws RepositoryException {
+        when(mockEvent.getPrimaryNodeType()).thenReturn(modeshapeFolderType);
         when(mockEvent.getMixinNodeTypes()).thenReturn(new NodeType[] {  });
         assertFalse(testObj.test(mockEvent));
     }

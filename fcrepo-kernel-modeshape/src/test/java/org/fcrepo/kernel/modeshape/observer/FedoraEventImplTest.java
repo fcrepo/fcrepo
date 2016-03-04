@@ -15,10 +15,10 @@
  */
 package org.fcrepo.kernel.modeshape.observer;
 
-import static com.google.common.collect.Iterators.contains;
 import static java.util.Collections.singleton;
 import static javax.jcr.observation.Event.NODE_ADDED;
 import static javax.jcr.observation.Event.PROPERTY_CHANGED;
+import static org.fcrepo.kernel.modeshape.observer.FedoraEventImpl.from;
 import static org.fcrepo.kernel.modeshape.observer.FedoraEventImpl.valueOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -42,14 +42,18 @@ import com.google.common.collect.ImmutableMap;
  */
 public class FedoraEventImplTest {
 
-    FedoraEvent e = new FedoraEventImpl(new TestEvent(1, "Path/Child", "UserId", "Identifier",
+    FedoraEvent e = from(new TestEvent(1, "Path/Child", "UserId", "Identifier",
             ImmutableMap.of("1", "2"), "data", 0L));
 
 
     @SuppressWarnings("unused")
-    @Test(expected = java.lang.IllegalArgumentException.class)
+    @Test(expected = java.lang.NullPointerException.class)
     public void testWrapNullEvent() {
-        new FedoraEventImpl((Event)null);
+        final String path = null;
+        final String userID = null;
+        final String userData = null;
+        final Map<String, String> info = null;
+        new FedoraEventImpl(valueOf(1), path, userID, userData, 0L, info);
     }
 
     @Test
@@ -64,9 +68,9 @@ public class FedoraEventImplTest {
 
 
     @SuppressWarnings("unused")
-    @Test(expected = java.lang.IllegalArgumentException.class)
+    @Test(expected = java.lang.NullPointerException.class)
     public void testWrapNullFedoraEvent() {
-        new FedoraEventImpl((FedoraEvent)null);
+        from((Event)null);
     }
 
     @Test
@@ -82,7 +86,7 @@ public class FedoraEventImplTest {
 
     @Test
     public void testGetPathWithProperties() {
-        final FedoraEvent e = new FedoraEventImpl(new TestEvent(PROPERTY_CHANGED,
+        final FedoraEvent e = from(new TestEvent(PROPERTY_CHANGED,
                                                             "Path/Child",
                                                             "UserId",
                                                             "Identifier",
@@ -125,8 +129,8 @@ public class FedoraEventImplTest {
         e.addType(type);
         assertEquals(2, e.getTypes().size());
 
-        assertTrue("Should contain: " + type, contains(e.getTypes().iterator(), type));
-        assertTrue("Should contain: NODE_ADDED", contains(e.getTypes().iterator(), valueOf(1)));
+        assertTrue("Should contain: " + type, e.getTypes().contains(type));
+        assertTrue("Should contain: NODE_ADDED", e.getTypes().contains(valueOf(1)));
     }
 
     @Test

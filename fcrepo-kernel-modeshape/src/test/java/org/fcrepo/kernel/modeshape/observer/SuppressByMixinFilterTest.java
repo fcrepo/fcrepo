@@ -49,6 +49,9 @@ public class SuppressByMixinFilterTest {
     @Mock
     private NodeType internalEvent;
 
+    @Mock
+    private NodeType modeshapeType;
+
     @Before
     public void setUp() {
         final Set<String> suppressedMixins = new HashSet<>();
@@ -56,16 +59,19 @@ public class SuppressByMixinFilterTest {
         testObj = new SuppressByMixinFilter(suppressedMixins);
         when(fedoraContainer.toString()).thenReturn(FEDORA_CONTAINER);
         when(internalEvent.toString()).thenReturn("audit:InternalEvent");
+        when(modeshapeType.toString()).thenReturn("nt:folder");
     }
 
     @Test
     public void shouldSuppressMixin() throws Exception {
+        when(mockEvent.getPrimaryNodeType()).thenReturn(modeshapeType);
         when(mockEvent.getMixinNodeTypes()).thenReturn(new NodeType[] {fedoraContainer, internalEvent});
         assertFalse(testObj.test(mockEvent));
     }
 
     @Test
     public void shouldAllowOthers() throws Exception {
+        when(mockEvent.getPrimaryNodeType()).thenReturn(modeshapeType);
         when(mockEvent.getMixinNodeTypes()).thenReturn(new NodeType[] {fedoraContainer});
         assertTrue(testObj.test(mockEvent));
     }

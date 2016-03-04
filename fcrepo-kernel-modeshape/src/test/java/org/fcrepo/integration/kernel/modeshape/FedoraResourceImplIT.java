@@ -755,6 +755,20 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
+    public void testGetChildrenRecursively() {
+        final String pid = getRandomPid();
+        final Container container = containerService.findOrCreate(session, "/" + pid);
+        containerService.findOrCreate(session, "/" + pid + "/a");
+        containerService.findOrCreate(session, "/" + pid + "/a/b");
+        containerService.findOrCreate(session, "/" + pid + "/a/b/c");
+        containerService.findOrCreate(session, "/" + pid + "/a/c/d");
+        containerService.findOrCreate(session, "/" + pid + "/a/c/e");
+
+        assertEquals(5, container.getChildren(true).count());
+        assertEquals(1, container.getChildren(false).count());
+    }
+
+    @Test
     public void testGetChildrenWithBinary() {
         final String pid = getRandomPid();
         final Container container = containerService.findOrCreate(session, "/" + pid);

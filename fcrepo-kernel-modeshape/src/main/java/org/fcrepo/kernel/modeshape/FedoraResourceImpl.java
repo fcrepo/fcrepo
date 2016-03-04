@@ -21,7 +21,9 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.empty;
+import static java.util.stream.Stream.of;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
@@ -144,14 +146,14 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     Function<IdentifierConverter<Resource, FedoraResource>, Function<Boolean, Stream<Triple>>>> {}
 
     private static RdfGenerator getDefaultTriples = resource -> translator -> uncheck(minimal -> {
-        final Stream<Stream<Triple>> min = Stream.of(
+        final Stream<Stream<Triple>> min = of(
             new TypeRdfContext(resource, translator),
             new PropertiesRdfContext(resource, translator));
         if (!minimal) {
-            final Stream<Stream<Triple>> extra = Stream.of(
+            final Stream<Stream<Triple>> extra = of(
                 new HashRdfContext(resource, translator),
                 new SkolemNodeRdfContext(resource, translator));
-            return Stream.concat(min, extra).reduce(empty(), Stream::concat);
+            return concat(min, extra).reduce(empty(), Stream::concat);
         }
         return min.reduce(empty(), Stream::concat);
     });
@@ -175,7 +177,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         if (minimal) {
             return new LdpRdfContext(resource, translator);
         }
-        final Stream<Stream<Triple>> streams = Stream.of(
+        final Stream<Stream<Triple>> streams = of(
             new LdpRdfContext(resource, translator),
             new AclRdfContext(resource, translator),
             new RootRdfContext(resource, translator),
@@ -185,7 +187,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     });
 
     private static RdfGenerator getLdpMembershipTriples = resource -> translator -> uncheck(_minimal -> {
-        final Stream<Stream<Triple>> streams = Stream.of(
+        final Stream<Stream<Triple>> streams = of(
             new LdpContainerRdfContext(resource, translator),
             new LdpIsMemberOfRdfContext(resource, translator));
         return streams.reduce(empty(), Stream::concat);
@@ -233,12 +235,16 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     }
 
     /* (non-Javadoc)
-     * @see org.fcrepo.kernel.api.models.FedoraResource#getChildren()
+     * @see org.fcrepo.kernel.api.models.FedoraResource#getChildren(Boolean recursive)
      */
     @Override
-    public Stream<FedoraResource> getChildren() {
+    public Stream<FedoraResource> getChildren(final Boolean recursive) {
         try {
-            return nodeToGoodChildren(node);
+            if (recursive) {
+                return nodeToGoodChildren(node).flatMap(FedoraResourceImpl::getAllChildren);
+            } else {
+                return nodeToGoodChildren(node);
+            }
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -254,7 +260,14 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     private Stream<FedoraResource> nodeToGoodChildren(final Node input) throws RepositoryException {
         return iteratorToStream(input.getNodes()).filter(nastyChildren.negate())
             .flatMap(uncheck((final Node child) -> child.isNodeType(FEDORA_PAIRTREE) ? nodeToGoodChildren(child) :
-                        Stream.of(nodeToObjectBinaryConverter.convert(child))));
+                        of(nodeToObjectBinaryConverter.convert(child))));
+    }
+
+    /**
+     * Get all children recursively, and flatten into a single Stream.
+     */
+    private static Stream<FedoraResource> getAllChildren(final FedoraResource resource) {
+        return concat(of(resource), resource.getChildren().flatMap(FedoraResourceImpl::getAllChildren));
     }
 
     /**
@@ -773,7 +786,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                 .flatMap(x -> {
                     if (x instanceof UpdateModify) {
                         final UpdateModify y = (UpdateModify)x;
-                        return Stream.concat(y.getInsertQuads().stream(), y.getDeleteQuads().stream());
+                        return concat(y.getInsertQuads().stream(), y.getDeleteQuads().stream());
                     } else if (x instanceof UpdateData) {
                         return ((UpdateData)x).getQuads().stream();
                     } else if (x instanceof UpdateDeleteWhere) {

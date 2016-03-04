@@ -15,6 +15,7 @@
  */
 package org.fcrepo.integration.kernel.modeshape.observer;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static com.jayway.awaitility.Awaitility.await;
 import static com.jayway.awaitility.Duration.ONE_SECOND;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
@@ -53,11 +54,6 @@ import com.google.common.eventbus.Subscribe;
 @ContextConfiguration({"/spring-test/eventing-suppress.xml", "/spring-test/repo.xml"})
 public class SuppressByMixinFilterIT extends AbstractIT {
 
-    /**
-     * Time to wait for a set of test messages, in milliseconds.
-     */
-    private static final long TIMEOUT = 20000;
-
     @Inject
     private Repository repository;
 
@@ -66,7 +62,7 @@ public class SuppressByMixinFilterIT extends AbstractIT {
 
     private final Set<String> eventsReceived = new HashSet<>();
 
-    @Test(timeout = TIMEOUT)
+    @Test
     public void shouldSuppressWithMixin() throws RepositoryException {
 
         final Session se = repository.login();
@@ -88,7 +84,7 @@ public class SuppressByMixinFilterIT extends AbstractIT {
         }
     }
 
-    @Test(timeout = TIMEOUT)
+    @Test
     public void shouldAllowWithoutMixin() throws RepositoryException {
 
         final Session se = repository.login();
@@ -118,14 +114,16 @@ public class SuppressByMixinFilterIT extends AbstractIT {
         final Set<String> properties = e.getProperties();
         assertNotNull(properties);
 
-        final String expected = REPOSITORY_NAMESPACE + "mixinTypes";
+        final String expected = REPOSITORY_NAMESPACE + "lastModified";
+        final String notExpected = REPOSITORY_NAMESPACE + "mixinTypes";
         assertTrue("Should contain: " + expected + properties, properties.contains(expected));
+        assertFalse("Should not contain: " + notExpected + properties, properties.contains(notExpected));
 
         eventsReceived.add(e.getPath());
     }
 
     private void waitForEvent(final String id) {
-        await().pollInterval(ONE_SECOND).until(() -> eventsReceived.contains(id));
+        await().atMost(5, SECONDS).pollInterval(ONE_SECOND).until(() -> eventsReceived.contains(id));
     }
 
 }

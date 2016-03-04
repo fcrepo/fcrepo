@@ -15,15 +15,19 @@
  */
 package org.fcrepo.integration.kernel.modeshape.observer;
 
-import static java.lang.Thread.sleep;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static com.jayway.awaitility.Awaitility.await;
+import static com.jayway.awaitility.Duration.ONE_SECOND;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.api.observer.EventType.NODE_ADDED;
+import static org.fcrepo.kernel.api.observer.EventType.NODE_MOVED;
+import static org.fcrepo.kernel.api.observer.EventType.NODE_REMOVED;
+import static org.fcrepo.kernel.api.observer.EventType.PROPERTY_CHANGED;
 import static org.fcrepo.kernel.api.utils.ContentDigest.asURI;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
@@ -40,8 +44,11 @@ import javax.jcr.Session;
 import org.fcrepo.integration.kernel.modeshape.AbstractIT;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.models.FedoraBinary;
+import org.fcrepo.kernel.api.observer.EventType;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
+import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
+import org.fcrepo.kernel.modeshape.services.NodeServiceImpl;
 
 import org.junit.After;
 import org.junit.Before;
@@ -53,15 +60,19 @@ import org.springframework.test.context.ContextConfiguration;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * <p>SimpleObserverIT class.</p>
  *
  * @author awoods
+ * @author acoburn
  */
 @ContextConfiguration({"/spring-test/eventing.xml", "/spring-test/repo.xml"})
 public class SimpleObserverIT extends AbstractIT {
+
+    private volatile List<FedoraEvent> events;
 
     private Integer eventBusMessageCount;
 
@@ -80,17 +91,13 @@ public class SimpleObserverIT extends AbstractIT {
         se.save();
         se.logout();
 
-        try {
-            sleep(500);
-        } catch (final InterruptedException e) {
-            e.printStackTrace();
-        }
-
         // Should be two messages, for each time
         // each node becomes a Fedora object
 
-        assertEquals("Where are my messages!?", (Integer) 2,
-                eventBusMessageCount);
+        awaitEvent("/object1", NODE_ADDED, REPOSITORY_NAMESPACE + "lastModified");
+        awaitEvent("/object2", NODE_ADDED, REPOSITORY_NAMESPACE + "lastModified");
+
+        assertEquals("Where are my messages!?", (Integer) 2, eventBusMessageCount);
 
     }
 
@@ -116,30 +123,94 @@ public class SimpleObserverIT extends AbstractIT {
         se.save();
         se.logout();
 
-        try {
-            sleep(500);
-        } catch (final InterruptedException e) {
-            e.printStackTrace();
-        }
+        awaitEvent("/object3", NODE_ADDED, REPOSITORY_NAMESPACE + "lastModified");
 
         assertEquals("Node and content events not collapsed!", (Integer) 1, eventBusMessageCount);
+    }
 
+    @Test
+    public void TestMoveEvent() throws RepositoryException {
+
+        final Session se = repository.login();
+        final NodeService ns = new NodeServiceImpl();
+
+        final Node n = se.getRootNode().addNode("/object4");
+        n.addMixin(FEDORA_CONTAINER);
+        n.addNode("/child1").addMixin(FEDORA_CONTAINER);
+        n.addNode("/child2").addMixin(FEDORA_CONTAINER);
+        se.save();
+        ns.moveObject(se, "/object4", "/object5");
+        se.save();
+        se.logout();
+
+        awaitEvent("/object4", NODE_ADDED);
+        awaitEvent("/object4/child1", NODE_ADDED);
+        awaitEvent("/object4/child2", NODE_ADDED);
+        awaitEvent("/object5", NODE_MOVED);
+        awaitEvent("/object5/child1", NODE_MOVED);
+        awaitEvent("/object5/child2", NODE_MOVED);
+        awaitEvent("/object4", NODE_REMOVED);
+        awaitEvent("/object4/child1", NODE_REMOVED);
+        awaitEvent("/object4/child2", NODE_REMOVED);
+
+        assertEquals("Move operation didn't generate additional events", (Integer) 9, eventBusMessageCount);
+    }
+
+    @Test
+    public void TestMoveContainedEvent() throws RepositoryException {
+
+        final Session se = repository.login();
+        final NodeService ns = new NodeServiceImpl();
+
+        final Node n = se.getRootNode().addNode("/object6");
+        n.addMixin(FEDORA_CONTAINER);
+        final Node child = n.addNode("/object7");
+        child.addMixin(FEDORA_CONTAINER);
+        child.addNode("/child1").addMixin(FEDORA_CONTAINER);
+        child.addNode("/child2").addMixin(FEDORA_CONTAINER);
+        se.save();
+        ns.moveObject(se, "/object6/object7", "/object6/object8");
+        se.save();
+        se.logout();
+
+        awaitEvent("/object6", NODE_ADDED);
+        awaitEvent("/object6/object7", NODE_ADDED);
+        awaitEvent("/object6/object7/child1", NODE_ADDED);
+        awaitEvent("/object6/object7/child2", NODE_ADDED);
+        awaitEvent("/object6/object8", NODE_MOVED);
+        awaitEvent("/object6/object8/child1", NODE_MOVED);
+        awaitEvent("/object6/object8/child2", NODE_MOVED);
+        awaitEvent("/object6/object7", NODE_REMOVED);
+        awaitEvent("/object6/object7/child1", NODE_REMOVED);
+        awaitEvent("/object6/object7/child2", NODE_REMOVED);
+        // should produce two of these
+        awaitEvent("/object6", PROPERTY_CHANGED);
+
+        assertEquals("Move operation didn't generate additional events", (Integer) 12, eventBusMessageCount);
+    }
+
+    private void awaitEvent(final String id, final EventType eventType, final String property) {
+        await().atMost(5, SECONDS).pollInterval(ONE_SECOND).until(() -> events.stream().anyMatch(evt ->
+            evt.getPath().equals(id) && evt.getTypes().contains(eventType)
+                && (property == null || evt.getProperties().contains(property))
+                // no events should contain the mixinTypes property
+                && !evt.getProperties().contains(REPOSITORY_NAMESPACE + "mixinTypes")));
+    }
+
+    private void awaitEvent(final String id, final EventType eventType) {
+        awaitEvent(id, eventType, null);
     }
 
     @Subscribe
     public void countMessages(final FedoraEvent e) {
         eventBusMessageCount++;
-
-        final Set<String> properties = e.getProperties();
-        assertNotNull(properties);
-
-        final String expected = REPOSITORY_NAMESPACE + "mixinTypes";
-        assertTrue("Should contain: " + expected + properties, properties.contains(expected));
+        events.add(e);
     }
 
     @Before
     public void acquireConnections() {
         eventBusMessageCount = 0;
+        events = new ArrayList<>();
         eventBus.register(this);
     }
 

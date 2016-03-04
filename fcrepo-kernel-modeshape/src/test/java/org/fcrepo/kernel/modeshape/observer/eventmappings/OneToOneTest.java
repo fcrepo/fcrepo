@@ -15,10 +15,11 @@
  */
 package org.fcrepo.kernel.modeshape.observer.eventmappings;
 
-import static com.google.common.collect.Iterators.size;
+import static java.util.stream.Stream.of;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
-import java.util.Iterator;
+
+import java.util.stream.Stream;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.observation.Event;
@@ -48,24 +49,25 @@ public class OneToOneTest {
     @Mock
     private Event mockEvent3;
 
-    @Mock
-    private Iterator<Event> mockIterator;
+    private Stream<Event> mockStream;
 
     @Before
     public void setUp() throws RepositoryException {
-        when(mockIterator.next()).thenReturn(mockEvent1, mockEvent2, mockEvent3);
-        when(mockIterator.hasNext()).thenReturn(true, true, true, false);
+        mockStream = of(mockEvent1, mockEvent2, mockEvent3);
         when(mockEvent1.getPath()).thenReturn("/foo");
         when(mockEvent2.getPath()).thenReturn("/foo");
         when(mockEvent3.getPath()).thenReturn("/foo");
         when(mockEvent1.getType()).thenReturn(1);
         when(mockEvent2.getType()).thenReturn(1);
         when(mockEvent3.getType()).thenReturn(1);
+        when(mockEvent1.getDate()).thenReturn(1L);
+        when(mockEvent2.getDate()).thenReturn(1L);
+        when(mockEvent3.getDate()).thenReturn(1L);
     }
 
     @Test
     public void testCardinality() {
-        assertEquals("Didn't get a FedoraEvent for every input JCR Event!", 3, size(testMapping
-                .apply(mockIterator)));
+        assertEquals("Didn't get a FedoraEvent for every input JCR Event!", 3, testMapping
+                .apply(mockStream).count());
     }
 }
