@@ -41,13 +41,13 @@ import javax.jcr.RepositoryException;
 import javax.jcr.observation.Event;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.observer.EventType;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
 import org.fcrepo.kernel.api.services.functions.HierarchicalIdentifierSupplier;
 import org.fcrepo.kernel.api.services.functions.UniqueValueSupplier;
+import org.fcrepo.kernel.modeshape.identifiers.HashConverter;
 
 import com.google.common.collect.ImmutableMap;
-
-import org.fcrepo.kernel.api.observer.EventType;
 
 /**
  * A very simple abstraction to prevent event-driven machinery downstream from the repository from relying directly
@@ -244,15 +244,28 @@ public class FedoraEventImpl implements FedoraEvent {
         try {
             @SuppressWarnings("unchecked")
             final Map<String, String> info = event.getInfo();
-            final String path = PROPERTY_TYPES.contains(event.getType()) ?
-                event.getPath().substring(0, event.getPath().lastIndexOf("/")) : event.getPath();
 
-            return new FedoraEventImpl(valueOf(event.getType()), path.replaceAll("/" + JCR_CONTENT, ""),
+            return new FedoraEventImpl(valueOf(event.getType()), cleanPath(event),
                     event.getUserID(), event.getUserData(), event.getDate(), info);
 
         } catch (final RepositoryException ex) {
             throw new RepositoryRuntimeException("Error converting JCR Event to FedoraEvent", ex);
         }
+    }
+
+    /**
+     * The JCR-based Event::getPath contains some Modeshape artifacts that must be removed or modified in
+     * order to correspond to the public resource path. For example, JCR Events will contain a trailing
+     * /jcr:content for Binaries, a trailing /propName for properties, and /#/ notation for URI fragments.
+     */
+    private static String cleanPath(final Event event) throws RepositoryException {
+        // remove any trailing data for property changes
+        final String path = PROPERTY_TYPES.contains(event.getType()) ?
+            event.getPath().substring(0, event.getPath().lastIndexOf("/")) : event.getPath();
+
+        // reformat any hash URIs and remove any trailing /jcr:content
+        final HashConverter converter = new HashConverter();
+        return converter.reverse().convert(path.replaceAll("/" + JCR_CONTENT, ""));
     }
 
     private static class DefaultPathMinter implements HierarchicalIdentifierSupplier { }

@@ -15,6 +15,7 @@
  */
 package org.fcrepo.kernel.modeshape.observer;
 
+import static com.google.common.collect.ImmutableMap.of;
 import static java.util.Collections.singleton;
 import static javax.jcr.observation.Event.NODE_ADDED;
 import static javax.jcr.observation.Event.PROPERTY_CHANGED;
@@ -33,8 +34,6 @@ import org.junit.Test;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
 import org.fcrepo.kernel.api.observer.EventType;
 
-import com.google.common.collect.ImmutableMap;
-
 /**
  * <p>FedoraEventTest class.</p>
  *
@@ -42,8 +41,8 @@ import com.google.common.collect.ImmutableMap;
  */
 public class FedoraEventImplTest {
 
-    FedoraEvent e = from(new TestEvent(1, "Path/Child", "UserId", "Identifier",
-            ImmutableMap.of("1", "2"), "data", 0L));
+    final FedoraEvent e = from(new TestEvent(1, "Path/Child", "UserId", "Identifier",
+            of("1", "2"), "data", 0L));
 
 
     @SuppressWarnings("unused")
@@ -86,14 +85,24 @@ public class FedoraEventImplTest {
 
     @Test
     public void testGetPathWithProperties() {
-        final FedoraEvent e = from(new TestEvent(PROPERTY_CHANGED,
-                                                            "Path/Child",
-                                                            "UserId",
-                                                            "Identifier",
-                                                            ImmutableMap.of("1", "2"),
-                                                            "data",
-                                                            0L));
-        assertEquals("Path", e.getPath());
+        final FedoraEvent e1 = from(new TestEvent(PROPERTY_CHANGED,
+                    "Path/Child", "UserId", "Identifier", of("1", "2"),
+                    "data", 0L));
+        assertEquals("Path", e1.getPath());
+    }
+
+    @Test
+    public void testGetPathWithTrailingJcrContent() {
+        final FedoraEvent e1 = from(new TestEvent(1, "Path/jcr:content", "UserId",
+                    "Identifier", of("1", "2"), "data", 0L));
+        assertEquals("Path", e1.getPath());
+    }
+
+    @Test
+    public void testGetPathWithHashUri() {
+        final FedoraEvent e1 = from(new TestEvent(1, "Path/#/child", "UserId",
+                    "Identifier", of("1", "2"), "data", 0L));
+        assertEquals("Path#child", e1.getPath());
     }
 
     @Test
