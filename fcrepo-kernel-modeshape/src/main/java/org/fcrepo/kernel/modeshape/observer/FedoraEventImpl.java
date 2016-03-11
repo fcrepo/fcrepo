@@ -253,6 +253,11 @@ public class FedoraEventImpl implements FedoraEvent {
         }
     }
 
+    /**
+     * The JCR-based Event::getPath contains some Modeshape artifacts that must be removed or modified in
+     * order to correspond to the public resource path. For example, JCR Events will contain a trailing
+     * /jcr:content for Binaries, a trailing /propName for properties, and /#/ notation for URI fragments.
+     */
     private static String cleanPath(final Event event) throws RepositoryException {
         // remove any trailing data for property changes
         final String path = PROPERTY_TYPES.contains(event.getType()) ?
