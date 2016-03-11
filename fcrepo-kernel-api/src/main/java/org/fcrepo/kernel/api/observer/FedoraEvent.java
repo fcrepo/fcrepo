@@ -15,6 +15,7 @@
  */
 package org.fcrepo.kernel.api.observer;
 
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -74,4 +75,10 @@ public interface FedoraEvent {
      * @return Event identifier to use for building event URIs (e.g., in an external triplestore).
     **/
     String getEventID();
+
+    /**
+     * Get auxiliary information about the event
+     * @return Event information as a Map
+     */
+    Map<String, String> getInfo();
 }

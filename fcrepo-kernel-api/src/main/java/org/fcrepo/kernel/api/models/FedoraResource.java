@@ -57,7 +57,16 @@ public interface FedoraResource {
      * Get the children of this resource
      * @return a stream of Fedora resources
      */
-    Stream<FedoraResource> getChildren();
+    default Stream<FedoraResource> getChildren() {
+        return getChildren(false);
+    }
+
+    /**
+     * Get the children of this resource, possibly recursively
+     * @param recursive whether to recursively fetch child resources
+     * @return a stream of Fedora resources
+     */
+    Stream<FedoraResource> getChildren(Boolean recursive);
 
     /**
      * Get the container of this resource

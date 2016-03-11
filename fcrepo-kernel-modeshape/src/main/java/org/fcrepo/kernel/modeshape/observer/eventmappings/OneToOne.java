@@ -19,9 +19,7 @@
 
 package org.fcrepo.kernel.modeshape.observer.eventmappings;
 
-import static com.google.common.collect.Iterators.transform;
-
-import java.util.Iterator;
+import java.util.stream.Stream;
 
 import javax.jcr.observation.Event;
 
@@ -37,7 +35,7 @@ import org.fcrepo.kernel.modeshape.observer.FedoraEventImpl;
 public class OneToOne implements InternalExternalEventMapper {
 
     @Override
-    public Iterator<FedoraEvent> apply(final Iterator<Event> jcrEvents) {
-        return transform(jcrEvents, FedoraEventImpl::new);
+    public Stream<FedoraEvent> apply(final Stream<Event> jcrEvents) {
+        return jcrEvents.map(FedoraEventImpl::from);
     }
 }

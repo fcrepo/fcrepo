@@ -17,10 +17,13 @@ package org.fcrepo.kernel.modeshape.observer;
 
 import static com.google.common.collect.Sets.newHashSet;
 import static java.util.Arrays.stream;
+import static java.util.stream.Stream.concat;
+import static java.util.stream.Stream.of;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.PathNotFoundException;
@@ -54,7 +57,7 @@ public class DefaultFilter implements EventFilter {
     private static final Logger LOGGER = getLogger(DefaultFilter.class);
 
     private static final HashSet<String> fedoraMixins =
-            newHashSet(FEDORA_BINARY, FEDORA_CONTAINER, FEDORA_NON_RDF_SOURCE_DESCRIPTION, FEDORA_RESOURCE);
+            newHashSet(FEDORA_BINARY, FEDORA_CONTAINER, FEDORA_NON_RDF_SOURCE_DESCRIPTION, FEDORA_RESOURCE, ROOT);
 
     @Override
     public boolean test(final Event event) {
@@ -73,7 +76,8 @@ public class DefaultFilter implements EventFilter {
         try {
             final org.modeshape.jcr.api.observation.Event modeEvent =
                     (org.modeshape.jcr.api.observation.Event) event;
-            return stream(modeEvent.getMixinNodeTypes()).map(NodeType::toString);
+            return concat(of(modeEvent.getPrimaryNodeType()), stream(modeEvent.getMixinNodeTypes()))
+                .map(NodeType::toString);
         } catch (final ClassCastException e) {
             throw new ClassCastException(event + " is not a Modeshape Event");
         }

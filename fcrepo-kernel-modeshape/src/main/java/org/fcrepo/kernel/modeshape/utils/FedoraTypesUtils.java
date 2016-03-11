@@ -128,6 +128,11 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
             type.startsWith("mix:");
 
     /**
+     * Predicate for determining whether a JCR property should be converted to the fedora namespace.
+     */
+    public static Predicate<String> isPublicJcrProperty = validJcrProperties::contains;
+
+    /**
      * Check whether a property is protected (ie, cannot be modified directly) but
      * is not one we've explicitly chosen to include.
      */
@@ -140,7 +145,7 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
             // another mechanism in place to make clear that
             // things cannot be edited.
             return false;
-        } else if (validJcrProperties.contains(p.getName())) {
+        } else if (isPublicJcrProperty.test(p.getName())) {
             return false;
         }
         return hasInternalNamespace.test(p.getName());

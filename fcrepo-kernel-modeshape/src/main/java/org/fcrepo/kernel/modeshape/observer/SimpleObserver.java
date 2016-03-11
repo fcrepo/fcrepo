@@ -17,28 +17,42 @@ package org.fcrepo.kernel.modeshape.observer;
 
 import static com.codahale.metrics.MetricRegistry.name;
 import static com.google.common.collect.Iterators.filter;
-import static com.google.common.collect.Iterators.transform;
+import static java.util.Collections.emptyMap;
+import static java.util.stream.Stream.concat;
+import static java.util.stream.Stream.of;
 import static javax.jcr.observation.Event.NODE_ADDED;
 import static javax.jcr.observation.Event.NODE_MOVED;
 import static javax.jcr.observation.Event.NODE_REMOVED;
 import static javax.jcr.observation.Event.PROPERTY_ADDED;
 import static javax.jcr.observation.Event.PROPERTY_CHANGED;
 import static javax.jcr.observation.Event.PROPERTY_REMOVED;
+import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isPublicJcrProperty;
+import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaceRegistry;
+import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import  org.fcrepo.metrics.RegistryService;
 
 import java.util.Iterator;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Stream;
+
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
+import javax.jcr.NamespaceRegistry;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.observation.Event;
 import javax.jcr.observation.EventListener;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
+import org.fcrepo.kernel.api.observer.EventType;
+import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.fcrepo.kernel.modeshape.observer.eventmappings.InternalExternalEventMapper;
 
 import org.modeshape.jcr.api.Repository;
@@ -67,6 +81,62 @@ public class SimpleObserver implements EventListener {
 
     static final Integer EVENT_TYPES = NODE_ADDED + NODE_REMOVED + NODE_MOVED + PROPERTY_ADDED + PROPERTY_CHANGED
             + PROPERTY_REMOVED;
+
+    /**
+     * Note: In order to resolve the JCR-based properties (e.g. jcr:lastModified or
+     * ebucore:mimeType) a new FedoarEvent is created and the dereferenced properties
+     * are added to that new event.
+     */
+    private static Function<Session, Function<FedoraEvent, FedoraEvent>> namespaceResolver = session -> evt -> {
+        final NamespaceRegistry namespaceRegistry = getNamespaceRegistry(session);
+        final FedoraEvent event = new FedoraEventImpl(evt.getTypes(), evt.getPath(), evt.getUserID(),
+                evt.getUserData(), evt.getDate(), evt.getInfo());
+
+        evt.getProperties().stream()
+            .filter(isPublicJcrProperty.or(property -> !property.startsWith("jcr:")))
+            .forEach(property -> {
+                final String[] parts = property.split(":", 2);
+                if (parts.length == 2) {
+                    try {
+                        event.addProperty(
+                            getRDFNamespaceForJcrNamespace(namespaceRegistry.getURI(parts[0])) + parts[1]);
+                    } catch (final RepositoryException ex) {
+                        LOGGER.warn("Prefix could not be dereferenced using the namespace registry, skipping: {}",
+                            property);
+                    }
+                } else {
+                    LOGGER.warn("Prefix could not be determined, skipping: {}", property);
+                }
+            });
+        return event;
+    };
+
+    /**
+     * Note: This function maps a FedoraEvent to a Stream of some number of FedoraEvents. This is because a MOVE event
+     * may lead to an arbitrarily large number of additional events for any child resources. In the event of this not
+     * being a MOVE event, the same FedoraEvent is returned, wrapped in a Stream. For a MOVEd resource, the resource in
+     * question will be translated to two FedoraEvents: a MOVED event for the new resource location and a REMOVED event
+     * corresponding to the old location. The same pair of FedoraEvents will also be generated for each child resource.
+     */
+    private static Function<Session, Function<FedoraEvent, Stream<FedoraEvent>>> handleMoveEvents = session -> evt -> {
+        if (evt.getTypes().contains(EventType.NODE_MOVED)) {
+            final Map<String, String> movePath = evt.getInfo();
+            final String dest = movePath.get("destAbsPath");
+            final String src = movePath.get("srcAbsPath");
+            try {
+                final FedoraResource resource = new FedoraResourceImpl(session.getNode(evt.getPath()));
+                return concat(of(evt), resource.getChildren(true).map(FedoraResource::getPath)
+                    .flatMap(path -> of(
+                        new FedoraEventImpl(EventType.NODE_MOVED, path, evt.getUserID(),
+                            evt.getUserData(), evt.getDate(), emptyMap()),
+                        new FedoraEventImpl(EventType.NODE_REMOVED, path.replaceFirst(dest, src),
+                            evt.getUserID(), evt.getUserData(), evt.getDate(), emptyMap()))));
+            } catch (final RepositoryException ex) {
+                throw new RepositoryRuntimeException(ex);
+            }
+        }
+        return of(evt);
+    };
 
     @Inject
     private Repository repository;
@@ -123,11 +193,14 @@ public class SimpleObserver implements EventListener {
         Session lookupSession = null;
         try {
             lookupSession = repository.login();
+            final Function<FedoraEvent, Stream<FedoraEvent>> moveEventHandler = handleMoveEvents.apply(lookupSession);
+
             @SuppressWarnings("unchecked")
             final Iterator<Event> filteredEvents = filter(events, eventFilter::test);
-            final Iterator<FedoraEvent> publishableEvents = eventMapper.apply(filteredEvents);
-            transform(publishableEvents, new GetNamespacedProperties(lookupSession)::apply)
-                .forEachRemaining(this::post);
+            eventMapper.apply(iteratorToStream(filteredEvents))
+                .flatMap(moveEventHandler)
+                .map(namespaceResolver.apply(lookupSession))
+                .forEach(this::post);
         } catch (final RepositoryException ex) {
             throw new RepositoryRuntimeException(ex);
         } finally {
