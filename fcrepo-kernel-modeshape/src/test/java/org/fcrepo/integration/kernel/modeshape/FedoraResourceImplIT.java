@@ -60,6 +60,8 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.Iterator;
 import java.util.List;
@@ -84,10 +86,12 @@ import com.google.common.collect.UnmodifiableIterator;
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
+import org.apache.commons.io.IOUtils;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.InvalidPrefixException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
+import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -98,6 +102,7 @@ import org.fcrepo.kernel.api.services.VersionService;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
+import org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 
 import org.junit.After;
@@ -853,7 +858,98 @@ public class FedoraResourceImplIT extends AbstractIT {
         final FedoraResourceImpl frozenResource = new FedoraResourceImpl(version.getFrozenNode().getNode("a"));
 
         assertEquals(object, frozenResource.getVersionedAncestor().getUnfrozenResource());
+    }
 
+    @Test
+    public void testVersionedChild() throws RepositoryException {
+        final String pid = getRandomPid();
+        final Container object = containerService.findOrCreate(session, "/" + pid);
+        object.enableVersioning();
+        session.save();
+
+        final Container child = containerService.findOrCreate(session, "/" + pid + "/child");
+        child.enableVersioning();
+        session.save();
+
+        session.getWorkspace().getVersionManager().checkpoint(object.getPath());
+        addVersionLabel("object-v0", object);
+        session.save();
+
+        session.getWorkspace().getVersionManager().checkpoint(child.getPath());
+        addVersionLabel("child-v0", child);
+        session.save();
+
+        final Version version = object.getVersionHistory().getVersionByLabel("object-v0");
+        final FedoraResourceImpl frozenResource = new FedoraResourceImpl(version.getFrozenNode().getNode("child"));
+
+        assertEquals(child, frozenResource.getVersionedAncestor().getUnfrozenResource());
+    }
+
+    @Test
+    public void testVersionedChildDeleted() throws RepositoryException {
+        final String pid = getRandomPid();
+        final Container object = containerService.findOrCreate(session, "/" + pid);
+        object.enableVersioning();
+        session.save();
+
+        final Container child = containerService.findOrCreate(session, "/" + pid + "/child");
+        child.getNode().setProperty("dc:title", "this-is-some-title");
+        session.save();
+
+        session.getWorkspace().getVersionManager().checkpoint(object.getPath());
+        addVersionLabel("object-v0", object);
+        session.save();
+
+        // Delete the child!
+        child.delete();
+        session.save();
+
+        final Version version = object.getVersionHistory().getVersionByLabel("object-v0");
+        final FedoraResourceImpl frozenResource = new FedoraResourceImpl(version.getFrozenNode());
+
+        // Parent version is correct
+        assertEquals(object, frozenResource.getVersionedAncestor().getUnfrozenResource());
+
+        // Versioned child still exists
+        final FedoraResourceImpl frozenChild = new FedoraResourceImpl(version.getFrozenNode().getNode("child"));
+        final javax.jcr.Property property = frozenChild.getNode().getProperty("dc:title");
+        assertNotNull(property);
+        assertEquals("this-is-some-title", property.getString());
+    }
+
+    @Test
+    public void testVersionedChildBinaryDeleted() throws RepositoryException, InvalidChecksumException, IOException {
+        final String pid = getRandomPid();
+        final Container object = containerService.findOrCreate(session, "/" + pid);
+        object.enableVersioning();
+        session.save();
+
+        final FedoraBinary child = binaryService.findOrCreate(session, "/" + pid + "/child");
+        final String content = "123456789test123456789";
+        child.setContent(new ByteArrayInputStream(content.getBytes()), "text/plain", null, null, null);
+        session.save();
+
+        session.getWorkspace().getVersionManager().checkpoint(object.getPath());
+        addVersionLabel("object-v0", object);
+        session.save();
+
+        // Delete the child!
+        child.delete();
+        session.save();
+
+        final Version version = object.getVersionHistory().getVersionByLabel("object-v0");
+        final FedoraResourceImpl frozenResource = new FedoraResourceImpl(version.getFrozenNode());
+
+        // Parent version is correct
+        assertEquals(object, frozenResource.getVersionedAncestor().getUnfrozenResource());
+
+        // Versioned child still exists
+        final NonRdfSourceDescription frozenChild =
+                new NonRdfSourceDescriptionImpl(version.getFrozenNode().getNode("child"));
+        System.out.println(frozenChild);
+        final InputStream contentStream = ((FedoraBinary)frozenChild.getDescribedResource()).getContent();
+        assertNotNull(contentStream);
+        assertEquals(content, IOUtils.toString(contentStream));
     }
 
     @Test (expected = RepositoryRuntimeException.class)
