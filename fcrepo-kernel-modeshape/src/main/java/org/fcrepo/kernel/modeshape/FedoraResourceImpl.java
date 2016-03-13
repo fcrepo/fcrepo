@@ -757,9 +757,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                 // ..Or it is a child-version-history on a frozen path
             } else if (hasProperty(JCR_CHILD_VERSION_HISTORY)) {
                 final Node childVersionHistory = getNodeByProperty(getProperty(JCR_CHILD_VERSION_HISTORY));
-                final Node childNode;
                 try {
-                    childNode = getNodeByProperty(childVersionHistory.getProperty(JCR_VERSIONABLE_UUID));
+                    final Node childNode = getNodeByProperty(childVersionHistory.getProperty(JCR_VERSIONABLE_UUID));
                     return new FedoraResourceImpl(childNode);
                 } catch (ItemNotFoundException e) {
                     // The unfrozen resource has been deleted, return the tombstone.
