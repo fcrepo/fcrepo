@@ -78,7 +78,6 @@ import javax.jcr.nodetype.NodeType;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.NamespaceRegistry;
-import javax.jcr.version.VersionIterator;
 import javax.jcr.version.VersionManager;
 
 import com.google.common.base.Converter;
@@ -823,24 +822,17 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             }
 
             // Loop versions
-            final VersionIterator versions = versionHistory.getAllVersions();
-            while (versions.hasNext()) {
-                final Version version = versions.nextVersion();
-
-                // ..searching for version with frozen node that matches target frozen resource
-                if (version.getFrozenNode().equals(frozenResource)) {
-                    final String[] labels = versionHistory.getVersionLabels(version);
-                    if (labels.length > 0) {
-                        return labels[0];
-                    }
-                }
-            }
+            @SuppressWarnings("unchecked")
+            final Stream<Version> versions = iteratorToStream(versionHistory.getAllVersions());
+            return versions
+                .filter(UncheckedPredicate.uncheck(version -> version.getFrozenNode().equals(frozenResource)))
+                .map(uncheck(version -> versionHistory.getVersionLabels(version)))
+                .filter(labels -> labels.length > 0)
+                .map(labels -> labels[0])
+                .findFirst().orElse(null);
         } catch (RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
-
-        // No label found... happens if a child is not versioned.
-        return null;
     }
 
     private Node getNodeByProperty(final Property property) throws RepositoryException {
