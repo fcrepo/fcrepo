@@ -120,7 +120,6 @@ import org.fcrepo.kernel.modeshape.utils.UncheckedPredicate;
 import org.fcrepo.kernel.modeshape.utils.iterators.RdfAdder;
 import org.fcrepo.kernel.modeshape.utils.iterators.RdfRemover;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 
@@ -828,8 +827,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             return versions
                 .filter(UncheckedPredicate.uncheck(version -> version.getFrozenNode().equals(frozenResource)))
                 .map(uncheck(versionHistory::getVersionLabels))
-                .filter(ArrayUtils::isNotEmpty)
-                .map(labels -> labels[0])
+                .flatMap(Arrays::stream)
                 .findFirst().orElse(null);
         } catch (RepositoryException e) {
             throw new RepositoryRuntimeException(e);
