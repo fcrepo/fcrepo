@@ -150,7 +150,9 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
     @Override
     public boolean inDomain(final Resource resource) {
         final Map<String, String> values = new HashMap<>();
-        return uriTemplate.match(resource.getURI(), values) && values.containsKey("path");
+
+        return uriTemplate.match(resource.getURI(), values) && values.containsKey("path") ||
+            isRootWithoutTrailingSlash(resource);
     }
 
     @Override
@@ -226,6 +228,11 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
             }
             return path;
         }
+
+        if (isRootWithoutTrailingSlash(resource)) {
+            return "/";
+        }
+
         return null;
     }
 
@@ -452,5 +459,12 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
             }
             return EMPTY;
         }
+    }
+
+    private boolean isRootWithoutTrailingSlash(final Resource resource) {
+        final Map<String, String> values = new HashMap<>();
+
+        return uriTemplate.match(resource.getURI() + "/", values) && values.containsKey("path") &&
+            values.get("path").isEmpty();
     }
 }

@@ -28,7 +28,9 @@ import org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import javax.jcr.ItemNotFoundException;
 import javax.jcr.Node;
@@ -47,12 +49,12 @@ import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_NODE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
 /**
  * @author cabeer
  */
+@RunWith(MockitoJUnitRunner.class)
 public class HttpResourceConverterTest {
 
     @Mock
@@ -95,10 +97,10 @@ public class HttpResourceConverterTest {
 
     @Before
     public void setUp() throws RepositoryException {
-        initMocks(this);
         final UriBuilder uriBuilder = UriBuilder.fromUri(uriTemplate);
         converter = new HttpResourceConverter(session, uriBuilder);
         when(session.getNode("/" + path)).thenReturn(node);
+        when(session.getNode("/")).thenReturn(node);
         when(node.getPath()).thenReturn("/" + path);
         when(node.isNodeType(FROZEN_NODE)).thenReturn(false);
         when(node.isNodeType(FEDORA_NON_RDF_SOURCE_DESCRIPTION)).thenReturn(false);
@@ -158,6 +160,22 @@ public class HttpResourceConverterTest {
         when(session.getNode("/[xyz]")).thenReturn(node);
         final FedoraResource converted = converter.convert(resource);
         assertEquals(node, converted.getNode());
+    }
+
+    @Test
+    public void testDoForwardRoot() throws Exception {
+        final Resource resource = createResource("http://localhost:8080/some/");
+        final FedoraResource converted = converter.convert(resource);
+        assertEquals(node, converted.getNode());
+        assertTrue(converter.inDomain(resource));
+    }
+
+    @Test
+    public void testDoForwardRootWithoutSlash() throws Exception {
+        final Resource resource = createResource("http://localhost:8080/some");
+        final FedoraResource converted = converter.convert(resource);
+        assertEquals(node, converted.getNode());
+        assertTrue(converter.inDomain(resource));
     }
 
     @Test
