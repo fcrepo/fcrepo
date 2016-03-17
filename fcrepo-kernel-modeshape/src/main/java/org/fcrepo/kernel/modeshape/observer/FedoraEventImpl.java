@@ -66,7 +66,6 @@ public class FedoraEventImpl implements FedoraEvent {
     private final String eventID;
 
     private final Set<EventType> eventTypes = new HashSet<>();
-    private final Set<String> eventProperties = new HashSet<>();
 
     private static final List<Integer> PROPERTY_TYPES = asList(Event.PROPERTY_ADDED,
             Event.PROPERTY_CHANGED, Event.PROPERTY_REMOVED);
@@ -130,25 +129,6 @@ public class FedoraEventImpl implements FedoraEvent {
     }
 
     /**
-     * @return the property names of the underlying JCR property {@link Event}s
-    **/
-    @Override
-    public Set<String> getProperties() {
-        return eventProperties;
-    }
-
-    /**
-     * Add a property name to this event
-     * @param property property name
-     * @return this object for continued use
-    **/
-    @Override
-    public FedoraEvent addProperty( final String property ) {
-        eventProperties.add(property);
-        return this;
-    }
-
-    /**
      * @return the path of the underlying JCR {@link Event}s
      */
     @Override
@@ -200,12 +180,8 @@ public class FedoraEventImpl implements FedoraEvent {
 
     @Override
     public String toString() {
-
         return toStringHelper(this)
-            .add("Event types:", getTypes().stream()
-                            .map(EventType::getName)
-                            .collect(joining(", ")))
-            .add("Event properties:", String.join(",", eventProperties))
+            .add("Event types:", getTypes().stream().map(EventType::getName).collect(joining(", ")))
             .add("Path:", getPath())
             .add("Date: ", getDate()).toString();
     }
@@ -227,7 +203,7 @@ public class FedoraEventImpl implements FedoraEvent {
      */
     public static EventType valueOf(final Integer i) {
         final EventType type = translation.get(i);
-        if (isNull(type)) {
+        if (type == null) {
             throw new IllegalArgumentException("Invalid event type: " + i);
         }
         return type;
@@ -242,12 +218,9 @@ public class FedoraEventImpl implements FedoraEvent {
     public static FedoraEvent from(final Event event) {
         requireNonNull(event);
         try {
-            @SuppressWarnings("unchecked")
             final Map<String, String> info = event.getInfo();
-
             return new FedoraEventImpl(valueOf(event.getType()), cleanPath(event),
                     event.getUserID(), event.getUserData(), event.getDate(), info);
-
         } catch (final RepositoryException ex) {
             throw new RepositoryRuntimeException("Error converting JCR Event to FedoraEvent", ex);
         }

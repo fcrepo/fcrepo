@@ -103,7 +103,6 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
         message.setStringProperty(BASE_URL_HEADER_NAME, baseURL);
         message.setStringProperty(USER_HEADER_NAME, event.getUserID());
         message.setStringProperty(USER_AGENT_HEADER_NAME, userAgent);
-        message.setStringProperty(PROPERTIES_HEADER_NAME, String.join(",", event.getProperties()));
         message.setStringProperty(EVENT_ID_HEADER_NAME, event.getEventID());
 
         LOGGER.trace("getMessage() returning: {}", message);

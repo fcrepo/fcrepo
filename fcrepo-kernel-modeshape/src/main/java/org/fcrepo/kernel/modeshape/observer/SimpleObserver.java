@@ -26,9 +26,6 @@ import static javax.jcr.observation.Event.NODE_REMOVED;
 import static javax.jcr.observation.Event.PROPERTY_ADDED;
 import static javax.jcr.observation.Event.PROPERTY_CHANGED;
 import static javax.jcr.observation.Event.PROPERTY_REMOVED;
-import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
-import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isPublicJcrProperty;
-import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaceRegistry;
 import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -42,7 +39,6 @@ import java.util.stream.Stream;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
-import javax.jcr.NamespaceRegistry;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.observation.Event;
@@ -81,35 +77,6 @@ public class SimpleObserver implements EventListener {
 
     static final Integer EVENT_TYPES = NODE_ADDED + NODE_REMOVED + NODE_MOVED + PROPERTY_ADDED + PROPERTY_CHANGED
             + PROPERTY_REMOVED;
-
-    /**
-     * Note: In order to resolve the JCR-based properties (e.g. jcr:lastModified or
-     * ebucore:mimeType) a new FedoarEvent is created and the dereferenced properties
-     * are added to that new event.
-     */
-    private static Function<Session, Function<FedoraEvent, FedoraEvent>> namespaceResolver = session -> evt -> {
-        final NamespaceRegistry namespaceRegistry = getNamespaceRegistry(session);
-        final FedoraEvent event = new FedoraEventImpl(evt.getTypes(), evt.getPath(), evt.getUserID(),
-                evt.getUserData(), evt.getDate(), evt.getInfo());
-
-        evt.getProperties().stream()
-            .filter(isPublicJcrProperty.or(property -> !property.startsWith("jcr:")))
-            .forEach(property -> {
-                final String[] parts = property.split(":", 2);
-                if (parts.length == 2) {
-                    try {
-                        event.addProperty(
-                            getRDFNamespaceForJcrNamespace(namespaceRegistry.getURI(parts[0])) + parts[1]);
-                    } catch (final RepositoryException ex) {
-                        LOGGER.warn("Prefix could not be dereferenced using the namespace registry, skipping: {}",
-                            property);
-                    }
-                } else {
-                    LOGGER.warn("Prefix could not be determined, skipping: {}", property);
-                }
-            });
-        return event;
-    };
 
     /**
      * Note: This function maps a FedoraEvent to a Stream of some number of FedoraEvents. This is because a MOVE event
@@ -199,7 +166,6 @@ public class SimpleObserver implements EventListener {
             final Iterator<Event> filteredEvents = filter(events, eventFilter::test);
             eventMapper.apply(iteratorToStream(filteredEvents))
                 .flatMap(moveEventHandler)
-                .map(namespaceResolver.apply(lookupSession))
                 .forEach(this::post);
         } catch (final RepositoryException ex) {
             throw new RepositoryRuntimeException(ex);

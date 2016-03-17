@@ -20,7 +20,6 @@ import static java.util.Collections.singleton;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.BASE_URL_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.EVENT_TYPE_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.IDENTIFIER_HEADER_NAME;
-import static org.fcrepo.jms.headers.DefaultMessageFactory.PROPERTIES_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.TIMESTAMP_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.USER_AGENT_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.USER_HEADER_NAME;
@@ -105,8 +104,6 @@ public class DefaultMessageFactoryTest {
         final Set<EventType> testTypes = singleton(EventType.NODE_ADDED);
         final String testReturnType = REPOSITORY_NAMESPACE + EventType.NODE_ADDED;
         when(mockEvent.getTypes()).thenReturn(testTypes);
-        final String prop = "test-property";
-        when(mockEvent.getProperties()).thenReturn(singleton(prop));
         final String eventID = "abcdefg12345678";
         when(mockEvent.getEventID()).thenReturn(eventID);
 
@@ -120,7 +117,6 @@ public class DefaultMessageFactoryTest {
         assertEquals("Got wrong date in message!", testDate, (Long) msg.getLongProperty(TIMESTAMP_HEADER_NAME));
         assertEquals("Got wrong type in message!", testReturnType, msg.getStringProperty(EVENT_TYPE_HEADER_NAME));
         assertEquals("Got wrong base-url in message", trimmedBaseUrl, msg.getStringProperty(BASE_URL_HEADER_NAME));
-        assertEquals("Got wrong property in message", prop, msg.getStringProperty(PROPERTIES_HEADER_NAME));
         assertEquals("Got wrong userID in message", testUser, msg.getStringProperty(USER_HEADER_NAME));
         assertEquals("Got wrong userAgent in message", userAgent, msg.getStringProperty(USER_AGENT_HEADER_NAME));
         assertEquals("Got wrong eventID in message", eventID, msg.getStringProperty(EVENT_ID_HEADER_NAME));

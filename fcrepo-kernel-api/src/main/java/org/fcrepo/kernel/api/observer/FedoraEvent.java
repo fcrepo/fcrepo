@@ -39,18 +39,6 @@ public interface FedoraEvent {
     FedoraEvent addType(final EventType type);
 
     /**
-     * @return the property names associated with this event.
-    **/
-    Set<String> getProperties();
-
-    /**
-     * Add a property name to this event
-     * @param property property name
-     * @return this object for continued use
-    **/
-    FedoraEvent addProperty(final String property);
-
-    /**
      * @return the path to the {@link org.fcrepo.kernel.api.models.FedoraResource}
      */
     String getPath();

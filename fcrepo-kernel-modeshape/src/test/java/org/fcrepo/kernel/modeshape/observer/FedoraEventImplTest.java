@@ -65,8 +65,6 @@ public class FedoraEventImplTest {
         valueOf(9999999);
     }
 
-
-    @SuppressWarnings("unused")
     @Test(expected = java.lang.NullPointerException.class)
     public void testWrapNullFedoraEvent() {
         from((Event)null);
@@ -140,13 +138,6 @@ public class FedoraEventImplTest {
 
         assertTrue("Should contain: " + type, e.getTypes().contains(type));
         assertTrue("Should contain: NODE_ADDED", e.getTypes().contains(valueOf(1)));
-    }
-
-    @Test
-    public void testAddProperty() {
-        e.addProperty("prop");
-        assertEquals(1, e.getProperties().size());
-        assertEquals("prop", e.getProperties().iterator().next());
     }
 
     @Test

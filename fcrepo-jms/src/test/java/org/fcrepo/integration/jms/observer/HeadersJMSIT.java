@@ -22,9 +22,7 @@ import static javax.jms.Session.AUTO_ACKNOWLEDGE;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.BASE_URL_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.EVENT_TYPE_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.IDENTIFIER_HEADER_NAME;
-import static org.fcrepo.jms.headers.DefaultMessageFactory.PROPERTIES_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.TIMESTAMP_HEADER_NAME;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.jgroups.util.UUID.randomUUID;
@@ -131,7 +129,7 @@ public class HeadersJMSIT implements MessageListener {
         try {
             containerService.findOrCreate(session, testIngested);
             session.save();
-            awaitMessageOrFail(testIngested, NODE_ADDED_EVENT_TYPE, null);
+            awaitMessageOrFail(testIngested, NODE_ADDED_EVENT_TYPE);
         } finally {
             session.logout();
         }
@@ -146,16 +144,16 @@ public class HeadersJMSIT implements MessageListener {
             binaryService.findOrCreate(session, testFile)
                 .setContent(new ByteArrayInputStream("foo".getBytes()), "text/plain", null, null, null);
             session.save();
-            awaitMessageOrFail(testFile, NODE_ADDED_EVENT_TYPE, HAS_SIZE.toString());
+            awaitMessageOrFail(testFile, NODE_ADDED_EVENT_TYPE);
 
             binaryService.find(session, testFile)
                 .setContent(new ByteArrayInputStream("bar".getBytes()), "text/plain", null, null, null);
             session.save();
-            awaitMessageOrFail(testFile, PROP_CHANGED_EVENT_TYPE, HAS_SIZE.toString());
+            awaitMessageOrFail(testFile, PROP_CHANGED_EVENT_TYPE);
 
             binaryService.find(session, testFile).delete();
             session.save();
-            awaitMessageOrFail(testFile, NODE_REMOVED_EVENT_TYPE, null);
+            awaitMessageOrFail(testFile, NODE_REMOVED_EVENT_TYPE);
         } finally {
             session.logout();
         }
@@ -172,24 +170,23 @@ public class HeadersJMSIT implements MessageListener {
             final String sparql1 = "insert data { <> <http://foo.com/prop> \"foo\" . }";
             resource1.updateProperties(subjects, sparql1, resource1.getTriples(subjects, PROPERTIES));
             session.save();
-            awaitMessageOrFail(testMeta, PROP_ADDED_EVENT_TYPE, "http://foo.com/prop");
+            awaitMessageOrFail(testMeta, PROP_ADDED_EVENT_TYPE);
 
             final FedoraResource resource2 = containerService.findOrCreate(session, testMeta);
             final String sparql2 = " delete { <> <http://foo.com/prop> \"foo\" . } "
                 + "insert { <> <http://foo.com/prop> \"bar\" . } where {}";
             resource2.updateProperties(subjects, sparql2, resource2.getTriples(subjects, PROPERTIES));
             session.save();
-            awaitMessageOrFail(testMeta, PROP_CHANGED_EVENT_TYPE, "http://foo.com/prop");
+            awaitMessageOrFail(testMeta, PROP_CHANGED_EVENT_TYPE);
         } finally {
             session.logout();
         }
     }
 
-    private void awaitMessageOrFail(final String id, final String eventType, final String property) {
+    private void awaitMessageOrFail(final String id, final String eventType) {
         await().pollInterval(ONE_SECOND).until(() -> messages.stream().anyMatch(msg -> {
             try {
-                return getPath(msg).equals(id) && getEventTypes(msg).contains(eventType)
-                        && (property == null || getProperties(msg).contains(property));
+                return getPath(msg).equals(id) && getEventTypes(msg).contains(eventType);
             } catch (final JMSException e) {
                 throw propagate(e);
             }
@@ -206,7 +203,7 @@ public class HeadersJMSIT implements MessageListener {
             session.save();
             resource.delete();
             session.save();
-            awaitMessageOrFail(testRemoved, NODE_REMOVED_EVENT_TYPE, null);
+            awaitMessageOrFail(testRemoved, NODE_REMOVED_EVENT_TYPE);
         } finally {
             session.logout();
         }
@@ -215,10 +212,9 @@ public class HeadersJMSIT implements MessageListener {
     @Override
     public void onMessage(final Message message) {
         try {
-            LOGGER.debug(
-                    "Received JMS message: {} with path: {}, timestamp: {}, event type: {}, properties: {},"
-                            + " and baseURL: {}", message.getJMSMessageID(), getPath(message), getTimestamp(message),
-                            getEventTypes(message), getProperties(message), getBaseURL(message));
+            LOGGER.debug("Received JMS message: {} with path: {}, timestamp: {}, event type: {}, and baseURL: {}",
+                    message.getJMSMessageID(), getPath(message), getTimestamp(message), getEventTypes(message),
+                    getBaseURL(message));
         } catch (final JMSException e) {
             propagate(e);
         }
@@ -266,9 +262,4 @@ public class HeadersJMSIT implements MessageListener {
     private static String getBaseURL(final Message msg) throws JMSException {
         return msg.getStringProperty(BASE_URL_HEADER_NAME);
     }
-
-    private static String getProperties(final Message msg) throws JMSException {
-        return msg.getStringProperty(PROPERTIES_HEADER_NAME);
-    }
-
 }
