@@ -135,8 +135,7 @@ public class HeadersJMSIT implements MessageListener {
             containerService.findOrCreate(session, testIngested);
             session.save();
             final Message ingestMsg = awaitMessageOrFail(testIngested, NODE_ADDED_EVENT_TYPE);
-            final String typesHeader = guard(() -> ingestMsg.getStringProperty(RESOURCE_TYPE_HEADER_NAME));
-            assertTrue(typesHeader.contains("fedora:Resource"));
+            assertTrue(getResourceTypes(ingestMsg).contains("fedora:Resource"));
         } finally {
             session.logout();
         }
@@ -213,13 +212,13 @@ public class HeadersJMSIT implements MessageListener {
     }
 
     @Override
-    public void onMessage(final Message message) {
-        guard(() -> {
-            LOGGER.debug("Received JMS message: {} with path: {}, timestamp: {}, event type: {}, and baseURL: {}",
-                    message.getJMSMessageID(), getPath(message), getTimestamp(message), getEventTypes(message),
-                    getBaseURL(message));
-            return messages.add(message);
-        });
+    public void onMessage(final Message msg) {
+        LOGGER.debug(
+                "Received JMS message: " +
+                        "{} with path: {}, timestamp: {}, event type: {}, resource types: {}, and baseURL: {}",
+                guard(() -> msg.getJMSMessageID()), getPath(msg), getTimestamp(msg), getEventTypes(msg),
+                getResourceTypes(msg), getBaseURL(msg));
+        messages.add(msg);
     }
 
     @Before
@@ -256,8 +255,12 @@ public class HeadersJMSIT implements MessageListener {
         return guard(() -> msg.getLongProperty(TIMESTAMP_HEADER_NAME));
     }
 
-    private static String getBaseURL(final Message msg) throws JMSException {
-        return msg.getStringProperty(BASE_URL_HEADER_NAME);
+    private static String getResourceTypes(final Message msg) {
+        return guard(() -> msg.getStringProperty(RESOURCE_TYPE_HEADER_NAME));
+    }
+
+    private static String getBaseURL(final Message msg) {
+        return guard(() -> msg.getStringProperty(BASE_URL_HEADER_NAME));
     }
 
     @FunctionalInterface
