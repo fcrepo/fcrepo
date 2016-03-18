@@ -18,8 +18,6 @@ package org.fcrepo.kernel.api.observer;
 import java.util.Map;
 import java.util.Set;
 
-import com.hp.hpl.jena.rdf.model.Resource;
-
 /**
  * A very simple abstraction to support downstream event-related machinery.
  *
@@ -43,13 +41,13 @@ public interface FedoraEvent {
     /**
      * @return the types of the resource associated with this event
      */
-    Set<Resource> getResourceTypes();
+    Set<String> getResourceTypes();
 
     /**
      * @param type the type
      * @return this object for continued use
      */
-    FedoraEvent addResourceType(final Resource type);
+    FedoraEvent addResourceType(final String type);
 
     /**
      * @return the path to the {@link org.fcrepo.kernel.api.models.FedoraResource}

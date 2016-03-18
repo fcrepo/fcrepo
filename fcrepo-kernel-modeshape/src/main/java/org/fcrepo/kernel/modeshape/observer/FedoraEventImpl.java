@@ -51,8 +51,6 @@ import org.fcrepo.kernel.api.services.functions.UniqueValueSupplier;
 import org.fcrepo.kernel.modeshape.identifiers.HashConverter;
 
 import com.google.common.collect.ImmutableMap;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
 /**
  * A very simple abstraction to prevent event-driven machinery downstream from the repository from relying directly on
@@ -77,7 +75,7 @@ public class FedoraEventImpl implements FedoraEvent {
 
     private final Set<EventType> eventTypes = new HashSet<>();
 
-    private final Set<Resource> resourceTypes = new HashSet<>();
+    private final Set<String> resourceTypes = new HashSet<>();
 
     private static final List<Integer> PROPERTY_TYPES = asList(Event.PROPERTY_ADDED,
             Event.PROPERTY_CHANGED, Event.PROPERTY_REMOVED);
@@ -139,12 +137,12 @@ public class FedoraEventImpl implements FedoraEvent {
     }
 
     @Override
-    public Set<Resource> getResourceTypes() {
+    public Set<String> getResourceTypes() {
         return resourceTypes;
     }
 
     @Override
-    public FedoraEvent addResourceType(final Resource type) {
+    public FedoraEvent addResourceType(final String type) {
         resourceTypes.add(type);
         return this;
     }
@@ -244,7 +242,7 @@ public class FedoraEventImpl implements FedoraEvent {
             final Map<String, String> info = event.getInfo();
             final FedoraEventImpl fedoraEvent = new FedoraEventImpl(valueOf(event.getType()), cleanPath(event),
                     event.getUserID(), event.getUserData(), event.getDate(), info);
-            getResourceTypes(event).map(ResourceFactory::createResource).forEach(fedoraEvent::addResourceType);
+            getResourceTypes(event).forEach(fedoraEvent::addResourceType);
             return fedoraEvent;
         } catch (final RepositoryException ex) {
             throw new RepositoryRuntimeException("Error converting JCR Event to FedoraEvent", ex);

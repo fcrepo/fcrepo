@@ -16,7 +16,6 @@
 package org.fcrepo.kernel.modeshape.observer;
 
 import static com.google.common.collect.ImmutableMap.of;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.Collections.singleton;
 import static javax.jcr.observation.Event.NODE_ADDED;
 import static javax.jcr.observation.Event.PROPERTY_CHANGED;
@@ -41,7 +40,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.google.common.collect.ImmutableSet;
-import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
 import org.fcrepo.kernel.api.observer.EventType;
 
@@ -101,8 +99,7 @@ public class FedoraEventImplTest {
 
     @Test
     public void testGetResourceType() {
-        final Set<Resource> types = ImmutableSet.of(createResource("mockPrimaryNodeType"),
-                createResource("mockMixinNodeType"));
+        final Set<String> types = ImmutableSet.of("mockPrimaryNodeType", "mockMixinNodeType");
         assertEquals(types, e.getResourceTypes());
     }
 

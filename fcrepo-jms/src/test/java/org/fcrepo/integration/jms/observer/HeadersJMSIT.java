@@ -15,22 +15,24 @@
  */
 package org.fcrepo.integration.jms.observer;
 
-import static com.google.common.base.Throwables.propagate;
 import static com.jayway.awaitility.Awaitility.await;
 import static com.jayway.awaitility.Duration.ONE_SECOND;
 import static javax.jms.Session.AUTO_ACKNOWLEDGE;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.BASE_URL_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.EVENT_TYPE_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.IDENTIFIER_HEADER_NAME;
+import static org.fcrepo.jms.headers.DefaultMessageFactory.RESOURCE_TYPE_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.TIMESTAMP_HEADER_NAME;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.jgroups.util.UUID.randomUUID;
+import static org.junit.Assert.assertTrue;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.ByteArrayInputStream;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Predicate;
 import javax.inject.Inject;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
@@ -129,7 +131,9 @@ public class HeadersJMSIT implements MessageListener {
         try {
             containerService.findOrCreate(session, testIngested);
             session.save();
-            awaitMessageOrFail(testIngested, NODE_ADDED_EVENT_TYPE);
+            final Message ingestMsg = awaitMessageOrFail(testIngested, NODE_ADDED_EVENT_TYPE);
+            final String typesHeader = guard(() -> ingestMsg.getStringProperty(RESOURCE_TYPE_HEADER_NAME));
+            assertTrue(typesHeader.contains("fedora:Resource"));
         } finally {
             session.logout();
         }
@@ -183,14 +187,10 @@ public class HeadersJMSIT implements MessageListener {
         }
     }
 
-    private void awaitMessageOrFail(final String id, final String eventType) {
-        await().pollInterval(ONE_SECOND).until(() -> messages.stream().anyMatch(msg -> {
-            try {
-                return getPath(msg).equals(id) && getEventTypes(msg).contains(eventType);
-            } catch (final JMSException e) {
-                throw propagate(e);
-            }
-        }));
+    private Message awaitMessageOrFail(final String id, final String eventType) {
+        final Predicate<Message> test = msg -> getPath(msg).equals(id) && getEventTypes(msg).contains(eventType);
+        await().pollInterval(ONE_SECOND).until(() -> messages.stream().anyMatch(test));
+        return messages.stream().filter(test).findFirst().orElseThrow(() -> new AssertionError("Where message go?!"));
     }
 
     @Test(timeout = TIMEOUT)
@@ -211,14 +211,12 @@ public class HeadersJMSIT implements MessageListener {
 
     @Override
     public void onMessage(final Message message) {
-        try {
+        guard(() -> {
             LOGGER.debug("Received JMS message: {} with path: {}, timestamp: {}, event type: {}, and baseURL: {}",
                     message.getJMSMessageID(), getPath(message), getTimestamp(message), getEventTypes(message),
                     getBaseURL(message));
-        } catch (final JMSException e) {
-            propagate(e);
-        }
-        messages.add(message);
+            return messages.add(message);
+        });
     }
 
     @Before
@@ -243,23 +241,31 @@ public class HeadersJMSIT implements MessageListener {
         connection.close();
     }
 
-    private static String getPath(final Message msg) throws JMSException {
-        final String id = msg.getStringProperty(IDENTIFIER_HEADER_NAME);
-        LOGGER.debug("Processing an event with identifier: {}", id);
-        return id;
+    private static String getPath(final Message msg) {
+        return guard(() -> msg.getStringProperty(IDENTIFIER_HEADER_NAME));
     }
 
-    private static String getEventTypes(final Message msg) throws JMSException {
-        final String type = msg.getStringProperty(EVENT_TYPE_HEADER_NAME);
-        LOGGER.debug("Processing an event with type: {}", type);
-        return type;
+    private static String getEventTypes(final Message msg) {
+        return guard(() -> msg.getStringProperty(EVENT_TYPE_HEADER_NAME));
     }
 
-    private static Long getTimestamp(final Message msg) throws JMSException {
-        return msg.getLongProperty(TIMESTAMP_HEADER_NAME);
+    private static Long getTimestamp(final Message msg) {
+        return guard(() -> msg.getLongProperty(TIMESTAMP_HEADER_NAME));
     }
 
     private static String getBaseURL(final Message msg) throws JMSException {
         return msg.getStringProperty(BASE_URL_HEADER_NAME);
+    }
+
+    private static <T> T guard(final DangerousSupplier<T> get) {
+        try {
+            return get.get();
+        } catch (final JMSException e) {
+            throw new AssertionError();
+        }
+    }
+
+    private static interface DangerousSupplier<T> {
+        T get() throws JMSException;
     }
 }
