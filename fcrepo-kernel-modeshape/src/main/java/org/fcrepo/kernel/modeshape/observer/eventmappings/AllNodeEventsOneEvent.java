@@ -17,24 +17,16 @@ package org.fcrepo.kernel.modeshape.observer.eventmappings;
 
 import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
 import static org.fcrepo.kernel.modeshape.observer.FedoraEventImpl.from;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
-import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Stream.empty;
 import static java.util.stream.Stream.of;
-import static javax.jcr.observation.Event.PROPERTY_ADDED;
-import static javax.jcr.observation.Event.PROPERTY_CHANGED;
-import static javax.jcr.observation.Event.PROPERTY_REMOVED;
-
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import javax.jcr.RepositoryException;
 import javax.jcr.observation.Event;
 
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
 import org.fcrepo.kernel.modeshape.observer.FedoraEventImpl;
 
@@ -50,9 +42,6 @@ import org.slf4j.Logger;
  */
 public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
 
-    private static final List<Integer> PROPERTY_EVENT_TYPES = asList(PROPERTY_ADDED, PROPERTY_CHANGED,
-            PROPERTY_REMOVED);
-
     private final static Logger LOGGER = getLogger(AllNodeEventsOneEvent.class);
 
     /**
@@ -62,7 +51,7 @@ public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
     private static final Function<Event, String> EXTRACT_NODE_ID = uncheck(ev -> {
             final FedoraEvent event = from(ev);
             final String id = event.getPath() + "-" + event.getUserID();
-            LOGGER.debug("Sorting an event by identifier: {}", id);
+            LOGGER.debug("Grouping an event by identifier: {}", id);
             return id;
     });
 
@@ -73,30 +62,14 @@ public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
         // will be a concatenated Stream of FedoraEvent objects.
         return events.collect(groupingBy(EXTRACT_NODE_ID)).entrySet().stream().flatMap(entry -> {
             final List<Event> evts = entry.getValue();
-            if (!evts.isEmpty()) {
-                // build a FedoraEvent from the first JCR Event
-                final FedoraEvent fedoraEvent = from(evts.get(0));
-                evts.stream().forEach(evt -> {
-                    // add types to the FedoraEvent from the JCR Event
-                    fedoraEvent.addType(FedoraEventImpl.valueOf(evt.getType()));
-                    try {
-                        // add appropriate properties to the FedoraEvent from the JCR Event
-                        if (evt.getPath().contains(JCR_CONTENT)) {
-                            fedoraEvent.addProperty("fedora:hasContent");
-                        }
-                        if (PROPERTY_EVENT_TYPES.contains(evt.getType())) {
-                            final String eventPath = evt.getPath();
-                            fedoraEvent.addProperty(eventPath.substring(eventPath.lastIndexOf('/') + 1));
-                        } else {
-                            LOGGER.trace("Not adding non-event property: {}, {}", fedoraEvent, evt);
-                        }
-                    } catch (final RepositoryException ex) {
-                        throw new RepositoryRuntimeException(ex);
-                    }
-                });
-                return of(fedoraEvent);
+            if (evts.isEmpty()) {
+                return empty();
             }
-            return empty();
+            // build a FedoraEvent from the first JCR Event
+            final FedoraEvent fedoraEvent = from(evts.get(0));
+            final List<Event> rest = evts.subList(1, evts.size());
+            rest.stream().map(Event::getType).map(FedoraEventImpl::valueOf).forEach(fedoraEvent::addType);
+            return of(fedoraEvent);
         });
     }
 }

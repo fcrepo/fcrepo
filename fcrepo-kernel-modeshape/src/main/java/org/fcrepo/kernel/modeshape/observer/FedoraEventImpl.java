@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.kernel.modeshape.observer;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
@@ -30,14 +31,16 @@ import static java.util.Collections.singleton;
 import static java.util.Objects.isNull;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
-
+import static java.util.stream.Stream.empty;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import javax.jcr.RepositoryException;
+import javax.jcr.nodetype.NodeType;
 import javax.jcr.observation.Event;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -50,8 +53,8 @@ import org.fcrepo.kernel.modeshape.identifiers.HashConverter;
 import com.google.common.collect.ImmutableMap;
 
 /**
- * A very simple abstraction to prevent event-driven machinery downstream from the repository from relying directly
- * on a JCR interface {@link Event}. Can represent either a single JCR event or several.
+ * A very simple abstraction to prevent event-driven machinery downstream from the repository from relying directly on
+ * a JCR interface {@link Event}. Can represent either a single JCR event or several.
  *
  * @author ajs6f
  * @since Feb 19, 2013
@@ -59,14 +62,20 @@ import com.google.common.collect.ImmutableMap;
 public class FedoraEventImpl implements FedoraEvent {
 
     private final String path;
+
     private final String userID;
+
     private final String userData;
+
     private final long date;
+
     private final Map<String, String> info;
+
     private final String eventID;
 
     private final Set<EventType> eventTypes = new HashSet<>();
-    private final Set<String> eventProperties = new HashSet<>();
+
+    private final Set<String> resourceTypes = new HashSet<>();
 
     private static final List<Integer> PROPERTY_TYPES = asList(Event.PROPERTY_ADDED,
             Event.PROPERTY_CHANGED, Event.PROPERTY_REMOVED);
@@ -75,6 +84,7 @@ public class FedoraEventImpl implements FedoraEvent {
 
     /**
      * Create a new FedoraEvent
+     *
      * @param type the Fedora EventType
      * @param path the node path corresponding to this event
      * @param userID the acting user for this event
@@ -87,8 +97,9 @@ public class FedoraEventImpl implements FedoraEvent {
         this(singleton(type), path, userID, userData, date, info);
     }
 
-   /**
+    /**
      * Create a new FedoraEvent
+     *
      * @param types a collection of Fedora EventTypes
      * @param path the node path corresponding to this event
      * @param userID the acting user for this event
@@ -110,10 +121,6 @@ public class FedoraEventImpl implements FedoraEvent {
         this.eventID = pidMinter.get();
     }
 
-
-    /**
-     * @return the event types of the underlying JCR {@link Event}s
-     */
     @Override
     public Set<EventType> getTypes() {
         return eventTypes;
@@ -129,22 +136,14 @@ public class FedoraEventImpl implements FedoraEvent {
         return this;
     }
 
-    /**
-     * @return the property names of the underlying JCR property {@link Event}s
-    **/
     @Override
-    public Set<String> getProperties() {
-        return eventProperties;
+    public Set<String> getResourceTypes() {
+        return resourceTypes;
     }
 
-    /**
-     * Add a property name to this event
-     * @param property property name
-     * @return this object for continued use
-    **/
     @Override
-    public FedoraEvent addProperty( final String property ) {
-        eventProperties.add(property);
+    public FedoraEvent addResourceType(final String type) {
+        resourceTypes.add(type);
         return this;
     }
 
@@ -182,8 +181,9 @@ public class FedoraEventImpl implements FedoraEvent {
 
     /**
      * Get the event ID.
+     *
      * @return Event identifier to use for building event URIs (e.g., in an external triplestore).
-    **/
+     **/
     @Override
     public String getEventID() {
         return eventID;
@@ -191,6 +191,7 @@ public class FedoraEventImpl implements FedoraEvent {
 
     /**
      * Return a Map with any additional information about the event.
+     *
      * @return a Map of additional information.
      */
     @Override
@@ -200,14 +201,10 @@ public class FedoraEventImpl implements FedoraEvent {
 
     @Override
     public String toString() {
-
         return toStringHelper(this)
-            .add("Event types:", getTypes().stream()
-                            .map(EventType::getName)
-                            .collect(joining(", ")))
-            .add("Event properties:", String.join(",", eventProperties))
-            .add("Path:", getPath())
-            .add("Date: ", getDate()).toString();
+                .add("Event types:", getTypes().stream().map(EventType::getName).collect(joining(", ")))
+                .add("Path:", getPath())
+                .add("Date: ", getDate()).toString();
     }
 
     private static final Map<Integer, EventType> translation = ImmutableMap.<Integer, EventType>builder()
@@ -227,46 +224,68 @@ public class FedoraEventImpl implements FedoraEvent {
      */
     public static EventType valueOf(final Integer i) {
         final EventType type = translation.get(i);
-        if (isNull(type)) {
+        if (type == null) {
             throw new IllegalArgumentException("Invalid event type: " + i);
         }
         return type;
     }
 
-
     /**
      * Convert a JCR Event to a FedoraEvent
+     *
      * @param event the JCR Event
      * @return a FedoraEvent
      */
     public static FedoraEvent from(final Event event) {
         requireNonNull(event);
         try {
-            @SuppressWarnings("unchecked")
             final Map<String, String> info = event.getInfo();
-
-            return new FedoraEventImpl(valueOf(event.getType()), cleanPath(event),
+            final FedoraEventImpl fedoraEvent = new FedoraEventImpl(valueOf(event.getType()), cleanPath(event),
                     event.getUserID(), event.getUserData(), event.getDate(), info);
-
+            getResourceTypes(event).forEach(fedoraEvent::addResourceType);
+            return fedoraEvent;
         } catch (final RepositoryException ex) {
             throw new RepositoryRuntimeException("Error converting JCR Event to FedoraEvent", ex);
         }
     }
 
     /**
-     * The JCR-based Event::getPath contains some Modeshape artifacts that must be removed or modified in
-     * order to correspond to the public resource path. For example, JCR Events will contain a trailing
-     * /jcr:content for Binaries, a trailing /propName for properties, and /#/ notation for URI fragments.
+     * @param event
+     * @return the types recorded on the resource associated to this event
+     */
+    public static Stream<String> getResourceTypes(final Event event) {
+        if (event instanceof org.modeshape.jcr.api.observation.Event) {
+            try {
+                final org.modeshape.jcr.api.observation.Event modeEvent =
+                        (org.modeshape.jcr.api.observation.Event) event;
+                final Stream.Builder<NodeType> types = Stream.builder();
+                for (final NodeType type : modeEvent.getMixinNodeTypes()) {
+                    types.add(type);
+                }
+                types.add(modeEvent.getPrimaryNodeType());
+                return types.build().map(NodeType::getName);
+            } catch (final RepositoryException e) {
+                throw new RepositoryRuntimeException(e);
+            }
+        }
+        return empty(); // wasn't a ModeShape event, so we have no access to resource types
+    }
+
+    /**
+     * The JCR-based Event::getPath contains some Modeshape artifacts that must be removed or modified in order to
+     * correspond to the public resource path. For example, JCR Events will contain a trailing /jcr:content for
+     * Binaries, a trailing /propName for properties, and /#/ notation for URI fragments.
      */
     private static String cleanPath(final Event event) throws RepositoryException {
         // remove any trailing data for property changes
-        final String path = PROPERTY_TYPES.contains(event.getType()) ?
-            event.getPath().substring(0, event.getPath().lastIndexOf("/")) : event.getPath();
+        final String path = PROPERTY_TYPES.contains(event.getType()) ? event.getPath().substring(0, event.getPath()
+                .lastIndexOf("/")) : event.getPath();
 
         // reformat any hash URIs and remove any trailing /jcr:content
         final HashConverter converter = new HashConverter();
         return converter.reverse().convert(path.replaceAll("/" + JCR_CONTENT, ""));
     }
 
-    private static class DefaultPathMinter implements HierarchicalIdentifierSupplier { }
+    private static class DefaultPathMinter implements HierarchicalIdentifierSupplier {
+    }
 }

@@ -32,6 +32,8 @@ import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.fcrepo.kernel.modeshape.rdf.impl.NodeTypeRdfContext;
+
+import org.modeshape.jcr.api.JcrTools;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
@@ -159,7 +161,14 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
      */
     @Override
     public FedoraResource findOrCreate(final Session session, final String path) {
-        throw new RepositoryRuntimeException("unimplemented");
+        if (exists(session, path)) {
+            return find(session, path);
+        }
+        try {
+            return new FedoraResourceImpl(new JcrTools().findOrCreateNode(session, path));
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     /**

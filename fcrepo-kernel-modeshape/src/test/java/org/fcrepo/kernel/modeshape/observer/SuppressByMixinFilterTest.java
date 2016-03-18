@@ -57,9 +57,9 @@ public class SuppressByMixinFilterTest {
         final Set<String> suppressedMixins = new HashSet<>();
         suppressedMixins.add("audit:InternalEvent");
         testObj = new SuppressByMixinFilter(suppressedMixins);
-        when(fedoraContainer.toString()).thenReturn(FEDORA_CONTAINER);
-        when(internalEvent.toString()).thenReturn("audit:InternalEvent");
-        when(modeshapeType.toString()).thenReturn("nt:folder");
+        when(fedoraContainer.getName()).thenReturn(FEDORA_CONTAINER);
+        when(internalEvent.getName()).thenReturn("audit:InternalEvent");
+        when(modeshapeType.getName()).thenReturn("nt:folder");
     }
 
     @Test

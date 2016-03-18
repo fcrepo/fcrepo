@@ -16,6 +16,7 @@
 package org.fcrepo.jms.headers;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static java.lang.String.join;
 import static java.util.stream.Collectors.joining;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -58,12 +59,10 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
     public static final String BASE_URL_HEADER_NAME = JMS_NAMESPACE
             + "baseURL";
 
-    public static final String PROPERTIES_HEADER_NAME = JMS_NAMESPACE
-            + "properties";
-
     public static final String USER_HEADER_NAME = JMS_NAMESPACE + "user";
     public static final String USER_AGENT_HEADER_NAME = JMS_NAMESPACE + "userAgent";
     public static final String EVENT_ID_HEADER_NAME = JMS_NAMESPACE + "eventID";
+    public static final String RESOURCE_TYPE_HEADER_NAME = JMS_NAMESPACE + "resourceTypes";
 
     private String baseURL;
     private String userAgent;
@@ -103,8 +102,8 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
         message.setStringProperty(BASE_URL_HEADER_NAME, baseURL);
         message.setStringProperty(USER_HEADER_NAME, event.getUserID());
         message.setStringProperty(USER_AGENT_HEADER_NAME, userAgent);
-        message.setStringProperty(PROPERTIES_HEADER_NAME, String.join(",", event.getProperties()));
         message.setStringProperty(EVENT_ID_HEADER_NAME, event.getEventID());
+        message.setStringProperty(RESOURCE_TYPE_HEADER_NAME, join(",", event.getResourceTypes()));
 
         LOGGER.trace("getMessage() returning: {}", message);
         return message;

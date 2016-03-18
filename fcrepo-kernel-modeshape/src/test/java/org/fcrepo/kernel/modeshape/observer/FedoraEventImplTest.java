@@ -24,13 +24,22 @@ import static org.fcrepo.kernel.modeshape.observer.FedoraEventImpl.valueOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
 import static org.junit.Assert.assertFalse;
 
 import java.util.Map;
+import java.util.Set;
 
+import javax.jcr.nodetype.NodeType;
 import javax.jcr.observation.Event;
 
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
+
+import com.google.common.collect.ImmutableSet;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
 import org.fcrepo.kernel.api.observer.EventType;
 
@@ -39,11 +48,24 @@ import org.fcrepo.kernel.api.observer.EventType;
  *
  * @author ksclarke
  */
+@RunWith(MockitoJUnitRunner.class)
 public class FedoraEventImplTest {
 
-    final FedoraEvent e = from(new TestEvent(1, "Path/Child", "UserId", "Identifier",
-            of("1", "2"), "data", 0L));
+    @Mock
+    private NodeType mockPrimaryNodeType;
 
+    @Mock
+    private NodeType mockMixinNodeType;
+
+    private FedoraEvent e;
+
+    @Before
+    public void setUp() {
+        when(mockPrimaryNodeType.getName()).thenReturn("mockPrimaryNodeType");
+        when(mockMixinNodeType.getName()).thenReturn("mockMixinNodeType");
+        e = from(new TestEvent(1, "Path/Child", "UserId", "Identifier",
+                of("1", "2"), "data", 0L, mockPrimaryNodeType, new NodeType[] { mockMixinNodeType }));
+    }
 
     @SuppressWarnings("unused")
     @Test(expected = java.lang.NullPointerException.class)
@@ -65,8 +87,6 @@ public class FedoraEventImplTest {
         valueOf(9999999);
     }
 
-
-    @SuppressWarnings("unused")
     @Test(expected = java.lang.NullPointerException.class)
     public void testWrapNullFedoraEvent() {
         from((Event)null);
@@ -78,58 +98,56 @@ public class FedoraEventImplTest {
     }
 
     @Test
+    public void testGetResourceType() {
+        final Set<String> types = ImmutableSet.of("mockPrimaryNodeType", "mockMixinNodeType");
+        assertEquals(types, e.getResourceTypes());
+    }
+
+    @Test
     public void testGetPath() {
         assertEquals("Path/Child", e.getPath());
-
     }
 
     @Test
     public void testGetPathWithProperties() {
         final FedoraEvent e1 = from(new TestEvent(PROPERTY_CHANGED,
                     "Path/Child", "UserId", "Identifier", of("1", "2"),
-                    "data", 0L));
+                    "data", 0L, mockPrimaryNodeType, new NodeType[]{}));
         assertEquals("Path", e1.getPath());
     }
 
     @Test
     public void testGetPathWithTrailingJcrContent() {
         final FedoraEvent e1 = from(new TestEvent(1, "Path/jcr:content", "UserId",
-                    "Identifier", of("1", "2"), "data", 0L));
+                    "Identifier", of("1", "2"), "data", 0L, mockPrimaryNodeType, new NodeType[]{}));
         assertEquals("Path", e1.getPath());
     }
 
     @Test
     public void testGetPathWithHashUri() {
         final FedoraEvent e1 = from(new TestEvent(1, "Path/#/child", "UserId",
-                    "Identifier", of("1", "2"), "data", 0L));
+                    "Identifier", of("1", "2"), "data", 0L, mockPrimaryNodeType, new NodeType[]{}));
         assertEquals("Path#child", e1.getPath());
     }
 
     @Test
     public void testGetUserID() {
-
         assertEquals("UserId", e.getUserID());
-
     }
 
     @Test
     public void testGetEventID() {
-
         assertNotNull(e.getEventID());
-
     }
 
     @Test
     public void testGetUserData() {
-
         assertEquals("data", e.getUserData());
-
     }
 
     @Test
     public void testGetDate() {
         assertEquals(0L, e.getDate());
-
     }
 
     @Test
@@ -140,13 +158,6 @@ public class FedoraEventImplTest {
 
         assertTrue("Should contain: " + type, e.getTypes().contains(type));
         assertTrue("Should contain: NODE_ADDED", e.getTypes().contains(valueOf(1)));
-    }
-
-    @Test
-    public void testAddProperty() {
-        e.addProperty("prop");
-        assertEquals(1, e.getProperties().size());
-        assertEquals("prop", e.getProperties().iterator().next());
     }
 
     @Test
@@ -161,7 +172,7 @@ public class FedoraEventImplTest {
         assertFalse("Should not contain user-id: " + text, text.contains(e.getUserID()));
     }
 
-    class TestEvent implements Event {
+    private static class TestEvent implements org.modeshape.jcr.api.observation.Event {
 
         private final int type;
 
@@ -177,10 +188,14 @@ public class FedoraEventImplTest {
 
         private final long date;
 
+        private final NodeType primaryType;
+
+        private final NodeType[] mixinTypes;
+
         public TestEvent(final int type, final String path,
                 final String user_id, final String identifier,
                 final Map<String, String> info, final String userData,
-                final long date) {
+                final long date, final NodeType primaryType, final NodeType[] mixinTypes) {
             this.type = type;
             this.path = path;
             this.user_id = user_id;
@@ -188,6 +203,8 @@ public class FedoraEventImplTest {
             this.info = info;
             this.userData = userData;
             this.date = date;
+            this.primaryType = primaryType;
+            this.mixinTypes = mixinTypes;
         }
 
 
@@ -230,6 +247,18 @@ public class FedoraEventImplTest {
         @Override
         public long getDate() {
             return date;
+        }
+
+
+        @Override
+        public NodeType getPrimaryNodeType() {
+            return primaryType;
+        }
+
+
+        @Override
+        public NodeType[] getMixinNodeTypes() {
+            return mixinTypes;
         }
     }
 }
