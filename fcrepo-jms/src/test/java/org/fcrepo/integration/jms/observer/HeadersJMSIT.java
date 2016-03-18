@@ -18,7 +18,6 @@ package org.fcrepo.integration.jms.observer;
 import static com.jayway.awaitility.Awaitility.await;
 import static com.jayway.awaitility.Duration.ONE_SECOND;
 import static javax.jms.Session.AUTO_ACKNOWLEDGE;
-import static org.fcrepo.integration.jms.observer.HeadersJMSIT.DangerousSupplier.guard;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.BASE_URL_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.EVENT_TYPE_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.IDENTIFIER_HEADER_NAME;
@@ -35,6 +34,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import static org.fcrepo.integration.jms.observer.HeadersJMSIT.DangerousSupplier.guard;
 
 import javax.inject.Inject;
 import javax.jcr.Repository;
