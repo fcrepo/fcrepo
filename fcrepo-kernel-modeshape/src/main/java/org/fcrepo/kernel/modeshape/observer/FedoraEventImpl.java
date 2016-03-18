@@ -256,20 +256,21 @@ public class FedoraEventImpl implements FedoraEvent {
      * @return the types recorded on the resource associated to this event
      */
     public static Stream<String> getResourceTypes(final Event event) {
-        try {
-            final Stream.Builder<NodeType> types = Stream.builder();
-            final org.modeshape.jcr.api.observation.Event modeEvent = (org.modeshape.jcr.api.observation.Event) event;
-            for (final NodeType type : modeEvent.getMixinNodeTypes()) {
-                types.add(type);
+        if (event instanceof org.modeshape.jcr.api.observation.Event) {
+            try {
+                final org.modeshape.jcr.api.observation.Event modeEvent =
+                        (org.modeshape.jcr.api.observation.Event) event;
+                final Stream.Builder<NodeType> types = Stream.builder();
+                for (final NodeType type : modeEvent.getMixinNodeTypes()) {
+                    types.add(type);
+                }
+                types.add(modeEvent.getPrimaryNodeType());
+                return types.build().map(NodeType::getName);
+            } catch (final RepositoryException e) {
+                throw new RepositoryRuntimeException(e);
             }
-            types.add(modeEvent.getPrimaryNodeType());
-            return types.build().map(NodeType::getName);
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        } catch (final ClassCastException eq) {
-            // wasn't a ModeShape event
-            return empty();
         }
+        return empty(); // wasn't a ModeShape event, so we have no access to resource types
     }
 
     /**
