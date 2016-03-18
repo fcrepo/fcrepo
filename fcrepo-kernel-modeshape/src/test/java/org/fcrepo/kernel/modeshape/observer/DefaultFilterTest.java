@@ -77,12 +77,12 @@ public class DefaultFilterTest {
     @Before
     public void setUp() {
         testObj = new DefaultFilter();
-        when(fedoraResource.toString()).thenReturn(FEDORA_RESOURCE);
-        when(fedoraContainer.toString()).thenReturn(FEDORA_CONTAINER);
-        when(fedoraDatastream.toString()).thenReturn(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
-        when(fedoraBinary.toString()).thenReturn(FEDORA_BINARY);
-        when(modeshapeRootType.toString()).thenReturn(ROOT);
-        when(modeshapeFolderType.toString()).thenReturn("nt:folder");
+        when(fedoraResource.getName()).thenReturn(FEDORA_RESOURCE);
+        when(fedoraContainer.getName()).thenReturn(FEDORA_CONTAINER);
+        when(fedoraDatastream.getName()).thenReturn(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
+        when(fedoraBinary.getName()).thenReturn(FEDORA_BINARY);
+        when(modeshapeRootType.getName()).thenReturn(ROOT);
+        when(modeshapeFolderType.getName()).thenReturn("nt:folder");
     }
 
     @Test

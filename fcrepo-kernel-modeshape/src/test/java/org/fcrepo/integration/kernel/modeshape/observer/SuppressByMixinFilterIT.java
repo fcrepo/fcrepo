@@ -105,7 +105,7 @@ public class SuppressByMixinFilterIT extends AbstractIT {
     }
 
     @Subscribe
-    public void count(final FedoraEvent e) {
+    public void receive(final FedoraEvent e) {
         eventsReceived.add(e);
     }
 
