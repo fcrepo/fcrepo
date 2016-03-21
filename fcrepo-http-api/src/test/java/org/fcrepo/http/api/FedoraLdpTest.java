@@ -16,9 +16,6 @@
 package org.fcrepo.http.api;
 
 import static com.google.common.base.Predicates.containsPattern;
-import static com.google.common.collect.Lists.newArrayList;
-import static com.google.common.collect.Lists.transform;
-
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static java.util.stream.Stream.of;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
@@ -382,12 +379,12 @@ public class FedoraLdpTest {
         assertTrue("Should be an LDP Resource",
                 mockResponse.getHeaders("Link").contains("<" + LDP_NAMESPACE + "Resource>;rel=\"type\""));
 
-        final RdfNamespacedStream entity = (RdfNamespacedStream) actual.getEntity();
-        final Model model = entity.stream.collect(toModel());
-        final List<String> rdfNodes = transform(newArrayList(model.listObjects()), RDFNode::toString);
-
-        assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
-                "LDP_CONTAINMENT", "LDP_MEMBERSHIP", "PROPERTIES", "SERVER_MANAGED")));
+        try (final RdfNamespacedStream entity = (RdfNamespacedStream) actual.getEntity()) {
+            final Model model = entity.stream.collect(toModel());
+            final List<String> rdfNodes = model.listObjects().mapWith(RDFNode::toString).toList();
+            assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
+                    "LDP_CONTAINMENT", "LDP_MEMBERSHIP", "PROPERTIES", "SERVER_MANAGED")));
+        }
     }
 
     @Test
@@ -398,12 +395,12 @@ public class FedoraLdpTest {
         assertTrue("Should advertise Accept-Post flavors", mockResponse.containsHeader("Accept-Post"));
         assertTrue("Should advertise Accept-Patch flavors", mockResponse.containsHeader("Accept-Patch"));
 
-        final RdfNamespacedStream entity = (RdfNamespacedStream) actual.getEntity();
-        final Model model = entity.stream.collect(toModel());
-
-        final List<String> rdfNodes = transform(newArrayList(model.listObjects()), RDFNode::toString);
-        assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
-                "LDP_CONTAINMENT", "LDP_MEMBERSHIP", "PROPERTIES", "SERVER_MANAGED")));
+        try (final RdfNamespacedStream entity = (RdfNamespacedStream) actual.getEntity()) {
+            final Model model = entity.stream.collect(toModel());
+            final List<String> rdfNodes = model.listObjects().mapWith(RDFNode::toString).toList();
+            assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
+                    "LDP_CONTAINMENT", "LDP_MEMBERSHIP", "PROPERTIES", "SERVER_MANAGED")));
+        }
     }
 
 
@@ -445,18 +442,14 @@ public class FedoraLdpTest {
         final Response actual = testObj.getResource(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
 
-        final RdfNamespacedStream entity = (RdfNamespacedStream) actual.getEntity();
-        final Model model = entity.stream.collect(toModel());
-        final List<String> rdfNodes = transform(newArrayList(model.listObjects()), RDFNode::toString);
-
-        assertTrue("Expected RDF contexts missing", rdfNodes.stream()
-                .filter(x -> x.contains("PROPERTIES") && x.contains("MINIMAL")).findFirst().isPresent());
-
-        assertFalse("Included non-minimal contexts",
-                rdfNodes.contains("LDP_MEMBERSHIP"));
-
-        assertFalse("Included non-minimal contexts",
-                rdfNodes.contains("LDP_CONTAINMENT"));
+        try (final RdfNamespacedStream entity = (RdfNamespacedStream) actual.getEntity()) {
+            final Model model = entity.stream.collect(toModel());
+            final List<String> rdfNodes = model.listObjects().mapWith(RDFNode::toString).toList();
+            assertTrue("Expected RDF contexts missing", rdfNodes.stream()
+                    .filter(x -> x.contains("PROPERTIES") && x.contains("MINIMAL")).findFirst().isPresent());
+            assertFalse("Included non-minimal contexts", rdfNodes.contains("LDP_MEMBERSHIP"));
+            assertFalse("Included non-minimal contexts", rdfNodes.contains("LDP_CONTAINMENT"));
+        }
 
     }
 
@@ -465,19 +458,15 @@ public class FedoraLdpTest {
         setResource(Container.class);
         setField(testObj, "prefer",
                 new MultiPrefer("return=representation; omit=\"" + LDP_NAMESPACE + "PreferContainment\""));
-        final Response actual = testObj.getResource(
-                null);
+        final Response actual = testObj.getResource( null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
 
-        final RdfNamespacedStream entity = (RdfNamespacedStream) actual.getEntity();
-        final Model model = entity.stream.collect(toModel());
-        final List<String> rdfNodes = transform(newArrayList(model.listObjects()), RDFNode::toString);
-        assertTrue("Should include membership contexts",
-                rdfNodes.contains("LDP_MEMBERSHIP"));
-
-        assertFalse("Should not include containment contexts",
-                rdfNodes.contains("LDP_CONTAINMENT"));
-
+        try (final RdfNamespacedStream entity = (RdfNamespacedStream) actual.getEntity()) {
+            final Model model = entity.stream.collect(toModel());
+            final List<String> rdfNodes = model.listObjects().mapWith(RDFNode::toString).toList();
+            assertTrue("Should include membership contexts", rdfNodes.contains("LDP_MEMBERSHIP"));
+            assertFalse("Should not include containment contexts", rdfNodes.contains("LDP_CONTAINMENT"));
+        }
     }
 
     @Test
@@ -488,15 +477,12 @@ public class FedoraLdpTest {
         final Response actual = testObj.getResource(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
 
-        final RdfNamespacedStream entity = (RdfNamespacedStream) actual.getEntity();
-        final Model model = entity.stream.collect(toModel());
-        final List<String> rdfNodes = transform(newArrayList(model.listObjects()), RDFNode::toString);
-
-        assertFalse("Should not include membership contexts",
-                rdfNodes.contains("LDP_MEMBERSHIP"));
-
-        assertTrue("Should include containment contexts",
-                rdfNodes.contains("LDP_CONTAINMENT"));
+        try (final RdfNamespacedStream entity = (RdfNamespacedStream) actual.getEntity()) {
+            final Model model = entity.stream.collect(toModel());
+            final List<String> rdfNodes = model.listObjects().mapWith(RDFNode::toString).toList();
+            assertFalse("Should not include membership contexts", rdfNodes.contains("LDP_MEMBERSHIP"));
+            assertTrue("Should include containment contexts", rdfNodes.contains("LDP_CONTAINMENT"));
+        }
     }
 
     @Test
@@ -506,13 +492,14 @@ public class FedoraLdpTest {
         final Response actual = testObj.getResource(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
 
-        final RdfNamespacedStream entity = (RdfNamespacedStream) actual.getEntity();
-        final Model model = entity.stream.collect(toModel());
+        try (final RdfNamespacedStream entity = (RdfNamespacedStream) actual.getEntity()) {
+            final Model model = entity.stream.collect(toModel());
 
-        final List<String> rdfNodes = transform(newArrayList(model.listObjects()), RDFNode::toString);
-        log.debug("Received RDF nodes: {}", rdfNodes);
-        assertTrue("Should include references contexts",
-                rdfNodes.stream().anyMatch(containsPattern("REFERENCES")::apply));
+            final List<String> rdfNodes = model.listObjects().mapWith(RDFNode::toString).toList();
+            log.debug("Received RDF nodes: {}", rdfNodes);
+            assertTrue("Should include references contexts",
+                    rdfNodes.stream().anyMatch(containsPattern("REFERENCES")::apply));
+        }
     }
 
     @Test
@@ -549,8 +536,9 @@ public class FedoraLdpTest {
         assertEquals(new URI("some:uri"), actual.getLocation());
     }
 
+
     @Test
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("resource")
     public void testGetWithBinaryDescription() throws RepositoryException, IOException {
 
         final NonRdfSourceDescription mockResource
@@ -572,7 +560,7 @@ public class FedoraLdpTest {
                         .contains("<" + idTranslator.toDomain(binaryPath) + ">; rel=\"describes\""));
 
         final Model model = ((RdfNamespacedStream) actual.getEntity()).stream.collect(toModel());
-        final List<String> rdfNodes = transform(newArrayList(model.listObjects()), RDFNode::toString);
+        final List<String> rdfNodes = model.listObjects().mapWith(RDFNode::toString).toList();
         log.info("Found RDF objects\n{}", rdfNodes);
         assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
                 "LDP_CONTAINMENT", "LDP_MEMBERSHIP", "PROPERTIES", "SERVER_MANAGED")));
@@ -684,8 +672,9 @@ public class FedoraLdpTest {
         testObj.updateSparql(toInputStream("xyz"));
     }
 
+
     @Test
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("resource")
     public void testPatchBinaryDescription() throws RepositoryException, MalformedRdfException, IOException {
 
         final NonRdfSourceDescription mockObject = (NonRdfSourceDescription)setResource(NonRdfSourceDescription.class);
@@ -790,14 +779,13 @@ public class FedoraLdpTest {
     }
 
     @Test(expected = ServerErrorException.class)
-    public void testLDPRNotImplemented() throws MalformedRdfException, AccessDeniedException,
-            InvalidChecksumException, IOException {
+    public void testLDPRNotImplemented() throws MalformedRdfException, InvalidChecksumException, IOException {
         testObj.createObject(null, null, null, null, null, "<http://www.w3.org/ns/ldp#Resource>; rel=\"type\"");
     }
 
     @Test(expected = ClientErrorException.class)
-    public void testLDPRNotImplementedInvalidLink() throws MalformedRdfException, AccessDeniedException,
-            InvalidChecksumException, IOException {
+    public void testLDPRNotImplementedInvalidLink() throws MalformedRdfException, InvalidChecksumException,
+            IOException {
         testObj.createObject(null, null, null, null, null, "Link: <http://www.w3.org/ns/ldp#Resource;rel=type");
     }
 

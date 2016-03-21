@@ -86,7 +86,7 @@ import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilderException;
-import javax.ws.rs.core.Variant;
+import javax.ws.rs.core.Variant.VariantListBuilder;
 
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
@@ -208,23 +208,25 @@ public class FedoraLdp extends ContentExposingResource {
 
         LOGGER.info("GET resource '{}'", externalPath);
 
-        final RdfStream rdfStream = new DefaultRdfStream(asNode(resource()));
+        try (final RdfStream rdfStream = new DefaultRdfStream(asNode(resource()))) {
 
-        // If requesting a binary, check the mime-type if "Accept:" header is present.
-        // (This needs to be done before setting up response headers, as getContent
-        // returns a response - so changing headers after that won't work so nicely.)
-        final ImmutableList<MediaType> acceptableMediaTypes = ImmutableList.copyOf(headers.getAcceptableMediaTypes());
+            // If requesting a binary, check the mime-type if "Accept:" header is present.
+            // (This needs to be done before setting up response headers, as getContent
+            // returns a response - so changing headers after that won't work so nicely.)
+            final ImmutableList<MediaType> acceptableMediaTypes = ImmutableList.copyOf(headers
+                    .getAcceptableMediaTypes());
 
-        if (resource() instanceof FedoraBinary && acceptableMediaTypes.size() > 0) {
-            final MediaType mediaType = MediaType.valueOf(((FedoraBinary) resource()).getMimeType());
+            if (resource() instanceof FedoraBinary && acceptableMediaTypes.size() > 0) {
+                final MediaType mediaType = MediaType.valueOf(((FedoraBinary) resource()).getMimeType());
 
-            if (!acceptableMediaTypes.stream().anyMatch(t -> t.isCompatible(mediaType))) {
-                return notAcceptable( Variant.VariantListBuilder.newInstance().mediaTypes(mediaType).build()).build();
+                if (!acceptableMediaTypes.stream().anyMatch(t -> t.isCompatible(mediaType))) {
+                    return notAcceptable(VariantListBuilder.newInstance().mediaTypes(mediaType).build()).build();
+                }
             }
-        }
 
-        addResourceHttpHeaders(resource());
-        return getContent(rangeValue, getChildrenLimit(), rdfStream);
+            addResourceHttpHeaders(resource());
+            return getContent(rangeValue, getChildrenLimit(), rdfStream);
+        }
     }
 
     private int getChildrenLimit() {
@@ -242,7 +244,7 @@ public class FedoraLdp extends ContentExposingResource {
             try {
                 return Integer.parseInt(limits.get(0));
 
-            } catch (NumberFormatException e) {
+            } catch (final NumberFormatException e) {
                 LOGGER.warn("Invalid 'Limit' header value: {}", limits.get(0));
                 throw new ClientErrorException("Invalid 'Limit' header value: " + limits.get(0), SC_BAD_REQUEST, e);
             }
@@ -357,38 +359,34 @@ public class FedoraLdp extends ContentExposingResource {
         }
 
         evaluateRequestPreconditions(request, servletResponse, resource, session);
-
-        final RdfStream resourceTriples;
         final boolean created = resource.isNew();
 
-        if (created) {
-            resourceTriples = new DefaultRdfStream(asNode(resource()));
-        } else {
-            resourceTriples = getResourceTriples();
-        }
+        try (final RdfStream resourceTriples =
+                created ? new DefaultRdfStream(asNode(resource())) : getResourceTriples()) {
 
-        LOGGER.info("PUT resource '{}'", externalPath);
-        if (resource instanceof FedoraBinary) {
-            if (!StringUtils.isBlank(checksumDeprecated) && StringUtils.isBlank(digest)) {
-                addChecksumDeprecationHeader(resource);
-                checksum = checksumDeprecated;
-            }
-            replaceResourceBinaryWithStream((FedoraBinary) resource,
-                    requestBodyStream, contentDisposition, requestContentType, checksum);
-        } else if (isRdfContentType(contentType.toString())) {
-            replaceResourceWithStream(resource, requestBodyStream, contentType, resourceTriples);
-        } else if (!created) {
-            boolean emptyRequest = true;
-            try {
-                emptyRequest = requestBodyStream.read() == -1;
-            } catch (final IOException ex) {
-                LOGGER.debug("Error checking for request body content", ex);
-            }
+            LOGGER.info("PUT resource '{}'", externalPath);
+            if (resource instanceof FedoraBinary) {
+                if (!StringUtils.isBlank(checksumDeprecated) && StringUtils.isBlank(digest)) {
+                    addChecksumDeprecationHeader();
+                    checksum = checksumDeprecated;
+                }
+                replaceResourceBinaryWithStream((FedoraBinary) resource,
+                        requestBodyStream, contentDisposition, requestContentType, checksum);
+            } else if (isRdfContentType(contentType.toString())) {
+                replaceResourceWithStream(resource, requestBodyStream, contentType, resourceTriples);
+            } else if (!created) {
+                boolean emptyRequest = true;
+                try {
+                    emptyRequest = requestBodyStream.read() == -1;
+                } catch (final IOException ex) {
+                    LOGGER.debug("Error checking for request body content", ex);
+                }
 
-            if (requestContentType == null && emptyRequest) {
-                throw new ClientErrorException("Resource Already Exists", CONFLICT);
+                if (requestContentType == null && emptyRequest) {
+                    throw new ClientErrorException("Resource Already Exists", CONFLICT);
+                }
+                throw new ClientErrorException("Invalid Content Type " + requestContentType, UNSUPPORTED_MEDIA_TYPE);
             }
-            throw new ClientErrorException("Invalid Content Type " + requestContentType, UNSUPPORTED_MEDIA_TYPE);
         }
 
         try {
@@ -431,17 +429,11 @@ public class FedoraLdp extends ContentExposingResource {
 
             evaluateRequestPreconditions(request, servletResponse, resource(), session);
 
-            final RdfStream resourceTriples;
-
-            if (resource().isNew()) {
-                resourceTriples = new DefaultRdfStream(asNode(resource()));
-            } else {
-                resourceTriples = getResourceTriples();
+            try (final RdfStream resourceTriples =
+                    resource().isNew() ? new DefaultRdfStream(asNode(resource())) : getResourceTriples()) {
+                LOGGER.info("PATCH for '{}'", externalPath);
+                patchResourcewithSparql(resource(), requestBody, resourceTriples);
             }
-
-            LOGGER.info("PATCH for '{}'", externalPath);
-            patchResourcewithSparql(resource(), requestBody, resourceTriples);
-
             session.save();
 
             addCacheControlHeaders(servletResponse, resource(), session);
@@ -480,7 +472,6 @@ public class FedoraLdp extends ContentExposingResource {
      * @throws InvalidChecksumException if invalid checksum exception occurred
      * @throws IOException if IO exception occurred
      * @throws MalformedRdfException if malformed rdf exception occurred
-     * @throws AccessDeniedException if access denied in creating resource
      */
     public Response createObject(@QueryParam("checksum") final String checksum,
                                  @HeaderParam("Content-Disposition") final ContentDisposition contentDisposition,
@@ -488,7 +479,7 @@ public class FedoraLdp extends ContentExposingResource {
                                  @HeaderParam("Slug") final String slug,
                                  @ContentLocation final InputStream requestBodyStream,
                                  @HeaderParam("Link") final String link)
-            throws InvalidChecksumException, IOException, MalformedRdfException, AccessDeniedException {
+            throws InvalidChecksumException, IOException, MalformedRdfException {
         return createObject(checksum, contentDisposition, requestContentType, slug, requestBodyStream, link, null);
     }
     /**
@@ -508,7 +499,6 @@ public class FedoraLdp extends ContentExposingResource {
      * @throws InvalidChecksumException if invalid checksum exception occurred
      * @throws IOException if IO exception occurred
      * @throws MalformedRdfException if malformed rdf exception occurred
-     * @throws AccessDeniedException if access denied in creating resource
      */
     @POST
     @Consumes({MediaType.APPLICATION_OCTET_STREAM + ";qs=1001", WILDCARD})
@@ -523,7 +513,7 @@ public class FedoraLdp extends ContentExposingResource {
                                  @ContentLocation final InputStream requestBodyStream,
                                  @HeaderParam("Link") final String link,
                                  @HeaderParam("Digest") final String digest)
-            throws InvalidChecksumException, IOException, MalformedRdfException, AccessDeniedException {
+            throws InvalidChecksumException, IOException, MalformedRdfException {
 
         checkLinkForLdpResourceCreation(link);
 
@@ -549,42 +539,35 @@ public class FedoraLdp extends ContentExposingResource {
                 = requestBodyStream == null || requestContentType == null ? null : contentType;
         resource = createFedoraResource(newObjectPath, effectiveContentType, contentDisposition);
 
-        final RdfStream resourceTriples;
+        try (final RdfStream resourceTriples =
+                resource.isNew() ? new DefaultRdfStream(asNode(resource())) : getResourceTriples()) {
 
-        if (resource.isNew()) {
-            resourceTriples = new DefaultRdfStream(asNode(resource()));
-        } else {
-            resourceTriples = getResourceTriples();
-        }
-
-        if (requestBodyStream == null) {
-            LOGGER.trace("No request body detected");
-        } else {
-            LOGGER.trace("Received createObject with a request body and content type \"{}\"", contentTypeString);
-
-            if ((resource instanceof Container)
-                    && isRdfContentType(contentTypeString)) {
-                replaceResourceWithStream(resource, requestBodyStream, contentType, resourceTriples);
-            } else if (resource instanceof FedoraBinary) {
-                LOGGER.trace("Created a datastream and have a binary payload.");
-                if (!StringUtils.isBlank(checksumDeprecated) && StringUtils.isBlank(digest)) {
-                    addChecksumDeprecationHeader(resource);
-                    checksum = checksumDeprecated;
-                }
-                replaceResourceBinaryWithStream((FedoraBinary) resource,
-                        requestBodyStream, contentDisposition, requestContentType, checksum);
-
-            } else if (contentTypeString.equals(contentTypeSPARQLUpdate)) {
-                LOGGER.trace("Found SPARQL-Update content, applying..");
-                patchResourcewithSparql(resource, IOUtils.toString(requestBodyStream), resourceTriples);
+            if (requestBodyStream == null) {
+                LOGGER.trace("No request body detected");
             } else {
-                if (requestBodyStream.read() != -1) {
-                    throw new ClientErrorException("Invalid Content Type " + contentTypeString, UNSUPPORTED_MEDIA_TYPE);
+                LOGGER.trace("Received createObject with a request body and content type \"{}\"", contentTypeString);
+
+                if ((resource instanceof Container) && isRdfContentType(contentTypeString)) {
+                    replaceResourceWithStream(resource, requestBodyStream, contentType, resourceTriples);
+                } else if (resource instanceof FedoraBinary) {
+                    LOGGER.trace("Created a datastream and have a binary payload.");
+                    if (!StringUtils.isBlank(checksumDeprecated) && StringUtils.isBlank(digest)) {
+                        addChecksumDeprecationHeader();
+                        checksum = checksumDeprecated;
+                    }
+                    replaceResourceBinaryWithStream((FedoraBinary) resource,
+                            requestBodyStream, contentDisposition, requestContentType, checksum);
+
+                } else if (contentTypeString.equals(contentTypeSPARQLUpdate)) {
+                    LOGGER.trace("Found SPARQL-Update content, applying..");
+                    patchResourcewithSparql(resource, IOUtils.toString(requestBodyStream), resourceTriples);
+                } else {
+                    if (requestBodyStream.read() != -1) {
+                        throw new ClientErrorException("Invalid Content Type " + contentTypeString,
+                                UNSUPPORTED_MEDIA_TYPE);
+                    }
                 }
             }
-        }
-
-        try {
             session.save();
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
@@ -606,6 +589,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @return 204 No Content (for updated resources), 201 Created (for created resources) including the resource
      *    URI or content depending on Prefer headers.
      */
+    @SuppressWarnings("resource")
     private Response createUpdateResponse(final FedoraResource resource, final boolean created) {
         addCacheControlHeaders(servletResponse, resource, session);
         addResourceLinkHeaders(resource, created);
@@ -620,9 +604,8 @@ public class FedoraLdp extends ContentExposingResource {
             final MediaType acceptablePlainText = acceptabePlainTextMediaType();
             if (acceptablePlainText != null) {
                 return builder.type(acceptablePlainText).entity(location.toString()).build();
-            } else {
-                return notAcceptable(mediaTypes(TEXT_PLAIN_TYPE).build()).build();
             }
+            return notAcceptable(mediaTypes(TEXT_PLAIN_TYPE).build()).build();
         } else if (prefer.getReturn().getValue().equals("minimal")) {
             return builder.build();
         } else {
@@ -643,13 +626,12 @@ public class FedoraLdp extends ContentExposingResource {
         final List<MediaType> acceptable = headers.getAcceptableMediaTypes();
         if (acceptable == null || acceptable.size() == 0) {
             return TEXT_PLAIN_TYPE;
-        } else {
-            for (final MediaType type : acceptable ) {
-                if (type.isWildcardType() || (type.isCompatible(TEXT_PLAIN_TYPE) && type.isWildcardSubtype())) {
-                    return TEXT_PLAIN_TYPE;
-                } else if (type.isCompatible(TEXT_PLAIN_TYPE)) {
-                    return type;
-                }
+        }
+        for (final MediaType type : acceptable ) {
+            if (type.isWildcardType() || (type.isCompatible(TEXT_PLAIN_TYPE) && type.isWildcardSubtype())) {
+                return TEXT_PLAIN_TYPE;
+            } else if (type.isCompatible(TEXT_PLAIN_TYPE)) {
+                return type;
             }
         }
         return null;
@@ -730,7 +712,7 @@ public class FedoraLdp extends ContentExposingResource {
      * Add a deprecation notice via the Warning header as per
      * RFC-7234 https://tools.ietf.org/html/rfc7234#section-5.5
      */
-    private void addChecksumDeprecationHeader(final FedoraResource resource) {
+    private void addChecksumDeprecationHeader() {
         servletResponse.addHeader("Warning", "Specifying a SHA-1 Checksum via query parameter is deprecated.");
     }
 
@@ -802,7 +784,7 @@ public class FedoraLdp extends ContentExposingResource {
         return pid;
     }
 
-    private void checkLinkForLdpResourceCreation(final String link) {
+    private static void checkLinkForLdpResourceCreation(final String link) {
         if (link != null) {
             try {
                 final Link linq = Link.valueOf(link);
@@ -810,7 +792,7 @@ public class FedoraLdp extends ContentExposingResource {
                     LOGGER.info("Unimplemented LDPR creation requested with header link: {}", link);
                     throw new ServerErrorException("LDPR creation not implemented", NOT_IMPLEMENTED);
                 }
-            } catch (RuntimeException e) {
+            } catch (final RuntimeException e) {
                 if (e instanceof IllegalArgumentException | e instanceof UriBuilderException) {
                     throw new ClientErrorException("Invalid link specified: " + link, BAD_REQUEST);
                 }
@@ -826,7 +808,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @param digest The Digest header value
      * @return the sha1 checksum value
      */
-    private String parseDigestHeader(final String digest) {
+    private static String parseDigestHeader(final String digest) {
         try {
             final Map<String,String> digestPairs = RFC3230_SPLITTER.split(nullToEmpty(digest));
             return digestPairs.entrySet().stream()
@@ -835,7 +817,7 @@ public class FedoraLdp extends ContentExposingResource {
                 .findFirst()
                 .map("urn:sha1:"::concat)
                 .orElse("");
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             if (e instanceof IllegalArgumentException) {
                 throw new ClientErrorException("Invalid Digest header: " + digest + "\n", BAD_REQUEST);
             }

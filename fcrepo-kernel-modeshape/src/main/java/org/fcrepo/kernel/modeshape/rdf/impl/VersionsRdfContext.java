@@ -57,8 +57,6 @@ public class VersionsRdfContext extends DefaultRdfStream {
 
     private final VersionHistory versionHistory;
 
-    private final IdentifierConverter<Resource, FedoraResource> idTranslator;
-
     private static final Logger LOGGER = getLogger(VersionsRdfContext.class);
 
     /**
@@ -72,7 +70,6 @@ public class VersionsRdfContext extends DefaultRdfStream {
                               final IdentifierConverter<Resource, FedoraResource> idTranslator)
         throws RepositoryException {
         super(idTranslator.reverse().convert(resource).asNode());
-        this.idTranslator = idTranslator;
         this.versionHistory = resource.getVersionHistory();
         concat(versionTriples());
     }

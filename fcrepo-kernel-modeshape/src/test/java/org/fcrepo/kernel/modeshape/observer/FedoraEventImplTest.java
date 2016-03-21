@@ -66,7 +66,6 @@ public class FedoraEventImplTest {
     }
 
 
-    @SuppressWarnings("unused")
     @Test(expected = java.lang.NullPointerException.class)
     public void testWrapNullFedoraEvent() {
         from((Event)null);

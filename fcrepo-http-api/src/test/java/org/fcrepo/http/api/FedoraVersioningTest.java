@@ -55,6 +55,7 @@ import org.mockito.Mock;
 /**
  * @author cabeer
  */
+// TODO There are no actual tests in this class. Perhaps there should be?
 public class FedoraVersioningTest {
 
     private FedoraVersioning testObj;
@@ -114,7 +115,6 @@ public class FedoraVersioningTest {
 
     @Test
     @Ignore("This is an absurd test. It should be removed or substantially changed.")
-    @SuppressWarnings("unchecked")
     public void testGetVersionList() {
         when(mockRequest.selectVariant(POSSIBLE_RDF_VARIANTS)).thenReturn(
                 mockVariant);

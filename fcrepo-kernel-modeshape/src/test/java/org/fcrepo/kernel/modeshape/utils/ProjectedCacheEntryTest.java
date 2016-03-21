@@ -17,21 +17,22 @@ package org.fcrepo.kernel.modeshape.utils;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import javax.jcr.Binary;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
-
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 /**
  * <p>ProjectedCacheEntryTest class.</p>
  *
  * @author fasseg
  */
+@RunWith(MockitoJUnitRunner.class)
 public class ProjectedCacheEntryTest {
 
     @Mock
@@ -43,9 +44,7 @@ public class ProjectedCacheEntryTest {
     private ProjectedCacheEntry testObj;
 
     @Before
-    public void setUp() throws Exception {
-        initMocks(this);
-
+    public void setUp() throws RepositoryException {
         when(mockProperty.getBinary()).thenReturn(mockBinary);
         when(mockProperty.getPath()).thenReturn("/some/path");
 
@@ -53,7 +52,7 @@ public class ProjectedCacheEntryTest {
     }
 
     @Test
-    public void testGetExternalIdentifier() throws RepositoryException {
+    public void testGetExternalIdentifier() {
         final String expected = "/org.modeshape.connector.filesystem.FileSystemConnector:projections:/some/path";
 
         assertEquals(expected, testObj.getExternalIdentifier());

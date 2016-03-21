@@ -22,8 +22,6 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
-
 import java.util.Map;
 
 import javax.ws.rs.core.UriInfo;
@@ -35,10 +33,11 @@ import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.context.ApplicationContext;
 
-import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
@@ -46,6 +45,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
  *
  * @author awoods
  */
+@RunWith(MockitoJUnitRunner.class)
 public class HttpTripleUtilTest {
 
     private HttpTripleUtil testObj;
@@ -71,34 +71,26 @@ public class HttpTripleUtilTest {
 
     @Before
     public void setUp() {
-        initMocks(this);
         testObj = new HttpTripleUtil();
         testObj.setApplicationContext(mockContext);
     }
 
     @Test
     public void shouldAddTriplesFromRegisteredBeans() {
-        final Map<String, UriAwareResourceModelFactory> mockBeans =
-                of("doesnt", mockBean1, "matter", mockBean2);
-        when(mockContext.getBeansOfType(UriAwareResourceModelFactory.class))
-                .thenReturn(mockBeans);
-        when(
-                mockBean1.createModelForResource(eq(mockResource),
-                        eq(mockUriInfo), eq(mockSubjects))).thenReturn(
-                ModelFactory.createDefaultModel());
-        when(
-                mockBean2.createModelForResource(eq(mockResource),
-                        eq(mockUriInfo), eq(mockSubjects))).thenReturn(
+        final Map<String, UriAwareResourceModelFactory> mockBeans = of("doesnt", mockBean1, "matter", mockBean2);
+        when(mockContext.getBeansOfType(UriAwareResourceModelFactory.class)).thenReturn(mockBeans);
+        when(mockBean1.createModelForResource(eq(mockResource), eq(mockUriInfo), eq(mockSubjects))).thenReturn(
+                createDefaultModel());
+        when(mockBean2.createModelForResource(eq(mockResource), eq(mockUriInfo), eq(mockSubjects))).thenReturn(
                 createDefaultModel());
 
-        final RdfStream rdfStream = new DefaultRdfStream(createURI("info:subject"));
+        try (final RdfStream rdfStream = new DefaultRdfStream(createURI("info:subject"))) {
 
-        assertTrue(testObj.addHttpComponentModelsForResourceToStream(rdfStream, mockResource,
-                mockUriInfo, mockSubjects).count() >= 0);
+            assertTrue(testObj.addHttpComponentModelsForResourceToStream(rdfStream, mockResource, mockUriInfo,
+                    mockSubjects).count() >= 0);
 
-        verify(mockBean1).createModelForResource(eq(mockResource),
-                eq(mockUriInfo), eq(mockSubjects));
-        verify(mockBean2).createModelForResource(eq(mockResource),
-                eq(mockUriInfo), eq(mockSubjects));
+            verify(mockBean1).createModelForResource(eq(mockResource), eq(mockUriInfo), eq(mockSubjects));
+            verify(mockBean2).createModelForResource(eq(mockResource), eq(mockUriInfo), eq(mockSubjects));
+        }
     }
 }

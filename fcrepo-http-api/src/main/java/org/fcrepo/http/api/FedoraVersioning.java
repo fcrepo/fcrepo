@@ -163,6 +163,7 @@ public class FedoraVersioning extends FedoraBaseResource {
      *
      * @return List of versions for the object as RDF
      */
+    @SuppressWarnings("resource")
     @GET
     @HtmlTemplate(value = "fcr:versions")
     @Produces({TURTLE + ";qs=10", JSON_LD + ";qs=8", N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN,

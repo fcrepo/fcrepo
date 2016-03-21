@@ -54,7 +54,7 @@ public class MalformedRdfExceptionMapperTest {
     }
 
     @Test
-    public void testToResponseError() throws IOException {
+    public void testToResponseError() {
         final String errorPrefix = "org.modeshape.jcr.value.ValueFormatException: ";
         final String errorSuffix = "Error converting ...";
         final Response response = testObj.toResponse(new MalformedRdfException(errorPrefix + errorSuffix));
@@ -63,7 +63,7 @@ public class MalformedRdfExceptionMapperTest {
     }
 
     @Test
-    public void testToResponseError2() throws IOException {
+    public void testToResponseError2() {
         final String errorPrefix = "org.modeshape.jcr.value.ValueFormat: ";
         final String errorSuffix = "Error converting ...";
         final Response response = testObj.toResponse(new MalformedRdfException(errorPrefix + errorSuffix));

@@ -113,9 +113,11 @@ public class HashRdfContextTest {
 
         when(mockNode.hasNode("#")).thenReturn(false);
 
-        final Model actual = new HashRdfContext(mockResource, subjects).collect(toModel());
+        try (final HashRdfContext hashRdfContext = new HashRdfContext(mockResource, subjects)) {
+            final Model actual = hashRdfContext.collect(toModel());
 
-        assertTrue("Expected the result to be empty", actual.isEmpty());
+            assertTrue("Expected the result to be empty", actual.isEmpty());
+        }
     }
 
     @Test
@@ -138,13 +140,13 @@ public class HashRdfContextTest {
         when(mockProperty.getValue()).thenReturn(mockValue);
         when(mockValue.getString()).thenReturn("x");
 
-        final Model actual = new HashRdfContext(mockResource, subjects).collect(toModel());
+        try (final HashRdfContext hashRdfContext = new HashRdfContext(mockResource, subjects)) {
+            final Model actual = hashRdfContext.collect(toModel());
 
-        assertFalse("Expected the result to not be empty", actual.isEmpty());
+            assertFalse("Expected the result to not be empty", actual.isEmpty());
 
-        assertTrue("Expected to find child properties",
-                actual.contains(createResource("info:fedora/a#123"),
-                        createProperty("info:y"),
-                        createPlainLiteral("x")));
+            assertTrue("Expected to find child properties", actual.contains(createResource("info:fedora/a#123"),
+                    createProperty("info:y"), createPlainLiteral("x")));
+        }
     }
 }

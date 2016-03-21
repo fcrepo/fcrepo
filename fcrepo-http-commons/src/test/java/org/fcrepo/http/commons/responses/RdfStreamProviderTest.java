@@ -53,7 +53,7 @@ import com.hp.hpl.jena.rdf.model.Model;
  */
 public class RdfStreamProviderTest {
 
-    private RdfStreamProvider testProvider = new RdfStreamProvider();
+    private final RdfStreamProvider testProvider = new RdfStreamProvider();
 
     @Mock
     private Session mockSession;
@@ -96,25 +96,21 @@ public class RdfStreamProviderTest {
     }
 
     @Test
-    public void testWriteTo() throws WebApplicationException,
-                             IllegalArgumentException, IOException {
-        final Triple t =
-            create(createURI("info:test"), createURI("property:test"),
-                    createURI("info:test"));
-        final RdfStream rdfStream = new DefaultRdfStream(createURI("info:test"), of(t));
+    public void testWriteTo() throws WebApplicationException, IllegalArgumentException, IOException {
+        final Triple t = create(createURI("info:test"), createURI("property:test"), createURI("info:test"));
+
         final Map<String, String> namespaces = new HashMap<>();
-        final RdfNamespacedStream nsStream = new RdfNamespacedStream(rdfStream, namespaces);
-        byte[] result;
-        try (ByteArrayOutputStream entityStream = new ByteArrayOutputStream();) {
-            testProvider.writeTo(nsStream, RdfNamespacedStream.class, null, null,
-                    MediaType.valueOf("application/rdf+xml"), null,
-                    entityStream);
-            result = entityStream.toByteArray();
+        try (final RdfStream rdfStream = new DefaultRdfStream(createURI("info:test"), of(t));
+                final RdfNamespacedStream nsStream = new RdfNamespacedStream(rdfStream, namespaces)) {
+            try (ByteArrayOutputStream entityStream = new ByteArrayOutputStream();) {
+                testProvider.writeTo(nsStream, RdfNamespacedStream.class, null, null,
+                        MediaType.valueOf("application/rdf+xml"), null, entityStream);
+                final byte[] result = entityStream.toByteArray();
+
+                final Model postSerialization = createDefaultModel().read(new ByteArrayInputStream(result), null);
+                assertTrue("Didn't find our triple!", postSerialization.contains(postSerialization.asStatement(t)));
+            }
         }
-        final Model postSerialization =
-            createDefaultModel().read(new ByteArrayInputStream(result), null);
-        assertTrue("Didn't find our triple!", postSerialization
-                .contains(postSerialization.asStatement(t)));
     }
 
 }

@@ -42,7 +42,7 @@ public class ModeShapeRepositoryFactoryBeanTest {
 
     private ModeShapeRepositoryFactoryBean testObj;
 
-    private Resource config = new ClassPathResource(
+    private final Resource config = new ClassPathResource(
             "config/testing/repository.json");
 
     @Mock
@@ -71,7 +71,7 @@ public class ModeShapeRepositoryFactoryBeanTest {
     }
 
     @Test
-    public void testFactory() throws Exception {
+    public void testFactory() {
         testObj.buildRepository();
         assertEquals(mockRepo, testObj.getObject());
     }

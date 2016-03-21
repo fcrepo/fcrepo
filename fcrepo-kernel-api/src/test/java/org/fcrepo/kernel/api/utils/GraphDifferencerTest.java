@@ -38,19 +38,19 @@ import static org.junit.Assert.assertEquals;
  */
 public class GraphDifferencerTest {
 
-    private Node subject = createURI("x");
-    private Triple t_xyz = new Triple(createURI("x"), createURI("y"), createURI("z"));
-    private Triple t_abc = new Triple(createURI("a"), createURI("b"), createURI("c"));
-    private Triple t_typed_string = new Triple(createURI("i"),
+    private final Node subject = createURI("x");
+    private final Triple t_xyz = new Triple(createURI("x"), createURI("y"), createURI("z"));
+    private final Triple t_abc = new Triple(createURI("a"), createURI("b"), createURI("c"));
+    private final Triple t_typed_string = new Triple(createURI("i"),
                                                createURI("j"),
                                                createLiteral("k", XSDDatatype.XSDstring));
-    private Triple t_untyped_string = new Triple(createURI("i"),
+    private final Triple t_untyped_string = new Triple(createURI("i"),
                                                  createURI("j"),
                                                  createLiteral("k"));
-    private Triple t_int = new Triple(createURI("i"),
+    private final Triple t_int = new Triple(createURI("i"),
             createURI("j"),
             createLiteral("0", XSDDatatype.XSDint));
-    private Triple t_int_equivalent = new Triple(createURI("i"),
+    private final Triple t_int_equivalent = new Triple(createURI("i"),
             createURI("j"),
             createLiteral("000", XSDDatatype.XSDint));
 
@@ -61,17 +61,19 @@ public class GraphDifferencerTest {
         final Graph graph = GraphFactory.createDefaultGraph();
         graph.add(t_xyz);
 
-        final GraphDifferencer diff = new GraphDifferencer(graph, new DefaultRdfStream(subject, of(t_xyz)));
+        try (final DefaultRdfStream original = new DefaultRdfStream(subject, of(t_xyz))) {
+            final GraphDifferencer diff = new GraphDifferencer(graph, original);
 
-        final Stream<Triple> removed = diff.difference();
-        final Stream<Triple> added = diff.notCommon();
-        final Stream<Triple> common = diff.common();
+            final Stream<Triple> removed = diff.difference();
+            final Stream<Triple> added = diff.notCommon();
+            final Stream<Triple> common = diff.common();
 
-        assertEquals(0, removed.count());
+            assertEquals(0, removed.count());
 
-        assertEquals(0, added.count());
+            assertEquals(0, added.count());
 
-        assertTrue(common.filter(x -> x.equals(t_xyz)).findFirst().isPresent());
+            assertTrue(common.filter(x -> x.equals(t_xyz)).findFirst().isPresent());
+        }
     }
 
     @Test
@@ -81,17 +83,19 @@ public class GraphDifferencerTest {
         final Graph graph = GraphFactory.createDefaultGraph();
         graph.add(t_xyz);
 
-        final GraphDifferencer diff = new GraphDifferencer(graph, new DefaultRdfStream(subject, of(t_xyz, t_abc)));
+        try (final DefaultRdfStream original = new DefaultRdfStream(subject, of(t_xyz, t_abc))) {
+            final GraphDifferencer diff = new GraphDifferencer(graph, original);
 
-        final Stream<Triple> removed = diff.difference();
-        final Stream<Triple> added = diff.notCommon();
-        final Stream<Triple> common = diff.common();
+            final Stream<Triple> removed = diff.difference();
+            final Stream<Triple> added = diff.notCommon();
+            final Stream<Triple> common = diff.common();
 
-        assertTrue(removed.filter(x -> x.equals(t_abc)).findFirst().isPresent());
+            assertTrue(removed.filter(x -> x.equals(t_abc)).findFirst().isPresent());
 
-        assertEquals(0, added.count());
+            assertEquals(0, added.count());
 
-        assertTrue(common.filter(x -> x.equals(t_xyz)).findFirst().isPresent());
+            assertTrue(common.filter(x -> x.equals(t_xyz)).findFirst().isPresent());
+        }
     }
 
     @Test
@@ -101,17 +105,19 @@ public class GraphDifferencerTest {
         graph.add(t_abc);
         graph.add(t_xyz);
 
-        final GraphDifferencer diff = new GraphDifferencer(graph, new DefaultRdfStream(subject, of(t_xyz)));
+        try (final DefaultRdfStream original = new DefaultRdfStream(subject, of(t_xyz))) {
+            final GraphDifferencer diff = new GraphDifferencer(graph, original);
 
-        final Stream<Triple> removed = diff.difference();
-        final Stream<Triple> added = diff.notCommon();
-        final Stream<Triple> common = diff.common();
+            final Stream<Triple> removed = diff.difference();
+            final Stream<Triple> added = diff.notCommon();
+            final Stream<Triple> common = diff.common();
 
-        assertEquals(0, removed.count());
+            assertEquals(0, removed.count());
 
-        assertTrue(added.filter(x -> x.equals(t_abc)).findFirst().isPresent());
+            assertTrue(added.filter(x -> x.equals(t_abc)).findFirst().isPresent());
 
-        assertTrue(common.filter(x -> x.equals(t_xyz)).findFirst().isPresent());
+            assertTrue(common.filter(x -> x.equals(t_xyz)).findFirst().isPresent());
+        }
     }
 
     @Test
@@ -120,17 +126,19 @@ public class GraphDifferencerTest {
         final Graph graph = GraphFactory.createDefaultGraph();
         graph.add(t_xyz);
 
-        final GraphDifferencer diff = new GraphDifferencer(graph, new DefaultRdfStream(subject, of(t_abc)));
+        try (final DefaultRdfStream original = new DefaultRdfStream(subject, of(t_abc))) {
+            final GraphDifferencer diff = new GraphDifferencer(graph, original);
 
-        final Stream<Triple> removed = diff.difference();
-        final Stream<Triple> added = diff.notCommon();
-        final Stream<Triple> common = diff.common();
+            final Stream<Triple> removed = diff.difference();
+            final Stream<Triple> added = diff.notCommon();
+            final Stream<Triple> common = diff.common();
 
-        assertTrue(removed.filter(x -> x.equals(t_abc)).findFirst().isPresent());
+            assertTrue(removed.filter(x -> x.equals(t_abc)).findFirst().isPresent());
 
-        assertTrue(added.filter(x -> x.equals(t_xyz)).findFirst().isPresent());
+            assertTrue(added.filter(x -> x.equals(t_xyz)).findFirst().isPresent());
 
-        assertEquals(0, common.count());
+            assertEquals(0, common.count());
+        }
     }
 
     @Test
@@ -139,16 +147,17 @@ public class GraphDifferencerTest {
         final Graph graph = GraphFactory.createDefaultGraph();
         graph.add(t_untyped_string);
 
-        final GraphDifferencer diff = new GraphDifferencer(graph, new DefaultRdfStream(subject, of(t_typed_string)));
+        try (final DefaultRdfStream original = new DefaultRdfStream(subject, of(t_typed_string))) {
+            final GraphDifferencer diff = new GraphDifferencer(graph, original);
 
-        final Stream<Triple> removed = diff.difference();
-        final Stream<Triple> added = diff.notCommon();
-        final Stream<Triple> common = diff.common();
+            final Stream<Triple> removed = diff.difference();
+            final Stream<Triple> added = diff.notCommon();
+            final Stream<Triple> common = diff.common();
 
-        assertEquals(0, removed.count());
-        assertEquals(0, added.count());
-        assertTrue(common.filter(x -> x.equals(t_typed_string)).findFirst().isPresent());
-
+            assertEquals(0, removed.count());
+            assertEquals(0, added.count());
+            assertTrue(common.filter(x -> x.equals(t_typed_string)).findFirst().isPresent());
+        }
     }
 
     @Test
@@ -157,15 +166,16 @@ public class GraphDifferencerTest {
         final Graph graph = GraphFactory.createDefaultGraph();
         graph.add(t_int_equivalent);
 
-        final GraphDifferencer diff = new GraphDifferencer(graph, new DefaultRdfStream(subject, of(t_int)));
+        try (final DefaultRdfStream original = new DefaultRdfStream(subject, of(t_int))) {
+            final GraphDifferencer diff = new GraphDifferencer(graph, original);
 
-        final Stream<Triple> removed = diff.difference();
-        final Stream<Triple> added = diff.notCommon();
-        final Stream<Triple> common = diff.common();
+            final Stream<Triple> removed = diff.difference();
+            final Stream<Triple> added = diff.notCommon();
+            final Stream<Triple> common = diff.common();
 
-        assertEquals(0, removed.count());
-        assertEquals(0, added.count());
-        assertTrue(common.filter(x -> x.equals(t_int)).findFirst().isPresent());
-
+            assertEquals(0, removed.count());
+            assertEquals(0, added.count());
+            assertTrue(common.filter(x -> x.equals(t_int)).findFirst().isPresent());
+        }
     }
 }

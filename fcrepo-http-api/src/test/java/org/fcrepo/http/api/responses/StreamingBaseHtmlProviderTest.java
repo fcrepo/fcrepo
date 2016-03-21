@@ -15,11 +15,11 @@
  */
 package org.fcrepo.http.api.responses;
 
-import static java.util.stream.Stream.of;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static java.util.Collections.singletonMap;
+import static java.util.stream.Stream.of;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
@@ -31,7 +31,6 @@ import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import java.io.ByteArrayOutputStream;
@@ -39,6 +38,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.util.stream.Stream;
 
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.RepositoryException;
@@ -50,20 +50,23 @@ import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 
-import com.google.common.collect.ImmutableMap;
-import org.apache.velocity.Template;
-import org.apache.velocity.context.Context;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
-import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+
+import org.apache.velocity.Template;
+import org.apache.velocity.context.Context;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
+import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 
+import com.google.common.collect.ImmutableMap;
 import com.hp.hpl.jena.graph.Triple;
 
 /**
@@ -71,6 +74,7 @@ import com.hp.hpl.jena.graph.Triple;
  *
  * @author awoods
  */
+@RunWith(MockitoJUnitRunner.class)
 public class StreamingBaseHtmlProviderTest {
 
     private final StreamingBaseHtmlProvider testProvider = new StreamingBaseHtmlProvider();
@@ -89,26 +93,22 @@ public class StreamingBaseHtmlProviderTest {
 
     @Before
     public void setup() throws RepositoryException {
-        initMocks(this);
-
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
-        when(mockNamespaceRegistry.getPrefixes()).thenReturn(new String[]{ });
+        when(mockNamespaceRegistry.getPrefixes()).thenReturn(new String[] {});
 
-        testData = new RdfNamespacedStream(
-                new DefaultRdfStream(createURI("test:subject"), of(
-                    new Triple(createURI("test:subject"),
-                            createURI("test:predicate"),
-                            createLiteral("test:object")),
-                    new Triple(createURI("test:subject"),
-                            type.asNode(), createURI(REPOSITORY_NAMESPACE + "Binary")))),
-                getNamespaces(mockSession));
+        final Stream<Triple> triples = of(new Triple(createURI("test:subject"), createURI("test:predicate"),
+                createLiteral("test:object")), new Triple(createURI("test:subject"), type.asNode(), createURI(
+                        REPOSITORY_NAMESPACE + "Binary")));
+        final Stream<Triple> triples2 = of(new Triple(createURI("test:subject2"), type.asNode(), createURI(
+                REPOSITORY_NAMESPACE + "Container")));
+        @SuppressWarnings("resource")
+        final DefaultRdfStream stream = new DefaultRdfStream(createURI("test:subject"), triples);
+        @SuppressWarnings("resource")
+        final DefaultRdfStream stream2 = new DefaultRdfStream(createURI("test:subject2"), triples2);
+        testData = new RdfNamespacedStream(stream, getNamespaces(mockSession));
 
-        testData2 = new RdfNamespacedStream(
-                new DefaultRdfStream(createURI("test:subject2"), of(
-                    new Triple(createURI("test:subject2"),
-                            type.asNode(), createURI(REPOSITORY_NAMESPACE + "Container")))),
-                getNamespaces(mockSession));
+        testData2 = new RdfNamespacedStream(stream2, getNamespaces(mockSession));
         final UriInfo info = Mockito.mock(UriInfo.class);
         setField(testProvider, "uriInfo", info);
     }

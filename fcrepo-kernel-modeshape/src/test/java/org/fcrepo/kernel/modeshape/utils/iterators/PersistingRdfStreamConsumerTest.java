@@ -21,6 +21,9 @@ import static com.hp.hpl.jena.graph.NodeFactory.createAnon;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createStatement;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.api.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.PAGE;
@@ -48,7 +51,6 @@ import com.google.common.collect.ObjectArrays;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.rdf.model.Statement;
 
 /**
@@ -62,49 +64,41 @@ public class PersistingRdfStreamConsumerTest {
     @Test
     public void testConsumeAsync() {
 
-        final RdfStream testStream = new DefaultRdfStream(createURI("subject"),
-                of(profferedStatements).map(Statement::asTriple));
+        try (final RdfStream testStream = new DefaultRdfStream(createURI("subject"), of(profferedStatements)
+                .map(Statement::asTriple))) {
 
-        final Set<Statement> rejectedStatements =
-            newHashSet(profferedStatements);
-        final Set<Statement> acceptedStatements = newHashSet();
+            final Set<Statement> rejectedStatements = newHashSet(profferedStatements);
+            final Set<Statement> acceptedStatements = newHashSet();
 
-        final Set<Resource> rejectedMixins = newHashSet(profferedMixins);
-        final Set<Resource> acceptedMixins = newHashSet();
+            final Set<Resource> rejectedMixins = newHashSet(profferedMixins);
+            final Set<Resource> acceptedMixins = newHashSet();
 
-        testPersister =
-            new PersistingRdfStreamConsumer(idTranslator, mockSession, testStream) {
+            testPersister = new PersistingRdfStreamConsumer(idTranslator, mockSession, testStream) {
 
                 @Override
-                protected void operateOnProperty(final Statement s,
-                    final FedoraResource resource) {
+                protected void operateOnProperty(final Statement s, final FedoraResource resource) {
                     rejectedStatements.remove(s);
                     acceptedStatements.add(s);
                 }
 
                 @Override
-                protected void operateOnMixin(final Resource mixinResource,
-                        final FedoraResource resource) {
+                protected void operateOnMixin(final Resource mixinResource, final FedoraResource resource) {
                     rejectedMixins.remove(mixinResource);
                     acceptedMixins.add(mixinResource);
                 }
             };
 
-        testPersister.consumeAsync();
+            testPersister.consumeAsync();
 
-        assertTrue("Failed to operate on ordinary property!",
-                acceptedStatements.contains(propertyStatement)
-                        && !rejectedStatements.contains(propertyStatement));
+            assertTrue("Failed to operate on ordinary property!", acceptedStatements.contains(propertyStatement) &&
+                    !rejectedStatements.contains(propertyStatement));
 
-        assertTrue("Wrongly operated on foreign property!",
-                !acceptedStatements.contains(foreignStatement)
-                        && rejectedStatements.contains(foreignStatement));
+            assertTrue("Wrongly operated on foreign property!", !acceptedStatements.contains(foreignStatement) &&
+                    rejectedStatements.contains(foreignStatement));
 
-        assertTrue("Failed to operate on ordinary mixin!", acceptedMixins
-                .contains(mixinStatement.getObject().asResource())
-                && !rejectedMixins.contains(mixinStatement.getObject()
-                        .asResource()));
-
+            assertTrue("Failed to operate on ordinary mixin!", acceptedMixins.contains(mixinStatement.getObject()
+                    .asResource()) && !rejectedMixins.contains(mixinStatement.getObject().asResource()));
+        }
     }
 
     @Before
@@ -125,25 +119,20 @@ public class PersistingRdfStreamConsumerTest {
     private static final Statement propertyStatement = m
             .asStatement(propertyTriple);
 
-    private static final Triple ldpManagedPropertyTriple = create(subject,
-            PAGE.asNode(), object);
+    private static final Triple ldpManagedPropertyTriple = create(subject, PAGE.asNode(), object);
 
-    private static final Statement ldpManagedPropertyStatement = m
-            .asStatement(ldpManagedPropertyTriple);
+    private static final Statement ldpManagedPropertyStatement = m.asStatement(ldpManagedPropertyTriple);
 
-    private static final Triple fedoraManagedPropertyTriple = create(subject,
-            createURI(REPOSITORY_NAMESPACE + "thing"), object);
+    private static final Triple fedoraManagedPropertyTriple =
+            create(subject,createURI(REPOSITORY_NAMESPACE + "thing"), object);
 
-    private static final Statement fedoraManagedPropertyStatement = m
-            .asStatement(fedoraManagedPropertyTriple);
+    private static final Statement fedoraManagedPropertyStatement = m.asStatement(fedoraManagedPropertyTriple);
 
     private static final Statement jcrManagedPropertyStatement =
-        ResourceFactory.createStatement(ResourceFactory.createResource(),
-                ResourceFactory.createProperty(JCR_NAMESPACE, "thing"),
-                ResourceFactory.createResource());
+        createStatement(createResource(), createProperty(JCR_NAMESPACE, "thing"), createResource());
 
-    private static final Triple managedMixinTriple = create(subject, type
-            .asNode(), createURI(REPOSITORY_NAMESPACE + "mixin"));
+    private static final Triple managedMixinTriple = create(subject, type.asNode(),
+            createURI(REPOSITORY_NAMESPACE + "mixin"));
 
     private static final Statement managedMixinStatement = m.asStatement(managedMixinTriple);
 

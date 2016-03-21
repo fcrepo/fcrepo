@@ -22,8 +22,6 @@ import org.fcrepo.kernel.api.utils.FixityResult;
 
 import org.slf4j.Logger;
 
-import javax.jcr.RepositoryException;
-
 import java.io.IOException;
 import java.net.URI;
 import java.security.MessageDigest;
@@ -75,7 +73,7 @@ public abstract class BasicCacheEntry implements CacheEntry {
         } catch (final IOException e) {
             LOGGER.debug("Got error closing input stream: {}", e);
             throw new RepositoryRuntimeException(e);
-        } catch (final NoSuchAlgorithmException | RepositoryException e1) {
+        } catch (final NoSuchAlgorithmException e1) {
             throw new RepositoryRuntimeException(e1);
         }
     }

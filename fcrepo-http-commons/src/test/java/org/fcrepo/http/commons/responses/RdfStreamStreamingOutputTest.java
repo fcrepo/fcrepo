@@ -17,6 +17,8 @@ package org.fcrepo.http.commons.responses;
 
 import static java.util.stream.Stream.of;
 import static com.google.common.util.concurrent.Futures.addCallback;
+import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDdateTime;
+import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
@@ -24,6 +26,7 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static javax.ws.rs.core.MediaType.valueOf;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_TYPE;
 import static org.fcrepo.http.commons.responses.RdfStreamStreamingOutput.getValueForObject;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -41,20 +44,18 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import javax.jcr.Session;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 
-import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
 import com.hp.hpl.jena.rdf.model.RDFNode;
-import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.RdfStream;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.openrdf.model.Value;
 import org.openrdf.model.ValueFactory;
@@ -63,7 +64,6 @@ import org.slf4j.Logger;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.NodeFactory;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
 
@@ -115,7 +115,7 @@ public class RdfStreamStreamingOutputTest {
 
     @Test
     public void testGetValueForObjectWithLiteral() {
-        final Node resource = NodeFactory.createLiteral("test");
+        final Node resource = createLiteral("test");
         final Value result = getValueForObject(resource);
         assertEquals("Created bad Value!", createLiteral(vf, "test"), result);
     }
@@ -126,16 +126,12 @@ public class RdfStreamStreamingOutputTest {
     }
 
     public void assertOutputContainsTriple(final Triple expected) throws IOException {
-        final RdfStream input = new DefaultRdfStream(expected.getSubject(), of(expected));
-        try (final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+        try (final RdfStream input = new DefaultRdfStream(expected.getSubject(), of(expected));
+                final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             new RdfStreamStreamingOutput(input, testNamespaces, testMediaType).write(output);
-            try (
-                final InputStream resultStream =
-                    new ByteArrayInputStream(output.toByteArray())) {
-                final Model result =
-                    createDefaultModel().read(resultStream, null);
-                assertTrue("Didn't find our test triple!", result
-                        .contains(result.asStatement(expected)));
+            try ( final InputStream resultStream = new ByteArrayInputStream(output.toByteArray())) {
+                final Model result = createDefaultModel().read(resultStream, null);
+                assertTrue("Didn't find our test triple!", result.contains(result.asStatement(expected)));
             }
         }
     }
@@ -144,9 +140,9 @@ public class RdfStreamStreamingOutputTest {
     public void testWriteWithNamespace() throws IOException {
         final Map<String, String> namespaces = new HashMap<>();
         namespaces.put("a", "info:a");
-        final RdfStream input = new DefaultRdfStream(triple.getSubject(), of(triple));
-        try (final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            new RdfStreamStreamingOutput(input, namespaces, RDFMediaType.TURTLE_TYPE).write(output);
+        try (final RdfStream input = new DefaultRdfStream(triple.getSubject(), of(triple));
+                final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            new RdfStreamStreamingOutput(input, namespaces, TURTLE_TYPE).write(output);
             final String s = output.toString("UTF-8");
             assertTrue(s.contains("@prefix a: <info:a>"));
         }
@@ -157,9 +153,9 @@ public class RdfStreamStreamingOutputTest {
     public void testWriteWithXmlnsNamespace() throws IOException {
         final Map<String, String> namespaces = new HashMap<>();
         namespaces.put("xmlns", "info:a");
-        final RdfStream input = new DefaultRdfStream(triple.getSubject(), of(triple));
-        try (final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            new RdfStreamStreamingOutput(input, namespaces, RDFMediaType.TURTLE_TYPE).write(output);
+        try (final RdfStream input = new DefaultRdfStream(triple.getSubject(), of(triple));
+                final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            new RdfStreamStreamingOutput(input, namespaces, TURTLE_TYPE).write(output);
             final String s = output.toString("UTF-8");
             assertFalse(s.contains("@prefix xmlns"));
         }
@@ -174,57 +170,43 @@ public class RdfStreamStreamingOutputTest {
 
     @Test
     public void testWriteWithBlankSubject() throws IOException {
-
-        final RdfStream input = new DefaultRdfStream(createResource().asNode(), of(create(createResource().asNode(),
-                createURI("info:testPredicate"),
-                createTypedLiteral(0).asNode())));
-        try (final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+        try (final RdfStream input = new DefaultRdfStream(createResource().asNode(), of(create(createResource()
+                .asNode(), createURI("info:testPredicate"), createTypedLiteral(0).asNode())));
+                final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             new RdfStreamStreamingOutput(input, testNamespaces, testMediaType).write(output);
-
             try (final InputStream resultStream = new ByteArrayInputStream(output.toByteArray())) {
                 final Model result = createDefaultModel().read(resultStream, null);
                 assertTrue(result.contains(null, createProperty("info:testPredicate"), createTypedLiteral(0)));
             }
         }
-
     }
 
 
     @Test
     public void testWriteWithBlankObject() throws IOException {
-
-        final RdfStream input = new DefaultRdfStream(createResource().asNode(), of(create(createResource().asNode(),
-                createURI("info:testPredicate"),
-                createResource().asNode())));
-        try (final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+        final Stream<Triple> triples =
+                of(create(createResource().asNode(), createURI("info:testPredicate"), createResource().asNode()));
+        try (final RdfStream input = new DefaultRdfStream(createResource().asNode(), triples);
+                final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             new RdfStreamStreamingOutput(input, testNamespaces, testMediaType).write(output);
-
             try (final InputStream resultStream = new ByteArrayInputStream(output.toByteArray())) {
                 final Model result = createDefaultModel().read(resultStream, null);
-                assertTrue(result.contains(null, createProperty("info:testPredicate"), (RDFNode)null));
+                assertTrue(result.contains(null, createProperty("info:testPredicate"), (RDFNode) null));
             }
         }
-
     }
-
 
     @Test
     public void testWriteWithDatetimeObject() throws IOException {
-
         assertOutputContainsTriple(create(createURI("info:testSubject"),
-                createURI("info:testPredicate"),
-                NodeFactory.createLiteral("2014-01-01T01:02:03Z", XSDDatatype.XSDdateTime)));
-
+                createURI("info:testPredicate"), createLiteral("2014-01-01T01:02:03Z", XSDdateTime)));
     }
-
 
     @Test
     public void testWriteWithLanguageLiteral() throws IOException {
-
         assertOutputContainsTriple(create(createURI("info:testSubject"),
                 createURI("info:testPredicate"),
-                NodeFactory.createLiteral("french string", "fr")));
-
+                createLiteral("french string", "fr")));
     }
 
     @Test(expected = WebApplicationException.class)
@@ -242,19 +224,12 @@ public class RdfStreamStreamingOutputTest {
                 LOGGER.debug("Got exception:", e);
                 assertTrue("Got wrong kind of exception!", e instanceof RDFHandlerException);
             }
-
         };
         addCallback(testRdfStreamStreamingOutput, callback);
-        try (final OutputStream mockOutputStream =
-                mock(OutputStream.class, new Answer<Object>() {
-
-                    @Override
-                    public Object answer(final InvocationOnMock invocation) throws IOException {
-                        throw new IOException("Expected.");
-                    }
-                })) {
+        try (final OutputStream mockOutputStream = mock(OutputStream.class, (Answer<Object>) invocation -> {
+            throw new IOException("Expected.");
+        })) {
             testRdfStreamStreamingOutput.write(mockOutputStream);
         }
     }
-
 }

@@ -47,6 +47,7 @@ import org.mockito.Mock;
  * @author awoods
  * @author ajs6f
  */
+//TODO write some actual tests that get run here
 public class FedoraFixityTest {
 
     FedoraFixity testObj;
@@ -81,14 +82,11 @@ public class FedoraFixityTest {
 
     @Test
     @Ignore("This is an absurd test. It should be removed or substantially changed.")
-    @SuppressWarnings("unchecked")
     public void testGetDatastreamFixity() {
-        final RdfStream expected = new DefaultRdfStream(createURI("subject"));
-
-        when(mockBinary.getFixity(any(IdentifierConverter.class))).thenReturn(expected);
-
-        final RdfStream actual = testObj.getDatastreamFixity().stream;
-
-        assertEquals(expected, actual);
+        try (final RdfStream expected = new DefaultRdfStream(createURI("subject"))) {
+            when(mockBinary.getFixity(any(IdentifierConverter.class))).thenReturn(expected);
+            final RdfStream actual = testObj.getDatastreamFixity().stream;
+            assertEquals(expected, actual);
+        }
     }
 }

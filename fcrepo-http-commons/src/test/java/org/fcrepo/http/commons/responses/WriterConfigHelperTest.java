@@ -71,7 +71,7 @@ public class WriterConfigHelperTest {
     }
 
     @Test
-    public void testApply() throws Exception {
+    public void testApply() {
         final WriterConfig config = WriterConfigHelper.apply(mediaType);
         if (null == profile) {
             assertFalse("JSONLD_MODE should not be set!", config.isSet(JSONLD_MODE));

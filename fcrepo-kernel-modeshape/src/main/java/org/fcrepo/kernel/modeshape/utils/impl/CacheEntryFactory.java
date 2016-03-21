@@ -46,8 +46,7 @@ public final class CacheEntryFactory {
 
         if (binary instanceof ExternalBinaryValue) {
             return new ProjectedCacheEntry(property);
-        } else {
-            return new BinaryCacheEntry(property);
         }
+        return new BinaryCacheEntry(property);
     }
 }

@@ -37,7 +37,7 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class DelegateHeaderPrincipalProviderTest {
 
-    private DelegateHeaderPrincipalProvider provider = new DelegateHeaderPrincipalProvider();
+    private final DelegateHeaderPrincipalProvider provider = new DelegateHeaderPrincipalProvider();
 
     @Mock
     private ServletCredentials credentials;
@@ -51,13 +51,13 @@ public class DelegateHeaderPrincipalProviderTest {
     }
 
     @Test
-    public void testGetDelegate0() throws Exception {
+    public void testGetDelegate0() {
         when(request.getHeader(DELEGATE_HEADER)).thenReturn(null);
         assertNull("No delegates should return null", provider.getDelegate(credentials));
     }
 
     @Test
-    public void testGetDelegate1() throws Exception {
+    public void testGetDelegate1() {
         final String user = "user1";
         when(request.getHeader(DELEGATE_HEADER)).thenReturn(user);
         assertNotNull("Should be a delegate!", provider.getDelegate(credentials));

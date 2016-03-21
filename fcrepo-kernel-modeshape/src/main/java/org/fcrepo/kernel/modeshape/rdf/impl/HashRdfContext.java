@@ -68,8 +68,7 @@ public class HashRdfContext extends NodeRdfContext {
         final Node node = resource.getNode();
         if (node.hasNode("#")) {
             return iteratorToStream(node.getNode("#").getNodes());
-        } else {
-            return Stream.empty();
         }
+        return Stream.empty();
     }
 }

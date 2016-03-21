@@ -75,7 +75,6 @@ public class ReferencesRdfContext extends NodeRdfContext {
     /* References from LDP indirect containers are generated dynamically by LdpContainerRdfContext, so they won't
        show up in getReferences()/getWeakReferences().  Instead, we should check referencers to see if they are
        members of an IndirectContainer and generate the appropriate inbound references. */
-    @SuppressWarnings("unchecked")
     private Stream<Triple> putReferencesIntoContext(final Node node) throws RepositoryException {
         return Stream.concat(
             getAllReferences(node).flatMap(property2triple),
@@ -91,7 +90,7 @@ public class ReferencesRdfContext extends NodeRdfContext {
     }
 
     @SuppressWarnings("unchecked")
-    private Stream<Property> getAllReferences(final Node node) throws RepositoryException {
+    private static Stream<Property> getAllReferences(final Node node) throws RepositoryException {
         return Stream.concat(iteratorToStream(node.getReferences()), iteratorToStream(node.getWeakReferences()));
     }
 }

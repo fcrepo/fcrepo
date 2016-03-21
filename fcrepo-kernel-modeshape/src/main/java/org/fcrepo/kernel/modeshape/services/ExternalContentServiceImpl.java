@@ -45,6 +45,7 @@ public class ExternalContentServiceImpl implements ExternalContentService {
      * @return the content at the URI using the global connection pool
      * @throws IOException if IO exception occurred
      */
+    @SuppressWarnings("resource")
     @Override
     public InputStream retrieveExternalContent(final URI sourceUri) throws IOException {
         final HttpGet httpGet = new HttpGet(sourceUri);

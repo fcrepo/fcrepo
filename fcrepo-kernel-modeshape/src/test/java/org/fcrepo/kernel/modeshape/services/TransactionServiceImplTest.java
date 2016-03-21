@@ -100,7 +100,7 @@ public class TransactionServiceImplTest {
     }
 
     @Test
-    public void testCreateTx() throws Exception {
+    public void testCreateTx() {
         final Transaction tx = service.beginTransaction(mockSession, USER_NAME);
         assertNotNull(tx);
         assertNotNull(tx.getCreated());
@@ -110,7 +110,7 @@ public class TransactionServiceImplTest {
     }
 
     @Test
-    public void testGetTx() throws Exception {
+    public void testGetTx() {
         final Transaction tx = service.getTransaction(IS_A_TX, null);
         assertNotNull(tx);
     }
@@ -165,7 +165,7 @@ public class TransactionServiceImplTest {
     }
 
     @Test(expected = SessionMissingException.class)
-    public void testCommitRemovedTransaction() throws Exception {
+    public void testCommitRemovedTransaction() {
         final Transaction tx = service.commit(IS_A_TX);
         service.getTransaction(tx.getId(), null);
     }
@@ -178,7 +178,7 @@ public class TransactionServiceImplTest {
     }
 
     @Test(expected = SessionMissingException.class)
-    public void testRollbackRemovedTransaction() throws Exception {
+    public void testRollbackRemovedTransaction() {
         final Transaction tx = service.rollback(IS_A_TX);
         service.getTransaction(tx.getId(), null);
     }

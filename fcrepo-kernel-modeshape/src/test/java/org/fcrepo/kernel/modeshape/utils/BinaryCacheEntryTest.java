@@ -23,6 +23,7 @@ import javax.jcr.Binary;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 
+import java.io.IOException;
 import java.io.InputStream;
 
 import static org.junit.Assert.assertEquals;
@@ -60,7 +61,7 @@ public class BinaryCacheEntryTest {
     }
 
     @Test
-    public void testGetInputStream() throws Exception {
+    public void testGetInputStream() throws RepositoryException, IOException {
         when(mockBinary.getStream()).thenReturn(mockInputStream);
         try (final InputStream actual = testObj.getInputStream()) {
             assertEquals(mockInputStream, actual);
@@ -69,7 +70,7 @@ public class BinaryCacheEntryTest {
     }
 
     @Test
-    public void testGetExternalIdentifier() throws Exception {
+    public void testGetExternalIdentifier() {
         assertEquals("/some/path", testObj.getExternalIdentifier());
     }
 }

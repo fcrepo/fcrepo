@@ -27,7 +27,7 @@ import java.util.Set;
  * @author awoods
  * @since 2015-10-31
  */
-public class DelegateHeaderPrincipalProvider extends HttpHeaderPrincipalProvider implements PrincipalProvider {
+public class DelegateHeaderPrincipalProvider extends HttpHeaderPrincipalProvider {
 
     private static final String SEP = "no-separator";
     protected static final String DELEGATE_HEADER = "On-Behalf-Of";

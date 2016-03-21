@@ -22,15 +22,12 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.slf4j.Logger;
-
+import org.mockito.runners.MockitoJUnitRunner;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.security.AccessControlException;
 
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDboolean;
@@ -40,13 +37,12 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author cabeer
  * @since 10/1/14
  */
+@RunWith(MockitoJUnitRunner.class)
 public class AclRdfContextTest {
 
     @Mock
@@ -61,12 +57,10 @@ public class AclRdfContextTest {
     private Session mockSession;
 
     private Resource nodeSubject;
-    private String path = "/path/to/node";
+    private final String path = "/path/to/node";
 
     @Before
     public void setUp() throws RepositoryException {
-        initMocks(this);
-
         // read-only resource mocks
         when(resource.getNode()).thenReturn(mockNode);
         when(mockNode.getSession()).thenReturn(mockSession);
@@ -77,31 +71,22 @@ public class AclRdfContextTest {
 
     @Test
     public void testWritableNode() throws RepositoryException {
-        final Model actual = new AclRdfContext(resource, idTranslator).collect(toModel());
-        final Literal booleanTrue = actual.createTypedLiteral("true", XSDboolean);
-        assertTrue("Didn't find writable triple!", actual.contains(nodeSubject, WRITABLE, booleanTrue));
-    }
-
-    @Test
-    public void testReadOnlyNode() throws RepositoryException, IOException {
-
-        doThrow(new AccessControlException("permissions check failed")).when(mockSession).checkPermission(
-                eq(path), eq("add_node,set_property,remove"));
-        final Model actual = new AclRdfContext(resource, idTranslator).collect(toModel());
-        logRdf("Constructed RDF: ", actual);
-        final Literal booleanFalse = actual.createTypedLiteral(false, XSDboolean);
-        assertTrue("Didn't find writable triple!", actual.contains(nodeSubject, WRITABLE, booleanFalse));
-    }
-
-    private static void logRdf(final String message, final Model model) throws IOException {
-        LOGGER.debug(message);
-        try (Writer w = new StringWriter()) {
-            model.write(w);
-            LOGGER.debug("\n" + w.toString());
+        try (final AclRdfContext aclRdfContext = new AclRdfContext(resource, idTranslator)) {
+            final Model actual = aclRdfContext.collect(toModel());
+            final Literal booleanTrue = actual.createTypedLiteral("true", XSDboolean);
+            assertTrue("Didn't find writable triple!", actual.contains(nodeSubject, WRITABLE, booleanTrue));
         }
     }
 
-    private static final Logger LOGGER = getLogger(AclRdfContextTest.class);
+    @Test
+    public void testReadOnlyNode() throws RepositoryException {
 
-
+        doThrow(new AccessControlException("permissions check failed")).when(mockSession).checkPermission(
+                eq(path), eq("add_node,set_property,remove"));
+        try (final AclRdfContext aclRdfContext = new AclRdfContext(resource, idTranslator)) {
+            final Model actual = aclRdfContext.collect(toModel());
+            final Literal booleanFalse = actual.createTypedLiteral(false, XSDboolean);
+            assertTrue("Didn't find writable triple!", actual.contains(nodeSubject, WRITABLE, booleanFalse));
+        }
+    }
 }

@@ -320,7 +320,6 @@ public final class RdfLexicon {
     /**
      * Detects whether an RDF property is managed by the repository.
      */
-    @SuppressWarnings("unchecked")
     public static final Predicate<Property> isManagedPredicate =
         hasJcrNamespace.or(hasFedoraNamespace).or(p -> managedProperties.contains(p));
 
