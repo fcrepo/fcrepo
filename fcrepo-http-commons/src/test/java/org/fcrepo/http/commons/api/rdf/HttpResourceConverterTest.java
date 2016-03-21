@@ -163,7 +163,7 @@ public class HttpResourceConverterTest {
     }
 
     @Test
-    public void testDoForwardRoot() throws Exception {
+    public void testDoForwardRoot() {
         final Resource resource = createResource("http://localhost:8080/some/");
         final FedoraResource converted = converter.convert(resource);
         assertEquals(node, converted.getNode());
@@ -171,7 +171,7 @@ public class HttpResourceConverterTest {
     }
 
     @Test
-    public void testDoForwardRootWithoutSlash() throws Exception {
+    public void testDoForwardRootWithoutSlash() {
         final Resource resource = createResource("http://localhost:8080/some");
         final FedoraResource converted = converter.convert(resource);
         assertEquals(node, converted.getNode());

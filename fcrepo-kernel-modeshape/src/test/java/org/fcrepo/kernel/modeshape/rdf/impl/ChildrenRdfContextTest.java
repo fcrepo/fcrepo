@@ -41,6 +41,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
+import java.util.stream.Stream;
+
 /**
  * ChildrenRdfContextTest class.
  *
@@ -92,17 +94,19 @@ public class ChildrenRdfContextTest {
     public void testNoChildren() throws RepositoryException {
         when(mockResourceNode.hasNodes()).thenReturn(false);
 
-        final Model results = new ChildrenRdfContext(mockResource, idTranslator).collect(toModel());
-        final Resource subject = idTranslator.reverse().convert(mockResource);
+        try (final ChildrenRdfContext childrenRdfContext = new ChildrenRdfContext(mockResource, idTranslator)) {
+            final Model results = childrenRdfContext.collect(toModel());
+            final Resource subject = idTranslator.reverse().convert(mockResource);
 
-        final StmtIterator stmts = results.listStatements(subject, RdfLexicon.HAS_CHILD_COUNT, (RDFNode) null);
+            final StmtIterator stmts = results.listStatements(subject, RdfLexicon.HAS_CHILD_COUNT, (RDFNode) null);
 
-        assertTrue("There should have been a statement!", stmts.hasNext());
-        final Statement stmt = stmts.nextStatement();
-        assertTrue("Object should be a literal! " + stmt.getObject(), stmt.getObject().isLiteral());
-        assertEquals(0, stmt.getInt());
+            assertTrue("There should have been a statement!", stmts.hasNext());
+            final Statement stmt = stmts.nextStatement();
+            assertTrue("Object should be a literal! " + stmt.getObject(), stmt.getObject().isLiteral());
+            assertEquals(0, stmt.getInt());
 
-        assertFalse("There should not have been a second statement!", stmts.hasNext());
+            assertFalse("There should not have been a second statement!", stmts.hasNext());
+        }
     }
 
     @Test
@@ -111,21 +115,22 @@ public class ChildrenRdfContextTest {
         when(mockRes2.getPath()).thenReturn(RDF_PATH + "/res2");
         when(mockRes3.getPath()).thenReturn(RDF_PATH + "/res3");
         when(mockResourceNode.hasNodes()).thenReturn(true);
-        when(mockResource.getChildren()).thenReturn(
-                    of(mockRes1, mockRes2, mockRes3),
-                    of(mockRes1, mockRes2, mockRes3));
+        final Stream<FedoraResource> first = of(mockRes1, mockRes2, mockRes3);
+        final Stream<FedoraResource> second = of(mockRes1, mockRes2, mockRes3);
+        when(mockResource.getChildren()).thenReturn(first).thenReturn(second);
 
-        final Model results = new ChildrenRdfContext(mockResource, idTranslator).collect(toModel());
-        final Resource subject = idTranslator.reverse().convert(mockResource);
+        try (final ChildrenRdfContext context = new ChildrenRdfContext(mockResource, idTranslator)) {
+            final Model results = context.collect(toModel());
+            final Resource subject = idTranslator.reverse().convert(mockResource);
 
-        final StmtIterator stmts = results.listStatements(subject, RdfLexicon.HAS_CHILD_COUNT, (RDFNode) null);
+            final StmtIterator stmts = results.listStatements(subject, RdfLexicon.HAS_CHILD_COUNT, (RDFNode) null);
 
-        assertTrue("There should have been a statement!", stmts.hasNext());
-        final Statement stmt = stmts.nextStatement();
-        assertTrue("Object should be a literal! " + stmt.getObject(), stmt.getObject().isLiteral());
-        assertEquals(3, stmt.getInt());
+            assertTrue("There should have been a statement!", stmts.hasNext());
+            final Statement stmt = stmts.nextStatement();
+            assertTrue("Object should be a literal! " + stmt.getObject(), stmt.getObject().isLiteral());
+            assertEquals(3, stmt.getInt());
 
-        assertFalse("There should not have been a second statement!", stmts.hasNext());
+            assertFalse("There should not have been a second statement!", stmts.hasNext());
+        }
     }
-
 }

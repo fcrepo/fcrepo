@@ -313,15 +313,14 @@ public class FedoraResourceImplTest {
             propertiesModel.createProperty("b"),
             "c");
 
-        final RdfStream propertiesStream = fromModel(createURI("info:fedora/xyz"), propertiesModel);
+        try (final RdfStream propertiesStream = fromModel(createURI("info:fedora/xyz"), propertiesModel)) {
 
-        final Model replacementModel = createDefaultModel();
+            final Model replacementModel = createDefaultModel();
 
-        replacementModel.add(replacementModel.createResource("a"),
-            replacementModel.createProperty("b"),
-            "n");
+            replacementModel.add(replacementModel.createResource("a"), replacementModel.createProperty("b"), "n");
 
-        testObj.replaceProperties(defaultGraphSubjects, replacementModel, propertiesStream);
+            testObj.replaceProperties(defaultGraphSubjects, replacementModel, propertiesStream);
+        }
     }
 
     @Test

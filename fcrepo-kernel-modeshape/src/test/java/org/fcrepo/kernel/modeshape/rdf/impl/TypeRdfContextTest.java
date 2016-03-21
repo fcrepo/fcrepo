@@ -27,7 +27,6 @@ import org.slf4j.Logger;
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
 import javax.jcr.Repository;
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
@@ -91,15 +90,13 @@ public class TypeRdfContextTest {
 
     private static final String mockNodeName = "mockNode";
 
-    private static final String mockNodeTypePrefix = "jcr";
-
     private static final String mockPrimaryNodeTypeName = "somePrimaryType";
     private static final String mockMixinNodeTypeName = "someMixinType";
     private static final String mockPrimarySuperNodeTypeName = "somePrimarySuperType";
     private static final String mockMixinSuperNodeTypeName = "someMixinSuperType";
 
     @Before
-    public void setUp() throws RepositoryException {
+    public void setUp() {
         initMocks(this);
         final List<URI> types = new ArrayList<>();
         types.add(URI.create(REPOSITORY_NAMESPACE + "somePrimaryType"));
@@ -115,30 +112,28 @@ public class TypeRdfContextTest {
     }
 
     @Test
-    public void testRdfTypesForNodetypes() throws RepositoryException,
-            IOException {
+    public void testRdfTypesForNodetypes() throws IOException {
 
         final Resource mockNodeSubject = idTranslator.reverse().convert(mockResource);
 
-        final Model actual =
-                new TypeRdfContext(mockResource, idTranslator).collect(toModel());
-        final Resource expectedRdfTypePrimary =
-                createResource(REPOSITORY_NAMESPACE + mockPrimaryNodeTypeName);
-        final Resource expectedRdfTypeMixin =
-                createResource(REPOSITORY_NAMESPACE + mockMixinNodeTypeName);
-        final Resource expectedRdfTypePrimarySuper =
-                createResource(REPOSITORY_NAMESPACE + mockPrimarySuperNodeTypeName);
-        final Resource expectedRdfTypeMixinSuper =
-                createResource(REPOSITORY_NAMESPACE + mockMixinSuperNodeTypeName);
-        logRdf("Constructed RDF: ", actual);
-        assertTrue("Didn't find RDF type triple for primarytype!", actual.contains(
-                mockNodeSubject, type, expectedRdfTypePrimary));
-        assertTrue("Didn't find RDF type triple for mixintype!", actual.contains(
-                mockNodeSubject, type, expectedRdfTypeMixin));
-        assertTrue("Didn't find RDF type triple for primarysupertype!", actual.contains(
-                mockNodeSubject, type, expectedRdfTypePrimarySuper));
-        assertTrue("Didn't find RDF type triple for mixinsupertype!", actual.contains(
-                mockNodeSubject, type, expectedRdfTypeMixinSuper));
+        try (final TypeRdfContext typeRdfContext = new TypeRdfContext(mockResource, idTranslator)) {
+            final Model actual = typeRdfContext.collect(toModel());
+            final Resource expectedRdfTypePrimary = createResource(REPOSITORY_NAMESPACE + mockPrimaryNodeTypeName);
+            final Resource expectedRdfTypeMixin = createResource(REPOSITORY_NAMESPACE + mockMixinNodeTypeName);
+            final Resource expectedRdfTypePrimarySuper =
+                    createResource(REPOSITORY_NAMESPACE + mockPrimarySuperNodeTypeName);
+            final Resource expectedRdfTypeMixinSuper =
+                    createResource(REPOSITORY_NAMESPACE + mockMixinSuperNodeTypeName);
+            logRdf("Constructed RDF: ", actual);
+            assertTrue("Didn't find RDF type triple for primarytype!", actual.contains(
+                    mockNodeSubject, type, expectedRdfTypePrimary));
+            assertTrue("Didn't find RDF type triple for mixintype!", actual.contains(
+                    mockNodeSubject, type, expectedRdfTypeMixin));
+            assertTrue("Didn't find RDF type triple for primarysupertype!", actual.contains(
+                    mockNodeSubject, type, expectedRdfTypePrimarySuper));
+            assertTrue("Didn't find RDF type triple for mixinsupertype!", actual.contains(
+                    mockNodeSubject, type, expectedRdfTypeMixinSuper));
+        }
     }
 
     private static void logRdf(final String message, final Model model) throws IOException {

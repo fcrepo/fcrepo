@@ -27,7 +27,7 @@ import org.fcrepo.kernel.api.RdfStream;
  * @author acoburn
  * @since 2/13/16
  */
-public class RdfNamespacedStream {
+public class RdfNamespacedStream implements AutoCloseable {
 
     public final RdfStream stream;
 
@@ -44,5 +44,10 @@ public class RdfNamespacedStream {
         requireNonNull(namespaces);
         this.stream = stream;
         this.namespaces = namespaces;
+    }
+
+    @Override
+    public void close() {
+        stream.close();
     }
 }

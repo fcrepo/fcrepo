@@ -121,7 +121,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
         }
     }
 
-    private void write(final Stream<Statement> model,
+    private static void write(final Stream<Statement> model,
                        final OutputStream output,
                        final RDFFormat dataFormat,
                        final MediaType dataMediaType,

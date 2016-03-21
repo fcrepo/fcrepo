@@ -82,7 +82,6 @@ import javax.jcr.security.Privilege;
 import javax.jcr.version.Version;
 
 import com.google.common.collect.Iterators;
-import com.google.common.collect.UnmodifiableIterator;
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
@@ -401,7 +400,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetRootObjectTypes() throws RepositoryException {
+    public void testGetRootObjectTypes() {
 
         final FedoraResource object = nodeService.find(session, "/");
 
@@ -414,7 +413,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetObjectTypes() throws RepositoryException {
+    public void testGetObjectTypes() {
 
         final FedoraResource object =
             containerService.findOrCreate(session, "/testObjectVersionGraph");
@@ -654,56 +653,55 @@ public class FedoraResourceImplIT extends AbstractIT {
         final String pid = UUID.randomUUID().toString();
         final Container object = containerService.findOrCreate(session, pid);
 
-        final RdfStream triples = object.getTriples(subjects, PROPERTIES);
-        final Model model = triples.collect(toModel());
+        try (final RdfStream triples = object.getTriples(subjects, PROPERTIES)) {
+            final Model model = triples.collect(toModel());
 
-        final Resource resource = model.createResource();
-        final Resource subject = subjects.reverse().convert(object);
-        final Property predicate = model.createProperty("info:xyz");
-        model.add(subject, predicate, resource);
-        model.add(resource, model.createProperty("http://purl.org/dc/elements/1.1/title"), "xyz");
+            final Resource resource = model.createResource();
+            final Resource subject = subjects.reverse().convert(object);
+            final Property predicate = model.createProperty("info:xyz");
+            model.add(subject, predicate, resource);
+            model.add(resource, model.createProperty("http://purl.org/dc/elements/1.1/title"), "xyz");
 
-        object.replaceProperties(subjects, model, object.getTriples(subjects, PROPERTIES));
+            object.replaceProperties(subjects, model, object.getTriples(subjects, PROPERTIES));
 
-        @SuppressWarnings("unchecked")
-        final Iterator<javax.jcr.Property> properties = object.getNode().getProperties();
+            final Iterator<javax.jcr.Property> properties = object.getNode().getProperties();
 
-        final UnmodifiableIterator<javax.jcr.Property> relation
-            = Iterators.filter(properties, uncheck(
-                        (final javax.jcr.Property p) -> p.getName().contains("xyz_ref"))::test);
+            final Iterator<javax.jcr.Property> relation = Iterators.filter(properties, uncheck(
+                    (final javax.jcr.Property p) -> p.getName().contains("xyz_ref"))::test);
 
-        assertTrue(relation.hasNext());
+            assertTrue(relation.hasNext());
 
-        final javax.jcr.Property next = relation.next();
-        final Value[] values = next.getValues();
-        assertEquals(1, values.length);
+            final javax.jcr.Property next = relation.next();
+            final Value[] values = next.getValues();
+            assertEquals(1, values.length);
 
-        final javax.jcr.Node skolemizedNode = session.getNodeByIdentifier(values[0].getString());
+            final javax.jcr.Node skolemizedNode = session.getNodeByIdentifier(values[0].getString());
 
-        assertTrue(skolemizedNode.getPath().contains("/.well-known/genid/"));
-        assertEquals("xyz", skolemizedNode.getProperty("dc:title").getValues()[0].getString());
-
+            assertTrue(skolemizedNode.getPath().contains("/.well-known/genid/"));
+            assertEquals("xyz", skolemizedNode.getProperty("dc:title").getValues()[0].getString());
+        }
     }
 
     @Test
     public void testReplacePropertiesHashURIs() throws RepositoryException {
         final String pid = getRandomPid();
         final Container object = containerService.findOrCreate(session, pid);
-        final RdfStream triples = object.getTriples(subjects, PROPERTIES);
-        final Model model = triples.collect(toModel());
+        try (final RdfStream triples = object.getTriples(subjects, PROPERTIES)) {
+            final Model model = triples.collect(toModel());
 
-        final Resource hashResource = createResource(createGraphSubjectNode(object).getURI() + "#foo");
-        final Property dcTitle = model.createProperty("http://purl.org/dc/elements/1.1/title");
-        final Literal titleValue = model.createLiteral("xyz");
+            final Resource hashResource = createResource(createGraphSubjectNode(object).getURI() + "#foo");
+            final Property dcTitle = model.createProperty("http://purl.org/dc/elements/1.1/title");
+            final Literal titleValue = model.createLiteral("xyz");
 
-        model.add(hashResource, dcTitle, titleValue);
-        object.replaceProperties(subjects, model, object.getTriples(subjects, PROPERTIES));
-        assertEquals(1, object.getNode().getNode("#").getNodes().getSize());
+            model.add(hashResource, dcTitle, titleValue);
+            object.replaceProperties(subjects, model, object.getTriples(subjects, PROPERTIES));
+            assertEquals(1, object.getNode().getNode("#").getNodes().getSize());
 
-        final Model updatedModel = object.getTriples(subjects, PROPERTIES).collect(toModel());
-        updatedModel.remove(hashResource, dcTitle, titleValue);
-        object.replaceProperties(subjects, updatedModel, object.getTriples(subjects, PROPERTIES));
-        assertEquals(0, object.getNode().getNode("#").getNodes().getSize());
+            final Model updatedModel = object.getTriples(subjects, PROPERTIES).collect(toModel());
+            updatedModel.remove(hashResource, dcTitle, titleValue);
+            object.replaceProperties(subjects, updatedModel, object.getTriples(subjects, PROPERTIES));
+            assertEquals(0, object.getNode().getNode("#").getNodes().getSize());
+        }
     }
 
     @Test
@@ -947,9 +945,10 @@ public class FedoraResourceImplIT extends AbstractIT {
         final NonRdfSourceDescription frozenChild =
                 new NonRdfSourceDescriptionImpl(version.getFrozenNode().getNode("child"));
         System.out.println(frozenChild);
-        final InputStream contentStream = ((FedoraBinary)frozenChild.getDescribedResource()).getContent();
-        assertNotNull(contentStream);
-        assertEquals(content, IOUtils.toString(contentStream));
+        try (final InputStream contentStream = ((FedoraBinary) frozenChild.getDescribedResource()).getContent()) {
+            assertNotNull(contentStream);
+            assertEquals(content, IOUtils.toString(contentStream));
+        }
     }
 
     @Test (expected = RepositoryRuntimeException.class)

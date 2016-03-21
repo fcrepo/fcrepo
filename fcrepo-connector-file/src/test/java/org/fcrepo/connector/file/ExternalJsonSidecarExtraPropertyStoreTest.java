@@ -147,31 +147,33 @@ public class ExternalJsonSidecarExtraPropertyStoreTest {
         final File sidecarFile = new File(tmp, "file.modeshape.json");
         tmp.deleteOnExit();
         final String jsonString = "{}";
-        final FileOutputStream fos = new FileOutputStream(sidecarFile);
-        fos.write(jsonString.getBytes("UTF-8"));
-        fos.close();
+        try (final FileOutputStream fos = new FileOutputStream(sidecarFile)) {
+            fos.write(jsonString.getBytes("UTF-8"));
+            fos.close();
 
-        final ExternalJsonSidecarExtraPropertyStore store =
-                new ExternalJsonSidecarExtraPropertyStore(mockConnector, mockTranslator, tmp);
+            final ExternalJsonSidecarExtraPropertyStore store =
+                    new ExternalJsonSidecarExtraPropertyStore(mockConnector, mockTranslator, tmp);
 
-        final Map<Name, Property> properties = new HashMap<>();
+            final Map<Name, Property> properties = new HashMap<>();
 
-        assertTrue(store.contains("/file"));
+            assertTrue(store.contains("/file"));
 
-        properties.put(KEY1, PROP1);
-        properties.put(KEY2, PROP2);
-        properties.put(KEY3, PROP3);
-        properties.put(KEY4, null);
+            properties.put(KEY1, PROP1);
+            properties.put(KEY2, PROP2);
+            properties.put(KEY3, PROP3);
+            properties.put(KEY4, null);
 
-        store.storeProperties("/file", properties);
+            store.storeProperties("/file", properties);
 
-        properties.forEach((key, property) -> {
-            if (property != null) {
-                verify(mockTranslator).setProperty(any(EditableDocument.class), eq(property), anyObject(), anyObject());
-            }
-        });
-        verify(mockTranslator, times(3)).setProperty(any(EditableDocument.class),
+            properties.forEach((key, property) -> {
+                if (property != null) {
+                    verify(mockTranslator).setProperty(any(EditableDocument.class), eq(property), anyObject(),
+                            anyObject());
+                }
+            });
+            verify(mockTranslator, times(3)).setProperty(any(EditableDocument.class),
                     any(Property.class), anyObject(), anyObject());
+        }
     }
 
 
@@ -211,30 +213,33 @@ public class ExternalJsonSidecarExtraPropertyStoreTest {
         tmp.deleteOnExit();
         final File sidecarFile = new File(tmp, "file.modeshape.json");
         final String jsonString = "{}";
-        final FileOutputStream fos = new FileOutputStream(sidecarFile);
-        fos.write(jsonString.getBytes("UTF-8"));
-        fos.close();
+        try (final FileOutputStream fos = new FileOutputStream(sidecarFile)) {
+            fos.write(jsonString.getBytes("UTF-8"));
+            fos.close();
 
-        final ExternalJsonSidecarExtraPropertyStore store =
-                new ExternalJsonSidecarExtraPropertyStore(mockConnector, mockTranslator, tmp);
+            final ExternalJsonSidecarExtraPropertyStore store =
+                    new ExternalJsonSidecarExtraPropertyStore(mockConnector, mockTranslator, tmp);
 
-        assertTrue(store.contains("/file"));
+            assertTrue(store.contains("/file"));
 
-        final Map<Name, Property> properties = new HashMap<>();
+            final Map<Name, Property> properties = new HashMap<>();
 
-        properties.put(KEY1, PROP1);
-        properties.put(KEY2, PROP2);
-        properties.put(KEY3, null);
+            properties.put(KEY1, PROP1);
+            properties.put(KEY2, PROP2);
+            properties.put(KEY3, null);
 
-        store.updateProperties("/file", properties);
+            store.updateProperties("/file", properties);
 
-        properties.forEach((key, property) -> {
-            if (property == null) {
-                verify(mockTranslator).removeProperty(any(EditableDocument.class), eq(key), anyObject(), anyObject());
-            } else {
-                verify(mockTranslator).setProperty(any(EditableDocument.class), eq(property), anyObject(), anyObject());
-            }
-        });
+            properties.forEach((key, property) -> {
+                if (property == null) {
+                    verify(mockTranslator).removeProperty(any(EditableDocument.class), eq(key), anyObject(),
+                            anyObject());
+                } else {
+                    verify(mockTranslator).setProperty(any(EditableDocument.class), eq(property), anyObject(),
+                            anyObject());
+                }
+            });
+        }
     }
 
     @Test
@@ -271,22 +276,23 @@ public class ExternalJsonSidecarExtraPropertyStoreTest {
                 "\"http://fedora.info/definitions/v4/repository#\" : {" +
                     "\"digest\" : { " +
                         "\"$uri\" : \"urn:sha1:6e1a2e24a4cc3dde495877019f53830b8f1d20e3\" } } } }";
-        final FileOutputStream fos = new FileOutputStream(sidecarFile);
-        fos.write(jsonString.getBytes("UTF-8"));
-        fos.close();
+        try (final FileOutputStream fos = new FileOutputStream(sidecarFile)) {
+            fos.write(jsonString.getBytes("UTF-8"));
+        }
 
         final ExternalJsonSidecarExtraPropertyStore store =
                 new ExternalJsonSidecarExtraPropertyStore(mockConnector, mockTranslator, tmp);
 
         assertTrue(store.contains("/file/fcr:content"));
 
-        final FileInputStream sidecarStream = new FileInputStream(sidecarFile);
-        final Document document = Json.read(sidecarStream, false);
-        final Map<Name, Property> results = new HashMap<>();
+        try (final FileInputStream sidecarStream = new FileInputStream(sidecarFile)) {
+            final Document document = Json.read(sidecarStream, false);
+            final Map<Name, Property> results = new HashMap<>();
 
-        store.getProperties("/file/fcr:content");
+            store.getProperties("/file/fcr:content");
 
-        verify(mockTranslator).getProperties(eq(document), eq(results));
+            verify(mockTranslator).getProperties(eq(document), eq(results));
+        }
     }
 
     @Test(expected = RepositoryRuntimeException.class)
@@ -295,9 +301,9 @@ public class ExternalJsonSidecarExtraPropertyStoreTest {
         tmp.deleteOnExit();
         final File sidecarFile = new File(tmp, "file.modeshape.json");
         final String jsonString = "{ THIS ISN'T JSON !";
-        final FileOutputStream fos = new FileOutputStream(sidecarFile);
-        fos.write(jsonString.getBytes("UTF-8"));
-        fos.close();
+        try (final FileOutputStream fos = new FileOutputStream(sidecarFile)) {
+            fos.write(jsonString.getBytes("UTF-8"));
+        }
 
         final ExternalJsonSidecarExtraPropertyStore store =
                 new ExternalJsonSidecarExtraPropertyStore(mockConnector, mockTranslator, tmp);

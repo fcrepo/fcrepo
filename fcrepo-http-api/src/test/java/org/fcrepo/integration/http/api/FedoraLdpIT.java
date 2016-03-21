@@ -25,6 +25,7 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static java.lang.System.currentTimeMillis;
 import static java.lang.Thread.sleep;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static java.util.TimeZone.getTimeZone;
@@ -411,7 +412,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
      * format being requested.
      */
     @Test
-    public void testGetRDFSourceWrongAccept() throws IOException {
+    public void testGetRDFSourceWrongAccept() {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
 
@@ -855,11 +856,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
     /**
      * Ensure that the objects can be created with a Digest header
      * with a SHA1 sum of the binary content
-     *
-     * @throws IOException in case of IOException
      */
     @Test
-    public void testIngestWithBinaryAndChecksum() throws IOException {
+    public void testIngestWithBinaryAndChecksum() {
         final HttpPost method = postObjMethod();
         final File img = new File("src/test/resources/test-objects/img.png");
         method.addHeader("Content-Type", "application/octet-stream");
@@ -873,11 +872,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
      * Ensure that the objects cannot be created when a Digest header
      * contains a SHA1 sum that does not match the uploaded binary
      * content
-     *
-     * @throws IOException in case of IOException
      */
     @Test
-    public void testIngestWithBinaryAndChecksumMismatch() throws IOException {
+    public void testIngestWithBinaryAndChecksumMismatch() {
         final HttpPost method = postObjMethod();
         final File img = new File("src/test/resources/test-objects/img.png");
         method.addHeader("Content-Type", "application/octet-stream");
@@ -889,11 +886,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     /**
      * Ensure that the a malformed Digest header returns a 400 Bad Request
-     *
-     * @throws IOException in case of IOException
      */
     @Test
-    public void testIngestWithBinaryAndMalformedDigestHeader() throws IOException {
+    public void testIngestWithBinaryAndMalformedDigestHeader() {
         final HttpPost method = postObjMethod();
         final File img = new File("src/test/resources/test-objects/img.png");
         method.addHeader("Content-Type", "application/octet-stream");
@@ -1313,12 +1308,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
                     createURI(serverAddress + pid3)));
         }
     }
-    private void createProxy(final String parent, final String child) throws Exception {
+    private static void createProxy(final String parent, final String child) {
         final HttpPost createProxy = new HttpPost(serverAddress + parent + "/members");
         createProxy.addHeader("Content-Type", "text/turtle");
         final String proxyRDF = "<> <http://www.openarchives.org/ore/terms/proxyFor> <" + serverAddress + child + ">;"
             + " <http://www.openarchives.org/ore/terms/proxyIn> <" + serverAddress + parent + "> .";
-        createProxy.setEntity(new StringEntity(proxyRDF));
+        createProxy.setEntity(new StringEntity(proxyRDF, UTF_8));
         assertEquals(CREATED.getStatusCode(), getStatus(createProxy));
     }
 
@@ -2180,27 +2175,27 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testCreationResponseDefault() throws Exception {
+    public void testCreationResponseDefault() {
         testCreationResponse(null, null, CREATED, "text/plain");
         testCreationResponse(null, "application/ld+json", NOT_ACCEPTABLE, "text/html");
     }
 
     @Test
-    public void testCreationResponseMinimal() throws Exception {
+    public void testCreationResponseMinimal() {
         testCreationResponse("minimal", null, CREATED, null);
         testCreationResponse("minimal", "application/ld+json", CREATED, null);
     }
 
     @Test
-    public void testCreationResponseRepresentation() throws Exception {
+    public void testCreationResponseRepresentation() {
         testCreationResponse("representation", null, CREATED, "text/turtle");
         testCreationResponse("representation", "application/ld+json", CREATED, "application/ld+json");
     }
 
-    private void testCreationResponse(final String prefer,
+    private static void testCreationResponse(final String prefer,
                                       final String accept,
                                       final Status expectedStatus,
-                                      final String expectedType) throws Exception {
+                                      final String expectedType) {
 
         final HttpPost createMethod = new HttpPost(serverAddress);
         if (prefer != null) {
@@ -2217,6 +2212,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
             } else {
                 assertTrue(createResponse.getFirstHeader("Content-Type").getValue().startsWith(expectedType));
             }
+        } catch (final IOException e) {
+            throw new AssertionError(e);
         }
     }
 }

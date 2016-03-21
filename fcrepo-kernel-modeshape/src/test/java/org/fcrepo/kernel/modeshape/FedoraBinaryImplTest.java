@@ -49,7 +49,6 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
-import static org.fcrepo.kernel.api.FedoraTypes.HAS_MIME_TYPE;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
 

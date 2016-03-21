@@ -34,7 +34,6 @@ import org.fcrepo.metrics.RegistryService;
 
 import java.util.Map;
 import java.util.stream.Stream;
-import java.util.stream.Stream.Builder;
 import org.slf4j.Logger;
 
 import com.codahale.metrics.Counter;

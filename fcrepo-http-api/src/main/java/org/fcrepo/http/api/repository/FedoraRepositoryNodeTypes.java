@@ -49,6 +49,7 @@ import com.codahale.metrics.annotation.Timed;
  */
 @Scope("prototype")
 @Path("/fcr:nodetypes")
+@Deprecated
 public class FedoraRepositoryNodeTypes extends AbstractResource {
 
     @Inject

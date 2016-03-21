@@ -146,15 +146,17 @@ public class PropertiesRdfContextTest {
         when(mockPropertyIterator.next()).thenReturn(mockNonRdfProperty);
         when(mockPropertyIterator.hasNext()).thenReturn(true, false);
 
-        final Model results = new PropertiesRdfContext(mockBinary, idTranslator).collect(toModel());
-        final Resource correctSubject = idTranslator.reverse().convert(mockBinary);
+        try (final PropertiesRdfContext propertiesRdfContext = new PropertiesRdfContext(mockBinary, idTranslator)) {
+            final Model results = propertiesRdfContext.collect(toModel());
 
-        results.listStatements().forEachRemaining(stmnt -> {
-            assertEquals("All subjects in triples created should be the resource processed!",
-                    correctSubject, stmnt.getSubject());
-        });
-        assertTrue("Should contain NonRdfSource statement: " + results + " -- " + NON_RDF_SOURCE_STMT,
-                results.contains(NON_RDF_SOURCE_STMT));
+            final Resource correctSubject = idTranslator.reverse().convert(mockBinary);
+
+            results.listStatements().forEachRemaining(stmnt -> assertEquals(
+                    "All subjects in triples created should be the resource processed!",
+                    correctSubject, stmnt.getSubject()));
+            assertTrue("Should contain NonRdfSource statement: " + results + " -- " + NON_RDF_SOURCE_STMT,
+                    results.contains(NON_RDF_SOURCE_STMT));
+        }
     }
 
     @Test
@@ -175,13 +177,15 @@ public class PropertiesRdfContextTest {
         when(mockPropertyIterator.next()).thenReturn(mockResourceProperty);
         when(mockPropertyIterator.hasNext()).thenReturn(true, false);
 
-        final Model results = new PropertiesRdfContext(mockResource, idTranslator).collect(toModel());
+        try (final PropertiesRdfContext propertiesRdfContext = new PropertiesRdfContext(mockResource, idTranslator)) {
+            final Model results = propertiesRdfContext.collect(toModel());
 
-        assertTrue("Should contain RdfSource statement: " + results + " -- " + RDF_SOURCE_STMT,
-                results.contains(RDF_SOURCE_STMT));
+            assertTrue("Should contain RdfSource statement: " + results + " -- " + RDF_SOURCE_STMT,
+                    results.contains(RDF_SOURCE_STMT));
 
-        assertFalse("Should NOT contain NonRdfSource statement: " + results + " -- " + NON_RDF_SOURCE_STMT,
-                results.contains(NON_RDF_SOURCE_STMT));
+            assertFalse("Should NOT contain NonRdfSource statement: " + results + " -- " + NON_RDF_SOURCE_STMT,
+                    results.contains(NON_RDF_SOURCE_STMT));
+        }
     }
 
 }

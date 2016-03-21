@@ -57,18 +57,22 @@ public class ContentRdfContextTest {
 
     @Test
     public void testForLowLevelStorageTriples() throws IOException {
-        final Model results = new ContentRdfContext(mockResource, idTranslator).collect(toModel());
-        logRdf("Retrieved RDF for testForLowLevelStorageTriples():", results);
-        assertTrue("Didn't find triple showing node has content!", results
-                .contains(mockSubject, DESCRIBES, mockContentSubject));
+        try (final ContentRdfContext contentRdfContext = new ContentRdfContext(mockResource, idTranslator)) {
+            final Model results = contentRdfContext.collect(toModel());
+            logRdf("Retrieved RDF for testForLowLevelStorageTriples():", results);
+            assertTrue("Didn't find triple showing node has content!", results.contains(mockSubject, DESCRIBES,
+                    mockContentSubject));
+        }
     }
 
     @Test
     public void testFedoraBinaryTriples() {
 
-        final Model results = new ContentRdfContext(mockBinary, idTranslator).collect(toModel());
-        assertTrue("Didn't find triple showing content has node!", results
-                .contains(mockContentSubject, DESCRIBED_BY, mockSubject));
+        try (final ContentRdfContext contentRdfContext = new ContentRdfContext(mockBinary, idTranslator)) {
+            final Model results = contentRdfContext.collect(toModel());
+            assertTrue("Didn't find triple showing content has node!", results.contains(mockContentSubject,
+                    DESCRIBED_BY, mockSubject));
+        }
     }
 
     @Before

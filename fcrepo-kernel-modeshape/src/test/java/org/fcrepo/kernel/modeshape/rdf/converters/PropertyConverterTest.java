@@ -111,7 +111,7 @@ public class PropertyConverterTest {
     @Test(expected = FedoraInvalidNamespaceException.class)
     public final void shouldRejectFcrPredicates() throws RepositoryException {
         final Property p = createProperty(mockUri, "fcr");
-        final Map<String, String> nsMap = new HashMap<String, String>();
+        final Map<String, String> nsMap = new HashMap<>();
         nsMap.put("fcr", mockUri);
         PropertyConverter.getPropertyNameFromPredicate(mockNode, p, nsMap);
     }

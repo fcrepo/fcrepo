@@ -72,8 +72,10 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
                     "'some-test-name' }";
 
             // Write the properties
-            object.updateProperties(new DefaultIdentifierTranslator(session), sparql,
-                    new DefaultRdfStream(createURI("info:fedora" + testFilePath())));
+            try (final DefaultRdfStream originalTriples =
+                    new DefaultRdfStream(createURI("info:fedora" + testFilePath()))) {
+                object.updateProperties(new DefaultIdentifierTranslator(session), sparql, originalTriples);
+            }
 
             // Verify
             final Property property = object.getNode().getProperty("fedora:name");
@@ -101,8 +103,10 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
 
             // Write the properties
             final DefaultIdentifierTranslator graphSubjects = new DefaultIdentifierTranslator(session);
-            object.updateProperties(graphSubjects, sparql, new DefaultRdfStream(
-                        createURI("info:fedora" + testFilePath())));
+            try (final DefaultRdfStream originalTriples =
+                    new DefaultRdfStream(createURI("info:fedora" + testFilePath()))) {
+                object.updateProperties(graphSubjects, sparql, originalTriples);
+            }
 
             // Verify property exists
             final Property property = object.getNode().getProperty("fedora:remove");

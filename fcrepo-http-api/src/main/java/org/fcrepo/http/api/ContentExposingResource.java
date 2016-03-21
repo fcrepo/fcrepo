@@ -175,15 +175,17 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
                 final String format = lang.getName().toUpperCase();
 
-                final InputStream content = ((FedoraBinary) resource()).getContent();
+                try (final InputStream content = ((FedoraBinary) resource()).getContent()) {
 
-                final Model inputModel = createDefaultModel()
-                        .read(content,  (resource()).toString(), format);
+                    final Model inputModel = createDefaultModel()
+                            .read(content, (resource()).toString(), format);
+                    outputStream = new RdfNamespacedStream(
+                            new DefaultRdfStream(rdfStream.topic(), concat(rdfStream,
+                                    DefaultRdfStream.fromModel(rdfStream.topic(), inputModel))),
+                            getNamespaces(session()));
+                }
 
-                outputStream = new RdfNamespacedStream(
-                        new DefaultRdfStream(rdfStream.topic(), concat(rdfStream,
-                            DefaultRdfStream.fromModel(rdfStream.topic(), inputModel))),
-                        getNamespaces(session()));
+
             } else {
 
                 final MediaType mediaType = MediaType.valueOf(contentTypeString);
@@ -343,6 +345,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                     builder = status(REQUESTED_RANGE_NOT_SATISFIABLE)
                             .header("Content-Range", contentRangeValue);
                 } else {
+                    @SuppressWarnings("resource")
                     final RangeRequestInputStream rangeInputStream =
                             new RangeRequestInputStream(binary.getContent(), range.start(), range.size());
 
@@ -351,6 +354,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 }
 
             } else {
+                @SuppressWarnings("resource")
                 final InputStream content = binary.getContent();
                 builder = ok(content);
             }

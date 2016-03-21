@@ -31,7 +31,6 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-import java.util.Map;
 import java.util.stream.Stream;
 
 import javax.jcr.Node;
@@ -55,7 +54,6 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.modeshape.jcr.api.NamespaceRegistry;
 
-import com.google.common.collect.ImmutableMap;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -237,9 +235,6 @@ public class RdfRemoverTest {
 
     private static final String propertyLongName = propertyNamespaceUri
             + propertyBaseName;
-
-    private static final Map<String, String> mockNamespaceMap = ImmutableMap
-            .of(propertyNamespacePrefix, propertyNamespaceUri, "rdf", type.getNameSpace());
 
     private static final String description = "Description.";
 

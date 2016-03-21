@@ -34,7 +34,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.IOException;
 
 import javax.annotation.PostConstruct;
-import javax.jcr.RepositoryException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -105,10 +104,9 @@ public class FedoraVersions extends ContentExposingResource {
      * Reverts the resource at the given path to the version specified by
      * the label.
      * @return response
-     * @throws RepositoryException if repository exception occurred
      */
     @PATCH
-    public Response revertToVersion() throws RepositoryException {
+    public Response revertToVersion() {
         LOGGER.info("Reverting {} to version {}.", path,
                 label);
         versionService.revertToVersion(session, unversionedResourcePath(), label);
@@ -118,10 +116,9 @@ public class FedoraVersions extends ContentExposingResource {
     /**
      * Removes the version specified by the label.
      * @return 204 No Content
-     * @throws RepositoryException if repository exception occurred
     **/
     @DELETE
-    public Response removeVersion() throws RepositoryException {
+    public Response removeVersion() {
         LOGGER.info("Removing {} version {}.", path, label);
         versionService.removeVersion(session, unversionedResourcePath(), label);
         return noContent().build();
@@ -136,6 +133,7 @@ public class FedoraVersions extends ContentExposingResource {
      * @throws IOException if IO exception occurred
      * @return the version of the object as RDF in the requested format
      */
+    @SuppressWarnings("resource")
     @GET
     @Produces({TURTLE + ";qs=10", JSON_LD + ";qs=8",
             N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,

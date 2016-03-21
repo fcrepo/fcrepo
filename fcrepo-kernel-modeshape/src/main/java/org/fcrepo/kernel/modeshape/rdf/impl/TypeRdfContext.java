@@ -21,8 +21,6 @@ import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.slf4j.Logger;
 
-import javax.jcr.RepositoryException;
-
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
@@ -42,11 +40,9 @@ public class TypeRdfContext extends NodeRdfContext {
      *
      * @param resource the resource
      * @param idTranslator the id translator
-     * @throws RepositoryException if repository exception occurred
      */
     public TypeRdfContext(final FedoraResource resource,
-                          final IdentifierConverter<Resource, FedoraResource> idTranslator)
-            throws RepositoryException {
+                          final IdentifierConverter<Resource, FedoraResource> idTranslator) {
         super(resource, idTranslator);
 
         concat(resource.getTypes().stream().map(uri -> create(subject(), type.asNode(), createURI(uri.toString()))));

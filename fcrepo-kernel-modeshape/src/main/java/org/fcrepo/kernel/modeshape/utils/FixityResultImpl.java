@@ -18,8 +18,6 @@ package org.fcrepo.kernel.modeshape.utils;
 import org.fcrepo.kernel.api.utils.CacheEntry;
 import org.fcrepo.kernel.api.utils.FixityResult;
 
-import javax.jcr.RepositoryException;
-
 import static java.util.Objects.hash;
 
 import java.net.URI;
@@ -62,10 +60,9 @@ public class FixityResultImpl implements FixityResult {
      * @param entry the entry
      * @param size the expected size
      * @param checksum the checksum
-     * @throws RepositoryException if repository exception occurred
      */
     public FixityResultImpl(final CacheEntry entry, final long size,
-                        final URI checksum) throws RepositoryException {
+                        final URI checksum) {
         this(entry.getExternalIdentifier(), size, checksum);
     }
 

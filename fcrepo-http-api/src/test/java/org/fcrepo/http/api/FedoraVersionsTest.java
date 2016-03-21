@@ -28,7 +28,6 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 import javax.ws.rs.core.Request;
@@ -76,8 +75,8 @@ public class FedoraVersionsTest {
     @Mock
     private Variant mockVariant;
 
-    private String path = "/some/path";
-    private String versionLabel = "someLabel";
+    private final String path = "/some/path";
+    private final String versionLabel = "someLabel";
 
     @Before
     public void setUp() throws Exception {
@@ -98,7 +97,7 @@ public class FedoraVersionsTest {
     }
 
     @Test
-    public void testRevertToVersion() throws RepositoryException {
+    public void testRevertToVersion() {
         doReturn(path).when(testObj).unversionedResourcePath();
         final Response response = testObj.revertToVersion();
         verify(mockVersions).revertToVersion(mockSession, path, versionLabel);
@@ -106,13 +105,13 @@ public class FedoraVersionsTest {
     }
 
     @Test (expected = PathNotFoundException.class)
-    public void testRevertToVersionFailure() throws RepositoryException {
+    public void testRevertToVersionFailure() {
         doThrow(PathNotFoundException.class).when(testObj).unversionedResourcePath();
         testObj.revertToVersion();
     }
 
     @Test
-    public void testRemoveVersion() throws RepositoryException {
+    public void testRemoveVersion() {
         doReturn(path).when(testObj).unversionedResourcePath();
         final Response response = testObj.removeVersion();
         verify(mockVersions).removeVersion(mockSession, path, versionLabel);
@@ -120,7 +119,7 @@ public class FedoraVersionsTest {
     }
 
     @Test (expected = PathNotFoundException.class)
-    public void testRemoveVersionFailure() throws RepositoryException {
+    public void testRemoveVersionFailure() {
         doThrow(PathNotFoundException.class).when(testObj).unversionedResourcePath();
         testObj.removeVersion();
     }

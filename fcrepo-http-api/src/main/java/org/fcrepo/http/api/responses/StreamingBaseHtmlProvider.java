@@ -154,7 +154,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
                         final MultivaluedMap<String, Object> httpHeaders,
                         final OutputStream entityStream) throws IOException {
 
-        final Node subject = VIEW_HELPERS.getContentNode(nsStream.stream.topic());
+        final Node subject = ViewHelpers.getContentNode(nsStream.stream.topic());
 
         final Model model = nsStream.stream.collect(toModel());
         model.setNsPrefixes(nsStream.namespaces);

@@ -150,6 +150,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     private static interface RdfGenerator extends Function<FedoraResource,
     Function<IdentifierConverter<Resource, FedoraResource>, Function<Boolean, Stream<Triple>>>> {}
 
+    @SuppressWarnings("resource")
     private static RdfGenerator getDefaultTriples = resource -> translator -> uncheck(minimal -> {
         final Stream<Stream<Triple>> min = of(
             new TypeRdfContext(resource, translator),
@@ -178,6 +179,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         return new VersionsRdfContext(resource, translator);
     });
 
+    @SuppressWarnings("resource")
     private static RdfGenerator getServerManagedTriples = resource -> translator -> uncheck(minimal -> {
         if (minimal) {
             return new LdpRdfContext(resource, translator);
@@ -191,6 +193,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         return streams.reduce(empty(), Stream::concat);
     });
 
+    @SuppressWarnings("resource")
     private static RdfGenerator getLdpMembershipTriples = resource -> translator -> uncheck(_minimal -> {
         final Stream<Stream<Triple>> streams = of(
             new LdpContainerRdfContext(resource, translator),
@@ -247,9 +250,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         try {
             if (recursive) {
                 return nodeToGoodChildren(node).flatMap(FedoraResourceImpl::getAllChildren);
-            } else {
-                return nodeToGoodChildren(node);
             }
+            return nodeToGoodChildren(node);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -748,7 +750,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             if (hasProperty(JCR_FROZEN_UUID)) {
                 try {
                     return new FedoraResourceImpl(getNodeByProperty(getProperty(JCR_FROZEN_UUID)));
-                } catch (ItemNotFoundException e) {
+                } catch (final ItemNotFoundException e) {
                     // The unfrozen resource has been deleted, return the tombstone.
                     return new TombstoneImpl(getNode());
                 }
@@ -759,7 +761,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                 try {
                     final Node childNode = getNodeByProperty(childVersionHistory.getProperty(JCR_VERSIONABLE_UUID));
                     return new FedoraResourceImpl(childNode);
-                } catch (ItemNotFoundException e) {
+                } catch (final ItemNotFoundException e) {
                     // The unfrozen resource has been deleted, return the tombstone.
                     return new TombstoneImpl(childVersionHistory);
                 }
@@ -829,7 +831,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                 .map(uncheck(versionHistory::getVersionLabels))
                 .flatMap(Arrays::stream)
                 .findFirst().orElse(null);
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
     }
@@ -841,7 +843,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     protected VersionManager getVersionManager() {
         try {
             return getSession().getWorkspace().getVersionManager();
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
     }

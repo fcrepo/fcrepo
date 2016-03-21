@@ -48,6 +48,7 @@ import org.mockito.Mock;
  *
  * @author cbeer
  */
+@Deprecated
 public class FedoraRepositoryNodeTypesTest {
 
     private FedoraRepositoryNodeTypes testObj;
