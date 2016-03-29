@@ -262,7 +262,11 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
                 throw new PathNotFoundException("Unable to find versioned resource at " + path);
             }
         }
-        return session.getNode(path);
+        try {
+            return session.getNode(path);
+        } catch (IllegalArgumentException ex) {
+            throw new InvalidResourceIdentifierException("Illegal path: " + path);
+        }
     }
 
     /**

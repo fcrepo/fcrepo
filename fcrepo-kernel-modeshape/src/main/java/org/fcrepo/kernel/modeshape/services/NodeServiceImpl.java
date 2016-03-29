@@ -26,6 +26,7 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.RdfStream;
@@ -56,6 +57,8 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
         try {
             validatePath(session, path);
             return session.nodeExists(path);
+        } catch (final IllegalArgumentException e) {
+            throw new InvalidResourceIdentifierException("Illegal path: " + path);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
