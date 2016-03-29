@@ -40,6 +40,7 @@ import static org.junit.Assert.assertTrue;
  *
  * @author cbeer
  */
+@Deprecated
 public class FedoraNodeTypesIT  extends AbstractResourceIT {
 
     @Test

@@ -59,6 +59,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 /**
  * @author cbeer
  */
+@Deprecated
 public class NodeTypeRdfContextTest {
 
 
