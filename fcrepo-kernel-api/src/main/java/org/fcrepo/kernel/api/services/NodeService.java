@@ -48,6 +48,7 @@ public interface NodeService extends Service<FedoraResource> {
      * @param session the session
      * @return RDFStream of node types
      */
+    @Deprecated
     RdfStream getNodeTypes(final Session session);
 
     /**
@@ -55,5 +56,6 @@ public interface NodeService extends Service<FedoraResource> {
      * @param cndStream the cnd stream
      * @throws IOException if IO exception occurred
      */
+    @Deprecated
     void registerNodeTypes(final Session session, final InputStream cndStream) throws IOException;
 }

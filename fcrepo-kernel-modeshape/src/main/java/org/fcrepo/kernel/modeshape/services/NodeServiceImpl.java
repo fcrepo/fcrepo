@@ -130,6 +130,7 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
      * @return node types
      */
     @Override
+    @Deprecated
     public RdfStream getNodeTypes(final Session session) {
         try {
             return new NodeTypeRdfContext(session.getWorkspace().getNodeTypeManager());
@@ -144,6 +145,7 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
      * @throws IOException if io exception occurred
      */
     @Override
+    @Deprecated
     public void registerNodeTypes(final Session session, final InputStream cndStream) throws IOException {
         try {
             final NodeTypeManager nodeTypeManager = (NodeTypeManager) session.getWorkspace().getNodeTypeManager();

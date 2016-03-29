@@ -52,6 +52,7 @@ import javax.jcr.nodetype.NodeTypeManager;
  *
  * @author cbeer
  */
+@Deprecated
 public class NodeTypeRdfContext extends DefaultRdfStream {
 
     private static final Logger LOGGER = getLogger(NodeTypeRdfContext.class);
