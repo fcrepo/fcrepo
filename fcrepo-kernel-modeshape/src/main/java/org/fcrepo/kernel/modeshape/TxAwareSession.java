@@ -15,15 +15,16 @@
  */
 package org.fcrepo.kernel.modeshape;
 
-import org.fcrepo.kernel.api.TxSession;
+import static com.google.common.reflect.Reflection.newProxy;
 
-import static java.lang.reflect.Proxy.newProxyInstance;
-
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import javax.jcr.Session;
+
+import org.fcrepo.kernel.api.TxSession;
+
+import com.google.common.reflect.AbstractInvocationHandler;
 
 /**
  * A dynamic proxy that wraps JCR sessions. It is aware of fcrepo transactions,
@@ -32,7 +33,7 @@ import javax.jcr.Session;
  *
  * @author awoods
  */
-public class TxAwareSession implements InvocationHandler {
+public class TxAwareSession extends AbstractInvocationHandler {
 
     private final String txId;
 
@@ -55,14 +56,11 @@ public class TxAwareSession implements InvocationHandler {
      * @return a wrapped JCR session
      */
     public static Session newInstance(final Session session, final String txId) {
-        return (Session) newProxyInstance(session.getClass().getClassLoader(),
-                new Class[] {TxSession.class},
-                new TxAwareSession(session, txId));
+        return newProxy(TxSession.class, new TxAwareSession(session, txId));
     }
 
     @Override
-    public Object invoke(final Object proxy, final Method method,
-            final Object[] args) throws Throwable {
+    protected Object handleInvocation(final Object proxy, final Method method, final Object[] args) throws Throwable {
         final String name = method.getName();
         if (name.equals("logout") || name.equals("save")) {
             return null;
