@@ -20,6 +20,8 @@ import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static java.util.stream.Stream.empty;
+import static java.util.stream.Stream.of;
 import static javax.ws.rs.core.Link.fromUri;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
@@ -51,9 +53,9 @@ import static org.openrdf.model.vocabulary.RDF.TYPE;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.http.client.methods.HttpHead;
 import org.fcrepo.http.commons.test.util.CloseableGraphStore;
@@ -218,22 +220,22 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         final HttpHead headObjMethod = headObjMethod(versionId);
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
 
-            final Set<Link> resultSet = new HashSet<>();
             final Collection<String> linkHeaders = getLinkHeaders(response);
 
-            linkHeaders.stream().map(Link::valueOf).forEach(link -> {
+            final Set<Link> resultSet = linkHeaders.stream().map(Link::valueOf).flatMap(link -> {
                 final String linkRel = link.getRel();
                 final URI linkUri = link.getUri();
 
                 if (linkRel.equals(NON_RDF_SOURCE_LINK.getRel()) && linkUri.equals(NON_RDF_SOURCE_LINK.getUri())) {
                     // Found nonRdfSource!
-                    resultSet.add(NON_RDF_SOURCE_LINK);
+                    return of(NON_RDF_SOURCE_LINK);
 
                 } else if (linkRel.equals(DESCRIBED_BY_LINK.getRel()) && linkUri.equals(DESCRIBED_BY_LINK.getUri())) {
                     // Found describedby!
-                    resultSet.add(DESCRIBED_BY_LINK);
+                    return of(DESCRIBED_BY_LINK);
                 }
-            });
+                return empty();
+            }).collect(Collectors.toSet());
 
             assertTrue("No link headers found!", !linkHeaders.isEmpty());
             assertTrue("Didn't find NonRdfSource link header! " + NON_RDF_SOURCE_LINK + " ?= " + linkHeaders,
