@@ -139,7 +139,7 @@ $(function() {
     $('#action_revert').submit(patchAndReload);
     $('#action_remove_version').submit(removeVersion);
 
-    $('a[property][href*="' + location.host + '"],#childList a,.breadcrumb a').click(checkIfNonRdfResource);
+    $('a[property][href*="' + location.host + '"],#childList a,.breadcrumb a,.version_link').click(checkIfNonRdfResource);
 
 });
 

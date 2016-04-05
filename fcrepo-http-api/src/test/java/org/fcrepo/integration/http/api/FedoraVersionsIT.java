@@ -20,6 +20,7 @@ import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static javax.ws.rs.core.Link.fromUri;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
@@ -28,8 +29,10 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.OK;
 import static com.google.common.collect.Iterators.size;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.DC_TITLE;
+import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.JCR_NT_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_SERIALIZATION;
@@ -37,15 +40,22 @@ import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_HISTORY;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.api.RdfLexicon.MIX_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.openrdf.model.vocabulary.RDF.TYPE;
 
 import java.io.IOException;
+import java.net.URI;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 
+import org.apache.http.client.methods.HttpHead;
 import org.fcrepo.http.commons.test.util.CloseableGraphStore;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -62,6 +72,8 @@ import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.sparql.core.Quad;
 import com.hp.hpl.jena.update.GraphStore;
+
+import javax.ws.rs.core.Link;
 
 /**
  * <p>
@@ -179,6 +191,55 @@ public class FedoraVersionsIT extends AbstractResourceIT {
                 final String url = versionIt.next().getObject().getURI();
                 assertEquals("Version " + url + " isn't accessible!", OK.getStatusCode(), getStatus(new HttpGet(url)));
             }
+        }
+    }
+
+    @Test
+    public void testVersionHeaders() throws IOException {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+        enableVersioning(id);
+
+        createDatastream(id, "ds", "This DS will be versioned");
+        final String dsId = id + "/ds";
+        enableVersioning(dsId);
+
+        // Version datastream
+        postObjectVersion(dsId, "label");
+
+        final String versionId = dsId + "/fcr:versions/label";
+
+        final Link NON_RDF_SOURCE_LINK = fromUri(NON_RDF_SOURCE.getURI()).rel(TYPE.getLocalName()).build();
+
+        final Link DESCRIBED_BY_LINK = fromUri(serverAddress + versionId + "/" + FCR_METADATA).rel(
+                DESCRIBED_BY.getLocalName()).build();
+
+        // Look for expected Link headers
+        final HttpHead headObjMethod = headObjMethod(versionId);
+        try (final CloseableHttpResponse response = execute(headObjMethod)) {
+
+            final Set<Link> resultSet = new HashSet<>();
+            final Collection<String> linkHeaders = getLinkHeaders(response);
+
+            linkHeaders.stream().map(Link::valueOf).forEach(link -> {
+                final String linkRel = link.getRel();
+                final URI linkUri = link.getUri();
+
+                if (linkRel.equals(NON_RDF_SOURCE_LINK.getRel()) && linkUri.equals(NON_RDF_SOURCE_LINK.getUri())) {
+                    // Found nonRdfSource!
+                    resultSet.add(NON_RDF_SOURCE_LINK);
+
+                } else if (linkRel.equals(DESCRIBED_BY_LINK.getRel()) && linkUri.equals(DESCRIBED_BY_LINK.getUri())) {
+                    // Found describedby!
+                    resultSet.add(DESCRIBED_BY_LINK);
+                }
+            });
+
+            assertTrue("No link headers found!", !linkHeaders.isEmpty());
+            assertTrue("Didn't find NonRdfSource link header! " + NON_RDF_SOURCE_LINK + " ?= " + linkHeaders,
+                    resultSet.contains(NON_RDF_SOURCE_LINK));
+            assertTrue("Didn't find describedby link header! " + DESCRIBED_BY_LINK + " ?= " + linkHeaders,
+                    resultSet.contains(DESCRIBED_BY_LINK));
         }
     }
 

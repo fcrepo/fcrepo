@@ -70,6 +70,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.EntityTag;
+import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
@@ -398,6 +399,25 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         return resource;
     }
 
+    protected void addResourceLinkHeaders(final FedoraResource resource) {
+        addResourceLinkHeaders(resource, false);
+    }
+
+    protected void addResourceLinkHeaders(final FedoraResource resource, final boolean includeAnchor) {
+        if (resource instanceof NonRdfSourceDescription) {
+            final URI uri = getUri(((NonRdfSourceDescription) resource).getDescribedResource());
+            final Link link = Link.fromUri(uri).rel("describes").build();
+            servletResponse.addHeader("Link", link.toString());
+        } else if (resource instanceof FedoraBinary) {
+            final URI uri = getUri(((FedoraBinary) resource).getDescription());
+            final Link.Builder builder = Link.fromUri(uri).rel("describedby");
+
+            if (includeAnchor) {
+                builder.param("anchor", getUri(resource).toString());
+            }
+            servletResponse.addHeader("Link", builder.build().toString());
+        }
+    }
 
     /**
      * Add any resource-specific headers to the response

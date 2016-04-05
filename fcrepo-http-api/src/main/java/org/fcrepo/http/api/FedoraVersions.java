@@ -143,6 +143,8 @@ public class FedoraVersions extends ContentExposingResource {
                 label);
         checkCacheControlHeaders(request, servletResponse, resource(), session);
         final RdfStream rdfStream = new DefaultRdfStream(asNode(resource()));
+        addResourceHttpHeaders(resource());
+
         return getContent(rangeValue, rdfStream);
     }
 
@@ -170,7 +172,8 @@ public class FedoraVersions extends ContentExposingResource {
 
     @Override
     protected void addResourceHttpHeaders(final FedoraResource resource) {
-        // no-op
+        super.addResourceHttpHeaders(resource);
+        super.addResourceLinkHeaders(resource);
     }
 
     @Override
