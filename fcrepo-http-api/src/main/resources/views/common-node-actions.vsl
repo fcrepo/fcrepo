@@ -7,7 +7,7 @@
     <span class="glyphicon glyphicon-warning-sign"></span>
     This is a <strong>historic version</strong> and cannot be modified.
 </div>
-<form id="action_revert" method="PATCH" action="$uriInfo.getAbsolutePath().toString()" data-redirect-after-submit="$helpers.getVersionSubjectUrl($uriInfo, $topic)" >
+<form id="action_revert" method="PATCH" action="$uriInfo.getAbsolutePath().toString()" data-redirect-after-submit="$helpers.getVersionSubjectUrl($uriInfo, $topic)/fcr:versions" >
     <button type="submit" class="btn btn-primary standalone">Revert to this Version</button>
 </form>
 <form id="action_remove_version" method="DELETE" action="$uriInfo.getAbsolutePath().toString()" data-redirect-after-submit="$helpers.getVersionSubjectUrl($uriInfo, $topic)/fcr:versions" >
