@@ -2052,10 +2052,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         return Optional.ofNullable(stmts.hasNext() ? tripleFormat.parse(stmts.nextStatement().getString()) : null);
     }
 
-    private static Collection<String> getLinkHeaders(final HttpResponse response) {
-        return stream(response.getHeaders("Link")).map(Header::getValue).collect(toList());
-    }
-
     @Test
     public void testUpdateObjectGraphWithNonLocalTriples() throws IOException {
         final String pid = getRandomUniqueId();
