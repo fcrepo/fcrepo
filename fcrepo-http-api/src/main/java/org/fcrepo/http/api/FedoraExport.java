@@ -48,6 +48,7 @@ import org.springframework.context.annotation.Scope;
  */
 @Scope("request")
 @Path("/{path: .*}/fcr:export")
+@Deprecated
 public class FedoraExport extends FedoraBaseResource {
 
     @Autowired
@@ -100,7 +101,9 @@ public class FedoraExport extends FedoraBaseResource {
                             throw new BadRequestException(e.getMessage());
                         }
                     }
-                }).build();
+                })
+                .header("Warning", "This endpoint is deprecated and will be removed in the 4.6.0 release.")
+                .build();
 
     }
 
