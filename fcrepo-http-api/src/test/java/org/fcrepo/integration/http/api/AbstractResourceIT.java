@@ -17,7 +17,9 @@ package org.fcrepo.integration.http.api;
 
 import static java.lang.Integer.MAX_VALUE;
 import static java.lang.Integer.parseInt;
+import static java.util.Arrays.stream;
 import static java.util.UUID.randomUUID;
+import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.GONE;
@@ -32,7 +34,9 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.Collection;
 
+import org.apache.http.Header;
 import org.fcrepo.http.commons.test.util.CloseableGraphStore;
 
 import org.apache.http.HttpHost;
@@ -265,6 +269,10 @@ public abstract class AbstractResourceIT {
             EntityUtils.consume(response.getEntity());
             return response.getFirstHeader("Content-Type").getValue();
         }
+    }
+
+    protected static Collection<String> getLinkHeaders(final HttpResponse response) {
+        return stream(response.getHeaders("Link")).map(Header::getValue).collect(toList());
     }
 
     /**

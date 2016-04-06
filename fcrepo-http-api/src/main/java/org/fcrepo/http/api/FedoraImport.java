@@ -51,6 +51,7 @@ import org.springframework.context.annotation.Scope;
  */
 @Scope("prototype")
 @Path("/{path: .*}/fcr:import")
+@Deprecated
 public class FedoraImport extends FedoraBaseResource {
 
     @Autowired
@@ -83,7 +84,9 @@ public class FedoraImport extends FedoraBaseResource {
             serializers.getSerializer(format)
                     .deserialize(session, path, requestBodyStream);
             session.save();
-            return created(new URI(path)).build();
+            return created(new URI(path))
+                    .header("Warning", "This endpoint is deprecated and will be removed in the 4.6.0 release.")
+                    .build();
         } catch ( ItemExistsException ex ) {
             return status(CONFLICT).entity("Item already exists").build();
         } catch (final RepositoryException e) {

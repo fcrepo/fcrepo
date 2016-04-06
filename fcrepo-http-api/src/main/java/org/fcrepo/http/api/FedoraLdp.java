@@ -187,7 +187,7 @@ public class FedoraLdp extends ContentExposingResource {
     @Timed
     public Response options() {
         LOGGER.info("OPTIONS for '{}'", externalPath);
-        addOptionsHttpHeaders();
+        addLinkAndOptionsHttpHeaders();
         return ok().build();
     }
 
@@ -649,7 +649,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         }
 
-        addOptionsHttpHeaders();
+        addLinkAndOptionsHttpHeaders();
     }
 
     @Override
@@ -657,7 +657,11 @@ public class FedoraLdp extends ContentExposingResource {
         return externalPath;
     }
 
-    private void addOptionsHttpHeaders() {
+    private void addLinkAndOptionsHttpHeaders() {
+        // Add Link headers
+        addResourceLinkHeaders(resource());
+
+        // Add Options headers
         final String options;
 
         if (resource() instanceof FedoraBinary) {
@@ -679,32 +683,9 @@ public class FedoraLdp extends ContentExposingResource {
             options = "";
         }
 
-        addResourceLinkHeaders(resource());
-
         servletResponse.addHeader("Allow", options);
     }
 
-    private void addResourceLinkHeaders(final FedoraResource resource) {
-        addResourceLinkHeaders(resource, false);
-    }
-
-    private void addResourceLinkHeaders(final FedoraResource resource, final boolean includeAnchor) {
-        if (resource instanceof NonRdfSourceDescription) {
-            final URI uri = getUri(((NonRdfSourceDescription) resource).getDescribedResource());
-            final Link link = Link.fromUri(uri).rel("describes").build();
-            servletResponse.addHeader("Link", link.toString());
-        } else if (resource instanceof FedoraBinary) {
-            final URI uri = getUri(((FedoraBinary) resource).getDescription());
-            final Link.Builder builder = Link.fromUri(uri).rel("describedby");
-
-            if (includeAnchor) {
-                builder.param("anchor", getUri(resource).toString());
-            }
-            servletResponse.addHeader("Link", builder.build().toString());
-        }
-
-
-    }
     /**
      * Add a deprecation notice via the Warning header as per
      * RFC-7234 https://tools.ietf.org/html/rfc7234#section-5.5

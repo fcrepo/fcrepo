@@ -26,6 +26,7 @@ import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -79,6 +80,7 @@ public class FedoraExportIT extends AbstractResourceIT {
         try (CloseableHttpResponse response = execute(new HttpGet(serverAddress + objName + "/fcr:export"))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
             assertEquals("application/xml", response.getEntity().getContentType().getValue());
+            assertNotNull("Missing Warning header", response.getFirstHeader("Warning"));
             logger.debug("Successfully exported: " + objName);
             content = EntityUtils.toString(response.getEntity());
             logger.debug("Found exported object: " + content);
@@ -93,7 +95,10 @@ public class FedoraExportIT extends AbstractResourceIT {
         final String parentName = objName.contains("/") ? objName.substring(0, objName.lastIndexOf('/')) : "";
         final HttpPost importMethod = new HttpPost(serverAddress + parentName + "/fcr:import");
         importMethod.setEntity(new StringEntity(content));
-        assertEquals("Couldn't import!", CREATED.getStatusCode(), getStatus(importMethod));
+        try (CloseableHttpResponse response = execute(importMethod)) {
+            assertEquals("Couldn't import!", CREATED.getStatusCode(), getStatus(response));
+            assertNotNull("Missing Warning header", response.getFirstHeader("Warning"));
+        }
 
         // check that we made it
         assertEquals(OK.getStatusCode(), getStatus(new HttpGet(serverAddress + objName)));
