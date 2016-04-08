@@ -291,17 +291,20 @@ function createVersionSnapshot()
         name = "version." + d.getFullYear().toString() + (d.getMonth()+1).toString() + d.getDate().toString() + d.getHours() + d.getMinutes() + d.getSeconds();
     } 
     var postURI = uri + "/fcr:versions";
-      $.ajax({
-        type: "POST",
-        beforeSend: function (request)
-        {
-          request.setRequestHeader("Slug", name);
-        },
-        url: postURI,
-        success: function() { window.location = postURI }
-      }).fail( ajaxErrorHandler);
-
-    return false;
+    
+    $.ajax({
+      type: "POST",
+      beforeSend: function (request)
+      {
+        request.setRequestHeader("Slug", name);
+      },
+      url: postURI,
+      success: function() { window.location = postURI },
+      error: ajaxErrorHandler,
+      complete: function() {
+        return false;
+      }
+    });
 
 }
 
