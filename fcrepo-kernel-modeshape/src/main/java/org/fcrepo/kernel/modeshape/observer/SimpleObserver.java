@@ -26,6 +26,9 @@ import static javax.jcr.observation.Event.NODE_REMOVED;
 import static javax.jcr.observation.Event.PROPERTY_ADDED;
 import static javax.jcr.observation.Event.PROPERTY_CHANGED;
 import static javax.jcr.observation.Event.PROPERTY_REMOVED;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIED;
+import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isPublicJcrProperty;
 import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaceRegistry;
@@ -108,6 +111,9 @@ public class SimpleObserver implements EventListener {
                     LOGGER.warn("Prefix could not be determined, skipping: {}", property);
                 }
             });
+        if (evt.getProperties().contains(JCR_LASTMODIFIED) && !evt.getProperties().contains(FEDORA_LASTMODIFIED)) {
+            event.addProperty(REPOSITORY_NAMESPACE + "lastModified");
+        }
         return event;
     };
 

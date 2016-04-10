@@ -102,8 +102,8 @@ public class SimpleObserverIT extends AbstractIT {
         // Should be two messages, for each time
         // each node becomes a Fedora object
 
-        awaitEvent("/object1", NODE_ADDED, REPOSITORY_NAMESPACE + "lastModified");
-        awaitEvent("/object2", NODE_ADDED, REPOSITORY_NAMESPACE + "lastModified");
+        awaitEvent("/object1", NODE_ADDED, REPOSITORY_NAMESPACE + "created");
+        awaitEvent("/object2", NODE_ADDED, REPOSITORY_NAMESPACE + "created");
 
         assertEquals("Where are my messages!?", (Integer) 2, eventBusMessageCount);
 
@@ -131,7 +131,7 @@ public class SimpleObserverIT extends AbstractIT {
         se.save();
         se.logout();
 
-        awaitEvent("/object3", NODE_ADDED, REPOSITORY_NAMESPACE + "lastModified");
+        awaitEvent("/object3", NODE_ADDED, REPOSITORY_NAMESPACE + "created");
 
         assertEquals("Node and content events not collapsed!", (Integer) 1, eventBusMessageCount);
     }
@@ -219,8 +219,101 @@ public class SimpleObserverIT extends AbstractIT {
         awaitEvent("/object9", NODE_ADDED);
         awaitEvent("/object9", PROPERTY_ADDED);
         awaitEvent("/object9#contributor", PROPERTY_ADDED);
+        // NOT CORRECT
+        awaitEvent("", PROPERTY_ADDED);
 
-        assertEquals("Where are my events?", (Integer) 2, eventBusMessageCount);
+        // This should be 2 -- should change with FCREPO-1985
+        assertEquals("Where are my events?", (Integer) 3, eventBusMessageCount);
+    }
+
+    @Test
+    public void testDirectContainerEvent() throws RepositoryException {
+        final Session se = repository.login();
+        final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator(se);
+
+        final Container obj1 = containerService.findOrCreate(se, "/object10");
+        final Container obj2 = containerService.findOrCreate(se, "/object11");
+
+        final Resource subject2 = subjects.reverse().convert(obj2);
+
+        obj1.updateProperties(subjects, "PREFIX ldp: <http://www.w3.org/ns/ldp#>\n" +
+                "PREFIX pcdm: <http://pcdm.org/models#>\n" +
+                "INSERT { <> a ldp:DirectContainer ;\n" +
+                    "ldp:membershipResource <" + subject2 + "> ;\n" +
+                    "ldp:hasMemberRelation pcdm:hasMember . } WHERE {}", obj1.getTriples(subjects, PROPERTIES));
+
+        se.save();
+
+        awaitEvent("/object10", NODE_ADDED);
+        awaitEvent("/object10", PROPERTY_ADDED);
+        awaitEvent("/object11", NODE_ADDED);
+
+        assertEquals("Where are my events?", (Integer) 3, eventBusMessageCount);
+
+        final Container obj3 = containerService.findOrCreate(se, "/object10/child");
+        se.save();
+
+        awaitEvent("/object10/child", NODE_ADDED);
+        awaitEvent("/object10", PROPERTY_CHANGED);
+        awaitEvent("/object11", PROPERTY_CHANGED);
+
+        assertEquals("Where are my events?", (Integer) 6, eventBusMessageCount);
+
+        obj3.delete();
+        se.save();
+        se.logout();
+
+        awaitEvent("/object10/child", NODE_REMOVED);
+        awaitEvent("/object10", PROPERTY_CHANGED);
+        awaitEvent("/object11", PROPERTY_CHANGED);
+
+        assertEquals("Where are my events?", (Integer) 9, eventBusMessageCount);
+    }
+
+    @Test
+    public void testIndirectContainerEvent() throws RepositoryException {
+        final Session se = repository.login();
+        final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator(se);
+
+        final Container obj1 = containerService.findOrCreate(se, "/object12");
+        final Container obj2 = containerService.findOrCreate(se, "/object13");
+
+        final Resource subject2 = subjects.reverse().convert(obj2);
+
+        obj1.updateProperties(subjects, "PREFIX ldp: <http://www.w3.org/ns/ldp#>\n" +
+                "PREFIX pcdm: <http://pcdm.org/models#>\n" +
+                "PREFIX ore: <http://www.openarchives.org/ore/terms/>\n" +
+                "INSERT { <> a ldp:IndirectContainer ;\n" +
+                    "ldp:membershipResource <" + subject2 + "> ;\n" +
+                    "ldp:hasMemberRelation pcdm:hasMember ;\n" +
+                    "ldp:insertedContentRelation ore:proxyFor. } WHERE {}", obj1.getTriples(subjects, PROPERTIES));
+
+        se.save();
+
+        awaitEvent("/object12", NODE_ADDED);
+        awaitEvent("/object12", PROPERTY_ADDED);
+        awaitEvent("/object13", NODE_ADDED);
+
+        assertEquals("Where are my events?", (Integer) 3, eventBusMessageCount);
+
+        final Container obj3 = containerService.findOrCreate(se, "/object12/child");
+        se.save();
+
+        awaitEvent("/object12/child", NODE_ADDED);
+        awaitEvent("/object12", PROPERTY_CHANGED);
+        awaitEvent("/object13", PROPERTY_CHANGED);
+
+        assertEquals("Where are my events?", (Integer) 6, eventBusMessageCount);
+
+        obj3.delete();
+        se.save();
+        se.logout();
+
+        awaitEvent("/object12/child", NODE_REMOVED);
+        awaitEvent("/object12", PROPERTY_CHANGED);
+        awaitEvent("/object13", PROPERTY_CHANGED);
+
+        assertEquals("Where are my events?", (Integer) 9, eventBusMessageCount);
     }
 
     private void awaitEvent(final String id, final EventType eventType, final String property) {

@@ -64,21 +64,29 @@ public class ContainerServiceImpl extends AbstractService implements ContainerSe
 
             if (node.isNew()) {
                 initializeNewObjectProperties(node);
+
+                final Node parent = node.getDepth() > 0 ? node.getParent() : null;
+
+                if (parent != null) {
+                    new ContainerImpl(parent).touch();
+
+                    // also update membershipResources for Direct/Indirect Containers
+                    if (parent.hasProperty(LDP_MEMBER_RESOURCE) && (parent.isNodeType(LDP_DIRECT_CONTAINER) ||
+                                parent.isNodeType(LDP_INDIRECT_CONTAINER))) {
+                        new ContainerImpl(parent.getProperty(LDP_MEMBER_RESOURCE).getNode()).touch();
+                    }
+                }
             }
 
             final ContainerImpl container = new ContainerImpl(node);
+
             if (node.isNew()) {
                 container.touch();
-
-                // also update membershipResources for Direct/Indirect Containers
-                if (node.getParent().isNodeType(LDP_DIRECT_CONTAINER) ||
-                        node.getParent().isNodeType(LDP_INDIRECT_CONTAINER)) {
-                    new ContainerImpl(node.getParent().getProperty(LDP_MEMBER_RESOURCE).getNode()).touch();
-                }
             }
 
             return container;
         } catch (final RepositoryException e) {
+            LOGGER.info("Error: {}", e);
             throw new RepositoryRuntimeException(e);
         }
     }

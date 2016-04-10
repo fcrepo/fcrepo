@@ -15,9 +15,12 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIED;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalProperty;
 import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
+import static org.fcrepo.kernel.modeshape.utils.UncheckedPredicate.uncheck;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.stream.Stream;
@@ -64,7 +67,8 @@ public class PropertiesRdfContext extends NodeRdfContext {
             throws RepositoryException {
         LOGGER.trace("Creating triples for node: {}", n);
         return iteratorToStream(getJcrNode(n).getProperties())
-            .filter(isInternalProperty.negate())
+            .filter(isInternalProperty.negate().or(uncheck(prop ->
+                prop.getName().equals(JCR_LASTMODIFIED) && !n.hasProperty(FEDORA_LASTMODIFIED))))
             .flatMap(propertyToTriple);
     }
 }

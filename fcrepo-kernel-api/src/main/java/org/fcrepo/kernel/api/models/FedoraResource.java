@@ -100,11 +100,6 @@ public interface FedoraResource {
     Date getLastModifiedDate();
 
     /**
-     * Set the last-modified date of this resource to the current date.
-     */
-    void touch();
-
-    /**
      * Check if this object uses a given RDF type
      *
      * <p>Note: the type parameter should be in prefixed short form, so ldp:Container or ex:Image

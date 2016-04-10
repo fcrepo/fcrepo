@@ -76,6 +76,7 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
             "jcr:uuid",
             JCR_CONTENT,
             JCR_PRIMARY_TYPE,
+            JCR_LASTMODIFIED,
             JCR_MIXIN_TYPES,
             FROZEN_MIXIN_TYPES,
             FROZEN_PRIMARY_TYPE);
@@ -83,7 +84,6 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
     private static Set<String> validJcrProperties = of(
             JCR_CREATED,
             JCR_CREATEDBY,
-            JCR_LASTMODIFIED,
             JCR_LASTMODIFIEDBY);
 
     /**

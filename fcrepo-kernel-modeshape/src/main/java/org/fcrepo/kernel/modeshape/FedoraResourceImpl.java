@@ -28,6 +28,9 @@ import static java.util.TimeZone.getTimeZone;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIED;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_MEMBER_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
@@ -393,8 +396,14 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
             if (parent != null) {
                 createTombstone(parent, name);
+                // also update membershipResources for Direct/Indirect Containers
+                if ((parent.isNodeType(LDP_DIRECT_CONTAINER) || parent.isNodeType(LDP_INDIRECT_CONTAINER))
+                        && parent.hasProperty(LDP_MEMBER_RESOURCE)) {
+                    new FedoraResourceImpl(parent.getProperty(LDP_MEMBER_RESOURCE).getNode()).touch();
+                }
             }
-
+        } catch (final javax.jcr.AccessDeniedException e) {
+            throw new AccessDeniedException(e);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -463,14 +472,10 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
     /**
      * Set the last-modified date to the current date.
+     * @throws RepositoryException
      */
-    public void touch() {
-        try {
-            getNode().setProperty(FEDORA_LASTMODIFIED, Calendar.getInstance(getTimeZone("UTC")));
-        } catch (final RepositoryException e) {
-            LOGGER.error("Exception caught when trying to update lastModified date: {}", e.getMessage());
-            throw new RepositoryRuntimeException(e);
-        }
+    public void touch() throws RepositoryException {
+        getNode().setProperty(FEDORA_LASTMODIFIED, Calendar.getInstance(getTimeZone("UTC")));
     }
 
     @Override
@@ -583,7 +588,11 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         removeEmptyFragments();
 
         listener.assertNoExceptions();
-        touch();
+        try {
+            touch();
+        } catch (final RepositoryException ex) {
+            throw new RepositoryRuntimeException(ex);
+        }
     }
 
     @Override
@@ -671,7 +680,12 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             }
 
             removeEmptyFragments();
-            touch();
+            try {
+                touch();
+            } catch (final RepositoryException ex) {
+                throw new RepositoryRuntimeException(ex);
+            }
+
 
             if (exceptions.length() > 0) {
                 throw new MalformedRdfException(exceptions.toString());

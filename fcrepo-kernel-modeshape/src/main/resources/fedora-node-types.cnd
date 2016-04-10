@@ -74,7 +74,9 @@
   - premis:hasMessageDigest (URI) COPY
 
 [fedora:Skolem] > mix:referenceable mixin
+  - fedora:lastModified (DATE)
 
 [fedora:Pairtree] mixin
+  - fedora:lastModified (DATE)
 
 [fedora:Tombstone] > nt:hierarchyNode

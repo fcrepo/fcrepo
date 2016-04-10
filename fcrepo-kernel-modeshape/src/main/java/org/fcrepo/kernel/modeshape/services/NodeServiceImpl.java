@@ -16,6 +16,9 @@
 package org.fcrepo.kernel.modeshape.services;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TOMBSTONE;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_MEMBER_RESOURCE;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.validatePath;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -86,6 +89,7 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
     public void copyObject(final Session session, final String source, final String destination) {
         try {
             session.getWorkspace().copy(source, destination);
+            touchParentLdpMemberResource(session, destination);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -112,8 +116,24 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
                 createTombstone(parent, name);
             }
 
+            touchParentLdpMemberResource(session, source);
+            touchParentLdpMemberResource(session, destination);
+
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    private void touchParentLdpMemberResource(final Session session, final String path) throws RepositoryException {
+        final FedoraResource resource = find(session, path);
+        final Node node = getJcrNode(resource);
+        final Node parent = node.getDepth() > 0 ? node.getParent() : null;
+
+        if (parent != null) {
+            if (parent.hasProperty(LDP_MEMBER_RESOURCE) && (parent.isNodeType(LDP_DIRECT_CONTAINER) ||
+                    parent.isNodeType(LDP_INDIRECT_CONTAINER))) {
+                new FedoraResourceImpl(parent.getProperty(LDP_MEMBER_RESOURCE).getNode()).touch();
+            }
         }
     }
 

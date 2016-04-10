@@ -60,6 +60,9 @@ public class NodeServiceImplTest {
     private Node mockObjNode;
 
     @Mock
+    private Node mockObjNode2;
+
+    @Mock
     private Workspace mockWorkspace;
 
     @Mock
@@ -95,6 +98,8 @@ public class NodeServiceImplTest {
     @Test
     public void testCopyObject() throws RepositoryException {
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockSession.getNode("bar")).thenReturn(mockObjNode);
+        when(mockObjNode.getDepth()).thenReturn(0);
         testObj.copyObject(mockSession, "foo", "bar");
         verify(mockWorkspace).copy("foo", "bar");
     }
@@ -103,7 +108,9 @@ public class NodeServiceImplTest {
     public void testMoveObject() throws RepositoryException {
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockSession.getNode("foo")).thenReturn(mockObjNode);
+        when(mockSession.getNode("bar")).thenReturn(mockObjNode2);
         when(mockObjNode.getDepth()).thenReturn(0);
+        when(mockObjNode2.getDepth()).thenReturn(0);
         testObj.moveObject(mockSession, "foo", "bar");
         verify(mockWorkspace).move("foo", "bar");
     }
