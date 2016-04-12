@@ -686,22 +686,41 @@ public class FedoraResourceImplIT extends AbstractIT {
     public void testReplacePropertiesHashURIs() throws RepositoryException {
         final String pid = getRandomPid();
         final Container object = containerService.findOrCreate(session, pid);
-        try (final RdfStream triples = object.getTriples(subjects, PROPERTIES)) {
-            final Model model = triples.collect(toModel());
+        final Model model = object.getTriples(subjects, PROPERTIES).collect(toModel());
 
-            final Resource hashResource = createResource(createGraphSubjectNode(object).getURI() + "#foo");
-            final Property dcTitle = model.createProperty("http://purl.org/dc/elements/1.1/title");
-            final Literal titleValue = model.createLiteral("xyz");
+        final Resource hashResource = createResource(createGraphSubjectNode(object).getURI() + "#creator");
+        final Property foafName = model.createProperty("http://xmlns.com/foaf/0.1/name");
+        final Literal nameValue = model.createLiteral("xyz");
+        final Resource foafPerson = createResource("http://xmlns.com/foaf/0.1/Person");
 
-            model.add(hashResource, dcTitle, titleValue);
-            object.replaceProperties(subjects, model, object.getTriples(subjects, PROPERTIES));
-            assertEquals(1, object.getNode().getNode("#").getNodes().getSize());
+        model.add(hashResource, foafName, nameValue);
+        model.add(hashResource, type, foafPerson);
 
-            final Model updatedModel = object.getTriples(subjects, PROPERTIES).collect(toModel());
-            updatedModel.remove(hashResource, dcTitle, titleValue);
-            object.replaceProperties(subjects, updatedModel, object.getTriples(subjects, PROPERTIES));
-            assertEquals(0, object.getNode().getNode("#").getNodes().getSize());
-        }
+        final Resource subject = subjects.reverse().convert(object);
+        final Property dcCreator = model.createProperty("http://purl.org/dc/elements/1.1/creator");
+
+        model.add(subject, dcCreator, hashResource);
+
+        object.replaceProperties(subjects, model, object.getTriples(subjects, PROPERTIES));
+        assertEquals(1, object.getNode().getNode("#").getNodes().getSize());
+
+        final Model updatedModel = object.getTriples(subjects, PROPERTIES).collect(toModel());
+
+        updatedModel.remove(hashResource, foafName, nameValue);
+        object.replaceProperties(subjects, updatedModel, object.getTriples(subjects, PROPERTIES));
+        assertEquals(1, object.getNode().getNode("#").getNodes().getSize());
+
+        final Model updatedModel2 = object.getTriples(subjects, PROPERTIES).collect(toModel());
+
+        updatedModel2.remove(hashResource, type, foafPerson);
+        object.replaceProperties(subjects, updatedModel2, object.getTriples(subjects, PROPERTIES));
+        assertEquals(1, object.getNode().getNode("#").getNodes().getSize());
+
+        final Model updatedModel3 = object.getTriples(subjects, PROPERTIES).collect(toModel());
+
+        updatedModel3.remove(subject, dcCreator, hashResource);
+        object.replaceProperties(subjects, updatedModel3, object.getTriples(subjects, PROPERTIES));
+        assertEquals(0, object.getNode().getNode("#").getNodes().getSize());
     }
 
     @Test
