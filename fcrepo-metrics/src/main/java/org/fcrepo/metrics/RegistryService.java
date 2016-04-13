@@ -21,7 +21,7 @@ import com.codahale.metrics.MetricRegistry;
 
 /**
  * Provide helpers for working with the Metrics registry
- * 
+ *
  * @author cbeer
  * @since Mar 22, 2013
  */
@@ -49,10 +49,11 @@ public final class RegistryService {
 
     /**
      * Get the current registry service
-     * 
+     *
      * TODO the new upstream SharedMetricRegistries may make this obsolete
      * @return the current registry service
      */
+    @SuppressWarnings("static-method")
     public MetricRegistry getMetrics() {
         return METRICS;
     }
