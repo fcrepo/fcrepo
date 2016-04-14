@@ -26,6 +26,7 @@ import static java.util.stream.Stream.empty;
 import static java.util.stream.Stream.of;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.RequiredRdfContext.EMBED_RESOURCES;
@@ -642,19 +643,33 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         }
     }
 
-    @SuppressWarnings("unchecked")
     private void removeEmptyFragments() {
         try {
             if (node.hasNode("#")) {
-                for (final Iterator<Node> hashNodes = node.getNode("#").getNodes(); hashNodes.hasNext(); ) {
-                    final Node n = hashNodes.next();
-                    final Iterator<Property> userProps = Iterators.filter((Iterator<Property>)n.getProperties(),
-                            p -> !isManagedPredicate.test(propertyConverter.convert(p)));
-                    if ( !userProps.hasNext() ) {
-                        LOGGER.debug("Removing empty hash URI node: {}", n.getName());
-                        n.remove();
+                @SuppressWarnings("unchecked")
+                final Iterator<Node> nodes = node.getNode("#").getNodes();
+                nodes.forEachRemaining(n -> {
+                    try {
+                        @SuppressWarnings("unchecked")
+                        final Iterator<Property> properties = n.getProperties();
+                        final boolean hasUserProps = iteratorToStream(properties).map(propertyConverter::convert)
+                            .anyMatch(isManagedPredicate.negate());
+
+                        final boolean hasUserTypes = Arrays.stream(n.getMixinNodeTypes())
+                            .map(uncheck(NodeType::getName)).filter(hasInternalNamespace.negate())
+                            .map(uncheck(type ->
+                                getSession().getWorkspace().getNamespaceRegistry().getURI(type.split(":")[0])))
+                            .anyMatch(isManagedNamespace.negate());
+
+                        if (!hasUserProps && !hasUserTypes && !n.getWeakReferences().hasNext() &&
+                                !n.getReferences().hasNext()) {
+                            LOGGER.debug("Removing empty hash URI node: {}", n.getName());
+                            n.remove();
+                        }
+                    } catch (final RepositoryException ex) {
+                        throw new RepositoryRuntimeException("Error removing empty fragments", ex);
                     }
-                }
+                });
             }
         } catch (final RepositoryException ex) {
             throw new RepositoryRuntimeException("Error removing empty fragments", ex);
