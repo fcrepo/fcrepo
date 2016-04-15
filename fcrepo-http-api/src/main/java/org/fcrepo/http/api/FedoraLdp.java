@@ -17,6 +17,7 @@ package org.fcrepo.http.api;
 
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
@@ -32,7 +33,6 @@ import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.notAcceptable;
 import static javax.ws.rs.core.Response.ok;
-
 import static javax.ws.rs.core.Variant.mediaTypes;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
@@ -420,7 +420,7 @@ public class FedoraLdp extends ContentExposingResource {
         }
 
         try {
-            final String requestBody = IOUtils.toString(requestBodyStream);
+            final String requestBody = IOUtils.toString(requestBodyStream, UTF_8);
             if (isBlank(requestBody)) {
                 throw new BadRequestException("SPARQL-UPDATE requests must have content!");
             }
@@ -557,7 +557,7 @@ public class FedoraLdp extends ContentExposingResource {
 
                 } else if (contentTypeString.equals(contentTypeSPARQLUpdate)) {
                     LOGGER.trace("Found SPARQL-Update content, applying..");
-                    patchResourcewithSparql(resource, IOUtils.toString(requestBodyStream), resourceTriples);
+                    patchResourcewithSparql(resource, IOUtils.toString(requestBodyStream, UTF_8), resourceTriples);
                 } else {
                     if (requestBodyStream.read() != -1) {
                         throw new ClientErrorException("Invalid Content Type " + contentTypeString,
