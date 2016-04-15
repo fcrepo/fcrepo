@@ -61,7 +61,6 @@ import java.text.ParseException;
 import java.util.EnumSet;
 import java.util.List;
 
-import javax.jcr.AccessDeniedException;
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -693,7 +692,7 @@ public class FedoraLdpTest {
     }
 
     @Test(expected = BadRequestException.class)
-    public void testPatchWithoutContent() throws MalformedRdfException, AccessDeniedException, IOException {
+    public void testPatchWithoutContent() throws MalformedRdfException, IOException {
         testObj.updateSparql(null);
     }
 
