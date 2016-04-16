@@ -19,6 +19,8 @@ import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isNonRdfSourceD
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.util.Date;
+
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
@@ -49,6 +51,21 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements N
     @Override
     public NonRdfSource getDescribedResource() {
         return new FedoraBinaryImpl(getContentNode());
+    }
+
+    @Override
+    public String getEtagValue() {
+        return getDescribedResource().getEtagValue();
+    }
+
+    @Override
+    public Date getCreatedDate() {
+        return getDescribedResource().getCreatedDate();
+    }
+
+    @Override
+    public Date getLastModifiedDate() {
+        return getDescribedResource().getLastModifiedDate();
     }
 
     private Node getContentNode() {
