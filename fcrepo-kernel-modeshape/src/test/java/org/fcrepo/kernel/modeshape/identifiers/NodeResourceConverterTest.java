@@ -20,9 +20,12 @@ import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.Tombstone;
+import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -30,27 +33,27 @@ import javax.jcr.RepositoryException;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TOMBSTONE;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 /**
  * @author cabeer
  */
+@RunWith(MockitoJUnitRunner.class)
 public class NodeResourceConverterTest {
 
     private NodeResourceConverter testObj;
 
     @Mock
-    private FedoraResource mockResource;
+    private FedoraResourceImpl mockResource;
 
     @Mock
     private Node mockNode;
 
     @Before
     public void setUp() {
-        initMocks(this);
         testObj = NodeResourceConverter.nodeConverter;
         when(mockResource.getNode()).thenReturn(mockNode);
     }
@@ -60,7 +63,7 @@ public class NodeResourceConverterTest {
     public void testForwardObject() {
         final FedoraResource actual = testObj.convert(mockNode);
         assertTrue(actual instanceof Container);
-        assertEquals(mockNode, actual.getNode());
+        assertEquals(mockNode, getJcrNode(actual));
     }
 
     @Test
@@ -68,7 +71,7 @@ public class NodeResourceConverterTest {
         when(mockNode.isNodeType(FEDORA_NON_RDF_SOURCE_DESCRIPTION)).thenReturn(true);
         final FedoraResource actual = testObj.convert(mockNode);
         assertTrue(actual instanceof NonRdfSourceDescription);
-        assertEquals(mockNode, actual.getNode());
+        assertEquals(mockNode, getJcrNode(actual));
 
     }
 
@@ -77,7 +80,7 @@ public class NodeResourceConverterTest {
         when(mockNode.isNodeType(FEDORA_BINARY)).thenReturn(true);
         final FedoraResource actual = testObj.convert(mockNode);
         assertTrue(actual instanceof FedoraBinary);
-        assertEquals(mockNode, actual.getNode());
+        assertEquals(mockNode, getJcrNode(actual));
     }
 
     @Test
@@ -85,7 +88,7 @@ public class NodeResourceConverterTest {
         when(mockNode.isNodeType(FEDORA_TOMBSTONE)).thenReturn(true);
         final FedoraResource actual = testObj.convert(mockNode);
         assertTrue(actual instanceof Tombstone);
-        assertEquals(mockNode, actual.getNode());
+        assertEquals(mockNode, getJcrNode(actual));
     }
 
     @Test

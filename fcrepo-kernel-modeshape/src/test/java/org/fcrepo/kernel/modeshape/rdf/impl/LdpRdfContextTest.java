@@ -30,9 +30,9 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.api.models.Container;
-import org.fcrepo.kernel.api.models.FedoraBinary;
-import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.modeshape.ContainerImpl;
+import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
+import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -47,13 +47,13 @@ import com.hp.hpl.jena.vocabulary.RDF;
 public class LdpRdfContextTest {
 
     @Mock
-    private FedoraResource mockResource;
+    private FedoraResourceImpl mockResource;
 
     @Mock
-    private FedoraBinary mockBinary;
+    private FedoraBinaryImpl mockBinary;
 
     @Mock
-    private Container mockContainer;
+    private ContainerImpl mockContainer;
 
     @Mock
     private Node mockNode;

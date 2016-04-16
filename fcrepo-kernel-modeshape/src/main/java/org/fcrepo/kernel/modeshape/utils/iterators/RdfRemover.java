@@ -15,6 +15,7 @@
  */
 package org.fcrepo.kernel.modeshape.utils.iterators;
 
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaces;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -57,7 +58,7 @@ public class RdfRemover extends PersistingRdfStreamConsumer {
     protected void operateOnMixin(final Resource mixinResource,
         final FedoraResource resource) throws RepositoryException {
 
-        jcrRdfTools().removeMixin(resource, mixinResource, getNamespaces(resource.getNode().getSession()));
+        jcrRdfTools().removeMixin(resource, mixinResource, getNamespaces(getJcrNode(resource).getSession()));
     }
 
     @Override
@@ -66,7 +67,7 @@ public class RdfRemover extends PersistingRdfStreamConsumer {
         LOGGER.debug("Trying to remove property from triple: {} on resource: {}.", t, resource
                 .getPath());
         jcrRdfTools().removeProperty(resource, t.getPredicate(), t.getObject(),
-                getNamespaces(resource.getNode().getSession()));
+                getNamespaces(getJcrNode(resource).getSession()));
     }
 
 }

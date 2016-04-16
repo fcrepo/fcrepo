@@ -15,6 +15,7 @@
  */
 package org.fcrepo.integration.kernel.modeshape.services;
 
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.junit.Assert.assertEquals;
 
 import org.fcrepo.integration.kernel.modeshape.AbstractIT;
@@ -150,14 +151,14 @@ public class VersionServiceImplIT extends AbstractIT {
 
     private static String currentVersion( final Session session, final FedoraResource resource )
         throws RepositoryException {
-        return session.getWorkspace().getVersionManager().getBaseVersion(resource.getNode().getPath())
+        return session.getWorkspace().getVersionManager().getBaseVersion(getJcrNode(resource).getPath())
             .getFrozenNode().getIdentifier();
     }
 
     private static long countVersions( final Session session, final FedoraResource resource )
         throws RepositoryException {
         final VersionHistory versions = session.getWorkspace().getVersionManager().getVersionHistory(
-            resource.getNode().getPath() );
+            getJcrNode(resource).getPath() );
         return versions.getAllVersions().getSize();
     }
 }

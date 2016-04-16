@@ -28,6 +28,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeToResource;
 import static org.fcrepo.kernel.modeshape.rdf.converters.PropertyConverter.getPropertyNameFromPredicate;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getClosestExistingAncestor;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getPropertyType;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isReferenceProperty;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
@@ -191,7 +192,7 @@ public class JcrRdfTools {
             }
 
             try {
-                final Node nodeFromGraphSubject = idTranslator.convert(data.asResource()).getNode();
+                final Node nodeFromGraphSubject = getJcrNode(idTranslator.convert(data.asResource()));
                 return valueFactory.createValue(nodeFromGraphSubject, type == WEAKREFERENCE);
             } catch (final RepositoryRuntimeException e) {
                 throw new MalformedRdfException("Unable to find referenced node", e);
@@ -219,7 +220,7 @@ public class JcrRdfTools {
                          final Map<String,String> namespaces)
             throws RepositoryException {
 
-        final Node node = resource.getNode();
+        final Node node = getJcrNode(resource);
         final Session session = node.getSession();
         final String mixinName = getPropertyNameFromPredicate(node, mixinResource, namespaces);
         if (!repositoryHasType(session, mixinName)) {
@@ -260,7 +261,7 @@ public class JcrRdfTools {
                             final RDFNode value,
                             final Map<String,String> namespaces) throws RepositoryException {
 
-        final Node node = resource.getNode();
+        final Node node = getJcrNode(resource);
 
         if (isManagedPredicate.test(predicate)) {
 
@@ -298,7 +299,7 @@ public class JcrRdfTools {
                             final Resource mixinResource,
                             final Map<String, String> nsPrefixMap) throws RepositoryException {
 
-        final Node node = resource.getNode();
+        final Node node = getJcrNode(resource);
         final String mixinName = getPropertyNameFromPredicate(node, mixinResource, nsPrefixMap);
         if (repositoryHasType(session, mixinName) && node.isNodeType(mixinName)) {
             node.removeMixin(mixinName);
@@ -319,7 +320,7 @@ public class JcrRdfTools {
                                final RDFNode objectNode,
                                final Map<String, String> nsPrefixMap) throws RepositoryException {
 
-        final Node node = resource.getNode();
+        final Node node = getJcrNode(resource);
         final String propertyName = getPropertyNameFromPredicate(node, predicate, nsPrefixMap);
 
         if (isManagedPredicate.test(predicate)) {

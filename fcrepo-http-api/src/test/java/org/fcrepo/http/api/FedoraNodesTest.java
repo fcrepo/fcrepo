@@ -146,7 +146,6 @@ public class FedoraNodesTest {
         when(mockWorkspace.getVersionManager()).thenReturn(mockVM);
         when(mockDate.getTime()).thenReturn(0L);
         when(mockNode.getPath()).thenReturn(path);
-        when(mockContainer.getNode()).thenReturn(mockNode);
         when(mockContainer.getPath()).thenReturn(path);
         when(mockContainer.getEtagValue()).thenReturn("XYZ");
         when(mockNodeType.getName()).thenReturn("nt:folder");

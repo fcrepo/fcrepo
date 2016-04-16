@@ -50,6 +50,7 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
 import static org.fcrepo.kernel.api.RequiredRdfContext.VERSIONS;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedPredicate.uncheck;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -250,7 +251,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         FedoraResource object =
             containerService.findOrCreate(session, "/testObjectGraph");
 
-        final javax.jcr.Node node = object.getNode();
+        final javax.jcr.Node node = getJcrNode(object);
         node.setProperty("dc:title", "this-is-some-title");
         node.setProperty("dc:subject", "this-is-some-subject-stored-as-a-binary", BINARY);
         node.setProperty("jcr:data", "jcr-data-should-be-ignored", BINARY);
@@ -303,7 +304,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         //create object with inheriting type
         FedoraResource object = containerService.findOrCreate(session, "/testNTTnheritanceObject");
-        final javax.jcr.Node node = object.getNode();
+        final javax.jcr.Node node = getJcrNode(object);
         node.addMixin("test:testInher");
 
         session.save();
@@ -336,7 +337,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final NonRdfSourceDescription object =
                 binaryService.findOrCreate(session, "/testDatastreamGraph").getDescription();
 
-        object.getNode().setProperty("fedora:isPartOf",
+        getJcrNode(object).setProperty("fedora:isPartOf",
                 session.getNode("/testDatastreamGraphParent"));
 
         final Graph graph = object.getTriples(subjects, PROPERTIES).collect(toModel()).getGraph();
@@ -434,7 +435,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final FedoraResource object =
             containerService.findOrCreate(session, "/testObjectVersionGraph");
 
-        object.getNode().addMixin("mix:versionable");
+        getJcrNode(object).addMixin("mix:versionable");
         session.save();
 
         // create a version and make sure there are 2 versions (root + created)
@@ -597,7 +598,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         object.updateProperties(subjects, "INSERT { <"
                 + createGraphSubjectNode(object).getURI() + "> <" + RDF.type
                 + "> <http://some/uri> } WHERE { }", object.getTriples(subjects, emptySet() ));
-        assertTrue(object.getNode().isNodeType("{http://some/}uri"));
+        assertTrue(getJcrNode(object).isNodeType("{http://some/}uri"));
     }
 
     @Test
@@ -608,12 +609,12 @@ public class FedoraResourceImplIT extends AbstractIT {
         object.updateProperties(subjects, "INSERT { <"
                 + createGraphSubjectNode(object).getURI() + "> <" + RDF.type
                 + "> <http://some/uri> } WHERE { }", object.getTriples(subjects, PROPERTIES));
-        assertTrue(object.getNode().isNodeType("{http://some/}uri"));
+        assertTrue(getJcrNode(object).isNodeType("{http://some/}uri"));
 
         object.updateProperties(subjects, "DELETE { <"
                 + createGraphSubjectNode(object).getURI() + "> <" + RDF.type
                 + "> <http://some/uri> } WHERE { }", object.getTriples(subjects, PROPERTIES));
-        assertFalse(object.getNode().isNodeType("{http://some/}uri"));
+        assertFalse(getJcrNode(object).isNodeType("{http://some/}uri"));
     }
 
     @Test
@@ -634,8 +635,8 @@ public class FedoraResourceImplIT extends AbstractIT {
         containerService.findOrCreate(session, pid);
         final Container subject = containerService.findOrCreate(session, pid + "/a");
         final Container object = containerService.findOrCreate(session, pid + "/b");
-        final Value value = session.getValueFactory().createValue(object.getNode());
-        subject.getNode().setProperty("fedora:isPartOf", new Value[] { value });
+        final Value value = session.getValueFactory().createValue(getJcrNode(object));
+        getJcrNode(subject).setProperty("fedora:isPartOf", new Value[] { value });
 
         session.save();
 
@@ -664,7 +665,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
             object.replaceProperties(subjects, model, object.getTriples(subjects, PROPERTIES));
 
-            final Iterator<javax.jcr.Property> properties = object.getNode().getProperties();
+            final Iterator<javax.jcr.Property> properties = getJcrNode(object).getProperties();
 
             final Iterator<javax.jcr.Property> relation = Iterators.filter(properties, uncheck(
                     (final javax.jcr.Property p) -> p.getName().contains("xyz_ref"))::test);
@@ -702,25 +703,25 @@ public class FedoraResourceImplIT extends AbstractIT {
         model.add(subject, dcCreator, hashResource);
 
         object.replaceProperties(subjects, model, object.getTriples(subjects, PROPERTIES));
-        assertEquals(1, object.getNode().getNode("#").getNodes().getSize());
+        assertEquals(1, getJcrNode(object).getNode("#").getNodes().getSize());
 
         final Model updatedModel = object.getTriples(subjects, PROPERTIES).collect(toModel());
 
         updatedModel.remove(hashResource, foafName, nameValue);
         object.replaceProperties(subjects, updatedModel, object.getTriples(subjects, PROPERTIES));
-        assertEquals(1, object.getNode().getNode("#").getNodes().getSize());
+        assertEquals(1, getJcrNode(object).getNode("#").getNodes().getSize());
 
         final Model updatedModel2 = object.getTriples(subjects, PROPERTIES).collect(toModel());
 
         updatedModel2.remove(hashResource, type, foafPerson);
         object.replaceProperties(subjects, updatedModel2, object.getTriples(subjects, PROPERTIES));
-        assertEquals(1, object.getNode().getNode("#").getNodes().getSize());
+        assertEquals(1, getJcrNode(object).getNode("#").getNodes().getSize());
 
         final Model updatedModel3 = object.getTriples(subjects, PROPERTIES).collect(toModel());
 
         updatedModel3.remove(subject, dcCreator, hashResource);
         object.replaceProperties(subjects, updatedModel3, object.getTriples(subjects, PROPERTIES));
-        assertEquals(0, object.getNode().getNode("#").getNodes().getSize());
+        assertEquals(0, getJcrNode(object).getNode("#").getNodes().getSize());
     }
 
     @Test
@@ -743,8 +744,8 @@ public class FedoraResourceImplIT extends AbstractIT {
         final FedoraResource resourceA = containerService.findOrCreate(session, "/" + pid + "/a");
         final FedoraResource resourceB = containerService.findOrCreate(session, "/" + pid + "/b");
 
-        final Value value = session.getValueFactory().createValue(resourceB.getNode());
-        resourceA.getNode().setProperty("fedora:hasMember", new Value[] { value });
+        final Value value = session.getValueFactory().createValue(getJcrNode(resourceB));
+        getJcrNode(resourceA).setProperty("fedora:hasMember", new Value[] { value });
 
         session.save();
         containerService.findOrCreate(session, "/" + pid + "/a").delete();
@@ -910,7 +911,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         session.save();
 
         final Container child = containerService.findOrCreate(session, "/" + pid + "/child");
-        child.getNode().setProperty("dc:title", "this-is-some-title");
+        getJcrNode(child).setProperty("dc:title", "this-is-some-title");
         session.save();
 
         session.getWorkspace().getVersionManager().checkpoint(object.getPath());
@@ -1000,7 +1001,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         session.save();
         final Version version = object.getVersionHistory().getVersionByLabel("some-label");
         final FedoraResourceImpl frozenResource = new FedoraResourceImpl(version.getFrozenNode());
-        assertNull(frozenResource.getNodeVersion("some-label"));
+        assertNull(frozenResource.getVersion("some-label"));
 
     }
 
@@ -1017,7 +1018,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         session.save();
         final Version version = object.getVersionHistory().getVersionByLabel("some-label");
         final FedoraResourceImpl frozenResource = new FedoraResourceImpl(version.getFrozenNode().getNode("a"));
-        assertNull(frozenResource.getNodeVersion("some-label"));
+        assertNull(frozenResource.getVersion("some-label"));
 
     }
 
@@ -1053,7 +1054,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Container object = containerService.findOrCreate(session, "/" + pid);
         object.enableVersioning();
         session.save();
-        final FedoraResourceImpl frozenResource = new FedoraResourceImpl(object.getNode());
+        final FedoraResourceImpl frozenResource = new FedoraResourceImpl(getJcrNode(object));
         assertFalse(frozenResource.hashCode() == 0);
     }
 
@@ -1066,9 +1067,9 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Container referent1 = containerService.findOrCreate(session, pid + "/b");
         final Container referent2 = containerService.findOrCreate(session, pid + "/c");
         final Value[] values = new Value[2];
-        values[0] = session.getValueFactory().createValue(referent1.getNode());
-        values[1] = session.getValueFactory().createValue(referent2.getNode());
-        subject.getNode().setProperty(relation, values);
+        values[0] = session.getValueFactory().createValue(getJcrNode(referent1));
+        values[1] = session.getValueFactory().createValue(getJcrNode(referent2));
+        getJcrNode(subject).setProperty(relation, values);
 
         session.save();
 

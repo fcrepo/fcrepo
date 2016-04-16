@@ -16,6 +16,7 @@
 package org.fcrepo.kernel.modeshape.utils.iterators;
 
 import static org.slf4j.LoggerFactory.getLogger;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaces;
 
 import javax.jcr.RepositoryException;
@@ -56,7 +57,7 @@ public class RdfAdder extends PersistingRdfStreamConsumer {
     @Override
     protected void operateOnMixin(final Resource mixinResource, final FedoraResource resource)
             throws RepositoryException {
-        jcrRdfTools().addMixin(resource, mixinResource, getNamespaces(resource.getNode().getSession()));
+        jcrRdfTools().addMixin(resource, mixinResource, getNamespaces(getJcrNode(resource).getSession()));
     }
 
 
@@ -66,6 +67,6 @@ public class RdfAdder extends PersistingRdfStreamConsumer {
                 .getPath());
 
         jcrRdfTools().addProperty(resource, t.getPredicate(), t.getObject(),
-                getNamespaces(resource.getNode().getSession()));
+                getNamespaces(getJcrNode(resource).getSession()));
     }
 }

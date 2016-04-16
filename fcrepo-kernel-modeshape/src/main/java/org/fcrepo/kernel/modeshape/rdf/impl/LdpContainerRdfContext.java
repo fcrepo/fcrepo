@@ -49,6 +49,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.LDP_MEMBER;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMBER_SUBJECT;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.modeshape.rdf.converters.PropertyConverter.getPropertyNameFromPredicate;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getReferencePropertyName;
 import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
@@ -80,7 +81,7 @@ public class LdpContainerRdfContext extends NodeRdfContext {
 
     @SuppressWarnings("unchecked")
     private static Stream<Property> getMembershipContext(final FedoraResource resource) throws RepositoryException {
-        return iteratorToStream(resource.getNode().getReferences(LDP_MEMBER_RESOURCE))
+        return iteratorToStream(getJcrNode(resource).getReferences(LDP_MEMBER_RESOURCE))
                     .filter(UncheckedPredicate.uncheck((final Property p) -> {
                         final Node container = p.getParent();
                         return container.isNodeType(LDP_DIRECT_CONTAINER)
@@ -98,7 +99,7 @@ public class LdpContainerRdfContext extends NodeRdfContext {
         final com.hp.hpl.jena.graph.Node memberRelation;
 
         if (container.hasProperty(LDP_HAS_MEMBER_RELATION)) {
-            final Property property = container.getNode().getProperty(LDP_HAS_MEMBER_RELATION);
+            final Property property = getJcrNode(container).getProperty(LDP_HAS_MEMBER_RELATION);
             memberRelation = createURI(property.getString());
         } else if (container.hasType(LDP_BASIC_CONTAINER)) {
             memberRelation = LDP_MEMBER.asNode();
@@ -110,7 +111,8 @@ public class LdpContainerRdfContext extends NodeRdfContext {
 
         if (container.hasType(LDP_INDIRECT_CONTAINER)) {
             if (container.hasProperty(LDP_INSERTED_CONTENT_RELATION)) {
-                insertedContainerProperty = container.getNode().getProperty(LDP_INSERTED_CONTENT_RELATION).getString();
+                insertedContainerProperty = getJcrNode(container).getProperty(LDP_INSERTED_CONTENT_RELATION)
+                    .getString();
             } else {
                 return empty();
             }
@@ -126,7 +128,7 @@ public class LdpContainerRdfContext extends NodeRdfContext {
                 if (insertedContainerProperty.equals(MEMBER_SUBJECT.getURI())) {
                     return of(create(subject(), memberRelation, childSubject));
                 }
-                String insertedContentProperty = getPropertyNameFromPredicate(resource().getNode(),
+                String insertedContentProperty = getPropertyNameFromPredicate(getJcrNode(resource()),
                         createResource(insertedContainerProperty), null);
 
                 if (child.hasProperty(insertedContentProperty)) {
@@ -142,9 +144,9 @@ public class LdpContainerRdfContext extends NodeRdfContext {
                 }
 
                 return iteratorToStream(new PropertyValueIterator(
-                        child.getNode().getProperty(insertedContentProperty)))
+                        getJcrNode(child).getProperty(insertedContentProperty)))
                     .map(uncheck(v -> create(subject(), memberRelation,
-                        new ValueConverter(container.getNode().getSession(), translator()).convert(v).asNode())));
+                        new ValueConverter(getJcrNode(container).getSession(), translator()).convert(v).asNode())));
             }));
     }
 }

@@ -36,10 +36,10 @@ import javax.jcr.Session;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
 
-import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
-import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
+import org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -114,17 +114,13 @@ public class ContentRdfContextTest {
     private static final String mockNodeName = "mockNode";
 
     @Mock
-    private NonRdfSourceDescription mockResource;
+    private NonRdfSourceDescriptionImpl mockResource;
 
     @Mock
-    private Node mockNode;
+    private Node mockNode, mockBinaryNode;
 
     @Mock
-    private FedoraBinary mockBinary;
-
-    @Mock
-    private Node mockBinaryNode;
-
+    private FedoraBinaryImpl mockBinary;
 
     @Mock
     private NodeType mockNodeType;

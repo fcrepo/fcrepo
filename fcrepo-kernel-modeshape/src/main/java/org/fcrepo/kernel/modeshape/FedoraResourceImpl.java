@@ -223,10 +223,11 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         this.node = node;
     }
 
-    /* (non-Javadoc)
-     * @see org.fcrepo.kernel.api.models.FedoraResource#getNode()
+    /**
+     * Return the underlying JCR Node for this resource
+     *
+     * @return the JCR Node
      */
-    @Override
     public Node getNode() {
         return node;
     }
@@ -790,12 +791,12 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     }
 
     @Override
-    public Node getNodeVersion(final String label) {
+    public FedoraResource getVersion(final String label) {
         try {
             final Node n = getFrozenNode(label);
 
             if (n != null) {
-                return n;
+                return new FedoraResourceImpl(n);
             }
 
             if (isVersioned()) {
@@ -803,7 +804,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
                 if (hist.hasVersionLabel(label)) {
                     LOGGER.debug("Found version for {} by label {}.", this, label);
-                    return hist.getVersionByLabel(label).getFrozenNode();
+                    return new FedoraResourceImpl(hist.getVersionByLabel(label).getFrozenNode());
                 }
             }
 
@@ -955,4 +956,5 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             throw new RepositoryRuntimeException(e);
         }
     }
+
 }

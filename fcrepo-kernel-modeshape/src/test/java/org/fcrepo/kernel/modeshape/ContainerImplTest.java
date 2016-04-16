@@ -21,9 +21,9 @@ import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 
 import java.util.Calendar;
 import java.util.function.Predicate;
@@ -39,13 +39,16 @@ import org.fcrepo.kernel.api.models.Container;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 /**
  * <p>FedoraObjectImplTest class.</p>
  *
  * @author ksclarke
  */
+@RunWith(MockitoJUnitRunner.class)
 public class ContainerImplTest implements FedoraTypes {
 
     private static final String testPid = "testObj";
@@ -56,10 +59,7 @@ public class ContainerImplTest implements FedoraTypes {
     private Session mockSession;
 
     @Mock
-    private Node mockRootNode;
-
-    @Mock
-    private Node mockObjNode;
+    private Node mockRootNode, mockObjNode;
 
     @Mock
     private Property mockProp;
@@ -73,7 +73,6 @@ public class ContainerImplTest implements FedoraTypes {
 
     @Before
     public void setUp() {
-        initMocks(this);
         final String relPath = "/" + testPid;
         final NodeType[] types = new NodeType[0];
         try {
@@ -114,7 +113,7 @@ public class ContainerImplTest implements FedoraTypes {
 
     @Test
     public void testGetNode() {
-        assertEquals(testContainer.getNode(), mockObjNode);
+        assertEquals(getJcrNode(testContainer), mockObjNode);
     }
 
     @Test

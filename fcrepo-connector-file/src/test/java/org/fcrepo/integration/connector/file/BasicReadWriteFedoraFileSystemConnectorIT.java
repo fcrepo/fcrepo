@@ -29,6 +29,7 @@ import javax.jcr.Session;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -78,7 +79,7 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
             }
 
             // Verify
-            final Property property = object.getNode().getProperty("fedora:name");
+            final Property property = getJcrNode(object).getProperty("fedora:name");
             assertNotNull(property);
             assertEquals("some-test-name", property.getValues()[0].toString());
 
@@ -109,7 +110,7 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
             }
 
             // Verify property exists
-            final Property property = object.getNode().getProperty("fedora:remove");
+            final Property property = getJcrNode(object).getProperty("fedora:remove");
             assertNotNull(property);
             assertEquals("some-property-to-remove", property.getValues()[0].getString());
 
@@ -131,7 +132,7 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
             // Verify
             boolean thrown = false;
             try {
-                object.getNode().getProperty("fedora:remove");
+                getJcrNode(object).getProperty("fedora:remove");
             } catch (final PathNotFoundException e) {
                 thrown = true;
             }

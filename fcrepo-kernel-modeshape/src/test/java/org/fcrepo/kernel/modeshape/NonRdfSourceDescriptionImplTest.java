@@ -20,7 +20,9 @@ import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 import org.modeshape.jcr.api.ValueFactory;
 
 import javax.jcr.Node;
@@ -36,13 +38,13 @@ import java.util.Date;
 import static org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl.hasMixin;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 /**
  * <p>{@link NonRdfSourceDescriptionImplTest} class.</p>
@@ -50,6 +52,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
  * @author ksclarke
  * @author ajs6f
  */
+@RunWith(MockitoJUnitRunner.class)
 public class NonRdfSourceDescriptionImplTest implements FedoraTypes {
 
     private static final String testDsId = "testDs";
@@ -60,10 +63,7 @@ public class NonRdfSourceDescriptionImplTest implements FedoraTypes {
     private Session mockSession;
 
     @Mock
-    private Node mockRootNode;
-
-    @Mock
-    private Node mockDsNode;
+    private Node mockRootNode, mockDsNode;
 
     @Mock
     private InputStream mockStream;
@@ -76,7 +76,6 @@ public class NonRdfSourceDescriptionImplTest implements FedoraTypes {
 
     @Before
     public void setUp() {
-        initMocks(this);
         final NodeType[] nodeTypes = new NodeType[] { mockDsNodeType };
         try {
             when(mockDsNodeType.getName()).thenReturn(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
@@ -102,7 +101,7 @@ public class NonRdfSourceDescriptionImplTest implements FedoraTypes {
 
     @Test
     public void testGetNode() {
-        assertEquals(testObj.getNode(), mockDsNode);
+        assertEquals(getJcrNode(testObj), mockDsNode);
     }
 
     @Test

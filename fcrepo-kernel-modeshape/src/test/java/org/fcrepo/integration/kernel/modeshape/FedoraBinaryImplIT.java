@@ -21,6 +21,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -306,9 +307,9 @@ public class FedoraBinaryImplIT extends AbstractIT {
                             createResource("urn:sha1:9578f951955d37f20b601c26591e260c1e5389bf")));
 
             assertEquals("Expected to find mime type",
-                    ds.getNode().getProperty("ebucore:hasMimeType").getString(), "text/plain");
+                    getJcrNode(ds).getProperty("ebucore:hasMimeType").getString(), "text/plain");
             assertEquals("Expected to find file name",
-                    ds.getNode().getProperty("ebucore:filename").getString(), "numbers.txt");
+                    getJcrNode(ds).getProperty("ebucore:filename").getString(), "numbers.txt");
         } finally {
             session.logout();
         }
@@ -353,7 +354,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
             final ValueFactory factory = session.getValueFactory();
             final Container object = containerService.findOrCreate(session, "/testLLObject");
 
-            final Node testRandomContentNode = object.getNode().addNode("testRandomContent", NT_FILE);
+            final Node testRandomContentNode = getJcrNode(object).addNode("testRandomContent", NT_FILE);
             testRandomContentNode.addMixin(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
             final Node testRandomContent = testRandomContentNode.addNode(JCR_CONTENT, NT_RESOURCE);
             testRandomContent.addMixin(FEDORA_BINARY);

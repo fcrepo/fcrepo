@@ -29,6 +29,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.utils.ContentDigest.asURI;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -209,7 +210,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
         final Container object = containerService.findOrCreate(session, testDirPath());
         assertNotNull(object);
 
-        final Node node = object.getNode();
+        final Node node = getJcrNode(object);
         final NodeType[] mixins = node.getMixinNodeTypes();
         assertEquals(2, mixins.length);
 
@@ -228,7 +229,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
                 = binaryService.findOrCreate(session, testFilePath()).getDescription();
         assertNotNull(nonRdfSourceDescription);
 
-        final Node node = nonRdfSourceDescription.getNode();
+        final Node node = getJcrNode(nonRdfSourceDescription);
         final NodeType[] mixins = node.getMixinNodeTypes();
         assertEquals(2, mixins.length);
 
@@ -244,7 +245,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     public void testGetFederatedContent() throws RepositoryException {
         final Session session = repo.login();
 
-        final Node node = nodeService.find(session, testFilePath() + "/jcr:content").getNode();
+        final Node node = getJcrNode(nodeService.find(session, testFilePath() + "/jcr:content"));
         assertNotNull(node);
 
         final NodeType[] mixins = node.getMixinNodeTypes();
