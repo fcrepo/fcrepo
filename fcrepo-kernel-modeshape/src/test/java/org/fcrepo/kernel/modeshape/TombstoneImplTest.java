@@ -19,11 +19,14 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 
 import javax.jcr.Node;
+import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TOMBSTONE;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doThrow;
@@ -76,6 +79,17 @@ public class TombstoneImplTest {
     public void testHasMixinException() throws RepositoryException {
         doThrow(new RepositoryException()).when(mockNode).isNodeType(FEDORA_TOMBSTONE);
         assertTrue(TombstoneImpl.hasMixin(mockNode));
+    }
+
+    @Test
+    public void testToString() throws RepositoryException {
+        when(mockNode.getPath()).thenReturn("/path");
+        when(mockNode.hasProperty(JCR_CREATED)).thenReturn(true);
+        when(mockNode.getProperty(JCR_CREATED)).thenReturn(Mockito.mock(Property.class));
+
+        final String msg = testObj.toString();
+        assertFalse("Msg should not contain 'jcr:': " + msg, msg.contains("jcr:"));
+        assertTrue("Msg should contain '/path': " + msg, msg.contains("/path"));
     }
 
 }

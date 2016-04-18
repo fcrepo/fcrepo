@@ -21,6 +21,8 @@ import javax.jcr.RepositoryException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.Tombstone;
 
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
+
 /**
  * @author cabeer
  * @since 10/16/14
@@ -57,5 +59,20 @@ public class TombstoneImpl extends FedoraResourceImpl implements Tombstone {
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
+        try {
+            sb.append(node.getPath());
+            if (node.hasProperty(JCR_CREATED)) {
+                sb.append(", departed: ");
+                sb.append(node.getProperty(JCR_CREATED).getString());
+            }
+        } catch (RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+        return sb.toString();
     }
 }

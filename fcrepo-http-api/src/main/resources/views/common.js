@@ -147,7 +147,7 @@ function checkIfNonRdfResource(e) {
 
     var url = this.href;
 
-    $.ajax({type: "HEAD", url: url}).success(function(data, status, xhr) {
+    $.ajax({type: "HEAD", url: url, success: function(data, status, xhr) {
         if (status != "success" || xhr.getResponseHeader("Link") == null) {
             location.href = url;
             return;
@@ -169,7 +169,7 @@ function checkIfNonRdfResource(e) {
         }
 
         location.href = url;
-    });
+    }, error: ajaxErrorHandler});
     e.preventDefault();
     return false;
 }
