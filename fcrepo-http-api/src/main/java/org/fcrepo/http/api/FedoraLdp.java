@@ -416,7 +416,7 @@ public class FedoraLdp extends ContentExposingResource {
         }
 
         if (resource() instanceof FedoraBinary) {
-            throw new BadRequestException(resource() + " is not a valid object to receive a PATCH");
+            throw new BadRequestException(resource().getPath() + " is not a valid object to receive a PATCH");
         }
 
         try {
@@ -434,7 +434,12 @@ public class FedoraLdp extends ContentExposingResource {
             }
             session.save();
 
-            addCacheControlHeaders(servletResponse, resource(), session);
+            if (resource() instanceof FedoraBinary) {
+                final NonRdfSourceDescription description = ((FedoraBinary)resource()).getDescription();
+                addCacheControlHeaders(servletResponse, description, session);
+            } else {
+                addCacheControlHeaders(servletResponse, resource(), session);
+            }
 
             return noContent().build();
         } catch (final IllegalArgumentException iae) {
