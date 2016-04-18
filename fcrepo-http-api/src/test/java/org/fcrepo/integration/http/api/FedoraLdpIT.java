@@ -2092,7 +2092,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         httpPut.addHeader("If-Match", etag);
 
         try (final CloseableHttpResponse response = execute(httpPut)) {
-            assertEquals("Should be a 409 Conflict!", CONFLICT.getStatusCode(), getStatus(response));
+            assertEquals("Should be a 412 Precondition Failed!", PRECONDITION_FAILED.getStatusCode(),
+                    getStatus(response));
         }
 
         // PUT improperly formatted etag ... not quoted.

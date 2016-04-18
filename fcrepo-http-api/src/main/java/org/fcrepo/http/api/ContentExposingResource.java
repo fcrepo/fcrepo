@@ -358,7 +358,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 builder = ok(content);
             }
 
-
             // we set the content-type explicitly to avoid content-negotiation from getting in the way
             return builder.type(binary.getMimeType())
                     .cacheControl(cc)
@@ -477,10 +476,21 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             return;
         }
 
-        final FedoraResource mutableResource = resource instanceof NonRdfSourceDescription
-                ? ((NonRdfSourceDescription) resource).getDescribedResource() : resource;
-        final EntityTag etag = new EntityTag(mutableResource.getEtagValue());
-        final Date date = mutableResource.getLastModifiedDate();
+        final EntityTag etag;
+        final Date date;
+
+        if (resource instanceof NonRdfSourceDescription) {
+            final NonRdfSourceDescription description = (NonRdfSourceDescription)resource;
+            etag = new EntityTag(description.getDescribedResource().getEtagValue(), true);
+            date = description.getDescribedResource().getLastModifiedDate();
+        } else if (resource instanceof NonRdfSource) {
+            final NonRdfSource binary = (NonRdfSource)resource;
+            etag = new EntityTag(binary.getDescription().getEtagValue());
+            date = binary.getDescription().getLastModifiedDate();
+        } else {
+            etag = new EntityTag(resource.getEtagValue(), true);
+            date = resource.getLastModifiedDate();
+        }
 
         if (!etag.getValue().isEmpty()) {
             servletResponse.addHeader("ETag", etag.toString());
@@ -519,9 +529,22 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             return;
         }
 
-        final EntityTag etag = new EntityTag(resource.getEtagValue());
-        final Date date = resource.getLastModifiedDate();
+        final EntityTag etag;
+        final Date date;
         final Date roundedDate = new Date();
+
+        if (resource instanceof NonRdfSourceDescription) {
+            final NonRdfSourceDescription description = (NonRdfSourceDescription)resource;
+            etag = new EntityTag(description.getDescribedResource().getEtagValue(), true);
+            date = description.getDescribedResource().getLastModifiedDate();
+        } else if (resource instanceof NonRdfSource) {
+            final NonRdfSource binary = (NonRdfSource)resource;
+            etag = new EntityTag(binary.getDescription().getEtagValue());
+            date = binary.getDescription().getLastModifiedDate();
+        } else {
+            etag = new EntityTag(resource.getEtagValue(), true);
+            date = resource.getLastModifiedDate();
+        }
 
         if (date != null) {
             roundedDate.setTime(date.getTime() - date.getTime() % 1000);
