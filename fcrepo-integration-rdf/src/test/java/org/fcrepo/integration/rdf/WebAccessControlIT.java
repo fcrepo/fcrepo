@@ -17,14 +17,12 @@ package org.fcrepo.integration.rdf;
 
 import org.junit.Test;
 
-import java.io.IOException;
-
 /**
  * @author cabeer
  */
 public class WebAccessControlIT extends AbstractIntegrationRdfIT {
     @Test
-    public void testExample() throws IOException {
+    public void testExample() {
         final String pid = getRandomUniqueId();
         final String card = createObject(pid + "-card").getFirstHeader("Location").getValue();
         final String s = "@prefix acl: <http://www.w3.org/ns/auth/acl#> . \n" +
