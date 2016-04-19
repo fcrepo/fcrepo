@@ -497,13 +497,16 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         // must change.
         if (resource instanceof NonRdfSourceDescription) {
             final NonRdfSourceDescription description = (NonRdfSourceDescription)resource;
+            // Use a weak ETag for the LDP-RS
             etag = new EntityTag(description.getDescribedResource().getEtagValue(), true);
             date = description.getDescribedResource().getLastModifiedDate();
         } else if (resource instanceof NonRdfSource) {
             final NonRdfSource binary = (NonRdfSource)resource;
+            // Use a strong ETag for the LDP-NR
             etag = new EntityTag(binary.getDescription().getEtagValue());
             date = binary.getDescription().getLastModifiedDate();
         } else {
+            // Use a weak ETag for the LDP-RS
             etag = new EntityTag(resource.getEtagValue(), true);
             date = resource.getLastModifiedDate();
         }
@@ -553,13 +556,16 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         // ContentExposingResource::addCacheControlHeaders function
         if (resource instanceof NonRdfSourceDescription) {
             final NonRdfSourceDescription description = (NonRdfSourceDescription)resource;
+            // Use a weak ETag for the LDP-RS
             etag = new EntityTag(description.getDescribedResource().getEtagValue(), true);
             date = description.getDescribedResource().getLastModifiedDate();
         } else if (resource instanceof NonRdfSource) {
             final NonRdfSource binary = (NonRdfSource)resource;
+            // Use a strong ETag for the LDP-NR
             etag = new EntityTag(binary.getDescription().getEtagValue());
             date = binary.getDescription().getLastModifiedDate();
         } else {
+            // Use a weak ETag for the LDP-RS
             etag = new EntityTag(resource.getEtagValue(), true);
             date = resource.getLastModifiedDate();
         }
