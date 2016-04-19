@@ -479,6 +479,22 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         final EntityTag etag;
         final Date date;
 
+        // The HTTP headers for ETags and Last-Modified dates are swapped for fedora:Binary
+        // resources and their descriptions. This may seem twisted.
+        //
+        // Here we are drawing a distinction between the HTTP resoruce and the LDP resource.
+        // As an HTTP resource, the last-modified header should reflect when the resource
+        // at the given URL was last changed. With fedora:Binary resources and their descriptions,
+        // this gets a little complicated, for the descriptions have, as their subjects, the
+        // binary itself. And the `fedora:lastModified` property produced by that NonRdfSourceDescription
+        // refers to the last-modified date of the binary -- not the last-modified date of the
+        // NonRdfSourceDescription. While that works for LDP, that falls on its face for HTTP.
+        //
+        // The reason being that a change to the NonRdfSourceDescription (e.g. adding or removing
+        // a property) does not change the fedora:lastModified date of the binary, yet, the
+        // representation of the triples in that NonRdfSourceDescription _did_ change. So, while
+        // the triple for fedora:lastModified will not change, the HTTP header for last-modified
+        // must change.
         if (resource instanceof NonRdfSourceDescription) {
             final NonRdfSourceDescription description = (NonRdfSourceDescription)resource;
             etag = new EntityTag(description.getDescribedResource().getEtagValue(), true);
@@ -533,6 +549,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         final Date date;
         final Date roundedDate = new Date();
 
+        // See the related note about the next block of code in the
+        // ContentExposingResource::addCacheControlHeaders function
         if (resource instanceof NonRdfSourceDescription) {
             final NonRdfSourceDescription description = (NonRdfSourceDescription)resource;
             etag = new EntityTag(description.getDescribedResource().getEtagValue(), true);
