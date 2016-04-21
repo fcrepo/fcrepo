@@ -63,16 +63,15 @@ public class TombstoneImpl extends FedoraResourceImpl implements Tombstone {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder();
         try {
-            sb.append(node.getPath());
+            String txt = node.getPath();
             if (node.hasProperty(JCR_CREATED)) {
-                sb.append(", departed: ");
-                sb.append(node.getProperty(JCR_CREATED).getString());
+                txt += ", departed: ";
+                txt += node.getProperty(JCR_CREATED).getString();
             }
+            return txt;
         } catch (RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
-        return sb.toString();
     }
 }
