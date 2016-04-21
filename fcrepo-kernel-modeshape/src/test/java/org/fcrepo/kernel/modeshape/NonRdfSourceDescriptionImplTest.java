@@ -43,6 +43,7 @@ import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
 /**
  * <p>{@link NonRdfSourceDescriptionImplTest} class.</p>
@@ -66,6 +67,9 @@ public class NonRdfSourceDescriptionImplTest implements FedoraTypes {
     private Node mockDsNode;
 
     @Mock
+    private Node mockContentNode;
+
+    @Mock
     private InputStream mockStream;
 
     @Mock
@@ -83,6 +87,7 @@ public class NonRdfSourceDescriptionImplTest implements FedoraTypes {
             when(mockDsNode.getMixinNodeTypes()).thenReturn(nodeTypes);
             when(mockDsNode.getName()).thenReturn(testDsId);
             when(mockDsNode.getSession()).thenReturn(mockSession);
+            when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContentNode);
             final NodeType mockNodeType = mock(NodeType.class);
             when(mockNodeType.getName()).thenReturn("nt:file");
             when(mockDsNode.getPrimaryNodeType()).thenReturn(mockNodeType);
@@ -112,8 +117,8 @@ public class NonRdfSourceDescriptionImplTest implements FedoraTypes {
         cal.setTime(expected);
         final Property mockProp = mock(Property.class);
         when(mockProp.getDate()).thenReturn(cal);
-        when(mockDsNode.hasProperty(JCR_CREATED)).thenReturn(true);
-        when(mockDsNode.getProperty(JCR_CREATED)).thenReturn(mockProp);
+        when(mockContentNode.hasProperty(JCR_CREATED)).thenReturn(true);
+        when(mockContentNode.getProperty(JCR_CREATED)).thenReturn(mockProp);
         final Date actual = testObj.getCreatedDate();
         assertEquals(expected.getTime(), actual.getTime());
     }
@@ -125,8 +130,8 @@ public class NonRdfSourceDescriptionImplTest implements FedoraTypes {
         cal.setTime(expected);
         final Property mockProp = mock(Property.class);
         when(mockProp.getDate()).thenReturn(cal);
-        when(mockDsNode.hasProperty(JCR_LASTMODIFIED)).thenReturn(true);
-        when(mockDsNode.getProperty(JCR_LASTMODIFIED)).thenReturn(mockProp);
+        when(mockContentNode.hasProperty(JCR_LASTMODIFIED)).thenReturn(true);
+        when(mockContentNode.getProperty(JCR_LASTMODIFIED)).thenReturn(mockProp);
         final Date actual = testObj.getLastModifiedDate();
         assertEquals(expected.getTime(), actual.getTime());
     }
