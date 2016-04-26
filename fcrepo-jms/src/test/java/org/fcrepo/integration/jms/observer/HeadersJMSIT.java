@@ -149,7 +149,7 @@ public class HeadersJMSIT implements MessageListener {
             awaitMessageOrFail(testFile, NODE_ADDED_EVENT_TYPE, HAS_SIZE.toString());
 
             binaryService.find(session, testFile)
-                .setContent(new ByteArrayInputStream("bar".getBytes()), "text/plain", null, null, null);
+                .setContent(new ByteArrayInputStream("barney".getBytes()), "text/plain", null, null, null);
             session.save();
             awaitMessageOrFail(testFile, PROP_CHANGED_EVENT_TYPE, HAS_SIZE.toString());
 

@@ -16,9 +16,6 @@
 package org.fcrepo.connector.file;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.infinispan.schematic.document.Document;
-import org.infinispan.schematic.document.EditableDocument;
-import org.infinispan.schematic.document.Json;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -29,6 +26,9 @@ import org.modeshape.jcr.value.Name;
 import org.modeshape.jcr.value.Property;
 import org.modeshape.jcr.value.basic.BasicName;
 import org.modeshape.jcr.value.basic.BasicSingleValueProperty;
+import org.modeshape.schematic.document.Document;
+import org.modeshape.schematic.document.EditableDocument;
+import org.modeshape.schematic.document.Json;
 
 import java.io.File;
 import java.io.FileInputStream;

@@ -29,7 +29,6 @@
       org.apache.commons.io.input,
       org.apache.commons.lang3,
       org.apache.http.*,
-      org.infinispan.manager,
       org.modeshape.jcr.*,
       org.springframework.*,
 
@@ -127,19 +126,6 @@
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-commons</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-cachestore-leveldb</artifactId>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>

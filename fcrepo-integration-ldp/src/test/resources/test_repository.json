@@ -6,6 +6,12 @@
     "default" : "default",
     "allowCreation" : true
   },
+  "storage" : {
+    "persistence" : {
+      "type" : "file",
+      "path" : "target/fedora_repository/store"
+    }
+  },
   "security" : {
     "anonymous" : {
       "roles" : ["readonly","readwrite","admin"],
