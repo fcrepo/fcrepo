@@ -57,24 +57,6 @@
         <version>4.16.6.Final</version>
       </dependency>
       <dependency>
-        <groupId>org.infinispan</groupId>
-        <artifactId>infinispan-cachestore-leveldb</artifactId>
-        <version>${infinispan.version}</version>
-        <exclusions>
-          <!-- leveldbjni platform-specific builds pull in different versions of this dep; we'll pull in the latest below. -->
-          <exclusion>
-            <groupId>org.fusesource.leveldbjni</groupId>
-            <artifactId>leveldbjni</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <!-- pulling in the latest version of the dependency to make DependencyConvergence happy -->
-      <dependency>
-        <groupId>org.fusesource.leveldbjni</groupId>
-        <artifactId>leveldbjni</artifactId>
-        <version>1.7</version>
-      </dependency>
-      <dependency>
         <groupId>org.xerial.snappy</groupId>
         <artifactId>snappy-java</artifactId>
         <version>1.0.5</version>

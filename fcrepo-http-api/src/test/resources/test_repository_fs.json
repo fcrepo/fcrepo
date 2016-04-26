@@ -7,13 +7,10 @@
         "allowCreation" : true
     },
     "storage": {
-        "cacheName" : "FedoraRepository",
-        "cacheConfiguration": "config/infinispan/file/infinispan.xml",
-        "binaryStorage" : {
-            "type" : "file",
-            "directory" : "target/FedoraRepositoryFiles",
-            "minimumBinarySizeInBytes" : 4
-        }
+      "persistence" : {
+        "type" : "file",
+        "path" : "${fcrepo.ispn.repo.cache:target/FedoraRepository/storage}"
+      }
     },
     "externalSources" : {
       "fileSystem" : {
