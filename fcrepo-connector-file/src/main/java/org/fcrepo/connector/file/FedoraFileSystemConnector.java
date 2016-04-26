@@ -42,7 +42,6 @@ import java.util.Map;
 import com.google.common.annotations.VisibleForTesting;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.infinispan.schematic.document.Document;
 import org.modeshape.connector.filesystem.FileSystemConnector;
 import org.modeshape.jcr.api.value.DateTime;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
@@ -53,6 +52,7 @@ import org.modeshape.jcr.value.BinaryValue;
 import org.modeshape.jcr.value.Name;
 import org.modeshape.jcr.value.Property;
 import org.modeshape.jcr.value.basic.BasicSingleValueProperty;
+import org.modeshape.schematic.document.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

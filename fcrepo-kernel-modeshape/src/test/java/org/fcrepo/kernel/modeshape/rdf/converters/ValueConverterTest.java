@@ -26,7 +26,6 @@ import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
-import org.infinispan.schematic.document.ParsingException;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -37,6 +36,7 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 import org.modeshape.jcr.ModeShapeEngine;
 import org.modeshape.jcr.RepositoryConfiguration;
+import org.modeshape.schematic.document.ParsingException;
 
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;

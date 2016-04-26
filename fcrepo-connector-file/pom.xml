@@ -16,7 +16,6 @@
 
       javax.jcr.*,
 
-      org.infinispan.schematic.*,
       org.modeshape.connector.filesystem,
       org.modeshape.jcr.*,
 

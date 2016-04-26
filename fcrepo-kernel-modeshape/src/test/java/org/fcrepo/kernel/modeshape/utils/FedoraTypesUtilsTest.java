@@ -356,7 +356,7 @@ public class FedoraTypesUtilsTest {
         when(mockNode.getSession()).thenReturn(mockSession);
         when(mockSession.getRepository()).thenReturn(mockJcrRepository);
         when(mockJcrRepository.getConfiguration()).thenReturn(mockConfig);
-        when(mockConfig.getStoreName()).thenReturn("BinaryStore");
+        when(mockConfig.getName()).thenReturn("BinaryStore");
         assertFalse(isExternalNode.test(mockNode));
     }
 
@@ -370,7 +370,7 @@ public class FedoraTypesUtilsTest {
         when(mockNode.getSession()).thenReturn(mockSession);
         when(mockSession.getRepository()).thenReturn(mockJcrRepository);
         when(mockJcrRepository.getConfiguration()).thenReturn(mockConfig);
-        when(mockConfig.getStoreName()).thenReturn("BinaryStore");
+        when(mockConfig.getName()).thenReturn("BinaryStore");
         assertTrue(isExternalNode.test(mockNode));
     }
 
