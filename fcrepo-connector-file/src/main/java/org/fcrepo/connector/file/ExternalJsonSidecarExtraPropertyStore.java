@@ -19,14 +19,14 @@ import static java.nio.file.Files.deleteIfExists;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 
-import org.infinispan.schematic.Schematic;
-import org.infinispan.schematic.document.Document;
-import org.infinispan.schematic.document.EditableDocument;
-import org.infinispan.schematic.document.Json;
 import org.modeshape.jcr.cache.document.DocumentTranslator;
 import org.modeshape.jcr.spi.federation.ExtraPropertiesStore;
 import org.modeshape.jcr.value.Name;
 import org.modeshape.jcr.value.Property;
+import org.modeshape.schematic.Schematic;
+import org.modeshape.schematic.document.Document;
+import org.modeshape.schematic.document.EditableDocument;
+import org.modeshape.schematic.document.Json;
 
 import java.util.Collections;
 import java.io.File;
