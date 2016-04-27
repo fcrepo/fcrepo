@@ -9,7 +9,7 @@
     "storage": {
       "persistence" : {
         "type" : "file",
-        "path" : "${fcrepo.ispn.repo.cache:target/FedoraRepository/storage}"
+        "path" : "target/fedora_repository/store"
       }
     },
     "externalSources" : {

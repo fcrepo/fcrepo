@@ -380,6 +380,12 @@
           <webApp>
             <contextPath>${fcrepo.test.context.path}</contextPath>
           </webApp>
+          <systemProperties>
+            <systemProperty>
+              <name>fcrepo.modeshape.configuration</name>
+              <value>classpath:/config/file-simple/repository.json</value>
+            </systemProperty>
+          </systemProperties>
 
         </configuration>
         <executions>
@@ -395,6 +401,11 @@
               <stopPort>${jetty.dynamic.stop.port}</stopPort>
 
               <systemProperties>
+                <systemProperty>
+                  <name>fcrepo.modeshape.configuration</name>
+                  <value>classpath:/config/file-simple/repository.json</value>
+                </systemProperty>
+
                 <systemProperty>
                   <name>fcrepo.dynamic.test.port</name>
                   <value>${fcrepo.dynamic.test.port}</value>
