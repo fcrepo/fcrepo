@@ -6,13 +6,22 @@
         "default" : "default",
         "allowCreation" : true
     },
+    "clustering" : {
+        "clusterName" : "fcrepo-cluster",
+        "configuration" : "${fcrepo.jgroups.configuration:config/jgroups-fcrepo-tcp.xml}"
+    },
     "storage" : {
-        "cacheName" : "FedoraRepository",
-        "cacheConfiguration" : "${fcrepo.ispn.configuration:config/infinispan/clustered/infinispan.xml}",
+        "persistence": {
+            "type" : "db",
+            "connectionUrl": "jdbc:mysql://${fcrepo.mysql.host}:${fcrepo.mysql.port:3306}/fcrepo?createDatabaseIfNotExist=true",
+            "driver" : "com.mysql.jdbc.Driver",
+            "username" : "${fcrepo.mysql.username}",
+            "password" : "${fcrepo.mysql.password}"
+        },
         "binaryStorage" : {
-            "type" : "cache",
-            "dataCacheName" : "FedoraRepositoryBinaryData",
-            "metadataCacheName" : "FedoraRepositoryMetaData"
+            "type" : "file",
+            "directory" : "${fcrepo.binary.directory:nfs/binaries}",
+            "minimumBinarySizeInBytes" : 4096
         }
     },
     "security" : {
