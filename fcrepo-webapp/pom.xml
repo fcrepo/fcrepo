@@ -367,7 +367,7 @@
           <systemProperties>
             <systemProperty>
               <name>fcrepo.modeshape.configuration</name>
-              <value>classpath:/config/minimal-default/repository.json</value>
+              <value>classpath:/config/file-simple/repository.json</value>
             </systemProperty>
           </systemProperties>
 
@@ -387,7 +387,7 @@
               <systemProperties>
                 <systemProperty>
                   <name>fcrepo.modeshape.configuration</name>
-                  <value>classpath:/config/minimal-default/repository.json</value>
+                  <value>classpath:/config/file-simple/repository.json</value>
                 </systemProperty>
 
                 <systemProperty>
