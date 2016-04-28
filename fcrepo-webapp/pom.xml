@@ -472,7 +472,7 @@
         <activeByDefault>false</activeByDefault>
       </activation>
       <properties>
-        <fcrepo.modeshape.configuration>classpath:/config/minimal-default/repository.json</fcrepo.modeshape.configuration>
+        <fcrepo.modeshape.configuration>classpath:/config/file-simple/repository.json</fcrepo.modeshape.configuration>
       </properties>
 
       <build>
