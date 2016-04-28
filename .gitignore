@@ -13,6 +13,7 @@ ObjectStore/
 *~
 fcrepo4-data/
 *.iml
+.idea/
 .checkstyle
 fcrepo-integration-ldp/report-*
 fcrepo-integration-ldp/report
