@@ -32,6 +32,8 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import static org.fcrepo.kernel.modeshape.TombstoneImpl.hasMixin;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
@@ -82,6 +84,17 @@ public class TombstoneImplIT extends AbstractIT {
         } catch (final RepositoryRuntimeException e) {
             //ok
         }
+    }
+
+    @Test
+    public void testTombstoneMessage() {
+        final String pid = getRandomPid();
+        final Container container = containerService.findOrCreate(session, "/" + pid);
+        final TombstoneImpl tombstone = new TombstoneImpl(container.getNode());
+
+        final String msg = tombstone.toString();
+        assertFalse("Msg should not contain 'jcr:': " + msg, msg.contains("jcr:"));
+        assertTrue("Msg should contain id: " + pid + " : " + msg, msg.contains(pid));
     }
 
     @Test (expected = RepositoryRuntimeException.class)

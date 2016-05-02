@@ -462,7 +462,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test(expected = MalformedRdfException.class)
-    public void testAddMissingReference() throws RepositoryException, MalformedRdfException {
+    public void testAddMissingReference() throws MalformedRdfException {
         final FedoraResource object =
                 containerService.findOrCreate(session, "/testRefObject");
 
@@ -501,7 +501,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test (expected = IllegalArgumentException.class)
-    public void testInvalidSparqlUpdateValidation() throws RepositoryException {
+    public void testInvalidSparqlUpdateValidation() {
         final String pid = UUID.randomUUID().toString();
         final FedoraResource object =
                 containerService.findOrCreate(session, pid);
@@ -513,7 +513,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test (expected = InvalidPrefixException.class)
-    public void testInvalidPrefixSparqlUpdateValidation() throws RepositoryException {
+    public void testInvalidPrefixSparqlUpdateValidation() {
         final String pid = UUID.randomUUID().toString();
         final FedoraResource object =
                 containerService.findOrCreate(session, pid);
@@ -530,7 +530,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testValidSparqlUpdateWithLiteralTrailingSlash() throws RepositoryException {
+    public void testValidSparqlUpdateWithLiteralTrailingSlash() {
         final String pid = UUID.randomUUID().toString();
         final FedoraResource object = containerService.findOrCreate(session, pid);
         object.updateProperties(
@@ -541,7 +541,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testValidSparqlUpdateValidationAltSyntax() throws RepositoryException {
+    public void testValidSparqlUpdateValidationAltSyntax() {
         final String pid = UUID.randomUUID().toString();
         final FedoraResource object = containerService.findOrCreate(session, pid);
         object.updateProperties(subjects,
@@ -554,7 +554,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test (expected = IllegalArgumentException.class)
-    public void testInvalidSparqlUpdateValidationAltSyntax() throws RepositoryException {
+    public void testInvalidSparqlUpdateValidationAltSyntax() {
         final String pid = UUID.randomUUID().toString();
         final FedoraResource object = containerService.findOrCreate(session, pid);
         object.updateProperties(subjects,
@@ -567,7 +567,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testValidSparqlUpdateValidation1() throws RepositoryException {
+    public void testValidSparqlUpdateValidation1() {
         final String pid = UUID.randomUUID().toString();
         final FedoraResource object =
                 containerService.findOrCreate(session, pid);
@@ -578,7 +578,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testValidSparqlUpdateValidation2() throws RepositoryException {
+    public void testValidSparqlUpdateValidation2() {
         final String pid = UUID.randomUUID().toString();
         final FedoraResource object =
                 containerService.findOrCreate(session, pid);
