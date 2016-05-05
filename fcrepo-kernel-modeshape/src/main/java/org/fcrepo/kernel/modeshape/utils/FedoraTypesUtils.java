@@ -311,8 +311,7 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
     public static Node getJcrNode(final FedoraResource resource) {
         if (resource instanceof FedoraResourceImpl) {
             return ((FedoraResourceImpl)resource).getNode();
-        } else {
-            throw new IllegalArgumentException("FedoraResource is of the wrong type");
         }
+        throw new IllegalArgumentException("FedoraResource is of the wrong type");
     }
 }
