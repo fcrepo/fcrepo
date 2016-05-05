@@ -19,9 +19,6 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TOMBSTONE;
 import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.validatePath;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.IOException;
-import java.io.InputStream;
-
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -29,11 +26,8 @@ import javax.jcr.Session;
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
-import org.fcrepo.kernel.modeshape.rdf.impl.NodeTypeRdfContext;
-import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
@@ -126,36 +120,6 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
         final FedoraResourceImpl fedoraResource = new FedoraResourceImpl(parent);
         final Node n  = fedoraResource.findOrCreateChild(parent, path, FEDORA_TOMBSTONE);
         LOGGER.info("Created tombstone at {} ", n.getPath());
-    }
-
-    /**
-     * @param session the session
-     * @return node types
-     */
-    @Override
-    @Deprecated
-    public RdfStream getNodeTypes(final Session session) {
-        try {
-            return new NodeTypeRdfContext(session.getWorkspace().getNodeTypeManager());
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-    }
-
-    /**
-     * @param session the session
-     * @param cndStream the cnd stream
-     * @throws IOException if io exception occurred
-     */
-    @Override
-    @Deprecated
-    public void registerNodeTypes(final Session session, final InputStream cndStream) throws IOException {
-        try {
-            final NodeTypeManager nodeTypeManager = (NodeTypeManager) session.getWorkspace().getNodeTypeManager();
-            nodeTypeManager.registerNodeTypes(cndStream, true);
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
     }
 
     /**

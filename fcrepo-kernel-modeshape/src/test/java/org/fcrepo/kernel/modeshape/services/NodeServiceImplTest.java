@@ -21,8 +21,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-import java.io.InputStream;
-
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
 import javax.jcr.PropertyIterator;
@@ -123,24 +121,5 @@ public class NodeServiceImplTest {
         final String badPath = "/foo/bad_ns:bar";
         when(mockNameReg.getURI("bad_ns")).thenThrow(new FedoraInvalidNamespaceException("Invalid namespace (bad_ns)"));
         testObj.exists(mockSession, badPath);
-    }
-
-    @Test
-    public void testGetNodeTypes() throws Exception {
-        when(mockNodeTypeManager.getPrimaryNodeTypes()).thenReturn(mock(NodeTypeIterator.class));
-        when(mockNodeTypeManager.getMixinNodeTypes()).thenReturn(mock(NodeTypeIterator.class));
-        testObj.getNodeTypes(mockSession);
-
-        verify(mockNodeTypeManager).getPrimaryNodeTypes();
-        verify(mockNodeTypeManager).getMixinNodeTypes();
-    }
-
-    @Test
-    public void testRegisterNodeTypes() throws Exception {
-        try (final InputStream mockInputStream = mock(InputStream.class)) {
-            testObj.registerNodeTypes(mockSession, mockInputStream);
-
-            verify(mockNodeTypeManager).registerNodeTypes(mockInputStream, true);
-        }
     }
 }
