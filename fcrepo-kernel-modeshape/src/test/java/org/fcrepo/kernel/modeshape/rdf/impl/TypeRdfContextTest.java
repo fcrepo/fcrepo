@@ -19,6 +19,7 @@ import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -54,7 +55,7 @@ public class TypeRdfContextTest {
 
 
     @Mock
-    private FedoraResource mockResource;
+    private FedoraResourceImpl mockResource;
 
     @Mock
     private Node mockNode;

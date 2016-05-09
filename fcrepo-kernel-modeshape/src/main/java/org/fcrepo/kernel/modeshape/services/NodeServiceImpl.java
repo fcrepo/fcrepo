@@ -16,6 +16,7 @@
 package org.fcrepo.kernel.modeshape.services;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TOMBSTONE;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.validatePath;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -101,7 +102,7 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
     public void moveObject(final Session session, final String source, final String destination) {
         try {
             final FedoraResource srcResource = find(session, source);
-            final Node sourceNode = srcResource.getNode();
+            final Node sourceNode = getJcrNode(srcResource);
             final String name = sourceNode.getName();
             final Node parent = sourceNode.getDepth() > 0 ? sourceNode.getParent() : null;
 

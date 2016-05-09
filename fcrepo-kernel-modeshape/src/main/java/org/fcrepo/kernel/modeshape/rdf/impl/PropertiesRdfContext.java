@@ -15,6 +15,7 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalProperty;
 import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -55,14 +56,14 @@ public class PropertiesRdfContext extends NodeRdfContext {
         throws RepositoryException {
         super(resource, idTranslator);
         concat(triplesFromProperties(resource,
-                new PropertyToTriple(resource.getNode().getSession(), translator())));
+                new PropertyToTriple(getJcrNode(resource).getSession(), translator())));
     }
 
     @SuppressWarnings("unchecked")
     private static Stream<Triple> triplesFromProperties(final FedoraResource n, final PropertyToTriple propertyToTriple)
             throws RepositoryException {
         LOGGER.trace("Creating triples for node: {}", n);
-        return iteratorToStream(n.getNode().getProperties())
+        return iteratorToStream(getJcrNode(n).getProperties())
             .filter(isInternalProperty.negate())
             .flatMap(propertyToTriple);
     }

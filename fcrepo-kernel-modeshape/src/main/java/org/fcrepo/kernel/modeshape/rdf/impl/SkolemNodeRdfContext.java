@@ -38,6 +38,7 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.modeshape.rdf.converters.ValueConverter.nodeForValue;
 import static org.fcrepo.kernel.modeshape.rdf.impl.ReferencesRdfContext.REFERENCE_TYPES;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isSkolemNode;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedPredicate.uncheck;
 import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
@@ -72,8 +73,8 @@ public class SkolemNodeRdfContext extends NodeRdfContext {
 
     @SuppressWarnings("unchecked")
     private static Stream<Node> getBlankNodes(final FedoraResource resource) throws RepositoryException {
-        final Function<Value, Node> valueToNode = sessionValueToNode.apply(resource.getNode().getSession());
-        final Stream<Property> refs = iteratorToStream(resource.getNode().getProperties())
+        final Function<Value, Node> valueToNode = sessionValueToNode.apply(getJcrNode(resource).getSession());
+        final Stream<Property> refs = iteratorToStream(getJcrNode(resource).getProperties())
                 .filter(uncheck((final Property p) -> REFERENCE_TYPES.contains(p.getType())));
         return iteratorToStream(new PropertyValueIterator(refs.iterator()))
                 .map(valueToNode)

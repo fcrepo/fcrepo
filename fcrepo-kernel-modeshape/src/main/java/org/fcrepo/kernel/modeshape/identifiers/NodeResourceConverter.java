@@ -15,6 +15,8 @@
  */
 package org.fcrepo.kernel.modeshape.identifiers;
 
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
+
 import com.google.common.base.Converter;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -61,6 +63,6 @@ public class NodeResourceConverter extends Converter<Node, FedoraResource> {
 
     @Override
     protected Node doBackward(final FedoraResource resource) {
-        return resource.getNode();
+        return getJcrNode(resource);
     }
 }

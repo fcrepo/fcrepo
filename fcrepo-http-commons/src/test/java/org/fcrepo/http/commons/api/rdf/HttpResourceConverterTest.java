@@ -46,6 +46,7 @@ import javax.ws.rs.core.UriBuilder;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_NODE;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
@@ -64,13 +65,7 @@ public class HttpResourceConverterTest {
     private TxSession txSession;
 
     @Mock
-    private Node node;
-
-    @Mock
-    private Node versionedNode;
-
-    @Mock
-    private Node contentNode;
+    private Node node, versionedNode, contentNode;
 
     @Mock
     private Property mockProperty;
@@ -114,7 +109,7 @@ public class HttpResourceConverterTest {
     @Test
     public void testDoForward() {
         final FedoraResource converted = converter.convert(resource);
-        assertEquals(node, converted.getNode());
+        assertEquals(node, getJcrNode(converted));
     }
 
     @Test
@@ -123,7 +118,7 @@ public class HttpResourceConverterTest {
         when(node.getNode(JCR_CONTENT)).thenReturn(contentNode);
         final FedoraResource converted = converter.convert(resource);
         assertTrue(converted instanceof FedoraBinary);
-        assertEquals(contentNode, converted.getNode());
+        assertEquals(contentNode, getJcrNode(converted));
     }
 
     @Test
@@ -131,7 +126,7 @@ public class HttpResourceConverterTest {
         when(node.isNodeType(FEDORA_NON_RDF_SOURCE_DESCRIPTION)).thenReturn(true);
         final FedoraResource converted = converter.convert(metadataResource);
         assertTrue(converted instanceof NonRdfSourceDescription);
-        assertEquals(node, converted.getNode());
+        assertEquals(node, getJcrNode(converted));
     }
 
     @Test
@@ -139,7 +134,7 @@ public class HttpResourceConverterTest {
         when(session.getNode("/" + path + "/#/with-a-hash")).thenReturn(node);
         final FedoraResource converted =
                 converter.convert(createResource("http://localhost:8080/some/" + path + "#with-a-hash"));
-        assertEquals(node, converted.getNode());
+        assertEquals(node, getJcrNode(converted));
     }
 
     @Test
@@ -151,7 +146,7 @@ public class HttpResourceConverterTest {
         when(txSession.getWorkspace()).thenReturn(mockWorkspace);
         final Resource resource = createResource("http://localhost:8080/some/tx:xyz/" + path);
         final FedoraResource converted = converter.convert(resource);
-        assertEquals(node, converted.getNode());
+        assertEquals(node, getJcrNode(converted));
     }
 
     @Test
@@ -159,14 +154,14 @@ public class HttpResourceConverterTest {
         final Resource resource = createResource("http://localhost:8080/some/[xyz]");
         when(session.getNode("/[xyz]")).thenReturn(node);
         final FedoraResource converted = converter.convert(resource);
-        assertEquals(node, converted.getNode());
+        assertEquals(node, getJcrNode(converted));
     }
 
     @Test
     public void testDoForwardRoot() {
         final Resource resource = createResource("http://localhost:8080/some/");
         final FedoraResource converted = converter.convert(resource);
-        assertEquals(node, converted.getNode());
+        assertEquals(node, getJcrNode(converted));
         assertTrue(converter.inDomain(resource));
     }
 
@@ -174,7 +169,7 @@ public class HttpResourceConverterTest {
     public void testDoForwardRootWithoutSlash() {
         final Resource resource = createResource("http://localhost:8080/some");
         final FedoraResource converted = converter.convert(resource);
-        assertEquals(node, converted.getNode());
+        assertEquals(node, getJcrNode(converted));
         assertTrue(converter.inDomain(resource));
     }
 
@@ -213,7 +208,7 @@ public class HttpResourceConverterTest {
         when(mockVersionHistory.hasVersionLabel("x")).thenReturn(true);
         when(mockVersionHistory.getVersionByLabel("x")).thenReturn(mockVersion);
         final FedoraResource converted = converter.convert(versionedResource);
-        assertEquals(versionedNode, converted.getNode());
+        assertEquals(versionedNode, getJcrNode(converted));
     }
 
     @Test
@@ -224,7 +219,7 @@ public class HttpResourceConverterTest {
         when(mockVersionHistory.getVersionByLabel("x")).thenReturn(mockVersion);
         when(mockVersion.getFrozenNode()).thenReturn(versionedNode);
         final FedoraResource converted = converter.convert(versionedResource);
-        assertEquals(versionedNode, converted.getNode());
+        assertEquals(versionedNode, getJcrNode(converted));
     }
 
     @Test(expected = RepositoryRuntimeException.class)

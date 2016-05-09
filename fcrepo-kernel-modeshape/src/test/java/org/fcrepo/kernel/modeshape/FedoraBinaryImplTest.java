@@ -22,7 +22,9 @@ import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 import org.modeshape.jcr.api.ValueFactory;
 
 import javax.jcr.Node;
@@ -38,6 +40,7 @@ import java.net.URISyntaxException;
 import java.util.Calendar;
 import java.util.Date;
 
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.TestHelpers.checksumString;
 import static org.fcrepo.kernel.modeshape.utils.TestHelpers.getContentNodeMock;
 import static org.junit.Assert.assertEquals;
@@ -46,7 +49,6 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
@@ -57,6 +59,7 @@ import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
  *
  * @author ksclarke
  */
+@RunWith(MockitoJUnitRunner.class)
 public class FedoraBinaryImplTest implements FedoraTypes {
 
     private static final String testDsId = "testDs";
@@ -67,10 +70,7 @@ public class FedoraBinaryImplTest implements FedoraTypes {
     private Session mockSession;
 
     @Mock
-    private Node mockRootNode;
-
-    @Mock
-    private Node mockDsNode;
+    private Node mockRootNode, mockDsNode, mockContent;
 
     @Mock
     private InputStream mockStream;
@@ -81,12 +81,8 @@ public class FedoraBinaryImplTest implements FedoraTypes {
     @Mock
     private NodeType mockDsNodeType;
 
-    @Mock
-    private Node mockContent;
-
     @Before
     public void setUp() {
-        initMocks(this);
         final NodeType[] nodeTypes = new NodeType[] { mockDsNodeType };
         try {
             when(mockDsNodeType.getName()).thenReturn(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
@@ -112,7 +108,7 @@ public class FedoraBinaryImplTest implements FedoraTypes {
 
     @Test
     public void testGetNode() {
-        assertEquals(testObj.getNode(), mockContent);
+        assertEquals(getJcrNode(testObj), mockContent);
     }
 
     @Test

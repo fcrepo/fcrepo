@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import javax.jcr.Node;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
@@ -41,11 +40,6 @@ import com.hp.hpl.jena.rdf.model.Model;
  * @since Jan 10, 2014
  */
 public interface FedoraResource {
-
-    /**
-     * @return The JCR node that backs this object.
-     */
-    Node getNode();
 
     /**
      * Get the path to the JCR node
@@ -237,11 +231,11 @@ public interface FedoraResource {
     FedoraResource getUnfrozenResource();
 
     /**
-     * Get the node for this object at the version provided.
+     * Get a resource version for this object with the provided label.
      * @param label the label
      * @return the node for this object at the version provided
      */
-    Node getNodeVersion(String label);
+    FedoraResource getVersion(String label);
 
     /**
      * This method returns the version label of this frozen resource.

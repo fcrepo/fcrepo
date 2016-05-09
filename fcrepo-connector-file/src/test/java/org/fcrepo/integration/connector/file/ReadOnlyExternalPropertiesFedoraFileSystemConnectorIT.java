@@ -23,6 +23,7 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static com.google.common.collect.Iterators.size;
 import static org.junit.Assert.assertEquals;
 
@@ -59,7 +60,7 @@ public class ReadOnlyExternalPropertiesFedoraFileSystemConnectorIT extends Abstr
             final FedoraResource object = nodeService.find(session, testFilePath());
             assertEquals(
                     "There should be exactly as many visible nodes as actual files (ie, no hidden sidecar files).",
-                    fileForNode().getParentFile().list().length, getChildCount(object.getNode().getParent()));
+                    fileForNode().getParentFile().list().length, getChildCount(getJcrNode(object).getParent()));
         } finally {
             session.logout();
         }

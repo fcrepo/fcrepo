@@ -17,6 +17,7 @@ package org.fcrepo.kernel.modeshape.utils;
 
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getReferencePropertyName;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isExternalNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalReferenceProperty;
@@ -138,7 +139,7 @@ public class NodePropertiesTools {
                                           final Resource resource) throws RepositoryException {
 
         try {
-            final Node refNode = idTranslator.convert(resource).getNode();
+            final Node refNode = getJcrNode(idTranslator.convert(resource));
 
             if (isExternalNode.test(refNode)) {
                 // we can't apply REFERENCE properties to external resources
@@ -180,7 +181,7 @@ public class NodePropertiesTools {
 
         final String referencePropertyName = getReferencePropertyName(propertyName);
 
-        final Node refNode = idTranslator.convert(resource).getNode();
+        final Node refNode = getJcrNode(idTranslator.convert(resource));
         final Value v = node.getSession().getValueFactory().createValue(refNode, true);
         removeNodeProperty(node, referencePropertyName, v);
     }

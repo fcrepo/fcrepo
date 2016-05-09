@@ -32,6 +32,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import static org.fcrepo.kernel.modeshape.TombstoneImpl.hasMixin;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -68,14 +69,14 @@ public class TombstoneImplIT extends AbstractIT {
         final String pid = getRandomPid();
         final Container container = containerService.findOrCreate(session, "/" + pid + "/a");
         session.logout();
-        hasMixin(container.getNode());
+        hasMixin(getJcrNode(container));
     }
 
     @Test
     public void testDeleteObject() {
         final String pid = getRandomPid();
         final Container container = containerService.findOrCreate(session, "/" + pid + "/a");
-        final TombstoneImpl tombstone = new TombstoneImpl(container.getNode());
+        final TombstoneImpl tombstone = new TombstoneImpl(getJcrNode(container));
         tombstone.delete();
 
         try {
@@ -90,7 +91,7 @@ public class TombstoneImplIT extends AbstractIT {
     public void testTombstoneMessage() {
         final String pid = getRandomPid();
         final Container container = containerService.findOrCreate(session, "/" + pid);
-        final TombstoneImpl tombstone = new TombstoneImpl(container.getNode());
+        final TombstoneImpl tombstone = new TombstoneImpl(getJcrNode(container));
 
         final String msg = tombstone.toString();
         assertFalse("Msg should not contain 'jcr:': " + msg, msg.contains("jcr:"));
@@ -103,7 +104,7 @@ public class TombstoneImplIT extends AbstractIT {
         containerService.findOrCreate(session, "/" + pid + "/a");
         session.save();
         final Container container = containerService.findOrCreate(session, "/" + pid + "/a");
-        final TombstoneImpl tombstone = new TombstoneImpl(container.getNode());
+        final TombstoneImpl tombstone = new TombstoneImpl(getJcrNode(container));
         session.logout();
         tombstone.delete();
     }

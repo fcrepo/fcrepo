@@ -26,6 +26,7 @@ import static java.util.stream.Stream.of;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_PARENT;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.VERSIONABLE;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -49,7 +50,7 @@ public class ParentRdfContext extends NodeRdfContext {
             throws RepositoryException {
         super(resource, idTranslator);
 
-        if (resource.getNode().getDepth() > 0) {
+        if (getJcrNode(resource).getDepth() > 0) {
             LOGGER.trace("Determined that this resource has a parent.");
             // The parent node of a frozen node for a versionable resource is not a node we want to link to because it
             // is in the jcr:system space

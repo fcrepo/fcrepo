@@ -22,6 +22,7 @@ import java.util.function.Predicate;
 
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.fcrepo.kernel.modeshape.services.functions.AnyTypesPredicate;
 import org.modeshape.jcr.JcrRepository;
 import org.modeshape.jcr.cache.NodeKey;
@@ -301,4 +302,16 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
         return session.getRootNode();
     }
 
+    /**
+     * Retrieve the underlying JCR Node from the FedoraResource
+     *
+     * @param resource the Fedora resource
+     * @return the JCR Node
+     */
+    public static Node getJcrNode(final FedoraResource resource) {
+        if (resource instanceof FedoraResourceImpl) {
+            return ((FedoraResourceImpl)resource).getNode();
+        }
+        throw new IllegalArgumentException("FedoraResource is of the wrong type");
+    }
 }

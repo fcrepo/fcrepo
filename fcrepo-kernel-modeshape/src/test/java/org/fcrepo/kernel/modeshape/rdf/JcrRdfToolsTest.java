@@ -72,8 +72,8 @@ import javax.jcr.version.VersionIterator;
 import javax.jcr.version.VersionManager;
 
 import org.fcrepo.kernel.api.FedoraTypes;
-import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.utils.CacheEntry;
+import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.modeshape.testutilities.TestPropertyIterator;
 import org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils;
@@ -557,28 +557,8 @@ public class JcrRdfToolsTest implements FedoraTypes {
     private MetricRegistry mockMetrics;
 
     @Mock
-    private Node mockChildNode;
-
-    @Mock
-    private Node mockChildNode2;
-
-    @Mock
-    private Node mockChildNode3;
-
-    @Mock
-    private Node mockChildNode4;
-
-    @Mock
-    private Node mockChildNode5;
-
-    @Mock
-    private Node mockFullChildNode;
-
-    @Mock
-    private Node mockRootNode;
-
-    @Mock
-    private Node mockHashNode;
+    private Node mockChildNode, mockChildNode2, mockChildNode3, mockChildNode4, mockChildNode5, mockFullChildNode,
+            mockRootNode, mockHashNode;
 
     @Mock
     private Counter mockCounter;
@@ -590,15 +570,12 @@ public class JcrRdfToolsTest implements FedoraTypes {
     private NodeTypeIterator mockNodeTypeIterator;
 
     @Mock
-    private NodeType mockMixinNodeType;
-
-    @Mock
-    private NodeType mockPrimaryNodeType;
+    private NodeType mockMixinNodeType, mockPrimaryNodeType;
 
     @Mock
     private NamespaceRegistry mockNsRegistry;
 
     @Mock
-    private FedoraResource mockFedoraResource;
+    private FedoraResourceImpl mockFedoraResource;
 
 }

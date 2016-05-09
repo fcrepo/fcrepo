@@ -27,6 +27,7 @@ import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDboolean;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static org.fcrepo.kernel.api.RdfLexicon.WRITABLE;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 
 /**
  * @author cabeer
@@ -46,7 +47,7 @@ public class AclRdfContext extends NodeRdfContext {
 
         boolean writable = false;
         try {
-            resource().getNode().getSession().checkPermission( resource().getPath(), "add_node,set_property,remove" );
+            getJcrNode(resource()).getSession().checkPermission( resource().getPath(), "add_node,set_property,remove" );
             writable = true;
         } catch ( final AccessControlException ex ) {
             writable = false;

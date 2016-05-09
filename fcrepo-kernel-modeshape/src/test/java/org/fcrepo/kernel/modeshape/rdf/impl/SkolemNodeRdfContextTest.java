@@ -16,8 +16,8 @@
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
 import com.hp.hpl.jena.rdf.model.Model;
-import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.fcrepo.kernel.modeshape.testutilities.TestPropertyIterator;
 
 import org.junit.Before;
@@ -54,7 +54,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 public class SkolemNodeRdfContextTest {
 
     @Mock
-    private FedoraResource mockResource;
+    private FedoraResourceImpl mockResource;
 
     @Mock
     private Node mockNode;

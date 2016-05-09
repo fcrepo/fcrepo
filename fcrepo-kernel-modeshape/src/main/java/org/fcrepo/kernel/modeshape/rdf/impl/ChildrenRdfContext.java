@@ -30,6 +30,7 @@ import static com.hp.hpl.jena.graph.Triple.create;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_CHILD_COUNT;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -53,7 +54,7 @@ public class ChildrenRdfContext extends NodeRdfContext {
             throws RepositoryException {
         super(resource, idTranslator);
 
-        if (resource.getNode().hasNodes()) {
+        if (getJcrNode(resource).hasNodes()) {
             LOGGER.trace("Found children of this resource: {}", resource.getPath());
 
             // Count the number of children

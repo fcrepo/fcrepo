@@ -32,6 +32,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.modeshape.rdf.ManagedRdf.isManagedTriple;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
 
 /**
@@ -65,7 +66,7 @@ public class HashRdfContext extends NodeRdfContext {
 
     @SuppressWarnings("unchecked")
     private static Stream<Node> getNodeStream(final FedoraResource resource) throws RepositoryException {
-        final Node node = resource.getNode();
+        final Node node = getJcrNode(resource);
         if (node.hasNode("#")) {
             return iteratorToStream(node.getNode("#").getNodes());
         }

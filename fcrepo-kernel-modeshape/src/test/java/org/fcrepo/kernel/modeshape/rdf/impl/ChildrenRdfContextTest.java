@@ -24,6 +24,7 @@ import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -53,13 +54,7 @@ import java.util.stream.Stream;
 public class ChildrenRdfContextTest {
 
     @Mock
-    private FedoraResource mockResource;
-
-    @Mock
-    private Node mockResourceNode;
-
-    @Mock
-    private Node mockBinaryNode;
+    private Node mockResourceNode, mockBinaryNode;
 
     @Mock
     private NonRdfSourceDescription mockNonRdfSourceDescription;
@@ -68,13 +63,7 @@ public class ChildrenRdfContextTest {
     private Session mockSession;
 
     @Mock
-    private FedoraResource mockRes1;
-
-    @Mock
-    private FedoraResource mockRes2;
-
-    @Mock
-    private FedoraResource mockRes3;
+    private FedoraResourceImpl mockResource, mockRes1, mockRes2, mockRes3;
 
     private IdentifierConverter<Resource, FedoraResource> idTranslator;
 

@@ -36,9 +36,10 @@ import javax.jcr.Value;
 import javax.jcr.nodetype.PropertyDefinition;
 
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
+import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
+import org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl;
 import org.fcrepo.kernel.modeshape.testutilities.TestPropertyIterator;
 
 import org.junit.Before;
@@ -59,10 +60,10 @@ import com.hp.hpl.jena.rdf.model.Statement;
 public class PropertiesRdfContextTest {
 
     @Mock
-    private FedoraResource mockResource;
+    private FedoraResourceImpl mockResource;
 
     @Mock
-    private FedoraBinary mockBinary;
+    private FedoraBinaryImpl mockBinary;
 
     @Mock
     private Node mockResourceNode;
@@ -71,7 +72,7 @@ public class PropertiesRdfContextTest {
     private Node mockBinaryNode;
 
     @Mock
-    private NonRdfSourceDescription mockNonRdfSourceDescription;
+    private NonRdfSourceDescriptionImpl mockNonRdfSourceDescription;
 
     @Mock
     private Session mockSession;

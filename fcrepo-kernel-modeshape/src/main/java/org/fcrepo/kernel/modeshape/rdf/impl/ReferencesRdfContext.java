@@ -17,8 +17,9 @@ package org.fcrepo.kernel.modeshape.rdf.impl;
 
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.modeshape.rdf.converters.ValueConverter.nodeForValue;
-import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
+import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
 import static java.util.Arrays.asList;
 import static javax.jcr.PropertyType.PATH;
 import static javax.jcr.PropertyType.REFERENCE;
@@ -64,8 +65,8 @@ public class ReferencesRdfContext extends NodeRdfContext {
                                 final IdentifierConverter<Resource, FedoraResource> idTranslator)
         throws RepositoryException {
         super(resource, idTranslator);
-        property2triple = new PropertyToTriple(resource.getNode().getSession(), idTranslator);
-        concat(putReferencesIntoContext(resource.getNode()));
+        property2triple = new PropertyToTriple(getJcrNode(resource).getSession(), idTranslator);
+        concat(putReferencesIntoContext(getJcrNode(resource)));
     }
 
     private final Predicate<Triple> INBOUND = t -> {

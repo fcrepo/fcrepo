@@ -21,6 +21,7 @@ import static java.util.regex.Pattern.compile;
 import static org.apache.commons.io.IOUtils.toInputStream;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getReferencePropertyName;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -101,7 +102,7 @@ public class ContainerImplIT extends AbstractIT {
             "\"This is an example title\" } WHERE {}", object.getTriples(subjects, PROPERTIES));
 
 
-        final Value[] values = object.getNode().getProperty("dc:title").getValues();
+        final Value[] values = getJcrNode(object).getProperty("dc:title").getValues();
         assertTrue(values.length > 0);
 
         assertTrue(values[0]
@@ -114,8 +115,7 @@ public class ContainerImplIT extends AbstractIT {
                 "INSERT { <" + graphSubject + "> myurn:info " +
                 "\"This is some example data\"} WHERE {}", object.getTriples(subjects, PROPERTIES));
 
-        final Value value =
-            object.getNode().getProperty(object.getNode().getSession()
+        final Value value = getJcrNode(object).getProperty(getJcrNode(object).getSession()
                                          .getNamespacePrefix("info:myurn/") +
                                          ":info").getValues()[0];
 
@@ -125,23 +125,21 @@ public class ContainerImplIT extends AbstractIT {
                 "INSERT { <" + graphSubject + "> dcterms:" +
                 "isPartOf <" + graphSubject + "> } WHERE {}", object.getTriples(subjects, PROPERTIES));
 
-        final Value refValue = object.getNode().getProperty("dcterms:isPartOf_ref").getValues()[0];
-        assertTrue(refValue.getString(), refValue.getString().equals(object.getNode().getIdentifier()));
+        final Value refValue = getJcrNode(object).getProperty("dcterms:isPartOf_ref").getValues()[0];
+        assertTrue(refValue.getString(), refValue.getString().equals(getJcrNode(object).getIdentifier()));
 
 
         object.updateProperties(subjects, "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
                 "DELETE { <" + graphSubject + "> dc:title " +
                 "\"This is an example title\" } WHERE {}", object.getTriples(subjects, PROPERTIES));
 
-        assertFalse("Found unexpected dc:title",
-                    object.getNode().hasProperty("dc:title"));
+        assertFalse("Found unexpected dc:title", getJcrNode(object).hasProperty("dc:title"));
 
         object.updateProperties(subjects, "PREFIX dcterms: <http://purl.org/dc/terms/>\n" +
                 "DELETE { <" + graphSubject + "> " +
                 "dcterms:isPartOf <" + graphSubject + "> " +
                 "} WHERE {}", object.getTriples(subjects, PROPERTIES));
-        assertFalse("found unexpected reference",
-                    object.getNode().hasProperty("dcterms:isPartOf"));
+        assertFalse("found unexpected reference", getJcrNode(object).hasProperty("dcterms:isPartOf"));
 
         session.save();
 
@@ -161,19 +159,19 @@ public class ContainerImplIT extends AbstractIT {
         final String propertyName = prefix + ":urlProperty";
         final String referencePropertyName = getReferencePropertyName(propertyName);
 
-        assertTrue(object.getNode().hasProperty(referencePropertyName));
-        assertFalse(object.getNode().hasProperty(propertyName));
+        assertTrue(getJcrNode(object).hasProperty(referencePropertyName));
+        assertFalse(getJcrNode(object).hasProperty(propertyName));
 
-        assertEquals(object.getNode(), session.getNodeByIdentifier(
-                object.getNode().getProperty(prefix + ":urlProperty_ref").getValues()[0].getString()));
+        assertEquals(getJcrNode(object), session.getNodeByIdentifier(
+                getJcrNode(object).getProperty(prefix + ":urlProperty_ref").getValues()[0].getString()));
 
         object.updateProperties(subjects, "PREFIX some: <info:some#>\n" +
                 "DELETE { <" + graphSubject + "> some:urlProperty " +
                 "<" + graphSubject + "> } WHERE {}", object.getTriples(subjects, PROPERTIES));
 
 
-        assertFalse(object.getNode().hasProperty(referencePropertyName));
-        assertFalse(object.getNode().hasProperty(propertyName));
+        assertFalse(getJcrNode(object).hasProperty(referencePropertyName));
+        assertFalse(getJcrNode(object).hasProperty(propertyName));
 
         object.updateProperties(subjects, "PREFIX some: <info:some#>\n" +
                 "INSERT DATA { <" + graphSubject + "> some:urlProperty <" + graphSubject + ">;\n" +
@@ -181,12 +179,12 @@ public class ContainerImplIT extends AbstractIT {
                 object.getTriples(subjects, PROPERTIES));
 
 
-        assertTrue(object.getNode().hasProperty(referencePropertyName));
-        assertTrue(object.getNode().hasProperty(propertyName));
+        assertTrue(getJcrNode(object).hasProperty(referencePropertyName));
+        assertTrue(getJcrNode(object).hasProperty(propertyName));
 
-        assertEquals(1, object.getNode().getProperty(prefix + ":urlProperty_ref").getValues().length);
-        assertEquals(object.getNode(), session.getNodeByIdentifier(
-                object.getNode().getProperty(prefix + ":urlProperty_ref").getValues()[0].getString()));
+        assertEquals(1, getJcrNode(object).getProperty(prefix + ":urlProperty_ref").getValues().length);
+        assertEquals(getJcrNode(object), session.getNodeByIdentifier(
+                getJcrNode(object).getProperty(prefix + ":urlProperty_ref").getValues()[0].getString()));
 
     }
 

@@ -28,6 +28,7 @@ import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
 import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
 import static org.fcrepo.kernel.modeshape.testutilities.TestNodeIterator.nodeIterator;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -39,7 +40,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
 import java.net.URI;
@@ -71,7 +71,9 @@ import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.modeshape.testutilities.TestPropertyIterator;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -81,42 +83,22 @@ import com.hp.hpl.jena.rdf.model.Resource;
  *
  * @author ajs6f
  */
+@RunWith(MockitoJUnitRunner.class)
 public class FedoraResourceImplTest {
 
     private FedoraResource testObj;
 
     @Mock
-    private Node mockNode;
+    private Node mockNode, mockRoot, mockChild, mockContainer;
 
     @Mock
-    private Node mockRoot;
-
-    @Mock
-    private Node mockChild;
-
-    @Mock
-    private Node mockContainer;
-
-    @Mock
-    private NodeType mockPrimaryNodeType;
-
-    @Mock
-    private NodeType mockMixinNodeType;
-
-    @Mock
-    private NodeType mockPrimarySuperNodeType;
-
-    @Mock
-    private NodeType mockMixinSuperNodeType;
+    private NodeType mockPrimaryNodeType, mockMixinNodeType, mockPrimarySuperNodeType, mockMixinSuperNodeType;
 
     @Mock
     private Session mockSession;
 
     @Mock
-    private Property mockProp;
-
-    @Mock
-    private Property mockContainerProperty;
+    private Property mockProp, mockContainerProperty;
 
     @Mock
     private JcrRdfTools mockJcrRdfTools;
@@ -126,14 +108,13 @@ public class FedoraResourceImplTest {
 
     @Before
     public void setUp() throws RepositoryException {
-        initMocks(this);
         when(mockNode.getSession()).thenReturn(mockSession);
         when(mockNode.getPath()).thenReturn("/some/path");
         final NodeType mockNodeType = mock(NodeType.class);
         when(mockNodeType.getName()).thenReturn("nt:folder");
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         testObj = new FedoraResourceImpl(mockNode);
-        assertEquals(mockNode, testObj.getNode());
+        assertEquals(mockNode, getJcrNode(testObj));
 
         mockSubjects = new DefaultIdentifierTranslator(mockSession);
     }
@@ -380,7 +361,7 @@ public class FedoraResourceImplTest {
         final Optional<FedoraResource> child = testObj.getChildren().findFirst();
 
         assertTrue("Expected a stream with values", child.isPresent());
-        assertEquals("Expected to find the child", mockChild, child.get().getNode());
+        assertEquals("Expected to find the child", mockChild, getJcrNode(child.get()));
     }
 
     @Test
@@ -419,7 +400,7 @@ public class FedoraResourceImplTest {
     @Test
     public void testGetProperty() throws RepositoryException {
         when(mockNode.getProperty("xyz")).thenReturn(mockProp);
-        final Property actual = testObj.getNode().getProperty("xyz");
+        final Property actual = getJcrNode(testObj).getProperty("xyz");
         assertEquals(mockProp, actual);
     }
 
@@ -462,7 +443,7 @@ public class FedoraResourceImplTest {
         when(mockProp.getString()).thenReturn("frozen-id");
         when(mockSession.getNodeByIdentifier("frozen-id")).thenReturn(mockChild);
         final FedoraResource actual = testObj.getUnfrozenResource();
-        assertEquals(mockChild, actual.getNode());
+        assertEquals(mockChild, getJcrNode(actual));
     }
 
     @Test
@@ -489,7 +470,7 @@ public class FedoraResourceImplTest {
         when(mockProp.getString()).thenReturn("frozen-id");
         when(mockSession.getNodeByIdentifier("frozen-id")).thenReturn(mockNode);
         final FedoraResource actual = testObj.getVersionedAncestor();
-        assertEquals(mockNode, actual.getNode());
+        assertEquals(mockNode, getJcrNode(actual));
     }
 
     @Test
@@ -514,7 +495,7 @@ public class FedoraResourceImplTest {
         when(mockContainer.isNodeType("mix:versionable")).thenReturn(true);
 
         final FedoraResource actual = testObj.getVersionedAncestor();
-        assertEquals(mockContainer, actual.getNode());
+        assertEquals(mockContainer, getJcrNode(actual));
     }
 
 

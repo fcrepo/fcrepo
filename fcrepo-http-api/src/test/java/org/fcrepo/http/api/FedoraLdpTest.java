@@ -220,9 +220,7 @@ public class FedoraLdpTest {
                         createURI(invocationOnMock.getArguments()[1].toString()))));
 
         doReturn(mockResource).when(testObj).resource();
-        when(mockResource.getNode()).thenReturn(mockNode);
         when(mockResource.getPath()).thenReturn(path);
-        when(mockNode.getPath()).thenReturn(path);
         when(mockResource.getEtagValue()).thenReturn("");
         when(mockResource.getTriples(eq(idTranslator), anySetOf(TripleCategory.class))).thenAnswer(answer);
         when(mockResource.getTriples(eq(idTranslator), any(TripleCategory.class))).thenAnswer(answer);

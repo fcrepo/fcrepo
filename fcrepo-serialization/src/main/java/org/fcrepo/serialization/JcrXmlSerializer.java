@@ -40,6 +40,7 @@ import java.io.OutputStream;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 
 /**
  * Serialize a FedoraObject using the modeshape-provided JCR/XML format
@@ -86,7 +87,7 @@ public class JcrXmlSerializer extends BaseFedoraObjectSerializer {
         if (obj.isFrozenResource()) {
             throw new InvalidSerializationFormatException("Cannot serialize historic versions.");
         }
-        final Node node = obj.getNode();
+        final Node node = getJcrNode(obj);
         // jcr/xml export system view implemented for noRecurse:
         // exportSystemView(String absPath, OutputStream out, boolean skipBinary, boolean noRecurse)
         node.getSession().exportSystemView(obj.getPath(), out, skipBinary, !recurse);

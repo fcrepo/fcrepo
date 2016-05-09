@@ -18,9 +18,10 @@ package org.fcrepo.kernel.modeshape.rdf.impl;
 import com.google.common.base.Converter;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
-import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
-import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl;
+import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
+import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -57,34 +58,19 @@ public class LdpIsMemberOfRdfContextTest {
     private LdpIsMemberOfRdfContext testObj;
 
     @Mock
-    private FedoraBinary mockBinary;
+    private FedoraBinaryImpl mockBinary;
 
     @Mock
-    private NonRdfSourceDescription mockBinaryDescription;
+    private NonRdfSourceDescriptionImpl mockBinaryDescription;
 
     @Mock
-    private Node mockBinaryNode;
+    private Node mockBinaryNode, mockResourceNode, mockContainerNode, mockNode;
 
     @Mock
-    private FedoraResource mockResource;
+    private FedoraResourceImpl mockResource, mockContainer;
 
     @Mock
-    private Node mockResourceNode;
-
-    @Mock
-    private FedoraResource mockContainer;
-
-    @Mock
-    private Node mockContainerNode;
-
-    @Mock
-    private Node mockNode;
-
-    @Mock
-    private Property mockRelationProperty;
-
-    @Mock
-    private Property mockMembershipProperty;
+    private Property mockRelationProperty, mockMembershipProperty;
 
     @Mock
     private Session mockSession;
