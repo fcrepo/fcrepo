@@ -25,6 +25,7 @@ import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.empty;
 import static java.util.stream.Stream.of;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
@@ -40,6 +41,7 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.VERSIONS;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_MIXIN_TYPES;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.isFrozen;
@@ -238,7 +240,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @Override
     public String getPath() {
         try {
-            return node.getPath();
+            final String path = node.getPath();
+            return path.endsWith("/" + JCR_CONTENT) ? path.substring(0, path.length() - JCR_CONTENT.length() - 1)
+                : path;
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -445,7 +449,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @Override
     public boolean hasType(final String type) {
         try {
-            if (isFrozen.test(node) && hasProperty(FROZEN_MIXIN_TYPES)) {
+            if (type.equals(FEDORA_REPOSITORY_ROOT)) {
+                return node.isNodeType(ROOT);
+            } else if (isFrozen.test(node) && hasProperty(FROZEN_MIXIN_TYPES)) {
                 return property2values.apply(getProperty(FROZEN_MIXIN_TYPES)).map(uncheck(Value::getString))
                     .anyMatch(type::equals);
             }

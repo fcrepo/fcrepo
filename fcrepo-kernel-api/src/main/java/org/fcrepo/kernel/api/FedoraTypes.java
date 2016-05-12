@@ -37,6 +37,8 @@ public interface FedoraTypes {
 
     String FEDORA_CONTAINER = "fedora:Container";
 
+    String FEDORA_REPOSITORY_ROOT = "fedora:RepositoryRoot";
+
     String LDP_BASIC_CONTAINER = "ldp:BasicContainer";
 
     String LDP_DIRECT_CONTAINER = "ldp:DirectContainer";

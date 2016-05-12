@@ -28,6 +28,7 @@ import static javax.jcr.PropertyType.BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TOMBSTONE;
 import static org.fcrepo.kernel.api.RdfLexicon.DC_TITLE;
@@ -50,6 +51,7 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
 import static org.fcrepo.kernel.api.RequiredRdfContext.VERSIONS;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedPredicate.uncheck;
 import static org.junit.Assert.assertEquals;
@@ -164,6 +166,8 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Session session = repo.login();
         final FedoraResource object = nodeService.find(session, "/");
         assertEquals("/", object.getPath());
+        assertTrue(object.hasType(ROOT));
+        assertTrue(object.hasType(FEDORA_REPOSITORY_ROOT));
         session.logout();
     }
 
