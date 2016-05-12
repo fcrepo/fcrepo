@@ -51,8 +51,6 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
 import static org.fcrepo.kernel.api.RequiredRdfContext.VERSIONS;
-import static org.fcrepo.kernel.api.RdfCollectors.toModel;
-import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedPredicate.uncheck;
@@ -195,8 +193,12 @@ public class FedoraResourceImplIT extends AbstractIT {
         final String pid = getRandomPid();
         containerService.findOrCreate(session, "/" + pid);
 
-        session.save();
-        session.logout();
+        try {
+            session.save();
+        } finally {
+            session.logout();
+        }
+
         session = repo.login();
 
         final Container obj2 = containerService.findOrCreate(session, "/" + pid);
@@ -207,9 +209,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Graph graph = obj2.getTriples(subjects, PROPERTIES).collect(toModel()).getGraph();
         final Node s = createGraphSubjectNode(obj2);
         final ExtendedIterator<Triple> iter = graph.find(s, LAST_MODIFIED_DATE.asNode(), ANY);
-        assertTrue("Should have one lastModified triple", iter.hasNext());
-        iter.next();
-        assertFalse("Should not have more than one lastModified triple", iter.hasNext());
+        assertEquals("Should have one lastModified triple", 1, iter.toList().size());
     }
 
     @Test
@@ -217,8 +217,12 @@ public class FedoraResourceImplIT extends AbstractIT {
         final String pid = getRandomPid();
         containerService.findOrCreate(session, "/" + pid);
 
-        session.save();
-        session.logout();
+        try {
+            session.save();
+        } finally {
+            session.logout();
+        }
+
         session = repo.login();
 
         final Container obj2 = containerService.findOrCreate(session, "/" + pid);

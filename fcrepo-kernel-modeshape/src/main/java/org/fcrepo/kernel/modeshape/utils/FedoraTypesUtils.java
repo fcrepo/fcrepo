@@ -37,9 +37,15 @@ import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.PropertyDefinition;
 
 import static java.util.Arrays.stream;
+import static java.util.Calendar.getInstance;
+import static java.util.TimeZone.getTimeZone;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static com.google.common.collect.ImmutableSet.of;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIED;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_MEMBER_RESOURCE;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_MIXIN_TYPES;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_PRIMARY_TYPE;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_NODE;
@@ -320,5 +326,27 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
             return ((FedoraResourceImpl)resource).getNode();
         }
         throw new IllegalArgumentException("FedoraResource is of the wrong type");
+    }
+
+    /**
+     * Update the fedora:lastModified date of the ldp:membershipResource if this node is a direct
+     * or indirect container.
+     *
+     * @param node The JCR node
+     */
+    public static void touchLdpMembershipResource(final Node node) throws RepositoryException {
+        if ((node.isNodeType(LDP_DIRECT_CONTAINER) || node.isNodeType(LDP_INDIRECT_CONTAINER)) &&
+                node.hasProperty(LDP_MEMBER_RESOURCE)) {
+            touch(node.getProperty(LDP_MEMBER_RESOURCE).getNode());
+        }
+    }
+
+    /**
+     * Update the fedora:lastModified date of the node.
+     *
+     * @param node The JCR node
+     */
+    public static void touch(final Node node) throws RepositoryException {
+        node.setProperty(FEDORA_LASTMODIFIED, getInstance(getTimeZone("UTC")));
     }
 }

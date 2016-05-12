@@ -128,8 +128,11 @@ public class SimpleObserverIT extends AbstractIT {
         binary.setContent( new ByteArrayInputStream(content.getBytes()), "text/plain",
                 asURI("SHA-1", checksum), "text.txt", null);
 
-        se.save();
-        se.logout();
+        try {
+            se.save();
+        } finally {
+            se.logout();
+        }
 
         awaitEvent("/object3", NODE_ADDED, REPOSITORY_NAMESPACE + "created");
 
@@ -242,26 +245,29 @@ public class SimpleObserverIT extends AbstractIT {
                     "ldp:membershipResource <" + subject2 + "> ;\n" +
                     "ldp:hasMemberRelation pcdm:hasMember . } WHERE {}", obj1.getTriples(subjects, PROPERTIES));
 
-        se.save();
+        try {
+            se.save();
 
-        awaitEvent("/object10", NODE_ADDED);
-        awaitEvent("/object10", PROPERTY_ADDED);
-        awaitEvent("/object11", NODE_ADDED);
+            awaitEvent("/object10", NODE_ADDED);
+            awaitEvent("/object10", PROPERTY_ADDED);
+            awaitEvent("/object11", NODE_ADDED);
 
-        assertEquals("Where are my events?", (Integer) 3, eventBusMessageCount);
+            assertEquals("Where are my events?", (Integer) 3, eventBusMessageCount);
 
-        final Container obj3 = containerService.findOrCreate(se, "/object10/child");
-        se.save();
+            final Container obj3 = containerService.findOrCreate(se, "/object10/child");
+            se.save();
 
-        awaitEvent("/object10/child", NODE_ADDED);
-        awaitEvent("/object10", PROPERTY_CHANGED);
-        awaitEvent("/object11", PROPERTY_CHANGED);
+            awaitEvent("/object10/child", NODE_ADDED);
+            awaitEvent("/object10", PROPERTY_CHANGED);
+            awaitEvent("/object11", PROPERTY_CHANGED);
 
-        assertEquals("Where are my events?", (Integer) 6, eventBusMessageCount);
+            assertEquals("Where are my events?", (Integer) 6, eventBusMessageCount);
 
-        obj3.delete();
-        se.save();
-        se.logout();
+            obj3.delete();
+            se.save();
+        } finally {
+            se.logout();
+        }
 
         awaitEvent("/object10/child", NODE_REMOVED);
         awaitEvent("/object10", PROPERTY_CHANGED);
@@ -288,26 +294,29 @@ public class SimpleObserverIT extends AbstractIT {
                     "ldp:hasMemberRelation pcdm:hasMember ;\n" +
                     "ldp:insertedContentRelation ore:proxyFor. } WHERE {}", obj1.getTriples(subjects, PROPERTIES));
 
-        se.save();
+        try {
+            se.save();
 
-        awaitEvent("/object12", NODE_ADDED);
-        awaitEvent("/object12", PROPERTY_ADDED);
-        awaitEvent("/object13", NODE_ADDED);
+            awaitEvent("/object12", NODE_ADDED);
+            awaitEvent("/object12", PROPERTY_ADDED);
+            awaitEvent("/object13", NODE_ADDED);
 
-        assertEquals("Where are my events?", (Integer) 3, eventBusMessageCount);
+            assertEquals("Where are my events?", (Integer) 3, eventBusMessageCount);
 
-        final Container obj3 = containerService.findOrCreate(se, "/object12/child");
-        se.save();
+            final Container obj3 = containerService.findOrCreate(se, "/object12/child");
+            se.save();
 
-        awaitEvent("/object12/child", NODE_ADDED);
-        awaitEvent("/object12", PROPERTY_CHANGED);
-        awaitEvent("/object13", PROPERTY_CHANGED);
+            awaitEvent("/object12/child", NODE_ADDED);
+            awaitEvent("/object12", PROPERTY_CHANGED);
+            awaitEvent("/object13", PROPERTY_CHANGED);
 
-        assertEquals("Where are my events?", (Integer) 6, eventBusMessageCount);
+            assertEquals("Where are my events?", (Integer) 6, eventBusMessageCount);
 
-        obj3.delete();
-        se.save();
-        se.logout();
+            obj3.delete();
+            se.save();
+        } finally {
+            se.logout();
+        }
 
         awaitEvent("/object12/child", NODE_REMOVED);
         awaitEvent("/object12", PROPERTY_CHANGED);

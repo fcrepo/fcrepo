@@ -24,13 +24,9 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.empty;
 import static java.util.stream.Stream.of;
-import static java.util.TimeZone.getTimeZone;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIED;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
-import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.FedoraTypes.LDP_MEMBER_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
@@ -54,6 +50,7 @@ import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunction
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.hasInternalNamespace;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFrozenNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalNode;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.touchLdpMembershipResource;
 import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaceRegistry;
 import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
@@ -63,7 +60,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
@@ -124,6 +120,7 @@ import org.fcrepo.kernel.modeshape.rdf.impl.ReferencesRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.RootRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.SkolemNodeRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.VersionsRdfContext;
+import org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.modeshape.utils.JcrPropertyStatementListener;
 import org.fcrepo.kernel.modeshape.utils.UncheckedPredicate;
 import org.fcrepo.kernel.modeshape.utils.iterators.RdfAdder;
@@ -397,10 +394,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             if (parent != null) {
                 createTombstone(parent, name);
                 // also update membershipResources for Direct/Indirect Containers
-                if ((parent.isNodeType(LDP_DIRECT_CONTAINER) || parent.isNodeType(LDP_INDIRECT_CONTAINER))
-                        && parent.hasProperty(LDP_MEMBER_RESOURCE)) {
-                    new FedoraResourceImpl(parent.getProperty(LDP_MEMBER_RESOURCE).getNode()).touch();
-                }
+                touchLdpMembershipResource(parent);
             }
         } catch (final javax.jcr.AccessDeniedException e) {
             throw new AccessDeniedException(e);
@@ -475,7 +469,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
      * @throws RepositoryException
      */
     public void touch() throws RepositoryException {
-        getNode().setProperty(FEDORA_LASTMODIFIED, Calendar.getInstance(getTimeZone("UTC")));
+        FedoraTypesUtils.touch(getNode());
     }
 
     @Override

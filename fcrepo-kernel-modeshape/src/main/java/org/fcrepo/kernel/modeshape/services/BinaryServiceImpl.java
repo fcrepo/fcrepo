@@ -20,7 +20,6 @@ import org.fcrepo.kernel.api.exception.ResourceTypeException;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
-import org.fcrepo.kernel.modeshape.ContainerImpl;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
@@ -31,9 +30,8 @@ import javax.jcr.Session;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
-import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.FedoraTypes.LDP_MEMBER_RESOURCE;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.touch;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.touchLdpMembershipResource;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
 import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
@@ -66,12 +64,8 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
                 final Node parent = dsNode.getDepth() > 0 ? dsNode.getParent() : null;
 
                 if (parent != null) {
-                    new ContainerImpl(parent).touch();
-
-                    if (parent.hasProperty(LDP_MEMBER_RESOURCE) && (parent.isNodeType(LDP_DIRECT_CONTAINER) ||
-                                parent.isNodeType(LDP_INDIRECT_CONTAINER))) {
-                        new FedoraBinaryImpl(dsNode.getParent().getProperty(LDP_MEMBER_RESOURCE).getNode()).touch();
-                    }
+                    touch(parent);
+                    touchLdpMembershipResource(parent);
                 }
             }
 

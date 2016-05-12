@@ -2191,9 +2191,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         patch.addHeader("Content-Type", "application/sparql-update");
         patch.setEntity(new StringEntity(
                 "INSERT { <> <http://purl.org/dc/elements/1.1/relation> <" + serverAddress + id1 + "> } WHERE {}"));
-        try (final CloseableHttpResponse response = execute(patch)) {
-            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
-        }
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(execute(patch)));
 
         try (final CloseableHttpResponse response = execute(getObjMethod(id1))) {
             final String etag = response.getFirstHeader("ETag").getValue();
@@ -2358,8 +2356,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     private static void verifyModifiedMatchesCreated(final GraphStore graph) {
         final Node cre = graph.find(ANY, ANY, CREATED_DATE.asNode(), ANY).next().getObject();
         final Node mod = graph.find(ANY, ANY, LAST_MODIFIED_DATE.asNode(), ANY).next().getObject();
-        System.out.println("cre: " + cre.getLiteralValue());
-        System.out.println("mod: " + mod.getLiteralValue());
         assertEquals(cre.getLiteralValue(), mod.getLiteralValue());
     }
 }

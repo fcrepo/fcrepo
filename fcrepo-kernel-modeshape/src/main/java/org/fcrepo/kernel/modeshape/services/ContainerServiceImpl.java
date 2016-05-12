@@ -17,10 +17,9 @@ package org.fcrepo.kernel.modeshape.services;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
-import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.FedoraTypes.LDP_MEMBER_RESOURCE;
 import static org.fcrepo.kernel.modeshape.ContainerImpl.hasMixin;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.touch;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.touchLdpMembershipResource;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -68,23 +67,16 @@ public class ContainerServiceImpl extends AbstractService implements ContainerSe
                 final Node parent = node.getDepth() > 0 ? node.getParent() : null;
 
                 if (parent != null) {
-                    new ContainerImpl(parent).touch();
-
-                    // also update membershipResources for Direct/Indirect Containers
-                    if (parent.hasProperty(LDP_MEMBER_RESOURCE) && (parent.isNodeType(LDP_DIRECT_CONTAINER) ||
-                                parent.isNodeType(LDP_INDIRECT_CONTAINER))) {
-                        new ContainerImpl(parent.getProperty(LDP_MEMBER_RESOURCE).getNode()).touch();
-                    }
+                    touch(parent);
+                    touchLdpMembershipResource(parent);
                 }
             }
 
-            final ContainerImpl container = new ContainerImpl(node);
-
             if (node.isNew()) {
-                container.touch();
+                touch(node);
             }
 
-            return container;
+            return new ContainerImpl(node);
         } catch (final RepositoryException e) {
             LOGGER.info("Error: {}", e);
             throw new RepositoryRuntimeException(e);
