@@ -19,15 +19,14 @@ import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static java.util.Collections.singletonMap;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_SERVICE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_SERIALIZATION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_TRANSACTION_SERVICE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_HISTORY;
 import static org.fcrepo.kernel.api.RdfLexicon.RDFS_LABEL;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.fcrepo.kernel.api.RdfLexicon.DC_NAMESPACE;
-import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Property;
@@ -71,7 +70,7 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
 
         final Resource s = idTranslator.reverse().convert(resource);
 
-        if (resource.hasType(ROOT)) {
+        if (resource.hasType(FEDORA_REPOSITORY_ROOT)) {
             addRepositoryStatements(uriInfo, model, s);
         } else {
             addNodeStatements(resource, uriInfo, model, s);
@@ -102,9 +101,7 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
     private void addNodeStatements(final FedoraResource resource, final UriInfo uriInfo,
         final Model model, final Resource s) {
 
-        String path = resource.getPath();
-        path = path.endsWith(JCR_CONTENT) ? path.replace("/" + JCR_CONTENT, "") : path;
-        final Map<String, String> pathMap = singletonMap("path", path.substring(1));
+        final Map<String, String> pathMap = singletonMap("path", resource.getPath().substring(1));
 
         // fcr:versions
         if (resource.isVersioned()) {

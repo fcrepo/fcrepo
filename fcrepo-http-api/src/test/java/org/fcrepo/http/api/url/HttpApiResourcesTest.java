@@ -17,11 +17,11 @@ package org.fcrepo.http.api.url;
 
 import static com.google.common.collect.ImmutableSet.of;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_SERVICE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_SERIALIZATION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_TRANSACTION_SERVICE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_HISTORY;
-import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
 import static org.jgroups.util.Util.assertFalse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -95,7 +95,7 @@ public class HttpApiResourcesTest {
 
     @Test
     public void shouldDecorateModeRootNodesWithRepositoryWideLinks() {
-        when(mockResource.hasType(ROOT)).thenReturn(true);
+        when(mockResource.hasType(FEDORA_REPOSITORY_ROOT)).thenReturn(true);
         when(mockResource.getPath()).thenReturn("/");
 
         final Resource graphSubject = mockSubjects.reverse().convert(mockResource);
@@ -152,7 +152,7 @@ public class HttpApiResourcesTest {
 
     @Test
     public void shouldDecorateRootNodeWithCorrectResourceURI() {
-        when(mockResource.hasType(ROOT)).thenReturn(true);
+        when(mockResource.hasType(FEDORA_REPOSITORY_ROOT)).thenReturn(true);
         when(mockSerializers.keySet()).thenReturn(of("a"));
         when(mockResource.getPath()).thenReturn("/");
 
