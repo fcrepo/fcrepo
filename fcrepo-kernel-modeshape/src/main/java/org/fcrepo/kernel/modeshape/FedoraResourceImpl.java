@@ -50,6 +50,8 @@ import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunction
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.hasInternalNamespace;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFrozenNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalNode;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.ldpInsertedContentProperty;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.resourceToProperty;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.touchLdpMembershipResource;
 import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaceRegistry;
 import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
@@ -122,6 +124,7 @@ import org.fcrepo.kernel.modeshape.rdf.impl.SkolemNodeRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.VersionsRdfContext;
 import org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.modeshape.utils.JcrPropertyStatementListener;
+import org.fcrepo.kernel.modeshape.utils.PropertyChangedListener;
 import org.fcrepo.kernel.modeshape.utils.UncheckedPredicate;
 import org.fcrepo.kernel.modeshape.utils.iterators.RdfAdder;
 import org.fcrepo.kernel.modeshape.utils.iterators.RdfRemover;
@@ -380,21 +383,23 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                 }
             }
 
-            final Node parent;
+            final Node parent = getNode().getDepth() > 0 ? getNode().getParent() : null;
 
-            if (getNode().getDepth() > 0) {
-                parent = getNode().getParent();
-            } else {
-                parent = null;
-            }
             final String name = getNode().getName();
+
+            // This is resolved immediately b/c we delete the node before updating an indirect container's target
+            final boolean shouldUpdateIndirectResource = ldpInsertedContentProperty(node)
+                .flatMap(resourceToProperty.apply(getSession())).filter(this::hasProperty).isPresent();
 
             node.remove();
 
             if (parent != null) {
                 createTombstone(parent, name);
                 // also update membershipResources for Direct/Indirect Containers
-                touchLdpMembershipResource(parent);
+                if (parent.hasProperty(LDP_MEMBER_RESOURCE) &&
+                        (parent.isNodeType(LDP_DIRECT_CONTAINER) || shouldUpdateIndirectResource)) {
+                    FedoraTypesUtils.touch(parent.getProperty(LDP_MEMBER_RESOURCE).getNode());
+                }
             }
         } catch (final javax.jcr.AccessDeniedException e) {
             throw new AccessDeniedException(e);
@@ -466,7 +471,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
     /**
      * Set the last-modified date to the current date.
-     * @throws RepositoryException
+     * @throws RepositoryException if a repository exception occurs
      */
     public void touch() throws RepositoryException {
         FedoraTypesUtils.touch(getNode());
@@ -576,14 +581,25 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
         model.register(listener);
 
+        final PropertyChangedListener insertedContentListener = new PropertyChangedListener();
+
+        ldpInsertedContentProperty(getNode()).ifPresent(resource -> {
+            insertedContentListener.addProperty(resource);
+            model.register(insertedContentListener);
+        });
+
         model.setNsPrefixes(request.getPrefixMapping());
         execute(request, model);
 
         removeEmptyFragments();
 
         listener.assertNoExceptions();
+
         try {
             touch();
+            if (insertedContentListener.propertyChanged()) {
+                touchLdpMembershipResource(getNode());
+            }
         } catch (final RepositoryException ex) {
             throw new RepositoryRuntimeException(ex);
         }

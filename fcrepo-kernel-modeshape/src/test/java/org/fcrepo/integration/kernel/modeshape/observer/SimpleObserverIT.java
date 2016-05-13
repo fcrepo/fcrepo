@@ -304,6 +304,8 @@ public class SimpleObserverIT extends AbstractIT {
             assertEquals("Where are my events?", (Integer) 3, eventBusMessageCount);
 
             final Container obj3 = containerService.findOrCreate(se, "/object12/child");
+            obj3.updateProperties(subjects, "PREFIX ore: <http://www.openarchives.org/ore/terms/>\n" +
+                    "INSERT { <> ore:proxyFor <info:example/test> } WHERE {}", obj3.getTriples(subjects, PROPERTIES));
             se.save();
 
             awaitEvent("/object12/child", NODE_ADDED);
@@ -311,6 +313,33 @@ public class SimpleObserverIT extends AbstractIT {
             awaitEvent("/object13", PROPERTY_CHANGED);
 
             assertEquals("Where are my events?", (Integer) 6, eventBusMessageCount);
+
+            final Container obj4 = containerService.findOrCreate(se, "/object12/child2");
+            se.save();
+
+            awaitEvent("/object12/child2", NODE_ADDED);
+            awaitEvent("/object12", PROPERTY_CHANGED);
+
+            assertEquals("Where are my events?", (Integer) 8, eventBusMessageCount);
+
+            // Update a property that is irrelevant for the indirect container
+            obj4.updateProperties(subjects, "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+                    "INSERT { <> rdfs:label \"some label\" } WHERE {}", obj4.getTriples(subjects, PROPERTIES));
+            se.save();
+
+            awaitEvent("/object12/child2", PROPERTY_CHANGED);
+
+            assertEquals("Where are my events?", (Integer) 9, eventBusMessageCount);
+
+            // Update a property that is relevant for the indirect container
+            obj4.updateProperties(subjects, "PREFIX ore: <http://www.openarchives.org/ore/terms/>\n" +
+                    "INSERT { <> ore:proxyFor \"some proxy\" } WHERE {}", obj4.getTriples(subjects, PROPERTIES));
+            se.save();
+
+            awaitEvent("/object12/child2", PROPERTY_CHANGED);
+            awaitEvent("/object13", PROPERTY_CHANGED);
+
+            assertEquals("Where are my events?", (Integer) 11, eventBusMessageCount);
 
             obj3.delete();
             se.save();
@@ -322,7 +351,7 @@ public class SimpleObserverIT extends AbstractIT {
         awaitEvent("/object12", PROPERTY_CHANGED);
         awaitEvent("/object13", PROPERTY_CHANGED);
 
-        assertEquals("Where are my events?", (Integer) 9, eventBusMessageCount);
+        assertEquals("Where are my events?", (Integer) 14, eventBusMessageCount);
     }
 
     private void awaitEvent(final String id, final EventType eventType, final String property) {

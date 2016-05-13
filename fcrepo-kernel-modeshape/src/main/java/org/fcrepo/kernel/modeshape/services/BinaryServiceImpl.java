@@ -65,7 +65,7 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
 
                 if (parent != null) {
                     touch(parent);
-                    touchLdpMembershipResource(parent);
+                    touchLdpMembershipResource(dsNode);
                 }
             }
 

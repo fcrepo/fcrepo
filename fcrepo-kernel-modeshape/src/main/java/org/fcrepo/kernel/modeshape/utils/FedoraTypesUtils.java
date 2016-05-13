@@ -19,9 +19,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
+import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.FedoraTypes;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.fcrepo.kernel.modeshape.services.functions.AnyTypesPredicate;
@@ -29,6 +32,7 @@ import org.modeshape.jcr.JcrRepository;
 import org.modeshape.jcr.cache.NodeKey;
 import org.slf4j.Logger;
 
+import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
@@ -38,13 +42,16 @@ import javax.jcr.nodetype.PropertyDefinition;
 
 import static java.util.Arrays.stream;
 import static java.util.Calendar.getInstance;
+import static java.util.Optional.empty;
 import static java.util.TimeZone.getTimeZone;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static com.google.common.collect.ImmutableSet.of;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIED;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_INSERTED_CONTENT_RELATION;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_MEMBER_RESOURCE;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_MIXIN_TYPES;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_PRIMARY_TYPE;
@@ -56,6 +63,7 @@ import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIEDBY;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
 import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.isBinaryContentProperty;
+import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaceRegistry;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedPredicate.uncheck;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_PRIMARY_TYPE;
@@ -329,15 +337,59 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
     }
 
     /**
-     * Update the fedora:lastModified date of the ldp:membershipResource if this node is a direct
-     * or indirect container.
+     * Given a JCR Node, fetch the parent's ldp:insertedContentRelation value, if
+     * one exists.
+     *
+     * @param node the JCR Node
+     * @return the ldp:insertedContentRelation Resource, if one exists.
+     */
+    public static Optional<Resource> ldpInsertedContentProperty(final Node node) {
+        try {
+            if (node.getDepth() > 0) {
+                final Node parent = node.getParent();
+
+                if (parent.hasProperty(LDP_MEMBER_RESOURCE) && parent.isNodeType(LDP_INDIRECT_CONTAINER) &&
+                        parent.hasProperty(LDP_INSERTED_CONTENT_RELATION)) {
+                    return Optional.of(createResource(parent.getProperty(LDP_INSERTED_CONTENT_RELATION).getString()));
+                }
+            }
+        } catch (final RepositoryException ex) {
+            throw new RepositoryRuntimeException(ex);
+        }
+        return empty();
+    }
+
+    public static Function<Session, Function<Resource, Optional<String>>> resourceToProperty = session -> resource -> {
+        try {
+            final NamespaceRegistry registry = getNamespaceRegistry(session);
+            return Optional.of(registry.getPrefix(resource.getNameSpace()) + ":" + resource.getLocalName());
+        } catch (final RepositoryException ex) {
+            LOGGER.debug("Could not resolve resource namespace ({}): {}", resource.toString(), ex.getMessage());
+        }
+        return Optional.empty();
+    };
+
+
+    /**
+     * Update the fedora:lastModified date of the parent's ldp:membershipResource if that node is a direct
+     * or indirect container, provided the LDP constraints are valid.
      *
      * @param node The JCR node
+     * @throws RepositoryException if a repository exception occurred
      */
     public static void touchLdpMembershipResource(final Node node) throws RepositoryException {
-        if ((node.isNodeType(LDP_DIRECT_CONTAINER) || node.isNodeType(LDP_INDIRECT_CONTAINER)) &&
-                node.hasProperty(LDP_MEMBER_RESOURCE)) {
-            touch(node.getProperty(LDP_MEMBER_RESOURCE).getNode());
+        if (node.getDepth() > 0) {
+            final Node parent = node.getParent();
+
+            if (parent.hasProperty(LDP_MEMBER_RESOURCE)) {
+                final Optional<String> hasInsertedContentProperty = ldpInsertedContentProperty(node)
+                            .flatMap(resourceToProperty.apply(node.getSession())).filter(uncheck(node::hasProperty));
+
+                if (parent.isNodeType(LDP_DIRECT_CONTAINER) ||
+                        (parent.isNodeType(LDP_INDIRECT_CONTAINER) && hasInsertedContentProperty.isPresent())) {
+                    touch(parent.getProperty(LDP_MEMBER_RESOURCE).getNode());
+                }
+            }
         }
     }
 
@@ -345,6 +397,7 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
      * Update the fedora:lastModified date of the node.
      *
      * @param node The JCR node
+     * @throws RepositoryException if a repository exception occurred
      */
     public static void touch(final Node node) throws RepositoryException {
         node.setProperty(FEDORA_LASTMODIFIED, getInstance(getTimeZone("UTC")));

@@ -68,7 +68,7 @@ public class ContainerServiceImpl extends AbstractService implements ContainerSe
 
                 if (parent != null) {
                     touch(parent);
-                    touchLdpMembershipResource(parent);
+                    touchLdpMembershipResource(node);
                 }
             }
 
