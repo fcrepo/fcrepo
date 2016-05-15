@@ -706,6 +706,98 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testBinaryEtags() throws IOException, InterruptedException {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+        final String location = serverAddress + id + "/binary";
+        final HttpPut method = new HttpPut(location);
+        method.setEntity(new StringEntity("foo"));
+
+        final String binaryEtag1, binaryEtag2, binaryEtag3, descEtag1, descEtag2, descEtag3;
+        final String binaryLastModed1, binaryLastModed2, binaryLastModed3;
+        final String descLastModed1, descLastModed2, descLastModed3;
+        final String descLocation;
+
+        try (final CloseableHttpResponse response = execute(method)) {
+            binaryEtag1 = response.getFirstHeader("ETag").getValue();
+            binaryLastModed1 = response.getFirstHeader("Last-Modified").getValue();
+            descLocation = Link.valueOf(response.getFirstHeader("Link").getValue()).getUri().toString();
+        }
+
+        // First check ETags and Last-Modified headers for the binary
+        final HttpGet get1 = new HttpGet(location);
+        get1.addHeader("If-None-Match", binaryEtag1);
+        assertEquals("Expected 304 Not Modified", NOT_MODIFIED.getStatusCode(), getStatus(get1));
+
+        final HttpGet get2 = new HttpGet(location);
+        get2.addHeader("If-Modified-Since", binaryLastModed1);
+        assertEquals("Expected 304 Not Modified", NOT_MODIFIED.getStatusCode(), getStatus(get2));
+
+        // Next, check ETags and Last-Modified headers on the description
+        final HttpGet get3 = new HttpGet(descLocation);
+        try (final CloseableHttpResponse response = execute(get3)) {
+            descEtag1 = response.getFirstHeader("ETag").getValue();
+            descLastModed1 = response.getFirstHeader("Last-Modified").getValue();
+        }
+
+        assertNotEquals("Binary, description ETags should be different", binaryEtag1, descEtag1);
+
+        final HttpGet get4 = new HttpGet(descLocation);
+        get4.addHeader("If-None-Match", descEtag1);
+        assertEquals("Expected 304 Not Modified", NOT_MODIFIED.getStatusCode(), getStatus(get4));
+
+        final HttpGet get5 = new HttpGet(descLocation);
+        get5.addHeader("If-Modified-Since", descLastModed1);
+        assertEquals("Expected 304 Not Modified", NOT_MODIFIED.getStatusCode(), getStatus(get5));
+
+        // Pause two seconds before updating the description
+        sleep(2000);
+
+        // Next, update the description
+        final HttpPatch httpPatch = patchObjMethod(id + "/binary/fcr:metadata");
+        httpPatch.addHeader("Content-Type", "application/sparql-update");
+        httpPatch.setEntity(new StringEntity(
+                "INSERT { <> <http://purl.org/dc/elements/1.1/title> 'this is a title' } WHERE {}"));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(httpPatch));
+
+        // Next, check headers for the binary; they should not have changed
+        final HttpHead head1 = new HttpHead(location);
+        try (final CloseableHttpResponse response = execute(head1)) {
+            binaryEtag2 = response.getFirstHeader("ETag").getValue();
+            binaryLastModed2 = response.getFirstHeader("Last-Modified").getValue();
+        }
+
+        assertEquals("ETags should be the same", binaryEtag1, binaryEtag2);
+        assertEquals("Last-Modified should be the same", binaryLastModed1, binaryLastModed2);
+
+        final HttpGet get6 = new HttpGet(location);
+        get6.addHeader("If-None-Match", binaryEtag1.toString());
+        assertEquals("Expected 304 Not Modified", NOT_MODIFIED.getStatusCode(), getStatus(get6));
+
+        final HttpGet get7 = new HttpGet(location);
+        get7.addHeader("If-Modified-Since", binaryLastModed2);
+        assertEquals("Expected 304 Not Modified", NOT_MODIFIED.getStatusCode(), getStatus(get7));
+
+        // Next, check headers for the description; they should have changed
+        final HttpHead head2 = new HttpHead(descLocation);
+        try (final CloseableHttpResponse response = execute(head2)) {
+            descEtag2 = response.getFirstHeader("ETag").getValue();
+            descLastModed2 = response.getFirstHeader("Last-Modified").getValue();
+        }
+
+        assertNotEquals("ETags should not be the same", descEtag1, descEtag2);
+        assertNotEquals("Last-Modified should not be the same", descLastModed1, descLastModed2);
+
+        final HttpGet get8 = new HttpGet(descLocation);
+        get8.addHeader("If-None-Match", descEtag2);
+        assertEquals("Expected 304 Not Modified", NOT_MODIFIED.getStatusCode(), getStatus(get8));
+
+        final HttpGet get9 = new HttpGet(descLocation);
+        get9.addHeader("If-Modified-Since", descLastModed2);
+        assertEquals("Expected 304 Not Modified", NOT_MODIFIED.getStatusCode(), getStatus(get9));
+    }
+
+    @Test
     public void testPutDatastreamContentOnObject() throws IOException {
         final String content = "foo";
         final String id = getRandomUniqueId();
@@ -2088,7 +2180,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         httpPut.addHeader("If-Match", etag);
 
         try (final CloseableHttpResponse response = execute(httpPut)) {
-            assertEquals("Should be a 409 Conflict!", CONFLICT.getStatusCode(), getStatus(response));
+            assertEquals("Should be a 412 Precondition Failed!", PRECONDITION_FAILED.getStatusCode(),
+                    getStatus(response));
         }
 
         // PUT improperly formatted etag ... not quoted.

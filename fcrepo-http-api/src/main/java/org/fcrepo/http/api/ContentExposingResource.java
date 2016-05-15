@@ -359,7 +359,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 builder = ok(content);
             }
 
-
             // we set the content-type explicitly to avoid content-negotiation from getting in the way
             return builder.type(binary.getMimeType())
                     .cacheControl(cc)
@@ -497,10 +496,40 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             return;
         }
 
-        final FedoraResource mutableResource = resource instanceof NonRdfSourceDescription
-                ? ((NonRdfSourceDescription) resource).getDescribedResource() : resource;
-        final EntityTag etag = new EntityTag(mutableResource.getEtagValue());
-        final Date date = mutableResource.getLastModifiedDate();
+        final EntityTag etag;
+        final Date date;
+
+        // The HTTP headers for ETags and Last-Modified dates are swapped for fedora:Binary
+        // resources and their descriptions. This may seem twisted.
+        //
+        // Here we are drawing a distinction between the HTTP resoruce and the LDP resource.
+        // As an HTTP resource, the last-modified header should reflect when the resource
+        // at the given URL was last changed. With fedora:Binary resources and their descriptions,
+        // this gets a little complicated, for the descriptions have, as their subjects, the
+        // binary itself. And the `fedora:lastModified` property produced by that NonRdfSourceDescription
+        // refers to the last-modified date of the binary -- not the last-modified date of the
+        // NonRdfSourceDescription. While that works for LDP, that falls on its face for HTTP.
+        //
+        // The reason being that a change to the NonRdfSourceDescription (e.g. adding or removing
+        // a property) does not change the fedora:lastModified date of the binary, yet, the
+        // representation of the triples in that NonRdfSourceDescription _did_ change. So, while
+        // the triple for fedora:lastModified will not change, the HTTP header for last-modified
+        // must change.
+        if (resource instanceof NonRdfSourceDescription) {
+            final NonRdfSourceDescription description = (NonRdfSourceDescription)resource;
+            // Use a weak ETag for the LDP-RS
+            etag = new EntityTag(description.getDescribedResource().getEtagValue(), true);
+            date = description.getDescribedResource().getLastModifiedDate();
+        } else if (resource instanceof NonRdfSource) {
+            final NonRdfSource binary = (NonRdfSource)resource;
+            // Use a strong ETag for the LDP-NR
+            etag = new EntityTag(binary.getDescription().getEtagValue());
+            date = binary.getDescription().getLastModifiedDate();
+        } else {
+            // Use a weak ETag for the LDP-RS
+            etag = new EntityTag(resource.getEtagValue(), true);
+            date = resource.getLastModifiedDate();
+        }
 
         if (!etag.getValue().isEmpty()) {
             servletResponse.addHeader("ETag", etag.toString());
@@ -539,9 +568,27 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             return;
         }
 
-        final EntityTag etag = new EntityTag(resource.getEtagValue());
-        final Date date = resource.getLastModifiedDate();
+        final EntityTag etag;
+        final Date date;
         final Date roundedDate = new Date();
+
+        // See the related note about the next block of code in the
+        // ContentExposingResource::addCacheControlHeaders function
+        if (resource instanceof NonRdfSourceDescription) {
+            final NonRdfSourceDescription description = (NonRdfSourceDescription)resource;
+            // Use a weak ETag for the LDP-RS
+            etag = new EntityTag(description.getDescribedResource().getEtagValue(), true);
+            date = description.getDescribedResource().getLastModifiedDate();
+        } else if (resource instanceof NonRdfSource) {
+            final NonRdfSource binary = (NonRdfSource)resource;
+            // Use a strong ETag for the LDP-NR
+            etag = new EntityTag(binary.getDescription().getEtagValue());
+            date = binary.getDescription().getLastModifiedDate();
+        } else {
+            // Use a weak ETag for the LDP-RS
+            etag = new EntityTag(resource.getEtagValue(), true);
+            date = resource.getLastModifiedDate();
+        }
 
         if (date != null) {
             roundedDate.setTime(date.getTime() - date.getTime() % 1000);
