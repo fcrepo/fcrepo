@@ -144,19 +144,11 @@
 	  <artifactId>postgresql</artifactId>
 	  <version>9.1-901-1.jdbc4</version>
     </dependency>
-    <dependency>
-      <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-cachestore-jdbc</artifactId>
-    </dependency>
 
     <!-- test gear -->
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-web</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-cachestore-leveldb</artifactId>
     </dependency>
     <dependency>
       <groupId>net.sourceforge.htmlunit</groupId>
@@ -388,6 +380,12 @@
           <webApp>
             <contextPath>${fcrepo.test.context.path}</contextPath>
           </webApp>
+          <systemProperties>
+            <systemProperty>
+              <name>fcrepo.modeshape.configuration</name>
+              <value>classpath:/config/file-simple/repository.json</value>
+            </systemProperty>
+          </systemProperties>
 
         </configuration>
         <executions>
@@ -403,6 +401,11 @@
               <stopPort>${jetty.dynamic.stop.port}</stopPort>
 
               <systemProperties>
+                <systemProperty>
+                  <name>fcrepo.modeshape.configuration</name>
+                  <value>classpath:/config/file-simple/repository.json</value>
+                </systemProperty>
+
                 <systemProperty>
                   <name>fcrepo.dynamic.test.port</name>
                   <value>${fcrepo.dynamic.test.port}</value>
