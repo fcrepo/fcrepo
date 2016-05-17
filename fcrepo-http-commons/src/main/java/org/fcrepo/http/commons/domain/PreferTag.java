@@ -21,6 +21,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Parse a single prefer tag, value and any optional parameters
@@ -65,12 +66,15 @@ public class PreferTag implements Comparable<PreferTag> {
         reader.hasNext();
 
         if (reader.hasNext()) {
-            tag = reader.nextToken();
+            tag = Optional.ofNullable(reader.nextToken())
+                      .map(CharSequence::toString).orElse(null);
 
             if (reader.hasNextSeparator('=', true)) {
                 reader.next();
 
-                value = reader.nextTokenOrQuotedString();
+                value = Optional.ofNullable(reader.nextTokenOrQuotedString())
+                            .map(CharSequence::toString)
+                            .orElse(null);
             }
 
             if (reader.hasNext()) {

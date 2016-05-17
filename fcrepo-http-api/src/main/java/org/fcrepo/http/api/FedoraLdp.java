@@ -200,7 +200,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @throws IOException if IO exception occurred
      */
     @GET
-    @Produces({TURTLE + ";qs=10", JSON_LD + ";qs=8",
+    @Produces({TURTLE + ";qs=1.0", JSON_LD + ";qs=0.8",
             N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
             TEXT_HTML, APPLICATION_XHTML_XML})
     public Response getResource(@HeaderParam("Range") final String rangeValue) throws IOException {
@@ -456,9 +456,6 @@ public class FedoraLdp extends ContentExposingResource {
     /**
      * Creates a new object.
      *
-     * application/octet-stream;qs=1001 is a workaround for JERSEY-2636, to ensure
-     * requests without a Content-Type get routed here.
-     *
      * @param checksum the checksum value
      * @param contentDisposition the content Disposition value
      * @param requestContentType the request content type
@@ -482,8 +479,12 @@ public class FedoraLdp extends ContentExposingResource {
     /**
      * Creates a new object.
      *
-     * application/octet-stream;qs=1001 is a workaround for JERSEY-2636, to ensure
-     * requests without a Content-Type get routed here.
+     * This originally used application/octet-stream;qs=1001 as a workaround
+     * for JERSEY-2636, to ensure requests without a Content-Type get routed here.
+     * This qs value does not parse with newer versions of Jersey, as qs values
+     * must be between 0 and 1.  We use qs=1.000 to mark where this historical
+     * anomaly had been.
+     *
      *
      * @param checksumDeprecated the checksum value
      * @param contentDisposition the content Disposition value
@@ -498,9 +499,9 @@ public class FedoraLdp extends ContentExposingResource {
      * @throws MalformedRdfException if malformed rdf exception occurred
      */
     @POST
-    @Consumes({MediaType.APPLICATION_OCTET_STREAM + ";qs=1001", WILDCARD})
+    @Consumes({MediaType.APPLICATION_OCTET_STREAM + ";qs=1.000", WILDCARD})
     @Timed
-    @Produces({TURTLE + ";qs=10", JSON_LD + ";qs=8",
+    @Produces({TURTLE + ";qs=1.0", JSON_LD + ";qs=0.8",
             N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
             TEXT_HTML, APPLICATION_XHTML_XML, "*/*"})
     public Response createObject(@QueryParam("checksum") final String checksumDeprecated,
