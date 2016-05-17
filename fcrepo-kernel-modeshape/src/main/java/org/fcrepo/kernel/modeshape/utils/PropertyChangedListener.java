@@ -15,8 +15,7 @@
  */
 package org.fcrepo.kernel.modeshape.utils;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.hp.hpl.jena.rdf.listeners.StatementListener;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -30,40 +29,32 @@ import com.hp.hpl.jena.rdf.model.Statement;
  */
 public class PropertyChangedListener extends StatementListener {
 
-    private final Set<Resource> properties = new HashSet<>();
+    private final Resource property;
 
-    private boolean propertyChanged = false;
+    private final AtomicBoolean changed;
+
+    /**
+     * Create a listener for a particular RDF predicate.
+     *
+     * @param property the predicate for which to watch
+     * @param changed a value to keep track of whether the value changed
+     */
+    public PropertyChangedListener(final Resource property, final AtomicBoolean changed) {
+        this.property = property;
+        this.changed = changed;
+    }
 
     @Override
     public void addedStatement(final Statement s) {
-        if (properties.contains(s.getPredicate())) {
-            propertyChanged = true;
+        if (property.equals(s.getPredicate())) {
+            changed.set(true);
         }
     }
 
     @Override
     public void removedStatement(final Statement s) {
-        if (properties.contains(s.getPredicate())) {
-            propertyChanged = true;
+        if (property.equals(s.getPredicate())) {
+            changed.set(true);
         }
-    }
-
-    /**
-     *  Add a property to watch
-     *
-     *  @param property the property
-     *  @return whether the property was added
-     */
-    public boolean addProperty(final Resource property) {
-        return properties.add(property);
-    }
-
-    /**
-     * Report whether the given property changed.
-     *
-     * @return whether the property was changed
-     */
-    public boolean propertyChanged() {
-        return propertyChanged;
     }
 }

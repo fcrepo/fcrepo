@@ -68,6 +68,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -389,7 +390,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
             // This is resolved immediately b/c we delete the node before updating an indirect container's target
             final boolean shouldUpdateIndirectResource = ldpInsertedContentProperty(node)
-                .flatMap(resourceToProperty.apply(getSession())).filter(this::hasProperty).isPresent();
+                .flatMap(resourceToProperty(getSession())).filter(this::hasProperty).isPresent();
 
             node.remove();
 
@@ -581,11 +582,11 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
         model.register(listener);
 
-        final PropertyChangedListener insertedContentListener = new PropertyChangedListener();
+        final AtomicBoolean propertyChanged = new AtomicBoolean();
 
         ldpInsertedContentProperty(getNode()).ifPresent(resource -> {
-            insertedContentListener.addProperty(resource);
-            model.register(insertedContentListener);
+            final PropertyChangedListener propertyListener = new PropertyChangedListener(resource, propertyChanged);
+            model.register(propertyListener);
         });
 
         model.setNsPrefixes(request.getPrefixMapping());
@@ -597,7 +598,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
         try {
             touch();
-            if (insertedContentListener.propertyChanged()) {
+            if (propertyChanged.get()) {
                 touchLdpMembershipResource(getNode());
             }
         } catch (final RepositoryException ex) {

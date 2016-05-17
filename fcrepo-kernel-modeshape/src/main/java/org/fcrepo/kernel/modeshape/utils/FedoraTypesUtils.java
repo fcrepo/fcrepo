@@ -359,15 +359,23 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
         return empty();
     }
 
-    public static Function<Session, Function<Resource, Optional<String>>> resourceToProperty = session -> resource -> {
-        try {
-            final NamespaceRegistry registry = getNamespaceRegistry(session);
-            return Optional.of(registry.getPrefix(resource.getNameSpace()) + ":" + resource.getLocalName());
-        } catch (final RepositoryException ex) {
-            LOGGER.debug("Could not resolve resource namespace ({}): {}", resource.toString(), ex.getMessage());
-        }
-        return Optional.empty();
-    };
+    /**
+     * Using a JCR session, return a function that maps an RDF Resource to a corresponding property name.
+     *
+     * @param session The JCR session
+     * @return a Function that maps a Resource to an Optional-wrapped String
+     */
+    public static Function<Resource, Optional<String>> resourceToProperty(final Session session) {
+        return resource -> {
+            try {
+                final NamespaceRegistry registry = getNamespaceRegistry(session);
+                return Optional.of(registry.getPrefix(resource.getNameSpace()) + ":" + resource.getLocalName());
+            } catch (final RepositoryException ex) {
+                LOGGER.debug("Could not resolve resource namespace ({}): {}", resource.toString(), ex.getMessage());
+            }
+            return Optional.empty();
+        };
+    }
 
 
     /**
@@ -383,7 +391,7 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
 
             if (parent.hasProperty(LDP_MEMBER_RESOURCE)) {
                 final Optional<String> hasInsertedContentProperty = ldpInsertedContentProperty(node)
-                            .flatMap(resourceToProperty.apply(node.getSession())).filter(uncheck(node::hasProperty));
+                            .flatMap(resourceToProperty(node.getSession())).filter(uncheck(node::hasProperty));
 
                 if (parent.isNodeType(LDP_DIRECT_CONTAINER) ||
                         (parent.isNodeType(LDP_INDIRECT_CONTAINER) && hasInsertedContentProperty.isPresent())) {
