@@ -18,6 +18,7 @@ package org.fcrepo.kernel.modeshape.services;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.modeshape.ContainerImpl.hasMixin;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getContainingNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.touch;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.touchLdpMembershipResource;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
@@ -64,12 +65,10 @@ public class ContainerServiceImpl extends AbstractService implements ContainerSe
             if (node.isNew()) {
                 initializeNewObjectProperties(node);
 
-                final Node parent = node.getDepth() > 0 ? node.getParent() : null;
-
-                if (parent != null) {
+                getContainingNode(node).ifPresent(parent -> {
                     touch(parent);
                     touchLdpMembershipResource(node);
-                }
+                });
             }
 
             if (node.isNew()) {
@@ -78,7 +77,6 @@ public class ContainerServiceImpl extends AbstractService implements ContainerSe
 
             return new ContainerImpl(node);
         } catch (final RepositoryException e) {
-            LOGGER.info("Error: {}", e);
             throw new RepositoryRuntimeException(e);
         }
     }

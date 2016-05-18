@@ -30,6 +30,7 @@ import javax.jcr.Session;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getContainingNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.touch;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.touchLdpMembershipResource;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
@@ -61,12 +62,10 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
             if (dsNode.isNew()) {
                 initializeNewDatastreamProperties(dsNode);
 
-                final Node parent = dsNode.getDepth() > 0 ? dsNode.getParent() : null;
-
-                if (parent != null) {
+                getContainingNode(dsNode).ifPresent(parent -> {
                     touch(parent);
                     touchLdpMembershipResource(dsNode);
-                }
+                });
             }
 
             final FedoraBinaryImpl binary = new FedoraBinaryImpl(dsNode.getNode(JCR_CONTENT));

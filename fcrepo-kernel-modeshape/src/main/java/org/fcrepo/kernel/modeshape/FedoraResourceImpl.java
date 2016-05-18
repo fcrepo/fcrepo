@@ -47,6 +47,7 @@ import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.node
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.isFrozen;
 import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.property2values;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getContainingNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.hasInternalNamespace;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFrozenNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalNode;
@@ -67,6 +68,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
@@ -323,26 +325,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
     @Override
     public FedoraResource getContainer() {
-        try {
-
-            if (getNode().getDepth() == 0) {
-                return null;
-            }
-
-            Node container = getNode().getParent();
-            while (container.getDepth() > 0) {
-                if (container.isNodeType(FEDORA_PAIRTREE)
-                        || container.isNodeType(FEDORA_NON_RDF_SOURCE_DESCRIPTION)) {
-                    container = container.getParent();
-                } else {
-                    return nodeConverter.convert(container);
-                }
-            }
-
-            return nodeConverter.convert(container);
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
+        return getContainingNode(getNode()).map(nodeConverter::convert).orElse(null);
     }
 
     @Override
@@ -392,15 +375,26 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             final boolean shouldUpdateIndirectResource = ldpInsertedContentProperty(node)
                 .flatMap(resourceToProperty(getSession())).filter(this::hasProperty).isPresent();
 
+            final Optional<Node> containingNode = getContainingNode(getNode());
+
             node.remove();
 
             if (parent != null) {
                 createTombstone(parent, name);
+
                 // also update membershipResources for Direct/Indirect Containers
-                if (parent.hasProperty(LDP_MEMBER_RESOURCE) &&
-                        (parent.isNodeType(LDP_DIRECT_CONTAINER) || shouldUpdateIndirectResource)) {
-                    FedoraTypesUtils.touch(parent.getProperty(LDP_MEMBER_RESOURCE).getNode());
-                }
+                containingNode.filter(UncheckedPredicate.uncheck((final Node ancestor) ->
+                            ancestor.hasProperty(LDP_MEMBER_RESOURCE) && (ancestor.isNodeType(LDP_DIRECT_CONTAINER) ||
+                            shouldUpdateIndirectResource)))
+                    .ifPresent(ancestor -> {
+                        try {
+                            FedoraTypesUtils.touch(ancestor.getProperty(LDP_MEMBER_RESOURCE).getNode());
+                        } catch (final javax.jcr.AccessDeniedException e) {
+                            throw new AccessDeniedException(e);
+                        } catch (final RepositoryException e) {
+                            throw new RepositoryRuntimeException(e);
+                        }
+                    });
             }
         } catch (final javax.jcr.AccessDeniedException e) {
             throw new AccessDeniedException(e);
@@ -585,8 +579,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         final AtomicBoolean propertyChanged = new AtomicBoolean();
 
         ldpInsertedContentProperty(getNode()).ifPresent(resource -> {
-            final PropertyChangedListener propertyListener = new PropertyChangedListener(resource, propertyChanged);
-            model.register(propertyListener);
+            model.register(new PropertyChangedListener(resource, propertyChanged));
         });
 
         model.setNsPrefixes(request.getPrefixMapping());

@@ -23,6 +23,7 @@ import java.util.function.Predicate;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.FedoraTypes;
+import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
@@ -337,19 +338,10 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
      * @return the ldp:insertedContentRelation Resource, if one exists.
      */
     public static Optional<Resource> ldpInsertedContentProperty(final Node node) {
-        try {
-            if (node.getDepth() > 0) {
-                final Node parent = node.getParent();
-
-                if (parent.hasProperty(LDP_MEMBER_RESOURCE) && parent.isNodeType(LDP_INDIRECT_CONTAINER) &&
-                        parent.hasProperty(LDP_INSERTED_CONTENT_RELATION)) {
-                    return Optional.of(createResource(parent.getProperty(LDP_INSERTED_CONTENT_RELATION).getString()));
-                }
-            }
-        } catch (final RepositoryException ex) {
-            throw new RepositoryRuntimeException(ex);
-        }
-        return empty();
+        return getContainingNode(node).filter(uncheck(parent -> parent.hasProperty(LDP_MEMBER_RESOURCE) &&
+                parent.isNodeType(LDP_INDIRECT_CONTAINER) && parent.hasProperty(LDP_INSERTED_CONTENT_RELATION)))
+            .map(UncheckedFunction.uncheck(parent ->
+                        createResource(parent.getProperty(LDP_INSERTED_CONTENT_RELATION).getString())));
     }
 
     /**
@@ -366,7 +358,7 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
             } catch (final RepositoryException ex) {
                 LOGGER.debug("Could not resolve resource namespace ({}): {}", resource.toString(), ex.getMessage());
             }
-            return Optional.empty();
+            return empty();
         };
     }
 
@@ -376,31 +368,59 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
      * or indirect container, provided the LDP constraints are valid.
      *
      * @param node The JCR node
-     * @throws RepositoryException if a repository exception occurred
      */
-    public static void touchLdpMembershipResource(final Node node) throws RepositoryException {
-        if (node.getDepth() > 0) {
-            final Node parent = node.getParent();
-
-            if (parent.hasProperty(LDP_MEMBER_RESOURCE)) {
+    public static void touchLdpMembershipResource(final Node node) {
+        getContainingNode(node).filter(uncheck(parent -> parent.hasProperty(LDP_MEMBER_RESOURCE))).ifPresent(parent -> {
+            try {
                 final Optional<String> hasInsertedContentProperty = ldpInsertedContentProperty(node)
-                            .flatMap(resourceToProperty(node.getSession())).filter(uncheck(node::hasProperty));
-
+                        .flatMap(resourceToProperty(node.getSession())).filter(uncheck(node::hasProperty));
                 if (parent.isNodeType(LDP_DIRECT_CONTAINER) ||
                         (parent.isNodeType(LDP_INDIRECT_CONTAINER) && hasInsertedContentProperty.isPresent())) {
                     touch(parent.getProperty(LDP_MEMBER_RESOURCE).getNode());
                 }
+            } catch (final javax.jcr.AccessDeniedException ex) {
+                throw new AccessDeniedException(ex);
+            } catch (final RepositoryException ex) {
+                throw new RepositoryRuntimeException(ex);
             }
-        }
+        });
     }
 
     /**
      * Update the fedora:lastModified date of the node.
      *
      * @param node The JCR node
-     * @throws RepositoryException if a repository exception occurred
      */
-    public static void touch(final Node node) throws RepositoryException {
-        node.setProperty(FEDORA_LASTMODIFIED, getInstance(getTimeZone("UTC")));
+    public static void touch(final Node node) {
+        try {
+            node.setProperty(FEDORA_LASTMODIFIED, getInstance(getTimeZone("UTC")));
+        } catch (final javax.jcr.AccessDeniedException ex) {
+            throw new AccessDeniedException(ex);
+        } catch (final RepositoryException ex) {
+            throw new RepositoryRuntimeException(ex);
+        }
+    }
+
+    /**
+     * Get the JCR Node that corresponds to the containing node in the repository.
+     * This may be the direct parent node, but it may also be a more distant ancestor.
+     *
+     * @param node the JCR node
+     * @return the containing node, if one is present
+     */
+    public static Optional<Node> getContainingNode(final Node node) {
+        try {
+            if (node.getDepth() == 0) {
+                return empty();
+            }
+
+            final Node parent = node.getParent();
+            if (parent.isNodeType(FEDORA_PAIRTREE) || parent.isNodeType(FEDORA_NON_RDF_SOURCE_DESCRIPTION)) {
+                return getContainingNode(parent);
+            }
+            return Optional.of(parent);
+        } catch (final RepositoryException ex) {
+            throw new RepositoryRuntimeException(ex);
+        }
     }
 }
