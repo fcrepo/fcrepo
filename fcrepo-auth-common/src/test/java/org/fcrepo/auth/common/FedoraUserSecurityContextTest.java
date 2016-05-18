@@ -145,14 +145,17 @@ public class FedoraUserSecurityContextTest {
         final FedoraUserSecurityContext context =
                 new FedoraUserSecurityContext(principal, fad);
 
-        assertFalse("Granted permission with no action on root", context
-                .hasPermission(null, null, new String[] {}));
-
         assertFalse("Granted write permission on root", context.hasPermission(
                 null, null, new String[] {"write"}));
 
         assertTrue("Failed to granted read permission on root", context
                 .hasPermission(null, null, new String[] {"read"}));
+
+        assertTrue("Failed to grant register_namespace permission", context
+                .hasPermission(null, null, new String[] {"register_namespace"}));
+
+        assertTrue("Failed to grant register_type permission", context
+                .hasPermission(null, null, new String[] {"register_type"}));
 
         assertFalse("Granted write permission on root", context.hasPermission(
                 null, null, new String[] {"read", "write"}));

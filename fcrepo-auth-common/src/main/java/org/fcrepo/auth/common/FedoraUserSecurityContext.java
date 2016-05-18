@@ -15,15 +15,21 @@
  */
 package org.fcrepo.auth.common;
 
+import static org.modeshape.jcr.ModeShapePermissions.READ;
+import static org.modeshape.jcr.ModeShapePermissions.REGISTER_NAMESPACE;
+import static org.modeshape.jcr.ModeShapePermissions.REGISTER_TYPE;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
 import java.security.Principal;
+import java.util.Set;
 
 import org.modeshape.jcr.security.AdvancedAuthorizationProvider;
 import org.modeshape.jcr.security.SecurityContext;
 import org.modeshape.jcr.value.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.Sets;
 
 /**
  * The security context for Fedora servlet users. These users are not
@@ -139,9 +145,20 @@ public class FedoraUserSecurityContext implements SecurityContext,
             return false;
         }
 
-        // this permission is required for login
         if (absPath == null) {
-            return actions.length == 1 && "read".equals(actions[0]);
+            // this permission is required for login
+            if (actions.length == 1 && READ.equals(actions[0])) {
+                return true;
+            }
+            // The REGISTER_NAMESPACE action and the REGISTER_TYPE action don't include
+            // a path and are allowed for all users.  The fedora 4 code base doesn't expose
+            // any endpoint that *JUST* registers a namespace or type, so the operations
+            // that perform these actions will have to be authorized in context (for instance
+            // setting a property).
+            final Set<String> filteredActions = Sets.newHashSet(actions);
+            filteredActions.remove(REGISTER_NAMESPACE);
+            filteredActions.remove(REGISTER_TYPE);
+            return filteredActions.isEmpty();
         }
 
         // Trim jcr:content from paths, if necessary
