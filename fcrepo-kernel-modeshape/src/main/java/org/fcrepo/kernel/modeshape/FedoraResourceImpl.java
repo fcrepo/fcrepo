@@ -152,6 +152,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
     private static final Logger LOGGER = getLogger(FedoraResourceImpl.class);
 
+    private static final long NO_TIME = 0L;
     private static final String JCR_CHILD_VERSION_HISTORY = "jcr:childVersionHistory";
     private static final String JCR_VERSIONABLE_UUID = "jcr:versionableUuid";
     private static final String JCR_FROZEN_UUID = "jcr:frozenUuid";
@@ -389,10 +390,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                     .ifPresent(ancestor -> {
                         try {
                             FedoraTypesUtils.touch(ancestor.getProperty(LDP_MEMBER_RESOURCE).getNode());
-                        } catch (final javax.jcr.AccessDeniedException e) {
-                            throw new AccessDeniedException(e);
-                        } catch (final RepositoryException e) {
-                            throw new RepositoryRuntimeException(e);
+                        } catch (final RepositoryException ex) {
+                            throw new RepositoryRuntimeException(ex);
                         }
                     });
             }
@@ -414,7 +413,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     public Date getCreatedDate() {
         try {
             if (hasProperty(JCR_CREATED)) {
-                return new Date(getTimestamp(JCR_CREATED, 0L));
+                return new Date(getTimestamp(JCR_CREATED, NO_TIME));
             }
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
@@ -433,7 +432,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
         final Date createdDate = getCreatedDate();
         try {
-            final long created = createdDate == null ? 0L : createdDate.getTime();
+            final long created = createdDate == null ? NO_TIME : createdDate.getTime();
             if (hasProperty(FEDORA_LASTMODIFIED)) {
                 return new Date(getTimestamp(FEDORA_LASTMODIFIED, created));
             } else if (hasProperty(JCR_LASTMODIFIED)) {
@@ -453,10 +452,11 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
         return null;
     }
+
     private long getTimestamp(final String property, final long created) throws RepositoryException {
         LOGGER.trace("Using {} date", property);
         final long timestamp = getProperty(property).getDate().getTimeInMillis();
-        if (timestamp < created && created > 0L && !isFrozenResource()) {
+        if (timestamp < created && created > NO_TIME && !isFrozenResource()) {
             LOGGER.trace("Updating {} with later created date", property);
             getNode().setProperty(property, created);
             return created;
@@ -466,9 +466,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
     /**
      * Set the last-modified date to the current date.
-     * @throws RepositoryException if a repository exception occurs
      */
-    public void touch() throws RepositoryException {
+    public void touch() {
         FedoraTypesUtils.touch(getNode());
     }
 
@@ -576,8 +575,10 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
         model.register(listener);
 
+        // If this resource's structural parent is an IndirectContainer, check whether the
+        // ldp:insertedContentRelation property is present in the stream of changed triples.
+        // If so, set the propertyChanged value to true.
         final AtomicBoolean propertyChanged = new AtomicBoolean();
-
         ldpInsertedContentProperty(getNode()).ifPresent(resource -> {
             model.register(new PropertyChangedListener(resource, propertyChanged));
         });
@@ -589,13 +590,13 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
         listener.assertNoExceptions();
 
-        try {
-            touch();
-            if (propertyChanged.get()) {
-                touchLdpMembershipResource(getNode());
-            }
-        } catch (final RepositoryException ex) {
-            throw new RepositoryRuntimeException(ex);
+        // Update the fedora:lastModified property
+        touch();
+
+        // Update the fedora:lastModified property of the ldp:memberResource
+        // resource, if necessary.
+        if (propertyChanged.get()) {
+            touchLdpMembershipResource(getNode());
         }
     }
 
@@ -683,16 +684,27 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                 exceptions.append(e.getMessage());
             }
 
-            removeEmptyFragments();
-            try {
-                touch();
-            } catch (final RepositoryException ex) {
-                throw new RepositoryRuntimeException(ex);
-            }
+            // If this resource's structural parent is an IndirectContainer, check whether the
+            // ldp:insertedContentRelation property is present in the stream of changed triples.
+            // If so, set the propertyChanged value to true.
+            final AtomicBoolean propertyChanged = new AtomicBoolean();
+            ldpInsertedContentProperty(getNode()).ifPresent(resource -> {
+                propertyChanged.set(differencer.notCommon().map(Triple::getPredicate).anyMatch(resource::equals));
+            });
 
+            removeEmptyFragments();
 
             if (exceptions.length() > 0) {
                 throw new MalformedRdfException(exceptions.toString());
+            }
+
+            // Update the fedora:lastModified property
+            touch();
+
+            // If the ldp:insertedContentRelation property was changed, update the
+            // ldp:membershipResource resource.
+            if (propertyChanged.get()) {
+                touchLdpMembershipResource(getNode());
             }
         }
     }
@@ -724,7 +736,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                         throw new RepositoryRuntimeException("Error removing empty fragments", ex);
                     }
                 });
-                touch();
             }
         } catch (final RepositoryException ex) {
             throw new RepositoryRuntimeException("Error removing empty fragments", ex);

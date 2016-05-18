@@ -218,14 +218,16 @@ public class SimpleObserverIT extends AbstractIT {
         se.save();
         se.logout();
 
-        // these first two should be part of a single event
+        // these first two are part of a single event
         awaitEvent("/object9", NODE_ADDED);
         awaitEvent("/object9", PROPERTY_ADDED);
         awaitEvent("/object9#contributor", PROPERTY_ADDED);
-        // NOT CORRECT
+
+        // FIXME -- it is unclear where this event is coming from; clearly from the hashURI,
+        // but it doesn't seem right.
         awaitEvent("", PROPERTY_ADDED);
 
-        // This should be 2 -- should change with FCREPO-1985
+        // FIXME -- as hinted above, there is an extra event here somehow related to the hashURI.
         assertEquals("Where are my events?", (Integer) 3, eventBusMessageCount);
     }
 

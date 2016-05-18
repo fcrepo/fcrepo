@@ -77,6 +77,5 @@
   - fedora:lastModified (DATE)
 
 [fedora:Pairtree] mixin
-  - fedora:lastModified (DATE)
 
 [fedora:Tombstone] > nt:hierarchyNode
