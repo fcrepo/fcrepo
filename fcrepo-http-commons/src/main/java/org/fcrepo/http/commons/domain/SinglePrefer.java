@@ -19,7 +19,6 @@ import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toSet;
 import static org.fcrepo.http.commons.domain.PreferTag.emptyTag;
 
-import java.text.ParseException;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -38,16 +37,11 @@ public class SinglePrefer {
      * Parse a Prefer: header
      *
      * @param header the header
-     * @throws ParseException if parse exception occurred
      */
-    public SinglePrefer(final String header) throws ParseException {
-        preferTags.addAll(stream(header.split(",")).map(h -> {
-            try {
-                return new PreferTag(h);
-            } catch (final ParseException e) {
-                throw new IllegalArgumentException("Could not parse 'Prefer' header", e);
-            }
-        }).collect(toSet()));
+    public SinglePrefer(final String header) {
+        preferTags.addAll(stream(header.split(","))
+                .map(PreferTag::new)
+                .collect(toSet()));
     }
 
     /**

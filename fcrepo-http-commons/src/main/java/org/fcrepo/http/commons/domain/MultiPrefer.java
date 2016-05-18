@@ -15,7 +15,6 @@
  */
 package org.fcrepo.http.commons.domain;
 
-import java.text.ParseException;
 import java.util.Set;
 
 import javax.ws.rs.HeaderParam;
@@ -30,17 +29,15 @@ public class MultiPrefer extends SinglePrefer {
 
     /**
      * @param header the header
-     * @throws ParseException if parse exception occurred
      */
-    public MultiPrefer(final String header) throws ParseException {
+    public MultiPrefer(final String header) {
         super(header);
     }
 
     /**
      * @param prefers the prefers
-     * @throws ParseException if parse exception occurred
      */
-    public MultiPrefer(final @HeaderParam("Prefer") Set<SinglePrefer> prefers) throws ParseException {
+    public MultiPrefer(final @HeaderParam("Prefer") Set<SinglePrefer> prefers) {
         super("");
         prefers.forEach(p -> preferTags().addAll(p.preferTags()));
     }
