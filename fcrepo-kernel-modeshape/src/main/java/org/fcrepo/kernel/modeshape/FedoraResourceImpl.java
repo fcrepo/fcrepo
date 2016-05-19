@@ -25,6 +25,7 @@ import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.empty;
 import static java.util.stream.Stream.of;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIED;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
@@ -46,9 +47,13 @@ import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.node
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.isFrozen;
 import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.property2values;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getContainingNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.hasInternalNamespace;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFrozenNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalNode;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.ldpInsertedContentProperty;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.resourceToProperty;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.touchLdpMembershipResource;
 import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaceRegistry;
 import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
@@ -63,7 +68,9 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -118,7 +125,9 @@ import org.fcrepo.kernel.modeshape.rdf.impl.ReferencesRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.RootRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.SkolemNodeRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.VersionsRdfContext;
+import org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.modeshape.utils.JcrPropertyStatementListener;
+import org.fcrepo.kernel.modeshape.utils.PropertyChangedListener;
 import org.fcrepo.kernel.modeshape.utils.UncheckedPredicate;
 import org.fcrepo.kernel.modeshape.utils.iterators.RdfAdder;
 import org.fcrepo.kernel.modeshape.utils.iterators.RdfRemover;
@@ -143,6 +152,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
     private static final Logger LOGGER = getLogger(FedoraResourceImpl.class);
 
+    private static final long NO_TIME = 0L;
     private static final String JCR_CHILD_VERSION_HISTORY = "jcr:childVersionHistory";
     private static final String JCR_VERSIONABLE_UUID = "jcr:versionableUuid";
     private static final String JCR_FROZEN_UUID = "jcr:frozenUuid";
@@ -316,26 +326,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
     @Override
     public FedoraResource getContainer() {
-        try {
-
-            if (getNode().getDepth() == 0) {
-                return null;
-            }
-
-            Node container = getNode().getParent();
-            while (container.getDepth() > 0) {
-                if (container.isNodeType(FEDORA_PAIRTREE)
-                        || container.isNodeType(FEDORA_NON_RDF_SOURCE_DESCRIPTION)) {
-                    container = container.getParent();
-                } else {
-                    return nodeConverter.convert(container);
-                }
-            }
-
-            return nodeConverter.convert(container);
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
+        return getContainingNode(getNode()).map(nodeConverter::convert).orElse(null);
     }
 
     @Override
@@ -377,21 +368,35 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                 }
             }
 
-            final Node parent;
+            final Node parent = getNode().getDepth() > 0 ? getNode().getParent() : null;
 
-            if (getNode().getDepth() > 0) {
-                parent = getNode().getParent();
-            } else {
-                parent = null;
-            }
             final String name = getNode().getName();
+
+            // This is resolved immediately b/c we delete the node before updating an indirect container's target
+            final boolean shouldUpdateIndirectResource = ldpInsertedContentProperty(node)
+                .flatMap(resourceToProperty(getSession())).filter(this::hasProperty).isPresent();
+
+            final Optional<Node> containingNode = getContainingNode(getNode());
 
             node.remove();
 
             if (parent != null) {
                 createTombstone(parent, name);
-            }
 
+                // also update membershipResources for Direct/Indirect Containers
+                containingNode.filter(UncheckedPredicate.uncheck((final Node ancestor) ->
+                            ancestor.hasProperty(LDP_MEMBER_RESOURCE) && (ancestor.isNodeType(LDP_DIRECT_CONTAINER) ||
+                            shouldUpdateIndirectResource)))
+                    .ifPresent(ancestor -> {
+                        try {
+                            FedoraTypesUtils.touch(ancestor.getProperty(LDP_MEMBER_RESOURCE).getNode());
+                        } catch (final RepositoryException ex) {
+                            throw new RepositoryRuntimeException(ex);
+                        }
+                    });
+            }
+        } catch (final javax.jcr.AccessDeniedException e) {
+            throw new AccessDeniedException(e);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -408,7 +413,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     public Date getCreatedDate() {
         try {
             if (hasProperty(JCR_CREATED)) {
-                return new Date(getProperty(JCR_CREATED).getDate().getTimeInMillis());
+                return new Date(getTimestamp(JCR_CREATED, NO_TIME));
             }
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
@@ -425,9 +430,13 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @Override
     public Date getLastModifiedDate() {
 
+        final Date createdDate = getCreatedDate();
         try {
-            if (hasProperty(JCR_LASTMODIFIED)) {
-                return new Date(getProperty(JCR_LASTMODIFIED).getDate().getTimeInMillis());
+            final long created = createdDate == null ? NO_TIME : createdDate.getTime();
+            if (hasProperty(FEDORA_LASTMODIFIED)) {
+                return new Date(getTimestamp(FEDORA_LASTMODIFIED, created));
+            } else if (hasProperty(JCR_LASTMODIFIED)) {
+                return new Date(getTimestamp(JCR_LASTMODIFIED, created));
             }
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
@@ -436,7 +445,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         }
         LOGGER.debug("Could not get last modified date property for node {}", node);
 
-        final Date createdDate = getCreatedDate();
         if (createdDate != null) {
             LOGGER.trace("Using created date for last modified date for node {}", node);
             return createdDate;
@@ -445,6 +453,23 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         return null;
     }
 
+    private long getTimestamp(final String property, final long created) throws RepositoryException {
+        LOGGER.trace("Using {} date", property);
+        final long timestamp = getProperty(property).getDate().getTimeInMillis();
+        if (timestamp < created && created > NO_TIME && !isFrozenResource()) {
+            LOGGER.trace("Updating {} with later created date", property);
+            getNode().setProperty(property, created);
+            return created;
+        }
+        return timestamp;
+    }
+
+    /**
+     * Set the last-modified date to the current date.
+     */
+    public void touch() {
+        FedoraTypesUtils.touch(getNode());
+    }
 
     @Override
     public boolean hasType(final String type) {
@@ -550,12 +575,29 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
         model.register(listener);
 
+        // If this resource's structural parent is an IndirectContainer, check whether the
+        // ldp:insertedContentRelation property is present in the stream of changed triples.
+        // If so, set the propertyChanged value to true.
+        final AtomicBoolean propertyChanged = new AtomicBoolean();
+        ldpInsertedContentProperty(getNode()).ifPresent(resource -> {
+            model.register(new PropertyChangedListener(resource, propertyChanged));
+        });
+
         model.setNsPrefixes(request.getPrefixMapping());
         execute(request, model);
 
         removeEmptyFragments();
 
         listener.assertNoExceptions();
+
+        // Update the fedora:lastModified property
+        touch();
+
+        // Update the fedora:lastModified property of the ldp:memberResource
+        // resource, if necessary.
+        if (propertyChanged.get()) {
+            touchLdpMembershipResource(getNode());
+        }
     }
 
     @Override
@@ -642,10 +684,27 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                 exceptions.append(e.getMessage());
             }
 
+            // If this resource's structural parent is an IndirectContainer, check whether the
+            // ldp:insertedContentRelation property is present in the stream of changed triples.
+            // If so, set the propertyChanged value to true.
+            final AtomicBoolean propertyChanged = new AtomicBoolean();
+            ldpInsertedContentProperty(getNode()).ifPresent(resource -> {
+                propertyChanged.set(differencer.notCommon().map(Triple::getPredicate).anyMatch(resource::equals));
+            });
+
             removeEmptyFragments();
 
             if (exceptions.length() > 0) {
                 throw new MalformedRdfException(exceptions.toString());
+            }
+
+            // Update the fedora:lastModified property
+            touch();
+
+            // If the ldp:insertedContentRelation property was changed, update the
+            // ldp:membershipResource resource.
+            if (propertyChanged.get()) {
+                touchLdpMembershipResource(getNode());
             }
         }
     }

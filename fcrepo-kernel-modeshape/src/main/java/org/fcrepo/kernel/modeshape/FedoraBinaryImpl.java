@@ -192,6 +192,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
             }
 
             decorateContentNode(contentNode);
+            touch();
 
             LOGGER.debug("Created data property at path: {}", dataProperty.getPath());
 

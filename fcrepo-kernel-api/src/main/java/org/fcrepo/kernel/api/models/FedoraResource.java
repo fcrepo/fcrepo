@@ -88,13 +88,13 @@ public interface FedoraResource {
     void delete();
 
     /**
-     * Get the date this datastream was created
+     * Get the date this resource was created
      * @return created date
      */
     Date getCreatedDate();
 
     /**
-     * Get the date this datastream was last modified
+     * Get the date this resource was last modified
      * @return last modified date
      */
     Date getLastModifiedDate();

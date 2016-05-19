@@ -17,6 +17,7 @@ package org.fcrepo.kernel.modeshape.services;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TOMBSTONE;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.touchLdpMembershipResource;
 import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.validatePath;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -86,6 +87,7 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
     public void copyObject(final Session session, final String source, final String destination) {
         try {
             session.getWorkspace().copy(source, destination);
+            touchLdpMembershipResource(getJcrNode(find(session, destination)));
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -111,6 +113,9 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
             if (parent != null) {
                 createTombstone(parent, name);
             }
+
+            touchLdpMembershipResource(getJcrNode(find(session, source)));
+            touchLdpMembershipResource(getJcrNode(find(session, destination)));
 
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
