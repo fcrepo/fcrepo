@@ -457,8 +457,14 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         LOGGER.trace("Using {} date", property);
         final long timestamp = getProperty(property).getDate().getTimeInMillis();
         if (timestamp < created && created > NO_TIME && !isFrozenResource()) {
-            LOGGER.trace("Updating {} with later created date", property);
-            getNode().setProperty(property, created);
+            try {
+                LOGGER.trace("Updating {} with later created date", property);
+                getNode().setProperty(property, created);
+            } catch (final javax.jcr.AccessDeniedException e) {
+                LOGGER.trace("Unable to update {} with the later created date", property);
+            } catch (final javax.jcr.RepositoryException e) {
+                LOGGER.warn("Unable to update " + property + " with the later created date", e);
+            }
             return created;
         }
         return timestamp;
