@@ -86,7 +86,7 @@ public class FedoraFixity extends ContentExposingResource {
     @GET
     @Timed
     @HtmlTemplate(value = "fcr:fixity")
-    @Produces({TURTLE + ";qs=10", JSON_LD + ";qs=8",
+    @Produces({TURTLE + ";qs=1.0", JSON_LD + ";qs=0.8",
             N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
             TEXT_HTML, APPLICATION_XHTML_XML, "*/*"})
     public RdfNamespacedStream getDatastreamFixity() {

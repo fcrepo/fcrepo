@@ -21,6 +21,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Parse a single prefer tag, value and any optional parameters
@@ -37,11 +38,7 @@ public class PreferTag implements Comparable<PreferTag> {
      * @return the empty PreferTag
      */
     public static PreferTag emptyTag() {
-        try {
-            return new PreferTag((String)null);
-        } catch (final ParseException e) {
-            throw new AssertionError(e);
-        }
+        return new PreferTag((String)null);
     }
 
     /**
@@ -57,27 +54,33 @@ public class PreferTag implements Comparable<PreferTag> {
     /**
      * Parse the prefer tag and parameters out of the header
      * @param reader the reader
-     * @throws ParseException if parse exception occurred
      */
-    public PreferTag(final HttpHeaderReader reader) throws ParseException {
+    public PreferTag(final HttpHeaderReader reader) {
 
         // Skip any white space
         reader.hasNext();
 
         if (reader.hasNext()) {
-            tag = reader.nextToken();
+            try {
+                tag = Optional.ofNullable(reader.nextToken())
+                          .map(CharSequence::toString).orElse(null);
 
-            if (reader.hasNextSeparator('=', true)) {
-                reader.next();
+                if (reader.hasNextSeparator('=', true)) {
+                    reader.next();
 
-                value = reader.nextTokenOrQuotedString();
-            }
-
-            if (reader.hasNext()) {
-                params = HttpHeaderReader.readParameters(reader);
-                if ( params == null ) {
-                    params = new HashMap<>();
+                    value = Optional.ofNullable(reader.nextTokenOrQuotedString())
+                            .    map(CharSequence::toString)
+                                .orElse(null);
                 }
+
+                if (reader.hasNext()) {
+                    params = HttpHeaderReader.readParameters(reader);
+                    if ( params == null ) {
+                        params = new HashMap<>();
+                    }
+                }
+            } catch (ParseException e) {
+                throw new IllegalArgumentException("Could not parse 'Prefer' header", e);
             }
         } else {
             tag = "";
@@ -87,9 +90,8 @@ public class PreferTag implements Comparable<PreferTag> {
     /**
      * Create a blank prefer tag
      * @param inputTag the input tag
-     * @throws ParseException if parse exception occurred
      */
-    public PreferTag(final String inputTag) throws ParseException {
+    public PreferTag(final String inputTag) {
         this(HttpHeaderReader.newInstance(inputTag));
     }
 

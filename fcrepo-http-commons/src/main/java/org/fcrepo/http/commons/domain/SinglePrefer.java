@@ -15,13 +15,12 @@
  */
 package org.fcrepo.http.commons.domain;
 
+import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.toSet;
 import static org.fcrepo.http.commons.domain.PreferTag.emptyTag;
 
-import java.text.ParseException;
 import java.util.Set;
 import java.util.TreeSet;
-
-import org.glassfish.jersey.message.internal.HttpHeaderReader;
 
 /**
  * JAX-RS HTTP parameter parser for the Prefer header
@@ -38,10 +37,11 @@ public class SinglePrefer {
      * Parse a Prefer: header
      *
      * @param header the header
-     * @throws ParseException if parse exception occurred
      */
-    public SinglePrefer(final String header) throws ParseException {
-        preferTags.addAll(HttpHeaderReader.readList(PreferTag::new, header));
+    public SinglePrefer(final String header) {
+        preferTags.addAll(stream(header.split(","))
+                .map(PreferTag::new)
+                .collect(toSet()));
     }
 
     /**
