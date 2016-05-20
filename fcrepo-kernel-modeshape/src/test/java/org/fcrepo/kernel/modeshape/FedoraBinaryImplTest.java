@@ -67,9 +67,6 @@ public class FedoraBinaryImplTest implements FedoraTypes {
     private FedoraBinary testObj;
 
     @Mock
-    private NonRdfSourceDescriptionImpl mockDescription;
-
-    @Mock
     private Session mockSession;
 
     @Mock
