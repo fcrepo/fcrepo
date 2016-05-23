@@ -17,6 +17,7 @@ package org.fcrepo.kernel.modeshape.rdf.impl;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIED;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
+import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeToResource;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalProperty;
 import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
@@ -25,10 +26,13 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.stream.Stream;
 
+import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
+import com.google.common.base.Converter;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.fcrepo.kernel.modeshape.rdf.impl.mappings.PropertyToTriple;
 
 import org.slf4j.Logger;
@@ -58,17 +62,20 @@ public class PropertiesRdfContext extends NodeRdfContext {
                                 final IdentifierConverter<Resource, FedoraResource> idTranslator)
         throws RepositoryException {
         super(resource, idTranslator);
-        concat(triplesFromProperties(resource,
+        concat(triplesFromProperties(resource, nodeToResource(translator()),
                 new PropertyToTriple(getJcrNode(resource).getSession(), translator())));
     }
 
     @SuppressWarnings("unchecked")
-    private static Stream<Triple> triplesFromProperties(final FedoraResource n, final PropertyToTriple propertyToTriple)
+    private static Stream<Triple> triplesFromProperties(final FedoraResource n,
+                                                        final Converter<Node, Resource> translator,
+                                                        final PropertyToTriple propertyToTriple)
             throws RepositoryException {
         LOGGER.trace("Creating triples for node: {}", n);
         return iteratorToStream(getJcrNode(n).getProperties())
             .filter(isInternalProperty.negate().or(uncheck(prop ->
                 prop.getName().equals(JCR_LASTMODIFIED) && !n.hasProperty(FEDORA_LASTMODIFIED))))
-            .flatMap(propertyToTriple);
+            .flatMap(propertyToTriple).map(t -> FedoraResourceImpl.fixTriples(n, translator, (Triple) t));
     }
+
 }
