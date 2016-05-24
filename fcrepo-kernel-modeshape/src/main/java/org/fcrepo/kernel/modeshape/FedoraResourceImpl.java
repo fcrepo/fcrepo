@@ -431,6 +431,19 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     /* (non-Javadoc)
      * @see org.fcrepo.kernel.api.models.FedoraResource#getLastModifiedDate()
      */
+
+    /**
+     * This method gets the last modified date for this FedoraResource.  Because
+     * the last modified date is managed by fcrepo (not ModeShape) while the created
+     * date *is* managed by ModeShape in the current implementation it's possible that
+     * the last modified date will be before the created date.  Instead of making
+     * a second update to correct the modified date, in cases where the modified
+     * date is ealier than the created date, this class presents the created date instead.
+     *
+     * Any method that exposes the last modified date must maintain this illusion so
+     * that that external callers are presented with a sensible and consistent
+     * representation of this resource.
+     */
     @Override
     public Date getLastModifiedDate() {
 
@@ -1031,15 +1044,17 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
      * {@link PropertiesRdfContext} to replace the reported {@link org.fcrepo.kernel.api.RdfLexicon#LAST_MODIFIED_DATE}
      * with the one produced by {@link #getLastModifiedDate}.
      */
-    public static Triple fixTriples(final FedoraResource r, final Converter<Node, Resource> translator,
-                                    final Triple t) {
-        if (t.getPredicate().toString().equals(LAST_MODIFIED_DATE.toString())
-                && t.getSubject().equals(translator.convert(getJcrNode(r)).asNode())) {
-            final Calendar c = Calendar.getInstance();
-            c.setTime(r.getLastModifiedDate());
-            return new Triple(t.getSubject(), t.getPredicate(), createTypedLiteral(c).asNode());
-        }
-        return t;
+    public static Function<Triple, Triple> fixDatesIfNecessary(final FedoraResource r,
+                                                      final Converter<Node, Resource> translator) {
+        return t -> {
+            if (t.getPredicate().toString().equals(LAST_MODIFIED_DATE.toString())
+                    && t.getSubject().equals(translator.convert(getJcrNode(r)).asNode())) {
+                final Calendar c = Calendar.getInstance();
+                c.setTime(r.getLastModifiedDate());
+                return new Triple(t.getSubject(), t.getPredicate(), createTypedLiteral(c).asNode());
+            }
+            return t;
+            };
     }
 
 }

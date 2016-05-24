@@ -17,6 +17,7 @@ package org.fcrepo.kernel.modeshape.rdf.impl;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIED;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
+import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.fixDatesIfNecessary;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeToResource;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalProperty;
@@ -32,7 +33,6 @@ import javax.jcr.RepositoryException;
 import com.google.common.base.Converter;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.fcrepo.kernel.modeshape.rdf.impl.mappings.PropertyToTriple;
 
 import org.slf4j.Logger;
@@ -75,7 +75,7 @@ public class PropertiesRdfContext extends NodeRdfContext {
         return iteratorToStream(getJcrNode(n).getProperties())
             .filter(isInternalProperty.negate().or(uncheck(prop ->
                 prop.getName().equals(JCR_LASTMODIFIED) && !n.hasProperty(FEDORA_LASTMODIFIED))))
-            .flatMap(propertyToTriple).map(t -> FedoraResourceImpl.fixTriples(n, translator, (Triple) t));
+            .flatMap(propertyToTriple).map(fixDatesIfNecessary(n, translator));
     }
 
 }
