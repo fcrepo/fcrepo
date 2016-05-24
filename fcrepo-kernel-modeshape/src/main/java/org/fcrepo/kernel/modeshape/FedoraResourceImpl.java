@@ -15,6 +15,7 @@
  */
 package org.fcrepo.kernel.modeshape;
 
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static com.hp.hpl.jena.update.UpdateAction.execute;
 import static com.hp.hpl.jena.update.UpdateFactory.create;
 import static java.util.Arrays.asList;
@@ -27,6 +28,7 @@ import static java.util.stream.Stream.of;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIED;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
+import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
@@ -48,6 +50,7 @@ import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getRDFNamespaceForJcrN
 import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.isFrozen;
 import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.property2values;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getContainingNode;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.hasInternalNamespace;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFrozenNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalNode;
@@ -63,6 +66,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
@@ -427,6 +431,21 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     /* (non-Javadoc)
      * @see org.fcrepo.kernel.api.models.FedoraResource#getLastModifiedDate()
      */
+
+    /**
+     * This method gets the last modified date for this FedoraResource.  Because
+     * the last modified date is managed by fcrepo (not ModeShape) while the created
+     * date *is* managed by ModeShape in the current implementation it's possible that
+     * the last modified date will be before the created date.  Instead of making
+     * a second update to correct the modified date, in cases where the modified
+     * date is ealier than the created date, this class presents the created date instead.
+     *
+     * Any method that exposes the last modified date must maintain this illusion so
+     * that that external callers are presented with a sensible and consistent
+     * representation of this resource.
+     * @return the last modified Date (or the created date if it was after the last
+     *         modified date)
+     */
     @Override
     public Date getLastModifiedDate() {
 
@@ -456,9 +475,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     private long getTimestamp(final String property, final long created) throws RepositoryException {
         LOGGER.trace("Using {} date", property);
         final long timestamp = getProperty(property).getDate().getTimeInMillis();
-        if (timestamp < created && created > NO_TIME && !isFrozenResource()) {
-            LOGGER.trace("Updating {} with later created date", property);
-            getNode().setProperty(property, created);
+        if (timestamp < created && created > NO_TIME) {
+            LOGGER.trace("Returning the later created date ({} > {}) for {}", created, timestamp, property);
             return created;
         }
         return timestamp;
@@ -1020,6 +1038,28 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
+    }
+
+    /**
+     * A method that takes a Triple and returns a Triple that is the correct representation of
+     * that triple for the given resource.  The current implementation of this method is used by
+     * {@link PropertiesRdfContext} to replace the reported {@link org.fcrepo.kernel.api.RdfLexicon#LAST_MODIFIED_DATE}
+     * with the one produced by {@link #getLastModifiedDate}.
+     * @param r the Fedora resource
+     * @param translator a converter to get the external identifier from a jcr node
+     * @return a function to convert triples
+     */
+    public static Function<Triple, Triple> fixDatesIfNecessary(final FedoraResource r,
+                                                      final Converter<Node, Resource> translator) {
+        return t -> {
+            if (t.getPredicate().toString().equals(LAST_MODIFIED_DATE.toString())
+                    && t.getSubject().equals(translator.convert(getJcrNode(r)).asNode())) {
+                final Calendar c = Calendar.getInstance();
+                c.setTime(r.getLastModifiedDate());
+                return new Triple(t.getSubject(), t.getPredicate(), createTypedLiteral(c).asNode());
+            }
+            return t;
+            };
     }
 
 }
