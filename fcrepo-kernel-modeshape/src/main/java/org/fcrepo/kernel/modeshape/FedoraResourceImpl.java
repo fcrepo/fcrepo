@@ -443,6 +443,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
      * Any method that exposes the last modified date must maintain this illusion so
      * that that external callers are presented with a sensible and consistent
      * representation of this resource.
+     * @return the last modified Date (or the created date if it was after the last
+     *         modified date)
      */
     @Override
     public Date getLastModifiedDate() {
@@ -1043,6 +1045,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
      * that triple for the given resource.  The current implementation of this method is used by
      * {@link PropertiesRdfContext} to replace the reported {@link org.fcrepo.kernel.api.RdfLexicon#LAST_MODIFIED_DATE}
      * with the one produced by {@link #getLastModifiedDate}.
+     * @param r the Fedora resource
+     * @param translator a converter to get the external identifier from a jcr node
+     * @return a function to convert triples
      */
     public static Function<Triple, Triple> fixDatesIfNecessary(final FedoraResource r,
                                                       final Converter<Node, Resource> translator) {
