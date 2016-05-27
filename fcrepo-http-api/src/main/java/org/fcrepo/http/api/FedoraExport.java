@@ -17,19 +17,20 @@ package org.fcrepo.http.api;
 
 import static java.lang.Boolean.parseBoolean;
 import static javax.ws.rs.core.Response.ok;
+import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.OutputStream;
 
-import javax.jcr.RepositoryException;
+import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
@@ -38,7 +39,6 @@ import org.fcrepo.serialization.FedoraObjectSerializer;
 import org.fcrepo.serialization.InvalidSerializationFormatException;
 import org.fcrepo.serialization.SerializerUtil;
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 
 /**
@@ -48,10 +48,9 @@ import org.springframework.context.annotation.Scope;
  */
 @Scope("request")
 @Path("/{path: .*}/fcr:export")
-@Deprecated
 public class FedoraExport extends FedoraBaseResource {
 
-    @Autowired
+    @Inject
     protected SerializerUtil serializers;
 
     private static final Logger LOGGER = getLogger(FedoraExport.class);
@@ -80,6 +79,10 @@ public class FedoraExport extends FedoraBaseResource {
         final FedoraObjectSerializer serializer =
             serializers.getSerializer(format);
 
+        if (serializer == null) {
+            return status(NOT_FOUND).entity("No " + format + " serialization available for " + resource.getPath())
+                    .build();
+        }
         return ok().type(serializer.getMediaType()).entity(
                 new StreamingOutput() {
 
@@ -95,14 +98,11 @@ public class FedoraExport extends FedoraBaseResource {
                                                  parseBoolean(skipBinary),
                                                  parseBoolean(recurse));
                             LOGGER.info("Serialized to {}, '{}'", format, externalPath);
-                        } catch (final RepositoryException e) {
-                            throw new WebApplicationException(e);
                         } catch (InvalidSerializationFormatException e) {
                             throw new BadRequestException(e.getMessage());
                         }
                     }
                 })
-                .header("Warning", "This endpoint is deprecated and will be removed in the 4.6.0 release.")
                 .build();
 
     }

@@ -35,7 +35,6 @@ import org.fcrepo.http.commons.test.util.TestHelpers;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.ContainerService;
 import org.fcrepo.serialization.FedoraObjectSerializer;
-import org.fcrepo.serialization.JcrXmlSerializer;
 import org.fcrepo.serialization.SerializerUtil;
 import org.junit.Before;
 import org.junit.Test;
@@ -59,7 +58,7 @@ public class FedoraExportTest {
     private FedoraObjectSerializer mockSerializer;
 
     @Mock
-    private JcrXmlSerializer mockJcrXmlSerializer;
+    private FedoraObjectSerializer mockObjectSerializer;
 
     @Mock
     private ContainerService mockContainerService;
@@ -94,11 +93,11 @@ public class FedoraExportTest {
     public void testExportObjectSkipBinary() throws Exception {
         final String skipBinary = "true";
         when(mockSerializers.getSerializer(FedoraObjectSerializer.JCR_XML)).thenReturn(
-                mockJcrXmlSerializer);
+                mockObjectSerializer);
         doReturn(mockResource).when(testObj).getResourceFromPath("test/object");
         ((StreamingOutput) testObj.exportObject("test/object", FedoraObjectSerializer.JCR_XML,
                     "false", skipBinary).getEntity()).write(new ByteArrayOutputStream());
-        verify(mockJcrXmlSerializer).serialize(eq(mockResource), any(OutputStream.class),
+        verify(mockObjectSerializer).serialize(eq(mockResource), any(OutputStream.class),
                 eq(Boolean.valueOf("false")), eq(Boolean.valueOf(skipBinary)));
     }
 
@@ -106,11 +105,11 @@ public class FedoraExportTest {
     public void testExportObjectNoRecurse() throws Exception {
         final String noRecurse = "true";
         when(mockSerializers.getSerializer(FedoraObjectSerializer.JCR_XML)).thenReturn(
-                mockJcrXmlSerializer);
+                mockObjectSerializer);
         doReturn(mockResource).when(testObj).getResourceFromPath("test/object");
         ((StreamingOutput) testObj.exportObject("test/object", FedoraObjectSerializer.JCR_XML,
                     noRecurse, "false").getEntity()).write(new ByteArrayOutputStream());
-        verify(mockJcrXmlSerializer).serialize(eq(mockResource),
+        verify(mockObjectSerializer).serialize(eq(mockResource),
                 any(OutputStream.class), eq(Boolean.valueOf(noRecurse)),
                     eq(Boolean.valueOf("false")));
     }

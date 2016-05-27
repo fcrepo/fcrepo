@@ -19,35 +19,33 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import javax.inject.Inject;
 import javax.jcr.Repository;
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Auto-wire some helpful services for the FedoraObjectSerializer
  *
  * @author cbeer
  */
-public abstract class BaseFedoraObjectSerializer implements
-        FedoraObjectSerializer {
+public abstract class BaseFedoraObjectSerializer implements FedoraObjectSerializer {
 
-    @Autowired
+    @Inject
     protected Repository repo;
 
     @Override
     public abstract void serialize(final FedoraResource obj,
                                    final OutputStream out,
                                    final boolean skipBinary,
-                                   final boolean recurse) throws RepositoryException, IOException,
+                                   final boolean recurse) throws IOException,
             InvalidSerializationFormatException;
 
     @Override
     public abstract void deserialize(final Session session, final String path,
-            final InputStream stream) throws IOException, RepositoryException,
-            InvalidChecksumException, InvalidSerializationFormatException;
+            final InputStream stream) throws IOException, InvalidChecksumException,
+           InvalidSerializationFormatException;
 
 }

@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -70,12 +69,11 @@ public interface FedoraObjectSerializer {
      * @param out the out
      * @param skipBinary skip binary
      * @param recurse the recurse
-     * @throws RepositoryException if repository exception occurred
      * @throws IOException if IO exception occurred
      * @throws org.fcrepo.serialization.InvalidSerializationFormatException if invalid serialization occurred
      */
     void serialize(final FedoraResource obj, final OutputStream out, final boolean skipBinary, final boolean recurse)
-                    throws RepositoryException, IOException, InvalidSerializationFormatException;
+                    throws IOException, InvalidSerializationFormatException;
 
     /**
      * Read the given InputStream and de-serialize the content
@@ -86,12 +84,11 @@ public interface FedoraObjectSerializer {
      * @param path the path
      * @param stream the stream
      * @throws IOException if IO exception occurred
-     * @throws RepositoryException if repository exception occurred
      * @throws InvalidChecksumException if invalid checksum exception occurred
      * @throws org.fcrepo.serialization.InvalidSerializationFormatException if invadlid serialization occurred
      */
     void deserialize(final Session session, final String path,
-            final InputStream stream) throws IOException, RepositoryException,
+            final InputStream stream) throws IOException,
             InvalidChecksumException, InvalidSerializationFormatException;
 
 }

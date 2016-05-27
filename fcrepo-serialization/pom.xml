@@ -15,14 +15,13 @@
   <properties>
     <osgi.import.packages>
       org.fcrepo.kernel.api.*,
-      org.fcrepo.kernel.modeshape.*,
 
+      javax.inject,
       javax.annotation,
       javax.jcr.*,
       javax.xml.*,
 
       org.apache.commons.io,
-      org.springframework.beans.*,
       org.springframework.context,
       org.springframework.stereotype,
 
@@ -41,9 +40,8 @@
     </dependency>
 
     <dependency>
-      <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-kernel-modeshape</artifactId>
-      <version>${project.version}</version>
+      <groupId>org.glassfish.hk2.external</groupId>
+      <artifactId>javax.inject</artifactId>
     </dependency>
 
     <dependency>
@@ -64,11 +62,6 @@
     <dependency>
       <groupId>javax.jcr</groupId>
       <artifactId>jcr</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.modeshape</groupId>
-      <artifactId>modeshape-jcr</artifactId>
     </dependency>
 
     <!-- test gear -->

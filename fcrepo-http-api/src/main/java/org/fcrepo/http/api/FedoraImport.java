@@ -16,8 +16,9 @@
 package org.fcrepo.http.api;
 
 import static javax.ws.rs.core.Response.created;
-import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -25,6 +26,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import javax.inject.Inject;
 import javax.jcr.ItemExistsException;
 import javax.jcr.RepositoryException;
 import javax.ws.rs.DefaultValue;
@@ -37,10 +39,10 @@ import javax.ws.rs.core.Response;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.serialization.FedoraObjectSerializer;
 import org.fcrepo.serialization.InvalidSerializationFormatException;
 import org.fcrepo.serialization.SerializerUtil;
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 
 /**
@@ -51,10 +53,9 @@ import org.springframework.context.annotation.Scope;
  */
 @Scope("prototype")
 @Path("/{path: .*}/fcr:import")
-@Deprecated
 public class FedoraImport extends FedoraBaseResource {
 
-    @Autowired
+    @Inject
     protected SerializerUtil serializers;
 
     private static final Logger LOGGER = getLogger(FedoraImport.class);
@@ -78,15 +79,19 @@ public class FedoraImport extends FedoraBaseResource {
         throws IOException, InvalidChecksumException, URISyntaxException {
 
         final String path = toPath(translator(), externalPath);
+
+        final FedoraObjectSerializer serializer = serializers.getSerializer(format);
+
+        if (serializer == null) {
+            return status(NOT_FOUND).entity("No " + format + " serialization available for " + path).build();
+        }
+
         LOGGER.info("Deserializing to {}, '{}'", format, path);
 
         try {
-            serializers.getSerializer(format)
-                    .deserialize(session, path, requestBodyStream);
+            serializer.deserialize(session, path, requestBodyStream);
             session.save();
-            return created(new URI(path))
-                    .header("Warning", "This endpoint is deprecated and will be removed in the 4.6.0 release.")
-                    .build();
+            return created(new URI(path)).build();
         } catch ( ItemExistsException ex ) {
             return status(CONFLICT).entity("Item already exists").build();
         } catch (final RepositoryException e) {
