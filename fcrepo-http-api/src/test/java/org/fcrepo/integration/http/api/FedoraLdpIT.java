@@ -772,11 +772,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals("Last-Modified should be the same", binaryLastModed1, binaryLastModed2);
 
         final HttpGet get6 = new HttpGet(location);
-        get6.addHeader("If-None-Match", binaryEtag1.toString());
+        get6.addHeader("If-None-Match", binaryEtag1);
         assertEquals("Expected 304 Not Modified", NOT_MODIFIED.getStatusCode(), getStatus(get6));
 
         final HttpGet get7 = new HttpGet(location);
-        get7.addHeader("If-Modified-Since", binaryLastModed2);
+        get7.addHeader("If-Modified-Since", binaryLastModed1);
         assertEquals("Expected 304 Not Modified", NOT_MODIFIED.getStatusCode(), getStatus(get7));
 
         // Next, check headers for the description; they should have changed
