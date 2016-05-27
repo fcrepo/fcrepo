@@ -535,7 +535,7 @@ public class FedoraLdpTest {
 
 
     @Test
-    @SuppressWarnings("resource")
+    @SuppressWarnings({"resource", "unchecked"})
     public void testGetWithBinaryDescription() throws RepositoryException, IOException {
 
         final NonRdfSourceDescription mockResource
@@ -671,7 +671,7 @@ public class FedoraLdpTest {
 
 
     @Test
-    @SuppressWarnings("resource")
+    @SuppressWarnings({"resource", "unchecked"})
     public void testPatchBinaryDescription() throws RepositoryException, MalformedRdfException, IOException {
 
         final NonRdfSourceDescription mockObject = (NonRdfSourceDescription)setResource(NonRdfSourceDescription.class);

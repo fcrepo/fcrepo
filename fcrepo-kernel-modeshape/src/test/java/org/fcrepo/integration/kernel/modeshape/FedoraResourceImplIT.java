@@ -321,7 +321,6 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     @Test
     public void testRdfTypeInheritance() throws RepositoryException {
-        logger.info("in testRdfTypeInheritance...");
         final NodeTypeManager mgr = session.getWorkspace().getNodeTypeManager();
         //create supertype mixin
         final NodeTypeTemplate type = mgr.createNodeTypeTemplate();
@@ -701,6 +700,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
             object.replaceProperties(subjects, model, object.getTriples(subjects, PROPERTIES));
 
+            @SuppressWarnings("unchecked")
             final Iterator<javax.jcr.Property> properties = getJcrNode(object).getProperties();
 
             final Iterator<javax.jcr.Property> relation = Iterators.filter(properties, uncheck(
@@ -1000,7 +1000,6 @@ public class FedoraResourceImplIT extends AbstractIT {
         // Versioned child still exists
         final NonRdfSourceDescription frozenChild =
                 new NonRdfSourceDescriptionImpl(version.getFrozenNode().getNode("child"));
-        System.out.println(frozenChild);
         try (final InputStream contentStream = ((FedoraBinary) frozenChild.getDescribedResource()).getContent()) {
             assertNotNull(contentStream);
             assertEquals(content, IOUtils.toString(contentStream));

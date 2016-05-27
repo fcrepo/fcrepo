@@ -414,6 +414,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
     protected List<Converter<String,String>> getTranslationChain() {
         final ApplicationContext context = getApplicationContext();
         if (context != null) {
+            @SuppressWarnings("unchecked")
             final List<Converter<String,String>> tchain =
                     getApplicationContext().getBean("translationChain", List.class);
             return tchain;
