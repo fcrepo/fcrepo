@@ -483,6 +483,16 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     /**
      * Add ETag and Last-Modified cache control headers to the response
+     * <p>
+     * Note: In this implementation, the HTTP headers for ETags and Last-Modified dates are swapped
+     * for fedora:Binary resources and their descriptions. Here, we are drawing a distinction between
+     * the HTTP resource and the LDP resource. As an HTTP resource, the last-modified header should
+     * reflect when the resource at the given URL was last changed. With fedora:Binary resources and
+     * their descriptions, this is a little complicated, for the descriptions have, as their subjects,
+     * the binary itself. And the fedora:lastModified property produced by that NonRdfSourceDescription
+     * refers to the last-modified date of the binary -- not the last-modified date of the
+     * NonRdfSourceDescription.
+     * </p>
      * @param servletResponse the servlet response
      * @param resource the fedora resource
      * @param session the session
@@ -497,10 +507,25 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             return;
         }
 
-        final FedoraResource mutableResource = resource instanceof NonRdfSourceDescription
-                ? ((NonRdfSourceDescription) resource).getDescribedResource() : resource;
-        final EntityTag etag = new EntityTag(mutableResource.getEtagValue());
-        final Date date = mutableResource.getLastModifiedDate();
+        final EntityTag etag;
+        final Date date;
+
+        // See note about this code in the javadoc above.
+        if (resource instanceof NonRdfSourceDescription) {
+            final NonRdfSourceDescription description = (NonRdfSourceDescription)resource;
+            // Use a weak ETag for the LDP-RS
+            etag = new EntityTag(description.getDescribedResource().getEtagValue(), true);
+            date = description.getDescribedResource().getLastModifiedDate();
+        } else if (resource instanceof FedoraBinary) {
+            final NonRdfSource binary = (NonRdfSource)resource;
+            // Use a strong ETag for the LDP-NR
+            etag = new EntityTag(binary.getDescription().getEtagValue());
+            date = binary.getDescription().getLastModifiedDate();
+        } else {
+            // Use a weak ETag for the LDP-RS
+            etag = new EntityTag(resource.getEtagValue(), true);
+            date = resource.getLastModifiedDate();
+        }
 
         if (!etag.getValue().isEmpty()) {
             servletResponse.addHeader("ETag", etag.toString());
@@ -539,9 +564,27 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             return;
         }
 
-        final EntityTag etag = new EntityTag(resource.getEtagValue());
-        final Date date = resource.getLastModifiedDate();
+        final EntityTag etag;
+        final Date date;
         final Date roundedDate = new Date();
+
+        // See the related note about the next block of code in the
+        // ContentExposingResource::addCacheControlHeaders method
+        if (resource instanceof NonRdfSourceDescription) {
+            final NonRdfSourceDescription description = (NonRdfSourceDescription)resource;
+            // Use a weak ETag for the LDP-RS
+            etag = new EntityTag(description.getDescribedResource().getEtagValue(), true);
+            date = description.getDescribedResource().getLastModifiedDate();
+        } else if (resource instanceof NonRdfSource) {
+            final NonRdfSource binary = (NonRdfSource)resource;
+            // Use a strong ETag for the LDP-NR
+            etag = new EntityTag(binary.getDescription().getEtagValue());
+            date = binary.getDescription().getLastModifiedDate();
+        } else {
+            // Use a weak ETag for the LDP-RS
+            etag = new EntityTag(resource.getEtagValue(), true);
+            date = resource.getLastModifiedDate();
+        }
 
         if (date != null) {
             roundedDate.setTime(date.getTime() - date.getTime() % 1000);

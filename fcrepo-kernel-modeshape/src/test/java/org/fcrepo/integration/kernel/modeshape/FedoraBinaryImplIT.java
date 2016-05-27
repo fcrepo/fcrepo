@@ -21,6 +21,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
+import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -50,6 +51,7 @@ import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.ContainerService;
 import org.fcrepo.kernel.api.utils.ContentDigest;
@@ -373,4 +375,44 @@ public class FedoraBinaryImplIT extends AbstractIT {
             session.logout();
         }
     }
+
+    @Test
+    public void testModifyDatastreamDescriptionLastMod() throws RepositoryException, InvalidChecksumException {
+        final Session session = repo.login();
+        try {
+            containerService.findOrCreate(session, "/testDatastreamObject");
+
+            final FedoraBinary orig = binaryService.findOrCreate(session, "/testDatastreamObject/testDatastreamNode6");
+            orig.setContent(new ByteArrayInputStream("asdf".getBytes()), "application/octet-stream", null, null, null);
+            session.save();
+            final long origMod = orig.getLastModifiedDate().getTime();
+
+            final NonRdfSourceDescription description = orig.getDescription();
+            final long origDescriptionMod = description.getLastModifiedDate().getTime();
+
+            description.updateProperties(idTranslator, "INSERT { <> <info:fcrepo/foo> \"b\" } WHERE {}",
+                    description.getTriples(idTranslator, PROPERTIES));
+            session.save();
+
+            final FedoraBinary ds = binaryService.findOrCreate(session, "/testDatastreamObject/testDatastreamNode6");
+
+            final long modMod = ds.getLastModifiedDate().getTime();
+            final long modDescMod = ds.getDescription().getLastModifiedDate().getTime();
+
+            assertEquals("Last-modified on the binary should be the same", modMod,  origMod);
+            assertNotEquals("Last-modified on the description should not be the same", modDescMod, origDescriptionMod);
+
+            ds.setContent(new ByteArrayInputStream("0123456789".getBytes()), null, null, null, null);
+
+            assertNotEquals("Last-modified on the binary should have changed",
+                    ds.getLastModifiedDate().getTime(), modMod);
+            assertNotEquals("Last-modified on the description should have changed",
+                    ds.getDescription().getLastModifiedDate().getTime(), modDescMod);
+
+        } finally {
+            session.logout();
+        }
+    }
+
+
 }

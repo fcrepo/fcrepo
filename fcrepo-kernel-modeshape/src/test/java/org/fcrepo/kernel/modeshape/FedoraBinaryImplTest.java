@@ -70,7 +70,7 @@ public class FedoraBinaryImplTest implements FedoraTypes {
     private Session mockSession;
 
     @Mock
-    private Node mockRootNode, mockDsNode, mockContent;
+    private Node mockRootNode, mockDsNode, mockContent, mockParentNode;
 
     @Mock
     private InputStream mockStream;
@@ -89,6 +89,7 @@ public class FedoraBinaryImplTest implements FedoraTypes {
             when(mockDsNode.getMixinNodeTypes()).thenReturn(nodeTypes);
             when(mockDsNode.getName()).thenReturn(testDsId);
             when(mockContent.getSession()).thenReturn(mockSession);
+            when(mockContent.getParent()).thenReturn(mockParentNode);
             final NodeType mockNodeType = mock(NodeType.class);
             when(mockNodeType.getName()).thenReturn("nt:file");
             when(mockDsNode.getPrimaryNodeType()).thenReturn(mockNodeType);
