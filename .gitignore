@@ -18,3 +18,4 @@ fcrepo4-data/
 fcrepo-integration-ldp/report-*
 fcrepo-integration-ldp/report
 fcrepo-integration-ldp/test-output
+.idea/
