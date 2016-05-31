@@ -13,15 +13,17 @@
     "storage" : {
         "persistence": {
             "type" : "db",
-            "connectionUrl": "jdbc:mysql://${fcrepo.mysql.host}:${fcrepo.mysql.port:3306}/fcrepo?createDatabaseIfNotExist=true",
+            "connectionUrl": "jdbc:mysql://${fcrepo.mysql.host:localhost}:${fcrepo.mysql.port:3306}/fcrepo?createDatabaseIfNotExist=true",
             "driver" : "com.mysql.jdbc.Driver",
             "username" : "${fcrepo.mysql.username}",
             "password" : "${fcrepo.mysql.password}"
         },
         "binaryStorage" : {
-            "type" : "file",
-            "directory" : "${fcrepo.binary.directory:nfs/binaries}",
-            "minimumBinarySizeInBytes" : 4096
+            "type"  : "database",
+            "url": "jdbc:mysql://${fcrepo.mysql.host:localhost}:${fcrepo.mysql.port:3306}/fcrepo?createDatabaseIfNotExist=true",
+            "driverClass" : "com.mysql.jdbc.Driver",
+            "username" : "${fcrepo.mysql.username}",
+            "password" : "${fcrepo.mysql.password}"
         }
     },
     "security" : {
