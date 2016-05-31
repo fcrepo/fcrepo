@@ -242,6 +242,7 @@ public class FedoraEventImpl implements FedoraEvent {
     public static FedoraEvent from(final Event event) {
         requireNonNull(event);
         try {
+            @SuppressWarnings("unchecked")
             final Map<String, String> info = event.getInfo();
 
             return new FedoraEventImpl(valueOf(event.getType()), cleanPath(event),

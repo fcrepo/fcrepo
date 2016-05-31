@@ -95,7 +95,6 @@ import javax.jcr.version.VersionManager;
 
 import com.google.common.base.Converter;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.graph.Triple;
 
@@ -354,23 +353,26 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @Override
     public void delete() {
         try {
+            @SuppressWarnings("unchecked")
             final Iterator<Property> references = node.getReferences();
+            @SuppressWarnings("unchecked")
             final Iterator<Property> weakReferences = node.getWeakReferences();
-            final Iterator<Property> inboundProperties = Iterators.concat(references, weakReferences);
+            concat(iteratorToStream(references), iteratorToStream(weakReferences)).forEach(prop -> {
+                try {
+                    final List<Value> newVals = property2values.apply(prop).filter(
+                            UncheckedPredicate.uncheck(value ->
+                                !node.equals(getSession().getNodeByIdentifier(value.getString()))))
+                        .collect(toList());
 
-            while (inboundProperties.hasNext()) {
-                final Property prop = inboundProperties.next();
-                final List<Value> newVals = property2values.apply(prop).filter(
-                        UncheckedPredicate.uncheck(value ->
-                            !node.equals(getSession().getNodeByIdentifier(value.getString()))))
-                    .collect(toList());
-
-                if (newVals.size() == 0) {
-                    prop.remove();
-                } else {
-                    prop.setValue(newVals.toArray(new Value[newVals.size()]));
+                    if (newVals.size() == 0) {
+                        prop.remove();
+                    } else {
+                        prop.setValue(newVals.toArray(new Value[newVals.size()]));
+                    }
+                } catch (final RepositoryException ex) {
+                    throw new RepositoryRuntimeException(ex);
                 }
-            }
+            });
 
             final Node parent = getNode().getDepth() > 0 ? getNode().getParent() : null;
 
@@ -891,7 +893,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                 }
             }
 
-            LOGGER.warn("Unknown version {} with label or uuid {}!", this, label);
+            LOGGER.warn("Unknown version {} with label {}!", getPath(), label);
             return null;
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);

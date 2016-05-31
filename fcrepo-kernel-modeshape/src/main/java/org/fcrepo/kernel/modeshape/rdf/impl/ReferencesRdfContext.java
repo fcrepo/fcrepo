@@ -80,8 +80,10 @@ public class ReferencesRdfContext extends NodeRdfContext {
         return Stream.concat(
             getAllReferences(node).flatMap(property2triple),
             getAllReferences(node).flatMap(uncheck((final Property x) -> {
-                    return iteratorToStream(new PropertyValueIterator(x.getParent().getProperties()))
-                        .filter((final Value y) -> REFERENCE_TYPES.contains(y.getType()));
+                    @SuppressWarnings("unchecked")
+                    final Stream<Value> values = iteratorToStream(new PropertyValueIterator(x.getParent()
+                            .getProperties())).filter((final Value y) -> REFERENCE_TYPES.contains(y.getType()));
+                    return values;
                 }))
                 .flatMap(uncheck((final Value x) -> {
                     return new LdpContainerRdfContext(nodeConverter.convert(nodeForValue(node.getSession(), x)),
