@@ -16,7 +16,7 @@
 package org.fcrepo.integration.kernel.modeshape.services;
 
 import static com.google.common.io.Files.createTempDir;
-import static org.jgroups.util.Util.assertEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
@@ -56,7 +56,7 @@ public class RepositoryServiceImplIT extends AbstractIT {
 
     @Test
     public void testGetAllObjectsDatastreamSize() throws RepositoryException, InvalidChecksumException {
-        final double originalSize;
+        final long originalSize;
         Session session = repository.login();
         try {
             originalSize = repositoryService.getRepositorySize();
@@ -73,8 +73,8 @@ public class RepositoryServiceImplIT extends AbstractIT {
         }
         try {
             session = repository.login();
-            final double afterSize = repositoryService.getRepositorySize();
-            assertEquals(4.0, afterSize - originalSize);
+            final long afterSize = repositoryService.getRepositorySize();
+            assertEquals(4L, afterSize - originalSize);
         } finally {
             session.logout();
         }
