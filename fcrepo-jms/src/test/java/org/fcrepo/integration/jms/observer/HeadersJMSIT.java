@@ -18,6 +18,7 @@ package org.fcrepo.integration.jms.observer;
 import static com.google.common.base.Throwables.propagate;
 import static com.jayway.awaitility.Awaitility.await;
 import static com.jayway.awaitility.Duration.ONE_SECOND;
+import static java.util.UUID.randomUUID;
 import static javax.jms.Session.AUTO_ACKNOWLEDGE;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.BASE_URL_HEADER_NAME;
 import static org.fcrepo.jms.headers.DefaultMessageFactory.EVENT_TYPE_HEADER_NAME;
@@ -27,7 +28,6 @@ import static org.fcrepo.jms.headers.DefaultMessageFactory.TIMESTAMP_HEADER_NAME
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
-import static org.jgroups.util.UUID.randomUUID;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.ByteArrayInputStream;
