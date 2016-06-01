@@ -38,10 +38,10 @@ import org.mockito.Mockito;
 import org.modeshape.jcr.api.ServletCredentials;
 import org.modeshape.jcr.value.Path;
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import javax.inject.Inject;
 import javax.jcr.AccessDeniedException;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
@@ -59,10 +59,10 @@ public class ModeShapeHonorsFADResponseIT {
     private static Logger logger =
             getLogger(ModeShapeHonorsFADResponseIT.class);
 
-    @Autowired
+    @Inject
     Repository repo;
 
-    @Autowired
+    @Inject
     FedoraAuthorizationDelegate fad;
 
     HttpServletRequest request = Mockito.mock(HttpServletRequest.class);

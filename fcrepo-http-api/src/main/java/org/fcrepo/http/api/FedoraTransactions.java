@@ -25,6 +25,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
 
+import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -36,7 +37,6 @@ import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TxSession;
 import org.fcrepo.kernel.api.services.TransactionService;
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 
 /**
@@ -51,7 +51,7 @@ public class FedoraTransactions extends FedoraBaseResource {
 
     private static final Logger LOGGER = getLogger(FedoraTransactions.class);
 
-    @Autowired
+    @Inject
     private TransactionService txService;
 
     /**

@@ -26,6 +26,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.security.Principal;
 
+import javax.inject.Inject;
 import javax.jcr.AccessDeniedException;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
@@ -45,7 +46,6 @@ import org.mockito.Mockito;
 import org.modeshape.jcr.api.ServletCredentials;
 import org.modeshape.jcr.value.Path;
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
@@ -59,10 +59,10 @@ public class DelegatedUserIT {
     private static Logger logger =
             getLogger(DelegatedUserIT.class);
 
-    @Autowired
+    @Inject
     private Repository repo;
 
-    @Autowired
+    @Inject
     private FedoraAuthorizationDelegate fad;
 
     private final HttpServletRequest request = mock(HttpServletRequest.class);
