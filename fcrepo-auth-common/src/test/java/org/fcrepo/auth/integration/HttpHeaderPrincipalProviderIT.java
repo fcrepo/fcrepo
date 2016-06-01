@@ -29,10 +29,10 @@ import org.mockito.Mockito;
 import org.modeshape.jcr.api.ServletCredentials;
 import org.modeshape.jcr.value.Path;
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import javax.inject.Inject;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -56,10 +56,10 @@ public class HttpHeaderPrincipalProviderIT {
     private static Logger logger =
             getLogger(HttpHeaderPrincipalProviderIT.class);
 
-    @Autowired
+    @Inject
     private Repository repo;
 
-    @Autowired
+    @Inject
     private FedoraAuthorizationDelegate fad;
 
     private final HttpServletRequest request = mock(HttpServletRequest.class);

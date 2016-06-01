@@ -19,8 +19,7 @@ import com.google.common.annotations.VisibleForTesting;
 
 import org.fcrepo.kernel.api.services.ExternalContentService;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
+import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -46,7 +45,7 @@ public class ContentLocationMessageBodyReader implements MessageBodyReader<Input
     /**
      * The fcrepo node service
      */
-    @Autowired
+    @Inject
     private ExternalContentService contentService;
 
     private static final Class<ContentLocation> contentLocationClass = ContentLocation.class;
