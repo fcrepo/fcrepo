@@ -17,7 +17,6 @@
         org.fcrepo.http.commons.*,
         org.fcrepo.kernel.api.*,
         org.fcrepo.kernel.modeshape.*,
-        org.fcrepo.serialization,
 
         javax.annotation,
         javax.inject,
@@ -82,12 +81,6 @@
       <artifactId>fcrepo-connector-file</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-serialization</artifactId>
-      <version>${project.version}</version>
     </dependency>
 
     <dependency>

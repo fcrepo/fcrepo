@@ -206,8 +206,6 @@ public final class RdfLexicon {
             HAS_NAMESPACE_PREFIX, HAS_NAMESPACE_URI, VOAF_VOCABULARY);
 
     // OTHER SERVICES
-    public static final Property HAS_SERIALIZATION =
-            createProperty(REPOSITORY_NAMESPACE + "exportsAs");
     public static final Property HAS_VERSION_HISTORY =
             createProperty(REPOSITORY_NAMESPACE + "hasVersions");
     public static final Property HAS_FIXITY_SERVICE =
@@ -222,7 +220,7 @@ public final class RdfLexicon {
         createProperty(SPARQL_SD_NAMESPACE + "endpoint");
 
     public static final Set<Property> otherServiceProperties = of(
-            HAS_SERIALIZATION, HAS_VERSION_HISTORY, HAS_FIXITY_SERVICE,
+            HAS_VERSION_HISTORY, HAS_FIXITY_SERVICE,
             HAS_FEED, HAS_SUBSCRIPTION_SERVICE);
 
 

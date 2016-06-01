@@ -15,7 +15,6 @@
       org.fcrepo.metrics,
       org.fcrepo.kernel.api,
       org.fcrepo.kernel.modeshape,
-      org.fcrepo.serialization,
 
       javax.annotation,
       javax.inject,
@@ -103,17 +102,6 @@
         <exclusion>
           <artifactId>snappy-java</artifactId>
           <groupId>org.xerial.snappy</groupId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-serialization</artifactId>
-      <version>${project.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>ch.qos.logback</groupId>
-          <artifactId>logback-classic</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
