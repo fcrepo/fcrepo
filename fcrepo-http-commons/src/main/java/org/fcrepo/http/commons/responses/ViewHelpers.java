@@ -189,18 +189,6 @@ public class ViewHelpers {
     }
 
     /**
-     * Take a HAS_SERIALIZATION node and find the RDFS_LABEL for the format it is associated with
-     *
-     * @param graph the graph
-     * @param subject the subject
-     * @return the label for the serialization format
-     */
-    public Optional<String> getSerializationTitle(final Graph graph, final Node subject) {
-        final Iterator<Node> formats = listObjects(graph, subject, DC_FORMAT.asNode());
-        return Optional.ofNullable(formats.hasNext() ? getObjectTitle(graph, formats.next()) : null);
-    }
-
-    /**
      * Determines whether the subject is writable
      * true if node is writable
      * @param graph the graph

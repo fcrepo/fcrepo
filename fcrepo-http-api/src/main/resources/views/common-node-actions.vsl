@@ -94,53 +94,8 @@ WHERE { }
 </form>
 #end
 
-#set ($serializations = $rdf.find($topic, $rdfLexicon.HAS_SERIALIZATION.asNode(), $nodeany))
-
-#if($serializations.hasNext())
-<div class="btn-group">
-    <div class="dropdown">
-        <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
-            Export as...
-            <span class="caret"></span>
-        </a>
-
-        <ul class="dropdown-menu">
-        #foreach($quad in $helpers.getSortedTriples($model, $serializations))
-          <li><a href="$quad.getObject().getURI()">$helpers.getSerializationTitle($rdf, $quad.getObject()).orElse("")</a></li>
-        #end
-        </ul>
-    </div>
-</div>
-<hr />
-#end
-
 
 #if ($writable == true)
-#set ($serializations = $rdf.find($topic, $rdfLexicon.HAS_SERIALIZATION.asNode(), $nodeany))
-
-#if($serializations.hasNext())
-<form id="action_import" method="POST">
-<h3>Import</h3>
-
-
-    <div class="form-group">
-<input type="file" id="import_file"/>
-    </div>
-
-    <div class="form-group">
-    <label class="control-label">Format</label>
-    <select id="import_format" name="format" class="form-control">
-        #foreach($quad in $helpers.getSortedTriples($model, $serializations))
-            <option>$helpers.getSerializationTitle($rdf, $quad.getObject()).orElse("")</option>
-        #end
-    </select>
-        </div>
-    <button type="submit" class="btn btn-primary" onclick='this.form.action="fcr:import"'>Import</button>
-    <hr />
-</form>
-
-#end
-
 #set ($fedoraresc = $rdf.find($topic, $rdfLexicon.HAS_MIXIN_TYPE.asNode(), $helpers.asLiteralStringNode("fedora:resource")))
 #if($fedoraresc.hasNext())
 <h3>Access Roles</h3>

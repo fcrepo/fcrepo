@@ -37,7 +37,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.JCR_NT_NAMESPACE;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_SERIALIZATION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_HISTORY;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_LABEL;
@@ -600,21 +599,6 @@ public class FedoraVersionsIT extends AbstractResourceIT {
                 assertFalse(prohibitedProperty + " must not appear in RDF for version-enabled node!",
                         rdf.contains(ANY, subject, createURI(prohibitedProperty), ANY));
             }
-        }
-    }
-
-    @Test
-    public void testInabilityToExportJCRXML() throws IOException {
-        final String versionLabel = "l1";
-        final String id = getRandomUniqueId();
-        createObjectAndClose(id);
-        enableVersioning(id);
-        postObjectVersion(id, versionLabel);
-
-        try (final CloseableGraphStore rdf =
-                getGraphStore(new HttpGet(serverAddress + id + "/fcr:versions/" + versionLabel))) {
-            assertFalse("Historic version must not have any serialization defined.",
-                    rdf.contains(ANY, ANY, HAS_SERIALIZATION.asNode(), ANY));
         }
     }
 

@@ -76,11 +76,6 @@
         <artifactId>fcrepo-metrics</artifactId>
         <version>${project.version}</version>
       </dependency>
-      <dependency>
-        <groupId>org.fcrepo</groupId>
-        <artifactId>fcrepo-serialization</artifactId>
-        <version>${project.version}</version>
-      </dependency>
 
       <!-- Not fcrepo4 specific but we need to include because we've excluded elsewhere -->
       <dependency>

@@ -71,7 +71,6 @@
     <module>fcrepo-http-commons</module>
     <module>fcrepo-http-api</module>
     <module>fcrepo-metrics</module>
-    <module>fcrepo-serialization</module>
     <module>fcrepo-auth-common</module>
     <module>fcrepo-connector-file</module>
     <module>fcrepo-configs</module>

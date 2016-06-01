@@ -17,24 +17,16 @@ package org.fcrepo.http.api.url;
 
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static java.util.Collections.singletonMap;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_SERVICE;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_SERIALIZATION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_TRANSACTION_SERVICE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_HISTORY;
-import static org.fcrepo.kernel.api.RdfLexicon.RDFS_LABEL;
-import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.fcrepo.kernel.api.RdfLexicon.DC_NAMESPACE;
 
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
 
-import org.fcrepo.http.api.FedoraExport;
 import org.fcrepo.http.api.FedoraVersioning;
-import org.fcrepo.http.api.repository.FedoraRepositoryExport;
 import org.fcrepo.http.api.repository.FedoraRepositoryTransactions;
 import org.fcrepo.http.commons.api.rdf.UriAwareResourceModelFactory;
 import org.fcrepo.kernel.api.models.NonRdfSource;
@@ -42,9 +34,7 @@ import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.fcrepo.serialization.SerializerUtil;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.core.UriInfo;
@@ -58,9 +48,6 @@ import java.util.Map;
  */
 @Component
 public class HttpApiResources implements UriAwareResourceModelFactory {
-
-    @Autowired
-    protected SerializerUtil serializers;
 
     @Override
     public Model createModelForResource(final FedoraResource resource,
@@ -109,22 +96,6 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
                     .getBaseUriBuilder().path(FedoraVersioning.class).buildFromMap(
                             pathMap, false).toASCIIString()));
         }
-
-        final Property dcFormat = createProperty(DC_NAMESPACE + "format");
-        // fcr:exports?format=xyz
-        for (final String key : serializers.keySet()) {
-            if (serializers.getSerializer(key).canSerialize(resource)) {
-                final Resource format =
-                        createResource(uriInfo.getBaseUriBuilder().path(
-                                FedoraExport.class).queryParam("format", key)
-                                .buildFromMap(pathMap, false).toASCIIString());
-                model.add(s, HAS_SERIALIZATION, format);
-
-                //RDF the serialization
-                final Resource formatRDF = createResource(REPOSITORY_NAMESPACE + key);
-                model.add(format, dcFormat, formatRDF);
-            }
-        }
     }
 
     private void addRepositoryStatements(final UriInfo uriInfo, final Model model,
@@ -133,19 +104,6 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
         model.add(s, HAS_TRANSACTION_SERVICE, createResource(uriInfo
                 .getBaseUriBuilder().path(FedoraRepositoryTransactions.class)
                 .build().toASCIIString()));
-
-        final Property dcFormat = createProperty(DC_NAMESPACE + "format");
-        // fcr:export?format=xyz
-        for (final String key : serializers.keySet()) {
-            final Resource format = createResource(uriInfo
-                .getBaseUriBuilder().path(FedoraRepositoryExport.class)
-                .queryParam("format", key).build().toASCIIString());
-            model.add(s, HAS_SERIALIZATION, format);
-            final Resource formatRDF = createResource(REPOSITORY_NAMESPACE + key);
-
-            model.add(formatRDF, RDFS_LABEL, key);
-            model.add(format, dcFormat, formatRDF);
-        }
     }
 
 }
