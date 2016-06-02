@@ -26,7 +26,6 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
-import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaces;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.ws.rs.GET;
@@ -99,7 +98,7 @@ public class FedoraFixity extends ContentExposingResource {
         return new RdfNamespacedStream(
                 new DefaultRdfStream(asNode(resource()),
                     ((FedoraBinary)resource()).getFixity(translator())),
-                getNamespaces(session()));
+                namespaceService.getNamespaces(session()));
     }
 
     @Override

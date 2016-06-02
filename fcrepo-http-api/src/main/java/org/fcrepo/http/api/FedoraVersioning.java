@@ -33,7 +33,6 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeToResource;
-import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaces;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
@@ -176,7 +175,7 @@ public class FedoraVersioning extends FedoraBaseResource {
         return new RdfNamespacedStream(new DefaultRdfStream(
                 asNode(resource()),
                 resource().getTriples(translator(), VERSIONS)),
-                getNamespaces(session()));
+                namespaceService.getNamespaces(session()));
     }
 
     protected FedoraResource resource() {

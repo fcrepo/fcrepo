@@ -48,7 +48,6 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_MEMBERSHIP;
 import static org.fcrepo.kernel.api.RequiredRdfContext.MINIMAL;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
-import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaces;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -182,7 +181,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                     outputStream = new RdfNamespacedStream(
                             new DefaultRdfStream(rdfStream.topic(), concat(rdfStream,
                                     DefaultRdfStream.fromModel(rdfStream.topic(), inputModel))),
-                            getNamespaces(session()));
+                            namespaceService.getNamespaces(session()));
                 }
 
 
@@ -206,7 +205,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             outputStream = new RdfNamespacedStream(
                     new DefaultRdfStream(rdfStream.topic(), concat(rdfStream,
                         getResourceTriples(limit))),
-                    getNamespaces(session()));
+                    namespaceService.getNamespaces(session()));
             if (prefer != null) {
                 prefer.getReturn().addResponseHeaders(servletResponse);
             }
