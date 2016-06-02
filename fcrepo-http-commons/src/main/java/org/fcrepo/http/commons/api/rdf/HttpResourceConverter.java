@@ -26,7 +26,6 @@ import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.node
 import static org.fcrepo.kernel.modeshape.services.TransactionServiceImpl.getCurrentTransactionId;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getClosestExistingAncestor;
 import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.validatePath;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.web.context.ContextLoader.getCurrentWebApplicationContext;
 
@@ -369,16 +368,13 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
      * @return
      */
     private String doBackwardPathOnly(final FedoraResource resource) {
-        String path = reverse.convert(getPath(resource));
+        final String path = reverse.convert(getPath(resource));
         if (path != null) {
 
             if (resource instanceof NonRdfSourceDescription) {
-                path = path + "/" + FCR_METADATA;
+                return path + "/" + FCR_METADATA;
             }
 
-            if (path.endsWith(JCR_CONTENT)) {
-                path = replaceOnce(path, "/" + JCR_CONTENT, EMPTY);
-            }
             return path;
         }
         throw new RepositoryRuntimeException("Unable to process reverse chain for resource " + resource);

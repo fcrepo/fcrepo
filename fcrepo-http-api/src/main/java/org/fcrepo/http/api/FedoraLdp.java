@@ -49,7 +49,6 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_PAIRTREE;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.modeshape.services.TransactionServiceImpl.getCurrentTransactionId;
-import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaces;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -617,7 +616,8 @@ public class FedoraLdp extends ContentExposingResource {
                 prefer.getReturn().addResponseHeaders(servletResponse);
             }
             final RdfNamespacedStream rdfStream = new RdfNamespacedStream(
-                new DefaultRdfStream(asNode(resource()), getResourceTriples()), getNamespaces(session()));
+                new DefaultRdfStream(asNode(resource()), getResourceTriples()),
+                    namespaceService.getNamespaces(session()));
             return builder.entity(rdfStream).build();
         }
     }

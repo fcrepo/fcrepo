@@ -18,6 +18,7 @@ package org.fcrepo.http.api;
 import static com.google.common.base.Predicates.containsPattern;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
 import static java.util.stream.Stream.of;
+import static java.util.Collections.emptyMap;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
@@ -93,6 +94,7 @@ import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.ContainerService;
+import org.fcrepo.kernel.api.services.NamespaceService;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.junit.Before;
 import org.junit.Test;
@@ -155,6 +157,9 @@ public class FedoraLdpTest {
     private BinaryService mockBinaryService;
 
     @Mock
+    private NamespaceService mockNamespaceService;
+
+    @Mock
     private FedoraHttpConfiguration mockHttpConfiguration;
 
     @Mock
@@ -190,10 +195,12 @@ public class FedoraLdpTest {
         setField(testObj, "containerService", mockContainerService);
         setField(testObj, "binaryService", mockBinaryService);
         setField(testObj, "httpConfiguration", mockHttpConfiguration);
+        setField(testObj, "namespaceService", mockNamespaceService);
 
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
         when(mockNamespaceRegistry.getPrefixes()).thenReturn(new String[]{});
+        when(mockNamespaceService.getNamespaces(any(Session.class))).thenReturn(emptyMap());
 
         when(mockHttpConfiguration.putRequiresIfMatch()).thenReturn(false);
 
