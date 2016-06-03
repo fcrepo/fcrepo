@@ -14,6 +14,7 @@
   <properties>
     <osgi.import.packages>
       javax.jcr.*,
+      javax.servlet.http,
 
       com.google.common.*,
       com.hp.hpl.jena.*,
@@ -63,6 +64,10 @@
     <dependency>
       <groupId>javax.jcr</groupId>
       <artifactId>jcr</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
     </dependency>
 
     <!-- test gear -->

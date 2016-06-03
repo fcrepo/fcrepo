@@ -23,6 +23,7 @@
       javax.jcr.*,
       javax.inject,
       javax.annotation,
+      javax.servlet.http,
 
       org.apache.commons.codec.digest,
       org.apache.commons.io.input,
@@ -108,6 +109,10 @@
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
     </dependency>
 
     <!-- test gear -->
