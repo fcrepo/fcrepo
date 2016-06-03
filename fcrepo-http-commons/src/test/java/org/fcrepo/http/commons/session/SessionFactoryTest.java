@@ -15,6 +15,7 @@
  */
 package org.fcrepo.http.commons.session;
 
+import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
@@ -33,6 +34,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.SessionMissingException;
+import org.fcrepo.kernel.api.services.CredentialsService;
 import org.fcrepo.kernel.api.services.TransactionService;
 import org.junit.Before;
 import org.junit.Test;
@@ -63,6 +65,9 @@ public class SessionFactoryTest {
     private TransactionService mockTxService;
 
     @Mock
+    private CredentialsService mockCredService;
+
+    @Mock
     private Transaction mockTx;
 
     @Mock
@@ -75,6 +80,7 @@ public class SessionFactoryTest {
     public void setUp() {
         initMocks(this);
         testObj = new SessionFactory(mockRepo, mockTxService);
+        setField(testObj, "credentialsService", mockCredService);
         testObj.init();
     }
 

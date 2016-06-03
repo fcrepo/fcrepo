@@ -31,9 +31,9 @@ import javax.ws.rs.BadRequestException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.SessionMissingException;
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.services.CredentialsService;
 import org.fcrepo.kernel.api.services.TransactionService;
 
-import org.modeshape.jcr.api.ServletCredentials;
 import org.slf4j.Logger;
 
 /**
@@ -67,6 +67,9 @@ public class SessionFactory {
 
     @Inject
     private TransactionService transactionService;
+
+    @Inject
+    private CredentialsService credentialsService;
 
     /**
      * Default constructor
@@ -145,11 +148,8 @@ public class SessionFactory {
      */
     protected Session createSession(final HttpServletRequest servletRequest) throws RepositoryException {
 
-        final ServletCredentials creds =
-                new ServletCredentials(servletRequest);
-
         LOGGER.debug("Returning an authenticated session in the default workspace");
-        return  repo.login(creds);
+        return  repo.login(credentialsService.getCredentials(servletRequest));
     }
 
     /**
