@@ -17,7 +17,7 @@ package org.fcrepo.kernel.api.services.policy;
 
 import java.util.List;
 
-import javax.jcr.Node;
+import org.fcrepo.kernel.api.models.FedoraResource;
 
 /**
  * Service Interface implementation for managing and using {@link org.fcrepo.kernel.api.services.policy.StoragePolicy}
@@ -31,10 +31,10 @@ public interface StoragePolicyDecisionPoint extends List<StoragePolicy> {
      * Given a JCR node (likely a jcr:content node), determine which storage
      * policy should apply
      *
-     * @param n the node
+     * @param resource the resource
      * @return storage policy
      */
-    String evaluatePolicies(final Node n);
+    String evaluatePolicies(final FedoraResource resource);
 
     /**
      * Explicitly set the policies this PDP should use
