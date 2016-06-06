@@ -161,7 +161,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
             String hint = null;
 
             if (storagePolicyDecisionPoint != null) {
-                hint = storagePolicyDecisionPoint.evaluatePolicies(node);
+                hint = storagePolicyDecisionPoint.evaluatePolicies(this);
             }
             final ValueFactory modevf =
                     (ValueFactory) node.getSession().getValueFactory();

@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.api.services;
 
-import javax.jcr.Node;
 import javax.jcr.Session;
 
 /**
@@ -49,11 +48,4 @@ public interface Service<T> {
      * @return retrieved T
      */
     public T findOrCreate(final Session session, final String path);
-    /**
-     * Retrieve a T instance from a node
-     *
-     * @param node the node
-     * @return node as T
-     */
-    public T cast(Node node);
 }

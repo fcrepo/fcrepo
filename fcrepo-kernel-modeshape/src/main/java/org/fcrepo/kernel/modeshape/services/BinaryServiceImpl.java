@@ -124,8 +124,7 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
      * @param node datastream node
      * @return node as datastream
      */
-    @Override
-    public FedoraBinary cast(final Node node) {
+    private FedoraBinary cast(final Node node) {
         assertIsType(node);
         return new FedoraBinaryImpl(node);
     }

@@ -16,7 +16,6 @@
 package org.fcrepo.kernel.modeshape.services;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.exception.ResourceTypeException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -91,17 +90,4 @@ public class BinaryServiceImplTest {
         when(mockSession.getNode("/")).thenReturn(mockRoot);
         testObj.findOrCreate(mockSession, testPath);
     }
-
-    @Test
-    public void testAsBinary() throws Exception {
-        when(mockNode.isNodeType(FEDORA_BINARY)).thenReturn(true);
-        testObj.cast(mockNode);
-    }
-
-    @Test(expected = ResourceTypeException.class)
-    public void testAsBinaryWithNonbinary() throws Exception {
-        when(mockNode.isNodeType(FEDORA_BINARY)).thenReturn(false);
-        testObj.cast(mockNode);
-    }
-
 }

@@ -113,8 +113,7 @@ public class ContainerServiceImpl extends AbstractService implements ContainerSe
         }
     }
 
-    @Override
-    public Container cast(final Node node) {
+    private Container cast(final Node node) {
         assertIsType(node);
         return new ContainerImpl(node);
     }
