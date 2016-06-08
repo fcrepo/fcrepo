@@ -26,8 +26,6 @@ import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.empty;
 import static java.util.stream.Stream.of;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIED;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
@@ -643,10 +641,37 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @Override
     public Version getBaseVersion() {
         try {
-            return getVersionManager().getBaseVersion(getPath());
+            return doGetBaseVersion(getPath());
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
+    }
+
+    /**
+     * Get the base version associated with this "resource()"
+     *
+     * @return base Version
+     */
+    private Version doGetBaseVersion(final String path) throws RepositoryException {
+        RepositoryException exception = null;
+        int i = 0;
+        final int MAX_TRIES = 3;
+        while (i < MAX_TRIES) {
+            try {
+                return getVersionManager().getBaseVersion(path);
+
+            } catch (final RepositoryException e) {
+                exception = e;
+                ++i;
+                // Wait for persisted state to become visible
+                try {
+                    Thread.sleep(200);
+                } catch (final InterruptedException e1) {
+                    // ignore
+                }
+            }
+        }
+        throw exception;
     }
 
     /*

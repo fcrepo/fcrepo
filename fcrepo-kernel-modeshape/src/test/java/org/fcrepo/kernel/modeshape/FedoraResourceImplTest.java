@@ -39,6 +39,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
@@ -266,6 +267,28 @@ public class FedoraResourceImplTest {
         testObj.getBaseVersion();
 
         verify(mockVersionManager).getBaseVersion(anyString());
+    }
+
+    @Test
+    public void testGetBaseVersionFail() throws RepositoryException {
+
+        final Version mockVersion = mock(Version.class);
+        when(mockVersion.getName()).thenReturn("uuid");
+        final Workspace mockWorkspace = mock(Workspace.class);
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        final VersionManager mockVersionManager = mock(VersionManager.class);
+        when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
+
+        when(mockVersionManager.getBaseVersion(anyString())).thenThrow(new RepositoryException("canned-exception"));
+
+        try {
+            testObj.getBaseVersion();
+        } catch (final RepositoryRuntimeException e) {
+            // ignore
+        }
+
+        final int MAX_TRIES = 3; // Number of tries defined in FedoraResourceImpl.doGetBaseVersion()
+        verify(mockVersionManager, times(MAX_TRIES)).getBaseVersion(anyString());
     }
 
     @Test
