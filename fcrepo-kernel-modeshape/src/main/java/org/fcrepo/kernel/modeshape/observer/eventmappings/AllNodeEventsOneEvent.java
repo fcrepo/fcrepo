@@ -17,10 +17,11 @@ package org.fcrepo.kernel.modeshape.observer.eventmappings;
 
 import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
 import static org.fcrepo.kernel.modeshape.observer.FedoraEventImpl.from;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+import static org.fcrepo.kernel.modeshape.observer.FedoraEventImpl.getResourceTypes;
 import static org.slf4j.LoggerFactory.getLogger;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toSet;
 import static java.util.stream.Stream.empty;
 import static java.util.stream.Stream.of;
 import static javax.jcr.observation.Event.PROPERTY_ADDED;
@@ -31,10 +32,8 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import javax.jcr.RepositoryException;
 import javax.jcr.observation.Event;
 
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
 import org.fcrepo.kernel.modeshape.observer.FedoraEventImpl;
 
@@ -78,21 +77,8 @@ public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
                 final FedoraEvent fedoraEvent = from(evts.get(0));
                 evts.stream().forEach(evt -> {
                     // add types to the FedoraEvent from the JCR Event
-                    fedoraEvent.addType(FedoraEventImpl.valueOf(evt.getType()));
-                    try {
-                        // add appropriate properties to the FedoraEvent from the JCR Event
-                        if (evt.getPath().contains(JCR_CONTENT)) {
-                            fedoraEvent.addProperty("fedora:hasContent");
-                        }
-                        if (PROPERTY_EVENT_TYPES.contains(evt.getType())) {
-                            final String eventPath = evt.getPath();
-                            fedoraEvent.addProperty(eventPath.substring(eventPath.lastIndexOf('/') + 1));
-                        } else {
-                            LOGGER.trace("Not adding non-event property: {}, {}", fedoraEvent, evt);
-                        }
-                    } catch (final RepositoryException ex) {
-                        throw new RepositoryRuntimeException(ex);
-                    }
+                    fedoraEvent.getTypes().add(FedoraEventImpl.valueOf(evt.getType()));
+                    fedoraEvent.getResourceTypes().addAll(getResourceTypes(evt).collect(toSet()));
                 });
                 return of(fedoraEvent);
             }

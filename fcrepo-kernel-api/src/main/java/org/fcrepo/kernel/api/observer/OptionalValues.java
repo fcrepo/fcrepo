@@ -13,9 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.fcrepo.kernel.api.observer;
+
 /**
- * This package provides capability to emit JMS messages for Fedora events.
- *
- * @author osmandin
+ * @author acoburn
  */
-package org.fcrepo.jms.observer;
+public class OptionalValues {
+
+    public static final String BASE_URL = "baseUrl";
+
+    public static final String USER_AGENT = "userAgent";
+
+    private OptionalValues() {
+        // prevent instantiation
+    }
+}

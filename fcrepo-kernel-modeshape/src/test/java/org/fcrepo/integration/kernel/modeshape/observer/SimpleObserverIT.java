@@ -17,17 +17,16 @@ package org.fcrepo.integration.kernel.modeshape.observer;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static com.jayway.awaitility.Awaitility.await;
-import static com.jayway.awaitility.Duration.ONE_SECOND;
+import static com.jayway.awaitility.Duration.ONE_HUNDRED_MILLISECONDS;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
-import static org.fcrepo.kernel.api.observer.EventType.NODE_ADDED;
-import static org.fcrepo.kernel.api.observer.EventType.NODE_MOVED;
-import static org.fcrepo.kernel.api.observer.EventType.NODE_REMOVED;
-import static org.fcrepo.kernel.api.observer.EventType.PROPERTY_ADDED;
-import static org.fcrepo.kernel.api.observer.EventType.PROPERTY_CHANGED;
+import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_CREATION;
+import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_DELETION;
+import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_MODIFICATION;
+import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_RELOCATION;
 import static org.fcrepo.kernel.api.utils.ContentDigest.asURI;
 import static org.junit.Assert.assertEquals;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
@@ -36,8 +35,8 @@ import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 
 import java.io.ByteArrayInputStream;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.inject.Inject;
 import javax.jcr.Node;
@@ -102,8 +101,8 @@ public class SimpleObserverIT extends AbstractIT {
         // Should be two messages, for each time
         // each node becomes a Fedora object
 
-        awaitEvent("/object1", NODE_ADDED, REPOSITORY_NAMESPACE + "created");
-        awaitEvent("/object2", NODE_ADDED, REPOSITORY_NAMESPACE + "created");
+        awaitEvent("/object1", RESOURCE_CREATION, REPOSITORY_NAMESPACE + "Container");
+        awaitEvent("/object2", RESOURCE_CREATION, REPOSITORY_NAMESPACE + "Container");
 
         assertEquals("Where are my messages!?", (Integer) 2, eventBusMessageCount);
 
@@ -134,7 +133,7 @@ public class SimpleObserverIT extends AbstractIT {
             se.logout();
         }
 
-        awaitEvent("/object3", NODE_ADDED, REPOSITORY_NAMESPACE + "created");
+        awaitEvent("/object3", RESOURCE_CREATION, REPOSITORY_NAMESPACE + "Binary");
 
         assertEquals("Node and content events not collapsed!", (Integer) 1, eventBusMessageCount);
     }
@@ -154,15 +153,15 @@ public class SimpleObserverIT extends AbstractIT {
         se.save();
         se.logout();
 
-        awaitEvent("/object4", NODE_ADDED);
-        awaitEvent("/object4/child1", NODE_ADDED);
-        awaitEvent("/object4/child2", NODE_ADDED);
-        awaitEvent("/object5", NODE_MOVED);
-        awaitEvent("/object5/child1", NODE_MOVED);
-        awaitEvent("/object5/child2", NODE_MOVED);
-        awaitEvent("/object4", NODE_REMOVED);
-        awaitEvent("/object4/child1", NODE_REMOVED);
-        awaitEvent("/object4/child2", NODE_REMOVED);
+        awaitEvent("/object4", RESOURCE_CREATION);
+        awaitEvent("/object4/child1", RESOURCE_CREATION);
+        awaitEvent("/object4/child2", RESOURCE_CREATION);
+        awaitEvent("/object5", RESOURCE_RELOCATION);
+        awaitEvent("/object5/child1", RESOURCE_RELOCATION);
+        awaitEvent("/object5/child2", RESOURCE_RELOCATION);
+        awaitEvent("/object4", RESOURCE_DELETION);
+        awaitEvent("/object4/child1", RESOURCE_DELETION);
+        awaitEvent("/object4/child2", RESOURCE_DELETION);
 
         assertEquals("Move operation didn't generate additional events", (Integer) 9, eventBusMessageCount);
     }
@@ -184,18 +183,18 @@ public class SimpleObserverIT extends AbstractIT {
         se.save();
         se.logout();
 
-        awaitEvent("/object6", NODE_ADDED);
-        awaitEvent("/object6/object7", NODE_ADDED);
-        awaitEvent("/object6/object7/child1", NODE_ADDED);
-        awaitEvent("/object6/object7/child2", NODE_ADDED);
-        awaitEvent("/object6/object8", NODE_MOVED);
-        awaitEvent("/object6/object8/child1", NODE_MOVED);
-        awaitEvent("/object6/object8/child2", NODE_MOVED);
-        awaitEvent("/object6/object7", NODE_REMOVED);
-        awaitEvent("/object6/object7/child1", NODE_REMOVED);
-        awaitEvent("/object6/object7/child2", NODE_REMOVED);
+        awaitEvent("/object6", RESOURCE_CREATION);
+        awaitEvent("/object6/object7", RESOURCE_CREATION);
+        awaitEvent("/object6/object7/child1", RESOURCE_CREATION);
+        awaitEvent("/object6/object7/child2", RESOURCE_CREATION);
+        awaitEvent("/object6/object8", RESOURCE_RELOCATION);
+        awaitEvent("/object6/object8/child1", RESOURCE_RELOCATION);
+        awaitEvent("/object6/object8/child2", RESOURCE_RELOCATION);
+        awaitEvent("/object6/object7", RESOURCE_DELETION);
+        awaitEvent("/object6/object7/child1", RESOURCE_DELETION);
+        awaitEvent("/object6/object7/child2", RESOURCE_DELETION);
         // should produce two of these
-        awaitEvent("/object6", PROPERTY_CHANGED);
+        awaitEvent("/object6", RESOURCE_MODIFICATION);
 
         assertEquals("Move operation didn't generate additional events", (Integer) 12, eventBusMessageCount);
     }
@@ -219,13 +218,13 @@ public class SimpleObserverIT extends AbstractIT {
         se.logout();
 
         // these first two are part of a single event
-        awaitEvent("/object9", NODE_ADDED);
-        awaitEvent("/object9", PROPERTY_ADDED);
-        awaitEvent("/object9#contributor", PROPERTY_ADDED);
+        awaitEvent("/object9", RESOURCE_CREATION);
+        awaitEvent("/object9", RESOURCE_MODIFICATION);
+        awaitEvent("/object9#contributor", RESOURCE_MODIFICATION);
 
         // FIXME -- it is unclear where this event is coming from; clearly from the hashURI,
         // but it doesn't seem right.
-        awaitEvent("", PROPERTY_ADDED);
+        awaitEvent("", RESOURCE_MODIFICATION);
 
         // FIXME -- as hinted above, there is an extra event here somehow related to the hashURI.
         assertEquals("Where are my events?", (Integer) 3, eventBusMessageCount);
@@ -250,18 +249,18 @@ public class SimpleObserverIT extends AbstractIT {
         try {
             se.save();
 
-            awaitEvent("/object10", NODE_ADDED);
-            awaitEvent("/object10", PROPERTY_ADDED);
-            awaitEvent("/object11", NODE_ADDED);
+            awaitEvent("/object10", RESOURCE_CREATION);
+            awaitEvent("/object10", RESOURCE_MODIFICATION);
+            awaitEvent("/object11", RESOURCE_CREATION);
 
             assertEquals("Where are my events?", (Integer) 3, eventBusMessageCount);
 
             final Container obj3 = containerService.findOrCreate(se, "/object10/child");
             se.save();
 
-            awaitEvent("/object10/child", NODE_ADDED);
-            awaitEvent("/object10", PROPERTY_CHANGED);
-            awaitEvent("/object11", PROPERTY_CHANGED);
+            awaitEvent("/object10/child", RESOURCE_CREATION);
+            awaitEvent("/object10", RESOURCE_MODIFICATION);
+            awaitEvent("/object11", RESOURCE_MODIFICATION);
 
             assertEquals("Where are my events?", (Integer) 6, eventBusMessageCount);
 
@@ -271,9 +270,9 @@ public class SimpleObserverIT extends AbstractIT {
             se.logout();
         }
 
-        awaitEvent("/object10/child", NODE_REMOVED);
-        awaitEvent("/object10", PROPERTY_CHANGED);
-        awaitEvent("/object11", PROPERTY_CHANGED);
+        awaitEvent("/object10/child", RESOURCE_DELETION);
+        awaitEvent("/object10", RESOURCE_MODIFICATION);
+        awaitEvent("/object11", RESOURCE_MODIFICATION);
 
         assertEquals("Where are my events?", (Integer) 9, eventBusMessageCount);
     }
@@ -299,9 +298,9 @@ public class SimpleObserverIT extends AbstractIT {
         try {
             se.save();
 
-            awaitEvent("/object12", NODE_ADDED);
-            awaitEvent("/object12", PROPERTY_ADDED);
-            awaitEvent("/object13", NODE_ADDED);
+            awaitEvent("/object12", RESOURCE_CREATION);
+            awaitEvent("/object12", RESOURCE_MODIFICATION);
+            awaitEvent("/object13", RESOURCE_CREATION);
 
             assertEquals("Where are my events?", (Integer) 3, eventBusMessageCount);
 
@@ -310,17 +309,17 @@ public class SimpleObserverIT extends AbstractIT {
                     "INSERT { <> ore:proxyFor <info:example/test> } WHERE {}", obj3.getTriples(subjects, PROPERTIES));
             se.save();
 
-            awaitEvent("/object12/child", NODE_ADDED);
-            awaitEvent("/object12", PROPERTY_CHANGED);
-            awaitEvent("/object13", PROPERTY_CHANGED);
+            awaitEvent("/object12/child", RESOURCE_CREATION);
+            awaitEvent("/object12", RESOURCE_MODIFICATION);
+            awaitEvent("/object13", RESOURCE_MODIFICATION);
 
             assertEquals("Where are my events?", (Integer) 6, eventBusMessageCount);
 
             final Container obj4 = containerService.findOrCreate(se, "/object12/child2");
             se.save();
 
-            awaitEvent("/object12/child2", NODE_ADDED);
-            awaitEvent("/object12", PROPERTY_CHANGED);
+            awaitEvent("/object12/child2", RESOURCE_CREATION);
+            awaitEvent("/object12", RESOURCE_MODIFICATION);
 
             assertEquals("Where are my events?", (Integer) 8, eventBusMessageCount);
 
@@ -329,7 +328,7 @@ public class SimpleObserverIT extends AbstractIT {
                     "INSERT { <> rdfs:label \"some label\" } WHERE {}", obj4.getTriples(subjects, PROPERTIES));
             se.save();
 
-            awaitEvent("/object12/child2", PROPERTY_CHANGED);
+            awaitEvent("/object12/child2", RESOURCE_MODIFICATION);
 
             assertEquals("Where are my events?", (Integer) 9, eventBusMessageCount);
 
@@ -338,8 +337,8 @@ public class SimpleObserverIT extends AbstractIT {
                     "INSERT { <> ore:proxyFor \"some proxy\" } WHERE {}", obj4.getTriples(subjects, PROPERTIES));
             se.save();
 
-            awaitEvent("/object12/child2", PROPERTY_CHANGED);
-            awaitEvent("/object13", PROPERTY_CHANGED);
+            awaitEvent("/object12/child2", RESOURCE_MODIFICATION);
+            awaitEvent("/object13", RESOURCE_MODIFICATION);
 
             assertEquals("Where are my events?", (Integer) 11, eventBusMessageCount);
 
@@ -349,19 +348,17 @@ public class SimpleObserverIT extends AbstractIT {
             se.logout();
         }
 
-        awaitEvent("/object12/child", NODE_REMOVED);
-        awaitEvent("/object12", PROPERTY_CHANGED);
-        awaitEvent("/object13", PROPERTY_CHANGED);
+        awaitEvent("/object12/child", RESOURCE_DELETION);
+        awaitEvent("/object12", RESOURCE_MODIFICATION);
+        awaitEvent("/object13", RESOURCE_MODIFICATION);
 
         assertEquals("Where are my events?", (Integer) 14, eventBusMessageCount);
     }
 
-    private void awaitEvent(final String id, final EventType eventType, final String property) {
-        await().atMost(5, SECONDS).pollInterval(ONE_SECOND).until(() -> events.stream().anyMatch(evt ->
-            evt.getPath().equals(id) && evt.getTypes().contains(eventType)
-                && (property == null || evt.getProperties().contains(property))
-                // no events should contain the mixinTypes property
-                && !evt.getProperties().contains(REPOSITORY_NAMESPACE + "mixinTypes")));
+    private void awaitEvent(final String id, final EventType eventType, final String resourceType) {
+        await().atMost(5, SECONDS).pollInterval(ONE_HUNDRED_MILLISECONDS).until(() -> events.stream().anyMatch(evt ->
+                evt.getPath().equals(id) && evt.getTypes().contains(eventType)
+                    && (resourceType == null || evt.getResourceTypes().contains(resourceType))));
     }
 
     private void awaitEvent(final String id, final EventType eventType) {
@@ -377,7 +374,7 @@ public class SimpleObserverIT extends AbstractIT {
     @Before
     public void acquireConnections() {
         eventBusMessageCount = 0;
-        events = new ArrayList<>();
+        events = new CopyOnWriteArrayList<>();
         eventBus.register(this);
     }
 

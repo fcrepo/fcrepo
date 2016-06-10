@@ -17,22 +17,24 @@ package org.fcrepo.integration.jms.observer;
 
 import static com.google.common.base.Throwables.propagate;
 import static com.jayway.awaitility.Awaitility.await;
-import static com.jayway.awaitility.Duration.ONE_SECOND;
+import static com.jayway.awaitility.Duration.ONE_HUNDRED_MILLISECONDS;
 import static java.util.UUID.randomUUID;
 import static javax.jms.Session.AUTO_ACKNOWLEDGE;
-import static org.fcrepo.jms.headers.DefaultMessageFactory.BASE_URL_HEADER_NAME;
-import static org.fcrepo.jms.headers.DefaultMessageFactory.EVENT_TYPE_HEADER_NAME;
-import static org.fcrepo.jms.headers.DefaultMessageFactory.IDENTIFIER_HEADER_NAME;
-import static org.fcrepo.jms.headers.DefaultMessageFactory.PROPERTIES_HEADER_NAME;
-import static org.fcrepo.jms.headers.DefaultMessageFactory.TIMESTAMP_HEADER_NAME;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
+import static org.fcrepo.jms.DefaultMessageFactory.BASE_URL_HEADER_NAME;
+import static org.fcrepo.jms.DefaultMessageFactory.EVENT_TYPE_HEADER_NAME;
+import static org.fcrepo.jms.DefaultMessageFactory.IDENTIFIER_HEADER_NAME;
+import static org.fcrepo.jms.DefaultMessageFactory.RESOURCE_TYPE_HEADER_NAME;
+import static org.fcrepo.jms.DefaultMessageFactory.TIMESTAMP_HEADER_NAME;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
+import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_CREATION;
+import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_DELETION;
+import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_MODIFICATION;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.ByteArrayInputStream;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import javax.inject.Inject;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
@@ -65,16 +67,16 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 /**
  * <p>
- * HeadersJMSIT class.
+ * JmsIT class.
  * </p>
  *
  * @author ajs6f
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration({ "/spring-test/headers-jms.xml", "/spring-test/repo.xml",
+@ContextConfiguration({ "/spring-test/jms.xml", "/spring-test/repo.xml",
     "/spring-test/eventing.xml" })
 @DirtiesContext
-public class HeadersJMSIT implements MessageListener {
+public class JmsIT implements MessageListener {
 
     /**
      * Time to wait for a set of test messages, in milliseconds.
@@ -89,16 +91,9 @@ public class HeadersJMSIT implements MessageListener {
 
     private static final String testMeta = "/testMessageFromMetadata-" + randomUUID();
 
-    private static final String NODE_ADDED_EVENT_TYPE
-            = REPOSITORY_NAMESPACE + EventType.NODE_ADDED;
-    private static final String NODE_REMOVED_EVENT_TYPE
-            = REPOSITORY_NAMESPACE + EventType.NODE_REMOVED;
-    private static final String PROP_ADDED_EVENT_TYPE
-            = REPOSITORY_NAMESPACE + EventType.PROPERTY_ADDED;
-    private static final String PROP_CHANGED_EVENT_TYPE
-            = REPOSITORY_NAMESPACE + EventType.PROPERTY_CHANGED;
-    private static final String PROP_REMOVED_EVENT_TYPE
-            = REPOSITORY_NAMESPACE + EventType.PROPERTY_REMOVED;
+    private static final String RESOURCE_CREATION_EVENT_TYPE = EventType.RESOURCE_CREATION.getType();
+    private static final String RESOURCE_DELETION_EVENT_TYPE = EventType.RESOURCE_DELETION.getType();
+    private static final String RESOURCE_MODIFICATION_EVENT_TYPE = EventType.RESOURCE_MODIFICATION.getType();
 
     @Inject
     private Repository repository;
@@ -118,20 +113,20 @@ public class HeadersJMSIT implements MessageListener {
 
     private MessageConsumer consumer;
 
-    private volatile Set<Message> messages = new HashSet<>();
+    private volatile Set<Message> messages = new CopyOnWriteArraySet<>();
 
-    private static final Logger LOGGER = getLogger(HeadersJMSIT.class);
+    private static final Logger LOGGER = getLogger(JmsIT.class);
 
     @Test(timeout = TIMEOUT)
     public void testIngestion() throws RepositoryException {
 
-        LOGGER.debug("Expecting a {} event", NODE_ADDED_EVENT_TYPE);
+        LOGGER.debug("Expecting a {} event", RESOURCE_CREATION.getType());
 
         final Session session = repository.login();
         try {
             containerService.findOrCreate(session, testIngested);
             session.save();
-            awaitMessageOrFail(testIngested, NODE_ADDED_EVENT_TYPE, null);
+            awaitMessageOrFail(testIngested, RESOURCE_CREATION.getType(), null);
         } finally {
             session.logout();
         }
@@ -146,16 +141,16 @@ public class HeadersJMSIT implements MessageListener {
             binaryService.findOrCreate(session, testFile)
                 .setContent(new ByteArrayInputStream("foo".getBytes()), "text/plain", null, null, null);
             session.save();
-            awaitMessageOrFail(testFile, NODE_ADDED_EVENT_TYPE, HAS_SIZE.toString());
+            awaitMessageOrFail(testFile, RESOURCE_CREATION.getType(), REPOSITORY_NAMESPACE + "Binary");
 
             binaryService.find(session, testFile)
                 .setContent(new ByteArrayInputStream("bar".getBytes()), "text/plain", null, null, null);
             session.save();
-            awaitMessageOrFail(testFile, PROP_CHANGED_EVENT_TYPE, HAS_SIZE.toString());
+            awaitMessageOrFail(testFile, RESOURCE_MODIFICATION.getType(), REPOSITORY_NAMESPACE + "Binary");
 
             binaryService.find(session, testFile).delete();
             session.save();
-            awaitMessageOrFail(testFile, NODE_REMOVED_EVENT_TYPE, null);
+            awaitMessageOrFail(testFile, RESOURCE_DELETION.getType(), null);
         } finally {
             session.logout();
         }
@@ -172,24 +167,24 @@ public class HeadersJMSIT implements MessageListener {
             final String sparql1 = "insert data { <> <http://foo.com/prop> \"foo\" . }";
             resource1.updateProperties(subjects, sparql1, resource1.getTriples(subjects, PROPERTIES));
             session.save();
-            awaitMessageOrFail(testMeta, PROP_ADDED_EVENT_TYPE, "http://foo.com/prop");
+            awaitMessageOrFail(testMeta, RESOURCE_MODIFICATION.getType(), REPOSITORY_NAMESPACE + "Container");
 
             final FedoraResource resource2 = containerService.findOrCreate(session, testMeta);
             final String sparql2 = " delete { <> <http://foo.com/prop> \"foo\" . } "
                 + "insert { <> <http://foo.com/prop> \"bar\" . } where {}";
             resource2.updateProperties(subjects, sparql2, resource2.getTriples(subjects, PROPERTIES));
             session.save();
-            awaitMessageOrFail(testMeta, PROP_CHANGED_EVENT_TYPE, "http://foo.com/prop");
+            awaitMessageOrFail(testMeta, RESOURCE_MODIFICATION.getType(), REPOSITORY_NAMESPACE + "Resource");
         } finally {
             session.logout();
         }
     }
 
-    private void awaitMessageOrFail(final String id, final String eventType, final String property) {
-        await().pollInterval(ONE_SECOND).until(() -> messages.stream().anyMatch(msg -> {
+    private void awaitMessageOrFail(final String id, final String eventType, final String type) {
+        await().pollInterval(ONE_HUNDRED_MILLISECONDS).until(() -> messages.stream().anyMatch(msg -> {
             try {
                 return getPath(msg).equals(id) && getEventTypes(msg).contains(eventType)
-                        && (property == null || getProperties(msg).contains(property));
+                        && (type == null || getResourceTypes(msg).contains(type));
             } catch (final JMSException e) {
                 throw propagate(e);
             }
@@ -199,14 +194,14 @@ public class HeadersJMSIT implements MessageListener {
     @Test(timeout = TIMEOUT)
     public void testRemoval() throws RepositoryException {
 
-        LOGGER.debug("Expecting a {} event", NODE_REMOVED_EVENT_TYPE);
+        LOGGER.debug("Expecting a {} event", RESOURCE_DELETION.getType());
         final Session session = repository.login();
         try {
             final Container resource = containerService.findOrCreate(session, testRemoved);
             session.save();
             resource.delete();
             session.save();
-            awaitMessageOrFail(testRemoved, NODE_REMOVED_EVENT_TYPE, null);
+            awaitMessageOrFail(testRemoved, RESOURCE_DELETION.getType(), null);
         } finally {
             session.logout();
         }
@@ -218,7 +213,7 @@ public class HeadersJMSIT implements MessageListener {
             LOGGER.debug(
                     "Received JMS message: {} with path: {}, timestamp: {}, event type: {}, properties: {},"
                             + " and baseURL: {}", message.getJMSMessageID(), getPath(message), getTimestamp(message),
-                            getEventTypes(message), getProperties(message), getBaseURL(message));
+                            getEventTypes(message), getResourceTypes(message), getBaseURL(message));
         } catch (final JMSException e) {
             propagate(e);
         }
@@ -267,8 +262,8 @@ public class HeadersJMSIT implements MessageListener {
         return msg.getStringProperty(BASE_URL_HEADER_NAME);
     }
 
-    private static String getProperties(final Message msg) throws JMSException {
-        return msg.getStringProperty(PROPERTIES_HEADER_NAME);
+    private static String getResourceTypes(final Message msg) throws JMSException {
+        return msg.getStringProperty(RESOURCE_TYPE_HEADER_NAME);
     }
 
 }

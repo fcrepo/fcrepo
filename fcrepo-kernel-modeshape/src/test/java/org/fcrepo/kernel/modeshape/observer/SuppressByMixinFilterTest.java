@@ -44,22 +44,16 @@ public class SuppressByMixinFilterTest {
     private org.modeshape.jcr.api.observation.Event mockEvent;
 
     @Mock
-    private NodeType fedoraContainer;
-
-    @Mock
-    private NodeType internalEvent;
-
-    @Mock
-    private NodeType modeshapeType;
+    private NodeType fedoraContainer, internalEvent, modeshapeType;
 
     @Before
     public void setUp() {
         final Set<String> suppressedMixins = new HashSet<>();
         suppressedMixins.add("audit:InternalEvent");
         testObj = new SuppressByMixinFilter(suppressedMixins);
-        when(fedoraContainer.toString()).thenReturn(FEDORA_CONTAINER);
-        when(internalEvent.toString()).thenReturn("audit:InternalEvent");
-        when(modeshapeType.toString()).thenReturn("nt:folder");
+        when(fedoraContainer.getName()).thenReturn(FEDORA_CONTAINER);
+        when(internalEvent.getName()).thenReturn("audit:InternalEvent");
+        when(modeshapeType.getName()).thenReturn("nt:folder");
     }
 
     @Test

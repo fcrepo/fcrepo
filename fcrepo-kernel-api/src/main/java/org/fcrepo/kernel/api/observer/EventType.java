@@ -15,25 +15,27 @@
  */
 package org.fcrepo.kernel.api.observer;
 
+import static org.fcrepo.kernel.api.RdfLexicon.EVENT_NAMESPACE;
+
 /**
- * A convenient abstraction over JCR's integer-typed events.
+ * A collection of repository event types
  *
  * @author ajs6f
  * @since Feb 7, 2013
  */
 public enum EventType {
-    NODE_ADDED("node added"),
-    NODE_REMOVED("node removed"),
-    PROPERTY_ADDED("property added"),
-    PROPERTY_REMOVED("property removed"),
-    PROPERTY_CHANGED("property changed"),
-    NODE_MOVED("node moved"),
-    PERSIST("persist");
+
+    RESOURCE_CREATION("resource creation", "ResourceCreation"),
+    RESOURCE_DELETION("resource deletion", "ResourceDeletion"),
+    RESOURCE_MODIFICATION("resource modification", "ResourceModification"),
+    RESOURCE_RELOCATION("resource relocation", "ResourceRelocation");
 
     private final String eventName;
+    private final String eventType;
 
-    EventType(final String eventName) {
+    EventType(final String eventName, final String eventType) {
         this.eventName = eventName;
+        this.eventType = eventType;
     }
 
     /**
@@ -41,5 +43,12 @@ public enum EventType {
      */
     public String getName() {
         return this.eventName;
+    }
+
+    /**
+     * @return an rdf type for this event
+     */
+    public String getType() {
+        return EVENT_NAMESPACE + eventType;
     }
 }

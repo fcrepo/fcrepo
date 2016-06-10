@@ -111,13 +111,11 @@ public class SuppressByMixinFilterIT extends AbstractIT {
 
     @Subscribe
     public void receiveEvents(final FedoraEvent e) {
-        final Set<String> properties = e.getProperties();
-        assertNotNull(properties);
+        final Set<String> types = e.getResourceTypes();
+        assertNotNull(types);
 
-        final String expected = REPOSITORY_NAMESPACE + "lastModified";
-        final String notExpected = REPOSITORY_NAMESPACE + "mixinTypes";
-        assertTrue("Should contain: " + expected + properties, properties.contains(expected));
-        assertFalse("Should not contain: " + notExpected + properties, properties.contains(notExpected));
+        final String expected = REPOSITORY_NAMESPACE + "Container";
+        assertTrue("Should contain: " + expected + types, types.contains(expected));
 
         eventsReceived.add(e.getPath());
     }

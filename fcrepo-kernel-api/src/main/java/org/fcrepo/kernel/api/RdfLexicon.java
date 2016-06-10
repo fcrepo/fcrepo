@@ -41,6 +41,8 @@ public final class RdfLexicon {
     public static final String REPOSITORY_NAMESPACE =
             "http://fedora.info/definitions/v4/repository#";
 
+    public static final String EVENT_NAMESPACE = "http://fedora.info/definitions/v4/event#";
+
     /**
      *  The core JCR namespace.
      */
@@ -53,6 +55,8 @@ public final class RdfLexicon {
     public static final String JCR_NT_NAMESPACE = "http://www.jcp.org/jcr/nt/1.0";
 
     public static final String EBUCORE_NAMESPACE = "http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#";
+
+    public static final String PROV_NAMESPACE = "http://www.w3.org/ns/prov#";
 
     /**
      * Fedora configuration namespace "fedora-config", used for user-settable

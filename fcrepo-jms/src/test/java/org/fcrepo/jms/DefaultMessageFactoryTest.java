@@ -13,30 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.jms.headers;
+package org.fcrepo.jms;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static java.time.Instant.ofEpochMilli;
 import static java.util.Collections.singleton;
-import static org.fcrepo.jms.headers.DefaultMessageFactory.BASE_URL_HEADER_NAME;
-import static org.fcrepo.jms.headers.DefaultMessageFactory.EVENT_TYPE_HEADER_NAME;
-import static org.fcrepo.jms.headers.DefaultMessageFactory.IDENTIFIER_HEADER_NAME;
-import static org.fcrepo.jms.headers.DefaultMessageFactory.PROPERTIES_HEADER_NAME;
-import static org.fcrepo.jms.headers.DefaultMessageFactory.TIMESTAMP_HEADER_NAME;
-import static org.fcrepo.jms.headers.DefaultMessageFactory.USER_AGENT_HEADER_NAME;
-import static org.fcrepo.jms.headers.DefaultMessageFactory.USER_HEADER_NAME;
-import static org.fcrepo.jms.headers.DefaultMessageFactory.EVENT_ID_HEADER_NAME;
-import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.jms.DefaultMessageFactory.BASE_URL_HEADER_NAME;
+import static org.fcrepo.jms.DefaultMessageFactory.EVENT_TYPE_HEADER_NAME;
+import static org.fcrepo.jms.DefaultMessageFactory.IDENTIFIER_HEADER_NAME;
+import static org.fcrepo.jms.DefaultMessageFactory.RESOURCE_TYPE_HEADER_NAME;
+import static org.fcrepo.jms.DefaultMessageFactory.TIMESTAMP_HEADER_NAME;
+import static org.fcrepo.jms.DefaultMessageFactory.USER_AGENT_HEADER_NAME;
+import static org.fcrepo.jms.DefaultMessageFactory.USER_HEADER_NAME;
+import static org.fcrepo.jms.DefaultMessageFactory.EVENT_ID_HEADER_NAME;
+import static org.fcrepo.kernel.api.observer.OptionalValues.BASE_URL;
+import static org.fcrepo.kernel.api.observer.OptionalValues.USER_AGENT;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.doThrow;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.Session;
 
-import org.apache.activemq.command.ActiveMQObjectMessage;
+import org.apache.activemq.command.ActiveMQTextMessage;
 
 import org.fcrepo.kernel.api.observer.EventType;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
@@ -65,7 +69,7 @@ public class DefaultMessageFactoryTest {
 
     @Before
     public void setUp() throws JMSException {
-        when(mockSession.createMessage()).thenReturn(new ActiveMQObjectMessage());
+        when(mockSession.createTextMessage(anyString())).thenReturn(new ActiveMQTextMessage());
         testDefaultMessageFactory = new DefaultMessageFactory();
     }
 
@@ -74,12 +78,6 @@ public class DefaultMessageFactoryTest {
         final String testPath = "/path/to/resource";
         final Message msg = doTestBuildMessage("base-url", "Test UserAgent", testPath);
         assertEquals("Got wrong identifier in message!", testPath, msg.getStringProperty(IDENTIFIER_HEADER_NAME));
-    }
-
-    @Test (expected = Exception.class)
-    public void testBuildMessageException() throws JMSException {
-        doThrow(Exception.class).when(mockEvent).getUserData();
-        testDefaultMessageFactory.getMessage(mockEvent, mockSession);
     }
 
     @Test
@@ -92,21 +90,23 @@ public class DefaultMessageFactoryTest {
     private Message doTestBuildMessage(final String baseUrl, final String userAgent, final String id)
             throws JMSException {
         final Long testDate = 46647758568747L;
-        when(mockEvent.getDate()).thenReturn(testDate);
-
-        String url = null;
-        if (!isNullOrEmpty(baseUrl) || !isNullOrEmpty(userAgent)) {
-            url = "{\"baseURL\":\"" + baseUrl + "\",\"userAgent\":\"" + userAgent + "\"}";
+        final Map<String, String> info = new HashMap<>();
+        if (baseUrl != null) {
+            info.put(BASE_URL, baseUrl);
         }
-        when(mockEvent.getUserData()).thenReturn(url);
+        if (userAgent != null) {
+            info.put(USER_AGENT, userAgent);
+        }
+        when(mockEvent.getInfo()).thenReturn(info);
+        when(mockEvent.getDate()).thenReturn(ofEpochMilli(testDate));
         final String testUser = "testUser";
         when(mockEvent.getUserID()).thenReturn(testUser);
         when(mockEvent.getPath()).thenReturn(id);
-        final Set<EventType> testTypes = singleton(EventType.NODE_ADDED);
-        final String testReturnType = REPOSITORY_NAMESPACE + EventType.NODE_ADDED;
+        final Set<EventType> testTypes = singleton(EventType.RESOURCE_CREATION);
+        final String testReturnType = EventType.RESOURCE_CREATION.getType();
         when(mockEvent.getTypes()).thenReturn(testTypes);
-        final String prop = "test-property";
-        when(mockEvent.getProperties()).thenReturn(singleton(prop));
+        final String prop = "test-type";
+        when(mockEvent.getResourceTypes()).thenReturn(singleton(prop));
         final String eventID = "abcdefg12345678";
         when(mockEvent.getEventID()).thenReturn(eventID);
 
@@ -120,7 +120,7 @@ public class DefaultMessageFactoryTest {
         assertEquals("Got wrong date in message!", testDate, (Long) msg.getLongProperty(TIMESTAMP_HEADER_NAME));
         assertEquals("Got wrong type in message!", testReturnType, msg.getStringProperty(EVENT_TYPE_HEADER_NAME));
         assertEquals("Got wrong base-url in message", trimmedBaseUrl, msg.getStringProperty(BASE_URL_HEADER_NAME));
-        assertEquals("Got wrong property in message", prop, msg.getStringProperty(PROPERTIES_HEADER_NAME));
+        assertEquals("Got wrong resource type in message", prop, msg.getStringProperty(RESOURCE_TYPE_HEADER_NAME));
         assertEquals("Got wrong userID in message", testUser, msg.getStringProperty(USER_HEADER_NAME));
         assertEquals("Got wrong userAgent in message", userAgent, msg.getStringProperty(USER_AGENT_HEADER_NAME));
         assertEquals("Got wrong eventID in message", eventID, msg.getStringProperty(EVENT_ID_HEADER_NAME));

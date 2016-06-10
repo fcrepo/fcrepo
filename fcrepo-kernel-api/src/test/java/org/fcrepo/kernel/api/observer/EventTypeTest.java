@@ -28,6 +28,6 @@ public class EventTypeTest {
 
     @Test()
     public void testValueOf() {
-        assertEquals(EventType.PERSIST, EventType.valueOf("PERSIST"));
+        assertEquals(EventType.RESOURCE_CREATION, EventType.valueOf("RESOURCE_CREATION"));
     }
 }

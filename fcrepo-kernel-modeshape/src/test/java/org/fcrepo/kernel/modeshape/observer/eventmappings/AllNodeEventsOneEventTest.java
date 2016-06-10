@@ -22,7 +22,6 @@ import static javax.jcr.observation.Event.PROPERTY_ADDED;
 import static javax.jcr.observation.Event.PROPERTY_CHANGED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
@@ -119,33 +118,11 @@ public class AllNodeEventsOneEventTest {
         assertEquals("Didn't collapse content node and fcr:content events!", 1, testMapping.apply(mockStream2).count());
     }
 
-    @Test
-    public void testFileEventProperties() {
-        final FedoraEvent e = testMapping.apply(mockStream3).findFirst().get();
-        assertTrue("Didn't add fedora:hasContent property to fcr:content events!: " + e.getProperties(),
-                e.getProperties().contains("fedora:hasContent"));
-    }
-
     @Test(expected = RuntimeException.class)
     public void testBadEvent() throws RepositoryException {
         reset(mockEvent1);
         when(mockEvent1.getPath()).thenThrow(new RepositoryException("Expected."));
         testMapping.apply(mockStream);
-    }
-
-    @Test
-    public void testPropertyEvents() {
-        final Stream<FedoraEvent> stream = testMapping.apply(mockStream);
-        assertNotNull(stream);
-
-        final boolean found = stream.anyMatch(event -> {
-            if (TEST_NODE_PATH3.equals(event.getPath())) {
-                assertEquals("Expected one event property", 1, event.getProperties().size());
-                return true;
-            }
-            return false;
-        });
-        assertTrue("Third mock event was not found!", found);
     }
 
     @Test(expected = RepositoryRuntimeException.class)

@@ -15,6 +15,7 @@
  */
 package org.fcrepo.kernel.api.observer;
 
+import java.time.Instant;
 import java.util.Map;
 import java.util.Set;
 
@@ -33,22 +34,9 @@ public interface FedoraEvent {
     Set<EventType> getTypes();
 
     /**
-     * @param type the type
-     * @return this object for continued use
-     */
-    FedoraEvent addType(final EventType type);
-
-    /**
-     * @return the property names associated with this event.
+     * @return the RDF Types of the resource associated with this event.
     **/
-    Set<String> getProperties();
-
-    /**
-     * Add a property name to this event
-     * @param property property name
-     * @return this object for continued use
-    **/
-    FedoraEvent addProperty(final String property);
+    Set<String> getResourceTypes();
 
     /**
      * @return the path to the {@link org.fcrepo.kernel.api.models.FedoraResource}
@@ -61,14 +49,9 @@ public interface FedoraEvent {
     String getUserID();
 
     /**
-     * @return the user data associated with this event.
-     */
-    String getUserData();
-
-    /**
      * @return the date of this event.
      */
-    long getDate();
+    Instant getDate();
 
     /**
      * Get the event ID.
