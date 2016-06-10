@@ -306,22 +306,6 @@
         </configuration>
       </plugin>
       <plugin>
-        <groupId>org.simplericity.jettyconsole</groupId>
-        <artifactId>jetty-console-maven-plugin</artifactId>
-        <version>1.56</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>createconsole</goal>
-            </goals>
-            <configuration>
-              <backgroundImage>${basedir}/src/main/webapp/images/fedora_logo_10in.png</backgroundImage>
-              <destinationFile>${project.build.directory}${file.separator}${project.artifactId}-${project.version}-jetty-console.jar</destinationFile>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-        <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
           <systemPropertyVariables>
@@ -388,6 +372,12 @@
           <webApp>
             <contextPath>${fcrepo.test.context.path}</contextPath>
           </webApp>
+          <systemProperties>
+            <systemProperty>
+              <name>fcrepo.modeshape.configuration</name>
+              <value>classpath:/config/minimal-default/repository.json</value>
+            </systemProperty>
+          </systemProperties>
 
         </configuration>
         <executions>
@@ -403,6 +393,11 @@
               <stopPort>${jetty.dynamic.stop.port}</stopPort>
 
               <systemProperties>
+                <systemProperty>
+                  <name>fcrepo.modeshape.configuration</name>
+                  <value>classpath:/config/minimal-default/repository.json</value>
+                </systemProperty>
+
                 <systemProperty>
                   <name>fcrepo.dynamic.test.port</name>
                   <value>${fcrepo.dynamic.test.port}</value>
@@ -477,5 +472,74 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>one-click</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+      </activation>
+      <properties>
+        <fcrepo.modeshape.configuration>classpath:/config/minimal-default/repository.json</fcrepo.modeshape.configuration>
+      </properties>
+
+      <build>
+        <resources>
+          <resource>
+            <directory>src/main/resources</directory>
+            <filtering>true</filtering>
+            <includes>
+              <include>**/repo.xml</include>
+            </includes>
+          </resource>
+        </resources>
+
+        <plugins>
+          <plugin>
+            <groupId>org.simplericity.jettyconsole</groupId>
+            <artifactId>jetty-console-maven-plugin</artifactId>
+            <version>1.56</version>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>createconsole</goal>
+                </goals>
+                <configuration>
+                  <backgroundImage>${basedir}/src/main/webapp/images/fedora_logo_10in.png</backgroundImage>
+                  <destinationFile>
+                    ${project.build.directory}${file.separator}${project.artifactId}-${project.version}-jetty-console.jar
+                  </destinationFile>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <!--Ensure that the main war is removed... because it will have a default ModeShape config wired in.-->
+          <plugin>
+            <artifactId>maven-clean-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>remove-war</id>
+                <phase>post-integration-test</phase>
+                <goals>
+                  <goal>clean</goal>
+                </goals>
+                <configuration>
+                  <excludeDefaultDirectories>true</excludeDefaultDirectories>
+                  <filesets>
+                    <fileset>
+                      <directory>${project.build.directory}</directory>
+                      <includes>
+                        <include>**/*.war</include>
+                      </includes>
+                    </fileset>
+                  </filesets>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 
 </project>
