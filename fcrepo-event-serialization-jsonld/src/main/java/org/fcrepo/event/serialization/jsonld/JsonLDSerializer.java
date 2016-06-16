@@ -34,6 +34,17 @@ public class JsonLDSerializer implements EventSerializer {
 
     private static final Logger LOGGER = getLogger(JsonLDSerializer.class);
 
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
+    /**
+     * Create a new JSON-LD Event Serializer
+     */
+    public JsonLDSerializer() {
+        // newer versions of jackson rename this to `JavaTimeModule`
+        MAPPER.registerModule(new JSR310Module());
+        MAPPER.configure(WRITE_DATES_AS_TIMESTAMPS, false);
+    }
+
     /**
      * Serialize a FedoraEvent into a JSON String
      * @param evt the Fedora event
@@ -41,13 +52,8 @@ public class JsonLDSerializer implements EventSerializer {
      */
     @Override
     public String serialize(final FedoraEvent evt) {
-        final ObjectMapper mapper = new ObjectMapper();
-        // newer versions of jackson rename this to `JavaTimeModule`
-        mapper.registerModule(new JSR310Module());
-        mapper.configure(WRITE_DATES_AS_TIMESTAMPS, false);
-
         try {
-            return mapper.writeValueAsString(from(evt));
+            return MAPPER.writeValueAsString(from(evt));
         } catch (final JsonProcessingException ex) {
             LOGGER.warn("Error processing JSON: " + ex.getMessage());
             return null;
