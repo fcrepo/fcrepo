@@ -13,6 +13,7 @@
   <properties>
     <osgi.import.packages>
       org.fcrepo.kernel.api.*,
+      org.fcrepo.event.serialization.jsonld,
 
       javax.annotation,
       javax.inject,
@@ -33,6 +34,11 @@
     <dependency>
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-kernel-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-event-serialization-jsonld</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>

@@ -5,25 +5,18 @@
     <artifactId>fcrepo</artifactId>
     <version>4.5.2-SNAPSHOT</version>
   </parent>
-  <artifactId>fcrepo-kernel-api</artifactId>
-  <name>Fedora Repository Kernel API</name>
-  <description>Fedora Repository Kernel API, containing types and constants for working with Fedora 4</description>
+  <artifactId>fcrepo-event-serialization-jsonld</artifactId>
+  <name>Fedora Event Serialization (JSON-LD)</name>
+  <description>A module for serializing Fedora events as JSON-LD</description>
 
   <packaging>bundle</packaging>
 
   <properties>
     <osgi.import.packages>
-      javax.jcr.*,
-      javax.servlet.http,
-
-      com.google.common.*,
-      com.hp.hpl.jena.*,
-      org.apache.commons.codec.binary,
-
       *
     </osgi.import.packages>
     <osgi.export.packages>
-      org.fcrepo.kernel.api.*;version=${project.version}
+      org.fcrepo.event.serialization.jsonld;version=${project.version}
     </osgi.export.packages>
   </properties>
 
@@ -36,19 +29,17 @@
     </plugins>
   </build>
 
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>org.fcrepo</groupId>
-        <artifactId>fcrepo-jcr-bom</artifactId>
-        <version>${project.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
-
   <dependencies>
+    <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-kernel-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-event-serialization-rdf</artifactId>
+      <version>${project.version}</version>
+    </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
@@ -66,8 +57,20 @@
       <artifactId>jcr</artifactId>
     </dependency>
     <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>javax.servlet-api</artifactId>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>com.fasterxml.jackson.datatype</groupId>
+        <artifactId>jackson-datatype-jsr310</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-annotations</artifactId>
     </dependency>
 
     <!-- test gear -->
@@ -82,6 +85,11 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.github.jsonld-java</groupId>
+      <artifactId>jsonld-java</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

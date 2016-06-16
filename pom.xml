@@ -67,6 +67,8 @@
     <module>fcrepo-kernel-api</module>
     <module>fcrepo-kernel-modeshape</module>
     <module>fcrepo-webapp</module>
+    <module>fcrepo-event-serialization-jsonld</module>
+    <module>fcrepo-event-serialization-rdf</module>
     <module>fcrepo-jms</module>
     <module>fcrepo-http-commons</module>
     <module>fcrepo-http-api</module>

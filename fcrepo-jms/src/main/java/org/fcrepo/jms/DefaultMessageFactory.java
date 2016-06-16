@@ -17,7 +17,6 @@ package org.fcrepo.jms;
 
 import static java.lang.String.join;
 import static java.util.stream.Collectors.joining;
-import static org.fcrepo.kernel.api.observer.EventUtils.serialize;
 import static org.fcrepo.kernel.api.observer.OptionalValues.BASE_URL;
 import static org.fcrepo.kernel.api.observer.OptionalValues.USER_AGENT;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -29,6 +28,8 @@ import javax.jms.Session;
 
 import org.fcrepo.kernel.api.observer.EventType;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
+import org.fcrepo.event.serialization.rdf.EventSerializer;
+import org.fcrepo.event.serialization.jsonld.JsonLDSerializer;
 
 import org.slf4j.Logger;
 
@@ -66,7 +67,8 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
     public Message getMessage(final FedoraEvent event, final Session jmsSession)
             throws JMSException {
 
-        final String body = serialize(event);
+        final EventSerializer serializer = new JsonLDSerializer();
+        final String body = serializer.serialize(event);
         final Message message = jmsSession.createTextMessage(body);
 
         message.setLongProperty(TIMESTAMP_HEADER_NAME, event.getDate().toEpochMilli());

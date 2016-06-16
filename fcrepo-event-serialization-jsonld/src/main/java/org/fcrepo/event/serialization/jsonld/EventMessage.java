@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.observer;
+package org.fcrepo.event.serialization.jsonld;
 
 import static java.util.stream.Collectors.toList;
 import static org.fcrepo.kernel.api.RdfLexicon.PROV_NAMESPACE;
@@ -27,13 +27,14 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.fcrepo.kernel.api.observer.FedoraEvent;
 import org.slf4j.Logger;
 
 /**
  * A structure used for serializing a FedoraEvent into JSON
  * @author acoburn
  */
-public class EventMessage {
+class EventMessage {
 
     @JsonIgnore
     private static final Logger LOGGER = getLogger(EventMessage.class);

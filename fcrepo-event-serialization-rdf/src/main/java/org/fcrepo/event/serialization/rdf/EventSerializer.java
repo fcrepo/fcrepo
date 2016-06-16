@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.observer;
+package org.fcrepo.event.serialization.rdf;
 
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDdateTime;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
@@ -23,27 +23,19 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static com.hp.hpl.jena.vocabulary.DCTerms.identifier;
 import static com.hp.hpl.jena.vocabulary.DCTerms.isPartOf;
-import static com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS;
 import static org.fcrepo.kernel.api.RdfLexicon.PROV_NAMESPACE;
-import static org.fcrepo.kernel.api.observer.EventMessage.from;
 import static org.fcrepo.kernel.api.observer.OptionalValues.BASE_URL;
 import static org.fcrepo.kernel.api.observer.OptionalValues.USER_AGENT;
-import static org.slf4j.LoggerFactory.getLogger;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JSR310Module;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
-import org.slf4j.Logger;
+import org.fcrepo.kernel.api.observer.FedoraEvent;
 
 /**
- * Some serialization utilities for FedoraEvent objects
+ * A basic serialization API for Fedora events
  * @author acoburn
  */
-public class EventUtils {
-
-    private static final Logger LOGGER = getLogger(EventUtils.class);
+public interface EventSerializer {
 
     /**
      * Convert an event to an Rdf Model
@@ -98,21 +90,5 @@ public class EventUtils {
      * @param evt the Fedora event
      * @return a JSON string
      */
-    public static String serialize(final FedoraEvent evt) {
-        final ObjectMapper mapper = new ObjectMapper();
-        // newer versions of jackson rename this to `JavaTimeModule`
-        mapper.registerModule(new JSR310Module());
-        mapper.configure(WRITE_DATES_AS_TIMESTAMPS, false);
-
-        try {
-            return mapper.writeValueAsString(from(evt));
-        } catch (final JsonProcessingException ex) {
-            LOGGER.warn("Error processing JSON: " + ex.getMessage());
-            return null;
-        }
-    }
-
-    private EventUtils() {
-        // prevent instantiation
-    }
+    String serialize(final FedoraEvent evt);
 }
