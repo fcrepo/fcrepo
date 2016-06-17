@@ -28,8 +28,8 @@ import javax.jms.Session;
 
 import org.fcrepo.kernel.api.observer.EventType;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
-import org.fcrepo.event.serialization.rdf.EventSerializer;
-import org.fcrepo.event.serialization.jsonld.JsonLDSerializer;
+import org.fcrepo.event.serialization.EventSerializer;
+import org.fcrepo.event.serialization.JsonLDSerializer;
 
 import org.slf4j.Logger;
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.event.serialization.rdf;
+package org.fcrepo.event.serialization;
 
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDdateTime;
 import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;

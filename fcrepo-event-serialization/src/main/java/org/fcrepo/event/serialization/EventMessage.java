@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.event.serialization.jsonld;
+package org.fcrepo.event.serialization;
 
 import static java.util.stream.Collectors.toList;
 import static org.fcrepo.kernel.api.RdfLexicon.PROV_NAMESPACE;

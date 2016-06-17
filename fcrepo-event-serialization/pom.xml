@@ -5,9 +5,9 @@
     <artifactId>fcrepo</artifactId>
     <version>4.5.2-SNAPSHOT</version>
   </parent>
-  <artifactId>fcrepo-event-serialization-jsonld</artifactId>
-  <name>Fedora Event Serialization (JSON-LD)</name>
-  <description>A module for serializing Fedora events as JSON-LD</description>
+  <artifactId>fcrepo-event-serialization</artifactId>
+  <name>Fedora Event Serialization</name>
+  <description>A module for serializing Fedora events as RDF</description>
 
   <packaging>bundle</packaging>
 
@@ -16,7 +16,7 @@
       *
     </osgi.import.packages>
     <osgi.export.packages>
-      org.fcrepo.event.serialization.jsonld;version=${project.version}
+      org.fcrepo.event.serialization;version=${project.version}
     </osgi.export.packages>
   </properties>
 
@@ -36,11 +36,6 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-event-serialization-rdf</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
     </dependency>
@@ -51,10 +46,6 @@
     <dependency>
       <groupId>org.apache.jena</groupId>
       <artifactId>jena-arq</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>javax.jcr</groupId>
-      <artifactId>jcr</artifactId>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
@@ -72,6 +63,7 @@
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-annotations</artifactId>
     </dependency>
+
 
     <!-- test gear -->
     <dependency>

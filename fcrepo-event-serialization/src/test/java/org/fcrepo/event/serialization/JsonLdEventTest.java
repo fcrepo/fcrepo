@@ -13,33 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.event.serialization.rdf;
+package org.fcrepo.event.serialization;
 
-import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDdateTime;
+import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static com.hp.hpl.jena.vocabulary.DCTerms.identifier;
 import static com.hp.hpl.jena.vocabulary.DCTerms.isPartOf;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.Instant.ofEpochMilli;
 import static org.fcrepo.kernel.api.RdfLexicon.EVENT_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.PROV_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.observer.OptionalValues.BASE_URL;
 import static org.fcrepo.kernel.api.observer.OptionalValues.USER_AGENT;
-import static org.fcrepo.event.serialization.rdf.EventSerializer.toModel;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.SimpleSelector;
@@ -57,7 +62,7 @@ import org.mockito.runners.MockitoJUnitRunner;
  * @author acoburn
  */
 @RunWith(MockitoJUnitRunner.class)
-public class FedoraEventTest {
+public class JsonLdEventTest {
 
     private static String FOAF_NAMESPACE = "http://xmlns.com/foaf/0.1/";
 
@@ -91,13 +96,18 @@ public class FedoraEventTest {
     }
 
     @Test
-    public void testModel() {
-        final Model model = toModel(mockEvent);
+    public void testJsonSerializationAsModel() {
+        final EventSerializer serializer = new JsonLDSerializer();
+        final String json = serializer.serialize(mockEvent);
+        final Model model = createDefaultModel();
+        model.read(new ByteArrayInputStream(json.getBytes(UTF_8)), baseUrl + path, "JSON-LD");
+
         final Resource subject = createResource(baseUrl + path);
         final Resource blankNode = null;
 
         assertTrue(model.contains(subject, type, createResource(REPOSITORY_NAMESPACE + "Resource")));
         assertTrue(model.contains(subject, type, createResource(REPOSITORY_NAMESPACE + "Container")));
+        assertTrue(model.contains(subject, type, createResource(PROV_NAMESPACE + "Entity")));
         assertTrue(model.contains(subject, type, createResource("http://example.com/SampleType")));
         assertTrue(model.contains(subject, isPartOf, createResource(baseUrl)));
         assertTrue(model.contains(subject, createProperty(PROV_NAMESPACE + "wasGeneratedBy")));
@@ -110,8 +120,6 @@ public class FedoraEventTest {
                 assertTrue(r.hasProperty(type, createResource(EVENT_NAMESPACE + "ResourceModification")));
                 assertTrue(r.hasProperty(type, createResource(PROV_NAMESPACE + "Activity")));
                 assertTrue(r.hasProperty(identifier, createResource("urn:uuid:some-event")));
-                assertTrue(r.hasProperty(createProperty(PROV_NAMESPACE + "atTime"),
-                        createTypedLiteral(timestamp.toString(), XSDdateTime)));
                 activities.incrementAndGet();
             });
         assertEquals(activities.get(), 1);
@@ -130,12 +138,62 @@ public class FedoraEventTest {
                 agents.incrementAndGet();
             });
         assertEquals(agents.get(), 2);
+        assertEquals(1, 1);
     }
 
     @Test
-    public void testTurtle() {
-        final EventSerializer serializer = new TurtleSerializer();
-        final String ttl = serializer.serialize(mockEvent);
-        assertTrue(ttl.contains("<http://localhost:8080/fcrepo/rest/path/to/resource>"));
+    public void testJsonSerializationAsJson() throws IOException {
+        final EventSerializer serializer = new JsonLDSerializer();
+        final String json = serializer.serialize(mockEvent);
+
+        final ObjectMapper mapper = new ObjectMapper();
+        final JsonNode node = mapper.readTree(json);
+        assertTrue(node.has("@context"));
+        assertTrue(node.has("id"));
+        assertEquals(node.get("id").textValue(), baseUrl + path);
+        final List<String> types = new ArrayList<>();
+        node.get("type").elements().forEachRemaining(n -> {
+            types.add(n.textValue());
+        });
+        assertEquals(types.size(), 4);
+        assertTrue(types.contains(REPOSITORY_NAMESPACE + "Resource"));
+        assertTrue(types.contains(REPOSITORY_NAMESPACE + "Container"));
+        assertTrue(types.contains(PROV_NAMESPACE + "Entity"));
+        assertTrue(types.contains("http://example.com/SampleType"));
+        assertTrue(node.has("isPartOf"));
+        assertEquals(node.get("isPartOf").textValue(), baseUrl);
+
+        // verify prov:Activity node
+        assertTrue(node.has("wasGeneratedBy"));
+        final JsonNode activity = node.get("wasGeneratedBy");
+        final List<String> activityTypes = new ArrayList<>();
+        assertTrue(activity.has("type"));
+        activity.get("type").elements().forEachRemaining(n -> {
+            activityTypes.add(n.textValue());
+        });
+        assertEquals(activityTypes.size(), 2);
+        assertTrue(activityTypes.contains(EVENT_NAMESPACE + "ResourceModification"));
+        assertTrue(activityTypes.contains(PROV_NAMESPACE + "Activity"));
+        assertTrue(activity.has("atTime"));
+        assertTrue(activity.has("identifier"));
+        assertEquals(activity.get("atTime").textValue(), timestamp.toString());
+        assertEquals(activity.get("identifier").textValue(), "urn:uuid:some-event");
+
+        // verify prov:Agent node
+        assertTrue(node.has("wasAttributedTo"));
+        final AtomicInteger agents = new AtomicInteger();
+        node.get("wasAttributedTo").elements().forEachRemaining(n -> {
+            assertTrue(n.has("type"));
+            assertTrue(n.has("name"));
+            if (n.get("type").textValue().equals(PROV_NAMESPACE + "Person")) {
+                assertEquals(n.get("type").textValue(), PROV_NAMESPACE + "Person");
+                assertEquals(n.get("name").textValue(), "fedo raadmin");
+            } else {
+                assertEquals(n.get("type").textValue(), PROV_NAMESPACE + "SoftwareAgent");
+                assertEquals(n.get("name").textValue(), "fcrepo-client/1.0");
+            }
+            agents.incrementAndGet();
+        });
+        assertEquals(agents.get(), 2);
     }
 }

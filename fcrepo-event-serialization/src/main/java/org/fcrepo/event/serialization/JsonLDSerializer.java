@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.event.serialization.jsonld;
+package org.fcrepo.event.serialization;
 
 import static com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS;
-import static org.fcrepo.event.serialization.jsonld.EventMessage.from;
+import static org.fcrepo.event.serialization.EventMessage.from;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JSR310Module;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
-import org.fcrepo.event.serialization.rdf.EventSerializer;
 import org.slf4j.Logger;
 
 /**
