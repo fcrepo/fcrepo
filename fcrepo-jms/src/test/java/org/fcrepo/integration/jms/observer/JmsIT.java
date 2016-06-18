@@ -15,6 +15,7 @@
  */
 package org.fcrepo.integration.jms.observer;
 
+import static com.google.common.base.Strings.nullToEmpty;
 import static com.google.common.base.Throwables.propagate;
 import static com.jayway.awaitility.Awaitility.await;
 import static com.jayway.awaitility.Duration.ONE_HUNDRED_MILLISECONDS;
@@ -184,7 +185,7 @@ public class JmsIT implements MessageListener {
         await().pollInterval(ONE_HUNDRED_MILLISECONDS).until(() -> messages.stream().anyMatch(msg -> {
             try {
                 return getPath(msg).equals(id) && getEventTypes(msg).contains(eventType)
-                        && (type == null || getResourceTypes(msg).contains(type));
+                        && getResourceTypes(msg).contains(nullToEmpty(type));
             } catch (final JMSException e) {
                 throw propagate(e);
             }
