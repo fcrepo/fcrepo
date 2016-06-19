@@ -91,7 +91,6 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.models.NonRdfSource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
@@ -228,7 +227,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected RdfStream getResourceTriples(final int limit) {
         // use the thing described, not the description, for the subject of descriptive triples
         if (resource() instanceof NonRdfSourceDescription) {
-            resource = ((NonRdfSourceDescription) resource()).getDescribedResource();
+            resource = resource().getDescribedResource();
         }
         final PreferTag returnPreference;
 
@@ -404,11 +403,11 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     protected void addResourceLinkHeaders(final FedoraResource resource, final boolean includeAnchor) {
         if (resource instanceof NonRdfSourceDescription) {
-            final URI uri = getUri(((NonRdfSourceDescription) resource).getDescribedResource());
+            final URI uri = getUri(resource.getDescribedResource());
             final Link link = Link.fromUri(uri).rel("describes").build();
             servletResponse.addHeader("Link", link.toString());
         } else if (resource instanceof FedoraBinary) {
-            final URI uri = getUri(((FedoraBinary) resource).getDescription());
+            final URI uri = getUri(resource.getDescription());
             final Link.Builder builder = Link.fromUri(uri).rel("describedby");
 
             if (includeAnchor) {
@@ -441,7 +440,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "Resource>;rel=\"type\"");
 
-        if (resource instanceof NonRdfSource) {
+        if (resource instanceof FedoraBinary) {
             servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "NonRDFSource>;rel=\"type\"");
         } else if (resource instanceof Container) {
             servletResponse.addHeader("Link", "<" + CONTAINER.getURI() + ">;rel=\"type\"");
@@ -510,20 +509,14 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         final Date date;
 
         // See note about this code in the javadoc above.
-        if (resource instanceof NonRdfSourceDescription) {
-            final NonRdfSourceDescription description = (NonRdfSourceDescription)resource;
-            // Use a weak ETag for the LDP-RS
-            etag = new EntityTag(description.getDescribedResource().getEtagValue(), true);
-            date = description.getDescribedResource().getLastModifiedDate();
-        } else if (resource instanceof FedoraBinary) {
-            final NonRdfSource binary = (NonRdfSource)resource;
-            // Use a strong ETag for the LDP-NR
-            etag = new EntityTag(binary.getDescription().getEtagValue());
-            date = binary.getDescription().getLastModifiedDate();
+        if (resource instanceof FedoraBinary) {
+            // Use a strong ETag for LDP-NR
+            etag = new EntityTag(resource.getDescription().getEtagValue());
+            date = resource.getDescription().getLastModifiedDate();
         } else {
             // Use a weak ETag for the LDP-RS
-            etag = new EntityTag(resource.getEtagValue(), true);
-            date = resource.getLastModifiedDate();
+            etag = new EntityTag(resource.getDescribedResource().getEtagValue(), true);
+            date = resource.getDescribedResource().getLastModifiedDate();
         }
 
         if (!etag.getValue().isEmpty()) {
@@ -569,20 +562,14 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         // See the related note about the next block of code in the
         // ContentExposingResource::addCacheControlHeaders method
-        if (resource instanceof NonRdfSourceDescription) {
-            final NonRdfSourceDescription description = (NonRdfSourceDescription)resource;
-            // Use a weak ETag for the LDP-RS
-            etag = new EntityTag(description.getDescribedResource().getEtagValue(), true);
-            date = description.getDescribedResource().getLastModifiedDate();
-        } else if (resource instanceof NonRdfSource) {
-            final NonRdfSource binary = (NonRdfSource)resource;
+        if (resource instanceof FedoraBinary) {
             // Use a strong ETag for the LDP-NR
-            etag = new EntityTag(binary.getDescription().getEtagValue());
-            date = binary.getDescription().getLastModifiedDate();
+            etag = new EntityTag(resource.getDescription().getEtagValue());
+            date = resource.getDescription().getLastModifiedDate();
         } else {
             // Use a weak ETag for the LDP-RS
-            etag = new EntityTag(resource.getEtagValue(), true);
-            date = resource.getLastModifiedDate();
+            etag = new EntityTag(resource.getDescribedResource().getEtagValue(), true);
+            date = resource.getDescribedResource().getLastModifiedDate();
         }
 
         if (date != null) {
@@ -664,13 +651,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected void patchResourcewithSparql(final FedoraResource resource,
             final String requestBody,
             final RdfStream resourceTriples) {
-        if (resource instanceof NonRdfSourceDescription) {
-            // update the described resource instead
-            ((NonRdfSourceDescription) resource).getDescribedResource()
-                    .updateProperties(translator(), requestBody, resourceTriples);
-        } else {
-            resource.updateProperties(translator(), requestBody, resourceTriples);
-        }
+        resource.getDescribedResource().updateProperties(translator(), requestBody, resourceTriples);
     }
 
     /**

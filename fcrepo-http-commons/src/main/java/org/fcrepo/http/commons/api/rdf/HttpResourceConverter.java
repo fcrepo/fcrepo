@@ -118,7 +118,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
                 final FedoraResource fedoraResource = nodeConverter.convert(node);
 
                 if (!metadata && fedoraResource instanceof NonRdfSourceDescription) {
-                    return ((NonRdfSourceDescription)fedoraResource).getDescribedResource();
+                    return fedoraResource.getDescribedResource();
                 }
                 return fedoraResource;
             }

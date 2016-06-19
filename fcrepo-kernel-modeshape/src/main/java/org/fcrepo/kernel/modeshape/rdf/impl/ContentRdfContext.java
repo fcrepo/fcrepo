@@ -46,14 +46,14 @@ public class ContentRdfContext extends NodeRdfContext {
 
         // if there's an accessible jcr:content node, include information about it
         if (resource instanceof NonRdfSourceDescription) {
-            final FedoraResource contentNode = ((NonRdfSourceDescription) resource()).getDescribedResource();
+            final FedoraResource contentNode = resource().getDescribedResource();
             final Node subject = uriFor(resource());
             final Node contentSubject = uriFor(contentNode);
             // add triples representing parent-to-content-child relationship
             concat(of(create(subject, DESCRIBES.asNode(), contentSubject)));
 
         } else if (resource instanceof FedoraBinary) {
-            final FedoraResource description = ((FedoraBinary) resource).getDescription();
+            final FedoraResource description = resource.getDescription();
             concat(of(create(uriFor(resource), DESCRIBED_BY.asNode(), uriFor(description))));
         }
     }

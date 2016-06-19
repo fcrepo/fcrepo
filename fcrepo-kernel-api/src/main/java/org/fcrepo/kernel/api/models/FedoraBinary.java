@@ -28,7 +28,7 @@ import java.net.URI;
  * @author cabeer
  * @since 9/19/14
  */
-public interface FedoraBinary extends NonRdfSource {
+public interface FedoraBinary extends FedoraResource {
 
     /**
      * @return The InputStream of content associated with this datastream.

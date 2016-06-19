@@ -23,7 +23,7 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.models.NonRdfSource;
+import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.slf4j.Logger;
 
@@ -47,7 +47,7 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements N
     }
 
     @Override
-    public NonRdfSource getDescribedResource() {
+    public FedoraResource getDescribedResource() {
         return new FedoraBinaryImpl(getContentNode());
     }
 

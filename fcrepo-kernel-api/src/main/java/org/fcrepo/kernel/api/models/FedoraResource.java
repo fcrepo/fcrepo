@@ -243,4 +243,16 @@ public interface FedoraResource {
      * @return version label
      */
     String getVersionLabelOfFrozenResource();
+
+    /**
+     * Get the description for this resource
+     * @return the description for this resource
+     */
+    FedoraResource getDescription();
+
+    /**
+     * Get the resource described by this resource
+     * @return the resource being described
+     */
+    FedoraResource getDescribedResource();
 }
