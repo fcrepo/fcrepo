@@ -1774,28 +1774,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
     }
 
-    /**
-     * Given a directory at: test-FileSystem1/ /ds1 /ds2 /TestSubdir/ and a projection of test-objects as
-     * fedora:/files, then I should be able to retrieve an object from fedora:/files/FileSystem1 that lists a child
-     * object at fedora:/files/FileSystem1/TestSubdir and lists datastreams ds and ds2
-     *
-     * @throws IOException thrown during this function
-     */
-    @Test
-    public void testGetProjectedNode() throws IOException {
-        final HttpGet method = new HttpGet(serverAddress + "files/FileSystem1");
-        try (final CloseableDataset dataset = getDataset(method)) {
-            final DatasetGraph graph = dataset.asDatasetGraph();
-            final Node subjectURI = createURI(serverAddress + "files/FileSystem1");
-            assertTrue("Didn't find the first datastream! ", graph.contains(ANY,
-                    subjectURI, ANY, createURI(subjectURI + "/ds1")));
-            assertTrue("Didn't find the second datastream! ", graph.contains(ANY,
-                    subjectURI, ANY, createURI(subjectURI + "/ds2")));
-            assertTrue("Didn't find the first object! ", graph.contains(ANY,
-                    subjectURI, ANY, createURI(subjectURI + "/TestSubdir")));
-        }
-    }
-
     @Test
     public void testDescribeRdfCached() throws IOException {
         try (final CloseableHttpClient cachClient = CachingHttpClientBuilder.create().setCacheConfig(DEFAULT).build()) {
@@ -1916,24 +1894,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
     }
 
-    /**
-     * I should be able to link to content on a federated filesystem.
-     *
-     * @throws IOException in case of IOException
-     **/
-    @Test
-    public void testFederatedDatastream() throws IOException {
-        final String federationAddress = serverAddress + "files/FileSystem1/ds1";
-        final String linkingAddress = getLocation(postObjMethod());
-
-        // link from the object to the content of the file on the federated filesystem
-        final HttpPatch patch = new HttpPatch(linkingAddress);
-        patch.addHeader("Content-Type", "application/sparql-update");
-        patch.setEntity(new ByteArrayEntity(("INSERT DATA { <> <http://some-vocabulary#hasExternalContent> "
-                + "<" + federationAddress + "> . }").getBytes()));
-        assertEquals("Couldn't link to external datastream!", NO_CONTENT.getStatusCode(), getStatus(patch));
-    }
-
     @Test
     public void testLinkedDeletion() {
         final String linkedFrom = getRandomUniqueId();
@@ -1950,58 +1910,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals("Couldn't link resources!", NO_CONTENT.getStatusCode(), getStatus(patch));
         assertEquals("Error deleting linked-to!", NO_CONTENT.getStatusCode(), getStatus(deleteObjMethod(linkedTo)));
         assertEquals("Linked to should still exist!", OK.getStatusCode(), getStatus(getObjMethod(linkedFrom)));
-    }
-
-    /**
-     * When I make changes to a resource in a federated filesystem, the parent folder's Last-Modified header should be
-     * updated.
-     *
-     * @throws IOException in case of IOException
-     **/
-    @Test
-    public void testLastModifiedUpdatedAfterUpdates() throws IOException  {
-
-        // create directory containing a file in filesystem
-        final File fed = new File("target/test-classes/test-objects");
-        final String id = getRandomUniqueId();
-        final File dir = new File(fed, id);
-        final File child = new File(dir, "child");
-        final long timestamp1 = currentTimeMillis();
-        dir.mkdir();
-        child.mkdir();
-        // TODO this seems really brittle
-        try {
-            sleep(2000);
-        } catch (final InterruptedException e) {
-        }
-
-        // check Last-Modified header is current
-        final long lastmod1;
-        try (final CloseableHttpResponse resp1 = execute(headObjMethod("files/" + id))) {
-            assertEquals(OK.getStatusCode(), getStatus(resp1));
-            lastmod1 = headerFormat.parse(resp1.getFirstHeader("Last-Modified").getValue()).getTime();
-            assertTrue((timestamp1 - lastmod1) < 1000); // because rounding
-
-            // remove the file and wait for the TTL to expire
-            final long timestamp2 = currentTimeMillis();
-            child.delete();
-            try {
-                sleep(2000);
-            } catch (final InterruptedException e) {
-            }
-
-            // check Last-Modified header is updated
-            try (final CloseableHttpResponse resp2 = execute(headObjMethod("files/" + id))) {
-                assertEquals(OK.getStatusCode(), getStatus(resp2));
-                final long lastmod2 = headerFormat.parse(resp2.getFirstHeader("Last-Modified").getValue()).getTime();
-                assertTrue((timestamp2 - lastmod2) < 1000); // because rounding
-                assertFalse("Last-Modified headers should have changed", lastmod1 == lastmod2);
-            } catch (final ParseException e) {
-                fail();
-            }
-        } catch (final ParseException e) {
-            fail();
-        }
     }
 
     @Test
