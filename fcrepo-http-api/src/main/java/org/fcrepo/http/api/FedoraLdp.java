@@ -389,7 +389,16 @@ public class FedoraLdp extends ContentExposingResource {
         }
 
         try {
-            session.save();
+            // prevent SN-Sibling nodes from creating.
+            synchronized (LOGGER) {
+                final FedoraResource existingNode = nodeService.find(session, resource.getPath());
+                if (resource.isNew() && existingNode != null && !existingNode.getPath().equals(resource.getPath())) {
+                    LOGGER.error("Same Name Sibling violation: {}", existingNode.getPath());
+                    session.removeItem(resource.getPath());
+                    throw new ClientErrorException("Resource Already Exists", CONFLICT);
+                }
+                session.save();
+            }
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }

@@ -32,6 +32,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Collection;
@@ -56,6 +57,7 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.FileEntity;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.BasicCredentialsProvider;
@@ -139,6 +141,14 @@ public abstract class AbstractResourceIT {
             throws UnsupportedEncodingException {
         final HttpPut put = new HttpPut(serverAddress + pid + "/" + ds);
         put.setEntity(new StringEntity(content == null ? "" : content));
+        put.setHeader("Content-Type", TEXT_PLAIN);
+        return put;
+    }
+
+    protected static HttpPut putDSFileMethod(final String pid, final String ds, final File content)
+            throws UnsupportedEncodingException {
+        final HttpPut put = new HttpPut(serverAddress + pid + "/" + ds);
+        put.setEntity(new FileEntity(content));
         put.setHeader("Content-Type", TEXT_PLAIN);
         return put;
     }
@@ -355,6 +365,21 @@ public abstract class AbstractResourceIT {
     protected void createDatastream(final String pid, final String dsid, final String content) throws IOException {
         logger.trace("Attempting to create datastream for object: {} at datastream ID: {}", pid, dsid);
         assertEquals(CREATED.getStatusCode(), getStatus(putDSMethod(pid, dsid, content)));
+    }
+
+    protected Thread createSNSDatastreamThread(final String pid, final String dsid, final File content)
+            throws IOException {
+        return (new Thread() {
+            public void run() {
+
+            try {
+                logger.info("Attempting to create datastream for object: {} at datastream ID: {}", pid, dsid);
+                getStatus(putDSFileMethod(pid, dsid, content));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        });
     }
 
     protected CloseableHttpResponse setProperty(final String pid, final String propertyUri, final String value)

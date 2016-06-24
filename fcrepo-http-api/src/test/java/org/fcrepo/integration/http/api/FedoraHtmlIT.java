@@ -20,10 +20,14 @@ import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URLEncoder;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
 
@@ -66,6 +70,57 @@ public class FedoraHtmlIT extends AbstractResourceIT {
 
         method.addHeader("Accept", "text/plain");
         assertEquals(200, getStatus(method));
+    }
+
+    @Test
+    public void testConcurrentGetDatastreamNode() throws IOException, InterruptedException {
+        final String pid = getRandomUniqueId();
+        createObject(pid);
+
+        final File content = File.createTempFile("content", ".txt");
+        content.deleteOnExit();
+
+        FileWriter fw = null;
+        try {
+            fw = new FileWriter(content);
+            for (int i = 0; i < 1000000; i++) {
+                fw.write("fooooooooooooooooooooooooooooooooooooooooooooooooooo");
+            }
+        } finally {
+            if (fw != null) {
+                fw.close();
+            }
+        }
+
+        final String ds = "ds2";
+        final Thread t1 = createSNSDatastreamThread(pid, ds, content);
+        final Thread t2 = createSNSDatastreamThread(pid, ds, content);
+        t1.start();
+        Thread.sleep(100);
+        t2.start();
+        t1.join();
+        t2.join();
+
+        Thread.sleep(1000);
+        for (int i = 0; i < 2; i++) {
+            String dsName = ds;
+            if (i > 0) {
+                dsName = ds + URLEncoder.encode("[" + (i + 1) + "]", "UTF-8");
+            }
+
+            final HttpGet method = new HttpGet(serverAddress + pid + "/" + dsName);
+            method.addHeader("Accept", "text/plain");
+            final int status = getStatus(method);
+            if (i == 0) {
+                assertEquals(200, status);
+            } else {
+                assertEquals(404, status);
+            }
+        }
+
+        // Verify that the binary content can be replaced successfully.
+        final HttpPut putMethod = putDSFileMethod(pid, ds, content);
+        assertEquals(204, getStatus(putMethod));
     }
 
     @Test
