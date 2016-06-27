@@ -206,6 +206,8 @@ public class FedoraLdpTest {
 
         when(mockContainer.getEtagValue()).thenReturn("");
         when(mockContainer.getPath()).thenReturn(path);
+        when(mockContainer.getDescription()).thenReturn(mockContainer);
+        when(mockContainer.getDescribedResource()).thenReturn(mockContainer);
 
         when(mockNonRdfSourceDescription.getEtagValue()).thenReturn("");
         when(mockNonRdfSourceDescription.getPath()).thenReturn(binaryDescriptionPath);
@@ -229,6 +231,8 @@ public class FedoraLdpTest {
         doReturn(mockResource).when(testObj).resource();
         when(mockResource.getPath()).thenReturn(path);
         when(mockResource.getEtagValue()).thenReturn("");
+        when(mockResource.getDescription()).thenReturn(mockResource);
+        when(mockResource.getDescribedResource()).thenReturn(mockResource);
         when(mockResource.getTriples(eq(idTranslator), anySetOf(TripleCategory.class))).thenAnswer(answer);
         when(mockResource.getTriples(eq(idTranslator), any(TripleCategory.class))).thenAnswer(answer);
 

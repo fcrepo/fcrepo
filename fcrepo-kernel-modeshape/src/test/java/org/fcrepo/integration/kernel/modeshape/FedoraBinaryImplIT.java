@@ -51,7 +51,6 @@ import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.ContainerService;
 import org.fcrepo.kernel.api.utils.ContentDigest;
@@ -387,7 +386,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
             session.save();
             final long origMod = orig.getLastModifiedDate().getTime();
 
-            final NonRdfSourceDescription description = orig.getDescription();
+            final FedoraResource description = orig.getDescription();
             final long origDescriptionMod = description.getLastModifiedDate().getTime();
 
             description.updateProperties(idTranslator, "INSERT { <> <info:fcrepo/foo> \"b\" } WHERE {}",

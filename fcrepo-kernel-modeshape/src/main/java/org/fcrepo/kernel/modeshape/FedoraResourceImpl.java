@@ -99,8 +99,6 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.graph.Triple;
 
 import org.fcrepo.kernel.api.FedoraTypes;
-import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
-import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.ConstraintViolationException;
@@ -276,6 +274,22 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         }
     }
 
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraResource#getDescription()
+     */
+    @Override
+    public FedoraResource getDescription() {
+        return this;
+    }
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraResource#getDescribedResource()
+     */
+    @Override
+    public FedoraResource getDescribedResource() {
+        return this;
+    }
+
     /**
      * Get the "good" children for a node by skipping all pairtree nodes in the way.
      * @param input
@@ -309,18 +323,12 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
         @Override
         protected FedoraResource doForward(final FedoraResource fedoraResource) {
-            if (fedoraResource instanceof NonRdfSourceDescription) {
-                return ((NonRdfSourceDescription) fedoraResource).getDescribedResource();
-            }
-            return fedoraResource;
+            return fedoraResource.getDescribedResource();
         }
 
         @Override
         protected FedoraResource doBackward(final FedoraResource fedoraResource) {
-            if (fedoraResource instanceof FedoraBinary) {
-                return ((FedoraBinary) fedoraResource).getDescription();
-            }
-            return fedoraResource;
+            return fedoraResource.getDescription();
         }
     };
 

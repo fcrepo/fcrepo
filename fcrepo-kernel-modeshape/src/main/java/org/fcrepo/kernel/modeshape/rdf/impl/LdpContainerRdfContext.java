@@ -18,7 +18,6 @@ package org.fcrepo.kernel.modeshape.rdf.impl;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
 
-import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.modeshape.rdf.converters.ValueConverter;
@@ -122,8 +121,7 @@ public class LdpContainerRdfContext extends NodeRdfContext {
 
         return container.getChildren().flatMap(
             UncheckedFunction.<FedoraResource, Stream<Triple>>uncheck(child -> {
-                final com.hp.hpl.jena.graph.Node childSubject = child instanceof NonRdfSourceDescription
-                        ? uriFor(((NonRdfSourceDescription) child).getDescribedResource()) : uriFor(child);
+                final com.hp.hpl.jena.graph.Node childSubject = uriFor(child.getDescribedResource());
 
                 if (insertedContainerProperty.equals(MEMBER_SUBJECT.getURI())) {
                     return of(create(subject(), memberRelation, childSubject));

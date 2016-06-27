@@ -29,8 +29,6 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.http.api.FedoraVersioning;
 import org.fcrepo.http.api.repository.FedoraRepositoryTransactions;
 import org.fcrepo.http.commons.api.rdf.UriAwareResourceModelFactory;
-import org.fcrepo.kernel.api.models.NonRdfSource;
-import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
@@ -63,16 +61,9 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
             addNodeStatements(resource, uriInfo, model, s);
         }
 
-        if (resource instanceof NonRdfSourceDescription) {
-            final NonRdfSource describedResource = ((NonRdfSourceDescription) resource).getDescribedResource();
-
-            if (describedResource instanceof FedoraBinary) {
-                addContentStatements(idTranslator, (FedoraBinary)describedResource, model);
-            }
-        } else if (resource instanceof FedoraBinary) {
-            addContentStatements(idTranslator, (FedoraBinary)resource, model);
+        if (resource.getDescribedResource() instanceof FedoraBinary) {
+            addContentStatements(idTranslator, (FedoraBinary)resource.getDescribedResource(), model);
         }
-
         return model;
     }
 

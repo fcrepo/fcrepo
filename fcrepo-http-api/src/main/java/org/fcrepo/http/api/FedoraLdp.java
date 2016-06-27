@@ -433,12 +433,7 @@ public class FedoraLdp extends ContentExposingResource {
             }
             session.save();
 
-            if (resource() instanceof FedoraBinary) {
-                final NonRdfSourceDescription description = ((FedoraBinary)resource()).getDescription();
-                addCacheControlHeaders(servletResponse, description, session);
-            } else {
-                addCacheControlHeaders(servletResponse, resource(), session);
-            }
+            addCacheControlHeaders(servletResponse, resource().getDescription(), session);
 
             return noContent().build();
         } catch (final IllegalArgumentException iae) {

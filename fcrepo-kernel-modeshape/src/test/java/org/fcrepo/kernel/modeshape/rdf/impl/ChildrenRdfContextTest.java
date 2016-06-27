@@ -103,6 +103,9 @@ public class ChildrenRdfContextTest {
         when(mockRes1.getPath()).thenReturn(RDF_PATH + "/res1");
         when(mockRes2.getPath()).thenReturn(RDF_PATH + "/res2");
         when(mockRes3.getPath()).thenReturn(RDF_PATH + "/res3");
+        when(mockRes1.getDescribedResource()).thenReturn(mockRes1);
+        when(mockRes2.getDescribedResource()).thenReturn(mockRes2);
+        when(mockRes3.getDescribedResource()).thenReturn(mockRes3);
         when(mockResourceNode.hasNodes()).thenReturn(true);
         final Stream<FedoraResource> first = of(mockRes1, mockRes2, mockRes3);
         final Stream<FedoraResource> second = of(mockRes1, mockRes2, mockRes3);

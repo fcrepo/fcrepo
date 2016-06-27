@@ -369,8 +369,7 @@ public class FedoraResourceImplIT extends AbstractIT {
                 null
         );
 
-        final NonRdfSourceDescription object =
-                binaryService.findOrCreate(session, "/testDatastreamGraph").getDescription();
+        final FedoraResource object = binaryService.findOrCreate(session, "/testDatastreamGraph").getDescription();
 
         getJcrNode(object).setProperty("fedora:isPartOf",
                 session.getNode("/testDatastreamGraphParent"));

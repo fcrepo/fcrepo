@@ -19,10 +19,4 @@ package org.fcrepo.kernel.api.models;
  * @author bbpennel
  * @since Feb 18, 2014
  */
-public interface NonRdfSourceDescription extends FedoraResource {
-
-    /**
-     * @return The binary stored in this datastream
-     */
-    NonRdfSource getDescribedResource();
-}
+public interface NonRdfSourceDescription extends FedoraResource { }

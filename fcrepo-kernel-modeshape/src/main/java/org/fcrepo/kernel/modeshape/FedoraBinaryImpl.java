@@ -94,7 +94,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     }
 
     @Override
-    public NonRdfSourceDescription getDescription() {
+    public FedoraResource getDescription() {
         try {
             return new NonRdfSourceDescriptionImpl(getNode().getParent());
         } catch (final RepositoryException e) {
@@ -193,7 +193,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
 
             decorateContentNode(contentNode);
             touch();
-            ((NonRdfSourceDescriptionImpl)getDescription()).touch();
+            ((FedoraResourceImpl) getDescription()).touch();
 
             LOGGER.debug("Created data property at path: {}", dataProperty.getPath());
 
@@ -302,7 +302,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
      */
     @Override
     public void delete() {
-        final NonRdfSourceDescription description = getDescription();
+        final FedoraResource description = getDescription();
 
         super.delete();
 

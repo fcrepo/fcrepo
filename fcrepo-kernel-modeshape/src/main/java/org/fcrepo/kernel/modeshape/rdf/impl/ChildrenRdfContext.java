@@ -17,7 +17,6 @@ package org.fcrepo.kernel.modeshape.rdf.impl;
 
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
-import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.slf4j.Logger;
@@ -60,8 +59,7 @@ public class ChildrenRdfContext extends NodeRdfContext {
             // Count the number of children
             concat(of(createNumChildrenTriple(resource().getChildren().count())));
             concat(resource().getChildren().peek(child -> LOGGER.trace("Creating triple for child node: {}", child))
-                    .map(child -> create(subject(), CONTAINS.asNode(), child instanceof NonRdfSourceDescription ?
-                            uriFor(((NonRdfSourceDescription) child).getDescribedResource()) : uriFor(child))));
+                    .map(child -> create(subject(), CONTAINS.asNode(), uriFor(child.getDescribedResource()))));
         } else {
             concat(of(createNumChildrenTriple(0)));
         }

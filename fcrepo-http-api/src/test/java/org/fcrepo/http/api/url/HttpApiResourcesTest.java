@@ -114,6 +114,7 @@ public class HttpApiResourcesTest {
     @Test
     public void shouldDecorateDatastreamsWithLinksToFixityChecks() {
         when(mockBinary.getPath()).thenReturn("/some/path/to/datastream");
+        when(mockBinary.getDescribedResource()).thenReturn(mockBinary);
         final Resource graphSubject = mockSubjects.reverse().convert(mockBinary);
 
         final Model model =
