@@ -208,10 +208,14 @@ public final class ServletContainerAuthenticationProvider implements
 
         // TODO add exception handling for principal providers
         for (final PrincipalProvider p : this.getPrincipalProviders()) {
-            final Set<Principal> ps = p.getPrincipals(credentials);
+            // if the provider is DelegateHeader, it is either already processed (if logged user has fedora admin role)
+            // or should be ignored completely (the user was not in admin role, so on-behalf-of header must be ignored)
+            if (!(p instanceof DelegateHeaderPrincipalProvider)) {
+                final Set<Principal> ps = p.getPrincipals(credentials);
 
-            if (ps != null) {
-                principals.addAll(p.getPrincipals(credentials));
+                if (ps != null) {
+                    principals.addAll(p.getPrincipals(credentials));
+                }
             }
         }
 

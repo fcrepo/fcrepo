@@ -20,6 +20,7 @@ import static org.fcrepo.auth.common.ServletContainerAuthenticationProvider.FEDO
 import static org.fcrepo.auth.common.ServletContainerAuthenticationProvider.FEDORA_USER_ROLE;
 import static org.fcrepo.auth.common.ServletContainerAuthenticationProvider.getInstance;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -176,6 +177,10 @@ public class ServletContainerAuthenticationProviderTest {
         when(delegateProvider.getDelegate(creds)).thenReturn(delegatePrincipal);
         when(delegatePrincipal.getName()).thenReturn("delegatedUserName");
 
+        // delegateProvider being HeaderProvider returns the header content in getPrincipals regardless of logged user
+        when(delegateProvider.getPrincipals(creds)).thenReturn(
+                new HashSet<>(Collections.singletonList(delegatePrincipal)));
+
         final ExecutionContext result =
                 provider.authenticate(creds, "repo", "workspace", context,
                         sessionAttributes);
@@ -183,6 +188,19 @@ public class ServletContainerAuthenticationProviderTest {
         assertEquals(
                 "Resulting security context must exist and belong to userName (delegated user is ignored)",
                 "userName", result.getSecurityContext().getUserName());
+
+        // check that the delegated header has not leaked into sessionAttributes.FEDORA_ALL_PRINCIPALS
+        assertTrue("There must be a set of principals in sessionAttributes",
+                sessionAttributes.containsKey(FedoraAuthorizationDelegate.FEDORA_ALL_PRINCIPALS));
+
+        @SuppressWarnings("unchecked")
+        final Set<Principal> principals =
+                (Set<Principal>) sessionAttributes.get(FedoraAuthorizationDelegate.FEDORA_ALL_PRINCIPALS);
+
+        assertFalse(
+                "The sessionAttributes must not contain delegatedUserName " +
+                        "(delegated user must not leak to FEDORA_ALL_PRINCIPALS)",
+                principals.stream().anyMatch(x->"delegatedUserName".equals(x.getName())));
     }
 
     @Test
