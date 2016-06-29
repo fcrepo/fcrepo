@@ -33,15 +33,14 @@ import org.slf4j.Logger;
  */
 @Provider
 public class ItemNotFoundExceptionMapper implements
-        ExceptionMapper<ItemNotFoundException> {
+        ExceptionMapper<ItemNotFoundException>, ExceptionDebugLogging {
 
     private static final Logger LOGGER =
         getLogger(ItemNotFoundExceptionMapper.class);
 
     @Override
     public Response toResponse(final ItemNotFoundException e) {
-        LOGGER.debug(
-                "ItemNotFoundException intercepted by ItemNotFoundExceptionMapper: \n", e);
+        debugException(this, e, LOGGER);
         return status(NOT_FOUND).build();
     }
 }

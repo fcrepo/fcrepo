@@ -39,7 +39,7 @@ import com.hp.hpl.jena.query.QueryParseException;
  */
 @Provider
 public class QueryParseExceptionMapper implements
-ExceptionMapper<QueryParseException> {
+        ExceptionMapper<QueryParseException>, ExceptionDebugLogging {
 
     private static final Logger LOGGER = getLogger(QueryParseExceptionMapper.class);
 
@@ -47,6 +47,7 @@ ExceptionMapper<QueryParseException> {
     public Response toResponse(final QueryParseException e) {
 
         LOGGER.error("Captured a query parse exception {}", e.getMessage());
+        debugException(this, e, LOGGER);
         if (e.getMessage().matches(".* Unresolved prefixed name: .*")) {
             final Pattern namespacePattern =
                 Pattern.compile("Unresolved prefixed name: (\\w+:\\w+)");

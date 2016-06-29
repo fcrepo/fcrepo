@@ -20,7 +20,10 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
+import org.slf4j.Logger;
+
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static org.slf4j.LoggerFactory.getLogger;
 import static javax.ws.rs.core.Response.status;
 
 /**
@@ -28,9 +31,15 @@ import static javax.ws.rs.core.Response.status;
  * @since 10/9/14
  */
 @Provider
-public class VersionExceptionMapper implements ExceptionMapper<VersionException> {
+public class VersionExceptionMapper implements
+        ExceptionMapper<VersionException>, ExceptionDebugLogging {
+
+    private static final Logger LOGGER =
+            getLogger(VersionExceptionMapper.class);
+
     @Override
-    public Response toResponse(final VersionException exception) {
-        return status(BAD_REQUEST).entity(exception.getMessage()).build();
+    public Response toResponse(final VersionException e) {
+        debugException(this, e, LOGGER);
+        return status(BAD_REQUEST).entity(e.getMessage()).build();
     }
 }

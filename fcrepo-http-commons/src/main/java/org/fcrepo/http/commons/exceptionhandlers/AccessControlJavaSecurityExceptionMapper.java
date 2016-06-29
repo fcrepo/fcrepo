@@ -36,16 +36,14 @@ import org.slf4j.Logger;
  */
 @Provider
 public class AccessControlJavaSecurityExceptionMapper implements
-        ExceptionMapper<AccessControlException> {
+        ExceptionMapper<AccessControlException>, ExceptionDebugLogging {
 
     private static final Logger LOGGER =
         getLogger(AccessControlJavaSecurityExceptionMapper.class);
 
     @Override
     public Response toResponse(final AccessControlException e) {
-        LOGGER.debug("AccessControlJavaSecurityExceptionMapper intercepted exception: \n",
-                        e);
-
+        debugException(this, e, LOGGER);
         return status(FORBIDDEN).build();
     }
 

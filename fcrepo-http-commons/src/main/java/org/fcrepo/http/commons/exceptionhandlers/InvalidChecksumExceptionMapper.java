@@ -36,7 +36,7 @@ import org.slf4j.Logger;
  */
 @Provider
 public class InvalidChecksumExceptionMapper implements
-        ExceptionMapper<InvalidChecksumException> {
+        ExceptionMapper<InvalidChecksumException>, ExceptionDebugLogging {
 
     private static final Logger LOGGER =
         getLogger(InvalidChecksumExceptionMapper.class);
@@ -46,6 +46,7 @@ public class InvalidChecksumExceptionMapper implements
 
         LOGGER.error("InvalidChecksumException intercepted by InvalidChecksumExceptionMapper: {}\n",
                 e.getMessage());
+        debugException(this, e, LOGGER);
 
         return status(CONFLICT).entity(e.getMessage()).build();
     }

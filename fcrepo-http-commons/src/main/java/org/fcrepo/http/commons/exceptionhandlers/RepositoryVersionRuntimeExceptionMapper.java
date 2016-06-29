@@ -17,11 +17,14 @@ package org.fcrepo.http.commons.exceptionhandlers;
 
 import org.fcrepo.kernel.api.exception.RepositoryVersionRuntimeException;
 
+import org.slf4j.Logger;
+
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static org.slf4j.LoggerFactory.getLogger;
 import static javax.ws.rs.core.Response.status;
 
 /**
@@ -29,9 +32,15 @@ import static javax.ws.rs.core.Response.status;
  * @since 9/15/14
  */
 @Provider
-public class RepositoryVersionRuntimeExceptionMapper implements ExceptionMapper<RepositoryVersionRuntimeException> {
+public class RepositoryVersionRuntimeExceptionMapper implements
+        ExceptionMapper<RepositoryVersionRuntimeException>, ExceptionDebugLogging {
+
+    private static final Logger LOGGER =
+            getLogger(RepositoryVersionRuntimeExceptionMapper.class);
+
     @Override
     public Response toResponse(final RepositoryVersionRuntimeException e) {
+        debugException(this, e, LOGGER);
         return status(NOT_FOUND).entity("This resource is not versioned").build();
     }
 }

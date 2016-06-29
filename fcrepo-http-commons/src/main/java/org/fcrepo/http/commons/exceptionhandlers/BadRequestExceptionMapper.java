@@ -33,13 +33,15 @@ import static org.slf4j.LoggerFactory.getLogger;
  * @since November 18, 2014
  */
 @Provider
-public class BadRequestExceptionMapper implements ExceptionMapper<BadRequestException> {
+public class BadRequestExceptionMapper implements
+        ExceptionMapper<BadRequestException>, ExceptionDebugLogging {
 
     private static final Logger LOGGER = getLogger(BadRequestExceptionMapper.class);
 
     @Override
     public Response toResponse(final BadRequestException e) {
         LOGGER.error("BadRequestExceptionMapper caught an exception: {}", e.getMessage());
+        debugException(this, e, LOGGER);
         return status(BAD_REQUEST).entity(e.getMessage()).build();
     }
 

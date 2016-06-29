@@ -32,7 +32,8 @@ import static org.slf4j.LoggerFactory.getLogger;
  * @since 2015-01-20
  */
 @Provider
-public class ParamExceptionMapper implements ExceptionMapper<ParamException> {
+public class ParamExceptionMapper implements
+        ExceptionMapper<ParamException>, ExceptionDebugLogging {
 
     private static final Logger LOGGER = getLogger(ParamExceptionMapper.class);
 
@@ -40,6 +41,7 @@ public class ParamExceptionMapper implements ExceptionMapper<ParamException> {
     public Response toResponse(final ParamException e) {
 
         LOGGER.error("ParamException intercepted by ParamExceptionMapper: {}\n", e.getMessage());
+        debugException(this, e, LOGGER);
 
         final StringBuilder msg = new StringBuilder("Error parsing parameter: ");
         msg.append(e.getParameterName());

@@ -34,13 +34,15 @@ import static org.slf4j.LoggerFactory.getLogger;
  * @since July 14, 2015.
  */
 @Provider
-public class InvalidResourceIdentifierExceptionMapper implements ExceptionMapper<InvalidResourceIdentifierException> {
+public class InvalidResourceIdentifierExceptionMapper implements
+        ExceptionMapper<InvalidResourceIdentifierException>, ExceptionDebugLogging {
 
     private static final Logger LOGGER = getLogger(InvalidResourceIdentifierExceptionMapper.class);
 
     @Override
     public Response toResponse(final InvalidResourceIdentifierException e) {
         LOGGER.error("InvalidResourceIdentifierExceptionMapper caught an exception: {}", e.getMessage());
+        debugException(this, e, LOGGER);
         return status(BAD_REQUEST).entity(e.getMessage()).build();
     }
 }

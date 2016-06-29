@@ -17,9 +17,13 @@ package org.fcrepo.http.commons.exceptionhandlers;
 
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
+
+import org.slf4j.Logger;
 
 import com.fasterxml.jackson.core.JsonParseException;
 
@@ -30,10 +34,14 @@ import com.fasterxml.jackson.core.JsonParseException;
  * @since 2014-05-21
  */
 @Provider
-public class JsonParseExceptionMapper implements ExceptionMapper<JsonParseException> {
+public class JsonParseExceptionMapper implements
+        ExceptionMapper<JsonParseException>, ExceptionDebugLogging {
+
+    private static final Logger LOGGER = getLogger(JsonParseExceptionMapper.class);
 
     @Override
-    public Response toResponse(final JsonParseException ex) {
-        return status(BAD_REQUEST).entity(ex.getMessage()).build();
+    public Response toResponse(final JsonParseException e) {
+        debugException(this, e, LOGGER);
+        return status(BAD_REQUEST).entity(e.getMessage()).build();
     }
 }

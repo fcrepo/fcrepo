@@ -34,7 +34,8 @@ import static org.slf4j.LoggerFactory.getLogger;
  * @since 11/21/14
  */
 @Provider
-public class LabelExistsVersionExceptionMapper implements ExceptionMapper<LabelExistsVersionException> {
+public class LabelExistsVersionExceptionMapper implements
+        ExceptionMapper<LabelExistsVersionException>, ExceptionDebugLogging {
 
     private static final Logger LOGGER =
         getLogger(LabelExistsVersionExceptionMapper.class);
@@ -43,7 +44,7 @@ public class LabelExistsVersionExceptionMapper implements ExceptionMapper<LabelE
     public Response toResponse(final LabelExistsVersionException e) {
         LOGGER.error("LabelExistsVersionException intercepted by LabelExistsVersionExceptionMapper: {}\n",
                     e.getMessage());
-
+        debugException(this, e, LOGGER);
         return status(CONFLICT).entity(e.getMessage()).build();
     }
 }
