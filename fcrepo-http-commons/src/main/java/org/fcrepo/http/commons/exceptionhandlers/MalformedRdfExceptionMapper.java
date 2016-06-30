@@ -18,6 +18,7 @@ package org.fcrepo.http.commons.exceptionhandlers;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response;
@@ -27,16 +28,22 @@ import javax.ws.rs.ext.Provider;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 
 import org.apache.commons.codec.binary.Base64;
+import org.slf4j.Logger;
 
 /**
  * @author cabeer
  * @since 9/30/14
  */
 @Provider
-public class MalformedRdfExceptionMapper implements ExceptionMapper<MalformedRdfException> {
+public class MalformedRdfExceptionMapper implements
+        ExceptionMapper<MalformedRdfException>, ExceptionDebugLogging {
+
+    private static final Logger LOGGER =
+            getLogger(MalformedRdfExceptionMapper.class);
 
     @Override
     public Response toResponse(final MalformedRdfException e) {
+        debugException(this, e, LOGGER);
         final Link link = Link.fromUri(getConstraintUri(e)).rel(CONSTRAINED_BY.getURI()).build();
         final String msg = e.getMessage();
         if (msg.matches(".*org.*Exception: .*")) {

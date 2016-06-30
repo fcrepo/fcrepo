@@ -17,11 +17,14 @@ package org.fcrepo.http.commons.exceptionhandlers;
 
 import org.fcrepo.kernel.api.exception.TombstoneException;
 
+import org.slf4j.Logger;
+
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
 import static javax.ws.rs.core.Response.Status.GONE;
+import static org.slf4j.LoggerFactory.getLogger;
 import static javax.ws.rs.core.Response.status;
 
 /**
@@ -29,9 +32,15 @@ import static javax.ws.rs.core.Response.status;
  * @since 10/16/14
  */
 @Provider
-public class TombstoneExceptionMapper implements ExceptionMapper<TombstoneException> {
+public class TombstoneExceptionMapper implements
+        ExceptionMapper<TombstoneException>, ExceptionDebugLogging {
+
+    private static final Logger LOGGER =
+            getLogger(TombstoneExceptionMapper.class);
+
     @Override
     public Response toResponse(final TombstoneException e) {
+        debugException(this, e, LOGGER);
         final Response.ResponseBuilder response = status(GONE)
                 .entity(e.getMessage());
 

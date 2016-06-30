@@ -34,13 +34,15 @@ import org.slf4j.Logger;
  * @since November 2, 2015
  */
 @Provider
-public class InvalidPrefixExceptionMapper implements ExceptionMapper<InvalidPrefixException> {
+public class InvalidPrefixExceptionMapper implements
+        ExceptionMapper<InvalidPrefixException>, ExceptionDebugLogging {
 
     private static final Logger LOGGER = getLogger(InvalidPrefixExceptionMapper.class);
 
     @Override
     public Response toResponse(final InvalidPrefixException e) {
         LOGGER.error("FedoraInvalidPrefixExceptionMapper caught an exception: {}", e.getMessage());
+        debugException(this, e, LOGGER);
         return status(BAD_REQUEST).entity(e.getMessage()).build();
     }
 

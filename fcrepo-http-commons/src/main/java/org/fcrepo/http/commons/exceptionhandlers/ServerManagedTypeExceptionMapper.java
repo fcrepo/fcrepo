@@ -17,6 +17,7 @@ package org.fcrepo.http.commons.exceptionhandlers;
 
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Link;
@@ -26,18 +27,25 @@ import javax.ws.rs.ext.Provider;
 
 import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
 
+import org.slf4j.Logger;
+
 /**
  * @author whikloj
  * @since 2015-06-02
  */
 @Provider
-public class ServerManagedTypeExceptionMapper extends ConstraintExceptionMapper<ServerManagedTypeException> {
+public class ServerManagedTypeExceptionMapper extends ConstraintExceptionMapper<ServerManagedTypeException>
+    implements ExceptionDebugLogging {
+
+    private static final Logger LOGGER =
+            getLogger(ServerManagedTypeExceptionMapper.class);
 
     @Context
     private UriInfo uriInfo;
 
     @Override
     public Response toResponse(final ServerManagedTypeException e) {
+        debugException(this, e, LOGGER);
         final Link link = buildConstraintLink(e, uriInfo);
         final String msg = e.getMessage();
         return status(CONFLICT).entity(msg).links(link).build();

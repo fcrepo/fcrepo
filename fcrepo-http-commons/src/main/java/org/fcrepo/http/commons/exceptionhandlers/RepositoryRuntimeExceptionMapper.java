@@ -36,7 +36,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 @Provider
 public class RepositoryRuntimeExceptionMapper implements
-        ExceptionMapper<RepositoryRuntimeException> {
+        ExceptionMapper<RepositoryRuntimeException>, ExceptionDebugLogging {
 
     private final Providers providers;
 
@@ -60,6 +60,7 @@ public class RepositoryRuntimeExceptionMapper implements
             return exceptionMapper.toResponse(cause);
         }
         LOGGER.error("Caught a repository exception: {}", e.getMessage());
+        debugException(this, cause, LOGGER);
         return serverError().entity(getStackTraceAsString(e)).build();
     }
 }

@@ -34,13 +34,15 @@ import org.slf4j.Logger;
  * @since September 12, 2014
  */
 @Provider
-public class FedoraInvalidNamespaceExceptionMapper implements ExceptionMapper<FedoraInvalidNamespaceException> {
+public class FedoraInvalidNamespaceExceptionMapper implements
+        ExceptionMapper<FedoraInvalidNamespaceException>, ExceptionDebugLogging {
 
     private static final Logger LOGGER = getLogger(FedoraInvalidNamespaceExceptionMapper.class);
 
     @Override
     public Response toResponse(final FedoraInvalidNamespaceException e) {
         LOGGER.error("NamespaceExceptionMapper caught an exception: {}", e.getMessage());
+        debugException(this, e, LOGGER);
         return status(BAD_REQUEST).entity(e.getMessage()).build();
     }
 

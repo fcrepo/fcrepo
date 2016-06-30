@@ -19,6 +19,10 @@ import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 
 import org.fcrepo.kernel.api.exception.IncorrectTripleSubjectException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response;
@@ -30,14 +34,18 @@ import javax.ws.rs.ext.Provider;
  * @since 2015-07-15
  */
 @Provider
-public class IncorrectTripleSubjectExceptionMapper extends ConstraintExceptionMapper<IncorrectTripleSubjectException> {
+public class IncorrectTripleSubjectExceptionMapper extends ConstraintExceptionMapper<IncorrectTripleSubjectException>
+    implements ExceptionDebugLogging {
+
+    private static final Logger LOGGER = LoggerFactory
+            .getLogger(IncorrectTripleSubjectExceptionMapper.class);
 
     @Context
     private UriInfo uriInfo;
 
     @Override
     public Response toResponse(final IncorrectTripleSubjectException e) {
-
+        debugException(this, e, LOGGER);
         final Link link = buildConstraintLink(e, uriInfo);
         final String msg = e.getMessage();
         return status(FORBIDDEN).entity(msg).links(link).build();

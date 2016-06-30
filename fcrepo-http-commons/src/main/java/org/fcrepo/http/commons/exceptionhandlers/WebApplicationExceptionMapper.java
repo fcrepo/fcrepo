@@ -32,7 +32,7 @@ import org.slf4j.Logger;
  */
 @Provider
 public class WebApplicationExceptionMapper implements
-        ExceptionMapper<WebApplicationException> {
+        ExceptionMapper<WebApplicationException>, ExceptionDebugLogging {
 
     private static final Logger LOGGER =
         getLogger(WebApplicationExceptionMapper.class);
@@ -41,7 +41,7 @@ public class WebApplicationExceptionMapper implements
     public Response toResponse(final WebApplicationException e) {
         LOGGER.error(
                 "WebApplicationException intercepted by WebApplicationExceptionMapper: {}\n", e.getMessage());
-
+        debugException(this, e, LOGGER);
         final String msg = null == e.getCause() ? e.getMessage() : e.getCause().getMessage();
         return fromResponse(e.getResponse()).entity(msg).build();
     }

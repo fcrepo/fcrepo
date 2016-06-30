@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
  */
 @Provider
 public class AccessDeniedExceptionMapper implements
-        ExceptionMapper<AccessDeniedException> {
+        ExceptionMapper<AccessDeniedException>, ExceptionDebugLogging {
 
     private static final Logger LOGGER = LoggerFactory
             .getLogger(AccessDeniedExceptionMapper.class);
@@ -42,8 +42,7 @@ public class AccessDeniedExceptionMapper implements
      */
     @Override
     public Response toResponse(final AccessDeniedException e) {
-        LOGGER.debug("{} intercepted exception:{} \n", this.getClass()
-                .getSimpleName(), e);
+        debugException(this, e, LOGGER);
         return status(FORBIDDEN).build();
     }
 }

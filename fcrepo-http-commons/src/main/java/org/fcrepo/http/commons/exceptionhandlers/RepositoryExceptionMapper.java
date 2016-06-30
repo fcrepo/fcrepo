@@ -36,7 +36,7 @@ import org.slf4j.Logger;
  */
 @Provider
 public class RepositoryExceptionMapper implements
-        ExceptionMapper<RepositoryException> {
+        ExceptionMapper<RepositoryException>, ExceptionDebugLogging {
 
     private static final Logger LOGGER = getLogger(RepositoryExceptionMapper.class);
 
@@ -44,6 +44,7 @@ public class RepositoryExceptionMapper implements
     public Response toResponse(final RepositoryException e) {
 
         LOGGER.error("Caught a repository exception: {}", e.getMessage() );
+        debugException(this, e, LOGGER);
         if ( e.getMessage().matches("Error converting \".+\" from String to a Name")) {
             return status(BAD_REQUEST).entity(e.getMessage()).build();
         } else if ( e instanceof ValueFormatException ) {

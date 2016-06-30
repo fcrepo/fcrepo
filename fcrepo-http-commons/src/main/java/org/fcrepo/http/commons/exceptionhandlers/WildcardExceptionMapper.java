@@ -36,7 +36,8 @@ import org.slf4j.Logger;
  * @author fasseg
  */
 @Provider
-public class WildcardExceptionMapper implements ExceptionMapper<Exception> {
+public class WildcardExceptionMapper implements
+        ExceptionMapper<Exception>, ExceptionDebugLogging {
 
     Boolean showStackTrace = true;
 
@@ -45,7 +46,6 @@ public class WildcardExceptionMapper implements ExceptionMapper<Exception> {
 
     @Override
     public Response toResponse(final Exception e) {
-
         if (e.getCause() instanceof SessionMissingException) {
             return new SessionMissingExceptionMapper()
                     .toResponse((SessionMissingException) e.getCause());
@@ -57,6 +57,7 @@ public class WildcardExceptionMapper implements ExceptionMapper<Exception> {
         }
 
         LOGGER.error("Exception intercepted by WildcardExceptionMapper: {}\n", e.getMessage());
+        debugException(this, e, LOGGER);
         return serverError().entity(
                 showStackTrace ? getStackTraceAsString(e) : null).build();
     }

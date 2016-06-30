@@ -34,14 +34,14 @@ import org.slf4j.Logger;
  */
 @Provider
 public class PathNotFoundExceptionMapper implements
-        ExceptionMapper<PathNotFoundException> {
+        ExceptionMapper<PathNotFoundException>, ExceptionDebugLogging {
 
     private static final Logger LOGGER =
         getLogger(PathNotFoundExceptionMapper.class);
 
     @Override
     public Response toResponse(final PathNotFoundException e) {
-        LOGGER.debug(e.getMessage());
+        debugException(this, e, LOGGER);
         return status(NOT_FOUND).build();
     }
 
