@@ -16,7 +16,7 @@
 package org.fcrepo.event.serialization;
 
 import static com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS;
-import static org.fcrepo.event.serialization.EventMessage.from;
+import static org.fcrepo.event.serialization.JsonLDEventMessage.from;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -54,7 +54,7 @@ public class JsonLDSerializer implements EventSerializer {
         try {
             return MAPPER.writeValueAsString(from(evt));
         } catch (final JsonProcessingException ex) {
-            LOGGER.warn("Error processing JSON: " + ex.getMessage());
+            LOGGER.error("Error processing JSON: {}", ex.getMessage());
             return null;
         }
     }

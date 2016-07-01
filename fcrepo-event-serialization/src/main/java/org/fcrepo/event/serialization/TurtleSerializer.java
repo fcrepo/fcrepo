@@ -30,9 +30,9 @@ import org.fcrepo.kernel.api.observer.FedoraEvent;
 public class TurtleSerializer implements EventSerializer {
 
     /**
-     * Serialize a FedoraEvent into a JSON String
+     * Serialize a FedoraEvent in RDF using Turtle syntax
      * @param evt the Fedora event
-     * @return a JSON string
+     * @return a string of RDF, using Turtle syntax
      */
     @Override
     public String serialize(final FedoraEvent evt) {

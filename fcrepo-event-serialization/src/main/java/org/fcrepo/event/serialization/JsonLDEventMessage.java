@@ -34,10 +34,10 @@ import org.slf4j.Logger;
  * A structure used for serializing a FedoraEvent into JSON
  * @author acoburn
  */
-class EventMessage {
+class JsonLDEventMessage {
 
     @JsonIgnore
-    private static final Logger LOGGER = getLogger(EventMessage.class);
+    private static final Logger LOGGER = getLogger(JsonLDEventMessage.class);
 
     static class ContextElement {
 
@@ -133,12 +133,12 @@ class EventMessage {
     public Context context = new Context();
 
     /**
-     * Populate an EventMessage from a FedoraEvent
+     * Populate a JsonLDEventMessage from a FedoraEvent
      * @param evt The Fedora event
-     * @return an EventMessage
+     * @return a JsonLDEventMessage
      */
-    public static EventMessage from(final FedoraEvent evt) {
-        final EventMessage msg = new EventMessage();
+    public static JsonLDEventMessage from(final FedoraEvent evt) {
+        final JsonLDEventMessage msg = new JsonLDEventMessage();
 
         final String baseUrl = evt.getInfo().get(BASE_URL);
         final String userAgent = evt.getInfo().get(USER_AGENT);
