@@ -21,11 +21,8 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
 import static org.fcrepo.kernel.modeshape.observer.FedoraEventImpl.getResourceTypes;
-import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.observation.Event;
-
-import org.slf4j.Logger;
 
 import java.util.Set;
 
@@ -44,8 +41,6 @@ import java.util.Set;
  * @since Oct 3, 2013
  */
 public class DefaultFilter implements EventFilter {
-
-    private static final Logger LOGGER = getLogger(DefaultFilter.class);
 
     private static final Set<String> fedoraMixins =
             of(FEDORA_BINARY, FEDORA_CONTAINER, FEDORA_RESOURCE, ROOT);
