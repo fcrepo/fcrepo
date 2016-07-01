@@ -75,8 +75,8 @@ public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
             if (!evts.isEmpty()) {
                 // build a FedoraEvent from the first JCR Event
                 final FedoraEvent fedoraEvent = from(evts.get(0));
-                evts.stream().forEach(evt -> {
-                    // add types to the FedoraEvent from the JCR Event
+                evts.stream().skip(1).forEach(evt -> {
+                    // add types to the FedoraEvent from the subsequent JCR Events
                     fedoraEvent.getTypes().add(FedoraEventImpl.valueOf(evt.getType()));
                     fedoraEvent.getResourceTypes().addAll(getResourceTypes(evt).collect(toSet()));
                 });
