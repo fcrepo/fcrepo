@@ -19,14 +19,10 @@ import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
 import static org.fcrepo.kernel.modeshape.observer.FedoraEventImpl.from;
 import static org.fcrepo.kernel.modeshape.observer.FedoraEventImpl.getResourceTypes;
 import static org.slf4j.LoggerFactory.getLogger;
-import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toSet;
 import static java.util.stream.Stream.empty;
 import static java.util.stream.Stream.of;
-import static javax.jcr.observation.Event.PROPERTY_ADDED;
-import static javax.jcr.observation.Event.PROPERTY_CHANGED;
-import static javax.jcr.observation.Event.PROPERTY_REMOVED;
 
 import java.util.List;
 import java.util.function.Function;
@@ -48,9 +44,6 @@ import org.slf4j.Logger;
  * @since Feb 27, 2014
  */
 public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
-
-    private static final List<Integer> PROPERTY_EVENT_TYPES = asList(PROPERTY_ADDED, PROPERTY_CHANGED,
-            PROPERTY_REMOVED);
 
     private final static Logger LOGGER = getLogger(AllNodeEventsOneEvent.class);
 
