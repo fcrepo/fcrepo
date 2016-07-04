@@ -16,7 +16,6 @@
 package org.fcrepo.kernel.api.services;
 
 import javax.jcr.Credentials;
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author acoburn
@@ -25,11 +24,11 @@ import javax.servlet.http.HttpServletRequest;
 public interface CredentialsService {
 
     /**
-     * Get the credentials for the given servlet request
+     * Get the credentials for the given request
      *
-     * @param request the servlet request
+     * @param request the request
      * @return the JCR credentials for the given request
      */
-    Credentials getCredentials(final HttpServletRequest request);
+    Credentials getCredentials(final Object request);
 
 }

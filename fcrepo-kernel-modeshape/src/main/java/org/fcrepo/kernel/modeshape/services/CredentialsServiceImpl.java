@@ -31,7 +31,10 @@ import org.springframework.stereotype.Component;
 public class CredentialsServiceImpl implements CredentialsService {
 
     @Override
-    public Credentials getCredentials(final HttpServletRequest request) {
-        return new ServletCredentials(request);
+    public Credentials getCredentials(final Object request) {
+        if (request instanceof HttpServletRequest) {
+            return new ServletCredentials((HttpServletRequest)request);
+        }
+        throw new IllegalArgumentException("Request object is of the wrong type");
     }
 }
