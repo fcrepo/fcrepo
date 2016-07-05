@@ -23,29 +23,35 @@ package org.fcrepo.kernel.api;
  */
 public interface FedoraTypes {
 
-    String FEDORA_RESOURCE = "fedora:Resource";
-
-    String FEDORA_NON_RDF_SOURCE_DESCRIPTION = "fedora:NonRdfSourceDescription";
-
     String FEDORA_BINARY = "fedora:Binary";
-
-    String FEDORA_PAIRTREE = "fedora:Pairtree";
-
-    String FEDORA_TOMBSTONE = "fedora:Tombstone";
-
-    String FEDORA_SKOLEM = "fedora:Skolem";
 
     String FEDORA_CONTAINER = "fedora:Container";
 
+    String FEDORA_NON_RDF_SOURCE_DESCRIPTION = "fedora:NonRdfSourceDescription";
+
+    String FEDORA_PAIRTREE = "fedora:Pairtree";
+
     String FEDORA_REPOSITORY_ROOT = "fedora:RepositoryRoot";
 
+    String FEDORA_RESOURCE = "fedora:Resource";
+
+    String FEDORA_SKOLEM = "fedora:Skolem";
+
+    String FEDORA_TOMBSTONE = "fedora:Tombstone";
+
     String LDP_BASIC_CONTAINER = "ldp:BasicContainer";
+
+    String LDP_CONTAINER = "ldp:Container";
 
     String LDP_DIRECT_CONTAINER = "ldp:DirectContainer";
 
     String LDP_INDIRECT_CONTAINER = "ldp:IndirectContainer";
 
     String LDP_INSERTED_CONTENT_RELATION = "ldp:insertedContentRelation";
+
+    String LDP_NON_RDF_SOURCE = "ldp:NonRDFSource";
+
+    String LDP_RDF_SOURCE = "ldp:RDFSource";
 
     String FEDORA_LASTMODIFIED = "fedora:lastModified";
 

@@ -9,7 +9,7 @@
   <context:annotation-config/>
 
   <!-- publishes events from the internal bus to JMS -->
-  <bean class="org.fcrepo.jms.observer.JMSTopicPublisher"/>
+  <bean class="org.fcrepo.jms.JMSTopicPublisher"/>
 
   <bean id="connectionFactory"
     class="org.apache.activemq.ActiveMQConnectionFactory" depends-on="jmsBroker"
@@ -19,6 +19,6 @@
     p:config="${fcrepo.activemq.configuration:classpath:/config/activemq.xml}" p:start="true"/>
 
   <!-- translates events into JMS header-only format-->
-  <bean class="org.fcrepo.jms.headers.DefaultMessageFactory"/>
+  <bean class="org.fcrepo.jms.DefaultMessageFactory"/>
 
 </beans>

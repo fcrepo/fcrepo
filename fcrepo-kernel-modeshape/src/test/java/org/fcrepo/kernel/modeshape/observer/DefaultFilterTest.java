@@ -36,6 +36,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.modeshape.jcr.api.Repository;
+import org.modeshape.jcr.api.observation.Event;
 
 /**
  * @author ajs6f
@@ -53,7 +54,7 @@ public class DefaultFilterTest {
     private Repository mockRepo;
 
     @Mock
-    private org.modeshape.jcr.api.observation.Event mockEvent;
+    private Event mockEvent;
 
     @Mock
     private Node mockNode;
@@ -62,27 +63,18 @@ public class DefaultFilterTest {
     private Property mockProperty;
 
     @Mock
-    private NodeType fedoraResource;
-    @Mock
-    private NodeType fedoraContainer;
-    @Mock
-    private NodeType fedoraDatastream;
-    @Mock
-    private NodeType fedoraBinary;
-    @Mock
-    private NodeType modeshapeRootType;
-    @Mock
-    private NodeType modeshapeFolderType;
+    private NodeType fedoraResource, fedoraContainer, fedoraDatastream, fedoraBinary, modeshapeRootType,
+            modeshapeFolderType;
 
     @Before
     public void setUp() {
         testObj = new DefaultFilter();
-        when(fedoraResource.toString()).thenReturn(FEDORA_RESOURCE);
-        when(fedoraContainer.toString()).thenReturn(FEDORA_CONTAINER);
-        when(fedoraDatastream.toString()).thenReturn(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
-        when(fedoraBinary.toString()).thenReturn(FEDORA_BINARY);
-        when(modeshapeRootType.toString()).thenReturn(ROOT);
-        when(modeshapeFolderType.toString()).thenReturn("nt:folder");
+        when(fedoraResource.getName()).thenReturn(FEDORA_RESOURCE);
+        when(fedoraContainer.getName()).thenReturn(FEDORA_CONTAINER);
+        when(fedoraDatastream.getName()).thenReturn(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
+        when(fedoraBinary.getName()).thenReturn(FEDORA_BINARY);
+        when(modeshapeRootType.getName()).thenReturn(ROOT);
+        when(modeshapeFolderType.getName()).thenReturn("nt:folder");
     }
 
     @Test
@@ -100,10 +92,10 @@ public class DefaultFilterTest {
     }
 
     @Test
-    public void shouldApplyToDatastream() throws RepositoryException {
+    public void shouldNotApplyToDatastream() throws RepositoryException {
         when(mockEvent.getPrimaryNodeType()).thenReturn(modeshapeFolderType);
         when(mockEvent.getMixinNodeTypes()).thenReturn(new NodeType[] { fedoraDatastream });
-        assertTrue(testObj.test(mockEvent));
+        assertFalse(testObj.test(mockEvent));
     }
 
     @Test

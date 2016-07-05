@@ -808,7 +808,7 @@ public class FedoraLdpTest {
     public void testSetUpJMSBaseURIs() throws RepositoryException {
         final ObservationManager mockManager = mock(ObservationManager.class);
         doReturn(mockManager).when(mockWorkspace).getObservationManager();
-        final String json = "{\"baseURL\":\"http://localhost/fcrepo\",\"userAgent\":\"Test UserAgent\"}";
+        final String json = "{\"baseUrl\":\"http://localhost/fcrepo\",\"userAgent\":\"Test UserAgent\"}";
         testObj.setUpJMSInfo(getUriInfoImpl(), mockHeaders);
         verify(mockManager).setUserData(eq(json));
     }
@@ -819,7 +819,7 @@ public class FedoraLdpTest {
 
         final ObservationManager mockManager = mock(ObservationManager.class);
         doReturn(mockManager).when(mockWorkspace).getObservationManager();
-        final String json = "{\"baseURL\":\"https://localhome:8443/fcrepo\",\"userAgent\":\"Test UserAgent\"}";
+        final String json = "{\"baseUrl\":\"https://localhome:8443/fcrepo\",\"userAgent\":\"Test UserAgent\"}";
 
         testObj.setUpJMSInfo(getUriInfoImpl(), mockHeaders);
         verify(mockManager).setUserData(eq(json));

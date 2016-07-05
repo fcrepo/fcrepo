@@ -36,6 +36,8 @@ import javax.jcr.observation.ObservationManager;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.UriInfo;
 
+import static org.fcrepo.kernel.api.observer.OptionalValues.BASE_URL;
+import static org.fcrepo.kernel.api.observer.OptionalValues.USER_AGENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -102,9 +104,9 @@ abstract public class FedoraBaseResource extends AbstractResource {
             final ObservationManager obs = session().getWorkspace().getObservationManager();
             final ObjectMapper mapper = new ObjectMapper();
             final ObjectNode json = mapper.createObjectNode();
-            json.put("baseURL", baseURL);
+            json.put(BASE_URL, baseURL);
             if (!StringUtils.isBlank(headers.getHeaderString("user-agent"))) {
-                json.put("userAgent", headers.getHeaderString("user-agent"));
+                json.put(USER_AGENT, headers.getHeaderString("user-agent"));
             }
             obs.setUserData(mapper.writeValueAsString(json));
         } catch (final Exception ex) {

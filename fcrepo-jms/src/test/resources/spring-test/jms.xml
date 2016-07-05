@@ -13,12 +13,12 @@
 
     <context:annotation-config/>
 
-    <!-- publishes events from the internal bus to JMS, in Atom format -->
-    <bean class="org.fcrepo.jms.observer.JMSTopicPublisher"/>
+    <!-- publishes events from the internal bus to JMS, in RDF format -->
+    <bean class="org.fcrepo.jms.JMSTopicPublisher"/>
 
     <amq:connectionFactory id="connectionFactory"
         brokerURL="vm://localhost?broker.persistent=false&amp;broker.useJmx=false&amp;broker.enableStatistics=false"/>
 
-    <bean class="org.fcrepo.jms.headers.DefaultMessageFactory"/>
+    <bean class="org.fcrepo.jms.DefaultMessageFactory"/>
 
 </beans>

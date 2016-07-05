@@ -16,12 +16,9 @@
 package org.fcrepo.kernel.modeshape.observer;
 
 import static org.slf4j.LoggerFactory.getLogger;
+import static org.fcrepo.kernel.modeshape.observer.FedoraEventImpl.getResourceTypes;
 
-import javax.jcr.PathNotFoundException;
-import javax.jcr.RepositoryException;
 import javax.jcr.observation.Event;
-
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 
 import org.slf4j.Logger;
 
@@ -49,14 +46,7 @@ public class SuppressByMixinFilter extends DefaultFilter {
 
     @Override
     public boolean test(final Event event) {
-        try {
-            return super.test(event) && !getMixinTypes(event).anyMatch(suppressedMixins::contains);
-        } catch (final PathNotFoundException e) {
-            LOGGER.trace("Dropping event from outside our assigned workspace:\n", e);
-            return false;
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
+        return super.test(event) && !getResourceTypes(event).anyMatch(suppressedMixins::contains);
     }
 
 }

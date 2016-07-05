@@ -27,7 +27,7 @@ import javax.jcr.NamespaceRegistry;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
-import javax.jcr.observation.Event;
+import javax.jcr.nodetype.NodeType;
 import javax.jcr.observation.EventIterator;
 import javax.jcr.observation.ObservationManager;
 
@@ -41,6 +41,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.modeshape.jcr.api.Repository;
+import org.modeshape.jcr.api.observation.Event;
 
 import com.google.common.eventbus.EventBus;
 
@@ -79,6 +80,9 @@ public class SimpleObserverTest {
     @Mock
     private EventIterator mockEvents;
 
+    @Mock
+    private NodeType mockNodeType, fedoraContainer;
+
     @Before
     public void setUp() throws RepositoryException {
         mockSession = mock(Session.class, Mockito.withSettings().extraInterfaces(org.modeshape.jcr.api.Session.class));
@@ -87,6 +91,12 @@ public class SimpleObserverTest {
         when(mockEvents.next()).thenReturn(mockEvent);
         when(mockEvent.getType()).thenReturn(1);
         when(mockEvent.getPath()).thenReturn("/foo");
+        when(mockEvent.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockNodeType.getName()).thenReturn("nt:folder");
+        when(mockEvent.getMixinNodeTypes()).thenReturn(new NodeType[] {fedoraContainer});
+        when(fedoraContainer.getName()).thenReturn("fedora:Container");
+        when(mockSession.getWorkspace()).thenReturn(mockWS);
+        when(mockWS.getNamespaceRegistry()).thenReturn(mockNS);
         testObserver = new SimpleObserver();
         setField(testObserver, "repository", mockRepository);
         setField(testObserver, "eventMapper", new OneToOne());
@@ -98,15 +108,12 @@ public class SimpleObserverTest {
     @Test
     public void testBuildListener() throws RepositoryException {
         when(mockWS.getObservationManager()).thenReturn(mockOM);
-        when(mockSession.getWorkspace()).thenReturn(mockWS);
         testObserver.buildListener();
         verify(mockOM).addEventListener(testObserver, EVENT_TYPES, "/", true, null, null, false);
     }
 
     @Test
     public void testOnEvent() throws RepositoryException {
-        when(mockSession.getWorkspace()).thenReturn(mockWS);
-        when(mockWS.getNamespaceRegistry()).thenReturn(mockNS);
         testObserver.onEvent(mockEvents);
         verify(mockBus).post(any(FedoraEvent.class));
     }

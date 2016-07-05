@@ -16,37 +16,52 @@
 package org.fcrepo.kernel.modeshape.observer;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
-import static org.fcrepo.kernel.api.observer.EventType.NODE_ADDED;
-import static org.fcrepo.kernel.api.observer.EventType.NODE_MOVED;
-import static org.fcrepo.kernel.api.observer.EventType.NODE_REMOVED;
-import static org.fcrepo.kernel.api.observer.EventType.PERSIST;
-import static org.fcrepo.kernel.api.observer.EventType.PROPERTY_ADDED;
-import static org.fcrepo.kernel.api.observer.EventType.PROPERTY_CHANGED;
-import static org.fcrepo.kernel.api.observer.EventType.PROPERTY_REMOVED;
+import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_CREATION;
+import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_DELETION;
+import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_MODIFICATION;
+import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_RELOCATION;
+import static org.fcrepo.kernel.api.observer.OptionalValues.BASE_URL;
+import static org.fcrepo.kernel.api.observer.OptionalValues.USER_AGENT;
+import static javax.jcr.observation.Event.NODE_ADDED;
+import static javax.jcr.observation.Event.NODE_MOVED;
+import static javax.jcr.observation.Event.NODE_REMOVED;
+import static javax.jcr.observation.Event.PROPERTY_ADDED;
+import static javax.jcr.observation.Event.PROPERTY_CHANGED;
+import static javax.jcr.observation.Event.PROPERTY_REMOVED;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+import static org.slf4j.LoggerFactory.getLogger;
+import static java.time.Instant.ofEpochMilli;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singleton;
 import static java.util.Objects.isNull;
 import static java.util.Objects.requireNonNull;
+import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toSet;
+import static java.util.stream.Stream.empty;
 
+import java.io.IOException;
+import java.time.Instant;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import javax.jcr.RepositoryException;
+import javax.jcr.nodetype.NodeType;
 import javax.jcr.observation.Event;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.observer.EventType;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
-import org.fcrepo.kernel.api.services.functions.HierarchicalIdentifierSupplier;
-import org.fcrepo.kernel.api.services.functions.UniqueValueSupplier;
 import org.fcrepo.kernel.modeshape.identifiers.HashConverter;
-
+import org.slf4j.Logger;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.ImmutableMap;
 
 /**
@@ -58,56 +73,57 @@ import com.google.common.collect.ImmutableMap;
  */
 public class FedoraEventImpl implements FedoraEvent {
 
+    private final static ObjectMapper MAPPER = new ObjectMapper();
+
+    private final static Logger LOGGER = getLogger(FedoraEventImpl.class);
+
     private final String path;
     private final String userID;
-    private final String userData;
-    private final long date;
+    private final Instant date;
     private final Map<String, String> info;
     private final String eventID;
+    private final Set<String> eventResourceTypes;
 
     private final Set<EventType> eventTypes = new HashSet<>();
-    private final Set<String> eventProperties = new HashSet<>();
 
     private static final List<Integer> PROPERTY_TYPES = asList(Event.PROPERTY_ADDED,
             Event.PROPERTY_CHANGED, Event.PROPERTY_REMOVED);
-
-    private static final UniqueValueSupplier pidMinter = new DefaultPathMinter();
 
     /**
      * Create a new FedoraEvent
      * @param type the Fedora EventType
      * @param path the node path corresponding to this event
+     * @param resourceTypes the rdf types of the corresponding resource
      * @param userID the acting user for this event
-     * @param userData any user data for this event
      * @param date the timestamp for this event
      * @param info supplementary information
      */
-    public FedoraEventImpl(final EventType type, final String path, final String userID,
-            final String userData, final long date, final Map<String, String> info) {
-        this(singleton(type), path, userID, userData, date, info);
+    public FedoraEventImpl(final EventType type, final String path, final Set<String> resourceTypes,
+            final String userID, final Instant date, final Map<String, String> info) {
+        this(singleton(type), path, resourceTypes, userID, date, info);
     }
 
    /**
      * Create a new FedoraEvent
      * @param types a collection of Fedora EventTypes
      * @param path the node path corresponding to this event
+     * @param resourceTypes the rdf types of the corresponding resource
      * @param userID the acting user for this event
-     * @param userData any user data for this event
      * @param date the timestamp for this event
      * @param info supplementary information
      */
-    public FedoraEventImpl(final Collection<EventType> types, final String path, final String userID,
-            final String userData, final long date, final Map<String, String> info) {
+    public FedoraEventImpl(final Collection<EventType> types, final String path, final Set<String> resourceTypes,
+            final String userID, final Instant date, final Map<String, String> info) {
         requireNonNull(types, "FedoraEvent requires a non-null event type");
         requireNonNull(path, "FedoraEvent requires a non-null path");
 
         this.eventTypes.addAll(types);
         this.path = path;
+        this.eventResourceTypes = resourceTypes;
         this.userID = userID;
-        this.userData = userData;
         this.date = date;
         this.info = isNull(info) ? emptyMap() : info;
-        this.eventID = pidMinter.get();
+        this.eventID = "urn:uuid:" + randomUUID().toString();
     }
 
 
@@ -120,32 +136,11 @@ public class FedoraEventImpl implements FedoraEvent {
     }
 
     /**
-     * @param type the type
-     * @return this object for continued use
-     */
-    @Override
-    public FedoraEvent addType(final EventType type) {
-        eventTypes.add(type);
-        return this;
-    }
-
-    /**
-     * @return the property names of the underlying JCR property {@link Event}s
+     * @return the RDF types of the underlying Fedora Resource
     **/
     @Override
-    public Set<String> getProperties() {
-        return eventProperties;
-    }
-
-    /**
-     * Add a property name to this event
-     * @param property property name
-     * @return this object for continued use
-    **/
-    @Override
-    public FedoraEvent addProperty( final String property ) {
-        eventProperties.add(property);
-        return this;
+    public Set<String> getResourceTypes() {
+        return eventResourceTypes;
     }
 
     /**
@@ -165,18 +160,10 @@ public class FedoraEventImpl implements FedoraEvent {
     }
 
     /**
-     * @return the user data of the underlying JCR {@link Event}s
-     */
-    @Override
-    public String getUserData() {
-        return userData;
-    }
-
-    /**
      * @return the date of the FedoraEvent
      */
     @Override
-    public long getDate() {
+    public Instant getDate() {
         return date;
     }
 
@@ -195,6 +182,7 @@ public class FedoraEventImpl implements FedoraEvent {
      */
     @Override
     public Map<String, String> getInfo() {
+
         return info;
     }
 
@@ -205,19 +193,18 @@ public class FedoraEventImpl implements FedoraEvent {
             .add("Event types:", getTypes().stream()
                             .map(EventType::getName)
                             .collect(joining(", ")))
-            .add("Event properties:", String.join(",", eventProperties))
+            .add("Event resource types:", String.join(",", eventResourceTypes))
             .add("Path:", getPath())
             .add("Date: ", getDate()).toString();
     }
 
     private static final Map<Integer, EventType> translation = ImmutableMap.<Integer, EventType>builder()
-            .put(Event.NODE_ADDED, NODE_ADDED)
-            .put(Event.NODE_REMOVED, NODE_REMOVED)
-            .put(Event.PROPERTY_ADDED, PROPERTY_ADDED)
-            .put(Event.PROPERTY_REMOVED, PROPERTY_REMOVED)
-            .put(Event.PROPERTY_CHANGED, PROPERTY_CHANGED)
-            .put(Event.NODE_MOVED, NODE_MOVED)
-            .put(Event.PERSIST, PERSIST).build();
+            .put(NODE_ADDED, RESOURCE_CREATION)
+            .put(NODE_REMOVED, RESOURCE_DELETION)
+            .put(PROPERTY_ADDED, RESOURCE_MODIFICATION)
+            .put(PROPERTY_REMOVED, RESOURCE_MODIFICATION)
+            .put(PROPERTY_CHANGED, RESOURCE_MODIFICATION)
+            .put(NODE_MOVED, RESOURCE_RELOCATION).build();
 
     /**
      * Get the Fedora event type for a JCR type
@@ -243,14 +230,60 @@ public class FedoraEventImpl implements FedoraEvent {
         requireNonNull(event);
         try {
             @SuppressWarnings("unchecked")
-            final Map<String, String> info = event.getInfo();
+            final Map<String, String> info = new HashMap<>(event.getInfo());
 
-            return new FedoraEventImpl(valueOf(event.getType()), cleanPath(event),
-                    event.getUserID(), event.getUserData(), event.getDate(), info);
+            final String userdata = event.getUserData();
+            try {
+                if (userdata != null && !userdata.isEmpty()) {
+                    final JsonNode json = MAPPER.readTree(userdata);
+                    if (json.has(BASE_URL)) {
+                        String url = json.get(BASE_URL).asText();
+                        while (url.endsWith("/")) {
+                            url = url.substring(0, url.length() - 1);
+                        }
+                        info.put(BASE_URL, url);
+                    }
+                    if (json.has(USER_AGENT)) {
+                        info.put(USER_AGENT, json.get(USER_AGENT).asText());
+                    }
+                } else {
+                    LOGGER.debug("Event UserData is empty!");
+                }
+            } catch (final IOException ex) {
+                LOGGER.warn("Error extracting user data: " + userdata, ex.getMessage());
+            }
+
+            final Set<String> resourceTypes = getResourceTypes(event).collect(toSet());
+
+            return new FedoraEventImpl(valueOf(event.getType()), cleanPath(event), resourceTypes,
+                    event.getUserID(), ofEpochMilli(event.getDate()), info);
 
         } catch (final RepositoryException ex) {
             throw new RepositoryRuntimeException("Error converting JCR Event to FedoraEvent", ex);
         }
+    }
+
+    /**
+     * Get the RDF Types of the resource corresponding to this JCR Event
+     * @param event the JCR event
+     * @return the types recorded on the resource associated to this event
+     */
+    public static Stream<String> getResourceTypes(final Event event) {
+        if (event instanceof org.modeshape.jcr.api.observation.Event) {
+            try {
+                final org.modeshape.jcr.api.observation.Event modeEvent =
+                        (org.modeshape.jcr.api.observation.Event) event;
+                final Stream.Builder<NodeType> types = Stream.builder();
+                for (final NodeType type : modeEvent.getMixinNodeTypes()) {
+                    types.add(type);
+                }
+                types.add(modeEvent.getPrimaryNodeType());
+                return types.build().map(NodeType::getName);
+            } catch (final RepositoryException e) {
+                throw new RepositoryRuntimeException(e);
+            }
+        }
+        return empty(); // wasn't a ModeShape event, so we have no access to resource types
     }
 
     /**
@@ -267,6 +300,4 @@ public class FedoraEventImpl implements FedoraEvent {
         final HashConverter converter = new HashConverter();
         return converter.reverse().convert(path.replaceAll("/" + JCR_CONTENT, ""));
     }
-
-    private static class DefaultPathMinter implements HierarchicalIdentifierSupplier { }
 }

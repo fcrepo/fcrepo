@@ -16,6 +16,7 @@
 package org.fcrepo.kernel.modeshape.observer;
 
 import static com.google.common.collect.ImmutableMap.of;
+import static java.time.Instant.ofEpochMilli;
 import static java.util.Collections.singleton;
 import static javax.jcr.observation.Event.NODE_ADDED;
 import static javax.jcr.observation.Event.PROPERTY_CHANGED;
@@ -27,6 +28,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 
 import java.util.Map;
+import java.util.Set;
 
 import javax.jcr.observation.Event;
 
@@ -42,7 +44,7 @@ import org.fcrepo.kernel.api.observer.EventType;
 public class FedoraEventImplTest {
 
     final FedoraEvent e = from(new TestEvent(1, "Path/Child", "UserId", "Identifier",
-            of("1", "2"), "data", 0L));
+            of("1", "2"), "{\"baseUrl\":\"http://localhost:8080/fcrepo/rest\"}", 0L));
 
 
     @SuppressWarnings("unused")
@@ -50,14 +52,14 @@ public class FedoraEventImplTest {
     public void testWrapNullEvent() {
         final String path = null;
         final String userID = null;
-        final String userData = null;
         final Map<String, String> info = null;
-        new FedoraEventImpl(valueOf(1), path, userID, userData, 0L, info);
+        final Set<String> resourceTypes = null;
+        new FedoraEventImpl(valueOf(1), path, resourceTypes, userID, ofEpochMilli(0L), info);
     }
 
     @Test
     public void testGetEventName() {
-        assertEquals("node added", valueOf(NODE_ADDED).getName());
+        assertEquals("resource creation", valueOf(NODE_ADDED).getName());
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -86,21 +88,21 @@ public class FedoraEventImplTest {
     public void testGetPathWithProperties() {
         final FedoraEvent e1 = from(new TestEvent(PROPERTY_CHANGED,
                     "Path/Child", "UserId", "Identifier", of("1", "2"),
-                    "data", 0L));
+                    null, 0L));
         assertEquals("Path", e1.getPath());
     }
 
     @Test
     public void testGetPathWithTrailingJcrContent() {
         final FedoraEvent e1 = from(new TestEvent(1, "Path/jcr:content", "UserId",
-                    "Identifier", of("1", "2"), "data", 0L));
+                    "Identifier", of("1", "2"), null, 0L));
         assertEquals("Path", e1.getPath());
     }
 
     @Test
     public void testGetPathWithHashUri() {
         final FedoraEvent e1 = from(new TestEvent(1, "Path/#/child", "UserId",
-                    "Identifier", of("1", "2"), "data", 0L));
+                    "Identifier", of("1", "2"), null, 0L));
         assertEquals("Path#child", e1.getPath());
     }
 
@@ -119,33 +121,19 @@ public class FedoraEventImplTest {
     }
 
     @Test
-    public void testGetUserData() {
-
-        assertEquals("data", e.getUserData());
-
-    }
-
-    @Test
     public void testGetDate() {
-        assertEquals(0L, e.getDate());
+        assertEquals(ofEpochMilli(0L), e.getDate());
 
     }
 
     @Test
     public void testAddType() {
         final EventType type = valueOf(PROPERTY_CHANGED);
-        e.addType(type);
+        e.getTypes().add(type);
         assertEquals(2, e.getTypes().size());
 
         assertTrue("Should contain: " + type, e.getTypes().contains(type));
         assertTrue("Should contain: NODE_ADDED", e.getTypes().contains(valueOf(1)));
-    }
-
-    @Test
-    public void testAddProperty() {
-        e.addProperty("prop");
-        assertEquals(1, e.getProperties().size());
-        assertEquals("prop", e.getProperties().iterator().next());
     }
 
     @Test
@@ -154,9 +142,8 @@ public class FedoraEventImplTest {
         assertTrue("Should contain path: " + text, text.contains(e.getPath()));
 
         assertTrue("Should contain types: " + text, text.contains(e.getTypes().iterator().next().getName()));
-        assertTrue("Should contain date: " + text, text.contains(Long.toString(e.getDate())));
+        assertTrue("Should contain date: " + text, text.contains(e.getDate().toString()));
 
-        assertFalse("Should not contain user-data: " + text, text.contains(e.getUserData()));
         assertFalse("Should not contain user-id: " + text, text.contains(e.getUserID()));
     }
 

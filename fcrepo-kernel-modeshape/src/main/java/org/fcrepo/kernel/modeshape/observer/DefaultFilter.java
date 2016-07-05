@@ -15,28 +15,16 @@
  */
 package org.fcrepo.kernel.modeshape.observer;
 
-import static com.google.common.collect.Sets.newHashSet;
-import static java.util.Arrays.stream;
-import static java.util.stream.Stream.concat;
-import static java.util.stream.Stream.of;
+import static com.google.common.collect.ImmutableSet.of;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
-import static org.slf4j.LoggerFactory.getLogger;
+import static org.fcrepo.kernel.modeshape.observer.FedoraEventImpl.getResourceTypes;
 
-import javax.jcr.PathNotFoundException;
-import javax.jcr.RepositoryException;
-import javax.jcr.nodetype.NodeType;
 import javax.jcr.observation.Event;
 
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-
-import org.slf4j.Logger;
-
-import java.util.HashSet;
-import java.util.stream.Stream;
+import java.util.Set;
 
 /**
  * {@link EventFilter} that passes only events emitted from nodes with a Fedora
@@ -54,33 +42,11 @@ import java.util.stream.Stream;
  */
 public class DefaultFilter implements EventFilter {
 
-    private static final Logger LOGGER = getLogger(DefaultFilter.class);
-
-    private static final HashSet<String> fedoraMixins =
-            newHashSet(FEDORA_BINARY, FEDORA_CONTAINER, FEDORA_NON_RDF_SOURCE_DESCRIPTION, FEDORA_RESOURCE, ROOT);
+    private static final Set<String> fedoraMixins =
+            of(FEDORA_BINARY, FEDORA_CONTAINER, FEDORA_RESOURCE, ROOT);
 
     @Override
     public boolean test(final Event event) {
-        try {
-            return getMixinTypes(event).anyMatch(fedoraMixins::contains);
-        } catch (final PathNotFoundException e) {
-            LOGGER.trace("Dropping event from outside our assigned workspace:\n", e);
-            return false;
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
+        return getResourceTypes(event).anyMatch(fedoraMixins::contains);
     }
-
-    protected static Stream<String> getMixinTypes(final Event event)
-            throws PathNotFoundException, RepositoryException {
-        try {
-            final org.modeshape.jcr.api.observation.Event modeEvent =
-                    (org.modeshape.jcr.api.observation.Event) event;
-            return concat(of(modeEvent.getPrimaryNodeType()), stream(modeEvent.getMixinNodeTypes()))
-                .map(NodeType::toString);
-        } catch (final ClassCastException e) {
-            throw new ClassCastException(event + " is not a Modeshape Event");
-        }
-    }
-
 }

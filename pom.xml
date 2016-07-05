@@ -67,6 +67,7 @@
     <module>fcrepo-kernel-api</module>
     <module>fcrepo-kernel-modeshape</module>
     <module>fcrepo-webapp</module>
+    <module>fcrepo-event-serialization</module>
     <module>fcrepo-jms</module>
     <module>fcrepo-http-commons</module>
     <module>fcrepo-http-api</module>
@@ -225,6 +226,16 @@
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-databind</artifactId>
         <version>${jackson2.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.datatype</groupId>
+        <artifactId>jackson-datatype-jsr310</artifactId>
+        <version>${jackson2.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.github.jsonld-java</groupId>
+        <artifactId>jsonld-java</artifactId>
+        <version>${jsonld.version}</version>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
