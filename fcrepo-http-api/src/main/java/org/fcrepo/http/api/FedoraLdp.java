@@ -786,16 +786,23 @@ public class FedoraLdp extends ContentExposingResource {
      * an empty string is returned.
      * @param digest The Digest header value
      * @return the sha1 checksum value
+     * @throws InvalidChecksumException if an unsupported digest is used
      */
-    private static String parseDigestHeader(final String digest) {
+    private static String parseDigestHeader(final String digest) throws InvalidChecksumException {
         try {
             final Map<String,String> digestPairs = RFC3230_SPLITTER.split(nullToEmpty(digest));
-            return digestPairs.entrySet().stream()
-                .filter(s -> s.getKey().toLowerCase().equals("sha1"))
-                .map(Map.Entry::getValue)
-                .findFirst()
-                .map("urn:sha1:"::concat)
-                .orElse("");
+            final boolean checksumTypeIncludeSHA1 = digestPairs.keySet().stream().anyMatch("sha1"::equalsIgnoreCase);
+            // If you have one or more digests and one is sha1 or no digests.
+            if (digestPairs.isEmpty() || checksumTypeIncludeSHA1) {
+                return digestPairs.entrySet().stream()
+                    .filter(s -> s.getKey().toLowerCase().equals("sha1"))
+                    .map(Map.Entry::getValue)
+                    .findFirst()
+                    .map("urn:sha1:"::concat)
+                    .orElse("");
+            } else {
+                throw new InvalidChecksumException(String.format("Unsupported Digest Algorithim: {}", digest));
+            }
         } catch (final RuntimeException e) {
             if (e instanceof IllegalArgumentException) {
                 throw new ClientErrorException("Invalid Digest header: " + digest + "\n", BAD_REQUEST);
