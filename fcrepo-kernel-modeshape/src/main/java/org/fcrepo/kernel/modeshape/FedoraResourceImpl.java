@@ -82,7 +82,6 @@ import javax.jcr.version.VersionManager;
 
 import com.google.common.base.Converter;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterators;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.graph.Triple;
 
@@ -144,6 +143,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     private static final String JCR_CHILD_VERSION_HISTORY = "jcr:childVersionHistory";
     private static final String JCR_VERSIONABLE_UUID = "jcr:versionableUuid";
     private static final String JCR_FROZEN_UUID = "jcr:frozenUuid";
+    private static final String JCR_VERSION_STORAGE = "jcr:versionStorage";
 
     private static final PropertyConverter propertyConverter = new PropertyConverter();
 
@@ -356,21 +356,29 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         try {
             final Iterator<Property> references = node.getReferences();
             final Iterator<Property> weakReferences = node.getWeakReferences();
-            final Iterator<Property> inboundProperties = Iterators.concat(references, weakReferences);
+            concat(iteratorToStream(references), iteratorToStream(weakReferences)).forEach(prop -> {
+                try {
+                    final List<Value> newVals = property2values.apply(prop).filter(
+                            UncheckedPredicate.uncheck(value ->
+                                !node.equals(getSession().getNodeByIdentifier(value.getString()))))
+                        .collect(toList());
 
-            while (inboundProperties.hasNext()) {
-                final Property prop = inboundProperties.next();
-                final List<Value> newVals = property2values.apply(prop).filter(
-                        UncheckedPredicate.uncheck(value ->
-                            !node.equals(getSession().getNodeByIdentifier(value.getString()))))
-                    .collect(toList());
-
-                if (newVals.size() == 0) {
-                    prop.remove();
-                } else {
-                    prop.setValue(newVals.toArray(new Value[newVals.size()]));
+                    if (newVals.size() == 0) {
+                        prop.remove();
+                    } else {
+                        prop.setValue(newVals.toArray(new Value[newVals.size()]));
+                    }
+                } catch (final RepositoryException ex) {
+                    // Ignore error from trying to update properties on versioned resources
+                    if (ex instanceof javax.jcr.nodetype.ConstraintViolationException &&
+                            ex.getMessage().contains(JCR_VERSION_STORAGE)) {
+                        LOGGER.debug("Ignoring exception trying to remove property from versioned resource: {}",
+                                ex.getMessage());
+                    } else {
+                        throw new RepositoryRuntimeException(ex);
+                    }
                 }
-            }
+            });
 
             final Node parent;
 
