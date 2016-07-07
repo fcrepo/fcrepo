@@ -23,10 +23,10 @@ import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
+import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.api.RdfLexicon.DCTERMS_TITLE;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_CHILD_COUNT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION;
@@ -373,14 +373,16 @@ public class ViewHelpersTest {
     @Test
     public void testGetNumChildren() {
         final Graph mem = createDefaultModel().getGraph();
-        mem.add(new Triple(createURI("a/b/c"), HAS_CHILD_COUNT.asNode(), createTypedLiteral(4).asNode()));
+        mem.add(new Triple(createURI("a/b/c"), CONTAINS.asNode(), createResource("a/b/c/1").asNode()));
+        mem.add(new Triple(createURI("a/b/c"), CONTAINS.asNode(), createResource("a/b/c/2").asNode()));
+        mem.add(new Triple(createURI("a/b/c"), CONTAINS.asNode(), createResource("a/b/c/3").asNode()));
+        mem.add(new Triple(createURI("a/b/c"), CONTAINS.asNode(), createResource("a/b/c/4").asNode()));
         assertEquals(4, testObj.getNumChildren(mem, createURI("a/b/c")));
     }
 
     @Test
     public void testGetNumChildrenEmpty() {
         final Graph mem = createDefaultModel().getGraph();
-        mem.add(new Triple(createURI("a/b/c"), HAS_CHILD_COUNT.asNode(), createLiteral("")));
         assertEquals(0, testObj.getNumChildren(mem, createURI("a/b/c")));
     }
 
