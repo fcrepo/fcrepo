@@ -84,6 +84,8 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
     @Override
     public void initialize(final NamespaceRegistry registry,
                            final NodeTypeManager nodeTypeManager) throws IOException {
+        LOGGER.warn("FedoraFileSystemConnector will be removed from the core of Fedora and packaged "
+            + "in fcrepo-webapp-plus in a coming release.");
         try {
             super.initialize(registry, nodeTypeManager);
         } catch (final RepositoryException e) {
