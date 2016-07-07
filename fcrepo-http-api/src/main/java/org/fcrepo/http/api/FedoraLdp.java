@@ -59,8 +59,6 @@ import java.net.URLDecoder;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.annotation.PostConstruct;
@@ -793,10 +791,10 @@ public class FedoraLdp extends ContentExposingResource {
     private static String parseDigestHeader(final String digest) throws InvalidChecksumException {
         try {
             final Map<String,String> digestPairs = RFC3230_SPLITTER.split(nullToEmpty(digest));
-            final Set<String> checksumTypes =
-                    digestPairs.keySet().stream().map(s -> s.toLowerCase()).collect(Collectors.toSet());
+            final boolean checksumTypeIncludeSHA1 = digestPairs.keySet().stream().map(String::toLowerCase)
+                .anyMatch("sha1"::equals);
             // If you have one or more digests and one is sha1 or no digests.
-            if (digestPairs.isEmpty() || checksumTypes.contains("sha1")) {
+            if (digestPairs.isEmpty() || checksumTypeIncludeSHA1) {
                 return digestPairs.entrySet().stream()
                     .filter(s -> s.getKey().toLowerCase().equals("sha1"))
                     .map(Map.Entry::getValue)
