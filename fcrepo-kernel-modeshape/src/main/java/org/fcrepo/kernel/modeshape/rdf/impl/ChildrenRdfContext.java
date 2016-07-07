@@ -15,7 +15,6 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
-import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
@@ -23,12 +22,8 @@ import org.slf4j.Logger;
 
 import javax.jcr.RepositoryException;
 
-import static java.util.stream.Stream.of;
-import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDlong;
 import static com.hp.hpl.jena.graph.Triple.create;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_CHILD_COUNT;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -56,20 +51,9 @@ public class ChildrenRdfContext extends NodeRdfContext {
         if (getJcrNode(resource).hasNodes()) {
             LOGGER.trace("Found children of this resource: {}", resource.getPath());
 
-            // Count the number of children
-            concat(of(createNumChildrenTriple(resource().getChildren().count())));
             concat(resource().getChildren().peek(child -> LOGGER.trace("Creating triple for child node: {}", child))
                     .map(child -> create(subject(), CONTAINS.asNode(), uriFor(child.getDescribedResource()))));
-        } else {
-            concat(of(createNumChildrenTriple(0)));
         }
-
-    }
-
-    private Triple createNumChildrenTriple(final long numChildren) {
-        return create(subject(),
-                HAS_CHILD_COUNT.asNode(),
-                createTypedLiteral(Long.toString(numChildren), XSDlong).asNode());
     }
 
 }

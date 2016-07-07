@@ -66,7 +66,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_CHILD;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_CHILD_COUNT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MIME_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MIXIN_TYPE;
@@ -1251,20 +1250,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
         httpGet.setHeader("Limit", Integer.toString(CHILDREN_LIMIT));
         try (final CloseableHttpResponse response = execute(httpGet)) {
             try (final CloseableGraphStore graph = getGraphStore(response)) {
-                assertTrue("Should contain child count!",
-                        graph.contains(ANY, createURI(location), HAS_CHILD_COUNT.asNode(), ANY));
-
-                final Iterator<Quad> children = graph.find(ANY, createURI(location), HAS_CHILD_COUNT.asNode(), ANY);
-                assertTrue("Should have a child count triple!", children.hasNext());
-
-                // Total child count should be provided
-                final Node child = children.next().getObject();
-                assertTrue("Object should be a literal!", child.isLiteral());
-                assertEquals(CHILDREN_TOTAL, Integer.parseInt(child.getLiteralValue().toString()));
-
                 final Iterator<Quad> contains = graph.find(ANY, createURI(location), CONTAINS.asNode(), ANY);
                 assertTrue("Should find contained child!", contains.hasNext());
-                assertEquals(CHILDREN_LIMIT - 1, Iterators.size(contains));
+                assertEquals(CHILDREN_LIMIT, Iterators.size(contains));
             }
         }
     }
