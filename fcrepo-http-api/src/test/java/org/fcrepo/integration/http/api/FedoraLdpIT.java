@@ -1022,6 +1022,20 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals("Should be a 400 BAD REQUEST!", BAD_REQUEST.getStatusCode(), getStatus(method));
     }
 
+    /**
+     * Ensure that a non-SHA1 Digest header returns a 409 Conflict
+     */
+    @Test
+    public void testIngestWithBinaryAndNonSha1DigestHeader() {
+        final HttpPost method = postObjMethod();
+        final File img = new File("src/test/resources/test-objects/img.png");
+        method.addHeader("Content-Type", "application/octet-stream");
+        method.addHeader("Digest", "md5=anything");
+        method.setEntity(new FileEntity(img));
+
+        assertEquals("Should be a 409 Conflict!", CONFLICT.getStatusCode(), getStatus(method));
+    }
+
     @Test
     public void testIngestOnSubtree() throws IOException {
         final String id = getRandomUniqueId();
