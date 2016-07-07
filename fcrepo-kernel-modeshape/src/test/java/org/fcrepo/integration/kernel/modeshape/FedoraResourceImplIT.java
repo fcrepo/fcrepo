@@ -1005,6 +1005,45 @@ public class FedoraResourceImplIT extends AbstractIT {
         }
     }
 
+    @Test
+    public void testDeleteLinkedVersionedResources() throws RepositoryException {
+        final Container object1 = containerService.findOrCreate(session, "/" + getRandomPid());
+        final Container object2 = containerService.findOrCreate(session, "/" + getRandomPid());
+
+        // Create a link between objects 1 and 2
+        object2.updateProperties(subjects, "PREFIX example: <http://example.org/>\n" +
+                "INSERT { <> <example:link> " + "<" + createGraphSubjectNode(object1).getURI() + ">" +
+                " } WHERE {} ",
+                object2.getTriples(subjects, emptySet()));
+
+        // Create version of object2
+        versionService.createVersion(session, object2.getPath(), "obj2-v0");
+
+        // Verify that the objects exist
+        assertTrue("object1 should exist!", exists(object1));
+        assertTrue("object2 should exist!", exists(object2));
+
+        // This is the test: verify successful deletion of the objects
+        object2.delete();
+        session.save();
+
+        object1.delete();
+        session.save();
+
+        // Double-verify that the objects are gone
+        assertFalse("/object2 should NOT exist!", exists(object2));
+        assertFalse("/object1 should NOT exist!", exists(object1));
+    }
+
+    private boolean exists(final Container resource) {
+        try {
+            resource.getPath();
+            return true;
+        } catch (RepositoryRuntimeException e) {
+            return false;
+        }
+    }
+
     @Test (expected = RepositoryRuntimeException.class)
     public void testNullBaseVersion() throws RepositoryException {
         final String pid = getRandomPid();

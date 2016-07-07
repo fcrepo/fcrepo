@@ -26,8 +26,6 @@ import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.empty;
 import static java.util.stream.Stream.of;
 import static org.apache.commons.codec.digest.DigestUtils.shaHex;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIED;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
@@ -157,6 +155,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     private static final String JCR_CHILD_VERSION_HISTORY = "jcr:childVersionHistory";
     private static final String JCR_VERSIONABLE_UUID = "jcr:versionableUuid";
     private static final String JCR_FROZEN_UUID = "jcr:frozenUuid";
+    private static final String JCR_VERSION_STORAGE = "jcr:versionStorage";
 
     private static final PropertyConverter propertyConverter = new PropertyConverter();
 
@@ -378,7 +377,14 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                         prop.setValue(newVals.toArray(new Value[newVals.size()]));
                     }
                 } catch (final RepositoryException ex) {
-                    throw new RepositoryRuntimeException(ex);
+                    // Ignore error from trying to update properties on versioned resources
+                    if (ex instanceof javax.jcr.nodetype.ConstraintViolationException &&
+                            ex.getMessage().contains(JCR_VERSION_STORAGE)) {
+                        LOGGER.debug("Ignoring exception trying to remove property from versioned resource: {}",
+                                ex.getMessage());
+                    } else {
+                        throw new RepositoryRuntimeException(ex);
+                    }
                 }
             });
 
