@@ -115,10 +115,8 @@ public final class RdfLexicon {
             createProperty(REPOSITORY_NAMESPACE + "hasParent");
     public static final Property HAS_CHILD =
             createProperty(REPOSITORY_NAMESPACE + "hasChild");
-    public static final Property HAS_CHILD_COUNT =
-            createProperty(REPOSITORY_NAMESPACE + "numberOfChildren");
 
-    public static final Set<Property> membershipProperties = of(HAS_PARENT, HAS_CHILD, HAS_CHILD_COUNT);
+    public static final Set<Property> membershipProperties = of(HAS_PARENT, HAS_CHILD);
 
     // FIXITY
 

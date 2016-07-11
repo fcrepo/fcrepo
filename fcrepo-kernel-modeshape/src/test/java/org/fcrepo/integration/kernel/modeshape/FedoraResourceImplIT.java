@@ -35,7 +35,6 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TOMBSTONE;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.RdfLexicon.DC_TITLE;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_CHILD_COUNT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MIXIN_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_NODE_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_PRIMARY_TYPE;
@@ -388,10 +387,6 @@ public class FedoraResourceImplIT extends AbstractIT {
         assertFalse(graph.contains(s, p, o));
 
         // structure
-        p = HAS_CHILD_COUNT.asNode();
-        //final RDFDatatype long_datatype = createTypedLiteral(0L).getDatatype();
-        o = createLiteral("0");
-
         //TODO: re-enable number of children reporting, if practical
 
         //assertTrue(datasetGraph.contains(ANY, s, p, o));

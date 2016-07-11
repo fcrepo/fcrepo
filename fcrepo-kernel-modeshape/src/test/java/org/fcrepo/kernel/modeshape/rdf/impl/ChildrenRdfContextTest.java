@@ -20,7 +20,6 @@ package org.fcrepo.kernel.modeshape.rdf.impl;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
@@ -44,6 +43,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 /**
@@ -89,14 +89,8 @@ public class ChildrenRdfContextTest {
             final Model results = childrenRdfContext.collect(toModel());
             final Resource subject = idTranslator.reverse().convert(mockResource);
 
-            final StmtIterator stmts = results.listStatements(subject, RdfLexicon.HAS_CHILD_COUNT, (RDFNode) null);
-
-            assertTrue("There should have been a statement!", stmts.hasNext());
-            final Statement stmt = stmts.nextStatement();
-            assertTrue("Object should be a literal! " + stmt.getObject(), stmt.getObject().isLiteral());
-            assertEquals(0, stmt.getInt());
-
-            assertFalse("There should not have been a second statement!", stmts.hasNext());
+            final StmtIterator stmts = results.listStatements(subject, RdfLexicon.CONTAINS, (RDFNode) null);
+            assertFalse("There should NOT have been a statement!", stmts.hasNext());
         }
     }
 
@@ -117,13 +111,17 @@ public class ChildrenRdfContextTest {
             final Model results = context.collect(toModel());
             final Resource subject = idTranslator.reverse().convert(mockResource);
 
-            final StmtIterator stmts = results.listStatements(subject, RdfLexicon.HAS_CHILD_COUNT, (RDFNode) null);
+            final StmtIterator stmts = results.listStatements(subject, RdfLexicon.CONTAINS, (RDFNode) null);
 
+            final AtomicInteger count = new AtomicInteger(0);
             assertTrue("There should have been a statement!", stmts.hasNext());
-            final Statement stmt = stmts.nextStatement();
-            assertTrue("Object should be a literal! " + stmt.getObject(), stmt.getObject().isLiteral());
-            assertEquals(3, stmt.getInt());
+            stmts.forEachRemaining(stmt -> {
+                        assertTrue("Object should be a URI! " + stmt.getObject(), stmt.getObject().isURIResource());
+                        count.incrementAndGet();
+                    }
+            );
 
+            assertEquals(3, count.get());
             assertFalse("There should not have been a second statement!", stmts.hasNext());
         }
     }
