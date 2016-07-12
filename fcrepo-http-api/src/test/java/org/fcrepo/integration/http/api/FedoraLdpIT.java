@@ -96,6 +96,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
@@ -143,6 +144,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
+import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -193,6 +195,31 @@ public class FedoraLdpIT extends AbstractResourceIT {
     static {
         headerFormat.setTimeZone(getTimeZone("GMT"));
         tripleFormat.setTimeZone(getTimeZone("GMT"));
+    }
+
+    private static File TEST_FILE;
+
+    @BeforeClass
+    public static void beforeClass() {
+        FileWriter fw = null;
+        try {
+            TEST_FILE = File.createTempFile("content", ".txt");
+            TEST_FILE.deleteOnExit();
+            fw = new FileWriter(TEST_FILE);
+            for (int i = 0; i < 1000000; i++) {
+                fw.write("fooooooooooooooooooooooooooooooooooooooooooooooooooo");
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (fw != null) {
+                try {
+                    fw.close();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
     }
 
     @Test
@@ -2474,6 +2501,41 @@ public class FedoraLdpIT extends AbstractResourceIT {
             lastmod4 = headerFormat.parse(response.getFirstHeader("Last-Modified").getValue()).getTime();
             assertTrue(lastmod4 > lastmod3);
         }
+    }
+
+    @Test
+    public void testConcurrentPutDatastreamResource() throws IOException, InterruptedException {
+        final String pid = getRandomUniqueId();
+        createObject(pid);
+
+        final String ds = "ds2";
+        final RequestThread t1 = new RequestThread(putDSFileMethod(pid, ds, TEST_FILE));
+        final RequestThread t2 = new RequestThread(putDSFileMethod(pid, ds, TEST_FILE));
+        t1.start();
+        Thread.sleep(100);
+        t2.start();
+        t1.join();
+        t2.join();
+
+        assertEquals(CREATED.getStatusCode(), t1.status());
+        assertEquals(NOT_FOUND.getStatusCode(), t2.status());
+    }
+
+    @Test
+    public void testConcurrentPostDatastreamResource() throws IOException, InterruptedException {
+        final String pid = getRandomUniqueId();
+        createObject(pid);
+
+        final RequestThread t1 = new RequestThread(postDSFileMethod(pid, TEST_FILE));
+        final RequestThread t2 = new RequestThread(postDSFileMethod(pid, TEST_FILE));
+        t1.start();
+        Thread.sleep(100);
+        t2.start();
+        t1.join();
+        t2.join();
+
+        assertEquals(CREATED.getStatusCode(), t1.status());
+        assertEquals(NOT_FOUND.getStatusCode(), t2.status());
     }
 
     private static void verifyModifiedMatchesCreated(final GraphStore graph) {
