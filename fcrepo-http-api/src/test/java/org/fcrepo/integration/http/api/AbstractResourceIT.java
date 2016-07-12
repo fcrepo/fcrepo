@@ -153,6 +153,14 @@ public abstract class AbstractResourceIT {
         return put;
     }
 
+    protected static HttpPost postDSFileMethod(final String pid, final File content)
+            throws UnsupportedEncodingException {
+        final HttpPost post = new HttpPost(serverAddress + pid + "/");
+        post.setEntity(new FileEntity(content));
+        post.setHeader("Content-Type", TEXT_PLAIN);
+        return post;
+    }
+
     protected static HttpGet getDSMethod(final String pid, final String ds) {
         return new HttpGet(serverAddress + pid + "/" + ds);
     }
@@ -447,5 +455,25 @@ public abstract class AbstractResourceIT {
         final String location = serverAddress + id;
         assertThat("Expected object to be deleted", getStatus(new HttpHead(location)), is(GONE.getStatusCode()));
         assertThat("Expected object to be deleted", getStatus(new HttpGet(location)), is(GONE.getStatusCode()));
+    }
+
+    class RequestThread extends Thread {
+
+        private HttpUriRequest request;
+        private int status;
+
+        RequestThread(final HttpUriRequest request) {
+            this.request = request;
+        }
+
+        public int status() {
+            return status;
+        }
+
+        @Override
+        public void run() {
+            logger.info("Attempting to create datastream at URI: {}", request.getURI());
+            this.status = getStatus(request);
+        }
     }
 }
