@@ -202,24 +202,16 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     @BeforeClass
     public static void beforeClass() {
-        FileWriter fw = null;
         try {
             TEST_FILE = File.createTempFile("content", ".txt");
             TEST_FILE.deleteOnExit();
-            fw = new FileWriter(TEST_FILE);
-            for (int i = 0; i < 1000000; i++) {
-                fw.write("fooooooooooooooooooooooooooooooooooooooooooooooooooo");
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            if (fw != null) {
-                try {
-                    fw.close();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
+            try (final FileWriter fw = new FileWriter(TEST_FILE)) {
+                for (int i = 0; i < 1000000; i++) {
+                    fw.write("fooooooooooooooooooooooooooooooooooooooooooooooooooo");
                 }
             }
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -2530,8 +2522,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String pid = getRandomUniqueId();
         createObject(pid);
 
-        final RequestThread t1 = new RequestThread(postDSFileMethod(pid, TEST_FILE));
-        final RequestThread t2 = new RequestThread(postDSFileMethod(pid, TEST_FILE));
+        final String ds = getRandomUniqueId();
+        final RequestThread t1 = new RequestThread(postDSFileMethod(pid, ds, TEST_FILE));
+        final RequestThread t2 = new RequestThread(postDSFileMethod(pid, ds, TEST_FILE));
         t1.start();
         Thread.sleep(100);
         t2.start();
