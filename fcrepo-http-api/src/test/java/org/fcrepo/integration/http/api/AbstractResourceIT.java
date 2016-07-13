@@ -161,6 +161,15 @@ public abstract class AbstractResourceIT {
         return post;
     }
 
+    protected static HttpPost postDSFileMethod(final String pid, final String ds, final File content)
+            throws UnsupportedEncodingException {
+        final HttpPost post = new HttpPost(serverAddress + pid + "/");
+        post.setEntity(new FileEntity(content));
+        post.addHeader("Slug", ds);
+        post.setHeader("Content-Type", TEXT_PLAIN);
+        return post;
+    }
+
     protected static HttpGet getDSMethod(final String pid, final String ds) {
         return new HttpGet(serverAddress + pid + "/" + ds);
     }
@@ -373,21 +382,6 @@ public abstract class AbstractResourceIT {
     protected void createDatastream(final String pid, final String dsid, final String content) throws IOException {
         logger.trace("Attempting to create datastream for object: {} at datastream ID: {}", pid, dsid);
         assertEquals(CREATED.getStatusCode(), getStatus(putDSMethod(pid, dsid, content)));
-    }
-
-    protected Thread createSNSDatastreamThread(final String pid, final String dsid, final File content)
-            throws IOException {
-        return (new Thread() {
-            public void run() {
-
-            try {
-                logger.info("Attempting to create datastream for object: {} at datastream ID: {}", pid, dsid);
-                getStatus(putDSFileMethod(pid, dsid, content));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        });
     }
 
     protected CloseableHttpResponse setProperty(final String pid, final String propertyUri, final String value)

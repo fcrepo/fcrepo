@@ -64,6 +64,9 @@ import javax.inject.Inject;
 import javax.annotation.PostConstruct;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
+import javax.jcr.lock.LockException;
+import javax.jcr.nodetype.ConstraintViolationException;
+import javax.jcr.version.VersionException;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.Consumes;
@@ -389,16 +392,7 @@ public class FedoraLdp extends ContentExposingResource {
         }
 
         try {
-            // prevent SN-Sibling nodes from creating.
-            synchronized (LOGGER) {
-                final FedoraResource existingNode = nodeService.find(session, resource.getPath());
-                if (resource.isNew() && existingNode != null && !existingNode.getPath().equals(resource.getPath())) {
-                    LOGGER.error("Same Name Sibling violation: {}", existingNode.getPath());
-                    session.removeItem(resource.getPath());
-                    throw new ClientErrorException("Resource Already Exists", CONFLICT);
-                }
-                session.save();
-            }
+            save(resource);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -574,7 +568,7 @@ public class FedoraLdp extends ContentExposingResource {
                     }
                 }
             }
-            session.save();
+            save(resource);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -770,6 +764,26 @@ public class FedoraLdp extends ContentExposingResource {
         }
 
         return pid;
+    }
+
+    /**
+     * perform save with checking to prevent SN-Sibling nodes from creating
+     * @param resource the FedoraResource need to save
+     * @throws javax.jcr.AccessDeniedException
+     * @throws VersionException
+     * @throws LockException
+     * @throws ConstraintViolationException
+     * @throws RepositoryException
+     */
+    private synchronized void save(final FedoraResource resource) throws javax.jcr.AccessDeniedException,
+            VersionException, LockException, ConstraintViolationException, RepositoryException {
+        final FedoraResource existingNode = nodeService.find(session, resource.getPath());
+        if (resource.isNew() && existingNode != null && !existingNode.getPath().equals(resource.getPath())) {
+            LOGGER.error("Same Name Sibling violation: {}", existingNode.getPath());
+            session.removeItem(resource.getPath());
+            throw new ClientErrorException("Resource Already Exists", CONFLICT);
+        }
+        session.save();
     }
 
     private static void checkLinkForLdpResourceCreation(final String link) {
