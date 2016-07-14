@@ -68,7 +68,6 @@ public class FedoraHtmlIT extends AbstractResourceIT {
         assertEquals(200, getStatus(method));
     }
 
-
     @Test
     public void testGetContainerTemplate() throws IOException {
         final String pid = getRandomUniqueId();
