@@ -2508,13 +2508,14 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final RequestThread t1 = new RequestThread(putDSFileMethod(pid, ds, TEST_FILE));
         final RequestThread t2 = new RequestThread(putDSFileMethod(pid, ds, TEST_FILE));
         t1.start();
-        Thread.sleep(100);
         t2.start();
         t1.join();
         t2.join();
 
-        assertEquals(CREATED.getStatusCode(), t1.status());
-        assertEquals(NOT_FOUND.getStatusCode(), t2.status());
+        final boolean created = t1.status() == CREATED.getStatusCode() || t2.status() == CREATED.getStatusCode();
+        final boolean notFound = t1.status() == NOT_FOUND.getStatusCode() || t2.status() == NOT_FOUND.getStatusCode();
+        assertTrue(created);
+        assertTrue(notFound);
     }
 
     @Test
@@ -2526,13 +2527,14 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final RequestThread t1 = new RequestThread(postDSFileMethod(pid, ds, TEST_FILE));
         final RequestThread t2 = new RequestThread(postDSFileMethod(pid, ds, TEST_FILE));
         t1.start();
-        Thread.sleep(100);
         t2.start();
         t1.join();
         t2.join();
 
-        assertEquals(CREATED.getStatusCode(), t1.status());
-        assertEquals(NOT_FOUND.getStatusCode(), t2.status());
+        final boolean created = t1.status() == CREATED.getStatusCode() || t2.status() == CREATED.getStatusCode();
+        final boolean notFound = t1.status() == NOT_FOUND.getStatusCode() || t2.status() == NOT_FOUND.getStatusCode();
+        assertTrue(created);
+        assertTrue(notFound);
     }
 
     private static void verifyModifiedMatchesCreated(final GraphStore graph) {
