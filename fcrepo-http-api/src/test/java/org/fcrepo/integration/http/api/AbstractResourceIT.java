@@ -34,7 +34,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Collection;
@@ -58,7 +57,6 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.entity.FileEntity;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.BasicCredentialsProvider;
@@ -144,31 +142,6 @@ public abstract class AbstractResourceIT {
         put.setEntity(new StringEntity(content == null ? "" : content));
         put.setHeader("Content-Type", TEXT_PLAIN);
         return put;
-    }
-
-    protected static HttpPut putDSFileMethod(final String pid, final String ds, final File content)
-            throws UnsupportedEncodingException {
-        final HttpPut put = new HttpPut(serverAddress + pid + "/" + ds);
-        put.setEntity(new FileEntity(content));
-        put.setHeader("Content-Type", TEXT_PLAIN);
-        return put;
-    }
-
-    protected static HttpPost postDSFileMethod(final String pid, final File content)
-            throws UnsupportedEncodingException {
-        final HttpPost post = new HttpPost(serverAddress + pid + "/");
-        post.setEntity(new FileEntity(content));
-        post.setHeader("Content-Type", TEXT_PLAIN);
-        return post;
-    }
-
-    protected static HttpPost postDSFileMethod(final String pid, final String ds, final File content)
-            throws UnsupportedEncodingException {
-        final HttpPost post = new HttpPost(serverAddress + pid + "/");
-        post.setEntity(new FileEntity(content));
-        post.addHeader("Slug", ds);
-        post.setHeader("Content-Type", TEXT_PLAIN);
-        return post;
     }
 
     protected static HttpGet getDSMethod(final String pid, final String ds) {
