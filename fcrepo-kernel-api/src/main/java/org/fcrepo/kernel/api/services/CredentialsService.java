@@ -1,9 +1,11 @@
 /*
- * Copyright 2015 DuraSpace, Inc.
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -16,7 +18,6 @@
 package org.fcrepo.kernel.api.services;
 
 import javax.jcr.Credentials;
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author acoburn
@@ -25,11 +26,11 @@ import javax.servlet.http.HttpServletRequest;
 public interface CredentialsService {
 
     /**
-     * Get the credentials for the given servlet request
+     * Get the credentials for the given request
      *
-     * @param request the servlet request
+     * @param request the request
      * @return the JCR credentials for the given request
      */
-    Credentials getCredentials(final HttpServletRequest request);
+    Credentials getCredentials(final Object request);
 
 }
