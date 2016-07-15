@@ -1,9 +1,11 @@
 /*
- * Copyright 2015 DuraSpace, Inc.
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -23,7 +25,6 @@ import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.GONE;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
@@ -36,15 +37,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-
 import org.apache.http.Header;
 import org.fcrepo.http.commons.test.util.CloseableGraphStore;
 
@@ -457,30 +450,5 @@ public abstract class AbstractResourceIT {
         final String location = serverAddress + id;
         assertThat("Expected object to be deleted", getStatus(new HttpHead(location)), is(GONE.getStatusCode()));
         assertThat("Expected object to be deleted", getStatus(new HttpGet(location)), is(GONE.getStatusCode()));
-    }
-
-    protected static void concurrentSNSDataStreamIngest(final HttpUriRequest req, final int numberOfExecutions)
-            throws InterruptedException, ExecutionException {
-        final List<Future<Integer>> tasks = new ArrayList<>();
-
-        final ExecutorService executor = Executors.newFixedThreadPool(numberOfExecutions);
-        for (int i = 0 ; i < numberOfExecutions; i++) {
-            final Callable<Integer> task = () -> {
-                return getStatus(req);
-            };
-            final Future<Integer> future = executor.submit(task);
-            tasks.add(future);
-            Thread.sleep(100);
-        }
-
-        for (int i = 0; i < tasks.size(); i++) {
-            final int status = tasks.get(i).get();
-            if (i == 0) {
-                assertEquals(CREATED.getStatusCode(), status);
-            } else {
-                assertEquals(NOT_FOUND.getStatusCode(), status);
-            }
-        }
-        executor.shutdown();
     }
 }

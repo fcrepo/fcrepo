@@ -1,9 +1,11 @@
 /*
- * Copyright 2015 DuraSpace, Inc.
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -84,6 +86,8 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
     @Override
     public void initialize(final NamespaceRegistry registry,
                            final NodeTypeManager nodeTypeManager) throws IOException {
+        LOGGER.warn("FedoraFileSystemConnector will be removed from the core of Fedora in a coming release. "
+            + "See https://jira.duraspace.org/browse/FCREPO-2028 for more information.");
         try {
             super.initialize(registry, nodeTypeManager);
         } catch (final RepositoryException e) {

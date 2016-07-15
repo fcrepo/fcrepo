@@ -1,9 +1,11 @@
 /*
- * Copyright 2015 DuraSpace, Inc.
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -29,6 +31,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static java.util.TimeZone.getTimeZone;
+import static java.util.concurrent.Executors.newFixedThreadPool;
 import static java.util.regex.Pattern.compile;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.Link.fromUri;
@@ -66,7 +69,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_CHILD;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_CHILD_COUNT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MIME_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MIXIN_TYPE;
@@ -115,6 +117,10 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
+
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
@@ -141,6 +147,7 @@ import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.FileEntity;
+import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
@@ -1043,6 +1050,20 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals("Should be a 400 BAD REQUEST!", BAD_REQUEST.getStatusCode(), getStatus(method));
     }
 
+    /**
+     * Ensure that a non-SHA1 Digest header returns a 409 Conflict
+     */
+    @Test
+    public void testIngestWithBinaryAndNonSha1DigestHeader() {
+        final HttpPost method = postObjMethod();
+        final File img = new File("src/test/resources/test-objects/img.png");
+        method.addHeader("Content-Type", "application/octet-stream");
+        method.addHeader("Digest", "md5=anything");
+        method.setEntity(new FileEntity(img));
+
+        assertEquals("Should be a 409 Conflict!", CONFLICT.getStatusCode(), getStatus(method));
+    }
+
     @Test
     public void testIngestOnSubtree() throws IOException {
         final String id = getRandomUniqueId();
@@ -1258,20 +1279,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
         httpGet.setHeader("Limit", Integer.toString(CHILDREN_LIMIT));
         try (final CloseableHttpResponse response = execute(httpGet)) {
             try (final CloseableGraphStore graph = getGraphStore(response)) {
-                assertTrue("Should contain child count!",
-                        graph.contains(ANY, createURI(location), HAS_CHILD_COUNT.asNode(), ANY));
-
-                final Iterator<Quad> children = graph.find(ANY, createURI(location), HAS_CHILD_COUNT.asNode(), ANY);
-                assertTrue("Should have a child count triple!", children.hasNext());
-
-                // Total child count should be provided
-                final Node child = children.next().getObject();
-                assertTrue("Object should be a literal!", child.isLiteral());
-                assertEquals(CHILDREN_TOTAL, Integer.parseInt(child.getLiteralValue().toString()));
-
                 final Iterator<Quad> contains = graph.find(ANY, createURI(location), CONTAINS.asNode(), ANY);
                 assertTrue("Should find contained child!", contains.hasNext());
-                assertEquals(CHILDREN_LIMIT - 1, Iterators.size(contains));
+                assertEquals(CHILDREN_LIMIT, Iterators.size(contains));
             }
         }
     }
@@ -2497,24 +2507,51 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
     }
 
+    /**
+     * Uses two requests in two threads to check that two datastreams cannot be created under the same URI. One thread
+     * and request starts first, but finishes second. The other starts second, but finishes first. Only whichever
+     * request <i>finishes</i> first should succeed.
+     *
+     * @see <a href="https://jira.duraspace.org/browse/FCREPO-2055">FCREPO-2055</a>
+     */
     @Test
-    public void testConcurrentPutDatastreamResource() throws InterruptedException,
-            ExecutionException, UnsupportedEncodingException {
+    @SuppressWarnings("resource")
+    public void testConcurrentSameNameDatastreamCreation() {
         final String pid = getRandomUniqueId();
-        createObject(pid);
+        createObjectAndClose(pid);
+        final String dsUri = serverAddress + pid + "/" + getRandomUniqueId();
 
-        final String ds = getRandomUniqueId();
-        concurrentSNSDataStreamIngest(putDSFileMethod(pid, ds, TEST_FILE), 2);
-    }
+        final HttpPut leadingRequest = new HttpPut(dsUri);
+        // will be used to indicate that the lagging request has completed and that the leading request may finish
+        final Semaphore signal = new Semaphore(0);
+        // this request will block until a permit is granted, at which point it will immediately complete
+        leadingRequest.setEntity(new InputStreamEntity(new InputStream() {
 
-    @Test
-    public void testConcurrentPostDatastreamResource() throws InterruptedException,
-            ExecutionException, UnsupportedEncodingException {
-        final String pid = getRandomUniqueId();
-        createObject(pid);
+            @Override
+            public int read() {
+                signal.acquireUninterruptibly();
+                return -1;
+            }
+        }));
+        final HttpPut laggingRequest = new HttpPut(dsUri);
 
-        final String ds = getRandomUniqueId();
-        concurrentSNSDataStreamIngest(postDSFileMethod(pid, ds, TEST_FILE), 2);
+        final ExecutorService executor = newFixedThreadPool(2);
+        final Future<Integer> shouldFail = executor.submit(() -> getStatus(leadingRequest));
+        // now the leading request is blocked on the signal
+        final Future<Integer> shouldWin = executor.submit(() -> {
+            // first accomplish this request
+            final int status = getStatus(laggingRequest);
+            // now permit the leading request to finish
+            signal.release();
+            return status;
+        });
+        try {
+            assertEquals("Was unable to create with lagged request!", CREATED.getStatusCode(), (int) shouldWin.get());
+            assertEquals("Was able to create with lead request!", CONFLICT.getStatusCode(), (int) shouldFail.get());
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+        executor.shutdown();
     }
 
     private static void verifyModifiedMatchesCreated(final GraphStore graph) {

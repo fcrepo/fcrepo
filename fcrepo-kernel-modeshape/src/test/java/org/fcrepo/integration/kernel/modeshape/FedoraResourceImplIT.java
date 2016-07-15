@@ -1,9 +1,11 @@
 /*
- * Copyright 2015 DuraSpace, Inc.
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -33,7 +35,6 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TOMBSTONE;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.RdfLexicon.DC_TITLE;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_CHILD_COUNT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MIXIN_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_NODE_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_PRIMARY_TYPE;
@@ -386,10 +387,6 @@ public class FedoraResourceImplIT extends AbstractIT {
         assertFalse(graph.contains(s, p, o));
 
         // structure
-        p = HAS_CHILD_COUNT.asNode();
-        //final RDFDatatype long_datatype = createTypedLiteral(0L).getDatatype();
-        o = createLiteral("0");
-
         //TODO: re-enable number of children reporting, if practical
 
         //assertTrue(datasetGraph.contains(ANY, s, p, o));
@@ -1002,6 +999,45 @@ public class FedoraResourceImplIT extends AbstractIT {
         try (final InputStream contentStream = ((FedoraBinary) frozenChild.getDescribedResource()).getContent()) {
             assertNotNull(contentStream);
             assertEquals(content, IOUtils.toString(contentStream));
+        }
+    }
+
+    @Test
+    public void testDeleteLinkedVersionedResources() throws RepositoryException {
+        final Container object1 = containerService.findOrCreate(session, "/" + getRandomPid());
+        final Container object2 = containerService.findOrCreate(session, "/" + getRandomPid());
+
+        // Create a link between objects 1 and 2
+        object2.updateProperties(subjects, "PREFIX example: <http://example.org/>\n" +
+                "INSERT { <> <example:link> " + "<" + createGraphSubjectNode(object1).getURI() + ">" +
+                " } WHERE {} ",
+                object2.getTriples(subjects, emptySet()));
+
+        // Create version of object2
+        versionService.createVersion(session, object2.getPath(), "obj2-v0");
+
+        // Verify that the objects exist
+        assertTrue("object1 should exist!", exists(object1));
+        assertTrue("object2 should exist!", exists(object2));
+
+        // This is the test: verify successful deletion of the objects
+        object2.delete();
+        session.save();
+
+        object1.delete();
+        session.save();
+
+        // Double-verify that the objects are gone
+        assertFalse("/object2 should NOT exist!", exists(object2));
+        assertFalse("/object1 should NOT exist!", exists(object1));
+    }
+
+    private boolean exists(final Container resource) {
+        try {
+            resource.getPath();
+            return true;
+        } catch (RepositoryRuntimeException e) {
+            return false;
         }
     }
 
