@@ -101,6 +101,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -112,6 +113,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
@@ -2496,41 +2498,23 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testConcurrentPutDatastreamResource() throws IOException, InterruptedException {
-        final String pid = getRandomUniqueId();
-        createObject(pid);
-
-        final String ds = "ds2";
-        final RequestThread t1 = new RequestThread(putDSFileMethod(pid, ds, TEST_FILE));
-        final RequestThread t2 = new RequestThread(putDSFileMethod(pid, ds, TEST_FILE));
-        t1.start();
-        t2.start();
-        t1.join();
-        t2.join();
-
-        final boolean created = t1.status() == CREATED.getStatusCode() || t2.status() == CREATED.getStatusCode();
-        final boolean notFound = t1.status() == NOT_FOUND.getStatusCode() || t2.status() == NOT_FOUND.getStatusCode();
-        assertTrue(created);
-        assertTrue(notFound);
-    }
-
-    @Test
-    public void testConcurrentPostDatastreamResource() throws IOException, InterruptedException {
+    public void testConcurrentPutDatastreamResource() throws InterruptedException,
+            ExecutionException, UnsupportedEncodingException {
         final String pid = getRandomUniqueId();
         createObject(pid);
 
         final String ds = getRandomUniqueId();
-        final RequestThread t1 = new RequestThread(postDSFileMethod(pid, ds, TEST_FILE));
-        final RequestThread t2 = new RequestThread(postDSFileMethod(pid, ds, TEST_FILE));
-        t1.start();
-        t2.start();
-        t1.join();
-        t2.join();
+        concurrentSNSDataStreamIngest(putDSFileMethod(pid, ds, TEST_FILE), 2);
+    }
 
-        final boolean created = t1.status() == CREATED.getStatusCode() || t2.status() == CREATED.getStatusCode();
-        final boolean notFound = t1.status() == NOT_FOUND.getStatusCode() || t2.status() == NOT_FOUND.getStatusCode();
-        assertTrue(created);
-        assertTrue(notFound);
+    @Test
+    public void testConcurrentPostDatastreamResource() throws InterruptedException,
+            ExecutionException, UnsupportedEncodingException {
+        final String pid = getRandomUniqueId();
+        createObject(pid);
+
+        final String ds = getRandomUniqueId();
+        concurrentSNSDataStreamIngest(postDSFileMethod(pid, ds, TEST_FILE), 2);
     }
 
     private static void verifyModifiedMatchesCreated(final GraphStore graph) {
