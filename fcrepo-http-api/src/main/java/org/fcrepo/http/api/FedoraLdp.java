@@ -771,15 +771,13 @@ public class FedoraLdp extends ContentExposingResource {
      * @throws RepositoryException
      */
     private void save(final FedoraResource resource) throws RepositoryException {
-        synchronized (LOGGER) {
-            final FedoraResource existingNode = nodeService.find(session, resource.getPath());
-            if (resource.isNew() && existingNode != null && !existingNode.getPath().equals(resource.getPath())) {
-                LOGGER.error("Same Name Sibling violation: {}", existingNode.getPath());
-                session.removeItem(resource.getPath());
-                throw new ClientErrorException("Resource Already Exists", CONFLICT);
-            }
-            session.save();
+        final FedoraResource existingNode = nodeService.find(session, resource.getPath());
+        if (resource.isNew() && existingNode != null && !existingNode.getPath().equals(resource.getPath())) {
+            LOGGER.error("Same Name Sibling violation: {}", existingNode.getPath());
+            session.removeItem(resource.getPath());
+            throw new ClientErrorException("Resource Already Exists", CONFLICT);
         }
+        session.save();
     }
 
     private static void checkLinkForLdpResourceCreation(final String link) {
