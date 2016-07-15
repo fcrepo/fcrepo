@@ -31,6 +31,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static java.util.TimeZone.getTimeZone;
+import static java.util.concurrent.Executors.newFixedThreadPool;
 import static java.util.regex.Pattern.compile;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.Link.fromUri;
@@ -97,12 +98,10 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -115,7 +114,9 @@ import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
-
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
@@ -142,12 +143,12 @@ import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.FileEntity;
+import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
-import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -198,23 +199,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     static {
         headerFormat.setTimeZone(getTimeZone("GMT"));
         tripleFormat.setTimeZone(getTimeZone("GMT"));
-    }
-
-    private static File TEST_FILE;
-
-    @BeforeClass
-    public static void beforeClass() {
-        try {
-            TEST_FILE = File.createTempFile("content", ".txt");
-            TEST_FILE.deleteOnExit();
-            try (final FileWriter fw = new FileWriter(TEST_FILE)) {
-                for (int i = 0; i < 1000000; i++) {
-                    fw.write("fooooooooooooooooooooooooooooooooooooooooooooooooooo");
-                }
-            }
-        } catch (final IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     @Test
@@ -2501,24 +2485,51 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
     }
 
+    /**
+     * Uses two requests in two threads to check that two datastreams cannot be created under the same URI. One thread
+     * and request starts first, but finishes second. The other starts second, but finishes first. Only whichever
+     * request <i>finishes</i> first should succeed.
+     *
+     * @see <a href="https://jira.duraspace.org/browse/FCREPO-2055">FCREPO-2055</a>
+     */
     @Test
-    public void testConcurrentPutDatastreamResource() throws InterruptedException,
-            ExecutionException, UnsupportedEncodingException {
+    @SuppressWarnings("resource")
+    public void testConcurrentSameNameDatastreamCreation() {
         final String pid = getRandomUniqueId();
-        createObject(pid);
+        createObjectAndClose(pid);
+        final String dsUri = serverAddress + pid + "/" + getRandomUniqueId();
 
-        final String ds = getRandomUniqueId();
-        concurrentSNSDataStreamIngest(putDSFileMethod(pid, ds, TEST_FILE), 2);
-    }
+        final HttpPut leadingRequest = new HttpPut(dsUri);
+        // will be used to indicate that the lagging request has completed and that the leading request may finish
+        final Semaphore signal = new Semaphore(0);
+        // this request will block until a permit is granted, at which point it will immediately complete
+        leadingRequest.setEntity(new InputStreamEntity(new InputStream() {
 
-    @Test
-    public void testConcurrentPostDatastreamResource() throws InterruptedException,
-            ExecutionException, UnsupportedEncodingException {
-        final String pid = getRandomUniqueId();
-        createObject(pid);
+            @Override
+            public int read() {
+                signal.acquireUninterruptibly();
+                return -1;
+            }
+        }));
+        final HttpPut laggingRequest = new HttpPut(dsUri);
 
-        final String ds = getRandomUniqueId();
-        concurrentSNSDataStreamIngest(postDSFileMethod(pid, ds, TEST_FILE), 2);
+        final ExecutorService executor = newFixedThreadPool(2);
+        final Future<Integer> shouldFail = executor.submit(() -> getStatus(leadingRequest));
+        // now the leading request is blocked on the signal
+        final Future<Integer> shouldWin = executor.submit(() -> {
+            // first accomplish this request
+            final int status = getStatus(laggingRequest);
+            // now permit the leading request to finish
+            signal.release();
+            return status;
+        });
+        try {
+            assertEquals("Was unable to create with lagged request!", CREATED.getStatusCode(), (int) shouldWin.get());
+            assertEquals("Was able to create with lead request!", CONFLICT.getStatusCode(), (int) shouldFail.get());
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+        executor.shutdown();
     }
 
     private static void verifyModifiedMatchesCreated(final GraphStore graph) {

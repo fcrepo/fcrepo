@@ -766,8 +766,8 @@ public class FedoraLdp extends ContentExposingResource {
     }
 
     /**
-     * perform save with checking to prevent SN-Sibling nodes from creating
-     * @param resource the FedoraResource need to save
+     * Perform save but prevent same-node-siblings from being created
+     * @param resource the FedoraResource to save
      * @throws RepositoryException
      */
     private void save(final FedoraResource resource) throws RepositoryException {
