@@ -24,7 +24,7 @@
         <label for="update_file" class="control-label">File</label>
         <input type="file" id="update_file"/>
       </div>
-      <input type="submit" class="btn btn-primary" value="Update">
+      <input type="submit" id="binary_update_content" class="btn btn-primary" value="Update">
     </form>
     #end
     <hr />
