@@ -13,6 +13,7 @@ function removeTrailingSlash(origURI) {
 
 function addChild()
 {
+    document.getElementById('btn_action_create').disabled = true;
     var id = $("#new_id").val().trim();
 
     var mixin = $("#new_mixin").val();
@@ -324,6 +325,11 @@ function deleteItem()
 function updateFile()
 {
     var update_file = document.getElementById("update_file").files[0];
+    if (!update_file) {
+      return;
+    }
+
+    document.getElementById("binary_update_content").disabled = true;
     var url = window.location.href.replace("fcr:metadata", "");
     var reader = new FileReader();
     var xhr = new XMLHttpRequest();
@@ -375,5 +381,6 @@ function ajaxErrorHandler(xhr, textStatus, errorThrown) {
     $('#errorLabel').text(errorThrown);
     $('#errorText').text(xhr.responseText);
     $('#errorModal').modal('show');
-
+    (document.getElementById('btn_action_create') || {}).disabled = false;
+    (document.getElementById("binary_update_content") || {}).disabled = false;
 }
