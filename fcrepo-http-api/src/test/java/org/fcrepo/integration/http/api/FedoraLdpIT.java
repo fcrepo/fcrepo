@@ -96,10 +96,12 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -111,6 +113,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
@@ -118,11 +121,11 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.Variant;
 
 import com.google.common.collect.Iterators;
+
 import nu.validator.htmlparser.sax.HtmlParser;
 import nu.validator.saxtree.TreeBuilder;
 
 import org.fcrepo.http.commons.test.util.CloseableGraphStore;
-
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -143,6 +146,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
+import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -193,6 +197,23 @@ public class FedoraLdpIT extends AbstractResourceIT {
     static {
         headerFormat.setTimeZone(getTimeZone("GMT"));
         tripleFormat.setTimeZone(getTimeZone("GMT"));
+    }
+
+    private static File TEST_FILE;
+
+    @BeforeClass
+    public static void beforeClass() {
+        try {
+            TEST_FILE = File.createTempFile("content", ".txt");
+            TEST_FILE.deleteOnExit();
+            try (final FileWriter fw = new FileWriter(TEST_FILE)) {
+                for (int i = 0; i < 1000000; i++) {
+                    fw.write("fooooooooooooooooooooooooooooooooooooooooooooooooooo");
+                }
+            }
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Test
@@ -2476,6 +2497,26 @@ public class FedoraLdpIT extends AbstractResourceIT {
             lastmod4 = headerFormat.parse(response.getFirstHeader("Last-Modified").getValue()).getTime();
             assertTrue(lastmod4 > lastmod3);
         }
+    }
+
+    @Test
+    public void testConcurrentPutDatastreamResource() throws InterruptedException,
+            ExecutionException, UnsupportedEncodingException {
+        final String pid = getRandomUniqueId();
+        createObject(pid);
+
+        final String ds = getRandomUniqueId();
+        concurrentSNSDataStreamIngest(putDSFileMethod(pid, ds, TEST_FILE), 2);
+    }
+
+    @Test
+    public void testConcurrentPostDatastreamResource() throws InterruptedException,
+            ExecutionException, UnsupportedEncodingException {
+        final String pid = getRandomUniqueId();
+        createObject(pid);
+
+        final String ds = getRandomUniqueId();
+        concurrentSNSDataStreamIngest(postDSFileMethod(pid, ds, TEST_FILE), 2);
     }
 
     private static void verifyModifiedMatchesCreated(final GraphStore graph) {
