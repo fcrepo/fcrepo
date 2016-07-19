@@ -42,6 +42,7 @@ import javax.jcr.Credentials;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
 
+import com.google.common.collect.Sets;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -178,8 +179,8 @@ public class ServletContainerAuthenticationProviderTest {
         when(delegatePrincipal.getName()).thenReturn("delegatedUserName");
 
         // delegateProvider being HeaderProvider returns the header content in getPrincipals regardless of logged user
-        when(delegateProvider.getPrincipals(creds)).thenReturn(
-                new HashSet<>(Collections.singletonList(delegatePrincipal)));
+        when(delegateProvider.getPrincipals(creds)).thenReturn(Sets.newHashSet(delegatePrincipal));
+
 
         final ExecutionContext result =
                 provider.authenticate(creds, "repo", "workspace", context,
@@ -200,7 +201,7 @@ public class ServletContainerAuthenticationProviderTest {
         assertFalse(
                 "The sessionAttributes must not contain delegatedUserName " +
                         "(delegated user must not leak to FEDORA_ALL_PRINCIPALS)",
-                principals.stream().anyMatch(x->"delegatedUserName".equals(x.getName())));
+                principals.stream().map(Principal::getName).anyMatch("delegatedUserName"::equals));
     }
 
     @Test
