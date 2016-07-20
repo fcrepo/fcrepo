@@ -19,7 +19,7 @@
 	<a href="$content/fcr:fixity" class="btn btn-success btn-lg">Fixity</a>
     #if ($writable == true)
     <h3>Update Content</h3>
-    <form action="javascript:updateFile()">
+    <form id="action_update_file">
       <div class="form-group">
         <label for="update_file" class="control-label">File</label>
         <input type="file" id="update_file"/>
@@ -47,7 +47,7 @@
     <label for="new_id"  class="control-label">
         Identifier
     </label>
-    <input type="text" id="new_id" name="slug"  class="form-control"/>
+    <input type="text" id="new_id" placeholder="(auto-generated identifier)" name="slug"  class="form-control"/>
         </div>
 
 
@@ -77,17 +77,16 @@ WHERE { }
     <hr />
 </form>
 
-<form id="action_create_version" name="action_create_version" action="javascript:createVersionSnapshot()" method="POST">
+<form id="action_create_version" name="action_create_version" method="POST">
     <h3>Create Version Snapshot</h3>
     <div class="form-group">
-    <input type="text" id="version_id" name="version_name" class="form-control"/>
+    <input type="text" id="version_id" placeholder="(auto-generated name)" name="version_name" class="form-control"/>
     </div>
     <button id="create-version-button" type="submit" class="btn btn-primary">Create Version</button>
     <hr />
 </form>
 
-<form id="action_delete" name="action_delete" action="javascript:deleteItem()" method="POST">
-    <input type="hidden" name="_method" value="DELETE" />
+<form id="action_delete" name="action_delete">
     <h3>Delete Resource</h3>
     <button name="delete-button" type="submit" class="btn btn-danger">Delete</button>
     <hr />
@@ -99,7 +98,7 @@ WHERE { }
 #set ($fedoraresc = $rdf.find($topic, $rdfLexicon.HAS_MIXIN_TYPE.asNode(), $helpers.asLiteralStringNode("fedora:resource")))
 #if($fedoraresc.hasNext())
 <h3>Access Roles</h3>
-<form id="update_rbacl" type="application/json" action="javascript:updateAccessRoles()" method="POST">
+<form id="update_rbacl" type="application/json">
     <div class="form-group">
 <textarea rows="10" id="rbacl_json" name="rbacl_json" class="form-control">
 {

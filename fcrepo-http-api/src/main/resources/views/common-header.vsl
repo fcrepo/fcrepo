@@ -50,6 +50,7 @@
 
 
 <!-- Modal -->
+<button id="showErrorModal" data-toggle="modal" data-target="#errorModal"></button>
 <div class="modal fade" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="errorLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
