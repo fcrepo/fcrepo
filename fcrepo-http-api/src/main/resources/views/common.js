@@ -290,8 +290,8 @@
       listen('update_rbacl', 'submit', updateAccessRoles);
 
       const links = document.querySelectorAll('a[property][href*="' + location.host + '"],#childList a,.breadcrumb a,.version_link');
-      for (const link of links) {
-        link.addEventListener('click', checkIfNonRdfResource);
+      for (var i = 0; i < links.length; ++i) {
+        links[i].addEventListener('click', checkIfNonRdfResource);
       }
   });
 })();
