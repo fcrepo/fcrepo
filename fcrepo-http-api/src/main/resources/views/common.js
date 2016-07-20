@@ -12,13 +12,13 @@
   // http(String method, String url, Array headers (optional), TypedArray data (optional), Function callback (optional));
   function http(method, url) {
       const args = Array.prototype.slice.call(arguments);
-      const cb = args.pop();
+      const fn = args.pop();
       const headers = args.length > 0 && Array.isArray(args[0]) ? args[0] : [];
       const data = args.length > 0 && !Array.isArray(args[args.length-1]) ? args[args.length-1] : null;
       const xhr = new XMLHttpRequest();
       xhr.open(method, url);
       xhr.onreadystatechange = function() {
-        xhr.readyState == 4 && typeof cb === 'function' && cb(xhr);
+        xhr.readyState == 4 && typeof fn === 'function' && fn(xhr);
       }
       headers.filter(function(h) { return Array.isArray(h) && h.length == 2 })
              .forEach(function(h) { xhr.setRequestHeader(h[0], h[1]) });
@@ -33,10 +33,10 @@
     }
   }
 
-  function listen(id, event, cb) {
+  function listen(id, event, fn) {
     const el = document.getElementById(id);
     if (el) {
-      el.addEventListener(event, cb);
+      el.addEventListener(event, fn);
     }
   }
 
@@ -51,7 +51,7 @@
     const url = id == '' ? uri : uri + '/' + id;
     const headers = [];
 
-    const cb = function (method, url, headers, data) {
+    const fn = function (method, url, headers, data) {
       http(method, url, headers, data, function(res) {
         console.log(res.status);
         if (res.status == 201) {
@@ -82,11 +82,11 @@
           for (var i = 0; i < result.length; i++) {
               data[i] = (result.charCodeAt(i) & 0xff);
           }
-          cb(method, url, headers, data.buffer);
+          fn(method, url, headers, data.buffer);
       };
       reader.readAsBinaryString(update_file);
     } else {
-      cb(method, url, headers, null);
+      fn(method, url, headers, null);
     }
   }
 
