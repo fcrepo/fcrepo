@@ -76,14 +76,10 @@
       headers.push(['Content-Disposition', 'attachment; filename=\"' + update_file.name + '\"']);
       headers.push(['Content-Type', update_file.type || 'application/octet-stream']);
       reader.onload = function(e) {
-          const result = e.target.result;
-          var data = new Uint8Array(result.length);
-          for (var i = 0; i < result.length; i++) {
-              data[i] = (result.charCodeAt(i) & 0xff);
-          }
+          const data = new Uint8Array(e.target.result);
           fn(method, url, headers, data.buffer);
       };
-      reader.readAsBinaryString(update_file);
+      reader.readAsArrayBuffer(update_file);
     } else {
       fn(method, url, headers, null);
     }
@@ -222,11 +218,7 @@
         ['Content-Type', update_file.type]];
 
       reader.onload = function(e) {
-          const result = e.target.result;
-          var data = new Uint8Array(result.length);
-          for (var i = 0; i < result.length; i++) {
-              data[i] = (result.charCodeAt(i) & 0xff);
-          }
+          const data = new Uint8Array(e.target.result);
           http('PUT', url, headers, data.buffer, function(res) {
               if (res.status == 204 || res.status == 201) {
                   window.location.reload(true);
@@ -235,7 +227,7 @@
               }
           });
       };
-      reader.readAsBinaryString(update_file);
+      reader.readAsArrayBuffer(update_file);
       e.preventDefault();
   }
 
