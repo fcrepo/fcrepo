@@ -53,7 +53,6 @@
 
     const fn = function (method, url, headers, data) {
       http(method, url, headers, data, function(res) {
-        console.log(res.status);
         if (res.status == 201) {
           const loc = res.getResponseHeader('Location');
           const link = res.getResponseHeader('Link');
