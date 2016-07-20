@@ -11,7 +11,7 @@
 
   // http(String method, String url, Array headers (optional), TypedArray data (optional), Function callback (optional));
   function http(method, url) {
-      const args = Array.prototype.slice.call(arguments);
+      const args = Array.prototype.slice.call(arguments, http.length);
       const fn = args.pop();
       const headers = args.length > 0 && Array.isArray(args[0]) ? args[0] : [];
       const data = args.length > 0 && !Array.isArray(args[args.length-1]) ? args[args.length-1] : null;
@@ -194,7 +194,7 @@
 
   function deleteItem(e) {
       const uri = document.getElementById('main').getAttribute('resource');
-      var arr = uri.toString().split('/');
+      const arr = uri.toString().split('/');
       arr.pop();
 
       http('DELETE', uri, function(res) {
@@ -290,7 +290,7 @@
       listen('update_rbacl', 'submit', updateAccessRoles);
 
       const links = document.querySelectorAll('a[property][href*="' + location.host + '"],#childList a,.breadcrumb a,.version_link');
-      for (var link of links) {
+      for (const link of links) {
         link.addEventListener('click', checkIfNonRdfResource);
       }
   });
