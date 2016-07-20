@@ -11,7 +11,7 @@
 
   // http(String method, String url, Array headers (optional), TypedArray data (optional), Function callback (optional));
   function http(method, url) {
-      const args = Array.prototype.slice.call(arguments, http.length);
+      const args = Array.prototype.slice.call(arguments);
       const cb = args.pop();
       const headers = args.length > 0 && Array.isArray(args[0]) ? args[0] : [];
       const data = args.length > 0 && !Array.isArray(args[args.length-1]) ? args[args.length-1] : null;
@@ -53,6 +53,7 @@
 
     const cb = function (method, url, headers, data) {
       http(method, url, headers, data, function(res) {
+        console.log(res.status);
         if (res.status == 201) {
           const loc = res.getResponseHeader('Location');
           const link = res.getResponseHeader('Link');
@@ -289,7 +290,9 @@
       listen('action_update_file', 'submit', updateFile);
       listen('update_rbacl', 'submit', updateAccessRoles);
 
-      Object.keys(document.querySelectorAll('a[property][href*="' + location.host + '"],#childList a,.breadcrumb a,.version_link'))
-          .forEach(function(link) { link.addEventListener('click', checkIfNonRdfResource) });
+      const links = document.querySelectorAll('a[property][href*="' + location.host + '"],#childList a,.breadcrumb a,.version_link');
+      for (var link of links) {
+        link.addEventListener('click', checkIfNonRdfResource);
+      }
   });
 })();
