@@ -76,8 +76,7 @@
       headers.push(['Content-Disposition', 'attachment; filename=\"' + update_file.name + '\"']);
       headers.push(['Content-Type', update_file.type || 'application/octet-stream']);
       reader.onload = function(e) {
-          const data = new Uint8Array(e.target.result);
-          fn(method, url, headers, data.buffer);
+          fn(method, url, headers, e.target.result);
       };
       reader.readAsArrayBuffer(update_file);
     } else {
@@ -218,8 +217,7 @@
         ['Content-Type', update_file.type]];
 
       reader.onload = function(e) {
-          const data = new Uint8Array(e.target.result);
-          http('PUT', url, headers, data.buffer, function(res) {
+          http('PUT', url, headers, e.target.result, function(res) {
               if (res.status == 204 || res.status == 201) {
                   window.location.reload(true);
               } else {
