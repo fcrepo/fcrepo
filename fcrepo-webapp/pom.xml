@@ -506,7 +506,7 @@
                   <goal>createconsole</goal>
                 </goals>
                 <configuration>
-                  <backgroundImage>${basedir}/src/main/webapp/images/fedora_logo_10in.png</backgroundImage>
+                  <backgroundImage>${basedir}/src/main/webapp/static/images/fedora_logo_10in.png</backgroundImage>
                   <destinationFile>
                     ${project.build.directory}${file.separator}${project.artifactId}-${project.version}-jetty-console.jar
                   </destinationFile>
