@@ -149,7 +149,6 @@
       <artifactId>infinispan-cachestore-jdbc</artifactId>
     </dependency>
 
-    <!-- test gear -->
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-web</artifactId>
@@ -158,6 +157,8 @@
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-cachestore-leveldb</artifactId>
     </dependency>
+
+    <!-- test gear -->
     <dependency>
       <groupId>net.sourceforge.htmlunit</groupId>
       <artifactId>htmlunit</artifactId>
