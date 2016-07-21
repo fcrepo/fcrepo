@@ -34,6 +34,16 @@
 
 	</servlet-mapping>
 
+  <filter>
+    <filter-name>ETagFilter</filter-name>
+    <filter-class>org.springframework.web.filter.ShallowEtagHeaderFilter</filter-class>
+  </filter>
+
+  <filter-mapping>
+    <filter-name>ETagFilter</filter-name>
+    <url-pattern>/static/*</url-pattern>
+  </filter-mapping>
+
   <!--Uncomment section below to enable Basic-Authentication-->
   <!--
   <security-constraint>
