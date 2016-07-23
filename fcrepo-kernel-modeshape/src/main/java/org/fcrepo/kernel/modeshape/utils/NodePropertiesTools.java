@@ -19,6 +19,8 @@ package org.fcrepo.kernel.modeshape.utils;
 
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
+import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDstring;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FIELD_DELIMITER;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getReferencePropertyName;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isExternalNode;
@@ -206,14 +208,16 @@ public class NodePropertiesTools {
 
             final Property property = node.getProperty(propertyName);
             final String strValueToRemove = valueToRemove.getString();
+            final String strValueToRemoveWithoutStringType = strValueToRemove != null ?
+                        strValueToRemove.replace(FIELD_DELIMITER + XSDstring.getURI(), "") : strValueToRemove;
 
             if (property.isMultiple()) {
                 final AtomicBoolean remove = new AtomicBoolean();
                 final Value[] newValues = stream(node.getProperty(propertyName).getValues()).filter(uncheck(v -> {
-                    final String strVal = v.getString();
+                    final String strVal = v.getString().replace(FIELD_DELIMITER + XSDstring.getURI(), "");
 
                     LOGGER.debug("v is '{}', valueToRemove is '{}'", v, strValueToRemove );
-                    if (strVal.equals(strValueToRemove)) {
+                    if (strVal.equals(strValueToRemoveWithoutStringType)) {
                         remove.set(true);
                         return false;
                     }
@@ -239,9 +243,11 @@ public class NodePropertiesTools {
             } else {
 
                 final String strPropVal = property.getValue().getString();
+                final String strPropValWithoutStringType =
+                    strPropVal != null ? strPropVal.replace(FIELD_DELIMITER + XSDstring.getURI(), "") : strPropVal;
 
                 LOGGER.debug("Removing string '{}'", strValueToRemove);
-                if (StringUtils.equals(strPropVal, strValueToRemove)) {
+                if (StringUtils.equals(strPropValWithoutStringType, strValueToRemoveWithoutStringType)) {
                     LOGGER.debug("single value: Removing value from property '{}'", propertyName);
                     property.remove();
                 } else {

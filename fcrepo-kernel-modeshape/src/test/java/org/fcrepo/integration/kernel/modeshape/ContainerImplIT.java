@@ -17,12 +17,14 @@
  */
 package org.fcrepo.integration.kernel.modeshape;
 
-import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static java.util.Collections.emptySet;
 import static java.util.regex.Pattern.compile;
 import static org.apache.commons.io.IOUtils.toInputStream;
+import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDstring;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FIELD_DELIMITER;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getReferencePropertyName;
 import static org.junit.Assert.assertEquals;
@@ -110,7 +112,7 @@ public class ContainerImplIT extends AbstractIT {
         assertTrue(values[0]
                        .getString(),
                       values[0]
-                          .getString().equals("This is an example title"));
+                          .getString().equals("This is an example title" + FIELD_DELIMITER + XSDstring.getURI()));
 
 
         object.updateProperties(subjects, "PREFIX myurn: <info:myurn/>\n" +
@@ -121,7 +123,7 @@ public class ContainerImplIT extends AbstractIT {
                                          .getNamespacePrefix("info:myurn/") +
                                          ":info").getValues()[0];
 
-        assertEquals("This is some example data", value.getString());
+        assertEquals("This is some example data" + FIELD_DELIMITER + XSDstring.getURI(), value.getString());
 
         object.updateProperties(subjects, "PREFIX dcterms: <http://purl.org/dc/terms/>\n" +
                 "INSERT { <" + graphSubject + "> dcterms:" +

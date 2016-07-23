@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.modeshape.rdf;
 
+import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDstring;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
@@ -28,6 +29,7 @@ import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.URI;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FIELD_DELIMITER;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_NODE;
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getJcrNamespaceForRDFNamespace;
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
@@ -252,7 +254,7 @@ public class JcrRdfToolsTest implements FedoraTypes {
         when(mockValueFactory.createValue(anyString(), eq(STRING))).thenReturn(mockValue);
         final RDFNode n = createPlainLiteral("x");
         testObj.createValue(mockNode, n, "some:property");
-        verify(mockValueFactory).createValue("x", STRING);
+        verify(mockValueFactory).createValue("x" + FIELD_DELIMITER + XSDstring.getURI(), STRING);
     }
 
     @Test

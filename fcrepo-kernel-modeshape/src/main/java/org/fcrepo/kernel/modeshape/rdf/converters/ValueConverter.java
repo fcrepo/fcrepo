@@ -19,7 +19,6 @@ package org.fcrepo.kernel.modeshape.rdf.converters;
 
 import com.google.common.base.Converter;
 import com.google.common.base.Splitter;
-import org.apache.jena.datatypes.BaseDatatype;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.RDFNode;
@@ -55,6 +54,7 @@ import static javax.jcr.PropertyType.UNDEFINED;
 import static javax.jcr.PropertyType.URI;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static org.fcrepo.kernel.api.RdfLexicon.INACCESSIBLE_RESOURCE;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FIELD_DELIMITER;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeToResource;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -155,7 +155,7 @@ public class ValueConverter extends Converter<Value, RDFNode> {
         } else if (rdfLiteralJcrValueBuilder.hasDatatypeUri()) {
             return createTypedLiteral(rdfLiteralJcrValueBuilder.value(), rdfLiteralJcrValueBuilder.datatype());
         } else {
-            return createPlainLiteral(literal);
+            return createPlainLiteral(rdfLiteralJcrValueBuilder.value());
         }
     }
 
@@ -192,7 +192,6 @@ public class ValueConverter extends Converter<Value, RDFNode> {
     }
 
     protected static class RdfLiteralJcrValueBuilder {
-        private static final String FIELD_DELIMITER = "\30^^\30";
         public static final Splitter JCR_VALUE_SPLITTER = Splitter.on(FIELD_DELIMITER);
 
         private String value;
