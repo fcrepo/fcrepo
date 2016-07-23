@@ -18,7 +18,7 @@
 package org.fcrepo.http.commons.api.rdf;
 
 import static com.google.common.collect.ImmutableList.of;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.Collections.singleton;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.replaceOnce;
@@ -64,7 +64,7 @@ import org.springframework.context.ApplicationContext;
 
 import com.google.common.base.Converter;
 import com.google.common.collect.Lists;
-import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Resource;
 
 /**
  * Convert between Jena Resources and JCR Nodes using a JAX-RS UriBuilder to mediate the

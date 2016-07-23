@@ -30,7 +30,7 @@ import javax.ws.rs.ext.Provider;
 
 import org.slf4j.Logger;
 
-import com.hp.hpl.jena.query.QueryParseException;
+import org.apache.jena.query.QueryParseException;
 
 
 /**

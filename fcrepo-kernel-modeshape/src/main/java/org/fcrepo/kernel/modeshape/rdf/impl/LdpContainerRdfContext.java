@@ -17,8 +17,8 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
@@ -37,9 +37,9 @@ import javax.jcr.RepositoryException;
 
 import static java.util.stream.Stream.empty;
 import static java.util.stream.Stream.of;
-import static com.hp.hpl.jena.graph.NodeFactory.createURI;
-import static com.hp.hpl.jena.graph.Triple.create;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.graph.Triple.create;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_HAS_MEMBER_RELATION;
@@ -97,7 +97,7 @@ public class LdpContainerRdfContext extends NodeRdfContext {
      * @throws RepositoryException
      */
     private Stream<Triple> memberRelations(final FedoraResource container) throws RepositoryException {
-        final com.hp.hpl.jena.graph.Node memberRelation;
+        final org.apache.jena.graph.Node memberRelation;
 
         if (container.hasProperty(LDP_HAS_MEMBER_RELATION)) {
             final Property property = getJcrNode(container).getProperty(LDP_HAS_MEMBER_RELATION);
@@ -123,7 +123,7 @@ public class LdpContainerRdfContext extends NodeRdfContext {
 
         return container.getChildren().flatMap(
             UncheckedFunction.<FedoraResource, Stream<Triple>>uncheck(child -> {
-                final com.hp.hpl.jena.graph.Node childSubject = uriFor(child.getDescribedResource());
+                final org.apache.jena.graph.Node childSubject = uriFor(child.getDescribedResource());
 
                 if (insertedContainerProperty.equals(MEMBER_SUBJECT.getURI())) {
                     return of(create(subject(), memberRelation, childSubject));

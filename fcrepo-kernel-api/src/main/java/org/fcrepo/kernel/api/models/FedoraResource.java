@@ -27,7 +27,7 @@ import java.util.stream.Stream;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
-import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
@@ -35,7 +35,7 @@ import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.RdfStream;
 
-import com.hp.hpl.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Model;
 
 /**
  * @author ajs6f

@@ -17,9 +17,9 @@
  */
 package org.fcrepo.integration.http.api;
 
-import static com.hp.hpl.jena.graph.Node.ANY;
-import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
-import static com.hp.hpl.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.graph.Node.ANY;
+import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.NodeFactory.createURI;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_RESULT;
@@ -41,9 +41,9 @@ import org.fcrepo.http.commons.test.util.CloseableGraphStore;
 
 import org.junit.Test;
 
-import com.hp.hpl.jena.datatypes.RDFDatatype;
-import com.hp.hpl.jena.datatypes.TypeMapper;
-import com.hp.hpl.jena.sparql.core.Quad;
+import org.apache.jena.datatypes.RDFDatatype;
+import org.apache.jena.datatypes.TypeMapper;
+import org.apache.jena.sparql.core.Quad;
 
 /**
  * <p>FedoraFixityIT class.</p>

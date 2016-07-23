@@ -18,7 +18,7 @@
 package org.fcrepo.http.api;
 
 import static com.google.common.base.Predicates.containsPattern;
-import static com.hp.hpl.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.graph.NodeFactory.createURI;
 import static java.util.stream.Stream.of;
 import static java.util.Collections.emptyMap;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
@@ -109,10 +109,10 @@ import org.springframework.mock.web.MockHttpServletResponse;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.RDFNode;
-import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
 
 /**
  * @author cabeer

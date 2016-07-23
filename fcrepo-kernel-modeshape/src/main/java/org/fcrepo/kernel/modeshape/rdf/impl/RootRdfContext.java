@@ -18,10 +18,10 @@
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
 import static java.util.stream.Stream.of;
-import static com.hp.hpl.jena.graph.NodeFactory.createURI;
-import static com.hp.hpl.jena.graph.Triple.create;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
-import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.graph.Triple.create;
+import static org.apache.jena.rdf.model.ResourceFactory.createTypedLiteral;
+import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_CHECK_COUNT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_ERROR_COUNT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_REPAIRED_COUNT;
@@ -29,7 +29,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.metrics.RegistryService;
@@ -39,7 +39,7 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 
 import com.codahale.metrics.Counter;
-import com.hp.hpl.jena.graph.Triple;
+import org.apache.jena.graph.Triple;
 
 /**
  * Assemble {@link Triple}s derived from the root of a repository.

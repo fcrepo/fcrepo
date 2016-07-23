@@ -18,8 +18,8 @@
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
 import com.google.common.base.Converter;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl;
 import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
@@ -36,8 +36,8 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.Workspace;
 
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.URI;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;

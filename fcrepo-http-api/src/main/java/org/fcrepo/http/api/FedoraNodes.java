@@ -50,7 +50,7 @@ import org.springframework.context.annotation.Scope;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import org.apache.jena.rdf.model.ResourceFactory;
 
 /**
  * CRUD operations on Fedora Nodes

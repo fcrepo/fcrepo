@@ -37,7 +37,7 @@
         com.codahale.metrics.*,
         com.fasterxml.jackson.*,
         com.google.common.*,
-        com.hp.hpl.jena.*,
+        org.apache.jena.*,
 
         *
     </osgi.import.packages>

@@ -27,8 +27,8 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
 
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.kernel.api.models.FedoraBinary;

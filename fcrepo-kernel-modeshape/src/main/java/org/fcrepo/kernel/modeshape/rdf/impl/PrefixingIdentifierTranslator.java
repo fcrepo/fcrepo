@@ -18,7 +18,7 @@
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 
 import com.google.common.base.Converter;
 import com.google.common.collect.Lists;
@@ -27,7 +27,7 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 
-import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.modeshape.identifiers.HashConverter;
 import org.fcrepo.kernel.modeshape.identifiers.NamespaceConverter;

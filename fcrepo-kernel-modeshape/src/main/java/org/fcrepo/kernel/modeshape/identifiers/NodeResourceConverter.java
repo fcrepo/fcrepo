@@ -20,7 +20,7 @@ package org.fcrepo.kernel.modeshape.identifiers;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 
 import com.google.common.base.Converter;
-import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl;
 import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;

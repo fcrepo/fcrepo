@@ -17,14 +17,14 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
-import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.slf4j.Logger;
 
 import javax.jcr.RepositoryException;
 
-import static com.hp.hpl.jena.graph.Triple.create;
+import static org.apache.jena.graph.Triple.create;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.slf4j.LoggerFactory.getLogger;

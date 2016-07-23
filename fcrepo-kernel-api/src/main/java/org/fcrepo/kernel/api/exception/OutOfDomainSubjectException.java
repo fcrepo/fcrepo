@@ -17,7 +17,7 @@
  */
 package org.fcrepo.kernel.api.exception;
 
-import com.hp.hpl.jena.graph.Node;
+import org.apache.jena.graph.Node;
 
 /**
  * Fedora does not accept RDF with subjects that are not local to the repository.

@@ -17,13 +17,13 @@
  */
 package org.fcrepo.kernel.modeshape.utils.iterators;
 
-import static com.hp.hpl.jena.graph.NodeFactory.createAnon;
-import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
-import static com.hp.hpl.jena.graph.NodeFactory.createURI;
-import static com.hp.hpl.jena.graph.Triple.create;
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static org.apache.jena.graph.NodeFactory.createAnon;
+import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.graph.Triple.create;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.vocabulary.RDF.type;
 import static javax.jcr.PropertyType.STRING;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getJcrNamespaceForRDFNamespace;
@@ -56,10 +56,10 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.modeshape.jcr.api.NamespaceRegistry;
 
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.Statement;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
 
 
 /**

@@ -17,16 +17,16 @@
  */
 package org.fcrepo.integration.http.api;
 
-import static com.hp.hpl.jena.datatypes.TypeMapper.getInstance;
-import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDinteger;
-import static com.hp.hpl.jena.graph.Node.ANY;
-import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
-import static com.hp.hpl.jena.graph.NodeFactory.createURI;
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createModelForGraph;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static org.apache.jena.datatypes.TypeMapper.getInstance;
+import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDinteger;
+import static org.apache.jena.graph.Node.ANY;
+import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.rdf.model.ModelFactory.createModelForGraph;
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.vocabulary.RDF.type;
 import static java.lang.System.currentTimeMillis;
 import static java.lang.Thread.sleep;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -157,14 +157,14 @@ import org.xml.sax.SAXParseException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Property;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.StmtIterator;
-import com.hp.hpl.jena.sparql.core.Quad;
-import com.hp.hpl.jena.update.GraphStore;
-import com.hp.hpl.jena.vocabulary.DC_11;
+import org.apache.jena.graph.Node;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.update.GraphStore;
+import org.apache.jena.vocabulary.DC_11;
 
 /**
  * @author cabeer

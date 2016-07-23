@@ -25,7 +25,7 @@ import javax.jcr.Session;
 import org.junit.Before;
 import org.mockito.Mock;
 
-import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Resource;
 
 /**
  * <p>DefaultGraphSubjectsTest class.</p>

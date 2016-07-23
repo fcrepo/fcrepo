@@ -24,7 +24,7 @@
       
       com.codahale.metrics.*,
       com.fasterxml.jackson.core,
-      com.hp.hpl.jena.*,
+      org.apache.jena.*,
       com.google.common.*,
       org.apache.jena.riot,
       org.apache.commons.codec.*,

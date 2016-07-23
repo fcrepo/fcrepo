@@ -17,13 +17,13 @@
  */
 package org.fcrepo.event.serialization;
 
-import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDdateTime;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
-import static com.hp.hpl.jena.vocabulary.DCTerms.identifier;
-import static com.hp.hpl.jena.vocabulary.DCTerms.isPartOf;
-import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDdateTime;
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.rdf.model.ResourceFactory.createTypedLiteral;
+import static org.apache.jena.vocabulary.DCTerms.identifier;
+import static org.apache.jena.vocabulary.DCTerms.isPartOf;
+import static org.apache.jena.vocabulary.RDF.type;
 import static java.time.Instant.ofEpochMilli;
 import static org.fcrepo.kernel.api.RdfLexicon.EVENT_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.PROV_NAMESPACE;
@@ -42,9 +42,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.SimpleSelector;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.SimpleSelector;
 import org.fcrepo.kernel.api.observer.EventType;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
 import org.junit.Before;

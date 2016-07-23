@@ -17,7 +17,7 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
-import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 
@@ -25,9 +25,9 @@ import javax.jcr.RepositoryException;
 import java.security.AccessControlException;
 
 import static java.util.stream.Stream.of;
-import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDboolean;
-import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
-import static com.hp.hpl.jena.graph.Triple.create;
+import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDboolean;
+import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.Triple.create;
 import static org.fcrepo.kernel.api.RdfLexicon.WRITABLE;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 

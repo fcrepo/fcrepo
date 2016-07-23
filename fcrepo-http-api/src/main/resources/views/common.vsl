@@ -1,7 +1,7 @@
-#* @vtlvariable name="quad" type="com.hp.hpl.jena.sparql.core.Quad" *#
-#* @vtlvariable name="rdf" type="com.hp.hpl.jena.graph.Graph" *#
-#* @vtlvariable name="model" type="com.hp.hpl.jena.rdf.model.Model" *#
-#* @vtlvariable name="triple" type="com.hp.hpl.jena.graph.Triple" *#
+#* @vtlvariable name="quad" type="org.apache.jena.sparql.core.Quad" *#
+#* @vtlvariable name="rdf" type="org.apache.jena.graph.Graph" *#
+#* @vtlvariable name="model" type="org.apache.jena.rdf.model.Model" *#
+#* @vtlvariable name="triple" type="org.apache.jena.graph.Triple" *#
 #macro( triples $sub )
         <dl>
 

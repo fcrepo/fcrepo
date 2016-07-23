@@ -67,7 +67,7 @@ import org.springframework.test.context.ContextConfiguration;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
-import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Resource;
 
 /**
  * <p>SimpleObserverIT class.</p>

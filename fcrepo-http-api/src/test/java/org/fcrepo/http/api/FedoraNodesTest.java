@@ -62,8 +62,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.sparql.util.Context;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.sparql.util.Context;
 
 
 /**

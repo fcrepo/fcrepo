@@ -17,15 +17,15 @@
  */
 package org.fcrepo.kernel.modeshape.rdf;
 
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 
 import java.util.function.Predicate;
 
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
 
 /**
  * {@link Predicate}s for determining when RDF is managed by the repository.

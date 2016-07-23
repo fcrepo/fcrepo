@@ -18,7 +18,7 @@
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
 import static java.util.stream.Stream.of;
-import static com.hp.hpl.jena.graph.Triple.create;
+import static org.apache.jena.graph.Triple.create;
 import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBES;
 import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBED_BY;
 
@@ -27,8 +27,8 @@ import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.jena.graph.Node;
+import org.apache.jena.rdf.model.Resource;
 
 /**
  * @author cabeer

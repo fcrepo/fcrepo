@@ -18,12 +18,12 @@
 package org.fcrepo.http.commons.responses;
 
 import static com.google.common.collect.ImmutableMap.of;
-import static com.hp.hpl.jena.graph.NodeFactory.createAnon;
-import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
-import static com.hp.hpl.jena.graph.NodeFactory.createURI;
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
+import static org.apache.jena.graph.NodeFactory.createAnon;
+import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
@@ -49,19 +49,19 @@ import java.util.Map;
 
 import javax.ws.rs.core.UriInfo;
 
-import com.hp.hpl.jena.graph.Graph;
-import com.hp.hpl.jena.graph.Triple;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Triple;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.NodeFactory;
-import com.hp.hpl.jena.rdf.model.Literal;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Property;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
-import com.hp.hpl.jena.vocabulary.RDF;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.rdf.model.Literal;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.vocabulary.RDF;
 
 /**
  * <p>ViewHelpersTest class.</p>

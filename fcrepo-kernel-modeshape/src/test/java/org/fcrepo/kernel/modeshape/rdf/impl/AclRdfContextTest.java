@@ -17,9 +17,9 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
-import com.hp.hpl.jena.rdf.model.Literal;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Literal;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
@@ -33,7 +33,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import java.security.AccessControlException;
 
-import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDboolean;
+import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDboolean;
 import static org.fcrepo.kernel.api.RdfLexicon.WRITABLE;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.junit.Assert.assertTrue;

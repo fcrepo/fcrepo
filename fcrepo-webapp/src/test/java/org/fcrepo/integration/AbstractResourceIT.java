@@ -31,7 +31,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.UUID;
 
-import com.hp.hpl.jena.update.GraphStore;
+import org.apache.jena.update.GraphStore;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;

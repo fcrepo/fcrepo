@@ -39,8 +39,8 @@ import org.fcrepo.kernel.modeshape.rdf.impl.mappings.PropertyToTriple;
 
 import org.slf4j.Logger;
 
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Resource;
 
 /**
  * {@link NodeRdfContext} for RDF that derives from JCR properties on a Resource

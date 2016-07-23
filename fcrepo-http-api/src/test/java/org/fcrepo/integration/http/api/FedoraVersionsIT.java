@@ -17,11 +17,11 @@
  */
 package org.fcrepo.integration.http.api;
 
-import static com.hp.hpl.jena.graph.Node.ANY;
-import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
-import static com.hp.hpl.jena.graph.NodeFactory.createURI;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static org.apache.jena.graph.Node.ANY;
+import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.vocabulary.RDF.type;
 import static java.util.stream.Stream.empty;
 import static java.util.stream.Stream.of;
 import static javax.ws.rs.core.Link.fromUri;
@@ -71,10 +71,10 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.sparql.core.Quad;
-import com.hp.hpl.jena.update.GraphStore;
+import org.apache.jena.graph.Node;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.update.GraphStore;
 
 import javax.ws.rs.core.Link;
 

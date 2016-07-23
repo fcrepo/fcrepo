@@ -17,7 +17,7 @@
  */
 package org.fcrepo.kernel.modeshape.rdf;
 
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.UNDEFINED;
@@ -50,9 +50,9 @@ import javax.jcr.nodetype.NodeTypeManager;
 import javax.jcr.nodetype.NodeTypeTemplate;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.hp.hpl.jena.rdf.model.AnonId;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.AnonId;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Statement;
 
 import org.fcrepo.kernel.modeshape.services.AbstractService;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -71,8 +71,8 @@ import org.slf4j.Logger;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
-import com.hp.hpl.jena.rdf.model.RDFNode;
-import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
 
 /**
  * A set of helpful tools for converting JCR properties to RDF
@@ -259,7 +259,7 @@ public class JcrRdfTools {
      * @throws RepositoryException if repository exception occurred
      */
     public void addProperty(final FedoraResource resource,
-                            final com.hp.hpl.jena.rdf.model.Property predicate,
+                            final org.apache.jena.rdf.model.Property predicate,
                             final RDFNode value,
                             final Map<String,String> namespaces) throws RepositoryException {
 
@@ -318,7 +318,7 @@ public class JcrRdfTools {
      * @throws RepositoryException if repository exception occurred
      */
     public void removeProperty(final FedoraResource resource,
-                               final com.hp.hpl.jena.rdf.model.Property predicate,
+                               final org.apache.jena.rdf.model.Property predicate,
                                final RDFNode objectNode,
                                final Map<String, String> nsPrefixMap) throws RepositoryException {
 

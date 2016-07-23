@@ -18,7 +18,7 @@
 package org.fcrepo.http.api;
 
 
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;

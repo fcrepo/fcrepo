@@ -26,7 +26,7 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 
 import com.google.common.base.Converter;
-import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Resource;
 
 /**
  * {@link org.fcrepo.kernel.api.RdfStream} that holds contexts related to a specific {@link Node}.
@@ -40,7 +40,7 @@ public class NodeRdfContext extends DefaultRdfStream {
 
     private final IdentifierConverter<Resource, FedoraResource> idTranslator;
 
-    private final com.hp.hpl.jena.graph.Node subject;
+    private final org.apache.jena.graph.Node subject;
 
     /**
      * Default constructor.
@@ -74,7 +74,7 @@ public class NodeRdfContext extends DefaultRdfStream {
      * @param resource a Fedora model instance that must be identified by an URI
      * @return a translated URI for that resource
      */
-    protected com.hp.hpl.jena.graph.Node uriFor(final FedoraResource resource) {
+    protected org.apache.jena.graph.Node uriFor(final FedoraResource resource) {
         return translator().reverse().convert(resource).asNode();
     }
 
@@ -88,7 +88,7 @@ public class NodeRdfContext extends DefaultRdfStream {
     /**
      * @return the RDF subject at the center of this context
      */
-    public com.hp.hpl.jena.graph.Node subject() {
+    public org.apache.jena.graph.Node subject() {
         return subject;
     }
 }

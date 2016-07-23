@@ -17,9 +17,9 @@
  */
 package org.fcrepo.integration.http.api;
 
-import static com.hp.hpl.jena.graph.Node.ANY;
-import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
-import static com.hp.hpl.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.graph.Node.ANY;
+import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.NodeFactory.createURI;
 import static java.lang.Math.min;
 import static java.lang.Thread.sleep;
 import static java.util.Arrays.stream;

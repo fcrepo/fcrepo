@@ -1,6 +1,6 @@
-#* @vtlvariable name="topic" type="com.hp.hpl.jena.graph.Node" *#
-#* @vtlvariable name="rdf" type="com.hp.hpl.jena.sparql.core.DatasetGraph" *#
-#* @vtlvariable name="model" type="com.hp.hpl.jena.rdf.model.Model" *#
+#* @vtlvariable name="topic" type="org.apache.jena.graph.Node" *#
+#* @vtlvariable name="rdf" type="org.apache.jena.sparql.core.DatasetGraph" *#
+#* @vtlvariable name="model" type="org.apache.jena.rdf.model.Model" *#
 <!DOCTYPE html>
 #set( $title = $helpers.getObjectTitle($rdf, $topic) )
 #set( $contentNode = $helpers.getContentNode($topic) )

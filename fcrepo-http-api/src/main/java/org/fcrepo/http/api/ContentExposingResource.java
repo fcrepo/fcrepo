@@ -18,8 +18,8 @@
 package org.fcrepo.http.api;
 
 
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
-import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.vocabulary.RDF.type;
 import static java.util.EnumSet.of;
 import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.empty;
@@ -103,8 +103,8 @@ import org.fcrepo.kernel.modeshape.services.TransactionServiceImpl;
 import org.apache.jena.riot.Lang;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.jvnet.hk2.annotations.Optional;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.rdf.model.Model;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
 
 /**
  * An abstract class that sits between AbstractResource and any resource that
