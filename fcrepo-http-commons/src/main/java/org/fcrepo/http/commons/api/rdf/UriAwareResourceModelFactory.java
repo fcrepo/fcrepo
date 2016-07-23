@@ -19,11 +19,11 @@ package org.fcrepo.http.commons.api.rdf;
 
 import javax.ws.rs.core.UriInfo;
 
-import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 
-import com.hp.hpl.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Model;
 
 /**
  * Helper to generate an RDF model for a FedoraResourceImpl that (likely) creates

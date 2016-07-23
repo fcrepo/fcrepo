@@ -26,7 +26,7 @@ import org.mockito.Mock;
 import javax.jcr.Session;
 import java.util.Arrays;
 
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.MockitoAnnotations.initMocks;
 

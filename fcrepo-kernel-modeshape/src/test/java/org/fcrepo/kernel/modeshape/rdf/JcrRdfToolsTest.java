@@ -17,11 +17,11 @@
  */
 package org.fcrepo.kernel.modeshape.rdf;
 
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.rdf.model.ResourceFactory.createPlainLiteral;
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static javax.jcr.PropertyType.LONG;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.STRING;
@@ -87,11 +87,11 @@ import org.modeshape.jcr.api.NamespaceRegistry;
 import org.modeshape.jcr.value.BinaryValue;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Property;
-import com.hp.hpl.jena.rdf.model.RDFNode;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
 
 /**
  * <p>JcrRdfToolsTest class.</p>
@@ -448,7 +448,7 @@ public class JcrRdfToolsTest implements FedoraTypes {
     private Property mockPredicate;
 
     @Mock
-    private Function<javax.jcr.Property, com.hp.hpl.jena.rdf.model.Property> mockPredicateFactoryFunc;
+    private Function<javax.jcr.Property, org.apache.jena.rdf.model.Property> mockPredicateFactoryFunc;
 
     @Mock
     private NodeIterator mockNodes;

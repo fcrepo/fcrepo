@@ -17,9 +17,9 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl.mappings;
 
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static java.util.stream.Collectors.toList;
 import static javax.jcr.PropertyType.BOOLEAN;
 import static javax.jcr.PropertyType.DATE;
@@ -57,8 +57,8 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.slf4j.Logger;
 
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Resource;
 
 /**
  * <p>PropertyToTripleTest class.</p>
@@ -66,7 +66,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
  * @author ajs6f
  */
 public class PropertyToTripleTest {
-    private com.hp.hpl.jena.graph.Node testSubject;
+    private org.apache.jena.graph.Node testSubject;
 
     // for mocks and setup gear see after tests
 

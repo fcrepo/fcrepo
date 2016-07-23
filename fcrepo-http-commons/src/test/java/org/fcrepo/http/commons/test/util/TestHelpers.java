@@ -17,7 +17,7 @@
  */
 package org.fcrepo.http.commons.test.util;
 
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static java.net.URI.create;
 import static javax.ws.rs.core.UriBuilder.fromUri;
 import static org.junit.Assert.assertNotNull;
@@ -72,8 +72,8 @@ import org.modeshape.jcr.api.NamespaceRegistry;
 import org.modeshape.jcr.api.Repository;
 import org.modeshape.jcr.api.query.QueryManager;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.update.GraphStoreFactory;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.update.GraphStoreFactory;
 
 /**
  * <p>Abstract TestHelpers class.</p>

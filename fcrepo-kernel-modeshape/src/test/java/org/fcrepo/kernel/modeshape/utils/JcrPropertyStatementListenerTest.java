@@ -17,8 +17,8 @@
  */
 package org.fcrepo.kernel.modeshape.utils;
 
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
-import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.vocabulary.RDF.type;
 import static javax.jcr.PropertyType.URI;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getPropertyType;
@@ -39,7 +39,7 @@ import javax.jcr.Session;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeTypeManager;
 
-import com.hp.hpl.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.RDF;
 
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -53,12 +53,12 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.slf4j.Logger;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.rdf.model.Property;
-import com.hp.hpl.jena.rdf.model.RDFNode;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
 
 /**
  * <p>JcrPropertyStatementListenerTest class.</p>
@@ -122,7 +122,7 @@ public class JcrPropertyStatementListenerTest {
     private FedoraResource resource;
 
     @Mock
-    private com.hp.hpl.jena.graph.Node mockTopic;
+    private org.apache.jena.graph.Node mockTopic;
 
 
     @Before

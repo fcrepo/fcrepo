@@ -17,9 +17,9 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl.mappings;
 
-import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDstring;
-import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
-import static com.hp.hpl.jena.graph.Triple.create;
+import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDstring;
+import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.Triple.create;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeToResource;
 import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
 
@@ -31,15 +31,15 @@ import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import com.google.common.base.Converter;
-import com.hp.hpl.jena.graph.impl.LiteralLabel;
-import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.jena.graph.impl.LiteralLabel;
+import org.apache.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.modeshape.rdf.converters.PropertyConverter;
 import org.fcrepo.kernel.modeshape.rdf.converters.ValueConverter;
-import com.hp.hpl.jena.datatypes.RDFDatatype;
-import com.hp.hpl.jena.graph.Triple;
+import org.apache.jena.datatypes.RDFDatatype;
+import org.apache.jena.graph.Triple;
 
 /**
  * Utility for moving from JCR properties to RDF triples.
@@ -67,12 +67,12 @@ public class PropertyToTriple implements Function<Property, Stream<Triple>> {
     @Override
     public Stream<Triple> apply(final Property p) {
         try {
-            final com.hp.hpl.jena.graph.Node subject = translator.convert(p.getParent()).asNode();
-            final com.hp.hpl.jena.graph.Node propPredicate = propertyConverter.convert(p).asNode();
+            final org.apache.jena.graph.Node subject = translator.convert(p.getParent()).asNode();
+            final org.apache.jena.graph.Node propPredicate = propertyConverter.convert(p).asNode();
             final String propertyName = p.getName();
 
             return iteratorToStream(new PropertyValueIterator(p)).map(v -> {
-                final com.hp.hpl.jena.graph.Node object = valueConverter.convert(v).asNode();
+                final org.apache.jena.graph.Node object = valueConverter.convert(v).asNode();
                 if (object.isLiteral()) {
                     // unpack the name of the property for information about what kind of literal
                     final int i = propertyName.indexOf('@');

@@ -17,11 +17,11 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
-import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
-import static com.hp.hpl.jena.graph.NodeFactory.createURI;
-import static com.hp.hpl.jena.graph.Triple.create;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
-import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.graph.Triple.create;
+import static org.apache.jena.rdf.model.ResourceFactory.createTypedLiteral;
+import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.api.RdfLexicon.FIXITY_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
@@ -36,11 +36,11 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
-import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.utils.FixityResult;
-import com.hp.hpl.jena.graph.Triple;
+import org.apache.jena.graph.Triple;
 
 /**
  * An {@link org.fcrepo.kernel.api.RdfStream} containing information about the fixity of a
@@ -68,7 +68,7 @@ public class FixityRdfContext extends NodeRdfContext {
         super(resource, idTranslator);
 
         concat(StreamSupport.stream(blobs.spliterator(), false).flatMap(uncheck(blob -> {
-            final com.hp.hpl.jena.graph.Node resultSubject =
+            final org.apache.jena.graph.Node resultSubject =
                     createURI(subject().getURI() + "#fixity/" + Calendar.getInstance().getTimeInMillis());
             final List<Triple> b = new ArrayList<>();
 

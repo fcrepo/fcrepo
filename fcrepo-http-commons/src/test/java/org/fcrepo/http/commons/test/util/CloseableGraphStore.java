@@ -17,8 +17,8 @@
  */
 package org.fcrepo.http.commons.test.util;
 
-import com.hp.hpl.jena.sparql.modify.GraphStoreWrapper;
-import com.hp.hpl.jena.update.GraphStore;
+import org.apache.jena.sparql.modify.GraphStoreBasic;
+import org.apache.jena.update.GraphStore;
 
 /**
  * Adds the standard {@link AutoCloseable} semantic to Jena's {@link GraphStore} for convenient use with Java 7's
@@ -26,7 +26,7 @@ import com.hp.hpl.jena.update.GraphStore;
  *
  * @author ajs6f
  */
-public class CloseableGraphStore extends GraphStoreWrapper implements AutoCloseable {
+public class CloseableGraphStore extends GraphStoreBasic implements AutoCloseable {
 
     /**
      * Default constructor.

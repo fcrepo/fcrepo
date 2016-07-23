@@ -17,9 +17,9 @@
  */
 package org.fcrepo.kernel.modeshape;
 
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
-import static com.hp.hpl.jena.update.UpdateAction.execute;
-import static com.hp.hpl.jena.update.UpdateFactory.create;
+import static org.apache.jena.rdf.model.ResourceFactory.createTypedLiteral;
+import static org.apache.jena.update.UpdateAction.execute;
+import static org.apache.jena.update.UpdateFactory.create;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static java.util.stream.Collectors.joining;
@@ -95,8 +95,8 @@ import javax.jcr.version.VersionManager;
 
 import com.google.common.base.Converter;
 import com.google.common.collect.ImmutableMap;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.graph.Triple;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.graph.Triple;
 
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -136,11 +136,11 @@ import org.fcrepo.kernel.modeshape.utils.iterators.RdfRemover;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.sparql.modify.request.UpdateData;
-import com.hp.hpl.jena.sparql.modify.request.UpdateDeleteWhere;
-import com.hp.hpl.jena.sparql.modify.request.UpdateModify;
-import com.hp.hpl.jena.update.UpdateRequest;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.sparql.modify.request.UpdateData;
+import org.apache.jena.sparql.modify.request.UpdateDeleteWhere;
+import org.apache.jena.sparql.modify.request.UpdateModify;
+import org.apache.jena.update.UpdateRequest;
 
 /**
  * Common behaviors across {@link org.fcrepo.kernel.api.models.Container} and
@@ -688,7 +688,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
     /* (non-Javadoc)
      * @see org.fcrepo.kernel.api.models.FedoraResource#replaceProperties
-     *     (org.fcrepo.kernel.api.identifiers.IdentifierConverter, com.hp.hpl.jena.rdf.model.Model)
+     *     (org.fcrepo.kernel.api.identifiers.IdentifierConverter, org.apache.jena.rdf.model.Model)
      */
     @Override
     public void replaceProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,

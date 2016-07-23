@@ -17,7 +17,7 @@
  */
 package org.fcrepo.integration.kernel.modeshape;
 
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static java.util.Collections.emptySet;
 import static java.util.regex.Pattern.compile;
 import static org.apache.commons.io.IOUtils.toInputStream;
@@ -36,8 +36,8 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.models.Container;

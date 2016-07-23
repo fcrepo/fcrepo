@@ -20,7 +20,7 @@ package org.fcrepo.event.serialization;
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
 
-import com.hp.hpl.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Model;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
 

@@ -17,7 +17,7 @@
  */
 package org.fcrepo.integration.rdf;
 
-import com.hp.hpl.jena.update.GraphStore;
+import org.apache.jena.update.GraphStore;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;

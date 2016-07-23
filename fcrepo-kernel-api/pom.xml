@@ -16,7 +16,7 @@
       javax.jcr.*,
 
       com.google.common.*,
-      com.hp.hpl.jena.*,
+      org.apache.jena.*,
       org.apache.commons.codec.binary,
 
       *

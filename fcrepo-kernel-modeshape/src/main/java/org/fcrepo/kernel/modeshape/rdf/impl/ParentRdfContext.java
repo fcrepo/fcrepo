@@ -17,7 +17,7 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
-import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.slf4j.Logger;
@@ -25,7 +25,7 @@ import org.slf4j.Logger;
 import javax.jcr.RepositoryException;
 
 import static java.util.stream.Stream.of;
-import static com.hp.hpl.jena.graph.Triple.create;
+import static org.apache.jena.graph.Triple.create;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_PARENT;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.VERSIONABLE;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
