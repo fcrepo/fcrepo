@@ -17,9 +17,9 @@
  */
 package org.fcrepo.kernel.modeshape.utils;
 
+import static org.apache.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.rdf.model.ResourceFactory.createStatement;
-import static org.apache.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static org.apache.jena.vocabulary.DC.creator;
 import static org.apache.jena.vocabulary.DC.title;
 import static org.junit.Assert.assertFalse;

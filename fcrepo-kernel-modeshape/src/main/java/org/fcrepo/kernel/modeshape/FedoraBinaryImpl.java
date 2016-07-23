@@ -51,6 +51,8 @@ import java.net.URISyntaxException;
 import java.util.Collection;
 
 import static com.codahale.metrics.MetricRegistry.name;
+import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDstring;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FIELD_DELIMITER;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFedoraBinary;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
@@ -246,7 +248,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     public String getMimeType() {
         try {
             if (hasProperty(HAS_MIME_TYPE)) {
-                return getProperty(HAS_MIME_TYPE).getString();
+                return getProperty(HAS_MIME_TYPE).getString().replace(FIELD_DELIMITER + XSDstring.getURI(), "");
             }
             return "application/octet-stream";
         } catch (final RepositoryException e) {

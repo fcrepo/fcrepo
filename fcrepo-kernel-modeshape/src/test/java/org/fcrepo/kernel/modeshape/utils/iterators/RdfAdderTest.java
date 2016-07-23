@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.modeshape.utils.iterators;
 
+import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDstring;
 import static org.apache.jena.graph.NodeFactory.createAnon;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
@@ -27,6 +28,7 @@ import static org.apache.jena.vocabulary.RDF.type;
 import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.UNDEFINED;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FIELD_DELIMITER;
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getJcrNamespaceForRDFNamespace;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.never;
@@ -191,7 +193,9 @@ public class RdfAdderTest {
                 mockSession
                         .getNamespacePrefix(getJcrNamespaceForRDFNamespace(type
                                 .getNameSpace()))).thenReturn("rdf");
-        when(mockValueFactory.createValue(description, STRING)).thenReturn(mockValue);
+
+        when(mockValueFactory.createValue(description + FIELD_DELIMITER + XSDstring.getURI(), STRING))
+                .thenReturn(mockValue);
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(
                 mockNamespaceRegistry);
         when(mockNamespaceRegistry.getURI(propertyNamespacePrefix)).thenReturn(

@@ -19,6 +19,7 @@ package org.fcrepo.integration.kernel.modeshape;
 
 import static java.net.URI.create;
 import static java.util.Collections.emptySet;
+import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDstring;
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
@@ -52,6 +53,7 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
 import static org.fcrepo.kernel.api.RequiredRdfContext.VERSIONS;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FIELD_DELIMITER;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedPredicate.uncheck;
@@ -711,7 +713,8 @@ public class FedoraResourceImplIT extends AbstractIT {
             final javax.jcr.Node skolemizedNode = session.getNodeByIdentifier(values[0].getString());
 
             assertTrue(skolemizedNode.getPath().contains("/.well-known/genid/"));
-            assertEquals("xyz", skolemizedNode.getProperty("dc:title").getValues()[0].getString());
+            assertEquals("xyz" + FIELD_DELIMITER + XSDstring.getURI(),
+                    skolemizedNode.getProperty("dc:title").getValues()[0].getString());
         }
     }
 
