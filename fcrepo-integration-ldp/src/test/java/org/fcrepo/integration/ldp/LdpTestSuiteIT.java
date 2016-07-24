@@ -24,9 +24,6 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.w3.ldp.testsuite.LdpTestSuite;
 
 import java.io.IOException;
@@ -36,10 +33,6 @@ import java.util.UUID;
 import static java.lang.Integer.MAX_VALUE;
 import static java.lang.Integer.parseInt;
 import static javax.ws.rs.core.Response.Status.CREATED;
-import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -48,9 +41,13 @@ import static org.junit.Assert.assertTrue;
  * @since 10/6/14
  */
 
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration("/spring-test/test-container.xml")
 public class LdpTestSuiteIT {
+
+    public static final String LDP_NAMESPACE = "http://www.w3.org/ns/ldp#";
+
+    public static final String BASIC_CONTAINER = LDP_NAMESPACE + "BasicContainer";
+    public static final String DIRECT_CONTAINER = LDP_NAMESPACE + "DirectContainer";
+    public static final String INDIRECT_CONTAINER = LDP_NAMESPACE + "IndirectContainer";
 
     protected static final int SERVER_PORT = parseInt(System.getProperty(
             "fcrepo.dynamic.test.port", "8080"));
@@ -60,7 +57,7 @@ public class LdpTestSuiteIT {
     protected static final String PROTOCOL = "http";
 
     protected static final String serverAddress = PROTOCOL + "://" + HOSTNAME + ":" +
-            SERVER_PORT + "/";
+            SERVER_PORT + "/fcrepo/rest/";
 
     protected static HttpClient client = createClient();
 
@@ -76,7 +73,7 @@ public class LdpTestSuiteIT {
 
         final HttpPut request = new HttpPut(serverAddress + pid);
         final BasicHttpEntity entity = new BasicHttpEntity();
-        entity.setContent(IOUtils.toInputStream("<> a <" + BASIC_CONTAINER.getURI() + "> ."));
+        entity.setContent(IOUtils.toInputStream("<> a <" + BASIC_CONTAINER + "> ."));
         request.setEntity(entity);
         request.setHeader("Content-Type", "text/turtle");
         final HttpResponse response = client.execute(request);
@@ -100,7 +97,7 @@ public class LdpTestSuiteIT {
 
         final HttpPut request = new HttpPut(serverAddress + pid);
         final BasicHttpEntity entity = new BasicHttpEntity();
-        entity.setContent(IOUtils.toInputStream("<> a <" + DIRECT_CONTAINER.getURI() + "> ;" +
+        entity.setContent(IOUtils.toInputStream("<> a <" + DIRECT_CONTAINER + "> ;" +
                 "    <" + LDP_NAMESPACE + "membershipResource> <> ;" +
                 "    <" + LDP_NAMESPACE + "hasMemberRelation> <" + LDP_NAMESPACE + "member> ."));
         request.setEntity(entity);
@@ -125,7 +122,7 @@ public class LdpTestSuiteIT {
 
         final HttpPut request = new HttpPut(serverAddress + pid);
         final BasicHttpEntity entity = new BasicHttpEntity();
-        entity.setContent(IOUtils.toInputStream("<> a <" + INDIRECT_CONTAINER.getURI() + ">;" +
+        entity.setContent(IOUtils.toInputStream("<> a <" + INDIRECT_CONTAINER + ">;" +
                 "    <" + LDP_NAMESPACE + "membershipResource> <> ;" +
                 "    <" + LDP_NAMESPACE + "insertedContentRelation> <" + LDP_NAMESPACE + "MemberSubject> ;" +
                 "    <" + LDP_NAMESPACE + "hasMemberRelation> <" + LDP_NAMESPACE + "member> ."));
