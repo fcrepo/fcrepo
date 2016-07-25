@@ -19,7 +19,6 @@ package org.fcrepo.kernel.modeshape.rdf.converters;
 
 import com.google.common.base.Converter;
 import com.google.common.base.Splitter;
-import com.hp.hpl.jena.datatypes.BaseDatatype;
 import com.hp.hpl.jena.datatypes.RDFDatatype;
 import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.RDFNode;
@@ -38,6 +37,7 @@ import javax.jcr.ValueFactory;
 
 import java.util.Iterator;
 
+import static com.hp.hpl.jena.datatypes.TypeMapper.getInstance;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createLangLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
@@ -247,7 +247,7 @@ public class ValueConverter extends Converter<Value, RDFNode> {
 
         public RDFDatatype datatype() {
             if (hasDatatypeUri()) {
-                return new BaseDatatype(datatypeUri);
+                return getInstance().getSafeTypeByName(datatypeUri);
             }
             return null;
         }
