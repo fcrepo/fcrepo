@@ -17,6 +17,8 @@
  */
 package org.fcrepo.integration.http.api;
 
+import static com.hp.hpl.jena.datatypes.TypeMapper.getInstance;
+import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDinteger;
 import static com.hp.hpl.jena.graph.Node.ANY;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.NodeFactory.createURI;
@@ -1512,12 +1514,28 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String subjectURI = getLocation(postObjMethod());
         final HttpPatch updateObjectGraphMethod = new HttpPatch(subjectURI);
         updateObjectGraphMethod.addHeader("Content-Type", "application/sparql-update");
-        updateObjectGraphMethod.setEntity(new StringEntity("INSERT {<" + subjectURI + "> <info:test#label> \"foo\"}" +
+        updateObjectGraphMethod.setEntity(new StringEntity("INSERT {<" + subjectURI + "> <info:test#label> \"foo\" ; " +
+                    " <info:test#number> 42 ; " +
+                    " <info:test#date> \"1953?\"^^<http://id.loc.gov/datatypes/edtf/EDTF> }" +
                 " WHERE {}"));
         executeAndClose(updateObjectGraphMethod);
-        updateObjectGraphMethod.setEntity(new StringEntity("DELETE { <" + subjectURI + "> <info:test#label> ?p}\n" +
-                "INSERT {<" + subjectURI + "> <info:test#label> \"qwerty\"} \n" +
-                "WHERE { <" + subjectURI + "> <info:test#label> ?p}"));
+        try (CloseableGraphStore graph = getGraphStore(new HttpGet(subjectURI))) {
+            assertTrue("Didn't find a triple we thought we added.", graph.contains(ANY,
+                    createURI(subjectURI), createURI("info:test#label"), createLiteral("foo")));
+            assertTrue("Didn't find a triple we thought we added.", graph.contains(ANY,
+                    createURI(subjectURI), createURI("info:test#number"), createLiteral("42", XSDinteger)));
+            assertTrue("Didn't find a triple we thought we added.", graph.contains(ANY,
+                    createURI(subjectURI), createURI("info:test#date"), createLiteral("1953?",
+                        getInstance().getSafeTypeByName("http://id.loc.gov/datatypes/edtf/EDTF"))));
+        }
+        updateObjectGraphMethod.setEntity(new StringEntity("DELETE WHERE { " +
+                    "<" + subjectURI + "> <info:test#label> \"foo\"." +
+                    "<" + subjectURI + "> <info:test#number> 42 . " +
+                    "<" + subjectURI + "> <info:test#date> \"1953?\"^^<http://id.loc.gov/datatypes/edtf/EDTF> . }; \n" +
+                "INSERT {<" + subjectURI + "> <info:test#label> \"qwerty\" ; " +
+                "<info:test#number> 43 ; " +
+                "<info:test#date> \"1953\"^^<http://id.loc.gov/datatypes/edtf/EDTF> . } \n" +
+                "WHERE { }"));
 
         try (final CloseableHttpResponse response = execute(updateObjectGraphMethod)) {
             assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
@@ -1526,7 +1544,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
         try (CloseableGraphStore graph = getGraphStore(new HttpGet(subjectURI))) {
             assertFalse("Found a triple we thought we deleted.", graph.contains(ANY,
-                    createURI(subjectURI), createURI("<info:test#label>"), createLiteral("foo")));
+                    createURI(subjectURI), createURI("info:test#label"), createLiteral("foo")));
+            assertFalse("Found a triple we thought we deleted.", graph.contains(ANY,
+                    createURI(subjectURI), createURI("info:test#number"), createLiteral("42", XSDinteger)));
+            assertFalse("Found a triple we thought we deleted.", graph.contains(ANY,
+                    createURI(subjectURI), createURI("info:test#date"), createLiteral("1953?",
+                        getInstance().getSafeTypeByName("http://id.loc.gov/datatypes/edtf/EDTF"))));
         }
     }
 
