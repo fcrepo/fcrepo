@@ -168,6 +168,8 @@ public final class RdfLexicon {
             createProperty(LDP_NAMESPACE + "membershipResource");
     public static final Property HAS_MEMBER_RELATION =
             createProperty(LDP_NAMESPACE + "hasMemberRelation");
+    public static final Property IS_MEMBER_OF_RELATION =
+            createProperty(LDP_NAMESPACE + "isMemberOfRelation");
     public static final Property CONTAINS =
         createProperty(LDP_NAMESPACE + "contains");
     public static final Property LDP_MEMBER =

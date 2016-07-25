@@ -44,6 +44,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.MEMBER_SUBJECT;
 import static org.fcrepo.kernel.modeshape.rdf.converters.PropertyConverter.getPropertyNameFromPredicate;
 import static org.fcrepo.kernel.modeshape.rdf.impl.ReferencesRdfContext.REFERENCE_TYPES;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getReferencePropertyName;
 import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
 
 /**
@@ -102,8 +103,13 @@ public class LdpIsMemberOfRdfContext extends NodeRdfContext {
         if (insertedContainerProperty.equals(MEMBER_SUBJECT.getURI())) {
             return of(create(subject(), memberRelation.asNode(), membershipResource));
         } else if (container.hasType(LDP_INDIRECT_CONTAINER)) {
-            final String insertedContentProperty = getPropertyNameFromPredicate(getJcrNode(resource()), createResource
+            String insertedContentProperty = getPropertyNameFromPredicate(getJcrNode(resource()), createResource
                     (insertedContainerProperty), null);
+
+            // The insertedContentProperty may be a pseudo reference property
+            if (resource().hasProperty(getReferencePropertyName(insertedContentProperty))) {
+                insertedContentProperty = getReferencePropertyName(insertedContentProperty);
+            }
 
             if (resource().hasProperty(insertedContentProperty)) {
                 return iteratorToStream(new PropertyValueIterator(

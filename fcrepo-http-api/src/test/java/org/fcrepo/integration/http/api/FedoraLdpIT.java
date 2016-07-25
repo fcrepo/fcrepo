@@ -78,6 +78,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.HAS_PRIMARY_IDENTIFIER;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.IS_MEMBER_OF_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.JCR_NT_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
@@ -2034,6 +2035,72 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 final CloseableGraphStore graphStore1 = getGraphStore(getResponse1);) {
             assertFalse("Expected NOT to have resource: " + graphStore1, graphStore1.contains(ANY,
                     createURI(container), createURI("info:some/relation"), createURI(resource)));
+        }
+    }
+
+    @Test
+    public void testLdpIndirectContainerInteractionMemberOf() throws IOException {
+
+        // Create resource (object)
+        final String resourceId = getRandomUniqueId();
+        final String resource;
+        try (final CloseableHttpResponse createResponse = createObject(resourceId)) {
+            resource = getLocation(createResponse);
+        }
+        // Create container (c0)
+        final String containerId = getRandomUniqueId();
+        final String container;
+        try (final CloseableHttpResponse createResponse = createObject(containerId)) {
+            container = getLocation(createResponse);
+        }
+        // Create indirect container (c0/members)
+        final String indirectContainerId = containerId + "/t";
+        final String indirectContainer;
+        try (final CloseableHttpResponse createResponse = createObject(indirectContainerId)) {
+            indirectContainer = getLocation(createResponse);
+        }
+        addMixin(indirectContainerId, INDIRECT_CONTAINER.getURI());
+
+        // Add LDP properties to indirect container
+        final HttpPatch patch = patchObjMethod(indirectContainerId);
+        patch.addHeader("Content-Type", "application/sparql-update");
+        final String sparql = "INSERT DATA { "
+                + "<> <" + MEMBERSHIP_RESOURCE + "> <" + container + "> .\n"
+                + "<> <" + IS_MEMBER_OF_RELATION + "> <info:some/relation> .\n"
+                + "<> <" + LDP_NAMESPACE + "insertedContentRelation> <info:proxy/for> .\n"
+                + " }";
+        patch.setEntity(new StringEntity(sparql));
+        assertEquals("Expected patch to succeed", NO_CONTENT.getStatusCode(), getStatus(patch));
+
+        // Add indirect resource to indirect container
+        final HttpPost postIndirectResource = postObjMethod(indirectContainerId);
+        final String irRdf =
+                "<> <info:proxy/in>  <" + container + "> ;\n" +
+                        "   <info:proxy/for> <" + resource + "> .";
+        postIndirectResource.setEntity(new StringEntity(irRdf));
+        postIndirectResource.setHeader("Content-Type", "text/turtle");
+
+        final String indirectResource;
+        try (final CloseableHttpResponse postResponse = execute(postIndirectResource)) {
+            indirectResource = getLocation(postResponse);
+            assertEquals("Expected post to succeed", CREATED.getStatusCode(), getStatus(postResponse));
+        }
+        // Ensure resource has been updated with relationship... indirectly
+        try (final CloseableHttpResponse getResponse = execute(new HttpGet(resource));
+             final CloseableGraphStore graphStore = getGraphStore(getResponse)) {
+            assertTrue("Expected to have triple on resource: " + createURI("info:some/relation") + " <"
+                    + createURI(container) + ">, graph: " + graphStore.toString(),
+                graphStore.contains(ANY, createURI(resource), createURI("info:some/relation"), createURI(container)));
+        }
+        // Remove indirect resource
+        assertEquals("Expected delete to succeed",
+                NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(indirectResource)));
+
+        // Ensure resource has been updated with relationship... indirectly
+        try (final CloseableHttpResponse getResponse1 = execute(new HttpGet(resource));
+             final CloseableGraphStore graphStore1 = getGraphStore(getResponse1);) {
+            assertFalse("Expected NOT to have resource: " + graphStore1, graphStore1.contains(ANY,
+                    createURI(resource), createURI("info:some/relation"), createURI(container)));
         }
     }
 

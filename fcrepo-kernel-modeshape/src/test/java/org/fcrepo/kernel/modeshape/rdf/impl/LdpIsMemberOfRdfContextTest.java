@@ -48,6 +48,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.LDP_IS_MEMBER_OF_RELATION;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_MEMBER_RESOURCE;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeToResource;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.REFERENCE_PROPERTY_SUFFIX;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -221,8 +222,9 @@ public class LdpIsMemberOfRdfContextTest {
         when(mockNamespaceRegistry.isRegisteredUri("some:")).thenReturn(true);
         when(mockNamespaceRegistry.getPrefix("some:")).thenReturn("some");
 
-        when(mockResource.hasProperty("some:relation")).thenReturn(true);
-        when(mockResourceNode.getProperty("some:relation")).thenReturn(mockRelationProperty);
+        when(mockResource.hasProperty("some:relation" + REFERENCE_PROPERTY_SUFFIX)).thenReturn(true);
+        when(mockResourceNode.getProperty("some:relation" + REFERENCE_PROPERTY_SUFFIX))
+                .thenReturn(mockRelationProperty);
         when(mockRelationProperty.isMultiple()).thenReturn(false);
         when(mockRelationProperty.getValue()).thenReturn(mockRelationValue);
         when(mockRelationValue.getType()).thenReturn(URI);
