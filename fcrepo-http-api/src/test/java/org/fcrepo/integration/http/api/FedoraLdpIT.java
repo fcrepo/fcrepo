@@ -985,10 +985,10 @@ public class FedoraLdpIT extends AbstractResourceIT {
     @Test
     public void testIngestOpaqueRdfAsBinary() throws IOException {
         final HttpPost method = postObjMethod();
-        method.addHeader("Content-Type", "application/rdf+xml");
+        method.addHeader("Content-Type", "application/n-triples");
         method.addHeader("Content-Disposition", "attachment");
 
-        final String rdf = IOUtils.toString(this.getClass().getResourceAsStream("/test-objects/test.rdf"));
+        final String rdf = "<test:/subject> <test:/predicate> <test:/object> .";
         method.setEntity(new StringEntity(rdf));
 
         try (final CloseableHttpResponse response = execute(method)) {
@@ -999,7 +999,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
             try (final CloseableHttpResponse getResponse = execute(get)) {
                 final String resp = IOUtils.toString(getResponse.getEntity().getContent());
-                assertEquals("application/rdf+xml", getResponse.getFirstHeader("Content-Type").getValue());
+                assertEquals("application/n-triples", getResponse.getFirstHeader("Content-Type").getValue());
                 assertEquals(rdf, resp);
             }
         }
