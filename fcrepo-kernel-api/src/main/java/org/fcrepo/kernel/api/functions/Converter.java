@@ -32,8 +32,9 @@ public interface Converter<A, B> extends InvertibleFunction<A, B>, DomainRestric
      * @return whether b is in the range of the converter
      */
     default boolean inRange(final B b) {
-        final Converter<B, A> converter = inverse();
-        return converter.inDomain(b);
+        return inverse().inDomain(b);
     }
 
+    @Override
+    Converter<B, A> inverse();
 }

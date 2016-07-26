@@ -30,9 +30,8 @@ public interface InvertibleFunction<A, B> extends Function<A, B> {
 
     /**
      * The inverse of the defined function
-     * @param <T> the type of the inverse of this function
      * @return the inverse of the defined function.
      */
-    <T extends InvertibleFunction<B, A>> T inverse();
+    InvertibleFunction<B, A> inverse();
 
 }
