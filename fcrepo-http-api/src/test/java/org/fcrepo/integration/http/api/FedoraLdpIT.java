@@ -126,6 +126,7 @@ import nu.validator.saxtree.TreeBuilder;
 
 import org.fcrepo.http.commons.test.util.CloseableGraphStore;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -977,6 +978,30 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertTrue("Expected an anchor to the newly created resource", link.getParams().containsKey("anchor"));
             assertEquals("Expected anchor at the newly created resource", location, link.getParams().get("anchor"));
             assertEquals("Expected describedBy link", location + "/" + FCR_METADATA, link.getUri().toString());
+        }
+    }
+
+    /* Verifies RDF persisted as binary is retrieved with byte-for-byte fidelity */
+    @Test
+    public void testIngestOpaqueRdfAsBinary() throws IOException {
+        final HttpPost method = postObjMethod();
+        method.addHeader("Content-Type", "application/n-triples");
+        method.addHeader("Content-Disposition", "attachment");
+
+        final String rdf = "<test:/subject> <test:/predicate> <test:/object> .";
+        method.setEntity(new StringEntity(rdf));
+
+        try (final CloseableHttpResponse response = execute(method)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+
+            final String location = getLocation(response);
+            final HttpGet get = new HttpGet(location);
+
+            try (final CloseableHttpResponse getResponse = execute(get)) {
+                final String resp = IOUtils.toString(getResponse.getEntity().getContent());
+                assertEquals("application/n-triples", getResponse.getFirstHeader("Content-Type").getValue());
+                assertEquals(rdf, resp);
+            }
         }
     }
 

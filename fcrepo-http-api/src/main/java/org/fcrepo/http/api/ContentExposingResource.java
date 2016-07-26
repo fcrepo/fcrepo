@@ -167,41 +167,15 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         if (resource() instanceof FedoraBinary) {
 
-            final String contentTypeString = ((FedoraBinary) resource()).getMimeType();
+            final MediaType mediaType = MediaType.valueOf(((FedoraBinary) resource()).getMimeType());
 
-            final Lang lang = contentTypeToLang(contentTypeString);
-
-            if (!contentTypeString.equals("text/plain") && lang != null) {
-
-                final String format = lang.getName().toUpperCase();
-
-                try (final InputStream content = ((FedoraBinary) resource()).getContent()) {
-
-                    final Model inputModel = createDefaultModel()
-                            .read(content, (resource()).toString(), format);
-                    outputStream = new RdfNamespacedStream(
-                            new DefaultRdfStream(rdfStream.topic(), concat(rdfStream,
-                                    DefaultRdfStream.fromModel(rdfStream.topic(), inputModel))),
-                            namespaceService.getNamespaces(session()));
-                }
-
-
-            } else {
-
-                final MediaType mediaType = MediaType.valueOf(contentTypeString);
-                if (MESSAGE_EXTERNAL_BODY.isCompatible(mediaType)
-                        && mediaType.getParameters().containsKey("access-type")
-                        && mediaType.getParameters().get("access-type").equals("URL")
-                        && mediaType.getParameters().containsKey("URL") ) {
-                    try {
-                        return temporaryRedirect(new URI(mediaType.getParameters().get("URL"))).build();
-                    } catch (final URISyntaxException e) {
-                        throw new RepositoryRuntimeException(e);
-                    }
-                }
-                return getBinaryContent(rangeValue);
+            if (MESSAGE_EXTERNAL_BODY.isCompatible(mediaType) && mediaType.getParameters().containsKey(
+                    "access-type") && mediaType.getParameters().get("access-type").equals("URL") && mediaType
+                    .getParameters().containsKey("URL")) {
+                return temporaryRedirect(URI.create(mediaType.getParameters().get("URL"))).build();
             }
 
+            return getBinaryContent(rangeValue);
         } else {
             outputStream = new RdfNamespacedStream(
                     new DefaultRdfStream(rdfStream.topic(), concat(rdfStream,
