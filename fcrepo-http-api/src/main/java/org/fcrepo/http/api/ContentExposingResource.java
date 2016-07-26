@@ -172,11 +172,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             if (MESSAGE_EXTERNAL_BODY.isCompatible(mediaType) && mediaType.getParameters().containsKey(
                     "access-type") && mediaType.getParameters().get("access-type").equals("URL") && mediaType
                     .getParameters().containsKey("URL")) {
-                try {
-                    return temporaryRedirect(new URI(mediaType.getParameters().get("URL"))).build();
-                } catch (final URISyntaxException e) {
-                    throw new RepositoryRuntimeException(e);
-                }
+                return temporaryRedirect(URI.create(mediaType.getParameters().get("URL"))).build();
             }
 
             return getBinaryContent(rangeValue);
