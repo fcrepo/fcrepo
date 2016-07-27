@@ -18,7 +18,7 @@
 package org.fcrepo.http.commons.responses;
 
 import static com.google.common.collect.ImmutableMap.of;
-import static org.apache.jena.graph.NodeFactory.createAnon;
+import static org.apache.jena.graph.NodeFactory.createBlankNode;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
@@ -261,7 +261,7 @@ public class ViewHelpersTest {
     @Test
     public void shouldUsetheBNodeIdIfItIsABNode() {
         final Graph mem = createDefaultModel().getGraph();
-        final Node anon = createAnon();
+        final Node anon = createBlankNode();
         assertEquals(anon.getBlankNodeLabel(), testObj
                 .getObjectTitle(mem, anon));
     }

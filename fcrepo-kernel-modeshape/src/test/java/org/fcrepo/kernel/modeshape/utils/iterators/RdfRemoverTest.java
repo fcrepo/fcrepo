@@ -18,7 +18,7 @@
 package org.fcrepo.kernel.modeshape.utils.iterators;
 
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDstring;
-import static org.apache.jena.graph.NodeFactory.createAnon;
+import static org.apache.jena.graph.NodeFactory.createBlankNode;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.graph.Triple.create;
@@ -243,7 +243,7 @@ public class RdfRemoverTest {
 
     private static final String description = "Description.";
 
-    private static final Triple descriptiveTriple = create(createAnon(),
+    private static final Triple descriptiveTriple = create(createBlankNode(),
             createURI(propertyLongName), createLiteral(description));
 
     private static final Statement descriptiveStmnt = m

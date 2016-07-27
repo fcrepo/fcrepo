@@ -19,7 +19,7 @@ package org.fcrepo.kernel.modeshape.utils.iterators;
 
 import static java.util.stream.Stream.of;
 import static com.google.common.collect.Sets.newHashSet;
-import static org.apache.jena.graph.NodeFactory.createAnon;
+import static org.apache.jena.graph.NodeFactory.createBlankNode;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.graph.Triple.create;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
@@ -116,7 +116,7 @@ public class PersistingRdfStreamConsumerTest {
     private static final org.apache.jena.graph.Node foreignSubject = m.createResource("z").asNode();
 
     private static final Triple propertyTriple = create(subject,
-            createAnon(), object);
+            createBlankNode(), object);
 
     private static final Statement propertyStatement = m
             .asStatement(propertyTriple);
@@ -145,7 +145,7 @@ public class PersistingRdfStreamConsumerTest {
 
 
     private static final Triple foreignTriple = create(foreignSubject,
-            createAnon(), object);
+            createBlankNode(), object);
 
     private static final Statement foreignStatement = m.asStatement(foreignTriple);
 

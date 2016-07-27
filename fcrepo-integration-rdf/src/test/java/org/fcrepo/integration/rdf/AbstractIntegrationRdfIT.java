@@ -20,12 +20,12 @@ package org.fcrepo.integration.rdf;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
-import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.graph.GraphFactory;
-import org.apache.jena.update.GraphStore;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
@@ -43,6 +43,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static javax.ws.rs.core.Response.Status.CREATED;
+import static org.apache.jena.graph.NodeFactory.createBlankNode;
+import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -70,8 +72,9 @@ public abstract class AbstractIntegrationRdfIT extends AbstractResourceIT {
             httpGet.addHeader("Prefer", "return=representation; " +
                     "include=\"http://www.w3.org/ns/ldp#PreferMinimalContainer\"; " +
                     "omit=\"http://fedora.info/definitions/v4/repository#ServerManaged\"");
-            final GraphStore graphStore = getGraphStore(httpGet);
+            final Dataset dataset = getDataset(httpGet);
 
+            final DatasetGraph graphStore = dataset.asDatasetGraph();
             assertFalse(graphStore.isEmpty());
 
             final Graph tidiedGraph = getTidiedGraph(graphStore);
@@ -105,8 +108,8 @@ public abstract class AbstractIntegrationRdfIT extends AbstractResourceIT {
         }
     }
 
-    private static Graph getTidiedGraph(final GraphStore graphStore) {
-        return getTidiedGraph(graphStore.getDefaultGraph());
+    private static Graph getTidiedGraph(final DatasetGraph graph) {
+        return getTidiedGraph(graph.getDefaultGraph());
     }
 
     private static Graph getTidiedGraph(final Graph graph) {
@@ -121,7 +124,7 @@ public abstract class AbstractIntegrationRdfIT extends AbstractResourceIT {
 
             if (replacement.getSubject().toString().contains(".well-known")) {
                 if (!bnodeMap.containsKey(replacement.getSubject())) {
-                    bnodeMap.put(replacement.getSubject(), NodeFactory.createAnon());
+                    bnodeMap.put(replacement.getSubject(), createBlankNode());
                 }
 
                 replacement = new Triple(bnodeMap.get(replacement.getSubject()),
@@ -132,7 +135,7 @@ public abstract class AbstractIntegrationRdfIT extends AbstractResourceIT {
             if (replacement.getObject().toString().contains(".well-known")) {
 
                 if (!bnodeMap.containsKey(replacement.getObject())) {
-                    bnodeMap.put(replacement.getObject(), NodeFactory.createAnon());
+                    bnodeMap.put(replacement.getObject(), createBlankNode());
                 }
 
                 replacement = new Triple(replacement.getSubject(),
@@ -145,7 +148,7 @@ public abstract class AbstractIntegrationRdfIT extends AbstractResourceIT {
                     && replacement.getObject().getLiteral().getDatatype().equals(XSDDatatype.XSDstring)) {
                 replacement = new Triple(replacement.getSubject(),
                         replacement.getPredicate(),
-                        NodeFactory.createLiteral(replacement.getObject().getLiteral().getLexicalForm()));
+                        createLiteral(replacement.getObject().getLiteral().getLexicalForm()));
             }
 
             betterGraph.add(replacement);

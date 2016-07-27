@@ -39,7 +39,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.Collection;
 
 import org.apache.http.Header;
-import org.fcrepo.http.commons.test.util.CloseableGraphStore;
+import org.fcrepo.http.commons.test.util.CloseableDataset;
 
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -279,14 +279,14 @@ public abstract class AbstractResourceIT {
 
     /**
      * Executes an HTTP request and parses the RDF found in the response, returning it in a
-     * {@link CloseableGraphStore}, then closes the response.
+     * {@link CloseableDataset}, then closes the response.
      *
      * @param client the client to use
      * @param req the request to execute
      * @return the graph retrieved
      * @throws IOException in case of IOException
      */
-    protected CloseableGraphStore getGraphStore(final CloseableHttpClient client, final HttpUriRequest req)
+    protected CloseableDataset getDataset(final CloseableHttpClient client, final HttpUriRequest req)
             throws IOException {
         if (!req.containsHeader("Accept")) {
             req.addHeader("Accept", "application/n-triples");
@@ -295,7 +295,7 @@ public abstract class AbstractResourceIT {
 
         try (final CloseableHttpResponse response = client.execute(req)) {
             assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
-            final CloseableGraphStore result = parseTriples(response.getEntity());
+            final CloseableDataset result = parseTriples(response.getEntity());
             logger.trace("Retrieved RDF: {}", result);
             return result;
         }
@@ -303,29 +303,29 @@ public abstract class AbstractResourceIT {
     }
 
     /**
-     * Parses the RDF found in and HTTP response, returning it in a {@link CloseableGraphStore}.
+     * Parses the RDF found in and HTTP response, returning it in a {@link CloseableDataset}.
      *
      * @param response the response to parse
      * @return the graph retrieved
      * @throws IOException in case of IOException
      */
-    protected CloseableGraphStore getGraphStore(final HttpResponse response) throws IOException {
+    protected CloseableDataset getDataset(final HttpResponse response) throws IOException {
         assertEquals(OK.getStatusCode(), getStatus(response));
-        final CloseableGraphStore result = parseTriples(response.getEntity());
+        final CloseableDataset result = parseTriples(response.getEntity());
         logger.trace("Retrieved RDF: {}", result);
         return result;
     }
 
     /**
      * Executes an HTTP request and parses the RDF found in the response, returning it in a
-     * {@link CloseableGraphStore}, then closes the response.
+     * {@link CloseableDataset}, then closes the response.
      *
      * @param req the request to execute
      * @return the constructed graph
      * @throws IOException in case of IOException
      */
-    protected CloseableGraphStore getGraphStore(final HttpUriRequest req) throws IOException {
-        return getGraphStore(client, req);
+    protected CloseableDataset getDataset(final HttpUriRequest req) throws IOException {
+        return getDataset(client, req);
     }
 
     protected CloseableHttpResponse createObject() {

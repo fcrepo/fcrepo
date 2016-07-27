@@ -42,7 +42,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
-import org.fcrepo.http.commons.test.util.CloseableGraphStore;
+import org.fcrepo.http.commons.test.util.CloseableDataset;
 
 import org.apache.http.Header;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -120,8 +120,8 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
             assertEquals(CREATED.getStatusCode(), getStatus(resp));
         }
         /* fetch the created tx from the endpoint */
-        try (final CloseableGraphStore graphStore = getGraphStore(new HttpGet(txLocation + "/" + id))) {
-            assertTrue(graphStore.contains(ANY, createURI(txLocation + "/" + id), ANY, ANY));
+        try (final CloseableDataset dataset = getDataset(new HttpGet(txLocation + "/" + id))) {
+            assertTrue(dataset.asDatasetGraph().contains(ANY, createURI(txLocation + "/" + id), ANY, ANY));
         }
         /* fetch the created tx from the endpoint */
         assertEquals("Expected to not find our object within the scope of the transaction",
@@ -151,8 +151,9 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         assertEquals(CREATED.getStatusCode(), getStatus(postNew));
 
         /* fetch the created tx from the endpoint */
-        try (CloseableGraphStore graphStore = getGraphStore(new HttpGet(txLocation + "/" + objectInTxCommit))) {
-            assertTrue(graphStore.contains(ANY, createURI(txLocation + "/" + objectInTxCommit), ANY, ANY));
+        try (CloseableDataset dataset = getDataset(new HttpGet(txLocation + "/" + objectInTxCommit))) {
+            assertTrue(dataset.asDatasetGraph().contains(ANY,
+                        createURI(txLocation + "/" + objectInTxCommit), ANY, ANY));
         }
         /* fetch the object-in-tx outside of the tx */
         assertEquals("Expected to not find our object within the scope of the transaction",
@@ -161,9 +162,9 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPost(txLocation + "/fcr:tx/fcr:commit")));
 
         /* fetch the object-in-tx outside of the tx after it has been committed */
-        try (CloseableGraphStore graphStore = getGraphStore(new HttpGet(serverAddress + objectInTxCommit))) {
+        try (CloseableDataset dataset = getDataset(new HttpGet(serverAddress + objectInTxCommit))) {
             assertTrue("Expected to  find our object after the transaction was committed",
-                    graphStore.contains(ANY, createURI(serverAddress + objectInTxCommit), ANY, ANY));
+                    dataset.asDatasetGraph().contains(ANY, createURI(serverAddress + objectInTxCommit), ANY, ANY));
         }
     }
 
@@ -179,8 +180,9 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         assertEquals(CREATED.getStatusCode(), getStatus(postNew));
 
         /* fetch the created tx from the endpoint */
-        try (CloseableGraphStore graphStore = getGraphStore(new HttpGet(txLocation + "/" + objectInTxCommit))) {
-            assertTrue(graphStore.contains(ANY, createURI(txLocation + "/" + objectInTxCommit), ANY, ANY));
+        try (CloseableDataset dataset = getDataset(new HttpGet(txLocation + "/" + objectInTxCommit))) {
+            assertTrue(dataset.asDatasetGraph().contains(ANY,
+                        createURI(txLocation + "/" + objectInTxCommit), ANY, ANY));
         }
         /* fetch the object-in-tx outside of the tx */
         assertEquals("Expected to not find our object within the scope of the transaction",
@@ -190,9 +192,9 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPost(txLocation + "/fcr:tx/fcr:commit")));
 
         /* fetch the object-in-tx outside of the tx after it has been committed */
-        try (CloseableGraphStore graphStore = getGraphStore(new HttpGet(serverAddress + objectInTxCommit))) {
+        try (CloseableDataset dataset = getDataset(new HttpGet(serverAddress + objectInTxCommit))) {
             assertTrue("Expected to  find our object after the transaction was committed",
-                    graphStore.contains(ANY, createURI(serverAddress + objectInTxCommit), ANY, ANY));
+                    dataset.asDatasetGraph().contains(ANY, createURI(serverAddress + objectInTxCommit), ANY, ANY));
         }
     }
 
@@ -225,18 +227,17 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
                 "\" } WHERE {}"));
         assertEquals("Didn't get a NO CONTENT status!", NO_CONTENT.getStatusCode(), getStatus(method));
         /* make sure the change was made within the tx */
-        try (final CloseableGraphStore graphStore = getGraphStore(new HttpGet(newObjectLocation))) {
-            assertTrue("The sparql update did not succeed within a transaction", graphStore.contains(ANY,
+        try (final CloseableDataset dataset = getDataset(new HttpGet(newObjectLocation))) {
+            assertTrue("The sparql update did not succeed within a transaction", dataset.asDatasetGraph().contains(ANY,
                     createURI(newObjectLocation), DC_TITLE.asNode(), createLiteral(title)));
         }
         /* commit */
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPost(txLocation + "/fcr:tx/fcr:commit")));
 
         /* it must exist after commit */
-        try (final CloseableGraphStore graphStoreAfterCommit =
-                getGraphStore(new HttpGet(serverAddress + objectInTxCommit))) {
+        try (final CloseableDataset dataset = getDataset(new HttpGet(serverAddress + objectInTxCommit))) {
             assertTrue("The inserted triple does not exist after the transaction has committed",
-                    graphStoreAfterCommit.contains(ANY, ANY, DC_TITLE.asNode(), createLiteral(title)));
+                    dataset.asDatasetGraph().contains(ANY, ANY, DC_TITLE.asNode(), createLiteral(title)));
         }
     }
 
@@ -391,8 +392,8 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
     private void verifyProperty(final String assertionMessage, final String pid, final String txId,
             final String propertyUri, final String propertyValue, final boolean shouldExist) throws IOException {
         final HttpGet getObjCommitted = new HttpGet(serverAddress + (txId != null ? txId + "/" : "") + pid);
-        try (final CloseableGraphStore graphStore = getGraphStore(getObjCommitted)) {
-            final boolean exists = graphStore.contains(ANY,
+        try (final CloseableDataset dataset = getDataset(getObjCommitted)) {
+            final boolean exists = dataset.asDatasetGraph().contains(ANY,
                     createURI(serverAddress + pid), createURI(propertyUri), createLiteral(propertyValue));
             if (shouldExist) {
                 assertTrue(assertionMessage, exists);

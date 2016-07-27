@@ -18,7 +18,7 @@
 package org.fcrepo.kernel.modeshape.utils.iterators;
 
 import static java.util.stream.Stream.of;
-import static org.apache.jena.graph.NodeFactory.createAnon;
+import static org.apache.jena.graph.NodeFactory.createBlankNode;
 import static org.apache.jena.graph.Triple.create;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_CHILD;
@@ -45,11 +45,11 @@ import org.apache.jena.graph.Triple;
  */
 public class ManagedRdfTest {
 
-    private final static Triple managedTriple = create(createAnon(), HAS_CHILD
-            .asNode(), createAnon());
+    private final static Triple managedTriple = create(createBlankNode(), HAS_CHILD
+            .asNode(), createBlankNode());
 
-    private final static Triple unManagedTriple = create(createAnon(),
-            createAnon(), createAnon());
+    private final static Triple unManagedTriple = create(createBlankNode(),
+            createBlankNode(), createBlankNode());
 
     private Stream<Triple> testStream;
 

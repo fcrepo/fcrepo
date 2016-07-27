@@ -34,7 +34,7 @@ import java.net.URI;
 
 import javax.ws.rs.core.Link;
 
-import org.fcrepo.http.commons.test.util.CloseableGraphStore;
+import org.fcrepo.http.commons.test.util.CloseableDataset;
 
 import org.apache.http.annotation.NotThreadSafe;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -42,6 +42,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
+import org.apache.jena.sparql.core.DatasetGraph;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -287,7 +288,8 @@ public class FedoraNodesIT extends AbstractResourceIT {
         // check properties
         final HttpGet get = new HttpGet(destination);
         get.addHeader("Accept", "application/n-triples");
-        try (final CloseableGraphStore graphStore = getGraphStore(get)) {
+        try (final CloseableDataset dataset = getDataset(get)) {
+            final DatasetGraph graphStore = dataset.asDatasetGraph();
             assertTrue(graphStore.contains(ANY, createURI(destination),
                     createURI("http://purl.org/dc/elements/1.1/identifier"), createLiteral("identifier.123")));
             assertTrue(graphStore.contains(ANY, createURI(destination),
