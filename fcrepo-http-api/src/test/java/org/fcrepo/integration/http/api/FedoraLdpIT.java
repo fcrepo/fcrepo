@@ -17,16 +17,16 @@
  */
 package org.fcrepo.integration.http.api;
 
-import static com.hp.hpl.jena.datatypes.TypeMapper.getInstance;
-import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDinteger;
-import static com.hp.hpl.jena.graph.Node.ANY;
-import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
-import static com.hp.hpl.jena.graph.NodeFactory.createURI;
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createModelForGraph;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static org.apache.jena.datatypes.TypeMapper.getInstance;
+import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDinteger;
+import static org.apache.jena.graph.Node.ANY;
+import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.rdf.model.ModelFactory.createModelForGraph;
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.vocabulary.RDF.type;
 import static java.lang.System.currentTimeMillis;
 import static java.lang.Thread.sleep;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -124,7 +124,7 @@ import com.google.common.collect.Iterators;
 import nu.validator.htmlparser.sax.HtmlParser;
 import nu.validator.saxtree.TreeBuilder;
 
-import org.fcrepo.http.commons.test.util.CloseableGraphStore;
+import org.fcrepo.http.commons.test.util.CloseableDataset;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
@@ -157,14 +157,15 @@ import org.xml.sax.SAXParseException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Property;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.StmtIterator;
-import com.hp.hpl.jena.sparql.core.Quad;
-import com.hp.hpl.jena.update.GraphStore;
-import com.hp.hpl.jena.vocabulary.DC_11;
+import org.apache.jena.graph.Node;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.vocabulary.DC_11;
 
 /**
  * @author cabeer
@@ -401,7 +402,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", "some content");
         try (final CloseableHttpResponse response = execute(getDSDescMethod(id, "x"));
-                final CloseableGraphStore graph = getGraphStore(response)) {
+                final CloseableDataset dataset = getDataset(response)) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
             final Node correctDSSubject = createURI(serverAddress + id + "/x");
             assertTrue("Binary should be a ldp:NonRDFSource", graph.contains(ANY,
                     correctDSSubject, rdfType, NON_RDF_SOURCE.asNode()));
@@ -541,7 +543,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 resource + "/x>" + " <" + DC_IDENTIFIER + "> \"identifier\" } WHERE {}"));
         try (final CloseableHttpResponse response = execute(patch)) {
             assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
-            try (final CloseableGraphStore graph = getGraphStore(new HttpGet(location))) {
+            try (final CloseableDataset dataset = getDataset(new HttpGet(location))) {
+                final DatasetGraph graph = dataset.asDatasetGraph();
                 assertTrue(graph.contains(ANY,
                         createURI(resource + "/x"), DC_IDENTIFIER, createLiteral("identifier")));
             }
@@ -568,7 +571,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         try (final CloseableHttpResponse response = client.execute(patch)) {
             assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
-            try (final CloseableGraphStore graphStore = getGraphStore(new HttpGet(location))) {
+            try (final CloseableDataset dataset = getDataset(new HttpGet(location))) {
+                final DatasetGraph graphStore = dataset.asDatasetGraph();
                 final Node subject = createURI(serverAddress + pid + "/x");
                 assertTrue(graphStore.contains(ANY, subject, HAS_MIME_TYPE.asNode(), createLiteral("text/awesome")));
                 assertTrue(graphStore.contains(ANY, subject, HAS_ORIGINAL_NAME.asNode(), createLiteral("x.txt")));
@@ -594,12 +598,13 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 "_:a <http://purl.org/dc/elements/1.1/title> \"this is a title\"\n" + " } WHERE {}"));
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(updateObjectGraphMethod));
 
-        try (final CloseableGraphStore graphStore = getGraphStore(new HttpGet(location))) {
+        try (final CloseableDataset dataset = getDataset(new HttpGet(location))) {
+            final DatasetGraph graphStore = dataset.asDatasetGraph();
             assertTrue(graphStore.contains(ANY, createURI(location), createURI("info:some-predicate"), ANY));
             final Node bnode = graphStore.find(ANY,
                     createURI(location), createURI("info:some-predicate"), ANY).next().getObject();
-            try (final CloseableGraphStore bnodeGraphStore = getGraphStore(new HttpGet(bnode.getURI()))) {
-                assertTrue(bnodeGraphStore.contains(ANY, bnode, DCTITLE, createLiteral("this is a title")));
+            try (final CloseableDataset dataset2 = getDataset(new HttpGet(bnode.getURI()))) {
+                assertTrue(dataset2.asDatasetGraph().contains(ANY, bnode, DCTITLE, createLiteral("this is a title")));
             }
         }
     }
@@ -623,7 +628,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertTrue("Didn't find Last-Modified header!", response.containsHeader("Last-Modified"));
             assertTrue("Didn't find ETag header!", response.containsHeader("ETag"));
         }
-        try (final CloseableGraphStore graph = getGraphStore(getObjMethod(id))) {
+        try (final CloseableDataset dataset = getDataset(getObjMethod(id))) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
             assertTrue("Didn't find a triple we tried to create!", graph.contains(ANY,
                     createURI(subjectURI), createURI("info:test#label"), createLiteral("foo")));
         }
@@ -637,7 +643,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createMethod.setEntity(new StringEntity("<" + subjectURI + "> <info:test#label> \"foo\""));
         assertEquals(CREATED.getStatusCode(), getStatus(createMethod));
 
-        try (final CloseableGraphStore graph = getGraphStore(new HttpGet(subjectURI))) {
+        try (final CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
             assertTrue("Didn't find a triple we tried to create!", graph.contains(ANY,
                     createURI(subjectURI), createURI("info:test#label"), createLiteral("foo")));
         }
@@ -654,7 +661,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final HttpGet getObjMethod = new HttpGet(subjectURI);
         getObjMethod.addHeader("Accept", "application/rdf+xml");
-        try (final CloseableGraphStore graph = getGraphStore(getObjMethod)) {
+        try (final CloseableDataset dataset = getDataset(getObjMethod)) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
             final Iterator<Quad> quads =
                     graph.find(ANY, createURI(subjectURI), createURI("info:some-predicate"), ANY);
             assertTrue("Didn't find skolemized blank node assertion", quads.hasNext());
@@ -895,7 +903,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertNotEquals("Last-Modified should not be blank for new nodes", lastmod.trim(), "");
             assertTrue("Didn't find Last-Modified header!", response.containsHeader("Last-Modified"));
             final String location = getLocation(response);
-            try (final CloseableGraphStore graphStore = getGraphStore(new HttpGet(location))) {
+            try (final CloseableDataset dataset = getDataset(new HttpGet(location))) {
+                final DatasetGraph graphStore = dataset.asDatasetGraph();
                 assertTrue(graphStore.contains(ANY, createURI(location), DCTITLE, createLiteral("title")));
             }
         }
@@ -924,7 +933,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertNotNull("Should set Last-Modified for new nodes", lastmod);
             assertNotEquals("Last-Modified should not be blank for new nodes", lastmod.trim(), "");
             final String location = getLocation(response);
-            try (final CloseableGraphStore graphStore = getGraphStore(new HttpGet(location))) {
+            try (final CloseableDataset dataset = getDataset(new HttpGet(location))) {
+                final DatasetGraph graphStore = dataset.asDatasetGraph();
                 assertTrue(graphStore.contains(ANY, createURI(location), DCTITLE, createLiteral("title")));
             }
         }
@@ -1084,8 +1094,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String objName = getLocation(postObjMethod());
         final String pairtreeName = objName.substring(serverAddress.length(), objName.lastIndexOf('/'));
 
-        try (final CloseableGraphStore graphStore = getGraphStore(getObjMethod(pairtreeName))) {
-        assertTrue("Resource \"" + objName + " " + pairtreeName + "\" must be pairtree.", graphStore.contains(ANY,
+        try (final CloseableDataset dataset = getDataset(getObjMethod(pairtreeName))) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertTrue("Resource \"" + objName + " " + pairtreeName + "\" must be pairtree.", graph.contains(ANY,
                 createURI(serverAddress + pairtreeName), type.asNode(), createURI(REPOSITORY_NAMESPACE + "Pairtree")));
         }
         // Attempting to POST to the child of the pairtree node...
@@ -1103,7 +1114,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(method)) {
             assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
             final String location = getLocation(response);
-            try (final CloseableGraphStore graphStore = getGraphStore(new HttpGet(location))) {
+            try (final CloseableDataset dataset = getDataset(new HttpGet(location))) {
+                final DatasetGraph graphStore = dataset.asDatasetGraph();
                 final Node subj = createURI(location);
                 assertTrue(graphStore.contains(ANY, subj, DCTITLE, createLiteral("english title", "en", false)));
                 assertTrue(graphStore.contains(ANY, subj, DCTITLE, createLiteral("french title", "fr", false)));
@@ -1169,7 +1181,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     @Test
     public void testGetRepositoryGraph() throws IOException {
-        try (final CloseableGraphStore graph = getGraphStore(getObjMethod(""))) {
+        try (final CloseableDataset dataset = getDataset(getObjMethod(""))) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
             logger.trace("Retrieved repository graph:\n" + graph);
             assertFalse("Should not find the root type", graph.contains(ANY,
                     ANY, type.asNode(), createURI(MODE_NAMESPACE + "root")));
@@ -1204,8 +1217,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertEquals(OK.getStatusCode(), getStatus(response));
             assertResourceOptionsHeaders(response);
             assertTrue("Didn't find LDP link header!", getLinkHeaders(response).contains(LDP_RESOURCE_LINK_HEADER));
-            try (final CloseableGraphStore results = getGraphStore(response)) {
-                assertTrue("Didn't find any type triples!", results.contains(ANY,
+            try (final CloseableDataset dataset = getDataset(response)) {
+                assertTrue("Didn't find any type triples!", dataset.asDatasetGraph().contains(ANY,
                         createURI(location), rdfType, ANY));
             }
             logger.trace("Leaving testGetObjectGraph()...");
@@ -1219,8 +1232,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createObjectAndClose(id);
         addMixin(id, MIX_NAMESPACE + "versionable");
 
-        try (final CloseableGraphStore graph = getGraphStore(getObjMethod(id))) {
-
+        try (final CloseableDataset dataset = getDataset(getObjMethod(id))) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
             final Node resource = createURI(serverAddress + id);
             verifyResource(graph, resource, REPOSITORY_NAMESPACE, "Container");
             verifyResource(graph, resource, REPOSITORY_NAMESPACE, "Resource");
@@ -1236,11 +1249,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
         logger.trace("Leaving verifyFullSetOfRdfTypes()...");
     }
 
-    private static void verifyResource(final GraphStore g, final Node subject, final String ns, final String type) {
+    private static void verifyResource(final DatasetGraph g, final Node subject, final String ns, final String type) {
         assertTrue("Should find type: " + ns + type, g.contains(ANY, subject, rdfType, createURI(ns + type)));
     }
 
-    private static void verifyAbsenceOfResource(final GraphStore g, final Node subject, final String ns,
+    private static void verifyAbsenceOfResource(final DatasetGraph g, final Node subject, final String ns,
             final String type) {
         assertFalse("Should not find type: " + ns + type, g.contains(ANY, subject, rdfType, createURI(ns + type)));
     }
@@ -1253,8 +1266,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createObjectAndClose(id + "/c");
 
         try (final CloseableHttpResponse response = execute(getObjMethod(id))) {
-            try (final CloseableGraphStore graph = getGraphStore(response)) {
-                assertTrue("Didn't find child node!", graph.contains(ANY,
+            try (final CloseableDataset dataset = getDataset(response)) {
+                assertTrue("Didn't find child node!", dataset.asDatasetGraph().contains(ANY,
                         createURI(location), createURI(LDP_NAMESPACE + "contains"), createURI(location + "/c")));
 
                 final Collection<String> links = getLinkHeaders(response);
@@ -1278,7 +1291,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpGet httpGet = getObjMethod(id);
         httpGet.setHeader("Limit", Integer.toString(CHILDREN_LIMIT));
         try (final CloseableHttpResponse response = execute(httpGet)) {
-            try (final CloseableGraphStore graph = getGraphStore(response)) {
+            try (final CloseableDataset dataset = getDataset(response)) {
+                final DatasetGraph graph = dataset.asDatasetGraph();
                 final Iterator<Quad> contains = graph.find(ANY, createURI(location), CONTAINS.asNode(), ANY);
                 assertTrue("Should find contained child!", contains.hasNext());
                 assertEquals(CHILDREN_LIMIT, Iterators.size(contains));
@@ -1306,7 +1320,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createObjectAndClose(id + "/a");
         final HttpGet getObjMethod = getObjMethod(id);
         getObjMethod.addHeader("Prefer", "return=minimal");
-        try (final CloseableGraphStore graph = getGraphStore(getObjMethod)) {
+        try (final CloseableDataset dataset = getDataset(getObjMethod)) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
             final Node resource = createURI(serverAddress + id);
             assertFalse("Didn't expect members", graph.find(ANY, resource, HAS_CHILD.asNode(), ANY).hasNext());
             assertFalse("Didn't expect members", graph.find(ANY, resource, CONTAINS.asNode(), ANY).hasNext());
@@ -1322,7 +1337,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpGet getObjMethod = getObjMethod(id);
         getObjMethod.addHeader("Prefer", "return=representation; "
                 + "omit=\"http://www.w3.org/ns/ldp#PreferContainment http://www.w3.org/ns/ldp#PreferMembership\"");
-        try (final CloseableGraphStore graph = getGraphStore(getObjMethod)) {
+        try (final CloseableDataset dataset = getDataset(getObjMethod)) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
             assertFalse("Didn't expect inlined member resources", graph.find(ANY,
                     createURI(serverAddress + id), HAS_CHILD.asNode(), ANY).hasNext());
         }
@@ -1344,7 +1360,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpGet getObjMethod = getObjMethod(id);
         getObjMethod
                 .addHeader("Prefer", "return=representation; omit=\"http://www.w3.org/ns/ldp#PreferContainment\"");
-        try (final CloseableGraphStore graph = getGraphStore(getObjMethod)) {
+        try (final CloseableDataset dataset = getDataset(getObjMethod)) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
             final Node resource = createURI(serverAddress + id);
             assertTrue("Didn't find member resources", graph.find(ANY, resource, LDP_MEMBER.asNode(), ANY).hasNext());
             assertFalse("Expected nothing contained", graph.find(ANY, resource, CONTAINS.asNode(), ANY).hasNext());
@@ -1371,7 +1388,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpGet getObjMethod = new HttpGet(resourceb);
 
         getObjMethod.addHeader("Prefer", "return=representation; include=\"" + INBOUND_REFERENCES + "\"");
-        try (final CloseableGraphStore graph = getGraphStore(getObjMethod)) {
+        try (final CloseableDataset dataset = getDataset(getObjMethod)) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
             assertTrue(graph.contains(ANY,
                     createURI(resourcea), createURI("http://purl.org/dc/terms/isPartOf"), createURI(resourceb)));
 
@@ -1409,7 +1427,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         // retrieve the parent and verify the outbound triples exist
         final HttpGet getParent =  new HttpGet(serverAddress + pid1);
         getParent.addHeader("Accept", "application/n-triples");
-        try (final CloseableGraphStore parentGraph = getGraphStore(getParent)) {
+        try (final CloseableDataset dataset = getDataset(getParent)) {
+            final DatasetGraph parentGraph = dataset.asDatasetGraph();
             assertTrue(parentGraph.contains(Node.ANY,
                     createURI(serverAddress + pid1),
                     createURI(memberRelation),
@@ -1424,7 +1443,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpGet getContainer =  new HttpGet(serverAddress + pid1 + "/members");
         getContainer.addHeader("Prefer", "return=representation;include=\"http://www.w3.org/ns/ldp#PreferMembership\"");
         getContainer.addHeader("Accept", "application/n-triples");
-        try (final CloseableGraphStore containerGraph = getGraphStore(getContainer)) {
+        try (final CloseableDataset dataset = getDataset(getContainer)) {
+            final DatasetGraph containerGraph = dataset.asDatasetGraph();
             assertTrue(containerGraph.contains(Node.ANY,
                     createURI(serverAddress + pid1 + "/members"),
                     createURI("http://www.w3.org/ns/ldp#hasMemberRelation"),
@@ -1446,7 +1466,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpGet getMember =  new HttpGet(serverAddress + pid2);
         getMember.addHeader("Prefer", "return=representation; include=\"" + INBOUND_REFERENCES.toString() + "\"");
         getMember.addHeader("Accept", "application/n-triples");
-        try (final CloseableGraphStore memberGraph = getGraphStore(getMember)) {
+        try (final CloseableDataset dataset = getDataset(getMember)) {
+            final DatasetGraph memberGraph = dataset.asDatasetGraph();
             assertTrue(memberGraph.contains(Node.ANY,
                     Node.ANY,
                     createURI("http://www.openarchives.org/ore/terms/proxyFor"),
@@ -1476,9 +1497,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testGetObjectGraphLacksUUID() throws Exception {
         final String location = getLocation(postObjMethod());
         final HttpGet getObjMethod = new HttpGet(location);
-        try (final CloseableGraphStore graphStore = getGraphStore(getObjMethod)) {
+        try (final CloseableDataset dataset = getDataset(getObjMethod)) {
             final Iterator<Quad> iterator =
-                    graphStore.find(ANY, createURI(location), HAS_PRIMARY_IDENTIFIER.asNode(), ANY);
+                    dataset.asDatasetGraph().find(ANY, createURI(location), HAS_PRIMARY_IDENTIFIER.asNode(), ANY);
             assertFalse("Graph should not contain a UUID!", iterator.hasNext());
         }
     }
@@ -1487,9 +1508,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testGetObjectGraphLacksPrimaryType() throws Exception {
         final String location = getLocation(postObjMethod());
         final HttpGet getObjMethod = new HttpGet(location);
-        try (final CloseableGraphStore graphStore = getGraphStore(getObjMethod)) {
+        try (final CloseableDataset dataset = getDataset(getObjMethod)) {
             final Iterator<Quad> iterator =
-                    graphStore.find(ANY, createURI(location), HAS_PRIMARY_TYPE.asNode(), ANY);
+                    dataset.asDatasetGraph().find(ANY, createURI(location), HAS_PRIMARY_TYPE.asNode(), ANY);
             assertFalse("Graph should not contain a primaryType!", iterator.hasNext());
         }
     }
@@ -1498,9 +1519,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testGetObjectGraphLacksMixinType() throws Exception {
         final String location = getLocation(postObjMethod());
         final HttpGet getObjMethod = new HttpGet(location);
-        try (final CloseableGraphStore graphStore = getGraphStore(getObjMethod)) {
+        try (final CloseableDataset dataset = getDataset(getObjMethod)) {
             final Iterator<Quad> iterator =
-                    graphStore.find(ANY, createURI(location), HAS_MIXIN_TYPE.asNode(), ANY);
+                    dataset.asDatasetGraph().find(ANY, createURI(location), HAS_MIXIN_TYPE.asNode(), ANY);
             assertFalse("Graph should not contain a mixinType!", iterator.hasNext());
         }
     }
@@ -1509,8 +1530,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testGetObjectGraphLacksJcrTypes() throws Exception {
         final String location = getLocation(postObjMethod());
         final HttpGet getObjMethod = new HttpGet(location);
-        try (final CloseableGraphStore graphStore = getGraphStore(getObjMethod)) {
-            graphStore.find(ANY, createURI(location), type.asNode(), ANY).forEachRemaining(q -> {
+        try (final CloseableDataset dataset = getDataset(getObjMethod)) {
+            dataset.asDatasetGraph().find(ANY, createURI(location), type.asNode(), ANY).forEachRemaining(q -> {
                     final Node o = q.asTriple().getObject();
                     assertTrue("Type should be a URI", o.isURI());
                     assertFalse("Graph should not contain an internal JCR type",
@@ -1544,7 +1565,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
                     " <info:test#date> \"1953?\"^^<http://id.loc.gov/datatypes/edtf/EDTF> }" +
                 " WHERE {}"));
         executeAndClose(updateObjectGraphMethod);
-        try (CloseableGraphStore graph = getGraphStore(new HttpGet(subjectURI))) {
+        try (CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
             assertTrue("Didn't find a triple we thought we added.", graph.contains(ANY,
                     createURI(subjectURI), createURI("info:test#label"), createLiteral("foo")));
             assertTrue("Didn't find a triple we thought we added.", graph.contains(ANY,
@@ -1567,7 +1589,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertTrue("Didn't find Last-Modified header!", response.containsHeader("Last-Modified"));
             assertTrue("Didn't find ETag header!", response.containsHeader("ETag"));
         }
-        try (CloseableGraphStore graph = getGraphStore(new HttpGet(subjectURI))) {
+        try (CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
             assertFalse("Found a triple we thought we deleted.", graph.contains(ANY,
                     createURI(subjectURI), createURI("info:test#label"), createLiteral("foo")));
             assertFalse("Found a triple we thought we deleted.", graph.contains(ANY,
@@ -1695,13 +1718,14 @@ public class FedoraLdpIT extends AbstractResourceIT {
     @Test
     public void testGetProjectedNode() throws IOException {
         final HttpGet method = new HttpGet(serverAddress + "files/FileSystem1");
-        try (final CloseableGraphStore result = getGraphStore(method)) {
+        try (final CloseableDataset dataset = getDataset(method)) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
             final Node subjectURI = createURI(serverAddress + "files/FileSystem1");
-            assertTrue("Didn't find the first datastream! ", result.contains(ANY,
+            assertTrue("Didn't find the first datastream! ", graph.contains(ANY,
                     subjectURI, ANY, createURI(subjectURI + "/ds1")));
-            assertTrue("Didn't find the second datastream! ", result.contains(ANY,
+            assertTrue("Didn't find the second datastream! ", graph.contains(ANY,
                     subjectURI, ANY, createURI(subjectURI + "/ds2")));
-            assertTrue("Didn't find the first object! ", result.contains(ANY,
+            assertTrue("Didn't find the first object! ", graph.contains(ANY,
                     subjectURI, ANY, createURI(subjectURI + "/TestSubdir")));
         }
     }
@@ -1932,8 +1956,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String location = getLocation(postObjMethod());
         final HttpGet getObjMethod = new HttpGet(location);
         try (final CloseableHttpResponse response = execute(getObjMethod)) {
-            try (final CloseableGraphStore results = getGraphStore(response)) {
-                final Model model = createModelForGraph(results.getDefaultGraph());
+            try (final CloseableDataset dataset = getDataset(response)) {
+                final DatasetGraph graph = dataset.asDatasetGraph();
+                final Model model = createModelForGraph(graph.getDefaultGraph());
                 final Resource nodeUri = createResource(location);
                 final String lastmodString = response.getFirstHeader("Last-Modified").getValue();
                 headerFormat.parse(lastmodString);
@@ -1981,7 +2006,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         createObject(id + "/t/1");
         createObject(id + "/b/1");
-        try (final CloseableGraphStore graphStore = getGraphStore(new HttpGet(location))) {
+        try (final CloseableDataset dataset = getDataset(new HttpGet(location))) {
+            final DatasetGraph graphStore = dataset.asDatasetGraph();
             final Node resource = createURI(location);
             assertTrue("Expected to have container t", graphStore.contains(ANY,
                     resource, createURI(LDP_NAMESPACE + "contains"), createURI(location + "/t")));
@@ -2043,7 +2069,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
         // Ensure container has been updated with relationship... indirectly
         try (final CloseableHttpResponse getResponse = execute(new HttpGet(container));
-                final CloseableGraphStore graphStore = getGraphStore(getResponse)) {
+                final CloseableDataset dataset = getDataset(getResponse)) {
+            final DatasetGraph graphStore = dataset.asDatasetGraph();
             assertTrue("Expected to have indirect container", graphStore.contains(ANY,
                     createURI(container), createURI(LDP_NAMESPACE + "contains"), createURI(indirectContainer)));
 
@@ -2056,8 +2083,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         // Ensure container has been updated with relationship... indirectly
         try (final CloseableHttpResponse getResponse1 = execute(new HttpGet(container));
-                final CloseableGraphStore graphStore1 = getGraphStore(getResponse1);) {
-            assertFalse("Expected NOT to have resource: " + graphStore1, graphStore1.contains(ANY,
+                final CloseableDataset dataset = getDataset(getResponse1);) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertFalse("Expected NOT to have resource: " + graph, graph.contains(ANY,
                     createURI(container), createURI("info:some/relation"), createURI(resource)));
         }
     }
@@ -2071,7 +2099,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(method)) {
             assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
             final String location = getLocation(response);
-            try (final CloseableGraphStore graphStore = getGraphStore(new HttpGet(location))) {
+            try (final CloseableDataset dataset = getDataset(new HttpGet(location))) {
+                final DatasetGraph graphStore = dataset.asDatasetGraph();
                 assertTrue(graphStore.contains(ANY,
                         createURI(location), createURI("info:some-predicate"), createURI(location + "#abc")));
                 assertTrue(graphStore.contains(ANY,
@@ -2104,8 +2133,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final HttpGet get = new HttpGet(subjectURI);
         get.addHeader("Prefer", "return=minimal");
-        try (final CloseableGraphStore graphStore = getGraphStore(get)) {
-            assertTrue(graphStore.contains(ANY, ANY, DCTITLE, createLiteral("xyz")));
+        try (final CloseableDataset dataset = getDataset(get)) {
+            assertTrue(dataset.asDatasetGraph().contains(ANY, ANY, DCTITLE, createLiteral("xyz")));
         }
         LOGGER.trace("Done with testCreateAndReplaceGraphMinimal().");
     }
@@ -2152,7 +2181,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpGet httpGet = getObjMethod(id);
         httpGet.setHeader("Prefer",
                 "return=representation; include=\"http://fedora.info/definitions/v4/repository#EmbedResources\"");
-        try (final CloseableGraphStore graphStore = getGraphStore(httpGet)) {
+        try (final CloseableDataset dataset = getDataset(httpGet)) {
+            final DatasetGraph graphStore = dataset.asDatasetGraph();
             assertTrue("Property on child binary should be found!" + graphStore, graphStore.contains(ANY,
                     createURI(serverAddress + id + "/" + binaryId),
                     createURI("http://purl.org/dc/elements/1.1/title"), createLiteral("this is a title")));
@@ -2341,9 +2371,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 getStatus(delPatch));
 
         // now test if property exists anymore (it shouldn't).
-        try (final CloseableGraphStore graph = getGraphStore(getObjMethod(pid))) {
-            assertFalse("Found the literal we tried to delete!", graph.contains(ANY,createURI(location), DC_TITLE,
-                    createLiteral(longLiteral)));
+        try (final CloseableDataset dataset = getDataset(getObjMethod(pid))) {
+            assertFalse("Found the literal we tried to delete!", dataset.asDatasetGraph().contains(ANY,
+                        createURI(location), DC_TITLE, createLiteral(longLiteral)));
         }
     }
 
@@ -2442,8 +2472,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         sleep(1000); // wait a second to make sure last-modified value will be different
 
-        try (final CloseableGraphStore graph = getGraphStore(new HttpGet(binURI + "/fcr:metadata"))) {
-            verifyModifiedMatchesCreated(graph);
+        try (final CloseableDataset dataset = getDataset(new HttpGet(binURI + "/fcr:metadata"))) {
+            verifyModifiedMatchesCreated(dataset);
         }
 
         final HttpPatch patchBinary = new HttpPatch(binURI + "/fcr:metadata");
@@ -2482,8 +2512,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         sleep(1000); // wait a second to make sure last-modified value will be different
 
         // initial created and last-modified properties should match
-        try (final CloseableGraphStore graph = getGraphStore(getObjMethod(objid))) {
-            verifyModifiedMatchesCreated(graph);
+        try (final CloseableDataset dataset = getDataset(getObjMethod(objid))) {
+            verifyModifiedMatchesCreated(dataset);
         }
 
         // update the object properties (last-modified should be updated)
@@ -2528,7 +2558,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
     }
 
-    private static void verifyModifiedMatchesCreated(final GraphStore graph) {
+    private static void verifyModifiedMatchesCreated(final Dataset dataset) {
+        final DatasetGraph graph = dataset.asDatasetGraph();
         final Node cre = graph.find(ANY, ANY, CREATED_DATE.asNode(), ANY).next().getObject();
         final Node mod = graph.find(ANY, ANY, LAST_MODIFIED_DATE.asNode(), ANY).next().getObject();
         assertEquals(cre.getLiteralValue(), mod.getLiteralValue());

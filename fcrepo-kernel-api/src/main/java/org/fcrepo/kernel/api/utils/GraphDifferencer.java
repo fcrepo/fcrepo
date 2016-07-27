@@ -19,15 +19,15 @@ package org.fcrepo.kernel.api.utils;
 
 import java.util.stream.Stream;
 
-import com.hp.hpl.jena.graph.Graph;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.rdf.model.Model;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
 
 import static java.util.Spliterator.IMMUTABLE;
 import static java.util.Spliterators.spliteratorUnknownSize;
 import static java.util.stream.StreamSupport.stream;
-import static com.hp.hpl.jena.graph.Node.ANY;
-import static com.hp.hpl.jena.sparql.graph.GraphFactory.createDefaultGraph;
+import static org.apache.jena.graph.Node.ANY;
+import static org.apache.jena.sparql.graph.GraphFactory.createDefaultGraph;
 
 /**
  * A wrapping {@link Stream} that calculates two differences between a

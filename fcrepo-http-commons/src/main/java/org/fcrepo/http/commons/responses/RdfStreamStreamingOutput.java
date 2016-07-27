@@ -48,8 +48,8 @@ import org.openrdf.rio.WriterConfig;
 import org.slf4j.Logger;
 
 import com.google.common.util.concurrent.AbstractFuture;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Triple;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
 
 /**
  * Serializes an {@link RdfStream}.

@@ -17,15 +17,17 @@
  */
 package org.fcrepo.kernel.modeshape.utils.iterators;
 
-import static com.hp.hpl.jena.graph.NodeFactory.createAnon;
-import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
-import static com.hp.hpl.jena.graph.NodeFactory.createURI;
-import static com.hp.hpl.jena.graph.Triple.create;
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDstring;
+import static org.apache.jena.graph.NodeFactory.createBlankNode;
+import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.graph.Triple.create;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.vocabulary.RDF.type;
 import static javax.jcr.PropertyType.STRING;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FIELD_DELIMITER;
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getJcrNamespaceForRDFNamespace;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -56,10 +58,10 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.modeshape.jcr.api.NamespaceRegistry;
 
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.Statement;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
 
 
 /**
@@ -137,7 +139,8 @@ public class RdfRemoverTest {
                 mockSession
                         .getNamespacePrefix(getJcrNamespaceForRDFNamespace(type
                                 .getNameSpace()))).thenReturn("rdf");
-        when(mockValueFactory.createValue(description, STRING)).thenReturn(mockValue);
+        when(mockValueFactory.createValue(description + FIELD_DELIMITER + XSDstring.getURI(), STRING))
+                .thenReturn(mockValue);
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(
                 mockNamespaceRegistry);
         when(mockNamespaceRegistry.getURI(propertyNamespacePrefix)).thenReturn(
@@ -240,7 +243,7 @@ public class RdfRemoverTest {
 
     private static final String description = "Description.";
 
-    private static final Triple descriptiveTriple = create(createAnon(),
+    private static final Triple descriptiveTriple = create(createBlankNode(),
             createURI(propertyLongName), createLiteral(description));
 
     private static final Statement descriptiveStmnt = m

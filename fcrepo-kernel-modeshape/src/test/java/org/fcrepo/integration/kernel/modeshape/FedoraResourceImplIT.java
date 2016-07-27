@@ -19,13 +19,14 @@ package org.fcrepo.integration.kernel.modeshape;
 
 import static java.net.URI.create;
 import static java.util.Collections.emptySet;
-import static com.hp.hpl.jena.graph.Node.ANY;
-import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
-import static com.hp.hpl.jena.graph.NodeFactory.createURI;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDstring;
+import static org.apache.jena.graph.Node.ANY;
+import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.rdf.model.ResourceFactory.createPlainLiteral;
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.vocabulary.RDF.type;
 import static javax.jcr.PropertyType.BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
@@ -52,6 +53,7 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
 import static org.fcrepo.kernel.api.RequiredRdfContext.VERSIONS;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FIELD_DELIMITER;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedPredicate.uncheck;
@@ -85,9 +87,9 @@ import javax.jcr.security.Privilege;
 import javax.jcr.version.Version;
 
 import com.google.common.collect.Iterators;
-import com.hp.hpl.jena.graph.Graph;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.ResourceFactory;
 
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
@@ -115,15 +117,15 @@ import org.junit.Test;
 import org.modeshape.jcr.security.SimplePrincipal;
 import org.springframework.test.context.ContextConfiguration;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.rdf.model.Literal;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Property;
-import com.hp.hpl.jena.rdf.model.RDFNode;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.Statement;
-import com.hp.hpl.jena.util.iterator.ExtendedIterator;
-import com.hp.hpl.jena.vocabulary.RDF;
+import org.apache.jena.graph.Node;
+import org.apache.jena.rdf.model.Literal;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.util.iterator.ExtendedIterator;
+import org.apache.jena.vocabulary.RDF;
 
 /**
  * <p>FedoraResourceImplIT class.</p>
@@ -711,7 +713,8 @@ public class FedoraResourceImplIT extends AbstractIT {
             final javax.jcr.Node skolemizedNode = session.getNodeByIdentifier(values[0].getString());
 
             assertTrue(skolemizedNode.getPath().contains("/.well-known/genid/"));
-            assertEquals("xyz", skolemizedNode.getProperty("dc:title").getValues()[0].getString());
+            assertEquals("xyz" + FIELD_DELIMITER + XSDstring.getURI(),
+                    skolemizedNode.getProperty("dc:title").getValues()[0].getString());
         }
     }
 
@@ -752,6 +755,8 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Model updatedModel3 = object.getTriples(subjects, PROPERTIES).collect(toModel());
 
         updatedModel3.remove(subject, dcCreator, hashResource);
+        updatedModel3.removeAll(hashResource, (Property)null, (RDFNode)null);
+
         object.replaceProperties(subjects, updatedModel3, object.getTriples(subjects, PROPERTIES));
         assertEquals(0, getJcrNode(object).getNode("#").getNodes().getSize());
     }

@@ -18,14 +18,14 @@
 package org.fcrepo.kernel.api;
 
 import static java.util.Arrays.asList;
-import static com.hp.hpl.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.junit.Assert.assertEquals;
 
 import java.util.List;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.rdf.model.Model;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
 
 import org.junit.Test;
 

@@ -19,14 +19,14 @@ package org.fcrepo.http.commons.responses;
 
 import static java.util.stream.Stream.of;
 import static com.google.common.util.concurrent.Futures.addCallback;
-import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDdateTime;
-import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
-import static com.hp.hpl.jena.graph.NodeFactory.createURI;
-import static com.hp.hpl.jena.graph.Triple.create;
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
+import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDdateTime;
+import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.graph.Triple.create;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static javax.ws.rs.core.MediaType.valueOf;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_TYPE;
 import static org.fcrepo.http.commons.responses.RdfStreamStreamingOutput.getValueForObject;
@@ -52,7 +52,7 @@ import javax.jcr.Session;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 
-import com.hp.hpl.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.RDFNode;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.RdfStream;
 import org.junit.Before;
@@ -65,9 +65,9 @@ import org.openrdf.rio.RDFHandlerException;
 import org.slf4j.Logger;
 
 import com.google.common.util.concurrent.FutureCallback;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.rdf.model.Model;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
 
 /**
  * <p>RdfStreamStreamingOutputTest class.</p>

@@ -17,8 +17,8 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.converters;
 
-import com.hp.hpl.jena.rdf.model.Property;
-import com.hp.hpl.jena.shared.InvalidPropertyURIException;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.shared.InvalidPropertyURIException;
 
 import org.fcrepo.kernel.api.exception.FedoraInvalidNamespaceException;
 import org.fcrepo.kernel.modeshape.utils.JcrPropertyMock;
@@ -36,7 +36,7 @@ import javax.jcr.Workspace;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static java.util.Collections.emptyMap;
 import static javax.jcr.PropertyType.REFERENCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;

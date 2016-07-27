@@ -31,7 +31,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.UUID;
 
-import com.hp.hpl.jena.update.GraphStore;
+import org.apache.jena.query.Dataset;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
@@ -179,7 +179,7 @@ public abstract class AbstractResourceIT {
         return response.getFirstHeader("Content-Type").getValue();
     }
 
-    protected GraphStore getGraphStore(final HttpClient client, final HttpUriRequest method) throws IOException {
+    protected Dataset getDataset(final HttpClient client, final HttpUriRequest method) throws IOException {
 
         if (method.getFirstHeader("Accept") == null) {
             method.addHeader("Accept", "application/n-triples");
@@ -191,20 +191,20 @@ public abstract class AbstractResourceIT {
         final HttpResponse response = client.execute(method);
         assertEquals(OK.getStatusCode(), response.getStatusLine()
                                              .getStatusCode());
-        final GraphStore result = parseTriples(response.getEntity());
+        final Dataset result = parseTriples(response.getEntity());
         logger.trace("Retrieved RDF: {}", result);
         return result;
 
     }
-    protected GraphStore getGraphStore(final HttpResponse response) throws IOException {
+    protected Dataset getDataset(final HttpResponse response) throws IOException {
         assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
-        final GraphStore result = parseTriples(response.getEntity());
+        final Dataset result = parseTriples(response.getEntity());
         logger.trace("Retrieved RDF: {}", result);
         return result;
     }
 
-    protected GraphStore getGraphStore(final HttpUriRequest method) throws IOException {
-        return getGraphStore(client, method);
+    protected Dataset getDataset(final HttpUriRequest method) throws IOException {
+        return getDataset(client, method);
     }
 
     protected HttpResponse createObject(final String pid) throws IOException {

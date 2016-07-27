@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
-    <artifactId>fcrepo</artifactId>
+    <artifactId>fcrepo-parent</artifactId>
     <groupId>org.fcrepo</groupId>
     <version>4.7.0-SNAPSHOT</version>
+    <relativePath>../fcrepo-parent/pom.xml</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -11,178 +12,24 @@
   <description>Packaging the LDP integration test suite for fcrepo4</description>
   <artifactId>fcrepo-integration-ldp</artifactId>
 
+  <properties>
+    <junit.version>4.11</junit.version>
+    <jetty-plugin.version>9.3.1.v20150714</jetty-plugin.version>
+    <ldp-testsuite.version>0.1.1</ldp-testsuite.version>
+  </properties>
+
   <dependencies>
     <!-- test gear -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-test</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-configs</artifactId>
-      <version>${project.version}</version>
+      <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
-
     <dependency>
-      <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-http-api</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-http-commons</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-auth-common</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-
-    <dependency>
-      <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-http-commons</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-      <type>test-jar</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.glassfish.grizzly</groupId>
-      <artifactId>grizzly-http-server</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.glassfish.grizzly</groupId>
-      <artifactId>grizzly-http-servlet</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.glassfish.jersey.test-framework.providers</groupId>
-      <artifactId>jersey-test-framework-provider-grizzly2</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-web</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.glassfish.jersey.ext</groupId>
-      <artifactId>jersey-spring3</artifactId>
-      <scope>test</scope>
-      <version>${jersey.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.glassfish.jersey.core</groupId>
-      <artifactId>jersey-common</artifactId>
-      <version>${jersey.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.glassfish.jersey.media</groupId>
-      <artifactId>jersey-media-multipart</artifactId>
-      <version>${jersey.version}</version>
-    </dependency>
-
-     <dependency>
-       <groupId>org.w3</groupId>
-       <artifactId>ldp-testsuite</artifactId>
-       <version>0.1.1</version>
-       <scope>test</scope>
-       <exclusions>
-         <exclusion>
-           <groupId>org.apache.jena</groupId>
-           <artifactId>jena-arq</artifactId>
-         </exclusion>
-         <exclusion>
-           <groupId>org.openrdf.sesame</groupId>
-           <artifactId>sesame-sail-api</artifactId>
-         </exclusion>
-         <exclusion>
-           <groupId>org.openrdf.sesame</groupId>
-           <artifactId>sesame-sail-memory</artifactId>
-         </exclusion>
-         <exclusion>
-           <groupId>org.openrdf.sesame</groupId>
-           <artifactId>sesame-queryresultio-api</artifactId>
-         </exclusion>
-         <exclusion>
-           <groupId>commons-validator</groupId>
-           <artifactId>commons-validator</artifactId>
-         </exclusion>
-         <exclusion>
-           <groupId>org.apache.commons</groupId>
-           <artifactId>commons-lang3</artifactId>
-         </exclusion>
-         <exclusion>
-           <groupId>commons-io</groupId>
-           <artifactId>commons-io</artifactId>
-         </exclusion>
-         <exclusion>
-           <groupId>commons-codec</groupId>
-           <artifactId>commons-codec</artifactId>
-         </exclusion>
-         <exclusion>
-           <groupId>org.slf4j</groupId>
-           <artifactId>slf4j-log4j12</artifactId>
-         </exclusion>
-         <exclusion>
-           <groupId>log4j</groupId>
-           <artifactId>log4j</artifactId>
-         </exclusion>
-       </exclusions>
-     </dependency>
- 
-     <!-- fixes for ldp-testsuite convergence problems -->
-     <dependency>
-       <groupId>org.openrdf.sesame</groupId>
-       <artifactId>sesame-sail-api</artifactId>
-       <version>2.7.13</version>
-       <scope>test</scope>
-     </dependency>
-     <dependency>
-       <groupId>org.openrdf.sesame</groupId>
-       <artifactId>sesame-sail-memory</artifactId>
-       <version>2.7.13</version>
-       <scope>test</scope>
-       <exclusions>
-         <exclusion>
-           <groupId>commons-codec</groupId>
-           <artifactId>commons-codec</artifactId>
-         </exclusion>
-         <exclusion>
-           <groupId>commons-httpclient</groupId>
-           <artifactId>commons-httpclient</artifactId>
-         </exclusion>
-       </exclusions>
-     </dependency>
-     <dependency>
-       <groupId>org.openrdf.sesame</groupId>
-       <artifactId>sesame-queryresultio-api</artifactId>
-       <version>2.7.13</version>
-       <scope>test</scope>
-     </dependency>
-     <dependency>
-       <groupId>org.apache.commons</groupId>
-       <artifactId>commons-lang3</artifactId>
-       <version>3.3.2</version>
-       <scope>test</scope>
-     </dependency>
-    <dependency>
-      <groupId>org.apache.jena</groupId>
-      <artifactId>jena-arq</artifactId>
-      <version>${jena.version}</version>
+      <groupId>org.w3</groupId>
+      <artifactId>ldp-testsuite</artifactId>
+      <version>${ldp-testsuite.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -195,13 +42,128 @@
                 <configuration>
                     <portNames>
                         <portName>fcrepo.dynamic.test.port</portName>
-                        <!-- reserves the stop port for jetty-maven-plugin -->
                         <portName>jetty.dynamic.stop.port</portName>
                         <portName>fcrepo.dynamic.jms.port</portName>
                         <portName>fcrepo.dynamic.stomp.port</portName>
                     </portNames>
                 </configuration>
+                <executions>
+                  <execution>
+                    <id>reserve-port</id>
+                    <phase>pre-integration-test</phase>
+                    <goals>
+                      <goal>reserve-network-port</goal>
+                    </goals>
+                  </execution>
+                </executions>
             </plugin>
+
+            <!--Bring in fcrepo webapp for integration testing-->
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-dependency-plugin</artifactId>
+              <executions>
+                <execution>
+                  <id>copy</id>
+                  <phase>package</phase>
+                  <goals>
+                    <goal>copy</goal>
+                  </goals>
+                  <configuration>
+                    <artifactItems>
+                      <artifactItem>
+                        <groupId>org.fcrepo</groupId>
+                        <artifactId>fcrepo-webapp</artifactId>
+                        <version>${project.version}</version>
+                        <type>war</type>
+                        <outputDirectory>${project.build.directory}</outputDirectory>
+                        <destFileName>fcrepo.war</destFileName>
+                      </artifactItem>
+                    </artifactItems>
+                  </configuration>
+                </execution>
+              </executions>
+            </plugin>
+
+            <!-- Launch jetty for integration testing with fedora -->
+            <plugin>
+              <groupId>org.eclipse.jetty</groupId>
+              <artifactId>jetty-maven-plugin</artifactId>
+              <version>${jetty-plugin.version}</version>
+              <configuration>
+                <systemProperties>
+                  <force>true</force>
+                  <systemProperty>
+                    <name>fcrepo.home</name>
+                    <value>${project.build.directory}/fcrepo-data</value>
+                  </systemProperty>
+                  <systemProperty>
+                    <name>fcrepo.dynamic.jms.port</name>
+                    <value>${fcrepo.dynamic.jms.port}</value>
+                  </systemProperty>
+                  <systemProperty>
+                    <name>fcrepo.dynamic.stomp.port</name>
+                    <value>${fcrepo.dynamic.stomp.port}</value>
+                  </systemProperty>
+                  <systemProperty>
+                    <name>fcrepo.modeshape.configuration</name>
+                    <value>classpath:/config/minimal-default/repository.json</value>
+                  </systemProperty>
+                  <systemProperty>
+                    <name>fcrepo.http.ldp.putRequiresIfMatch</name>
+                    <value>true</value>
+                  </systemProperty>
+                  <systemProperty>
+                    <name>fcrepo.log.http.api</name>
+                    <value>ERROR</value>
+                  </systemProperty>
+                  <systemProperty>
+                    <name>fcrepo.log.kernel</name>
+                    <value>ERROR</value>
+                  </systemProperty>
+                  <systemProperty>
+                    <name>fcrepo.log</name>
+                    <value>ERROR</value>
+                  </systemProperty>
+                </systemProperties>
+                <scanIntervalSeconds>10</scanIntervalSeconds>
+                <stopKey>STOP</stopKey>
+                <stopPort>${jetty.dynamic.stop.port}</stopPort>
+                <daemon>true</daemon>
+              </configuration>
+              <executions>
+                <execution>
+                  <id>start-jetty</id>
+                  <phase>pre-integration-test</phase>
+                  <goals>
+                    <goal>stop</goal>
+                    <goal>start</goal>
+                  </goals>
+                  <configuration>
+                    <httpConnector>
+                      <port>${fcrepo.dynamic.test.port}</port>
+                    </httpConnector>
+                    <scanIntervalSeconds>0</scanIntervalSeconds>
+                    <daemon>true</daemon>
+                    <contextHandlers>
+                        <contextHandler implementation="org.eclipse.jetty.webapp.WebAppContext">
+                          <war>${project.build.directory}/fcrepo.war</war>
+                          <contextPath>/fcrepo</contextPath>
+                        </contextHandler>
+                    </contextHandlers>
+                  </configuration>
+                </execution>
+
+                <execution>
+                  <id>stop-jetty</id>
+                  <phase>post-integration-test</phase>
+                   <goals>
+                     <goal>stop</goal>
+                   </goals>
+                 </execution>
+              </executions>
+            </plugin>
+
             <plugin>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <configuration>

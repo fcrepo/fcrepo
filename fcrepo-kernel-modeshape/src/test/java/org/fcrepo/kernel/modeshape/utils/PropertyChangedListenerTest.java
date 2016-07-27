@@ -17,11 +17,11 @@
  */
 package org.fcrepo.kernel.modeshape.utils;
 
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createStatement;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
-import static com.hp.hpl.jena.vocabulary.DC.creator;
-import static com.hp.hpl.jena.vocabulary.DC.title;
+import static org.apache.jena.rdf.model.ResourceFactory.createPlainLiteral;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.rdf.model.ResourceFactory.createStatement;
+import static org.apache.jena.vocabulary.DC.creator;
+import static org.apache.jena.vocabulary.DC.title;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 

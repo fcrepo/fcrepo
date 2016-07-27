@@ -18,9 +18,9 @@
 package org.fcrepo.http.commons.responses;
 
 import static java.util.stream.Stream.of;
-import static com.hp.hpl.jena.graph.NodeFactory.createURI;
-import static com.hp.hpl.jena.graph.Triple.create;
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.graph.Triple.create;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -45,8 +45,8 @@ import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.rdf.model.Model;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
 
 /**
  * <p>RdfStreamProviderTest class.</p>

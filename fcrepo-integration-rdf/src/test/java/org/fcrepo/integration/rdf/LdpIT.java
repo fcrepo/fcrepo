@@ -17,7 +17,7 @@
  */
 package org.fcrepo.integration.rdf;
 
-import com.hp.hpl.jena.update.GraphStore;
+import org.apache.jena.query.Dataset;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -66,8 +66,8 @@ public class LdpIT extends AbstractIntegrationRdfIT {
                 "include=\"http://www.w3.org/ns/ldp#PreferMembership " +
                     "http://www.w3.org/ns/ldp#PreferMinimalContainer\"; " +
                 "omit=\"http://fedora.info/definitions/v4/repository#ServerManaged\"");
-        final GraphStore graphStore = getGraphStore(httpGet);
+        final Dataset dataset = getDataset(httpGet);
 
-        assertFalse(graphStore.isEmpty());
+        assertFalse(dataset.asDatasetGraph().isEmpty());
     }
 }

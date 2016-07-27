@@ -19,8 +19,8 @@ package org.fcrepo.kernel.modeshape.rdf.converters;
 
 import com.google.common.base.Converter;
 import com.google.common.collect.ImmutableBiMap;
-import com.hp.hpl.jena.rdf.model.Property;
-import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.api.exception.FedoraInvalidNamespaceException;
 import org.modeshape.jcr.api.NamespaceRegistry;
@@ -33,7 +33,7 @@ import javax.jcr.RepositoryException;
 import java.util.Map;
 
 import static com.google.common.base.Throwables.propagate;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getJcrNamespaceForRDFNamespace;
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getReferencePropertyOriginalName;

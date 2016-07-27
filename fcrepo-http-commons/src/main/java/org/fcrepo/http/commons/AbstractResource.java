@@ -24,7 +24,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.UriInfo;
 
-import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Resource;
 
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.api.models.FedoraResource;

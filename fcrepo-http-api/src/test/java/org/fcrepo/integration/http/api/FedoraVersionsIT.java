@@ -17,11 +17,11 @@
  */
 package org.fcrepo.integration.http.api;
 
-import static com.hp.hpl.jena.graph.Node.ANY;
-import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
-import static com.hp.hpl.jena.graph.NodeFactory.createURI;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static org.apache.jena.graph.Node.ANY;
+import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.vocabulary.RDF.type;
 import static java.util.stream.Stream.empty;
 import static java.util.stream.Stream.of;
 import static javax.ws.rs.core.Link.fromUri;
@@ -59,7 +59,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.http.client.methods.HttpHead;
-import org.fcrepo.http.commons.test.util.CloseableGraphStore;
+import org.fcrepo.http.commons.test.util.CloseableDataset;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
@@ -71,10 +71,10 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.sparql.core.Quad;
-import com.hp.hpl.jena.update.GraphStore;
+import org.apache.jena.graph.Node;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.Quad;
 
 import javax.ws.rs.core.Link;
 
@@ -103,21 +103,22 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         enableVersioning(id);
         postObjectVersion(id, label);
         logger.debug("Retrieved version profile:");
-        try (final CloseableGraphStore results = getGraphStore(new HttpGet(serverAddress + id + "/fcr:versions"))) {
-            assertEquals("Expected exactly 3 triples!", 3, countTriples(results));
+        try (final CloseableDataset dataset = getDataset(new HttpGet(serverAddress + id + "/fcr:versions"))) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertEquals("Expected exactly 3 triples!", 3, countTriples(graph));
             final Resource subject = createResource(serverAddress + id);
-            final Iterator<Quad> hasVersionTriple = results.find(ANY, subject.asNode(), HAS_VERSION.asNode(), ANY);
+            final Iterator<Quad> hasVersionTriple = graph.find(ANY, subject.asNode(), HAS_VERSION.asNode(), ANY);
             assertTrue("Didn't find a version triple!", hasVersionTriple.hasNext());
             final Node versionURI = hasVersionTriple.next().getObject();
             assertFalse("Found extra version triple!", hasVersionTriple.hasNext());
             assertTrue("Version label wasn't presented!",
-                    results.contains(ANY, versionURI, HAS_VERSION_LABEL.asNode(), createLiteral(label)));
+                    graph.contains(ANY, versionURI, HAS_VERSION_LABEL.asNode(), createLiteral(label)));
             assertTrue("Version creation date wasn't present!",
-                    results.contains(ANY, versionURI, CREATED_DATE.asNode(), ANY));
+                    graph.contains(ANY, versionURI, CREATED_DATE.asNode(), ANY));
         }
     }
 
-    private static int countTriples(final GraphStore g) {
+    private static int countTriples(final DatasetGraph g) {
         return size(g.find());
     }
 
@@ -149,8 +150,8 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         logger.debug("Setting a title");
         patchLiteralProperty(serverAddress + id, DC_TITLE.getURI(), "First Title");
 
-        try (final CloseableGraphStore nodeResults = getContent(serverAddress + id)) {
-            assertTrue("Should find original title", nodeResults.contains(ANY,
+        try (final CloseableDataset dataset = getContent(serverAddress + id)) {
+            assertTrue("Should find original title", dataset.asDatasetGraph().contains(ANY,
                     ANY, DC_TITLE.asNode(), createLiteral("First Title")));
         }
         logger.debug("Posting version v0.0.1");
@@ -159,8 +160,9 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         logger.debug("Replacing the title");
         patchLiteralProperty(serverAddress + id, DC_TITLE.getURI(), "Second Title");
 
-        try (final CloseableGraphStore versionResults = getContent(serverAddress + id + "/fcr:versions/v0.0.1")) {
+        try (final CloseableDataset dataset = getContent(serverAddress + id + "/fcr:versions/v0.0.1")) {
             logger.debug("Got version profile:");
+            final DatasetGraph versionResults = dataset.asDatasetGraph();
 
             assertTrue("Didn't find a version triple!", versionResults.contains(ANY,
                     ANY, type.asNode(), createURI(REPOSITORY_NAMESPACE + "Version")));
@@ -186,7 +188,8 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         postObjectVersion(id, "label");
 
         logger.debug("Retrieved version profile:");
-        try (final CloseableGraphStore results = getGraphStore(new HttpGet(serverAddress + id + "/fcr:versions"))) {
+        try (final CloseableDataset dataset = getDataset(new HttpGet(serverAddress + id + "/fcr:versions"))) {
+            final DatasetGraph results = dataset.asDatasetGraph();
             final Node subject = createURI(serverAddress + id);
             assertTrue("Didn't find a version triple!", results.contains(ANY, subject, HAS_VERSION.asNode(), ANY));
             final Iterator<Quad> versionIt = results.find(ANY, subject, HAS_VERSION.asNode(), ANY);
@@ -321,7 +324,8 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
         final HttpGet getVersions = new HttpGet(serverAddress + objId + "/fcr:versions");
         logger.debug("Retrieved versions");
-        try (final CloseableGraphStore results = getGraphStore(getVersions)) {
+        try (final CloseableDataset dataset = getDataset(getVersions)) {
+            final DatasetGraph results = dataset.asDatasetGraph();
             assertEquals("Expected exactly 3 triples!", 3, countTriples(results));
             logger.debug("Posting a version with label \"" + label2 + "\"");
             postObjectVersion(objId, label2);
@@ -411,14 +415,16 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         patchLiteralProperty(serverAddress + objId, DC_TITLE.getURI(), title2);
         postObjectVersion(objId, secondVersionLabel);
 
-        try (final CloseableGraphStore preRollback = getGraphStore(new HttpGet(serverAddress + objId))) {
+        try (final CloseableDataset dataset = getDataset(new HttpGet(serverAddress + objId))) {
+            final DatasetGraph preRollback = dataset.asDatasetGraph();
             assertTrue("First title must be present!", preRollback.contains(ANY,
                     subject, DC_TITLE.asNode(), createLiteral(title1)));
             assertTrue("Second title must be present!", preRollback.contains(ANY,
                     subject, DC_TITLE.asNode(), createLiteral(title2)));
         }
         revertToVersion(objId, firstVersionLabel);
-        try (final CloseableGraphStore postRollback = getGraphStore(new HttpGet(serverAddress + objId))) {
+        try (final CloseableDataset dataset = getDataset(new HttpGet(serverAddress + objId))) {
+            final DatasetGraph postRollback = dataset.asDatasetGraph();
             assertTrue("First title must be present!", postRollback.contains(ANY,
                     subject, DC_TITLE.asNode(), createLiteral(title1)));
             assertFalse("Second title must NOT be present!", postRollback.contains(ANY,
@@ -489,12 +495,13 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
         final Node subject = createURI(serverAddress + id);
-        try (final CloseableGraphStore originalObjectProperties = getContent(serverAddress + id)) {
-            assertFalse("Node must not have versionable mixin.", originalObjectProperties.contains(ANY,
+        try (final CloseableDataset dataset = getContent(serverAddress + id)) {
+            assertFalse("Node must not have versionable mixin.", dataset.asDatasetGraph().contains(ANY,
                     subject, HAS_VERSION_HISTORY.asNode(), ANY));
         }
         postObjectVersion(id, "label");
-        try (final CloseableGraphStore updatedObjectProperties = getContent(serverAddress + id)) {
+        try (final CloseableDataset dataset = getContent(serverAddress + id)) {
+            final DatasetGraph updatedObjectProperties = dataset.asDatasetGraph();
             assertTrue("Node is expected to contain hasVersions triple.", updatedObjectProperties.contains(ANY,
                     subject, HAS_VERSION_HISTORY.asNode(), ANY));
             assertFalse("Node must not have versionable mixin.", updatedObjectProperties.contains(ANY,
@@ -517,8 +524,8 @@ public class FedoraVersionsIT extends AbstractResourceIT {
                 getStatus(new HttpGet(serverAddress + pid + "/" + dsid + "/fcr:versions")));
 
         // datastream should not be versionable
-        try (final CloseableGraphStore originalObjectProperties =
-                getContent(serverAddress + pid + "/" + dsid + "/fcr:metadata")) {
+        try (final CloseableDataset dataset = getContent(serverAddress + pid + "/" + dsid + "/fcr:metadata")) {
+            final DatasetGraph originalObjectProperties = dataset.asDatasetGraph();
             final Node subject = createURI(serverAddress + pid + "/" + dsid);
             assertFalse("Node must not have versionable mixin.", originalObjectProperties.contains(ANY,
                     subject, type.asNode(), createURI(MIX_NAMESPACE + "versionable")));
@@ -533,7 +540,8 @@ public class FedoraVersionsIT extends AbstractResourceIT {
             final String dsVersionURI = getLocation(response);
             assertNotNull("No version location header found", dsVersionURI);
             // version triples should not have fcr:metadata as the subject
-            try (final CloseableGraphStore dsVersionProperties = getContent(dsVersionURI)) {
+            try (final CloseableDataset dataset = getContent(dsVersionURI)) {
+                final DatasetGraph dsVersionProperties = dataset.asDatasetGraph();
                 assertTrue("Should have triples about the datastream", dsVersionProperties.contains(ANY,
                         createURI(dsVersionURI.replaceAll("/fcr:metadata","")), ANY, ANY));
                 assertFalse("Shouldn't have triples about fcr:metadata", dsVersionProperties.contains(ANY,
@@ -543,9 +551,8 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         // datastream should then have versions endpoint
         assertEquals(OK.getStatusCode(), getStatus(new HttpGet(serverAddress + pid + "/" + dsid + "/fcr:versions")));
         // datastream should then be versionable
-        try (final CloseableGraphStore updatedDSProperties =
-                getContent(serverAddress + pid + "/" + dsid + "/fcr:metadata")) {
-            assertTrue("Node is expected to contain hasVersions triple.", updatedDSProperties.contains(
+        try (final CloseableDataset dataset = getContent(serverAddress + pid + "/" + dsid + "/fcr:metadata")) {
+            assertTrue("Node is expected to contain hasVersions triple.", dataset.asDatasetGraph().contains(
                     ANY, createURI(serverAddress + pid + "/" + dsid), HAS_VERSION_HISTORY.asNode(), ANY));
         }
         // update the content
@@ -595,11 +602,11 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
         enableVersioning(id);
-        try (final CloseableGraphStore rdf = getGraphStore(new HttpGet(serverAddress + id))) {
+        try (final CloseableDataset dataset = getDataset(new HttpGet(serverAddress + id))) {
             final Node subject = createURI(serverAddress + id);
             for (final String prohibitedProperty : jcrVersioningTriples) {
                 assertFalse(prohibitedProperty + " must not appear in RDF for version-enabled node!",
-                        rdf.contains(ANY, subject, createURI(prohibitedProperty), ANY));
+                        dataset.asDatasetGraph().contains(ANY, subject, createURI(prohibitedProperty), ANY));
             }
         }
     }
@@ -613,10 +620,10 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(updateObjectGraphMethod));
     }
 
-    private CloseableGraphStore getContent(final String url) throws IOException {
+    private CloseableDataset getContent(final String url) throws IOException {
         final HttpGet getVersion = new HttpGet(url);
         getVersion.addHeader("Prefer", "return=representation; include=\"" + EMBED_CONTAINS.toString() + "\"");
-        return getGraphStore(getVersion);
+        return getDataset(getVersion);
     }
 
     public void postObjectVersion(final String pid) throws IOException {

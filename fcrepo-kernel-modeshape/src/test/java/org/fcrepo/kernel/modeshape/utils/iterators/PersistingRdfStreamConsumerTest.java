@@ -19,14 +19,14 @@ package org.fcrepo.kernel.modeshape.utils.iterators;
 
 import static java.util.stream.Stream.of;
 import static com.google.common.collect.Sets.newHashSet;
-import static com.hp.hpl.jena.graph.NodeFactory.createAnon;
-import static com.hp.hpl.jena.graph.NodeFactory.createURI;
-import static com.hp.hpl.jena.graph.Triple.create;
-import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createStatement;
-import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static org.apache.jena.graph.NodeFactory.createBlankNode;
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.graph.Triple.create;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.rdf.model.ResourceFactory.createStatement;
+import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.api.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.PAGE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
@@ -50,10 +50,10 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import com.google.common.collect.ObjectArrays;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.Statement;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
 
 /**
  * <p>PersistingRdfStreamConsumerTest class.</p>
@@ -111,12 +111,12 @@ public class PersistingRdfStreamConsumerTest {
 
     private static final Model m = createDefaultModel();
 
-    private static final com.hp.hpl.jena.graph.Node subject = m.createResource("x").asNode();
-    private static final com.hp.hpl.jena.graph.Node object = m.createResource("y").asNode();
-    private static final com.hp.hpl.jena.graph.Node foreignSubject = m.createResource("z").asNode();
+    private static final org.apache.jena.graph.Node subject = m.createResource("x").asNode();
+    private static final org.apache.jena.graph.Node object = m.createResource("y").asNode();
+    private static final org.apache.jena.graph.Node foreignSubject = m.createResource("z").asNode();
 
     private static final Triple propertyTriple = create(subject,
-            createAnon(), object);
+            createBlankNode(), object);
 
     private static final Statement propertyStatement = m
             .asStatement(propertyTriple);
@@ -145,7 +145,7 @@ public class PersistingRdfStreamConsumerTest {
 
 
     private static final Triple foreignTriple = create(foreignSubject,
-            createAnon(), object);
+            createBlankNode(), object);
 
     private static final Statement foreignStatement = m.asStatement(foreignTriple);
 

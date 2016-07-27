@@ -20,13 +20,13 @@ package org.fcrepo.kernel.api.rdf;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Stream.of;
-import static com.hp.hpl.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.junit.Assert.assertEquals;
 
 import java.util.List;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Triple;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
 import org.fcrepo.kernel.api.RdfStream;
 import org.junit.Test;
 

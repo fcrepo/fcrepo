@@ -17,9 +17,9 @@
  */
 package org.fcrepo.http.api.responses;
 
-import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
-import static com.hp.hpl.jena.graph.NodeFactory.createURI;
-import static com.hp.hpl.jena.vocabulary.RDF.type;
+import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.vocabulary.RDF.type;
 import static java.util.Collections.singletonMap;
 import static java.util.stream.Stream.of;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
@@ -69,7 +69,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 
 import com.google.common.collect.ImmutableMap;
-import com.hp.hpl.jena.graph.Triple;
+import org.apache.jena.graph.Triple;
 
 /**
  * <p>BaseHtmlProviderTest class.</p>

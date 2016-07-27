@@ -19,10 +19,10 @@ package org.fcrepo.kernel.modeshape.rdf.converters;
 
 import com.google.common.base.Converter;
 import com.google.common.base.Splitter;
-import com.hp.hpl.jena.datatypes.RDFDatatype;
-import com.hp.hpl.jena.rdf.model.Literal;
-import com.hp.hpl.jena.rdf.model.RDFNode;
-import com.hp.hpl.jena.rdf.model.Resource;
+import org.apache.jena.datatypes.RDFDatatype;
+import org.apache.jena.rdf.model.Literal;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.slf4j.Logger;
@@ -37,11 +37,11 @@ import javax.jcr.ValueFactory;
 
 import java.util.Iterator;
 
-import static com.hp.hpl.jena.datatypes.TypeMapper.getInstance;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createLangLiteral;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createPlainLiteral;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
+import static org.apache.jena.datatypes.TypeMapper.getInstance;
+import static org.apache.jena.rdf.model.ResourceFactory.createLangLiteral;
+import static org.apache.jena.rdf.model.ResourceFactory.createPlainLiteral;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static javax.jcr.PropertyType.BOOLEAN;
 import static javax.jcr.PropertyType.DATE;
 import static javax.jcr.PropertyType.DECIMAL;
@@ -54,6 +54,7 @@ import static javax.jcr.PropertyType.UNDEFINED;
 import static javax.jcr.PropertyType.URI;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static org.fcrepo.kernel.api.RdfLexicon.INACCESSIBLE_RESOURCE;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FIELD_DELIMITER;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeToResource;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -154,7 +155,7 @@ public class ValueConverter extends Converter<Value, RDFNode> {
         } else if (rdfLiteralJcrValueBuilder.hasDatatypeUri()) {
             return createTypedLiteral(rdfLiteralJcrValueBuilder.value(), rdfLiteralJcrValueBuilder.datatype());
         } else {
-            return createPlainLiteral(literal);
+            return createPlainLiteral(rdfLiteralJcrValueBuilder.value());
         }
     }
 
@@ -191,7 +192,6 @@ public class ValueConverter extends Converter<Value, RDFNode> {
     }
 
     protected static class RdfLiteralJcrValueBuilder {
-        private static final String FIELD_DELIMITER = "\30^^\30";
         public static final Splitter JCR_VALUE_SPLITTER = Splitter.on(FIELD_DELIMITER);
 
         private String value;

@@ -19,8 +19,8 @@ package org.fcrepo.http.commons.api.rdf;
 
 import java.util.Comparator;
 
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.shared.PrefixMapping;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.shared.PrefixMapping;
 
 /**
  * Comparator to sort a list of Quads by subject, predicate, and object

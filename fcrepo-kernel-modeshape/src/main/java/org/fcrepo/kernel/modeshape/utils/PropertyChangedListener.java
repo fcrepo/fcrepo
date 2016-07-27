@@ -19,9 +19,9 @@ package org.fcrepo.kernel.modeshape.utils;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.hp.hpl.jena.rdf.listeners.StatementListener;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.Statement;
+import org.apache.jena.rdf.listeners.StatementListener;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
 
 /**
  * Listen to Jena statement events to see whether a certain

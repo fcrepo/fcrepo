@@ -17,9 +17,9 @@
  */
 package org.fcrepo.integration.http.api;
 
-import static com.hp.hpl.jena.graph.Node.ANY;
-import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
-import static com.hp.hpl.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.graph.Node.ANY;
+import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.NodeFactory.createURI;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_RESULT;
@@ -37,13 +37,14 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 
-import org.fcrepo.http.commons.test.util.CloseableGraphStore;
+import org.fcrepo.http.commons.test.util.CloseableDataset;
 
 import org.junit.Test;
 
-import com.hp.hpl.jena.datatypes.RDFDatatype;
-import com.hp.hpl.jena.datatypes.TypeMapper;
-import com.hp.hpl.jena.sparql.core.Quad;
+import org.apache.jena.datatypes.RDFDatatype;
+import org.apache.jena.datatypes.TypeMapper;
+import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.Quad;
 
 /**
  * <p>FedoraFixityIT class.</p>
@@ -61,8 +62,9 @@ public class FedoraFixityIT extends AbstractResourceIT {
         createObjectAndClose(id);
         createDatastream(id, "zxc", "foo");
 
-        try (final CloseableGraphStore graphStore =
-                getGraphStore(new HttpGet(serverAddress + id + "/zxc/fcr:fixity"))) {
+        try (final CloseableDataset dataset =
+                getDataset(new HttpGet(serverAddress + id + "/zxc/fcr:fixity"))) {
+            final DatasetGraph graphStore = dataset.asDatasetGraph();
             logger.debug("Got triples {}", graphStore);
 
             assertTrue(graphStore.contains(ANY,
@@ -96,8 +98,9 @@ public class FedoraFixityIT extends AbstractResourceIT {
         logger.debug("Creating binary content version v0 ...");
         postVersion(id + "/dsid", "v0");
 
-        try (final CloseableGraphStore graphStore =
-                getGraphStore(new HttpGet(serverAddress + id + "/dsid/fcr%3aversions/v0/fcr:fixity"))) {
+        try (final CloseableDataset dataset =
+                getDataset(new HttpGet(serverAddress + id + "/dsid/fcr%3aversions/v0/fcr:fixity"))) {
+            final DatasetGraph graphStore = dataset.asDatasetGraph();
             logger.debug("Got binary content versioned fixity triples {}", graphStore);
             final Iterator<Quad> stmtIt = graphStore.find(ANY, ANY, HAS_FIXITY_RESULT.asNode(), ANY);
             assertTrue(stmtIt.hasNext());
