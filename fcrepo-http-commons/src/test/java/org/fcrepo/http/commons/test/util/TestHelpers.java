@@ -73,7 +73,6 @@ import org.modeshape.jcr.api.Repository;
 import org.modeshape.jcr.api.query.QueryManager;
 
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.update.GraphStoreFactory;
 
 /**
  * <p>Abstract TestHelpers class.</p>
@@ -271,18 +270,18 @@ public abstract class TestHelpers {
         return lang.getName();
     }
 
-    public static CloseableGraphStore parseTriples(final HttpEntity entity) throws IOException {
+    public static CloseableDataset parseTriples(final HttpEntity entity) throws IOException {
         return parseTriples(entity.getContent(), getRdfSerialization(entity));
     }
 
-    public static CloseableGraphStore parseTriples(final InputStream content) {
+    public static CloseableDataset parseTriples(final InputStream content) {
         return parseTriples(content, "N3");
     }
 
-    public static CloseableGraphStore parseTriples(final InputStream content, final String contentType) {
+    public static CloseableDataset parseTriples(final InputStream content, final String contentType) {
         final Model model = createDefaultModel();
         model.read(content, "", contentType);
-        return new CloseableGraphStore(GraphStoreFactory.create(model));
+        return new CloseableDataset(model);
     }
 
     /**

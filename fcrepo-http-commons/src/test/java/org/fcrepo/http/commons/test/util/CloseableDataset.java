@@ -17,23 +17,23 @@
  */
 package org.fcrepo.http.commons.test.util;
 
-import org.apache.jena.sparql.modify.GraphStoreBasic;
-import org.apache.jena.update.GraphStore;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.sparql.core.DatasetImpl;
 
 /**
- * Adds the standard {@link AutoCloseable} semantic to Jena's {@link GraphStore} for convenient use with Java 7's
- * <code>try-with-resources</code> syntax.
+ * Adds the standard {@link AutoCloseable} semantic to Jena's {@link org.apache.jena.query.Dataset} for
+ * convenient use with Java 7's <code>try-with-resources</code> syntax.
  *
  * @author ajs6f
  */
-public class CloseableGraphStore extends GraphStoreBasic implements AutoCloseable {
+public class CloseableDataset extends DatasetImpl implements AutoCloseable {
 
     /**
      * Default constructor.
      *
-     * @param graphStore GraphStore to wrap
+     * @param model Model to wrap
      */
-    public CloseableGraphStore(final GraphStore graphStore) {
-        super(graphStore);
+    public CloseableDataset(final Model model) {
+        super(model);
     }
 }
