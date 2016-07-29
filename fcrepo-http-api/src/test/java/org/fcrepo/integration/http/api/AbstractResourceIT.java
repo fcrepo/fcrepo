@@ -37,7 +37,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Collection;
-
 import org.apache.http.Header;
 import org.fcrepo.http.commons.test.util.CloseableGraphStore;
 

@@ -33,6 +33,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static java.util.TimeZone.getTimeZone;
+import static java.util.concurrent.Executors.newFixedThreadPool;
 import static java.util.regex.Pattern.compile;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.Link.fromUri;
@@ -114,6 +115,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
 
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
@@ -142,6 +148,7 @@ import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.FileEntity;
+import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
@@ -2526,6 +2533,53 @@ public class FedoraLdpIT extends AbstractResourceIT {
             lastmod4 = headerFormat.parse(response.getFirstHeader("Last-Modified").getValue()).getTime();
             assertTrue(lastmod4 > lastmod3);
         }
+    }
+
+    /**
+     * Uses two requests in two threads to check that two datastreams cannot be created under the same URI. One thread
+     * and request starts first, but finishes second. The other starts second, but finishes first. Only whichever
+     * request <i>finishes</i> first should succeed.
+     *
+     * @see <a href="https://jira.duraspace.org/browse/FCREPO-2055">FCREPO-2055</a>
+     */
+    @Test
+    @SuppressWarnings("resource")
+    public void testConcurrentSameNameDatastreamCreation() {
+        final String pid = getRandomUniqueId();
+        createObjectAndClose(pid);
+        final String dsUri = serverAddress + pid + "/" + getRandomUniqueId();
+
+        final HttpPut leadingRequest = new HttpPut(dsUri);
+        // will be used to indicate that the lagging request has completed and that the leading request may finish
+        final Semaphore signal = new Semaphore(0);
+        // this request will block until a permit is granted, at which point it will immediately complete
+        leadingRequest.setEntity(new InputStreamEntity(new InputStream() {
+
+            @Override
+            public int read() {
+                signal.acquireUninterruptibly();
+                return -1;
+            }
+        }));
+        final HttpPut laggingRequest = new HttpPut(dsUri);
+
+        final ExecutorService executor = newFixedThreadPool(2);
+        final Future<Integer> shouldFail = executor.submit(() -> getStatus(leadingRequest));
+        // now the leading request is blocked on the signal
+        final Future<Integer> shouldWin = executor.submit(() -> {
+            // first accomplish this request
+            final int status = getStatus(laggingRequest);
+            // now permit the leading request to finish
+            signal.release();
+            return status;
+        });
+        try {
+            assertEquals("Was unable to create with lagged request!", CREATED.getStatusCode(), (int) shouldWin.get());
+            assertEquals("Was able to create with lead request!", CONFLICT.getStatusCode(), (int) shouldFail.get());
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+        executor.shutdown();
     }
 
     private static void verifyModifiedMatchesCreated(final GraphStore graph) {
