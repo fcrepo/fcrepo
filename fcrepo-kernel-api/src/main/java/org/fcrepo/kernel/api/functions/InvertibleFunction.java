@@ -34,4 +34,10 @@ public interface InvertibleFunction<A, B> extends Function<A, B> {
      */
     InvertibleFunction<B, A> inverse();
 
+    /**
+     * Reverse the function.
+     * @param rangeValue
+     * @return
+     */
+    A toDomain(B rangeValue);
 }
