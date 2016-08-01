@@ -17,7 +17,7 @@
  */
 package org.fcrepo.kernel.api.identifiers;
 
-import com.google.common.base.Converter;
+import org.fcrepo.kernel.api.functions.Converter;
 
 /**
  * An {@link IdentifierConverter} accepts and returns identifiers, translating
@@ -28,7 +28,15 @@ import com.google.common.base.Converter;
  * @since Mar 26, 2014
  * @param <B> the type to and from which we are translating
  */
-public abstract class IdentifierConverter<A, B> extends Converter<A, B> {
+public abstract class IdentifierConverter<A, B> implements Converter<A, B> {
+
+    /**
+     * Invert this conversion function
+     */
+    @Override
+    public IdentifierConverter<B, A> inverse() {
+        return new InverseIdentifierConverter<B,A>(this);
+    }
 
     /**
      * Check if the given resource is in the domain of this converter
@@ -36,15 +44,8 @@ public abstract class IdentifierConverter<A, B> extends Converter<A, B> {
      * @return boolean value of the check
      */
     public boolean inDomain(final A resource) {
-        return convert(resource) != null;
+        return apply(resource) != null;
     }
-
-    /**
-     * Convert a plain string to a resource appropriate to this converter
-     * @param resource the plain string resource
-     * @return the resource appropriate to this converter
-     */
-    abstract public A toDomain(final String resource);
 
     /**
      * Convert the given resource into a plain string representation of the conversion to the resource
@@ -52,4 +53,22 @@ public abstract class IdentifierConverter<A, B> extends Converter<A, B> {
      * @return a plain string representation of the conversion to the resource
      */
     abstract public String asString(final A resource);
+
+    /**
+     * Compose a function from this and a second IdentifierConverter
+     * @param second
+     * @return
+     */
+    public <C> IdentifierConverter<A, C> andThen(final IdentifierConverter<B, C> second) {
+        return new CompositeIdentifierConverter<>(this, second);
+    }
+
+    /**
+     * Compose a function from a second IdentifierConverter and this
+     * @param second
+     * @return
+     */
+    public <C> IdentifierConverter<C, B> compose(final IdentifierConverter<C, A> second) {
+        return new CompositeIdentifierConverter<>(second, this);
+    }
 }
