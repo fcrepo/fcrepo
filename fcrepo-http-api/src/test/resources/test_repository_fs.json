@@ -7,13 +7,10 @@
         "allowCreation" : true
     },
     "storage": {
-        "cacheName" : "FedoraRepository",
-        "cacheConfiguration": "config/infinispan/file/infinispan.xml",
-        "binaryStorage" : {
-            "type" : "file",
-            "directory" : "target/FedoraRepositoryFiles",
-            "minimumBinarySizeInBytes" : 4
-        }
+      "persistence" : {
+        "type" : "file",
+        "path" : "target/fedora_repository/store"
+      }
     },
     "externalSources" : {
       "fileSystem" : {
@@ -21,7 +18,7 @@
         "directoryPath" : "target/test-classes/test-objects",
         "readonly" : true,
         "extraPropertiesStorage": "json",
-        "cacheTtlSeconds" : 5,
+        "cacheable" : false,
         "projections" : [ "default:/files => /" ]
       }
     },

@@ -147,7 +147,7 @@ public class JmsIT implements MessageListener {
             awaitMessageOrFail(testFile, RESOURCE_CREATION.getType(), REPOSITORY_NAMESPACE + "Binary");
 
             binaryService.find(session, testFile)
-                .setContent(new ByteArrayInputStream("bar".getBytes()), "text/plain", null, null, null);
+                .setContent(new ByteArrayInputStream("barney".getBytes()), "text/plain", null, null, null);
             session.save();
             awaitMessageOrFail(testFile, RESOURCE_MODIFICATION.getType(), REPOSITORY_NAMESPACE + "Binary");
 

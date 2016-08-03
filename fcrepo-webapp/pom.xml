@@ -140,22 +140,14 @@
       <version>5.1.38</version>
     </dependency>
     <dependency>
-	  <groupId>postgresql</groupId>
+	  <groupId>org.postgresql</groupId>
 	  <artifactId>postgresql</artifactId>
-	  <version>9.1-901-1.jdbc4</version>
-    </dependency>
-    <dependency>
-      <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-cachestore-jdbc</artifactId>
+	  <version>9.4.1208</version>
     </dependency>
 
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-web</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-cachestore-leveldb</artifactId>
     </dependency>
 
     <!-- test gear -->
@@ -376,7 +368,7 @@
           <systemProperties>
             <systemProperty>
               <name>fcrepo.modeshape.configuration</name>
-              <value>classpath:/config/minimal-default/repository.json</value>
+              <value>classpath:/config/file-simple/repository.json</value>
             </systemProperty>
           </systemProperties>
 
@@ -396,7 +388,7 @@
               <systemProperties>
                 <systemProperty>
                   <name>fcrepo.modeshape.configuration</name>
-                  <value>classpath:/config/minimal-default/repository.json</value>
+                  <value>classpath:/config/file-simple/repository.json</value>
                 </systemProperty>
 
                 <systemProperty>
@@ -481,7 +473,7 @@
         <activeByDefault>false</activeByDefault>
       </activation>
       <properties>
-        <fcrepo.modeshape.configuration>classpath:/config/minimal-default/repository.json</fcrepo.modeshape.configuration>
+        <fcrepo.modeshape.configuration>classpath:/config/file-simple/repository.json</fcrepo.modeshape.configuration>
       </properties>
 
       <build>

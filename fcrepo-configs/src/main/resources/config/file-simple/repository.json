@@ -7,12 +7,14 @@
         "allowCreation" : true
     },
     "storage" : {
-        "cacheName" : "FedoraRepository",
-        "cacheConfiguration" : "${fcrepo.ispn.configuration:config/infinispan/clustered/infinispan.xml}",
+        "persistence": {
+            "type": "file",
+            "path" : "${fcrepo.object.directory:target/objects}"
+        },
         "binaryStorage" : {
-            "type" : "cache",
-            "dataCacheName" : "FedoraRepositoryBinaryData",
-            "metadataCacheName" : "FedoraRepositoryMetaData"
+            "type" : "file",
+            "directory" : "${fcrepo.binary.directory:target/binaries}",
+            "minimumBinarySizeInBytes" : 4096
         }
     },
     "security" : {

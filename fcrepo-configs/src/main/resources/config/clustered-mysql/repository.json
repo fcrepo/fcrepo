@@ -6,6 +6,10 @@
         "default" : "default",
         "allowCreation" : true
     },
+    "clustering" : {
+        "clusterName" : "fcrepo-cluster",
+        "configuration" : "${fcrepo.jgroups.configuration:config/jgroups-fcrepo-tcp.xml}"
+    },
     "storage" : {
         "persistence": {
             "type" : "db",
@@ -15,9 +19,11 @@
             "password" : "${fcrepo.mysql.password}"
         },
         "binaryStorage" : {
-            "type" : "file",
-            "directory" : "${fcrepo.binary.directory:target/binaries}",
-            "minimumBinarySizeInBytes" : 4096
+            "type"  : "database",
+            "url": "jdbc:mysql://${fcrepo.mysql.host:localhost}:${fcrepo.mysql.port:3306}/fcrepo?createDatabaseIfNotExist=true",
+            "driverClass" : "com.mysql.jdbc.Driver",
+            "username" : "${fcrepo.mysql.username}",
+            "password" : "${fcrepo.mysql.password}"
         }
     },
     "security" : {

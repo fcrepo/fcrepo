@@ -7,12 +7,9 @@
     "allowCreation" : true
   },
   "storage" : {
-    "cacheName" : "FedoraRepository",
-    "cacheConfiguration" : "${fcrepo.ispn.configuration:config/testing/infinispan-basic.xml}",
-    "binaryStorage" : {
+    "persistence" : {
       "type" : "file",
-      "minimumBinarySizeInBytes" : 40,
-      "directory" : "target/test-binaryFileStore"
+      "path" : "target/fedora_repository/store"
     }
   },
   "externalSources" : {
@@ -21,7 +18,7 @@
       "directoryPath" : "target/test-classes/test-objects",
       "readonly" : false,
       "extraPropertiesStorage": "json",
-      "cacheTtlSeconds" : 2,
+      "cacheable" : false,
       "projections" : [ "default:/files => /" ]
     },
     "readonly" : {
@@ -30,7 +27,7 @@
       "propertiesDirectoryPath" : "target/test-classes/test-meta",
       "readonly" : true,
       "extraPropertiesStorage": "none",
-      "cacheTtlSeconds" : 2,
+      "cacheable" : false,
       "projections" : [ "default:/readonlyfiles => /" ]
     }
   },

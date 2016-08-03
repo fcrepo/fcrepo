@@ -47,7 +47,6 @@ import java.nio.file.Path;
 
 import javax.jcr.NamespaceRegistry;
 
-import org.infinispan.schematic.document.Document;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -65,6 +64,7 @@ import org.modeshape.jcr.value.Property;
 import org.modeshape.jcr.value.ValueFactories;
 import org.modeshape.jcr.value.basic.BasicName;
 import org.modeshape.jcr.value.basic.BasicSingleValueProperty;
+import org.modeshape.schematic.document.Document;
 import org.slf4j.Logger;
 
 /**
