@@ -46,10 +46,11 @@ import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.NodeTypeManager;
 import javax.jcr.nodetype.PropertyDefinition;
 
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
+import org.fcrepo.kernel.modeshape.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.junit.Before;
 import org.junit.Test;
@@ -167,8 +168,8 @@ public class RdfRemoverTest {
         when(mockPropertyDefinition.isMultiple()).thenReturn(false);
         when(mockPropertyDefinition.getName()).thenReturn(propertyShortName);
         when(mockPropertyDefinition.getRequiredType()).thenReturn(STRING);
-        when(mockGraphSubjects.reverse()).thenReturn(mockReverseGraphSubjects);
         // TODO? when(mockReverseGraphSubjects.convert(mockNode)).thenReturn(mockNodeSubject);
+        mockGraphSubjects = new DefaultIdentifierTranslator(mockSession);
         resource = new FedoraResourceImpl(mockNode);
         testStream = new DefaultRdfStream(createURI("subject"), mockTriples);
     }
@@ -219,12 +220,7 @@ public class RdfRemoverTest {
 
 
 
-    @Mock
-    private IdentifierConverter<Resource, FedoraResource> mockGraphSubjects;
-
-    @Mock
-    private IdentifierConverter<FedoraResource,Resource> mockReverseGraphSubjects;
-
+    private IdentifierConverter<Resource, String> mockGraphSubjects;
 
     private static final Model m = createDefaultModel();
 

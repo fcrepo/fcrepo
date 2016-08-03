@@ -17,10 +17,7 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
-import com.google.common.base.Converter;
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
-import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl;
 import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
@@ -47,7 +44,8 @@ import static org.fcrepo.kernel.api.FedoraTypes.LDP_INSERTED_CONTENT_RELATION;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_IS_MEMBER_OF_RELATION;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_MEMBER_RESOURCE;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
-import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeToResource;
+import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
+import static org.fcrepo.kernel.modeshape.utils.TestHelpers.mockResource;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -94,20 +92,20 @@ public class LdpIsMemberOfRdfContextTest {
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
-        when(mockResource.getPath()).thenReturn("/a");
+        mockResource(mockResource, "/a");
         when(mockResource.getContainer()).thenReturn(mockContainer);
         when(mockResource.getNode()).thenReturn(mockResourceNode);
         when(mockResourceNode.getSession()).thenReturn(mockSession);
         when(mockResourceNode.getDepth()).thenReturn(1);
 
-        when(mockContainer.getPath()).thenReturn("/");
+        mockResource(mockContainer, "/");
         when(mockContainer.getNode()).thenReturn(mockContainerNode);
         when(mockContainerNode.getDepth()).thenReturn(0);
 
         when(mockNode.getPath()).thenReturn("/some/path");
 
         when(mockBinary.hasType(FEDORA_BINARY)).thenReturn(true);
-        when(mockBinary.getPath()).thenReturn("/a/jcr:content");
+        mockResource(mockBinary, "/a/jcr:content");
         when(mockBinary.getNode()).thenReturn(mockBinaryNode);
         when(mockBinary.getContainer()).thenReturn(mockContainer);
 
@@ -152,9 +150,9 @@ public class LdpIsMemberOfRdfContextTest {
         final Model model = testObj.collect(toModel());
 
         assertTrue("Expected stream to contain triple",
-                model.contains(subjects.reverse().convert(mockResource),
+                model.contains(mockResource.graphResource(subjects),
                         createProperty(property),
-                        nodeToResource(subjects).convert(mockNode)));
+                        nodeConverter.apply(mockNode).graphResource(subjects)));
     }
 
 
@@ -174,10 +172,8 @@ public class LdpIsMemberOfRdfContextTest {
 
         final Model model = testObj.collect(toModel());
 
-        final Converter<FedoraResource, Resource> nodeSubjects = subjects.reverse();
-
         assertTrue("Expected stream to contain triple",
-                model.contains(nodeSubjects.convert(mockResource),
+                model.contains(mockResource.graphResource(subjects),
                         createProperty(property),
                         createResource("some:resource")));
     }
@@ -199,12 +195,10 @@ public class LdpIsMemberOfRdfContextTest {
 
         final Model model = testObj.collect(toModel());
 
-        final Converter<FedoraResource, Resource> nodeSubjects = subjects.reverse();
-
         assertTrue("Expected stream to contain triple",
-                model.contains(nodeSubjects.convert(mockBinary),
+                model.contains(mockBinary.graphResource(subjects),
                         createProperty(property),
-                        nodeToResource(subjects).convert(mockNode)));
+                        nodeConverter.apply(mockNode).graphResource(subjects)));
     }
 
     @Test
@@ -239,7 +233,7 @@ public class LdpIsMemberOfRdfContextTest {
         assertTrue("Expected stream to contain triple",
                 model.contains(subjects.toDomain("/a/#/hash-uri"),
                         createProperty(property),
-                        nodeToResource(subjects).convert(mockNode)));
+                        nodeConverter.apply(mockNode).graphResource(subjects)));
 
     }
 

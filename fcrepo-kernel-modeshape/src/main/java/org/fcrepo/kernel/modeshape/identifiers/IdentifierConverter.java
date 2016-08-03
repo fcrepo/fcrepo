@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.identifiers;
+package org.fcrepo.kernel.modeshape.identifiers;
 
 import org.fcrepo.kernel.api.functions.Converter;
 
@@ -70,5 +70,43 @@ public abstract class IdentifierConverter<A, B> implements Converter<A, B> {
      */
     public <C> IdentifierConverter<C, B> compose(final IdentifierConverter<C, A> second) {
         return new CompositeIdentifierConverter<>(second, this);
+    }
+
+    protected <T> Converter<T,T> identity() {
+        return new Identity<>();
+    }
+
+    static class Identity<T> implements Converter<T, T> {
+
+        @Override
+        public T toDomain(final T rangeValue) {
+            return rangeValue;
+        }
+
+        @Override
+        public T apply(final T t) {
+            return t;
+        }
+
+        @Override
+        public boolean inDomain(final T a) {
+            return a != null;
+        }
+
+        @Override
+        public Converter<T, T> inverse() {
+            return this;
+        }
+
+        @Override
+        public <C> Converter<T, C> andThen(final Converter<T, C> after) {
+            return after;
+        }
+
+        @Override
+        public <C> Converter<C, T> compose(final Converter<C, T> before) {
+            return before;
+        }
+
     }
 }

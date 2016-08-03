@@ -17,11 +17,9 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.converters;
 
-import com.google.common.base.Converter;
 import com.hp.hpl.jena.rdf.model.RDFNode;
-import com.hp.hpl.jena.rdf.model.Resource;
 
-import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 
 import org.hamcrest.BaseMatcher;
@@ -91,7 +89,7 @@ public class ValueConverterTest {
 
     private Session session;
 
-    private Converter<Resource, FedoraResource> subjects;
+    private DefaultIdentifierTranslator subjects;
     private Converter<Value, RDFNode> testObj;
 
     @Parameter(value = 0)
@@ -99,7 +97,7 @@ public class ValueConverterTest {
 
     @Test
     public void test() {
-        assertThat(testObj.convert(testObj.reverse().convert(externalValue)), sameValueAs(externalValue));
+        assertThat(testObj.apply(testObj.inverse().apply(externalValue)), sameValueAs(externalValue));
     }
 
     @Parameters

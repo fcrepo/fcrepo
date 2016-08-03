@@ -204,17 +204,17 @@ public class SimpleObserverIT extends AbstractIT {
     @Test
     public void testHashUriEvent() throws RepositoryException {
         final Session se = repository.login();
-        final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator(se);
+        final DefaultIdentifierTranslator identifiers = new DefaultIdentifierTranslator(se);
 
         final Container obj = containerService.findOrCreate(se, "/object9");
 
-        final Resource subject = subjects.reverse().convert(obj);
+        final Resource subject = obj.graphResource(identifiers);
 
-        obj.updateProperties(subjects, "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
+        obj.updateProperties(identifiers, "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
             "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n" +
             "INSERT { <" + subject + "> dc:contributor <" + subject + "#contributor> .\n" +
                 "<" + subject + "#contributor> foaf:name \"some creator\" . } WHERE {}",
-                obj.getTriples(subjects, PROPERTIES));
+                obj.getTriples(identifiers, PROPERTIES));
 
         se.save();
         se.logout();
@@ -240,7 +240,7 @@ public class SimpleObserverIT extends AbstractIT {
         final Container obj1 = containerService.findOrCreate(se, "/object10");
         final Container obj2 = containerService.findOrCreate(se, "/object11");
 
-        final Resource subject2 = subjects.reverse().convert(obj2);
+        final Resource subject2 = obj2.graphResource(subjects);
 
         obj1.updateProperties(subjects, "PREFIX ldp: <http://www.w3.org/ns/ldp#>\n" +
                 "PREFIX pcdm: <http://pcdm.org/models#>\n" +
@@ -287,7 +287,7 @@ public class SimpleObserverIT extends AbstractIT {
         final Container obj1 = containerService.findOrCreate(se, "/object12");
         final Container obj2 = containerService.findOrCreate(se, "/object13");
 
-        final Resource subject2 = subjects.reverse().convert(obj2);
+        final Resource subject2 = obj2.graphResource(subjects);
 
         obj1.updateProperties(subjects, "PREFIX ldp: <http://www.w3.org/ns/ldp#>\n" +
                 "PREFIX pcdm: <http://pcdm.org/models#>\n" +
@@ -308,7 +308,8 @@ public class SimpleObserverIT extends AbstractIT {
 
             final Container obj3 = containerService.findOrCreate(se, "/object12/child");
             obj3.updateProperties(subjects, "PREFIX ore: <http://www.openarchives.org/ore/terms/>\n" +
-                    "INSERT { <> ore:proxyFor <info:example/test> } WHERE {}", obj3.getTriples(subjects, PROPERTIES));
+                    "INSERT { <> ore:proxyFor <info:example/test> } WHERE {}",
+                    obj3.getTriples(subjects, PROPERTIES));
             se.save();
 
             awaitEvent("/object12/child", RESOURCE_CREATION);

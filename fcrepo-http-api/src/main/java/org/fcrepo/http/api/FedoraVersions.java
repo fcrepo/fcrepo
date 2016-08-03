@@ -49,6 +49,7 @@ import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.RdfStream;
+
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 

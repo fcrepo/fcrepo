@@ -122,7 +122,7 @@ public class FedoraTransactions extends FedoraBaseResource {
     private Response finalizeTransaction(@PathParam("path")
         final String externalPath, final boolean commit) {
 
-        final String path = toPath(translator(), externalPath);
+        final String path = toInternalPath(translator(), externalPath);
         if (!path.equals("/")) {
             return status(BAD_REQUEST).build();
         }

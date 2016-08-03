@@ -34,12 +34,12 @@ import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
 import org.fcrepo.kernel.api.exception.OutOfDomainSubjectException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.modeshape.rdf.JcrRdfTools;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.slf4j.Logger;
@@ -64,7 +64,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
 
     private final RdfStream stream;
 
-    private final IdentifierConverter<Resource, FedoraResource> idTranslator;
+    private final Converter<Resource, String> idTranslator;
 
     // if it's not about a Fedora resource, we don't care.
     protected final Predicate<Triple> isFedoraSubjectTriple;
@@ -84,7 +84,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
      * @param session the session
      * @param stream the rdf stream
      */
-    public PersistingRdfStreamConsumer(final IdentifierConverter<Resource, FedoraResource> idTranslator,
+    public PersistingRdfStreamConsumer(final Converter<Resource, String> idTranslator,
             final Session session, final RdfStream stream) {
         this.idTranslator = idTranslator;
         this.jcrRdfTools = new JcrRdfTools(idTranslator, session);
@@ -97,13 +97,14 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
             if (!t.getSubject().isBlank()) {
                 final String subjectURI = subject.getURI();
                 final int hashIndex = subjectURI.lastIndexOf("#");
+                final Converter<Resource, FedoraResource> converter = jcrRdfTools.resourceTranslator();
                 // a hash URI with the same base as the topic is okay, as is the topic itself
                 if ((hashIndex > 0 && topic.getURI().equals(subjectURI.substring(0, hashIndex)))
                         || topic.equals(subject)) {
                     LOGGER.debug("Discovered a Fedora-relevant subject in triple: {}.", t);
                     return true;
                 } else if (topic.getURI().equals(subject.getURI() + "/" + FCR_METADATA)
-                       && isFedoraBinary.test(getJcrNode(translator().convert(createResource(subject.getURI()))))) {
+                       && isFedoraBinary.test(getJcrNode(converter.apply(createResource(subject.getURI()))))) {
                     LOGGER.debug("Discovered a NonRDFSource subject in triple: {}.", t);
                     return true;
                 }
@@ -149,10 +150,10 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
     protected void operateOnTriple(final Statement input) throws MalformedRdfException {
         try {
 
-            final Statement t = jcrRdfTools.skolemize(idTranslator, input);
+            final Statement t = jcrRdfTools.skolemize(input);
 
             final Resource subject = t.getSubject();
-            final FedoraResource subjectNode = translator().convert(subject);
+            final FedoraResource subjectNode = jcrRdfTools.resourceTranslator().apply(subject);
 
             // if this is a user-managed RDF type assertion, update the node's
             // mixins. If it isn't, treat it as a "data" property.
@@ -212,7 +213,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
     /**
      * @return the idTranslator
      */
-    public IdentifierConverter<Resource, FedoraResource> translator() {
+    public Converter<Resource, String> translator() {
         return idTranslator;
     }
 

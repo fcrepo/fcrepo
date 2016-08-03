@@ -20,7 +20,7 @@ package org.fcrepo.kernel.modeshape.rdf.impl;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
 
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 
 import javax.jcr.Node;
@@ -57,12 +57,12 @@ public class HashRdfContext extends NodeRdfContext {
      * @throws javax.jcr.RepositoryException if repository exception occurred
      */
     public HashRdfContext(final FedoraResource resource,
-                          final IdentifierConverter<Resource, FedoraResource> idTranslator)
+                          final Converter<Resource, String> idTranslator)
             throws RepositoryException {
         super(resource, idTranslator);
 
         concat(getNodeStream(resource)
-                .flatMap(n -> nodeConverter.convert(n).getTriples(idTranslator, PROPERTIES))
+                .flatMap(n -> nodeConverter.apply(n).getTriples(idTranslator, PROPERTIES))
                 .filter(IS_MANAGED_TRIPLE.negate()));
     }
 

@@ -77,7 +77,9 @@ public class BasicReadWriteFedoraFileSystemConnectorIT extends AbstractFedoraFil
             // Write the properties
             try (final DefaultRdfStream originalTriples =
                     new DefaultRdfStream(createURI("info:fedora" + testFilePath()))) {
-                object.updateProperties(new DefaultIdentifierTranslator(session), sparql, originalTriples);
+                object.updateProperties(
+                        new DefaultIdentifierTranslator(session),
+                        sparql, originalTriples);
             }
 
             // Verify

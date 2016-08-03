@@ -19,8 +19,8 @@ package org.fcrepo.kernel.modeshape.testutilities;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.modeshape.identifiers.IdentifierConverter;
 
 import static java.util.stream.Stream.of;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;

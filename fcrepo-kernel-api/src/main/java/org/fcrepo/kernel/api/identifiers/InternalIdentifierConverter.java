@@ -17,7 +17,9 @@
  */
 package org.fcrepo.kernel.api.identifiers;
 
-import com.google.common.base.Converter;
+import org.fcrepo.kernel.api.functions.CompositeConverter;
+import org.fcrepo.kernel.api.functions.Converter;
+import org.fcrepo.kernel.api.functions.InverseConverterWrapper;
 
 /**
  * Translates internal {@link String} identifiers to internal {@link String}
@@ -26,24 +28,43 @@ import com.google.common.base.Converter;
  * @author ajs6f
  * @since Apr 1, 2014
  */
-public abstract class InternalIdentifierConverter extends Converter<String, String> {
+public abstract class InternalIdentifierConverter implements Converter<String, String> {
 
     /*
      * (non-Javadoc)
-     * @see com.google.common.base.Converter#doForward(java.lang.Object)
+     * @see org.fcrepo.kernel.api.functions.Converter#apply(java.lang.Object)
      */
     @Override
-    protected String doForward(final String a) {
+    public String apply(final String a) {
         return a;
     }
 
+    @Override
+    public boolean inDomain(final String value) {
+        return value != null;
+    }
+
     /*
      * (non-Javadoc)
-     * @see com.google.common.base.Converter#doBackward(java.lang.Object)
+     * @see org.fcrepo.kernel.api.functions.Converter#toDomain(java.lang.Object)
      */
     @Override
-    protected String doBackward(final String b) {
+    public String toDomain(final String b) {
         return b;
     }
 
+    @Override
+    public Converter<String, String> inverse() {
+        return new InverseConverterWrapper<>(this);
+    }
+
+    @Override
+    public <A> Converter<String, A> andThen(final Converter<String, A> after) {
+        return new CompositeConverter<>(this, after);
+    }
+
+    @Override
+    public <A> Converter<A, String> compose(final Converter<A, String> before) {
+        return new CompositeConverter<>(before, this);
+    }
 }

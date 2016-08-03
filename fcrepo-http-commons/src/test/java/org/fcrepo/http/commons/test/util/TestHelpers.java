@@ -181,7 +181,6 @@ public abstract class TestHelpers {
     public static Collection<String>
             parseChildren(final HttpEntity entity) throws IOException {
         final String body = EntityUtils.toString(entity);
-        System.err.println(body);
         final String[] names =
             body.replace("[", "").replace("]", "").trim().split(",\\s?");
         return Arrays.asList(names);

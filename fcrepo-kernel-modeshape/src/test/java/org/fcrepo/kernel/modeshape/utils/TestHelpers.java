@@ -20,6 +20,7 @@ package org.fcrepo.kernel.modeshape.utils;
 import static org.fcrepo.kernel.api.FedoraTypes.CONTENT_DIGEST;
 import static org.fcrepo.kernel.api.FedoraTypes.CONTENT_SIZE;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATEDBY;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
@@ -39,9 +40,12 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Value;
 
 import org.fcrepo.kernel.api.utils.ContentDigest;
+import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
+import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import com.hp.hpl.jena.rdf.model.Resource;
 /**
  * Helpers to make writing unit tests easier (by providing some generic
  * mocks)
@@ -96,6 +100,17 @@ public abstract class TestHelpers {
         } // shhh
         return mock;
     }
+
+    public static void mockResource(final FedoraResourceImpl resource, final String path) {
+        mockResource(resource, path, new DefaultIdentifierTranslator(null).toDomain(path));
+    }
+
+    public static void mockResource(final FedoraResourceImpl resource, final String path, final Resource uri) {
+        when(resource.getPath()).thenReturn(path);
+        when(resource.graphResource(any()))
+        .thenReturn(uri);
+    }
+
 
     public static String checksumString(final String content) {
         return checksumString(content.getBytes());

@@ -24,7 +24,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -271,12 +271,12 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     }
 
     @Override
-    public RdfStream getFixity(final IdentifierConverter<Resource, FedoraResource> idTranslator) {
+    public RdfStream getFixity(final Converter<Resource, String> idTranslator) {
         return getFixity(idTranslator, getContentDigest(), getContentSize());
     }
 
     @Override
-    public RdfStream getFixity(final IdentifierConverter<Resource, FedoraResource> idTranslator,
+    public RdfStream getFixity(final Converter<Resource, String> idTranslator,
                                final URI digestUri,
                                final long size) {
 

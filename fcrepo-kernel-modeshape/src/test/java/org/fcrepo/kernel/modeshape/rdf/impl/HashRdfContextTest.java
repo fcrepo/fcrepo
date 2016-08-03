@@ -40,6 +40,7 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static javax.jcr.PropertyType.STRING;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
+import static org.fcrepo.kernel.modeshape.utils.TestHelpers.mockResource;
 import static org.fcrepo.kernel.modeshape.testutilities.TestNodeIterator.nodeIterator;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -91,7 +92,7 @@ public class HashRdfContextTest {
     public void setUp() throws RepositoryException {
         initMocks(this);
 
-        when(mockResource.getPath()).thenReturn("/a");
+        mockResource(mockResource, "/a");
         when(mockResource.getNode()).thenReturn(mockNode);
         when(mockNode.getNode("#")).thenReturn(mockContainer);
         when(mockNode.getSession()).thenReturn(mockSession);

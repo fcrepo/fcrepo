@@ -19,8 +19,10 @@ package org.fcrepo.kernel.modeshape.identifiers;
 
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 
-import com.google.common.base.Converter;
 import com.hp.hpl.jena.rdf.model.Resource;
+
+import org.fcrepo.kernel.api.functions.CompositeConverter;
+import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl;
 import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
@@ -33,7 +35,7 @@ import javax.jcr.Node;
  * @author cabeer
  * @since 10/15/14
  */
-public class NodeResourceConverter extends Converter<Node, FedoraResource> {
+public class NodeResourceConverter extends IdentifierConverter<Node, FedoraResource> {
     public static final NodeResourceConverter nodeConverter = new NodeResourceConverter();
 
     /**
@@ -42,11 +44,11 @@ public class NodeResourceConverter extends Converter<Node, FedoraResource> {
      * @return the converter that can transform a node to resource
      */
     public static Converter<Node, Resource> nodeToResource(final Converter<Resource, FedoraResource> c) {
-        return nodeConverter.andThen(c.reverse());
+        return nodeConverter.andThen(c.inverse());
     }
 
     @Override
-    protected FedoraResource doForward(final Node node) {
+    public FedoraResource apply(final Node node) {
 
         final FedoraResource fedoraResource;
 
@@ -64,7 +66,32 @@ public class NodeResourceConverter extends Converter<Node, FedoraResource> {
     }
 
     @Override
-    protected Node doBackward(final FedoraResource resource) {
+    public Node toDomain(final FedoraResource resource) {
         return getJcrNode(resource);
+    }
+
+    @Override
+    public boolean inDomain(final Node a) {
+        return true;
+    }
+
+    @Override
+    public IdentifierConverter<FedoraResource, Node> inverse() {
+        return new InverseIdentifierConverter<>(this);
+    }
+
+    @Override
+    public <C> Converter<Node, C> andThen(final Converter<FedoraResource, C> after) {
+        return new CompositeConverter<>(this, after);
+    }
+
+    @Override
+    public <C> Converter<C, FedoraResource> compose(final Converter<C, Node> before) {
+        return new CompositeConverter<>(before, this);
+    }
+
+    @Override
+    public String asString(final Node resource) {
+        return apply(resource).toString();
     }
 }

@@ -22,7 +22,6 @@ import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
 import org.fcrepo.kernel.api.RdfLexicon;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
@@ -38,6 +37,7 @@ import javax.jcr.Session;
 
 import static java.util.stream.Stream.of;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
+import static org.fcrepo.kernel.modeshape.utils.TestHelpers.mockResource;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -67,7 +67,7 @@ public class ChildrenRdfContextTest {
     @Mock
     private FedoraResourceImpl mockResource, mockRes1, mockRes2, mockRes3;
 
-    private IdentifierConverter<Resource, FedoraResource> idTranslator;
+    private DefaultIdentifierTranslator idTranslator;
 
     private static final String RDF_PATH = "/resource/path";
 
@@ -76,7 +76,7 @@ public class ChildrenRdfContextTest {
         // Mock RDF Source
         when(mockResource.getNode()).thenReturn(mockResourceNode);
         when(mockResourceNode.getSession()).thenReturn(mockSession);
-        when(mockResource.getPath()).thenReturn(RDF_PATH);
+        mockResource(mockResource, RDF_PATH);
 
         idTranslator = new DefaultIdentifierTranslator(mockSession);
     }
@@ -87,7 +87,7 @@ public class ChildrenRdfContextTest {
 
         try (final ChildrenRdfContext childrenRdfContext = new ChildrenRdfContext(mockResource, idTranslator)) {
             final Model results = childrenRdfContext.collect(toModel());
-            final Resource subject = idTranslator.reverse().convert(mockResource);
+            final Resource subject = mockResource.graphResource(idTranslator);
 
             final StmtIterator stmts = results.listStatements(subject, RdfLexicon.CONTAINS, (RDFNode) null);
             assertFalse("There should NOT have been a statement!", stmts.hasNext());
@@ -96,9 +96,9 @@ public class ChildrenRdfContextTest {
 
     @Test
     public void testChildren() throws RepositoryException {
-        when(mockRes1.getPath()).thenReturn(RDF_PATH + "/res1");
-        when(mockRes2.getPath()).thenReturn(RDF_PATH + "/res2");
-        when(mockRes3.getPath()).thenReturn(RDF_PATH + "/res3");
+        mockResource(mockRes1, RDF_PATH + "/res1");
+        mockResource(mockRes2, RDF_PATH + "/res2");
+        mockResource(mockRes3, RDF_PATH + "/res3");
         when(mockRes1.getDescribedResource()).thenReturn(mockRes1);
         when(mockRes2.getDescribedResource()).thenReturn(mockRes2);
         when(mockRes3.getDescribedResource()).thenReturn(mockRes3);
@@ -109,7 +109,7 @@ public class ChildrenRdfContextTest {
 
         try (final ChildrenRdfContext context = new ChildrenRdfContext(mockResource, idTranslator)) {
             final Model results = context.collect(toModel());
-            final Resource subject = idTranslator.reverse().convert(mockResource);
+            final Resource subject = mockResource.graphResource(idTranslator);
 
             final StmtIterator stmts = results.listStatements(subject, RdfLexicon.CONTAINS, (RDFNode) null);
 

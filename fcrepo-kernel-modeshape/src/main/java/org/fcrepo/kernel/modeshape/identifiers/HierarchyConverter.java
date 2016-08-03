@@ -63,7 +63,7 @@ public class HierarchyConverter extends InternalIdentifierConverter {
      * @see com.google.common.base.Converter#doBackward(java.lang.Object)
      */
     @Override
-    protected String doBackward(final String flat) {
+    public String toDomain(final String flat) {
         log.debug("Converting incoming identifier: {}", flat);
         final List<String> hierarchySegments = createHierarchySegments();
         final List<String> flatSegments = asList(flat.split(separator));
@@ -90,7 +90,11 @@ public class HierarchyConverter extends InternalIdentifierConverter {
      * @see com.google.common.base.Converter#doForward(java.lang.Object)
      */
     @Override
-    protected String doForward(final String hierarchical) {
+    public String apply(final String hierarchical) {
+        if (hierarchical == null) {
+            return hierarchical;
+        }
+
         log.debug("Converting outgoing identifier: {}", hierarchical);
         final List<String> segments = asList(hierarchical.split(separator));
         if (segments.size() <= levels) {

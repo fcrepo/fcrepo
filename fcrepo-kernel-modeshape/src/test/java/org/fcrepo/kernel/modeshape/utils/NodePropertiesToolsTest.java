@@ -43,9 +43,6 @@ import javax.jcr.ValueFactory;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.PropertyDefinition;
 
-import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -53,8 +50,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-
-import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
  * <p>NodePropertiesToolsTest class.</p>
@@ -88,9 +83,6 @@ public class NodePropertiesToolsTest {
     private Value previousValue;
 
     @Mock
-    private IdentifierConverter<Resource, FedoraResource> idTranslator;
-
-    @Mock
     private Session mockSession;
 
     @Mock
@@ -115,7 +107,6 @@ public class NodePropertiesToolsTest {
         when(mockNode.getSession()).thenReturn(mockSession);
         when(mockSession.getValueFactory()).thenReturn(mockValueFactory);
 
-        idTranslator = new DefaultIdentifierTranslator(mockSession);
     }
 
 

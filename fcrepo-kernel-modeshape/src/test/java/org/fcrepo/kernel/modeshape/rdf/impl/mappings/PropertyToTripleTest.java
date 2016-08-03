@@ -30,7 +30,7 @@ import static javax.jcr.PropertyType.PATH;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.URI;
-import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeToResource;
+import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -48,8 +48,7 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.ValueFormatException;
 
-import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.modeshape.utils.JcrPropertyMock;
 import org.junit.Before;
@@ -366,7 +365,7 @@ public class PropertyToTripleTest {
         when(mockSession.getNode(TEST_NODE_PATH)).thenReturn(mockNode);
         when(mockNode.getNode(TEST_NODE_PATH)).thenReturn(mockNode);
         when(mockNode.getPath()).thenReturn(TEST_NODE_PATH);
-        testSubject = nodeToResource(idTranslator).convert(mockNode).asNode();
+        testSubject = nodeConverter.apply(mockNode).graphResource(idTranslator).asNode();
     }
 
     private PropertyToTriple testPropertyToTriple;
@@ -374,7 +373,7 @@ public class PropertyToTripleTest {
     @Mock
     private Session mockSession;
 
-    private IdentifierConverter<Resource, FedoraResource> idTranslator;
+    private Converter<Resource, String> idTranslator;
 
     @Mock
     private JcrPropertyMock mockProperty;

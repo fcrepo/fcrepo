@@ -23,6 +23,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
+import static org.fcrepo.kernel.modeshape.utils.TestHelpers.mockResource;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
@@ -71,9 +72,9 @@ public class LdpRdfContextTest {
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
-        when(mockResource.getPath()).thenReturn("/a");
-        when(mockBinary.getPath()).thenReturn("/a");
-        when(mockContainer.getPath()).thenReturn("/a");
+        mockResource(mockResource, "/a");
+        mockResource(mockBinary, "/a");
+        mockResource(mockContainer,"/a");
         when(mockResource.getNode()).thenReturn(mockNode);
         when(mockBinary.getNode()).thenReturn(mockNode);
         when(mockContainer.getNode()).thenReturn(mockNode);
@@ -125,7 +126,7 @@ public class LdpRdfContextTest {
     }
 
     private Resource subject() {
-        return subjects.reverse().convert(mockResource);
+        return mockResource.graphResource(subjects);
     }
 
 }

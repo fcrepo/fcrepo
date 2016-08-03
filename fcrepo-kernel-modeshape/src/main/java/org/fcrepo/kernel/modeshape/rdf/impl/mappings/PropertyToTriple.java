@@ -20,7 +20,6 @@ package org.fcrepo.kernel.modeshape.rdf.impl.mappings;
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDstring;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.Triple.create;
-import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeToResource;
 import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
 
 import java.util.function.Function;
@@ -30,12 +29,12 @@ import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import com.google.common.base.Converter;
 import com.hp.hpl.jena.graph.impl.LiteralLabel;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.functions.Converter;
+import org.fcrepo.kernel.modeshape.identifiers.InternalPathToNodeConverter;
 import org.fcrepo.kernel.modeshape.rdf.converters.PropertyConverter;
 import org.fcrepo.kernel.modeshape.rdf.converters.ValueConverter;
 import com.hp.hpl.jena.datatypes.RDFDatatype;
@@ -59,20 +58,20 @@ public class PropertyToTriple implements Function<Property, Stream<Triple>> {
      * @param converter a converter between RDF and the Fedora model
      * @param session the JCR session
      */
-    public PropertyToTriple(final Session session, final Converter<Resource, FedoraResource> converter) {
+    public PropertyToTriple(final Session session, final Converter<Resource, String> converter) {
         this.valueConverter = new ValueConverter(session, converter);
-        this.translator = nodeToResource(converter);
+        this.translator = converter.andThen(new InternalPathToNodeConverter(session)).inverse();
     }
 
     @Override
     public Stream<Triple> apply(final Property p) {
         try {
-            final com.hp.hpl.jena.graph.Node subject = translator.convert(p.getParent()).asNode();
+            final com.hp.hpl.jena.graph.Node subject = translator.apply(p.getParent()).asNode();
             final com.hp.hpl.jena.graph.Node propPredicate = propertyConverter.convert(p).asNode();
             final String propertyName = p.getName();
 
             return iteratorToStream(new PropertyValueIterator(p)).map(v -> {
-                final com.hp.hpl.jena.graph.Node object = valueConverter.convert(v).asNode();
+                final com.hp.hpl.jena.graph.Node object = valueConverter.apply(v).asNode();
                 if (object.isLiteral()) {
                     // unpack the name of the property for information about what kind of literal
                     final int i = propertyName.indexOf('@');

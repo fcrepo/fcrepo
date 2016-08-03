@@ -21,6 +21,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBES;
 import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
+import static org.fcrepo.kernel.modeshape.utils.TestHelpers.mockResource;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -38,10 +39,9 @@ import javax.jcr.Session;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
 
-import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
 import org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -85,7 +85,7 @@ public class ContentRdfContextTest {
         when(mockBinaryNode.getSession()).thenReturn(mockSession);
         when(mockResource.getNode()).thenReturn(mockNode);
         when(mockNode.getSession()).thenReturn(mockSession);
-        when(mockResource.getPath()).thenReturn("/mockNode");
+        mockResource(mockResource, "/mockNode");
         when(mockSession.getRepository()).thenReturn(mockRepository);
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
@@ -95,7 +95,7 @@ public class ContentRdfContextTest {
         when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[] {});
         when(mockBinaryNode.getMixinNodeTypes()).thenReturn(new NodeType[]{});
         when(mockBinaryNode.hasProperties()).thenReturn(false);
-        when(mockBinary.getPath()).thenReturn("/mockNode/jcr:content");
+        mockResource(mockBinary, "/mockNode/jcr:content");
         idTranslator = new DefaultIdentifierTranslator(mockSession);
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockBinaryNode.getPrimaryNodeType()).thenReturn(mockNodeType);
@@ -104,8 +104,8 @@ public class ContentRdfContextTest {
                  mockNodeTypePrefix + ":" + mockNodeName);
 
         //when(mockNodeType.getName()).thenReturn("not:root");
-        mockSubject = idTranslator.reverse().convert(mockResource);
-        mockContentSubject = idTranslator.reverse().convert(mockBinary);
+        mockSubject = mockResource.graphResource(idTranslator);
+        mockContentSubject = mockBinary.graphResource(idTranslator);
     }
 
     private Resource mockContentSubject;
@@ -127,7 +127,7 @@ public class ContentRdfContextTest {
     @Mock
     private NodeType mockNodeType;
 
-    private IdentifierConverter<Resource, FedoraResource> idTranslator;
+    private DefaultIdentifierTranslator idTranslator;
 
     @Mock
     private Session mockSession;

@@ -21,6 +21,7 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createStatement;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
+import static org.fcrepo.kernel.modeshape.utils.TestHelpers.mockResource;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -37,8 +38,6 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.nodetype.PropertyDefinition;
 
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl;
@@ -82,7 +81,7 @@ public class PropertiesRdfContextTest {
     @Mock
     private PropertyIterator mockPropertyIterator;
 
-    private IdentifierConverter<Resource, FedoraResource> idTranslator;
+    private DefaultIdentifierTranslator idTranslator;
 
     private static final String RDF_PROPERTY_NAME = "rdf-property-name";
 
@@ -113,21 +112,21 @@ public class PropertiesRdfContextTest {
         // Mock RDF Source
         when(mockResource.getNode()).thenReturn(mockResourceNode);
         when(mockResourceNode.getSession()).thenReturn(mockSession);
-        when(mockResource.getPath()).thenReturn(RDF_PATH);
+        mockResource(mockResource, RDF_PATH);
 
         when(mockResourceNode.getPath()).thenReturn(RDF_PATH);
 
         // Mock NonRDF Source
         when(mockBinary.getNode()).thenReturn(mockBinaryNode);
         when(mockBinaryNode.getSession()).thenReturn(mockSession);
-        when(mockBinary.getPath()).thenReturn(BINARY_PATH);
+        idTranslator = new DefaultIdentifierTranslator(mockSession);
+        mockResource(mockBinary, BINARY_PATH + "/jcr:content", idTranslator.toDomain(BINARY_PATH));
 
         when(mockBinary.getDescription()).thenReturn(mockNonRdfSourceDescription);
         when(mockNonRdfSourceDescription.getNode()).thenReturn(mockResourceNode);
 
         when(mockBinaryNode.getPath()).thenReturn(BINARY_PATH);
 
-        idTranslator = new DefaultIdentifierTranslator(mockSession);
     }
 
     @Test
@@ -152,7 +151,7 @@ public class PropertiesRdfContextTest {
         try (final PropertiesRdfContext propertiesRdfContext = new PropertiesRdfContext(mockBinary, idTranslator)) {
             final Model results = propertiesRdfContext.collect(toModel());
 
-            final Resource correctSubject = idTranslator.reverse().convert(mockBinary);
+            final Resource correctSubject = mockBinary.graphResource(idTranslator);
 
             results.listStatements().forEachRemaining(stmnt -> assertEquals(
                     "All subjects in triples created should be the resource processed!",

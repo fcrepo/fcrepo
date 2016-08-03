@@ -42,7 +42,8 @@ import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_INSERTED_CONTENT_RELATION;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_MEMBER_RESOURCE;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
-import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeToResource;
+import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
+import static org.fcrepo.kernel.modeshape.utils.TestHelpers.mockResource;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -98,7 +99,7 @@ public class LdpContainerRdfContextTest {
     public void setUp() throws RepositoryException {
         initMocks(this);
         when(mockNode.getSession()).thenReturn(mockSession);
-        when(mockResource.getPath()).thenReturn("/a");
+        mockResource(mockResource, "/a");
         when(mockResource.getNode()).thenReturn(mockNode);
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
@@ -181,9 +182,9 @@ public class LdpContainerRdfContextTest {
 
         assertTrue("Expected stream to have one triple", model.size() == 1);
         assertTrue(model.contains(
-                subjects.reverse().convert(mockResource),
+                mockResource.graphResource(subjects),
                 ResourceFactory.createProperty("some:property"),
-                nodeToResource(subjects).convert(mockChild)));
+                nodeConverter.apply(mockChild).graphResource(subjects)));
     }
 
     @Test
@@ -217,7 +218,7 @@ public class LdpContainerRdfContextTest {
 
         assertTrue("Expected stream to have one triple", model.size() == 1);
         assertTrue(model.contains(
-                subjects.reverse().convert(mockResource),
+                mockResource.graphResource(subjects),
                 ResourceFactory.createProperty("some:property"),
                 ResourceFactory.createPlainLiteral("x")));
     }
@@ -254,7 +255,7 @@ public class LdpContainerRdfContextTest {
 
         assertTrue("Expected stream to have one triple", model.size() == 1);
         assertTrue(model.contains(
-                subjects.reverse().convert(mockResource),
+                mockResource.graphResource(subjects),
                 ResourceFactory.createProperty("some:property"),
                 ResourceFactory.createPlainLiteral("x")));
     }

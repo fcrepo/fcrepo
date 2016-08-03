@@ -51,10 +51,11 @@ import javax.jcr.nodetype.PropertyDefinition;
 
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
+import org.fcrepo.kernel.modeshape.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -222,8 +223,8 @@ public class RdfAdderTest {
         when(mockPropertyDefinition.getName()).thenReturn(propertyShortName);
         when(mockPropertyDefinition.getRequiredType()).thenReturn(STRING);
         when(mockProperty.getName()).thenReturn(propertyShortName);
-        when(mockGraphSubjects.reverse()).thenReturn(mockReverseGraphSubjects);
         //TODO? when(mockReverseGraphSubjects.convert(mockNode)).thenReturn(mockNodeSubject);
+        mockGraphSubjects = new DefaultIdentifierTranslator(mockSession);
         resource = new FedoraResourceImpl(mockNode);
         testStream = new DefaultRdfStream(testSubject, mockTriples);
     }
@@ -265,11 +266,7 @@ public class RdfAdderTest {
 
     private RdfStream testStream;
 
-    @Mock
-    private IdentifierConverter<Resource, FedoraResource> mockGraphSubjects;
-
-    @Mock
-    private IdentifierConverter<FedoraResource,Resource> mockReverseGraphSubjects;
+    private IdentifierConverter<Resource, String> mockGraphSubjects;
 
     @Mock
     private Property mockProperty;

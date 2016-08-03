@@ -300,6 +300,6 @@ public class FedoraEventImpl implements FedoraEvent {
 
         // reformat any hash URIs and remove any trailing /jcr:content
         final HashConverter converter = new HashConverter();
-        return converter.reverse().convert(path.replaceAll("/" + JCR_CONTENT, ""));
+        return converter.toDomain(path.replaceAll("/" + JCR_CONTENT, ""));
     }
 }

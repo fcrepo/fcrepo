@@ -31,9 +31,9 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.http.api.FedoraVersioning;
 import org.fcrepo.http.api.repository.FedoraRepositoryTransactions;
 import org.fcrepo.http.commons.api.rdf.UriAwareResourceModelFactory;
+import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 
 import org.springframework.stereotype.Component;
 
@@ -51,11 +51,11 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
 
     @Override
     public Model createModelForResource(final FedoraResource resource,
-        final UriInfo uriInfo, final IdentifierConverter<Resource,FedoraResource> idTranslator) {
+        final UriInfo uriInfo, final Converter<Resource,String> idTranslator) {
 
         final Model model = createDefaultModel();
 
-        final Resource s = idTranslator.reverse().convert(resource);
+        final Resource s = resource.graphResource(idTranslator);
 
         if (resource.hasType(FEDORA_REPOSITORY_ROOT)) {
             addRepositoryStatements(uriInfo, model, s);
@@ -69,11 +69,11 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
         return model;
     }
 
-    private static void addContentStatements(final IdentifierConverter<Resource,FedoraResource> idTranslator,
+    private static void addContentStatements(final Converter<Resource,String> idTranslator,
                                              final FedoraBinary resource,
                                              final Model model) {
         // fcr:fixity
-        final Resource subject = idTranslator.reverse().convert(resource);
+        final Resource subject = resource.graphResource(idTranslator);
         model.add(subject, HAS_FIXITY_SERVICE, createResource(subject.getURI() +
                 "/fcr:fixity"));
     }

@@ -29,7 +29,7 @@ import org.fcrepo.kernel.api.exception.IncorrectTripleSubjectException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.OutOfDomainSubjectException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.modeshape.rdf.JcrRdfTools;
 
@@ -58,7 +58,7 @@ public class JcrPropertyStatementListener extends StatementListener {
 
     private final JcrRdfTools jcrRdfTools;
 
-    private final IdentifierConverter<Resource, FedoraResource> idTranslator;
+    private final Converter<Resource, String> idTranslator;
 
     private final List<Exception> exceptions;
 
@@ -71,7 +71,7 @@ public class JcrPropertyStatementListener extends StatementListener {
      * @param session the session
      * @param topic the topic of the RDF statement
      */
-    public JcrPropertyStatementListener(final IdentifierConverter<Resource, FedoraResource> idTranslator,
+    public JcrPropertyStatementListener(final Converter<Resource, String> idTranslator,
                                         final Session session, final Node topic) {
         this(idTranslator, new JcrRdfTools(idTranslator, session), topic);
     }
@@ -83,7 +83,7 @@ public class JcrPropertyStatementListener extends StatementListener {
      * @param jcrRdfTools the jcr rdf tools
      * @param topic the topic of the RDF statement
      */
-    public JcrPropertyStatementListener(final IdentifierConverter<Resource, FedoraResource> idTranslator,
+    public JcrPropertyStatementListener(final Converter<Resource, String> idTranslator,
                                         final JcrRdfTools jcrRdfTools, final Node topic) {
         super();
         this.idTranslator = idTranslator;
@@ -105,9 +105,9 @@ public class JcrPropertyStatementListener extends StatementListener {
             validateSubject(subject);
             LOGGER.debug(">> adding statement {}", input);
 
-            final Statement s = jcrRdfTools.skolemize(idTranslator, input);
+            final Statement s = jcrRdfTools.skolemize(input);
 
-            final FedoraResource resource = idTranslator.convert(s.getSubject());
+            final FedoraResource resource = jcrRdfTools.resourceTranslator().apply(s.getSubject());
 
             // special logic for handling rdf:type updates.
             // if the object is an already-existing mixin, update
@@ -144,7 +144,7 @@ public class JcrPropertyStatementListener extends StatementListener {
             validateSubject(subject);
             LOGGER.trace(">> removing statement {}", s);
 
-            final FedoraResource resource = idTranslator.convert(subject);
+            final FedoraResource resource = jcrRdfTools.resourceTranslator().apply(subject);
 
             // special logic for handling rdf:type updates.
             // if the object is an already-existing mixin, update

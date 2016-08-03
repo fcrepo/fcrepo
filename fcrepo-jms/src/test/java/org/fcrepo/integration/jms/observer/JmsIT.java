@@ -38,6 +38,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.ByteArrayInputStream;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+
 import javax.inject.Inject;
 import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
@@ -94,8 +95,11 @@ public class JmsIT implements MessageListener {
 
     private static final String testMeta = "/testMessageFromMetadata-" + randomUUID();
 
+    @SuppressWarnings("unused")
     private static final String RESOURCE_CREATION_EVENT_TYPE = EventType.RESOURCE_CREATION.getType();
+    @SuppressWarnings("unused")
     private static final String RESOURCE_DELETION_EVENT_TYPE = EventType.RESOURCE_DELETION.getType();
+    @SuppressWarnings("unused")
     private static final String RESOURCE_MODIFICATION_EVENT_TYPE = EventType.RESOURCE_MODIFICATION.getType();
 
     @Inject

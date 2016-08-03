@@ -66,8 +66,8 @@ import javax.jcr.version.VersionManager;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
+import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.modeshape.rdf.JcrRdfTools;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
@@ -107,7 +107,7 @@ public class FedoraResourceImplTest {
     private JcrRdfTools mockJcrRdfTools;
 
     @Mock
-    private IdentifierConverter<Resource, FedoraResource> mockSubjects;
+    private Converter<Resource, FedoraResource> mockSubjects;
 
     @Before
     public void setUp() throws RepositoryException {
@@ -119,7 +119,7 @@ public class FedoraResourceImplTest {
         testObj = new FedoraResourceImpl(mockNode);
         assertEquals(mockNode, getJcrNode(testObj));
 
-        mockSubjects = new DefaultIdentifierTranslator(mockSession);
+        mockSubjects = new DefaultIdentifierTranslator(mockSession).toResources();
     }
 
     @Test
@@ -227,7 +227,6 @@ public class FedoraResourceImplTest {
             when(mockNode.getProperty(FEDORA_LASTMODIFIED)).thenReturn(mockMod);
             when(mockMod.getDate()).thenReturn(modDate);
         } catch (final RepositoryException e) {
-            System.err.println("What are we doing in the second test?");
             e.printStackTrace();
         }
         final Date actual = testObj.getLastModifiedDate();

@@ -26,7 +26,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 
 import java.util.stream.Stream;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -48,7 +48,7 @@ public class LdpRdfContext extends NodeRdfContext {
      * @param idTranslator the id translator
      */
     public LdpRdfContext(final FedoraResource resource,
-                         final IdentifierConverter<Resource, FedoraResource> idTranslator) {
+                         final Converter<Resource, String> idTranslator) {
         super(resource, idTranslator);
 
         final Stream.Builder<Triple> builder = Stream.builder();

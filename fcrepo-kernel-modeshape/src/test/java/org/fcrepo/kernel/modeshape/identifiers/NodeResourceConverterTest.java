@@ -63,7 +63,7 @@ public class NodeResourceConverterTest {
 
     @Test
     public void testForwardObject() {
-        final FedoraResource actual = testObj.convert(mockNode);
+        final FedoraResource actual = testObj.apply(mockNode);
         assertTrue(actual instanceof Container);
         assertEquals(mockNode, getJcrNode(actual));
     }
@@ -71,7 +71,7 @@ public class NodeResourceConverterTest {
     @Test
     public void testForwardDatastream() throws RepositoryException {
         when(mockNode.isNodeType(FEDORA_NON_RDF_SOURCE_DESCRIPTION)).thenReturn(true);
-        final FedoraResource actual = testObj.convert(mockNode);
+        final FedoraResource actual = testObj.apply(mockNode);
         assertTrue(actual instanceof NonRdfSourceDescription);
         assertEquals(mockNode, getJcrNode(actual));
 
@@ -80,7 +80,7 @@ public class NodeResourceConverterTest {
     @Test
     public void testForwardBinary() throws RepositoryException {
         when(mockNode.isNodeType(FEDORA_BINARY)).thenReturn(true);
-        final FedoraResource actual = testObj.convert(mockNode);
+        final FedoraResource actual = testObj.apply(mockNode);
         assertTrue(actual instanceof FedoraBinary);
         assertEquals(mockNode, getJcrNode(actual));
     }
@@ -88,14 +88,14 @@ public class NodeResourceConverterTest {
     @Test
     public void testForwardTombstone() throws RepositoryException {
         when(mockNode.isNodeType(FEDORA_TOMBSTONE)).thenReturn(true);
-        final FedoraResource actual = testObj.convert(mockNode);
+        final FedoraResource actual = testObj.apply(mockNode);
         assertTrue(actual instanceof Tombstone);
         assertEquals(mockNode, getJcrNode(actual));
     }
 
     @Test
     public void testBackward() {
-        final Node actual = testObj.reverse().convert(mockResource);
+        final Node actual = testObj.inverse().apply(mockResource);
         assertEquals(mockNode, actual);
     }
 

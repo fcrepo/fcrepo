@@ -174,13 +174,13 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     private Node createGraphSubjectNode(final FedoraResource obj) {
-        return subjects.reverse().convert(obj).asNode();
+        return obj.graphResource(subjects).asNode();
     }
 
     @Test
     public void testRandomNodeGraph() {
         final FedoraResource object = containerService.findOrCreate(session, "/testNodeGraph");
-        final Node s = subjects.reverse().convert(object).asNode();
+        final Node s = object.graphResource(subjects).asNode();
         final Model rdf = object.getTriples(subjects, PROPERTIES).collect(toModel());
 
         assertFalse(rdf.getGraph().contains(s, HAS_PRIMARY_IDENTIFIER.asNode(), ANY));
@@ -498,12 +498,13 @@ public class FedoraResourceImplIT extends AbstractIT {
         final FedoraResource object =
                 containerService.findOrCreate(session, "/testRefObject");
 
+        final String workUri = subjects.toDomain("/some-path").getURI();
         object.updateProperties(
                 subjects,
                 "PREFIX example: <http://example.org/>\n"
                         + "PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n"
                         + "PREFIX fedora: <" + REPOSITORY_NAMESPACE + ">\n"
-                        + "INSERT { <> fedora:isPartOf <" + subjects.toDomain("/some-path") + ">}"
+                        + "INSERT { <> fedora:isPartOf <" + workUri + ">}"
                         + "WHERE { }", object.getTriples(subjects, emptySet()));
     }
 
@@ -674,9 +675,9 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Model model = object.getTriples(subjects, INBOUND_REFERENCES).collect(toModel());
 
         assertTrue(
-            model.contains(subjects.reverse().convert(subject),
+            model.contains(subject.graphResource(subjects),
                               ResourceFactory.createProperty(REPOSITORY_NAMESPACE + "isPartOf"),
-                              subjects.reverse().convert(object))
+                              object.graphResource(subjects))
         );
     }
 
@@ -689,7 +690,7 @@ public class FedoraResourceImplIT extends AbstractIT {
             final Model model = triples.collect(toModel());
 
             final Resource resource = model.createResource();
-            final Resource subject = subjects.reverse().convert(object);
+            final Resource subject = object.graphResource(subjects);
             final Property predicate = model.createProperty("info:xyz");
             model.add(subject, predicate, resource);
             model.add(resource, model.createProperty("http://purl.org/dc/elements/1.1/title"), "xyz");
@@ -729,7 +730,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         model.add(hashResource, foafName, nameValue);
         model.add(hashResource, type, foafPerson);
 
-        final Resource subject = subjects.reverse().convert(object);
+        final Resource subject = object.graphResource(subjects);
         final Property dcCreator = model.createProperty("http://purl.org/dc/elements/1.1/creator");
 
         model.add(subject, dcCreator, hashResource);
@@ -1137,11 +1138,11 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         final Model model1 = referent1.getTriples(subjects, INBOUND_REFERENCES).collect(toModel());
 
-        assertTrue(model1.contains(subjects.reverse().convert(subject),
+        assertTrue(model1.contains(subject.graphResource(subjects),
                 createProperty("info:fedora/test/fakeRel"),
                 createResource("info:fedora/" + pid + "/b")));
 
-        assertTrue(model1.contains(subjects.reverse().convert(subject),
+        assertTrue(model1.contains(subject.graphResource(subjects),
                 createProperty("info:fedora/test/fakeRel"),
                 createResource("info:fedora/" + pid + "/c")));
 
@@ -1150,11 +1151,11 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         final Model model2 = referent1.getTriples(subjects, INBOUND_REFERENCES).collect(toModel());
 
-        assertTrue(model2.contains(subjects.reverse().convert(subject),
+        assertTrue(model2.contains(subject.graphResource(subjects),
             createProperty("info:fedora/test/fakeRel"),
             createResource("info:fedora/" + pid + "/b")));
 
-        assertFalse(model2.contains(subjects.reverse().convert(subject),
+        assertFalse(model2.contains(subject.graphResource(subjects),
                 createProperty("info:fedora/test/fakeRel"),
                 createResource("info:fedora/" + pid + "/c")));
     }

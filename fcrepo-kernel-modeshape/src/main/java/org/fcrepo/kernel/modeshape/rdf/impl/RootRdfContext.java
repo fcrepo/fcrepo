@@ -30,12 +30,13 @@ import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.hp.hpl.jena.rdf.model.Resource;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.metrics.RegistryService;
 
 import java.util.Map;
 import java.util.stream.Stream;
+
 import org.slf4j.Logger;
 
 import com.codahale.metrics.Counter;
@@ -63,7 +64,7 @@ public class RootRdfContext extends NodeRdfContext {
      * @param idTranslator the id translator
      */
     public RootRdfContext(final FedoraResource resource,
-                          final IdentifierConverter<Resource, FedoraResource> idTranslator) {
+                          final Converter<Resource, String> idTranslator) {
         super(resource, idTranslator);
 
         if (resource().hasType(ROOT)) {
