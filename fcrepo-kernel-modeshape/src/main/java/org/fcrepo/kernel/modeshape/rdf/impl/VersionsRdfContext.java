@@ -35,9 +35,10 @@ import java.util.stream.Stream;
 import javax.jcr.RepositoryException;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
+
 import com.hp.hpl.jena.rdf.model.Resource;
 
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.modeshape.utils.UncheckedFunction;
@@ -69,9 +70,9 @@ public class VersionsRdfContext extends DefaultRdfStream {
      * @throws RepositoryException if repository exception occurred
      */
     public VersionsRdfContext(final FedoraResource resource,
-                              final IdentifierConverter<Resource, FedoraResource> idTranslator)
+                              final Converter<Resource, String> idTranslator)
         throws RepositoryException {
-        super(idTranslator.reverse().convert(resource).asNode());
+        super(resource.graphResource(idTranslator).asNode());
         this.versionHistory = resource.getVersionHistory();
         concat(versionTriples());
     }

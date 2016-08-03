@@ -20,8 +20,8 @@ package org.fcrepo.kernel.modeshape.rdf.impl;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
 
+import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.modeshape.rdf.converters.ValueConverter;
 import org.fcrepo.kernel.modeshape.rdf.impl.mappings.PropertyValueIterator;
 import org.fcrepo.kernel.modeshape.utils.UncheckedFunction;
@@ -62,6 +62,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * @since 9/25/14
  */
 public class LdpContainerRdfContext extends NodeRdfContext {
+    @SuppressWarnings("unused")
     private static final Logger LOGGER = getLogger(LdpContainerRdfContext.class);
 
     /**
@@ -72,12 +73,12 @@ public class LdpContainerRdfContext extends NodeRdfContext {
      * @throws javax.jcr.RepositoryException if repository exception occurred
      */
     public LdpContainerRdfContext(final FedoraResource resource,
-                                  final IdentifierConverter<Resource, FedoraResource> idTranslator)
+                                  final Converter<Resource, String> idTranslator)
             throws RepositoryException {
         super(resource, idTranslator);
 
         concat(getMembershipContext(resource)
-                .flatMap(uncheck(p -> memberRelations(nodeConverter.convert(p.getParent())))));
+                .flatMap(uncheck(p -> memberRelations(nodeConverter.apply(p.getParent())))));
     }
 
     @SuppressWarnings("unchecked")
@@ -146,7 +147,7 @@ public class LdpContainerRdfContext extends NodeRdfContext {
                 return iteratorToStream(new PropertyValueIterator(
                         getJcrNode(child).getProperty(insertedContentProperty)))
                     .map(uncheck(v -> create(subject(), memberRelation,
-                        new ValueConverter(getJcrNode(container).getSession(), translator()).convert(v).asNode())));
+                        new ValueConverter(getJcrNode(container).getSession(), translator()).apply(v).asNode())));
             }));
     }
 }

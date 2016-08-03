@@ -18,8 +18,10 @@
 package org.fcrepo.kernel.modeshape.utils;
 
 import java.util.function.Function;
+import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 
 /**
@@ -35,6 +37,8 @@ public interface UncheckedFunction<T, R> extends Function<T, R> {
     default R apply(final T elem) {
         try {
             return applyThrows(elem);
+        } catch (final PathNotFoundException e) {
+            throw new PathNotFoundRuntimeException(e);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }

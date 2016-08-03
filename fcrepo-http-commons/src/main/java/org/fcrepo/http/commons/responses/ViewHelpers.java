@@ -83,6 +83,7 @@ public class ViewHelpers {
 
     private static final List<Property>  TITLE_PROPERTIES = asList(RDFS_LABEL, DC_TITLE, DCTERMS_TITLE, SKOS_PREFLABEL);
 
+    @SuppressWarnings("unused")
     private static final Property DC_FORMAT = createProperty(DC_NAMESPACE + "format");
 
     private static final String DEFAULT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").format(new Date());

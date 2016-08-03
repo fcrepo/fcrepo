@@ -150,9 +150,9 @@ public class FedoraVersioning extends FedoraBaseResource {
     public Response addVersion(@HeaderParam("Slug") final String slug) throws RepositoryException {
         if (!isBlank(slug)) {
             LOGGER.info("Request to add version '{}' for '{}'", slug, externalPath);
-            final String path = toPath(translator(), externalPath);
+            final String path = toInternalPath(translator(), externalPath);
             versionService.createVersion(session, path, slug);
-            return created(URI.create(nodeToResource(translator()).convert(
+            return created(URI.create(nodeToResource(graphToResource()).apply(
                             resource().getBaseVersion().getFrozenNode()).getURI())).build();
         }
         return status(BAD_REQUEST).entity("Specify label for version").build();
@@ -164,7 +164,6 @@ public class FedoraVersioning extends FedoraBaseResource {
      *
      * @return List of versions for the object as RDF
      */
-    @SuppressWarnings("resource")
     @GET
     @HtmlTemplate(value = "fcr:versions")
     @Produces({TURTLE + ";qs=1.0", JSON_LD + ";qs=0.8", N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN,

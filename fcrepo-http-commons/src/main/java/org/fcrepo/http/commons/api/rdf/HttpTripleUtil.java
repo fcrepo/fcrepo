@@ -31,10 +31,10 @@ import javax.ws.rs.core.UriInfo;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.modeshape.identifiers.IdentifierConverter;
 
 import org.slf4j.Logger;
 import org.springframework.context.ApplicationContext;
@@ -69,7 +69,7 @@ public class HttpTripleUtil implements ApplicationContextAware {
      */
     public RdfStream addHttpComponentModelsForResourceToStream(final RdfStream rdfStream,
             final FedoraResource resource, final UriInfo uriInfo,
-            final IdentifierConverter<Resource,FedoraResource> idTranslator) {
+            final IdentifierConverter<Resource,String> idTranslator) {
 
         LOGGER.debug("Adding additional HTTP context triples to stream");
         return new DefaultRdfStream(rdfStream.topic(), concat(rdfStream, getUriAwareTripleFactories().entrySet()

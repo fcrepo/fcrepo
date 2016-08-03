@@ -39,6 +39,7 @@ import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Value;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.nodetype.PropertyDefinition;
 
@@ -50,11 +51,6 @@ import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static com.google.common.collect.ImmutableSet.of;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIED;
-import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.FedoraTypes.LDP_INSERTED_CONTENT_RELATION;
-import static org.fcrepo.kernel.api.FedoraTypes.LDP_MEMBER_RESOURCE;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_MIXIN_TYPES;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_PRIMARY_TYPE;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_NODE;
@@ -65,6 +61,8 @@ import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIEDBY;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
 import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.isBinaryContentProperty;
+import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.isFrozen;
+import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.property2values;
 import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaceRegistry;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedPredicate.uncheck;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
@@ -123,7 +121,7 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
     /**
      * Predicate for determining whether this {@link FedoraResource} has a frozen node
      */
-    public static Predicate<FedoraResource> isFrozenNode = f -> f.hasType(FROZEN_NODE) ||
+    public static Predicate<FedoraResource> isFrozenResource = f -> f.hasType(FROZEN_NODE) ||
             f.getPath().contains(JCR_FROZEN_NODE);
 
     /**
@@ -329,7 +327,7 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
         if (resource instanceof FedoraResourceImpl) {
             return ((FedoraResourceImpl)resource).getNode();
         }
-        throw new IllegalArgumentException("FedoraResource is of the wrong type");
+        throw new IllegalArgumentException("FedoraResource is of the wrong type: " + resource.getClass().getName());
     }
 
     /**
@@ -425,4 +423,32 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
             throw new RepositoryRuntimeException(ex);
         }
     }
+
+    /**
+     * 
+     * @param type
+     * @return
+     */
+    public static Predicate<Node> typePredicate(final String type) {
+        if (type.equals(FEDORA_REPOSITORY_ROOT)) {
+            return UncheckedPredicate.uncheck((final Node node) -> node.isNodeType(ROOT));
+        } else {
+            return UncheckedPredicate.uncheck((final Node node) -> {
+                if (isFrozen.test(node) && node.hasProperty(FROZEN_MIXIN_TYPES)) {
+                    return property2values.apply(
+                            node.getProperty(FROZEN_MIXIN_TYPES)).map(UncheckedFunction.uncheck(Value::getString))
+                            .anyMatch(type::equals);
+                } else {
+                    return node.isNodeType(type);
+                }
+            });
+        }
+    }
+
+    /**
+     * Predicate to detect a frozen node when reckoning versions
+     */
+    public static Predicate<Node> isFrozenNode =
+        typePredicate(FROZEN_NODE)
+                .or(uncheck((final Node node) -> node.getPath().contains(JCR_FROZEN_NODE)));
 }

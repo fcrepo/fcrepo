@@ -49,7 +49,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import org.apache.commons.io.IOUtils;
 
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -80,7 +80,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
     @Inject
     ContainerService containerService;
 
-    private IdentifierConverter<Resource, FedoraResource> idTranslator;
+    private Converter<Resource, String> idTranslator;
 
     @Before
     public void setUp() throws RepositoryException {

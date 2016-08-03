@@ -20,8 +20,7 @@ package org.fcrepo.kernel.modeshape.rdf.impl;
 import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
-import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,6 +35,7 @@ import java.security.AccessControlException;
 import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDboolean;
 import static org.fcrepo.kernel.api.RdfLexicon.WRITABLE;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
+import static org.fcrepo.kernel.modeshape.utils.TestHelpers.mockResource;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -54,7 +54,7 @@ public class AclRdfContextTest {
     @Mock
     private Node mockNode;
 
-    private IdentifierConverter<Resource, FedoraResource> idTranslator;
+    private DefaultIdentifierTranslator idTranslator;
 
     @Mock
     private Session mockSession;
@@ -67,9 +67,9 @@ public class AclRdfContextTest {
         // read-only resource mocks
         when(resource.getNode()).thenReturn(mockNode);
         when(mockNode.getSession()).thenReturn(mockSession);
-        when(resource.getPath()).thenReturn(path);
+        mockResource(resource, path);
+        nodeSubject = ResourceFactory.createResource("info:fedora" + path);
         idTranslator = new DefaultIdentifierTranslator(mockSession);
-        nodeSubject = idTranslator.reverse().convert(resource);
     }
 
     @Test

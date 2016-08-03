@@ -36,11 +36,11 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
-import com.hp.hpl.jena.rdf.model.Resource;
-import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.api.utils.FixityResult;
 import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.api.functions.Converter;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.utils.FixityResult;
 
 /**
  * An {@link org.fcrepo.kernel.api.RdfStream} containing information about the fixity of a
@@ -61,7 +61,7 @@ public class FixityRdfContext extends NodeRdfContext {
      * @param size the size
      */
     public FixityRdfContext(final FedoraResource resource,
-                            final IdentifierConverter<Resource, FedoraResource> idTranslator,
+                            final Converter<Resource, String> idTranslator,
                             final Iterable<FixityResult> blobs,
                             final URI digest,
                             final long size) {

@@ -37,4 +37,18 @@ public interface Converter<A, B> extends InvertibleFunction<A, B>, DomainRestric
 
     @Override
     Converter<B, A> inverse();
+
+    /**
+     * @param <C> the range type of the subsequent function
+     * @param after a converter to which this converter provides the domain
+     * @return a composite function
+     */
+    <C> Converter<A, C> andThen(Converter<B, C> after);
+    /**
+     * 
+     * @param <C> the domain type of the previous function
+     * @param before a converter for which the range is this converter's domain
+     * @return a composite function
+     */
+    <C> Converter<C, B> compose(Converter<C, A> before);
 }

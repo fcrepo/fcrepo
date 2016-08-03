@@ -26,12 +26,16 @@ import java.util.function.Supplier;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.UriInfo;
 
+import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.NodeService;
+import org.fcrepo.kernel.modeshape.identifiers.IdentifierConverter;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.modeshape.jcr.api.NamespaceRegistry;
+
+import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
  * <p>AbstractResourceTest class.</p>
@@ -60,7 +64,20 @@ public class AbstractResourceTest {
     @Before
     public void setUp() {
         initMocks(this);
-        testObj = new AbstractResource() {/**/};
+        testObj = new AbstractResource() {
+
+            @Override
+            protected IdentifierConverter<Resource, String> translator() {
+                // TODO Auto-generated method stub
+                return null;
+            }
+
+            @Override
+            protected IdentifierConverter<Resource, FedoraResource> graphToResource() {
+                // TODO Auto-generated method stub
+                return null;
+            }
+        };
     }
 
     @Test

@@ -22,10 +22,10 @@ import static com.hp.hpl.jena.graph.Triple.create;
 import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBES;
 import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBED_BY;
 
+import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -43,7 +43,7 @@ public class ContentRdfContext extends NodeRdfContext {
      * @param idTranslator the idTranslator
      */
     public ContentRdfContext(final FedoraResource resource,
-                             final IdentifierConverter<Resource, FedoraResource> idTranslator) {
+                             final Converter<Resource, String> idTranslator) {
         super(resource, idTranslator);
 
         // if there's an accessible jcr:content node, include information about it

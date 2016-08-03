@@ -45,6 +45,7 @@ import static javax.jcr.PropertyType.BINARY;
 import static javax.jcr.PropertyType.REFERENCE;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_SKOLEM;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
+import static org.fcrepo.kernel.modeshape.utils.TestHelpers.mockResource;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -114,7 +115,7 @@ public class SkolemNodeRdfContextTest {
     public void setUp() throws RepositoryException {
         initMocks(this);
         when(mockResource.getNode()).thenReturn(mockNode);
-        when(mockResource.getPath()).thenReturn("/x");
+        mockResource(mockResource, "/x");
 
         when(mockNode.getSession()).thenReturn(mockSession);
         when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[]{});

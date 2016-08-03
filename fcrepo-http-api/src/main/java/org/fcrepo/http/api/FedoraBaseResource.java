@@ -22,14 +22,18 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.annotations.VisibleForTesting;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.rdf.model.Resource;
+
 import org.apache.commons.lang3.StringUtils;
+
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.kernel.api.exception.SessionMissingException;
 import org.fcrepo.kernel.api.exception.TombstoneException;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.Tombstone;
+import org.fcrepo.kernel.modeshape.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.modeshape.identifiers.InternalPathToNodeConverter;
+
 import org.slf4j.Logger;
 
 import javax.inject.Inject;
@@ -53,15 +57,28 @@ abstract public class FedoraBaseResource extends AbstractResource {
     @Inject
     protected Session session;
 
-    protected IdentifierConverter<Resource, FedoraResource> idTranslator;
+    protected IdentifierConverter<Resource, FedoraResource> graphToResource;
 
-    protected IdentifierConverter<Resource, FedoraResource> translator() {
+
+    @Override
+    protected IdentifierConverter<Resource, String> translator() {
         if (idTranslator == null) {
-            idTranslator = new HttpResourceConverter(session(),
-                    uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class));
+            idTranslator =
+                    new HttpResourceConverter(session(), uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class));
         }
 
         return idTranslator;
+    }
+
+    @Override
+    protected IdentifierConverter<Resource, FedoraResource> graphToResource() {
+        if (graphToResource == null) {
+            graphToResource = translator()
+                    .andThen(new InternalPathToNodeConverter(session()))
+                    .andThen(org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter);
+        }
+
+        return graphToResource;
     }
 
     /**
@@ -71,7 +88,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
      * @return the Jena node
      */
     protected Node asNode(final FedoraResource resource) {
-        return translator().reverse().convert(resource).asNode();
+        return resource.graphResource(translator()).asNode();
     }
 
     /**
@@ -82,8 +99,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
     @VisibleForTesting
     public FedoraResource getResourceFromPath(final String externalPath) {
         final Resource resource = translator().toDomain(externalPath);
-        final FedoraResource fedoraResource = translator().convert(resource);
-
+        final FedoraResource fedoraResource = graphToResource().apply(resource);
         if (fedoraResource instanceof Tombstone) {
             throw new TombstoneException(fedoraResource, resource.getURI() + "/fcr:tombstone");
         }

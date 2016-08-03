@@ -24,9 +24,10 @@ import static org.slf4j.LoggerFactory.getLogger;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.functions.Converter;
+
 import org.slf4j.Logger;
 
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -51,7 +52,7 @@ public class RdfRemover extends PersistingRdfStreamConsumer {
      * @param session the session
      * @param stream the stream
      */
-    public RdfRemover(final IdentifierConverter<Resource, FedoraResource> idTranslator, final Session session,
+    public RdfRemover(final Converter<Resource, String> idTranslator, final Session session,
         final RdfStream stream) {
         super(idTranslator, session, stream);
     }

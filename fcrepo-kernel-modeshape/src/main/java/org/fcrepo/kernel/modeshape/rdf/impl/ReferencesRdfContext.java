@@ -29,7 +29,7 @@ import static javax.jcr.PropertyType.WEAKREFERENCE;
 
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.modeshape.rdf.impl.mappings.PropertyToTriple;
 import org.fcrepo.kernel.modeshape.rdf.impl.mappings.PropertyValueIterator;
@@ -64,7 +64,7 @@ public class ReferencesRdfContext extends NodeRdfContext {
      */
 
     public ReferencesRdfContext(final FedoraResource resource,
-                                final IdentifierConverter<Resource, FedoraResource> idTranslator)
+                                final Converter<Resource, String> idTranslator)
         throws RepositoryException {
         super(resource, idTranslator);
         property2triple = new PropertyToTriple(getJcrNode(resource).getSession(), idTranslator);
@@ -88,7 +88,7 @@ public class ReferencesRdfContext extends NodeRdfContext {
                     return values;
                 }))
                 .flatMap(uncheck((final Value x) -> {
-                    return new LdpContainerRdfContext(nodeConverter.convert(nodeForValue(node.getSession(), x)),
+                    return new LdpContainerRdfContext(nodeConverter.apply(nodeForValue(node.getSession(), x)),
                         translator());
                 }))
                 .filter(INBOUND));

@@ -18,8 +18,9 @@
 package org.fcrepo.kernel.api.models;
 
 import com.hp.hpl.jena.rdf.model.Resource;
+
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 
@@ -79,7 +80,7 @@ public interface FedoraBinary extends FedoraResource {
      * @param idTranslator the id translator
      * @return the fixity of this datastream compared to metadata stored in the repository
      */
-    RdfStream getFixity(IdentifierConverter<Resource, FedoraResource> idTranslator);
+    RdfStream getFixity(Converter<Resource, String> idTranslator);
 
     /**
      * Get the fixity of this datastream in a given repository's binary store.
@@ -88,6 +89,6 @@ public interface FedoraBinary extends FedoraResource {
      * @param size the expected size of the binary
      * @return the fixity of the datastream
      */
-    RdfStream getFixity(IdentifierConverter<Resource, FedoraResource> idTranslator,
+    RdfStream getFixity(Converter<Resource, String> idTranslator,
                         URI contentDigest, long size);
 }

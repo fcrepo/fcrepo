@@ -22,12 +22,13 @@ import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.UNDEFINED;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.apache.commons.lang3.StringUtils.replaceOnce;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_SKOLEM;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_PAIRTREE;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
-import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeToResource;
 import static org.fcrepo.kernel.modeshape.rdf.converters.PropertyConverter.getPropertyNameFromPredicate;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getClosestExistingAncestor;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
@@ -60,9 +61,11 @@ import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.api.services.functions.HierarchicalIdentifierSupplier;
 import org.fcrepo.kernel.api.services.functions.UniqueValueSupplier;
+import org.fcrepo.kernel.modeshape.identifiers.InternalPathToNodeConverter;
+import org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter;
 import org.fcrepo.kernel.modeshape.rdf.converters.ValueConverter;
 import org.fcrepo.kernel.modeshape.utils.NodePropertiesTools;
 
@@ -98,7 +101,8 @@ public class JcrRdfTools {
     public static BiMap<String, String> rdfNamespacesToJcrNamespaces =
         jcrNamespacesToRDFNamespaces.inverse();
 
-    private final IdentifierConverter<Resource, FedoraResource> idTranslator;
+    private final Converter<Resource, String> idTranslator;
+    private final Converter<Resource, FedoraResource> idToResource;
     private final ValueConverter valueConverter;
 
     private final Session session;
@@ -119,9 +123,12 @@ public class JcrRdfTools {
      * @param idTranslator the id translator
      * @param session the session
      */
-    public JcrRdfTools(final IdentifierConverter<Resource, FedoraResource> idTranslator,
+    public JcrRdfTools(final Converter<Resource, String> idTranslator,
                        final Session session) {
         this.idTranslator = idTranslator;
+        this.idToResource = idTranslator
+                .andThen(new InternalPathToNodeConverter(session))
+                .andThen(NodeResourceConverter.nodeConverter);
         this.session = session;
         this.valueConverter = new ValueConverter(session, idTranslator);
         this.skolemizedBnodeMap = new HashMap<>();
@@ -186,7 +193,7 @@ public class JcrRdfTools {
 
 
         if (type == UNDEFINED || type == STRING) {
-            return valueConverter.reverse().convert(data);
+            return valueConverter.inverse().apply(data);
         } else if (type == REFERENCE || type == WEAKREFERENCE) {
             // reference to another node (by path)
             if (!data.isURIResource()) {
@@ -194,7 +201,8 @@ public class JcrRdfTools {
             }
 
             try {
-                final Node nodeFromGraphSubject = getJcrNode(idTranslator.convert(data.asResource()));
+                final Node nodeFromGraphSubject =
+                        idTranslator.andThen(new InternalPathToNodeConverter(session)).apply(data.asResource());
                 return valueFactory.createValue(nodeFromGraphSubject, type == WEAKREFERENCE);
             } catch (final RepositoryRuntimeException e) {
                 throw new MalformedRdfException("Unable to find referenced node", e);
@@ -336,7 +344,7 @@ public class JcrRdfTools {
         if (objectNode.isURIResource()
                 && idTranslator.inDomain(objectNode.asResource())
                 && !isReferenceProperty(node, propertyName)) {
-            nodePropertiesTools.removeReferencePlaceholders(idTranslator,
+            nodePropertiesTools.removeReferencePlaceholders(idToResource,
                     node,
                     propertyName,
                     objectNode.asResource());
@@ -350,12 +358,11 @@ public class JcrRdfTools {
      * Convert an external statement into a persistable statement by skolemizing
      * blank nodes, creating hash-uri subjects, etc
      *
-     * @param idTranslator the property of idTranslator
      * @param t the statement
      * @return the persistable statement
      * @throws RepositoryException if repository exception occurred
      */
-    public Statement skolemize(final IdentifierConverter<Resource, FedoraResource> idTranslator, final Statement t)
+    public Statement skolemize(final Statement t)
             throws RepositoryException {
 
         Statement skolemized = t;
@@ -380,9 +387,19 @@ public class JcrRdfTools {
         return skolemized;
     }
 
-    private void findOrCreateHashUri(final IdentifierConverter<Resource, FedoraResource> idTranslator,
+    /**
+     * 
+     * @return
+     */
+    public Converter<Resource, FedoraResource> resourceTranslator() {
+        return this.idToResource;
+    }
+
+    private void findOrCreateHashUri(final Converter<Resource, String> idTranslator,
                                      final Resource s) throws RepositoryException {
-        final String absPath = idTranslator.asString(s);
+        //TODO this conversion of path is very fragile (versions, etc)
+        final String absPath =
+                replaceOnce(replaceOnce(idTranslator.apply(s),"/fcr:metadata", EMPTY), "/fcr:tombstone", EMPTY);
 
         if (!absPath.isEmpty() && !session.nodeExists(absPath)) {
             final Node closestExistingAncestor = getClosestExistingAncestor(session, absPath);
@@ -408,7 +425,7 @@ public class JcrRdfTools {
         }
     }
 
-    private Resource getSkolemizedResource(final IdentifierConverter<Resource, FedoraResource> idTranslator,
+    private Resource getSkolemizedResource(final Converter<Resource, String> idTranslator,
                                            final RDFNode resource) throws RepositoryException {
         final AnonId id = resource.asResource().getId();
 
@@ -425,7 +442,9 @@ public class JcrRdfTools {
                         orCreateNode);
             }
 
-            final Resource skolemizedSubject = nodeToResource(idTranslator).convert(orCreateNode);
+            final Resource skolemizedSubject =
+                    idTranslator.andThen(new InternalPathToNodeConverter(session))
+                    .toDomain(orCreateNode);
             skolemizedBnodeMap.put(id, skolemizedSubject);
         }
 

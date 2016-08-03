@@ -1,9 +1,11 @@
 /*
- * Copyright 2015 DuraSpace, Inc.
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -13,7 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.identifiers;
+package org.fcrepo.kernel.modeshape.identifiers;
+
+import org.fcrepo.kernel.api.functions.CompositeConverter;
+import org.fcrepo.kernel.api.functions.Converter;
+
 
 
 /**
@@ -57,6 +63,16 @@ public class InverseIdentifierConverter<A,B> extends IdentifierConverter<A,B> {
     @Override
     public String asString(final A resource) {
         return apply(resource).toString();
+    }
+
+    @Override
+    public <C> Converter<A, C> andThen(final Converter<B, C> after) {
+        return new CompositeConverter<>(this, after);
+    }
+
+    @Override
+    public <C> Converter<C, B> compose(final Converter<C, A> before) {
+        return new CompositeConverter<>(before, this);
     }
 
 }

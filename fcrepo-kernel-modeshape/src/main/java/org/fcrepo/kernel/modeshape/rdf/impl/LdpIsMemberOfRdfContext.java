@@ -20,8 +20,8 @@ package org.fcrepo.kernel.modeshape.rdf.impl;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.modeshape.rdf.converters.ValueConverter;
 import org.fcrepo.kernel.modeshape.rdf.impl.mappings.PropertyValueIterator;
 
@@ -62,7 +62,7 @@ public class LdpIsMemberOfRdfContext extends NodeRdfContext {
      * @throws javax.jcr.RepositoryException if repository exception
      */
     public LdpIsMemberOfRdfContext(final FedoraResource resource,
-                                   final IdentifierConverter<Resource, FedoraResource> idTranslator)
+                                   final Converter<Resource, String> idTranslator)
             throws RepositoryException {
         super(resource, idTranslator);
 
@@ -108,7 +108,7 @@ public class LdpIsMemberOfRdfContext extends NodeRdfContext {
             if (resource().hasProperty(insertedContentProperty)) {
                 return iteratorToStream(new PropertyValueIterator(
                             getJcrNode(resource()).getProperty(insertedContentProperty)))
-                        .map(valueConverter::convert)
+                        .map(valueConverter::apply)
                         .filter(n -> n.isURIResource())
                         .filter(n -> translator().inDomain(n.asResource()))
                         .map(s -> create(s.asNode(), memberRelation.asNode(), membershipResource));
@@ -130,7 +130,7 @@ public class LdpIsMemberOfRdfContext extends NodeRdfContext {
             final Property memberResource = getJcrNode(parent).getProperty(LDP_MEMBER_RESOURCE);
 
             if (REFERENCE_TYPES.contains(memberResource.getType())) {
-                membershipResource = nodeConverter().convert(memberResource.getNode()).asNode();
+                membershipResource = nodeConverter().apply(memberResource.getNode()).asNode();
             } else {
                 membershipResource = createURI(memberResource.getString());
             }

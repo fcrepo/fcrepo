@@ -137,6 +137,8 @@ public class FedoraNodesTest {
         setField(testObj, "nodeService", mockNodes);
         setField(testObj, "versionService", mockVersions);
         this.mockUriInfo = getUriInfoImpl();
+        final UriBuilder mockBuilder = UriBuilder.fromUri("http://localhost/fcrepo/{path: .*}");
+        when(mockUriInfo.getBaseUriBuilder()).thenReturn(mockBuilder);
         setField(testObj, "pidMinter", mockPidMinter);
         setField(testObj, "containerService", mockObjects);
         mockSession = mockSession(testObj);
@@ -155,7 +157,7 @@ public class FedoraNodesTest {
         when(mockSession.getNode(path)).thenReturn(mockNode);
 
         setField(testObj, "idTranslator",
-                new HttpResourceConverter(mockSession, UriBuilder.fromUri("http://localhost/fcrepo/{path: .*}")));
+                new HttpResourceConverter(mockSession, mockBuilder));
     }
 
     @Test

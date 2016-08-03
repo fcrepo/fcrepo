@@ -45,11 +45,13 @@ import org.fcrepo.http.commons.domain.COPY;
 import org.fcrepo.http.commons.domain.MOVE;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
+import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
 /**
@@ -108,9 +110,11 @@ public class FedoraNodes extends ContentExposingResource {
             throws URISyntaxException {
 
         try {
-            final String source = translator().asString(translator().toDomain(externalPath));
+            //TODO this is a map of external paths to internal paths; it will break for
+            // suffixed paths or version paths
+            final String jcrPath = translator().apply(translator().toDomain(externalPath));
 
-            if (!nodeService.exists(session, source)) {
+            if (!nodeService.exists(session, jcrPath)) {
                 throw new ClientErrorException("The source path does not exist", CONFLICT);
             }
 
@@ -122,8 +126,8 @@ public class FedoraNodes extends ContentExposingResource {
                 throw new ClientErrorException("Destination resource already exists", PRECONDITION_FAILED);
             }
 
-            LOGGER.info("Copy from '{}' to '{}'", source, destination);
-            nodeService.copyObject(session, source, destination);
+            LOGGER.info("Copy from '{}' to '{}'", jcrPath, destination);
+            nodeService.copyObject(session, jcrPath, destination);
 
             session.save();
 
@@ -161,7 +165,7 @@ public class FedoraNodes extends ContentExposingResource {
 
         try {
 
-            final String source = toPath(translator(), externalPath);
+            final String source = toInternalPath(translator(), externalPath);
 
             if (!nodeService.exists(session, source)) {
                 throw new ClientErrorException("The source path does not exist", CONFLICT);
@@ -170,18 +174,23 @@ public class FedoraNodes extends ContentExposingResource {
 
             evaluateRequestPreconditions(request, servletResponse, resource(), session);
 
-            final String destination = translator().asString(ResourceFactory.createResource(destinationUri));
+            final Resource destResource = ResourceFactory.createResource(destinationUri);
+            String destination = translator().apply(destResource);
 
             if (destination == null) {
                 throw new ServerErrorException("Destination was not a valid resource path", BAD_GATEWAY);
-            } else if (nodeService.exists(session, destination)) {
+            }
+
+            destination = toInternalPath(translator(), destination);
+
+            if (nodeService.exists(session, destination)) {
                 throw new ClientErrorException("Destination resource already exists", PRECONDITION_FAILED);
             }
 
             LOGGER.info("Move from '{}' to '{}'", source, destination);
             nodeService.moveObject(session, source, destination);
             session.save();
-            return created(new URI(destinationUri)).build();
+            return created(new URI(translator().toDomain(destinationUri).getURI())).build();
         } catch (final RepositoryRuntimeException e) {
             final Throwable cause = e.getCause();
 

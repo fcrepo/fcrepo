@@ -36,10 +36,13 @@ import javax.ws.rs.core.Response;
 
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.http.commons.AbstractResource;
+import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.RepositoryService;
+import org.fcrepo.kernel.modeshape.identifiers.IdentifierConverter;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
+import com.hp.hpl.jena.rdf.model.Resource;
 /**
  * Restore a backup of the repository
  *
@@ -97,5 +100,17 @@ public class FedoraRepositoryRestore extends AbstractResource {
         }
         return noContent().build();
 
+    }
+
+    @Override
+    protected IdentifierConverter<Resource, String> translator() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    protected IdentifierConverter<Resource, FedoraResource> graphToResource() {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

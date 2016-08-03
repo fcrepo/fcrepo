@@ -19,8 +19,10 @@ package org.fcrepo.kernel.modeshape.utils;
 
 import java.util.function.Predicate;
 
+import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 
 /**
@@ -36,6 +38,8 @@ public interface UncheckedPredicate<T> extends Predicate<T> {
     default boolean test(final T elem) {
         try {
             return testThrows(elem);
+        } catch (final PathNotFoundException e) {
+            throw new PathNotFoundRuntimeException(e);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }

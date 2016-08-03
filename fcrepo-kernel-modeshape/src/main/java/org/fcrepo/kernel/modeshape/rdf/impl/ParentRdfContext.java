@@ -18,8 +18,8 @@
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
 import com.hp.hpl.jena.rdf.model.Resource;
+import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.slf4j.Logger;
 
 import javax.jcr.RepositoryException;
@@ -48,7 +48,7 @@ public class ParentRdfContext extends NodeRdfContext {
      * @throws javax.jcr.RepositoryException if repository exception occurred
      */
     public ParentRdfContext(final FedoraResource resource,
-                            final IdentifierConverter<Resource, FedoraResource> idTranslator)
+                            final Converter<Resource, String> idTranslator)
             throws RepositoryException {
         super(resource, idTranslator);
 

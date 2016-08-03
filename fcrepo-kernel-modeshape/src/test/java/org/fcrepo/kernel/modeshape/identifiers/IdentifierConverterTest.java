@@ -1,9 +1,11 @@
 /*
- * Copyright 2015 DuraSpace, Inc.
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -13,12 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api;
+package org.fcrepo.kernel.modeshape.identifiers;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.functions.Converter;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
@@ -80,6 +82,16 @@ public class IdentifierConverterTest {
             return this;
         }
 
+        @Override
+        public <C> Converter<String, C> andThen(final Converter<String, C> after) {
+            return null;
+        }
+
+        @Override
+        public <C> Converter<C, String> compose(final Converter<C, String> before) {
+            return null;
+        }
+
     }
     static class ToCharArray extends IdentifierConverter<String, char[]> {
 
@@ -104,6 +116,16 @@ public class IdentifierConverterTest {
             } else {
                 return a.toCharArray();
             }
+        }
+
+        @Override
+        public <C> Converter<String, C> andThen(final Converter<char[], C> after) {
+            return null;
+        }
+
+        @Override
+        public <C> Converter<C, char[]> compose(final Converter<C, String> before) {
+            return null;
         }
     }
 }

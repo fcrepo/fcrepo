@@ -20,20 +20,22 @@ package org.fcrepo.kernel.modeshape.rdf.impl;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 
-import com.google.common.base.Converter;
 import com.google.common.collect.Lists;
 
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.functions.CompositeConverter;
+import org.fcrepo.kernel.api.functions.Converter;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.modeshape.identifiers.HashConverter;
+import org.fcrepo.kernel.modeshape.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.modeshape.identifiers.NamespaceConverter;
 import org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter;
+import org.fcrepo.kernel.modeshape.identifiers.PathToNodeConverter;
 
-import javax.jcr.RepositoryException;
+import javax.jcr.Node;
 import javax.jcr.Session;
 
 import java.util.List;
@@ -48,7 +50,7 @@ import java.util.List;
  * @author escowles
  * @since 2015-04-24
  */
-public class PrefixingIdentifierTranslator extends IdentifierConverter<Resource, FedoraResource> {
+public class PrefixingIdentifierTranslator extends IdentifierConverter<Resource, String> {
 
 
     private static final NodeResourceConverter nodeResourceConverter = new NodeResourceConverter();
@@ -83,7 +85,7 @@ public class PrefixingIdentifierTranslator extends IdentifierConverter<Resource,
             forward = forward.andThen(t);
         }
         for (final Converter<String, String> t : Lists.reverse(minimalTranslationChain)) {
-            reverse = reverse.andThen(t.reverse());
+            reverse = reverse.andThen(t.inverse());
         }
     }
 
@@ -95,23 +97,12 @@ public class PrefixingIdentifierTranslator extends IdentifierConverter<Resource,
             );
 
     @Override
-    protected FedoraResource doForward(final Resource subject) {
-        try {
-            if (!inDomain(subject)) {
-                throw new RepositoryRuntimeException("Subject " + subject + " is not in this repository");
-            }
-
-            return nodeResourceConverter.convert(session.getNode(asString(subject)));
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
+    public String apply(final Resource subject) {
+        if (!inDomain(subject)) {
+            throw new RepositoryRuntimeException("Subject " + subject + " is not in this repository");
         }
-    }
 
-    @Override
-    protected Resource doBackward(final FedoraResource resource) {
-        final String absPath = resource.getPath();
-
-        return toDomain(absPath);
+        return asString(subject);
     }
 
     @Override
@@ -128,7 +119,7 @@ public class PrefixingIdentifierTranslator extends IdentifierConverter<Resource,
         } else {
             relativePath = absPath;
         }
-        return createResource(resourceNamespace + reverse.convert(relativePath));
+        return createResource(resourceNamespace + reverse.apply(relativePath));
     }
 
     @Override
@@ -139,7 +130,7 @@ public class PrefixingIdentifierTranslator extends IdentifierConverter<Resource,
 
         final String path = subject.getURI().substring(resourceNamespace.length() - 1);
 
-        final String absPath = forward.convert(path);
+        final String absPath = forward.apply(path);
 
         if (absPath.isEmpty()) {
             return "/";
@@ -147,4 +138,29 @@ public class PrefixingIdentifierTranslator extends IdentifierConverter<Resource,
         return absPath;
     }
 
+    @Override
+    public <C> Converter<Resource, C> andThen(final Converter<String, C> after) {
+        return new CompositeConverter<>(this, after);
+    }
+
+    @Override
+    public <C> Converter<C, String> compose(final Converter<C, Resource> before) {
+        return new CompositeConverter<>(before, this);
+    }
+
+    /**
+     * Convenience factory method
+     * @return
+     */
+    public Converter<Resource, Node> toNodes() {
+        return this.andThen(new PathToNodeConverter(session));
+    }
+
+    /**
+     * Convenience factory method
+     * @return
+     */
+    public Converter<Resource, FedoraResource> toResources() {
+        return toNodes().andThen(nodeResourceConverter);
+    }
 }

@@ -20,7 +20,6 @@ package org.fcrepo.kernel.modeshape.rdf.impl;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIED;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
 import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.fixDatesIfNecessary;
-import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeToResource;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalProperty;
 import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
@@ -32,8 +31,7 @@ import java.util.stream.Stream;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
-import com.google.common.base.Converter;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.modeshape.rdf.impl.mappings.PropertyToTriple;
 
@@ -61,11 +59,11 @@ public class PropertiesRdfContext extends NodeRdfContext {
      */
 
     public PropertiesRdfContext(final FedoraResource resource,
-                                final IdentifierConverter<Resource, FedoraResource> idTranslator)
+                                final Converter<Resource, String> idTranslator)
         throws RepositoryException {
         super(resource, idTranslator);
-        concat(triplesFromProperties(resource, nodeToResource(translator()),
-                new PropertyToTriple(getJcrNode(resource).getSession(), translator())));
+        concat(triplesFromProperties(resource, nodeConverter(),
+                new PropertyToTriple(getJcrNode(resource).getSession(), idTranslator)));
     }
 
     @SuppressWarnings("unchecked")

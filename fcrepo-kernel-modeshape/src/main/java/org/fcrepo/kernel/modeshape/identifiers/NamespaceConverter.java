@@ -42,7 +42,7 @@ public class NamespaceConverter extends InternalIdentifierConverter {
      * java.lang.String)
      */
     @Override
-    protected String doForward(final String inputId) {
+    public String apply(final String inputId) {
         LOGGER.trace("Converting identifier {} from internal to external...", inputId);
         String result = inputId;
         for (final String jcrNamespace : jcrNamespacesToRDFNamespaces.keySet()) {
@@ -54,6 +54,11 @@ public class NamespaceConverter extends InternalIdentifierConverter {
         return result;
     }
 
+    @Override
+    public boolean inDomain(final String inputId) {
+        return inputId != null;
+    }
+
     /*
      * (non-Javadoc)
      * @see
@@ -61,7 +66,7 @@ public class NamespaceConverter extends InternalIdentifierConverter {
      * (java.lang.String)
      */
     @Override
-    protected String doBackward(final String b) {
+    public String toDomain(final String b) {
         LOGGER.trace("Converting identifier from external to internal...");
         String result = b;
         for (final String rdfNamespace : rdfNamespacesToJcrNamespaces.keySet()) {

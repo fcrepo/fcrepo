@@ -67,6 +67,8 @@ public interface FedoraTypes {
 
     String FCR_METADATA = "fcr:metadata";
 
+    String FCR_TOMBSTONE = "fcr:tombstone";
+
     String FCR_VERSIONS = "fcr:versions";
 
     String LDP_HAS_MEMBER_RELATION = "ldp:hasMemberRelation";

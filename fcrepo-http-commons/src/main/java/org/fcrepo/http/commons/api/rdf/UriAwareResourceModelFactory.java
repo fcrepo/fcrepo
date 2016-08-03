@@ -20,8 +20,9 @@ package org.fcrepo.http.commons.api.rdf;
 import javax.ws.rs.core.UriInfo;
 
 import com.hp.hpl.jena.rdf.model.Resource;
+
+import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 
 import com.hp.hpl.jena.rdf.model.Model;
 
@@ -44,5 +45,5 @@ public interface UriAwareResourceModelFactory {
      * @return model containing triples for the given resource
      */
     Model createModelForResource(final FedoraResource resource,
-            final UriInfo uriInfo, final IdentifierConverter<Resource,FedoraResource> idTranslator);
+            final UriInfo uriInfo, final Converter<Resource,String> idTranslator);
 }

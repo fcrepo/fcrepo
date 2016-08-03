@@ -17,27 +17,36 @@
  */
 package org.fcrepo.kernel.api.functions;
 
-import java.util.function.Function;
 
 /**
- * @author acoburn
- * @author ajs6f
- * @since 7/3/16
- * @param <A> the type from which we are translating
- * @param <B> the type to which we are translating
+ * Simple inverse function that wraps an InvertibleFunction implementation
+ * Assumes a bijective function.
+ * @author barmintor
+ *
  */
-public interface InvertibleFunction<A, B> extends Function<A, B> {
+public class InverseFunctionWrapper<A, B> implements InvertibleFunction<A, B> {
 
+    private final InvertibleFunction<B, A> original;
     /**
-     * The inverse of the defined function
-     * @return the inverse of the defined function.
+     * 
+     * @param original
      */
-    InvertibleFunction<B, A> inverse();
+    public InverseFunctionWrapper(final InvertibleFunction<B, A> original) {
+        this.original = original;
+    }
 
-    /**
-     * Reverse the function.
-     * @param rangeValue the candidate value for which a domain value should be calculated
-     * @return a domain value or null
-     */
-    A toDomain(B rangeValue);
+    @Override
+    public B apply(final A t) {
+        return original.toDomain(t);
+    }
+
+    @Override
+    public InvertibleFunction<B, A> inverse() {
+        return original;
+    }
+
+    @Override
+    public A toDomain(final B rangeValue) {
+        return original.apply(rangeValue);
+    }
 }

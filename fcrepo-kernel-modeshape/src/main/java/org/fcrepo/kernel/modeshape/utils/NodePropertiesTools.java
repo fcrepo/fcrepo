@@ -44,7 +44,9 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.exception.IdentifierConversionException;
 import org.fcrepo.kernel.api.exception.NoSuchPropertyDefinitionException;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.functions.Converter;
+import org.fcrepo.kernel.modeshape.identifiers.InternalPathToNodeConverter;
+
 import org.slf4j.Logger;
 
 /**
@@ -135,13 +137,14 @@ public class NodePropertiesTools {
      * @param resource the resource
      * @throws RepositoryException if repository exception occurred
      */
-    public void addReferencePlaceholders(final IdentifierConverter<Resource,FedoraResource> idTranslator,
+    public void addReferencePlaceholders(final Converter<Resource,String> idTranslator,
                                           final Node node,
                                           final String propertyName,
                                           final Resource resource) throws RepositoryException {
 
         try {
-            final Node refNode = getJcrNode(idTranslator.convert(resource));
+            final Node refNode =
+                    idTranslator.andThen(new InternalPathToNodeConverter(node.getSession())).apply(resource);
 
             if (isExternalNode.test(refNode)) {
                 // we can't apply REFERENCE properties to external resources
@@ -176,14 +179,14 @@ public class NodePropertiesTools {
      * @param resource the resource
      * @throws RepositoryException if repository exception occurred
      */
-    public void removeReferencePlaceholders(final IdentifierConverter<Resource,FedoraResource> idTranslator,
+    public void removeReferencePlaceholders(final Converter<Resource,FedoraResource> idTranslator,
                                              final Node node,
                                              final String propertyName,
                                              final Resource resource) throws RepositoryException {
 
         final String referencePropertyName = getReferencePropertyName(propertyName);
 
-        final Node refNode = getJcrNode(idTranslator.convert(resource));
+        final Node refNode = getJcrNode(idTranslator.apply(resource));
         final Value v = node.getSession().getValueFactory().createValue(refNode, true);
         removeNodeProperty(node, referencePropertyName, v);
     }

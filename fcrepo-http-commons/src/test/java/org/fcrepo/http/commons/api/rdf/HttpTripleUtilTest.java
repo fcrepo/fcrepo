@@ -24,15 +24,16 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
 import java.util.Map;
 
 import javax.ws.rs.core.UriInfo;
 
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
+import org.fcrepo.kernel.modeshape.identifiers.IdentifierConverter;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -57,7 +58,7 @@ public class HttpTripleUtilTest {
     private UriInfo mockUriInfo;
 
     @Mock
-    private IdentifierConverter<Resource,FedoraResource> mockSubjects;
+    private IdentifierConverter<Resource,String> mockSubjects;
 
     @Mock
     private UriAwareResourceModelFactory mockBean1;

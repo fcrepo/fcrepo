@@ -188,7 +188,7 @@ public class FedoraLdp extends ContentExposingResource {
     @Timed
     public Response options() {
         LOGGER.info("OPTIONS for '{}'", externalPath);
-        addLinkAndOptionsHttpHeaders();
+        addLinkAndOptionsHttpHeaders(resource());
         return ok().build();
     }
 
@@ -339,7 +339,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         final FedoraResource resource;
 
-        final String path = toPath(translator(), externalPath);
+        final String path = toInternalPath(translator(), externalPath);
 
         // TODO: Add final when deprecated checksum Query paramater is removed
         // https://jira.duraspace.org/browse/FCREPO-1851
@@ -588,7 +588,6 @@ public class FedoraLdp extends ContentExposingResource {
      * @return 204 No Content (for updated resources), 201 Created (for created resources) including the resource
      *    URI or content depending on Prefer headers.
      */
-    @SuppressWarnings("resource")
     private Response createUpdateResponse(final FedoraResource resource, final boolean created) {
         addCacheControlHeaders(servletResponse, resource, session);
         addResourceLinkHeaders(resource, created);
@@ -642,9 +641,8 @@ public class FedoraLdp extends ContentExposingResource {
         super.addResourceHttpHeaders(resource);
 
         if (getCurrentTransactionId(session) != null) {
-            final String canonical = translator().reverse()
-                    .convert(resource)
-                    .toString()
+            final String canonical = resource.graphResource(translator())
+                    .getURI()
                     .replaceFirst("/tx:[^/]+", "");
 
 
@@ -652,7 +650,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         }
 
-        addLinkAndOptionsHttpHeaders();
+        addLinkAndOptionsHttpHeaders(resource);
     }
 
     @Override
@@ -660,21 +658,21 @@ public class FedoraLdp extends ContentExposingResource {
         return externalPath;
     }
 
-    private void addLinkAndOptionsHttpHeaders() {
+    private void addLinkAndOptionsHttpHeaders(final FedoraResource resource) {
         // Add Link headers
-        addResourceLinkHeaders(resource());
+        addResourceLinkHeaders(resource);
 
         // Add Options headers
         final String options;
 
-        if (resource() instanceof FedoraBinary) {
+        if (resource instanceof FedoraBinary) {
             options = "DELETE,HEAD,GET,PUT,OPTIONS";
 
-        } else if (resource() instanceof NonRdfSourceDescription) {
+        } else if (resource instanceof NonRdfSourceDescription) {
             options = "MOVE,COPY,DELETE,POST,HEAD,GET,PUT,PATCH,OPTIONS";
             servletResponse.addHeader("Accept-Patch", contentTypeSPARQLUpdate);
 
-        } else if (resource() instanceof Container) {
+        } else if (resource instanceof Container) {
             options = "MOVE,COPY,DELETE,POST,HEAD,GET,PUT,PATCH,OPTIONS";
             servletResponse.addHeader("Accept-Patch", contentTypeSPARQLUpdate);
 

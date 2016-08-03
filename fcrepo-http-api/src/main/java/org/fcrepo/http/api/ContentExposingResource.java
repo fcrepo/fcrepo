@@ -359,7 +359,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     protected URI getUri(final FedoraResource resource) {
         try {
-            final String uri = translator().reverse().convert(resource).getURI();
+            final String uri = resource.graphResource(translator()).getURI();
             return new URI(uri);
         } catch (final URISyntaxException e) {
             throw new BadRequestException(e);

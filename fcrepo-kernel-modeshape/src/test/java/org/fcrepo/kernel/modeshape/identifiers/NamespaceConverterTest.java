@@ -47,15 +47,15 @@ public class NamespaceConverterTest {
 
     @Test
     public void testRoundTrip() {
-        final String result = testTranslator.convert(testId1);
+        final String result = testTranslator.apply(testId1);
         log.debug("Received translated identifier: {}", result);
-        assertEquals("Didn't get our original identifier back!", testId1, testTranslator.reverse().convert(result));
+        assertEquals("Didn't get our original identifier back!", testId1, testTranslator.toDomain(result));
     }
 
     @Test
     public void testRoundTrip2() {
-        final String result = testTranslator.convert(testId2);
+        final String result = testTranslator.apply(testId2);
         log.debug("Received translated identifier: {}", result);
-        assertEquals("Didn't get our original identifier back!", testId2, testTranslator.reverse().convert(result));
+        assertEquals("Didn't get our original identifier back!", testId2, testTranslator.toDomain(result));
     }
 }

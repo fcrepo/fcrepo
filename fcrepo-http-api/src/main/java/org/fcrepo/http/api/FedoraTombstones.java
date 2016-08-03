@@ -81,6 +81,6 @@ public class FedoraTombstones extends FedoraBaseResource {
     }
 
     protected FedoraResource resource() {
-        return translator().convert(translator().toDomain(externalPath));
+        return graphToResource().apply(translator().toDomain(externalPath));
     }
 }

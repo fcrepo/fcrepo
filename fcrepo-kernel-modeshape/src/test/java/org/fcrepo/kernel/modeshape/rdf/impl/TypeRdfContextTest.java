@@ -19,8 +19,7 @@ package org.fcrepo.kernel.modeshape.rdf.impl;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
-import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,6 +43,7 @@ import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
+import static org.fcrepo.kernel.modeshape.utils.TestHelpers.mockResource;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -77,7 +77,7 @@ public class TypeRdfContextTest {
     @Mock
     private NodeType mockMixinSuperNodeType;
 
-    private IdentifierConverter<Resource, FedoraResource> idTranslator;
+    private Converter<Resource, String> idTranslator;
 
     @Mock
     private Session mockSession;
@@ -109,7 +109,7 @@ public class TypeRdfContextTest {
 
         when(mockResource.getTypes()).thenReturn(types);
         when(mockResource.getNode()).thenReturn(mockNode);
-        when(mockResource.getPath()).thenReturn("/" + mockNodeName);
+        mockResource(mockResource, "/" + mockNodeName);
 
         idTranslator = new DefaultIdentifierTranslator(mockSession);
     }
@@ -117,7 +117,7 @@ public class TypeRdfContextTest {
     @Test
     public void testRdfTypesForNodetypes() throws IOException {
 
-        final Resource mockNodeSubject = idTranslator.reverse().convert(mockResource);
+        final Resource mockNodeSubject = mockResource.graphResource(idTranslator);
 
         try (final TypeRdfContext typeRdfContext = new TypeRdfContext(mockResource, idTranslator)) {
             final Model actual = typeRdfContext.collect(toModel());

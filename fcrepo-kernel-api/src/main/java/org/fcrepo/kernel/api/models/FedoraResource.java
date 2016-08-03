@@ -31,7 +31,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.RdfStream;
 
@@ -133,7 +133,7 @@ public interface FedoraResource {
      * @throws MalformedRdfException if malformed rdf exception occurred
      * @throws AccessDeniedException if access denied in updating properties
      */
-    void updateProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
+    void updateProperties(final Converter<Resource, String> idTranslator,
                           final String sparqlUpdateStatement,
                           final RdfStream originalTriples) throws MalformedRdfException, AccessDeniedException;
 
@@ -143,7 +143,7 @@ public interface FedoraResource {
      * @param context the context
      * @return the rdf properties of this object using the provided context
      */
-    RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> idTranslator,
+    RdfStream getTriples(final Converter<Resource, String> idTranslator,
                          final TripleCategory context);
 
     /**
@@ -152,7 +152,7 @@ public interface FedoraResource {
      * @param contexts the provided contexts
      * @return the rdf properties of this object
      */
-    RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> idTranslator,
+    RdfStream getTriples(final Converter<Resource, String> idTranslator,
                          final Set<? extends TripleCategory> contexts);
 
     /**
@@ -184,7 +184,7 @@ public interface FedoraResource {
      * @param originalTriples the original triples
      * @throws MalformedRdfException if malformed rdf exception occurred
      */
-    void replaceProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
+    void replaceProperties(final Converter<Resource, String> idTranslator,
                                 final Model inputModel,
                                 final RdfStream originalTriples) throws MalformedRdfException;
 
@@ -257,4 +257,10 @@ public interface FedoraResource {
      * @return the resource being described
      */
     FedoraResource getDescribedResource();
+
+    /**
+     * Get a graph resource corresponding to this resource
+     * @return a graph resource
+     */
+    Resource graphResource(Converter<Resource, String> idTranslator);
 }
