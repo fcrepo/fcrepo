@@ -17,7 +17,7 @@
  */
 package org.fcrepo.kernel.api.identifiers;
 
-import org.fcrepo.kernel.api.functions.Converter;
+import org.fcrepo.kernel.api.functions.InjectiveConverter;
 
 /**
  * Translates internal {@link String} identifiers to internal {@link String}
@@ -26,7 +26,7 @@ import org.fcrepo.kernel.api.functions.Converter;
  * @author ajs6f
  * @since Apr 1, 2014
  */
-public abstract class InternalIdentifierConverter implements Converter<String, String> {
+public abstract class InternalIdentifierConverter implements InjectiveConverter<String, String> {
 
     /*
      * (non-Javadoc)

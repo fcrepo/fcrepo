@@ -104,6 +104,7 @@ import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.functions.Converter;
+import org.fcrepo.kernel.api.functions.InjectiveConverter;
 import org.fcrepo.kernel.modeshape.identifiers.InternalPathToNodeConverter;
 import org.fcrepo.kernel.modeshape.rdf.converters.PropertyConverter;
 import org.fcrepo.kernel.api.TripleCategory;
@@ -317,8 +318,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                     .or(UncheckedPredicate.uncheck(p -> p.getName().equals(JCR_CONTENT)))
                     .or(UncheckedPredicate.uncheck(p -> p.getName().equals("#")));
 
-    private static final Converter<FedoraResource, FedoraResource> datastreamToBinary
-            = new Converter<FedoraResource, FedoraResource>() {
+    private static final InjectiveConverter<FedoraResource, FedoraResource> datastreamToBinary
+            = new InjectiveConverter<FedoraResource, FedoraResource>() {
 
         @Override
         public FedoraResource apply(final FedoraResource fedoraResource) {
@@ -642,7 +643,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         final Converter<Resource, Node> toNodes =
                 idTranslator.andThen(new InternalPathToNodeConverter(getSession()));
         //final Converter<Resource, FedoraResource> toResources = toNodes.andThen(NodeResourceConverter.nodeConverter);
-        return new DefaultRdfStream(toNodes.toDomain(getNode()).asNode(), contexts.stream()
+        return new DefaultRdfStream(toNodes.inverse().apply(getNode()).asNode(), contexts.stream()
                 .filter(contextMap::containsKey)
                 .map(x -> contextMap.get(x).apply(this).apply(idTranslator).apply(contexts.contains(MINIMAL)))
                 .reduce(empty(), Stream::concat));
@@ -1041,7 +1042,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
     @Override
     public Resource graphResource(final Converter<Resource, String> idTranslator) {
-        return idTranslator.andThen(new InternalPathToNodeConverter(getSession())).toDomain(getNode());
+        return idTranslator
+                .andThen(new InternalPathToNodeConverter(getSession()))
+                .inverse().apply(getNode());
     }
 
     private Node getNodeByProperty(final Property property) throws RepositoryException {

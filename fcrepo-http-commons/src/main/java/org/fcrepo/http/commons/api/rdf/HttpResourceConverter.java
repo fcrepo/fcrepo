@@ -45,6 +45,7 @@ import javax.ws.rs.core.UriBuilder;
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.functions.Converter;
+import org.fcrepo.kernel.api.functions.InjectiveConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.modeshape.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.modeshape.identifiers.InternalPathToNodeConverter;
@@ -71,7 +72,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,String> 
     private final Session session;
     private final UriBuilder uriBuilder;
 
-    protected Converter<String, String> pathProcessor = identity();
+    protected InjectiveConverter<String, String> pathProcessor = identity();
 
     private final UriTemplate uriTemplate;
 

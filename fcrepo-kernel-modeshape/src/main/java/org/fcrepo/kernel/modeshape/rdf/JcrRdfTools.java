@@ -444,7 +444,7 @@ public class JcrRdfTools {
 
             final Resource skolemizedSubject =
                     idTranslator.andThen(new InternalPathToNodeConverter(session))
-                    .toDomain(orCreateNode);
+                    .inverse().apply(orCreateNode);
             skolemizedBnodeMap.put(id, skolemizedSubject);
         }
 

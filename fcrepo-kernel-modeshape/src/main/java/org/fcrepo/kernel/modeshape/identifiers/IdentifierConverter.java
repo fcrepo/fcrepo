@@ -18,6 +18,7 @@
 package org.fcrepo.kernel.modeshape.identifiers;
 
 import org.fcrepo.kernel.api.functions.Converter;
+import org.fcrepo.kernel.api.functions.InjectiveConverter;
 
 /**
  * An {@link IdentifierConverter} accepts and returns identifiers, translating
@@ -28,7 +29,7 @@ import org.fcrepo.kernel.api.functions.Converter;
  * @since Mar 26, 2014
  * @param <B> the type to and from which we are translating
  */
-public abstract class IdentifierConverter<A, B> implements Converter<A, B> {
+public abstract class IdentifierConverter<A, B> implements InjectiveConverter<A, B> {
 
     /**
      * Invert this conversion function
@@ -72,11 +73,11 @@ public abstract class IdentifierConverter<A, B> implements Converter<A, B> {
         return new CompositeIdentifierConverter<>(second, this);
     }
 
-    protected <T> Converter<T,T> identity() {
+    protected <T> InjectiveConverter<T,T> identity() {
         return new Identity<>();
     }
 
-    static class Identity<T> implements Converter<T, T> {
+    static class Identity<T> implements InjectiveConverter<T, T> {
 
         @Override
         public T toDomain(final T rangeValue) {
@@ -94,7 +95,7 @@ public abstract class IdentifierConverter<A, B> implements Converter<A, B> {
         }
 
         @Override
-        public Converter<T, T> inverse() {
+        public InjectiveConverter<T, T> inverse() {
             return this;
         }
 

@@ -24,6 +24,7 @@ import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.functions.Converter;
+import org.fcrepo.kernel.api.functions.InjectiveConverter;
 import org.fcrepo.kernel.modeshape.identifiers.InternalPathToNodeConverter;
 import org.slf4j.Logger;
 
@@ -60,7 +61,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * @author cabeer
  * @since 10/8/14
  */
-public class ValueConverter implements Converter<Value, RDFNode> {
+public class ValueConverter implements InjectiveConverter<Value, RDFNode> {
 
     private static final Logger LOGGER = getLogger(ValueConverter.class);
 

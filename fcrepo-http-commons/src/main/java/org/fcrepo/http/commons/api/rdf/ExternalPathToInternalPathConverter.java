@@ -73,7 +73,7 @@ public class ExternalPathToInternalPathConverter extends IdentifierConverter<Str
         String result = t;
         final ListIterator<Converter<String, String>> iter = processors.listIterator(processors.size());
         while (iter.hasPrevious()) {
-            result = iter.previous().toDomain(result);
+            result = iter.previous().inverse().apply(result);
         }
         return result;
     }

@@ -24,35 +24,29 @@ package org.fcrepo.kernel.api.functions;
  * @param <A>
  * @param <B>
  */
-public class InverseConverterWrapper<A, B> implements InjectiveConverter<A, B> {
+public interface InjectiveConverter<A,B> extends InjectiveFunction<A, B>, Converter<A, B> {
+    @Override
+    public default InjectiveConverter<B, A> inverse() {
+        return new InverseConverterWrapper<>(this);
+    }
 
-    private final InjectiveConverter<B, A> original;
     /**
-     * 
-     * @param original
+     * A typed composition
+     * @see java.util.function.Function
+     * @param after
+     * @return
      */
-    public InverseConverterWrapper(final InjectiveConverter<B, A> original) {
-        this.original = original;
+    public default <C> InjectiveConverter<A, C> andThen(InjectiveConverter<B, C> after) {
+        return new CompositeInjectiveConverter<>(this, after);
     }
 
-    @Override
-    public A toDomain(final B rangeValue) {
-        return original.apply(rangeValue);
+    /**
+     * A typed composition
+     * @see java.util.function.Function
+     * @param before
+     * @return
+     */
+    public default <C> InjectiveConverter<C, B> compose(InjectiveConverter<C, A> before) {
+        return new CompositeInjectiveConverter<>(before, this);
     }
-
-    @Override
-    public B apply(final A t) {
-        return original.toDomain(t);
-    }
-
-    @Override
-    public boolean inDomain(final A a) {
-        return original.inRange(a);
-    }
-
-    @Override
-    public InjectiveConverter<B, A> inverse() {
-        return original;
-    }
-
 }
