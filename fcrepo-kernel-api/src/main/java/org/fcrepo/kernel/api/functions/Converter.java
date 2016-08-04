@@ -24,16 +24,7 @@ package org.fcrepo.kernel.api.functions;
  * @param <A> the type from which we are translating
  * @param <B> the type to which we are translating
  */
-public interface Converter<A, B> extends InvertibleFunction<A, B>, DomainRestrictedFunction<A, B> {
-
-    /**
-     * Whether the value is in the range of this function
-     * @param b a result of the converter function
-     * @return whether b is in the range of the converter
-     */
-    default boolean inRange(final B b) {
-        return inverse().inDomain(b);
-    }
+public interface Converter<A, B> extends InjectiveFunction<A, B>, DomainRestrictedFunction<A, B> {
 
     @Override
     public default Converter<B, A> inverse() {

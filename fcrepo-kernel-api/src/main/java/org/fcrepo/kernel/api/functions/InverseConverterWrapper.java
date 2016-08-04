@@ -17,7 +17,6 @@
  */
 package org.fcrepo.kernel.api.functions;
 
-
 /**
  * 
  * @author barmintor

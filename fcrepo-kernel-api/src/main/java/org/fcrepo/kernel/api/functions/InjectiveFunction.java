@@ -17,36 +17,37 @@
  */
 package org.fcrepo.kernel.api.functions;
 
-
 /**
- * Simple inverse function that wraps an InvertibleFunction implementation
- * Assumes a bijective function.
+ * An invertible function that is also reversible, i.e. injective.
  * @author barmintor
  *
+ * @param <A>
+ * @param <B>
  */
-public class InverseFunctionWrapper<A, B> implements InjectiveFunction<A, B> {
 
-    private final InjectiveFunction<B, A> original;
+public interface InjectiveFunction<A, B> extends InvertibleFunction<A, B> {
     /**
-     * 
-     * @param original
+     * Whether the value is in the range of this function
+     * @param b a result of the converter function
+     * @return whether b is in the range of the converter
      */
-    public InverseFunctionWrapper(final InjectiveFunction<B, A> original) {
-        this.original = original;
+    default boolean inRange(final B b) {
+        return true;
     }
 
-    @Override
-    public B apply(final A t) {
-        return original.toDomain(t);
-    }
+    /**
+     * Reverse the function.
+     * @param b the candidate value for which a domain value should be calculated
+     * @return a domain value or null
+     */
+    A toDomain(B b);
 
+    /**
+     * The inverse of the defined function
+     * @return the inverse of the defined function.
+     */
     @Override
-    public InvertibleFunction<B, A> inverse() {
-        return original;
-    }
-
-    @Override
-    public A toDomain(final B rangeValue) {
-        return original.apply(rangeValue);
+    default InvertibleFunction<B, A> inverse() {
+        return new InverseFunctionWrapper<>(this);
     }
 }

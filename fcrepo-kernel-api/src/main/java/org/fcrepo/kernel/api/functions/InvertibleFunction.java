@@ -27,19 +27,10 @@ import java.util.function.Function;
  * @param <B> the type to which we are translating
  */
 public interface InvertibleFunction<A, B> extends Function<A, B> {
-
     /**
      * The inverse of the defined function
      * @return the inverse of the defined function.
      */
-    public default InvertibleFunction<B, A> inverse() {
-        return new InverseFunctionWrapper<>(this);
-    }
+    public InvertibleFunction<B, A> inverse();
 
-    /**
-     * Reverse the function.
-     * @param rangeValue the candidate value for which a domain value should be calculated
-     * @return a domain value or null
-     */
-    A toDomain(B rangeValue);
 }
