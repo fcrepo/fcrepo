@@ -20,8 +20,6 @@ package org.fcrepo.kernel.modeshape.identifiers;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-import org.fcrepo.kernel.api.functions.Converter;
-
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 
@@ -82,17 +80,8 @@ public class IdentifierConverterTest {
             return this;
         }
 
-        @Override
-        public <C> Converter<String, C> andThen(final Converter<String, C> after) {
-            return null;
-        }
-
-        @Override
-        public <C> Converter<C, String> compose(final Converter<C, String> before) {
-            return null;
-        }
-
     }
+
     static class ToCharArray extends IdentifierConverter<String, char[]> {
 
         @Override
@@ -116,16 +105,6 @@ public class IdentifierConverterTest {
             } else {
                 return a.toCharArray();
             }
-        }
-
-        @Override
-        public <C> Converter<String, C> andThen(final Converter<char[], C> after) {
-            return null;
-        }
-
-        @Override
-        public <C> Converter<C, char[]> compose(final Converter<C, String> before) {
-            return null;
         }
     }
 }

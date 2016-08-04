@@ -22,8 +22,6 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.functions.CompositeConverter;
-import org.fcrepo.kernel.api.functions.Converter;
 
 /**
  * 
@@ -39,15 +37,6 @@ public class PathToNodeConverter extends IdentifierConverter<String, Node> {
      */
     public PathToNodeConverter(final Session session) {
         this.session = session;
-    }
-    @Override
-    public <C> Converter<String, C> andThen(final Converter<Node, C> after) {
-        return new CompositeConverter<>(this, after);
-    }
-
-    @Override
-    public <C> Converter<C, Node> compose(final Converter<C, String> before) {
-        return new CompositeConverter<>(before, this);
     }
 
     @Override

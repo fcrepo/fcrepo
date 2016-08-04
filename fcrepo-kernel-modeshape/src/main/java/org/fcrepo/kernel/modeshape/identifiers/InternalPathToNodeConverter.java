@@ -36,8 +36,6 @@ import org.fcrepo.kernel.api.exception.IdentifierConversionException;
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.TombstoneException;
-import org.fcrepo.kernel.api.functions.CompositeConverter;
-import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl;
@@ -274,16 +272,6 @@ public class InternalPathToNodeConverter extends IdentifierConverter<String,Node
         } catch (RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
-    }
-
-    @Override
-    public <C> Converter<String, C> andThen(final Converter<Node, C> after) {
-        return new CompositeConverter<>(this, after);
-    }
-
-    @Override
-    public <C> Converter<C, Node> compose(final Converter<C, String> before) {
-        return new CompositeConverter<>(before, this);
     }
 
 }

@@ -17,9 +17,7 @@
  */
 package org.fcrepo.kernel.api.identifiers;
 
-import org.fcrepo.kernel.api.functions.CompositeConverter;
 import org.fcrepo.kernel.api.functions.Converter;
-import org.fcrepo.kernel.api.functions.InverseConverterWrapper;
 
 /**
  * Translates internal {@link String} identifiers to internal {@link String}
@@ -53,18 +51,4 @@ public abstract class InternalIdentifierConverter implements Converter<String, S
         return b;
     }
 
-    @Override
-    public Converter<String, String> inverse() {
-        return new InverseConverterWrapper<>(this);
-    }
-
-    @Override
-    public <A> Converter<String, A> andThen(final Converter<String, A> after) {
-        return new CompositeConverter<>(this, after);
-    }
-
-    @Override
-    public <A> Converter<A, String> compose(final Converter<A, String> before) {
-        return new CompositeConverter<>(before, this);
-    }
 }

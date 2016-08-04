@@ -24,8 +24,6 @@ import static org.fcrepo.kernel.modeshape.services.TransactionServiceImpl.getCur
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.functions.CompositeConverter;
-import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.modeshape.identifiers.IdentifierConverter;
 
 /**
@@ -73,16 +71,6 @@ public class TransactionIdentifierConverter extends IdentifierConverter<String, 
             return "/" + TX_PREFIX + txId;
         }
         return EMPTY;
-    }
-
-    @Override
-    public <C> Converter<String, C> andThen(final Converter<String, C> after) {
-        return new CompositeConverter<>(this, after);
-    }
-
-    @Override
-    public <C> Converter<C, String> compose(final Converter<C, String> before) {
-        return new CompositeConverter<>(before, this);
     }
 
     @Override

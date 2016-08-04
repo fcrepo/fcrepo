@@ -32,7 +32,9 @@ public interface InvertibleFunction<A, B> extends Function<A, B> {
      * The inverse of the defined function
      * @return the inverse of the defined function.
      */
-    InvertibleFunction<B, A> inverse();
+    public default InvertibleFunction<B, A> inverse() {
+        return new InverseFunctionWrapper<>(this);
+    }
 
     /**
      * Reverse the function.

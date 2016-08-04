@@ -17,9 +17,6 @@
  */
 package org.fcrepo.kernel.modeshape.identifiers;
 
-import org.fcrepo.kernel.api.functions.CompositeConverter;
-import org.fcrepo.kernel.api.functions.Converter;
-
 
 /**
  * 
@@ -61,21 +58,6 @@ public class CompositeIdentifierConverter<A, B, C> extends IdentifierConverter<A
     @Override
     public C apply(final A a) {
         return second.apply(first.apply(a));
-    }
-
-    @Override
-    public IdentifierConverter<C, A> inverse() {
-        return new CompositeIdentifierConverter<C,B, A>(secondReverse, firstReverse);
-    }
-
-    @Override
-    public <T> Converter<A, T> andThen(final Converter<C, T> after) {
-        return new CompositeConverter<>(this, after);
-    }
-
-    @Override
-    public <T> Converter<T, C> compose(final Converter<T, A> before) {
-        return new CompositeConverter<>(before, this);
     }
 
 }

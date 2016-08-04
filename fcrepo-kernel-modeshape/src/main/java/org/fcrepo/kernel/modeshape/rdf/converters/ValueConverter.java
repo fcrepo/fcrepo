@@ -23,9 +23,7 @@ import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.functions.CompositeConverter;
 import org.fcrepo.kernel.api.functions.Converter;
-import org.fcrepo.kernel.api.functions.InverseConverterWrapper;
 import org.fcrepo.kernel.modeshape.identifiers.InternalPathToNodeConverter;
 import org.slf4j.Logger;
 
@@ -296,20 +294,5 @@ public class ValueConverter implements Converter<Value, RDFNode> {
     @Override
     public boolean inDomain(final Value a) {
         return a != null;
-    }
-
-    @Override
-    public Converter<RDFNode, Value> inverse() {
-        return new InverseConverterWrapper<>(this);
-    }
-
-    @Override
-    public <C> Converter<Value, C> andThen(final Converter<RDFNode, C> after) {
-        return new CompositeConverter<>(this, after);
-    }
-
-    @Override
-    public <C> Converter<C, RDFNode> compose(final Converter<C, Value> before) {
-        return new CompositeConverter<>(before, this);
     }
 }

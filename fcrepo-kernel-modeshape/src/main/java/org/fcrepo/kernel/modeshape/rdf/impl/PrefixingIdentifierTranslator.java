@@ -24,7 +24,6 @@ import com.google.common.collect.Lists;
 
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.functions.CompositeConverter;
 import org.fcrepo.kernel.api.functions.Converter;
 
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -136,16 +135,6 @@ public class PrefixingIdentifierTranslator extends IdentifierConverter<Resource,
             return "/";
         }
         return absPath;
-    }
-
-    @Override
-    public <C> Converter<Resource, C> andThen(final Converter<String, C> after) {
-        return new CompositeConverter<>(this, after);
-    }
-
-    @Override
-    public <C> Converter<C, String> compose(final Converter<C, Resource> before) {
-        return new CompositeConverter<>(before, this);
     }
 
     /**

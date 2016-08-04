@@ -103,9 +103,7 @@ import org.fcrepo.kernel.api.exception.InvalidPrefixException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.functions.CompositeConverter;
 import org.fcrepo.kernel.api.functions.Converter;
-import org.fcrepo.kernel.api.functions.InverseConverterWrapper;
 import org.fcrepo.kernel.modeshape.identifiers.InternalPathToNodeConverter;
 import org.fcrepo.kernel.modeshape.rdf.converters.PropertyConverter;
 import org.fcrepo.kernel.api.TripleCategory;
@@ -335,21 +333,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         @Override
         public boolean inDomain(final FedoraResource a) {
             return a != null;
-        }
-
-        @Override
-        public Converter<FedoraResource, FedoraResource> inverse() {
-            return new InverseConverterWrapper<>(this);
-        }
-
-        @Override
-        public <C> Converter<FedoraResource, C> andThen(final Converter<FedoraResource, C> after) {
-            return new CompositeConverter<>(this, after);
-        }
-
-        @Override
-        public <C> Converter<C, FedoraResource> compose(final Converter<C, FedoraResource> before) {
-            return new CompositeConverter<>(before, this);
         }
     };
 

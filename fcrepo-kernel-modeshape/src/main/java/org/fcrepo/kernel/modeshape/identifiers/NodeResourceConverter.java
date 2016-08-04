@@ -21,7 +21,6 @@ import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 
-import org.fcrepo.kernel.api.functions.CompositeConverter;
 import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl;
@@ -73,21 +72,6 @@ public class NodeResourceConverter extends IdentifierConverter<Node, FedoraResou
     @Override
     public boolean inDomain(final Node a) {
         return true;
-    }
-
-    @Override
-    public IdentifierConverter<FedoraResource, Node> inverse() {
-        return new InverseIdentifierConverter<>(this);
-    }
-
-    @Override
-    public <C> Converter<Node, C> andThen(final Converter<FedoraResource, C> after) {
-        return new CompositeConverter<>(this, after);
-    }
-
-    @Override
-    public <C> Converter<C, FedoraResource> compose(final Converter<C, Node> before) {
-        return new CompositeConverter<>(before, this);
     }
 
     @Override
