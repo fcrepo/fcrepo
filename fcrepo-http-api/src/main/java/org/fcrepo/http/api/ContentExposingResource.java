@@ -543,8 +543,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             etag = new EntityTag(resource.getDescription().getEtagValue());
             date = resource.getDescription().getLastModifiedDate();
         } else {
-            // Use a weak ETag for the LDP-RS
-            etag = new EntityTag(resource.getDescribedResource().getEtagValue(), true);
+            // Use a strong ETag for the LDP-RS when validating If-(None)-Match headers
+            etag = new EntityTag(resource.getDescribedResource().getEtagValue());
             date = resource.getDescribedResource().getLastModifiedDate();
         }
 
