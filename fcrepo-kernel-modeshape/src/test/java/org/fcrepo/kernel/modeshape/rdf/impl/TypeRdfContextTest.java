@@ -117,7 +117,7 @@ public class TypeRdfContextTest {
     @Test
     public void testRdfTypesForNodetypes() throws IOException {
 
-        final Resource mockNodeSubject = mockResource.graphResource(idTranslator);
+        final Resource mockNodeSubject = mockResource.asUri(idTranslator);
 
         try (final TypeRdfContext typeRdfContext = new TypeRdfContext(mockResource, idTranslator)) {
             final Model actual = typeRdfContext.collect(toModel());

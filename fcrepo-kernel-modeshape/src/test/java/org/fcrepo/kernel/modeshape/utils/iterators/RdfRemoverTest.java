@@ -48,8 +48,8 @@ import javax.jcr.nodetype.PropertyDefinition;
 
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.functions.InjectiveConverter;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
-import org.fcrepo.kernel.modeshape.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.junit.Before;
@@ -220,7 +220,7 @@ public class RdfRemoverTest {
 
 
 
-    private IdentifierConverter<Resource, String> mockGraphSubjects;
+    private InjectiveConverter<Resource, String> mockGraphSubjects;
 
     private static final Model m = createDefaultModel();
 

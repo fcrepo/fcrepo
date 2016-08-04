@@ -87,7 +87,7 @@ public class ChildrenRdfContextTest {
 
         try (final ChildrenRdfContext childrenRdfContext = new ChildrenRdfContext(mockResource, idTranslator)) {
             final Model results = childrenRdfContext.collect(toModel());
-            final Resource subject = mockResource.graphResource(idTranslator);
+            final Resource subject = mockResource.asUri(idTranslator);
 
             final StmtIterator stmts = results.listStatements(subject, RdfLexicon.CONTAINS, (RDFNode) null);
             assertFalse("There should NOT have been a statement!", stmts.hasNext());
@@ -109,7 +109,7 @@ public class ChildrenRdfContextTest {
 
         try (final ChildrenRdfContext context = new ChildrenRdfContext(mockResource, idTranslator)) {
             final Model results = context.collect(toModel());
-            final Resource subject = mockResource.graphResource(idTranslator);
+            final Resource subject = mockResource.asUri(idTranslator);
 
             final StmtIterator stmts = results.listStatements(subject, RdfLexicon.CONTAINS, (RDFNode) null);
 

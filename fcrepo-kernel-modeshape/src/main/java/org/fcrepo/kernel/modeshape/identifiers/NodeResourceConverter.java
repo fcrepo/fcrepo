@@ -22,6 +22,7 @@ import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.api.functions.Converter;
+import org.fcrepo.kernel.api.functions.InjectiveConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl;
 import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
@@ -34,7 +35,7 @@ import javax.jcr.Node;
  * @author cabeer
  * @since 10/15/14
  */
-public class NodeResourceConverter extends IdentifierConverter<Node, FedoraResource> {
+public class NodeResourceConverter implements InjectiveConverter<Node, FedoraResource> {
     public static final NodeResourceConverter nodeConverter = new NodeResourceConverter();
 
     /**
@@ -74,8 +75,4 @@ public class NodeResourceConverter extends IdentifierConverter<Node, FedoraResou
         return true;
     }
 
-    @Override
-    public String asString(final Node resource) {
-        return apply(resource).toString();
-    }
 }

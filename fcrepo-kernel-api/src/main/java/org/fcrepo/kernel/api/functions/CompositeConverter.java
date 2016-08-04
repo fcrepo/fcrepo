@@ -26,12 +26,12 @@ package org.fcrepo.kernel.api.functions;
  * @param <B> the range of the first and domain of the second functions
  * @param <C> the range of the second function
  */
-public class CompositeConverter<A, B, C> implements Converter<A, C> {
+class CompositeConverter<A, B, C> implements Converter<A, C> {
 
     final Converter<A,B> first;
-    final Converter<B,A> firstReverse;
+    Converter<B,A> firstReverse = null;
     final Converter<B,C> second;
-    final Converter<C,B> secondReverse;
+    Converter<C,B> secondReverse = null;
 
     /**
      * 
@@ -40,7 +40,6 @@ public class CompositeConverter<A, B, C> implements Converter<A, C> {
      */
     public CompositeConverter(final Converter<A,B> first, final Converter<B,C> second) {
         this.first = first;
-        this.firstReverse = first.inverse();
         this.second = second;
         this.secondReverse = second.inverse();
     }
@@ -57,6 +56,12 @@ public class CompositeConverter<A, B, C> implements Converter<A, C> {
 
     @Override
     public Converter<C, A> inverse() {
+        if (firstReverse == null) {
+            firstReverse = first.inverse();
+        }
+        if (secondReverse == null) {
+            secondReverse = second.inverse();
+        }
         return secondReverse.andThen(firstReverse);
     }
 

@@ -51,10 +51,10 @@ import javax.jcr.nodetype.PropertyDefinition;
 
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
+import org.fcrepo.kernel.api.functions.InjectiveConverter;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
-import org.fcrepo.kernel.modeshape.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 import org.junit.Before;
 import org.junit.Test;
@@ -266,7 +266,7 @@ public class RdfAdderTest {
 
     private RdfStream testStream;
 
-    private IdentifierConverter<Resource, String> mockGraphSubjects;
+    private InjectiveConverter<Resource, String> mockGraphSubjects;
 
     @Mock
     private Property mockProperty;

@@ -150,9 +150,9 @@ public class LdpIsMemberOfRdfContextTest {
         final Model model = testObj.collect(toModel());
 
         assertTrue("Expected stream to contain triple",
-                model.contains(mockResource.graphResource(subjects),
+                model.contains(mockResource.asUri(subjects),
                         createProperty(property),
-                        nodeConverter.apply(mockNode).graphResource(subjects)));
+                        nodeConverter.apply(mockNode).asUri(subjects)));
     }
 
 
@@ -173,7 +173,7 @@ public class LdpIsMemberOfRdfContextTest {
         final Model model = testObj.collect(toModel());
 
         assertTrue("Expected stream to contain triple",
-                model.contains(mockResource.graphResource(subjects),
+                model.contains(mockResource.asUri(subjects),
                         createProperty(property),
                         createResource("some:resource")));
     }
@@ -196,9 +196,9 @@ public class LdpIsMemberOfRdfContextTest {
         final Model model = testObj.collect(toModel());
 
         assertTrue("Expected stream to contain triple",
-                model.contains(mockBinary.graphResource(subjects),
+                model.contains(mockBinary.asUri(subjects),
                         createProperty(property),
-                        nodeConverter.apply(mockNode).graphResource(subjects)));
+                        nodeConverter.apply(mockNode).asUri(subjects)));
     }
 
     @Test
@@ -233,7 +233,7 @@ public class LdpIsMemberOfRdfContextTest {
         assertTrue("Expected stream to contain triple",
                 model.contains(subjects.toDomain("/a/#/hash-uri"),
                         createProperty(property),
-                        nodeConverter.apply(mockNode).graphResource(subjects)));
+                        nodeConverter.apply(mockNode).asUri(subjects)));
 
     }
 

@@ -72,7 +72,7 @@ public class VersionsRdfContext extends DefaultRdfStream {
     public VersionsRdfContext(final FedoraResource resource,
                               final Converter<Resource, String> idTranslator)
         throws RepositoryException {
-        super(resource.graphResource(idTranslator).asNode());
+        super(resource.asUri(idTranslator).asNode());
         this.versionHistory = resource.getVersionHistory();
         concat(versionTriples());
     }

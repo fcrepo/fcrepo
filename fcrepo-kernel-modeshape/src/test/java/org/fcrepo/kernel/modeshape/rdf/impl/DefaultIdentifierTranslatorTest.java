@@ -63,8 +63,8 @@ public class DefaultIdentifierTranslatorTest {
     }
 
     @Test
-    public void testToString() {
-        assertEquals(internalId, testObj.asString(createResource(externalId)));
+    public void testApply() {
+        assertEquals(internalId, testObj.apply(createResource(externalId)));
     }
 
     @Test

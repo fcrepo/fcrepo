@@ -18,9 +18,10 @@
 package org.fcrepo.kernel.modeshape.testutilities;
 
 import com.hp.hpl.jena.rdf.model.Resource;
+
+import org.fcrepo.kernel.api.functions.InjectiveConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-import org.fcrepo.kernel.modeshape.identifiers.IdentifierConverter;
 
 import static java.util.stream.Stream.of;
 import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
@@ -38,7 +39,7 @@ public class TestTriplesContext extends DefaultRdfStream {
      * @param idTranslator an IdentifierConvertor
      */
     public TestTriplesContext(final FedoraResource resource,
-                              final IdentifierConverter<Resource, FedoraResource> idTranslator) {
+                              final InjectiveConverter<Resource, FedoraResource> idTranslator) {
         super(createURI("subject"), of(create(createURI("MockTriplesContextClass"), createURI("isAThing"),
                         createLiteral("n"))));
     }

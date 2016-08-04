@@ -51,7 +51,7 @@ public class NodeRdfContext extends DefaultRdfStream {
      */
     public NodeRdfContext(final FedoraResource resource,
                           final Converter<Resource, String> idTranslator) {
-        super(resource.graphResource(idTranslator).asNode());
+        super(resource.asUri(idTranslator).asNode());
         this.resource = resource;
         this.idTranslator = idTranslator;
         this.subject = uriFor(resource);
@@ -76,11 +76,11 @@ public class NodeRdfContext extends DefaultRdfStream {
      * @return a translated URI for that resource
      */
     protected com.hp.hpl.jena.graph.Node uriFor(final FedoraResource resource) {
-        return resource.graphResource(idTranslator).asNode();
+        return resource.asUri(idTranslator).asNode();
     }
 
     /**
-     * @return local {@link org.fcrepo.kernel.modeshape.identifiers.IdentifierConverter}
+     * @return local {@link org.fcrepo.kernel.api.functions.Converter}
      */
     public Converter<Node, Resource> nodeConverter() {
         try {

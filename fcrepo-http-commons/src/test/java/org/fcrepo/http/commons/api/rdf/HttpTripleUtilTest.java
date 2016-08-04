@@ -29,10 +29,10 @@ import java.util.Map;
 
 import javax.ws.rs.core.UriInfo;
 
+import org.fcrepo.kernel.api.functions.InjectiveConverter;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
-import org.fcrepo.kernel.modeshape.identifiers.IdentifierConverter;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -58,7 +58,7 @@ public class HttpTripleUtilTest {
     private UriInfo mockUriInfo;
 
     @Mock
-    private IdentifierConverter<Resource,String> mockSubjects;
+    private InjectiveConverter<Resource,String> mockSubjects;
 
     @Mock
     private UriAwareResourceModelFactory mockBean1;

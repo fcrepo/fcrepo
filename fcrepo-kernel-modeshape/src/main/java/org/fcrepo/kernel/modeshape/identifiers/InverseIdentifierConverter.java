@@ -24,6 +24,7 @@ package org.fcrepo.kernel.modeshape.identifiers;
  * @param <A>
  *
  */
+@Deprecated
 public class InverseIdentifierConverter<A,B> extends IdentifierConverter<A,B> {
 
     private final IdentifierConverter<B,A> original;

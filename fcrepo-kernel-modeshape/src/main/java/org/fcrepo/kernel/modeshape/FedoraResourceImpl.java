@@ -570,7 +570,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
         final Model model = originalTriples.collect(toModel());
 
-        final Resource resourceSubject = graphResource(idTranslator);
+        final Resource resourceSubject = asUri(idTranslator);
 
         final UpdateRequest request = create(sparqlUpdateStatement,
                 resourceSubject.toString());
@@ -692,7 +692,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         final Model inputModel, final RdfStream originalTriples) throws MalformedRdfException {
 
         try (final RdfStream replacementStream =
-                new DefaultRdfStream(this.graphResource(idTranslator).asNode())) {
+                new DefaultRdfStream(this.asUri(idTranslator).asNode())) {
 
             final GraphDifferencer differencer =
                 new GraphDifferencer(inputModel, originalTriples);
@@ -807,12 +807,22 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
     }
 
-    public static Predicate<Node> isVersioned =
-            UncheckedPredicate.uncheck((final Node node) -> node.isNodeType("mix:versionable"));
+    /**
+     * Check the input node to see if it includes the versionable mixin
+     * @param node
+     * @return
+     */
+    public static boolean isVersioned(final Node node) {
+        try {
+            return node.isNodeType("mix:versionable");
+        } catch (RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
 
     @Override
     public boolean isVersioned() {
-        return isVersioned.test(node);
+        return isVersioned(node);
     }
 
     @Override
@@ -868,7 +878,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             Node unfrozenNode = getUnfrozenNode(node);
 
             // traverse the frozen tree looking for a node whose unfrozen equivalent is versioned
-            while (!isVersioned.test(unfrozenNode)) {
+            while (!isVersioned(unfrozenNode)) {
 
                 if (versionableFrozenNode.getDepth() == 0) {
                     return null;
@@ -1041,7 +1051,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     }
 
     @Override
-    public Resource graphResource(final Converter<Resource, String> idTranslator) {
+    public Resource asUri(final Converter<Resource, String> idTranslator) {
         return idTranslator
                 .andThen(new InternalPathToNodeConverter(getSession()))
                 .inverse().apply(getNode());

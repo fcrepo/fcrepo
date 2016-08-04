@@ -39,7 +39,7 @@ public class ConstraintExceptionsTest {
 
         subTypes.add(ConstraintViolationException.class);
 
-        for (final Class c : subTypes) {
+        for (final Class<?> c : subTypes) {
             final File file = new File("src/main/webapp/static/constraints/" + c.getSimpleName() + ".rdf");
             Assert.assertTrue("Expected to find: " + file.getPath(), file.exists());
         }

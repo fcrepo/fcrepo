@@ -174,13 +174,13 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     private Node createGraphSubjectNode(final FedoraResource obj) {
-        return obj.graphResource(subjects).asNode();
+        return obj.asUri(subjects).asNode();
     }
 
     @Test
     public void testRandomNodeGraph() {
         final FedoraResource object = containerService.findOrCreate(session, "/testNodeGraph");
-        final Node s = object.graphResource(subjects).asNode();
+        final Node s = object.asUri(subjects).asNode();
         final Model rdf = object.getTriples(subjects, PROPERTIES).collect(toModel());
 
         assertFalse(rdf.getGraph().contains(s, HAS_PRIMARY_IDENTIFIER.asNode(), ANY));
@@ -675,9 +675,9 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Model model = object.getTriples(subjects, INBOUND_REFERENCES).collect(toModel());
 
         assertTrue(
-            model.contains(subject.graphResource(subjects),
+            model.contains(subject.asUri(subjects),
                               ResourceFactory.createProperty(REPOSITORY_NAMESPACE + "isPartOf"),
-                              object.graphResource(subjects))
+                              object.asUri(subjects))
         );
     }
 
@@ -690,7 +690,7 @@ public class FedoraResourceImplIT extends AbstractIT {
             final Model model = triples.collect(toModel());
 
             final Resource resource = model.createResource();
-            final Resource subject = object.graphResource(subjects);
+            final Resource subject = object.asUri(subjects);
             final Property predicate = model.createProperty("info:xyz");
             model.add(subject, predicate, resource);
             model.add(resource, model.createProperty("http://purl.org/dc/elements/1.1/title"), "xyz");
@@ -730,7 +730,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         model.add(hashResource, foafName, nameValue);
         model.add(hashResource, type, foafPerson);
 
-        final Resource subject = object.graphResource(subjects);
+        final Resource subject = object.asUri(subjects);
         final Property dcCreator = model.createProperty("http://purl.org/dc/elements/1.1/creator");
 
         model.add(subject, dcCreator, hashResource);
@@ -1138,11 +1138,11 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         final Model model1 = referent1.getTriples(subjects, INBOUND_REFERENCES).collect(toModel());
 
-        assertTrue(model1.contains(subject.graphResource(subjects),
+        assertTrue(model1.contains(subject.asUri(subjects),
                 createProperty("info:fedora/test/fakeRel"),
                 createResource("info:fedora/" + pid + "/b")));
 
-        assertTrue(model1.contains(subject.graphResource(subjects),
+        assertTrue(model1.contains(subject.asUri(subjects),
                 createProperty("info:fedora/test/fakeRel"),
                 createResource("info:fedora/" + pid + "/c")));
 
@@ -1151,11 +1151,11 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         final Model model2 = referent1.getTriples(subjects, INBOUND_REFERENCES).collect(toModel());
 
-        assertTrue(model2.contains(subject.graphResource(subjects),
+        assertTrue(model2.contains(subject.asUri(subjects),
             createProperty("info:fedora/test/fakeRel"),
             createResource("info:fedora/" + pid + "/b")));
 
-        assertFalse(model2.contains(subject.graphResource(subjects),
+        assertFalse(model2.contains(subject.asUri(subjects),
                 createProperty("info:fedora/test/fakeRel"),
                 createResource("info:fedora/" + pid + "/c")));
     }

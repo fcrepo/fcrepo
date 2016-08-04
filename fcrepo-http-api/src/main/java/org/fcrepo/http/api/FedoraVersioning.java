@@ -152,7 +152,7 @@ public class FedoraVersioning extends FedoraBaseResource {
             LOGGER.info("Request to add version '{}' for '{}'", slug, externalPath);
             final String path = toInternalPath(translator(), externalPath);
             versionService.createVersion(session, path, slug);
-            return created(URI.create(nodeToResource(graphToResource()).apply(
+            return created(URI.create(nodeToResource(uriToResource()).apply(
                             resource().getBaseVersion().getFrozenNode()).getURI())).build();
         }
         return status(BAD_REQUEST).entity("Specify label for version").build();

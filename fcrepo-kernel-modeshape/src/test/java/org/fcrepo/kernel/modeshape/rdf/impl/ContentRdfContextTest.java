@@ -104,8 +104,8 @@ public class ContentRdfContextTest {
                  mockNodeTypePrefix + ":" + mockNodeName);
 
         //when(mockNodeType.getName()).thenReturn("not:root");
-        mockSubject = mockResource.graphResource(idTranslator);
-        mockContentSubject = mockBinary.graphResource(idTranslator);
+        mockSubject = mockResource.asUri(idTranslator);
+        mockContentSubject = mockBinary.asUri(idTranslator);
     }
 
     private Resource mockContentSubject;

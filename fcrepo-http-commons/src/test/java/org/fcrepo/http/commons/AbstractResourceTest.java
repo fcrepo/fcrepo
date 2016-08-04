@@ -26,9 +26,9 @@ import java.util.function.Supplier;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.UriInfo;
 
+import org.fcrepo.kernel.api.functions.InjectiveConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.NodeService;
-import org.fcrepo.kernel.modeshape.identifiers.IdentifierConverter;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -67,13 +67,13 @@ public class AbstractResourceTest {
         testObj = new AbstractResource() {
 
             @Override
-            protected IdentifierConverter<Resource, String> translator() {
+            protected InjectiveConverter<Resource, String> translator() {
                 // TODO Auto-generated method stub
                 return null;
             }
 
             @Override
-            protected IdentifierConverter<Resource, FedoraResource> graphToResource() {
+            protected InjectiveConverter<Resource, FedoraResource> uriToResource() {
                 // TODO Auto-generated method stub
                 return null;
             }

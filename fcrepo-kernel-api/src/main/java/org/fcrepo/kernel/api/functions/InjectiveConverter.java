@@ -49,4 +49,45 @@ public interface InjectiveConverter<A,B> extends InjectiveFunction<A, B>, Conver
     public default <C> InjectiveConverter<C, B> compose(InjectiveConverter<C, A> before) {
         return new CompositeInjectiveConverter<>(before, this);
     }
+
+    /**
+     * Convenience method for building a typed identity function
+     * @param klass
+     * @return
+     */
+    public default <T> InjectiveConverter<T, T> identity(Class<T> klass) {
+        return new Identity<>();
+    }
+
+    static class Identity<T> implements InjectiveConverter<T, T> {
+        @Override
+        public T toDomain(final T rangeValue) {
+            return rangeValue;
+        }
+
+        @Override
+        public T apply(final T t) {
+            return t;
+        }
+
+        @Override
+        public boolean inDomain(final T a) {
+            return a != null;
+        }
+
+        @Override
+        public InjectiveConverter<T, T> inverse() {
+            return this;
+        }
+
+        @Override
+        public <C> Converter<T, C> andThen(final Converter<T, C> after) {
+            return after;
+        }
+
+        @Override
+        public <C> Converter<C, T> compose(final Converter<C, T> before) {
+            return before;
+        }
+    }
 }

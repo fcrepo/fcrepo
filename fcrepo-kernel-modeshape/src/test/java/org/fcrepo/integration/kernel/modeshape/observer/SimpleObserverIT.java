@@ -208,7 +208,7 @@ public class SimpleObserverIT extends AbstractIT {
 
         final Container obj = containerService.findOrCreate(se, "/object9");
 
-        final Resource subject = obj.graphResource(identifiers);
+        final Resource subject = obj.asUri(identifiers);
 
         obj.updateProperties(identifiers, "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
             "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\n" +
@@ -240,7 +240,7 @@ public class SimpleObserverIT extends AbstractIT {
         final Container obj1 = containerService.findOrCreate(se, "/object10");
         final Container obj2 = containerService.findOrCreate(se, "/object11");
 
-        final Resource subject2 = obj2.graphResource(subjects);
+        final Resource subject2 = obj2.asUri(subjects);
 
         obj1.updateProperties(subjects, "PREFIX ldp: <http://www.w3.org/ns/ldp#>\n" +
                 "PREFIX pcdm: <http://pcdm.org/models#>\n" +
@@ -287,7 +287,7 @@ public class SimpleObserverIT extends AbstractIT {
         final Container obj1 = containerService.findOrCreate(se, "/object12");
         final Container obj2 = containerService.findOrCreate(se, "/object13");
 
-        final Resource subject2 = obj2.graphResource(subjects);
+        final Resource subject2 = obj2.asUri(subjects);
 
         obj1.updateProperties(subjects, "PREFIX ldp: <http://www.w3.org/ns/ldp#>\n" +
                 "PREFIX pcdm: <http://pcdm.org/models#>\n" +

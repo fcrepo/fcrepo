@@ -182,9 +182,9 @@ public class LdpContainerRdfContextTest {
 
         assertTrue("Expected stream to have one triple", model.size() == 1);
         assertTrue(model.contains(
-                mockResource.graphResource(subjects),
+                mockResource.asUri(subjects),
                 ResourceFactory.createProperty("some:property"),
-                nodeConverter.apply(mockChild).graphResource(subjects)));
+                nodeConverter.apply(mockChild).asUri(subjects)));
     }
 
     @Test
@@ -218,7 +218,7 @@ public class LdpContainerRdfContextTest {
 
         assertTrue("Expected stream to have one triple", model.size() == 1);
         assertTrue(model.contains(
-                mockResource.graphResource(subjects),
+                mockResource.asUri(subjects),
                 ResourceFactory.createProperty("some:property"),
                 ResourceFactory.createPlainLiteral("x")));
     }
@@ -255,7 +255,7 @@ public class LdpContainerRdfContextTest {
 
         assertTrue("Expected stream to have one triple", model.size() == 1);
         assertTrue(model.contains(
-                mockResource.graphResource(subjects),
+                mockResource.asUri(subjects),
                 ResourceFactory.createProperty("some:property"),
                 ResourceFactory.createPlainLiteral("x")));
     }

@@ -23,13 +23,13 @@ import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.TxSession;
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.functions.InjectiveConverter;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl;
-import org.fcrepo.kernel.modeshape.identifiers.IdentifierConverter;
 
 import org.junit.Before;
 import org.junit.Ignore;
@@ -77,7 +77,7 @@ public class HttpResourceConverterTest implements FedoraTypes {
 
 
     private HttpResourceConverter idTranslator;
-    private IdentifierConverter<Resource, FedoraResource> converter;
+    private InjectiveConverter<Resource, FedoraResource> converter;
     private final String uriTemplate = "http://localhost:8080/some/{path: .*}";
     private final String path = "arbitrary/path";
     private final Resource resource = createResource("http://localhost:8080/some/" + path);
@@ -262,7 +262,7 @@ public class HttpResourceConverterTest implements FedoraTypes {
 
     @Test
     public void testDoBackwardWithTransaction() throws Exception {
-        final IdentifierConverter<Resource, FedoraResource> converter =
+        final InjectiveConverter<Resource, FedoraResource> converter =
                 new HttpResourceConverter(txSession, UriBuilder.fromUri(uriTemplate)).toResources();
         when(txSession.getTxId()).thenReturn("xyz");
         when(txSession.getNode("/" + path)).thenReturn(node);

@@ -47,7 +47,6 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.api.functions.InjectiveConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.modeshape.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.modeshape.identifiers.InternalPathToNodeConverter;
 
 import org.glassfish.jersey.uri.UriTemplate;
@@ -63,7 +62,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
  * @author cabeer
  * @since 10/5/14
  */
-public class HttpResourceConverter extends IdentifierConverter<Resource,String> {
+public class HttpResourceConverter implements InjectiveConverter<Resource,String> {
 
     private static final Logger LOGGER = getLogger(HttpResourceConverter.class);
 
@@ -72,7 +71,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,String> 
     private final Session session;
     private final UriBuilder uriBuilder;
 
-    protected InjectiveConverter<String, String> pathProcessor = identity();
+    protected InjectiveConverter<String, String> pathProcessor = identity(String.class);
 
     private final UriTemplate uriTemplate;
 
@@ -139,8 +138,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,String> 
         return createResource(uri.build().toString());
     }
 
-    @Override
-    public String asString(final Resource resource) {
+    private String asString(final Resource resource) {
         final Map<String, String> values = new HashMap<>();
 
         return asString(resource, values);
@@ -360,7 +358,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,String> 
      * 
      * @return
      */
-    public IdentifierConverter<Resource, Node> toNodes() {
+    public InjectiveConverter<Resource, Node> toNodes() {
         return this.andThen(new InternalPathToNodeConverter(session));
     }
 
@@ -368,7 +366,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,String> 
      * 
      * @return
      */
-    public IdentifierConverter<Resource, FedoraResource> toResources() {
+    public InjectiveConverter<Resource, FedoraResource> toResources() {
         return toNodes().andThen(nodeConverter);
     }
 }

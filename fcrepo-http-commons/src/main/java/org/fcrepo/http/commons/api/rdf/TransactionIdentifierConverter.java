@@ -24,13 +24,13 @@ import static org.fcrepo.kernel.modeshape.services.TransactionServiceImpl.getCur
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.modeshape.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.functions.InjectiveConverter;
 
 /**
  * Translate the current transaction into the identifier
  * @author barmintor
  */
-public class TransactionIdentifierConverter extends IdentifierConverter<String, String> {
+public class TransactionIdentifierConverter implements InjectiveConverter<String, String> {
     public static final String TX_PREFIX = "tx:";
 
     private final Session session;
@@ -74,7 +74,7 @@ public class TransactionIdentifierConverter extends IdentifierConverter<String, 
     }
 
     @Override
-    public String asString(final String resource) {
-        return apply(resource).toString();
+    public boolean inDomain(final String a) {
+        return a != null;
     }
 }

@@ -118,7 +118,7 @@ public class FedoraNodes extends ContentExposingResource {
                 throw new ClientErrorException("The source path does not exist", CONFLICT);
             }
 
-            final String destination = translator().asString(ResourceFactory.createResource(destinationUri));
+            final String destination = translator().apply(ResourceFactory.createResource(destinationUri));
 
             if (destination == null) {
                 throw new ServerErrorException("Destination was not a valid resource path", BAD_GATEWAY);

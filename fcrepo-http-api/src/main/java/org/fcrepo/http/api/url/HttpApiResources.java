@@ -55,7 +55,7 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
 
         final Model model = createDefaultModel();
 
-        final Resource s = resource.graphResource(idTranslator);
+        final Resource s = resource.asUri(idTranslator);
 
         if (resource.hasType(FEDORA_REPOSITORY_ROOT)) {
             addRepositoryStatements(uriInfo, model, s);
@@ -73,7 +73,7 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
                                              final FedoraBinary resource,
                                              final Model model) {
         // fcr:fixity
-        final Resource subject = resource.graphResource(idTranslator);
+        final Resource subject = resource.asUri(idTranslator);
         model.add(subject, HAS_FIXITY_SERVICE, createResource(subject.getURI() +
                 "/fcr:fixity"));
     }

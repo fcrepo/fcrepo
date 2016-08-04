@@ -641,7 +641,7 @@ public class FedoraLdp extends ContentExposingResource {
         super.addResourceHttpHeaders(resource);
 
         if (getCurrentTransactionId(session) != null) {
-            final String canonical = resource.graphResource(translator())
+            final String canonical = resource.asUri(translator())
                     .getURI()
                     .replaceFirst("/tx:[^/]+", "");
 
@@ -746,7 +746,7 @@ public class FedoraLdp extends ContentExposingResource {
         final URI newResourceUri = uriInfo.getAbsolutePathBuilder().clone().path(FedoraLdp.class)
                 .resolveTemplate("path", pid, false).build();
 
-        pid = translator().asString(createResource(newResourceUri.toString()));
+        pid = translator().apply(createResource(newResourceUri.toString()));
         try {
             pid = URLDecoder.decode(pid, "UTF-8");
         } catch (final UnsupportedEncodingException e) {

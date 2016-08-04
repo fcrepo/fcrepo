@@ -27,6 +27,7 @@ import javax.ws.rs.core.UriInfo;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.http.commons.session.SessionFactory;
+import org.fcrepo.kernel.api.functions.InjectiveConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.NamespaceService;
@@ -35,7 +36,6 @@ import org.fcrepo.kernel.api.services.ContainerService;
 import org.fcrepo.kernel.api.services.VersionService;
 import org.fcrepo.kernel.api.services.functions.HierarchicalIdentifierSupplier;
 import org.fcrepo.kernel.api.services.functions.UniqueValueSupplier;
-import org.fcrepo.kernel.modeshape.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.modeshape.identifiers.InternalPathToNodeConverter;
 
 import org.jvnet.hk2.annotations.Optional;
@@ -107,13 +107,13 @@ public abstract class AbstractResource {
 
     protected UniqueValueSupplier defaultPidMinter = new DefaultPathMinter();
 
-    protected IdentifierConverter<Resource, String> idTranslator;
+    protected InjectiveConverter<Resource, String> idTranslator;
 
-    protected IdentifierConverter<Resource, FedoraResource> graphToResource;
+    protected InjectiveConverter<Resource, FedoraResource> graphToResource;
 
-    protected abstract IdentifierConverter<Resource, String> translator();
+    protected abstract InjectiveConverter<Resource, String> translator();
 
-    protected abstract IdentifierConverter<Resource, FedoraResource> graphToResource();
+    protected abstract InjectiveConverter<Resource, FedoraResource> uriToResource();
 
     /**
      * Convert a JAX-RS list of PathSegments to an internal path
@@ -122,7 +122,7 @@ public abstract class AbstractResource {
      * @param originalPath the original path
      * @return String internal path
      */
-    public static final String toInternalPath(final IdentifierConverter<Resource, String> idTranslator,
+    public static final String toInternalPath(final InjectiveConverter<Resource, String> idTranslator,
                                       final String originalPath) {
 
         final Resource resource =

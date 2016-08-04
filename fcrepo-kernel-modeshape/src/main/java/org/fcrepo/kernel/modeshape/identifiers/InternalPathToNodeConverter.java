@@ -36,6 +36,7 @@ import org.fcrepo.kernel.api.exception.IdentifierConversionException;
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.TombstoneException;
+import org.fcrepo.kernel.api.functions.InjectiveConverter;
 import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl;
@@ -50,7 +51,7 @@ import org.slf4j.Logger;
  * the signal suffixes (fcr:metadata, fcr:tombstone)
  * @author barmintor
  */
-public class InternalPathToNodeConverter extends IdentifierConverter<String,Node> {
+public class InternalPathToNodeConverter implements InjectiveConverter<String,Node> {
 
     private static final Logger LOGGER = getLogger(InternalPathToNodeConverter.class);
 
@@ -122,15 +123,6 @@ public class InternalPathToNodeConverter extends IdentifierConverter<String,Node
     @Override
     public boolean inDomain(final String resource) {
         return resource != null;
-    }
-
-    @Override
-    public String asString(final String resource) {
-        try {
-            return apply(resource).getPath();
-        } catch (RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
     }
 
     private String getVersionPath(final String path) {

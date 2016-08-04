@@ -24,7 +24,7 @@ package org.fcrepo.kernel.api.functions;
  * @param <A>
  * @param <B>
  */
-public class InverseConverterWrapper<A, B> implements InjectiveConverter<A, B> {
+class InverseConverterWrapper<A, B> implements InjectiveConverter<A, B> {
 
     private final InjectiveConverter<B, A> original;
     /**

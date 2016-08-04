@@ -25,11 +25,11 @@ import com.google.common.collect.Lists;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.functions.Converter;
+import org.fcrepo.kernel.api.functions.InjectiveConverter;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.modeshape.identifiers.HashConverter;
-import org.fcrepo.kernel.modeshape.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.modeshape.identifiers.NamespaceConverter;
 import org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter;
 import org.fcrepo.kernel.modeshape.identifiers.PathToNodeConverter;
@@ -40,7 +40,7 @@ import javax.jcr.Session;
 import java.util.List;
 
 /**
- * A very simple {@link IdentifierConverter} which translates JCR paths into Fedora subjects with
+ * A very simple {@link org.fcrepo.kernel.api.functions.Converter} which translates JCR paths into Fedora subjects with
  * a configurable resource namespace (e.g., a baseURL).  When a REST API context is available for
  * constructing URIs, org.fcrepo.http.commons.api.rdf.HttpResourceConverter should be used instead.
  *
@@ -49,7 +49,7 @@ import java.util.List;
  * @author escowles
  * @since 2015-04-24
  */
-public class PrefixingIdentifierTranslator extends IdentifierConverter<Resource, String> {
+public class PrefixingIdentifierTranslator implements InjectiveConverter<Resource, String> {
 
 
     private static final NodeResourceConverter nodeResourceConverter = new NodeResourceConverter();
@@ -71,8 +71,8 @@ public class PrefixingIdentifierTranslator extends IdentifierConverter<Resource,
     }
 
 
-    protected Converter<String, String> forward = identity();
-    protected Converter<String, String> reverse = identity();
+    protected Converter<String, String> forward = identity(String.class);
+    protected Converter<String, String> reverse = identity(String.class);
 
     /*
      * TODO: much of what happens with chains of translators inside these converters should be factored
@@ -121,8 +121,7 @@ public class PrefixingIdentifierTranslator extends IdentifierConverter<Resource,
         return createResource(resourceNamespace + reverse.apply(relativePath));
     }
 
-    @Override
-    public String asString(final Resource subject) {
+    private String asString(final Resource subject) {
         if (!inDomain(subject)) {
             return null;
         }

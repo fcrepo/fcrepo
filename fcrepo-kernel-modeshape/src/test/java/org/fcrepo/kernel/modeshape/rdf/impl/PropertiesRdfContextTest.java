@@ -151,7 +151,7 @@ public class PropertiesRdfContextTest {
         try (final PropertiesRdfContext propertiesRdfContext = new PropertiesRdfContext(mockBinary, idTranslator)) {
             final Model results = propertiesRdfContext.collect(toModel());
 
-            final Resource correctSubject = mockBinary.graphResource(idTranslator);
+            final Resource correctSubject = mockBinary.asUri(idTranslator);
 
             results.listStatements().forEachRemaining(stmnt -> assertEquals(
                     "All subjects in triples created should be the resource processed!",

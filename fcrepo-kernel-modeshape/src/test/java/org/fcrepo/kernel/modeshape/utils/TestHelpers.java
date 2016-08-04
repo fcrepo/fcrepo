@@ -107,7 +107,7 @@ public abstract class TestHelpers {
 
     public static void mockResource(final FedoraResourceImpl resource, final String path, final Resource uri) {
         when(resource.getPath()).thenReturn(path);
-        when(resource.graphResource(any()))
+        when(resource.asUri(any()))
         .thenReturn(uri);
     }
 

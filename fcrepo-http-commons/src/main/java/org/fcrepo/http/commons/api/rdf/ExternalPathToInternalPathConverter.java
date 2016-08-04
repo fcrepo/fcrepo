@@ -24,8 +24,8 @@ import java.util.List;
 import java.util.ListIterator;
 
 import org.fcrepo.kernel.api.functions.Converter;
+import org.fcrepo.kernel.api.functions.InjectiveConverter;
 import org.fcrepo.kernel.modeshape.identifiers.HashConverter;
-import org.fcrepo.kernel.modeshape.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.modeshape.identifiers.NamespaceConverter;
 
 import org.slf4j.Logger;
@@ -39,7 +39,7 @@ import org.slf4j.Logger;
  * @author barmintor
  *
  */
-public class ExternalPathToInternalPathConverter extends IdentifierConverter<String, String> {
+public class ExternalPathToInternalPathConverter implements InjectiveConverter<String, String> {
 
     @SuppressWarnings("unused")
     private static final Logger LOGGER = getLogger(ExternalPathToInternalPathConverter.class);
@@ -88,8 +88,8 @@ public class ExternalPathToInternalPathConverter extends IdentifierConverter<Str
     }
 
     @Override
-    public String asString(final String resource) {
-        return apply(resource);
+    public boolean inDomain(final String a) {
+        return a != null;
     }
 
 }

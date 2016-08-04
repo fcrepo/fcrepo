@@ -22,13 +22,13 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-
+import org.fcrepo.kernel.api.functions.InjectiveConverter;
 /**
  * 
  * @author barmintor
  *
  */
-public class PathToNodeConverter extends IdentifierConverter<String, Node> {
+public class PathToNodeConverter implements InjectiveConverter<String, Node> {
 
     private final Session session;
     /**
@@ -58,8 +58,8 @@ public class PathToNodeConverter extends IdentifierConverter<String, Node> {
     }
 
     @Override
-    public String asString(final String resource) {
-        return resource;
+    public boolean inDomain(final String a) {
+        return a != null;
     }
 
 }

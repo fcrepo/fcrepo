@@ -126,7 +126,7 @@ public class LdpRdfContextTest {
     }
 
     private Resource subject() {
-        return mockResource.graphResource(subjects);
+        return mockResource.asUri(subjects);
     }
 
 }

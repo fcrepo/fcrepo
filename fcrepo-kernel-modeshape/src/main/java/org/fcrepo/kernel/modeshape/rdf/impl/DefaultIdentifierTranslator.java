@@ -20,7 +20,7 @@ package org.fcrepo.kernel.modeshape.rdf.impl;
 import javax.jcr.Session;
 
 /**
-  * A very simple {@link org.fcrepo.kernel.modeshape.identifiers.IdentifierConverter} which translates JCR paths into
+  * A very simple {@link org.fcrepo.kernel.api.functions.Converter} which translates JCR paths into
   * un-dereference-able Fedora subjects (by replacing JCR-specific names with
   * Fedora names). Should not be used except in "embedded" deployments in which
   * no publication of translated identifiers is expected!

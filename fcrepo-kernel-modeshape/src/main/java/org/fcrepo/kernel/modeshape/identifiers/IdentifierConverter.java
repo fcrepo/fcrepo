@@ -29,53 +29,16 @@ import org.fcrepo.kernel.api.functions.InjectiveConverter;
  * @since Mar 26, 2014
  * @param <B> the type to and from which we are translating
  */
+@Deprecated
 public abstract class IdentifierConverter<A, B> implements InjectiveConverter<A, B> {
-
-    /**
-     * Invert this conversion function
-     */
-    @Override
-    public IdentifierConverter<B, A> inverse() {
-        return new InverseIdentifierConverter<B,A>(this);
-    }
-
-    /**
-     * Check if the given resource is in the domain of this converter
-     * @param resource the given resource
-     * @return boolean value of the check
-     */
-    public boolean inDomain(final A resource) {
-        return apply(resource) != null;
-    }
 
     /**
      * Convert the given resource into a plain string representation of the conversion to the resource
      * @param resource the given resource
      * @return a plain string representation of the conversion to the resource
      */
+    @Deprecated
     abstract public String asString(final A resource);
-
-    /**
-     * Compose a function from this and a second IdentifierConverter
-     * @param second
-     * @return
-     */
-    public <C> IdentifierConverter<A, C> andThen(final IdentifierConverter<B, C> second) {
-        return new CompositeIdentifierConverter<>(this, second);
-    }
-
-    /**
-     * Compose a function from a second IdentifierConverter and this
-     * @param second
-     * @return
-     */
-    public <C> IdentifierConverter<C, B> compose(final IdentifierConverter<C, A> second) {
-        return new CompositeIdentifierConverter<>(second, this);
-    }
-
-    protected <T> InjectiveConverter<T,T> identity() {
-        return new Identity<>();
-    }
 
     static class Identity<T> implements InjectiveConverter<T, T> {
 

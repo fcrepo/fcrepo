@@ -36,9 +36,9 @@ import javax.ws.rs.core.Response;
 
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.http.commons.AbstractResource;
+import org.fcrepo.kernel.api.functions.InjectiveConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.RepositoryService;
-import org.fcrepo.kernel.modeshape.identifiers.IdentifierConverter;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
@@ -103,13 +103,13 @@ public class FedoraRepositoryRestore extends AbstractResource {
     }
 
     @Override
-    protected IdentifierConverter<Resource, String> translator() {
+    protected InjectiveConverter<Resource, String> translator() {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    protected IdentifierConverter<Resource, FedoraResource> graphToResource() {
+    protected InjectiveConverter<Resource, FedoraResource> uriToResource() {
         // TODO Auto-generated method stub
         return null;
     }

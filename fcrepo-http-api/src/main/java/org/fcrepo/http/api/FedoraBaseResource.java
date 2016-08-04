@@ -29,9 +29,9 @@ import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.kernel.api.exception.SessionMissingException;
 import org.fcrepo.kernel.api.exception.TombstoneException;
+import org.fcrepo.kernel.api.functions.InjectiveConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.Tombstone;
-import org.fcrepo.kernel.modeshape.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.modeshape.identifiers.InternalPathToNodeConverter;
 
 import org.slf4j.Logger;
@@ -57,11 +57,11 @@ abstract public class FedoraBaseResource extends AbstractResource {
     @Inject
     protected Session session;
 
-    protected IdentifierConverter<Resource, FedoraResource> graphToResource;
+    protected InjectiveConverter<Resource, FedoraResource> uriToResource;
 
 
     @Override
-    protected IdentifierConverter<Resource, String> translator() {
+    protected InjectiveConverter<Resource, String> translator() {
         if (idTranslator == null) {
             idTranslator =
                     new HttpResourceConverter(session(), uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class));
@@ -71,14 +71,14 @@ abstract public class FedoraBaseResource extends AbstractResource {
     }
 
     @Override
-    protected IdentifierConverter<Resource, FedoraResource> graphToResource() {
-        if (graphToResource == null) {
-            graphToResource = translator()
+    protected InjectiveConverter<Resource, FedoraResource> uriToResource() {
+        if (uriToResource == null) {
+            uriToResource = translator()
                     .andThen(new InternalPathToNodeConverter(session()))
                     .andThen(org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter);
         }
 
-        return graphToResource;
+        return uriToResource;
     }
 
     /**
@@ -88,7 +88,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
      * @return the Jena node
      */
     protected Node asNode(final FedoraResource resource) {
-        return resource.graphResource(translator()).asNode();
+        return resource.asUri(translator()).asNode();
     }
 
     /**
@@ -99,7 +99,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
     @VisibleForTesting
     public FedoraResource getResourceFromPath(final String externalPath) {
         final Resource resource = translator().toDomain(externalPath);
-        final FedoraResource fedoraResource = graphToResource().apply(resource);
+        final FedoraResource fedoraResource = uriToResource().apply(resource);
         if (fedoraResource instanceof Tombstone) {
             throw new TombstoneException(fedoraResource, resource.getURI() + "/fcr:tombstone");
         }

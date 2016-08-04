@@ -20,8 +20,8 @@ package org.fcrepo.auth.integration;
 import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
+import org.fcrepo.kernel.api.functions.InjectiveConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.modeshape.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.modeshape.identifiers.InternalPathToNodeConverter;
 import org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter;
 import org.modeshape.jcr.api.JcrTools;
@@ -81,7 +81,7 @@ public class RootTestResource extends AbstractResource {
     }
 
     @Override
-    protected IdentifierConverter<Resource,String> translator() {
+    protected InjectiveConverter<Resource,String> translator() {
         return new HttpResourceConverter(session,
                     uriInfo.getBaseUriBuilder().clone().path(RootTestResource.class)) {
             /**
@@ -94,7 +94,7 @@ public class RootTestResource extends AbstractResource {
     }
 
     @Override
-    protected IdentifierConverter<Resource, FedoraResource> graphToResource() {
+    protected InjectiveConverter<Resource, FedoraResource> uriToResource() {
         return translator()
                 .andThen(new InternalPathToNodeConverter(session))
                 .andThen(NodeResourceConverter.nodeConverter);

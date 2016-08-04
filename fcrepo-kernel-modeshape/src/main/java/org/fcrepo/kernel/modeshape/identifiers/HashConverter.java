@@ -27,6 +27,8 @@ public class HashConverter extends InternalIdentifierConverter {
 
     @Override
     public String apply(final String externalId) {
+        // this is called multiple times, so if the input appears to
+        // have been processed already pass it on unmodified
         if (!inDomain(externalId)) {
             return externalId;
         }
@@ -39,6 +41,9 @@ public class HashConverter extends InternalIdentifierConverter {
         return result;
     }
 
+    /**
+     * @return true if the input string has not had a '#' converted into a path segment  '/#/'
+     */
     @Override
     public boolean inDomain(final String inputId) {
         return inputId != null && inputId.indexOf("#/") == -1;

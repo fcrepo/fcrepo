@@ -365,7 +365,7 @@ public class PropertyToTripleTest {
         when(mockSession.getNode(TEST_NODE_PATH)).thenReturn(mockNode);
         when(mockNode.getNode(TEST_NODE_PATH)).thenReturn(mockNode);
         when(mockNode.getPath()).thenReturn(TEST_NODE_PATH);
-        testSubject = nodeConverter.apply(mockNode).graphResource(idTranslator).asNode();
+        testSubject = nodeConverter.apply(mockNode).asUri(idTranslator).asNode();
     }
 
     private PropertyToTriple testPropertyToTriple;

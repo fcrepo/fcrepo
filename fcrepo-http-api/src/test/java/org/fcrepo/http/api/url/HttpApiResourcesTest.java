@@ -76,7 +76,7 @@ public class HttpApiResourcesTest {
     public void shouldDecorateModeRootNodesWithRepositoryWideLinks() {
         when(mockResource.hasType(FEDORA_REPOSITORY_ROOT)).thenReturn(true);
         final Resource graphSubject = mockSubjects.toDomain(mockResource.getPath());
-        when(mockResource.graphResource(mockSubjects)).thenReturn(graphSubject);
+        when(mockResource.asUri(mockSubjects)).thenReturn(graphSubject);
 
         final Model model =
             testObj.createModelForResource(mockResource, uriInfo, mockSubjects);
@@ -90,7 +90,7 @@ public class HttpApiResourcesTest {
         when(mockResource.isVersioned()).thenReturn(true);
         when(mockResource.getPath()).thenReturn("/some/path/to/object");
         final Resource graphSubject = mockSubjects.toDomain(mockResource.getPath());
-        when(mockResource.graphResource(mockSubjects)).thenReturn(graphSubject);
+        when(mockResource.asUri(mockSubjects)).thenReturn(graphSubject);
 
         final Model model =
             testObj.createModelForResource(mockResource, uriInfo, mockSubjects);
@@ -104,7 +104,7 @@ public class HttpApiResourcesTest {
         when(mockResource.isVersioned()).thenReturn(false);
         when(mockResource.getPath()).thenReturn("/some/path/to/object");
         final Resource graphSubject = mockSubjects.toDomain(mockResource.getPath());
-        when(mockResource.graphResource(mockSubjects)).thenReturn(graphSubject);
+        when(mockResource.asUri(mockSubjects)).thenReturn(graphSubject);
 
         final Model model =
                 testObj.createModelForResource(mockResource, uriInfo, mockSubjects);
@@ -117,7 +117,7 @@ public class HttpApiResourcesTest {
         when(mockBinary.getPath()).thenReturn("/some/path/to/datastream");
         when(mockBinary.getDescribedResource()).thenReturn(mockBinary);
         final Resource graphSubject = mockSubjects.toDomain(mockBinary.getPath());
-        when(mockBinary.graphResource(mockSubjects)).thenReturn(graphSubject);
+        when(mockBinary.asUri(mockSubjects)).thenReturn(graphSubject);
 
         final Model model =
             testObj.createModelForResource(mockBinary, uriInfo, mockSubjects);

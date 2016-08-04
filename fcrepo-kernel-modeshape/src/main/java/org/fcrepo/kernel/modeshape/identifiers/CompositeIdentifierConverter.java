@@ -26,18 +26,15 @@ package org.fcrepo.kernel.modeshape.identifiers;
  * @param <B>
  * @param <C>
  */
+@Deprecated
 public class CompositeIdentifierConverter<A, B, C> extends IdentifierConverter<A, C> {
 
     final IdentifierConverter<A,B> first;
-    final IdentifierConverter<B,A> firstReverse;
     final IdentifierConverter<B,C> second;
-    final IdentifierConverter<C,B> secondReverse;
 
     CompositeIdentifierConverter(final IdentifierConverter<A,B> first, final IdentifierConverter<B,C> second) {
         this.first = first;
-        this.firstReverse = first.inverse();
         this.second = second;
-        this.secondReverse = second.inverse();
     }
 
     @Override
@@ -51,6 +48,7 @@ public class CompositeIdentifierConverter<A, B, C> extends IdentifierConverter<A
     }
 
     @Override
+    @Deprecated
     public String asString(final A resource) {
         return second.asString(first.apply(resource));
     }

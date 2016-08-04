@@ -259,8 +259,8 @@ public interface FedoraResource {
     FedoraResource getDescribedResource();
 
     /**
-     * Get a graph resource corresponding to this resource
+     * Get an externalized URI corresponding to this resource
      * @return a graph resource
      */
-    Resource graphResource(Converter<Resource, String> idTranslator);
+    Resource asUri(Converter<Resource, String> idTranslator);
 }

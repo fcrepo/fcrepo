@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.modeshape.identifiers;
+package org.fcrepo.kernel.api.functions;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -28,11 +28,11 @@ import org.junit.Test;
  * @author barmintor
  *
  */
-public class IdentifierConverterTest {
+public class InjectiveConverterTest {
 
     @Test
     public void testAndThen() {
-        final IdentifierConverter<String, char[]> composite = new Reverse().andThen(new ToCharArray());
+        final InjectiveConverter<String, char[]> composite = new Reverse().andThen(new ToCharArray());
         final String before = "a,b,c";
         final char[] after = new char[]{'c',',','b',',','a'};
         assertEquals(new String(after), new String(composite.apply(before)));
@@ -42,7 +42,7 @@ public class IdentifierConverterTest {
 
     @Test
     public void testComposition() {
-        final IdentifierConverter<String, char[]> composite = new ToCharArray().compose(new Reverse());
+        final InjectiveConverter<String, char[]> composite = new ToCharArray().compose(new Reverse());
         final String before = "a,b,c";
         final char[] after = new char[]{'c',',','b',',','a'};
         assertEquals(new String(after), new String(composite.apply(before)));
@@ -50,7 +50,7 @@ public class IdentifierConverterTest {
         assertNull(composite.apply(null));
     }
 
-    static class Reverse extends IdentifierConverter<String, String> {
+    static class Reverse implements InjectiveConverter<String, String> {
 
         private String nullOrReverse(final String resource) {
             if (resource == null) {
@@ -66,23 +66,18 @@ public class IdentifierConverterTest {
         }
 
         @Override
-        public String asString(final String resource) {
-            return nullOrReverse(resource);
-        }
-
-        @Override
         public String apply(final String a) {
             return nullOrReverse(a);
         }
 
         @Override
-        public IdentifierConverter<String, String> inverse() {
-            return this;
+        public boolean inDomain(final String a) {
+            return a != null;
         }
 
     }
 
-    static class ToCharArray extends IdentifierConverter<String, char[]> {
+    static class ToCharArray implements InjectiveConverter<String, char[]> {
 
         @Override
         public String toDomain(final char[] resource) {
@@ -94,17 +89,17 @@ public class IdentifierConverterTest {
         }
 
         @Override
-        public String asString(final String resource) {
-            return resource;
-        }
-
-        @Override
         public char[] apply(final String a) {
             if (a == null) {
                 return null;
             } else {
                 return a.toCharArray();
             }
+        }
+
+        @Override
+        public boolean inDomain(final String a) {
+            return a != null;
         }
     }
 }
