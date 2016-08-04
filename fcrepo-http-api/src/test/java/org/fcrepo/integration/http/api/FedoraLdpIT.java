@@ -760,7 +760,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         // Next, update the description
         final HttpPatch httpPatch = patchObjMethod(id + "/binary/fcr:metadata");
+        assertTrue("Expected weak ETag", descEtag1.startsWith("W/"));
         httpPatch.addHeader("Content-Type", "application/sparql-update");
+        httpPatch.addHeader("If-Match", descEtag1.substring(2));
         httpPatch.setEntity(new StringEntity(
                 "INSERT { <> <http://purl.org/dc/elements/1.1/title> 'this is a title' } WHERE {}"));
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(httpPatch));
@@ -805,8 +807,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         // Next, update the binary itself
         final HttpPut method2 = new HttpPut(location);
+        assertFalse("Expected strong ETag", binaryEtag1.startsWith("W/"));
+        method2.addHeader("If-Match", binaryEtag1);
         method2.setEntity(new StringEntity("foobar"));
         try (final CloseableHttpResponse response = execute(method2)) {
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
             binaryEtag3 = response.getFirstHeader("ETag").getValue();
             binaryLastModed3 = response.getFirstHeader("Last-Modified").getValue();
         }
