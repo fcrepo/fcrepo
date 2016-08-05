@@ -47,16 +47,14 @@ public class ExternalPathToInternalPathConverter extends ChainWrappingConverter<
      * Build a converter with the default transforms
      */
     public ExternalPathToInternalPathConverter() {
-        setTranslationChain(defaultList());
+        setTranslationChain(defaultList);
     }
 
     @SuppressWarnings("rawtypes")
-    static List<InjectiveConverter> defaultList() {
-        return ImmutableList.of(new HashConverter(), new NamespaceConverter());
-    }
+    static List<InjectiveConverter> defaultList = ImmutableList.of(new HashConverter(), new NamespaceConverter());
 
     @Override
     public boolean inDomain(final String a) {
-        return a != null;
+        return a != null && super.inDomain(a);
     }
 }

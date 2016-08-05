@@ -26,9 +26,9 @@ package org.fcrepo.kernel.api.functions;
  */
 class CompositeConverter<A, C> implements Converter<A, C> {
 
-    protected final Converter<A, ?> first;
+    private final Converter<A, ?> first;
 
-    protected final Converter<?, C> second;
+    private final Converter<?, C> second;
 
     @SuppressWarnings("unchecked")
     protected <B> Converter<A, B> first() {

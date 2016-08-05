@@ -336,7 +336,7 @@ public class HttpResourceConverter extends SessionBearingConverter<Resource, Str
             LOGGER.debug("Retrieving translation chain from Spring configuration.");
             return context.getBean("translationChain", List.class);
         }
-        return ExternalPathToInternalPathConverter.defaultList();
+        return ExternalPathToInternalPathConverter.defaultList;
     }
 
     protected ApplicationContext getApplicationContext() {

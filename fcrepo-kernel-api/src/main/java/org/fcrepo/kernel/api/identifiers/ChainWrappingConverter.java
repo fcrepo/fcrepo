@@ -41,7 +41,7 @@ public class ChainWrappingConverter<A, B> implements InjectiveConverter<A, B> {
 
     private static final Logger log = getLogger(ChainWrappingConverter.class);
 
-    private InjectiveConverter chain = new CompositeInjectiveConverter<>(identity(), identity());
+    private InjectiveConverter chain = identity();
 
     @Override
     public A toDomain(final B b) {
@@ -83,12 +83,10 @@ public class ChainWrappingConverter<A, B> implements InjectiveConverter<A, B> {
             final Iterator<InjectiveConverter> converters = chain.iterator();
             this.chain = new CompositeInjectiveConverter<>(converters.next(), converters.next());
             converters.forEachRemaining(this::add);
-            break;
         }
     }
 
     protected void add(final InjectiveConverter addend) {
         chain = chain.andThen(addend);
     }
-
 }
