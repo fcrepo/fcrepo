@@ -82,7 +82,7 @@ public class ReferencesRdfContextTest {
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
-        translator = new DefaultIdentifierTranslator(mockSession);
+        translator = new DefaultIdentifierTranslator();
         when(mockResource.getNode()).thenReturn(mockNode);
         mockResource(mockResource, "/a");
         when(mockNode.getPath()).thenReturn("/a");

@@ -26,7 +26,6 @@ import org.mockito.Mock;
 import javax.jcr.Session;
 import java.util.Arrays;
 
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -53,24 +52,23 @@ public class PrefixingIdentifierTranslatorTest {
     public static Iterable<String[]> data() {
         return Arrays.asList(new String[][]{
                 {"/", "http://example.com:8080/rest/"},
-                {"/some/path", "http://example.com:8080/rest/some/path"},
-                {"/some/path/#/with-a-hash-uri", "http://example.com:8080/rest/some/path#with-a-hash-uri"}
+                {"/some/path", "http://example.com:8080/rest/some/path"}
         });
     }
 
     @Before
     public void setUp() {
         initMocks(this);
-        testObj = new PrefixingIdentifierTranslator(mockSession, "http://example.com:8080/rest/");
+        testObj = new PrefixingIdentifierTranslator("http://example.com:8080/rest/");
     }
 
     @Test
     public void testApply() {
-        assertEquals(internalId, testObj.apply(createResource(externalId)));
+        assertEquals(internalId, testObj.apply(externalId));
     }
 
     @Test
     public void testToDomain() {
-        assertEquals(createResource(externalId), testObj.toDomain(internalId));
+        assertEquals(externalId, testObj.toDomain(internalId));
     }
 }

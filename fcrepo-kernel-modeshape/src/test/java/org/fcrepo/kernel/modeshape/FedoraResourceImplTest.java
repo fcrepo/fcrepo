@@ -29,6 +29,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_NODE;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
+import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
 import static org.fcrepo.kernel.modeshape.testutilities.TestNodeIterator.nodeIterator;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
@@ -69,6 +70,7 @@ import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.modeshape.identifiers.PathToNodeConverter;
 import org.fcrepo.kernel.modeshape.rdf.JcrRdfTools;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.modeshape.testutilities.TestPropertyIterator;
@@ -119,7 +121,8 @@ public class FedoraResourceImplTest {
         testObj = new FedoraResourceImpl(mockNode);
         assertEquals(mockNode, getJcrNode(testObj));
 
-        mockSubjects = new DefaultIdentifierTranslator(mockSession).toResources();
+        mockSubjects = new DefaultIdentifierTranslator().andThen(new PathToNodeConverter(mockSession)
+                .andThen(nodeConverter));
     }
 
     @Test
@@ -305,7 +308,7 @@ public class FedoraResourceImplTest {
     @Test(expected = MalformedRdfException.class)
     public void testReplacePropertiesDataset() throws RepositoryException {
 
-        final DefaultIdentifierTranslator defaultGraphSubjects = new DefaultIdentifierTranslator(mockSession);
+        final DefaultIdentifierTranslator defaultGraphSubjects = new DefaultIdentifierTranslator();
 
         when(mockNode.getPath()).thenReturn("/xyz");
         when(mockSession.getNode("/xyz")).thenReturn(mockNode);

@@ -36,12 +36,13 @@ import org.slf4j.Logger;
  * @author awoods
  * @author cbeer
  * @author fasseg
+ * @author ajs6f
  */
 @Provider
 public class WildcardExceptionMapper implements
         ExceptionMapper<Exception>, ExceptionDebugLogging {
 
-    Boolean showStackTrace = true;
+    boolean showStackTrace = true;
 
     private static final Logger LOGGER =
         getLogger(WildcardExceptionMapper.class);

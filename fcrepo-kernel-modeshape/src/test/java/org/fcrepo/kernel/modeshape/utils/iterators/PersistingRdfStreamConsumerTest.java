@@ -106,7 +106,7 @@ public class PersistingRdfStreamConsumerTest {
     @Before
     public void setUp() {
         initMocks(this);
-        idTranslator = new DefaultIdentifierTranslator(mockSession);
+        idTranslator = new DefaultIdentifierTranslator();
     }
 
     private static final Model m = createDefaultModel();

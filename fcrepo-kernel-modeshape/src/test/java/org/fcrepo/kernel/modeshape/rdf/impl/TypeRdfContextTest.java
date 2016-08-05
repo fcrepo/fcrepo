@@ -111,7 +111,7 @@ public class TypeRdfContextTest {
         when(mockResource.getNode()).thenReturn(mockNode);
         mockResource(mockResource, "/" + mockNodeName);
 
-        idTranslator = new DefaultIdentifierTranslator(mockSession);
+        idTranslator = new DefaultIdentifierTranslator();
     }
 
     @Test

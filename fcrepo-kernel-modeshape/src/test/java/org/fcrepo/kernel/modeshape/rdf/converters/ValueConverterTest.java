@@ -155,7 +155,7 @@ public class ValueConverterTest {
     public void setUp() throws RepositoryException {
 
         session = repo.login();
-        subjects = new DefaultIdentifierTranslator(session);
+        subjects = new DefaultIdentifierTranslator();
         testObj = new ValueConverter(session, subjects);
     }
 

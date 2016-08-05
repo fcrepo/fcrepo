@@ -15,51 +15,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.kernel.api.functions;
 
-import static java.util.Collections.singleton;
-import static java.util.stream.Collector.Characteristics.IDENTITY_FINISH;
-
-import java.util.Set;
-import java.util.function.BiConsumer;
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Collector;
-
 /**
- *
  * @author barmintor
  * @author ajs6f
- *
  * @param <A> the domain of the first chained function
- * @param <B> the range of the first and domain of the second functions
  * @param <C> the range of the second function
  */
-class CompositeConverter<A, B, C> implements Converter<A, C>,
-        Collector<Converter, CompositeConverter, CompositeConverter> {
+class CompositeConverter<A, C> implements Converter<A, C> {
 
-    protected Converter<A,B> first;
-    protected Converter<B,C> second;
+    protected final Converter<A, ?> first;
 
+    protected final Converter<?, C> second;
 
-    protected Converter<A, B> first() {
-        return first;
+    @SuppressWarnings("unchecked")
+    protected <B> Converter<A, B> first() {
+        return (Converter<A, B>) first;
     }
 
-    protected Converter<B, C> second() {
-        return second;
-    }
-
-    protected CompositeConverter() {
+    @SuppressWarnings("unchecked")
+    protected <B> Converter<B, C> second() {
+        return (Converter<B, C>) second;
     }
 
     /**
-     *
      * @param first the first function
      * @param second the function to be applied to outputs from the first
      */
-    public CompositeConverter(final Converter<A,B> first, final Converter<B,C> second) {
+    public <B> CompositeConverter(final Converter<A, B> first, final Converter<B, C> second) {
         this.first = first;
         this.second = second;
     }
@@ -71,45 +56,11 @@ class CompositeConverter<A, B, C> implements Converter<A, C>,
 
     @Override
     public boolean inDomain(final A a) {
-        return first().inDomain(a);
+        return first().inDomain(a) && second().inDomain(first().apply(a));
     }
 
     @Override
     public Converter<C, A> inverse() {
-        return second().inverse().andThen(first.inverse());
+        return second().inverse().andThen(first().inverse());
     }
-
-    @Override
-    public Supplier<CompositeConverter> supplier() {
-        return () -> new CompositeConverter();
-    }
-
-    @Override
-    public BiConsumer<CompositeConverter, Converter> accumulator() {
-        return (composite, converter) -> {
-            if (composite.first == null) {
-                composite.first = converter;
-            } else if (composite.second == null) {
-                composite.second = converter;
-            } else {
-                composite = new CompositeConverter<>(composite, converter);
-            }
-        };
-    }
-
-    @Override
-    public BinaryOperator<CompositeConverter> combiner() {
-        return (left, right) -> (CompositeConverter) left.andThen(right);
-    }
-
-    @Override
-    public Function<CompositeConverter, CompositeConverter> finisher() {
-        return converter -> converter;
-    }
-
-    @Override
-    public Set<java.util.stream.Collector.Characteristics> characteristics() {
-        return singleton(IDENTITY_FINISH);
-    }
-
 }

@@ -59,7 +59,7 @@ public class DefaultIdentifierTranslatorTest {
     @Before
     public void setUp() {
         initMocks(this);
-        testObj = new DefaultIdentifierTranslator(mockSession);
+        testObj = new DefaultIdentifierTranslator();
     }
 
     @Test

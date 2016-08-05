@@ -15,38 +15,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.functions;
 
+package org.fcrepo.kernel.modeshape.rdf.impl;
+
+import javax.jcr.Session;
+
+import org.fcrepo.kernel.api.identifiers.ChainWrappingConverter;
 
 /**
- * Simple inverse function that wraps an InvertibleFunction implementation
- * Assumes a bijective function.
- * @author barmintor
+ * A pipeline of identifier translation with access to a JCR repository
  *
+ * @author ajs6f
+ *
+ * @param <A> the input type
+ * @param <C> the output type
  */
-public class InverseFunctionWrapper<A, B> implements InjectiveFunction<A, B> {
+public class SessionBearingConverter<A, C> extends ChainWrappingConverter<A, C> {
 
-    private final InjectiveFunction<B, A> original;
+    protected Session session;
 
     /**
-     * @param original the function to be wrapped
+     * @param session the session to keep in scope
      */
-    public InverseFunctionWrapper(final InjectiveFunction<B, A> original) {
-        this.original = original;
+    public SessionBearingConverter(final Session session) {
+        this.session = session;
     }
 
-    @Override
-    public B apply(final A t) {
-        return original.toDomain(t);
-    }
-
-    @Override
-    public InvertibleFunction<B, A> inverse() {
-        return original;
-    }
-
-    @Override
-    public A toDomain(final B rangeValue) {
-        return original.apply(rangeValue);
-    }
 }

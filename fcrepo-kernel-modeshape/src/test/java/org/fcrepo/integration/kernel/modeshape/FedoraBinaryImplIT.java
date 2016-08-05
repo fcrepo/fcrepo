@@ -84,7 +84,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
     @Before
     public void setUp() throws RepositoryException {
-        idTranslator = new DefaultIdentifierTranslator(repo.login());
+        idTranslator = new DefaultIdentifierTranslator();
     }
 
     @Test

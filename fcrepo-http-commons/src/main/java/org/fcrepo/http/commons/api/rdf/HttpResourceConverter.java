@@ -42,11 +42,10 @@ import javax.ws.rs.core.UriBuilder;
 
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.api.functions.InjectiveConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.modeshape.identifiers.InternalPathToNodeConverter;
-import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
+import org.fcrepo.kernel.modeshape.rdf.impl.SessionBearingConverter;
 
 import org.glassfish.jersey.uri.UriTemplate;
 import org.slf4j.Logger;
@@ -63,13 +62,13 @@ import com.hp.hpl.jena.rdf.model.Resource;
  * @author ajs6f
  * @since 10/5/14
  */
-public class HttpResourceConverter extends DefaultIdentifierTranslator {
+public class HttpResourceConverter extends SessionBearingConverter<Resource, String> {
 
     private static final Logger LOGGER = getLogger(HttpResourceConverter.class);
 
     private final UriBuilder uriBuilder;
 
-    protected InjectiveConverter<String, String> pathProcessor = identity(String.class);
+    protected ExternalPathToInternalPathConverter pathProcessor;
 
     private final UriTemplate uriTemplate;
 
@@ -78,8 +77,7 @@ public class HttpResourceConverter extends DefaultIdentifierTranslator {
      * @param session the session
      * @param uriBuilder the uri builder
      */
-    public HttpResourceConverter(final Session session,
-                                 final UriBuilder uriBuilder) {
+    public HttpResourceConverter(final Session session, final UriBuilder uriBuilder) {
         super(session);
         this.uriBuilder = uriBuilder;
         this.uriTemplate = new UriTemplate(uriBuilder.toTemplate());
@@ -93,7 +91,13 @@ public class HttpResourceConverter extends DefaultIdentifierTranslator {
 
     @Override
     public String apply(final Resource resource) {
+        LOGGER.debug("Translating external identifier: {}", resource);
         return asString(resource);
+    }
+
+    @Override
+    public InjectiveConverter<String, Resource> inverse() {
+        return new InverseConverterWrapper<>(this);
     }
 
     @Override
@@ -106,7 +110,7 @@ public class HttpResourceConverter extends DefaultIdentifierTranslator {
 
     @Override
     public Resource toDomain(final String path) {
-
+        LOGGER.debug("Translating internal identifier: {}", path);
         String realPath;
         if (path == null) {
             realPath = "";
@@ -312,24 +316,25 @@ public class HttpResourceConverter extends DefaultIdentifierTranslator {
     }
 
     protected void resetTranslationChain() {
-        final List<Converter<String, String>> newChain = ImmutableList.<Converter<String, String>>builder().addAll(
+        @SuppressWarnings("rawtypes")
+        final List<InjectiveConverter> newChain = ImmutableList.<InjectiveConverter>builder().addAll(
                 getTranslationChain()).add(new TransactionIdentifierConverter(session)).build();
         setTranslationChain(newChain);
     }
 
     @Override
-    protected void setTranslationChain(final List<Converter<String, String>> chain) {
-        super.setTranslationChain(chain);
-        pathProcessor = new ExternalPathToInternalPathConverter(chain);
+    public void setTranslationChain(@SuppressWarnings("rawtypes") final List<InjectiveConverter> chain) {
+        pathProcessor = new ExternalPathToInternalPathConverter();
+        pathProcessor.setTranslationChain(chain);
     }
 
 
-    protected List<Converter<String,String>> getTranslationChain() {
+    @SuppressWarnings("rawtypes")
+    protected List<InjectiveConverter> getTranslationChain() {
         final ApplicationContext context = getApplicationContext();
         if (context != null) {
-            final List<Converter<String,String>> tchain =
-                    getApplicationContext().getBean("translationChain", List.class);
-            return tchain;
+            LOGGER.debug("Retrieving translation chain from Spring configuration.");
+            return context.getBean("translationChain", List.class);
         }
         return ExternalPathToInternalPathConverter.defaultList();
     }
@@ -349,7 +354,6 @@ public class HttpResourceConverter extends DefaultIdentifierTranslator {
      *
      * @return
      */
-    @Override
     public InjectiveConverter<Resource, Node> toNodes() {
         return this.andThen(new InternalPathToNodeConverter(session));
     }
@@ -358,7 +362,6 @@ public class HttpResourceConverter extends DefaultIdentifierTranslator {
      *
      * @return
      */
-    @Override
     public InjectiveConverter<Resource, FedoraResource> toResources() {
         return toNodes().andThen(nodeConverter);
     }

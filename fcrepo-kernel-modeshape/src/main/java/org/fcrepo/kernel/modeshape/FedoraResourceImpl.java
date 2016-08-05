@@ -809,13 +809,13 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
     /**
      * Check the input node to see if it includes the versionable mixin
-     * @param node
-     * @return
+     * @param node the node to test
+     * @return whether or not the node includes the versionable mixin
      */
     public static boolean isVersioned(final Node node) {
         try {
             return node.isNodeType("mix:versionable");
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
     }
@@ -863,9 +863,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     }
 
     /**
-     * 
-     * @param node
-     * @return
+     * @param node a node
+     * @return its closest versioned ancestor
      */
     public static Node getVersionedAncestor(final Node node) {
 
@@ -934,30 +933,30 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     }
 
     /**
-     * 
-     * @param input
-     * @return
+     *
+     * @param node a node
+     * @return the unfrozen node corresponding to it
      */
-    public static Node getUnfrozenNode(final Node input) {
-        if (!FedoraTypesUtils.isFrozenNode.test(input)) {
-            return input;
+    public static Node getUnfrozenNode(final Node node) {
+        if (!FedoraTypesUtils.isFrozenNode.test(node)) {
+            return node;
         }
 
         try {
-            final Session session = input.getSession();
+            final Session session = node.getSession();
             // Either this resource is frozen
-            if (input.hasProperty(JCR_FROZEN_UUID)) {
+            if (node.hasProperty(JCR_FROZEN_UUID)) {
                 try {
-                    return getNodeByProperty(session, input.getProperty(JCR_FROZEN_UUID));
+                    return getNodeByProperty(session, node.getProperty(JCR_FROZEN_UUID));
                 } catch (final ItemNotFoundException e) {
                     // The unfrozen resource has been deleted, return the tombstone.
-                    return input;
+                    return node;
                 }
 
                 // ..Or it is a child-version-history on a frozen path
-            } else if (input.hasProperty(JCR_CHILD_VERSION_HISTORY)) {
+            } else if (node.hasProperty(JCR_CHILD_VERSION_HISTORY)) {
                 final Node childVersionHistory = getNodeByProperty(session,
-                        input.getProperty(JCR_CHILD_VERSION_HISTORY));
+                        node.getProperty(JCR_CHILD_VERSION_HISTORY));
                 try {
                     return getNodeByProperty(
                             session,
@@ -1007,9 +1006,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     }
 
     /**
-     * 
-     * @param node
-     * @return
+     *
+     * @param node a node
+     * @return the version label for its frozen resource
      */
     public static String getVersionLabelOfFrozenResource(final Node node) {
         if (!isFrozenNode.test(node)) {
@@ -1052,9 +1051,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
     @Override
     public Resource asUri(final Converter<Resource, String> idTranslator) {
-        return idTranslator
-                .andThen(new InternalPathToNodeConverter(getSession()))
-                .inverse().apply(getNode());
+        return new InternalPathToNodeConverter(getSession()).inverse().andThen(idTranslator.inverse()).apply(
+                getNode());
     }
 
     private Node getNodeByProperty(final Property property) throws RepositoryException {

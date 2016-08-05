@@ -112,7 +112,7 @@ public class LdpIsMemberOfRdfContextTest {
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
 
-        subjects = new DefaultIdentifierTranslator(mockSession);
+        subjects = new DefaultIdentifierTranslator();
     }
 
     @Test

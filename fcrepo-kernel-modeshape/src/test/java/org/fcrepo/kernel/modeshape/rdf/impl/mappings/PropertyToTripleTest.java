@@ -354,7 +354,7 @@ public class PropertyToTripleTest {
     @Before
     public void setUp() throws ValueFormatException, RepositoryException {
         initMocks(this);
-        idTranslator = new DefaultIdentifierTranslator(mockSession);
+        idTranslator = new DefaultIdentifierTranslator();
         testPropertyToTriple = new PropertyToTriple(mockSession, idTranslator);
         when(mockProperty.getValue()).thenReturn(mockValue);
         when(mockProperty.getParent()).thenReturn(mockNode);

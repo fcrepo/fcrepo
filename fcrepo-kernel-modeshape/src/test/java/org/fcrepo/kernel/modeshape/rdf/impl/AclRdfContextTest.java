@@ -69,7 +69,7 @@ public class AclRdfContextTest {
         when(mockNode.getSession()).thenReturn(mockSession);
         mockResource(resource, path);
         nodeSubject = ResourceFactory.createResource("info:fedora" + path);
-        idTranslator = new DefaultIdentifierTranslator(mockSession);
+        idTranslator = new DefaultIdentifierTranslator();
     }
 
     @Test

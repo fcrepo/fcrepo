@@ -388,8 +388,7 @@ public class JcrRdfTools {
     }
 
     /**
-     * 
-     * @return
+     * @return the RDF resource to Fedora resource conversion in scope
      */
     public Converter<Resource, FedoraResource> resourceTranslator() {
         return this.idToResource;

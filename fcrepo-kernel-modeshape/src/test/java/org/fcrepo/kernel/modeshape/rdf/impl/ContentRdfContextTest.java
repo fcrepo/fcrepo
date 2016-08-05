@@ -96,7 +96,7 @@ public class ContentRdfContextTest {
         when(mockBinaryNode.getMixinNodeTypes()).thenReturn(new NodeType[]{});
         when(mockBinaryNode.hasProperties()).thenReturn(false);
         mockResource(mockBinary, "/mockNode/jcr:content");
-        idTranslator = new DefaultIdentifierTranslator(mockSession);
+        idTranslator = new DefaultIdentifierTranslator();
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockBinaryNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNodeType.getSupertypes()).thenReturn(new NodeType[] {mockNodeType});

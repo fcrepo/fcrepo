@@ -17,27 +17,8 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
-import static com.google.common.collect.Lists.newArrayList;
-import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-
-import com.google.common.collect.Lists;
-
-import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.api.functions.InjectiveConverter;
-
-import com.hp.hpl.jena.rdf.model.Resource;
-
-import org.fcrepo.kernel.modeshape.identifiers.HashConverter;
-import org.fcrepo.kernel.modeshape.identifiers.NamespaceConverter;
-import org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter;
-import org.fcrepo.kernel.modeshape.identifiers.PathToNodeConverter;
-
-import javax.jcr.Node;
-import javax.jcr.Session;
-
-import java.util.List;
 
 /**
  * A very simple {@link org.fcrepo.kernel.api.functions.Converter} which translates JCR paths into Fedora subjects with
@@ -49,95 +30,37 @@ import java.util.List;
  * @author escowles
  * @since 2015-04-24
  */
-public class PrefixingIdentifierTranslator implements InjectiveConverter<Resource, String> {
-
-
-    private static final NodeResourceConverter nodeResourceConverter = new NodeResourceConverter();
+public class PrefixingIdentifierTranslator implements InjectiveConverter<String, String> {
 
     private final String resourceNamespace;
-    protected final Session session;
 
     /**
-     * Construct the graph with the provided resource namespace, which will translate JCR paths into
-     * URIs prefixed with that namespace.  Should only be used when a REST API context is not available
-     * for constructing URIs.
-     * @param session Session to lookup nodes
+     * Construct the graph with the provided resource namespace, which will translate JCR paths into URIs prefixed
+     * with that namespace. Should only be used when a REST API context is not available for constructing URIs.
+     *
      * @param resourceNamespace Resource namespace (i.e., base URL)
-    **/
-    public PrefixingIdentifierTranslator(final Session session, final String resourceNamespace) {
-        this.session = session;
+     **/
+    public PrefixingIdentifierTranslator(final String resourceNamespace) {
         this.resourceNamespace = resourceNamespace;
-        setTranslationChain(minimalTranslationChain);
     }
-
-
-    protected Converter<String, String> forward = identity(String.class);
-    protected Converter<String, String> reverse = identity(String.class);
-
-    protected void setTranslationChain(final List<Converter<String, String>> chain) {
-        forward = chain.stream().collect(Converter.collect());
-        reverse = Lists.reverse(chain).stream().map(Converter::inverse).collect(Converter.collect());
-    }
-
-
-    @SuppressWarnings("unchecked")
-    public static final List<Converter<String, String>> minimalTranslationChain = newArrayList(
-            new NamespaceConverter(), new HashConverter());
 
     @Override
-    public String apply(final Resource subject) {
+    public String apply(final String subject) {
         if (!inDomain(subject)) {
             throw new RepositoryRuntimeException("Subject " + subject + " is not in this repository");
         }
-
-        return asString(subject);
+        final String path = subject.substring(resourceNamespace.length() - 1);
+        return path.isEmpty() ? "/" : path;
     }
 
     @Override
-    public boolean inDomain(final Resource subject) {
-        return subject.isURIResource() && subject.getURI().startsWith(resourceNamespace);
+    public boolean inDomain(final String subject) {
+        return subject.startsWith(resourceNamespace);
     }
 
     @Override
-    public Resource toDomain(final String absPath) {
-        final String relativePath;
-
-        if (absPath.startsWith("/")) {
-            relativePath = absPath.substring(1);
-        } else {
-            relativePath = absPath;
-        }
-        return createResource(resourceNamespace + reverse.apply(relativePath));
-    }
-
-    private String asString(final Resource subject) {
-        if (!inDomain(subject)) {
-            return null;
-        }
-
-        final String path = subject.getURI().substring(resourceNamespace.length() - 1);
-
-        final String absPath = forward.apply(path);
-
-        if (absPath.isEmpty()) {
-            return "/";
-        }
-        return absPath;
-    }
-
-    /**
-     * Convenience factory method
-     * @return
-     */
-    public Converter<Resource, Node> toNodes() {
-        return this.andThen(new PathToNodeConverter(session));
-    }
-
-    /**
-     * Convenience factory method
-     * @return
-     */
-    public Converter<Resource, FedoraResource> toResources() {
-        return toNodes().andThen(nodeResourceConverter);
+    public String toDomain(final String absPath) {
+        final String relativePath = absPath.startsWith("/") ? absPath.substring(1) : absPath;
+        return resourceNamespace + relativePath;
     }
 }

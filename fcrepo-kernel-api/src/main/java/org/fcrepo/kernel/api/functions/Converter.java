@@ -27,13 +27,6 @@ package org.fcrepo.kernel.api.functions;
 public interface Converter<A, B> extends InvertibleFunction<A, B>, DomainRestrictedFunction<A, B> {
 
     /**
-     * @return a {@link CompositeConverter} for use in stream collection
-     */
-    static <X,Y,Z> CompositeConverter<X,Y,Z> collect() {
-        return new CompositeConverter<>();
-    }
-
-    /**
      * @see org.fcrepo.kernel.api.functions.InvertibleFunction#inverse()
      * @return a Converter applying the inverse function
      */

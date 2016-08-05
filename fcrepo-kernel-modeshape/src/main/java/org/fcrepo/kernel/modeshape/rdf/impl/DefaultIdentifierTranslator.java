@@ -17,7 +17,16 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
-import javax.jcr.Session;
+import java.util.List;
+
+import org.fcrepo.kernel.api.functions.InjectiveConverter;
+import org.fcrepo.kernel.api.identifiers.ChainWrappingConverter;
+import org.fcrepo.kernel.modeshape.identifiers.HashConverter;
+import org.fcrepo.kernel.modeshape.identifiers.NamespaceConverter;
+
+import com.google.common.collect.ImmutableList;
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
 /**
   * A very simple {@link org.fcrepo.kernel.api.functions.Converter} which translates JCR paths into
@@ -30,14 +39,40 @@ import javax.jcr.Session;
  * @author escowles
  * @since May 15, 2013
  */
-public class DefaultIdentifierTranslator extends PrefixingIdentifierTranslator {
+public class DefaultIdentifierTranslator implements InjectiveConverter<Resource, String> {
+
+    public static String DEFAULT_PREFIX = "info:fedora/";
+
+    private final ChainWrappingConverter<String, String> internal = new ChainWrappingConverter<>();
 
     /**
-     * Construct the graph with a placeholder resource namespace
-     * @param session Session to lookup nodes
+     * Translation with a placeholder resource namespace
      */
-    public DefaultIdentifierTranslator(final Session session) {
-        super(session, "info:fedora/");
+    public DefaultIdentifierTranslator() {
+        @SuppressWarnings("rawtypes")
+        final List<InjectiveConverter> chain = ImmutableList.of(new NamespaceConverter(), new HashConverter(),
+                new PrefixingIdentifierTranslator(DEFAULT_PREFIX));
+        internal.setTranslationChain(chain);
+    }
+
+    @Override
+    public String apply(final Resource a) {
+        return internal.apply(a.getURI());
+    }
+
+    @Override
+    public boolean inDomain(final Resource a) {
+        return internal.inDomain(a.getURI());
+    }
+
+    @Override
+    public Resource toDomain(final String b) {
+        return ResourceFactory.createResource(internal.toDomain(b));
+    }
+
+    @Override
+    public InjectiveConverter<String, Resource> inverse() {
+        return new InverseConverterWrapper<>(this);
     }
 
 }

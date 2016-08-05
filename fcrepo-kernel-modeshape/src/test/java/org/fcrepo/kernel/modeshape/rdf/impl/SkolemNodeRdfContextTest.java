@@ -170,7 +170,7 @@ public class SkolemNodeRdfContextTest {
         when(mockReferenceValue.getType()).thenReturn(REFERENCE);
         when(mockSession.getNodeByIdentifier("zzzz")).thenReturn(mockOtherNode);
 
-        subjects = new DefaultIdentifierTranslator(mockSession);
+        subjects = new DefaultIdentifierTranslator();
     }
 
     @Test

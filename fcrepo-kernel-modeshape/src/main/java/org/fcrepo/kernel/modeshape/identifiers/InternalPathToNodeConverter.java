@@ -100,8 +100,8 @@ public class InternalPathToNodeConverter implements InjectiveConverter<String,No
 
     /**
      * Remove the suffixes for magic paths
-     * @param path
-     * @return
+     * @param path a path
+     * @return that path sans "URI elbows"
      */
     public static String trimSignalSuffixes(final String path) {
         return removeEnd(removeEnd(removeEnd(path,"/fcr:metadata"), "/fcr:tombstone"), "/jcr:content");
@@ -215,7 +215,7 @@ public class InternalPathToNodeConverter implements InjectiveConverter<String,No
     private Node getNode(final String path) throws RepositoryException {
         try {
             return session.getNode(path);
-        } catch (IllegalArgumentException ex) {
+        } catch (final IllegalArgumentException ex) {
             throw new InvalidResourceIdentifierException("Illegal path: " + path);
         }
     }
@@ -253,7 +253,7 @@ public class InternalPathToNodeConverter implements InjectiveConverter<String,No
     private static String getPath(final Node node) {
         try {
             return node.getPath();
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
     }
@@ -261,7 +261,7 @@ public class InternalPathToNodeConverter implements InjectiveConverter<String,No
     private static String getRelativePath(final Node child, final Node ancestor) {
         try {
             return child.getPath().substring(ancestor.getPath().length());
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
     }

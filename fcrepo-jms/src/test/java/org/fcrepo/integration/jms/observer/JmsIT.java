@@ -167,7 +167,7 @@ public class JmsIT implements MessageListener {
     public void testMetadataEvents() throws RepositoryException {
 
         final Session session = repository.login();
-        final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator(session);
+        final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator();
 
         try {
             final FedoraResource resource1 = containerService.findOrCreate(session, testMeta);

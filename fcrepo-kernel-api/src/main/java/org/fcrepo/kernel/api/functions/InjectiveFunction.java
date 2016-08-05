@@ -21,8 +21,8 @@ package org.fcrepo.kernel.api.functions;
  * An invertible function that is also reversible, i.e. injective.
  * @author barmintor
  *
- * @param <A>
- * @param <B>
+ * @param <A> the input type
+ * @param <B> the output type
  */
 
 public interface InjectiveFunction<A, B> extends InvertibleFunction<A, B> {
