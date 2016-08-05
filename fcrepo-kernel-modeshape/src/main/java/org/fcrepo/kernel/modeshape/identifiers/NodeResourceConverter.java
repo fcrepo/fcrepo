@@ -44,7 +44,7 @@ public class NodeResourceConverter implements InjectiveConverter<Node, FedoraRes
      * @return the converter that can transform a node to resource
      */
     public static Converter<Node, Resource> nodeToResource(final Converter<Resource, FedoraResource> c) {
-        return nodeConverter.andThen(c.inverse());
+        return nodeConverter.andThen(c.reverse());
     }
 
     @Override

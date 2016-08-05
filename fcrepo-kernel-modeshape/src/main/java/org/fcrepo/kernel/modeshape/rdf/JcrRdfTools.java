@@ -193,7 +193,7 @@ public class JcrRdfTools {
 
 
         if (type == UNDEFINED || type == STRING) {
-            return valueConverter.inverse().apply(data);
+            return valueConverter.reverse().apply(data);
         } else if (type == REFERENCE || type == WEAKREFERENCE) {
             // reference to another node (by path)
             if (!data.isURIResource()) {
@@ -443,7 +443,7 @@ public class JcrRdfTools {
 
             final Resource skolemizedSubject =
                     idTranslator.andThen(new InternalPathToNodeConverter(session))
-                    .inverse().apply(orCreateNode);
+                    .reverse().apply(orCreateNode);
             skolemizedBnodeMap.put(id, skolemizedSubject);
         }
 

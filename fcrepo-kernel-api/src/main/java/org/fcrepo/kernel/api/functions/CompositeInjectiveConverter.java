@@ -54,7 +54,7 @@ public class CompositeInjectiveConverter<A, C> extends CompositeConverter<A, C> 
     }
 
     @Override
-    public InjectiveConverter<C, A> inverse() {
-        return second().inverse().andThen(first().inverse());
+    public InjectiveConverter<C, A> reverse() {
+        return second().reverse().andThen(first().reverse());
     }
 }

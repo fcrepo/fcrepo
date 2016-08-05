@@ -32,7 +32,7 @@ public interface InjectiveConverter<A,B> extends InjectiveFunction<A, B>, Conver
     public static final Identity<?> IDENTITY = new Identity<>();
 
     @Override
-    default InjectiveConverter<B, A> inverse() {
+    default InjectiveConverter<B, A> reverse() {
         return new InverseConverterWrapper<>(this);
     }
 
@@ -85,7 +85,7 @@ public interface InjectiveConverter<A,B> extends InjectiveFunction<A, B>, Conver
         }
 
         @Override
-        public InjectiveConverter<T, T> inverse() {
+        public InjectiveConverter<T, T> reverse() {
             return this;
         }
 
@@ -119,7 +119,7 @@ public interface InjectiveConverter<A,B> extends InjectiveFunction<A, B>, Conver
         }
 
         @Override
-        public InjectiveConverter<A, B> inverse() {
+        public InjectiveConverter<A, B> reverse() {
             return wrapped;
         }
 

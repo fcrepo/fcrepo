@@ -51,7 +51,7 @@ class InverseConverterWrapper<A, B> implements InjectiveConverter<A, B> {
     }
 
     @Override
-    public InjectiveConverter<B, A> inverse() {
+    public InjectiveConverter<B, A> reverse() {
         return original;
     }
 

@@ -643,7 +643,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         final Converter<Resource, Node> toNodes =
                 idTranslator.andThen(new InternalPathToNodeConverter(getSession()));
         //final Converter<Resource, FedoraResource> toResources = toNodes.andThen(NodeResourceConverter.nodeConverter);
-        return new DefaultRdfStream(toNodes.inverse().apply(getNode()).asNode(), contexts.stream()
+        return new DefaultRdfStream(toNodes.reverse().apply(getNode()).asNode(), contexts.stream()
                 .filter(contextMap::containsKey)
                 .map(x -> contextMap.get(x).apply(this).apply(idTranslator).apply(contexts.contains(MINIMAL)))
                 .reduce(empty(), Stream::concat));
@@ -1051,7 +1051,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
     @Override
     public Resource asUri(final Converter<Resource, String> idTranslator) {
-        return new InternalPathToNodeConverter(getSession()).inverse().andThen(idTranslator.inverse()).apply(
+        return new InternalPathToNodeConverter(getSession()).reverse().andThen(idTranslator.reverse()).apply(
                 getNode());
     }
 

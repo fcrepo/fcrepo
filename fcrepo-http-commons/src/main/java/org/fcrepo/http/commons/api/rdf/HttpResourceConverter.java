@@ -96,7 +96,7 @@ public class HttpResourceConverter extends SessionBearingConverter<Resource, Str
     }
 
     @Override
-    public InjectiveConverter<String, Resource> inverse() {
+    public InjectiveConverter<String, Resource> reverse() {
         return new InverseConverterWrapper<>(this);
     }
 

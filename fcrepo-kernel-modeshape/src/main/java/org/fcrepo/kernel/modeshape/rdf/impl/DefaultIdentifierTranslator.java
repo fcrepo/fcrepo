@@ -71,7 +71,7 @@ public class DefaultIdentifierTranslator implements InjectiveConverter<Resource,
     }
 
     @Override
-    public InjectiveConverter<String, Resource> inverse() {
+    public InjectiveConverter<String, Resource> reverse() {
         return new InverseConverterWrapper<>(this);
     }
 

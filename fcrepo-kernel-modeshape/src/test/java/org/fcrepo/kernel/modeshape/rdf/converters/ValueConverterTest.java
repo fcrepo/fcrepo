@@ -97,7 +97,7 @@ public class ValueConverterTest {
 
     @Test
     public void test() {
-        assertThat(testObj.apply(testObj.inverse().apply(externalValue)), sameValueAs(externalValue));
+        assertThat(testObj.apply(testObj.reverse().apply(externalValue)), sameValueAs(externalValue));
     }
 
     @Parameters

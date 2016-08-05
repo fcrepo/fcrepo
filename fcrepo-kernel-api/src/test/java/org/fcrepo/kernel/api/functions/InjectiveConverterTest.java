@@ -36,7 +36,7 @@ public class InjectiveConverterTest {
         final String before = "a,b,c";
         final char[] after = new char[]{'c',',','b',',','a'};
         assertEquals(new String(after), new String(composite.apply(before)));
-        assertEquals(before, composite.inverse().apply(after));
+        assertEquals(before, composite.reverse().apply(after));
         assertNull(composite.apply(null));
     }
 
@@ -46,7 +46,7 @@ public class InjectiveConverterTest {
         final String before = "a,b,c";
         final char[] after = new char[]{'c',',','b',',','a'};
         assertEquals(new String(after), new String(composite.apply(before)));
-        assertEquals(before, composite.inverse().apply(after));
+        assertEquals(before, composite.reverse().apply(after));
         assertNull(composite.apply(null));
     }
 

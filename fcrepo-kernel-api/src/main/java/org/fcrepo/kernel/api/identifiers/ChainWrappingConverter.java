@@ -55,8 +55,8 @@ public class ChainWrappingConverter<A, B> implements InjectiveConverter<A, B> {
     }
 
     @Override
-    public InjectiveConverter<B, A> inverse() {
-        return chain.inverse();
+    public InjectiveConverter<B, A> reverse() {
+        return chain.reverse();
     }
 
     @Override

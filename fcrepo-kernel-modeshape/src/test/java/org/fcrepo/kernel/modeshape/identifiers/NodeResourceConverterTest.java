@@ -95,7 +95,7 @@ public class NodeResourceConverterTest {
 
     @Test
     public void testBackward() {
-        final Node actual = testObj.inverse().apply(mockResource);
+        final Node actual = testObj.reverse().apply(mockResource);
         assertEquals(mockNode, actual);
     }
 

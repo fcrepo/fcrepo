@@ -60,7 +60,7 @@ class CompositeConverter<A, C> implements Converter<A, C> {
     }
 
     @Override
-    public Converter<C, A> inverse() {
-        return second().inverse().andThen(first().inverse());
+    public Converter<C, A> reverse() {
+        return second().reverse().andThen(first().reverse());
     }
 }

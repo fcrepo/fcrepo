@@ -24,14 +24,14 @@ package org.fcrepo.kernel.api.functions;
  * @param <A> the type from which we are translating
  * @param <B> the type to which we are translating
  */
-public interface Converter<A, B> extends InvertibleFunction<A, B>, DomainRestrictedFunction<A, B> {
+public interface Converter<A, B> extends ReversibleFunction<A, B>, DomainRestrictedFunction<A, B> {
 
     /**
-     * @see org.fcrepo.kernel.api.functions.InvertibleFunction#inverse()
-     * @return a Converter applying the inverse function
+     * @see org.fcrepo.kernel.api.functions.ReversibleFunction#reverse()
+     * @return a Converter applying the reverse function
      */
     @Override
-    public Converter<B, A> inverse();
+    public Converter<B, A> reverse();
 
     /**
      * @param <C> the range type of the subsequent function

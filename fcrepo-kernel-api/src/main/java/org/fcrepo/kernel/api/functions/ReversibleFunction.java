@@ -26,11 +26,11 @@ import java.util.function.Function;
  * @param <A> the type from which we are translating
  * @param <B> the type to which we are translating
  */
-public interface InvertibleFunction<A, B> extends Function<A, B> {
+public interface ReversibleFunction<A, B> extends Function<A, B> {
     /**
-     * The inverse of the defined function
-     * @return the inverse of the defined function.
+     * The reverse of the defined function
+     * @return the reverse of the defined function.
      */
-    public InvertibleFunction<B, A> inverse();
+    public ReversibleFunction<B, A> reverse();
 
 }

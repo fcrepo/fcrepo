@@ -41,7 +41,7 @@ public class InverseFunctionWrapper<A, B> implements InjectiveFunction<A, B> {
     }
 
     @Override
-    public InvertibleFunction<B, A> inverse() {
+    public ReversibleFunction<B, A> reverse() {
         return original;
     }
 
