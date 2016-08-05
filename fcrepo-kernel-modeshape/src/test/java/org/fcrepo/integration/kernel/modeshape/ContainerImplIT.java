@@ -70,7 +70,7 @@ public class ContainerImplIT extends AbstractIT {
     @Before
     public void setUp() throws RepositoryException {
         session = repo.login();
-        subjects = new DefaultIdentifierTranslator(session);
+        subjects = new DefaultIdentifierTranslator();
     }
 
     @Test

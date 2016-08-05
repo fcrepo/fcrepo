@@ -62,7 +62,8 @@ public class HashRdfContext extends NodeRdfContext {
         super(resource, idTranslator);
 
         concat(getNodeStream(resource)
-                .flatMap(n -> nodeConverter.apply(n).getTriples(idTranslator, PROPERTIES))
+                .map(nodeConverter)
+                .flatMap(r -> r.getTriples(idTranslator, PROPERTIES))
                 .filter(IS_MANAGED_TRIPLE.negate()));
     }
 

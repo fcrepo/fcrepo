@@ -18,7 +18,6 @@
 package org.fcrepo.http.commons.api.rdf;
 
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
-import static java.util.Collections.singleton;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.replaceOnce;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
@@ -28,7 +27,6 @@ import static org.springframework.web.context.ContextLoader.getCurrentWebApplica
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,15 +42,16 @@ import javax.ws.rs.core.UriBuilder;
 
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.api.functions.InjectiveConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.modeshape.identifiers.InternalPathToNodeConverter;
+import org.fcrepo.kernel.modeshape.rdf.impl.SessionBearingConverter;
 
 import org.glassfish.jersey.uri.UriTemplate;
 import org.slf4j.Logger;
 import org.springframework.context.ApplicationContext;
 
+import com.google.common.collect.ImmutableList;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 /**
@@ -60,18 +59,16 @@ import com.hp.hpl.jena.rdf.model.Resource;
  * URI translation.
  *
  * @author cabeer
+ * @author ajs6f
  * @since 10/5/14
  */
-public class HttpResourceConverter implements InjectiveConverter<Resource,String> {
+public class HttpResourceConverter extends SessionBearingConverter<Resource, String> {
 
     private static final Logger LOGGER = getLogger(HttpResourceConverter.class);
 
-    protected List<Converter<String, String>> translationChain;
-
-    private final Session session;
     private final UriBuilder uriBuilder;
 
-    protected InjectiveConverter<String, String> pathProcessor = identity(String.class);
+    protected ExternalPathToInternalPathConverter pathProcessor;
 
     private final UriTemplate uriTemplate;
 
@@ -80,10 +77,8 @@ public class HttpResourceConverter implements InjectiveConverter<Resource,String
      * @param session the session
      * @param uriBuilder the uri builder
      */
-    public HttpResourceConverter(final Session session,
-                                 final UriBuilder uriBuilder) {
-
-        this.session = session;
+    public HttpResourceConverter(final Session session, final UriBuilder uriBuilder) {
+        super(session);
         this.uriBuilder = uriBuilder;
         this.uriTemplate = new UriTemplate(uriBuilder.toTemplate());
 
@@ -96,7 +91,13 @@ public class HttpResourceConverter implements InjectiveConverter<Resource,String
 
     @Override
     public String apply(final Resource resource) {
+        LOGGER.debug("Translating external identifier: {}", resource);
         return asString(resource);
+    }
+
+    @Override
+    public InjectiveConverter<String, Resource> reverse() {
+        return new InverseConverterWrapper<>(this);
     }
 
     @Override
@@ -109,7 +110,7 @@ public class HttpResourceConverter implements InjectiveConverter<Resource,String
 
     @Override
     public Resource toDomain(final String path) {
-
+        LOGGER.debug("Translating internal identifier: {}", path);
         String realPath;
         if (path == null) {
             realPath = "";
@@ -214,7 +215,7 @@ public class HttpResourceConverter implements InjectiveConverter<Resource,String
         }
         try {
             return session.getNode(path);
-        } catch (IllegalArgumentException ex) {
+        } catch (final IllegalArgumentException ex) {
             throw new InvalidResourceIdentifierException("Illegal path: " + path);
         }
     }
@@ -315,32 +316,27 @@ public class HttpResourceConverter implements InjectiveConverter<Resource,String
     }
 
     protected void resetTranslationChain() {
-        if (translationChain == null) {
-            translationChain = getTranslationChain();
-            final List<Converter<String, String>> newChain =
-                    new ArrayList<>(singleton(new TransactionIdentifierConverter(session)));
-            newChain.addAll(translationChain);
-            setTranslationChain(newChain);
-        }
+        @SuppressWarnings("rawtypes")
+        final List<InjectiveConverter> newChain = ImmutableList.<InjectiveConverter>builder().addAll(
+                getTranslationChain()).add(new TransactionIdentifierConverter(session)).build();
+        setTranslationChain(newChain);
     }
 
-    private void setTranslationChain(final List<Converter<String, String>> chained) {
-
-        translationChain = chained;
-
-        pathProcessor = new ExternalPathToInternalPathConverter(translationChain);
+    @Override
+    public void setTranslationChain(@SuppressWarnings("rawtypes") final List<InjectiveConverter> chain) {
+        pathProcessor = new ExternalPathToInternalPathConverter();
+        pathProcessor.setTranslationChain(chain);
     }
 
 
-    protected List<Converter<String,String>> getTranslationChain() {
+    @SuppressWarnings("rawtypes")
+    protected List<InjectiveConverter> getTranslationChain() {
         final ApplicationContext context = getApplicationContext();
         if (context != null) {
-            @SuppressWarnings("unchecked")
-            final List<Converter<String,String>> tchain =
-                    getApplicationContext().getBean("translationChain", List.class);
-            return tchain;
+            LOGGER.debug("Retrieving translation chain from Spring configuration.");
+            return context.getBean("translationChain", List.class);
         }
-        return ExternalPathToInternalPathConverter.defaultList();
+        return ExternalPathToInternalPathConverter.defaultList;
     }
 
     protected ApplicationContext getApplicationContext() {
@@ -355,7 +351,7 @@ public class HttpResourceConverter implements InjectiveConverter<Resource,String
     }
 
     /**
-     * 
+     *
      * @return
      */
     public InjectiveConverter<Resource, Node> toNodes() {
@@ -363,7 +359,7 @@ public class HttpResourceConverter implements InjectiveConverter<Resource,String
     }
 
     /**
-     * 
+     *
      * @return
      */
     public InjectiveConverter<Resource, FedoraResource> toResources() {

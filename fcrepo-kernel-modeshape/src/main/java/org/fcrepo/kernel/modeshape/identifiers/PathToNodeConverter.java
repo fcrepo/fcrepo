@@ -24,16 +24,17 @@ import javax.jcr.Session;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.functions.InjectiveConverter;
 /**
- * 
+ *
  * @author barmintor
  *
  */
 public class PathToNodeConverter implements InjectiveConverter<String, Node> {
 
     private final Session session;
+
     /**
-     * 
-     * @param session
+     *
+     * @param session the session to use for retrieving nodes
      */
     public PathToNodeConverter(final Session session) {
         this.session = session;
@@ -43,7 +44,7 @@ public class PathToNodeConverter implements InjectiveConverter<String, Node> {
     public String toDomain(final Node rangeValue) {
         try {
             return rangeValue.getPath();
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
     }
@@ -52,7 +53,7 @@ public class PathToNodeConverter implements InjectiveConverter<String, Node> {
     public Node apply(final String absPath) {
         try {
             return session.getNode(absPath);
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
     }

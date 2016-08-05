@@ -169,7 +169,7 @@ public class RdfRemoverTest {
         when(mockPropertyDefinition.getName()).thenReturn(propertyShortName);
         when(mockPropertyDefinition.getRequiredType()).thenReturn(STRING);
         // TODO? when(mockReverseGraphSubjects.convert(mockNode)).thenReturn(mockNodeSubject);
-        mockGraphSubjects = new DefaultIdentifierTranslator(mockSession);
+        mockGraphSubjects = new DefaultIdentifierTranslator();
         resource = new FedoraResourceImpl(mockNode);
         testStream = new DefaultRdfStream(createURI("subject"), mockTriples);
     }

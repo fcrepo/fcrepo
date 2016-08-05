@@ -60,7 +60,7 @@ public class PropertyToTriple implements Function<Property, Stream<Triple>> {
      */
     public PropertyToTriple(final Session session, final Converter<Resource, String> converter) {
         this.valueConverter = new ValueConverter(session, converter);
-        this.translator = converter.andThen(new InternalPathToNodeConverter(session)).inverse();
+        this.translator = converter.andThen(new InternalPathToNodeConverter(session)).reverse();
     }
 
     @Override

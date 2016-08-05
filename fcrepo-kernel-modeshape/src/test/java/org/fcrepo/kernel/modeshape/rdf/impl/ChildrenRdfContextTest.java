@@ -78,7 +78,7 @@ public class ChildrenRdfContextTest {
         when(mockResourceNode.getSession()).thenReturn(mockSession);
         mockResource(mockResource, RDF_PATH);
 
-        idTranslator = new DefaultIdentifierTranslator(mockSession);
+        idTranslator = new DefaultIdentifierTranslator();
     }
 
     @Test

@@ -21,6 +21,7 @@ import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
 import static com.hp.hpl.jena.vocabulary.RDF.type;
 import static javax.jcr.PropertyType.URI;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getPropertyType;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -45,6 +46,7 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
+import org.fcrepo.kernel.modeshape.identifiers.PathToNodeConverter;
 import org.fcrepo.kernel.modeshape.rdf.JcrRdfTools;
 
 import org.junit.Before;
@@ -131,8 +133,8 @@ public class JcrPropertyStatementListenerTest {
     public void setUp() throws RepositoryException {
         initMocks(this);
 
-        idTranslator = new DefaultIdentifierTranslator(mockSession);
-        resourceTranslator = idTranslator.toResources();
+        idTranslator = new DefaultIdentifierTranslator();
+        resourceTranslator = idTranslator.andThen(new PathToNodeConverter(mockSession).andThen(nodeConverter));
         when(mockNode.getSession()).thenReturn(mockSession);
         testObj = new JcrPropertyStatementListener(idTranslator, mockJcrRdfTools, mockTopic);
         mockResource = idTranslator.toDomain("/xyz");

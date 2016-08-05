@@ -15,22 +15,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.functions;
 
-import java.util.function.Function;
+package org.fcrepo.kernel.modeshape.rdf.impl;
+
+import javax.jcr.Session;
+
+import org.fcrepo.kernel.api.identifiers.ChainWrappingConverter;
 
 /**
- * @author acoburn
+ * A pipeline of identifier translation with access to a JCR repository
+ *
  * @author ajs6f
- * @since 7/3/16
- * @param <A> the type from which we are translating
- * @param <B> the type to which we are translating
+ *
+ * @param <A> the input type
+ * @param <C> the output type
  */
-public interface InvertibleFunction<A, B> extends Function<A, B> {
+public class SessionBearingConverter<A, C> extends ChainWrappingConverter<A, C> {
+
+    protected Session session;
+
     /**
-     * The inverse of the defined function
-     * @return the inverse of the defined function.
+     * @param session the session to keep in scope
      */
-    public InvertibleFunction<B, A> inverse();
+    public SessionBearingConverter(final Session session) {
+        this.session = session;
+    }
 
 }

@@ -27,9 +27,9 @@ package org.fcrepo.kernel.api.functions;
 public class InverseFunctionWrapper<A, B> implements InjectiveFunction<A, B> {
 
     private final InjectiveFunction<B, A> original;
+
     /**
-     * 
-     * @param original
+     * @param original the function to be wrapped
      */
     public InverseFunctionWrapper(final InjectiveFunction<B, A> original) {
         this.original = original;
@@ -41,7 +41,7 @@ public class InverseFunctionWrapper<A, B> implements InjectiveFunction<A, B> {
     }
 
     @Override
-    public InvertibleFunction<B, A> inverse() {
+    public ReversibleFunction<B, A> reverse() {
         return original;
     }
 

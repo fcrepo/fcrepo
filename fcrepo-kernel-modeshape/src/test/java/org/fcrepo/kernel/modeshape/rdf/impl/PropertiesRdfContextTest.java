@@ -119,7 +119,7 @@ public class PropertiesRdfContextTest {
         // Mock NonRDF Source
         when(mockBinary.getNode()).thenReturn(mockBinaryNode);
         when(mockBinaryNode.getSession()).thenReturn(mockSession);
-        idTranslator = new DefaultIdentifierTranslator(mockSession);
+        idTranslator = new DefaultIdentifierTranslator();
         mockResource(mockBinary, BINARY_PATH + "/jcr:content", idTranslator.toDomain(BINARY_PATH));
 
         when(mockBinary.getDescription()).thenReturn(mockNonRdfSourceDescription);

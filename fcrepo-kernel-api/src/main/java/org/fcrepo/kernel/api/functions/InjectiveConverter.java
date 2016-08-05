@@ -17,46 +17,55 @@
  */
 package org.fcrepo.kernel.api.functions;
 
+import static java.util.Objects.requireNonNull;
+
 /**
- * 
- * @author barmintor
  *
- * @param <A>
- * @param <B>
+ * @author barmintor
+ * @author ajs6f
+ *
+ * @param <A> the input type
+ * @param <B> the output type
  */
 public interface InjectiveConverter<A,B> extends InjectiveFunction<A, B>, Converter<A, B> {
+
+    public static final Identity<?> IDENTITY = new Identity<>();
+
     @Override
-    public default InjectiveConverter<B, A> inverse() {
+    default InjectiveConverter<B, A> reverse() {
         return new InverseConverterWrapper<>(this);
     }
 
     /**
      * A typed composition
      * @see java.util.function.Function
-     * @param after
-     * @return
+     * @param after the converter to append
+     * @param <C> the output type of the result
+     * @return a new converter snocing this and the input
      */
-    public default <C> InjectiveConverter<A, C> andThen(InjectiveConverter<B, C> after) {
-        return new CompositeInjectiveConverter<>(this, after);
+    default <C> InjectiveConverter<A, C> andThen(final InjectiveConverter<B, C> after) {
+        return new CompositeInjectiveConverter<>(this, requireNonNull(after, "Cannot compose with null!"));
     }
 
     /**
      * A typed composition
      * @see java.util.function.Function
-     * @param before
-     * @return
+     * @param before the converter to prefix
+     * @param <C> the input type of the result
+     * @return a new converter consing the input and this
      */
-    public default <C> InjectiveConverter<C, B> compose(InjectiveConverter<C, A> before) {
-        return new CompositeInjectiveConverter<>(before, this);
+    default <C> InjectiveConverter<C, B> compose(final InjectiveConverter<C, A> before) {
+        return new CompositeInjectiveConverter<>(requireNonNull(before, "Cannot compose with null!"), this);
     }
 
     /**
      * Convenience method for building a typed identity function
-     * @param klass
-     * @return
+     * @param <T> the type of the returned identity function
+     * @return a typed identity function
      */
-    public default <T> InjectiveConverter<T, T> identity(Class<T> klass) {
-        return new Identity<>();
+    @SuppressWarnings("unchecked")
+    static <T> InjectiveConverter<T, T> identity() {
+        return (InjectiveConverter<T, T>) IDENTITY;
     }
 
     static class Identity<T> implements InjectiveConverter<T, T> {
@@ -76,7 +85,7 @@ public interface InjectiveConverter<A,B> extends InjectiveFunction<A, B>, Conver
         }
 
         @Override
-        public InjectiveConverter<T, T> inverse() {
+        public InjectiveConverter<T, T> reverse() {
             return this;
         }
 
@@ -88,6 +97,35 @@ public interface InjectiveConverter<A,B> extends InjectiveFunction<A, B>, Conver
         @Override
         public <C> Converter<C, T> compose(final Converter<C, T> before) {
             return before;
+        }
+    }
+
+    static class InverseConverterWrapper<A, B> implements InjectiveConverter<B, A> {
+
+        private final InjectiveConverter<A, B> wrapped;
+
+        public InverseConverterWrapper(final InjectiveConverter<A, B> wrapped) {
+            this.wrapped = wrapped;
+        }
+
+        @Override
+        public B toDomain(final A a) {
+            return wrapped.apply(a);
+        }
+
+        @Override
+        public A apply(final B b) {
+            return wrapped.toDomain(b);
+        }
+
+        @Override
+        public InjectiveConverter<A, B> reverse() {
+            return wrapped;
+        }
+
+        @Override
+        public boolean inDomain(final B b) {
+            return wrapped.inRange(b);
         }
     }
 }

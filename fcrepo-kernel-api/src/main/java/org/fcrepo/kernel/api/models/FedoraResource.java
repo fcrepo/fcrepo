@@ -259,7 +259,8 @@ public interface FedoraResource {
     FedoraResource getDescribedResource();
 
     /**
-     * Get an externalized URI corresponding to this resource
+     * Get an external URI corresponding to this resource
+     * @param idTranslator the translation to use
      * @return a graph resource
      */
     Resource asUri(Converter<Resource, String> idTranslator);

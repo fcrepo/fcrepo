@@ -17,38 +17,20 @@
  */
 package org.fcrepo.kernel.api.functions;
 
+import java.util.function.Function;
+
 /**
  * @author acoburn
  * @author ajs6f
- * @since 6/20/16
+ * @since 7/3/16
  * @param <A> the type from which we are translating
  * @param <B> the type to which we are translating
  */
-public interface Converter<A, B> extends ReversibleFunction<A, B>, DomainRestrictedFunction<A, B> {
-
+public interface ReversibleFunction<A, B> extends Function<A, B> {
     /**
-     * @see org.fcrepo.kernel.api.functions.ReversibleFunction#reverse()
-     * @return a Converter applying the reverse function
+     * The reverse of the defined function
+     * @return the reverse of the defined function.
      */
-    @Override
-    public Converter<B, A> reverse();
+    public ReversibleFunction<B, A> reverse();
 
-    /**
-     * @param <C> the range type of the subsequent function
-     * @param after a converter to which this converter provides the domain
-     * @return a composite function
-     */
-    public default <C> Converter<A, C> andThen(final Converter<B, C> after) {
-        return new CompositeConverter<>(this, after);
-    }
-
-    /**
-     *
-     * @param <C> the domain type of the previous function
-     * @param before a converter for which the range is this converter's domain
-     * @return a composite function
-     */
-    public default <C> Converter<C, B> compose(final Converter<C, A> before) {
-        return new CompositeConverter<>(before, this);
-    }
 }

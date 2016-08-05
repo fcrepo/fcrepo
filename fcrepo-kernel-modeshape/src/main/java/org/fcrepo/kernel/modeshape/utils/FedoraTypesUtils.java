@@ -425,9 +425,9 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
     }
 
     /**
-     * 
-     * @param type
-     * @return
+     *
+     * @param type a type
+     * @return a predicate checking for the attachment of this type
      */
     public static Predicate<Node> typePredicate(final String type) {
         if (type.equals(FEDORA_REPOSITORY_ROOT)) {

@@ -97,7 +97,7 @@ public class ValueConverterTest {
 
     @Test
     public void test() {
-        assertThat(testObj.apply(testObj.inverse().apply(externalValue)), sameValueAs(externalValue));
+        assertThat(testObj.apply(testObj.reverse().apply(externalValue)), sameValueAs(externalValue));
     }
 
     @Parameters
@@ -155,7 +155,7 @@ public class ValueConverterTest {
     public void setUp() throws RepositoryException {
 
         session = repo.login();
-        subjects = new DefaultIdentifierTranslator(session);
+        subjects = new DefaultIdentifierTranslator();
         testObj = new ValueConverter(session, subjects);
     }
 

@@ -82,15 +82,7 @@ public class RootTestResource extends AbstractResource {
 
     @Override
     protected InjectiveConverter<Resource,String> translator() {
-        return new HttpResourceConverter(session,
-                    uriInfo.getBaseUriBuilder().clone().path(RootTestResource.class)) {
-            /**
-             * Emulate the historically tested mapping behavior local to this module
-             * by override to leave only the identity path processor in place
-             */
-            protected void resetTranslationChain() {
-            }
-        };
+        return new HttpResourceConverter(session, uriInfo.getBaseUriBuilder().clone().path(RootTestResource.class));
     }
 
     @Override

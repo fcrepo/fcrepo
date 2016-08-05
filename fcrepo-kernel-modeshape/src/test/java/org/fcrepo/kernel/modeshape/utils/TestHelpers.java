@@ -102,7 +102,7 @@ public abstract class TestHelpers {
     }
 
     public static void mockResource(final FedoraResourceImpl resource, final String path) {
-        mockResource(resource, path, new DefaultIdentifierTranslator(null).toDomain(path));
+        mockResource(resource, path, new DefaultIdentifierTranslator().toDomain(path));
     }
 
     public static void mockResource(final FedoraResourceImpl resource, final String path, final Resource uri) {

@@ -77,7 +77,7 @@ public class ValueConverter implements InjectiveConverter<Value, RDFNode> {
                           final Converter<Resource, String> graphSubjects) {
         this.session = session;
         this.graphSubjects = graphSubjects
-                .andThen(new InternalPathToNodeConverter(session)).inverse();
+                .andThen(new InternalPathToNodeConverter(session)).reverse();
     }
 
     @Override

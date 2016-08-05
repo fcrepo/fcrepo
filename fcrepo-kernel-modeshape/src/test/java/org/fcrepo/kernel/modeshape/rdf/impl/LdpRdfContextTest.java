@@ -80,7 +80,7 @@ public class LdpRdfContextTest {
         when(mockContainer.getNode()).thenReturn(mockNode);
         when(mockNode.getSession()).thenReturn(mockSession);
 
-        subjects = new DefaultIdentifierTranslator(mockSession);
+        subjects = new DefaultIdentifierTranslator();
     }
 
     @Test

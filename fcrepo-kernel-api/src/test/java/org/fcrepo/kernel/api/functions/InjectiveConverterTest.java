@@ -24,7 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 
 /**
- * 
+ *
  * @author barmintor
  *
  */
@@ -36,7 +36,7 @@ public class InjectiveConverterTest {
         final String before = "a,b,c";
         final char[] after = new char[]{'c',',','b',',','a'};
         assertEquals(new String(after), new String(composite.apply(before)));
-        assertEquals(before, composite.inverse().apply(after));
+        assertEquals(before, composite.reverse().apply(after));
         assertNull(composite.apply(null));
     }
 
@@ -46,18 +46,14 @@ public class InjectiveConverterTest {
         final String before = "a,b,c";
         final char[] after = new char[]{'c',',','b',',','a'};
         assertEquals(new String(after), new String(composite.apply(before)));
-        assertEquals(before, composite.inverse().apply(after));
+        assertEquals(before, composite.reverse().apply(after));
         assertNull(composite.apply(null));
     }
 
     static class Reverse implements InjectiveConverter<String, String> {
 
         private String nullOrReverse(final String resource) {
-            if (resource == null) {
-                return null;
-            } else {
-                return StringUtils.reverse(resource);
-            }
+            return resource == null ?  null : StringUtils.reverse(resource);
         }
 
         @Override
@@ -81,20 +77,12 @@ public class InjectiveConverterTest {
 
         @Override
         public String toDomain(final char[] resource) {
-            if (resource == null) {
-                return null;
-            } else {
-                return new String(resource);
-            }
+            return resource == null ? null : new String(resource);
         }
 
         @Override
         public char[] apply(final String a) {
-            if (a == null) {
-                return null;
-            } else {
-                return a.toCharArray();
-            }
+            return a == null ? null : a.toCharArray();
         }
 
         @Override

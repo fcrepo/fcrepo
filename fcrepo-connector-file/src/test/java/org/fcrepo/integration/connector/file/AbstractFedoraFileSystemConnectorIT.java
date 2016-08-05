@@ -294,7 +294,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
     }
 
     private String checkFixity(final FedoraBinary binary)
-            throws IOException, NoSuchAlgorithmException, RepositoryException {
+            throws IOException, NoSuchAlgorithmException {
         assertNotNull(binary);
 
         final File file = fileForNode();
@@ -302,7 +302,7 @@ public abstract class AbstractFedoraFileSystemConnectorIT {
 
         final URI calculatedChecksum = asURI(SHA_1.toString(), hash);
 
-        final DefaultIdentifierTranslator graphSubjects = new DefaultIdentifierTranslator(repo.login());
+        final DefaultIdentifierTranslator graphSubjects = new DefaultIdentifierTranslator();
         final Model results = binary.getFixity(graphSubjects).collect(toModel());
         assertNotNull(results);
 

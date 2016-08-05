@@ -105,7 +105,7 @@ public class HashRdfContextTest {
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
         when(mockNamespaceRegistry.getPrefixes()).thenReturn(new String[]{});
-        subjects = new DefaultIdentifierTranslator(mockSession);
+        subjects = new DefaultIdentifierTranslator();
     }
 
     @Test

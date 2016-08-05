@@ -15,54 +15,52 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.kernel.api.functions;
 
-
 /**
- * 
  * @author barmintor
- *
+ * @author ajs6f
  * @param <A> the domain of the first chained function
- * @param <B> the range of the first and domain of the second functions
  * @param <C> the range of the second function
  */
-class CompositeConverter<A, B, C> implements Converter<A, C> {
+class CompositeConverter<A, C> implements Converter<A, C> {
 
-    final Converter<A,B> first;
-    Converter<B,A> firstReverse = null;
-    final Converter<B,C> second;
-    Converter<C,B> secondReverse = null;
+    private final Converter<A, ?> first;
+
+    private final Converter<?, C> second;
+
+    @SuppressWarnings("unchecked")
+    protected <B> Converter<A, B> first() {
+        return (Converter<A, B>) first;
+    }
+
+    @SuppressWarnings("unchecked")
+    protected <B> Converter<B, C> second() {
+        return (Converter<B, C>) second;
+    }
 
     /**
-     * 
      * @param first the first function
      * @param second the function to be applied to outputs from the first
      */
-    public CompositeConverter(final Converter<A,B> first, final Converter<B,C> second) {
+    public <B> CompositeConverter(final Converter<A, B> first, final Converter<B, C> second) {
         this.first = first;
         this.second = second;
-        this.secondReverse = second.inverse();
     }
 
     @Override
     public C apply(final A a) {
-        return second.apply(first.apply(a));
+        return second().apply(first().apply(a));
     }
 
     @Override
     public boolean inDomain(final A a) {
-        return first.inDomain(a);
+        return first().inDomain(a) && second().inDomain(first().apply(a));
     }
 
     @Override
-    public Converter<C, A> inverse() {
-        if (firstReverse == null) {
-            firstReverse = first.inverse();
-        }
-        if (secondReverse == null) {
-            secondReverse = second.inverse();
-        }
-        return secondReverse.andThen(firstReverse);
+    public Converter<C, A> reverse() {
+        return second().reverse().andThen(first().reverse());
     }
-
 }

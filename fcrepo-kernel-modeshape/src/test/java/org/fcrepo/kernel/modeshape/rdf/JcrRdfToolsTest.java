@@ -112,7 +112,7 @@ public class JcrRdfToolsTest implements FedoraTypes {
     @Before
     public final void setUp() throws RepositoryException {
         initMocks(this);
-        testSubjects = new DefaultIdentifierTranslator(mockSession);
+        testSubjects = new DefaultIdentifierTranslator();
         buildMockNodeAndSurroundings();
         testObj = new JcrRdfTools(testSubjects, mockSession);
     }

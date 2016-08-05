@@ -18,14 +18,14 @@
 package org.fcrepo.kernel.api.functions;
 
 /**
- * An invertible function that is also reversible, i.e. injective.
+ * A reversible function that is injective.
  * @author barmintor
  *
- * @param <A>
- * @param <B>
+ * @param <A> the input type
+ * @param <B> the output type
  */
 
-public interface InjectiveFunction<A, B> extends InvertibleFunction<A, B> {
+public interface InjectiveFunction<A, B> extends ReversibleFunction<A, B> {
     /**
      * Whether the value is in the range of this function
      * @param b a result of the converter function
@@ -47,7 +47,7 @@ public interface InjectiveFunction<A, B> extends InvertibleFunction<A, B> {
      * @return the inverse of the defined function.
      */
     @Override
-    default InvertibleFunction<B, A> inverse() {
+    default ReversibleFunction<B, A> reverse() {
         return new InverseFunctionWrapper<>(this);
     }
 }

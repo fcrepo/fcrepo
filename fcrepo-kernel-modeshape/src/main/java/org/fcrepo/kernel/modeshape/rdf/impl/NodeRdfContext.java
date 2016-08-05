@@ -86,7 +86,7 @@ public class NodeRdfContext extends DefaultRdfStream {
         try {
             return idTranslator
                     .andThen(new InternalPathToNodeConverter(getJcrNode(resource).getSession()))
-                    .inverse();
+                    .reverse();
         } catch (RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }

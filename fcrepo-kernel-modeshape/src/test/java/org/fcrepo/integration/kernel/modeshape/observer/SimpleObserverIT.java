@@ -204,7 +204,7 @@ public class SimpleObserverIT extends AbstractIT {
     @Test
     public void testHashUriEvent() throws RepositoryException {
         final Session se = repository.login();
-        final DefaultIdentifierTranslator identifiers = new DefaultIdentifierTranslator(se);
+        final DefaultIdentifierTranslator identifiers = new DefaultIdentifierTranslator();
 
         final Container obj = containerService.findOrCreate(se, "/object9");
 
@@ -235,7 +235,7 @@ public class SimpleObserverIT extends AbstractIT {
     @Test
     public void testDirectContainerEvent() throws RepositoryException {
         final Session se = repository.login();
-        final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator(se);
+        final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator();
 
         final Container obj1 = containerService.findOrCreate(se, "/object10");
         final Container obj2 = containerService.findOrCreate(se, "/object11");
@@ -282,7 +282,7 @@ public class SimpleObserverIT extends AbstractIT {
     @Test
     public void testIndirectContainerEvent() throws RepositoryException {
         final Session se = repository.login();
-        final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator(se);
+        final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator();
 
         final Container obj1 = containerService.findOrCreate(se, "/object12");
         final Container obj2 = containerService.findOrCreate(se, "/object13");

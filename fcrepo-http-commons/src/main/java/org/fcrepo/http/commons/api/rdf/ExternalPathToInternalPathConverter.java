@@ -19,16 +19,15 @@ package org.fcrepo.http.commons.api.rdf;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.ListIterator;
-
-import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.api.functions.InjectiveConverter;
+import org.fcrepo.kernel.api.identifiers.ChainWrappingConverter;
 import org.fcrepo.kernel.modeshape.identifiers.HashConverter;
 import org.fcrepo.kernel.modeshape.identifiers.NamespaceConverter;
 
 import org.slf4j.Logger;
+
+import com.google.common.collect.ImmutableList;
 
 /**
  * Converts between External Paths and Internal Paths.
@@ -39,57 +38,23 @@ import org.slf4j.Logger;
  * @author barmintor
  *
  */
-public class ExternalPathToInternalPathConverter implements InjectiveConverter<String, String> {
+public class ExternalPathToInternalPathConverter extends ChainWrappingConverter<String, String> {
 
     @SuppressWarnings("unused")
     private static final Logger LOGGER = getLogger(ExternalPathToInternalPathConverter.class);
-
-    private final List<Converter<String,String>> processors;
 
     /**
      * Build a converter with the default transforms
      */
     public ExternalPathToInternalPathConverter() {
-        this(defaultList());
+        setTranslationChain(defaultList);
     }
 
-    /**
-     * 
-     * @param processors
-     */
-    public ExternalPathToInternalPathConverter(final List<Converter<String,String>> processors) {
-        this.processors = (processors != null) ? processors : defaultList();
-    }
-
-    static List<Converter<String,String>> defaultList() {
-        final ArrayList<Converter<String,String>> processors = new ArrayList<>();
-        processors.add(new HashConverter());
-        processors.add(new NamespaceConverter());
-        return processors;
-    }
-
-    @Override
-    public String toDomain(final String t) {
-        String result = t;
-        final ListIterator<Converter<String, String>> iter = processors.listIterator(processors.size());
-        while (iter.hasPrevious()) {
-            result = iter.previous().inverse().apply(result);
-        }
-        return result;
-    }
-
-    @Override
-    public String apply(final String t) {
-        String result = t;
-        for (Converter<String,String> converter:processors) {
-            result = converter.apply(result);
-        }
-        return result;
-    }
+    @SuppressWarnings("rawtypes")
+    static List<InjectiveConverter> defaultList = ImmutableList.of(new HashConverter(), new NamespaceConverter());
 
     @Override
     public boolean inDomain(final String a) {
-        return a != null;
+        return a != null && super.inDomain(a);
     }
-
 }

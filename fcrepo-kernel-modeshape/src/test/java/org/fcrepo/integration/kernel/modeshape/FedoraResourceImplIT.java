@@ -155,7 +155,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Before
     public void setUp() throws RepositoryException {
         session = repo.login();
-        subjects = new DefaultIdentifierTranslator(session);
+        subjects = new DefaultIdentifierTranslator();
     }
 
     @After
@@ -1037,7 +1037,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         try {
             resource.getPath();
             return true;
-        } catch (RepositoryRuntimeException e) {
+        } catch (final RepositoryRuntimeException e) {
             return false;
         }
     }
