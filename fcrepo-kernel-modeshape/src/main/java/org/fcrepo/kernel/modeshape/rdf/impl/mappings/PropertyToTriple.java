@@ -50,6 +50,7 @@ public class PropertyToTriple implements Function<Property, Stream<Triple>> {
 
     private static final PropertyConverter propertyConverter = new PropertyConverter();
     private final ValueConverter valueConverter;
+    private final Converter<Resource, String> idTranslator;
     private final Converter<Node, Resource> translator;
 
     /**
@@ -60,6 +61,7 @@ public class PropertyToTriple implements Function<Property, Stream<Triple>> {
      */
     public PropertyToTriple(final Session session, final Converter<Resource, String> converter) {
         this.valueConverter = new ValueConverter(session, converter);
+        this.idTranslator = converter;
         this.translator = converter.andThen(new InternalPathToNodeConverter(session)).inverse();
     }
 
@@ -70,7 +72,7 @@ public class PropertyToTriple implements Function<Property, Stream<Triple>> {
             final com.hp.hpl.jena.graph.Node propPredicate = propertyConverter.convert(p).asNode();
             final String propertyName = p.getName();
 
-            return iteratorToStream(new PropertyValueIterator(p)).map(v -> {
+            return iteratorToStream(new PropertyValueIterator(p, new RowToResourceUri(idTranslator))).map(v -> {
                 final com.hp.hpl.jena.graph.Node object = valueConverter.apply(v).asNode();
                 if (object.isLiteral()) {
                     // unpack the name of the property for information about what kind of literal

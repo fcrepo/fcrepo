@@ -18,5 +18,8 @@
             "useOnFailedLogin" : true
         }
     },
+    "reindexing" : {
+        "async" : false
+    },
     "node-types" : ["fedora-node-types.cnd"]
 }

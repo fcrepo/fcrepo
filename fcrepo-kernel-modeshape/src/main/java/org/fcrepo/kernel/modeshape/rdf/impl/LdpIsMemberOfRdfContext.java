@@ -20,13 +20,16 @@ package org.fcrepo.kernel.modeshape.rdf.impl;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
+
 import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.modeshape.rdf.converters.ValueConverter;
 import org.fcrepo.kernel.modeshape.rdf.impl.mappings.PropertyValueIterator;
+import org.fcrepo.kernel.modeshape.rdf.impl.mappings.RowToResourceUri;
 
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 
 import java.util.stream.Stream;
 
@@ -102,12 +105,15 @@ public class LdpIsMemberOfRdfContext extends NodeRdfContext {
         if (insertedContainerProperty.equals(MEMBER_SUBJECT.getURI())) {
             return of(create(subject(), memberRelation.asNode(), membershipResource));
         } else if (container.hasType(LDP_INDIRECT_CONTAINER)) {
-            final String insertedContentProperty = getPropertyNameFromPredicate(getJcrNode(resource()), createResource
+            final Session session = getJcrNode(resource()).getSession();
+            final String insertedContentProperty = getPropertyNameFromPredicate(session, createResource
                     (insertedContainerProperty), null);
 
             if (resource().hasProperty(insertedContentProperty)) {
-                return iteratorToStream(new PropertyValueIterator(
-                            getJcrNode(resource()).getProperty(insertedContentProperty)))
+                return iteratorToStream(
+                        new PropertyValueIterator(
+                            getJcrNode(resource()).getProperty(insertedContentProperty),
+                            new RowToResourceUri(translator())))
                         .map(valueConverter::apply)
                         .filter(n -> n.isURIResource())
                         .filter(n -> translator().inDomain(n.asResource()))

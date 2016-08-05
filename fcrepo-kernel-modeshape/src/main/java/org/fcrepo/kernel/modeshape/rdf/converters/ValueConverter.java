@@ -22,11 +22,14 @@ import com.hp.hpl.jena.datatypes.RDFDatatype;
 import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Resource;
+
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.functions.CompositeConverter;
 import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.api.functions.InverseConverterWrapper;
 import org.fcrepo.kernel.modeshape.identifiers.InternalPathToNodeConverter;
+import org.fcrepo.kernel.modeshape.rdf.impl.mappings.ResourceUriValue;
+
 import org.slf4j.Logger;
 
 import javax.jcr.AccessDeniedException;
@@ -72,12 +75,12 @@ public class ValueConverter implements Converter<Value, RDFNode> {
     /**
      * Convert values between JCR values and RDF objects with the given session and subjects
      * @param session the session
-     * @param graphSubjects the graph subjects
+     * @param idTranslator the resource to path function
      */
     public ValueConverter(final Session session,
-                          final Converter<Resource, String> graphSubjects) {
+                          final Converter<Resource, String> idTranslator) {
         this.session = session;
-        this.graphSubjects = graphSubjects
+        this.graphSubjects = idTranslator
                 .andThen(new InternalPathToNodeConverter(session)).inverse();
     }
 
@@ -96,6 +99,8 @@ public class ValueConverter implements Converter<Value, RDFNode> {
                 case LONG:
                     return literal2node(value.getLong());
                 case URI:
+                    return createResource(value.getString());
+                case UNDEFINED:
                     return createResource(value.getString());
                 case REFERENCE:
                 case WEAKREFERENCE:
@@ -162,7 +167,7 @@ public class ValueConverter implements Converter<Value, RDFNode> {
 
     private RDFNode traverseLink(final Value v) throws RepositoryException {
         try {
-            return getGraphSubject(nodeForValue(session, v));
+            return getGraphSubject(nodeForValue(session, v, graphSubjects.inverse()));
         } catch (final AccessDeniedException e) {
             LOGGER.info("Link inaccessible by requesting user: {}, {}", v, session.getUserID());
             return INACCESSIBLE_RESOURCE;
@@ -171,17 +176,21 @@ public class ValueConverter implements Converter<Value, RDFNode> {
 
     /**
      * Get the node that a property value refers to.
+     * This is very expensive, and should be used as little as possible.
      * @param session Session to use to load the node.
      * @param v Value that refers to a node.
      * @return the JCR node
      * @throws RepositoryException When there is an error accessing the node.
      * @throws RepositoryRuntimeException When the value type is not PATH, REFERENCE or WEAKREFERENCE.
     **/
-    public static javax.jcr.Node nodeForValue(final Session session, final Value v) throws RepositoryException {
+    public static javax.jcr.Node nodeForValue(final Session session, final Value v,
+                final Converter<Resource, Node> converter) throws RepositoryException {
         if (v.getType() == PATH) {
             return session.getNode(v.getString());
         } else if (v.getType() == REFERENCE || v.getType() == WEAKREFERENCE) {
             return session.getNodeByIdentifier(v.getString());
+        } else if (v instanceof ResourceUriValue) {
+            return converter.apply(((ResourceUriValue)v).getURI());
         } else {
             throw new RepositoryRuntimeException("Cannot convert value of type "
                     + PropertyType.nameFromValue(v.getType()) + " to a node reference");

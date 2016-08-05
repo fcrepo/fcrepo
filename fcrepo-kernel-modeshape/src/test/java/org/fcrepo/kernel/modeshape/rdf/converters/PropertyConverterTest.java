@@ -107,7 +107,7 @@ public class PropertyConverterTest {
     public final void shouldMapRdfPredicatesToJcrProperties() throws RepositoryException {
 
         final Property p = createProperty(REPOSITORY_NAMESPACE, "created");
-        assertEquals("jcr:created", getPropertyNameFromPredicate(mockNode, p, EMPTY_NAMESPACE_MAP));
+        assertEquals("jcr:created", getPropertyNameFromPredicate(mockSession, p, EMPTY_NAMESPACE_MAP));
     }
 
     @Test(expected = FedoraInvalidNamespaceException.class)
@@ -115,13 +115,13 @@ public class PropertyConverterTest {
         final Property p = createProperty(mockUri, "fcr");
         final Map<String, String> nsMap = new HashMap<>();
         nsMap.put("fcr", mockUri);
-        PropertyConverter.getPropertyNameFromPredicate(mockNode, p, nsMap);
+        PropertyConverter.getPropertyNameFromPredicate(mockSession, p, nsMap);
     }
 
     @Test
     public final void shouldReuseRegisteredNamespaces() throws RepositoryException {
         final Property p = createProperty(mockUri, "uuid");
-        assertEquals("some-prefix:uuid", getPropertyNameFromPredicate(mockNode, p,
+        assertEquals("some-prefix:uuid", getPropertyNameFromPredicate(mockSession, p,
                 EMPTY_NAMESPACE_MAP));
     }
 
@@ -130,7 +130,7 @@ public class PropertyConverterTest {
         when(mockNsRegistry.registerNamespace("not-registered-uri#"))
                 .thenReturn("ns001");
         final Property p = createProperty("not-registered-uri#", "uuid");
-        assertEquals("ns001:uuid", getPropertyNameFromPredicate(mockNode, p, EMPTY_NAMESPACE_MAP));
+        assertEquals("ns001:uuid", getPropertyNameFromPredicate(mockSession, p, EMPTY_NAMESPACE_MAP));
     }
 
     @Test (expected = InvalidPropertyURIException.class)

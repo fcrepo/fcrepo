@@ -1447,12 +1447,16 @@ public class FedoraLdpIT extends AbstractResourceIT {
         getMember.addHeader("Prefer", "return=representation; include=\"" + INBOUND_REFERENCES.toString() + "\"");
         getMember.addHeader("Accept", "application/n-triples");
         try (final CloseableGraphStore memberGraph = getGraphStore(getMember)) {
-            assertTrue(memberGraph.contains(Node.ANY,
+            System.err.println(memberGraph);
+            String message = "missing <http://www.openarchives.org/ore/terms/proxyFor> <" +
+                createURI(serverAddress + pid2) + ">";
+            assertTrue(message, memberGraph.contains(Node.ANY,
                     Node.ANY,
                     createURI("http://www.openarchives.org/ore/terms/proxyFor"),
                     createURI(serverAddress + pid2)));
 
-            assertTrue(memberGraph.contains(Node.ANY,
+            message = "missing <" + memberRelation + "> <" + createURI(serverAddress + pid2) + ">";
+            assertTrue(message, memberGraph.contains(Node.ANY,
                     createURI(serverAddress + pid1),
                     createURI(memberRelation),
                     createURI(serverAddress + pid2)));
@@ -2047,7 +2051,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertTrue("Expected to have indirect container", graphStore.contains(ANY,
                     createURI(container), createURI(LDP_NAMESPACE + "contains"), createURI(indirectContainer)));
 
-            assertTrue("Expected to have resource: " + graphStore.toString(), graphStore.contains(ANY,
+            final String msg = "Expected to have resource: " + graphStore.toString() +
+                    "\n<" + createURI(container) + "> <info:some/relation> <" + createURI(resource) + ">";
+            assertTrue(msg, graphStore.contains(ANY,
                     createURI(container), createURI("info:some/relation"), createURI(resource)));
         }
         // Remove indirect resource

@@ -52,6 +52,11 @@
         <version>${modeshape.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.modeshape</groupId>
+        <artifactId>modeshape-lucene-index-provider</artifactId>
+        <version>${modeshape.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.jboss.jbossts</groupId>
         <artifactId>jbossjta</artifactId>
         <version>4.16.6.Final</version>

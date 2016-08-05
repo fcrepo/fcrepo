@@ -23,12 +23,13 @@ import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.api.exception.FedoraInvalidNamespaceException;
+
 import org.modeshape.jcr.api.NamespaceRegistry;
 import org.modeshape.jcr.api.Namespaced;
 import org.slf4j.Logger;
 
-import javax.jcr.Node;
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 
 import java.util.Map;
 
@@ -86,18 +87,18 @@ public class PropertyConverter extends Converter<javax.jcr.Property, Property> {
      * Given an RDF predicate value (namespace URI + local name), figure out
      * what JCR property to use
      *
-     * @param node the JCR node we want a property for
+     * @param session the JCR session in context
      * @param predicate the predicate to map to a property name
      * @param namespaceMapping prefix to uri namespace mapping
      * @return the JCR property name
      * @throws RepositoryException if repository exception occurred
      */
-    public static String getPropertyNameFromPredicate(final Node node,
+    public static String getPropertyNameFromPredicate(final Session session,
                                                       final Resource predicate,
                                                       final Map<String, String> namespaceMapping)
             throws RepositoryException {
 
-        final NamespaceRegistry namespaceRegistry = (NamespaceRegistry)getNamespaceRegistry(node.getSession());
+        final NamespaceRegistry namespaceRegistry = (NamespaceRegistry)getNamespaceRegistry(session);
 
         return getPropertyNameFromPredicate(namespaceRegistry,
                 predicate, namespaceMapping);

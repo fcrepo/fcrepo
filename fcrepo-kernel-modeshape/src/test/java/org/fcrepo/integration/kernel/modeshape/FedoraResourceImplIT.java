@@ -1149,6 +1149,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         // This is the test! Ensure that only the delete resource is removed from the "subject" container.
         referent2.delete();
 
+        //session.save(); // delete me if it works
         final Model model2 = referent1.getTriples(subjects, INBOUND_REFERENCES).collect(toModel());
 
         assertTrue(model2.contains(subject.graphResource(subjects),

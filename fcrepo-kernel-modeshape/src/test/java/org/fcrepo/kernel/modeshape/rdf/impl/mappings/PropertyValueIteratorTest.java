@@ -25,8 +25,11 @@ import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
 
+import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
+
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.BiFunction;
 
 import static com.google.common.collect.ImmutableList.of;
 import static com.google.common.collect.Iterators.contains;
@@ -64,6 +67,8 @@ public class PropertyValueIteratorTest {
 
     private Iterator<Property> propertyIterator;
 
+    private BiFunction<String, Value[], Value> rowToResource;
+
     @Before
     public void setUp() throws RepositoryException {
         initMocks(this);
@@ -74,31 +79,32 @@ public class PropertyValueIteratorTest {
 
         when(mockMultivaluedEmptyProperty.isMultiple()).thenReturn(true);
         when(mockMultivaluedEmptyProperty.getValues()).thenReturn(new Value[] {});
+        rowToResource = new RowToResourceUri(new DefaultIdentifierTranslator(null));
     }
 
     @Test
     public void testSingleValueSingleProperty() {
-        testObj = new PropertyValueIterator(mockProperty);
+        testObj = new PropertyValueIterator(mockProperty, rowToResource);
         assertTrue(contains(testObj, value1));
     }
 
     @Test
     public void testMultiValueSingleProperty() {
-        testObj = new PropertyValueIterator(mockMultivaluedProperty);
+        testObj = new PropertyValueIterator(mockMultivaluedProperty, rowToResource);
         final List<Value> values = newArrayList(testObj);
         assertTrue(values.containsAll(of(value2, value3)));
     }
 
     @Test
     public void testMultiValueSingleEmptyProperty() {
-        testObj = new PropertyValueIterator(mockMultivaluedEmptyProperty);
+        testObj = new PropertyValueIterator(mockMultivaluedEmptyProperty, rowToResource);
         final List<Value> values = newArrayList(testObj);
         assertTrue(values.isEmpty());
     }
 
     @Test
     public void testSingleValuePropertyIterator() {
-        testObj = new PropertyValueIterator(propertyIterator);
+        testObj = new PropertyValueIterator(propertyIterator, rowToResource);
         final List<Value> values = newArrayList(testObj);
         assertTrue(values.containsAll(of(value1, value2, value3)));
     }

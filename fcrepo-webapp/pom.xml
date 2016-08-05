@@ -247,6 +247,12 @@
       <artifactId>modeshape-jcr</artifactId>
       <scope>runtime</scope>
     </dependency>
+
+    <dependency>
+      <groupId>org.modeshape</groupId>
+      <artifactId>modeshape-lucene-index-provider</artifactId>
+      <scope>runtime</scope>
+    </dependency>
     
   </dependencies>
   <build>

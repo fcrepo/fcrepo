@@ -18,14 +18,17 @@
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
+
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
+import javax.jcr.Session;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.modeshape.identifiers.InternalPathToNodeConverter;
+import org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 
@@ -55,6 +58,20 @@ public class NodeRdfContext extends DefaultRdfStream {
         this.resource = resource;
         this.idTranslator = idTranslator;
         this.subject = uriFor(resource);
+    }
+
+    /**
+     * 
+     * @param resource
+     * @param session
+     * @param idTranslator
+     */
+    public NodeRdfContext(final Resource resource, final Session session,
+            final Converter<Resource, String> idTranslator) {
+        super(resource.asNode());
+        this.resource = toResource(resource, session, idTranslator);
+        this.idTranslator = idTranslator;
+        this.subject = resource.asNode();
     }
 
     /**
@@ -92,6 +109,20 @@ public class NodeRdfContext extends DefaultRdfStream {
         }
     }
 
+    /**
+     * 
+     * @param uri
+     * @param session
+     * @param idTranslator
+     * @return
+     */
+    protected static FedoraResource toResource(final Resource uri, final Session session,
+            final Converter<Resource, String> idTranslator) {
+        return idTranslator
+                .andThen(new InternalPathToNodeConverter(session))
+                .andThen(NodeResourceConverter.nodeConverter)
+                .apply(uri);
+    }
     /**
      * @return the RDF subject at the center of this context
      */

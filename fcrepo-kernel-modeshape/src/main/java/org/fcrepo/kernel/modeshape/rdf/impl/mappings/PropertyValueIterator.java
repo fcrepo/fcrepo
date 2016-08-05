@@ -23,11 +23,14 @@ import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Iterators;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+
 import javax.jcr.Property;
+import javax.jcr.PropertyType;
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
 
 import java.util.Iterator;
+import java.util.function.BiFunction;
 
 /**
  * Iterate over all the values in a property or list of properties
@@ -36,14 +39,17 @@ import java.util.Iterator;
  */
 public class PropertyValueIterator extends AbstractIterator<Value> {
     private final Iterator<Property> properties;
+    private final BiFunction<String, Value[], Value> valueTranslator;
     private Iterator<Value> currentValues;
 
     /**
      * Iterate through multiple properties' values
      * @param properties the properties
      */
-    public PropertyValueIterator(final Iterator<Property> properties) {
+    public PropertyValueIterator(final Iterator<Property> properties,
+            final BiFunction<String, Value[], Value> valueTranslator) {
         this.properties = properties;
+        this.valueTranslator = valueTranslator;
         this.currentValues = null;
     }
 
@@ -51,9 +57,9 @@ public class PropertyValueIterator extends AbstractIterator<Value> {
      * Iterate through a property's values
      * @param property the properties
      */
-    public PropertyValueIterator(final Property property) {
-        this.properties = singletonIterator(property);
-        this.currentValues = null;
+    public PropertyValueIterator(final Property property,
+            final BiFunction<String, Value[], Value> valueTranslator) {
+        this(singletonIterator(property), valueTranslator);
     }
 
     @Override
@@ -66,7 +72,13 @@ public class PropertyValueIterator extends AbstractIterator<Value> {
                 final Property property = properties.next();
 
                 if (property.isMultiple()) {
-                    currentValues = Iterators.forArray(property.getValues());
+                    if (property.getType() == PropertyType.REFERENCE
+                            || property.getType() == PropertyType.WEAKREFERENCE) {
+                        //currentValues = Iterators.forArray(property.getValues());
+                        currentValues = new ReferencePropertyIterator(property, valueTranslator);
+                    } else {
+                        currentValues = Iterators.forArray(property.getValues());
+                    }
                     if (currentValues.hasNext()) {
                         return currentValues.next();
                     }

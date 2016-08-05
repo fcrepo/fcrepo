@@ -29,10 +29,14 @@ import static javax.jcr.PropertyType.WEAKREFERENCE;
 
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.Resource;
+
 import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.modeshape.identifiers.InternalPathToNodeConverter;
 import org.fcrepo.kernel.modeshape.rdf.impl.mappings.PropertyToTriple;
 import org.fcrepo.kernel.modeshape.rdf.impl.mappings.PropertyValueIterator;
+import org.fcrepo.kernel.modeshape.rdf.impl.mappings.ResourceUriValue;
+import org.fcrepo.kernel.modeshape.rdf.impl.mappings.RowToResourceUri;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -79,17 +83,27 @@ public class ReferencesRdfContext extends NodeRdfContext {
        show up in getReferences()/getWeakReferences().  Instead, we should check referencers to see if they are
        members of an IndirectContainer and generate the appropriate inbound references. */
     private Stream<Triple> putReferencesIntoContext(final Node node) throws RepositoryException {
+        final Converter<Resource, Node> converter =
+                translator().andThen(new InternalPathToNodeConverter(node.getSession()));
         return Stream.concat(
             getAllReferences(node).flatMap(property2triple),
             getAllReferences(node).flatMap(uncheck((final Property x) -> {
                     @SuppressWarnings("unchecked")
                     final Stream<Value> values = iteratorToStream(new PropertyValueIterator(x.getParent()
-                            .getProperties())).filter((final Value y) -> REFERENCE_TYPES.contains(y.getType()));
+                            .getProperties(), new RowToResourceUri(translator())))
+                            .filter((final Value y) -> {
+                                return REFERENCE_TYPES.contains(y.getType()) || y instanceof ResourceUriValue;
+                            });
                     return values;
                 }))
                 .flatMap(uncheck((final Value x) -> {
-                    return new LdpContainerRdfContext(nodeConverter.apply(nodeForValue(node.getSession(), x)),
-                        translator());
+                    if (x instanceof ResourceUriValue) {
+                        final Resource referee = ((ResourceUriValue)x).getURI();
+                        return new LdpContainerRdfContext(referee, node.getSession(), translator());
+                    }
+                    return new LdpContainerRdfContext(
+                            nodeConverter.apply(nodeForValue(node.getSession(), x, converter)),
+                            translator());
                 }))
                 .filter(INBOUND));
     }

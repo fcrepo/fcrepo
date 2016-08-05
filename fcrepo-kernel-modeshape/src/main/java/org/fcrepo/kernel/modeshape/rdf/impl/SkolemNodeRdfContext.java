@@ -22,7 +22,9 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.functions.Converter;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.modeshape.identifiers.InternalPathToNodeConverter;
 import org.fcrepo.kernel.modeshape.rdf.impl.mappings.PropertyValueIterator;
+import org.fcrepo.kernel.modeshape.rdf.impl.mappings.RowToResourceUri;
 
 import org.slf4j.Logger;
 
@@ -35,6 +37,7 @@ import javax.jcr.Value;
 
 import java.util.Objects;
 import java.util.stream.Stream;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
@@ -70,24 +73,30 @@ public class SkolemNodeRdfContext extends NodeRdfContext {
             throws RepositoryException {
         super(resource, idTranslator);
 
-        concat(getBlankNodes(resource).flatMap(n -> nodeConverter.apply(n).getTriples(idTranslator,
+        concat(getBlankNodes(resource, idTranslator).flatMap(n -> nodeConverter.apply(n).getTriples(idTranslator,
                     PROPERTIES)));
     }
 
     @SuppressWarnings("unchecked")
-    private static Stream<Node> getBlankNodes(final FedoraResource resource) throws RepositoryException {
-        final Function<Value, Node> valueToNode = sessionValueToNode.apply(getJcrNode(resource).getSession());
+    private static Stream<Node> getBlankNodes(final FedoraResource resource,
+            final Converter<Resource, String> idTranslator)
+            throws RepositoryException {
+        final Session session = getJcrNode(resource).getSession();
+        final Converter<Resource, Node> converter =
+                idTranslator.andThen(new InternalPathToNodeConverter(session));
+        final Function<Value, Node> valueToNode = sessionValueToNode.apply(session, converter);
         final Stream<Property> refs = iteratorToStream(getJcrNode(resource).getProperties())
                 .filter(uncheck((final Property p) -> REFERENCE_TYPES.contains(p.getType())));
-        return iteratorToStream(new PropertyValueIterator(refs.iterator()))
+        return iteratorToStream(new PropertyValueIterator(refs.iterator(), new RowToResourceUri(idTranslator)))
                 .map(valueToNode)
                 .filter(Objects::nonNull)
                 .filter(isSkolemNode);
     }
 
-    private static final Function<Session, Function<Value, Node>> sessionValueToNode = session -> v -> {
+    private static final BiFunction<Session, Converter<Resource, Node>, Function<Value, Node>> sessionValueToNode =
+        (session, idTranslator) -> v -> {
         try {
-            return nodeForValue(session, v);
+            return nodeForValue(session, v, idTranslator);
 
         } catch (final AccessDeniedException e) {
             LOGGER.error("Link inaccessible by requesting user: {}, {}", v, session.getUserID());

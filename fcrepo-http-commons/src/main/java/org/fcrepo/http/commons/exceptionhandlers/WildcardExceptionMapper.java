@@ -58,7 +58,7 @@ public class WildcardExceptionMapper implements
                     .toResponse((RepositoryException)e.getCause());
         }
 
-        LOGGER.error("Exception intercepted by WildcardExceptionMapper: {}\n", e.getMessage());
+        LOGGER.error("Exception intercepted by WildcardExceptionMapper: {}\n", e.getMessage(), e);
         debugException(this, e, LOGGER);
         return serverError().entity(
                 showStackTrace ? getStackTraceAsString(e) : null).build();

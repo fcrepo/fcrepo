@@ -232,7 +232,7 @@ public class JcrRdfTools {
 
         final Node node = getJcrNode(resource);
         final Session session = node.getSession();
-        final String mixinName = getPropertyNameFromPredicate(node, mixinResource, namespaces);
+        final String mixinName = getPropertyNameFromPredicate(session, mixinResource, namespaces);
         if (!repositoryHasType(session, mixinName)) {
             final NodeTypeManager mgr = session.getWorkspace().getNodeTypeManager();
             final NodeTypeTemplate type = mgr.createNodeTypeTemplate();
@@ -282,7 +282,7 @@ public class JcrRdfTools {
         }
 
         final String propertyName =
-                getPropertyNameFromPredicate(node, predicate, namespaces);
+                getPropertyNameFromPredicate(session, predicate, namespaces);
 
         if (value.isURIResource()
                 && idTranslator.inDomain(value.asResource())
@@ -310,7 +310,7 @@ public class JcrRdfTools {
                             final Map<String, String> nsPrefixMap) throws RepositoryException {
 
         final Node node = getJcrNode(resource);
-        final String mixinName = getPropertyNameFromPredicate(node, mixinResource, nsPrefixMap);
+        final String mixinName = getPropertyNameFromPredicate(session, mixinResource, nsPrefixMap);
         if (repositoryHasType(session, mixinName) && node.isNodeType(mixinName)) {
             node.removeMixin(mixinName);
         }
@@ -331,7 +331,7 @@ public class JcrRdfTools {
                                final Map<String, String> nsPrefixMap) throws RepositoryException {
 
         final Node node = getJcrNode(resource);
-        final String propertyName = getPropertyNameFromPredicate(node, predicate, nsPrefixMap);
+        final String propertyName = getPropertyNameFromPredicate(session, predicate, nsPrefixMap);
 
         if (isManagedPredicate.test(predicate)) {
 
