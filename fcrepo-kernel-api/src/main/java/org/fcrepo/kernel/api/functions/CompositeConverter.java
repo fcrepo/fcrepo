@@ -17,52 +17,99 @@
  */
 package org.fcrepo.kernel.api.functions;
 
+import static java.util.Collections.singleton;
+import static java.util.stream.Collector.Characteristics.IDENTITY_FINISH;
+
+import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collector;
 
 /**
- * 
+ *
  * @author barmintor
+ * @author ajs6f
  *
  * @param <A> the domain of the first chained function
  * @param <B> the range of the first and domain of the second functions
  * @param <C> the range of the second function
  */
-class CompositeConverter<A, B, C> implements Converter<A, C> {
+class CompositeConverter<A, B, C> implements Converter<A, C>,
+        Collector<Converter, CompositeConverter, CompositeConverter> {
 
-    final Converter<A,B> first;
-    Converter<B,A> firstReverse = null;
-    final Converter<B,C> second;
-    Converter<C,B> secondReverse = null;
+    protected Converter<A,B> first;
+    protected Converter<B,C> second;
+
+
+    protected Converter<A, B> first() {
+        return first;
+    }
+
+    protected Converter<B, C> second() {
+        return second;
+    }
+
+    protected CompositeConverter() {
+    }
 
     /**
-     * 
+     *
      * @param first the first function
      * @param second the function to be applied to outputs from the first
      */
     public CompositeConverter(final Converter<A,B> first, final Converter<B,C> second) {
         this.first = first;
         this.second = second;
-        this.secondReverse = second.inverse();
     }
 
     @Override
     public C apply(final A a) {
-        return second.apply(first.apply(a));
+        return second().apply(first().apply(a));
     }
 
     @Override
     public boolean inDomain(final A a) {
-        return first.inDomain(a);
+        return first().inDomain(a);
     }
 
     @Override
     public Converter<C, A> inverse() {
-        if (firstReverse == null) {
-            firstReverse = first.inverse();
-        }
-        if (secondReverse == null) {
-            secondReverse = second.inverse();
-        }
-        return secondReverse.andThen(firstReverse);
+        return second().inverse().andThen(first.inverse());
+    }
+
+    @Override
+    public Supplier<CompositeConverter> supplier() {
+        return () -> new CompositeConverter();
+    }
+
+    @Override
+    public BiConsumer<CompositeConverter, Converter> accumulator() {
+        return (composite, converter) -> {
+            if (composite.first == null) {
+                composite.first = converter;
+            } else if (composite.second == null) {
+                composite.second = converter;
+            } else {
+                composite = new CompositeConverter<>(composite, converter);
+            }
+        };
+    }
+
+    @Override
+    public BinaryOperator<CompositeConverter> combiner() {
+        return (left, right) -> (CompositeConverter) left.andThen(right);
+    }
+
+    @Override
+    public Function<CompositeConverter, CompositeConverter> finisher() {
+        return converter -> converter;
+    }
+
+    @Override
+    public Set<java.util.stream.Collector.Characteristics> characteristics() {
+        return singleton(IDENTITY_FINISH);
     }
 
 }

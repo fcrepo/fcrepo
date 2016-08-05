@@ -55,7 +55,7 @@ public class PrefixingIdentifierTranslator implements InjectiveConverter<Resourc
     private static final NodeResourceConverter nodeResourceConverter = new NodeResourceConverter();
 
     private final String resourceNamespace;
-    private final Session session;
+    protected final Session session;
 
     /**
      * Construct the graph with the provided resource namespace, which will translate JCR paths into
@@ -67,33 +67,22 @@ public class PrefixingIdentifierTranslator implements InjectiveConverter<Resourc
     public PrefixingIdentifierTranslator(final Session session, final String resourceNamespace) {
         this.session = session;
         this.resourceNamespace = resourceNamespace;
-        setTranslationChain();
+        setTranslationChain(minimalTranslationChain);
     }
 
 
     protected Converter<String, String> forward = identity(String.class);
     protected Converter<String, String> reverse = identity(String.class);
 
-    /*
-     * TODO: much of what happens with chains of translators inside these converters should be factored
-     * out into some abstract class, or post Java 8, default implementation.
-     */
-    private void setTranslationChain() {
-
-        for (final Converter<String, String> t : minimalTranslationChain) {
-            forward = forward.andThen(t);
-        }
-        for (final Converter<String, String> t : Lists.reverse(minimalTranslationChain)) {
-            reverse = reverse.andThen(t.inverse());
-        }
+    protected void setTranslationChain(final List<Converter<String, String>> chain) {
+        forward = chain.stream().collect(Converter.collect());
+        reverse = Lists.reverse(chain).stream().map(Converter::inverse).collect(Converter.collect());
     }
 
 
     @SuppressWarnings("unchecked")
-    private static final List<Converter<String, String>> minimalTranslationChain =
-            newArrayList((Converter<String, String>) new NamespaceConverter(),
-                    (Converter<String, String>) new HashConverter()
-            );
+    public static final List<Converter<String, String>> minimalTranslationChain = newArrayList(
+            new NamespaceConverter(), new HashConverter());
 
     @Override
     public String apply(final Resource subject) {

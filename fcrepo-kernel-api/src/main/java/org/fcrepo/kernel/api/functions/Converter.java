@@ -27,9 +27,17 @@ package org.fcrepo.kernel.api.functions;
 public interface Converter<A, B> extends InvertibleFunction<A, B>, DomainRestrictedFunction<A, B> {
 
     /**
+     * @return a {@link CompositeConverter} for use in stream collection
+     */
+    static <X,Y,Z> CompositeConverter<X,Y,Z> collect() {
+        return new CompositeConverter<>();
+    }
+
+    /**
      * @see org.fcrepo.kernel.api.functions.InvertibleFunction#inverse()
      * @return a Converter applying the inverse function
      */
+    @Override
     public Converter<B, A> inverse();
 
     /**
@@ -37,17 +45,17 @@ public interface Converter<A, B> extends InvertibleFunction<A, B>, DomainRestric
      * @param after a converter to which this converter provides the domain
      * @return a composite function
      */
-    public default <C> Converter<A, C> andThen(Converter<B, C> after) {
+    public default <C> Converter<A, C> andThen(final Converter<B, C> after) {
         return new CompositeConverter<>(this, after);
     }
 
     /**
-     * 
+     *
      * @param <C> the domain type of the previous function
      * @param before a converter for which the range is this converter's domain
      * @return a composite function
      */
-    public default <C> Converter<C, B> compose(Converter<C, A> before) {
+    public default <C> Converter<C, B> compose(final Converter<C, A> before) {
         return new CompositeConverter<>(before, this);
     }
 }

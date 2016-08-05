@@ -17,14 +17,18 @@
  */
 package org.fcrepo.kernel.api.functions;
 
+import static java.util.Objects.requireNonNull;
+
 /**
- * 
+ *
  * @author barmintor
  *
  * @param <A>
  * @param <B>
  */
 public interface InjectiveConverter<A,B> extends InjectiveFunction<A, B>, Converter<A, B> {
+    public static final Identity<?> IDENTITY = new Identity<>();
+
     @Override
     public default InjectiveConverter<B, A> inverse() {
         return new InverseConverterWrapper<>(this);
@@ -36,8 +40,8 @@ public interface InjectiveConverter<A,B> extends InjectiveFunction<A, B>, Conver
      * @param after
      * @return
      */
-    public default <C> InjectiveConverter<A, C> andThen(InjectiveConverter<B, C> after) {
-        return new CompositeInjectiveConverter<>(this, after);
+    public default <C> InjectiveConverter<A, C> andThen(final InjectiveConverter<B, C> after) {
+        return new CompositeInjectiveConverter<>(this, requireNonNull(after, "Cannot compose with null!"));
     }
 
     /**
@@ -46,8 +50,8 @@ public interface InjectiveConverter<A,B> extends InjectiveFunction<A, B>, Conver
      * @param before
      * @return
      */
-    public default <C> InjectiveConverter<C, B> compose(InjectiveConverter<C, A> before) {
-        return new CompositeInjectiveConverter<>(before, this);
+    public default <C> InjectiveConverter<C, B> compose(final InjectiveConverter<C, A> before) {
+        return new CompositeInjectiveConverter<>(requireNonNull(before, "Cannot compose with null!"), this);
     }
 
     /**
@@ -55,8 +59,9 @@ public interface InjectiveConverter<A,B> extends InjectiveFunction<A, B>, Conver
      * @param klass
      * @return
      */
-    public default <T> InjectiveConverter<T, T> identity(Class<T> klass) {
-        return new Identity<>();
+    @SuppressWarnings("unchecked")
+    public default <T> InjectiveConverter<T, T> identity(final Class<T> klass) {
+        return (InjectiveConverter<T, T>) IDENTITY;
     }
 
     static class Identity<T> implements InjectiveConverter<T, T> {
