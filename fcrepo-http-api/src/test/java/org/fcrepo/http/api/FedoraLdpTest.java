@@ -580,7 +580,7 @@ public class FedoraLdpTest {
     @Test
     public void testDelete() throws Exception {
         final FedoraResource fedoraResource = setResource(FedoraResource.class);
-        final Response actual = testObj.deleteObject();
+        final Response actual = testObj.deleteObject(null);
         assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
         verify(fedoraResource).delete();
     }
@@ -679,7 +679,7 @@ public class FedoraLdpTest {
 
         setResource(Container.class);
 
-        testObj.updateSparql(toInputStream("xyz"));
+        testObj.updateSparql(toInputStream("xyz"), null);
     }
 
 
@@ -699,24 +699,24 @@ public class FedoraLdpTest {
 
         doReturn(mockObject).when(testObj).resource();
 
-        testObj.updateSparql(toInputStream("xyz"));
+        testObj.updateSparql(toInputStream("xyz"), null);
     }
 
     @Test(expected = BadRequestException.class)
     public void testPatchWithoutContent() throws MalformedRdfException, IOException {
-        testObj.updateSparql(null);
+        testObj.updateSparql(null, null);
     }
 
     @Test(expected = BadRequestException.class)
     public void testPatchWithMissingContent() throws RepositoryException, MalformedRdfException, IOException {
         setResource(Container.class);
-        testObj.updateSparql(toInputStream(""));
+        testObj.updateSparql(toInputStream(""), null);
     }
 
     @Test(expected = BadRequestException.class)
     public void testPatchBinary() throws RepositoryException, MalformedRdfException, IOException {
         setResource(FedoraBinary.class);
-        testObj.updateSparql(toInputStream(""));
+        testObj.updateSparql(toInputStream(""), null);
     }
 
     @Test

@@ -45,7 +45,6 @@ import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NOT_MODIFIED;
 import static javax.ws.rs.core.Response.Status.OK;
-import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static javax.ws.rs.core.Response.Status.TEMPORARY_REDIRECT;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
@@ -630,6 +629,33 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testPatchIfMatch() throws IOException {
+        // Create a container
+        final String id = getRandomUniqueId();
+        executeAndClose(putObjMethod(id));
+
+        // Get the container's etag
+        String etag;
+        final HttpHead httpHead = headObjMethod(id);
+        try (final CloseableHttpResponse response = execute(httpHead)) {
+            etag = response.getFirstHeader("ETag").getValue();
+            assertNotNull("ETag was missing!?", etag);
+        }
+
+        // PATCH with If-Match should fail
+        final HttpPatch httpPatch = patchObjMethod(id);
+        httpPatch.addHeader("Content-Type", "application/sparql-update");
+        httpPatch.addHeader("If-Match", etag);
+        httpPatch.setEntity(new StringEntity(
+                "INSERT DATA { <> <http://purl.org/dc/elements/1.1/title> 'test' }"));
+
+        try (final CloseableHttpResponse response = execute(httpPatch)) {
+            assertEquals("Should be a 400 Bad Request!", BAD_REQUEST.getStatusCode(),
+                    getStatus(response));
+        }
+    }
+
+    @Test
     public void testCreateGraph() throws IOException {
         final String subjectURI = serverAddress + getRandomUniqueId();
         final HttpPut createMethod = new HttpPut(subjectURI);
@@ -1132,12 +1158,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testDeleteWithBadEtag() throws IOException {
+    public void testDeleteWithIfMatch() throws IOException {
         try (final CloseableHttpResponse response = execute(postObjMethod())) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
             final HttpDelete request = new HttpDelete(getLocation(response));
             request.addHeader("If-Match", "\"doesnt-match\"");
-            assertEquals(PRECONDITION_FAILED.getStatusCode(), getStatus(request));
+            assertEquals(BAD_REQUEST.getStatusCode(), getStatus(request));
         }
     }
 
@@ -2264,12 +2290,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertNotNull("ETag was missing!?", etag);
         }
 
-        // PUT properly formatted etag
+        // PUT with If-Match should fail
         final HttpPut httpPut = putObjMethod(id);
         httpPut.addHeader("If-Match", etag);
 
         try (final CloseableHttpResponse response = execute(httpPut)) {
-            assertEquals("Should be a 412 Precondition Failed!", PRECONDITION_FAILED.getStatusCode(),
+            assertEquals("Should be a 400 Bad Request!", BAD_REQUEST.getStatusCode(),
                     getStatus(response));
         }
 
