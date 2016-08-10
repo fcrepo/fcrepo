@@ -28,31 +28,37 @@
         ]
     },
     "indexProviders" : {
-        "local" : {
-            "classname" : "local",
-            "directory" : "target/indexes/local",
-            "cacheSize" : 65536,
-            "cacheLRUEnable" : true,
-            "mmapFileEnable" : true
+        "lucene" : {
+            "classname" : "lucene",
+            "directory" : "target/indexes/lucene"
         }
     },
     "indexes" : {
         "uuid" : {
-            "provider" : "local",
+            "provider" : "lucene",
             "columns" : "jcr:uuid(STRING)",
             "kind" : "unique"
         },
         "primaryType" : {
-            "provider" : "local",
+            "provider" : "lucene",
             "columns" : "jcr:primaryType(STRING)",
             "kind" : "nodetype"
         },
+        "mixinType" : {
+            "provider" : "lucene",
+            "columns" : "jcr:mixinTypes(STRING)",
+            "kind" : "nodetype"
+        },
         "path" : {
-            "provider" : "local",
+            "provider" : "lucene",
             "columns" : "jcr:path(PATH)"
         },
+        "hasMember" : {
+            "provider" : "lucene",
+            "columns" : "pcdm:hasMember_ref(REFERENCE)"
+        },
         "proxyFor" : {
-            "provider" : "local",
+            "provider" : "lucene",
             "columns" : "ore:proxyFor_ref(REFERENCE)"
         }
     },

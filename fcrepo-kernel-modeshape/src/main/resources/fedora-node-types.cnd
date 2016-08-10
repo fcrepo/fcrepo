@@ -17,7 +17,7 @@
  * http://dublincore.org/documents/dcmi-namespace/
  */
 <dc = 'http://purl.org/dc/elements/1.1/'>
-
+<dcterms = 'http://purl.org/dc/terms/'>
 /*
  * Generic Fedora namespace
  */
@@ -27,6 +27,8 @@
 <premis = 'http://www.loc.gov/premis/rdf/v1#'>
 <ldp = 'http://www.w3.org/ns/ldp#'>
 <ebucore = 'http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#'>
+<pcdm = 'http://pcdm.org/models#'>
+<ore = 'http://www.openarchives.org/ore/terms/'>
 
 /*
  * A fedora namespace for properties a user may set on a node that may
@@ -52,6 +54,7 @@
   - ldp:hasMemberRelation (URI)
   - ldp:isMemberOfRelation (URI)
   - ldp:insertedContentRelation (URI)
+  - pcdm:hasMember (WEAKREFERENCE) multiple
 
 [ldp:BasicContainer] > fedora:Container mixin
 

@@ -40,5 +40,38 @@
       { "classname" : "org.fcrepo.auth.common.BypassSecurityServletAuthenticationProvider" }
     ]
   },
+  "indexProviders" : {
+    "lucene" : {
+      "classname" : "lucene",
+      "directory" : "target/indexes/lucene"
+    }
+  },
+  "indexes" : {
+    "primaryType" : {
+      "provider" : "lucene",
+      "columns" : "jcr:primaryType(STRING)",
+      "kind" : "nodetype"
+    },
+    "mixinType" : {
+      "provider" : "lucene",
+      "columns" : "jcr:mixinTypes(STRING)",
+      "kind" : "nodetype"
+    },
+    "path" : {
+      "columns" : "jcr:path(PATH)",
+      "provider" : "lucene"
+    },
+    "hasMember" : {
+      "columns" : "pcdm:hasMember(STRING)",
+      "provider" : "lucene"
+    },
+    "proxyFor" : {
+      "columns" : "ore:proxyFor(STRING)",
+      "provider" : "lucene"
+    }
+  },
+  "reindexing" : {
+    "async" : false
+  },
   "node-types" : ["fedora-node-types.cnd"]
 }

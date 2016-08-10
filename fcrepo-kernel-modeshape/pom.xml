@@ -62,6 +62,10 @@
       <artifactId>modeshape-jcr</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.modeshape</groupId>
+      <artifactId>modeshape-lucene-index-provider</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.jboss.jbossts</groupId>
       <artifactId>jbossjta</artifactId>
     </dependency>
