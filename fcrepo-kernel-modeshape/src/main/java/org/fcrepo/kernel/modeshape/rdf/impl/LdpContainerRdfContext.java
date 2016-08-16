@@ -218,7 +218,7 @@ public class LdpContainerRdfContext extends NodeRdfContext {
             final String path = container.getPath();
             //TODO will pairtree nodes have the content property?
             String jcrSql2 =
-                   "SELECT [jcr:path] AS path, [jcr:mixinTypes] AS type\n" +
+                   "SELECT [jcr:mixinTypes] AS type\n" +
                     "FROM [nt:base] as ref\n" +
                     "WHERE [jcr:uuid] IN (\n" +
                     "  SELECT [" + insertedContentRefProperty + "] FROM [nt:base] AS child" +
@@ -230,7 +230,7 @@ public class LdpContainerRdfContext extends NodeRdfContext {
                 final RowToResourceUri toUris = new RowToResourceUri(translator());
                 return iteratorToStream(rows).map(UncheckedFunction.<Row, com.hp.hpl.jena.graph.Node>uncheck(
                         (Row r) -> createResource(
-                                toUris.apply(r.getValue("path").getString(), r.getValues()).getString()).asNode()))
+                                toUris.apply(r.getPath(), r.getValues()).getString()).asNode()))
                         .map((com.hp.hpl.jena.graph.Node n) -> create(subject, memberRelation, n));
             } else {
                 //TODO will pairtree nodes have the content property?
@@ -257,6 +257,7 @@ public class LdpContainerRdfContext extends NodeRdfContext {
                 session.getWorkspace().getQueryManager();
         final Query query = queryManager.createQuery(jcrSql2, "JCR-SQL2");
         final JcrQueryResult result = (JcrQueryResult) query.execute();
+        //LOGGER.info(result.getPlan());
         return new RowIterator(result.getRows());
     }
 }

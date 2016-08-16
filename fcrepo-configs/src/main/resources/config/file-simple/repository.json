@@ -42,15 +42,6 @@
             "columns" : "jcr:uuid(STRING)",
             "kind" : "unique"
         },
-        "primaryType" : {
-            "provider" : "local",
-            "columns" : "jcr:primaryType(STRING)",
-            "kind" : "nodetype"
-        },
-        "path" : {
-            "provider" : "local",
-            "columns" : "jcr:path(PATH)"
-        },
         "proxyFor" : {
             "provider" : "local",
             "columns" : "ore:proxyFor_ref(REFERENCE)"

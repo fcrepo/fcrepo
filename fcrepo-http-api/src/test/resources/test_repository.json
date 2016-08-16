@@ -41,33 +41,29 @@
     ]
   },
   "indexProviders" : {
-    "lucene" : {
-      "classname" : "lucene",
-      "directory" : "target/indexes/lucene"
+    "local" : {
+      "classname" : "local",
+      "directory" : "target/indexes/local"
     }
   },
   "indexes" : {
     "primaryType" : {
-      "provider" : "lucene",
+      "provider" : "local",
       "columns" : "jcr:primaryType(STRING)",
       "kind" : "nodetype"
     },
     "mixinType" : {
-      "provider" : "lucene",
+      "provider" : "local",
       "columns" : "jcr:mixinTypes(STRING)",
       "kind" : "nodetype"
     },
-    "path" : {
-      "columns" : "jcr:path(PATH)",
-      "provider" : "lucene"
-    },
     "hasMember" : {
-      "columns" : "pcdm:hasMember(STRING)",
-      "provider" : "lucene"
+      "columns" : "pcdm:hasMember_ref(REFERENCE)",
+      "provider" : "local"
     },
     "proxyFor" : {
-      "columns" : "ore:proxyFor(STRING)",
-      "provider" : "lucene"
+      "columns" : "ore:proxyFor_ref(REFERENCE)",
+      "provider" : "local"
     }
   },
   "reindexing" : {
