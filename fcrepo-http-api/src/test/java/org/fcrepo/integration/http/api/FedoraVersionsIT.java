@@ -34,6 +34,8 @@ import static javax.ws.rs.core.Response.Status.OK;
 import static com.google.common.collect.Iterators.size;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
+import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBED_BY;
@@ -196,6 +198,108 @@ public class FedoraVersionsIT extends AbstractResourceIT {
             while (versionIt.hasNext()) {
                 final String url = versionIt.next().getObject().getURI();
                 assertEquals("Version " + url + " isn't accessible!", OK.getStatusCode(), getStatus(new HttpGet(url)));
+            }
+        }
+    }
+
+    @Test
+    public void testChildVersionedFirstURL() throws IOException {
+        final String parentId = getRandomUniqueId();
+        createObjectAndClose(parentId);
+
+        // Add a child
+        final String child = "child";
+        final String childId = parentId + "/" + child;
+        createObjectAndClose(childId);
+
+        // Add property to child
+        final String title0 = "title-0";
+        patchLiteralProperty(serverAddress + childId, DC_TITLE.getURI(), title0);
+
+        // Create version of child
+        final String label0 = "label-v0";
+        postObjectVersion(childId, label0);
+
+        // Update property on child
+        patchLiteralProperty(serverAddress + childId, DC_TITLE.getURI(), "title-1");
+
+        // Create version of parent
+        final String label1 = "label-v1";
+        postObjectVersion(parentId, label1);
+
+        final String parentURL = serverAddress + parentId;
+        verifyVersionURLAndTitle(parentURL, label1, child, title0);
+
+        // Create version of child, again
+        final String label2 = "label-v2";
+        postObjectVersion(childId, label2);
+
+        verifyVersionURLAndTitle(parentURL, label1, child, title0);
+    }
+
+    @Test
+    public void testChildVersionedLastURL() throws IOException {
+        final String parentId = getRandomUniqueId();
+        createObjectAndClose(parentId);
+
+        // Add a child
+        final String child = "child";
+        final String childId = parentId + "/child";
+        createObjectAndClose(childId);
+
+        // Create version of parent
+        final String label1 = "label-v1";
+        postObjectVersion(parentId, label1);
+
+        // Add property to child
+        final String title0 = "title-0";
+        patchLiteralProperty(serverAddress + childId, DC_TITLE.getURI(), title0);
+
+        // Create version of child
+        final String label0 = "label-v0";
+        postObjectVersion(childId, label0);
+
+        // Update property on child
+        patchLiteralProperty(serverAddress + childId, DC_TITLE.getURI(), "title-1");
+
+        final String parentURL = serverAddress + parentId;
+        verifyVersionURLAndTitle(parentURL, label1, child, title0);
+
+        // Create version of parent, again
+        final String label2 = "label-v2";
+        postObjectVersion(parentId, label2);
+
+        verifyVersionURLAndTitle(parentURL, label2, child, title0);
+    }
+
+    private void verifyVersionURLAndTitle(final String parentURL,
+                                          final String parentLabel,
+                                          final String childElement,
+                                          final String expectedTitle) throws IOException {
+        final String parentVersionURL = parentURL + "/" + FCR_VERSIONS + "/" + parentLabel;
+        try (final CloseableGraphStore results = getGraphStore(new HttpGet(parentVersionURL))) {
+
+            final Node subject = createURI(parentVersionURL);
+            assertTrue("Didn't find a version triple!", results.contains(ANY, subject, CONTAINS.asNode(), ANY));
+
+            // Find all (just one) contained, versioned resources
+            final Iterator<Quad> versionItr = results.find(ANY, subject, CONTAINS.asNode(), ANY);
+            while (versionItr.hasNext()) {
+
+                final String url = versionItr.next().getObject().getURI();
+                assertEquals("Version " + url + " isn't accessible!", OK.getStatusCode(), getStatus(new HttpGet(url)));
+                assertEquals(parentVersionURL + "/" + childElement, url);
+
+                try (final CloseableGraphStore childVersion = getGraphStore(new HttpGet(url))) {
+                    final Node versionedChildURI = createURI(url);
+                    assertTrue("No DC_TITLE!", childVersion.contains(ANY, versionedChildURI, DC_TITLE.asNode(), ANY));
+
+                    final Iterator<Quad> dcTitles = results.find(ANY, versionedChildURI, DC_TITLE.asNode(), ANY);
+                    while (dcTitles.hasNext()) {
+                        final String title = dcTitles.next().getObject().getURI();
+                        assertEquals("DC_TITLE should be the pre-versioned value!", expectedTitle, title);
+                    }
+                }
             }
         }
     }
