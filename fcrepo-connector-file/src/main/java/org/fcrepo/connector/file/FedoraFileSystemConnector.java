@@ -201,11 +201,9 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
             final Map<Name, Property> extraProperties = extraPropertiesStore().getProperties(id);
             final Name digestName = nameFrom(CONTENT_DIGEST);
             if (extraProperties.containsKey(digestName)) {
-                if (!hasBeenModifiedSincePropertiesWereStored(file, extraProperties.get(nameFrom(JCR_CREATED)))) {
                     LOGGER.trace("Found sha1 for {} in extra properties store.", id);
                     final String uriStr = ((URI) extraProperties.get(digestName).getFirstValue()).toString();
                     return uriStr.substring(uriStr.indexOf("sha1:") + 5);
-                }
             }
         } else {
             LOGGER.trace("No cache configured to contain object hashes.");
