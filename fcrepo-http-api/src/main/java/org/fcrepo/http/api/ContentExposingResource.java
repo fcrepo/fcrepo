@@ -169,9 +169,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
             final MediaType mediaType = MediaType.valueOf(((FedoraBinary) resource()).getMimeType());
 
-            if (MESSAGE_EXTERNAL_BODY.isCompatible(mediaType) && mediaType.getParameters().containsKey(
-                    "access-type") && mediaType.getParameters().get("access-type").equals("URL") && mediaType
-                    .getParameters().containsKey("URL")) {
+            if (isExternalBody(mediaType)) {
                 return temporaryRedirect(URI.create(mediaType.getParameters().get("URL"))).build();
             }
 
@@ -188,6 +186,13 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         servletResponse.addHeader("Vary", "Accept, Range, Accept-Encoding, Accept-Language");
 
         return ok(outputStream).build();
+    }
+
+    protected boolean isExternalBody(final MediaType mediaType) {
+        return MESSAGE_EXTERNAL_BODY.isCompatible(mediaType) &&
+                mediaType.getParameters().containsKey("access-type") &&
+                mediaType.getParameters().get("access-type").equals("URL") &&
+                mediaType.getParameters().containsKey("URL");
     }
 
     protected RdfStream getResourceTriples() {

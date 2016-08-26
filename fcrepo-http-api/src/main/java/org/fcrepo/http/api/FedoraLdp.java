@@ -177,9 +177,7 @@ public class FedoraLdp extends ContentExposingResource {
         if (resource() instanceof FedoraBinary) {
             final MediaType mediaType = MediaType.valueOf(((FedoraBinary) resource()).getMimeType());
 
-            if (MESSAGE_EXTERNAL_BODY.isCompatible(mediaType) && mediaType.getParameters().containsKey(
-                    "access-type") && mediaType.getParameters().get("access-type").equals("URL") && mediaType
-                    .getParameters().containsKey("URL")) {
+            if (isExternalBody(mediaType)) {
                 builder = temporaryRedirect(URI.create(mediaType.getParameters().get("URL")));
             }
 
