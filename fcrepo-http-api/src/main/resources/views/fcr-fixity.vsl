@@ -50,11 +50,11 @@
                 
             	## output triples for fixity
 
-				#set($hasFixity = $nodeany.createURI("http://www.loc.gov/premis/rdf/v1#hasFixity"))
+				#set($hasFixity = $helpers.createURI("http://www.loc.gov/premis/rdf/v1#hasFixity"))
 				#set($fixities = $rdf.find($topic, $hasFixity, $nodeany))
 				#if ($fixities.hasNext())		            
 	            	#set($triple = $fixities.next())
-	            	#set($sub = $nodeany.createURI($triple.getObject().getURI()))
+                    #set($sub = $helpers.createURI($triple.getObject().getURI()))
 	                <div class="panel-heading">
 	                    <h4 class="panel-title">Fixity Properties <br/><small><a href="$triple.getObject().getURI()">$esc.html($helpers.getObjectTitle($rdf, $sub))</a></small></h4>
 	                </div>
