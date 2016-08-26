@@ -305,8 +305,26 @@ public class FedoraLdpTest {
     public void testHeadWithBinary() throws Exception {
         final FedoraBinary mockResource = (FedoraBinary)setResource(FedoraBinary.class);
         when(mockResource.getDescription()).thenReturn(mockNonRdfSourceDescription);
+        when(mockResource.getMimeType()).thenReturn("image/jpeg");
         final Response actual = testObj.head();
         assertEquals(OK.getStatusCode(), actual.getStatus());
+        assertTrue("Should be an LDP NonRDFSource", mockResponse.getHeaders("Link").contains("<" + LDP_NAMESPACE +
+                "NonRDFSource>;rel=\"type\""));
+        assertFalse("Should not advertise Accept-Post flavors", mockResponse.containsHeader("Accept-Post"));
+        assertFalse("Should not advertise Accept-Patch flavors", mockResponse.containsHeader("Accept-Patch"));
+        assertTrue("Should contain a link to the binary description",
+                mockResponse.getHeaders("Link")
+                        .contains("<" + idTranslator.toDomain(binaryDescriptionPath + "/fcr:metadata")
+                                + ">; rel=\"describedby\""));
+    }
+
+    @Test
+    public void testHeadWithExternalBinary() throws Exception {
+        final FedoraBinary mockResource = (FedoraBinary)setResource(FedoraBinary.class);
+        when(mockResource.getDescription()).thenReturn(mockNonRdfSourceDescription);
+        when(mockResource.getMimeType()).thenReturn("message/external-body; access-type=URL; URL=\"some:uri\"");
+        final Response actual = testObj.head();
+        assertEquals(TEMPORARY_REDIRECT.getStatusCode(), actual.getStatus());
         assertTrue("Should be an LDP NonRDFSource", mockResponse.getHeaders("Link").contains("<" + LDP_NAMESPACE +
                 "NonRDFSource>;rel=\"type\""));
         assertFalse("Should not advertise Accept-Post flavors", mockResponse.containsHeader("Accept-Post"));

@@ -18,6 +18,7 @@
 package org.fcrepo.http.api;
 
 
+import static javax.ws.rs.core.Response.temporaryRedirect;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
@@ -171,10 +172,19 @@ public class FedoraLdp extends ContentExposingResource {
 
         addResourceHttpHeaders(resource());
 
-        final Response.ResponseBuilder builder = ok();
+        Response.ResponseBuilder builder = ok();
 
         if (resource() instanceof FedoraBinary) {
-            builder.type(((FedoraBinary) resource()).getMimeType());
+            final MediaType mediaType = MediaType.valueOf(((FedoraBinary) resource()).getMimeType());
+
+            if (MESSAGE_EXTERNAL_BODY.isCompatible(mediaType) && mediaType.getParameters().containsKey(
+                    "access-type") && mediaType.getParameters().get("access-type").equals("URL") && mediaType
+                    .getParameters().containsKey("URL")) {
+                builder = temporaryRedirect(URI.create(mediaType.getParameters().get("URL")));
+            }
+
+            // we set the content-type explicitly to avoid content-negotiation from getting in the way
+            builder.type(mediaType.toString());
         }
 
         return builder.build();
