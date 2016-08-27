@@ -277,24 +277,25 @@ public class FedoraVersionsIT extends AbstractResourceIT {
                                           final String childElement,
                                           final String expectedTitle) throws IOException {
         final String parentVersionURL = parentURL + "/" + FCR_VERSIONS + "/" + parentLabel;
-        try (final CloseableGraphStore results = getGraphStore(new HttpGet(parentVersionURL))) {
-
+        try (final CloseableDataset dataset = getDataset(new HttpGet(parentVersionURL))) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
             final Node subject = createURI(parentVersionURL);
-            assertTrue("Didn't find a version triple!", results.contains(ANY, subject, CONTAINS.asNode(), ANY));
+            assertTrue("Didn't find a version triple!", graph.contains(ANY, subject, CONTAINS.asNode(), ANY));
 
             // Find all (just one) contained, versioned resources
-            final Iterator<Quad> versionItr = results.find(ANY, subject, CONTAINS.asNode(), ANY);
+            final Iterator<Quad> versionItr = graph.find(ANY, subject, CONTAINS.asNode(), ANY);
             while (versionItr.hasNext()) {
 
                 final String url = versionItr.next().getObject().getURI();
                 assertEquals("Version " + url + " isn't accessible!", OK.getStatusCode(), getStatus(new HttpGet(url)));
                 assertEquals(parentVersionURL + "/" + childElement, url);
 
-                try (final CloseableGraphStore childVersion = getGraphStore(new HttpGet(url))) {
+                try (final CloseableDataset childVersion = getDataset(new HttpGet(url))) {
+                    final DatasetGraph childGraph = childVersion.asDatasetGraph();
                     final Node versionedChildURI = createURI(url);
-                    assertTrue("No DC_TITLE!", childVersion.contains(ANY, versionedChildURI, DC_TITLE.asNode(), ANY));
+                    assertTrue("No DC_TITLE!", childGraph.contains(ANY, versionedChildURI, DC_TITLE.asNode(), ANY));
 
-                    final Iterator<Quad> dcTitles = results.find(ANY, versionedChildURI, DC_TITLE.asNode(), ANY);
+                    final Iterator<Quad> dcTitles = childGraph.find(ANY, versionedChildURI, DC_TITLE.asNode(), ANY);
                     while (dcTitles.hasNext()) {
                         final String title = dcTitles.next().getObject().getURI();
                         assertEquals("DC_TITLE should be the pre-versioned value!", expectedTitle, title);
