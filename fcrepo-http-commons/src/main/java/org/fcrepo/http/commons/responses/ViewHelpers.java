@@ -19,7 +19,6 @@ package org.fcrepo.http.commons.responses;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static org.apache.jena.graph.GraphUtil.listObjects;
-import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static java.util.Arrays.asList;
@@ -53,6 +52,7 @@ import java.util.StringJoiner;
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.graph.impl.LiteralLabel;
 
@@ -399,7 +399,17 @@ public class ViewHelpers {
      * @return content-bearing node for the given subject
      */
     public static Node getContentNode(final Node subject) {
-        return subject == null ? null : createURI(subject.getURI().replace("/" + FCR_METADATA, ""));
+        return subject == null ? null : NodeFactory.createURI(subject.getURI().replace("/" + FCR_METADATA, ""));
+    }
+
+    /**
+     * Create a URI Node from the provided String
+     *
+     * @param uri from which a URI Node will be created
+     * @return URI Node
+     */
+    public static Node createURI(final String uri) {
+        return NodeFactory.createURI(uri);
     }
 
     /**

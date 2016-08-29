@@ -46,7 +46,7 @@
 #end
 
 #macro( isObject $sub )
-#set($type = $anynode.createURI("http://fedora.info/definitions/v4/repository#mixinTypes"))
+#set($type = $helpers.createURI("http://fedora.info/definitions/v4/repository#mixinTypes"))
 #set($object = $anynode.createLiteral("fedora:object"))
 $rdf.find($sub, $type, $object).hasNext()
 #end
