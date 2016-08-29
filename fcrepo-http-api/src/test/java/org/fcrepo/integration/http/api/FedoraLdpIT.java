@@ -124,6 +124,7 @@ import com.google.common.collect.Iterators;
 import nu.validator.htmlparser.sax.HtmlParser;
 import nu.validator.saxtree.TreeBuilder;
 
+import org.apache.http.client.config.RequestConfig;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 
 import org.apache.commons.io.IOUtils;
@@ -275,6 +276,31 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
             assertEquals(TEXT_PLAIN, response.getFirstHeader("Content-Type").getValue());
             assertEquals("3", response.getFirstHeader("Content-Length").getValue());
+            assertEquals("bytes", response.getFirstHeader("Accept-Ranges").getValue());
+            final ContentDisposition disposition =
+                    new ContentDisposition(response.getFirstHeader("Content-Disposition").getValue());
+            assertEquals("attachment", disposition.getType());
+        }
+    }
+
+    @Test
+    public void testHeadExternalDatastream() throws IOException, ParseException {
+        final String externalContentType = "message/external-body;access-type=URL;url=\"some:uri\"";
+
+        final String id = getRandomUniqueId();
+        final HttpPut put = putObjMethod(id);
+        put.addHeader("Content-Type", externalContentType);
+        assertEquals(CREATED.getStatusCode(), getStatus(put));
+
+        // Configure HEAD request to NOT follow redirects
+        final HttpHead headObjMethod = headObjMethod(id);
+        final RequestConfig.Builder requestConfig = RequestConfig.custom();
+        requestConfig.setRedirectsEnabled(false);
+        headObjMethod.setConfig(requestConfig.build());
+
+        try (final CloseableHttpResponse response = execute(headObjMethod)) {
+            assertEquals(TEMPORARY_REDIRECT.getStatusCode(), response.getStatusLine().getStatusCode());
+            assertEquals(externalContentType, response.getFirstHeader("Content-Type").getValue());
             assertEquals("bytes", response.getFirstHeader("Accept-Ranges").getValue());
             final ContentDisposition disposition =
                     new ContentDisposition(response.getFirstHeader("Content-Disposition").getValue());
