@@ -18,6 +18,7 @@
 package org.fcrepo.kernel.api.utils;
 
 import static java.net.URI.create;
+import static org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM.SHA1;
 import static org.fcrepo.kernel.api.utils.ContentDigest.asURI;
 import static org.fcrepo.kernel.api.utils.ContentDigest.getAlgorithm;
 import static org.junit.Assert.assertEquals;
@@ -34,7 +35,7 @@ public class ContentDigestTest {
     @Test
     public void testSHA_1() {
         assertEquals("Failed to produce a proper content digest URI!",
-                create("urn:sha1:fake"), asURI("SHA-1", "fake"));
+                create("urn:sha1:fake"), asURI(SHA1.algorithm, "fake"));
     }
 
     @Test
@@ -45,7 +46,7 @@ public class ContentDigestTest {
 
     @Test
     public void testGetAlgorithm() {
-        assertEquals("Failed to produce a proper digest algorithm!", "SHA-1",
-                getAlgorithm(asURI("SHA-1", "fake")));
+        assertEquals("Failed to produce a proper digest algorithm!", SHA1.algorithm,
+                getAlgorithm(asURI(SHA1.algorithm, "fake")));
     }
 }

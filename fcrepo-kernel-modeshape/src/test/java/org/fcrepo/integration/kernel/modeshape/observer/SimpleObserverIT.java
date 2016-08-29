@@ -30,6 +30,7 @@ import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_CREATION;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_DELETION;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_MODIFICATION;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_RELOCATION;
+import static org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM.SHA1;
 import static org.fcrepo.kernel.api.utils.ContentDigest.asURI;
 import static org.junit.Assert.assertEquals;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
@@ -129,7 +130,7 @@ public class SimpleObserverIT extends AbstractIT {
         contentNode.addMixin(FEDORA_BINARY);
         final FedoraBinary binary = new FedoraBinaryImpl(contentNode);
         binary.setContent( new ByteArrayInputStream(content.getBytes()), "text/plain",
-                new HashSet<>(asList(asURI("SHA-1", checksum))), "text.txt", null);
+                new HashSet<>(asList(asURI(SHA1.algorithm, checksum))), "text.txt", null);
 
         try {
             se.save();

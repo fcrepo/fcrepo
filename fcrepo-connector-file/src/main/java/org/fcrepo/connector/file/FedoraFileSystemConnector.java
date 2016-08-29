@@ -24,6 +24,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM.SHA1;
 import static org.fcrepo.kernel.api.utils.ContentDigest.asURI;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
@@ -220,7 +221,7 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
         if (shouldCacheProperties()) {
             final Map<Name, Property> updateMap = new HashMap<>();
             final Property digestProperty = new BasicSingleValueProperty(nameFrom(CONTENT_DIGEST),
-                    asURI("SHA-1", sha1));
+                    asURI(SHA1.algorithm, sha1));
             final Property digestDateProperty = new BasicSingleValueProperty(nameFrom(JCR_CREATED),
                     factories().getDateFactory().create(file.lastModified()));
             updateMap.put(digestProperty.getName(), digestProperty);
@@ -256,7 +257,7 @@ public class FedoraFileSystemConnector extends FileSystemConnector {
                 || hasBeenModifiedSincePropertiesWereStored(file, docReader.getProperty(JCR_CREATED))) {
             final BinaryValue binaryValue = getBinaryValue(docReader);
             final String dsChecksum = binaryValue.getHexHash();
-            final String dsURI = asURI("SHA-1", dsChecksum).toString();
+            final String dsURI = asURI(SHA1.algorithm, dsChecksum).toString();
 
             LOGGER.trace("Adding {} property of {} to {}", CONTENT_DIGEST, dsURI, docReader.getDocumentId());
             docWriter.addProperty(CONTENT_DIGEST, dsURI);

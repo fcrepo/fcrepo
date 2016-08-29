@@ -19,6 +19,7 @@ package org.fcrepo.kernel.api.utils;
 
 import static com.google.common.base.Throwables.propagate;
 import static org.apache.commons.codec.binary.Hex.encodeHexString;
+import static org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM.SHA1;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
@@ -40,7 +41,7 @@ public final class ContentDigest {
     public enum DIGEST_ALGORITHM {
         SHA1("SHA-1", "urn:sha1"), SHA256("SHA-256", "urn:sha256"), MD5("MD5", "urn:md5"), MISSING("NONE", "missing");
 
-        final private String algorithm;
+        final public String algorithm;
         final private String scheme;
 
         DIGEST_ALGORITHM(final String alg, final String scheme) {
@@ -137,7 +138,7 @@ public final class ContentDigest {
      * @return URI
      */
     public static URI missingChecksum() {
-        return asURI("SHA-1", "missing");
+        return asURI(SHA1.algorithm, SHA1.scheme);
     }
 
 }

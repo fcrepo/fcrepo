@@ -58,6 +58,7 @@ import java.util.stream.Collectors;
 
 import static com.codahale.metrics.MetricRegistry.name;
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDstring;
+import static org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM.SHA1;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FIELD_DELIMITER;
 import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.property2values;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFedoraBinary;
@@ -227,9 +228,9 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
             final String algorithm = ContentDigest.getAlgorithm(checksum);
             try {
                 // The case internally supported by ModeShape
-                if (algorithm.equals("SHA-1")) {
+                if (algorithm.equals(SHA1.algorithm)) {
                     final String dsSHA1 = ((Binary) dataProperty.getBinary()).getHexHash();
-                    final URI dsSHA1Uri = ContentDigest.asURI("SHA-1", dsSHA1);
+                    final URI dsSHA1Uri = ContentDigest.asURI(SHA1.algorithm, dsSHA1);
 
                     if (!dsSHA1Uri.equals(checksum)) {
                         LOGGER.debug("Failed checksum test");
@@ -414,7 +415,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
 
             contentSizeHistogram.update(dataProperty.getLength());
 
-            checksums.add(ContentDigest.asURI("SHA-1", dsChecksum));
+            checksums.add(ContentDigest.asURI(SHA1.algorithm, dsChecksum));
 
             final String[] checksumArray = new String[checksums.size()];
             checksums.stream().map(Object::toString).collect(Collectors.toSet()).toArray(checksumArray);
