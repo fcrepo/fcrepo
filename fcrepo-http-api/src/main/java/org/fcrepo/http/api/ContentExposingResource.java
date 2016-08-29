@@ -598,7 +598,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                                                    final ContentDisposition contentDisposition,
                                                    final MediaType contentType,
                                                    final Collection<String> checksums) throws InvalidChecksumException {
-        final Collection<URI> checksumURIs = null == checksums ?
+        final Collection<URI> checksumURIs = checksums == null ?
                 new HashSet<>() : checksums.stream().map(checksum -> checksumURI(checksum)).collect(Collectors.toSet());
         final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
         final String originalContentType = contentType != null ? contentType.toString() : "";
