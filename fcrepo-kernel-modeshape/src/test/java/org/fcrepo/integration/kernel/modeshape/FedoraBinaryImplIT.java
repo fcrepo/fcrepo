@@ -17,6 +17,7 @@
  */
 package org.fcrepo.integration.kernel.modeshape;
 
+import static java.util.Arrays.asList;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.UUID.randomUUID;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
@@ -36,6 +37,7 @@ import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.HashSet;
 import javax.inject.Inject;
 import javax.jcr.Node;
 import javax.jcr.Repository;
@@ -230,7 +232,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
             binaryService.findOrCreate(session, "/testDatastreamObject/testDatastreamNode4").setContent(
                     new ByteArrayInputStream("asdf".getBytes()),
                     "application/octet-stream",
-                    ContentDigest.asURI("SHA-1", "3da541559918a808c2402bba5012f6c60b27661c"),
+                    new HashSet<>(asList(ContentDigest.asURI("SHA-1", "3da541559918a808c2402bba5012f6c60b27661c"))),
                     null,
                     null
                     );

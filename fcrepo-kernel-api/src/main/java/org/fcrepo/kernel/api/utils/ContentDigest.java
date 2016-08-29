@@ -18,17 +18,14 @@
 package org.fcrepo.kernel.api.utils;
 
 import static com.google.common.base.Throwables.propagate;
-import static java.util.Collections.singletonMap;
 import static org.apache.commons.codec.binary.Hex.encodeHexString;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Map;
+import java.util.Arrays;
 
 import org.slf4j.Logger;
-
-import com.google.common.collect.ImmutableMap;
 
 /**
  * Digest helpers to convert digests (checksums) into URI strings
@@ -40,13 +37,52 @@ public final class ContentDigest {
 
     private static final Logger LOGGER = getLogger(ContentDigest.class);
 
-    public static final Map<String, String> algorithmToScheme = ImmutableMap
-            .of("SHA-1", "urn:sha1", "SHA1", "urn:sha1");
+    public enum DIGEST_ALGORITHM {
+        SHA1("SHA-1", "urn:sha1"), SHA256("SHA-256", "urn:sha256"), MD5("MD5", "urn:md5"), MISSING("NONE", "missing");
 
-    public static final Map<String, String> schemeToAlgorithm =
-        singletonMap("urn:sha1", "SHA-1");
+        final private String algorithm;
+        final private String scheme;
 
-    public static final String DEFAULT_ALGORITHM = "SHA-1";
+        DIGEST_ALGORITHM(final String alg, final String scheme) {
+            this.algorithm = alg;
+            this.scheme = scheme;
+        }
+
+        /**
+         * Return the scheme associated with the provided algorithm (e.g. SHA-1 returns urn:sha1)
+         *
+         * @param alg for which scheme is requested
+         * @return scheme
+         */
+        public static String getScheme(final String alg) {
+            return Arrays.stream(values()).filter(value ->
+                    value.algorithm.equalsIgnoreCase(alg) || value.algorithm.replace("-", "").equalsIgnoreCase(alg)
+            ).findFirst().orElse(MISSING).scheme;
+        }
+
+        /**
+         * Return enum value for the provided scheme (e.g. urn:sha1 returns SHA-1)
+         *
+         * @param argScheme for which enum is requested
+         * @return enum value associated with the arg scheme
+         */
+        public static DIGEST_ALGORITHM fromScheme(final String argScheme) {
+            return Arrays.stream(values()).filter(value -> value.scheme.equalsIgnoreCase(argScheme)
+            ).findFirst().orElse(MISSING);
+        }
+
+        /**
+         * Return true if the provided algorithm is included in this enum
+         *
+         * @param alg to test
+         * @return true if arg algorithm is supported
+         */
+        public static boolean isSupportedAlgorithm(final String alg) {
+            return !getScheme(alg).equals(MISSING.scheme);
+        }
+    }
+
+    public static final String DEFAULT_ALGORITHM = DIGEST_ALGORITHM.SHA1.algorithm;
 
     private ContentDigest() {
     }
@@ -59,7 +95,7 @@ public final class ContentDigest {
      */
     public static URI asURI(final String algorithm, final String value) {
         try {
-            final String scheme = algorithmToScheme.get(algorithm);
+            final String scheme = DIGEST_ALGORITHM.getScheme(algorithm);
 
             return new URI(scheme, value, null);
         } catch (final URISyntaxException unlikelyException) {
@@ -88,9 +124,8 @@ public final class ContentDigest {
         if (digestUri == null) {
             return DEFAULT_ALGORITHM;
         }
-        return schemeToAlgorithm
-        .get(digestUri.getScheme() + ":" +
-             digestUri.getSchemeSpecificPart().split(":", 2)[0]);
+        return DIGEST_ALGORITHM.fromScheme(digestUri.getScheme() + ":" +
+             digestUri.getSchemeSpecificPart().split(":", 2)[0]).algorithm;
     }
 
     private static String asString(final byte[] data) {

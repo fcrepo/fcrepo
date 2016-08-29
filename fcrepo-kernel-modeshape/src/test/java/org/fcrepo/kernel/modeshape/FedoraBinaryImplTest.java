@@ -42,6 +42,7 @@ import java.net.URISyntaxException;
 import java.util.Calendar;
 import java.util.Date;
 
+import static java.util.Collections.singleton;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.TestHelpers.checksumString;
 import static org.fcrepo.kernel.modeshape.utils.TestHelpers.getContentNodeMock;
@@ -180,7 +181,7 @@ public class FedoraBinaryImplTest implements FedoraTypes {
         when(mockContent.setProperty(JCR_DATA, mockBin)).thenReturn(mockData);
         when(mockContent.getProperty(JCR_DATA)).thenReturn(mockData);
         when(mockData.getBinary()).thenReturn(mockBin);
-        testObj.setContent(mockStream, null, new URI("urn:sha1:xyz"), null, null);
+        testObj.setContent(mockStream, null, singleton(new URI("urn:sha1:xyz")), null, null);
     }
 
     @Test

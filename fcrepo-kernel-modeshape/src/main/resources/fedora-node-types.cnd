@@ -71,7 +71,7 @@
   - ebucore:filename (STRING)
   - ebucore:hasMimeType (STRING)
   - premis:hasSize (LONG) COPY
-  - premis:hasMessageDigest (URI) COPY
+  - premis:hasMessageDigest (URI) COPY multiple
 
 [fedora:Skolem] > mix:referenceable mixin
   - fedora:lastModified (DATE)

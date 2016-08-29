@@ -17,11 +17,13 @@
  */
 package org.fcrepo.integration.http.api;
 
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
+import static org.fcrepo.kernel.api.FedoraTypes.DEFAULT_DIGEST_ALGORITHM;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_RESULT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_STATE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
@@ -35,8 +37,11 @@ import java.util.Iterator;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.StringEntity;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 
 import org.junit.Test;
@@ -73,6 +78,36 @@ public class FedoraFixityIT extends AbstractResourceIT {
             assertTrue(graphStore.contains(ANY,
                     ANY, HAS_MESSAGE_DIGEST.asNode(), createURI("urn:sha1:0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33")));
             assertTrue(graphStore.contains(ANY, ANY, HAS_SIZE.asNode(), createLiteral("3", IntegerType)));
+        }
+    }
+
+    @Test
+    public void testCheckDatastreamFixityMD5() throws IOException {
+        final String id = getRandomUniqueId();
+        final String childId = id + "/child";
+
+        final HttpPut put = putDSMethod(id, "child", "text-body");
+        put.setHeader("Digest", "md5=888c09337d6869fa48bbeff802ddd05a");
+        assertEquals("Did not create successfully!", CREATED.getStatusCode(), getStatus(put));
+
+        // Set default digest algorithm
+        final HttpPatch patch = patchObjMethod(childId + "/fcr:metadata");
+        patch.setHeader("Content-Type", "application/sparql-update");
+        final String updateString = "PREFIX fedoraconfig: <http://fedora.info/definitions/v4/config#>\n" +
+                "INSERT DATA { <> " + DEFAULT_DIGEST_ALGORITHM + " \"md5\" }";
+        patch.setEntity(new StringEntity(updateString));
+        assertEquals("Did not update successfully!", NO_CONTENT.getStatusCode(), getStatus(patch));
+
+        try (final CloseableDataset dataset = getDataset(new HttpGet(serverAddress + childId + "/fcr:fixity"))) {
+            final DatasetGraph graphStore = dataset.asDatasetGraph();
+            logger.debug("Got triples {}", graphStore);
+
+            assertTrue(graphStore.contains(ANY,
+                    createURI(serverAddress + childId), HAS_FIXITY_RESULT.asNode(), ANY));
+            assertTrue(graphStore.contains(ANY, ANY, HAS_FIXITY_STATE.asNode(), createLiteral("SUCCESS")));
+            assertTrue(graphStore.contains(ANY,
+                    ANY, HAS_MESSAGE_DIGEST.asNode(), createURI("urn:md5:888c09337d6869fa48bbeff802ddd05a")));
+            assertTrue(graphStore.contains(ANY, ANY, HAS_SIZE.asNode(), createLiteral("9", IntegerType)));
         }
     }
 

@@ -17,6 +17,7 @@
  */
 package org.fcrepo.integration.kernel.modeshape.observer;
 
+import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static com.jayway.awaitility.Awaitility.await;
 import static com.jayway.awaitility.Duration.ONE_HUNDRED_MILLISECONDS;
@@ -37,6 +38,7 @@ import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 
 import java.io.ByteArrayInputStream;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -127,7 +129,7 @@ public class SimpleObserverIT extends AbstractIT {
         contentNode.addMixin(FEDORA_BINARY);
         final FedoraBinary binary = new FedoraBinaryImpl(contentNode);
         binary.setContent( new ByteArrayInputStream(content.getBytes()), "text/plain",
-                asURI("SHA-1", checksum), "text.txt", null);
+                new HashSet<>(asList(asURI("SHA-1", checksum))), "text.txt", null);
 
         try {
             se.save();
