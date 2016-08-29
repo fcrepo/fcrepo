@@ -620,8 +620,8 @@ public class FedoraLdpTest {
 
     @Test(expected = ServerErrorException.class)
     public void testPutNewObjectLdpr() throws Exception {
-        testObj.createOrReplaceObjectRdf(null, null, null, null, null,
-                "<http://www.w3.org/ns/ldp#Resource>; rel=\"type\"");
+        testObj.createOrReplaceObjectRdf(null, null, null, null,
+                "<http://www.w3.org/ns/ldp#Resource>; rel=\"type\"", null);
     }
 
     @Test
@@ -742,7 +742,7 @@ public class FedoraLdpTest {
             IOException {
         setResource(Container.class);
         when(mockContainerService.findOrCreate(mockSession, "/b")).thenReturn(mockContainer);
-        final Response actual = testObj.createObject(null, null, null, "b", null, null);
+        final Response actual = testObj.createObject(null, null, "b", null, null, null);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
     }
 
@@ -752,8 +752,8 @@ public class FedoraLdpTest {
 
         setResource(Container.class);
         when(mockContainerService.findOrCreate(mockSession, "/b")).thenReturn(mockContainer);
-        final Response actual = testObj.createObject(null, null,
-                MediaType.valueOf(contentTypeSPARQLUpdate), "b", toInputStream("x"), null);
+        final Response actual = testObj.createObject(null,
+                MediaType.valueOf(contentTypeSPARQLUpdate), "b", toInputStream("x"), null, null);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(mockContainer).updateProperties(eq(idTranslator), eq("x"), any(RdfStream.class));
     }
@@ -763,8 +763,8 @@ public class FedoraLdpTest {
             InvalidChecksumException, IOException {
         setResource(Container.class);
         when(mockContainerService.findOrCreate(mockSession, "/b")).thenReturn(mockContainer);
-        final Response actual = testObj.createObject(null, null, NTRIPLES_TYPE, "b",
-                toInputStream("_:a <info:b> _:c ."), null);
+        final Response actual = testObj.createObject(null, NTRIPLES_TYPE, "b",
+                toInputStream("_:a <info:b> _:c ."), null, null);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(mockContainer).replaceProperties(eq(idTranslator), any(Model.class), any(RdfStream.class));
     }
@@ -776,8 +776,7 @@ public class FedoraLdpTest {
         setResource(Container.class);
         when(mockBinaryService.findOrCreate(mockSession, "/b")).thenReturn(mockBinary);
         try (final InputStream content = toInputStream("x")) {
-            final Response actual = testObj.createObject(null, null, APPLICATION_OCTET_STREAM_TYPE, "b",
-                    content, null);
+            final Response actual = testObj.createObject(null, APPLICATION_OCTET_STREAM_TYPE, "b", content, null, null);
             assertEquals(CREATED.getStatusCode(), actual.getStatus());
             verify(mockBinary).setContent(content, APPLICATION_OCTET_STREAM, null, "", null);
         }
@@ -791,8 +790,7 @@ public class FedoraLdpTest {
         when(mockBinaryService.findOrCreate(mockSession, "/b")).thenReturn(mockBinary);
         try (final InputStream content = toInputStream("x")) {
             final MediaType requestContentType = MediaType.valueOf("some/mime-type; with=some; param=s");
-            final Response actual = testObj.createObject(null, null, requestContentType, "b",
-                    content, null);
+            final Response actual = testObj.createObject(null, requestContentType, "b", content, null, null);
             assertEquals(CREATED.getStatusCode(), actual.getStatus());
             verify(mockBinary).setContent(content, requestContentType.toString(), null, "", null);
         }
@@ -808,13 +806,13 @@ public class FedoraLdpTest {
 
     @Test(expected = ServerErrorException.class)
     public void testLDPRNotImplemented() throws MalformedRdfException, InvalidChecksumException, IOException {
-        testObj.createObject(null, null, null, null, null, "<http://www.w3.org/ns/ldp#Resource>; rel=\"type\"");
+        testObj.createObject(null, null, null, null, "<http://www.w3.org/ns/ldp#Resource>; rel=\"type\"", null);
     }
 
     @Test(expected = ClientErrorException.class)
     public void testLDPRNotImplementedInvalidLink() throws MalformedRdfException, InvalidChecksumException,
             IOException {
-        testObj.createObject(null, null, null, null, null, "Link: <http://www.w3.org/ns/ldp#Resource;rel=type");
+        testObj.createObject(null, null, null, null, "Link: <http://www.w3.org/ns/ldp#Resource;rel=type", null);
     }
 
     @Test
