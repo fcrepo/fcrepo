@@ -722,11 +722,11 @@ public class FedoraLdp extends ContentExposingResource {
     private static Collection<String> parseDigestHeader(final String digest) throws InvalidChecksumException {
         try {
             final Map<String,String> digestPairs = RFC3230_SPLITTER.split(nullToEmpty(digest));
-            final boolean isSupportedAlgorithm = digestPairs.keySet().stream().anyMatch(
+            final boolean allSupportedAlgorithms = digestPairs.keySet().stream().allMatch(
                     ContentDigest.DIGEST_ALGORITHM::isSupportedAlgorithm);
 
-            // If you have one or more digests and one is sha1 or no digests.
-            if (digestPairs.isEmpty() || isSupportedAlgorithm) {
+            // If you have one or more digests that are all valid or no digests.
+            if (digestPairs.isEmpty() || allSupportedAlgorithms) {
                 return digestPairs.entrySet().stream()
                     .filter(entry -> ContentDigest.DIGEST_ALGORITHM.isSupportedAlgorithm(entry.getKey()))
                     .map(entry -> ContentDigest.asURI(entry.getKey(), entry.getValue()).toString())

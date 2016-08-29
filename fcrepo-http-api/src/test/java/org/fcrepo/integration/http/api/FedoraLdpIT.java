@@ -1129,6 +1129,18 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testIngestWithBinaryAndValidAndInvalidDigestHeaders() {
+        final HttpPost method = postObjMethod();
+        final File img = new File("src/test/resources/test-objects/img.png");
+        method.addHeader("Content-Type", "application/octet-stream");
+        method.addHeader("Digest", "md5=6668675a91f39ca1afe46c084e8406ba," +
+                " sha99=7b115a72978fe138287c1a6dfe6cc1afce4720fb3610a81d32e4ad518700c923");
+        method.setEntity(new FileEntity(img));
+
+        assertEquals("Should be a 409 Conflict!", CONFLICT.getStatusCode(), getStatus(method));
+    }
+
+    @Test
     public void testIngestOnSubtree() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
