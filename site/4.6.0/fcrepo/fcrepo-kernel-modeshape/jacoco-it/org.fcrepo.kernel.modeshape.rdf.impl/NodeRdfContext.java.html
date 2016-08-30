@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>NodeRdfContext.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation (ModeShape)</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.rdf.impl</a> &gt; <span class="el_source">NodeRdfContext.java</span></div><h1>NodeRdfContext.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.rdf.impl;
+
+import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeToResource;
+
+import javax.jcr.Node;
+
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+
+import com.google.common.base.Converter;
+import com.hp.hpl.jena.rdf.model.Resource;
+
+/**
+ * {@link org.fcrepo.kernel.api.RdfStream} that holds contexts related to a specific {@link Node}.
+ *
+ * @author ajs6f
+ * @since Oct 10, 2013
+ */
+public class NodeRdfContext extends DefaultRdfStream {
+
+    private final FedoraResource resource;
+
+    private final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator;
+
+    private final com.hp.hpl.jena.graph.Node subject;
+
+    /**
+     * Default constructor.
+     *
+     * @param resource the resource
+     * @param idTranslator the id translator
+     */
+    public NodeRdfContext(final FedoraResource resource,
+                          final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator) {
+<span class="nc" id="L53">        super(idTranslator.reverse().convert(resource).asNode());</span>
+<span class="nc" id="L54">        this.resource = resource;</span>
+<span class="nc" id="L55">        this.idTranslator = idTranslator;</span>
+<span class="nc" id="L56">        this.subject = uriFor(resource);</span>
+<span class="nc" id="L57">    }</span>
+
+    /**
+     * @return The {@link Node} in question
+     */
+    public FedoraResource resource() {
+<span class="nc" id="L63">        return resource;</span>
+    }
+
+    /**
+     * @return local {@link org.fcrepo.kernel.api.identifiers.IdentifierConverter}
+     */
+    public IdentifierConverter&lt;Resource, FedoraResource&gt; translator() {
+<span class="nc" id="L70">        return idTranslator;</span>
+    }
+
+    /**
+     * @param resource a Fedora model instance that must be identified by an URI
+     * @return a translated URI for that resource
+     */
+    protected com.hp.hpl.jena.graph.Node uriFor(final FedoraResource resource) {
+<span class="nc" id="L78">        return translator().reverse().convert(resource).asNode();</span>
+    }
+
+    /**
+     * @return local {@link org.fcrepo.kernel.api.identifiers.IdentifierConverter}
+     */
+    public Converter&lt;Node, Resource&gt; nodeConverter() {
+<span class="nc" id="L85">        return nodeToResource(idTranslator);</span>
+    }
+
+    /**
+     * @return the RDF subject at the center of this context
+     */
+    public com.hp.hpl.jena.graph.Node subject() {
+<span class="nc" id="L92">        return subject;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

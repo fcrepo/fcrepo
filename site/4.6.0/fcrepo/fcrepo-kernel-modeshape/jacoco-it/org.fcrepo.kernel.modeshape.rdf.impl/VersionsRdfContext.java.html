@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>VersionsRdfContext.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation (ModeShape)</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.rdf.impl</a> &gt; <span class="el_source">VersionsRdfContext.java</span></div><h1>VersionsRdfContext.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.rdf.impl;
+
+import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
+import static com.hp.hpl.jena.graph.Triple.create;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createProperty;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createTypedLiteral;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
+import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_LABEL;
+import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
+import static org.fcrepo.kernel.modeshape.utils.UncheckedPredicate.uncheck;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.Arrays;
+import java.util.stream.Stream;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.version.Version;
+import javax.jcr.version.VersionHistory;
+import com.hp.hpl.jena.rdf.model.Resource;
+
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.modeshape.utils.UncheckedFunction;
+
+import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.Triple;
+
+import org.slf4j.Logger;
+
+
+/**
+ * {@link org.fcrepo.kernel.api.RdfStream} that supplies {@link Triple}s concerning
+ * the versions of a selected {@link Node}.
+ *
+ * @author ajs6f
+ * @since Oct 15, 2013
+ */
+public class VersionsRdfContext extends DefaultRdfStream {
+
+    private final VersionHistory versionHistory;
+
+<span class="nc" id="L62">    private static final Logger LOGGER = getLogger(VersionsRdfContext.class);</span>
+
+    /**
+     * Ordinary constructor.
+     *
+     * @param resource the resource
+     * @param idTranslator the id translator
+     * @throws RepositoryException if repository exception occurred
+     */
+    public VersionsRdfContext(final FedoraResource resource,
+                              final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator)
+        throws RepositoryException {
+<span class="nc" id="L74">        super(idTranslator.reverse().convert(resource).asNode());</span>
+<span class="nc" id="L75">        this.versionHistory = resource.getVersionHistory();</span>
+<span class="nc" id="L76">        concat(versionTriples());</span>
+<span class="nc" id="L77">    }</span>
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    private Stream&lt;Triple&gt; versionTriples() throws RepositoryException {
+<span class="nc" id="L81">        return iteratorToStream(versionHistory.getAllVersions())</span>
+            /* Discard jcr:rootVersion */
+<span class="nc bnc" id="L83" title="All 2 branches missed.">            .filter(uncheck((final Version v) -&gt; !v.getName().equals(versionHistory.getRootVersion().getName())))</span>
+            /* Omit unlabelled versions */
+<span class="nc" id="L85">            .filter(uncheck((final Version v) -&gt; {</span>
+<span class="nc" id="L86">                final String[] labels = versionHistory.getVersionLabels(v);</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">                if (labels.length == 0) {</span>
+<span class="nc" id="L88">                    LOGGER.warn(&quot;An unlabeled version for {} was found!  Omitting from version listing!&quot;,</span>
+<span class="nc" id="L89">                        topic().getURI());</span>
+<span class="nc bnc" id="L90" title="All 2 branches missed.">                } else if (labels.length &gt; 1) {</span>
+<span class="nc" id="L91">                    LOGGER.info(&quot;Multiple version labels found for {}!  Using first label, \&quot;{}\&quot;.&quot;, topic().getURI());</span>
+                }
+<span class="nc bnc" id="L93" title="All 2 branches missed.">                return labels.length &gt; 0;</span>
+            }))
+<span class="nc" id="L95">            .flatMap(UncheckedFunction.uncheck((final Version v) -&gt; {</span>
+<span class="nc" id="L96">                final String[] labels = versionHistory.getVersionLabels(v);</span>
+<span class="nc" id="L97">                final Node versionSubject</span>
+<span class="nc" id="L98">                        = createProperty(topic() + &quot;/&quot; + FCR_VERSIONS + &quot;/&quot; + labels[0]).asNode();</span>
+
+<span class="nc" id="L100">                return Stream.concat(</span>
+<span class="nc" id="L101">                        Arrays.stream(labels).map(x -&gt; create(versionSubject, HAS_VERSION_LABEL.asNode(),</span>
+<span class="nc" id="L102">                                createLiteral(x))),</span>
+
+<span class="nc" id="L104">                        Stream.of(create(topic(), HAS_VERSION.asNode(), versionSubject),</span>
+<span class="nc" id="L105">                            create(versionSubject, CREATED_DATE.asNode(),</span>
+<span class="nc" id="L106">                                createTypedLiteral(v.getCreated()).asNode())));</span>
+            }));
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>
