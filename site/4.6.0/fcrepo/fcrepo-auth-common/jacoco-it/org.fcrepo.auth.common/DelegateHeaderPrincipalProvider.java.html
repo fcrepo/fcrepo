@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>DelegateHeaderPrincipalProvider.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Authorization Commons Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.auth.common</a> &gt; <span class="el_source">DelegateHeaderPrincipalProvider.java</span></div><h1>DelegateHeaderPrincipalProvider.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.auth.common;
+
+import org.fcrepo.kernel.api.exception.RepositoryConfigurationException;
+
+import javax.jcr.Credentials;
+import java.security.Principal;
+import java.util.Set;
+
+/**
+ * An example principal provider that extracts principals from request headers.
+ *
+ * @author awoods
+ * @since 2015-10-31
+ */
+public class DelegateHeaderPrincipalProvider extends HttpHeaderPrincipalProvider {
+
+    private static final String SEP = &quot;no-separator&quot;;
+    protected static final String DELEGATE_HEADER = &quot;On-Behalf-Of&quot;;
+
+    /**
+     * Default Constructor
+     */
+    public DelegateHeaderPrincipalProvider() {
+<span class="fc" id="L41">        super();</span>
+<span class="fc" id="L42">        setHeaderName(DELEGATE_HEADER);</span>
+<span class="fc" id="L43">        setSeparator(SEP);</span>
+<span class="fc" id="L44">    }</span>
+
+    /**
+     * @param credentials from which the principal header is extracted
+     * @return null if no delegate found, and the delegate if one found
+     * @throws RepositoryConfigurationException if more than one delegate found
+     */
+    public Principal getDelegate(final Credentials credentials) {
+<span class="fc" id="L52">        final Set&lt;Principal&gt; principals = getPrincipals(credentials);</span>
+        // No delegate
+<span class="pc bpc" id="L54" title="1 of 2 branches missed.">        if (principals.size() == 0) {</span>
+<span class="nc" id="L55">            return null;</span>
+        }
+
+        // One delegate
+<span class="pc bpc" id="L59" title="1 of 2 branches missed.">        if (principals.size() == 1) {</span>
+<span class="fc" id="L60">            return principals.iterator().next();</span>
+        }
+
+<span class="nc" id="L63">        throw new RepositoryConfigurationException(&quot;Too many delegates! &quot; + principals);</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>
