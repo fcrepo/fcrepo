@@ -1,0 +1,816 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>FedoraLdp.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api</a> &gt; <span class="el_source">FedoraLdp.java</span></div><h1>FedoraLdp.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.http.api;
+
+
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
+import static javax.ws.rs.core.MediaType.APPLICATION_XML;
+import static javax.ws.rs.core.MediaType.TEXT_HTML;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
+import static javax.ws.rs.core.MediaType.WILDCARD;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static javax.ws.rs.core.Response.Status.FORBIDDEN;
+import static javax.ws.rs.core.Response.Status.NOT_IMPLEMENTED;
+import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
+import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.noContent;
+import static javax.ws.rs.core.Response.notAcceptable;
+import static javax.ws.rs.core.Response.ok;
+import static javax.ws.rs.core.Variant.mediaTypes;
+import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
+import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
+import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
+import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
+import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_PAIRTREE;
+import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.modeshape.services.TransactionServiceImpl.getCurrentTransactionId;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URLDecoder;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
+import javax.inject.Inject;
+import javax.annotation.PostConstruct;
+import javax.jcr.PathNotFoundException;
+import javax.jcr.RepositoryException;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.ClientErrorException;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.HEAD;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.OPTIONS;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.ServerErrorException;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Link;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilderException;
+import javax.ws.rs.core.Variant.VariantListBuilder;
+
+import org.fcrepo.http.commons.domain.ContentLocation;
+import org.fcrepo.http.commons.domain.PATCH;
+import org.fcrepo.http.commons.responses.RdfNamespacedStream;
+import org.fcrepo.kernel.api.exception.AccessDeniedException;
+import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.MalformedRdfException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.models.Container;
+import org.fcrepo.kernel.api.models.FedoraBinary;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.RdfStream;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.glassfish.jersey.media.multipart.ContentDisposition;
+import org.slf4j.Logger;
+import org.springframework.context.annotation.Scope;
+
+import com.codahale.metrics.annotation.Timed;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
+import com.google.common.base.Splitter;
+import static com.google.common.base.Strings.nullToEmpty;
+
+/**
+ * @author cabeer
+ * @author ajs6f
+ * @since 9/25/14
+ */
+
+@Scope(&quot;request&quot;)
+@Path(&quot;/{path: .*}&quot;)
+public class FedoraLdp extends ContentExposingResource {
+
+<span class="nc" id="L127">    private static final Logger LOGGER = getLogger(FedoraLdp.class);</span>
+
+<span class="nc" id="L129">    private static final Splitter.MapSplitter RFC3230_SPLITTER =</span>
+<span class="nc" id="L130">        Splitter.on(',').omitEmptyStrings().trimResults().</span>
+<span class="nc" id="L131">        withKeyValueSeparator(Splitter.on('=').limit(2));</span>
+
+    @PathParam(&quot;path&quot;) protected String externalPath;
+
+    @Inject private FedoraHttpConfiguration httpConfiguration;
+
+    /**
+     * Default JAX-RS entry point
+     */
+    public FedoraLdp() {
+<span class="nc" id="L141">        super();</span>
+<span class="nc" id="L142">    }</span>
+
+    /**
+     * Create a new FedoraNodes instance for a given path
+     * @param externalPath the external path
+     */
+    @VisibleForTesting
+<span class="nc" id="L149">    public FedoraLdp(final String externalPath) {</span>
+<span class="nc" id="L150">        this.externalPath = externalPath;</span>
+<span class="nc" id="L151">    }</span>
+
+    /**
+     * Run these actions after initializing this resource
+     */
+    @PostConstruct
+    public void postConstruct() {
+<span class="nc" id="L158">        setUpJMSInfo(uriInfo, headers);</span>
+<span class="nc" id="L159">    }</span>
+
+    /**
+     * Retrieve the node headers
+     * @return response
+     */
+    @HEAD
+    @Timed
+    public Response head() {
+<span class="nc" id="L168">        LOGGER.info(&quot;HEAD for: {}&quot;, externalPath);</span>
+
+<span class="nc" id="L170">        checkCacheControlHeaders(request, servletResponse, resource(), session);</span>
+
+<span class="nc" id="L172">        addResourceHttpHeaders(resource());</span>
+
+<span class="nc" id="L174">        final Response.ResponseBuilder builder = ok();</span>
+
+<span class="nc bnc" id="L176" title="All 2 branches missed.">        if (resource() instanceof FedoraBinary) {</span>
+<span class="nc" id="L177">            builder.type(((FedoraBinary) resource()).getMimeType());</span>
+        }
+
+<span class="nc" id="L180">        return builder.build();</span>
+    }
+
+    /**
+     * Outputs information about the supported HTTP methods, etc.
+     * @return the outputs information about the supported HTTP methods, etc.
+     */
+    @OPTIONS
+    @Timed
+    public Response options() {
+<span class="nc" id="L190">        LOGGER.info(&quot;OPTIONS for '{}'&quot;, externalPath);</span>
+<span class="nc" id="L191">        addLinkAndOptionsHttpHeaders();</span>
+<span class="nc" id="L192">        return ok().build();</span>
+    }
+
+
+    /**
+     * Retrieve the node profile
+     *
+     * @param rangeValue the range value
+     * @return a binary or the triples for the specified node
+     * @throws IOException if IO exception occurred
+     */
+    @GET
+    @Produces({TURTLE + &quot;;qs=1.0&quot;, JSON_LD + &quot;;qs=0.8&quot;,
+            N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
+            TEXT_HTML, APPLICATION_XHTML_XML})
+    public Response getResource(@HeaderParam(&quot;Range&quot;) final String rangeValue) throws IOException {
+<span class="nc" id="L208">        checkCacheControlHeaders(request, servletResponse, resource(), session);</span>
+
+<span class="nc" id="L210">        LOGGER.info(&quot;GET resource '{}'&quot;, externalPath);</span>
+
+<span class="nc" id="L212">        try (final RdfStream rdfStream = new DefaultRdfStream(asNode(resource()))) {</span>
+
+            // If requesting a binary, check the mime-type if &quot;Accept:&quot; header is present.
+            // (This needs to be done before setting up response headers, as getContent
+            // returns a response - so changing headers after that won't work so nicely.)
+<span class="nc" id="L217">            final ImmutableList&lt;MediaType&gt; acceptableMediaTypes = ImmutableList.copyOf(headers</span>
+<span class="nc" id="L218">                    .getAcceptableMediaTypes());</span>
+
+<span class="nc bnc" id="L220" title="All 4 branches missed.">            if (resource() instanceof FedoraBinary &amp;&amp; acceptableMediaTypes.size() &gt; 0) {</span>
+<span class="nc" id="L221">                final MediaType mediaType = MediaType.valueOf(((FedoraBinary) resource()).getMimeType());</span>
+
+<span class="nc bnc" id="L223" title="All 2 branches missed.">                if (!acceptableMediaTypes.stream().anyMatch(t -&gt; t.isCompatible(mediaType))) {</span>
+<span class="nc" id="L224">                    return notAcceptable(VariantListBuilder.newInstance().mediaTypes(mediaType).build()).build();</span>
+                }
+            }
+
+<span class="nc" id="L228">            addResourceHttpHeaders(resource());</span>
+<span class="nc" id="L229">            return getContent(rangeValue, getChildrenLimit(), rdfStream);</span>
+<span class="nc bnc" id="L230" title="All 12 branches missed.">        }</span>
+    }
+
+    private int getChildrenLimit() {
+<span class="nc" id="L234">        final List&lt;String&gt; acceptHeaders = headers.getRequestHeader(HttpHeaders.ACCEPT);</span>
+<span class="nc bnc" id="L235" title="All 4 branches missed.">        if (acceptHeaders != null &amp;&amp; acceptHeaders.size() &gt; 0) {</span>
+<span class="nc" id="L236">            final List&lt;String&gt; accept = Arrays.asList(acceptHeaders.get(0).split(&quot;,&quot;));</span>
+<span class="nc bnc" id="L237" title="All 4 branches missed.">            if (accept.contains(TEXT_HTML) || accept.contains(APPLICATION_XHTML_XML)) {</span>
+                // Magic number '100' is tied to common-metadata.vsl display of ellipses
+<span class="nc" id="L239">                return 100;</span>
+            }
+        }
+
+<span class="nc" id="L243">        final List&lt;String&gt; limits = headers.getRequestHeader(&quot;Limit&quot;);</span>
+<span class="nc bnc" id="L244" title="All 4 branches missed.">        if (null != limits &amp;&amp; limits.size() &gt; 0) {</span>
+            try {
+<span class="nc" id="L246">                return Integer.parseInt(limits.get(0));</span>
+
+<span class="nc" id="L248">            } catch (final NumberFormatException e) {</span>
+<span class="nc" id="L249">                LOGGER.warn(&quot;Invalid 'Limit' header value: {}&quot;, limits.get(0));</span>
+<span class="nc" id="L250">                throw new ClientErrorException(&quot;Invalid 'Limit' header value: &quot; + limits.get(0), SC_BAD_REQUEST, e);</span>
+            }
+        }
+<span class="nc" id="L253">        return -1;</span>
+    }
+
+    /**
+     * Deletes an object.
+     *
+     * @return response
+     */
+    @DELETE
+    @Timed
+    public Response deleteObject() {
+<span class="nc" id="L264">        evaluateRequestPreconditions(request, servletResponse, resource(), session);</span>
+
+<span class="nc" id="L266">        LOGGER.info(&quot;Delete resource '{}'&quot;, externalPath);</span>
+<span class="nc" id="L267">        resource().delete();</span>
+
+        try {
+<span class="nc" id="L270">            session.save();</span>
+<span class="nc" id="L271">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L272">            throw new RepositoryRuntimeException(e);</span>
+<span class="nc" id="L273">        }</span>
+
+<span class="nc" id="L275">        return noContent().build();</span>
+    }
+
+    /**
+     * Create a resource at a specified path, or replace triples with provided RDF.
+     * @param requestContentType the request content type
+     * @param requestBodyStream the request body stream
+     * @param checksum the checksum value
+     * @param contentDisposition the content disposition value
+     * @param ifMatch the if-match value
+     * @param link the link value
+     * @return 204
+     * @throws InvalidChecksumException if invalid checksum exception occurred
+     * @throws MalformedRdfException if malformed rdf exception occurred
+     */
+    public Response createOrReplaceObjectRdf(
+            @HeaderParam(&quot;Content-Type&quot;) final MediaType requestContentType,
+            @ContentLocation final InputStream requestBodyStream,
+            @QueryParam(&quot;checksum&quot;) final String checksum,
+            @HeaderParam(&quot;Content-Disposition&quot;) final ContentDisposition contentDisposition,
+            @HeaderParam(&quot;If-Match&quot;) final String ifMatch,
+            @HeaderParam(&quot;Link&quot;) final String link)
+            throws InvalidChecksumException, MalformedRdfException {
+<span class="nc" id="L298">        return createOrReplaceObjectRdf(requestContentType, requestBodyStream,</span>
+            checksum, contentDisposition, ifMatch, link, null);
+    }
+
+    /**
+     * Create a resource at a specified path, or replace triples with provided RDF.
+     *
+     * Temporary 6 parameter version of this function to allow for backwards
+     * compatability during a period of transition from a digest hash being
+     * provided via non-standard 'checksum' query parameter to RFC-3230 compliant
+     * 'Digest' header.
+     *
+     * TODO: Remove this function in favour of the 5 parameter version that takes
+     *       the Digest header in lieu of the checksum parameter
+     *       https://jira.duraspace.org/browse/FCREPO-1851
+     *
+     * @param requestContentType the request content type
+     * @param requestBodyStream the request body stream
+     * @param checksumDeprecated the deprecated digest hash
+     * @param contentDisposition the content disposition value
+     * @param ifMatch the if-match value
+     * @param link the link value
+     * @param digest the digest header
+     * @return 204
+     * @throws InvalidChecksumException if invalid checksum exception occurred
+     * @throws MalformedRdfException if malformed rdf exception occurred
+     */
+    @PUT
+    @Consumes
+    @Timed
+    public Response createOrReplaceObjectRdf(
+            @HeaderParam(&quot;Content-Type&quot;) final MediaType requestContentType,
+            @ContentLocation final InputStream requestBodyStream,
+            @QueryParam(&quot;checksum&quot;) final String checksumDeprecated,
+            @HeaderParam(&quot;Content-Disposition&quot;) final ContentDisposition contentDisposition,
+            @HeaderParam(&quot;If-Match&quot;) final String ifMatch,
+            @HeaderParam(&quot;Link&quot;) final String link,
+            @HeaderParam(&quot;Digest&quot;) final String digest)
+            throws InvalidChecksumException, MalformedRdfException {
+
+<span class="nc" id="L338">        checkLinkForLdpResourceCreation(link);</span>
+
+        final FedoraResource resource;
+
+<span class="nc" id="L342">        final String path = toPath(translator(), externalPath);</span>
+
+        // TODO: Add final when deprecated checksum Query paramater is removed
+        // https://jira.duraspace.org/browse/FCREPO-1851
+<span class="nc" id="L346">        String checksum = parseDigestHeader(digest);</span>
+
+<span class="nc" id="L348">        final MediaType contentType = getSimpleContentType(requestContentType);</span>
+
+<span class="nc bnc" id="L350" title="All 2 branches missed.">        if (nodeService.exists(session, path)) {</span>
+<span class="nc" id="L351">            resource = resource();</span>
+        } else {
+<span class="nc bnc" id="L353" title="All 4 branches missed.">            final MediaType effectiveContentType</span>
+                    = requestBodyStream == null || requestContentType == null ? null : contentType;
+<span class="nc" id="L355">            resource = createFedoraResource(path, effectiveContentType, contentDisposition);</span>
+        }
+
+<span class="nc bnc" id="L358" title="All 6 branches missed.">        if (httpConfiguration.putRequiresIfMatch() &amp;&amp; StringUtils.isBlank(ifMatch) &amp;&amp; !resource.isNew()) {</span>
+<span class="nc" id="L359">            throw new ClientErrorException(&quot;An If-Match header is required&quot;, 428);</span>
+        }
+
+<span class="nc" id="L362">        evaluateRequestPreconditions(request, servletResponse, resource, session);</span>
+<span class="nc" id="L363">        final boolean created = resource.isNew();</span>
+
+<span class="nc bnc" id="L365" title="All 2 branches missed.">        try (final RdfStream resourceTriples =</span>
+<span class="nc" id="L366">                created ? new DefaultRdfStream(asNode(resource())) : getResourceTriples()) {</span>
+
+<span class="nc" id="L368">            LOGGER.info(&quot;PUT resource '{}'&quot;, externalPath);</span>
+<span class="nc bnc" id="L369" title="All 2 branches missed.">            if (resource instanceof FedoraBinary) {</span>
+<span class="nc bnc" id="L370" title="All 4 branches missed.">                if (!StringUtils.isBlank(checksumDeprecated) &amp;&amp; StringUtils.isBlank(digest)) {</span>
+<span class="nc" id="L371">                    addChecksumDeprecationHeader();</span>
+<span class="nc" id="L372">                    checksum = checksumDeprecated;</span>
+                }
+<span class="nc" id="L374">                replaceResourceBinaryWithStream((FedoraBinary) resource,</span>
+                        requestBodyStream, contentDisposition, requestContentType, checksum);
+<span class="nc bnc" id="L376" title="All 2 branches missed.">            } else if (isRdfContentType(contentType.toString())) {</span>
+<span class="nc" id="L377">                replaceResourceWithStream(resource, requestBodyStream, contentType, resourceTriples);</span>
+<span class="nc bnc" id="L378" title="All 2 branches missed.">            } else if (!created) {</span>
+<span class="nc" id="L379">                boolean emptyRequest = true;</span>
+                try {
+<span class="nc bnc" id="L381" title="All 2 branches missed.">                    emptyRequest = requestBodyStream.read() == -1;</span>
+<span class="nc" id="L382">                } catch (final IOException ex) {</span>
+<span class="nc" id="L383">                    LOGGER.debug(&quot;Error checking for request body content&quot;, ex);</span>
+<span class="nc" id="L384">                }</span>
+
+<span class="nc bnc" id="L386" title="All 4 branches missed.">                if (requestContentType == null &amp;&amp; emptyRequest) {</span>
+<span class="nc" id="L387">                    throw new ClientErrorException(&quot;Resource Already Exists&quot;, CONFLICT);</span>
+                }
+<span class="nc" id="L389">                throw new ClientErrorException(&quot;Invalid Content Type &quot; + requestContentType, UNSUPPORTED_MEDIA_TYPE);</span>
+            }
+<span class="nc bnc" id="L391" title="All 8 branches missed.">        }</span>
+
+        try {
+<span class="nc" id="L394">            session.save();</span>
+<span class="nc" id="L395">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L396">            throw new RepositoryRuntimeException(e);</span>
+<span class="nc" id="L397">        }</span>
+
+<span class="nc" id="L399">        return createUpdateResponse(resource, created);</span>
+    }
+
+    /**
+     * Update an object using SPARQL-UPDATE
+     *
+     * @param requestBodyStream the request body stream
+     * @return 201
+     * @throws IOException if IO exception occurred
+     */
+    @PATCH
+    @Consumes({contentTypeSPARQLUpdate})
+    @Timed
+    public Response updateSparql(@ContentLocation final InputStream requestBodyStream)
+            throws IOException {
+
+<span class="nc bnc" id="L415" title="All 2 branches missed.">        if (null == requestBodyStream) {</span>
+<span class="nc" id="L416">            throw new BadRequestException(&quot;SPARQL-UPDATE requests must have content!&quot;);</span>
+        }
+
+<span class="nc bnc" id="L419" title="All 2 branches missed.">        if (resource() instanceof FedoraBinary) {</span>
+<span class="nc" id="L420">            throw new BadRequestException(resource().getPath() + &quot; is not a valid object to receive a PATCH&quot;);</span>
+        }
+
+        try {
+<span class="nc" id="L424">            final String requestBody = IOUtils.toString(requestBodyStream, UTF_8);</span>
+<span class="nc bnc" id="L425" title="All 2 branches missed.">            if (isBlank(requestBody)) {</span>
+<span class="nc" id="L426">                throw new BadRequestException(&quot;SPARQL-UPDATE requests must have content!&quot;);</span>
+            }
+
+<span class="nc" id="L429">            evaluateRequestPreconditions(request, servletResponse, resource(), session);</span>
+
+<span class="nc" id="L431">            try (final RdfStream resourceTriples =</span>
+<span class="nc bnc" id="L432" title="All 2 branches missed.">                    resource().isNew() ? new DefaultRdfStream(asNode(resource())) : getResourceTriples()) {</span>
+<span class="nc" id="L433">                LOGGER.info(&quot;PATCH for '{}'&quot;, externalPath);</span>
+<span class="nc" id="L434">                patchResourcewithSparql(resource(), requestBody, resourceTriples);</span>
+<span class="nc bnc" id="L435" title="All 8 branches missed.">            }</span>
+<span class="nc" id="L436">            session.save();</span>
+
+<span class="nc" id="L438">            addCacheControlHeaders(servletResponse, resource().getDescription(), session);</span>
+
+<span class="nc" id="L440">            return noContent().build();</span>
+<span class="nc" id="L441">        } catch (final IllegalArgumentException iae) {</span>
+<span class="nc" id="L442">            throw new BadRequestException(iae.getMessage());</span>
+<span class="nc" id="L443">        } catch (final AccessDeniedException e) {</span>
+<span class="nc" id="L444">            throw e;</span>
+<span class="nc" id="L445">        } catch ( final RuntimeException ex ) {</span>
+<span class="nc" id="L446">            final Throwable cause = ex.getCause();</span>
+<span class="nc bnc" id="L447" title="All 2 branches missed.">            if (cause instanceof PathNotFoundException) {</span>
+                // the sparql update referred to a repository resource that doesn't exist
+<span class="nc" id="L449">                throw new BadRequestException(cause.getMessage());</span>
+            }
+<span class="nc" id="L451">            throw ex;</span>
+<span class="nc" id="L452">        }  catch (final RepositoryException e) {</span>
+<span class="nc" id="L453">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    /**
+     * Creates a new object.
+     *
+     * @param checksum the checksum value
+     * @param contentDisposition the content Disposition value
+     * @param requestContentType the request content type
+     * @param slug the slug value
+     * @param requestBodyStream the request body stream
+     * @param link the link value
+     * @return 201
+     * @throws InvalidChecksumException if invalid checksum exception occurred
+     * @throws IOException if IO exception occurred
+     * @throws MalformedRdfException if malformed rdf exception occurred
+     */
+    public Response createObject(@QueryParam(&quot;checksum&quot;) final String checksum,
+                                 @HeaderParam(&quot;Content-Disposition&quot;) final ContentDisposition contentDisposition,
+                                 @HeaderParam(&quot;Content-Type&quot;) final MediaType requestContentType,
+                                 @HeaderParam(&quot;Slug&quot;) final String slug,
+                                 @ContentLocation final InputStream requestBodyStream,
+                                 @HeaderParam(&quot;Link&quot;) final String link)
+            throws InvalidChecksumException, IOException, MalformedRdfException {
+<span class="nc" id="L478">        return createObject(checksum, contentDisposition, requestContentType, slug, requestBodyStream, link, null);</span>
+    }
+    /**
+     * Creates a new object.
+     *
+     * This originally used application/octet-stream;qs=1001 as a workaround
+     * for JERSEY-2636, to ensure requests without a Content-Type get routed here.
+     * This qs value does not parse with newer versions of Jersey, as qs values
+     * must be between 0 and 1.  We use qs=1.000 to mark where this historical
+     * anomaly had been.
+     *
+     *
+     * @param checksumDeprecated the checksum value
+     * @param contentDisposition the content Disposition value
+     * @param requestContentType the request content type
+     * @param slug the slug value
+     * @param requestBodyStream the request body stream
+     * @param link the link value
+     * @param digest the digest header
+     * @return 201
+     * @throws InvalidChecksumException if invalid checksum exception occurred
+     * @throws IOException if IO exception occurred
+     * @throws MalformedRdfException if malformed rdf exception occurred
+     */
+    @POST
+    @Consumes({MediaType.APPLICATION_OCTET_STREAM + &quot;;qs=1.000&quot;, WILDCARD})
+    @Timed
+    @Produces({TURTLE + &quot;;qs=1.0&quot;, JSON_LD + &quot;;qs=0.8&quot;,
+            N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
+            TEXT_HTML, APPLICATION_XHTML_XML, &quot;*/*&quot;})
+    public Response createObject(@QueryParam(&quot;checksum&quot;) final String checksumDeprecated,
+                                 @HeaderParam(&quot;Content-Disposition&quot;) final ContentDisposition contentDisposition,
+                                 @HeaderParam(&quot;Content-Type&quot;) final MediaType requestContentType,
+                                 @HeaderParam(&quot;Slug&quot;) final String slug,
+                                 @ContentLocation final InputStream requestBodyStream,
+                                 @HeaderParam(&quot;Link&quot;) final String link,
+                                 @HeaderParam(&quot;Digest&quot;) final String digest)
+            throws InvalidChecksumException, IOException, MalformedRdfException {
+
+<span class="nc" id="L517">        checkLinkForLdpResourceCreation(link);</span>
+
+<span class="nc bnc" id="L519" title="All 2 branches missed.">        if (!(resource() instanceof Container)) {</span>
+<span class="nc" id="L520">            throw new ClientErrorException(&quot;Object cannot have child nodes&quot;, CONFLICT);</span>
+<span class="nc bnc" id="L521" title="All 2 branches missed.">        } else if (resource().hasType(FEDORA_PAIRTREE)) {</span>
+<span class="nc" id="L522">            throw new ClientErrorException(&quot;Objects cannot be created under pairtree nodes&quot;, FORBIDDEN);</span>
+        }
+
+<span class="nc" id="L525">        final MediaType contentType = getSimpleContentType(requestContentType);</span>
+
+<span class="nc" id="L527">        final String contentTypeString = contentType.toString();</span>
+
+<span class="nc" id="L529">        final String newObjectPath = mintNewPid(slug);</span>
+
+        // TODO: Add final when deprecated checksum Query paramater is removed
+        // https://jira.duraspace.org/browse/FCREPO-1851
+<span class="nc" id="L533">        String checksum = parseDigestHeader(digest);</span>
+
+<span class="nc" id="L535">        LOGGER.info(&quot;Ingest with path: {}&quot;, newObjectPath);</span>
+
+<span class="nc bnc" id="L537" title="All 4 branches missed.">        final MediaType effectiveContentType</span>
+                = requestBodyStream == null || requestContentType == null ? null : contentType;
+<span class="nc" id="L539">        resource = createFedoraResource(newObjectPath, effectiveContentType, contentDisposition);</span>
+
+<span class="nc" id="L541">        try (final RdfStream resourceTriples =</span>
+<span class="nc bnc" id="L542" title="All 2 branches missed.">                resource.isNew() ? new DefaultRdfStream(asNode(resource())) : getResourceTriples()) {</span>
+
+<span class="nc bnc" id="L544" title="All 2 branches missed.">            if (requestBodyStream == null) {</span>
+<span class="nc" id="L545">                LOGGER.trace(&quot;No request body detected&quot;);</span>
+            } else {
+<span class="nc" id="L547">                LOGGER.trace(&quot;Received createObject with a request body and content type \&quot;{}\&quot;&quot;, contentTypeString);</span>
+
+<span class="nc bnc" id="L549" title="All 4 branches missed.">                if ((resource instanceof Container) &amp;&amp; isRdfContentType(contentTypeString)) {</span>
+<span class="nc" id="L550">                    replaceResourceWithStream(resource, requestBodyStream, contentType, resourceTriples);</span>
+<span class="nc bnc" id="L551" title="All 2 branches missed.">                } else if (resource instanceof FedoraBinary) {</span>
+<span class="nc" id="L552">                    LOGGER.trace(&quot;Created a datastream and have a binary payload.&quot;);</span>
+<span class="nc bnc" id="L553" title="All 4 branches missed.">                    if (!StringUtils.isBlank(checksumDeprecated) &amp;&amp; StringUtils.isBlank(digest)) {</span>
+<span class="nc" id="L554">                        addChecksumDeprecationHeader();</span>
+<span class="nc" id="L555">                        checksum = checksumDeprecated;</span>
+                    }
+<span class="nc" id="L557">                    replaceResourceBinaryWithStream((FedoraBinary) resource,</span>
+                            requestBodyStream, contentDisposition, requestContentType, checksum);
+
+<span class="nc bnc" id="L560" title="All 2 branches missed.">                } else if (contentTypeString.equals(contentTypeSPARQLUpdate)) {</span>
+<span class="nc" id="L561">                    LOGGER.trace(&quot;Found SPARQL-Update content, applying..&quot;);</span>
+<span class="nc" id="L562">                    patchResourcewithSparql(resource, IOUtils.toString(requestBodyStream, UTF_8), resourceTriples);</span>
+                } else {
+<span class="nc bnc" id="L564" title="All 2 branches missed.">                    if (requestBodyStream.read() != -1) {</span>
+<span class="nc" id="L565">                        throw new ClientErrorException(&quot;Invalid Content Type &quot; + contentTypeString,</span>
+                                UNSUPPORTED_MEDIA_TYPE);
+                    }
+                }
+            }
+<span class="nc" id="L570">            session.save();</span>
+<span class="nc bnc" id="L571" title="All 8 branches missed.">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L572">            throw new RepositoryRuntimeException(e);</span>
+<span class="nc" id="L573">        }</span>
+
+<span class="nc" id="L575">        LOGGER.debug(&quot;Finished creating resource with path: {}&quot;, newObjectPath);</span>
+<span class="nc" id="L576">        return createUpdateResponse(resource, true);</span>
+    }
+
+    /**
+     * Create the appropriate response after a create or update request is processed.  When a resource is created,
+     * examine the Prefer and Accept headers to determine whether to include a representation.  By default, the
+     * URI for the created resource is return as plain text.  If a minimal response is requested, then no body is
+     * returned.  If a non-minimal return is requested, return the RDF for the created resource in the appropriate
+     * RDF serialization.
+     *
+     * @param resource The created or updated Fedora resource.
+     * @param created True for a newly-created resource, false for an updated resource.
+     * @return 204 No Content (for updated resources), 201 Created (for created resources) including the resource
+     *    URI or content depending on Prefer headers.
+     */
+    @SuppressWarnings(&quot;resource&quot;)
+    private Response createUpdateResponse(final FedoraResource resource, final boolean created) {
+<span class="nc" id="L593">        addCacheControlHeaders(servletResponse, resource, session);</span>
+<span class="nc" id="L594">        addResourceLinkHeaders(resource, created);</span>
+<span class="nc bnc" id="L595" title="All 2 branches missed.">        if (!created) {</span>
+<span class="nc" id="L596">            return noContent().build();</span>
+        }
+
+<span class="nc" id="L599">        final URI location = getUri(resource);</span>
+<span class="nc" id="L600">        final Response.ResponseBuilder builder = created(location);</span>
+
+<span class="nc bnc" id="L602" title="All 4 branches missed.">        if (prefer == null || !prefer.hasReturn()) {</span>
+<span class="nc" id="L603">            final MediaType acceptablePlainText = acceptabePlainTextMediaType();</span>
+<span class="nc bnc" id="L604" title="All 2 branches missed.">            if (acceptablePlainText != null) {</span>
+<span class="nc" id="L605">                return builder.type(acceptablePlainText).entity(location.toString()).build();</span>
+            }
+<span class="nc" id="L607">            return notAcceptable(mediaTypes(TEXT_PLAIN_TYPE).build()).build();</span>
+<span class="nc bnc" id="L608" title="All 2 branches missed.">        } else if (prefer.getReturn().getValue().equals(&quot;minimal&quot;)) {</span>
+<span class="nc" id="L609">            return builder.build();</span>
+        } else {
+<span class="nc" id="L611">            servletResponse.addHeader(&quot;Vary&quot;, &quot;Accept, Range, Accept-Encoding, Accept-Language&quot;);</span>
+<span class="nc bnc" id="L612" title="All 2 branches missed.">            if (prefer != null) {</span>
+<span class="nc" id="L613">                prefer.getReturn().addResponseHeaders(servletResponse);</span>
+            }
+<span class="nc" id="L615">            final RdfNamespacedStream rdfStream = new RdfNamespacedStream(</span>
+<span class="nc" id="L616">                new DefaultRdfStream(asNode(resource()), getResourceTriples()),</span>
+<span class="nc" id="L617">                    namespaceService.getNamespaces(session()));</span>
+<span class="nc" id="L618">            return builder.entity(rdfStream).build();</span>
+        }
+    }
+
+    /**
+     * Returns an acceptable plain text media type if possible, or null if not.
+     */
+    private MediaType acceptabePlainTextMediaType() {
+<span class="nc" id="L626">        final List&lt;MediaType&gt; acceptable = headers.getAcceptableMediaTypes();</span>
+<span class="nc bnc" id="L627" title="All 4 branches missed.">        if (acceptable == null || acceptable.size() == 0) {</span>
+<span class="nc" id="L628">            return TEXT_PLAIN_TYPE;</span>
+        }
+<span class="nc bnc" id="L630" title="All 2 branches missed.">        for (final MediaType type : acceptable ) {</span>
+<span class="nc bnc" id="L631" title="All 6 branches missed.">            if (type.isWildcardType() || (type.isCompatible(TEXT_PLAIN_TYPE) &amp;&amp; type.isWildcardSubtype())) {</span>
+<span class="nc" id="L632">                return TEXT_PLAIN_TYPE;</span>
+<span class="nc bnc" id="L633" title="All 2 branches missed.">            } else if (type.isCompatible(TEXT_PLAIN_TYPE)) {</span>
+<span class="nc" id="L634">                return type;</span>
+            }
+<span class="nc" id="L636">        }</span>
+<span class="nc" id="L637">        return null;</span>
+    }
+
+    @Override
+    protected void addResourceHttpHeaders(final FedoraResource resource) {
+<span class="nc" id="L642">        super.addResourceHttpHeaders(resource);</span>
+
+<span class="nc bnc" id="L644" title="All 2 branches missed.">        if (getCurrentTransactionId(session) != null) {</span>
+<span class="nc" id="L645">            final String canonical = translator().reverse()</span>
+<span class="nc" id="L646">                    .convert(resource)</span>
+<span class="nc" id="L647">                    .toString()</span>
+<span class="nc" id="L648">                    .replaceFirst(&quot;/tx:[^/]+&quot;, &quot;&quot;);</span>
+
+
+<span class="nc" id="L651">            servletResponse.addHeader(&quot;Link&quot;, &quot;&lt;&quot; + canonical + &quot;&gt;;rel=\&quot;canonical\&quot;&quot;);</span>
+
+        }
+
+<span class="nc" id="L655">        addLinkAndOptionsHttpHeaders();</span>
+<span class="nc" id="L656">    }</span>
+
+    @Override
+    protected String externalPath() {
+<span class="nc" id="L660">        return externalPath;</span>
+    }
+
+    private void addLinkAndOptionsHttpHeaders() {
+        // Add Link headers
+<span class="nc" id="L665">        addResourceLinkHeaders(resource());</span>
+
+        // Add Options headers
+        final String options;
+
+<span class="nc bnc" id="L670" title="All 2 branches missed.">        if (resource() instanceof FedoraBinary) {</span>
+<span class="nc" id="L671">            options = &quot;DELETE,HEAD,GET,PUT,OPTIONS&quot;;</span>
+
+<span class="nc bnc" id="L673" title="All 2 branches missed.">        } else if (resource() instanceof NonRdfSourceDescription) {</span>
+<span class="nc" id="L674">            options = &quot;MOVE,COPY,DELETE,POST,HEAD,GET,PUT,PATCH,OPTIONS&quot;;</span>
+<span class="nc" id="L675">            servletResponse.addHeader(&quot;Accept-Patch&quot;, contentTypeSPARQLUpdate);</span>
+
+<span class="nc bnc" id="L677" title="All 2 branches missed.">        } else if (resource() instanceof Container) {</span>
+<span class="nc" id="L678">            options = &quot;MOVE,COPY,DELETE,POST,HEAD,GET,PUT,PATCH,OPTIONS&quot;;</span>
+<span class="nc" id="L679">            servletResponse.addHeader(&quot;Accept-Patch&quot;, contentTypeSPARQLUpdate);</span>
+
+<span class="nc" id="L681">            final String rdfTypes = TURTLE + &quot;,&quot; + N3 + &quot;,&quot;</span>
+                    + N3_ALT2 + &quot;,&quot; + RDF_XML + &quot;,&quot; + NTRIPLES;
+<span class="nc" id="L683">            servletResponse.addHeader(&quot;Accept-Post&quot;, rdfTypes + &quot;,&quot; + MediaType.MULTIPART_FORM_DATA</span>
+                    + &quot;,&quot; + contentTypeSPARQLUpdate);
+<span class="nc" id="L685">        } else {</span>
+<span class="nc" id="L686">            options = &quot;&quot;;</span>
+        }
+
+<span class="nc" id="L689">        servletResponse.addHeader(&quot;Allow&quot;, options);</span>
+<span class="nc" id="L690">    }</span>
+
+    /**
+     * Add a deprecation notice via the Warning header as per
+     * RFC-7234 https://tools.ietf.org/html/rfc7234#section-5.5
+     */
+    private void addChecksumDeprecationHeader() {
+<span class="nc" id="L697">        servletResponse.addHeader(&quot;Warning&quot;, &quot;Specifying a SHA-1 Checksum via query parameter is deprecated.&quot;);</span>
+<span class="nc" id="L698">    }</span>
+
+    private static String getRequestedObjectType(final MediaType requestContentType,
+                                          final ContentDisposition contentDisposition) {
+
+<span class="nc bnc" id="L703" title="All 2 branches missed.">        if (requestContentType != null) {</span>
+<span class="nc" id="L704">            final String s = requestContentType.toString();</span>
+<span class="nc bnc" id="L705" title="All 6 branches missed.">            if (!s.equals(contentTypeSPARQLUpdate) &amp;&amp; !isRdfContentType(s) || s.equals(TEXT_PLAIN)) {</span>
+<span class="nc" id="L706">                return FEDORA_BINARY;</span>
+            }
+        }
+
+<span class="nc bnc" id="L710" title="All 4 branches missed.">        if (contentDisposition != null &amp;&amp; contentDisposition.getType().equals(&quot;attachment&quot;)) {</span>
+<span class="nc" id="L711">            return FEDORA_BINARY;</span>
+        }
+
+<span class="nc" id="L714">        return FEDORA_CONTAINER;</span>
+    }
+
+    private FedoraResource createFedoraResource(final String path,
+                                                final MediaType requestContentType,
+                                                final ContentDisposition contentDisposition) {
+<span class="nc" id="L720">        final String objectType = getRequestedObjectType(requestContentType, contentDisposition);</span>
+
+        final FedoraResource result;
+
+<span class="nc bnc" id="L724" title="All 2 branches missed.">        if (objectType.equals(FEDORA_BINARY)) {</span>
+<span class="nc" id="L725">            result = binaryService.findOrCreate(session, path);</span>
+        } else {
+<span class="nc" id="L727">            result = containerService.findOrCreate(session, path);</span>
+        }
+
+<span class="nc" id="L730">        return result;</span>
+    }
+
+    private String mintNewPid(final String slug) {
+        String pid;
+
+<span class="nc bnc" id="L736" title="All 4 branches missed.">        if (slug != null &amp;&amp; !slug.isEmpty()) {</span>
+<span class="nc" id="L737">            pid = slug;</span>
+<span class="nc bnc" id="L738" title="All 2 branches missed.">        } else if (pidMinter != null) {</span>
+<span class="nc" id="L739">            pid = pidMinter.get();</span>
+        } else {
+<span class="nc" id="L741">            pid = defaultPidMinter.get();</span>
+        }
+        // reverse translate the proffered or created identifier
+<span class="nc" id="L744">        LOGGER.trace(&quot;Using external identifier {} to create new resource.&quot;, pid);</span>
+<span class="nc" id="L745">        LOGGER.trace(&quot;Using prefixed external identifier {} to create new resource.&quot;, uriInfo.getBaseUri() + &quot;/&quot;</span>
+                + pid);
+
+<span class="nc" id="L748">        final URI newResourceUri = uriInfo.getAbsolutePathBuilder().clone().path(FedoraLdp.class)</span>
+<span class="nc" id="L749">                .resolveTemplate(&quot;path&quot;, pid, false).build();</span>
+
+<span class="nc" id="L751">        pid = translator().asString(createResource(newResourceUri.toString()));</span>
+        try {
+<span class="nc" id="L753">            pid = URLDecoder.decode(pid, &quot;UTF-8&quot;);</span>
+<span class="nc" id="L754">        } catch (final UnsupportedEncodingException e) {</span>
+            // noop
+<span class="nc" id="L756">        }</span>
+        // remove leading slash left over from translation
+<span class="nc" id="L758">        LOGGER.trace(&quot;Using internal identifier {} to create new resource.&quot;, pid);</span>
+
+<span class="nc bnc" id="L760" title="All 2 branches missed.">        if (nodeService.exists(session, pid)) {</span>
+<span class="nc" id="L761">            LOGGER.trace(&quot;Resource with path {} already exists; minting new path instead&quot;, pid);</span>
+<span class="nc" id="L762">            return mintNewPid(null);</span>
+        }
+
+<span class="nc" id="L765">        return pid;</span>
+    }
+
+    private static void checkLinkForLdpResourceCreation(final String link) {
+<span class="nc bnc" id="L769" title="All 2 branches missed.">        if (link != null) {</span>
+            try {
+<span class="nc" id="L771">                final Link linq = Link.valueOf(link);</span>
+<span class="nc bnc" id="L772" title="All 4 branches missed.">                if (&quot;type&quot;.equals(linq.getRel()) &amp;&amp; (LDP_NAMESPACE + &quot;Resource&quot;).equals(linq.getUri().toString())) {</span>
+<span class="nc" id="L773">                    LOGGER.info(&quot;Unimplemented LDPR creation requested with header link: {}&quot;, link);</span>
+<span class="nc" id="L774">                    throw new ServerErrorException(&quot;LDPR creation not implemented&quot;, NOT_IMPLEMENTED);</span>
+                }
+<span class="nc" id="L776">            } catch (final RuntimeException e) {</span>
+<span class="nc bnc" id="L777" title="All 2 branches missed.">                if (e instanceof IllegalArgumentException | e instanceof UriBuilderException) {</span>
+<span class="nc" id="L778">                    throw new ClientErrorException(&quot;Invalid link specified: &quot; + link, BAD_REQUEST);</span>
+                }
+<span class="nc" id="L780">                throw e;</span>
+<span class="nc" id="L781">            }</span>
+        }
+<span class="nc" id="L783">    }</span>
+
+    /**
+     * Parse the RFC-3230 Digest response header value.  Look for a
+     * sha1 checksum and return it as a urn, if missing or malformed
+     * an empty string is returned.
+     * @param digest The Digest header value
+     * @return the sha1 checksum value
+     * @throws InvalidChecksumException if an unsupported digest is used
+     */
+    private static String parseDigestHeader(final String digest) throws InvalidChecksumException {
+        try {
+<span class="nc" id="L795">            final Map&lt;String,String&gt; digestPairs = RFC3230_SPLITTER.split(nullToEmpty(digest));</span>
+<span class="nc" id="L796">            final boolean checksumTypeIncludeSHA1 = digestPairs.keySet().stream().anyMatch(&quot;sha1&quot;::equalsIgnoreCase);</span>
+            // If you have one or more digests and one is sha1 or no digests.
+<span class="nc bnc" id="L798" title="All 4 branches missed.">            if (digestPairs.isEmpty() || checksumTypeIncludeSHA1) {</span>
+<span class="nc" id="L799">                return digestPairs.entrySet().stream()</span>
+<span class="nc" id="L800">                    .filter(s -&gt; s.getKey().toLowerCase().equals(&quot;sha1&quot;))</span>
+<span class="nc" id="L801">                    .map(Map.Entry::getValue)</span>
+<span class="nc" id="L802">                    .findFirst()</span>
+<span class="nc" id="L803">                    .map(&quot;urn:sha1:&quot;::concat)</span>
+<span class="nc" id="L804">                    .orElse(&quot;&quot;);</span>
+            } else {
+<span class="nc" id="L806">                throw new InvalidChecksumException(String.format(&quot;Unsupported Digest Algorithim: {}&quot;, digest));</span>
+            }
+<span class="nc" id="L808">        } catch (final RuntimeException e) {</span>
+<span class="nc bnc" id="L809" title="All 2 branches missed.">            if (e instanceof IllegalArgumentException) {</span>
+<span class="nc" id="L810">                throw new ClientErrorException(&quot;Invalid Digest header: &quot; + digest + &quot;\n&quot;, BAD_REQUEST);</span>
+            }
+<span class="nc" id="L812">            throw e;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

@@ -1,0 +1,18 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+Fedora Repository HTTP API Module,org.fcrepo.http.api.repository,FedoraRepositoryRestore,50,35,3,3,9,9,3,3,0,3
+Fedora Repository HTTP API Module,org.fcrepo.http.api.repository,FedoraRepositoryTransactions,0,3,0,0,0,1,0,1,0,1
+Fedora Repository HTTP API Module,org.fcrepo.http.api.repository,FedoraRepositoryBackup,47,48,5,5,10,12,5,3,0,3
+Fedora Repository HTTP API Module,org.fcrepo.http.api.url,HttpApiResources,101,0,6,0,22,0,8,0,5,0
+Fedora Repository HTTP API Module,org.fcrepo.http.api,FedoraHttpConfiguration,0,6,0,0,0,2,0,2,0,2
+Fedora Repository HTTP API Module,org.fcrepo.http.api,FedoraBaseResource,158,0,14,0,34,0,15,0,8,0
+Fedora Repository HTTP API Module,org.fcrepo.http.api,FedoraLdp,1415,0,192,0,267,0,123,0,27,0
+Fedora Repository HTTP API Module,org.fcrepo.http.api,FedoraVersions,163,0,6,0,34,0,14,0,11,0
+Fedora Repository HTTP API Module,org.fcrepo.http.api,ContentExposingResource,1019,0,120,0,208,0,89,0,29,0
+Fedora Repository HTTP API Module,org.fcrepo.http.api,ViewAssets,19,0,0,0,3,0,3,0,3,0
+Fedora Repository HTTP API Module,org.fcrepo.http.api,FedoraVersioning,144,0,6,0,36,0,11,0,8,0
+Fedora Repository HTTP API Module,org.fcrepo.http.api,FedoraTombstones,12,32,0,0,5,9,1,4,1,4
+Fedora Repository HTTP API Module,org.fcrepo.http.api,FedoraNodes,239,0,20,0,53,0,18,0,8,0
+Fedora Repository HTTP API Module,org.fcrepo.http.api,FedoraTransactions,165,0,16,0,36,0,14,0,6,0
+Fedora Repository HTTP API Module,org.fcrepo.http.api,FedoraFixity,60,0,2,0,14,0,6,0,5,0
+Fedora Repository HTTP API Module,org.fcrepo.http.api.responses,StreamingBaseHtmlProvider,383,0,16,0,69,0,21,0,13,0
+Fedora Repository HTTP API Module,org.fcrepo.http.api.responses,StreamingHtmlProvider,0,3,0,0,0,1,0,1,0,1

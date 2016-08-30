@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>HttpApiResources.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api.url</a> &gt; <span class="el_source">HttpApiResources.java</span></div><h1>HttpApiResources.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.http.api.url;
+
+import static com.hp.hpl.jena.rdf.model.ModelFactory.createDefaultModel;
+import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
+import static java.util.Collections.singletonMap;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_SERVICE;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_TRANSACTION_SERVICE;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_HISTORY;
+
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Resource;
+
+import org.fcrepo.http.api.FedoraVersioning;
+import org.fcrepo.http.api.repository.FedoraRepositoryTransactions;
+import org.fcrepo.http.commons.api.rdf.UriAwareResourceModelFactory;
+import org.fcrepo.kernel.api.models.FedoraBinary;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+
+import org.springframework.stereotype.Component;
+
+import javax.ws.rs.core.UriInfo;
+
+import java.util.Map;
+
+/**
+ * Inject our HTTP API methods into the object graphs
+ *
+ * @author awoods
+ */
+@Component
+<span class="nc" id="L50">public class HttpApiResources implements UriAwareResourceModelFactory {</span>
+
+    @Override
+    public Model createModelForResource(final FedoraResource resource,
+        final UriInfo uriInfo, final IdentifierConverter&lt;Resource,FedoraResource&gt; idTranslator) {
+
+<span class="nc" id="L56">        final Model model = createDefaultModel();</span>
+
+<span class="nc" id="L58">        final Resource s = idTranslator.reverse().convert(resource);</span>
+
+<span class="nc bnc" id="L60" title="All 2 branches missed.">        if (resource.hasType(FEDORA_REPOSITORY_ROOT)) {</span>
+<span class="nc" id="L61">            addRepositoryStatements(uriInfo, model, s);</span>
+        } else {
+<span class="nc" id="L63">            addNodeStatements(resource, uriInfo, model, s);</span>
+        }
+
+<span class="nc bnc" id="L66" title="All 2 branches missed.">        if (resource.getDescribedResource() instanceof FedoraBinary) {</span>
+<span class="nc" id="L67">            addContentStatements(idTranslator, (FedoraBinary)resource.getDescribedResource(), model);</span>
+        }
+<span class="nc" id="L69">        return model;</span>
+    }
+
+    private static void addContentStatements(final IdentifierConverter&lt;Resource,FedoraResource&gt; idTranslator,
+                                             final FedoraBinary resource,
+                                             final Model model) {
+        // fcr:fixity
+<span class="nc" id="L76">        final Resource subject = idTranslator.reverse().convert(resource);</span>
+<span class="nc" id="L77">        model.add(subject, HAS_FIXITY_SERVICE, createResource(subject.getURI() +</span>
+                &quot;/fcr:fixity&quot;));
+<span class="nc" id="L79">    }</span>
+
+    private void addNodeStatements(final FedoraResource resource, final UriInfo uriInfo,
+        final Model model, final Resource s) {
+
+<span class="nc" id="L84">        final Map&lt;String, String&gt; pathMap = singletonMap(&quot;path&quot;, resource.getPath().substring(1));</span>
+
+        // fcr:versions
+<span class="nc bnc" id="L87" title="All 2 branches missed.">        if (resource.isVersioned()) {</span>
+<span class="nc" id="L88">            model.add(s, HAS_VERSION_HISTORY, createResource(uriInfo</span>
+<span class="nc" id="L89">                    .getBaseUriBuilder().path(FedoraVersioning.class).buildFromMap(</span>
+<span class="nc" id="L90">                            pathMap, false).toASCIIString()));</span>
+        }
+<span class="nc" id="L92">    }</span>
+
+    private void addRepositoryStatements(final UriInfo uriInfo, final Model model,
+        final Resource s) {
+        // fcr:tx
+<span class="nc" id="L97">        model.add(s, HAS_TRANSACTION_SERVICE, createResource(uriInfo</span>
+<span class="nc" id="L98">                .getBaseUriBuilder().path(FedoraRepositoryTransactions.class)</span>
+<span class="nc" id="L99">                .build().toASCIIString()));</span>
+<span class="nc" id="L100">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>
