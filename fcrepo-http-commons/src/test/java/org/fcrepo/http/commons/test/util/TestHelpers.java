@@ -20,6 +20,7 @@ package org.fcrepo.http.commons.test.util;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static java.net.URI.create;
 import static javax.ws.rs.core.UriBuilder.fromUri;
+import static org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM.SHA1;
 import static org.junit.Assert.assertNotNull;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.fcrepo.kernel.api.utils.ContentDigest.asURI;
@@ -228,12 +229,12 @@ public abstract class TestHelpers {
         if (content != null) {
             final MessageDigest md;
             try {
-                md = MessageDigest.getInstance("SHA-1");
+                md = MessageDigest.getInstance(SHA1.algorithm);
             } catch (final NoSuchAlgorithmException e) {
                 throw new RuntimeException(e);
             }
             final byte[] digest = md.digest(content.getBytes());
-            final URI cd = asURI("SHA-1", digest);
+            final URI cd = asURI(SHA1.algorithm, digest);
             when(mockDs.getEtagValue()).thenReturn(cd.toString());
         }
         return mockDs;
@@ -249,12 +250,12 @@ public abstract class TestHelpers {
         if (content != null) {
             final MessageDigest md;
             try {
-                md = MessageDigest.getInstance("SHA-1");
+                md = MessageDigest.getInstance(SHA1.algorithm);
             } catch (final NoSuchAlgorithmException e) {
                 throw new RuntimeException(e);
             }
             final byte[] digest = md.digest(content.getBytes());
-            final URI cd = asURI("SHA-1", digest);
+            final URI cd = asURI(SHA1.algorithm, digest);
             when(mockBinary.getContent()).thenReturn(
                     IOUtils.toInputStream(content));
             when(mockBinary.getContentDigest()).thenReturn(cd);

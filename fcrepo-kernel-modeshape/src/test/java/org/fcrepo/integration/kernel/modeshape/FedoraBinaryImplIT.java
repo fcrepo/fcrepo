@@ -17,6 +17,7 @@
  */
 package org.fcrepo.integration.kernel.modeshape;
 
+import static java.util.Arrays.asList;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.UUID.randomUUID;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
@@ -24,6 +25,8 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTIO
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
+import static org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM.SHA1;
+import static org.fcrepo.kernel.api.utils.ContentDigest.asURI;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -36,6 +39,7 @@ import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.HashSet;
 import javax.inject.Inject;
 import javax.jcr.Node;
 import javax.jcr.Repository;
@@ -55,7 +59,6 @@ import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.ContainerService;
-import org.fcrepo.kernel.api.utils.ContentDigest;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 
 import org.junit.Before;
@@ -230,7 +233,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
             binaryService.findOrCreate(session, "/testDatastreamObject/testDatastreamNode4").setContent(
                     new ByteArrayInputStream("asdf".getBytes()),
                     "application/octet-stream",
-                    ContentDigest.asURI("SHA-1", "3da541559918a808c2402bba5012f6c60b27661c"),
+                    new HashSet<>(asList(asURI(SHA1.algorithm, "3da541559918a808c2402bba5012f6c60b27661c"))),
                     null,
                     null
                     );

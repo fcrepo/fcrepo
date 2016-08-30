@@ -30,6 +30,7 @@ import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.utils.CacheEntry;
 import org.fcrepo.kernel.api.utils.ContentDigest;
 import org.fcrepo.kernel.api.utils.FixityResult;
 import org.fcrepo.kernel.modeshape.rdf.impl.FixityRdfContext;
@@ -43,16 +44,23 @@ import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
+import javax.jcr.Value;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.codahale.metrics.MetricRegistry.name;
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDstring;
+import static org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM.SHA1;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FIELD_DELIMITER;
+import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.property2values;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFedoraBinary;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
@@ -91,7 +99,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
 
     private void initializeNewBinaryProperties() {
         try {
-            decorateContentNode(node);
+            decorateContentNode(node, new HashSet<>());
         } catch (final RepositoryException e) {
             LOGGER.warn("Count not decorate {} with FedoraBinary properties: {}", node, e);
         }
@@ -141,7 +149,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
      */
     @Override
     public void setContent(final InputStream content, final String contentType,
-                           final URI checksum, final String originalFileName,
+                           final Collection<URI> checksums, final String originalFileName,
                            final StoragePolicyDecisionPoint storagePolicyDecisionPoint)
             throws InvalidChecksumException {
 
@@ -186,16 +194,11 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
          */
             final Property dataProperty = contentNode.setProperty(JCR_DATA, binary);
 
-            final String dsChecksum = binary.getHexHash();
-            final URI uriChecksumString = ContentDigest.asURI("SHA-1", dsChecksum);
-            if (checksum != null &&
-                    !checksum.equals(uriChecksumString)) {
-                LOGGER.debug("Failed checksum test");
-                throw new InvalidChecksumException("Checksum Mismatch of " +
-                        uriChecksumString + " and " + checksum);
-            }
+            // Ensure provided checksums are valid
+            final Collection<URI> nonNullChecksums = (null == checksums) ? new HashSet<>() : checksums;
+            verifyChecksums(nonNullChecksums, dataProperty);
 
-            decorateContentNode(contentNode);
+            decorateContentNode(contentNode, nonNullChecksums);
             touch();
             ((FedoraResourceImpl) getDescription()).touch();
 
@@ -204,6 +207,61 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
+    }
+
+    /**
+     * This method ensures that the arg checksums are valid against the binary associated with the arg dataProperty.
+     * If one or more of the checksums are invalid, an InvalidChecksumException is thrown.
+     *
+     * @param checksums that the user provided
+     * @param dataProperty containing the binary against which the checksums will be verified
+     * @throws InvalidChecksumException
+     * @throws RepositoryException
+     */
+    private void verifyChecksums(final Collection<URI> checksums, final Property dataProperty)
+            throws InvalidChecksumException, RepositoryException {
+
+        final Map<URI, URI> checksumErrors = new HashMap<>();
+
+        // Loop through provided checksums validating against computed values
+        checksums.forEach(checksum -> {
+            final String algorithm = ContentDigest.getAlgorithm(checksum);
+            try {
+                // The case internally supported by ModeShape
+                if (algorithm.equals(SHA1.algorithm)) {
+                    final String dsSHA1 = ((Binary) dataProperty.getBinary()).getHexHash();
+                    final URI dsSHA1Uri = ContentDigest.asURI(SHA1.algorithm, dsSHA1);
+
+                    if (!dsSHA1Uri.equals(checksum)) {
+                        LOGGER.debug("Failed checksum test");
+                        checksumErrors.put(checksum, dsSHA1Uri);
+                    }
+
+                // The case that requires re-computing the checksum
+                } else {
+                    final CacheEntry cacheEntry = CacheEntryFactory.forProperty(dataProperty);
+                    cacheEntry.checkFixity(algorithm).stream().findFirst().ifPresent(
+                            fixityResult -> {
+                                if (!fixityResult.matches(checksum)) {
+                                    LOGGER.debug("Failed checksum test");
+                                    checksumErrors.put(checksum, fixityResult.getComputedChecksum());
+                                }
+                            }
+                    );
+                }
+            } catch (RepositoryException e) {
+                throw new RepositoryRuntimeException(e);
+            }
+        });
+
+        // Throw an exception if any checksum errors occurred
+        if (!checksumErrors.isEmpty()) {
+            final String template = "Checksum Mismatch of %1$s and %2$s\n";
+            final StringBuilder error = new StringBuilder();
+            checksumErrors.forEach((key, value) -> error.append(String.format(template, key, value)));
+            throw new InvalidChecksumException(error.toString());
+        }
+
     }
 
     /*
@@ -230,11 +288,33 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     @Override
     public URI getContentDigest() {
         try {
+            // Determine which digest algorithm to use
+            final String algorithm = hasProperty(DEFAULT_DIGEST_ALGORITHM) ?
+                    property2values.apply(getProperty(DEFAULT_DIGEST_ALGORITHM)).findFirst().get().getString() :
+                    ContentDigest.DEFAULT_ALGORITHM;
+            final String algorithmWithoutStringType = algorithm.replace(FIELD_DELIMITER + XSDstring.getURI(), "");
+
             if (hasProperty(CONTENT_DIGEST)) {
-                return new URI(getProperty(CONTENT_DIGEST).getString());
+                // Select the stored digest that matches the digest algorithm
+                Optional<Value> digestValue = property2values.apply(getProperty(CONTENT_DIGEST)).filter(digest -> {
+                    try {
+                        final URI digestUri = URI.create(digest.getString());
+                        return algorithmWithoutStringType.equalsIgnoreCase(ContentDigest.getAlgorithm(digestUri));
+
+                    } catch (RepositoryException e) {
+                        LOGGER.warn("Exception thrown when getting digest property {}, {}", digest, e.getMessage());
+                        return false;
+                    }
+                }).findFirst();
+
+                // Success, return the digest value
+                if (digestValue.isPresent()) {
+                    return URI.create(digestValue.get().getString());
+                }
             }
-        } catch (final RepositoryException | URISyntaxException e) {
-            LOGGER.info("Could not get content digest: {}", e.getMessage());
+            LOGGER.warn("No digest value was found to match the algorithm: {}", algorithmWithoutStringType);
+        } catch (final RepositoryException e) {
+            LOGGER.warn("Could not get content digest: {}", e.getMessage());
         }
 
         return ContentDigest.missingChecksum();
@@ -318,7 +398,8 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
         return getDescription().getBaseVersion();
     }
 
-    private static void decorateContentNode(final Node contentNode) throws RepositoryException {
+    private static void decorateContentNode(final Node contentNode, final Collection<URI> checksums)
+            throws RepositoryException {
         if (contentNode == null) {
             LOGGER.warn("{} node appears to be null!", JCR_CONTENT);
             return;
@@ -334,8 +415,13 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
 
             contentSizeHistogram.update(dataProperty.getLength());
 
+            checksums.add(ContentDigest.asURI(SHA1.algorithm, dsChecksum));
+
+            final String[] checksumArray = new String[checksums.size()];
+            checksums.stream().map(Object::toString).collect(Collectors.toSet()).toArray(checksumArray);
+
+            contentNode.setProperty(CONTENT_DIGEST, checksumArray);
             contentNode.setProperty(CONTENT_SIZE, dataProperty.getLength());
-            contentNode.setProperty(CONTENT_DIGEST, ContentDigest.asURI("SHA-1", dsChecksum).toString());
 
             LOGGER.debug("Decorated data property at path: {}", dataProperty.getPath());
         }

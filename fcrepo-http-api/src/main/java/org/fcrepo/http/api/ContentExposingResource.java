@@ -56,10 +56,13 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.inject.Inject;
@@ -594,14 +597,15 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                                                    final InputStream requestBodyStream,
                                                    final ContentDisposition contentDisposition,
                                                    final MediaType contentType,
-                                                   final String checksum) throws InvalidChecksumException {
-        final URI checksumURI = checksumURI(checksum);
+                                                   final Collection<String> checksums) throws InvalidChecksumException {
+        final Collection<URI> checksumURIs = checksums == null ?
+                new HashSet<>() : checksums.stream().map(checksum -> checksumURI(checksum)).collect(Collectors.toSet());
         final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
         final String originalContentType = contentType != null ? contentType.toString() : "";
 
         result.setContent(requestBodyStream,
                 originalContentType,
-                checksumURI,
+                checksumURIs,
                 originalFileName,
                 storagePolicyDecisionPoint);
     }

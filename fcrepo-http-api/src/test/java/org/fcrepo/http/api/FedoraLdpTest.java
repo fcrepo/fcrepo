@@ -18,6 +18,8 @@
 package org.fcrepo.http.api;
 
 import static com.google.common.base.Predicates.containsPattern;
+import static java.util.Arrays.asList;
+import static java.util.Collections.singleton;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static java.util.stream.Stream.of;
 import static java.util.Collections.emptyMap;
@@ -61,8 +63,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.text.ParseException;
+import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
@@ -778,7 +783,7 @@ public class FedoraLdpTest {
         try (final InputStream content = toInputStream("x")) {
             final Response actual = testObj.createObject(null, APPLICATION_OCTET_STREAM_TYPE, "b", content, null, null);
             assertEquals(CREATED.getStatusCode(), actual.getStatus());
-            verify(mockBinary).setContent(content, APPLICATION_OCTET_STREAM, null, "", null);
+            verify(mockBinary).setContent(content, APPLICATION_OCTET_STREAM, Collections.emptySet(), "", null);
         }
     }
 
@@ -792,7 +797,67 @@ public class FedoraLdpTest {
             final MediaType requestContentType = MediaType.valueOf("some/mime-type; with=some; param=s");
             final Response actual = testObj.createObject(null, requestContentType, "b", content, null, null);
             assertEquals(CREATED.getStatusCode(), actual.getStatus());
-            verify(mockBinary).setContent(content, requestContentType.toString(), null, "", null);
+            verify(mockBinary).setContent(content, requestContentType.toString(), Collections.emptySet(), "", null);
+        }
+    }
+
+    @Test
+    public void testCreateNewBinaryWithChecksumSHA() throws RepositoryException, MalformedRdfException,
+            InvalidChecksumException, IOException {
+
+        setResource(Container.class);
+        when(mockBinaryService.findOrCreate(mockSession, "/b")).thenReturn(mockBinary);
+        try (final InputStream content = toInputStream("x")) {
+            final MediaType requestContentType = MediaType.valueOf("some/mime-type; with=some; param=s");
+            final String sha = "07a4d371f3b7b6283a8e1230b7ec6764f8287bf2";
+            final String requestSHA = "sha1=" + sha;
+            final Set<URI> shaURI = singleton(URI.create("urn:sha1:" + sha));
+            final Response actual = testObj.createObject(null, requestContentType, "b", content, null, requestSHA);
+            assertEquals(CREATED.getStatusCode(), actual.getStatus());
+            verify(mockBinary).setContent(content, requestContentType.toString(), shaURI, "", null);
+        }
+    }
+
+    @Test
+    public void testCreateNewBinaryWithChecksumMD5() throws RepositoryException, MalformedRdfException,
+            InvalidChecksumException, IOException {
+
+        setResource(Container.class);
+        when(mockBinaryService.findOrCreate(mockSession, "/b")).thenReturn(mockBinary);
+        try (final InputStream content = toInputStream("x")) {
+            final MediaType requestContentType = MediaType.valueOf("some/mime-type; with=some; param=s");
+            final String md5 = "HUXZLQLMuI/KZ5KDcJPcOA==";
+            final String requestMD5 = "md5=" + md5;
+            final Set<URI> md5URI = singleton(URI.create("urn:md5:" + md5));
+            final Response actual = testObj.createObject(null, requestContentType, "b", content, null, requestMD5);
+            assertEquals(CREATED.getStatusCode(), actual.getStatus());
+            verify(mockBinary).setContent(content, requestContentType.toString(), md5URI, "", null);
+        }
+    }
+
+    @Test
+    public void testCreateNewBinaryWithChecksumSHAandMD5() throws RepositoryException, MalformedRdfException,
+            InvalidChecksumException, IOException {
+
+        setResource(Container.class);
+        when(mockBinaryService.findOrCreate(mockSession, "/b")).thenReturn(mockBinary);
+        try (final InputStream content = toInputStream("x")) {
+            final MediaType requestContentType = MediaType.valueOf("some/mime-type; with=some; param=s");
+
+            final String sha = "07a4d371f3b7b6283a8e1230b7ec6764f8287bf2";
+            final String requestSHA = "sha1=" + sha;
+            final URI shaURI = URI.create("urn:sha1:" + sha);
+
+            final String md5 = "HUXZLQLMuI/KZ5KDcJPcOA==";
+            final String requestMD5 = "md5=" + md5;
+            final URI md5URI = URI.create("urn:md5:" + md5);
+
+            final String requestChecksum = requestSHA + "," + requestMD5;
+            final HashSet<URI> checksumURIs = new HashSet<>(asList(shaURI, md5URI));
+
+            final Response actual = testObj.createObject(null, requestContentType, "b", content, null, requestChecksum);
+            assertEquals(CREATED.getStatusCode(), actual.getStatus());
+            verify(mockBinary).setContent(content, requestContentType.toString(), checksumURIs, "", null);
         }
     }
 

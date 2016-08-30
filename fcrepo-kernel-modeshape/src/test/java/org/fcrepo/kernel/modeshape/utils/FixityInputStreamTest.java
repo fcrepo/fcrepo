@@ -20,6 +20,7 @@ package org.fcrepo.kernel.modeshape.utils;
 import static org.apache.commons.codec.binary.Hex.encodeHexString;
 import static org.apache.commons.io.output.NullOutputStream.NULL_OUTPUT_STREAM;
 import static org.apache.tika.io.IOUtils.copy;
+import static org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM.SHA1;
 import static org.junit.Assert.assertEquals;
 
 import java.io.ByteArrayInputStream;
@@ -40,7 +41,7 @@ public class FixityInputStreamTest {
     public void SimpleFixityInputStreamTest() throws NoSuchAlgorithmException, IOException {
         try (final FixityInputStream is =
                 new FixityInputStream(new ByteArrayInputStream("0123456789"
-                        .getBytes()), MessageDigest.getInstance("SHA-1"))) {
+                        .getBytes()), MessageDigest.getInstance(SHA1.algorithm))) {
             copy(is, NULL_OUTPUT_STREAM);
             assertEquals(10, is.getByteCount());
             assertEquals("87acec17cd9dcd20a716cc2cf67417b71c8a7016",

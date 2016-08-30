@@ -60,8 +60,10 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.annotation.PostConstruct;
@@ -104,6 +106,7 @@ import org.fcrepo.kernel.api.RdfStream;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.fcrepo.kernel.api.utils.ContentDigest;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
@@ -313,7 +316,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         final String path = toPath(translator(), externalPath);
 
-        final String checksum = parseDigestHeader(digest);
+        final Collection<String> checksums = parseDigestHeader(digest);
 
         final MediaType contentType = getSimpleContentType(requestContentType);
 
@@ -338,7 +341,7 @@ public class FedoraLdp extends ContentExposingResource {
             LOGGER.info("PUT resource '{}'", externalPath);
             if (resource instanceof FedoraBinary) {
                 replaceResourceBinaryWithStream((FedoraBinary) resource,
-                        requestBodyStream, contentDisposition, requestContentType, checksum);
+                        requestBodyStream, contentDisposition, requestContentType, checksums);
             } else if (isRdfContentType(contentType.toString())) {
                 replaceResourceWithStream(resource, requestBodyStream, contentType, resourceTriples);
             } else if (!created) {
@@ -468,7 +471,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         final String newObjectPath = mintNewPid(slug);
 
-        final String checksum = parseDigestHeader(digest);
+        final Collection<String> checksum = parseDigestHeader(digest);
 
         LOGGER.info("Ingest with path: {}", newObjectPath);
 
@@ -716,20 +719,20 @@ public class FedoraLdp extends ContentExposingResource {
      * @return the sha1 checksum value
      * @throws InvalidChecksumException if an unsupported digest is used
      */
-    private static String parseDigestHeader(final String digest) throws InvalidChecksumException {
+    private static Collection<String> parseDigestHeader(final String digest) throws InvalidChecksumException {
         try {
             final Map<String,String> digestPairs = RFC3230_SPLITTER.split(nullToEmpty(digest));
-            final boolean checksumTypeIncludeSHA1 = digestPairs.keySet().stream().anyMatch("sha1"::equalsIgnoreCase);
-            // If you have one or more digests and one is sha1 or no digests.
-            if (digestPairs.isEmpty() || checksumTypeIncludeSHA1) {
+            final boolean allSupportedAlgorithms = digestPairs.keySet().stream().allMatch(
+                    ContentDigest.DIGEST_ALGORITHM::isSupportedAlgorithm);
+
+            // If you have one or more digests that are all valid or no digests.
+            if (digestPairs.isEmpty() || allSupportedAlgorithms) {
                 return digestPairs.entrySet().stream()
-                    .filter(s -> s.getKey().toLowerCase().equals("sha1"))
-                    .map(Map.Entry::getValue)
-                    .findFirst()
-                    .map("urn:sha1:"::concat)
-                    .orElse("");
+                    .filter(entry -> ContentDigest.DIGEST_ALGORITHM.isSupportedAlgorithm(entry.getKey()))
+                    .map(entry -> ContentDigest.asURI(entry.getKey(), entry.getValue()).toString())
+                    .collect(Collectors.toSet());
             } else {
-                throw new InvalidChecksumException(String.format("Unsupported Digest Algorithim: {}", digest));
+                throw new InvalidChecksumException(String.format("Unsupported Digest Algorithim: %1$s", digest));
             }
         } catch (final RuntimeException e) {
             if (e instanceof IllegalArgumentException) {

@@ -19,6 +19,7 @@ package org.fcrepo.kernel.modeshape.utils;
 
 import static org.fcrepo.kernel.api.FedoraTypes.CONTENT_DIGEST;
 import static org.fcrepo.kernel.api.FedoraTypes.CONTENT_SIZE;
+import static org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM.SHA1;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATEDBY;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -64,7 +65,9 @@ public abstract class TestHelpers {
     public static Node getContentNodeMock(final Node mock, final byte[] content) {
         final long size = content.length;
         final String digest = checksumString(content);
-        final String digestType = "SHA-1";
+        final Value digestValue = mock(Value.class);
+        final Value[] digestArray = {digestValue};
+        final String digestType = SHA1.algorithm;
         final Property mockFedoraSize = mock(Property.class);
         final Property mockProp = mock(Property.class);
         final Property mockDigest = mock(Property.class);
@@ -82,7 +85,7 @@ public abstract class TestHelpers {
                 }
             });
             when(mockProp.getBinary()).thenReturn(mockBin);
-            when(mockDigest.getString()).thenReturn(digest);
+            when(mockDigest.getValues()).thenReturn(digestArray);
             when(mockDigestType.getString()).thenReturn(digestType);
             when(mock.hasProperty(JCR_DATA)).thenReturn(true);
             when(mock.hasProperty(CONTENT_SIZE)).thenReturn(true);
@@ -91,6 +94,8 @@ public abstract class TestHelpers {
             when(mock.getProperty(JCR_DATA)).thenReturn(mockProp);
             when(mock.getProperty(CONTENT_SIZE)).thenReturn(mockFedoraSize);
             when(mock.getProperty(CONTENT_DIGEST)).thenReturn(mockDigest);
+            when(mockDigest.isMultiple()).thenReturn(true);
+            when(digestValue.getString()).thenReturn(digest);
             when(mock.getProperty(JCR_CREATEDBY)).thenReturn(mockCreated);
         } catch (final RepositoryException e) {
         } // shhh
@@ -103,9 +108,9 @@ public abstract class TestHelpers {
 
     public static String checksumString(final byte[] content) {
         try {
-            final MessageDigest d = MessageDigest.getInstance("SHA-1");
+            final MessageDigest d = MessageDigest.getInstance(SHA1.algorithm);
             final byte[] digest = d.digest(content);
-            return ContentDigest.asURI("SHA-1", digest).toString();
+            return ContentDigest.asURI(SHA1.algorithm, digest).toString();
         } catch (final NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
