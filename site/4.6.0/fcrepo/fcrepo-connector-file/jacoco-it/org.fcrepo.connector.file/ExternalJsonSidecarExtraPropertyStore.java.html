@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ExternalJsonSidecarExtraPropertyStore.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository FileSystem Connector Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.connector.file</a> &gt; <span class="el_source">ExternalJsonSidecarExtraPropertyStore.java</span></div><h1>ExternalJsonSidecarExtraPropertyStore.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.connector.file;
+
+import static java.nio.file.Files.deleteIfExists;
+
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+
+import org.infinispan.schematic.Schematic;
+import org.infinispan.schematic.document.Document;
+import org.infinispan.schematic.document.EditableDocument;
+import org.infinispan.schematic.document.Json;
+import org.modeshape.jcr.cache.document.DocumentTranslator;
+import org.modeshape.jcr.spi.federation.ExtraPropertiesStore;
+import org.modeshape.jcr.value.Name;
+import org.modeshape.jcr.value.Property;
+
+import java.util.Collections;
+import java.io.File;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
+import java.io.IOException;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+
+/**
+ * An implementation of ExtraPropertyStore, based on
+ * org.modeshape.connector.filesystem.JsonSidecarExtraPropertyStore that stores the
+ * properties in a separate configured directory than the filesystem federation itself.
+ *
+ * @author Mike Durbin
+ * @author acoburn
+ * @author ajs6f
+ */
+public class ExternalJsonSidecarExtraPropertyStore implements ExtraPropertiesStore {
+
+    private final FedoraFileSystemConnector connector;
+
+    private final File propertyStoreRoot;
+
+    private final DocumentTranslator translator;
+
+    /**
+     * Default constructor.
+     * @param connector the FileSystemConnector for which this class will store properties.
+     * @param translator the utility to translate properties to/from the JSON configuration
+     * @param propertyStoreRoot the root of a filesystem into which properties will be
+     *                          serialized.
+     */
+    public ExternalJsonSidecarExtraPropertyStore(final FedoraFileSystemConnector connector,
+                                                 final DocumentTranslator translator,
+<span class="nc" id="L68">                                                 final File propertyStoreRoot) {</span>
+<span class="nc" id="L69">        this.connector = connector;</span>
+<span class="nc" id="L70">        this.translator = translator;</span>
+<span class="nc" id="L71">        this.propertyStoreRoot = propertyStoreRoot;</span>
+<span class="nc" id="L72">    }</span>
+
+    protected File sidecarFile(final String id) {
+        final File file;
+<span class="nc bnc" id="L76" title="All 2 branches missed.">        if (connector.isRoot(id)) {</span>
+<span class="nc" id="L77">            file = new File(propertyStoreRoot, &quot;federation-root.modeshape.json&quot;);</span>
+        } else {
+<span class="nc" id="L79">            String ext = &quot;.modeshape.json&quot;;</span>
+<span class="nc bnc" id="L80" title="All 2 branches missed.">            if (connector.isContentNode(id)) {</span>
+<span class="nc" id="L81">                ext = &quot;.content.modeshape.json&quot;;</span>
+            }
+<span class="nc" id="L83">            final File f = new File(connector.fileFor(id).getAbsolutePath() + ext);</span>
+
+<span class="nc" id="L85">            final Path propertyFileInFederation = f.getAbsoluteFile().toPath();</span>
+<span class="nc" id="L86">            final Path relativePath = connector.fileFor(&quot;/&quot;)</span>
+<span class="nc" id="L87">                            .getAbsoluteFile().toPath().relativize(propertyFileInFederation);</span>
+<span class="nc" id="L88">            file = propertyStoreRoot.toPath().resolve(relativePath).toFile();</span>
+        }
+<span class="nc bnc" id="L90" title="All 4 branches missed.">        if (!file.getParentFile().exists() &amp;&amp; !file.getParentFile().mkdirs()) {</span>
+<span class="nc" id="L91">            throw new RepositoryRuntimeException(&quot;Unable to create directories &quot; + file.getParentFile() + &quot;.&quot;);</span>
+        }
+<span class="nc" id="L93">        return file;</span>
+    }
+
+    /**
+     * This is a trivial reimplementation of the private Modeshape implementation in
+     * org.modeshape.connector.filesystem.JsonSidecarExtraPropertyStore
+     *
+     * See: https://github.com/ModeShape/modeshape/blob/modeshape-4.2.0.Final/modeshape-jcr/src/main/java/
+     *              org/modeshape/connector/filesystem/JsonSidecarExtraPropertyStore.java#L139
+     *
+     * @param id the identifier for the sidecar file
+     * @return whether the file was deleted
+     */
+    @Override
+    public boolean removeProperties(final String id) {
+        try {
+<span class="nc" id="L109">            return deleteIfExists(sidecarFile(id).toPath());</span>
+<span class="nc" id="L110">        } catch (final IOException e) {</span>
+<span class="nc" id="L111">            throw new RepositoryRuntimeException(id, e);</span>
+        }
+    }
+
+
+    /**
+     * This is a trivial reimplementation of the private modeshape implementation in
+     * org.modeshape.connector.filesystem.JsonSidecarExtraPropertyStore
+     *
+     * See: https://github.com/ModeShape/modeshape/blob/modeshape-4.2.0.Final/modeshape-jcr/src/main/java/
+     *              org/modeshape/connector/filesystem/JsonSidecarExtraPropertyStore.java#L60
+     *
+     * @param id the identifier for the sidecar file
+     * @return a map of the properties associated with the given configuration
+     */
+    @Override
+    public Map&lt;Name, Property&gt; getProperties(final String id) {
+<span class="nc" id="L128">        final File sidecarFile = sidecarFile(id);</span>
+<span class="nc bnc" id="L129" title="All 2 branches missed.">        if (!sidecarFile.exists()) {</span>
+<span class="nc" id="L130">            return Collections.emptyMap();</span>
+        }
+<span class="nc" id="L132">        try (final FileInputStream sidecarStream = new FileInputStream(sidecarFile)) {</span>
+<span class="nc" id="L133">            final Document document = Json.read(sidecarStream, false);</span>
+<span class="nc" id="L134">            final Map&lt;Name, Property&gt; results = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L135">            translator.getProperties(document, results);</span>
+<span class="nc" id="L136">            return results;</span>
+<span class="nc bnc" id="L137" title="All 8 branches missed.">        } catch (final IOException e) {</span>
+<span class="nc" id="L138">            throw new RepositoryRuntimeException(id, e);</span>
+        }
+    }
+
+    /**
+     * This is a trivial reimplementation of the private modeshape implementation in
+     * org.modeshape.connector.filesystem.JsonSidecarExtraPropertyStore
+     *
+     * See: https://github.com/ModeShape/modeshape/blob/modeshape-4.2.0.Final/modeshape-jcr/src/main/java/
+     *              org/modeshape/connector/filesystem/JsonSidecarExtraPropertyStore.java#L74
+     *
+     * @param id the id for the sidecar file
+     * @param properties the keys/values to set in the specified sidecar configuration
+     */
+    @Override
+    public void updateProperties(final String id, final Map&lt;Name, Property&gt; properties ) {
+<span class="nc" id="L154">        final File sidecarFile = sidecarFile(id);</span>
+        try {
+            final EditableDocument document;
+<span class="nc bnc" id="L157" title="All 2 branches missed.">            if (!sidecarFile.exists()) {</span>
+<span class="nc bnc" id="L158" title="All 2 branches missed.">                if (properties.isEmpty()) {</span>
+<span class="nc" id="L159">                    return;</span>
+                }
+<span class="nc" id="L161">                sidecarFile.createNewFile();</span>
+<span class="nc" id="L162">                document = Schematic.newDocument();</span>
+            } else {
+<span class="nc" id="L164">                try (final FileInputStream sidecarStream = new FileInputStream(sidecarFile)) {</span>
+<span class="nc" id="L165">                    final Document existing = Json.read(sidecarStream, false);</span>
+<span class="nc" id="L166">                    document = Schematic.newDocument(existing);</span>
+<span class="nc bnc" id="L167" title="All 8 branches missed.">                }</span>
+            }
+<span class="nc" id="L169">            properties.forEach((key, property) -&gt; {</span>
+<span class="nc bnc" id="L170" title="All 2 branches missed.">                if (property == null) {</span>
+<span class="nc" id="L171">                    translator.removeProperty(document, key, null, null);</span>
+                } else {
+<span class="nc" id="L173">                    translator.setProperty(document, property, null, null);</span>
+                }
+<span class="nc" id="L175">            });</span>
+<span class="nc" id="L176">            try (final FileOutputStream outputStream = new FileOutputStream(sidecarFile)) {</span>
+<span class="nc" id="L177">                Json.write(document, outputStream);</span>
+<span class="nc bnc" id="L178" title="All 8 branches missed.">            }</span>
+<span class="nc" id="L179">        } catch (final IOException e) {</span>
+<span class="nc" id="L180">            throw new RepositoryRuntimeException(id, e);</span>
+<span class="nc" id="L181">        }</span>
+<span class="nc" id="L182">    }</span>
+
+    /**
+     * This is a trivial reimplementation of the private modeshape implementation in
+     * org.modeshape.connector.filesystem.JsonSidecarExtraPropertyStore
+     *
+     * See: https://github.com/ModeShape/modeshape/blob/modeshape-4.2.0.Final/modeshape-jcr/src/main/java/
+     *              org/modeshape/connector/filesystem/JsonSidecarExtraPropertyStore.java#L102
+     *
+     * @param id the id for the sidecar file
+     * @param properties the keys/values to set in the specified sidecar configuration
+     */
+    @Override
+    public void storeProperties(final String id, final Map&lt;Name, Property&gt; properties ) {
+<span class="nc" id="L196">        final File sidecarFile = sidecarFile(id);</span>
+        try {
+<span class="nc bnc" id="L198" title="All 2 branches missed.">            if (!sidecarFile.exists()) {</span>
+<span class="nc bnc" id="L199" title="All 2 branches missed.">                if (properties.isEmpty()) {</span>
+<span class="nc" id="L200">                    return;</span>
+                }
+<span class="nc" id="L202">                sidecarFile.createNewFile();</span>
+            }
+<span class="nc" id="L204">            final EditableDocument document = Schematic.newDocument();</span>
+<span class="nc bnc" id="L205" title="All 2 branches missed.">            for (final Property property : properties.values()) {</span>
+<span class="nc bnc" id="L206" title="All 2 branches missed.">                if (property == null) {</span>
+<span class="nc" id="L207">                    continue;</span>
+                }
+<span class="nc" id="L209">                translator.setProperty(document, property, null, null);</span>
+<span class="nc" id="L210">            }</span>
+<span class="nc" id="L211">            try (final FileOutputStream outputStream = new FileOutputStream(sidecarFile)) {</span>
+<span class="nc" id="L212">                Json.write(document, outputStream);</span>
+<span class="nc bnc" id="L213" title="All 8 branches missed.">            }</span>
+<span class="nc" id="L214">        } catch (final IOException e) {</span>
+<span class="nc" id="L215">            throw new RepositoryRuntimeException(id, e);</span>
+<span class="nc" id="L216">        }</span>
+<span class="nc" id="L217">    }</span>
+
+    /**
+     * This is a trivial reimplementation of the private modeshape implementation in
+     * org.modeshape.connector.filesystem.JsonSidecarExtraPropertyStore
+     *
+     * See: https://github.com/ModeShape/modeshape/blob/modeshape-4.2.0.Final/modeshape-jcr/src/main/java/
+     *              org/modeshape/connector/filesystem/JsonSidecarExtraPropertyStore.java#L156
+     *
+     * @param id the id for the sidecar file
+     * @return whether the specified sidecar configuration exists
+     */
+    @Override
+    public boolean contains(final String id) {
+<span class="nc" id="L231">        return sidecarFile(id).exists();</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>
