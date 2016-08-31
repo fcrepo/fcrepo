@@ -19,10 +19,9 @@ package org.fcrepo.http.api;
 
 import static com.google.common.base.Predicates.containsPattern;
 import static java.util.Arrays.asList;
-import static java.util.Collections.singleton;
-import static org.apache.jena.graph.NodeFactory.createURI;
-import static java.util.stream.Stream.of;
 import static java.util.Collections.emptyMap;
+import static java.util.Collections.singleton;
+import static java.util.stream.Stream.of;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
@@ -31,6 +30,7 @@ import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static javax.ws.rs.core.Response.Status.TEMPORARY_REDIRECT;
 import static org.apache.commons.io.IOUtils.toInputStream;
+import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.fcrepo.http.api.ContentExposingResource.getSimpleContentType;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES_TYPE;
@@ -39,12 +39,12 @@ import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
-import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -78,17 +78,23 @@ import javax.jcr.observation.ObservationManager;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.ServerErrorException;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.http.commons.domain.MultiPrefer;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
@@ -97,8 +103,6 @@ import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-import org.fcrepo.kernel.api.TripleCategory;
-import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.ContainerService;
 import org.fcrepo.kernel.api.services.NamespaceService;
@@ -114,10 +118,6 @@ import org.springframework.mock.web.MockHttpServletResponse;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import org.apache.jena.graph.Triple;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Resource;
 
 /**
  * @author cabeer
@@ -708,7 +708,8 @@ public class FedoraLdpTest {
 
     @Test
     @SuppressWarnings({"resource", "unchecked"})
-    public void testPatchBinaryDescription() throws RepositoryException, MalformedRdfException, IOException {
+    public void testPatchBinaryDescription() throws RepositoryException, MalformedRdfException, IOException,
+            InterruptedException {
 
         final NonRdfSourceDescription mockObject = (NonRdfSourceDescription)setResource(NonRdfSourceDescription.class);
         when(mockObject.getDescribedResource()).thenReturn(mockBinary);
@@ -726,25 +727,26 @@ public class FedoraLdpTest {
     }
 
     @Test(expected = BadRequestException.class)
-    public void testPatchWithoutContent() throws MalformedRdfException, IOException {
+    public void testPatchWithoutContent() throws MalformedRdfException, IOException, InterruptedException {
         testObj.updateSparql(null);
     }
 
     @Test(expected = BadRequestException.class)
-    public void testPatchWithMissingContent() throws RepositoryException, MalformedRdfException, IOException {
+    public void testPatchWithMissingContent() throws RepositoryException, MalformedRdfException, IOException,
+            InterruptedException {
         setResource(Container.class);
         testObj.updateSparql(toInputStream(""));
     }
 
     @Test(expected = BadRequestException.class)
-    public void testPatchBinary() throws RepositoryException, MalformedRdfException, IOException {
+    public void testPatchBinary() throws RepositoryException, MalformedRdfException, IOException, InterruptedException {
         setResource(FedoraBinary.class);
         testObj.updateSparql(toInputStream(""));
     }
 
     @Test
     public void testCreateNewObject() throws RepositoryException, MalformedRdfException, InvalidChecksumException,
-            IOException {
+            IOException, InterruptedException {
         setResource(Container.class);
         when(mockContainerService.findOrCreate(mockSession, "/b")).thenReturn(mockContainer);
         final Response actual = testObj.createObject(null, null, "b", null, null, null);
@@ -753,7 +755,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testCreateNewObjectWithSparql() throws RepositoryException, MalformedRdfException,
-            InvalidChecksumException, IOException {
+            InvalidChecksumException, IOException, InterruptedException {
 
         setResource(Container.class);
         when(mockContainerService.findOrCreate(mockSession, "/b")).thenReturn(mockContainer);
@@ -765,7 +767,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testCreateNewObjectWithRdf() throws RepositoryException, MalformedRdfException,
-            InvalidChecksumException, IOException {
+            InvalidChecksumException, IOException, InterruptedException {
         setResource(Container.class);
         when(mockContainerService.findOrCreate(mockSession, "/b")).thenReturn(mockContainer);
         final Response actual = testObj.createObject(null, NTRIPLES_TYPE, "b",
@@ -777,7 +779,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testCreateNewBinary() throws RepositoryException, MalformedRdfException, InvalidChecksumException,
-            IOException {
+            IOException, InterruptedException {
         setResource(Container.class);
         when(mockBinaryService.findOrCreate(mockSession, "/b")).thenReturn(mockBinary);
         try (final InputStream content = toInputStream("x")) {
@@ -789,7 +791,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testCreateNewBinaryWithContentTypeWithParams() throws RepositoryException, MalformedRdfException,
-            InvalidChecksumException, IOException {
+            InvalidChecksumException, IOException, InterruptedException {
 
         setResource(Container.class);
         when(mockBinaryService.findOrCreate(mockSession, "/b")).thenReturn(mockBinary);
@@ -803,7 +805,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testCreateNewBinaryWithChecksumSHA() throws RepositoryException, MalformedRdfException,
-            InvalidChecksumException, IOException {
+            InvalidChecksumException, IOException, InterruptedException {
 
         setResource(Container.class);
         when(mockBinaryService.findOrCreate(mockSession, "/b")).thenReturn(mockBinary);
@@ -820,7 +822,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testCreateNewBinaryWithChecksumMD5() throws RepositoryException, MalformedRdfException,
-            InvalidChecksumException, IOException {
+            InvalidChecksumException, IOException, InterruptedException {
 
         setResource(Container.class);
         when(mockBinaryService.findOrCreate(mockSession, "/b")).thenReturn(mockBinary);
@@ -837,7 +839,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testCreateNewBinaryWithChecksumSHAandMD5() throws RepositoryException, MalformedRdfException,
-            InvalidChecksumException, IOException {
+            InvalidChecksumException, IOException, InterruptedException {
 
         setResource(Container.class);
         when(mockBinaryService.findOrCreate(mockSession, "/b")).thenReturn(mockBinary);
@@ -863,20 +865,21 @@ public class FedoraLdpTest {
 
     @Test(expected = ClientErrorException.class)
     public void testPostToBinary() throws MalformedRdfException, InvalidChecksumException,
-            IOException, RepositoryException {
+            IOException, RepositoryException, InterruptedException {
         final FedoraBinary mockObject = (FedoraBinary)setResource(FedoraBinary.class);
         doReturn(mockObject).when(testObj).resource();
         testObj.createObject(null, null, null, null, null, null);
     }
 
     @Test(expected = ServerErrorException.class)
-    public void testLDPRNotImplemented() throws MalformedRdfException, InvalidChecksumException, IOException {
+    public void testLDPRNotImplemented() throws MalformedRdfException, InvalidChecksumException, IOException,
+            InterruptedException {
         testObj.createObject(null, null, null, null, "<http://www.w3.org/ns/ldp#Resource>; rel=\"type\"", null);
     }
 
     @Test(expected = ClientErrorException.class)
     public void testLDPRNotImplementedInvalidLink() throws MalformedRdfException, InvalidChecksumException,
-            IOException {
+            IOException, InterruptedException {
         testObj.createObject(null, null, null, null, "Link: <http://www.w3.org/ns/ldp#Resource;rel=type", null);
     }
 
