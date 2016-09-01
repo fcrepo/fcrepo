@@ -49,18 +49,6 @@
                 <div class="panel-body">
                     #triples($contentNode)
                 </div>
-
-            ## output triples for the content node
-
-            #if ($rdf.find($contentNode, $nodeany, $nodeany).hasNext())
-                <div class="panel-heading">
-                    <a href="$contentNode" class="btn btn-success pull-right"><span class="glyphicon glyphicon-download"></span> Download</a>
-                    <h4 class="panel-title">Content Properties <br/><small><a href="$contentNode.getURI()">$esc.html($helpers.getObjectTitle($rdf, $contentNode))</a></small></h4>
-                </div>
-                <div class="panel-body">
-                    #triples($contentNode)
-                </div>
-            #end
             </div>
 
         </div>
