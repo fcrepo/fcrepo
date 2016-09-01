@@ -31,22 +31,9 @@
                         #else
                             <span property="$triple.getPredicate().toString()">$esc.html($triple.getObject())</span>
                         #end
-                        #if( $triple.getPredicate().toString().equals("http://fedora.info/definitions/v4/repository#digest") )
-                            #set ($fixity_service = $helpers.getObjects($rdf, $triple.getSubject(), $rdfLexicon.HAS_FIXITY_SERVICE))
-
-                            #if($fixity_service.hasNext())
-                                <a href="$fixity_service.next().getObject().getURI()">check fixity</a>
-                            #end
-                        #end
                     </dd>
                 #set ($last_quad = $triple)
 
             #end
         </dl>
-#end
-
-#macro( isObject $sub )
-#set($type = $helpers.createURI("http://fedora.info/definitions/v4/repository#mixinTypes"))
-#set($object = $anynode.createLiteral("fedora:object"))
-$rdf.find($sub, $type, $object).hasNext()
 #end

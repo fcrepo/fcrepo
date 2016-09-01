@@ -93,24 +93,4 @@ WHERE { }
 </form>
 #end
 
-
-#if ($writable == true)
-#set ($fedoraresc = $rdf.find($topic, $rdfLexicon.HAS_MIXIN_TYPE.asNode(), $helpers.asLiteralStringNode("fedora:resource")))
-#if($fedoraresc.hasNext())
-<h3>Access Roles</h3>
-<form id="update_rbacl" type="application/json">
-    <div class="form-group">
-<textarea rows="10" id="rbacl_json" name="rbacl_json" class="form-control">
-{
-   "principal name 1" : [ "reader" ],
-   "principal name 2" : [ "writer" ],
-   "principal name 3" : [ "admin" ]
-}
-</textarea>
-    </div>
-    <button type="submit" class="btn btn-primary">Update</button>
-    <hr />
-</form>
-#end
-#end
 #end
