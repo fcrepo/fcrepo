@@ -140,7 +140,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     protected FedoraResource resource;
 
-    protected static final PathLockManager PATH_LOCKS = new PathLockManager();
+    @Inject
+    protected  PathLockManager lockManager;
 
     private static final Predicate<Triple> IS_MANAGED_TYPE = t -> t.getPredicate().equals(type.asNode()) &&
             isManagedNamespace.test(t.getObject().getNameSpace());

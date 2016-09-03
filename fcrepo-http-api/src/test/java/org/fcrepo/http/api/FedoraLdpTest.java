@@ -90,6 +90,7 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
+import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.http.commons.domain.MultiPrefer;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
@@ -178,11 +179,17 @@ public class FedoraLdpTest {
     @Mock
     private NamespaceRegistry mockNamespaceRegistry;
 
+    @Mock
+    private PathLockManager mockLockManager;
+
+    @Mock
+    private AcquiredLock mockLock;
+
     private static final Logger log = getLogger(FedoraLdpTest.class);
 
 
     @Before
-    public void setUp() throws RepositoryException {
+    public void setUp() throws RepositoryException, InterruptedException {
         testObj = spy(new FedoraLdp(path));
 
         mockResponse = new MockHttpServletResponse();
@@ -203,6 +210,7 @@ public class FedoraLdpTest {
         setField(testObj, "binaryService", mockBinaryService);
         setField(testObj, "httpConfiguration", mockHttpConfiguration);
         setField(testObj, "namespaceService", mockNamespaceService);
+        setField(testObj, "lockManager", mockLockManager);
 
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
@@ -225,6 +233,10 @@ public class FedoraLdpTest {
         when(mockBinary.getDescription()).thenReturn(mockNonRdfSourceDescription);
 
         when(mockHeaders.getHeaderString("user-agent")).thenReturn("Test UserAgent");
+
+        when(mockLockManager.lockForRead(any(), any(), any())).thenReturn(mockLock);
+        when(mockLockManager.lockForWrite(any(), any(), any())).thenReturn(mockLock);
+        when(mockLockManager.lockForDelete(any(), any(), any())).thenReturn(mockLock);
     }
 
     private FedoraResource setResource(final Class<? extends FedoraResource> klass) throws RepositoryException {

@@ -15,117 +15,82 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.fcrepo.http.api;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import javax.jcr.Session;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Semaphore;
-
-import org.slf4j.Logger;
+import org.fcrepo.kernel.api.services.NodeService;
 
 /**
- * A class that serves as a pool of locks to guarantee synchronized
- * access based on the String representation of paths.  Because there
- * may be an extremely high number of paths in the repository, the main
- * function of this class is to ensure that for a given path only one
- * semaphore exists, and that that semaphore exists only as long as a
- * caller wishes to access that path.
+ * An interface representing a utility whose locking methods can enforce
+ * the kinds of concurrency restrictions appropriate for an otherwise
+ * concurrency-naive application that operates on hierarchical resources
+ * represented by paths (as in URIs or filesystems).
  *
- * The correct usage pattern is to invoke getSemaphoreForPath (a blocking
- * method), perform some mutations to the resource at that path, then
- * invoke release on that semaphore.
- *
- * @author md5wz
+ * @author Mike Durbin
  */
-public class PathLockManager {
-
-    private static final Logger LOGGER = getLogger(PathLockManager.class);
-
-    private Map<String, TransientSemaphore> pool = new HashMap<String, TransientSemaphore>();
+public interface PathLockManager {
 
     /**
-     * A specialized construct for the purpose of allowing mutex controls (blocking)
-     * on arbitrary keys that only exist in memory as long as there is activity against
-     * that particular key.  The creation of these objects should be handled entirely
-     * by the method getSemaphoreForPath().
+     * An interface representing a lock (comparable to that defined in
+     * java.util.concurrent.locks) that has been acquired.  Memory management
+     * for instances of this lock is handled by LockManager instances and
+     * anyone else receiving one of these such locks from a LockManager
+     * should not retain a reference to the used lock after releasing it.
+     */
+    public interface AcquiredLock {
+
+        /**
+         * Releases the lock, after which it's useless.
+         */
+        public void release();
+    }
+
+    /**
+     * Locks the necessary resources affected in order to safely view a resource
+     * at the given path.  A successful return from this method should guarantee
+     * that until release() is invoked on the returned Lock that no changes are made
+     * to the resource that would affect its display.
      *
-     * @author md5wz
+     * @param path the path to a resource to be viewed
+     * @param session the current session
+     * @param nodeService the repository NodeService implementation
+     * @return an acquired Lock on the relevant resources
+     * @throws InterruptedException if interrupted while waiting to acquire the lock
      */
-    public class TransientSemaphore {
-
-        private String key;
-
-        private Semaphore wrappedSemaphore;
-
-        private int count;
-
-        /**
-         * Default constructor.
-         * @param key the locking key
-         */
-        public TransientSemaphore(final String key) {
-            this.wrappedSemaphore = new Semaphore(1);
-            this.key = key;
-            LOGGER.trace("Created a new lock for {} (Thread {})", key, Thread.currentThread().getId());
-        }
-
-        /**
-         * Releases this semaphore.  Also, if there is no one waiting on
-         * it, also removes it from the pool so that it may be garbage collected
-         * (when the caller no longer retains a reference to it).
-         */
-        public void release() {
-            synchronized (pool) {
-                count --;
-                if (count == 0) {
-                    LOGGER.trace("Removed {} from the lock pool. (Thread {})", key, Thread.currentThread().getId());
-                    pool.remove(key);
-                }
-                wrappedSemaphore.release();
-                LOGGER.trace("Released lock {} (Thread {})", key, Thread.currentThread().getId());
-            }
-        }
-
-    }
+    public AcquiredLock lockForRead(String path, Session session, NodeService nodeService) throws InterruptedException;
 
     /**
-     * Gets a semaphore and acquires the lock for the given path.
-     * This method blocks until it can acquire the lock for that
-     * path, or until interrupted.
-     * @param path the path we wish to mutate
-     * @return an acquired semaphore
-     * @throws InterruptedException if the thread is interrupted while
-     *         waiting to acquire the semaphore
+     * Locks the necessary resources affected in order to safely write to a resource
+     * at the given path.  A successful return from this method should guarantee
+     * that until release() is invoked on the returned Lock that no other callers
+     * may be granted locks necessary to add, modify or delete the resource at the
+     * provided path.
+     *
+     * @param path the path to a resource to be created (may involve implicitly created
+     *        resources at parent paths)
+     * @param session the current session
+     * @param nodeService the repository NodeService implementation
+     * @return an acquired Lock on the relevant resources
+     * @throws InterruptedException if interrupted while waiting to acquire the lock
      */
-    public TransientSemaphore getSemaphoreForPath(final String path) throws InterruptedException {
-        TransientSemaphore lock = null;
-        synchronized (pool) {
-            if (pool.containsKey(path)) {
-                lock = pool.get(path);
-                lock.count ++;
-            } else {
-                lock = new TransientSemaphore(path);
-                lock.count ++;
-                pool.put(path, lock);
-            }
-        }
-        try {
-            LOGGER.trace("Waiting to acquire lock {} (Thread {})", path, Thread.currentThread().getId());
-            lock.wrappedSemaphore.acquire();
-            LOGGER.trace("Acquired lock {} (Thread {})", path, Thread.currentThread().getId());
-            return lock;
-        } catch (InterruptedException e) {
-            LOGGER.trace("Interrupted while acquiring lock {} (Thread {})", path, Thread.currentThread().getId());
-            synchronized (pool) {
-                lock.count --;
-                if (lock.count == 0) {
-                    pool.remove(path);
-                }
-            }
-            throw e;
-        }
-    }
+    public AcquiredLock lockForWrite(String path, Session session, NodeService nodeService) throws InterruptedException;
+
+    /**
+     * Locks the necessary resources affected in order to safely delete a resource
+     * at the given path.  A successful return from this method should guarantee
+     * that until release() is invoked on the returned Lock that no other callers
+     * may be granted locks necessary to add, modify or delete the resource at the
+     * provided path or any child path (because deletes cascade).
+     *
+     * @param path the path to a resource to be deleted (may imply the deletion of
+     *        all descendant resources)
+     * @param session the current session
+     * @param nodeService the repository NodeService implementation
+     * @return an acquired Lock on the relevant resources
+     * @throws InterruptedException if interrupted while waiting to acquire the lock
+     */
+    public AcquiredLock lockForDelete(String path, Session session, NodeService nodeService)
+            throws InterruptedException;
+
 }

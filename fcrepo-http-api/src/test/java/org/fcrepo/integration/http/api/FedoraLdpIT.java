@@ -105,6 +105,7 @@ import java.io.StringWriter;
 import java.net.URI;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -2561,6 +2562,51 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 fail("Only one of the PUTs should have resulted in a child (unexpected child "
                        + children.next().getObject().getURI() + ")!");
             }
+        }
+    }
+
+    @Test
+    public void testConcurrentPutsWithPairtrees() throws InterruptedException, IOException {
+        final String parent = getRandomUniqueId();
+        executeAndClose(putObjMethod(parent));
+        final String first = parent + "/00/1";
+        final String second = parent + "/00/2";
+        final String third = parent + "/00/3";
+        final String fourth = parent + "/00/4";
+        final Thread t1 = new Thread(() -> { executeAndClose(putObjMethod(first));});
+        final Thread t2 = new Thread(() -> { executeAndClose(putObjMethod(second)); });
+        final Thread t3 = new Thread(() -> { executeAndClose(putObjMethod(third)); });
+        final Thread t4 = new Thread(() -> { executeAndClose(putObjMethod(fourth)); });
+        t1.start();
+        t2.start();
+        t3.start();
+        t4.start();
+        t1.join();
+        t2.join();
+        t3.join();
+        t4.join();
+
+        try (final CloseableDataset dataset = getDataset(getObjMethod(parent))) {
+            final DatasetGraph graphStore = dataset.asDatasetGraph();
+            final List<String> childPaths = new ArrayList<String>();
+            final Iterator<Quad> children = graphStore.find(ANY, ANY, CONTAINS.asNode(), ANY);
+            assertTrue("Four children should have been created (none found).", children.hasNext());
+            childPaths.add(children.next().getObject().getURI());
+            LOGGER.info("Found child: {}", childPaths.get(0));
+            assertTrue("Four children should have been created (only one found).", children.hasNext());
+            childPaths.add(children.next().getObject().getURI());
+            LOGGER.info("Found child: {}", childPaths.get(1));
+            assertTrue("Four children should have been created (only two found).", children.hasNext());
+            childPaths.add(children.next().getObject().getURI());
+            LOGGER.info("Found child: {}", childPaths.get(2));
+            assertTrue("Four children should have been created. (only three found)", children.hasNext());
+            childPaths.add(children.next().getObject().getURI());
+            LOGGER.info("Found child: {}", childPaths.get(3));
+            assertFalse("Only four children should have been created.", children.hasNext());
+            assertTrue(childPaths.contains(serverAddress + first));
+            assertTrue(childPaths.contains(serverAddress + second));
+            assertTrue(childPaths.contains(serverAddress + third));
+            assertTrue(childPaths.contains(serverAddress + fourth));
         }
 
     }

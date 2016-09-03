@@ -93,7 +93,7 @@ import javax.ws.rs.core.Variant.VariantListBuilder;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.fcrepo.http.api.PathLockManager.TransientSemaphore;
+import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
@@ -277,7 +277,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         LOGGER.info("Delete resource '{}'", externalPath);
 
-        final TransientSemaphore lock = PATH_LOCKS.getSemaphoreForPath(resource().getPath());
+        final AcquiredLock lock = lockManager.lockForDelete(resource().getPath(), session, nodeService);
 
         try {
             resource().delete();
@@ -327,7 +327,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         final String path = toPath(translator(), externalPath);
 
-        final TransientSemaphore lock = PATH_LOCKS.getSemaphoreForPath(path);
+        final AcquiredLock lock = lockManager.lockForWrite(path, session, nodeService);
 
         try {
 
@@ -412,7 +412,7 @@ public class FedoraLdp extends ContentExposingResource {
             throw new BadRequestException(resource().getPath() + " is not a valid object to receive a PATCH");
         }
 
-        final TransientSemaphore lock = PATH_LOCKS.getSemaphoreForPath(resource().getPath());
+        final AcquiredLock lock = lockManager.lockForWrite(resource().getPath(), session, nodeService);
 
         try {
             final String requestBody = IOUtils.toString(requestBodyStream, UTF_8);
@@ -500,7 +500,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         final String newObjectPath = mintNewPid(slug);
 
-        final TransientSemaphore lock = PATH_LOCKS.getSemaphoreForPath(newObjectPath);
+        final AcquiredLock lock = lockManager.lockForWrite(newObjectPath, session, nodeService);
 
         try {
 
