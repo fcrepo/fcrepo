@@ -89,7 +89,7 @@ public class DefaultPathLockManager implements PathLockManager {
         /**
          * A list with references to every thread that has requested
          * (though not necessary acquired) a read or write lock through
-         * the mechanism of the greater class' contract and not yet
+         * the mechanism of the outer class' contract and not yet
          * relinquished it by invoking LockManager.release().  This
          * list is actually managed by methods outside of ActivePath.
          */
@@ -120,7 +120,7 @@ public class DefaultPathLockManager implements PathLockManager {
          */
         private class PathScopedLock {
 
-            private Lock lock;
+            final private Lock lock;
 
             public PathScopedLock(final Lock l) {
                 lock = l;
@@ -131,7 +131,7 @@ public class DefaultPathLockManager implements PathLockManager {
             }
 
             public boolean tryLock() {
-                for (String deletePath : activeDeletePaths) {
+                for (final String deletePath : activeDeletePaths) {
                     if (isOrIsDescendantOf(path, deletePath)) {
                         LOGGER.trace("Thread {} could not be granted lock on {} because that path is being deleted.",
                                 Thread.currentThread().getId(), path);
@@ -208,15 +208,14 @@ public class DefaultPathLockManager implements PathLockManager {
             boolean success = false;
             while (!success) {
                 synchronized (DefaultPathLockManager.this) {
-                    this.locks = new ArrayList<ActivePath.PathScopedLock>();
+                    this.locks = new ArrayList<>();
 
                     // find all paths to lock
-                    for (Map.Entry<String, ActivePath> entry : activePaths.entrySet()) {
-                        final String path = entry.getKey();
+                    activePaths.forEach((path, lock) -> {
                         if (isOrIsDescendantOf(path, deletePath)) {
-                            locks.add(entry.getValue().getWriteLock());
+                            locks.add(lock.getWriteLock());
                         }
-                    }
+                        });
 
                     success = tryAcquireAll();
                     if (!success) {
@@ -244,14 +243,12 @@ public class DefaultPathLockManager implements PathLockManager {
 
         private boolean tryAcquireAll() {
             final List<ActivePath.PathScopedLock> acquired = new ArrayList<>();
-            for (ActivePath.PathScopedLock lock : locks) {
+            for (final ActivePath.PathScopedLock lock : locks) {
                 if (lock.tryLock()) {
                     acquired.add(lock);
                 } else {
                     // roll back
-                    for (ActivePath.PathScopedLock acquiredLock : acquired) {
-                        acquiredLock.unlock();
-                    }
+                    acquired.forEach(ActivePath.PathScopedLock::unlock);
                     return false;
                 }
             }
@@ -265,7 +262,7 @@ public class DefaultPathLockManager implements PathLockManager {
         @Override
         public void release() {
             synchronized (DefaultPathLockManager.this) {
-                for (ActivePath.PathScopedLock lock : locks) {
+                for (final ActivePath.PathScopedLock lock : locks) {
                     lock.unlock();
                     lock.getPath().threads.remove(Thread.currentThread());
                     if (lock.getPath().threads.isEmpty()) {
