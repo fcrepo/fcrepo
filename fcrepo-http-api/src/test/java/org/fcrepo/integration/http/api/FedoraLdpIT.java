@@ -102,6 +102,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -2610,6 +2611,80 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
 
     }
+
+    @Test
+    public void testConcurrentUpdatesToBinary() throws IOException, InterruptedException {
+        // create a binary
+        final String path = getRandomUniqueId();
+
+        final HttpPut method = new HttpPut(serverAddress + path);
+        method.setHeader("Content-Type", "text/plain");
+        method.setEntity(new StringEntity("initial value"));
+
+        final String binaryEtag;
+
+        try (final CloseableHttpResponse response = execute(method)) {
+            binaryEtag = response.getFirstHeader("ETag").getValue();
+        }
+
+        final HttpResponse r1;
+        final PutThread[] threads = new PutThread[] {
+                new PutThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 1")),
+                new PutThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 2")),
+                new PutThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 3")),
+                new PutThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 4"))  };
+
+        for (PutThread t : threads) {
+            t.start();
+        }
+
+        final List<PutThread> successfulThreads = new ArrayList<>();
+        for (PutThread t : threads) {
+            t.join(1000);
+            assertFalse("Thread " + t.getId() + " could not perform its operation in time!", t.isAlive());
+            final int status = t.response.getStatusLine().getStatusCode();
+            LOGGER.info("{} received a {} status code.", t.getId(), status);
+            if (status == 204) {
+                successfulThreads.add(t);
+            }
+        }
+
+        assertEquals("Only one PUT request should have been successful!", 1, successfulThreads.size());
+    }
+
+    private class PutThread extends Thread {
+
+        private HttpPut put;
+
+        private HttpResponse response;
+
+        public PutThread(final HttpPut put) {
+            this.put = put;
+        }
+
+        @Override
+        public void run() {
+            try {
+                response = execute(put);
+            } catch (IOException e) {
+                LOGGER.error("Thread " + Thread.currentThread().getId() + ", failed to PUT resource!", e);
+            }
+
+        }
+    }
+
+    private HttpPut putBinaryObjMethodIfMatch(final String location, final String etag, final String content) {
+         final HttpPut put = putObjMethod(location);
+         put.setHeader("Content-Type", "text/plain");
+         put.setHeader("If-Match", etag);
+         try {
+            put.setEntity(new StringEntity(content));
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+         return put;
+    }
+
 
     @Test
     public void testBinaryLastModified() throws Exception {
