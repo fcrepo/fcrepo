@@ -2685,6 +2685,70 @@ public class FedoraLdpIT extends AbstractResourceIT {
          return put;
     }
 
+    @Test
+    public void testConcurrentPatches() throws IOException, InterruptedException {
+        // create a resource
+        final String path = getRandomUniqueId();
+        executeAndClose(putObjMethod(path));
+        final int[] responseCodes = new int[4];
+        final Thread t1 = new Thread(() -> { responseCodes[0] = patchWithSparql(path,
+                "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'one' . }");});
+        final Thread t2 = new Thread(() -> { responseCodes[1] = patchWithSparql(path,
+                "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'two' . }");});
+        final Thread t3 = new Thread(() -> { responseCodes[2] = patchWithSparql(path,
+                "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'three' . }");});
+        final Thread t4 = new Thread(() -> { responseCodes[3] = patchWithSparql(path,
+                "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'four' . }");});
+        t1.start();
+        t2.start();
+        t3.start();
+        t4.start();
+        t1.join();
+        t2.join();
+        t3.join();
+        t4.join();
+        assertEquals("Patch should have succeeded!", 204, responseCodes[0]);
+        assertEquals("Patch should have succeeded!", 204, responseCodes[1]);
+        assertEquals("Patch should have succeeded!", 204, responseCodes[2]);
+        assertEquals("Patch should have succeeded!", 204, responseCodes[3]);
+        try (final CloseableDataset dataset = getDataset(getObjMethod(path))) {
+            final DatasetGraph graphStore = dataset.asDatasetGraph();
+            final List<String> missingDcIdentifiers
+                    = new ArrayList<>(Arrays.asList(new String[] { "one", "two", "three", "four" }));
+            final Iterator<Quad> dcIdentifierIt = graphStore.find(ANY, createURI(serverAddress + path),
+                    createProperty("http://purl.org/dc/elements/1.1/identifier").asNode(), ANY);
+            while (dcIdentifierIt.hasNext()) {
+                final String value = dcIdentifierIt.next().getObject().getLiteralValue().toString();
+                assertTrue("Unexpected dc:identifier found: " + value, missingDcIdentifiers.remove(value));
+            }
+            assertTrue("All of the dc:identifiers should have been applied! (missing "
+            + Arrays.toString(missingDcIdentifiers.toArray()) + ")", missingDcIdentifiers.isEmpty());
+
+            assertTrue("Added property must exist!", graphStore.contains(ANY, createURI(serverAddress + path),
+                    createProperty("http://purl.org/dc/elements/1.1/identifier").asNode(), createLiteral("one")));
+            assertTrue("Added property must exist!", graphStore.contains(ANY, createURI(serverAddress + path),
+                    createProperty("http://purl.org/dc/elements/1.1/identifier").asNode(), createLiteral("two")));
+            assertTrue("Added property must exist!", graphStore.contains(ANY, createURI(serverAddress + path),
+                    createProperty("http://purl.org/dc/elements/1.1/identifier").asNode(), createLiteral("three")));
+            assertTrue("Added property must exist!", graphStore.contains(ANY, createURI(serverAddress + path),
+                    createProperty("http://purl.org/dc/elements/1.1/identifier").asNode(), createLiteral("four")));
+        }
+    }
+
+    private int patchWithSparql(final String path, final String sparqlUpdate) {
+        try {
+            final HttpPatch patch = new HttpPatch(serverAddress + path);
+            patch.addHeader("Content-Type", "application/sparql-update");
+            patch.setEntity(new StringEntity(sparqlUpdate));
+            final CloseableHttpResponse r = client.execute(patch);
+            final int code = r.getStatusLine().getStatusCode();
+            r.close();
+            return code;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 
     @Test
     public void testBinaryLastModified() throws Exception {
