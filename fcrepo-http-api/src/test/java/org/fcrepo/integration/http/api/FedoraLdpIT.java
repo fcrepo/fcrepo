@@ -27,7 +27,6 @@ import static org.apache.jena.rdf.model.ModelFactory.createModelForGraph;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.vocabulary.RDF.type;
-import static java.lang.System.currentTimeMillis;
 import static java.lang.Thread.sleep;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
