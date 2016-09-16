@@ -416,6 +416,11 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                             throw new RepositoryRuntimeException(ex);
                         }
                     });
+
+                // update the lastModified date on the parent node
+                containingNode.ifPresent(ancestor -> {
+                    FedoraTypesUtils.touch(ancestor);
+                });
             }
         } catch (final javax.jcr.AccessDeniedException e) {
             throw new AccessDeniedException(e);

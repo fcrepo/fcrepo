@@ -873,6 +873,109 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testETagOnDeletedChild() throws Exception {
+        final String id = getRandomUniqueId();
+        final String child = id + "/child";
+        createObjectAndClose(id);
+        createObjectAndClose(child);
+
+        final HttpGet get = new HttpGet(serverAddress + id);
+        final String etag1;
+        try (final CloseableHttpResponse response = execute(get)) {
+            etag1 = response.getFirstHeader("ETag").getValue();
+        }
+
+        assertEquals("Child resource not deleted!", NO_CONTENT.getStatusCode(),
+                getStatus(new HttpDelete(serverAddress + child)));
+        final String etag2;
+        try (final CloseableHttpResponse response = execute(get)) {
+            etag2 = response.getFirstHeader("ETag").getValue();
+        }
+
+        assertNotEquals("ETag didn't change!", etag1, etag2);
+    }
+
+    @Test
+    public void testETagOnDeletedLdpDirectContainerChild() throws Exception {
+        final String id = getRandomUniqueId();
+        final String members = id + "/members";
+        final String child = members + "/child";
+
+        createObjectAndClose(id);
+
+        // Create the DirectContainer
+        final HttpPut createContainer = new HttpPut(serverAddress + members);
+        createContainer.addHeader("Content-Type", "text/turtle");
+        final String membersRDF = "<> a <http://www.w3.org/ns/ldp#DirectContainer>; "
+            + "<http://www.w3.org/ns/ldp#hasMemberRelation> <http://pcdm.org/models#hasMember>; "
+            + "<http://www.w3.org/ns/ldp#membershipResource> <" + serverAddress + id + "> . ";
+        createContainer.setEntity(new StringEntity(membersRDF));
+        assertEquals("Membership container not created!", CREATED.getStatusCode(), getStatus(createContainer));
+
+        // Create the child resource
+        createObjectAndClose(child);
+
+        final HttpGet get = new HttpGet(serverAddress + id);
+        final String etag1;
+        try (final CloseableHttpResponse response = execute(get)) {
+            etag1 = response.getFirstHeader("ETag").getValue();
+        }
+
+        assertEquals("Child resource not deleted!", NO_CONTENT.getStatusCode(),
+                getStatus(new HttpDelete(serverAddress + child)));
+        final String etag2;
+        try (final CloseableHttpResponse response = execute(get)) {
+            etag2 = response.getFirstHeader("ETag").getValue();
+        }
+
+        assertNotEquals("ETag didn't change!", etag1, etag2);
+    }
+
+    @Test
+    public void testETagOnDeletedLdpIndirectContainerChild() throws Exception {
+        final String id = getRandomUniqueId();
+        final String members = id + "/members";
+        final String child = members + "/child";
+
+        createObjectAndClose(id);
+
+        // Create the IndirectContainer
+        final HttpPut createContainer = new HttpPut(serverAddress + members);
+        createContainer.addHeader("Content-Type", "text/turtle");
+        final String membersRDF = "<> a <http://www.w3.org/ns/ldp#IndirectContainer>; "
+            + "<http://www.w3.org/ns/ldp#hasMemberRelation> <info:fedora/test/hasTitle> ; "
+            + "<http://www.w3.org/ns/ldp#insertedContentRelation> <http://www.w3.org/2004/02/skos/core#prefLabel>; "
+            + "<http://www.w3.org/ns/ldp#membershipResource> <" + serverAddress + id + "> . ";
+        createContainer.setEntity(new StringEntity(membersRDF));
+        assertEquals("Membership container not created!", CREATED.getStatusCode(), getStatus(createContainer));
+
+        // Create a child with the appropriate property
+        final HttpPut createChild = new HttpPut(serverAddress + child);
+        createChild.addHeader("Content-Type", "text/turtle");
+        final String childRDF = "<> <http://www.w3.org/2004/02/skos/core#prefLabel> \"A title\".";
+        createChild.setEntity(new StringEntity(childRDF));
+        assertEquals("Child container not created!", CREATED.getStatusCode(), getStatus(createChild));
+
+        final HttpGet get = new HttpGet(serverAddress + id);
+        final String etag1;
+        try (final CloseableHttpResponse response = execute(get)) {
+            etag1 = response.getFirstHeader("ETag").getValue();
+            final String resp = IOUtils.toString(response.getEntity().getContent());
+        }
+
+        assertEquals("Child resource not deleted!", NO_CONTENT.getStatusCode(),
+                getStatus(new HttpDelete(serverAddress + child)));
+
+        final String etag2;
+        try (final CloseableHttpResponse response = execute(get)) {
+            etag2 = response.getFirstHeader("ETag").getValue();
+            final String resp = IOUtils.toString(response.getEntity().getContent());
+        }
+
+        assertNotEquals("ETag didn't change!", etag1, etag2);
+    }
+
+    @Test
     public void testPutDatastreamContentOnObject() throws IOException {
         final String content = "foo";
         final String id = getRandomUniqueId();
