@@ -73,7 +73,6 @@
     <module>fcrepo-http-api</module>
     <module>fcrepo-metrics</module>
     <module>fcrepo-auth-common</module>
-    <module>fcrepo-connector-file</module>
     <module>fcrepo-configs</module>
     <module>fcrepo-parent</module>
     <module>fcrepo-integration-ldp</module>

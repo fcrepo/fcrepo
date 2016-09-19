@@ -12,25 +12,6 @@
       "path" : "target/fedora_repository/store"
     }
   },
-  "externalSources" : {
-    "fileSystem" : {
-      "classname" : "org.fcrepo.connector.file.FedoraFileSystemConnector",
-      "directoryPath" : "target/test-classes/test-objects",
-      "readonly" : false,
-      "extraPropertiesStorage": "json",
-      "cacheable" : false,
-      "projections" : [ "default:/files => /" ]
-    },
-    "readonly" : {
-      "classname" : "org.fcrepo.connector.file.FedoraFileSystemConnector",
-      "directoryPath" : "target/test-classes/test-objects",
-      "propertiesDirectoryPath" : "target/test-classes/test-meta",
-      "readonly" : true,
-      "extraPropertiesStorage": "none",
-      "cacheable" : false,
-      "projections" : [ "default:/readonlyfiles => /" ]
-    }
-  },
   "security" : {
     "anonymous" : {
       "roles" : ["readonly","readwrite","admin"],
