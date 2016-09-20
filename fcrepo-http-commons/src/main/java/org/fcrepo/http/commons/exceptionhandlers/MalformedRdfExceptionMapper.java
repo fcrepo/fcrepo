@@ -43,6 +43,8 @@ public class MalformedRdfExceptionMapper implements
     private static final Logger LOGGER =
             getLogger(MalformedRdfExceptionMapper.class);
 
+    private static final int REASONABLE_LENGTH = 500;
+
     @Override
     public Response toResponse(final MalformedRdfException e) {
         debugException(this, e, LOGGER);
@@ -55,6 +57,11 @@ public class MalformedRdfExceptionMapper implements
     }
 
     private static String getConstraintUri(final MalformedRdfException e) {
-        return "data:text/plain;base64," + Base64.encodeBase64String(e.getMessage().getBytes());
+        final int index = Math.min(e.getMessage().length(), REASONABLE_LENGTH);
+        if (index > e.getMessage().length()) {
+            LOGGER.debug("Truncating Link header to {} characters.", REASONABLE_LENGTH);
+        }
+
+        return "data:text/plain;base64," + Base64.encodeBase64String(e.getMessage().substring(0, index).getBytes());
     }
 }
