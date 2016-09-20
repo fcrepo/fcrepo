@@ -27,9 +27,13 @@ import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response;
 
 import java.io.IOException;
+import java.util.Random;
+import java.util.stream.Stream;
 
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author cabeer
@@ -71,5 +75,16 @@ public class MalformedRdfExceptionMapperTest {
         final Response response = testObj.toResponse(new MalformedRdfException(errorPrefix + errorSuffix));
 
         assertEquals(errorPrefix + errorSuffix, response.getEntity().toString());
+    }
+
+    @Test
+    public void testToResponseLongError() {
+        final StringBuilder error = new StringBuilder();
+        Stream.generate(new Random()::nextInt).limit(2000).forEach(error::append);
+        final Response response = testObj.toResponse(new MalformedRdfException(error.toString()));
+
+        final String linkHeader = response.getHeaderString("Link");
+        assertNotNull(linkHeader);
+        assertTrue(linkHeader.length() < 1000);
     }
 }
