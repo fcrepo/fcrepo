@@ -43,6 +43,7 @@ import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jms.Connection;
+import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
@@ -61,25 +62,16 @@ import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.slf4j.Logger;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-
 
 /**
  * <p>
- * JmsIT class.
+ * AbstractJmsIT class.
  * </p>
  *
  * @author ajs6f
  */
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration({ "/spring-test/jms.xml", "/spring-test/repo.xml",
-    "/spring-test/eventing.xml" })
-@DirtiesContext
-public class JmsIT implements MessageListener {
+abstract class AbstractJmsIT implements MessageListener {
 
     /**
      * Time to wait for a set of test messages, in milliseconds.
@@ -112,13 +104,15 @@ public class JmsIT implements MessageListener {
 
     private Connection connection;
 
-    private javax.jms.Session session;
+    protected javax.jms.Session session;
 
     private MessageConsumer consumer;
 
     private volatile Set<Message> messages = new CopyOnWriteArraySet<>();
 
-    private static final Logger LOGGER = getLogger(JmsIT.class);
+    private static final Logger LOGGER = getLogger(AbstractJmsIT.class);
+
+    protected abstract Destination createDestination() throws JMSException;
 
     @Test(timeout = TIMEOUT)
     public void testIngestion() throws RepositoryException {
@@ -229,7 +223,7 @@ public class JmsIT implements MessageListener {
         connection = connectionFactory.createConnection();
         connection.start();
         session = connection.createSession(false, AUTO_ACKNOWLEDGE);
-        consumer = session.createConsumer(session.createTopic("fedora"));
+        consumer = session.createConsumer(createDestination());
         messages.clear();
         consumer.setMessageListener(this);
     }

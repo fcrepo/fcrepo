@@ -17,37 +17,13 @@
  */
 package org.fcrepo.jms;
 
-import javax.jms.Destination;
-import javax.jms.JMSException;
-
 /**
- * Machinery to publish JMS messages when an EventBus
- * message is received.
+ * <p>JMSQueuePublisherTest class.</p>
  *
- * @author barmintor
- * @author awoods
+ * @author acoburn
  */
-public class JMSTopicPublisher extends AbstractJMSPublisher {
-
-    private String topicName;
-
-    /**
-     * Create a JMS Topic with the default name of "fedora"
-     */
-    public JMSTopicPublisher() {
-        this("fedora");
-    }
-
-    /**
-     * Create a JMS Topic with a configurable name
-     *
-     * @param topicName the name of the topic
-     */
-    public JMSTopicPublisher(final String topicName) {
-        this.topicName = topicName;
-    }
-
-    protected Destination createDestination() throws JMSException {
-        return jmsSession.createTopic(topicName);
+public class JMSQueuePublisherTest extends AbstractJMSPublisherTest {
+    protected AbstractJMSPublisher getPublisher() {
+        return new JMSQueuePublisher();
     }
 }
