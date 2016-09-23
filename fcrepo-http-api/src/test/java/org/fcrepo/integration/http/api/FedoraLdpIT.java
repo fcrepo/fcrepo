@@ -27,7 +27,6 @@ import static org.apache.jena.rdf.model.ModelFactory.createModelForGraph;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.vocabulary.RDF.type;
-import static java.lang.System.currentTimeMillis;
 import static java.lang.Thread.sleep;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
@@ -870,6 +869,109 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         assertNotEquals("ETags should have changed", descEtag2, descEtag3);
         assertNotEquals("Last-Modified should have changed", descLastModed2, descLastModed3);
+    }
+
+    @Test
+    public void testETagOnDeletedChild() throws Exception {
+        final String id = getRandomUniqueId();
+        final String child = id + "/child";
+        createObjectAndClose(id);
+        createObjectAndClose(child);
+
+        final HttpGet get = new HttpGet(serverAddress + id);
+        final String etag1;
+        try (final CloseableHttpResponse response = execute(get)) {
+            etag1 = response.getFirstHeader("ETag").getValue();
+        }
+
+        assertEquals("Child resource not deleted!", NO_CONTENT.getStatusCode(),
+                getStatus(new HttpDelete(serverAddress + child)));
+        final String etag2;
+        try (final CloseableHttpResponse response = execute(get)) {
+            etag2 = response.getFirstHeader("ETag").getValue();
+        }
+
+        assertNotEquals("ETag didn't change!", etag1, etag2);
+    }
+
+    @Test
+    public void testETagOnDeletedLdpDirectContainerChild() throws Exception {
+        final String id = getRandomUniqueId();
+        final String members = id + "/members";
+        final String child = members + "/child";
+
+        createObjectAndClose(id);
+
+        // Create the DirectContainer
+        final HttpPut createContainer = new HttpPut(serverAddress + members);
+        createContainer.addHeader("Content-Type", "text/turtle");
+        final String membersRDF = "<> a <http://www.w3.org/ns/ldp#DirectContainer>; "
+            + "<http://www.w3.org/ns/ldp#hasMemberRelation> <http://pcdm.org/models#hasMember>; "
+            + "<http://www.w3.org/ns/ldp#membershipResource> <" + serverAddress + id + "> . ";
+        createContainer.setEntity(new StringEntity(membersRDF));
+        assertEquals("Membership container not created!", CREATED.getStatusCode(), getStatus(createContainer));
+
+        // Create the child resource
+        createObjectAndClose(child);
+
+        final HttpGet get = new HttpGet(serverAddress + id);
+        final String etag1;
+        try (final CloseableHttpResponse response = execute(get)) {
+            etag1 = response.getFirstHeader("ETag").getValue();
+        }
+
+        assertEquals("Child resource not deleted!", NO_CONTENT.getStatusCode(),
+                getStatus(new HttpDelete(serverAddress + child)));
+        final String etag2;
+        try (final CloseableHttpResponse response = execute(get)) {
+            etag2 = response.getFirstHeader("ETag").getValue();
+        }
+
+        assertNotEquals("ETag didn't change!", etag1, etag2);
+    }
+
+    @Test
+    public void testETagOnDeletedLdpIndirectContainerChild() throws Exception {
+        final String id = getRandomUniqueId();
+        final String members = id + "/members";
+        final String child = members + "/child";
+
+        createObjectAndClose(id);
+
+        // Create the IndirectContainer
+        final HttpPut createContainer = new HttpPut(serverAddress + members);
+        createContainer.addHeader("Content-Type", "text/turtle");
+        final String membersRDF = "<> a <http://www.w3.org/ns/ldp#IndirectContainer>; "
+            + "<http://www.w3.org/ns/ldp#hasMemberRelation> <info:fedora/test/hasTitle> ; "
+            + "<http://www.w3.org/ns/ldp#insertedContentRelation> <http://www.w3.org/2004/02/skos/core#prefLabel>; "
+            + "<http://www.w3.org/ns/ldp#membershipResource> <" + serverAddress + id + "> . ";
+        createContainer.setEntity(new StringEntity(membersRDF));
+        assertEquals("Membership container not created!", CREATED.getStatusCode(), getStatus(createContainer));
+
+        // Create a child with the appropriate property
+        final HttpPut createChild = new HttpPut(serverAddress + child);
+        createChild.addHeader("Content-Type", "text/turtle");
+        final String childRDF = "<> <http://www.w3.org/2004/02/skos/core#prefLabel> \"A title\".";
+        createChild.setEntity(new StringEntity(childRDF));
+        assertEquals("Child container not created!", CREATED.getStatusCode(), getStatus(createChild));
+
+        final HttpGet get = new HttpGet(serverAddress + id);
+        final String etag1;
+        try (final CloseableHttpResponse response = execute(get)) {
+            etag1 = response.getFirstHeader("ETag").getValue();
+            final String resp = IOUtils.toString(response.getEntity().getContent());
+        }
+
+        assertEquals("Child resource not deleted!", NO_CONTENT.getStatusCode(),
+                getStatus(new HttpDelete(serverAddress + child)));
+
+        final String etag2;
+        try (final CloseableHttpResponse response = execute(get)) {
+            etag2 = response.getFirstHeader("ETag").getValue();
+            final String resp = IOUtils.toString(response.getEntity().getContent());
+        }
+
+        assertNotEquals("ETag didn't change!", etag1, etag2);
     }
 
     @Test
@@ -1774,28 +1876,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
     }
 
-    /**
-     * Given a directory at: test-FileSystem1/ /ds1 /ds2 /TestSubdir/ and a projection of test-objects as
-     * fedora:/files, then I should be able to retrieve an object from fedora:/files/FileSystem1 that lists a child
-     * object at fedora:/files/FileSystem1/TestSubdir and lists datastreams ds and ds2
-     *
-     * @throws IOException thrown during this function
-     */
-    @Test
-    public void testGetProjectedNode() throws IOException {
-        final HttpGet method = new HttpGet(serverAddress + "files/FileSystem1");
-        try (final CloseableDataset dataset = getDataset(method)) {
-            final DatasetGraph graph = dataset.asDatasetGraph();
-            final Node subjectURI = createURI(serverAddress + "files/FileSystem1");
-            assertTrue("Didn't find the first datastream! ", graph.contains(ANY,
-                    subjectURI, ANY, createURI(subjectURI + "/ds1")));
-            assertTrue("Didn't find the second datastream! ", graph.contains(ANY,
-                    subjectURI, ANY, createURI(subjectURI + "/ds2")));
-            assertTrue("Didn't find the first object! ", graph.contains(ANY,
-                    subjectURI, ANY, createURI(subjectURI + "/TestSubdir")));
-        }
-    }
-
     @Test
     public void testDescribeRdfCached() throws IOException {
         try (final CloseableHttpClient cachClient = CachingHttpClientBuilder.create().setCacheConfig(DEFAULT).build()) {
@@ -1916,24 +1996,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
     }
 
-    /**
-     * I should be able to link to content on a federated filesystem.
-     *
-     * @throws IOException in case of IOException
-     **/
-    @Test
-    public void testFederatedDatastream() throws IOException {
-        final String federationAddress = serverAddress + "files/FileSystem1/ds1";
-        final String linkingAddress = getLocation(postObjMethod());
-
-        // link from the object to the content of the file on the federated filesystem
-        final HttpPatch patch = new HttpPatch(linkingAddress);
-        patch.addHeader("Content-Type", "application/sparql-update");
-        patch.setEntity(new ByteArrayEntity(("INSERT DATA { <> <http://some-vocabulary#hasExternalContent> "
-                + "<" + federationAddress + "> . }").getBytes()));
-        assertEquals("Couldn't link to external datastream!", NO_CONTENT.getStatusCode(), getStatus(patch));
-    }
-
     @Test
     public void testLinkedDeletion() {
         final String linkedFrom = getRandomUniqueId();
@@ -1950,58 +2012,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals("Couldn't link resources!", NO_CONTENT.getStatusCode(), getStatus(patch));
         assertEquals("Error deleting linked-to!", NO_CONTENT.getStatusCode(), getStatus(deleteObjMethod(linkedTo)));
         assertEquals("Linked to should still exist!", OK.getStatusCode(), getStatus(getObjMethod(linkedFrom)));
-    }
-
-    /**
-     * When I make changes to a resource in a federated filesystem, the parent folder's Last-Modified header should be
-     * updated.
-     *
-     * @throws IOException in case of IOException
-     **/
-    @Test
-    public void testLastModifiedUpdatedAfterUpdates() throws IOException  {
-
-        // create directory containing a file in filesystem
-        final File fed = new File("target/test-classes/test-objects");
-        final String id = getRandomUniqueId();
-        final File dir = new File(fed, id);
-        final File child = new File(dir, "child");
-        final long timestamp1 = currentTimeMillis();
-        dir.mkdir();
-        child.mkdir();
-        // TODO this seems really brittle
-        try {
-            sleep(2000);
-        } catch (final InterruptedException e) {
-        }
-
-        // check Last-Modified header is current
-        final long lastmod1;
-        try (final CloseableHttpResponse resp1 = execute(headObjMethod("files/" + id))) {
-            assertEquals(OK.getStatusCode(), getStatus(resp1));
-            lastmod1 = headerFormat.parse(resp1.getFirstHeader("Last-Modified").getValue()).getTime();
-            assertTrue((timestamp1 - lastmod1) < 1000); // because rounding
-
-            // remove the file and wait for the TTL to expire
-            final long timestamp2 = currentTimeMillis();
-            child.delete();
-            try {
-                sleep(2000);
-            } catch (final InterruptedException e) {
-            }
-
-            // check Last-Modified header is updated
-            try (final CloseableHttpResponse resp2 = execute(headObjMethod("files/" + id))) {
-                assertEquals(OK.getStatusCode(), getStatus(resp2));
-                final long lastmod2 = headerFormat.parse(resp2.getFirstHeader("Last-Modified").getValue()).getTime();
-                assertTrue((timestamp2 - lastmod2) < 1000); // because rounding
-                assertFalse("Last-Modified headers should have changed", lastmod1 == lastmod2);
-            } catch (final ParseException e) {
-                fail();
-            }
-        } catch (final ParseException e) {
-            fail();
-        }
     }
 
     @Test

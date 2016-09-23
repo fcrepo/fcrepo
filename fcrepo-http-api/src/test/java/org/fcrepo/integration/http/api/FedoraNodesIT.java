@@ -17,33 +17,21 @@
  */
 package org.fcrepo.integration.http.api;
 
-import static org.apache.jena.graph.Node.ANY;
-import static org.apache.jena.graph.NodeFactory.createLiteral;
-import static org.apache.jena.graph.NodeFactory.createURI;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.GONE;
-import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.io.IOException;
 import java.net.URI;
 
 import javax.ws.rs.core.Link;
 
-import org.fcrepo.http.commons.test.util.CloseableDataset;
-
 import org.apache.http.annotation.NotThreadSafe;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.StringEntity;
-import org.apache.jena.sparql.core.DatasetGraph;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -212,88 +200,4 @@ public class FedoraNodesIT extends AbstractResourceIT {
         }
     }
 
-    /**
-     * I should be able to copy objects from the repository to a federated filesystem.
-     *
-     * @throws IOException exception thrown during this function
-    **/
-    @Ignore("Enabled once the FedoraFileSystemConnector becomes readable/writable")
-    public void testCopyToProjection() throws IOException {
-        // create object in the repository
-        final String pid = getRandomUniqueId();
-        createDatastream(pid, "ds1", "abc123");
-
-        // copy to federated filesystem
-        final HttpCopy request = new HttpCopy(serverAddress + pid);
-        request.addHeader("Destination", serverAddress + "files/copy-" + pid);
-        assertEquals(CREATED.getStatusCode(), getStatus(request));
-
-        // federated copy should now exist
-        final HttpGet copyGet = new HttpGet(serverAddress + "files/copy-" + pid);
-        assertEquals(OK.getStatusCode(), getStatus(copyGet));
-
-        // repository copy should still exist
-        final HttpGet originalGet = new HttpGet(serverAddress + pid);
-        assertEquals(OK.getStatusCode(), getStatus(originalGet));
-    }
-
-    /**
-     * I should be able to copy objects from a federated filesystem to the repository.
-    **/
-    @Test
-    public void testCopyFromProjection() {
-        final String destination = serverAddress + "copy-" + getRandomUniqueId() + "-ds1";
-        final String source = serverAddress + "files/FileSystem1/ds1";
-
-        // ensure the source is present
-        assertEquals(OK.getStatusCode(), getStatus(new HttpGet(source)));
-
-        // copy to repository
-        final HttpCopy request = new HttpCopy(source);
-        request.addHeader("Destination", destination);
-        assertEquals(CREATED.getStatusCode(), getStatus(request));
-
-        // repository copy should now exist
-        assertEquals(OK.getStatusCode(), getStatus(new HttpGet(destination)));
-        assertEquals(OK.getStatusCode(), getStatus(new HttpGet(source)));
-    }
-
-    /**
-     * I should be able to move a node within a federated filesystem with
-     * properties preserved.
-     *
-     * @throws IOException exception thrown during this function
-    **/
-    @Ignore("Enabled once the FedoraFileSystemConnector becomes readable/writable")
-    public void testFederatedMoveWithProperties() throws IOException {
-        // create object on federation
-        final String pid = getRandomUniqueId();
-        final String source = serverAddress + "files/" + pid + "/src";
-        createObject("files/" + pid + "/src");
-
-        // add properties
-        final HttpPatch patch = new HttpPatch(source);
-        patch.addHeader("Content-Type", "application/sparql-update");
-        patch.setEntity(new StringEntity(
-                "insert { <> <http://purl.org/dc/elements/1.1/identifier> \"identifier.123\" . "
-                        + "<> <http://purl.org/dc/elements/1.1/title> \"title.123\" } where {}"));
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(patch));
-
-        // move object
-        final String destination = serverAddress + "files/" + pid + "/dst";
-        final HttpMove request = new HttpMove(source);
-        request.addHeader("Destination", destination);
-        assertEquals(CREATED.getStatusCode(), getStatus(request));
-
-        // check properties
-        final HttpGet get = new HttpGet(destination);
-        get.addHeader("Accept", "application/n-triples");
-        try (final CloseableDataset dataset = getDataset(get)) {
-            final DatasetGraph graphStore = dataset.asDatasetGraph();
-            assertTrue(graphStore.contains(ANY, createURI(destination),
-                    createURI("http://purl.org/dc/elements/1.1/identifier"), createLiteral("identifier.123")));
-            assertTrue(graphStore.contains(ANY, createURI(destination),
-                    createURI("http://purl.org/dc/elements/1.1/title"), createLiteral("title.123")));
-        }
-    }
 }
