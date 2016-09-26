@@ -31,6 +31,7 @@ import static javax.ws.rs.core.Response.Status.GONE;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
+import static org.apache.http.util.EntityUtils.consume;
 import static org.fcrepo.kernel.api.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.modeshape.TransactionImpl.DEFAULT_TIMEOUT;
 import static org.fcrepo.kernel.modeshape.TransactionImpl.TIMEOUT_SYSTEM_PROPERTY;
@@ -90,6 +91,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
             assertEquals(OK.getStatusCode(), getStatus(resp));
             assertTrue(stream(resp.getHeaders("Link")).anyMatch(
                     i -> i.getValue().contains("<" + serverAddress + ">;rel=\"canonical\"")));
+            consume(resp.getEntity());
         }
 
         sleep(REAP_INTERVAL * 2);
@@ -340,6 +342,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
             assertEquals(CACHE_CONTROL + "expected", CACHE_CONTROL, headers[1].getName());
             assertEquals("must-revalidate expected", "must-revalidate", headers[0].getValue());
             assertEquals("max-age=0 expected", "max-age=0", headers[1].getValue());
+            consume(responseFromGet.getEntity());
         }
     }
 

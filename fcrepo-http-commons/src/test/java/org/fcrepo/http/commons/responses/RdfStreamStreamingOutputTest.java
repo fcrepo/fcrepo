@@ -19,6 +19,8 @@ package org.fcrepo.http.commons.responses;
 
 import static java.util.stream.Stream.of;
 import static com.google.common.util.concurrent.Futures.addCallback;
+import static com.github.jsonldjava.core.JsonLdError.Error.INVALID_INPUT;
+import static javax.ws.rs.core.MediaType.valueOf;
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDdateTime;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
@@ -27,16 +29,9 @@ import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.rdf.model.ResourceFactory.createTypedLiteral;
-import static javax.ws.rs.core.MediaType.valueOf;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_TYPE;
-import static org.fcrepo.http.commons.responses.RdfStreamStreamingOutput.getValueForObject;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
-import static org.mockito.MockitoAnnotations.initMocks;
-import static org.openrdf.model.impl.ValueFactoryImpl.getInstance;
-import static org.openrdf.model.util.Literals.createLiteral;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.ByteArrayInputStream;
@@ -52,6 +47,8 @@ import javax.jcr.Session;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 
+import com.github.jsonldjava.core.JsonLdError;
+import com.google.common.util.concurrent.FutureCallback;
 import org.apache.jena.rdf.model.RDFNode;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.RdfStream;
@@ -59,21 +56,21 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.stubbing.Answer;
-import org.openrdf.model.Value;
-import org.openrdf.model.ValueFactory;
-import org.openrdf.rio.RDFHandlerException;
 import org.slf4j.Logger;
 
-import com.google.common.util.concurrent.FutureCallback;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
+
+import org.junit.runner.RunWith;
+import org.mockito.runners.MockitoJUnitRunner;
 
 /**
  * <p>RdfStreamStreamingOutputTest class.</p>
  *
  * @author ajs6f
  */
+@RunWith(MockitoJUnitRunner.class)
 public class RdfStreamStreamingOutputTest {
 
     private RdfStreamStreamingOutput testRdfStreamStreamingOutput;
@@ -96,30 +93,13 @@ public class RdfStreamStreamingOutputTest {
 
     private final MediaType testMediaType = valueOf("application/rdf+xml");
 
-    private static final ValueFactory vf = getInstance();
-
     private static final Logger LOGGER =
             getLogger(RdfStreamStreamingOutputTest.class);
 
     @Before
     public void setUp() {
-        initMocks(this);
         testRdfStreamStreamingOutput =
             new RdfStreamStreamingOutput(testRdfStream, testNamespaces, testMediaType);
-    }
-
-    @Test
-    public void testGetValueForObjectWithResource() {
-        final Node resource = createURI("info:test");
-        final Value result = getValueForObject(resource);
-        assertEquals("Created bad Value!", vf.createURI("info:test"), result);
-    }
-
-    @Test
-    public void testGetValueForObjectWithLiteral() {
-        final Node resource = createLiteral("test");
-        final Value result = getValueForObject(resource);
-        assertEquals("Created bad Value!", createLiteral(vf, "test"), result);
     }
 
     @Test
@@ -146,20 +126,7 @@ public class RdfStreamStreamingOutputTest {
                 final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             new RdfStreamStreamingOutput(input, namespaces, TURTLE_TYPE).write(output);
             final String s = output.toString("UTF-8");
-            assertTrue(s.contains("@prefix a: <info:a>"));
-        }
-    }
-
-
-    @Test
-    public void testWriteWithXmlnsNamespace() throws IOException {
-        final Map<String, String> namespaces = new HashMap<>();
-        namespaces.put("xmlns", "info:a");
-        try (final RdfStream input = new DefaultRdfStream(triple.getSubject(), of(triple));
-                final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            new RdfStreamStreamingOutput(input, namespaces, TURTLE_TYPE).write(output);
-            final String s = output.toString("UTF-8");
-            assertFalse(s.contains("@prefix xmlns"));
+            assertTrue(s.replaceAll("\\s+", " ").contains("@prefix a: <info:a>"));
         }
     }
 
@@ -223,13 +190,13 @@ public class RdfStreamStreamingOutputTest {
 
             @Override
             public void onFailure(final Throwable e) {
-                LOGGER.debug("Got exception:", e);
-                assertTrue("Got wrong kind of exception!", e instanceof RDFHandlerException);
+                LOGGER.info("Got exception:", e.getMessage());
+                assertTrue("Got wrong kind of exception!", e instanceof JsonLdError);
             }
         };
         addCallback(testRdfStreamStreamingOutput, callback);
         try (final OutputStream mockOutputStream = mock(OutputStream.class, (Answer<Object>) invocation -> {
-            throw new IOException("Expected.");
+            throw new JsonLdError(INVALID_INPUT, "Expected.");
         })) {
             testRdfStreamStreamingOutput.write(mockOutputStream);
         }

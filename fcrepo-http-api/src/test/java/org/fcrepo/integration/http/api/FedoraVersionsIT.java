@@ -49,7 +49,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.openrdf.model.vocabulary.RDF.TYPE;
 
 import java.io.IOException;
 import java.net.URI;
@@ -215,7 +214,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
         final String versionId = dsId + "/fcr:versions/label";
 
-        final Link NON_RDF_SOURCE_LINK = fromUri(NON_RDF_SOURCE.getURI()).rel(TYPE.getLocalName()).build();
+        final Link NON_RDF_SOURCE_LINK = fromUri(NON_RDF_SOURCE.getURI()).rel(type.getLocalName()).build();
 
         final Link DESCRIBED_BY_LINK = fromUri(serverAddress + versionId + "/" + FCR_METADATA).rel(
                 DESCRIBED_BY.getLocalName()).build();

@@ -25,7 +25,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -48,11 +47,15 @@ import org.mockito.Mock;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 
+import org.junit.runner.RunWith;
+import org.mockito.runners.MockitoJUnitRunner;
+
 /**
  * <p>RdfStreamProviderTest class.</p>
  *
  * @author ajs6f
  */
+@RunWith(MockitoJUnitRunner.class)
 public class RdfStreamProviderTest {
 
     private final RdfStreamProvider testProvider = new RdfStreamProvider();
@@ -68,8 +71,6 @@ public class RdfStreamProviderTest {
 
     @Before
     public void setUp() throws RepositoryException {
-        initMocks(this);
-        testProvider.registerMimeTypes();
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(
                 mockNamespaceRegistry);

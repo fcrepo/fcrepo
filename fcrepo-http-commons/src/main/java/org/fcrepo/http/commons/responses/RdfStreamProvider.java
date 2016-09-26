@@ -28,25 +28,18 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
-import static org.openrdf.rio.RDFFormat.NO_CONTEXTS;
-import static org.openrdf.rio.RDFFormat.NO_NAMESPACES;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
-import java.nio.charset.Charset;
 
-import javax.annotation.PostConstruct;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.RDFWriterRegistry;
-import org.openrdf.rio.ntriples.NTriplesWriterFactory;
 import org.slf4j.Logger;
 
 /**
@@ -101,34 +94,4 @@ public class RdfStreamProvider implements MessageBodyWriter<RdfNamespacedStream>
                 nsStream.namespaces, mediaType);
         streamOutput.write(entityStream);
     }
-
-    /**
-     * Add the correct mimeType for n-triples.
-     */
-    @PostConstruct
-    public void registerMimeTypes() {
-        RDFWriterRegistry.getInstance().add(new NTriplesWithCorrectMimeType());
-    }
-
-    /**
-     * OpenRDF uses the wrong mimeType for n-triples, so we offer the correct
-     * one as well.
-     *
-     * @author ajs6f
-     * @since Nov 20, 2013
-     */
-    public static class NTriplesWithCorrectMimeType extends
-        NTriplesWriterFactory {
-
-        private static final RDFFormat NTRIPLESWITHCORRECTMIMETYPE =
-            new RDFFormat("N-Triples-with-correct-mimeType",
-                    NTRIPLES, Charset.forName("US-ASCII"), "nt",
-                    NO_NAMESPACES, NO_CONTEXTS);
-
-        @Override
-        public RDFFormat getRDFFormat() {
-            return NTRIPLESWITHCORRECTMIMETYPE;
-        }
-    }
-
 }

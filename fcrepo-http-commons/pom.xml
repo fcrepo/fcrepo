@@ -34,9 +34,7 @@
       org.glassfish.jersey.*,
       org.jvnet.hk2.annotations,
       org.modeshape.jcr.*,
-      org.openrdf.model.*,
-      org.openrdf.rio,
-      
+
       org.springframework.beans.*,
       org.springframework.context,
       org.springframework.stereotype,
@@ -94,10 +92,6 @@
         <exclusion>
           <groupId>org.springframework</groupId>
           <artifactId>spring-beans</artifactId>
-        </exclusion>
-        <exclusion>
-          <artifactId>commons-codec</artifactId>
-          <groupId>commons-codec</groupId>
         </exclusion>
         <exclusion>
           <artifactId>snappy-java</artifactId>
@@ -261,43 +255,11 @@
       <artifactId>modeshape-jcr</artifactId>
       <exclusions>
         <exclusion>
-          <artifactId>commons-codec</artifactId>
-          <groupId>commons-codec</groupId>
-        </exclusion>
-        <exclusion>
           <artifactId>snappy-java</artifactId>
           <groupId>org.xerial.snappy</groupId>
         </exclusion>
       </exclusions>
     </dependency>
-    <dependency>
-      <groupId>org.openrdf.sesame</groupId>
-      <artifactId>sesame-rio-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.openrdf.sesame</groupId>
-      <artifactId>sesame-rio-ntriples</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.openrdf.sesame</groupId>
-      <artifactId>sesame-rio-rdfxml</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.openrdf.sesame</groupId>
-      <artifactId>sesame-rio-turtle</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.openrdf.sesame</groupId>
-      <artifactId>sesame-rio-n3</artifactId>
-      <version>${sesame.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>com.github.jsonld-java</groupId>
-      <artifactId>jsonld-java-sesame</artifactId>
-      <version>${jsonld.version}</version>
-    </dependency>
-
   </dependencies>
 
   <build>
