@@ -612,7 +612,12 @@ public class FedoraLdp extends ContentExposingResource {
             servletResponse.addHeader("Accept-Patch", contentTypeSPARQLUpdate);
 
         } else if (resource() instanceof Container) {
-            options = "MOVE,COPY,DELETE,POST,HEAD,GET,PUT,PATCH,OPTIONS";
+            // MOVE/COPY/DELETE operations are not available on a RepositoryRoot resource
+            if (resource().getContainer() == null) {
+                options = "POST,HEAD,GET,PUT,PATCH,OPTIONS";
+            } else {
+                options = "MOVE,COPY,DELETE,POST,HEAD,GET,PUT,PATCH,OPTIONS";
+            }
             servletResponse.addHeader("Accept-Patch", contentTypeSPARQLUpdate);
 
             final String rdfTypes = TURTLE + "," + N3 + ","
