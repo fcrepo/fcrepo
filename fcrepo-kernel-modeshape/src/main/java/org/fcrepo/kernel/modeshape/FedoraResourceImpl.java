@@ -664,10 +664,37 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @Override
     public Version getBaseVersion() {
         try {
-            return getVersionManager().getBaseVersion(getPath());
+            return doGetBaseVersion(getPath());
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
+    }
+
+    /**
+     * Get the base version associated with this "resource()"
+     *
+     * @return base Version
+     */
+    private Version doGetBaseVersion(final String path) throws RepositoryException {
+        RepositoryException exception = null;
+        int i = 0;
+        final int MAX_TRIES = 3;
+        while (i < MAX_TRIES) {
+            try {
+                return getVersionManager().getBaseVersion(path);
+
+            } catch (final RepositoryException e) {
+                exception = e;
+                ++i;
+                // Wait for persisted state to become visible
+                try {
+                    Thread.sleep(200);
+                } catch (final InterruptedException e1) {
+                    // ignore
+                }
+            }
+        }
+        throw exception;
     }
 
     /*
