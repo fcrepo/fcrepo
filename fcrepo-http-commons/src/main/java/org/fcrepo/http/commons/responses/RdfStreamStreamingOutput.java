@@ -65,8 +65,11 @@ import org.slf4j.Logger;
 public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
         StreamingOutput {
 
-    private static final Logger LOGGER =
-        getLogger(RdfStreamStreamingOutput.class);
+    private static final Logger LOGGER = getLogger(RdfStreamStreamingOutput.class);
+
+    private static final String JSONLD_COMPACTED = "http://www.w3.org/ns/json-ld#compacted";
+
+    private static final String JSONLD_FLATTENED = "http://www.w3.org/ns/json-ld#flattened";
 
     private final Lang format;
 
@@ -138,7 +141,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
             LOGGER.debug("Stream-based serialization of {}", dataFormat.toString());
             final StreamRDF stream = getWriterStream(output, format);
             stream.start();
-            nsPrefixes.forEach((k, v) -> stream.prefix(k, v));
+            nsPrefixes.forEach(stream::prefix);
             rdfStream.forEach(stream::triple);
             stream.finish();
 
@@ -155,7 +158,6 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
             }
         }
     }
-
 
     /*
      * Convert an RdfStream to a JSON object suitable for writing by JsonUtils::write
@@ -181,9 +183,9 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
         final JsonLdOptions opts = new JsonLdOptions();
         opts.setCompactArrays(true);
         final Object json = new JsonLdApi(opts).fromRDF(ds);
-        if (profile.equals("http://www.w3.org/ns/json-ld#compacted")) {
+        if (profile.equals(JSONLD_COMPACTED)) {
             return compact(json, prefixes, opts);
-        } else if (profile.equals("http://www.w3.org/ns/json-ld#flattened")) {
+        } else if (profile.equals(JSONLD_FLATTENED)) {
             return flatten(json, prefixes, opts);
         }
         return json;

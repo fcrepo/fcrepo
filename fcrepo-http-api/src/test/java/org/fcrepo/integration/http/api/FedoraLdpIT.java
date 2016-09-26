@@ -2293,7 +2293,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpPost method = postObjMethod();
         method.addHeader("Content-Type", "application/n3");
         final BasicHttpEntity entity = new BasicHttpEntity();
-        final String rdf = "<> <http://purl.org/dc/elements/1.1/title> \"c'est un titre français\"@fr ." +
+        final String rdf = "<> <http://purl.org/dc/elements/1.1/title> \"ceci n'est pas un titre français\"@fr ." +
                 "<> <http://purl.org/dc/elements/1.1/title> \"this is an english title\"@en .";
         entity.setContent(new ByteArrayInputStream(rdf.getBytes()));
         method.setEntity(entity);
