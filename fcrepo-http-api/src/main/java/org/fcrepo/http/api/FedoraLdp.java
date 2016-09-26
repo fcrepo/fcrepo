@@ -265,12 +265,16 @@ public class FedoraLdp extends ContentExposingResource {
 
     /**
      * Deletes an object.
+     * @param ifMatch the if-match value
      *
      * @return response
      */
     @DELETE
     @Timed
-    public Response deleteObject() {
+    public Response deleteObject(@HeaderParam("If-Match") final String ifMatch) {
+        if (resource() instanceof Container && ifMatch != null) {
+            throw new BadRequestException("An If-Match header is not allowed for Container updates");
+        }
         evaluateRequestPreconditions(request, servletResponse, resource(), session);
 
         LOGGER.info("Delete resource '{}'", externalPath);
@@ -332,7 +336,12 @@ public class FedoraLdp extends ContentExposingResource {
             throw new ClientErrorException("An If-Match header is required", 428);
         }
 
+        if (resource() instanceof Container && ifMatch != null) {
+            throw new BadRequestException("An If-Match header is not allowed for Container updates");
+        }
+
         evaluateRequestPreconditions(request, servletResponse, resource, session);
+
         final boolean created = resource.isNew();
 
         try (final RdfStream resourceTriples =
@@ -372,13 +381,15 @@ public class FedoraLdp extends ContentExposingResource {
      * Update an object using SPARQL-UPDATE
      *
      * @param requestBodyStream the request body stream
+     * @param ifMatch the if-match value
      * @return 201
      * @throws IOException if IO exception occurred
      */
     @PATCH
     @Consumes({contentTypeSPARQLUpdate})
     @Timed
-    public Response updateSparql(@ContentLocation final InputStream requestBodyStream)
+    public Response updateSparql(@ContentLocation final InputStream requestBodyStream,
+                                 @HeaderParam("If-Match") final String ifMatch)
             throws IOException {
 
         if (null == requestBodyStream) {
@@ -387,6 +398,10 @@ public class FedoraLdp extends ContentExposingResource {
 
         if (resource() instanceof FedoraBinary) {
             throw new BadRequestException(resource().getPath() + " is not a valid object to receive a PATCH");
+        }
+
+        if (resource() instanceof Container && ifMatch != null) {
+            throw new BadRequestException("An If-Match header is not allowed for Container updates");
         }
 
         try {
