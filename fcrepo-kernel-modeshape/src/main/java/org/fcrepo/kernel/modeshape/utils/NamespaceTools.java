@@ -17,11 +17,14 @@
  */
 package org.fcrepo.kernel.modeshape.utils;
 
+import static com.google.common.collect.ImmutableSet.of;
 import static java.util.Objects.requireNonNull;
 import static java.util.Arrays.stream;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Predicate;
 
 import javax.jcr.NamespaceException;
 import javax.jcr.NamespaceRegistry;
@@ -42,6 +45,9 @@ public final class NamespaceTools {
 
     private NamespaceTools() {
     }
+
+    // Internal namespaces defined in the modeshape CND file
+    private static final Set<String> INTERNAL_PREFIXES = of("jcr", "nt", "mode", "mix", "image", "sv");
 
     /**
      * Return the {@link NamespaceRegistry} associated with the arg session.
@@ -101,7 +107,7 @@ public final class NamespaceTools {
         final Map<String, String> namespaces = new HashMap<>();
 
         try {
-            stream(registry.getPrefixes()).filter(x -> !x.isEmpty()).forEach(x -> {
+            stream(registry.getPrefixes()).filter(internalPrefix.negate()).forEach(x -> {
                 try {
                     namespaces.put(x, registry.getURI(x));
                 } catch (final RepositoryException e) {
@@ -113,4 +119,6 @@ public final class NamespaceTools {
         }
         return namespaces;
     }
+
+    private static Predicate<String> internalPrefix = prefix -> prefix.isEmpty() || INTERNAL_PREFIXES.contains(prefix);
 }
