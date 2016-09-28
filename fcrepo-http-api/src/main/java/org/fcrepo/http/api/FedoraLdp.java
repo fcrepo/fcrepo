@@ -623,7 +623,6 @@ public class FedoraLdp extends ContentExposingResource {
             options = "";
         }
 
-        servletResponse.addHeader("Vary", "Prefer,Accept");
         servletResponse.addHeader("Allow", options);
     }
 
