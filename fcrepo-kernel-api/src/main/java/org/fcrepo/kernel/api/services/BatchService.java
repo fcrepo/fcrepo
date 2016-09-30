@@ -28,7 +28,7 @@ public interface BatchService {
     /**
      * Check for expired batch operations and remove them
      */
-    void removeAndRollbackExpired();
+    void removeExpired();
 
     /**
      * Create a new batch operation with a FedoraSession and add it to the currently open ones
@@ -36,15 +36,15 @@ public interface BatchService {
      * @param session The session to use for this batch operation
      * @param username the name of the {@link java.security.Principal}
      */
-    void beginBatch(FedoraSession session, String username);
+    void begin(FedoraSession session, String username);
 
     /**
      * Create a new FedoraSession for the anonymous user and add it to the currently open ones
      *
      * @param session The session to use for this batch operation
      */
-    default void beginBatch(FedoraSession session) {
-        beginBatch(session, null);
+    default void begin(FedoraSession session) {
+        begin(session, null);
     }
 
     /**
@@ -54,7 +54,7 @@ public interface BatchService {
      * @param username the name of the {@link java.security.Principal}
      * @return the {@link FedoraSession} with this user
      */
-    FedoraSession getBatchSession(String txId, String username);
+    FedoraSession getSession(String txId, String username);
 
     /**
      * Retrieve an open {@link FedoraSession} for an anonymous user
@@ -62,8 +62,8 @@ public interface BatchService {
      * @param txId the Id of the {@link FedoraSession}
      * @return the {@link FedoraSession}
      */
-    default FedoraSession getBatchSession(String txId) {
-        return getBatchSession(txId, null);
+    default FedoraSession getSession(String txId) {
+        return getSession(txId, null);
     }
 
     /**
@@ -108,14 +108,14 @@ public interface BatchService {
      * @param txid the id of the {@link FedoraSession}
      * @param username the name of the {@link java.security.Principal}
      */
-    void rollback(String txid, String username);
+    void abort(String txid, String username);
 
     /**
      * Roll back any uncommited changes during a {@link FedoraSession} for the anonymous user
      *
      * @param txid the id of the {@link FedoraSession}
      */
-    default void rollback(String txid) {
-        rollback(txid, null);
+    default void abort(String txid) {
+        abort(txid, null);
     }
 }
