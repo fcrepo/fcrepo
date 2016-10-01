@@ -50,72 +50,72 @@ public interface BatchService {
     /**
      * Retrieve an open {@link FedoraSession} for a given user
      *
-     * @param txId the Id of the {@link FedoraSession}
+     * @param sessionId the Id of the {@link FedoraSession}
      * @param username the name of the {@link java.security.Principal}
      * @return the {@link FedoraSession} with this user
      */
-    FedoraSession getSession(String txId, String username);
+    FedoraSession getSession(String sessionId, String username);
 
     /**
      * Retrieve an open {@link FedoraSession} for an anonymous user
      *
-     * @param txId the Id of the {@link FedoraSession}
+     * @param sessionId the Id of the {@link FedoraSession}
      * @return the {@link FedoraSession}
      */
-    default FedoraSession getSession(String txId) {
-        return getSession(txId, null);
+    default FedoraSession getSession(String sessionId) {
+        return getSession(sessionId, null);
     }
 
     /**
      * Check if a FedoraSession exists for a particular user
      *
-     * @param txid the Id of the {@link FedoraSession}
+     * @param sessionId the Id of the {@link FedoraSession}
      * @param username the name of the {@link java.security.Principal}
      * @return the {@link FedoraSession} object for the defined user
      */
-    boolean exists(String txid, String username);
+    boolean exists(String sessionId, String username);
 
     /**
      * Check if a FedoraSession exists for the anonymous user
      *
-     * @param txid the Id of the {@link FedoraSession}
+     * @param sessionId the Id of the {@link FedoraSession}
      * @return the {@link FedoraSession} object
      */
-    default boolean exists(String txid) {
-        return exists(txid, null);
+    default boolean exists(String sessionId) {
+        return exists(sessionId, null);
     }
 
     /**
      * Commit any changes during a {@link FedoraSession} with the given id and username
      *
-     * @param txid the id of the {@link FedoraSession}
+     * @param sessionId the id of the {@link FedoraSession}
      * @param username the name of the {@link java.security.Principal}
      */
-    void commit(String txid, String username);
+    void commit(String sessionId, String username);
 
     /**
      * Commit any changes during a {@link FedoraSession} with the given id for the anonymous user
      *
-     * @param txid the id of the {@link FedoraSession}
+     * @param sessionId the id of the {@link FedoraSession}
      */
-    default void commit(String txid) {
-        commit(txid, null);
+    default void commit(String sessionId) {
+        commit(sessionId, null);
     }
 
     /**
      * Roll back any uncommited changes during a {@link FedoraSession}
      *
-     * @param txid the id of the {@link FedoraSession}
+     * @param sessionId the id of the {@link FedoraSession}
      * @param username the name of the {@link java.security.Principal}
      */
-    void abort(String txid, String username);
+    void abort(String sessionId, String username);
 
     /**
      * Roll back any uncommited changes during a {@link FedoraSession} for the anonymous user
      *
-     * @param txid the id of the {@link FedoraSession}
+     * @param sessionId the id of the {@link FedoraSession}
      */
-    default void abort(String txid) {
-        abort(txid, null);
+    default void abort(String sessionId) {
+        abort(sessionId, null);
     }
 }
