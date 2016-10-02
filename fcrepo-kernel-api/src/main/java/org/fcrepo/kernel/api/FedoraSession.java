@@ -17,10 +17,6 @@
  */
 package org.fcrepo.kernel.api;
 
-import static java.lang.Long.parseLong;
-import static java.time.Duration.ofMinutes;
-import static java.time.Duration.ofMillis;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
@@ -32,11 +28,6 @@ import java.util.Optional;
  * @author acoburn
  */
 public interface FedoraSession {
-
-    // The default timeout is 3 minutes
-    public static final String DEFAULT_TIMEOUT = Long.toString(ofMinutes(3).toMillis());
-
-    public static final String TIMEOUT_SYSTEM_PROPERTY = "fcrepo.session.timeout";
 
     /**
      * Expire the session
@@ -98,12 +89,4 @@ public interface FedoraSession {
      * @return the value
      */
     Optional<String> getSessionData(String key);
-
-    /**
-     * Retrieve the default operation timeout value
-     * @return the default timeout value
-     */
-    public static Duration operationTimeout() {
-       return ofMillis(parseLong(System.getProperty(TIMEOUT_SYSTEM_PROPERTY, DEFAULT_TIMEOUT)));
-    }
 }
