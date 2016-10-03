@@ -68,7 +68,7 @@ public class FedoraRepositoryImpl implements FedoraRepository {
      *
      * @return the JCR Repository
      */
-    public Repository getRepository() {
+    public Repository getJcrRepository() {
         return repository;
     }
 
@@ -80,7 +80,7 @@ public class FedoraRepositoryImpl implements FedoraRepository {
      */
     public static Repository getJcrRepository(final FedoraRepository repository) {
         if (repository instanceof FedoraRepositoryImpl) {
-            return ((FedoraRepositoryImpl)repository).getRepository();
+            return ((FedoraRepositoryImpl)repository).getJcrRepository();
         }
         throw new IllegalArgumentException("FedoraRepository is of the wrong type");
     }

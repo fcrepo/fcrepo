@@ -146,7 +146,7 @@ public class FedoraSessionImpl implements FedoraSession {
      * Get the internal JCR session
      * @return the internal JCR session
      */
-    public Session getSession() {
+    public Session getJcrSession() {
         return session;
     }
 
@@ -157,7 +157,7 @@ public class FedoraSessionImpl implements FedoraSession {
      */
     public static Session getJcrSession(final FedoraSession session) {
         if (session instanceof FedoraSessionImpl) {
-            return ((FedoraSessionImpl)session).getSession();
+            return ((FedoraSessionImpl)session).getJcrSession();
         }
         throw new IllegalArgumentException("FedoraSession is of the wrong type");
     }
