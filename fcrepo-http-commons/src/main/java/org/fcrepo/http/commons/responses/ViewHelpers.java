@@ -18,6 +18,7 @@
 package org.fcrepo.http.commons.responses;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static org.apache.jena.atlas.iterator.Iter.asStream;
 import static org.apache.jena.graph.GraphUtil.listObjects;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
@@ -57,7 +58,6 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.graph.impl.LiteralLabel;
 
 import org.fcrepo.http.commons.api.rdf.TripleOrdering;
-import org.fcrepo.kernel.modeshape.utils.StreamUtils;
 import org.slf4j.Logger;
 
 import org.apache.jena.graph.Node;
@@ -249,11 +249,7 @@ public class ViewHelpers {
      */
     public int getNumChildren(final Graph graph, final Node subject) {
         LOGGER.trace("Getting number of children: s:{}, g:{}", subject, graph);
-        final Iterator<Node> iterator = listObjects(graph, subject, CONTAINS.asNode());
-        if (iterator.hasNext()) {
-            return (int) StreamUtils.iteratorToStream(iterator).count();
-        }
-        return 0;
+        return (int) asStream(listObjects(graph, subject, CONTAINS.asNode())).count();
     }
 
     /**
