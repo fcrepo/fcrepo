@@ -32,7 +32,11 @@ import java.util.Optional;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.observation.ObservationManager;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -60,6 +64,8 @@ public class FedoraSessionImpl implements FedoraSession {
      */
     public static final String FCREPO_TX_ID = "fcrepo.tx.id";
 
+    private static final ObjectMapper mapper = new ObjectMapper();
+
     /**
      * Create a Fedora session with a JCR session and a username
      * @param session the JCR session
@@ -77,11 +83,15 @@ public class FedoraSessionImpl implements FedoraSession {
     public void commit() {
         try {
             if (session.isLive()) {
+                final ObservationManager obs = session.getWorkspace().getObservationManager();
+                final ObjectNode json = mapper.createObjectNode();
+                sessionData.forEach(json::put);
+                obs.setUserData(mapper.writeValueAsString(json));
                 session.save();
             }
         } catch (final javax.jcr.AccessDeniedException ex) {
             throw new AccessDeniedException(ex);
-        } catch (final RepositoryException ex) {
+        } catch (final RepositoryException | JsonProcessingException ex) {
             throw new RepositoryRuntimeException(ex);
         }
     }
