@@ -93,7 +93,7 @@ public class FedoraFixityIT extends AbstractResourceIT {
         // Set default digest algorithm
         final HttpPatch patch = patchObjMethod(childId + "/fcr:metadata");
         patch.setHeader("Content-Type", "application/sparql-update");
-        final String updateString = "PREFIX fedoraconfig: <http://fedora.info/definitions/v4/config#>\n" +
+        final String updateString = "PREFIX fedoraconfig: <info:fedoraconfig/>\n" +
                 "INSERT DATA { <> " + DEFAULT_DIGEST_ALGORITHM + " \"md5\" }";
         patch.setEntity(new StringEntity(updateString));
         assertEquals("Did not update successfully!", NO_CONTENT.getStatusCode(), getStatus(patch));
