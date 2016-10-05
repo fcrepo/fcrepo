@@ -23,6 +23,7 @@ package org.fcrepo.kernel.modeshape.services;
 
 import static java.time.Instant.now;
 import static java.util.stream.Collectors.toSet;
+import static com.google.common.base.Strings.nullToEmpty;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.operationTimeout;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -92,10 +93,13 @@ public class BatchServiceImpl extends AbstractService implements BatchService {
 
     @Override
     public FedoraSession getSession(final String sessionId, final String username) {
-        final FedoraSession tx = transactions.computeIfAbsent(getTxKey(sessionId, username), s -> {
-            throw new SessionMissingException("Batch session with id: " + s + " is not available");
-        });
-        return tx;
+        System.out.println(transactions.keySet().toString());
+        System.out.println(getTxKey(sessionId, username));
+        final FedoraSession session = transactions.get(getTxKey(sessionId, username));
+        if (session == null) {
+            throw new SessionMissingException("Batch session with id: " + sessionId + " is not available");
+        }
+        return session;
     }
 
     @Override
@@ -105,12 +109,9 @@ public class BatchServiceImpl extends AbstractService implements BatchService {
 
     @Override
     public void commit(final String sessionId, final String username) {
-        final FedoraSession session = transactions.remove(getTxKey(sessionId, username));
-        if (session == null) {
-            throw new SessionMissingException("Batch session with id " + sessionId +
-                    " is not available");
-        }
+        final FedoraSession session = getSession(sessionId, username);
         session.commit();
+        transactions.remove(getTxKey(sessionId, username));
     }
 
     @Override
@@ -121,15 +122,12 @@ public class BatchServiceImpl extends AbstractService implements BatchService {
 
     @Override
     public void abort(final String sessionId, final String username) {
-        final FedoraSession tx = transactions.remove(getTxKey(sessionId, username));
-        if (tx == null) {
-            throw new SessionMissingException("Batch session with id " + sessionId +
-                    " is not available for " + username);
-        }
-        tx.expire();
+        final FedoraSession session = getSession(sessionId, username);
+        session.expire();
+        transactions.remove(getTxKey(sessionId, username));
     }
 
     private static String getTxKey(final String sessionId, final String username) {
-        return username == null ? sessionId : username + ":" + sessionId;
+        return nullToEmpty(username) + ":" + sessionId;
     }
 }

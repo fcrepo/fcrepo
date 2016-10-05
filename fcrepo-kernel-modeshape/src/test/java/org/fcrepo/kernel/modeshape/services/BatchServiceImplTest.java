@@ -85,7 +85,7 @@ public class BatchServiceImplTest {
         final Map<String, FedoraSession> txs =
                 (Map<String, FedoraSession>) txsField
                         .get(BatchService.class);
-        txs.put(IS_A_TX, mockTx);
+        txs.put(":" + IS_A_TX, mockTx);
     }
 
     @Test

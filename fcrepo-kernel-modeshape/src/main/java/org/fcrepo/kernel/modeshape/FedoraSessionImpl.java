@@ -21,14 +21,14 @@ import static java.lang.Long.parseLong;
 import static java.time.Duration.ofMillis;
 import static java.time.Duration.ofMinutes;
 import static java.time.Instant.now;
-import static java.util.Optional.ofNullable;
+import static java.util.Collections.singleton;
 import static java.util.UUID.randomUUID;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.HashMap;
+import java.util.Collection;
 import java.util.Map;
-import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -45,6 +45,8 @@ import org.fcrepo.kernel.modeshape.utils.NamespaceTools;
 /**
  * An implementation of the FedoraSession abstraction
  * @author acoburn
+ *
+ * Note: This class is not guaranteed to be thread-safe.
  */
 public class FedoraSessionImpl implements FedoraSession {
 
@@ -53,10 +55,10 @@ public class FedoraSessionImpl implements FedoraSession {
 
     public static final String TIMEOUT_SYSTEM_PROPERTY = "fcrepo.session.timeout";
 
-    private final Session session;
+    private final Session jcrSession;
     private final String id;
     private final Instant created;
-    private final Map<String, String> sessionData;
+    private final ConcurrentHashMap<String, String> sessionData;
     private Instant expires;
 
     /**
@@ -71,23 +73,23 @@ public class FedoraSessionImpl implements FedoraSession {
      * @param session the JCR session
      */
     public FedoraSessionImpl(final Session session) {
-        this.session = session;
+        this.jcrSession = session;
 
         created = now();
         id = randomUUID().toString();
         expires = created.plus(operationTimeout());
-        sessionData = new HashMap<>();
+        sessionData = new ConcurrentHashMap<>();
     }
 
     @Override
     public void commit() {
         try {
-            if (session.isLive()) {
-                final ObservationManager obs = session.getWorkspace().getObservationManager();
+            if (jcrSession.isLive()) {
+                final ObservationManager obs = jcrSession.getWorkspace().getObservationManager();
                 final ObjectNode json = mapper.createObjectNode();
                 sessionData.forEach(json::put);
                 obs.setUserData(mapper.writeValueAsString(json));
-                session.save();
+                jcrSession.save();
             }
         } catch (final javax.jcr.AccessDeniedException ex) {
             throw new AccessDeniedException(ex);
@@ -100,9 +102,9 @@ public class FedoraSessionImpl implements FedoraSession {
     public void expire() {
         expires = now();
         try {
-            if (session.isLive()) {
-                session.refresh(false);
-                session.logout();
+            if (jcrSession.isLive()) {
+                jcrSession.refresh(false);
+                jcrSession.logout();
             }
         } catch (final RepositoryException ex) {
             throw new RepositoryRuntimeException(ex);
@@ -111,7 +113,7 @@ public class FedoraSessionImpl implements FedoraSession {
 
     @Override
     public Instant updateExpiry(final Duration amountToAdd) {
-        if (session.isLive()) {
+        if (jcrSession.isLive()) {
             expires = now().plus(amountToAdd);
         }
         return expires;
@@ -134,22 +136,32 @@ public class FedoraSessionImpl implements FedoraSession {
 
     @Override
     public String getUserId() {
-        return session.getUserID();
+        return jcrSession.getUserID();
     }
 
     @Override
     public Map<String, String> getNamespaces() {
-        return NamespaceTools.getNamespaces(session);
+        return NamespaceTools.getNamespaces(jcrSession);
     }
 
     @Override
-    public void setSessionData(final String key, final String value) {
+    public void addSessionData(final String key, final String value) {
         sessionData.put(key, value);
     }
 
     @Override
-    public Optional<String> getSessionData(final String key) {
-        return ofNullable(sessionData.get(key));
+    public Collection<String> getSessionData(final String key) {
+        return singleton(sessionData.get(key));
+    }
+
+    @Override
+    public void removeSessionData(final String key, final String value) {
+        sessionData.remove(key, value);
+    }
+
+    @Override
+    public void removeSessionData(final String key) {
+        sessionData.remove(key);
     }
 
     /**
@@ -157,7 +169,7 @@ public class FedoraSessionImpl implements FedoraSession {
      * @return the internal JCR session
      */
     public Session getJcrSession() {
-        return session;
+        return jcrSession;
     }
 
     /**
@@ -169,7 +181,7 @@ public class FedoraSessionImpl implements FedoraSession {
         if (session instanceof FedoraSessionImpl) {
             return ((FedoraSessionImpl)session).getJcrSession();
         }
-        throw new IllegalArgumentException("FedoraSession is of the wrong type");
+        throw new ClassCastException("FedoraSession is not a " + FedoraSessionImpl.class.getCanonicalName());
     }
 
     /**

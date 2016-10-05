@@ -82,6 +82,6 @@ public class FedoraRepositoryImpl implements FedoraRepository {
         if (repository instanceof FedoraRepositoryImpl) {
             return ((FedoraRepositoryImpl)repository).getJcrRepository();
         }
-        throw new IllegalArgumentException("FedoraRepository is of the wrong type");
+        throw new ClassCastException("FedoraRepository is not a " + FedoraRepositoryImpl.class.getCanonicalName());
     }
 }

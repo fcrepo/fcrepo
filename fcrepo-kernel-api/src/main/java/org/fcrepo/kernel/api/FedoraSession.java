@@ -19,13 +19,16 @@ package org.fcrepo.kernel.api;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * The Fedora Session abstraction
  *
  * @author acoburn
+ *
+ * Note: This interface does not make any guarantees about thread-safety. Any
+ * synchronization behavior is left to the discretion of the implementation.
  */
 public interface FedoraSession {
 
@@ -77,16 +80,31 @@ public interface FedoraSession {
     Map<String, String> getNamespaces();
 
     /**
-     * Set session-specific data
+     * Add session-specific data
      * @param key the key
      * @param value the value
      */
-    void setSessionData(String key, String value);
+    void addSessionData(String key, String value);
 
     /**
      * Retrieve the session data for a given key
      * @param key the key
      * @return the value
      */
-    Optional<String> getSessionData(String key);
+    Collection<String> getSessionData(String key);
+
+    /**
+     * Remove a particular session key-value pair
+     * @param key the data key
+     * @param value the data value
+     */
+    void removeSessionData(String key, String value);
+
+    /**
+     * Remove all session data for a particular key
+     * @param key the data key
+     */
+    default void removeSessionData(String key) {
+        getSessionData(key).forEach(v -> removeSessionData(key, v));
+    }
 }
