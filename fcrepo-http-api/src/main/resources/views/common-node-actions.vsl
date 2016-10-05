@@ -55,8 +55,7 @@
 	        RDF (turtle)
         </label>
         <textarea rows="10" id="turtle_payload" name="turtle" class="form-control" 
-                  placeholder="@prefix dcmitype: <http://purl.org/dc/dcmitype/> 
-<> a dcmitype:Collection ."></textarea>
+                  placeholder="<> a <http://purl.org/dc/dcmitype/Collection>"></textarea>
     </div>
 
 
