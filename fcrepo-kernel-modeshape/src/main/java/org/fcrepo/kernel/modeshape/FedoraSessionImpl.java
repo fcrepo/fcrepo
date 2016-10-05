@@ -144,6 +144,17 @@ public class FedoraSessionImpl implements FedoraSession {
         return NamespaceTools.getNamespaces(jcrSession);
     }
 
+    /**
+     *  Add session data
+     *  @param key the data key
+     *  @param value the data value
+     *
+     *  Note: while the FedoraSession inteface permits multi-valued
+     *  session data, this implementation constrains that to be single-valued.
+     *  That is, calling obj.addSessionData("key", "value1") followed by
+     *  obj.addSessionData("key", "value2") will result in only "value2" being assciated
+     *  with the given key.
+     */
     @Override
     public void addSessionData(final String key, final String value) {
         sessionData.put(key, value);

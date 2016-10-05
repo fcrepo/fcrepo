@@ -93,8 +93,6 @@ public class BatchServiceImpl extends AbstractService implements BatchService {
 
     @Override
     public FedoraSession getSession(final String sessionId, final String username) {
-        System.out.println(transactions.keySet().toString());
-        System.out.println(getTxKey(sessionId, username));
         final FedoraSession session = transactions.get(getTxKey(sessionId, username));
         if (session == null) {
             throw new SessionMissingException("Batch session with id: " + sessionId + " is not available");

@@ -83,6 +83,9 @@ public interface FedoraSession {
      * Add session-specific data
      * @param key the key
      * @param value the value
+     *
+     * Note: it is up to the particular implementation as to whether multi-valued session data
+     * is allowed.
      */
     void addSessionData(String key, String value);
 
