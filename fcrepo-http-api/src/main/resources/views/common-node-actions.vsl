@@ -51,13 +51,12 @@
         </div>
 
     <div class="form-group" id="turtle_payload_container">
-    	<label for="rdf"  class="control-label">
+        <label for="rdf"  class="control-label">
 	        RDF (turtle)
-	    </label>
-		<textarea rows="10" id="turtle_payload" name="turtle" class="form-control" 
-		placeholder="@prefix pcdm: <http://pcdm.org/models#> 
-<> a pcdm:Object . ">
-	    </textarea>
+        </label>
+        <textarea rows="10" id="turtle_payload" name="turtle" class="form-control" 
+                  placeholder="@prefix dcmitype: <http://purl.org/dc/dcmitype/> 
+<> a dcmitype:Collection ."></textarea>
     </div>
 
 
