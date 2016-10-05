@@ -26,9 +26,6 @@ import java.util.Map;
  * The Fedora Session abstraction
  *
  * @author acoburn
- *
- * Note: This interface does not make any guarantees about thread-safety. Any
- * synchronization behavior is left to the discretion of the implementation.
  */
 public interface FedoraSession {
 

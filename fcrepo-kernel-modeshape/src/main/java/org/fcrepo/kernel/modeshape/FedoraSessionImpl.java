@@ -45,8 +45,6 @@ import org.fcrepo.kernel.modeshape.utils.NamespaceTools;
 /**
  * An implementation of the FedoraSession abstraction
  * @author acoburn
- *
- * Note: This class is not guaranteed to be thread-safe.
  */
 public class FedoraSessionImpl implements FedoraSession {
 
