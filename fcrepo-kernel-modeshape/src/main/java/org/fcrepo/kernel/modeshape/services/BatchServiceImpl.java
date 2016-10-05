@@ -72,7 +72,9 @@ public class BatchServiceImpl extends AbstractService implements BatchService {
     @Scheduled(fixedRate = REAP_INTERVAL)
     public void removeExpired() {
         final Set<String> reapable = transactions.entrySet().stream()
-                .filter(e -> e.getValue().getExpires().isBefore(now())).map(Map.Entry::getKey).collect(toSet());
+                .filter(e -> e.getValue().getExpires().isPresent())
+                .filter(e -> e.getValue().getExpires().get().isBefore(now()))
+                .map(Map.Entry::getKey).collect(toSet());
         reapable.forEach(key -> {
             final FedoraSession s = transactions.get(key);
             if (s != null) {

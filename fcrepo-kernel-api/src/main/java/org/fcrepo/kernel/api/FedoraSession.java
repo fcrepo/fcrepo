@@ -21,6 +21,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * The Fedora Session abstraction
@@ -54,9 +55,9 @@ public interface FedoraSession {
 
     /**
      * Get the date this session expires
-     * @return expiration date
+     * @return expiration date, if one exists
      */
-    Instant getExpires();
+    Optional<Instant> getExpires();
 
     /**
      * Get the session identifier

@@ -22,12 +22,14 @@ import static java.time.Duration.ofMillis;
 import static java.time.Duration.ofMinutes;
 import static java.time.Instant.now;
 import static java.util.Collections.singleton;
+import static java.util.Optional.of;
 import static java.util.UUID.randomUUID;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.jcr.RepositoryException;
@@ -123,8 +125,8 @@ public class FedoraSessionImpl implements FedoraSession {
     }
 
     @Override
-    public Instant getExpires() {
-        return expires;
+    public Optional<Instant> getExpires() {
+        return of(expires);
     }
 
     @Override

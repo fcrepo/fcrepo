@@ -18,6 +18,7 @@
 package org.fcrepo.kernel.modeshape.services;
 
 import static java.time.Instant.now;
+import static java.util.Optional.of;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.FCREPO_TX_ID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -91,7 +92,7 @@ public class BatchServiceImplTest {
     @Test
     public void testExpiration() {
         final Instant fiveSecondsAgo = now().minusSeconds(5);
-        when(mockTx.getExpires()).thenReturn(fiveSecondsAgo);
+        when(mockTx.getExpires()).thenReturn(of(fiveSecondsAgo));
         service.removeExpired();
         verify(mockTx).expire();
     }
@@ -100,7 +101,7 @@ public class BatchServiceImplTest {
     public void testExpirationThrowsRepositoryException() {
         final Instant fiveSecondsAgo = now().minusSeconds(5);
         doThrow(new RepositoryRuntimeException("")).when(mockTx).expire();
-        when(mockTx.getExpires()).thenReturn(fiveSecondsAgo);
+        when(mockTx.getExpires()).thenReturn(of(fiveSecondsAgo));
         service.removeExpired();
     }
 
