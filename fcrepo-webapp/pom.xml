@@ -365,7 +365,6 @@
               <value>classpath:/config/file-simple/repository.json</value>
             </systemProperty>
           </systemProperties>
-          <jvmArgs>${jetty.jvm.args}</jvmArgs>
 
         </configuration>
         <executions>
