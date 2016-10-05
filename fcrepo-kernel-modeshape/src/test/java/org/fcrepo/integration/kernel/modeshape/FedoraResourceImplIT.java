@@ -53,6 +53,7 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
 import static org.fcrepo.kernel.api.RequiredRdfContext.VERSIONS;
+import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FIELD_DELIMITER;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
@@ -77,7 +78,6 @@ import javax.inject.Inject;
 import javax.jcr.Value;
 import javax.jcr.nodetype.NodeTypeDefinition;
 import javax.jcr.nodetype.NodeTypeTemplate;
-import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeTypeManager;
@@ -92,6 +92,8 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.ResourceFactory;
 
 import org.apache.commons.io.IOUtils;
+import org.fcrepo.kernel.api.FedoraRepository;
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
@@ -136,7 +138,7 @@ import org.apache.jena.vocabulary.RDF;
 public class FedoraResourceImplIT extends AbstractIT {
 
     @Inject
-    Repository repo;
+    FedoraRepository repo;
 
     @Inject
     NodeService nodeService;
@@ -150,29 +152,29 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Inject
     VersionService versionService;
 
-    private Session session;
+    private FedoraSession session;
 
     private DefaultIdentifierTranslator subjects;
 
     @Before
     public void setUp() throws RepositoryException {
         session = repo.login();
-        subjects = new DefaultIdentifierTranslator(session);
+        subjects = new DefaultIdentifierTranslator(getJcrSession(session));
     }
 
     @After
     public void tearDown() {
-        session.logout();
+        session.expire();
     }
 
     @Test
     public void testGetRootNode() throws RepositoryException {
-        final Session session = repo.login();
+        final FedoraSession session = repo.login();
         final FedoraResource object = nodeService.find(session, "/");
         assertEquals("/", object.getPath());
         assertTrue(object.hasType(ROOT));
         assertTrue(object.hasType(FEDORA_REPOSITORY_ROOT));
-        session.logout();
+        session.expire();
     }
 
     private Node createGraphSubjectNode(final FedoraResource obj) {
@@ -197,9 +199,9 @@ public class FedoraResourceImplIT extends AbstractIT {
         containerService.findOrCreate(session, "/" + pid);
 
         try {
-            session.save();
+            session.commit();
         } finally {
-            session.logout();
+            session.expire();
         }
 
         session = repo.login();
@@ -221,9 +223,9 @@ public class FedoraResourceImplIT extends AbstractIT {
         containerService.findOrCreate(session, "/" + pid);
 
         try {
-            session.save();
+            session.commit();
         } finally {
-            session.logout();
+            session.expire();
         }
 
         session = repo.login();
@@ -295,8 +297,8 @@ public class FedoraResourceImplIT extends AbstractIT {
         node.setProperty("dc:subject", "this-is-some-subject-stored-as-a-binary", BINARY);
         node.setProperty("jcr:data", "jcr-data-should-be-ignored", BINARY);
 
-        session.save();
-        session.logout();
+        session.commit();
+        session.expire();
 
         session = repo.login();
 
@@ -324,7 +326,8 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     @Test
     public void testRdfTypeInheritance() throws RepositoryException {
-        final NodeTypeManager mgr = session.getWorkspace().getNodeTypeManager();
+        final Session jcrSession = getJcrSession(session);
+        final NodeTypeManager mgr = jcrSession.getWorkspace().getNodeTypeManager();
         //create supertype mixin
         final NodeTypeTemplate type = mgr.createNodeTypeTemplate();
         type.setName("fedoraconfig:aSupertype");
@@ -345,8 +348,8 @@ public class FedoraResourceImplIT extends AbstractIT {
         final javax.jcr.Node node = getJcrNode(object);
         node.addMixin("fedoraconfig:testInher");
 
-        session.save();
-        session.logout();
+        session.commit();
+        session.expire();
         session = repo.login();
 
         object = containerService.findOrCreate(session, "/testNTTnheritanceObject");
@@ -363,6 +366,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     public void testDatastreamGraph() throws RepositoryException, InvalidChecksumException {
 
         final Container parentObject = containerService.findOrCreate(session, "/testDatastreamGraphParent");
+        final Session jcrSession = getJcrSession(session);
 
         binaryService.findOrCreate(session, "/testDatastreamGraph").setContent(
                 new ByteArrayInputStream("123456789test123456789".getBytes()),
@@ -375,7 +379,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final FedoraResource object = binaryService.findOrCreate(session, "/testDatastreamGraph").getDescription();
 
         getJcrNode(object).setProperty("fedora:isPartOf",
-                session.getNode("/testDatastreamGraphParent"));
+                jcrSession.getNode("/testDatastreamGraphParent"));
 
         final Graph graph = object.getTriples(subjects, PROPERTIES).collect(toModel()).getGraph();
 
@@ -469,11 +473,11 @@ public class FedoraResourceImplIT extends AbstractIT {
             containerService.findOrCreate(session, "/testObjectVersionGraph");
 
         getJcrNode(object).addMixin("mix:versionable");
-        session.save();
+        session.commit();
 
         // create a version and make sure there are 2 versions (root + created)
         versionService.createVersion(session, object.getPath(), "v0.0.1");
-        session.save();
+        session.commit();
 
         final Model graphStore = object.getTriples(subjects, VERSIONS).collect(toModel());
 
@@ -521,12 +525,13 @@ public class FedoraResourceImplIT extends AbstractIT {
         } catch (final AccessDeniedException e) {
             fail("Should fail at update, not create property");
         }
-        final AccessControlManager acm = session.getAccessControlManager();
+        final Session jcrSession = getJcrSession(session);
+        final AccessControlManager acm = jcrSession.getAccessControlManager();
         final Privilege[] permissions = new Privilege[] {acm.privilegeFromName(Privilege.JCR_READ)};
         final AccessControlList acl = (AccessControlList) acm.getApplicablePolicies("/testRefObject").next();
         acl.addAccessControlEntry(SimplePrincipal.newInstance("anonymous"), permissions);
         acm.setPolicy("/testRefObject", acl);
-        session.save();
+        session.commit();
 
         object.updateProperties(
                 subjects,
@@ -655,7 +660,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final FedoraResource object =
             containerService.findOrCreate(session, "/testEtagObject");
 
-        session.save();
+        session.commit();
 
         final String actual = object.getEtagValue();
         assertNotNull(actual);
@@ -665,13 +670,14 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testGetReferences() throws RepositoryException {
         final String pid = getRandomPid();
+        final Session jcrSession = getJcrSession(session);
         containerService.findOrCreate(session, pid);
         final Container subject = containerService.findOrCreate(session, pid + "/a");
         final Container object = containerService.findOrCreate(session, pid + "/b");
-        final Value value = session.getValueFactory().createValue(getJcrNode(object));
+        final Value value = jcrSession.getValueFactory().createValue(getJcrNode(object));
         getJcrNode(subject).setProperty("fedora:isPartOf", new Value[] { value });
 
-        session.save();
+        session.commit();
 
         final Model model = object.getTriples(subjects, INBOUND_REFERENCES).collect(toModel());
 
@@ -686,6 +692,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     public void testReplaceProperties() throws RepositoryException {
         final String pid = getRandomPid();
         final Container object = containerService.findOrCreate(session, pid);
+        final Session jcrSession = getJcrSession(session);
 
         try (final RdfStream triples = object.getTriples(subjects, PROPERTIES)) {
             final Model model = triples.collect(toModel());
@@ -710,7 +717,7 @@ public class FedoraResourceImplIT extends AbstractIT {
             final Value[] values = next.getValues();
             assertEquals(1, values.length);
 
-            final javax.jcr.Node skolemizedNode = session.getNodeByIdentifier(values[0].getString());
+            final javax.jcr.Node skolemizedNode = jcrSession.getNodeByIdentifier(values[0].getString());
 
             assertTrue(skolemizedNode.getPath().contains("/.well-known/genid/"));
             assertEquals("xyz" + FIELD_DELIMITER + XSDstring.getURI(),
@@ -762,14 +769,15 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testDeleteObject() throws RepositoryException {
         final String pid = getRandomPid();
+        final Session jcrSession = getJcrSession(session);
         containerService.findOrCreate(session, "/" + pid);
-        session.save();
+        session.commit();
 
         containerService.findOrCreate(session, "/" + pid).delete();
 
-        session.save();
+        session.commit();
 
-        assertTrue(session.getNode("/" + pid).isNodeType(FEDORA_TOMBSTONE));
+        assertTrue(jcrSession.getNode("/" + pid).isNodeType(FEDORA_TOMBSTONE));
     }
 
     @Test
@@ -778,19 +786,20 @@ public class FedoraResourceImplIT extends AbstractIT {
         final String pid = getRandomPid();
         final FedoraResource resourceA = containerService.findOrCreate(session, "/" + pid + "/a");
         final FedoraResource resourceB = containerService.findOrCreate(session, "/" + pid + "/b");
+        final Session jcrSession = getJcrSession(session);
 
-        final Value value = session.getValueFactory().createValue(getJcrNode(resourceB));
+        final Value value = jcrSession.getValueFactory().createValue(getJcrNode(resourceB));
         getJcrNode(resourceA).setProperty("fedora:hasMember", new Value[] { value });
 
-        session.save();
+        session.commit();
         containerService.findOrCreate(session, "/" + pid + "/a").delete();
 
-        session.save();
+        session.commit();
         containerService.findOrCreate(session, "/" + pid + "/b").delete();
 
-        session.save();
+        session.commit();
 
-        assertTrue(session.getNode("/" + pid + "/b").isNodeType(FEDORA_TOMBSTONE));
+        assertTrue(jcrSession.getNode("/" + pid + "/b").isNodeType(FEDORA_TOMBSTONE));
 
     }
 
@@ -886,10 +895,10 @@ public class FedoraResourceImplIT extends AbstractIT {
         final String pid = getRandomPid();
         final Container object = containerService.findOrCreate(session, "/" + pid);
         object.enableVersioning();
-        session.save();
+        session.commit();
         addVersionLabel("some-label", object);
         final Version version = object.getVersionHistory().getVersionByLabel("some-label");
-        session.save();
+        session.commit();
         final FedoraResourceImpl frozenResource = new FedoraResourceImpl(version.getFrozenNode());
 
         assertEquals(object, frozenResource.getUnfrozenResource());
@@ -900,13 +909,14 @@ public class FedoraResourceImplIT extends AbstractIT {
     public void testGetVersionedAncestor() throws RepositoryException {
         final String pid = getRandomPid();
         final Container object = containerService.findOrCreate(session, "/" + pid);
+        final Session jcrSession = getJcrSession(session);
         object.enableVersioning();
-        session.save();
+        session.commit();
         containerService.findOrCreate(session, "/" + pid + "/a/b/c");
-        session.save();
-        session.getWorkspace().getVersionManager().checkpoint(object.getPath());
+        session.commit();
+        jcrSession.getWorkspace().getVersionManager().checkpoint(object.getPath());
         addVersionLabel("some-label", object);
-        session.save();
+        session.commit();
         final Version version = object.getVersionHistory().getVersionByLabel("some-label");
         final FedoraResourceImpl frozenResource = new FedoraResourceImpl(version.getFrozenNode().getNode("a"));
 
@@ -917,20 +927,21 @@ public class FedoraResourceImplIT extends AbstractIT {
     public void testVersionedChild() throws RepositoryException {
         final String pid = getRandomPid();
         final Container object = containerService.findOrCreate(session, "/" + pid);
+        final Session jcrSession = getJcrSession(session);
         object.enableVersioning();
-        session.save();
+        session.commit();
 
         final Container child = containerService.findOrCreate(session, "/" + pid + "/child");
         child.enableVersioning();
-        session.save();
+        session.commit();
 
-        session.getWorkspace().getVersionManager().checkpoint(object.getPath());
+        jcrSession.getWorkspace().getVersionManager().checkpoint(object.getPath());
         addVersionLabel("object-v0", object);
-        session.save();
+        session.commit();
 
-        session.getWorkspace().getVersionManager().checkpoint(child.getPath());
+        jcrSession.getWorkspace().getVersionManager().checkpoint(child.getPath());
         addVersionLabel("child-v0", child);
-        session.save();
+        session.commit();
 
         final Version version = object.getVersionHistory().getVersionByLabel("object-v0");
         final FedoraResourceImpl frozenResource = new FedoraResourceImpl(version.getFrozenNode().getNode("child"));
@@ -942,20 +953,21 @@ public class FedoraResourceImplIT extends AbstractIT {
     public void testVersionedChildDeleted() throws RepositoryException {
         final String pid = getRandomPid();
         final Container object = containerService.findOrCreate(session, "/" + pid);
+        final Session jcrSession = getJcrSession(session);
         object.enableVersioning();
-        session.save();
+        session.commit();
 
         final Container child = containerService.findOrCreate(session, "/" + pid + "/child");
         getJcrNode(child).setProperty("dc:title", "this-is-some-title");
-        session.save();
+        session.commit();
 
-        session.getWorkspace().getVersionManager().checkpoint(object.getPath());
+        jcrSession.getWorkspace().getVersionManager().checkpoint(object.getPath());
         addVersionLabel("object-v0", object);
-        session.save();
+        session.commit();
 
         // Delete the child!
         child.delete();
-        session.save();
+        session.commit();
 
         final Version version = object.getVersionHistory().getVersionByLabel("object-v0");
         final FedoraResourceImpl frozenResource = new FedoraResourceImpl(version.getFrozenNode());
@@ -975,20 +987,21 @@ public class FedoraResourceImplIT extends AbstractIT {
         final String pid = getRandomPid();
         final Container object = containerService.findOrCreate(session, "/" + pid);
         object.enableVersioning();
-        session.save();
+        session.commit();
 
         final FedoraBinary child = binaryService.findOrCreate(session, "/" + pid + "/child");
         final String content = "123456789test123456789";
+        final Session jcrSession = getJcrSession(session);
         child.setContent(new ByteArrayInputStream(content.getBytes()), "text/plain", null, null, null);
-        session.save();
+        session.commit();
 
-        session.getWorkspace().getVersionManager().checkpoint(object.getPath());
+        jcrSession.getWorkspace().getVersionManager().checkpoint(object.getPath());
         addVersionLabel("object-v0", object);
-        session.save();
+        session.commit();
 
         // Delete the child!
         child.delete();
-        session.save();
+        session.commit();
 
         final Version version = object.getVersionHistory().getVersionByLabel("object-v0");
         final FedoraResourceImpl frozenResource = new FedoraResourceImpl(version.getFrozenNode());
@@ -1025,10 +1038,10 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         // This is the test: verify successful deletion of the objects
         object2.delete();
-        session.save();
+        session.commit();
 
         object1.delete();
-        session.save();
+        session.commit();
 
         // Double-verify that the objects are gone
         assertFalse("/object2 should NOT exist!", exists(object2));
@@ -1048,7 +1061,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     public void testNullBaseVersion() throws RepositoryException {
         final String pid = getRandomPid();
         final Container object = containerService.findOrCreate(session, "/" + pid);
-        session.save();
+        session.commit();
         object.getBaseVersion();
     }
 
@@ -1057,7 +1070,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     public void testNullVersionHistory() throws RepositoryException {
         final String pid = getRandomPid();
         final Container object = containerService.findOrCreate(session, "/" + pid);
-        session.save();
+        session.commit();
         object.getVersionHistory();
     }
 
@@ -1065,13 +1078,14 @@ public class FedoraResourceImplIT extends AbstractIT {
     public void testGetNodeVersion() throws RepositoryException {
         final String pid = getRandomPid();
         final Container object = containerService.findOrCreate(session, "/" + pid);
+        final Session jcrSession = getJcrSession(session);
         object.enableVersioning();
-        session.save();
+        session.commit();
         containerService.findOrCreate(session, "/" + pid + "/a/b/c");
-        session.save();
-        session.getWorkspace().getVersionManager().checkpoint(object.getPath());
+        session.commit();
+        jcrSession.getWorkspace().getVersionManager().checkpoint(object.getPath());
         addVersionLabel("some-label", object);
-        session.save();
+        session.commit();
         final Version version = object.getVersionHistory().getVersionByLabel("some-label");
         final FedoraResourceImpl frozenResource = new FedoraResourceImpl(version.getFrozenNode());
         assertNull(frozenResource.getVersion("some-label"));
@@ -1082,13 +1096,14 @@ public class FedoraResourceImplIT extends AbstractIT {
     public void testGetNullNodeVersion() throws RepositoryException {
         final String pid = getRandomPid();
         final Container object = containerService.findOrCreate(session, "/" + pid);
+        final Session jcrSession = getJcrSession(session);
         object.enableVersioning();
-        session.save();
+        session.commit();
         containerService.findOrCreate(session, "/" + pid + "/a/b/c");
-        session.save();
-        session.getWorkspace().getVersionManager().checkpoint(object.getPath());
+        session.commit();
+        jcrSession.getWorkspace().getVersionManager().checkpoint(object.getPath());
         addVersionLabel("some-label", object);
-        session.save();
+        session.commit();
         final Version version = object.getVersionHistory().getVersionByLabel("some-label");
         final FedoraResourceImpl frozenResource = new FedoraResourceImpl(version.getFrozenNode().getNode("a"));
         assertNull(frozenResource.getVersion("some-label"));
@@ -1100,7 +1115,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final String pid = getRandomPid();
         final Container object = containerService.findOrCreate(session, "/" + pid);
         object.enableVersioning();
-        session.save();
+        session.commit();
         assertTrue(object.isVersioned());
         object.disableVersioning();
         assertFalse(object.isVersioned());
@@ -1118,7 +1133,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final String pid = getRandomPid();
         final Container object = containerService.findOrCreate(session, "/" + pid);
         object.enableVersioning();
-        session.save();
+        session.commit();
         final FedoraResourceImpl frozenResource = new FedoraResourceImpl(getJcrNode(object));
         assertFalse(frozenResource.hashCode() == 0);
     }
@@ -1131,12 +1146,13 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Container subject = containerService.findOrCreate(session, pid + "/a");
         final Container referent1 = containerService.findOrCreate(session, pid + "/b");
         final Container referent2 = containerService.findOrCreate(session, pid + "/c");
+        final Session jcrSession = getJcrSession(session);
         final Value[] values = new Value[2];
-        values[0] = session.getValueFactory().createValue(getJcrNode(referent1));
-        values[1] = session.getValueFactory().createValue(getJcrNode(referent2));
+        values[0] = jcrSession.getValueFactory().createValue(getJcrNode(referent1));
+        values[1] = jcrSession.getValueFactory().createValue(getJcrNode(referent2));
         getJcrNode(subject).setProperty(relation, values);
 
-        session.save();
+        session.commit();
 
         final Model model1 = referent1.getTriples(subjects, INBOUND_REFERENCES).collect(toModel());
 
@@ -1163,7 +1179,8 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     private void addVersionLabel(final String label, final FedoraResource r) throws RepositoryException {
-        addVersionLabel(label, session.getWorkspace().getVersionManager().getBaseVersion(r.getPath()));
+        final Session jcrSession = getJcrSession(session);
+        addVersionLabel(label, jcrSession.getWorkspace().getVersionManager().getBaseVersion(r.getPath()));
     }
 
     private static void addVersionLabel(final String label, final Version v) throws RepositoryException {

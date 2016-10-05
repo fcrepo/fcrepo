@@ -18,6 +18,8 @@
 package org.fcrepo.integration.kernel.modeshape.services;
 
 import org.fcrepo.integration.kernel.modeshape.AbstractIT;
+import org.fcrepo.kernel.api.FedoraRepository;
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.FedoraInvalidNamespaceException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.services.NodeService;
@@ -26,9 +28,7 @@ import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
 import javax.inject.Inject;
-import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 
 /**
  * @author cabeer
@@ -38,14 +38,14 @@ import javax.jcr.Session;
 public class NodeServiceImplIT extends AbstractIT {
 
     @Inject
-    private Repository repository;
+    private FedoraRepository repository;
 
     @Inject
     NodeService nodeService;
 
     @Test(expected = FedoraInvalidNamespaceException.class)
     public void testExistsWithBadNamespace() throws RepositoryException {
-        final Session session = repository.login();
+        final FedoraSession session = repository.login();
         final String path = "/bad_ns: " + getRandomPid();
 
         nodeService.exists(session, path);
@@ -53,7 +53,7 @@ public class NodeServiceImplIT extends AbstractIT {
 
     @Test (expected = RepositoryRuntimeException.class)
     public void testGetRootNodeException() throws RepositoryException {
-        final Session session = repository.login();
+        final FedoraSession session = repository.login();
         nodeService.find(session, "\\/");
     }
 }

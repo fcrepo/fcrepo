@@ -42,6 +42,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.MIX_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.MODE_NAMESPACE;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_DELETION;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_RELOCATION;
+import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
 import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaceRegistry;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
@@ -65,13 +66,13 @@ import javax.jcr.Session;
 import javax.jcr.observation.Event;
 import javax.jcr.observation.EventListener;
 
+import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.fcrepo.kernel.modeshape.observer.eventmappings.InternalExternalEventMapper;
 
-import org.modeshape.jcr.api.Repository;
 import org.slf4j.Logger;
 
 import com.codahale.metrics.Counter;
@@ -161,7 +162,7 @@ public class SimpleObserver implements EventListener {
     }
 
     @Inject
-    private Repository repository;
+    private FedoraRepository repository;
 
     @Inject
     private EventBus eventBus;
@@ -184,7 +185,7 @@ public class SimpleObserver implements EventListener {
     @PostConstruct
     public void buildListener() throws RepositoryException {
         LOGGER.debug("Constructing an observer for JCR events...");
-        session = repository.login();
+        session = getJcrSession(repository.login());
         session.getWorkspace().getObservationManager()
                 .addEventListener(this, EVENT_TYPES, "/", true, null, null, false);
         session.save();
@@ -214,7 +215,7 @@ public class SimpleObserver implements EventListener {
     public void onEvent(final javax.jcr.observation.EventIterator events) {
         Session lookupSession = null;
         try {
-            lookupSession = repository.login();
+            lookupSession = getJcrSession(repository.login());
 
             @SuppressWarnings("unchecked")
             final Iterator<Event> filteredEvents = filter(events, eventFilter::test);
@@ -222,8 +223,6 @@ public class SimpleObserver implements EventListener {
                 .map(filterAndDerefResourceTypes(lookupSession))
                 .flatMap(handleMoveEvents(lookupSession))
                 .forEach(this::post);
-        } catch (final RepositoryException ex) {
-            throw new RepositoryRuntimeException(ex);
         } finally {
             if (lookupSession != null) {
                 lookupSession.logout();

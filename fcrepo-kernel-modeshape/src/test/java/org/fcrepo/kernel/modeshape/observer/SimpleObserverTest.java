@@ -33,7 +33,9 @@ import javax.jcr.nodetype.NodeType;
 import javax.jcr.observation.EventIterator;
 import javax.jcr.observation.ObservationManager;
 
+import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
+import org.fcrepo.kernel.modeshape.FedoraRepositoryImpl;
 import org.fcrepo.kernel.modeshape.observer.eventmappings.OneToOne;
 
 import org.junit.Before;
@@ -57,6 +59,8 @@ import com.google.common.eventbus.EventBus;
 public class SimpleObserverTest {
 
     private SimpleObserver testObserver;
+
+    private FedoraRepository testRepository;
 
     @Mock
     private ObservationManager mockOM;
@@ -100,7 +104,7 @@ public class SimpleObserverTest {
         when(mockSession.getWorkspace()).thenReturn(mockWS);
         when(mockWS.getNamespaceRegistry()).thenReturn(mockNS);
         testObserver = new SimpleObserver();
-        setField(testObserver, "repository", mockRepository);
+        setField(testObserver, "repository", new FedoraRepositoryImpl(mockRepository));
         setField(testObserver, "eventMapper", new OneToOne());
         setField(testObserver, "eventFilter", (EventFilter) x -> true);
         setField(testObserver, "eventBus", mockBus);

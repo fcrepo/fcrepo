@@ -49,8 +49,10 @@ import javax.jcr.query.RowIterator;
 import javax.jcr.query.qom.QueryObjectModel;
 import javax.jcr.query.qom.QueryObjectModelFactory;
 
+import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.services.RepositoryService;
+import org.fcrepo.kernel.modeshape.FedoraRepositoryImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -74,6 +76,8 @@ public class RepositoryServiceImplTest implements FedoraTypes {
     private static final Long EXPECTED_COUNT = 0L;
 
     private RepositoryService testObj;
+
+    private FedoraRepository testRepo;
 
     @Mock
     private Repository mockRepo;
@@ -138,6 +142,7 @@ public class RepositoryServiceImplTest implements FedoraTypes {
         final String relPath = "/" + TESTPID + "/" + TESTDSID;
         final String[] mockPrefixes = {MOCKPREFIX};
         expectedNS = new HashMap<>();
+        testRepo = new FedoraRepositoryImpl(mockRepo);
         try {
             when(mockSession.getRootNode()).thenReturn(mockRootNode);
             when(mockRootNode.getNode(relPath)).thenReturn(mockDsNode);
@@ -146,7 +151,7 @@ public class RepositoryServiceImplTest implements FedoraTypes {
             when(mockRepo.login()).thenReturn(mockSession);
 
             testObj = new RepositoryServiceImpl();
-            setField(testObj, "repo", mockRepo);
+            setField(testObj, "repository", testRepo);
 
             when(mockSession.getNode("/objects")).thenReturn(mockRootNode);
             when(mockRootNode.getNodes()).thenReturn(mockNI);

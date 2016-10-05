@@ -19,14 +19,12 @@ package org.fcrepo.http.api;
 
 import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
-import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import java.net.URISyntaxException;
@@ -50,17 +48,23 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.SecurityContext;
 
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.api.services.ContainerService;
+import org.fcrepo.kernel.api.services.BatchService;
 import org.fcrepo.kernel.api.services.VersionService;
+import org.fcrepo.kernel.modeshape.FedoraSessionImpl;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.sparql.util.Context;
@@ -71,9 +75,12 @@ import org.apache.jena.sparql.util.Context;
  *
  * @author awoods
  */
+@RunWith(MockitoJUnitRunner.class)
 public class FedoraNodesTest {
 
     FedoraNodes testObj;
+
+    FedoraSession testSession;
 
     @Mock
     private ContainerService mockObjects;
@@ -96,6 +103,7 @@ public class FedoraNodesTest {
     @Mock
     private FedoraResource mockResource;
 
+    @Mock
     Session mockSession;
 
     @Mock
@@ -119,28 +127,35 @@ public class FedoraNodesTest {
     private UriInfo mockUriInfo;
 
     @Mock
+    private BatchService mockTxService;
+
+    @Mock
     private Value mockValue;
 
     @Mock
     private ValueFactory mockValueFactory;
 
+    @Mock
+    private SecurityContext mockSecurityContext;
+
     private String path = "/some/path";
 
     @Before
     public void setUp() throws Exception {
-        initMocks(this);
         testObj = new FedoraNodes(path);
+        testSession = new FedoraSessionImpl(mockSession);
 
         setField(testObj, "request", mockRequest);
         setField(testObj, "servletResponse", mockResponse);
         setField(testObj, "uriInfo", mockUriInfo);
         setField(testObj, "nodeService", mockNodes);
         setField(testObj, "versionService", mockVersions);
+        setField(testObj, "batchService", mockTxService);
         this.mockUriInfo = getUriInfoImpl();
         setField(testObj, "pidMinter", mockPidMinter);
         setField(testObj, "containerService", mockObjects);
-        mockSession = mockSession(testObj);
-        setField(testObj, "session", mockSession);
+        setField(testObj, "session", testSession);
+        setField(testObj, "securityContext", mockSecurityContext);
         final Workspace mockWorkspace = mock(Workspace.class);
         when(mockWorkspace.getName()).thenReturn("default");
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
@@ -154,8 +169,8 @@ public class FedoraNodesTest {
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockSession.getNode(path)).thenReturn(mockNode);
 
-        setField(testObj, "idTranslator",
-                new HttpResourceConverter(mockSession, UriBuilder.fromUri("http://localhost/fcrepo/{path: .*}")));
+        setField(testObj, "idTranslator", new HttpResourceConverter(testSession,
+                    UriBuilder.fromUri("http://localhost/fcrepo/{path: .*}"), false));
     }
 
     @Test
@@ -163,11 +178,11 @@ public class FedoraNodesTest {
 
         final ValueFactory mockVF = mock(ValueFactory.class);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
-        when(mockNodes.exists(mockSession, path)).thenReturn(true);
+        when(mockNodes.exists(testSession, path)).thenReturn(true);
         when(mockContainer.getPath()).thenReturn(path);
 
         testObj.copyObject("http://localhost/fcrepo/bar");
-        verify(mockNodes).copyObject(mockSession, path, "/bar");
+        verify(mockNodes).copyObject(testSession, path, "/bar");
     }
 
     @Test(expected = ClientErrorException.class)
@@ -175,7 +190,7 @@ public class FedoraNodesTest {
 
         final ValueFactory mockVF = mock(ValueFactory.class);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
-        when(mockNodes.exists(mockSession, path)).thenReturn(false);
+        when(mockNodes.exists(testSession, path)).thenReturn(false);
 
         testObj.copyObject("http://localhost/fcrepo/bar");
     }
@@ -184,7 +199,7 @@ public class FedoraNodesTest {
     public void testCopyObjectWithBadDestination() throws RepositoryException, URISyntaxException {
         final ValueFactory mockVF = mock(ValueFactory.class);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
-        when(mockNodes.exists(mockSession, path)).thenReturn(true);
+        when(mockNodes.exists(testSession, path)).thenReturn(true);
 
         testObj.copyObject("http://somewhere/else/baz");
 
@@ -194,9 +209,9 @@ public class FedoraNodesTest {
     public void testCopyObjectToExistingDestination() throws RepositoryException, URISyntaxException {
         final ValueFactory mockVF = mock(ValueFactory.class);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
-        when(mockNodes.exists(mockSession, path)).thenReturn(true);
+        when(mockNodes.exists(testSession, path)).thenReturn(true);
         doThrow(new RepositoryRuntimeException(new ItemExistsException()))
-                .when(mockNodes).copyObject(mockSession, path, "/baz");
+                .when(mockNodes).copyObject(testSession, path, "/baz");
 
         final Response response = testObj.copyObject("http://localhost/fcrepo/baz");
 
@@ -206,24 +221,24 @@ public class FedoraNodesTest {
     @Test
     public void testMoveObject() throws RepositoryException, URISyntaxException {
         final ValueFactory mockVF = mock(ValueFactory.class);
-        when(mockNodes.find(isA(Session.class), isA(String.class)))
+        when(mockNodes.find(isA(FedoraSession.class), isA(String.class)))
             .thenReturn(mockContainer);
         when(mockContainer.getEtagValue()).thenReturn("");
         when(mockContainer.getPath()).thenReturn(path);
 
         when(mockSession.getValueFactory()).thenReturn(mockVF);
-        when(mockNodes.exists(mockSession, path)).thenReturn(true);
+        when(mockNodes.exists(testSession, path)).thenReturn(true);
 
         testObj.moveObject("http://localhost/fcrepo/bar");
-        verify(mockNodes).moveObject(mockSession, path, "/bar");
+        verify(mockNodes).moveObject(testSession, path, "/bar");
     }
 
     @Test(expected = ClientErrorException.class)
     public void testMoveMissingObject() throws RepositoryException, URISyntaxException {
         final ValueFactory mockVF = mock(ValueFactory.class);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
-        when(mockNodes.exists(mockSession, path)).thenReturn(false);
-        when(mockNodes.find(isA(Session.class), isA(String.class)))
+        when(mockNodes.exists(testSession, path)).thenReturn(false);
+        when(mockNodes.find(isA(FedoraSession.class), isA(String.class)))
             .thenReturn(mockContainer);
         when(mockContainer.getEtagValue()).thenReturn("");
 
@@ -234,12 +249,12 @@ public class FedoraNodesTest {
     public void testMoveObjectToExistingDestination() throws RepositoryException, URISyntaxException {
         final ValueFactory mockVF = mock(ValueFactory.class);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
-        when(mockNodes.exists(mockSession, path)).thenReturn(true);
-        when(mockNodes.find(isA(Session.class), isA(String.class)))
+        when(mockNodes.exists(testSession, path)).thenReturn(true);
+        when(mockNodes.find(isA(FedoraSession.class), isA(String.class)))
             .thenReturn(mockContainer);
         when(mockContainer.getEtagValue()).thenReturn("");
         doThrow(new RepositoryRuntimeException(new ItemExistsException()))
-                .when(mockNodes).moveObject(mockSession, path, "/baz");
+                .when(mockNodes).moveObject(testSession, path, "/baz");
 
         final Response response = testObj.moveObject("http://localhost/fcrepo/baz");
 
@@ -250,9 +265,9 @@ public class FedoraNodesTest {
     public void testMoveObjectWithBadDestination() throws RepositoryException, URISyntaxException {
         final ValueFactory mockVF = mock(ValueFactory.class);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
-        when(mockNodes.find(isA(Session.class), isA(String.class)))
+        when(mockNodes.find(isA(FedoraSession.class), isA(String.class)))
             .thenReturn(mockContainer);
-        when(mockNodes.exists(mockSession, path)).thenReturn(true);
+        when(mockNodes.exists(testSession, path)).thenReturn(true);
         when(mockContainer.getEtagValue()).thenReturn("");
 
         testObj.moveObject("http://somewhere/else/baz");

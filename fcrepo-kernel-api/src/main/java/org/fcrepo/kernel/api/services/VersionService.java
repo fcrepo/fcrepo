@@ -17,7 +17,7 @@
  */
 package org.fcrepo.kernel.api.services;
 
-import javax.jcr.Session;
+import org.fcrepo.kernel.api.FedoraSession;
 
 /**
  * @author bbpennel
@@ -33,7 +33,7 @@ public interface VersionService {
      * @param label a label to be applied to the new version
      * @return the identifier
      */
-    String createVersion(Session session, String absPath, String label);
+    String createVersion(FedoraSession session, String absPath, String label);
 
     /**
      * Reverts the node to the version identified by the label.  This method
@@ -44,7 +44,7 @@ public interface VersionService {
      * @param absPath the path to the node whose version is to be reverted
      * @param label identifies the historic version
      */
-    void revertToVersion(Session session, String absPath, String label);
+    void revertToVersion(FedoraSession session, String absPath, String label);
 
     /**
      * Remove a version of a node.  This method will throw a PathNotFoundException
@@ -54,6 +54,6 @@ public interface VersionService {
      * @param absPath the path to the node whose version is to be removed
      * @param label identifies the historic version by label or id
      */
-    void removeVersion(Session session, String absPath, String label);
+    void removeVersion(FedoraSession session, String absPath, String label);
 
 }

@@ -29,10 +29,12 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.exception.TombstoneException;
 import org.fcrepo.kernel.api.services.ContainerService;
+import org.fcrepo.kernel.modeshape.FedoraSessionImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -64,9 +66,12 @@ public class ContainerServiceImplTest implements FedoraTypes {
 
     private final String testPath = "/foo";
 
+    private FedoraSession testSession;
+
     @Before
     public void setUp() throws RepositoryException {
         testObj = new ContainerServiceImpl();
+        testSession = new FedoraSessionImpl(mockSession);
         when(mockSession.getRootNode()).thenReturn(mockRoot);
         when(mockSession.nodeExists("/")).thenReturn(true);
         when(mockSession.getNode("/")).thenReturn(mockRoot);
@@ -77,7 +82,7 @@ public class ContainerServiceImplTest implements FedoraTypes {
 
     @Test
     public void testCreateObject() {
-        final Node actual = getJcrNode(testObj.findOrCreate(mockSession, testPath));
+        final Node actual = getJcrNode(testObj.findOrCreate(testSession, testPath));
         assertEquals(mockNode, actual);
     }
 
@@ -90,7 +95,7 @@ public class ContainerServiceImplTest implements FedoraTypes {
         when(mockNode.getDepth()).thenReturn(1);
         when(mockNode.isNew()).thenReturn(true);
 
-        final Node actual = getJcrNode(testObj.findOrCreate(mockSession, "/foo/bar"));
+        final Node actual = getJcrNode(testObj.findOrCreate(testSession, "/foo/bar"));
         assertEquals(mockNode, actual);
         verify(mockParent).addMixin(FedoraTypes.FEDORA_PAIRTREE);
     }
@@ -106,7 +111,7 @@ public class ContainerServiceImplTest implements FedoraTypes {
         when(mockNode.isNew()).thenReturn(true);
         when(mockNode.getDepth()).thenReturn(1);
 
-        final Node actual = getJcrNode(testObj.findOrCreate(mockSession, "/foo/bar"));
+        final Node actual = getJcrNode(testObj.findOrCreate(testSession, "/foo/bar"));
         assertEquals(mockNode, actual);
         verify(mockParent, never()).addMixin(FedoraTypes.FEDORA_PAIRTREE);
     }
@@ -117,7 +122,7 @@ public class ContainerServiceImplTest implements FedoraTypes {
         final String testPath = "/foo";
         when(mockSession.getNode(testPath)).thenReturn(mockNode);
         when(mockJcrTools.findOrCreateNode(mockSession, "/foo", NT_FOLDER, NT_FOLDER)).thenReturn(mockNode);
-        final Container actual = testObj.findOrCreate(mockSession, "/foo");
+        final Container actual = testObj.findOrCreate(testSession, "/foo");
         assertEquals(mockNode, getJcrNode(actual));
     }
 
@@ -133,7 +138,7 @@ public class ContainerServiceImplTest implements FedoraTypes {
         when(mockRoot.getNode("foo/bar")).thenReturn(mockNode);
         when(mockNode.isNew()).thenReturn(true);
 
-        testObj.findOrCreate(mockSession, "/foo/bar");
+        testObj.findOrCreate(testSession, "/foo/bar");
 
     }
 

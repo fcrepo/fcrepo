@@ -17,6 +17,7 @@
  */
 package org.fcrepo.http.commons;
 
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.http.commons.session.SessionProvider;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.filter.LoggingFilter;
@@ -27,7 +28,6 @@ import org.glassfish.jersey.process.internal.RequestScoped;
 
 import com.codahale.metrics.jersey2.InstrumentedResourceMethodApplicationListener;
 import com.codahale.metrics.MetricRegistry;
-import javax.jcr.Session;
 
 import java.util.logging.Logger;
 
@@ -63,7 +63,7 @@ public class FedoraApplication extends ResourceConfig {
         @Override
         protected void configure() {
             bindFactory(SessionProvider.class)
-                    .to(Session.class)
+                    .to(FedoraSession.class)
                     .in(RequestScoped.class);
         }
     }

@@ -22,7 +22,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -34,21 +33,28 @@ import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionIterator;
 import javax.jcr.version.VersionManager;
 
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.services.VersionService;
+import org.fcrepo.kernel.modeshape.FedoraSessionImpl;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 /**
  * @author Mike Durbin
  */
+@RunWith(MockitoJUnitRunner.class)
 public class VersionServiceImplTest {
 
     public static final String EXAMPLE_VERSIONED_PATH = "/example-versioned";
     public static final String EXAMPLE_UNVERSIONED_PATH = "/example-unversioned";
 
     private VersionService testObj;
+
+    private FedoraSession testSession;
 
     @Mock
     private Session mockSession;
@@ -59,23 +65,19 @@ public class VersionServiceImplTest {
     @Mock
     private VersionManager mockVM;
 
+    @Mock
+    private Node unversionedNode;
 
     @Before
     public void setup() throws Exception {
-        initMocks(this);
         testObj = new VersionServiceImpl();
+        testSession = new FedoraSessionImpl(mockSession);
 
-        mockSession = mock(Session.class);
-        mockWorkspace = mock(Workspace.class);
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getSession()).thenReturn(mockSession);
         when(mockWorkspace.getName()).thenReturn("default");
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
-        mockVM = mock(VersionManager.class);
         when(mockWorkspace.getVersionManager()).thenReturn(mockVM);
-
-        // add a node that's unversioned
-        final Node unversionedNode = mock(Node.class);
         when(unversionedNode.getPath()).thenReturn(EXAMPLE_UNVERSIONED_PATH);
         when(unversionedNode.getSession()).thenReturn(mockSession);
         when(unversionedNode.isNodeType(VERSIONABLE))
@@ -98,7 +100,7 @@ public class VersionServiceImplTest {
         when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
         when(mockVersionManager.getVersionHistory(EXAMPLE_VERSIONED_PATH)).thenReturn(mockHistory);
 
-        testObj.revertToVersion(mockSession, EXAMPLE_VERSIONED_PATH, versionLabel);
+        testObj.revertToVersion(testSession, EXAMPLE_VERSIONED_PATH, versionLabel);
         verify(mockVersionManager).restore(mockVersion1, true);
 
         verify(mockVersionManager, never()).checkpoint(EXAMPLE_VERSIONED_PATH);
@@ -117,7 +119,7 @@ public class VersionServiceImplTest {
         when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
         when(mockVersionManager.getVersionHistory(EXAMPLE_VERSIONED_PATH)).thenReturn(mockHistory);
 
-        testObj.revertToVersion(mockSession, EXAMPLE_VERSIONED_PATH, versionUUID);
+        testObj.revertToVersion(testSession, EXAMPLE_VERSIONED_PATH, versionUUID);
     }
 
     @Test
@@ -143,7 +145,7 @@ public class VersionServiceImplTest {
         when(mockVersion1.getIdentifier()).thenReturn(versionUUID);
         when(mockVersion1.getName()).thenReturn(versionName);
 
-        testObj.removeVersion(mockSession, "/example", versionLabel);
+        testObj.removeVersion(testSession, "/example", versionLabel);
         verify(mockHistory).removeVersion(versionName);
         verify(mockHistory).removeVersionLabel(versionLabel);
         verify(mockVersionManager, never()).checkpoint("/example");
@@ -162,7 +164,7 @@ public class VersionServiceImplTest {
         when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
         when(mockVersionManager.getVersionHistory("/example")).thenReturn(mockHistory);
 
-        testObj.removeVersion(mockSession, "/example", versionUUID);
+        testObj.removeVersion(testSession, "/example", versionUUID);
     }
 
     @Test
@@ -171,7 +173,7 @@ public class VersionServiceImplTest {
         final VersionHistory mockHistory = mock(VersionHistory.class);
         when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
         when(mockVersionManager.getVersionHistory(EXAMPLE_UNVERSIONED_PATH)).thenReturn(mockHistory);
-        testObj.createVersion(mockSession, EXAMPLE_UNVERSIONED_PATH, "LABEL");
+        testObj.createVersion(testSession, EXAMPLE_UNVERSIONED_PATH, "LABEL");
 
         final Node unversionedNode = mockSession.getNode(EXAMPLE_UNVERSIONED_PATH);
         verify(unversionedNode).isNodeType(VERSIONABLE);

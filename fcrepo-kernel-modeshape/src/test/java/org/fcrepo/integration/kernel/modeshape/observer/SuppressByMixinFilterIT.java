@@ -23,6 +23,7 @@ import static com.jayway.awaitility.Duration.ONE_SECOND;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -31,11 +32,11 @@ import java.util.HashSet;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.jcr.Node;
-import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.integration.kernel.modeshape.AbstractIT;
+import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
 import org.junit.After;
 import org.junit.Before;
@@ -57,7 +58,7 @@ import com.google.common.eventbus.Subscribe;
 public class SuppressByMixinFilterIT extends AbstractIT {
 
     @Inject
-    private Repository repository;
+    private FedoraRepository repository;
 
     @Inject
     private EventBus eventBus;
@@ -67,7 +68,7 @@ public class SuppressByMixinFilterIT extends AbstractIT {
     @Test
     public void shouldSuppressWithMixin() throws RepositoryException {
 
-        final Session se = repository.login();
+        final Session se = getJcrSession(repository.login());
         try {
             // add node with suppressed mixin ldp:DirectContainer
             final Node node = se.getRootNode().addNode("/object1");
@@ -89,7 +90,7 @@ public class SuppressByMixinFilterIT extends AbstractIT {
     @Test
     public void shouldAllowWithoutMixin() throws RepositoryException {
 
-        final Session se = repository.login();
+        final Session se = getJcrSession(repository.login());
         try {
             se.getRootNode().addNode("/object3").addMixin(FEDORA_CONTAINER);
             se.save();

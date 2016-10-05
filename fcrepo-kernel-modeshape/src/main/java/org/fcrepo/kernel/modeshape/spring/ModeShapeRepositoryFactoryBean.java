@@ -26,7 +26,9 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 
+import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.modeshape.FedoraRepositoryImpl;
 import org.modeshape.jcr.JcrRepository;
 import org.modeshape.jcr.ModeShapeEngine;
 import org.modeshape.jcr.NoSuchRepositoryException;
@@ -43,7 +45,7 @@ import org.springframework.core.io.Resource;
  * @since Feb 7, 2013
  */
 public class ModeShapeRepositoryFactoryBean implements
-        FactoryBean<JcrRepository> {
+        FactoryBean<FedoraRepository> {
 
     private static final Logger LOGGER =
             getLogger(ModeShapeRepositoryFactoryBean.class);
@@ -119,13 +121,13 @@ public class ModeShapeRepositoryFactoryBean implements
     }
 
     @Override
-    public JcrRepository getObject() {
-        return repository;
+    public FedoraRepository getObject() {
+        return new FedoraRepositoryImpl(repository);
     }
 
     @Override
     public Class<?> getObjectType() {
-        return JcrRepository.class;
+        return FedoraRepository.class;
     }
 
     @Override

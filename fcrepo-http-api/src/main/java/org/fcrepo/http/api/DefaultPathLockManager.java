@@ -28,8 +28,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import javax.jcr.Session;
-
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.InterruptedRuntimeException;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.slf4j.Logger;
@@ -331,7 +330,7 @@ public class DefaultPathLockManager implements PathLockManager {
     }
 
     @Override
-    public AcquiredLock lockForWrite(final String path, final Session session, final NodeService nodeService) {
+    public AcquiredLock lockForWrite(final String path, final FedoraSession session, final NodeService nodeService) {
         final List<ActivePath.PathScopedLock> locks = new ArrayList<>();
 
         synchronized (this) {

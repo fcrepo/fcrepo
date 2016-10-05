@@ -30,7 +30,6 @@ import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.services.BinaryService;
-import org.fcrepo.kernel.api.services.NamespaceService;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.api.services.ContainerService;
 import org.fcrepo.kernel.api.services.VersionService;
@@ -86,12 +85,6 @@ public class AbstractResource {
      */
     @Inject
     protected VersionService versionService;
-
-    /**
-     * The namespace service
-     */
-    @Inject
-    protected NamespaceService namespaceService;
 
     @Inject
     @Optional

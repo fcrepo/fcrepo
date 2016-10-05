@@ -17,12 +17,14 @@
  */
 package org.fcrepo.kernel.modeshape.spring;
 
+import static org.fcrepo.kernel.modeshape.FedoraRepositoryImpl.getJcrRepository;
 import static org.fcrepo.kernel.modeshape.utils.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
+import org.fcrepo.kernel.api.FedoraRepository;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -75,12 +77,12 @@ public class ModeShapeRepositoryFactoryBeanTest {
     @Test
     public void testFactory() {
         testObj.buildRepository();
-        assertEquals(mockRepo, testObj.getObject());
+        assertEquals(mockRepo, getJcrRepository(testObj.getObject()));
     }
 
     @Test
     public void testFactoryMetadata() {
-        assertEquals(JcrRepository.class, testObj.getObjectType());
+        assertEquals(FedoraRepository.class, testObj.getObjectType());
         assertEquals(true, testObj.isSingleton());
     }
 }

@@ -17,97 +17,89 @@
  */
 package org.fcrepo.http.api;
 
+import static java.time.Instant.now;
+import static java.util.Optional.of;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
-import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import java.net.URISyntaxException;
 import java.security.Principal;
 
-import javax.jcr.Session;
-import javax.jcr.Workspace;
-import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 
-import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.TxSession;
-import org.fcrepo.kernel.api.services.TransactionService;
-import org.fcrepo.kernel.modeshape.TxAwareSession;
+import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.services.BatchService;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
+import org.mockito.runners.MockitoJUnitRunner;
 
 /**
  * <p>FedoraTransactionsTest class.</p>
  *
  * @author awoods
  */
+@RunWith(MockitoJUnitRunner.class)
 public class FedoraTransactionsTest {
 
     private static final String USER_NAME = "test";
 
     private FedoraTransactions testObj;
 
-    private Session mockSession;
+    @Mock
+    private FedoraSession mockSession;
 
     @Mock
-    private Session regularSession;
+    private FedoraSession regularSession;
 
     @Mock
-    private Transaction mockTx;
-
-    @Mock
-    private HttpServletRequest mockRequest;
-
-    @Mock
-    private TransactionService mockTxService;
+    private BatchService mockTxService;
 
     @Mock
     private Principal mockPrincipal;
 
     @Mock
-    private Workspace mockWorkspace;
+    private SecurityContext mockSecurityContext;
 
     @Before
     public void setUp() {
-        initMocks(this);
         testObj = new FedoraTransactions();
-        final Session session = mockSession(testObj);
-        when(regularSession.getWorkspace()).thenReturn(mockWorkspace);
-        when(mockWorkspace.getName()).thenReturn("default");
-        mockSession = TxAwareSession.newInstance(session, "123");
+        when(mockSession.getId()).thenReturn("123");
+        when(mockSession.getExpires()).thenReturn(of(now().plusSeconds(100)));
+        when(regularSession.getExpires()).thenReturn(of(now().minusSeconds(100)));
         setField(testObj, "uriInfo", getUriInfoImpl());
         setField(testObj, "session", mockSession);
-        setField(testObj, "txService", mockTxService);
-
+        setField(testObj, "batchService", mockTxService);
+        setField(testObj, "securityContext", mockSecurityContext);
     }
 
     @Test
     public void shouldStartANewTransaction() throws URISyntaxException {
         setField(testObj, "session", regularSession);
-        when(mockTxService.beginTransaction(regularSession, USER_NAME)).thenReturn(mockTx);
-        when(mockRequest.getUserPrincipal()).thenReturn(mockPrincipal);
+        when(mockSecurityContext.getUserPrincipal()).thenReturn(mockPrincipal);
         when(mockPrincipal.getName()).thenReturn(USER_NAME);
-        testObj.createTransaction(null, mockRequest);
-        verify(mockTxService).beginTransaction(regularSession, USER_NAME);
+        testObj.createTransaction(null);
+        verify(mockTxService).begin(regularSession, USER_NAME);
     }
 
     @Test
     public void shouldUpdateExpiryOnExistingTransaction() throws URISyntaxException {
-        when(mockTxService.getTransaction(Mockito.any(TxSession.class))).thenReturn(mockTx);
-        testObj.createTransaction(null, mockRequest);
-        verify(mockTx).updateExpiryDate();
+        when(mockTxService.exists(any(String.class), any(String.class))).thenReturn(true);
+        testObj.createTransaction(null);
+        verify(mockTxService).refresh(any(String.class), any(String.class));
     }
 
     @Test
     public void shouldCommitATransaction() {
+        when(mockTxService.exists(any(String.class), any(String.class))).thenReturn(true);
         testObj.commit(null);
-        verify(mockTxService).commit("123");
+        verify(mockTxService).commit("123", null);
     }
 
     @Test
@@ -126,8 +118,9 @@ public class FedoraTransactionsTest {
 
     @Test
     public void shouldRollBackATransaction() {
+        when(mockTxService.exists(any(String.class), any(String.class))).thenReturn(true);
         testObj.commit(null);
-        verify(mockTxService).commit("123");
+        verify(mockTxService).commit("123", null);
     }
 
     @Test

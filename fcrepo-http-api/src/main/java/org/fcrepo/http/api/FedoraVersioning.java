@@ -55,7 +55,6 @@ import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryVersionRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
@@ -109,11 +108,8 @@ public class FedoraVersioning extends FedoraBaseResource {
     public Response enableVersioning() {
         LOGGER.info("Enable versioning for '{}'", externalPath);
         resource().enableVersioning();
-
-        try {
-            session.save();
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
+        if (!batchService.exists(session.getId(), getUserPrincipal())) {
+            session.commit();
         }
         return created(uriInfo.getRequestUri()).build();
     }
@@ -126,13 +122,9 @@ public class FedoraVersioning extends FedoraBaseResource {
     public Response disableVersioning() {
         LOGGER.info("Disable versioning for '{}'", externalPath);
         resource().disableVersioning();
-
-        try {
-            session.save();
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
+        if (!batchService.exists(session.getId(), getUserPrincipal())) {
+            session.commit();
         }
-
         return noContent().build();
     }
 
@@ -142,8 +134,8 @@ public class FedoraVersioning extends FedoraBaseResource {
      * reassigned to describe this version.
      *
      * @param slug the value of slug
+     * @throws RepositoryException the exception
      * @return response
-     * @throws RepositoryException if repository exception occurred
      */
     @POST
     public Response addVersion(@HeaderParam("Slug") final String slug) throws RepositoryException {
@@ -176,7 +168,7 @@ public class FedoraVersioning extends FedoraBaseResource {
         return new RdfNamespacedStream(new DefaultRdfStream(
                 asNode(resource()),
                 resource().getTriples(translator(), VERSIONS)),
-                namespaceService.getNamespaces(session()));
+                session().getNamespaces());
     }
 
     protected FedoraResource resource() {

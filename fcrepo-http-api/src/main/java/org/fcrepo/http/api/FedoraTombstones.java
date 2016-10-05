@@ -19,11 +19,9 @@ package org.fcrepo.http.api;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
-import javax.jcr.RepositoryException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -71,10 +69,8 @@ public class FedoraTombstones extends FedoraBaseResource {
         LOGGER.info("Delete tombstone: {}", resource());
         resource().delete();
 
-        try {
-            session.save();
-        } catch (RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
+        if (!batchService.exists(session.getId(), getUserPrincipal())) {
+            session.commit();
         }
 
         return noContent().build();

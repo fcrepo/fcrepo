@@ -23,9 +23,8 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
 
-import javax.jcr.Session;
-
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.InterruptedRuntimeException;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.junit.Before;
@@ -50,7 +49,7 @@ public class DefaultPathLockManagerTest {
     public static final int WAIT = 1000;
 
     @Mock
-    private Session session;
+    private FedoraSession session;
 
     @Mock
     private NodeService nodeService;

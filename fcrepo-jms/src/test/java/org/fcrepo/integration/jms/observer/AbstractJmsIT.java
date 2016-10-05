@@ -33,24 +33,28 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_CREATION;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_DELETION;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_MODIFICATION;
+import static org.fcrepo.kernel.api.observer.OptionalValues.BASE_URL;
+import static org.fcrepo.kernel.api.observer.OptionalValues.USER_AGENT;
+import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.ByteArrayInputStream;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import javax.inject.Inject;
-import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 import javax.jms.Connection;
 import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageListener;
+import javax.jms.Session;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 
+import org.fcrepo.kernel.api.FedoraRepository;
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.observer.EventType;
@@ -89,9 +93,11 @@ abstract class AbstractJmsIT implements MessageListener {
     private static final String RESOURCE_CREATION_EVENT_TYPE = EventType.RESOURCE_CREATION.getType();
     private static final String RESOURCE_DELETION_EVENT_TYPE = EventType.RESOURCE_DELETION.getType();
     private static final String RESOURCE_MODIFICATION_EVENT_TYPE = EventType.RESOURCE_MODIFICATION.getType();
+    private static final String TEST_USER_AGENT = "FedoraClient/1.0";
+    private static final String TEST_BASE_URL = "http://localhost:8080/rest";
 
     @Inject
-    private Repository repository;
+    private FedoraRepository repository;
 
     @Inject
     private BinaryService binaryService;
@@ -104,7 +110,7 @@ abstract class AbstractJmsIT implements MessageListener {
 
     private Connection connection;
 
-    protected javax.jms.Session session;
+    protected Session jmsSession;
 
     private MessageConsumer consumer;
 
@@ -119,61 +125,68 @@ abstract class AbstractJmsIT implements MessageListener {
 
         LOGGER.debug("Expecting a {} event", RESOURCE_CREATION.getType());
 
-        final Session session = repository.login();
+        final FedoraSession session = repository.login();
+        session.addSessionData(BASE_URL, TEST_BASE_URL);
+        session.addSessionData(USER_AGENT, TEST_USER_AGENT);
+
         try {
             containerService.findOrCreate(session, testIngested);
-            session.save();
+            session.commit();
             awaitMessageOrFail(testIngested, RESOURCE_CREATION.getType(), null);
         } finally {
-            session.logout();
+            session.expire();
         }
     }
 
     @Test(timeout = TIMEOUT)
     public void testFileEvents() throws InvalidChecksumException, RepositoryException {
 
-        final Session session = repository.login();
+        final FedoraSession session = repository.login();
+        session.addSessionData(BASE_URL, TEST_BASE_URL);
+        session.addSessionData(USER_AGENT, TEST_USER_AGENT);
 
         try {
             binaryService.findOrCreate(session, testFile)
                 .setContent(new ByteArrayInputStream("foo".getBytes()), "text/plain", null, null, null);
-            session.save();
+            session.commit();
             awaitMessageOrFail(testFile, RESOURCE_CREATION.getType(), REPOSITORY_NAMESPACE + "Binary");
 
             binaryService.find(session, testFile)
                 .setContent(new ByteArrayInputStream("barney".getBytes()), "text/plain", null, null, null);
-            session.save();
+            session.commit();
             awaitMessageOrFail(testFile, RESOURCE_MODIFICATION.getType(), REPOSITORY_NAMESPACE + "Binary");
 
             binaryService.find(session, testFile).delete();
-            session.save();
+            session.commit();
             awaitMessageOrFail(testFile, RESOURCE_DELETION.getType(), null);
         } finally {
-            session.logout();
+            session.expire();
         }
     }
 
     @Test(timeout = TIMEOUT)
     public void testMetadataEvents() throws RepositoryException {
 
-        final Session session = repository.login();
-        final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator(session);
+        final FedoraSession session = repository.login();
+        session.addSessionData(BASE_URL, TEST_BASE_URL);
+        session.addSessionData(USER_AGENT, TEST_USER_AGENT);
+        final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator(getJcrSession(session));
 
         try {
             final FedoraResource resource1 = containerService.findOrCreate(session, testMeta);
             final String sparql1 = "insert data { <> <http://foo.com/prop> \"foo\" . }";
             resource1.updateProperties(subjects, sparql1, resource1.getTriples(subjects, PROPERTIES));
-            session.save();
+            session.commit();
             awaitMessageOrFail(testMeta, RESOURCE_MODIFICATION.getType(), REPOSITORY_NAMESPACE + "Container");
 
             final FedoraResource resource2 = containerService.findOrCreate(session, testMeta);
             final String sparql2 = " delete { <> <http://foo.com/prop> \"foo\" . } "
                 + "insert { <> <http://foo.com/prop> \"bar\" . } where {}";
             resource2.updateProperties(subjects, sparql2, resource2.getTriples(subjects, PROPERTIES));
-            session.save();
+            session.commit();
             awaitMessageOrFail(testMeta, RESOURCE_MODIFICATION.getType(), REPOSITORY_NAMESPACE + "Resource");
         } finally {
-            session.logout();
+            session.expire();
         }
     }
 
@@ -192,15 +205,18 @@ abstract class AbstractJmsIT implements MessageListener {
     public void testRemoval() throws RepositoryException {
 
         LOGGER.debug("Expecting a {} event", RESOURCE_DELETION.getType());
-        final Session session = repository.login();
+        final FedoraSession session = repository.login();
+        session.addSessionData(BASE_URL, TEST_BASE_URL);
+        session.addSessionData(USER_AGENT, TEST_USER_AGENT);
+
         try {
             final Container resource = containerService.findOrCreate(session, testRemoved);
-            session.save();
+            session.commit();
             resource.delete();
-            session.save();
+            session.commit();
             awaitMessageOrFail(testRemoved, RESOURCE_DELETION.getType(), null);
         } finally {
-            session.logout();
+            session.expire();
         }
     }
 
@@ -222,8 +238,8 @@ abstract class AbstractJmsIT implements MessageListener {
         LOGGER.debug(this.getClass().getName() + " acquiring JMS connection.");
         connection = connectionFactory.createConnection();
         connection.start();
-        session = connection.createSession(false, AUTO_ACKNOWLEDGE);
-        consumer = session.createConsumer(createDestination());
+        jmsSession = connection.createSession(false, AUTO_ACKNOWLEDGE);
+        consumer = jmsSession.createConsumer(createDestination());
         messages.clear();
         consumer.setMessageListener(this);
     }
@@ -235,7 +251,7 @@ abstract class AbstractJmsIT implements MessageListener {
         // and shut the listening machinery down
         LOGGER.debug(this.getClass().getName() + " releasing JMS connection.");
         consumer.close();
-        session.close();
+        jmsSession.close();
         connection.close();
     }
 

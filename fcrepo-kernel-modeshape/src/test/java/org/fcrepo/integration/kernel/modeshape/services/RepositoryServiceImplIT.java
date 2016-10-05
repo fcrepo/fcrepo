@@ -26,11 +26,11 @@ import java.io.File;
 import java.util.Collection;
 
 import javax.inject.Inject;
-import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 
 import org.fcrepo.integration.kernel.modeshape.AbstractIT;
+import org.fcrepo.kernel.api.FedoraRepository;
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.RepositoryService;
@@ -48,7 +48,7 @@ import org.springframework.test.context.ContextConfiguration;
 public class RepositoryServiceImplIT extends AbstractIT {
 
     @Inject
-    private Repository repository;
+    private FedoraRepository repository;
 
     @Inject
     private RepositoryService repositoryService;
@@ -59,7 +59,7 @@ public class RepositoryServiceImplIT extends AbstractIT {
     @Test
     public void testGetAllObjectsDatastreamSize() throws RepositoryException, InvalidChecksumException {
         final long originalSize;
-        Session session = repository.login();
+        FedoraSession session = repository.login();
         try {
             originalSize = repositoryService.getRepositorySize();
             binaryService.findOrCreate(session, "/testObjectServiceNode").setContent(
@@ -69,22 +69,22 @@ public class RepositoryServiceImplIT extends AbstractIT {
                     null,
                     null
                     );
-            session.save();
+            session.commit();
         } finally {
-            session.logout();
+            session.expire();
         }
         try {
             session = repository.login();
             final long afterSize = repositoryService.getRepositorySize();
             assertEquals(4L, afterSize - originalSize);
         } finally {
-            session.logout();
+            session.expire();
         }
     }
 
     @Test
     public void testBackupRepository() throws Exception {
-        final Session session = repository.login();
+        final FedoraSession session = repository.login();
         try {
             binaryService.findOrCreate(session, "/testObjectServiceNode0").setContent(
                     new ByteArrayInputStream("asdfx".getBytes()),
@@ -93,18 +93,18 @@ public class RepositoryServiceImplIT extends AbstractIT {
                     null,
                     null
                     );
-            session.save();
+            session.commit();
             final File backupDirectory = createTempDir();
             final Collection<Throwable> problems = repositoryService.backupRepository(session, backupDirectory);
             assertTrue(problems.isEmpty());
         } finally {
-            session.logout();
+            session.expire();
         }
     }
 
     @Test
     public void testRestoreRepository() throws Exception {
-        final Session session = repository.login();
+        final FedoraSession session = repository.login();
         try {
             binaryService.findOrCreate(session, "/testObjectServiceNode1").setContent(
                     new ByteArrayInputStream("asdfy".getBytes()),
@@ -114,13 +114,13 @@ public class RepositoryServiceImplIT extends AbstractIT {
                     null
                     );
 
-            session.save();
+            session.commit();
             final File backupDirectory = createTempDir();
             repositoryService.backupRepository(session, backupDirectory);
             final Collection<Throwable> problems = repositoryService.restoreRepository(session, backupDirectory);
             assertTrue(problems.isEmpty());
         } finally {
-            session.logout();
+            session.expire();
         }
     }
 }

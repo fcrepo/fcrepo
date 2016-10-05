@@ -39,6 +39,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 public class JmsQueueIT extends AbstractJmsIT {
 
     protected Destination createDestination() throws JMSException {
-        return session.createQueue("fcrepo-queue");
+        return jmsSession.createQueue("fcrepo-queue");
     }
 }

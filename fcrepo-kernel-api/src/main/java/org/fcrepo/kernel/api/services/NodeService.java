@@ -17,8 +17,7 @@
  */
 package org.fcrepo.kernel.api.services;
 
-import javax.jcr.Session;
-
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.models.FedoraResource;
 
 /**
@@ -32,7 +31,7 @@ public interface NodeService extends Service<FedoraResource> {
      * @param source the source
      * @param destination the destination
      */
-    void copyObject(Session session, String source, String destination);
+    void copyObject(FedoraSession session, String source, String destination);
 
     /**
      * Move an existing object from the source path to the destination path
@@ -40,5 +39,5 @@ public interface NodeService extends Service<FedoraResource> {
      * @param source the source
      * @param destination the destination
      */
-    void moveObject(Session session, String source, String destination);
+    void moveObject(FedoraSession session, String source, String destination);
 }

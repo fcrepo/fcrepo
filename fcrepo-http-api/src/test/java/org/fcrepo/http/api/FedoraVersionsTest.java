@@ -18,19 +18,16 @@
 package org.fcrepo.http.api;
 
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
-import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
-import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
@@ -38,18 +35,22 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.Variant;
 
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.api.services.VersionService;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 /**
  * <p>FedoraVersionsTest class.</p>
  *
  * @author awoods
  */
+@RunWith(MockitoJUnitRunner.class)
 public class FedoraVersionsTest {
 
     private FedoraVersions testObj;
@@ -66,8 +67,6 @@ public class FedoraVersionsTest {
     @Mock
     private NodeType mockNodeType;
 
-    private Session mockSession;
-
     @Mock
     private FedoraResourceImpl mockResource;
 
@@ -77,14 +76,15 @@ public class FedoraVersionsTest {
     @Mock
     private Variant mockVariant;
 
+    @Mock
+    private FedoraSession mockSession;
+
     private final String path = "/some/path";
     private final String versionLabel = "someLabel";
 
     @Before
     public void setUp() throws Exception {
-        initMocks(this);
         testObj = spy(new FedoraVersions(path, versionLabel, ""));
-        mockSession = mockSession(testObj);
         setField(testObj, "nodeService", mockNodes);
         setField(testObj, "uriInfo", getUriInfoImpl());
         setField(testObj, "session", mockSession);
@@ -94,8 +94,8 @@ public class FedoraVersionsTest {
         when(mockNodeType.getName()).thenReturn("nt:folder");
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
 
-        setField(testObj, "idTranslator",
-                new HttpResourceConverter(mockSession, UriBuilder.fromUri("http://localhost/fcrepo/{path: .*}")));
+        setField(testObj, "idTranslator", new HttpResourceConverter(mockSession,
+                    UriBuilder.fromUri("http://localhost/fcrepo/{path: .*}"), false));
     }
 
     @Test

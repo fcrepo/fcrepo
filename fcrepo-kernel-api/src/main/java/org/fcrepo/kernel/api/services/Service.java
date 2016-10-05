@@ -17,7 +17,7 @@
  */
 package org.fcrepo.kernel.api.services;
 
-import javax.jcr.Session;
+import org.fcrepo.kernel.api.FedoraSession;
 
 /**
  * @author bbpennel
@@ -33,7 +33,7 @@ public interface Service<T> {
      * @param session the session
      * @return whether T exists at the given path
      */
-    public boolean exists(final Session session, final String path);
+    public boolean exists(final FedoraSession session, final String path);
     /**
      * Retrieve an existing T instance by session and path
      *
@@ -41,7 +41,7 @@ public interface Service<T> {
      * @param session the session
      * @return retrieved T
      */
-    public T find(final Session session, final String path);
+    public T find(final FedoraSession session, final String path);
     /**
      * Retrieve a T instance by session and path
      *
@@ -49,5 +49,5 @@ public interface Service<T> {
      * @param path jcr path to the node
      * @return retrieved T
      */
-    public T findOrCreate(final Session session, final String path);
+    public T findOrCreate(final FedoraSession session, final String path);
 }
