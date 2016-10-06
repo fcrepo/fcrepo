@@ -80,13 +80,13 @@
       };
       reader.readAsArrayBuffer(update_file);
     } else {
-    	const turtle = document.getElementById('turtle_payload')
-        if (turtle && turtle.value) {
-            headers.push([ 'Content-Type', 'text/turtle' ])
-            fn(method, url, headers, turtle.value)
-        } else {
-            fn(method, url, headers, null)
-        }
+      const turtle = document.getElementById('turtle_payload');
+      if (turtle && turtle.value) {
+        headers.push(['Content-Type', 'text/turtle']);
+        fn(method, url, headers, turtle.value);
+      } else {
+        fn(method, url, headers, null);
+      }
     }
   }
 
