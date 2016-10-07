@@ -17,6 +17,7 @@
  */
 package org.fcrepo.http.api.responses;
 
+import static java.lang.System.getProperty;
 import static java.util.stream.Stream.of;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML_TYPE;
@@ -121,6 +122,15 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
 
         LOGGER.trace("Velocity engine initializing...");
         final Properties properties = new Properties();
+        final String fcrepoHome = getProperty("fcrepo.home");
+        final String velocityLog = getProperty("fcrepo.velocity.runtime.log");
+        if (velocityLog != null) {
+            LOGGER.debug("Setting Velocity runtime log: {}", velocityLog);
+            properties.setProperty("runtime.log", velocityLog);
+        } else if (fcrepoHome != null) {
+            LOGGER.debug("Using fcrepo.home directory for the velocity log");
+            properties.setProperty("runtime.log", fcrepoHome + getProperty("file.separator") + "velocity.log");
+        }
         final URL propertiesUrl =
                 getClass().getResource(velocityPropertiesLocation);
         LOGGER.debug("Using Velocity configuration from {}", propertiesUrl);
