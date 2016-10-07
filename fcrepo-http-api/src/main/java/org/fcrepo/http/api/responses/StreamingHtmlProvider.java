@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 
 import javax.ws.rs.Produces;
 
-import static javax.ws.rs.core.MediaType.TEXT_HTML;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
 
 /**
  * JAX-RS provider for taking an RdfStream and returning some nice looking
@@ -30,6 +30,6 @@ import static javax.ws.rs.core.MediaType.TEXT_HTML;
  * @author ajs6f
  */
 @Component
-@Produces({TEXT_HTML})
+@Produces({TEXT_HTML_WITH_CHARSET})
 public class StreamingHtmlProvider extends StreamingBaseHtmlProvider{
 }

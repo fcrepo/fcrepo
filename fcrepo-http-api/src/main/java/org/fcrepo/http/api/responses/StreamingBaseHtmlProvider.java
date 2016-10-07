@@ -19,12 +19,12 @@ package org.fcrepo.http.api.responses;
 
 import static java.lang.System.getProperty;
 import static java.util.stream.Stream.of;
-import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
 import static com.google.common.collect.ImmutableMap.builder;
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.sparql.util.graph.GraphUtils.multiValueURI;
 import static org.apache.jena.vocabulary.RDF.type;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
@@ -73,7 +73,7 @@ import org.slf4j.Logger;
  * @since Nov 19, 2013
  */
 @Provider
-@Produces({TEXT_HTML})
+@Produces({TEXT_HTML_WITH_CHARSET})
 public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespacedStream> {
 
 
@@ -219,7 +219,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
         LOGGER.debug(
                 "Checking to see if type: {} is serializable to mimeType: {}",
                 type.getName(), mediaType);
-        return mediaType.equals(TEXT_HTML_TYPE) && RdfNamespacedStream.class.isAssignableFrom(type);
+        return isTextHtml(mediaType) && RdfNamespacedStream.class.isAssignableFrom(type);
     }
 
     @Override
@@ -234,4 +234,10 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
         return templatesLocation + "/" +
             nodeTypeName.replace(':', '-') + templateFilenameExtension;
     }
+
+    private static boolean isTextHtml(final MediaType mediaType) {
+        return mediaType.getType().equals(TEXT_HTML_TYPE.getType()) &&
+            mediaType.getSubtype().equals(TEXT_HTML_TYPE.getSubtype());
+    }
+
 }
