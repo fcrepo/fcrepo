@@ -35,6 +35,7 @@
  */
 <premis = 'http://www.loc.gov/premis/rdf/v1#'>
 <ebucore = 'http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#'>
+<iana = 'http://www.iana.org/assignments/relation/'>
 
 /*
  * Core Fedora namespaces
