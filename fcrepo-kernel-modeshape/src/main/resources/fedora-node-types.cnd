@@ -13,20 +13,35 @@
 
 /*
  * Dublin Core. See:
- * 
+ *
  * http://dublincore.org/documents/dcmi-namespace/
  */
 <dc = 'http://purl.org/dc/elements/1.1/'>
+<dcterms = 'http://purl.org/dc/terms/'>
 
 /*
- * Generic Fedora namespace
+ * Common W3C Vocabularies
  */
-<fedora = 'http://fedora.info/definitions/v4/repository#'>
+<ldp = 'http://www.w3.org/ns/ldp#'>
+<owl = 'http://www.w3.org/2002/07/owl#'>
+<prov = 'http://www.w3.org/ns/prov#'>
 <rdf = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'>
 <rdfs = 'http://www.w3.org/2000/01/rdf-schema#'>
+<skos = 'http://www.w3.org/2004/02/skos/core#'>
+<acl = 'http://www.w3.org/ns/auth/acl#'>
+
+/*
+ * Other vocabularies used by Fedora
+ */
 <premis = 'http://www.loc.gov/premis/rdf/v1#'>
-<ldp = 'http://www.w3.org/ns/ldp#'>
 <ebucore = 'http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#'>
+<iana = 'http://www.iana.org/assignments/relation/'>
+
+/*
+ * Core Fedora namespaces
+ */
+<fedora = 'http://fedora.info/definitions/v4/repository#'>
+<event = 'http://fedora.info/definitions/v4/event#'>
 
 /*
  * An implementation-specific fedora namespace for properties a user may set on a node that may
