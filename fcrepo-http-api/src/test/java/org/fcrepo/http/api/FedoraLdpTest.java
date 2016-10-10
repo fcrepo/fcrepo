@@ -758,7 +758,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testCreateNewObject() throws RepositoryException, MalformedRdfException, InvalidChecksumException,
-    InsufficientStorageException, IOException {
+           IOException {
         setResource(Container.class);
         when(mockContainerService.findOrCreate(mockSession, "/b")).thenReturn(mockContainer);
         final Response actual = testObj.createObject(null, null, "b", null, null, null);
@@ -767,7 +767,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testCreateNewObjectWithSparql() throws RepositoryException, MalformedRdfException,
-    InvalidChecksumException, InsufficientStorageException, IOException {
+           InvalidChecksumException, IOException {
 
         setResource(Container.class);
         when(mockContainerService.findOrCreate(mockSession, "/b")).thenReturn(mockContainer);
@@ -779,7 +779,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testCreateNewObjectWithRdf() throws RepositoryException, MalformedRdfException,
-    InvalidChecksumException, InsufficientStorageException, IOException {
+           InvalidChecksumException, IOException {
         setResource(Container.class);
         when(mockContainerService.findOrCreate(mockSession, "/b")).thenReturn(mockContainer);
         final Response actual = testObj.createObject(null, NTRIPLES_TYPE, "b",
@@ -791,7 +791,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testCreateNewBinary() throws RepositoryException, MalformedRdfException, InvalidChecksumException,
-            InsufficientStorageException, IOException {
+           IOException {
         setResource(Container.class);
         when(mockBinaryService.findOrCreate(mockSession, "/b")).thenReturn(mockBinary);
         try (final InputStream content = toInputStream("x")) {
@@ -803,8 +803,7 @@ public class FedoraLdpTest {
 
     @Test(expected = InsufficientStorageException.class)
     public void testCreateNewBinaryWithInsufficientResources() throws RepositoryException, MalformedRdfException,
-    InvalidChecksumException,
-    InsufficientStorageException, IOException {
+           InvalidChecksumException, IOException {
         setResource(Container.class);
         when(mockBinaryService.findOrCreate(mockSession, "/b")).thenReturn(mockBinary);
 
@@ -818,15 +817,13 @@ public class FedoraLdpTest {
                     .emptySet(),
                     "", null);
 
-            final Response actual = testObj.createObject(null, APPLICATION_OCTET_STREAM_TYPE, "b", content, null,
-                    null);
-            verify(mockBinary).setContent(content, APPLICATION_OCTET_STREAM, Collections.emptySet(), "", null);
+            testObj.createObject(null, APPLICATION_OCTET_STREAM_TYPE, "b", content, null, null);
         }
     }
 
     @Test
     public void testCreateNewBinaryWithContentTypeWithParams() throws RepositoryException, MalformedRdfException,
-    InsufficientStorageException, InvalidChecksumException, IOException {
+           InvalidChecksumException, IOException {
 
         setResource(Container.class);
         when(mockBinaryService.findOrCreate(mockSession, "/b")).thenReturn(mockBinary);
@@ -840,7 +837,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testCreateNewBinaryWithChecksumSHA() throws RepositoryException, MalformedRdfException,
-    InvalidChecksumException, InsufficientStorageException, IOException {
+           InvalidChecksumException, IOException {
 
         setResource(Container.class);
         when(mockBinaryService.findOrCreate(mockSession, "/b")).thenReturn(mockBinary);
@@ -857,7 +854,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testCreateNewBinaryWithChecksumMD5() throws RepositoryException, MalformedRdfException,
-            InvalidChecksumException, InsufficientStorageException, IOException {
+            InvalidChecksumException, IOException {
 
         setResource(Container.class);
         when(mockBinaryService.findOrCreate(mockSession, "/b")).thenReturn(mockBinary);
@@ -874,7 +871,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testCreateNewBinaryWithChecksumSHAandMD5() throws RepositoryException, MalformedRdfException,
-    InsufficientStorageException, InvalidChecksumException, IOException {
+           InvalidChecksumException, IOException {
 
         setResource(Container.class);
         when(mockBinaryService.findOrCreate(mockSession, "/b")).thenReturn(mockBinary);
@@ -900,7 +897,7 @@ public class FedoraLdpTest {
 
     @Test(expected = ClientErrorException.class)
     public void testPostToBinary() throws MalformedRdfException, InvalidChecksumException,
-    InsufficientStorageException, IOException, RepositoryException {
+           IOException, RepositoryException {
         final FedoraBinary mockObject = (FedoraBinary)setResource(FedoraBinary.class);
         doReturn(mockObject).when(testObj).resource();
         testObj.createObject(null, null, null, null, null, null);
@@ -908,13 +905,13 @@ public class FedoraLdpTest {
 
     @Test(expected = ServerErrorException.class)
     public void testLDPRNotImplemented() throws MalformedRdfException, InvalidChecksumException,
-            InsufficientStorageException, IOException {
+            IOException {
         testObj.createObject(null, null, null, null, "<http://www.w3.org/ns/ldp#Resource>; rel=\"type\"", null);
     }
 
     @Test(expected = ClientErrorException.class)
     public void testLDPRNotImplementedInvalidLink() throws MalformedRdfException, InvalidChecksumException,
-    InsufficientStorageException, IOException {
+           IOException {
         testObj.createObject(null, null, null, null, "Link: <http://www.w3.org/ns/ldp#Resource;rel=type", null);
     }
 

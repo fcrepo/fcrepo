@@ -23,7 +23,7 @@ package org.fcrepo.kernel.api.exception;
  * @author Daniel Bernstein
  * @since Oct 7, 2016
  */
-public class InsufficientStorageException extends Exception {
+public class InsufficientStorageException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 
