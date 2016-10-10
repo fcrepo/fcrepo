@@ -164,7 +164,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
      *
      * Note: we use the jsonld library directly here instead of using Jena's facade
      * because Jena doesn't permit writing expanded or flattened formats.
-     * Once https://github.com/apache/jena/pull/139 is merged, much of this code will go away
+     * Once Jena 3.1.1 is released, much of this code can be dramatically simplified.
      */
     private static Object rdfToJsonLd(final RdfStream rdfStream, final Map<String, String> prefixes,
             final String profile) throws IOException, JsonLdError {
