@@ -18,7 +18,6 @@
 package org.fcrepo.http.api;
 
 
-import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
@@ -139,7 +138,7 @@ public class FedoraVersions extends ContentExposingResource {
     @GET
     @Produces({TURTLE + ";qs=1.0", JSON_LD + ";qs=0.8",
             N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
-            TEXT_HTML, APPLICATION_XHTML_XML, "*/*"})
+            TEXT_HTML, "*/*"})
     public Response getVersion(@HeaderParam("Range") final String rangeValue) throws IOException {
         LOGGER.trace("Getting version profile for: {} at version: {}", path,
                 label);
