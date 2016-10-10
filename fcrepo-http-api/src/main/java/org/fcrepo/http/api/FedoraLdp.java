@@ -570,7 +570,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         if (throwable.getCause() != null) {
             checkForInsufficientStorageException(rootThrowable, throwable.getCause());
-        } else
+        }
 
         if (rootThrowable instanceof InvalidChecksumException) {
             throw (InvalidChecksumException) rootThrowable;
