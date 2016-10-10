@@ -41,11 +41,10 @@
     <jena.version>3.1.0</jena.version>
     <jersey.version>2.22.2</jersey.version>
     <jgroups.version>3.6.2.Final</jgroups.version>
-    <jsonld.version>0.5.1</jsonld.version>
+    <jsonld.version>0.8.3</jsonld.version>
     <logback.version>1.1.2</logback.version>
     <metrics.version>3.1.0</metrics.version>
     <modeshape.version>5.1.0.Final</modeshape.version>
-    <sesame.version>2.7.13</sesame.version>
     <slf4j.version>1.7.7</slf4j.version>
     <spring.version>4.1.1.RELEASE</spring.version>
     <xml-apis.version>1.4.01</xml-apis.version>
@@ -185,10 +184,6 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
           </exclusion>
-          <exclusion>
-            <groupId>com.github.jsonld-java</groupId>
-            <artifactId>jsonld-java</artifactId>
-          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -291,53 +286,6 @@
             <artifactId>commons-logging</artifactId>
           </exclusion>
         </exclusions>
-      </dependency>
-      <!-- sesame/openrdf dependencies that were previously provided by the
-        Aduna Maven repo -->
-      <dependency>
-        <groupId>org.openrdf.sesame</groupId>
-        <artifactId>sesame-model</artifactId>
-        <version>${sesame.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.openrdf.sesame</groupId>
-        <artifactId>sesame-rio-api</artifactId>
-        <version>${sesame.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.openrdf.sesame</groupId>
-        <artifactId>sesame-rio-ntriples</artifactId>
-        <version>${sesame.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.openrdf.sesame</groupId>
-        <artifactId>sesame-rio-rdfxml</artifactId>
-        <version>${sesame.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.openrdf.sesame</groupId>
-        <artifactId>sesame-rio-trix</artifactId>
-        <version>${sesame.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.openrdf.sesame</groupId>
-        <artifactId>sesame-rio-turtle</artifactId>
-        <version>${sesame.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.openrdf.sesame</groupId>
-        <artifactId>sesame-repository-api</artifactId>
-        <version>${sesame.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.openrdf.sesame</groupId>
-        <artifactId>sesame-repository-sail</artifactId>
-        <version>${sesame.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.openrdf.sesame</groupId>
-        <artifactId>sesame-sail-memory</artifactId>
-        <version>${sesame.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.commons</groupId>
