@@ -48,6 +48,6 @@ public class InsufficientStorageExceptionMapperTest {
         final InsufficientStorageException input = new InsufficientStorageException(
                 "No space left on device.", null);
         final Response actual = testObj.toResponse(input);
-        assertEquals(507, actual.getStatus());
+        assertEquals(InsufficientStorageExceptionMapper.INSUFFICIENT_STORAGE_HTTP_CODE, actual.getStatus());
     }
 }

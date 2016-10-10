@@ -297,7 +297,6 @@ public class FedoraLdp extends ContentExposingResource {
      * @return 204
      * @throws InvalidChecksumException if invalid checksum exception occurred
      * @throws MalformedRdfException if malformed rdf exception occurred
-     * @throws InsufficientStorageException if operation fails due to insufficient storage on the device.
      */
     @PUT
     @Consumes
@@ -309,7 +308,7 @@ public class FedoraLdp extends ContentExposingResource {
             @HeaderParam("If-Match") final String ifMatch,
             @HeaderParam("Link") final String link,
             @HeaderParam("Digest") final String digest)
-            throws InvalidChecksumException, MalformedRdfException, InsufficientStorageException {
+            throws InvalidChecksumException, MalformedRdfException {
 
         checkLinkForLdpResourceCreation(link);
 
@@ -445,7 +444,6 @@ public class FedoraLdp extends ContentExposingResource {
      * @throws InvalidChecksumException if invalid checksum exception occurred
      * @throws IOException if IO exception occurred
      * @throws MalformedRdfException if malformed rdf exception occurred
-     * @throws InsufficientStorageException if operation fails due to insufficient storage on the device.
      */
     @POST
     @Consumes({MediaType.APPLICATION_OCTET_STREAM + ";qs=1.000", WILDCARD})
@@ -459,7 +457,7 @@ public class FedoraLdp extends ContentExposingResource {
                                  @ContentLocation final InputStream requestBodyStream,
                                  @HeaderParam("Link") final String link,
                                  @HeaderParam("Digest") final String digest)
-            throws InvalidChecksumException, IOException, MalformedRdfException, InsufficientStorageException {
+            throws InvalidChecksumException, IOException, MalformedRdfException {
 
         checkLinkForLdpResourceCreation(link);
 
