@@ -50,6 +50,14 @@
     <input type="text" id="new_id" placeholder="(auto-generated identifier)" name="slug"  class="form-control"/>
         </div>
 
+    <div class="form-group" id="turtle_payload_container">
+        <label for="rdf"  class="control-label">
+	        RDF (turtle)
+        </label>
+        <textarea rows="10" id="turtle_payload" name="turtle" class="form-control" 
+                  placeholder="<> a <http://purl.org/dc/dcmitype/Collection>"></textarea>
+    </div>
+
 
     <div  id="binary_payload_container" class="form-group">
     <label for="binary_payload"  class="control-label">
@@ -57,6 +65,7 @@
     </label>
     <input type="file" name="file" id="binary_payload"/>
     </div>
+    
     <button id="btn_action_create" class="btn btn-primary">Add</button>
     <hr />
 </form>

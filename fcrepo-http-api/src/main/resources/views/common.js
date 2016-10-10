@@ -80,7 +80,13 @@
       };
       reader.readAsArrayBuffer(update_file);
     } else {
-      fn(method, url, headers, null);
+      const turtle = document.getElementById('turtle_payload');
+      if (turtle && turtle.value) {
+        headers.push(['Content-Type', 'text/turtle']);
+        fn(method, url, headers, turtle.value);
+      } else {
+        fn(method, url, headers, null);
+      }
     }
   }
 
@@ -254,6 +260,8 @@
   ready(function() {
       listen('new_mixin', 'change', function(e) {
         document.getElementById('binary_payload_container').style.display = e.target.value == 'binary' ? 'block' : 'none';
+        document.getElementById('turtle_payload_container').style.display = e.target.value == 'binary' ? 'none' : 'block';
+
       });
 
       listen('btn_action_create', 'click', function(e) {
