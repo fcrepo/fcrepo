@@ -524,8 +524,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @throws InsufficientStorageException
      */
     private void checkForInsufficientStorageException(final Throwable rootThrowable, final Throwable throwable)
-            throws InsufficientStorageException,
-            InvalidChecksumException {
+            throws InvalidChecksumException {
         final String insufficientSpaceIdentifyingMessage = "No space left on device";
         final String message = throwable.getMessage();
         if (throwable instanceof IOException && message != null && message.contains(
