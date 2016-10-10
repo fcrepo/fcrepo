@@ -507,8 +507,6 @@ public class FedoraLdp extends ContentExposingResource {
                 }
             }
             session.save();
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
         } catch (final Exception e) {
             checkForInsufficientStorageException(e, e);
         }
