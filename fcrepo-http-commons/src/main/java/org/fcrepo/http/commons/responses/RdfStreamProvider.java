@@ -17,7 +17,6 @@
  */
 package org.fcrepo.http.commons.responses;
 
-import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
@@ -48,7 +47,7 @@ import org.slf4j.Logger;
  * @since Nov 19, 2013
  */
 @Provider
-@Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X, JSON_LD})
+@Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, TEXT_PLAIN, TURTLE_X, JSON_LD})
 public class RdfStreamProvider implements MessageBodyWriter<RdfNamespacedStream> {
 
     private static final Logger LOGGER = getLogger(RdfStreamProvider.class);

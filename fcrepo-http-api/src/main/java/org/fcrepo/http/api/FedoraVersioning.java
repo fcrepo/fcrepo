@@ -17,7 +17,6 @@
  */
 package org.fcrepo.http.api;
 
-import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
@@ -166,7 +165,7 @@ public class FedoraVersioning extends FedoraBaseResource {
     @SuppressWarnings("resource")
     @GET
     @HtmlTemplate(value = "fcr:versions")
-    @Produces({TURTLE + ";qs=1.0", JSON_LD + ";qs=0.8", N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN,
+    @Produces({TURTLE + ";qs=1.0", JSON_LD + ";qs=0.8", N3, N3_ALT2, RDF_XML, NTRIPLES, TEXT_PLAIN,
             TURTLE_X, TEXT_HTML, "*/*"})
     public RdfNamespacedStream getVersionList() {
         if (!resource().isVersioned()) {

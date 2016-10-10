@@ -21,7 +21,6 @@ package org.fcrepo.http.api;
 import static javax.ws.rs.core.Response.temporaryRedirect;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
@@ -211,8 +210,7 @@ public class FedoraLdp extends ContentExposingResource {
      */
     @GET
     @Produces({TURTLE + ";qs=1.0", JSON_LD + ";qs=0.8",
-            N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
-            TEXT_HTML})
+            N3, N3_ALT2, RDF_XML, NTRIPLES, TEXT_PLAIN, TURTLE_X, TEXT_HTML})
     public Response getResource(@HeaderParam("Range") final String rangeValue) throws IOException {
         checkCacheControlHeaders(request, servletResponse, resource(), session);
 
@@ -446,8 +444,7 @@ public class FedoraLdp extends ContentExposingResource {
     @Consumes({MediaType.APPLICATION_OCTET_STREAM + ";qs=1.000", WILDCARD})
     @Timed
     @Produces({TURTLE + ";qs=1.0", JSON_LD + ";qs=0.8",
-            N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
-            TEXT_HTML, "*/*"})
+            N3, N3_ALT2, RDF_XML, NTRIPLES, TEXT_PLAIN, TURTLE_X, TEXT_HTML, "*/*"})
     public Response createObject(@HeaderParam("Content-Disposition") final ContentDisposition contentDisposition,
                                  @HeaderParam("Content-Type") final MediaType requestContentType,
                                  @HeaderParam("Slug") final String slug,
