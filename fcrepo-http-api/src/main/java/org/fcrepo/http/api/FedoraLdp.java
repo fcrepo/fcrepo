@@ -21,7 +21,6 @@ package org.fcrepo.http.api;
 import static javax.ws.rs.core.Response.temporaryRedirect;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
@@ -213,7 +212,7 @@ public class FedoraLdp extends ContentExposingResource {
     @GET
     @Produces({TURTLE + ";qs=1.0", JSON_LD + ";qs=0.8",
             N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
-            TEXT_HTML, APPLICATION_XHTML_XML})
+            TEXT_HTML})
     public Response getResource(@HeaderParam("Range") final String rangeValue) throws IOException {
         checkCacheControlHeaders(request, servletResponse, resource(), session);
 
@@ -244,7 +243,7 @@ public class FedoraLdp extends ContentExposingResource {
         final List<String> acceptHeaders = headers.getRequestHeader(HttpHeaders.ACCEPT);
         if (acceptHeaders != null && acceptHeaders.size() > 0) {
             final List<String> accept = Arrays.asList(acceptHeaders.get(0).split(","));
-            if (accept.contains(TEXT_HTML) || accept.contains(APPLICATION_XHTML_XML)) {
+            if (accept.contains(TEXT_HTML)) {
                 // Magic number '100' is tied to common-metadata.vsl display of ellipses
                 return 100;
             }
@@ -448,7 +447,7 @@ public class FedoraLdp extends ContentExposingResource {
     @Timed
     @Produces({TURTLE + ";qs=1.0", JSON_LD + ";qs=0.8",
             N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
-            TEXT_HTML, APPLICATION_XHTML_XML, "*/*"})
+            TEXT_HTML, "*/*"})
     public Response createObject(@HeaderParam("Content-Disposition") final ContentDisposition contentDisposition,
                                  @HeaderParam("Content-Type") final MediaType requestContentType,
                                  @HeaderParam("Slug") final String slug,

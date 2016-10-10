@@ -19,8 +19,6 @@ package org.fcrepo.http.api.responses;
 
 import static java.lang.System.getProperty;
 import static java.util.stream.Stream.of;
-import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
-import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
 import static com.google.common.collect.ImmutableMap.builder;
@@ -75,7 +73,7 @@ import org.slf4j.Logger;
  * @since Nov 19, 2013
  */
 @Provider
-@Produces({TEXT_HTML, APPLICATION_XHTML_XML})
+@Produces({TEXT_HTML})
 public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespacedStream> {
 
 
@@ -221,9 +219,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
         LOGGER.debug(
                 "Checking to see if type: {} is serializable to mimeType: {}",
                 type.getName(), mediaType);
-        return (mediaType.equals(TEXT_HTML_TYPE) || mediaType
-                .equals(APPLICATION_XHTML_XML_TYPE))
-                && RdfNamespacedStream.class.isAssignableFrom(type);
+        return mediaType.equals(TEXT_HTML_TYPE) && RdfNamespacedStream.class.isAssignableFrom(type);
     }
 
     @Override

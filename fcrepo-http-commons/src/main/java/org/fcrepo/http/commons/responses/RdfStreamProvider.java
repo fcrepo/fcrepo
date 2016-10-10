@@ -17,7 +17,6 @@
  */
 package org.fcrepo.http.commons.responses;
 
-import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML_TYPE;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
@@ -64,7 +63,6 @@ public class RdfStreamProvider implements MessageBodyWriter<RdfNamespacedStream>
             return false;
         }
         if (mediaType.equals(TEXT_HTML_TYPE)
-                || mediaType.equals(APPLICATION_XHTML_XML_TYPE)
                 || (mediaType.getType().equals("application") && mediaType
                         .getSubtype().equals("html"))) {
             LOGGER.debug("Was asked for an HTML mimeType, returning false.");

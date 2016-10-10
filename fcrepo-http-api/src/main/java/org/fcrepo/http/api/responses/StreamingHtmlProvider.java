@@ -21,7 +21,6 @@ import org.springframework.stereotype.Component;
 
 import javax.ws.rs.Produces;
 
-import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 
 /**
@@ -31,6 +30,6 @@ import static javax.ws.rs.core.MediaType.TEXT_HTML;
  * @author ajs6f
  */
 @Component
-@Produces({TEXT_HTML, APPLICATION_XHTML_XML})
+@Produces({TEXT_HTML})
 public class StreamingHtmlProvider extends StreamingBaseHtmlProvider{
 }
