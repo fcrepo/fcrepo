@@ -27,27 +27,27 @@ import javax.jms.JMSException;
  * @author barmintor
  * @author awoods
  */
-public class JMSTopicPublisher extends AbstractJMSPublisher {
+public class JMSQueuePublisher extends AbstractJMSPublisher {
 
-    private String topicName;
+    private String queueName;
 
     /**
      * Create a JMS Topic with the default name of "fedora"
      */
-    public JMSTopicPublisher() {
+    public JMSQueuePublisher() {
         this("fedora");
     }
 
     /**
      * Create a JMS Topic with a configurable name
      *
-     * @param topicName the name of the topic
+     * @param queueName the name of the queue
      */
-    public JMSTopicPublisher(final String topicName) {
-        this.topicName = topicName;
+    public JMSQueuePublisher(final String queueName) {
+        this.queueName = queueName;
     }
 
     protected Destination createDestination() throws JMSException {
-        return jmsSession.createTopic(topicName);
+        return jmsSession.createQueue(queueName);
     }
 }

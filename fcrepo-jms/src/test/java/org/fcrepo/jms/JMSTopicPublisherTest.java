@@ -17,96 +17,13 @@
  */
 package org.fcrepo.jms;
 
-import static javax.jms.Session.AUTO_ACKNOWLEDGE;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.util.ReflectionTestUtils.setField;
-
-import java.io.IOException;
-
-import javax.jms.Connection;
-import javax.jms.JMSException;
-import javax.jms.Message;
-import javax.jms.MessageProducer;
-
-import org.apache.activemq.ActiveMQConnectionFactory;
-
-import org.fcrepo.kernel.api.observer.FedoraEvent;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
-
-import com.google.common.eventbus.EventBus;
-
 /**
  * <p>JMSTopicPublisherTest class.</p>
  *
  * @author awoods
  */
-@RunWith(MockitoJUnitRunner.class)
-public class JMSTopicPublisherTest {
-
-    private JMSTopicPublisher testJMSTopicPublisher;
-
-    @Mock
-    private JMSEventMessageFactory mockEventFactory;
-
-    @Mock
-    private MessageProducer mockProducer;
-
-    @Mock
-    private ActiveMQConnectionFactory mockConnections;
-
-    @Mock
-    private EventBus mockBus;
-
-    @Mock
-    private javax.jms.Session mockJmsSession;
-
-    @Mock
-    private Connection mockConn;
-
-    @Before
-    public void setUp() {
-        testJMSTopicPublisher = new JMSTopicPublisher();
-        setField(testJMSTopicPublisher, "eventFactory", mockEventFactory);
-        setField(testJMSTopicPublisher, "producer", mockProducer);
-        setField(testJMSTopicPublisher, "connectionFactory", mockConnections);
-        setField(testJMSTopicPublisher, "eventBus", mockBus);
-    }
-
-    @Test
-    public void testAcquireConnections() throws JMSException {
-        when(mockConnections.createConnection()).thenReturn(mockConn);
-        when(mockConn.createSession(false, AUTO_ACKNOWLEDGE))
-                .thenReturn(mockJmsSession);
-        testJMSTopicPublisher.acquireConnections();
-        verify(mockBus).register(any());
-    }
-
-    @Test
-    public void testPublishJCREvent() throws IOException, JMSException {
-        final Message mockMsg = mock(Message.class);
-        final FedoraEvent mockEvent = mock(FedoraEvent.class);
-        when(mockEventFactory.getMessage(eq(mockEvent), any(javax.jms.Session.class))).thenReturn(mockMsg);
-        testJMSTopicPublisher.publishJCREvent(mockEvent);
-        verify(mockProducer).send(mockMsg);
-    }
-
-    @Test
-    public void testReleaseConnections() throws JMSException  {
-        setField(testJMSTopicPublisher, "connection", mockConn);
-        setField(testJMSTopicPublisher, "jmsSession", mockJmsSession);
-        testJMSTopicPublisher.releaseConnections();
-        verify(mockProducer).close();
-        verify(mockJmsSession).close();
-        verify(mockConn).close();
-        verify(mockBus).unregister(testJMSTopicPublisher);
+public class JMSTopicPublisherTest extends AbstractJMSPublisherTest {
+    protected AbstractJMSPublisher getPublisher() {
+        return new JMSTopicPublisher();
     }
 }

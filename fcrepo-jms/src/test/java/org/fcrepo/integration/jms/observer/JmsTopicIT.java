@@ -15,39 +15,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.jms;
+package org.fcrepo.integration.jms.observer;
 
 import javax.jms.Destination;
 import javax.jms.JMSException;
 
+import org.junit.runner.RunWith;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
 /**
- * Machinery to publish JMS messages when an EventBus
- * message is received.
+ * <p>
+ * JmsTopicIT class.
+ * </p>
  *
- * @author barmintor
- * @author awoods
+ * @author acoburn
  */
-public class JMSTopicPublisher extends AbstractJMSPublisher {
-
-    private String topicName;
-
-    /**
-     * Create a JMS Topic with the default name of "fedora"
-     */
-    public JMSTopicPublisher() {
-        this("fedora");
-    }
-
-    /**
-     * Create a JMS Topic with a configurable name
-     *
-     * @param topicName the name of the topic
-     */
-    public JMSTopicPublisher(final String topicName) {
-        this.topicName = topicName;
-    }
-
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration({ "/spring-test/jms-topic.xml", "/spring-test/repo.xml",
+    "/spring-test/eventing.xml" })
+@DirtiesContext
+public class JmsTopicIT extends AbstractJmsIT {
     protected Destination createDestination() throws JMSException {
-        return jmsSession.createTopic(topicName);
+        return session.createTopic("fedora");
     }
 }
