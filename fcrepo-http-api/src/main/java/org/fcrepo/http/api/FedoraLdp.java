@@ -219,6 +219,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         LOGGER.info("GET resource '{}'", externalPath);
 
+        final AcquiredLock readLock = lockManager.lockForRead(resource().getPath(), session, nodeService);
         try (final RdfStream rdfStream = new DefaultRdfStream(asNode(resource()))) {
 
             // If requesting a binary, check the mime-type if "Accept:" header is present.
@@ -237,6 +238,8 @@ public class FedoraLdp extends ContentExposingResource {
 
             addResourceHttpHeaders(resource());
             return getContent(rangeValue, getChildrenLimit(), rdfStream);
+        } finally {
+            readLock.release();
         }
     }
 
@@ -267,12 +270,10 @@ public class FedoraLdp extends ContentExposingResource {
      * Deletes an object.
      *
      * @return response
-     * @throws InterruptedException if this method was blocking waiting for a lock
-     *         and was interrupted, probably due to a server shutdown or something.
      */
     @DELETE
     @Timed
-    public Response deleteObject() throws InterruptedException {
+    public Response deleteObject() {
         evaluateRequestPreconditions(request, servletResponse, resource(), session);
 
         LOGGER.info("Delete resource '{}'", externalPath);
@@ -306,8 +307,6 @@ public class FedoraLdp extends ContentExposingResource {
      * @return 204
      * @throws InvalidChecksumException if invalid checksum exception occurred
      * @throws MalformedRdfException if malformed rdf exception occurred
-     * @throws InterruptedException if this method was blocking waiting for a lock
-     *         and was interrupted, probably due to a server shutdown or something.
      */
     @PUT
     @Consumes
@@ -319,7 +318,7 @@ public class FedoraLdp extends ContentExposingResource {
             @HeaderParam("If-Match") final String ifMatch,
             @HeaderParam("Link") final String link,
             @HeaderParam("Digest") final String digest)
-            throws InvalidChecksumException, MalformedRdfException, InterruptedException {
+            throws InvalidChecksumException, MalformedRdfException {
 
         checkLinkForLdpResourceCreation(link);
 
@@ -395,14 +394,12 @@ public class FedoraLdp extends ContentExposingResource {
      * @param requestBodyStream the request body stream
      * @return 201
      * @throws IOException if IO exception occurred
-     * @throws InterruptedException if this method was blocking waiting for a lock
-     *         and was interrupted, probably due to a server shutdown or something.
      */
     @PATCH
     @Consumes({contentTypeSPARQLUpdate})
     @Timed
     public Response updateSparql(@ContentLocation final InputStream requestBodyStream)
-            throws IOException, InterruptedException {
+            throws IOException {
 
         if (null == requestBodyStream) {
             throw new BadRequestException("SPARQL-UPDATE requests must have content!");
@@ -469,8 +466,6 @@ public class FedoraLdp extends ContentExposingResource {
      * @throws InvalidChecksumException if invalid checksum exception occurred
      * @throws IOException if IO exception occurred
      * @throws MalformedRdfException if malformed rdf exception occurred
-     * @throws InterruptedException if this method was blocking waiting for a lock
-     *         and was interrupted, probably due to a server shutdown or something.
      */
     @POST
     @Consumes({MediaType.APPLICATION_OCTET_STREAM + ";qs=1.000", WILDCARD})
@@ -484,7 +479,7 @@ public class FedoraLdp extends ContentExposingResource {
                                  @ContentLocation final InputStream requestBodyStream,
                                  @HeaderParam("Link") final String link,
                                  @HeaderParam("Digest") final String digest)
-            throws InvalidChecksumException, IOException, MalformedRdfException, InterruptedException {
+            throws InvalidChecksumException, IOException, MalformedRdfException {
 
         checkLinkForLdpResourceCreation(link);
 

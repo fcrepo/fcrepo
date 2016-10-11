@@ -315,39 +315,54 @@ public class DefaultPathLockManager implements PathLockManager {
     }
 
     @Override
-    public AcquiredLock lockForRead(final String path, final Session session, final NodeService nodeService)
-            throws InterruptedException {
+    public AcquiredLock lockForRead(final String path, final Session session, final NodeService nodeService) {
         final List<ActivePath.PathScopedLock> locks = new ArrayList<>();
 
         synchronized (this) {
             locks.add(getActivePath(normalizePath(path)).getReadLock());
         }
 
-        return new AcquiredMultiPathLock(locks);
+        try {
+            return new AcquiredMultiPathLock(locks);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
-    public AcquiredLock lockForWrite(final String path, final Session session, final NodeService nodeService)
-            throws InterruptedException {
+    public AcquiredLock lockForWrite(final String path, final Session session, final NodeService nodeService) {
         final List<ActivePath.PathScopedLock> locks = new ArrayList<>();
 
         synchronized (this) {
-            for (String currentPath = normalizePath(path) ;
+            // lock the specified path while iterating through the path's
+            // ancestry to also lock each path that would be created implicitly
+            // by this write (ie, non-existent ancestral paths)
+            final String startingPath = normalizePath(path);
+            for (String currentPath = startingPath ;
                     currentPath == null || currentPath.length() > 0;
                     currentPath = getParentPath(currentPath)) {
-                if (currentPath == null || (currentPath != path && nodeService.exists(session, currentPath))) {
+                if (currentPath == null || (currentPath != startingPath && nodeService.exists(session, currentPath))) {
+                    // either we've followed the path back to the root, or we've found an ancestor that exists...
+                    // so there are no more locks to create.
                     break;
                 }
                 locks.add(getActivePath(currentPath).getWriteLock());
             }
         }
 
-        return new AcquiredMultiPathLock(locks);
+        try {
+            return new AcquiredMultiPathLock(locks);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
-    public AcquiredLock lockForDelete(final String path, final Session session, final NodeService nodeService)
-            throws InterruptedException {
-        return new AcquiredMultiPathLock(normalizePath(path));
+    public AcquiredLock lockForDelete(final String path, final Session session, final NodeService nodeService) {
+        try {
+            return new AcquiredMultiPathLock(normalizePath(path));
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

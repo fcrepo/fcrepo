@@ -56,9 +56,8 @@ public interface PathLockManager {
      * @param session the current session
      * @param nodeService the repository NodeService implementation
      * @return an acquired Lock on the relevant resources
-     * @throws InterruptedException if interrupted while waiting to acquire the lock
      */
-    public AcquiredLock lockForRead(String path, Session session, NodeService nodeService) throws InterruptedException;
+    public AcquiredLock lockForRead(String path, Session session, NodeService nodeService);
 
     /**
      * Locks the necessary resources affected in order to safely write to a resource
@@ -72,9 +71,8 @@ public interface PathLockManager {
      * @param session the current session
      * @param nodeService the repository NodeService implementation
      * @return an acquired Lock on the relevant resources
-     * @throws InterruptedException if interrupted while waiting to acquire the lock
      */
-    public AcquiredLock lockForWrite(String path, Session session, NodeService nodeService) throws InterruptedException;
+    public AcquiredLock lockForWrite(String path, Session session, NodeService nodeService);
 
     /**
      * Locks the necessary resources affected in order to safely delete a resource
@@ -88,9 +86,7 @@ public interface PathLockManager {
      * @param session the current session
      * @param nodeService the repository NodeService implementation
      * @return an acquired Lock on the relevant resources
-     * @throws InterruptedException if interrupted while waiting to acquire the lock
      */
-    public AcquiredLock lockForDelete(String path, Session session, NodeService nodeService)
-            throws InterruptedException;
+    public AcquiredLock lockForDelete(String path, Session session, NodeService nodeService);
 
 }

@@ -171,7 +171,7 @@ public class DefaultPathLockManagerTest {
      * An interface whose single method acquires an AcquiredLock.
      */
     private interface Locker {
-        public AcquiredLock acquireLock() throws InterruptedException;
+        public AcquiredLock acquireLock();
     }
 
     /**
@@ -193,8 +193,10 @@ public class DefaultPathLockManagerTest {
             AcquiredLock lock = null;
             try {
                 lock = l.acquireLock();
-            } catch (InterruptedException e) {
-                interrupted = true;
+            } catch (RuntimeException e) {
+                if (e.getCause() instanceof InterruptedException) {
+                    interrupted = true;
+                }
             }
             if (lock != null) {
                 lock.release();
