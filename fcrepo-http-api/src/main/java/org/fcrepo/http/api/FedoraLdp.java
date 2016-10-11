@@ -18,6 +18,7 @@
 package org.fcrepo.http.api;
 
 
+import static com.google.common.base.Strings.nullToEmpty;
 import static com.hp.hpl.jena.rdf.model.ResourceFactory.createResource;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
@@ -26,15 +27,15 @@ import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
 import static javax.ws.rs.core.MediaType.WILDCARD;
+import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.noContent;
+import static javax.ws.rs.core.Response.notAcceptable;
+import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static javax.ws.rs.core.Response.Status.NOT_IMPLEMENTED;
 import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
-import static javax.ws.rs.core.Response.created;
-import static javax.ws.rs.core.Response.noContent;
-import static javax.ws.rs.core.Response.notAcceptable;
-import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Variant.mediaTypes;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
@@ -62,8 +63,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import javax.inject.Inject;
 import javax.annotation.PostConstruct;
+import javax.inject.Inject;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.ws.rs.BadRequestException;
@@ -88,9 +89,13 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilderException;
 import javax.ws.rs.core.Variant.VariantListBuilder;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
@@ -100,19 +105,14 @@ import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-import org.fcrepo.kernel.api.RdfStream;
-
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
 import com.google.common.base.Splitter;
-import static com.google.common.base.Strings.nullToEmpty;
+import com.google.common.collect.ImmutableList;
 
 /**
  * @author cabeer
@@ -208,7 +208,7 @@ public class FedoraLdp extends ContentExposingResource {
         checkCacheControlHeaders(request, servletResponse, resource(), session);
 
         LOGGER.info("GET resource '{}'", externalPath);
-
+        final AcquiredLock readLock = lockManager.lockForRead(resource().getPath());
         try (final RdfStream rdfStream = new DefaultRdfStream(asNode(resource()))) {
 
             // If requesting a binary, check the mime-type if "Accept:" header is present.
@@ -227,6 +227,8 @@ public class FedoraLdp extends ContentExposingResource {
 
             addResourceHttpHeaders(resource());
             return getContent(rangeValue, getChildrenLimit(), rdfStream);
+        } finally {
+            readLock.release();
         }
     }
 
@@ -264,15 +266,22 @@ public class FedoraLdp extends ContentExposingResource {
         evaluateRequestPreconditions(request, servletResponse, resource(), session);
 
         LOGGER.info("Delete resource '{}'", externalPath);
-        resource().delete();
+
+        final AcquiredLock lock = lockManager.lockForDelete(resource().getPath());
 
         try {
-            session.save();
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
+            resource().delete();
 
-        return noContent().build();
+            try {
+                session.save();
+            } catch (final RepositoryException e) {
+                throw new RepositoryRuntimeException(e);
+            }
+
+            return noContent().build();
+        } finally {
+            lock.release();
+        }
     }
 
     /**
@@ -345,58 +354,67 @@ public class FedoraLdp extends ContentExposingResource {
         // https://jira.duraspace.org/browse/FCREPO-1851
         String checksum = parseDigestHeader(digest);
 
-        final MediaType contentType = getSimpleContentType(requestContentType);
-
-        if (nodeService.exists(session, path)) {
-            resource = resource();
-        } else {
-            final MediaType effectiveContentType
-                    = requestBodyStream == null || requestContentType == null ? null : contentType;
-            resource = createFedoraResource(path, effectiveContentType, contentDisposition);
-        }
-
-        if (httpConfiguration.putRequiresIfMatch() && StringUtils.isBlank(ifMatch) && !resource.isNew()) {
-            throw new ClientErrorException("An If-Match header is required", 428);
-        }
-
-        evaluateRequestPreconditions(request, servletResponse, resource, session);
-        final boolean created = resource.isNew();
-
-        try (final RdfStream resourceTriples =
-                created ? new DefaultRdfStream(asNode(resource())) : getResourceTriples()) {
-
-            LOGGER.info("PUT resource '{}'", externalPath);
-            if (resource instanceof FedoraBinary) {
-                if (!StringUtils.isBlank(checksumDeprecated) && StringUtils.isBlank(digest)) {
-                    addChecksumDeprecationHeader();
-                    checksum = checksumDeprecated;
-                }
-                replaceResourceBinaryWithStream((FedoraBinary) resource,
-                        requestBodyStream, contentDisposition, requestContentType, checksum);
-            } else if (isRdfContentType(contentType.toString())) {
-                replaceResourceWithStream(resource, requestBodyStream, contentType, resourceTriples);
-            } else if (!created) {
-                boolean emptyRequest = true;
-                try {
-                    emptyRequest = requestBodyStream.read() == -1;
-                } catch (final IOException ex) {
-                    LOGGER.debug("Error checking for request body content", ex);
-                }
-
-                if (requestContentType == null && emptyRequest) {
-                    throw new ClientErrorException("Resource Already Exists", CONFLICT);
-                }
-                throw new ClientErrorException("Invalid Content Type " + requestContentType, UNSUPPORTED_MEDIA_TYPE);
-            }
-        }
+        final AcquiredLock lock = lockManager.lockForWrite(path, session, nodeService);
 
         try {
-            session.save();
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
 
-        return createUpdateResponse(resource, created);
+            final MediaType contentType = getSimpleContentType(requestContentType);
+
+            if (nodeService.exists(session, path)) {
+                resource = resource();
+            } else {
+                final MediaType effectiveContentType
+                    = requestBodyStream == null || requestContentType == null ? null : contentType;
+                resource = createFedoraResource(path, effectiveContentType, contentDisposition);
+            }
+
+            if (httpConfiguration.putRequiresIfMatch() && StringUtils.isBlank(ifMatch) && !resource.isNew()) {
+                throw new ClientErrorException("An If-Match header is required", 428);
+            }
+
+            evaluateRequestPreconditions(request, servletResponse, resource, session);
+
+            final boolean created = resource.isNew();
+
+            try (final RdfStream resourceTriples =
+                created ? new DefaultRdfStream(asNode(resource())) : getResourceTriples()) {
+
+                LOGGER.info("PUT resource '{}'", externalPath);
+                if (resource instanceof FedoraBinary) {
+                    if (!StringUtils.isBlank(checksumDeprecated) && StringUtils.isBlank(digest)) {
+                        addChecksumDeprecationHeader();
+                        checksum = checksumDeprecated;
+                    }
+                    replaceResourceBinaryWithStream((FedoraBinary) resource,
+                            requestBodyStream, contentDisposition, requestContentType, checksum);
+                } else if (isRdfContentType(contentType.toString())) {
+                    replaceResourceWithStream(resource, requestBodyStream, contentType, resourceTriples);
+                } else if (!created) {
+                    boolean emptyRequest = true;
+                    try {
+                        emptyRequest = requestBodyStream.read() == -1;
+                    } catch (final IOException ex) {
+                        LOGGER.debug("Error checking for request body content", ex);
+                    }
+
+                    if (requestContentType == null && emptyRequest) {
+                        throw new ClientErrorException("Resource Already Exists", CONFLICT);
+                    }
+                    throw new ClientErrorException("Invalid Content Type " + requestContentType,
+                            UNSUPPORTED_MEDIA_TYPE);
+                }
+            }
+
+            try {
+                session.save();
+            } catch (final RepositoryException e) {
+                throw new RepositoryRuntimeException(e);
+            }
+
+            return createUpdateResponse(resource, created);
+        } finally {
+            lock.release();
+        }
     }
 
     /**
@@ -419,6 +437,8 @@ public class FedoraLdp extends ContentExposingResource {
         if (resource() instanceof FedoraBinary) {
             throw new BadRequestException(resource().getPath() + " is not a valid object to receive a PATCH");
         }
+
+        final AcquiredLock lock = lockManager.lockForWrite(resource().getPath(), session, nodeService);
 
         try {
             final String requestBody = IOUtils.toString(requestBodyStream, UTF_8);
@@ -451,6 +471,8 @@ public class FedoraLdp extends ContentExposingResource {
             throw ex;
         }  catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
+        } finally {
+            lock.release();
         }
     }
 
@@ -530,50 +552,54 @@ public class FedoraLdp extends ContentExposingResource {
 
         // TODO: Add final when deprecated checksum Query paramater is removed
         // https://jira.duraspace.org/browse/FCREPO-1851
-        String checksum = parseDigestHeader(digest);
+        final String checksum = parseDigestHeader(digest);
 
-        LOGGER.info("Ingest with path: {}", newObjectPath);
+        final AcquiredLock lock = lockManager.lockForWrite(newObjectPath, session, nodeService);
 
-        final MediaType effectiveContentType
-                = requestBodyStream == null || requestContentType == null ? null : contentType;
-        resource = createFedoraResource(newObjectPath, effectiveContentType, contentDisposition);
+        try {
 
-        try (final RdfStream resourceTriples =
-                resource.isNew() ? new DefaultRdfStream(asNode(resource())) : getResourceTriples()) {
+            LOGGER.info("Ingest with path: {}", newObjectPath);
 
-            if (requestBodyStream == null) {
-                LOGGER.trace("No request body detected");
-            } else {
-                LOGGER.trace("Received createObject with a request body and content type \"{}\"", contentTypeString);
+            final MediaType effectiveContentType
+                    = requestBodyStream == null || requestContentType == null ? null : contentType;
+            resource = createFedoraResource(newObjectPath, effectiveContentType, contentDisposition);
 
-                if ((resource instanceof Container) && isRdfContentType(contentTypeString)) {
-                    replaceResourceWithStream(resource, requestBodyStream, contentType, resourceTriples);
-                } else if (resource instanceof FedoraBinary) {
-                    LOGGER.trace("Created a datastream and have a binary payload.");
-                    if (!StringUtils.isBlank(checksumDeprecated) && StringUtils.isBlank(digest)) {
-                        addChecksumDeprecationHeader();
-                        checksum = checksumDeprecated;
-                    }
-                    replaceResourceBinaryWithStream((FedoraBinary) resource,
-                            requestBodyStream, contentDisposition, requestContentType, checksum);
+            try (final RdfStream resourceTriples =
+                    resource.isNew() ? new DefaultRdfStream(asNode(resource())) : getResourceTriples()) {
 
-                } else if (contentTypeString.equals(contentTypeSPARQLUpdate)) {
-                    LOGGER.trace("Found SPARQL-Update content, applying..");
-                    patchResourcewithSparql(resource, IOUtils.toString(requestBodyStream, UTF_8), resourceTriples);
+                if (requestBodyStream == null) {
+                    LOGGER.trace("No request body detected");
                 } else {
-                    if (requestBodyStream.read() != -1) {
-                        throw new ClientErrorException("Invalid Content Type " + contentTypeString,
-                                UNSUPPORTED_MEDIA_TYPE);
+                    LOGGER.trace("Received createObject with a request body and content type \"{}\"",
+                            contentTypeString);
+
+                    if ((resource instanceof Container) && isRdfContentType(contentTypeString)) {
+                        replaceResourceWithStream(resource, requestBodyStream, contentType, resourceTriples);
+                    } else if (resource instanceof FedoraBinary) {
+                        LOGGER.trace("Created a datastream and have a binary payload.");
+                        replaceResourceBinaryWithStream((FedoraBinary) resource,
+                                requestBodyStream, contentDisposition, requestContentType, checksum);
+
+                    } else if (contentTypeString.equals(contentTypeSPARQLUpdate)) {
+                        LOGGER.trace("Found SPARQL-Update content, applying..");
+                        patchResourcewithSparql(resource, IOUtils.toString(requestBodyStream, UTF_8), resourceTriples);
+                    } else {
+                        if (requestBodyStream.read() != -1) {
+                            throw new ClientErrorException("Invalid Content Type " + contentTypeString,
+                                    UNSUPPORTED_MEDIA_TYPE);
+                        }
                     }
                 }
+                session.save();
+            } catch (final RepositoryException e) {
+                throw new RepositoryRuntimeException(e);
             }
-            session.save();
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
 
-        LOGGER.debug("Finished creating resource with path: {}", newObjectPath);
-        return createUpdateResponse(resource, true);
+            LOGGER.debug("Finished creating resource with path: {}", newObjectPath);
+            return createUpdateResponse(resource, true);
+        } finally {
+            lock.release();
+        }
     }
 
     /**
