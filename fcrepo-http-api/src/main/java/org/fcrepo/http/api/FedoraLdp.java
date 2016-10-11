@@ -218,8 +218,7 @@ public class FedoraLdp extends ContentExposingResource {
         checkCacheControlHeaders(request, servletResponse, resource(), session);
 
         LOGGER.info("GET resource '{}'", externalPath);
-
-        final AcquiredLock readLock = lockManager.lockForRead(resource().getPath(), session, nodeService);
+        final AcquiredLock readLock = lockManager.lockForRead(resource().getPath());
         try (final RdfStream rdfStream = new DefaultRdfStream(asNode(resource()))) {
 
             // If requesting a binary, check the mime-type if "Accept:" header is present.
@@ -278,7 +277,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         LOGGER.info("Delete resource '{}'", externalPath);
 
-        final AcquiredLock lock = lockManager.lockForDelete(resource().getPath(), session, nodeService);
+        final AcquiredLock lock = lockManager.lockForDelete(resource().getPath());
 
         try {
             resource().delete();

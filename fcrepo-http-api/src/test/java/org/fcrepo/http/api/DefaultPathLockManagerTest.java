@@ -65,7 +65,7 @@ public class DefaultPathLockManagerTest {
         final DefaultPathLockManager m = new DefaultPathLockManager();
         assertEquals("There should no active paths in memory.", 0, m.activePaths.size());
 
-        final AcquiredLock l1 = m.lockForRead("p1", session, nodeService);
+        final AcquiredLock l1 = m.lockForRead("p1");
         assertEquals("There should be exactly 1 path in memory.", 1, m.activePaths.size());
 
         final AcquiredLock l2 = m.lockForWrite("p2", session, nodeService);
@@ -82,9 +82,9 @@ public class DefaultPathLockManagerTest {
     public void readsShouldNotBlock() throws InterruptedException {
         final DefaultPathLockManager m = new DefaultPathLockManager();
         final String path = "path1";
-        m.lockForRead(path, session, nodeService);
+        m.lockForRead(path);
         assertTrue("Concurrent read operations should be allowed!",
-                new Actor(() -> m.lockForRead(path, session, nodeService)).canComplete());
+                new Actor(() -> m.lockForRead(path)).canComplete());
     }
 
     @Test
@@ -92,7 +92,7 @@ public class DefaultPathLockManagerTest {
         final DefaultPathLockManager m = new DefaultPathLockManager();
         final String path = "path1";
         final AcquiredLock l = m.lockForWrite(path, session, nodeService);
-        final Actor r = new Actor(() -> m.lockForRead(path, session, nodeService));
+        final Actor r = new Actor(() -> m.lockForRead(path));
         assertTrue("Read should block while writing to same path!", r.isBlocked());
         l.release();
         assertTrue("Read should complete after write!", r.canComplete());
@@ -135,7 +135,7 @@ public class DefaultPathLockManagerTest {
     public void deletePathShouldBeDisappearWhenLockIsReleased() throws InterruptedException {
         final DefaultPathLockManager m = new DefaultPathLockManager();
         final String p1 = "delete";
-        final AcquiredLock l = m.lockForDelete(p1, session, nodeService);
+        final AcquiredLock l = m.lockForDelete(p1);
         assertEquals("One delete lock should exist!", 1, m.activeDeletePaths.size());
         assertEquals(p1, m.activeDeletePaths.get(0));
         l.release();
@@ -146,21 +146,21 @@ public class DefaultPathLockManagerTest {
     public void deleteShouldBlockAccessToDescendents() throws InterruptedException {
         final DefaultPathLockManager m = new DefaultPathLockManager();
         final String p1 = "delete";
-        m.lockForDelete(p1, session, nodeService);
+        m.lockForDelete(p1);
         assertTrue("Reading a path that is being deleted should block until delete is complete!",
-                new Actor(() -> m.lockForRead("delete/some/ancestor", session, nodeService)).isBlocked());
+                new Actor(() -> m.lockForRead("delete/some/ancestor")).isBlocked());
 
         when(nodeService.exists(any(), eq("delete/some/nonexistant/path"))).thenReturn(false);
         when(nodeService.exists(any(), eq("delete/some/nonexistant"))).thenReturn(false);
         assertTrue("Creating a node under a node being deleted should block until delete is complete!",
-                new Actor(() -> m.lockForRead("delete/some/nonexistant/path", session, nodeService)).isBlocked());
+                new Actor(() -> m.lockForRead("delete/some/nonexistant/path")).isBlocked());
     }
 
     @Test
     public void deleteShouldNotAffectParentOrPeers() throws InterruptedException {
         final DefaultPathLockManager m = new DefaultPathLockManager();
         final String p1 = "root/delete";
-        m.lockForDelete(p1, session, nodeService);
+        m.lockForDelete(p1);
         assertTrue("Writing to parent of node-being-deleted should not block.",
                 new Actor(() -> m.lockForWrite("root", session, nodeService)).canComplete());
         assertTrue("Writing to peer of node-being-deleted should not block.",

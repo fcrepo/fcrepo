@@ -53,11 +53,9 @@ public interface PathLockManager {
      * to the resource that would affect its display.
      *
      * @param path the path to a resource to be viewed
-     * @param session the current session
-     * @param nodeService the repository NodeService implementation
      * @return an acquired Lock on the relevant resources
      */
-    public AcquiredLock lockForRead(String path, Session session, NodeService nodeService);
+    public AcquiredLock lockForRead(String path);
 
     /**
      * Locks the necessary resources affected in order to safely write to a resource
@@ -83,10 +81,8 @@ public interface PathLockManager {
      *
      * @param path the path to a resource to be deleted (may imply the deletion of
      *        all descendant resources)
-     * @param session the current session
-     * @param nodeService the repository NodeService implementation
      * @return an acquired Lock on the relevant resources
      */
-    public AcquiredLock lockForDelete(String path, Session session, NodeService nodeService);
+    public AcquiredLock lockForDelete(String path);
 
 }

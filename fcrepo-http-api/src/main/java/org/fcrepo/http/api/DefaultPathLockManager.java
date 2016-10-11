@@ -315,7 +315,7 @@ public class DefaultPathLockManager implements PathLockManager {
     }
 
     @Override
-    public AcquiredLock lockForRead(final String path, final Session session, final NodeService nodeService) {
+    public AcquiredLock lockForRead(final String path) {
         final List<ActivePath.PathScopedLock> locks = new ArrayList<>();
 
         synchronized (this) {
@@ -358,7 +358,7 @@ public class DefaultPathLockManager implements PathLockManager {
     }
 
     @Override
-    public AcquiredLock lockForDelete(final String path, final Session session, final NodeService nodeService) {
+    public AcquiredLock lockForDelete(final String path) {
         try {
             return new AcquiredMultiPathLock(normalizePath(path));
         } catch (InterruptedException e) {

@@ -234,9 +234,9 @@ public class FedoraLdpTest {
 
         when(mockHeaders.getHeaderString("user-agent")).thenReturn("Test UserAgent");
 
-        when(mockLockManager.lockForRead(any(), any(), any())).thenReturn(mockLock);
+        when(mockLockManager.lockForRead(any())).thenReturn(mockLock);
         when(mockLockManager.lockForWrite(any(), any(), any())).thenReturn(mockLock);
-        when(mockLockManager.lockForDelete(any(), any(), any())).thenReturn(mockLock);
+        when(mockLockManager.lockForDelete(any())).thenReturn(mockLock);
     }
 
     private FedoraResource setResource(final Class<? extends FedoraResource> klass) throws RepositoryException {
