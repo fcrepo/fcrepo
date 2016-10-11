@@ -17,6 +17,7 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
+import org.fcrepo.kernel.api.exception.InterruptedRuntimeException;
 import org.slf4j.Logger;
 
 import javax.ws.rs.core.Response;
@@ -34,12 +35,12 @@ import static javax.ws.rs.core.Response.status;
  */
 @Provider
 public class InterruptedExceptionMapper implements
-        ExceptionMapper<InterruptedException>, ExceptionDebugLogging {
+        ExceptionMapper<InterruptedRuntimeException>, ExceptionDebugLogging {
 
     private static final Logger LOGGER = getLogger(InterruptedExceptionMapper.class);
 
     @Override
-    public Response toResponse(final InterruptedException e) {
+    public Response toResponse(final InterruptedRuntimeException e) {
         debugException(this, e, LOGGER);
         return status(SERVICE_UNAVAILABLE).entity(e.getMessage()).build();
     }
