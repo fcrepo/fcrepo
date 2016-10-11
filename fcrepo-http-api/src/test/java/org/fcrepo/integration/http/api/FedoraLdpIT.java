@@ -17,16 +17,6 @@
  */
 package org.fcrepo.integration.http.api;
 
-import static org.apache.jena.datatypes.TypeMapper.getInstance;
-import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDinteger;
-import static org.apache.jena.graph.Node.ANY;
-import static org.apache.jena.graph.NodeFactory.createLiteral;
-import static org.apache.jena.graph.NodeFactory.createURI;
-import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
-import static org.apache.jena.rdf.model.ModelFactory.createModelForGraph;
-import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
-import static org.apache.jena.rdf.model.ResourceFactory.createResource;
-import static org.apache.jena.vocabulary.RDF.type;
 import static java.lang.Thread.sleep;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
@@ -39,19 +29,28 @@ import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
-import static javax.ws.rs.core.Response.Status.NO_CONTENT;
+import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NOT_MODIFIED;
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static javax.ws.rs.core.Response.Status.TEMPORARY_REDIRECT;
-import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static nu.validator.htmlparser.common.DoctypeExpectation.NO_DOCTYPE_ERRORS;
 import static nu.validator.htmlparser.common.XmlViolationPolicy.ALLOW;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.impl.client.cache.CacheConfig.DEFAULT;
+import static org.apache.jena.datatypes.TypeMapper.getInstance;
+import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDinteger;
+import static org.apache.jena.graph.Node.ANY;
+import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.rdf.model.ModelFactory.createModelForGraph;
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.riot.WebContent.contentTypeN3;
 import static org.apache.jena.riot.WebContent.contentTypeN3Alt2;
@@ -59,6 +58,7 @@ import static org.apache.jena.riot.WebContent.contentTypeNTriples;
 import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.apache.jena.riot.WebContent.contentTypeTurtle;
+import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_VARIANTS;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
@@ -102,9 +102,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -119,17 +121,11 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.Variant;
 
-import com.google.common.collect.Iterators;
-import nu.validator.htmlparser.sax.HtmlParser;
-import nu.validator.saxtree.TreeBuilder;
-
-import org.apache.http.client.config.RequestConfig;
-import org.fcrepo.http.commons.test.util.CloseableDataset;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -140,12 +136,22 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.FileEntity;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
 import org.apache.http.util.EntityUtils;
+import org.apache.jena.graph.Node;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.vocabulary.DC_11;
+import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -157,15 +163,10 @@ import org.xml.sax.SAXParseException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.jena.graph.Node;
-import org.apache.jena.query.Dataset;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.StmtIterator;
-import org.apache.jena.sparql.core.DatasetGraph;
-import org.apache.jena.sparql.core.Quad;
-import org.apache.jena.vocabulary.DC_11;
+import com.google.common.collect.Iterators;
+
+import nu.validator.htmlparser.sax.HtmlParser;
+import nu.validator.saxtree.TreeBuilder;
 
 /**
  * @author cabeer
@@ -2533,6 +2534,221 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(postObjMethod("%5bfoo")));
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(putObjMethod("%5bfoo")));
     }
+
+    @Test
+    public void testConcurrentPuts() throws InterruptedException, IOException {
+        final String parent = getRandomUniqueId();
+        executeAndClose(putObjMethod(parent));
+        final String newResource = parent + "/test";
+        final Runnable updateRunnable = () -> { executeAndClose(putObjMethod(newResource)); };
+        final Thread t1 = new Thread(updateRunnable);
+        final Thread t2 = new Thread(updateRunnable);
+        final Thread t3 = new Thread(updateRunnable);
+        final Thread t4 = new Thread(updateRunnable);
+        t1.start();
+        t2.start();
+        t3.start();
+        t4.start();
+        t1.join();
+        t2.join();
+        t3.join();
+        t4.join();
+
+        try (final CloseableDataset dataset = getDataset(getObjMethod(parent))) {
+            final DatasetGraph graphStore = dataset.asDatasetGraph();
+            final Iterator<Quad> children = graphStore.find(ANY, ANY, CONTAINS.asNode(), ANY);
+            assertTrue("One of the PUTs should have resulted in a child.", children.hasNext());
+            children.next();
+            if (children.hasNext()) {
+                fail("Only one of the PUTs should have resulted in a child (unexpected child "
+                       + children.next().getObject().getURI() + ")!");
+            }
+        }
+    }
+
+    @Test
+    public void testConcurrentPutsWithPairtrees() throws InterruptedException, IOException {
+        final String parent = getRandomUniqueId();
+        executeAndClose(putObjMethod(parent));
+        final String first = parent + "/00/1";
+        final String second = parent + "/00/2";
+        final String third = parent + "/00/3";
+        final String fourth = parent + "/00/4";
+        final Thread t1 = new Thread(() -> { executeAndClose(putObjMethod(first));});
+        final Thread t2 = new Thread(() -> { executeAndClose(putObjMethod(second)); });
+        final Thread t3 = new Thread(() -> { executeAndClose(putObjMethod(third)); });
+        final Thread t4 = new Thread(() -> { executeAndClose(putObjMethod(fourth)); });
+        t1.start();
+        t2.start();
+        t3.start();
+        t4.start();
+        t1.join();
+        t2.join();
+        t3.join();
+        t4.join();
+
+        try (final CloseableDataset dataset = getDataset(getObjMethod(parent))) {
+            final DatasetGraph graphStore = dataset.asDatasetGraph();
+            final List<String> childPaths = new ArrayList<String>();
+            final Iterator<Quad> children = graphStore.find(ANY, ANY, CONTAINS.asNode(), ANY);
+            assertTrue("Four children should have been created (none found).", children.hasNext());
+            childPaths.add(children.next().getObject().getURI());
+            LOGGER.info("Found child: {}", childPaths.get(0));
+            assertTrue("Four children should have been created (only one found).", children.hasNext());
+            childPaths.add(children.next().getObject().getURI());
+            LOGGER.info("Found child: {}", childPaths.get(1));
+            assertTrue("Four children should have been created (only two found).", children.hasNext());
+            childPaths.add(children.next().getObject().getURI());
+            LOGGER.info("Found child: {}", childPaths.get(2));
+            assertTrue("Four children should have been created. (only three found)", children.hasNext());
+            childPaths.add(children.next().getObject().getURI());
+            LOGGER.info("Found child: {}", childPaths.get(3));
+            assertFalse("Only four children should have been created.", children.hasNext());
+            assertTrue(childPaths.contains(serverAddress + first));
+            assertTrue(childPaths.contains(serverAddress + second));
+            assertTrue(childPaths.contains(serverAddress + third));
+            assertTrue(childPaths.contains(serverAddress + fourth));
+        }
+
+    }
+
+    @Test
+    public void testConcurrentUpdatesToBinary() throws IOException, InterruptedException {
+        // create a binary
+        final String path = getRandomUniqueId();
+
+        final HttpPut method = new HttpPut(serverAddress + path);
+        method.setHeader("Content-Type", "text/plain");
+        method.setEntity(new StringEntity("initial value"));
+
+        final String binaryEtag;
+
+        try (final CloseableHttpResponse response = execute(method)) {
+            binaryEtag = response.getFirstHeader("ETag").getValue();
+        }
+
+        final HttpResponse r1;
+        final PutThread[] threads = new PutThread[] {
+                new PutThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 1")),
+                new PutThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 2")),
+                new PutThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 3")),
+                new PutThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 4"))  };
+
+        for (PutThread t : threads) {
+            t.start();
+        }
+
+        final List<PutThread> successfulThreads = new ArrayList<>();
+        for (PutThread t : threads) {
+            t.join(1000);
+            assertFalse("Thread " + t.getId() + " could not perform its operation in time!", t.isAlive());
+            final int status = t.response.getStatusLine().getStatusCode();
+            LOGGER.info("{} received a {} status code.", t.getId(), status);
+            if (status == 204) {
+                successfulThreads.add(t);
+            }
+        }
+
+        assertEquals("Only one PUT request should have been successful!", 1, successfulThreads.size());
+    }
+
+    private class PutThread extends Thread {
+
+        private HttpPut put;
+
+        private HttpResponse response;
+
+        public PutThread(final HttpPut put) {
+            this.put = put;
+        }
+
+        @Override
+        public void run() {
+            try {
+                response = execute(put);
+            } catch (IOException e) {
+                LOGGER.error("Thread " + Thread.currentThread().getId() + ", failed to PUT resource!", e);
+            }
+
+        }
+    }
+
+    private HttpPut putBinaryObjMethodIfMatch(final String location, final String etag, final String content) {
+         final HttpPut put = putObjMethod(location);
+         put.setHeader("Content-Type", "text/plain");
+         put.setHeader("If-Match", etag);
+         try {
+            put.setEntity(new StringEntity(content));
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+         return put;
+    }
+
+    @Test
+    public void testConcurrentPatches() throws IOException, InterruptedException {
+        // create a resource
+        final String path = getRandomUniqueId();
+        executeAndClose(putObjMethod(path));
+        final int[] responseCodes = new int[4];
+        final Thread t1 = new Thread(() -> { responseCodes[0] = patchWithSparql(path,
+                "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'one' . }");});
+        final Thread t2 = new Thread(() -> { responseCodes[1] = patchWithSparql(path,
+                "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'two' . }");});
+        final Thread t3 = new Thread(() -> { responseCodes[2] = patchWithSparql(path,
+                "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'three' . }");});
+        final Thread t4 = new Thread(() -> { responseCodes[3] = patchWithSparql(path,
+                "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'four' . }");});
+        t1.start();
+        t2.start();
+        t3.start();
+        t4.start();
+        t1.join();
+        t2.join();
+        t3.join();
+        t4.join();
+        assertEquals("Patch should have succeeded!", 204, responseCodes[0]);
+        assertEquals("Patch should have succeeded!", 204, responseCodes[1]);
+        assertEquals("Patch should have succeeded!", 204, responseCodes[2]);
+        assertEquals("Patch should have succeeded!", 204, responseCodes[3]);
+        try (final CloseableDataset dataset = getDataset(getObjMethod(path))) {
+            final DatasetGraph graphStore = dataset.asDatasetGraph();
+            final List<String> missingDcIdentifiers
+                    = new ArrayList<>(Arrays.asList(new String[] { "one", "two", "three", "four" }));
+            final Iterator<Quad> dcIdentifierIt = graphStore.find(ANY, createURI(serverAddress + path),
+                    createProperty("http://purl.org/dc/elements/1.1/identifier").asNode(), ANY);
+            while (dcIdentifierIt.hasNext()) {
+                final String value = dcIdentifierIt.next().getObject().getLiteralValue().toString();
+                assertTrue("Unexpected dc:identifier found: " + value, missingDcIdentifiers.remove(value));
+            }
+            assertTrue("All of the dc:identifiers should have been applied! (missing "
+            + Arrays.toString(missingDcIdentifiers.toArray()) + ")", missingDcIdentifiers.isEmpty());
+
+            assertTrue("Added property must exist!", graphStore.contains(ANY, createURI(serverAddress + path),
+                    createProperty("http://purl.org/dc/elements/1.1/identifier").asNode(), createLiteral("one")));
+            assertTrue("Added property must exist!", graphStore.contains(ANY, createURI(serverAddress + path),
+                    createProperty("http://purl.org/dc/elements/1.1/identifier").asNode(), createLiteral("two")));
+            assertTrue("Added property must exist!", graphStore.contains(ANY, createURI(serverAddress + path),
+                    createProperty("http://purl.org/dc/elements/1.1/identifier").asNode(), createLiteral("three")));
+            assertTrue("Added property must exist!", graphStore.contains(ANY, createURI(serverAddress + path),
+                    createProperty("http://purl.org/dc/elements/1.1/identifier").asNode(), createLiteral("four")));
+        }
+    }
+
+    private int patchWithSparql(final String path, final String sparqlUpdate) {
+        try {
+            final HttpPatch patch = new HttpPatch(serverAddress + path);
+            patch.addHeader("Content-Type", "application/sparql-update");
+            patch.setEntity(new StringEntity(sparqlUpdate));
+            final CloseableHttpResponse r = client.execute(patch);
+            final int code = r.getStatusLine().getStatusCode();
+            r.close();
+            return code;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 
     @Test
     public void testBinaryLastModified() throws Exception {
