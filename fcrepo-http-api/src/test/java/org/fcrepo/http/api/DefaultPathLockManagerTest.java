@@ -61,7 +61,7 @@ public class DefaultPathLockManagerTest {
     }
 
     @Test
-    public void testActivePathCleanup() throws InterruptedException {
+    public void testActivePathCleanup() {
         final DefaultPathLockManager m = new DefaultPathLockManager();
         assertEquals("There should no active paths in memory.", 0, m.activePaths.size());
 
@@ -79,7 +79,7 @@ public class DefaultPathLockManagerTest {
     }
 
     @Test
-    public void readsShouldNotBlock() throws InterruptedException {
+    public void readsShouldNotBlock() {
         final DefaultPathLockManager m = new DefaultPathLockManager();
         final String path = "path1";
         m.lockForRead(path);
@@ -88,7 +88,7 @@ public class DefaultPathLockManagerTest {
     }
 
     @Test
-    public void readShouldBlockWhileWriting() throws InterruptedException {
+    public void readShouldBlockWhileWriting() {
         final DefaultPathLockManager m = new DefaultPathLockManager();
         final String path = "path1";
         final AcquiredLock l = m.lockForWrite(path, session, nodeService);
@@ -99,7 +99,7 @@ public class DefaultPathLockManagerTest {
     }
 
     @Test
-    public void writesShouldBlock() throws InterruptedException {
+    public void writesShouldBlock() {
         final DefaultPathLockManager m = new DefaultPathLockManager();
         final String path = "path1";
         final AcquiredLock l = m.lockForWrite(path, session, nodeService);
@@ -110,7 +110,7 @@ public class DefaultPathLockManagerTest {
     }
 
     @Test
-    public void siblingWritesShouldNotBlock() throws InterruptedException {
+    public void siblingWritesShouldNotBlock() {
         final DefaultPathLockManager m = new DefaultPathLockManager();
         final String p1 = "0/0";
         final String p2 = "0/1";
@@ -120,7 +120,7 @@ public class DefaultPathLockManagerTest {
     }
 
     @Test
-    public void siblingCreatesShouldNotBlock() throws InterruptedException {
+    public void siblingCreatesShouldNotBlock() {
         when(nodeService.exists(any(), eq("0/0"))).thenReturn(false);
         when(nodeService.exists(any(), eq("0/1"))).thenReturn(false);
         final DefaultPathLockManager m = new DefaultPathLockManager();
@@ -132,7 +132,7 @@ public class DefaultPathLockManagerTest {
     }
 
     @Test
-    public void deletePathShouldBeDisappearWhenLockIsReleased() throws InterruptedException {
+    public void deletePathShouldBeDisappearWhenLockIsReleased() {
         final DefaultPathLockManager m = new DefaultPathLockManager();
         final String p1 = "delete";
         final AcquiredLock l = m.lockForDelete(p1);
@@ -143,7 +143,7 @@ public class DefaultPathLockManagerTest {
     }
 
     @Test
-    public void deleteShouldBlockAccessToDescendents() throws InterruptedException {
+    public void deleteShouldBlockAccessToDescendents() {
         final DefaultPathLockManager m = new DefaultPathLockManager();
         final String p1 = "delete";
         m.lockForDelete(p1);
@@ -157,7 +157,7 @@ public class DefaultPathLockManagerTest {
     }
 
     @Test
-    public void deleteShouldNotAffectParentOrPeers() throws InterruptedException {
+    public void deleteShouldNotAffectParentOrPeers() {
         final DefaultPathLockManager m = new DefaultPathLockManager();
         final String p1 = "root/delete";
         m.lockForDelete(p1);
@@ -208,7 +208,7 @@ public class DefaultPathLockManagerTest {
          * is accomplished by interrupting the thread and joining,
          * so once it's called, the thread is no longer of use
          */
-        public boolean isBlocked() {
+        private boolean isBlocked() {
             this.interrupt();
             try {
                 this.join();
@@ -223,10 +223,13 @@ public class DefaultPathLockManagerTest {
          * The current implementation joins this thread (with a timeout)
          * and verifies that it is no longer alive.
          * @return
-         * @throws InterruptedException
          */
-        public boolean canComplete() throws InterruptedException {
-            this.join(WAIT);
+        private boolean canComplete() {
+            try {
+                this.join(WAIT);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
             return !this.isAlive();
         }
 

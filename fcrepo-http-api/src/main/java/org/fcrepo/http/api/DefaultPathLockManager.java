@@ -30,6 +30,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import javax.jcr.Session;
 
+import org.fcrepo.kernel.api.exception.InterruptedRuntimeException;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
@@ -173,7 +174,7 @@ public class DefaultPathLockManager implements PathLockManager {
          * @param locks each PathLock that must be acquired
          * @throws InterruptedException
          */
-        public AcquiredMultiPathLock(final List<ActivePath.PathScopedLock> locks) throws InterruptedException {
+        private AcquiredMultiPathLock(final List<ActivePath.PathScopedLock> locks) throws InterruptedException {
             this.locks = locks;
 
             boolean success = false;
@@ -202,7 +203,7 @@ public class DefaultPathLockManager implements PathLockManager {
          *        write locked.
          * @throws InterruptedException
          */
-        public AcquiredMultiPathLock(final String deletePath) throws InterruptedException {
+        private AcquiredMultiPathLock(final String deletePath) throws InterruptedException {
             this.deletePath = deletePath;
 
             boolean success = false;
@@ -325,7 +326,7 @@ public class DefaultPathLockManager implements PathLockManager {
         try {
             return new AcquiredMultiPathLock(locks);
         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            throw new InterruptedRuntimeException(e);
         }
     }
 
@@ -353,7 +354,7 @@ public class DefaultPathLockManager implements PathLockManager {
         try {
             return new AcquiredMultiPathLock(locks);
         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            throw new InterruptedRuntimeException(e);
         }
     }
 
@@ -362,7 +363,7 @@ public class DefaultPathLockManager implements PathLockManager {
         try {
             return new AcquiredMultiPathLock(normalizePath(path));
         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            throw new InterruptedRuntimeException(e);
         }
     }
 }
