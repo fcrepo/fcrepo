@@ -122,7 +122,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     public static final MediaType MESSAGE_EXTERNAL_BODY = MediaType.valueOf("message/external-body");
 
     @Context protected Request request;
-    @Context protected HttpServletResponse servletResponse;
 
     @Inject
     @Optional

@@ -34,12 +34,17 @@ import org.fcrepo.kernel.api.models.Tombstone;
 import org.slf4j.Logger;
 
 import java.security.Principal;
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletResponse;
+
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 
+import static org.fcrepo.http.commons.domain.ServerHeader.SERVER;
+import static org.fcrepo.http.commons.domain.ServerHeader.serverVersion;
 import static org.fcrepo.kernel.api.observer.OptionalValues.BASE_URL;
 import static org.fcrepo.kernel.api.observer.OptionalValues.USER_AGENT;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -52,11 +57,23 @@ abstract public class FedoraBaseResource extends AbstractResource {
 
     private static final Logger LOGGER = getLogger(FedoraBaseResource.class);
 
+    @Context protected HttpServletResponse servletResponse;
+
     @Inject
     protected HttpSession session;
 
     @Context
     protected SecurityContext securityContext;
+
+    @PostConstruct
+    private void init() {
+        final String server = servletResponse.getHeader(SERVER);
+        if (server == null) {
+            servletResponse.setHeader(SERVER, serverVersion());
+        } else {
+            servletResponse.setHeader(SERVER, server + " " + serverVersion());
+        }
+    }
 
     protected IdentifierConverter<Resource, FedoraResource> idTranslator;
 

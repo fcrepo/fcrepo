@@ -26,6 +26,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
+import static org.fcrepo.http.commons.domain.ServerHeader.SERVER;
+import static org.fcrepo.http.commons.domain.ServerHeader.serverVersion;
 import static javax.ws.rs.core.Response.ok;
 
 /**
@@ -44,7 +46,8 @@ public class ViewAssets {
     @Path("common.css")
     @Produces({"text/css", "*/*"})
     public Response getViewCss() {
-        return ok().entity(this.getClass().getResourceAsStream(StreamingBaseHtmlProvider.commonCssLocation)).build();
+        return ok().header(SERVER, serverVersion())
+            .entity(this.getClass().getResourceAsStream(StreamingBaseHtmlProvider.commonCssLocation)).build();
     }
 
     /**
@@ -55,6 +58,7 @@ public class ViewAssets {
     @Path("common.js")
     @Produces({"text/javascript", "*/*"})
     public Response getViewJs() {
-        return ok().entity(this.getClass().getResourceAsStream(StreamingBaseHtmlProvider.commonJsLocation)).build();
+        return ok().header(SERVER, serverVersion())
+            .entity(this.getClass().getResourceAsStream(StreamingBaseHtmlProvider.commonJsLocation)).build();
     }
 }
