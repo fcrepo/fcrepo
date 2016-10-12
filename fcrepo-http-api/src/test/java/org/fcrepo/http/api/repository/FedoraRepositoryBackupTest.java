@@ -43,6 +43,7 @@ import org.mockito.Mock;
  * @author Andrew Woods
  *         Date: 9/4/13
  */
+@Deprecated
 public class FedoraRepositoryBackupTest {
 
     private FedoraRepositoryBackup repoBackup;
@@ -70,7 +71,7 @@ public class FedoraRepositoryBackupTest {
                                         any(File.class))).thenReturn(
                 problems);
 
-        final String backupPath = repoBackup.runBackup(null);
+        final String backupPath = (String) repoBackup.runBackup(null).getEntity();
         assertNotNull(backupPath);
     }
 
@@ -85,7 +86,7 @@ public class FedoraRepositoryBackupTest {
         final String tmpDirPath = new File(tmpDir).getCanonicalPath();
         final InputStream inputStream = new ByteArrayInputStream(tmpDir.getBytes());
 
-        final String backupPath = repoBackup.runBackup(inputStream);
+        final String backupPath = (String) repoBackup.runBackup(inputStream).getEntity();
         assertNotNull(backupPath);
         assertEquals(tmpDirPath, backupPath);
     }

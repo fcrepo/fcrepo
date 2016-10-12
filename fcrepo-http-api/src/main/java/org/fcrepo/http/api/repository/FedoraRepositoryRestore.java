@@ -47,6 +47,7 @@ import org.springframework.context.annotation.Scope;
  */
 @Scope("prototype")
 @Path("/fcr:restore")
+@Deprecated
 public class FedoraRepositoryRestore extends AbstractResource {
 
     private static final Logger LOGGER = getLogger(FedoraRepositoryRestore.class);
@@ -95,7 +96,9 @@ public class FedoraRepositoryRestore extends AbstractResource {
                     .entity(problemsOutput).build());
 
         }
-        return noContent().build();
+        return noContent()
+            .header("Warning", "This endpoint is deprecated and will be removed in a future Fedora release")
+            .build();
 
     }
 }

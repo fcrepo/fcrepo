@@ -19,6 +19,7 @@ package org.fcrepo.http.api.repository;
 
 import static com.google.common.io.Files.createTempDir;
 import static java.util.stream.Collectors.joining;
+import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.serverError;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -32,6 +33,7 @@ import javax.jcr.Session;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
 
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.http.commons.AbstractResource;
@@ -46,6 +48,7 @@ import org.springframework.context.annotation.Scope;
  */
 @Scope("prototype")
 @Path("/fcr:backup")
+@Deprecated
 public class FedoraRepositoryBackup extends AbstractResource {
 
     private static final Logger LOGGER = getLogger(FedoraRepositoryBackup.class);
@@ -67,7 +70,7 @@ public class FedoraRepositoryBackup extends AbstractResource {
      * @throws IOException if IO exception occurred
      */
     @POST
-    public String runBackup(final InputStream bodyStream) throws IOException {
+    public Response runBackup(final InputStream bodyStream) throws IOException {
 
         File backupDirectory;
         if (null != bodyStream) {
@@ -104,6 +107,7 @@ public class FedoraRepositoryBackup extends AbstractResource {
             throw new WebApplicationException(serverError().entity(output).build());
 
         }
-        return backupDirectory.getCanonicalPath();
+        return ok().header("Warning", "This endpoint is deprecated and will be removed in a future Fedora release")
+            .entity(backupDirectory.getCanonicalPath()).build();
     }
 }
