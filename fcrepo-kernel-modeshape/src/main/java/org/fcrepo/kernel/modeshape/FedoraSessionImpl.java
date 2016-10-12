@@ -39,6 +39,7 @@ import javax.jcr.observation.ObservationManager;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.annotations.VisibleForTesting;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -51,8 +52,10 @@ import org.fcrepo.kernel.modeshape.utils.NamespaceTools;
 public class FedoraSessionImpl implements FedoraSession {
 
     // The default timeout is 3 minutes
+    @VisibleForTesting
     public static final String DEFAULT_TIMEOUT = Long.toString(ofMinutes(3).toMillis());
 
+    @VisibleForTesting
     public static final String TIMEOUT_SYSTEM_PROPERTY = "fcrepo.session.timeout";
 
     private final Session jcrSession;
@@ -69,7 +72,7 @@ public class FedoraSessionImpl implements FedoraSession {
     private static final ObjectMapper mapper = new ObjectMapper();
 
     /**
-     * Create a Fedora session with a JCR session and a username
+     * Create a Fedora session with a JCR session
      * @param session the JCR session
      */
     public FedoraSessionImpl(final Session session) {
@@ -149,10 +152,10 @@ public class FedoraSessionImpl implements FedoraSession {
      *  @param key the data key
      *  @param value the data value
      *
-     *  Note: while the FedoraSession inteface permits multi-valued
+     *  Note: while the FedoraSession interface permits multi-valued
      *  session data, this implementation constrains that to be single-valued.
      *  That is, calling obj.addSessionData("key", "value1") followed by
-     *  obj.addSessionData("key", "value2") will result in only "value2" being assciated
+     *  obj.addSessionData("key", "value2") will result in only "value2" being associated
      *  with the given key.
      */
     @Override

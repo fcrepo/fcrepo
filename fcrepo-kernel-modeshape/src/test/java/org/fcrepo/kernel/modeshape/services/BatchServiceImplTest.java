@@ -80,7 +80,7 @@ public class BatchServiceImplTest {
         when(mockTx.getId()).thenReturn(IS_A_TX);
         when(mockTx.getUserId()).thenReturn(null);
         final Field txsField =
-                BatchServiceImpl.class.getDeclaredField("transactions");
+                BatchServiceImpl.class.getDeclaredField("sessions");
         txsField.setAccessible(true);
         @SuppressWarnings("unchecked")
         final Map<String, FedoraSession> txs =

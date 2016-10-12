@@ -36,6 +36,7 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.SessionMissingException;
 import org.fcrepo.kernel.api.services.BatchService;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -60,8 +61,9 @@ public class BatchServiceImpl extends AbstractService implements BatchService {
      * be either persisted or written to a distributed map or sth, not just this
      * plain hashmap that follows
      */
-    private static Map<String, FedoraSession> transactions = new ConcurrentHashMap<>();
+    private static Map<String, FedoraSession> sessions = new ConcurrentHashMap<>();
 
+    @VisibleForTesting
     public static final long REAP_INTERVAL = 1000;
 
     /**
@@ -71,12 +73,12 @@ public class BatchServiceImpl extends AbstractService implements BatchService {
     @Override
     @Scheduled(fixedRate = REAP_INTERVAL)
     public void removeExpired() {
-        final Set<String> reapable = transactions.entrySet().stream()
+        final Set<String> reapable = sessions.entrySet().stream()
                 .filter(e -> e.getValue().getExpires().isPresent())
                 .filter(e -> e.getValue().getExpires().get().isBefore(now()))
                 .map(Map.Entry::getKey).collect(toSet());
         reapable.forEach(key -> {
-            final FedoraSession s = transactions.get(key);
+            final FedoraSession s = sessions.get(key);
             if (s != null) {
                 try {
                     s.expire();
@@ -84,18 +86,18 @@ public class BatchServiceImpl extends AbstractService implements BatchService {
                     LOGGER.error("Got exception rolling back expired session {}: {}", s, e.getMessage());
                 }
             }
-            transactions.remove(key);
+            sessions.remove(key);
         });
     }
 
     @Override
     public void begin(final FedoraSession session, final String username) {
-        transactions.put(getTxKey(session.getId(), username), session);
+        sessions.put(getTxKey(session.getId(), username), session);
     }
 
     @Override
     public FedoraSession getSession(final String sessionId, final String username) {
-        final FedoraSession session = transactions.get(getTxKey(sessionId, username));
+        final FedoraSession session = sessions.get(getTxKey(sessionId, username));
         if (session == null) {
             throw new SessionMissingException("Batch session with id: " + sessionId + " is not available");
         }
@@ -104,14 +106,14 @@ public class BatchServiceImpl extends AbstractService implements BatchService {
 
     @Override
     public boolean exists(final String sessionId, final String username) {
-        return transactions.containsKey(getTxKey(sessionId, username));
+        return sessions.containsKey(getTxKey(sessionId, username));
     }
 
     @Override
     public void commit(final String sessionId, final String username) {
         final FedoraSession session = getSession(sessionId, username);
         session.commit();
-        transactions.remove(getTxKey(sessionId, username));
+        sessions.remove(getTxKey(sessionId, username));
     }
 
     @Override
@@ -124,7 +126,7 @@ public class BatchServiceImpl extends AbstractService implements BatchService {
     public void abort(final String sessionId, final String username) {
         final FedoraSession session = getSession(sessionId, username);
         session.expire();
-        transactions.remove(getTxKey(sessionId, username));
+        sessions.remove(getTxKey(sessionId, username));
     }
 
     private static String getTxKey(final String sessionId, final String username) {

@@ -39,7 +39,7 @@ public interface BatchService {
     void begin(FedoraSession session, String username);
 
     /**
-     * Create a new FedoraSession for the anonymous user and add it to the currently open ones
+     * Create a new batch operation with a FedoraSession for the anonymous user and add it to the currently open ones
      *
      * @param session The session to use for this batch operation
      */
