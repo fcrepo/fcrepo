@@ -60,7 +60,8 @@ public class FedoraRepositoryImpl implements FedoraRepository {
                 throw new RepositoryRuntimeException(ex);
             }
         }
-        throw new IllegalArgumentException("Credentials are of the wrong type");
+        throw new ClassCastException("login credentials are not an instance of " +
+                Credentials.class.getCanonicalName());
     }
 
     /**
