@@ -582,6 +582,34 @@ public class FedoraLdp extends ContentExposingResource {
     }
 
     /**
+     * @param rootThrowable The original throwable
+     * @param throwable The throwable under direct scrutiny.
+     * @throws RepositoryRuntimeException
+     * @throws InsufficientStorageException
+     */
+    private void checkForInsufficientStorageException(final Throwable rootThrowable, final Throwable throwable)
+            throws InvalidChecksumException {
+        final String insufficientSpaceIdentifyingMessage = "No space left on device";
+        final String message = throwable.getMessage();
+        if (throwable instanceof IOException && message != null && message.contains(
+                insufficientSpaceIdentifyingMessage)) {
+            throw new InsufficientStorageException(throwable.getMessage(), rootThrowable);
+        }
+
+        if (throwable.getCause() != null) {
+            checkForInsufficientStorageException(rootThrowable, throwable.getCause());
+        }
+
+        if (rootThrowable instanceof InvalidChecksumException) {
+            throw (InvalidChecksumException) rootThrowable;
+        } else if (rootThrowable instanceof RuntimeException) {
+            throw (RuntimeException) rootThrowable;
+        } else {
+            throw new RepositoryRuntimeException(rootThrowable);
+        }
+    }
+
+    /**
      * Create the appropriate response after a create or update request is processed.  When a resource is created,
      * examine the Prefer and Accept headers to determine whether to include a representation.  By default, the
      * URI for the created resource is return as plain text.  If a minimal response is requested, then no body is
