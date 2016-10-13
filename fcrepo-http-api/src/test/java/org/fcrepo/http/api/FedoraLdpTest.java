@@ -811,7 +811,7 @@ public class FedoraLdpTest {
         try (final InputStream content = toInputStream("x")) {
 
             final RuntimeException ex = new RuntimeException(new IOException("root exception", new IOException(
-                    "No space left on device")));
+                    FedoraLdp.INSUFFICIENT_SPACE_IDENTIFYING_MESSAGE)));
             doThrow(ex).when(mockBinary).setContent(content, APPLICATION_OCTET_STREAM_TYPE.toString(),
                     Collections
                     .emptySet(),

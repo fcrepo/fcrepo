@@ -133,6 +133,8 @@ public class FedoraLdp extends ContentExposingResource {
         Splitter.on(',').omitEmptyStrings().trimResults().
         withKeyValueSeparator(Splitter.on('=').limit(2));
 
+    static final String INSUFFICIENT_SPACE_IDENTIFYING_MESSAGE = "No space left on device";
+
     @PathParam("path") protected String externalPath;
 
     @Inject private FedoraHttpConfiguration httpConfiguration;
@@ -552,15 +554,12 @@ public class FedoraLdp extends ContentExposingResource {
     /**
      * @param rootThrowable The original throwable
      * @param throwable The throwable under direct scrutiny.
-     * @throws RepositoryRuntimeException
-     * @throws InsufficientStorageException
      */
     private void checkForInsufficientStorageException(final Throwable rootThrowable, final Throwable throwable)
             throws InvalidChecksumException {
-        final String insufficientSpaceIdentifyingMessage = "No space left on device";
         final String message = throwable.getMessage();
         if (throwable instanceof IOException && message != null && message.contains(
-                insufficientSpaceIdentifyingMessage)) {
+                INSUFFICIENT_SPACE_IDENTIFYING_MESSAGE)) {
             throw new InsufficientStorageException(throwable.getMessage(), rootThrowable);
         }
 
