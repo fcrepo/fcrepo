@@ -373,10 +373,9 @@ public class FedoraLdp extends ContentExposingResource {
                     throw new ClientErrorException("Invalid Content Type " + requestContentType,
                             UNSUPPORTED_MEDIA_TYPE);
                 }
+            } catch (final Exception e) {
+                checkForInsufficientStorageException(e, e);
             }
-        } catch (final Exception e) {
-            checkForInsufficientStorageException(e, e);
-        }
 
             try {
                 session.save();
@@ -538,13 +537,9 @@ public class FedoraLdp extends ContentExposingResource {
                 session.save();
             } catch (final RepositoryException e) {
                 throw new RepositoryRuntimeException(e);
+            } catch (final Exception e) {
+                checkForInsufficientStorageException(e, e);
             }
-            session.save();
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        } catch (final Exception e) {
-            checkForInsufficientStorageException(e, e);
-        }
 
             LOGGER.debug("Finished creating resource with path: {}", newObjectPath);
             return createUpdateResponse(resource, true);
