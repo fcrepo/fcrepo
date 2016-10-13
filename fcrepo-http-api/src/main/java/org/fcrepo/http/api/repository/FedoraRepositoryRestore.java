@@ -97,7 +97,7 @@ public class FedoraRepositoryRestore extends AbstractResource {
 
         }
         return noContent()
-            .header("Warning", "This endpoint is deprecated and will be removed in a future Fedora release")
+            .header("Warning", "This endpoint will be moving to an extension module in a future release of Fedora")
             .build();
 
     }

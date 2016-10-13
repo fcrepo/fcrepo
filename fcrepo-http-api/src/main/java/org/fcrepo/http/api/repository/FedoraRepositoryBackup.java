@@ -107,7 +107,8 @@ public class FedoraRepositoryBackup extends AbstractResource {
             throw new WebApplicationException(serverError().entity(output).build());
 
         }
-        return ok().header("Warning", "This endpoint is deprecated and will be removed in a future Fedora release")
+        return ok()
+            .header("Warning", "This endpoint will be moving to an extension module in a future release of Fedora")
             .entity(backupDirectory.getCanonicalPath()).build();
     }
 }
