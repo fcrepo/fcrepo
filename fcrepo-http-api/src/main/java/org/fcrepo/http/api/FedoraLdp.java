@@ -551,8 +551,6 @@ public class FedoraLdp extends ContentExposingResource {
     /**
      * @param rootThrowable The original throwable
      * @param throwable The throwable under direct scrutiny.
-     * @throws RepositoryRuntimeException
-     * @throws InsufficientStorageException
      */
     private void checkForInsufficientStorageException(final Throwable rootThrowable, final Throwable throwable)
             throws InvalidChecksumException {
