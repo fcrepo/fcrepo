@@ -27,7 +27,7 @@
     <commons-io.version>2.4</commons-io.version>
     <commons-lang.version>3.3.2</commons-lang.version>
     <jetty.version>9.3.1.v20150714</jetty.version>
-    <guava.version>18.0</guava.version>
+    <guava.version>19.0</guava.version>
     <hk2.version>2.3.0</hk2.version>
     <htmlunit.version>2.15</htmlunit.version>
     <httpclient.version>4.4.1</httpclient.version>
