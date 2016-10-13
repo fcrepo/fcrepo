@@ -251,12 +251,6 @@ public final class RdfLexicon {
     public static final Predicate<Property> isManagedPredicate =
         hasFedoraNamespace.or(p -> managedProperties.contains(p));
 
-    /**
-     * Detects whether an RDF predicate URI is managed by the repository.
-    **/
-    public static Predicate<String> isManagedPredicateURI =
-        p -> isManagedPredicate.test(createProperty(p));
-
     private RdfLexicon() {
 
     }

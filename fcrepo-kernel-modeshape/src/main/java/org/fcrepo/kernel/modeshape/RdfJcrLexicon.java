@@ -55,18 +55,12 @@ public final class RdfJcrLexicon {
     public static final Property HAS_MIXIN_TYPE =
             createProperty(REPOSITORY_NAMESPACE + "mixinTypes");
 
-    // managedProperties
-    // isMangagedPredicate -- concat w/ jcrProperties
-    // isManagedPredicateURI -- concat w/ jcrProperties
-    // rework isManagedNamespace
     public static final Set<Property> jcrProperties = of(
             HAS_PRIMARY_IDENTIFIER, HAS_PRIMARY_TYPE, HAS_NODE_TYPE,
             HAS_MIXIN_TYPE);
 
-
     private static Predicate<Property> hasJcrNamespace =
         p -> !p.isAnon() && p.getNameSpace().equals(JCR_NAMESPACE);
-
 
     private RdfJcrLexicon() {
         // prevent instantiation
