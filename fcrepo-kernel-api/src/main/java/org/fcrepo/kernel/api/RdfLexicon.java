@@ -36,29 +36,17 @@ import org.apache.jena.rdf.model.Resource;
 public final class RdfLexicon {
 
     /**
-     * Repository namespace "fcrepo", used for JCR properties exposed
-     * publicly.
-     * Was "info:fedora/fedora-system:def/internal#".
+     * Repository namespace "fedora"
     **/
-    public static final String REPOSITORY_NAMESPACE =
-            "http://fedora.info/definitions/v4/repository#";
+    public static final String REPOSITORY_NAMESPACE = "http://fedora.info/definitions/v4/repository#";
 
     public static final String EVENT_NAMESPACE = "http://fedora.info/definitions/v4/event#";
-
-    /**
-     *  The core JCR namespace.
-     */
-    public static final String JCR_NAMESPACE = "http://www.jcp.org/jcr/1.0";
-
-    public static final String MODE_NAMESPACE = "http://www.modeshape.org/1.0";
-
-    public static final String MIX_NAMESPACE = "http://www.jcp.org/jcr/mix/1.0";
-
-    public static final String JCR_NT_NAMESPACE = "http://www.jcp.org/jcr/nt/1.0";
 
     public static final String EBUCORE_NAMESPACE = "http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#";
 
     public static final String PROV_NAMESPACE = "http://www.w3.org/ns/prov#";
+
+    public static final String PREMIS_NAMESPACE = "http://www.loc.gov/premis/rdf/v1#";
 
     /**
      * Fedora configuration namespace "fedora-config", used for user-settable
@@ -68,14 +56,6 @@ public final class RdfLexicon {
     // should be referenced again when versioning is back in REST api
     public static final String FEDORA_CONFIG_NAMESPACE = // NO_UCD (unused code)
             "http://fedora.info/definitions/v4/config#";
-
-    /**
-     * REST API namespace "fedora", used for internal API links and node
-     * paths.
-     * Was "info:fedora/".
-     **/
-    public static final String PREMIS_NAMESPACE =
-        "http://www.loc.gov/premis/rdf/v1#";
 
     /**
      * Linked Data Platform namespace.
@@ -89,26 +69,9 @@ public final class RdfLexicon {
             "http://www.w3.org/ns/sparql-service-description#";
 
     /**
-     * The namespaces that the repository manages internally.
-     */
-    public static final Set<String> managedNamespaces = of(
-            REPOSITORY_NAMESPACE, JCR_NAMESPACE,
-            MIX_NAMESPACE, JCR_NT_NAMESPACE, MODE_NAMESPACE);
-
-    /**
      * Is this namespace one that the repository manages?
      */
-    public static final Predicate<String> isManagedNamespace =
-        p -> managedNamespaces.contains(p);
-
-    public static final String RDF_NAMESPACE =
-            "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
-
-    public static final String INDEXING_NAMESPACE =
-            "http://fedora.info/definitions/v4/indexing#";
-
-    public static final String DC_NAMESPACE =
-            "http://purl.org/dc/elements/1.1/";
+    public static final Predicate<String> isManagedNamespace = p -> p.equals(REPOSITORY_NAMESPACE);
 
     // MEMBERSHIP
     public static final Property HAS_PARENT =
@@ -147,15 +110,21 @@ public final class RdfLexicon {
     public static final Property WRITABLE =
             createProperty(REPOSITORY_NAMESPACE + "writable");
 
+    // Server managed properties
+    public static final Property CREATED_DATE =
+            createProperty(REPOSITORY_NAMESPACE + "created");
+    public static final Property CREATED_BY =
+            createProperty(REPOSITORY_NAMESPACE + "createdBy");
+    public static final Property LAST_MODIFIED_DATE =
+            createProperty(REPOSITORY_NAMESPACE + "lastModified");
+    public static final Property LAST_MODIFIED_BY =
+            createProperty(REPOSITORY_NAMESPACE + "lastModifiedBy");
+    public static final Set<Property> serverManagedProperties = of(
+            CREATED_DATE, CREATED_BY, LAST_MODIFIED_DATE, LAST_MODIFIED_BY);
+
     // Linked Data Platform
     public static final Property PAGE =
         createProperty(LDP_NAMESPACE + "Page");
-    public static final Property PAGE_OF =
-        createProperty(LDP_NAMESPACE + "pageOf");
-    public static final Property FIRST_PAGE =
-        createProperty(LDP_NAMESPACE + "firstPage");
-    public static final Property NEXT_PAGE =
-            createProperty(LDP_NAMESPACE + "nextPage");
     public static final Resource CONTAINER =
             createResource(LDP_NAMESPACE + "Container");
     public static final Resource BASIC_CONTAINER =
@@ -180,11 +149,11 @@ public final class RdfLexicon {
             createProperty(LDP_NAMESPACE + "constrainedBy");
     public static final Property MEMBER_SUBJECT =
             createProperty(LDP_NAMESPACE + "MemberSubject");
+    public static final Property INBOX =
+            createProperty(LDP_NAMESPACE + "inbox");
 
-    public static final Set<Property> ldpProperties = of(PAGE, PAGE_OF,
-            FIRST_PAGE, NEXT_PAGE, CONTAINS, LDP_MEMBER);
-    public static final Set<Resource> ldpResources = of(CONTAINER,
-            DIRECT_CONTAINER);
+    public static final Set<Property> ldpProperties = of(CONTAINS, LDP_MEMBER);
+    public static final Set<Resource> ldpResources = of(CONTAINER, DIRECT_CONTAINER);
 
     // REPOSITORY INFORMATION
     public static final Property HAS_OBJECT_COUNT =
@@ -204,28 +173,20 @@ public final class RdfLexicon {
             createProperty("http://purl.org/vocab/vann/preferredNamespacePrefix");
     public static final Property HAS_NAMESPACE_URI =
             createProperty("http://purl.org/vocab/vann/preferredNamespaceUri");
-    public static final Property VOAF_VOCABULARY = createProperty("http://purl.org/vocommons/voaf#Vocabulary");
 
     public static final Set<Property> namespaceProperties = of(
-            HAS_NAMESPACE_PREFIX, HAS_NAMESPACE_URI, VOAF_VOCABULARY);
+            HAS_NAMESPACE_PREFIX, HAS_NAMESPACE_URI);
 
     // OTHER SERVICES
     public static final Property HAS_VERSION_HISTORY =
             createProperty(REPOSITORY_NAMESPACE + "hasVersions");
     public static final Property HAS_FIXITY_SERVICE =
             createProperty(REPOSITORY_NAMESPACE + "hasFixityService");
-    public static final Property HAS_FEED =
-            createProperty(
-                    "http://www.whatwg.org/specs/web-apps/current-work/#",
-                    "feed0");
-    public static final Property HAS_SUBSCRIPTION_SERVICE =
-            createProperty("http://microformats.org/wiki/rel-subscription");
     public static final Property HAS_SPARQL_ENDPOINT =
         createProperty(SPARQL_SD_NAMESPACE + "endpoint");
 
     public static final Set<Property> otherServiceProperties = of(
-            HAS_VERSION_HISTORY, HAS_FIXITY_SERVICE,
-            HAS_FEED, HAS_SUBSCRIPTION_SERVICE);
+            HAS_VERSION_HISTORY, HAS_FIXITY_SERVICE);
 
 
     // BINARY DESCRIPTIONS
@@ -270,38 +231,6 @@ public final class RdfLexicon {
     public static final Property EMBED_CONTAINS = createProperty(REPOSITORY_NAMESPACE + "EmbedResources");
     public static final Property SERVER_MANAGED = createProperty(REPOSITORY_NAMESPACE + "ServerManaged");
 
-    // IMPORTANT JCR PROPERTIES
-    public static final Property HAS_PRIMARY_IDENTIFIER =
-            createProperty(REPOSITORY_NAMESPACE + "uuid");
-    public static final Property HAS_PRIMARY_TYPE =
-            createProperty(REPOSITORY_NAMESPACE + "primaryType");
-    public static final Property HAS_NODE_TYPE =
-            createProperty(REPOSITORY_NAMESPACE + "hasNodeType");
-    public static final Property HAS_MIXIN_TYPE =
-            createProperty(REPOSITORY_NAMESPACE + "mixinTypes");
-    public static final Property CREATED_DATE =
-            createProperty(REPOSITORY_NAMESPACE + "created");
-    public static final Property CREATED_BY =
-            createProperty(REPOSITORY_NAMESPACE + "createdBy");
-    public static final Property LAST_MODIFIED_DATE =
-            createProperty(REPOSITORY_NAMESPACE + "lastModified");
-    public static final Property LAST_MODIFIED_BY =
-            createProperty(REPOSITORY_NAMESPACE + "lastModifiedBy");
-
-    public static final Set<Property> jcrProperties = of(
-            HAS_PRIMARY_IDENTIFIER, HAS_PRIMARY_TYPE, HAS_NODE_TYPE,
-            HAS_MIXIN_TYPE, CREATED_DATE, CREATED_BY, LAST_MODIFIED_DATE,
-            LAST_MODIFIED_BY);
-
-    public static final Property RDFS_LABEL =
-            createProperty("http://www.w3.org/2000/01/rdf-schema#label");
-    public static final Property DC_TITLE =
-            createProperty("http://purl.org/dc/elements/1.1/title");
-    public static final Property DCTERMS_TITLE =
-            createProperty("http://purl.org/dc/terms/title");
-    public static final Property SKOS_PREFLABEL =
-            createProperty("http://www.w3.org/2004/02/skos/core#prefLabel");
-
     public static final Set<Property> managedProperties;
 
     static {
@@ -309,12 +238,9 @@ public final class RdfLexicon {
         b.addAll(membershipProperties).addAll(fixityProperties).addAll(ldpProperties).addAll(
                 repositoryProperties).addAll(namespaceProperties).addAll(
                 otherServiceProperties).addAll(structProperties).addAll(contentProperties).addAll(
-                versioningProperties).addAll(jcrProperties);
+                versioningProperties).addAll(serverManagedProperties);
         managedProperties = b.build();
     }
-
-    private static Predicate<Property> hasJcrNamespace =
-        p -> !p.isAnon() && p.getNameSpace().equals(JCR_NAMESPACE);
 
     private static Predicate<Property> hasFedoraNamespace =
         p -> !p.isAnon() && p.getNameSpace().startsWith(REPOSITORY_NAMESPACE);
@@ -323,7 +249,7 @@ public final class RdfLexicon {
      * Detects whether an RDF property is managed by the repository.
      */
     public static final Predicate<Property> isManagedPredicate =
-        hasJcrNamespace.or(hasFedoraNamespace).or(p -> managedProperties.contains(p));
+        hasFedoraNamespace.or(p -> managedProperties.contains(p));
 
     /**
      * Detects whether an RDF predicate URI is managed by the repository.

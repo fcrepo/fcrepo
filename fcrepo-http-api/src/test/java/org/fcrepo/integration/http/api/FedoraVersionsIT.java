@@ -22,6 +22,7 @@ import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.vocabulary.RDF.type;
+import static org.apache.jena.vocabulary.DC.title;
 import static java.util.stream.Stream.empty;
 import static java.util.stream.Stream.of;
 import static javax.ws.rs.core.Link.fromUri;
@@ -35,14 +36,11 @@ import static com.google.common.collect.Iterators.size;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
-import static org.fcrepo.kernel.api.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINS;
-import static org.fcrepo.kernel.api.RdfLexicon.JCR_NT_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_HISTORY;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_LABEL;
-import static org.fcrepo.kernel.api.RdfLexicon.MIX_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
@@ -147,17 +145,17 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         enableVersioning(id);
 
         logger.debug("Setting a title");
-        patchLiteralProperty(serverAddress + id, DC_TITLE.getURI(), "First Title");
+        patchLiteralProperty(serverAddress + id, title.getURI(), "First Title");
 
         try (final CloseableDataset dataset = getContent(serverAddress + id)) {
             assertTrue("Should find original title", dataset.asDatasetGraph().contains(ANY,
-                    ANY, DC_TITLE.asNode(), createLiteral("First Title")));
+                    ANY, title.asNode(), createLiteral("First Title")));
         }
         logger.debug("Posting version v0.0.1");
         postObjectVersion(id, "v0.0.1");
 
         logger.debug("Replacing the title");
-        patchLiteralProperty(serverAddress + id, DC_TITLE.getURI(), "Second Title");
+        patchLiteralProperty(serverAddress + id, title.getURI(), "Second Title");
 
         try (final CloseableDataset dataset = getContent(serverAddress + id + "/fcr:versions/v0.0.1")) {
             logger.debug("Got version profile:");
@@ -165,14 +163,12 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
             assertTrue("Didn't find a version triple!", versionResults.contains(ANY,
                     ANY, type.asNode(), createURI(REPOSITORY_NAMESPACE + "Version")));
-            assertFalse("Found a jcr version triple!", versionResults.contains(ANY,
-                    ANY, type.asNode(), createURI(JCR_NT_NAMESPACE + "frozenNode")));
             assertTrue("Should find a title in historic version", versionResults.contains(ANY,
-                    ANY, DC_TITLE.asNode(), ANY));
+                    ANY, title.asNode(), ANY));
             assertTrue("Should find original title in historic version", versionResults.contains(ANY,
-                    ANY, DC_TITLE.asNode(), createLiteral("First Title")));
+                    ANY, title.asNode(), createLiteral("First Title")));
             assertFalse("Should not find the updated title in historic version", versionResults.contains(ANY,
-                    ANY, DC_TITLE.asNode(), createLiteral("Second Title")));
+                    ANY, title.asNode(), createLiteral("Second Title")));
         }
     }
 
@@ -256,7 +252,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         enableVersioning(objId);
 
         logger.debug("Setting a title");
-        patchLiteralProperty(serverAddress + objId, DC_TITLE.getURI(), "Example Title");
+        patchLiteralProperty(serverAddress + objId, title.getURI(), "Example Title");
         logger.debug("Posting a labeled version");
         postObjectVersion(objId, "label");
     }
@@ -268,7 +264,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         createObjectAndClose(objId);
         enableVersioning(objId);
         logger.debug("Setting a title");
-        patchLiteralProperty(serverAddress + objId, DC_TITLE.getURI(), "Example Title");
+        patchLiteralProperty(serverAddress + objId, title.getURI(), "Example Title");
 
         logger.debug("Posting an unlabeled version");
         final HttpPost postVersion = postObjMethod(objId + "/fcr:versions");
@@ -309,11 +305,11 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         enableVersioning(objId);
 
         logger.debug("Setting a title");
-        patchLiteralProperty(serverAddress + objId, DC_TITLE.getURI(), "First title");
+        patchLiteralProperty(serverAddress + objId, title.getURI(), "First title");
         logger.debug("Posting a version with label \"" + label1 + "\"");
         postObjectVersion(objId, label1);
         logger.debug("Resetting the title");
-        patchLiteralProperty(serverAddress + objId, DC_TITLE.getURI(), "Second title");
+        patchLiteralProperty(serverAddress + objId, title.getURI(), "Second title");
 
         logger.debug("Posting a version with label \"" + label1 + "\"");
         final HttpPost postVersion = postObjMethod(objId + "/fcr:versions");
@@ -408,33 +404,33 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
         createObjectAndClose(objId);
         enableVersioning(objId);
-        patchLiteralProperty(serverAddress + objId, DC_TITLE.getURI(), title1);
+        patchLiteralProperty(serverAddress + objId, title.getURI(), title1);
         postObjectVersion(objId, firstVersionLabel);
 
-        patchLiteralProperty(serverAddress + objId, DC_TITLE.getURI(), title2);
+        patchLiteralProperty(serverAddress + objId, title.getURI(), title2);
         postObjectVersion(objId, secondVersionLabel);
 
         try (final CloseableDataset dataset = getDataset(new HttpGet(serverAddress + objId))) {
             final DatasetGraph preRollback = dataset.asDatasetGraph();
             assertTrue("First title must be present!", preRollback.contains(ANY,
-                    subject, DC_TITLE.asNode(), createLiteral(title1)));
+                    subject, title.asNode(), createLiteral(title1)));
             assertTrue("Second title must be present!", preRollback.contains(ANY,
-                    subject, DC_TITLE.asNode(), createLiteral(title2)));
+                    subject, title.asNode(), createLiteral(title2)));
         }
         revertToVersion(objId, firstVersionLabel);
         try (final CloseableDataset dataset = getDataset(new HttpGet(serverAddress + objId))) {
             final DatasetGraph postRollback = dataset.asDatasetGraph();
             assertTrue("First title must be present!", postRollback.contains(ANY,
-                    subject, DC_TITLE.asNode(), createLiteral(title1)));
+                    subject, title.asNode(), createLiteral(title1)));
             assertFalse("Second title must NOT be present!", postRollback.contains(ANY,
-                    subject, DC_TITLE.asNode(), createLiteral(title2)));
+                    subject, title.asNode(), createLiteral(title2)));
         }
         /*
          * Make the sure the node is checked out and able to be updated. Because the JCR concept of checked-out is
          * something we don't intend to expose through Fedora in the future, the following line is simply to test that
          * writes can be completed after a reversion.
          */
-        patchLiteralProperty(serverAddress + objId, DC_TITLE.getURI(), "additional change");
+        patchLiteralProperty(serverAddress + objId, title.getURI(), "additional change");
     }
 
     @Test
@@ -503,8 +499,6 @@ public class FedoraVersionsIT extends AbstractResourceIT {
             final DatasetGraph updatedObjectProperties = dataset.asDatasetGraph();
             assertTrue("Node is expected to contain hasVersions triple.", updatedObjectProperties.contains(ANY,
                     subject, HAS_VERSION_HISTORY.asNode(), ANY));
-            assertFalse("Node must not have versionable mixin.", updatedObjectProperties.contains(ANY,
-                    subject, type.asNode(), createURI(MIX_NAMESPACE + "versionable")));
         }
     }
 
@@ -526,8 +520,6 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         try (final CloseableDataset dataset = getContent(serverAddress + pid + "/" + dsid + "/fcr:metadata")) {
             final DatasetGraph originalObjectProperties = dataset.asDatasetGraph();
             final Node subject = createURI(serverAddress + pid + "/" + dsid);
-            assertFalse("Node must not have versionable mixin.", originalObjectProperties.contains(ANY,
-                    subject, type.asNode(), createURI(MIX_NAMESPACE + "versionable")));
             assertFalse("Node must not contain any hasVersions triples.", originalObjectProperties.contains(ANY,
                     subject, HAS_VERSION_HISTORY.asNode(), ANY));
         }

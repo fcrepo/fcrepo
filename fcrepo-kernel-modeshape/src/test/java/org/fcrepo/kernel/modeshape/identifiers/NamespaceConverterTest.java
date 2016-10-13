@@ -17,7 +17,7 @@
  */
 package org.fcrepo.kernel.modeshape.identifiers;
 
-import static org.fcrepo.kernel.api.RdfLexicon.JCR_NAMESPACE;
+import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.JCR_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;

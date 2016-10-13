@@ -27,6 +27,7 @@ import static org.apache.jena.rdf.model.ResourceFactory.createPlainLiteral;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.vocabulary.RDF.type;
+import static org.apache.jena.vocabulary.DC.title;
 import static javax.jcr.PropertyType.BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
@@ -35,19 +36,9 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TOMBSTONE;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
-import static org.fcrepo.kernel.api.RdfLexicon.DC_TITLE;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_MIXIN_TYPE;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_NODE_TYPE;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_PRIMARY_TYPE;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_PRIMARY_IDENTIFIER;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_LABEL;
-import static org.fcrepo.kernel.api.RdfLexicon.JCR_NAMESPACE;
-import static org.fcrepo.kernel.api.RdfLexicon.JCR_NT_NAMESPACE;
-import static org.fcrepo.kernel.api.RdfLexicon.MIX_NAMESPACE;
-import static org.fcrepo.kernel.api.RdfLexicon.MODE_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
-import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RequiredRdfContext.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
@@ -56,6 +47,14 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.VERSIONS;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FIELD_DELIMITER;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
+import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.HAS_MIXIN_TYPE;
+import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.HAS_NODE_TYPE;
+import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.HAS_PRIMARY_TYPE;
+import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.HAS_PRIMARY_IDENTIFIER;
+import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.JCR_NAMESPACE;
+import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.JCR_NT_NAMESPACE;
+import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.MIX_NAMESPACE;
+import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.MODE_NAMESPACE;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedPredicate.uncheck;
 import static org.junit.Assert.assertEquals;
@@ -309,7 +308,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         // jcr property
         final Node s = createGraphSubjectNode(object);
-        Node p = DC_TITLE.asNode();
+        Node p = title.asNode();
         Node o = createLiteral("this-is-some-title");
         assertTrue(graph.contains(s, p, o));
 
@@ -329,10 +328,10 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Session jcrSession = getJcrSession(session);
         final NodeTypeManager mgr = jcrSession.getWorkspace().getNodeTypeManager();
         //create supertype mixin
-        final NodeTypeTemplate type = mgr.createNodeTypeTemplate();
-        type.setName("fedoraconfig:aSupertype");
-        type.setMixin(true);
-        final NodeTypeDefinition[] nodeTypes = new NodeTypeDefinition[]{type};
+        final NodeTypeTemplate type1 = mgr.createNodeTypeTemplate();
+        type1.setName("fedoraconfig:aSupertype");
+        type1.setMixin(true);
+        final NodeTypeDefinition[] nodeTypes = new NodeTypeDefinition[]{type1};
         mgr.registerNodeTypes(nodeTypes, true);
 
         //create a type inheriting above supertype
@@ -356,7 +355,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         //test that supertype has been inherited as rdf:type
         final Node s = createGraphSubjectNode(object);
-        final Node p = createProperty(RDF_NAMESPACE + "type").asNode();
+        final Node p = type.asNode();
         final Node o = createProperty("info:fedoraconfig/aSupertype").asNode();
         assertTrue("supertype fedoraconfig:aSupertype not found inherited in fedora:testInher!",
                 object.getTriples(subjects, PROPERTIES).collect(toModel()).getGraph().contains(s, p, o));
