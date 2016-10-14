@@ -98,6 +98,7 @@ import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
+import org.fcrepo.kernel.api.exception.InsufficientStorageException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -131,6 +132,8 @@ public class FedoraLdp extends ContentExposingResource {
     private static final Splitter.MapSplitter RFC3230_SPLITTER =
         Splitter.on(',').omitEmptyStrings().trimResults().
         withKeyValueSeparator(Splitter.on('=').limit(2));
+
+    static final String INSUFFICIENT_SPACE_IDENTIFYING_MESSAGE = "No space left on device";
 
     @PathParam("path") protected String externalPath;
 
@@ -372,6 +375,8 @@ public class FedoraLdp extends ContentExposingResource {
                     throw new ClientErrorException("Invalid Content Type " + requestContentType,
                             UNSUPPORTED_MEDIA_TYPE);
                 }
+            } catch (final Exception e) {
+                checkForInsufficientStorageException(e, e);
             }
 
             try {
@@ -381,6 +386,7 @@ public class FedoraLdp extends ContentExposingResource {
             }
 
             return createUpdateResponse(resource, created);
+
         } finally {
             lock.release();
         }
@@ -534,12 +540,39 @@ public class FedoraLdp extends ContentExposingResource {
                 session.save();
             } catch (final RepositoryException e) {
                 throw new RepositoryRuntimeException(e);
+            } catch (final Exception e) {
+                checkForInsufficientStorageException(e, e);
             }
 
             LOGGER.debug("Finished creating resource with path: {}", newObjectPath);
             return createUpdateResponse(resource, true);
         } finally {
             lock.release();
+        }
+    }
+
+    /**
+     * @param rootThrowable The original throwable
+     * @param throwable The throwable under direct scrutiny.
+     */
+    private void checkForInsufficientStorageException(final Throwable rootThrowable, final Throwable throwable)
+            throws InvalidChecksumException {
+        final String message = throwable.getMessage();
+        if (throwable instanceof IOException && message != null && message.contains(
+                INSUFFICIENT_SPACE_IDENTIFYING_MESSAGE)) {
+            throw new InsufficientStorageException(throwable.getMessage(), rootThrowable);
+        }
+
+        if (throwable.getCause() != null) {
+            checkForInsufficientStorageException(rootThrowable, throwable.getCause());
+        }
+
+        if (rootThrowable instanceof InvalidChecksumException) {
+            throw (InvalidChecksumException) rootThrowable;
+        } else if (rootThrowable instanceof RuntimeException) {
+            throw (RuntimeException) rootThrowable;
+        } else {
+            throw new RepositoryRuntimeException(rootThrowable);
         }
     }
 
