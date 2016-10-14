@@ -26,6 +26,7 @@ import static org.mockito.Mockito.when;
 import javax.jcr.Session;
 
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
+import org.fcrepo.kernel.api.exception.InterruptedRuntimeException;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.junit.Before;
 import org.junit.Test;
@@ -193,10 +194,8 @@ public class DefaultPathLockManagerTest {
             AcquiredLock lock = null;
             try {
                 lock = l.acquireLock();
-            } catch (RuntimeException e) {
-                if (e.getCause() instanceof InterruptedException) {
-                    interrupted = true;
-                }
+            } catch (InterruptedRuntimeException e) {
+                interrupted = true;
             }
             if (lock != null) {
                 lock.release();
