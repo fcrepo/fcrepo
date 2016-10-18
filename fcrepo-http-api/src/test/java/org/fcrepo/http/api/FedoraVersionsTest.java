@@ -88,7 +88,7 @@ public class FedoraVersionsTest {
 
     @Before
     public void setUp() throws Exception {
-        testObj = spy(new FedoraVersions(path, versionLabel, ""));
+        testObj = spy(new FedoraVersions(path, versionLabel));
         setField(testObj, "nodeService", mockNodes);
         setField(testObj, "uriInfo", getUriInfoImpl());
         setField(testObj, "session", mockSession);

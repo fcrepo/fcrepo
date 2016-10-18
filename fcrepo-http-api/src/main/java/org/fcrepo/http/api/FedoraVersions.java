@@ -34,7 +34,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 
-import javax.annotation.PostConstruct;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -69,10 +68,6 @@ public class FedoraVersions extends ContentExposingResource {
 
     @PathParam("labelAndOptionalPathIntoVersion") protected String pathListIntoVersion;
 
-    protected String path;
-    protected String label;
-    protected String pathIntoVersion;
-
     protected FedoraResource baseResource;
 
     /**
@@ -84,21 +79,13 @@ public class FedoraVersions extends ContentExposingResource {
 
     /**
      * Create a new FedoraNodes instance for a given path
-     * @param path the path
-     * @param label the label
-     * @param pathIntoVersion the string value of pathIntoVersion
+     * @param externalPath the externalPath
+     * @param pathListIntoVersion the string value of pathListIntoVersion
      */
     @VisibleForTesting
-    public FedoraVersions(final String path, final String label, final String pathIntoVersion) {
-        this.path = path;
-        this.label = label;
-        this.pathIntoVersion = pathIntoVersion;
-    }
-
-    @PostConstruct
-    private void postConstruct() {
-        this.path = externalPath + "/" + FCR_VERSIONS + "/" + pathListIntoVersion;
-        this.label = pathListIntoVersion.split("/", 2)[0];
+    public FedoraVersions(final String externalPath, final String pathListIntoVersion) {
+        this.externalPath = externalPath;
+        this.pathListIntoVersion = pathListIntoVersion;
     }
 
     /**
@@ -108,9 +95,8 @@ public class FedoraVersions extends ContentExposingResource {
      */
     @PATCH
     public Response revertToVersion() {
-        LOGGER.info("Reverting {} to version {}.", path,
-                label);
-        versionService.revertToVersion(session.getFedoraSession(), unversionedResourcePath(), label);
+        LOGGER.info("Reverting {} to version {}.", versionedPath(), versionLabel());
+        versionService.revertToVersion(session.getFedoraSession(), unversionedResourcePath(), versionLabel());
         return noContent().build();
     }
 
@@ -120,8 +106,8 @@ public class FedoraVersions extends ContentExposingResource {
     **/
     @DELETE
     public Response removeVersion() {
-        LOGGER.info("Removing {} version {}.", path, label);
-        versionService.removeVersion(session.getFedoraSession(), unversionedResourcePath(), label);
+        LOGGER.info("Removing {} version {}.", versionedPath(), versionLabel());
+        versionService.removeVersion(session.getFedoraSession(), unversionedResourcePath(), versionLabel());
         return noContent().build();
     }
 
@@ -140,8 +126,7 @@ public class FedoraVersions extends ContentExposingResource {
             N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
             TEXT_HTML, "*/*"})
     public Response getVersion(@HeaderParam("Range") final String rangeValue) throws IOException {
-        LOGGER.trace("Getting version profile for: {} at version: {}", path,
-                label);
+        LOGGER.trace("Getting version profile for: {} at version: {}", versionedPath(), versionLabel());
         checkCacheControlHeaders(request, servletResponse, resource(), session);
         final RdfStream rdfStream = new DefaultRdfStream(asNode(resource()));
         addResourceHttpHeaders(resource());
@@ -165,7 +150,7 @@ public class FedoraVersions extends ContentExposingResource {
     protected FedoraResource resource() {
 
         if (resource == null) {
-            resource = getResourceFromPath(path);
+            resource = getResourceFromPath(versionedPath());
         }
 
         return resource;
@@ -180,5 +165,13 @@ public class FedoraVersions extends ContentExposingResource {
     @Override
     protected String externalPath() {
         return externalPath;
+    }
+
+    private String versionedPath() {
+        return externalPath + "/" + FCR_VERSIONS + "/" + pathListIntoVersion;
+    }
+
+    private String versionLabel() {
+        return pathListIntoVersion.split("/", 2)[0];
     }
 }
