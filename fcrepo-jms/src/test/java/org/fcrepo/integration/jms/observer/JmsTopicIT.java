@@ -38,6 +38,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 @DirtiesContext
 public class JmsTopicIT extends AbstractJmsIT {
     protected Destination createDestination() throws JMSException {
-        return session.createTopic("fedora");
+        return jmsSession.createTopic("fedora");
     }
 }

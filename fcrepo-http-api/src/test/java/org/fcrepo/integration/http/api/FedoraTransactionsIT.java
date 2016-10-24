@@ -33,9 +33,9 @@ import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.http.util.EntityUtils.consume;
 import static org.fcrepo.kernel.api.RdfLexicon.DC_TITLE;
-import static org.fcrepo.kernel.modeshape.TransactionImpl.DEFAULT_TIMEOUT;
-import static org.fcrepo.kernel.modeshape.TransactionImpl.TIMEOUT_SYSTEM_PROPERTY;
-import static org.fcrepo.kernel.modeshape.services.TransactionServiceImpl.REAP_INTERVAL;
+import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.DEFAULT_TIMEOUT;
+import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.TIMEOUT_SYSTEM_PROPERTY;
+import static org.fcrepo.kernel.modeshape.services.BatchServiceImpl.REAP_INTERVAL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -98,7 +98,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         try {
             assertEquals("Transaction did not expire", GONE.getStatusCode(), getStatus(new HttpGet(location)));
         } finally {
-            System.setProperty(TIMEOUT_SYSTEM_PROPERTY, Long.toString(DEFAULT_TIMEOUT));
+            System.setProperty(TIMEOUT_SYSTEM_PROPERTY, DEFAULT_TIMEOUT);
             System.clearProperty("fcrepo.transactions.timeout");
         }
     }

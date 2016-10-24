@@ -20,26 +20,28 @@ package org.fcrepo.http.commons.session;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
-import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
 
+import org.fcrepo.kernel.api.FedoraSession;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 /**
  * <p>SessionProviderTest class.</p>
  *
  * @author awoods
  */
+@RunWith(MockitoJUnitRunner.class)
 public class SessionProviderTest {
 
     SessionProvider testObj;
 
     @Mock
-    private Session mockSession;
+    private FedoraSession mockSession;
 
     @Mock
     private SessionFactory mockSessionFactory;
@@ -49,10 +51,8 @@ public class SessionProviderTest {
 
     @Before
     public void setUp() {
-        initMocks(this);
         when(mockSessionFactory.getInternalSession()).thenReturn(mockSession);
-        when(
-                mockSessionFactory.getSession(mockHttpServletRequest)).thenReturn(mockSession);
+        when(mockSessionFactory.getSession(mockHttpServletRequest)).thenReturn(mockSession);
         testObj = new SessionProvider(mockHttpServletRequest);
         setField(testObj, "sessionFactory", mockSessionFactory);
         setField(testObj, "request", mockHttpServletRequest);
@@ -61,7 +61,7 @@ public class SessionProviderTest {
 
     @Test
     public void testProvide() {
-        final Session inj = testObj.provide();
+        final FedoraSession inj = testObj.provide();
         assertNotNull("Didn't get a session", inj);
     }
 }

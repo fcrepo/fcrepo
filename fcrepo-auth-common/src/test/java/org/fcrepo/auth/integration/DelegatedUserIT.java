@@ -17,6 +17,7 @@
  */
 package org.fcrepo.auth.integration;
 
+import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
@@ -30,7 +31,6 @@ import java.security.Principal;
 
 import javax.inject.Inject;
 import javax.jcr.AccessDeniedException;
-import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
@@ -38,6 +38,8 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.http.auth.BasicUserPrincipal;
 import org.fcrepo.auth.common.FedoraAuthorizationDelegate;
 import org.fcrepo.auth.common.ServletContainerAuthenticationProvider;
+import org.fcrepo.kernel.api.FedoraRepository;
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.services.ContainerService;
 import org.fcrepo.kernel.modeshape.services.ContainerServiceImpl;
@@ -62,7 +64,7 @@ public class DelegatedUserIT {
             getLogger(DelegatedUserIT.class);
 
     @Inject
-    private Repository repo;
+    private FedoraRepository repo;
 
     @Inject
     private FedoraAuthorizationDelegate fad;
@@ -90,10 +92,11 @@ public class DelegatedUserIT {
         when(fad.hasPermission(any(Session.class), any(Path.class), any(String[].class))).thenReturn(false);
 
         final ServletCredentials credentials = new ServletCredentials(request);
-        final Session session = repo.login(credentials);
+        final FedoraSession session = repo.login(credentials);
+        final Session jcrSession = getJcrSession(session);
         assertEquals("Session user principal is user1",
                 "user1",
-                ((Principal) session.getAttribute(FedoraAuthorizationDelegate.FEDORA_USER_PRINCIPAL)).getName());
+                ((Principal) jcrSession.getAttribute(FedoraAuthorizationDelegate.FEDORA_USER_PRINCIPAL)).getName());
 
         // try to create an object, this should fail because it is being executed as a non-admin user
         final ContainerService os = new ContainerServiceImpl();

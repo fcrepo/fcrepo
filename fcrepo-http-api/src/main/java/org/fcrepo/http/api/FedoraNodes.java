@@ -29,7 +29,6 @@ import java.net.URISyntaxException;
 import javax.annotation.PostConstruct;
 import javax.jcr.ItemExistsException;
 import javax.jcr.PathNotFoundException;
-import javax.jcr.RepositoryException;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.HeaderParam;
@@ -125,7 +124,9 @@ public class FedoraNodes extends ContentExposingResource {
             LOGGER.info("Copy from '{}' to '{}'", source, destination);
             nodeService.copyObject(session, source, destination);
 
-            session.save();
+            if (!batchService.exists(session.getId(), getUserPrincipal())) {
+                session.commit();
+            }
 
             return created(new URI(destinationUri)).build();
         } catch (final RepositoryRuntimeException e) {
@@ -142,8 +143,6 @@ public class FedoraNodes extends ContentExposingResource {
             } else {
                 throw e;
             }
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
         }
 
     }
@@ -180,7 +179,9 @@ public class FedoraNodes extends ContentExposingResource {
 
             LOGGER.info("Move from '{}' to '{}'", source, destination);
             nodeService.moveObject(session, source, destination);
-            session.save();
+            if (!batchService.exists(session.getId(), getUserPrincipal())) {
+                session.commit();
+            }
             return created(new URI(destinationUri)).build();
         } catch (final RepositoryRuntimeException e) {
             final Throwable cause = e.getCause();
@@ -193,8 +194,6 @@ public class FedoraNodes extends ContentExposingResource {
             } else {
                 throw e;
             }
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
         }
     }
 

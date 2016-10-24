@@ -51,7 +51,6 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_PAIRTREE;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
-import static org.fcrepo.kernel.modeshape.services.TransactionServiceImpl.getCurrentTransactionId;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -67,8 +66,6 @@ import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
-import javax.jcr.PathNotFoundException;
-import javax.jcr.RepositoryException;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.Consumes;
@@ -101,6 +98,7 @@ import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.InsufficientStorageException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
@@ -283,13 +281,9 @@ public class FedoraLdp extends ContentExposingResource {
 
         try {
             resource().delete();
-
-            try {
-                session.save();
-            } catch (final RepositoryException e) {
-                throw new RepositoryRuntimeException(e);
+            if (!batchService.exists(session.getId(), getUserPrincipal())) {
+                session.commit();
             }
-
             return noContent().build();
         } finally {
             lock.release();
@@ -379,10 +373,8 @@ public class FedoraLdp extends ContentExposingResource {
                 checkForInsufficientStorageException(e, e);
             }
 
-            try {
-                session.save();
-            } catch (final RepositoryException e) {
-                throw new RepositoryRuntimeException(e);
+            if (!batchService.exists(session.getId(), getUserPrincipal())) {
+                session.commit();
             }
 
             return createUpdateResponse(resource, created);
@@ -428,7 +420,9 @@ public class FedoraLdp extends ContentExposingResource {
                 LOGGER.info("PATCH for '{}'", externalPath);
                 patchResourcewithSparql(resource(), requestBody, resourceTriples);
             }
-            session.save();
+            if (!batchService.exists(session.getId(), getUserPrincipal())) {
+                session.commit();
+            }
 
             addCacheControlHeaders(servletResponse, resource().getDescription(), session);
 
@@ -439,13 +433,11 @@ public class FedoraLdp extends ContentExposingResource {
             throw e;
         } catch ( final RuntimeException ex ) {
             final Throwable cause = ex.getCause();
-            if (cause instanceof PathNotFoundException) {
+            if (cause instanceof PathNotFoundRuntimeException) {
                 // the sparql update referred to a repository resource that doesn't exist
                 throw new BadRequestException(cause.getMessage());
             }
             throw ex;
-        }  catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
         } finally {
             lock.release();
         }
@@ -537,9 +529,9 @@ public class FedoraLdp extends ContentExposingResource {
                         }
                     }
                 }
-                session.save();
-            } catch (final RepositoryException e) {
-                throw new RepositoryRuntimeException(e);
+                if (!batchService.exists(session.getId(), getUserPrincipal())) {
+                    session.commit();
+                }
             } catch (final Exception e) {
                 checkForInsufficientStorageException(e, e);
             }
@@ -614,7 +606,7 @@ public class FedoraLdp extends ContentExposingResource {
             }
             final RdfNamespacedStream rdfStream = new RdfNamespacedStream(
                 new DefaultRdfStream(asNode(resource()), getResourceTriples()),
-                    namespaceService.getNamespaces(session()));
+                    session().getNamespaces());
             return builder.entity(rdfStream).build();
         }
     }
@@ -641,7 +633,7 @@ public class FedoraLdp extends ContentExposingResource {
     protected void addResourceHttpHeaders(final FedoraResource resource) {
         super.addResourceHttpHeaders(resource);
 
-        if (getCurrentTransactionId(session) != null) {
+        if (batchService.exists(session.getId(), getUserPrincipal())) {
             final String canonical = translator().reverse()
                     .convert(resource)
                     .toString()

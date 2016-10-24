@@ -24,17 +24,13 @@ import java.security.Principal;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
-import javax.jcr.Repository;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.BadRequestException;
 
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.FedoraRepository;
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.SessionMissingException;
-import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.services.CredentialsService;
-import org.fcrepo.kernel.api.services.TransactionService;
+import org.fcrepo.kernel.api.services.BatchService;
 
 import org.slf4j.Logger;
 
@@ -65,10 +61,10 @@ public class SessionFactory {
     private static final Logger LOGGER = getLogger(SessionFactory.class);
 
     @Inject
-    private Repository repo;
+    private FedoraRepository repo;
 
     @Inject
-    private TransactionService transactionService;
+    private BatchService batchService;
 
     @Inject
     private CredentialsService credentialsService;
@@ -83,12 +79,11 @@ public class SessionFactory {
      * Initialize a session factory for the given Repository
      *
      * @param repo the repository
-     * @param transactionService the transaction service
+     * @param batchService the transaction service
      */
-    public SessionFactory(final Repository repo,
-            final TransactionService transactionService) {
+    public SessionFactory(final FedoraRepository repo, final BatchService batchService) {
         this.repo = repo;
-        this.transactionService = transactionService;
+        this.batchService = batchService;
     }
 
     /**
@@ -104,12 +99,8 @@ public class SessionFactory {
      *
      * @return an internal session
      */
-    public Session getInternalSession() {
-        try {
-            return repo.login();
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
+    public FedoraSession getInternalSession() {
+        return repo.login();
     }
 
     /**
@@ -120,8 +111,8 @@ public class SessionFactory {
      * @return the Session
      * @throws RuntimeException if the transaction could not be found
      */
-    public Session getSession(final HttpServletRequest servletRequest) {
-        final Session session;
+    public FedoraSession getSession(final HttpServletRequest servletRequest) {
+        final FedoraSession session;
         final String txId = getEmbeddedId(servletRequest, Prefix.TX);
 
         try {
@@ -133,8 +124,6 @@ public class SessionFactory {
         } catch (final SessionMissingException e) {
             LOGGER.warn("Transaction missing: {}", e.getMessage());
             return null;
-        } catch (final RepositoryException e) {
-            throw new BadRequestException(e);
         }
 
         return session;
@@ -146,9 +135,8 @@ public class SessionFactory {
      *
      * @param servletRequest the servlet request
      * @return a newly created JCR session
-     * @throws RepositoryException if the session could not be created
      */
-    protected Session createSession(final HttpServletRequest servletRequest) throws RepositoryException {
+    protected FedoraSession createSession(final HttpServletRequest servletRequest) {
 
         LOGGER.debug("Returning an authenticated session in the default workspace");
         return  repo.login(credentialsService.getCredentials(servletRequest));
@@ -161,22 +149,14 @@ public class SessionFactory {
      * @param txId the transaction id
      * @return a JCR session that is associated with the transaction
      */
-    protected Session getSessionFromTransaction(final HttpServletRequest servletRequest, final String txId) {
+    protected FedoraSession getSessionFromTransaction(final HttpServletRequest servletRequest, final String txId) {
 
         final Principal userPrincipal = servletRequest.getUserPrincipal();
+        final String userName = userPrincipal == null ? null : userPrincipal.getName();
 
-        String userName = null;
-        if (userPrincipal != null) {
-            userName = userPrincipal.getName();
-        }
-
-        final Transaction transaction =
-                transactionService.getTransaction(txId, userName);
-        LOGGER.debug(
-                "Returning a session in the transaction {} for user {}",
-                transaction, userName);
-        return transaction.getSession();
-
+        final FedoraSession session = batchService.getSession(txId, userName);
+        LOGGER.debug("Returning a session in the batch {} for user {}", session, userName);
+        return session;
     }
 
     /**

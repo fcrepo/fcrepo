@@ -32,6 +32,7 @@ import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_MODIFICATION;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_RELOCATION;
 import static org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM.SHA1;
 import static org.fcrepo.kernel.api.utils.ContentDigest.asURI;
+import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.junit.Assert.assertEquals;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
@@ -45,11 +46,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.inject.Inject;
 import javax.jcr.Node;
-import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.integration.kernel.modeshape.AbstractIT;
+import org.fcrepo.kernel.api.FedoraRepository;
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
@@ -86,7 +88,7 @@ public class SimpleObserverIT extends AbstractIT {
     private Integer eventBusMessageCount;
 
     @Inject
-    private Repository repository;
+    private FedoraRepository repository;
 
     @Inject
     private EventBus eventBus;
@@ -97,11 +99,12 @@ public class SimpleObserverIT extends AbstractIT {
     @Test
     public void testEventBusPublishing() throws RepositoryException {
 
-        final Session se = repository.login();
+        final FedoraSession session = repository.login();
+        final Session se = getJcrSession(session);
         se.getRootNode().addNode("/object1").addMixin(FEDORA_CONTAINER);
         se.getRootNode().addNode("/object2").addMixin(FEDORA_CONTAINER);
-        se.save();
-        se.logout();
+        session.commit();
+        session.expire();
 
         // Should be two messages, for each time
         // each node becomes a Fedora object
@@ -116,7 +119,8 @@ public class SimpleObserverIT extends AbstractIT {
     @Test
     public void contentEventCollapsing() throws RepositoryException, InvalidChecksumException {
 
-        final Session se = repository.login();
+        final FedoraSession session = repository.login();
+        final Session se = getJcrSession(session);
         final JcrTools jcrTools = new JcrTools();
 
         final Node n = jcrTools.findOrCreateNode(se.getRootNode(), "/object3", NT_FOLDER, NT_FILE);
@@ -133,9 +137,9 @@ public class SimpleObserverIT extends AbstractIT {
                 new HashSet<>(asList(asURI(SHA1.algorithm, checksum))), "text.txt", null);
 
         try {
-            se.save();
+            session.commit();
         } finally {
-            se.logout();
+            session.expire();
         }
 
         awaitEvent("/object3", RESOURCE_CREATION, REPOSITORY_NAMESPACE + "Binary");
@@ -146,17 +150,18 @@ public class SimpleObserverIT extends AbstractIT {
     @Test
     public void testMoveEvent() throws RepositoryException {
 
-        final Session se = repository.login();
+        final FedoraSession session = repository.login();
+        final Session se = getJcrSession(session);
         final NodeService ns = new NodeServiceImpl();
 
         final Node n = se.getRootNode().addNode("/object4");
         n.addMixin(FEDORA_CONTAINER);
         n.addNode("/child1").addMixin(FEDORA_CONTAINER);
         n.addNode("/child2").addMixin(FEDORA_CONTAINER);
-        se.save();
-        ns.moveObject(se, "/object4", "/object5");
-        se.save();
-        se.logout();
+        session.commit();
+        ns.moveObject(session, "/object4", "/object5");
+        session.commit();
+        session.expire();
 
         awaitEvent("/object4", RESOURCE_CREATION);
         awaitEvent("/object4/child1", RESOURCE_CREATION);
@@ -174,7 +179,8 @@ public class SimpleObserverIT extends AbstractIT {
     @Test
     public void testMoveContainedEvent() throws RepositoryException {
 
-        final Session se = repository.login();
+        final FedoraSession session = repository.login();
+        final Session se = getJcrSession(session);
         final NodeService ns = new NodeServiceImpl();
 
         final Node n = se.getRootNode().addNode("/object6");
@@ -183,10 +189,10 @@ public class SimpleObserverIT extends AbstractIT {
         child.addMixin(FEDORA_CONTAINER);
         child.addNode("/child1").addMixin(FEDORA_CONTAINER);
         child.addNode("/child2").addMixin(FEDORA_CONTAINER);
-        se.save();
-        ns.moveObject(se, "/object6/object7", "/object6/object8");
-        se.save();
-        se.logout();
+        session.commit();
+        ns.moveObject(session, "/object6/object7", "/object6/object8");
+        session.commit();
+        session.expire();
 
         awaitEvent("/object6", RESOURCE_CREATION);
         awaitEvent("/object6/object7", RESOURCE_CREATION);
@@ -206,10 +212,11 @@ public class SimpleObserverIT extends AbstractIT {
 
     @Test
     public void testHashUriEvent() throws RepositoryException {
-        final Session se = repository.login();
+        final FedoraSession session = repository.login();
+        final Session se = getJcrSession(session);
         final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator(se);
 
-        final Container obj = containerService.findOrCreate(se, "/object9");
+        final Container obj = containerService.findOrCreate(session, "/object9");
 
         final Resource subject = subjects.reverse().convert(obj);
 
@@ -219,8 +226,8 @@ public class SimpleObserverIT extends AbstractIT {
                 "<" + subject + "#contributor> foaf:name \"some creator\" . } WHERE {}",
                 obj.getTriples(subjects, PROPERTIES));
 
-        se.save();
-        se.logout();
+        session.commit();
+        session.expire();
 
         // these first two are part of a single event
         awaitEvent("/object9", RESOURCE_CREATION);
@@ -237,11 +244,12 @@ public class SimpleObserverIT extends AbstractIT {
 
     @Test
     public void testDirectContainerEvent() throws RepositoryException {
-        final Session se = repository.login();
+        final FedoraSession session = repository.login();
+        final Session se = getJcrSession(session);
         final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator(se);
 
-        final Container obj1 = containerService.findOrCreate(se, "/object10");
-        final Container obj2 = containerService.findOrCreate(se, "/object11");
+        final Container obj1 = containerService.findOrCreate(session, "/object10");
+        final Container obj2 = containerService.findOrCreate(session, "/object11");
 
         final Resource subject2 = subjects.reverse().convert(obj2);
 
@@ -252,7 +260,7 @@ public class SimpleObserverIT extends AbstractIT {
                     "ldp:hasMemberRelation pcdm:hasMember . } WHERE {}", obj1.getTriples(subjects, PROPERTIES));
 
         try {
-            se.save();
+            session.commit();
 
             awaitEvent("/object10", RESOURCE_CREATION);
             awaitEvent("/object10", RESOURCE_MODIFICATION);
@@ -260,8 +268,8 @@ public class SimpleObserverIT extends AbstractIT {
 
             assertEquals("Where are my events?", (Integer) 3, eventBusMessageCount);
 
-            final Container obj3 = containerService.findOrCreate(se, "/object10/child");
-            se.save();
+            final Container obj3 = containerService.findOrCreate(session, "/object10/child");
+            session.commit();
 
             awaitEvent("/object10/child", RESOURCE_CREATION);
             awaitEvent("/object10", RESOURCE_MODIFICATION);
@@ -270,9 +278,9 @@ public class SimpleObserverIT extends AbstractIT {
             assertEquals("Where are my events?", (Integer) 6, eventBusMessageCount);
 
             obj3.delete();
-            se.save();
+            session.commit();
         } finally {
-            se.logout();
+            session.expire();
         }
 
         awaitEvent("/object10/child", RESOURCE_DELETION);
@@ -284,11 +292,12 @@ public class SimpleObserverIT extends AbstractIT {
 
     @Test
     public void testIndirectContainerEvent() throws RepositoryException {
-        final Session se = repository.login();
+        final FedoraSession session = repository.login();
+        final Session se = getJcrSession(session);
         final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator(se);
 
-        final Container obj1 = containerService.findOrCreate(se, "/object12");
-        final Container obj2 = containerService.findOrCreate(se, "/object13");
+        final Container obj1 = containerService.findOrCreate(session, "/object12");
+        final Container obj2 = containerService.findOrCreate(session, "/object13");
 
         final Resource subject2 = subjects.reverse().convert(obj2);
 
@@ -301,7 +310,7 @@ public class SimpleObserverIT extends AbstractIT {
                     "ldp:insertedContentRelation ore:proxyFor. } WHERE {}", obj1.getTriples(subjects, PROPERTIES));
 
         try {
-            se.save();
+            session.commit();
 
             awaitEvent("/object12", RESOURCE_CREATION);
             awaitEvent("/object12", RESOURCE_MODIFICATION);
@@ -309,10 +318,10 @@ public class SimpleObserverIT extends AbstractIT {
 
             assertEquals("Where are my events?", (Integer) 3, eventBusMessageCount);
 
-            final Container obj3 = containerService.findOrCreate(se, "/object12/child");
+            final Container obj3 = containerService.findOrCreate(session, "/object12/child");
             obj3.updateProperties(subjects, "PREFIX ore: <http://www.openarchives.org/ore/terms/>\n" +
                     "INSERT { <> ore:proxyFor <info:example/test> } WHERE {}", obj3.getTriples(subjects, PROPERTIES));
-            se.save();
+            session.commit();
 
             awaitEvent("/object12/child", RESOURCE_CREATION);
             awaitEvent("/object12", RESOURCE_MODIFICATION);
@@ -320,8 +329,8 @@ public class SimpleObserverIT extends AbstractIT {
 
             assertEquals("Where are my events?", (Integer) 6, eventBusMessageCount);
 
-            final Container obj4 = containerService.findOrCreate(se, "/object12/child2");
-            se.save();
+            final Container obj4 = containerService.findOrCreate(session, "/object12/child2");
+            session.commit();
 
             awaitEvent("/object12/child2", RESOURCE_CREATION);
             awaitEvent("/object12", RESOURCE_MODIFICATION);
@@ -331,7 +340,7 @@ public class SimpleObserverIT extends AbstractIT {
             // Update a property that is irrelevant for the indirect container
             obj4.updateProperties(subjects, "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
                     "INSERT { <> rdfs:label \"some label\" } WHERE {}", obj4.getTriples(subjects, PROPERTIES));
-            se.save();
+            session.commit();
 
             awaitEvent("/object12/child2", RESOURCE_MODIFICATION);
 
@@ -340,7 +349,7 @@ public class SimpleObserverIT extends AbstractIT {
             // Update a property that is relevant for the indirect container
             obj4.updateProperties(subjects, "PREFIX ore: <http://www.openarchives.org/ore/terms/>\n" +
                     "INSERT { <> ore:proxyFor \"some proxy\" } WHERE {}", obj4.getTriples(subjects, PROPERTIES));
-            se.save();
+            session.commit();
 
             awaitEvent("/object12/child2", RESOURCE_MODIFICATION);
             awaitEvent("/object13", RESOURCE_MODIFICATION);
@@ -348,9 +357,9 @@ public class SimpleObserverIT extends AbstractIT {
             assertEquals("Where are my events?", (Integer) 11, eventBusMessageCount);
 
             obj3.delete();
-            se.save();
+            session.commit();
         } finally {
-            se.logout();
+            session.expire();
         }
 
         awaitEvent("/object12/child", RESOURCE_DELETION);

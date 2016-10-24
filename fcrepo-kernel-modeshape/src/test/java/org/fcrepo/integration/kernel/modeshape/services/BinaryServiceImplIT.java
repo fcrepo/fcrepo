@@ -18,6 +18,7 @@
 package org.fcrepo.integration.kernel.modeshape.services;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FILENAME;
+import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
@@ -27,11 +28,12 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
 import javax.inject.Inject;
-import javax.jcr.Repository;
 import javax.jcr.Session;
 
 import org.apache.tika.io.IOUtils;
 import org.fcrepo.integration.kernel.modeshape.AbstractIT;
+import org.fcrepo.kernel.api.FedoraRepository;
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.ContainerService;
@@ -47,7 +49,7 @@ import org.springframework.test.context.ContextConfiguration;
 public class BinaryServiceImplIT extends AbstractIT {
 
     @Inject
-    private Repository repository;
+    private FedoraRepository repository;
 
     @Inject
     ContainerService containerService;
@@ -57,7 +59,8 @@ public class BinaryServiceImplIT extends AbstractIT {
 
     @Test
     public void testCreateDatastreamNode() throws Exception {
-        Session session = repository.login();
+        FedoraSession session = repository.login();
+        Session jcrSession = getJcrSession(session);
 
         binaryService.findOrCreate(session, "/testDatastreamNode").setContent(
                 new ByteArrayInputStream("asdf".getBytes()),
@@ -67,19 +70,23 @@ public class BinaryServiceImplIT extends AbstractIT {
                 null
         );
 
-        session.save();
-        session.logout();
-        session = repository.login();
+        session.commit();
+        session.expire();
 
-        assertTrue(session.getRootNode().hasNode("testDatastreamNode"));
-        assertEquals("asdf", session.getNode("/testDatastreamNode").getNode(
+        session = repository.login();
+        jcrSession = getJcrSession(session);
+
+        assertTrue(jcrSession.getRootNode().hasNode("testDatastreamNode"));
+        assertEquals("asdf", jcrSession.getNode("/testDatastreamNode").getNode(
                 JCR_CONTENT).getProperty(JCR_DATA).getString());
-        session.logout();
+        session.expire();
     }
 
     @Test
     public void testCreateDatastreamNodeWithfilename() throws Exception {
-        Session session = repository.login();
+        FedoraSession session = repository.login();
+        Session jcrSession = getJcrSession(session);
+
         binaryService.findOrCreate(session, "/testDatastreamNode").setContent(
                 new ByteArrayInputStream("asdf".getBytes()),
                 "application/octet-stream",
@@ -88,19 +95,21 @@ public class BinaryServiceImplIT extends AbstractIT {
                 null
         );
 
-        session.save();
-        session.logout();
-        session = repository.login();
+        session.commit();
+        session.expire();
 
-        assertTrue(session.getRootNode().hasNode("testDatastreamNode"));
-        assertEquals("xyz.jpg", session.getNode("/testDatastreamNode").getNode(JCR_CONTENT)
+        session = repository.login();
+        jcrSession = getJcrSession(session);
+
+        assertTrue(jcrSession.getRootNode().hasNode("testDatastreamNode"));
+        assertEquals("xyz.jpg", jcrSession.getNode("/testDatastreamNode").getNode(JCR_CONTENT)
                 .getProperty(FILENAME).getString());
-        session.logout();
+        session.expire();
     }
 
     @Test
     public void testGetDatastreamContentInputStream() throws Exception {
-        Session session = repository.login();
+        FedoraSession session = repository.login();
         final InputStream is = new ByteArrayInputStream("asdf".getBytes());
         containerService.findOrCreate(session, "/testDatastreamServiceObject");
 
@@ -113,14 +122,14 @@ public class BinaryServiceImplIT extends AbstractIT {
                         null
                 );
 
-        session.save();
-        session.logout();
+        session.commit();
+        session.expire();
         session = repository.login();
         final FedoraBinary binary =
                 binaryService.findOrCreate(session,
                     "/testDatastreamServiceObject/" + "testDatastreamNode");
         assertEquals("asdf", IOUtils.toString(binary.getContent(), "UTF-8"));
-        session.logout();
+        session.expire();
     }
 
 

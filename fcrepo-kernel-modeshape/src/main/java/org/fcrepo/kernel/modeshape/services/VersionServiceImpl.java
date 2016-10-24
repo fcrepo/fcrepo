@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.modeshape.services;
 
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.services.VersionService;
 import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
@@ -38,6 +39,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.VERSIONABLE;
+import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -56,21 +58,23 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
     private static final Pattern invalidLabelPattern = Pattern.compile("[~#@*+%{}<>\\[\\]|\"^]");
 
     @Override
-    public String createVersion(final Session session, final String absPath, final String label) {
+    public String createVersion(final FedoraSession session, final String absPath, final String label) {
+        final Session jcrSession = getJcrSession(session);
         try {
-            final Node node = session.getNode(absPath);
+            final Node node = jcrSession.getNode(absPath);
             if (!isVersioningEnabled(node)) {
                 enableVersioning(node);
             }
-            return checkpoint(session, absPath, label);
+            return checkpoint(jcrSession, absPath, label);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
     }
 
     @Override
-    public void revertToVersion(final Session session, final String absPath, final String label) {
-        final Workspace workspace = session.getWorkspace();
+    public void revertToVersion(final FedoraSession session, final String absPath, final String label) {
+        final Session jcrSession = getJcrSession(session);
+        final Workspace workspace = jcrSession.getWorkspace();
         try {
             final Version v = getVersionForLabel(workspace, absPath, label);
             if (v == null) {
@@ -114,8 +118,9 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
     }
 
     @Override
-    public void removeVersion(final Session session, final String absPath, final String label) {
-        final Workspace workspace = session.getWorkspace();
+    public void removeVersion(final FedoraSession session, final String absPath, final String label) {
+        final Session jcrSession = getJcrSession(session);
+        final Workspace workspace = jcrSession.getWorkspace();
         try {
             final Version v = getVersionForLabel(workspace, absPath, label);
             if (v == null) {

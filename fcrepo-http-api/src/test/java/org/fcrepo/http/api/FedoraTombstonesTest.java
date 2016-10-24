@@ -17,13 +17,17 @@
  */
 package org.fcrepo.http.api;
 
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.models.Tombstone;
+import org.fcrepo.kernel.api.services.BatchService;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
-import javax.jcr.Session;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static org.junit.Assert.assertEquals;
@@ -31,12 +35,12 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
-import static org.mockito.MockitoAnnotations.initMocks;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 /**
  * @author cabeer
  */
+@RunWith(MockitoJUnitRunner.class)
 public class FedoraTombstonesTest {
 
     @Mock
@@ -47,13 +51,21 @@ public class FedoraTombstonesTest {
     private FedoraTombstones testObj;
 
     @Mock
-    private Session mockSession;
+    private FedoraSession mockSession;
+
+    @Mock
+    private BatchService mockTxService;
+
+    @Mock
+    private SecurityContext mockSecurityContext;
+
 
     @Before
     public void setUp() {
-        initMocks(this);
         testObj = spy(new FedoraTombstones(path));
         setField(testObj, "session", mockSession);
+        setField(testObj, "batchService", mockTxService);
+        setField(testObj, "securityContext", mockSecurityContext);
     }
 
     @Test
@@ -65,6 +77,6 @@ public class FedoraTombstonesTest {
         final Response actual = testObj.delete();
         assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
         verify(mockResource).delete();
-        verify(mockSession).save();
+        verify(mockSession).commit();
     }
 }

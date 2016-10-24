@@ -33,10 +33,10 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import javax.jcr.Session;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.services.RepositoryService;
 import org.junit.Before;
 import org.junit.Test;
@@ -53,7 +53,7 @@ public class FedoraRepositoryRestoreTest {
     private RepositoryService mockService;
 
     @Mock
-    private Session mockSession;
+    private FedoraSession mockSession;
 
     @Before
     public void setUp() {
@@ -68,7 +68,7 @@ public class FedoraRepositoryRestoreTest {
     @Test
     public void testRunBackup() throws Exception {
         final Collection<Throwable> problems = new ArrayList<>();
-        when(mockService.backupRepository(any(Session.class), any(File.class)))
+        when(mockService.backupRepository(any(FedoraSession.class), any(File.class)))
                 .thenReturn(problems);
 
         boolean thrown = false;
@@ -84,7 +84,7 @@ public class FedoraRepositoryRestoreTest {
     @Test
     public void testRunBackupWithDir() throws Exception {
         final Collection<Throwable> problems = new ArrayList<>();
-        when(mockService.restoreRepository(any(Session.class), any(File.class)))
+        when(mockService.restoreRepository(any(FedoraSession.class), any(File.class)))
                 .thenReturn(problems);
 
         final String tmpDir = System.getProperty("java.io.tmpdir");

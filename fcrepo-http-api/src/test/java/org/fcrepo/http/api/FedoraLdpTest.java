@@ -19,7 +19,6 @@ package org.fcrepo.http.api;
 
 import static com.google.common.base.Predicates.containsPattern;
 import static java.util.Arrays.asList;
-import static java.util.Collections.emptyMap;
 import static java.util.Collections.singleton;
 import static java.util.stream.Stream.of;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
@@ -70,12 +69,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.jcr.NamespaceRegistry;
-import javax.jcr.Node;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.Workspace;
-import javax.jcr.observation.ObservationManager;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
@@ -84,6 +77,7 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriBuilder;
 
 import org.apache.commons.io.IOUtils;
@@ -95,6 +89,7 @@ import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.http.commons.domain.MultiPrefer;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.exception.InsufficientStorageException;
@@ -106,9 +101,9 @@ import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.services.BatchService;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.ContainerService;
-import org.fcrepo.kernel.api.services.NamespaceService;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.junit.Before;
 import org.junit.Test;
@@ -141,10 +136,8 @@ public class FedoraLdpTest {
 
     private HttpServletResponse mockResponse;
 
-    private Session mockSession;
-
     @Mock
-    private Node mockNode;
+    private FedoraSession mockSession;
 
     @Mock
     private Container mockContainer;
@@ -167,19 +160,16 @@ public class FedoraLdpTest {
     private BinaryService mockBinaryService;
 
     @Mock
-    private NamespaceService mockNamespaceService;
-
-    @Mock
     private FedoraHttpConfiguration mockHttpConfiguration;
 
     @Mock
     private HttpHeaders mockHeaders;
 
     @Mock
-    private Workspace mockWorkspace;
+    private BatchService mockTxService;
 
     @Mock
-    private NamespaceRegistry mockNamespaceRegistry;
+    private SecurityContext mockSecurityContext;
 
     @Mock
     private PathLockManager mockLockManager;
@@ -191,16 +181,13 @@ public class FedoraLdpTest {
 
 
     @Before
-    public void setUp() throws RepositoryException {
+    public void setUp() {
         testObj = spy(new FedoraLdp(path));
 
         mockResponse = new MockHttpServletResponse();
 
-        mockSession = mockSession(testObj);
-        setField(testObj, "session", mockSession);
-
         idTranslator = new HttpResourceConverter(mockSession,
-                UriBuilder.fromUri("http://localhost/fcrepo/{path: .*}"));
+                UriBuilder.fromUri("http://localhost/fcrepo/{path: .*}"), false);
 
         setField(testObj, "request", mockRequest);
         setField(testObj, "servletResponse", mockResponse);
@@ -208,16 +195,13 @@ public class FedoraLdpTest {
         setField(testObj, "headers", mockHeaders);
         setField(testObj, "idTranslator", idTranslator);
         setField(testObj, "nodeService", mockNodeService);
+        setField(testObj, "batchService", mockTxService);
         setField(testObj, "containerService", mockContainerService);
         setField(testObj, "binaryService", mockBinaryService);
         setField(testObj, "httpConfiguration", mockHttpConfiguration);
-        setField(testObj, "namespaceService", mockNamespaceService);
+        setField(testObj, "session", mockSession);
+        setField(testObj, "securityContext", mockSecurityContext);
         setField(testObj, "lockManager", mockLockManager);
-
-        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
-        when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
-        when(mockNamespaceRegistry.getPrefixes()).thenReturn(new String[]{});
-        when(mockNamespaceService.getNamespaces(any(Session.class))).thenReturn(emptyMap());
 
         when(mockHttpConfiguration.putRequiresIfMatch()).thenReturn(false);
 
@@ -239,9 +223,10 @@ public class FedoraLdpTest {
         when(mockLockManager.lockForRead(any())).thenReturn(mockLock);
         when(mockLockManager.lockForWrite(any(), any(), any())).thenReturn(mockLock);
         when(mockLockManager.lockForDelete(any())).thenReturn(mockLock);
+        when(mockSession.getId()).thenReturn("foo1234");
     }
 
-    private FedoraResource setResource(final Class<? extends FedoraResource> klass) throws RepositoryException {
+    private FedoraResource setResource(final Class<? extends FedoraResource> klass) {
         final FedoraResource mockResource = mock(klass);
         final Answer<RdfStream> answer = invocationOnMock -> new DefaultRdfStream(
                 createURI(invocationOnMock.getMock().toString()),
@@ -533,7 +518,7 @@ public class FedoraLdpTest {
     }
 
     @Test
-    public void testGetWithObjectIncludeReferences() throws ParseException, IOException, RepositoryException {
+    public void testGetWithObjectIncludeReferences() throws ParseException, IOException {
         setResource(Container.class);
         setField(testObj, "prefer", new MultiPrefer("return=representation; include=\"" + INBOUND_REFERENCES + "\""));
         final Response actual = testObj.getResource(null);
@@ -586,7 +571,7 @@ public class FedoraLdpTest {
 
     @Test
     @SuppressWarnings({"resource", "unchecked"})
-    public void testGetWithBinaryDescription() throws RepositoryException, IOException {
+    public void testGetWithBinaryDescription() throws IOException {
 
         final NonRdfSourceDescription mockResource
                 = (NonRdfSourceDescription)setResource(NonRdfSourceDescription.class);
@@ -722,7 +707,7 @@ public class FedoraLdpTest {
 
     @Test
     @SuppressWarnings({"resource", "unchecked"})
-    public void testPatchBinaryDescription() throws RepositoryException, MalformedRdfException, IOException {
+    public void testPatchBinaryDescription() throws MalformedRdfException, IOException {
 
         final NonRdfSourceDescription mockObject = (NonRdfSourceDescription)setResource(NonRdfSourceDescription.class);
         when(mockObject.getDescribedResource()).thenReturn(mockBinary);
@@ -745,19 +730,19 @@ public class FedoraLdpTest {
     }
 
     @Test(expected = BadRequestException.class)
-    public void testPatchWithMissingContent() throws RepositoryException, MalformedRdfException, IOException {
+    public void testPatchWithMissingContent() throws MalformedRdfException, IOException {
         setResource(Container.class);
         testObj.updateSparql(toInputStream(""));
     }
 
     @Test(expected = BadRequestException.class)
-    public void testPatchBinary() throws RepositoryException, MalformedRdfException, IOException {
+    public void testPatchBinary() throws MalformedRdfException, IOException {
         setResource(FedoraBinary.class);
         testObj.updateSparql(toInputStream(""));
     }
 
     @Test
-    public void testCreateNewObject() throws RepositoryException, MalformedRdfException, InvalidChecksumException,
+    public void testCreateNewObject() throws MalformedRdfException, InvalidChecksumException,
            IOException {
         setResource(Container.class);
         when(mockContainerService.findOrCreate(mockSession, "/b")).thenReturn(mockContainer);
@@ -766,9 +751,8 @@ public class FedoraLdpTest {
     }
 
     @Test
-    public void testCreateNewObjectWithSparql() throws RepositoryException, MalformedRdfException,
+    public void testCreateNewObjectWithSparql() throws MalformedRdfException,
            InvalidChecksumException, IOException {
-
         setResource(Container.class);
         when(mockContainerService.findOrCreate(mockSession, "/b")).thenReturn(mockContainer);
         final Response actual = testObj.createObject(null,
@@ -778,7 +762,7 @@ public class FedoraLdpTest {
     }
 
     @Test
-    public void testCreateNewObjectWithRdf() throws RepositoryException, MalformedRdfException,
+    public void testCreateNewObjectWithRdf() throws MalformedRdfException,
            InvalidChecksumException, IOException {
         setResource(Container.class);
         when(mockContainerService.findOrCreate(mockSession, "/b")).thenReturn(mockContainer);
@@ -790,7 +774,7 @@ public class FedoraLdpTest {
 
 
     @Test
-    public void testCreateNewBinary() throws RepositoryException, MalformedRdfException, InvalidChecksumException,
+    public void testCreateNewBinary() throws MalformedRdfException, InvalidChecksumException,
            IOException {
         setResource(Container.class);
         when(mockBinaryService.findOrCreate(mockSession, "/b")).thenReturn(mockBinary);
@@ -802,7 +786,7 @@ public class FedoraLdpTest {
     }
 
     @Test(expected = InsufficientStorageException.class)
-    public void testCreateNewBinaryWithInsufficientResources() throws RepositoryException, MalformedRdfException,
+    public void testCreateNewBinaryWithInsufficientResources() throws MalformedRdfException,
            InvalidChecksumException, IOException {
         setResource(Container.class);
         when(mockBinaryService.findOrCreate(mockSession, "/b")).thenReturn(mockBinary);
@@ -822,7 +806,7 @@ public class FedoraLdpTest {
     }
 
     @Test
-    public void testCreateNewBinaryWithContentTypeWithParams() throws RepositoryException, MalformedRdfException,
+    public void testCreateNewBinaryWithContentTypeWithParams() throws MalformedRdfException,
            InvalidChecksumException, IOException {
 
         setResource(Container.class);
@@ -836,7 +820,7 @@ public class FedoraLdpTest {
     }
 
     @Test
-    public void testCreateNewBinaryWithChecksumSHA() throws RepositoryException, MalformedRdfException,
+    public void testCreateNewBinaryWithChecksumSHA() throws MalformedRdfException,
            InvalidChecksumException, IOException {
 
         setResource(Container.class);
@@ -853,7 +837,7 @@ public class FedoraLdpTest {
     }
 
     @Test
-    public void testCreateNewBinaryWithChecksumMD5() throws RepositoryException, MalformedRdfException,
+    public void testCreateNewBinaryWithChecksumMD5() throws MalformedRdfException,
             InvalidChecksumException, IOException {
 
         setResource(Container.class);
@@ -870,7 +854,7 @@ public class FedoraLdpTest {
     }
 
     @Test
-    public void testCreateNewBinaryWithChecksumSHAandMD5() throws RepositoryException, MalformedRdfException,
+    public void testCreateNewBinaryWithChecksumSHAandMD5() throws MalformedRdfException,
            InvalidChecksumException, IOException {
 
         setResource(Container.class);
@@ -896,8 +880,7 @@ public class FedoraLdpTest {
     }
 
     @Test(expected = ClientErrorException.class)
-    public void testPostToBinary() throws MalformedRdfException, InvalidChecksumException,
-           IOException, RepositoryException {
+    public void testPostToBinary() throws MalformedRdfException, InvalidChecksumException, IOException {
         final FedoraBinary mockObject = (FedoraBinary)setResource(FedoraBinary.class);
         doReturn(mockObject).when(testObj).resource();
         testObj.createObject(null, null, null, null, null, null);
@@ -920,26 +903,5 @@ public class FedoraLdpTest {
         final MediaType mediaType = new MediaType("text", "plain", ImmutableMap.of("charset", "UTF-8"));
         final MediaType sanitizedMediaType = getSimpleContentType(mediaType);
         assertEquals("text/plain", sanitizedMediaType.toString());
-    }
-
-    @Test
-    public void testSetUpJMSBaseURIs() throws RepositoryException {
-        final ObservationManager mockManager = mock(ObservationManager.class);
-        doReturn(mockManager).when(mockWorkspace).getObservationManager();
-        final String json = "{\"baseUrl\":\"http://localhost/fcrepo\",\"userAgent\":\"Test UserAgent\"}";
-        testObj.setUpJMSInfo(getUriInfoImpl(), mockHeaders);
-        verify(mockManager).setUserData(eq(json));
-    }
-
-    @Test
-    public void testSetUpJMSBaseURIsWithSystemProperty() throws RepositoryException {
-        System.setProperty(BASEURL_PROP, "https://localhome:8443");
-
-        final ObservationManager mockManager = mock(ObservationManager.class);
-        doReturn(mockManager).when(mockWorkspace).getObservationManager();
-        final String json = "{\"baseUrl\":\"https://localhome:8443/fcrepo\",\"userAgent\":\"Test UserAgent\"}";
-
-        testObj.setUpJMSInfo(getUriInfoImpl(), mockHeaders);
-        verify(mockManager).setUserData(eq(json));
     }
 }

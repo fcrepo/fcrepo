@@ -17,6 +17,8 @@
  */
 package org.fcrepo.integration.kernel.modeshape;
 
+import org.fcrepo.kernel.api.FedoraRepository;
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.services.ContainerService;
@@ -29,9 +31,7 @@ import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
 import javax.inject.Inject;
-import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 
 import static org.fcrepo.kernel.modeshape.TombstoneImpl.hasMixin;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
@@ -46,7 +46,7 @@ import static org.junit.Assert.fail;
 public class TombstoneImplIT extends AbstractIT {
 
     @Inject
-    Repository repo;
+    FedoraRepository repo;
 
     @Inject
     NodeService nodeService;
@@ -54,7 +54,7 @@ public class TombstoneImplIT extends AbstractIT {
     @Inject
     ContainerService containerService;
 
-    private Session session;
+    private FedoraSession session;
 
     @Before
     public void setUp() throws RepositoryException {
@@ -63,14 +63,14 @@ public class TombstoneImplIT extends AbstractIT {
 
     @After
     public void tearDown() {
-        session.logout();
+        session.expire();
     }
 
     @Test (expected = RepositoryRuntimeException.class)
     public void testTombstoneNodeTypeException() {
         final String pid = getRandomPid();
         final Container container = containerService.findOrCreate(session, "/" + pid + "/a");
-        session.logout();
+        session.expire();
         hasMixin(getJcrNode(container));
     }
 
@@ -104,10 +104,10 @@ public class TombstoneImplIT extends AbstractIT {
     public void testDeleteObjectWithException() throws RepositoryException {
         final String pid = getRandomPid();
         containerService.findOrCreate(session, "/" + pid + "/a");
-        session.save();
+        session.commit();
         final Container container = containerService.findOrCreate(session, "/" + pid + "/a");
         final TombstoneImpl tombstone = new TombstoneImpl(getJcrNode(container));
-        session.logout();
+        session.expire();
         tombstone.delete();
     }
 

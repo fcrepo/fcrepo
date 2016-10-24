@@ -18,6 +18,7 @@
 package org.fcrepo.kernel.modeshape.services;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TOMBSTONE;
+import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.touchLdpMembershipResource;
 import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.validatePath;
@@ -27,6 +28,7 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -51,10 +53,11 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
      * @see org.fcrepo.kernel.api.services.Service#exists(javax.jcr.Session, java.lang.String)
      */
     @Override
-    public boolean exists(final Session session, final String path) {
+    public boolean exists(final FedoraSession session, final String path) {
+        final Session jcrSession = getJcrSession(session);
         try {
-            validatePath(session, path);
-            return session.nodeExists(path);
+            validatePath(jcrSession, path);
+            return jcrSession.nodeExists(path);
         } catch (final IllegalArgumentException e) {
             throw new InvalidResourceIdentifierException("Illegal path: " + path);
         } catch (final RepositoryException e) {
@@ -70,9 +73,10 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
      * @return Fedora resource at the given path
      */
     @Override
-    public FedoraResource find(final Session session, final String path) {
+    public FedoraResource find(final FedoraSession session, final String path) {
+        final Session jcrSession = getJcrSession(session);
         try {
-            return new FedoraResourceImpl(session.getNode(path));
+            return new FedoraResourceImpl(jcrSession.getNode(path));
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -86,9 +90,10 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
      * @param destination the destination path
      */
     @Override
-    public void copyObject(final Session session, final String source, final String destination) {
+    public void copyObject(final FedoraSession session, final String source, final String destination) {
+        final Session jcrSession = getJcrSession(session);
         try {
-            session.getWorkspace().copy(source, destination);
+            jcrSession.getWorkspace().copy(source, destination);
             touchLdpMembershipResource(getJcrNode(find(session, destination)));
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
@@ -103,14 +108,15 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
      * @param destination the destination path
      */
     @Override
-    public void moveObject(final Session session, final String source, final String destination) {
+    public void moveObject(final FedoraSession session, final String source, final String destination) {
+        final Session jcrSession = getJcrSession(session);
         try {
             final FedoraResource srcResource = find(session, source);
             final Node sourceNode = getJcrNode(srcResource);
             final String name = sourceNode.getName();
             final Node parent = sourceNode.getDepth() > 0 ? sourceNode.getParent() : null;
 
-            session.getWorkspace().move(source, destination);
+            jcrSession.getWorkspace().move(source, destination);
 
             if (parent != null) {
                 createTombstone(parent, name);
@@ -135,7 +141,7 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
      * @param path the path
      */
     @Override
-    public FedoraResource findOrCreate(final Session session, final String path) {
+    public FedoraResource findOrCreate(final FedoraSession session, final String path) {
         throw new RepositoryRuntimeException("unimplemented");
     }
 }

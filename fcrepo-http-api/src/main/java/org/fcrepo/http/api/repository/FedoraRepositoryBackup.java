@@ -28,13 +28,13 @@ import java.io.InputStream;
 import java.util.Collection;
 
 import javax.inject.Inject;
-import javax.jcr.Session;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.WebApplicationException;
 
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.http.commons.AbstractResource;
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.services.RepositoryService;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
@@ -51,7 +51,7 @@ public class FedoraRepositoryBackup extends AbstractResource {
     private static final Logger LOGGER = getLogger(FedoraRepositoryBackup.class);
 
     @Inject
-    protected Session session;
+    protected FedoraSession session;
 
     /**
      * The fcrepo repository service

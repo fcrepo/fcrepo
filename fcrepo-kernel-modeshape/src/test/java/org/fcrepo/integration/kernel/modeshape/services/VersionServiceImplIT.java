@@ -17,10 +17,13 @@
  */
 package org.fcrepo.integration.kernel.modeshape.services;
 
+import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.junit.Assert.assertEquals;
 
 import org.fcrepo.integration.kernel.modeshape.AbstractIT;
+import org.fcrepo.kernel.api.FedoraRepository;
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.NodeService;
@@ -30,9 +33,7 @@ import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
 import javax.inject.Inject;
-import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 import javax.jcr.version.VersionHistory;
 
 /**
@@ -44,7 +45,7 @@ import javax.jcr.version.VersionHistory;
 public class VersionServiceImplIT extends AbstractIT {
 
     @Inject
-    private Repository repository;
+    private FedoraRepository repository;
 
     @Inject
     NodeService nodeService;
@@ -60,106 +61,106 @@ public class VersionServiceImplIT extends AbstractIT {
 
     @Test
     public void testCreateVersion() throws RepositoryException {
-        final Session session = repository.login();
+        final FedoraSession session = repository.login();
         final String pid = getRandomPid();
         final FedoraResource resource = containerService.findOrCreate(session, "/" + pid);
-        session.save();
+        session.commit();
 
         // create a version and make sure there are 2 versions (root + created)
         versionService.createVersion(session, "/" + pid, LABEL);
-        session.save();
+        session.commit();
         assertEquals(2L, countVersions(session, resource));
     }
 
     @Test
     public void testRemoveVersion() throws RepositoryException {
-        final Session session = repository.login();
+        final FedoraSession session = repository.login();
         final String pid = getRandomPid();
         final FedoraResource resource = containerService.findOrCreate(session, "/" + pid);
-        session.save();
+        session.commit();
 
         // create a version and make sure there are 2 versions (root + created)
         versionService.createVersion(session, "/" + pid, LABEL);
-        session.save();
+        session.commit();
         assertEquals(2L, countVersions(session, resource));
 
         // create another version
         versionService.createVersion(session, "/" + pid, SECOND_LABEL);
-        session.save();
+        session.commit();
         assertEquals(3L, countVersions(session, resource));
 
         // remove the old version and make sure there two versions again
         versionService.removeVersion( session, "/" + pid,LABEL );
-        session.save();
+        session.commit();
         assertEquals(2L, countVersions(session, resource));
     }
 
     @Test
     public void testRevertToVersion() throws RepositoryException {
-        final Session session = repository.login();
+        final FedoraSession session = repository.login();
         final String pid = getRandomPid();
         final FedoraResource resource = containerService.findOrCreate(session, "/" + pid);
-        session.save();
+        session.commit();
 
         // create a version and make sure there are 2 versions (root + created)
         final String label = versionService.createVersion(session, "/" + pid, LABEL);
-        session.save();
+        session.commit();
         assertEquals(2L, countVersions(session, resource));
 
         // create another version
         versionService.createVersion(session, "/" + pid, SECOND_LABEL);
-        session.save();
+        session.commit();
         assertEquals(3L, countVersions(session, resource));
 
         // revert to the old version and make sure there two versions again
         versionService.revertToVersion( session, "/" + pid, LABEL );
-        session.save();
+        session.commit();
         assertEquals(label, currentVersion(session,resource));
     }
 
     @Test( expected = RepositoryRuntimeException.class )
     public void testRevertToInvalidVersion() throws RepositoryException {
-        final Session session = repository.login();
+        final FedoraSession session = repository.login();
         final String pid = getRandomPid();
         final FedoraResource resource = containerService.findOrCreate(session, "/" + pid);
-        session.save();
+        session.commit();
 
         // create a version and make sure there are 2 versions (root + created)
         versionService.createVersion(session, "/" + pid, LABEL);
-        session.save();
+        session.commit();
         assertEquals(2L, countVersions(session, resource));
 
         // revert to an invalid version
         versionService.revertToVersion( session, "/" + pid, "invalid-version-label" );
-        session.save();
+        session.commit();
     }
 
     @Test( expected = RepositoryRuntimeException.class )
     public void testRemoveInvalidVersion() throws RepositoryException {
-        final Session session = repository.login();
+        final FedoraSession session = repository.login();
         final String pid = getRandomPid();
         final FedoraResource resource = containerService.findOrCreate(session, "/" + pid);
-        session.save();
+        session.commit();
 
         // create a version and make sure there are 2 versions (root + created)
         versionService.createVersion(session, "/" + pid, LABEL);
-        session.save();
+        session.commit();
         assertEquals(2L, countVersions(session, resource));
 
         // revert to an invalid version
         versionService.removeVersion( session, "/" + pid, "invalid-version-label" );
-        session.save();
+        session.commit();
     }
 
-    private static String currentVersion( final Session session, final FedoraResource resource )
+    private static String currentVersion(final FedoraSession session, final FedoraResource resource )
         throws RepositoryException {
-        return session.getWorkspace().getVersionManager().getBaseVersion(getJcrNode(resource).getPath())
+        return getJcrSession(session).getWorkspace().getVersionManager().getBaseVersion(getJcrNode(resource).getPath())
             .getFrozenNode().getIdentifier();
     }
 
-    private static long countVersions( final Session session, final FedoraResource resource )
+    private static long countVersions(final FedoraSession session, final FedoraResource resource )
         throws RepositoryException {
-        final VersionHistory versions = session.getWorkspace().getVersionManager().getVersionHistory(
+        final VersionHistory versions = getJcrSession(session).getWorkspace().getVersionManager().getVersionHistory(
             getJcrNode(resource).getPath() );
         return versions.getAllVersions().getSize();
     }

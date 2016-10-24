@@ -21,26 +21,24 @@ import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.security.Principal;
 
 import javax.jcr.Credentials;
-import javax.jcr.Repository;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
 
-import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.FedoraRepository;
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.SessionMissingException;
+import org.fcrepo.kernel.api.services.BatchService;
 import org.fcrepo.kernel.api.services.CredentialsService;
-import org.fcrepo.kernel.api.services.TransactionService;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 import org.modeshape.jcr.api.ServletCredentials;
 
 import com.google.common.base.Throwables;
@@ -50,27 +48,28 @@ import com.google.common.base.Throwables;
  *
  * @author awoods
  */
+@RunWith(MockitoJUnitRunner.class)
 public class SessionFactoryTest {
 
     SessionFactory testObj;
 
     @Mock
-    private Session txSession;
+    private FedoraSession txSession;
 
     @Mock
-    private Session mockSession;
+    private FedoraSession mockSession;
 
     @Mock
-    private Repository mockRepo;
+    private FedoraRepository mockRepo;
 
     @Mock
-    private TransactionService mockTxService;
+    private BatchService mockTxService;
 
     @Mock
     private CredentialsService mockCredService;
 
     @Mock
-    private Transaction mockTx;
+    private FedoraSession mockTx;
 
     @Mock
     private HttpServletRequest mockRequest;
@@ -80,14 +79,13 @@ public class SessionFactoryTest {
 
     @Before
     public void setUp() {
-        initMocks(this);
         testObj = new SessionFactory(mockRepo, mockTxService);
         setField(testObj, "credentialsService", mockCredService);
         testObj.init();
     }
 
     @Test
-    public void testGetSessionWithNullPath() throws RepositoryException {
+    public void testGetSessionWithNullPath() {
         when(mockRequest.getPathInfo()).thenReturn(null);
         when(mockRequest.getContextPath()).thenReturn("");
         when(mockRepo.login(any(Credentials.class))).thenReturn(mockSession);
@@ -96,13 +94,13 @@ public class SessionFactoryTest {
     }
 
    @Test
-    public void testGetSessionUnauthenticated() throws RepositoryException {
+    public void testGetSessionUnauthenticated() {
         testObj.getInternalSession();
         verify(mockRepo).login();
     }
 
     @Test
-    public void testCreateSession() throws RepositoryException {
+    public void testCreateSession() {
         when(mockRequest.getPathInfo()).thenReturn("/some/path");
         testObj.createSession(mockRequest);
         verify(mockRepo).login(any(Credentials.class));
@@ -111,18 +109,15 @@ public class SessionFactoryTest {
     @Test
     public void testGetSessionFromTransaction() {
         when(mockRequest.getPathInfo()).thenReturn("/tx:123/some/path");
-        when(mockTx.getSession()).thenReturn(mock(Session.class));
-        when(mockTxService.getTransaction("123", null)).thenReturn(mockTx);
-        final Session session = testObj.getSessionFromTransaction(mockRequest, "123");
-        assertEquals(mockTx.getSession(), session);
+        when(mockTxService.getSession("123", null)).thenReturn(mockTx);
+        final FedoraSession session = testObj.getSessionFromTransaction(mockRequest, "123");
+        assertEquals(mockTx, session);
     }
 
     @Test
     public void testGetSessionThrowException() {
         when(mockRequest.getPathInfo()).thenReturn("/tx:123/some/path");
-        when(mockTx.getSession()).thenReturn(mock(Session.class));
-        when(mockTxService.getTransaction("123", null)).thenThrow(
-                new SessionMissingException(""));
+        when(mockTxService.getSession("123", null)).thenThrow(new SessionMissingException(""));
         try {
             testObj.getSession(mockRequest);
         } catch (final RuntimeException e) {

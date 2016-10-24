@@ -32,6 +32,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.vocabulary.RDF.type;
+
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;
@@ -65,7 +66,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.inject.Inject;
-import javax.jcr.Session;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.BeanParam;
@@ -91,6 +91,7 @@ import org.fcrepo.http.commons.domain.Range;
 import org.fcrepo.http.commons.domain.ldp.LdpPreferTag;
 import org.fcrepo.http.commons.responses.RangeRequestInputStream;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
@@ -102,7 +103,7 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
-import org.fcrepo.kernel.modeshape.services.TransactionServiceImpl;
+
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.jvnet.hk2.annotations.Optional;
 
@@ -183,7 +184,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             outputStream = new RdfNamespacedStream(
                     new DefaultRdfStream(rdfStream.topic(), concat(rdfStream,
                         getResourceTriples(limit))),
-                    namespaceService.getNamespaces(session()));
+                    session.getNamespaces());
             if (prefer != null) {
                 prefer.getReturn().addResponseHeaders(servletResponse);
             }
@@ -296,8 +297,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
             // we include an explicit etag, because the default behavior is to use the JCR node's etag, not
             // the jcr:content node digest. The etag is only included if we are not within a transaction.
-            final String txId = TransactionServiceImpl.getCurrentTransactionId(session());
-            if (txId == null) {
+            if (!batchService.exists(session.getId(), getUserPrincipal())) {
                 checkCacheControlHeaders(request, servletResponse, binary, session());
             }
             final CacheControl cc = new CacheControl();
@@ -457,10 +457,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * @param resource the fedora resource
      * @param session the session
      */
-    protected static void checkCacheControlHeaders(final Request request,
+    protected void checkCacheControlHeaders(final Request request,
                                                    final HttpServletResponse servletResponse,
                                                    final FedoraResource resource,
-                                                   final Session session) {
+                                                   final FedoraSession session) {
         evaluateRequestPreconditions(request, servletResponse, resource, session, true);
         addCacheControlHeaders(servletResponse, resource, session);
     }
@@ -481,12 +481,11 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * @param resource the fedora resource
      * @param session the session
      */
-    protected static void addCacheControlHeaders(final HttpServletResponse servletResponse,
+    protected void addCacheControlHeaders(final HttpServletResponse servletResponse,
                                                  final FedoraResource resource,
-                                                 final Session session) {
+                                                 final FedoraSession session) {
 
-        final String txId = TransactionServiceImpl.getCurrentTransactionId(session);
-        if (txId != null) {
+        if (batchService.exists(session.getId(), getUserPrincipal())) {
             // Do not add caching headers if in a transaction
             return;
         }
@@ -521,21 +520,20 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * @param resource the resource
      * @param session the session
      */
-    protected static void evaluateRequestPreconditions(final Request request,
+    protected void evaluateRequestPreconditions(final Request request,
                                                        final HttpServletResponse servletResponse,
                                                        final FedoraResource resource,
-                                                       final Session session) {
+                                                       final FedoraSession session) {
         evaluateRequestPreconditions(request, servletResponse, resource, session, false);
     }
 
-    private static void evaluateRequestPreconditions(final Request request,
+    private void evaluateRequestPreconditions(final Request request,
                                                      final HttpServletResponse servletResponse,
                                                      final FedoraResource resource,
-                                                     final Session session,
+                                                     final FedoraSession session,
                                                      final boolean cacheControl) {
 
-        final String txId = TransactionServiceImpl.getCurrentTransactionId(session);
-        if (txId != null) {
+        if (batchService.exists(session.getId(), getUserPrincipal())) {
             // Force cache revalidation if in a transaction
             servletResponse.addHeader(CACHE_CONTROL, "must-revalidate");
             servletResponse.addHeader(CACHE_CONTROL, "max-age=0");

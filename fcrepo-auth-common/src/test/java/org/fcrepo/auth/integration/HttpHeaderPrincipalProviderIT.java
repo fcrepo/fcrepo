@@ -21,8 +21,10 @@ import org.apache.http.auth.BasicUserPrincipal;
 
 import org.fcrepo.auth.common.FedoraAuthorizationDelegate;
 import org.fcrepo.auth.common.ServletContainerAuthenticationProvider;
-import org.fcrepo.kernel.modeshape.services.ContainerServiceImpl;
+import org.fcrepo.kernel.api.FedoraRepository;
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.services.ContainerService;
+import org.fcrepo.kernel.modeshape.services.ContainerServiceImpl;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -35,12 +37,12 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import javax.inject.Inject;
-import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.security.Privilege;
 import javax.servlet.http.HttpServletRequest;
 
+import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
@@ -59,7 +61,7 @@ public class HttpHeaderPrincipalProviderIT {
             getLogger(HttpHeaderPrincipalProviderIT.class);
 
     @Inject
-    private Repository repo;
+    private FedoraRepository repo;
 
     @Inject
     private FedoraAuthorizationDelegate fad;
@@ -87,9 +89,9 @@ public class HttpHeaderPrincipalProviderIT {
 
         final ServletCredentials credentials =
                 new ServletCredentials(request);
-        final Session session = repo.login(credentials);
-        final Privilege[] rootPrivs =
-                session.getAccessControlManager().getPrivileges("/");
+        final FedoraSession session = repo.login(credentials);
+        final Session jcrSession = getJcrSession(session);
+        final Privilege[] rootPrivs = jcrSession.getAccessControlManager().getPrivileges("/");
         for (final Privilege p : rootPrivs) {
             logger.debug("got priv: " + p.getName());
         }

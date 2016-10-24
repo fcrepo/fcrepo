@@ -17,10 +17,14 @@
  */
 package org.fcrepo.kernel.modeshape.services;
 
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.modeshape.FedoraSessionImpl;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -29,16 +33,18 @@ import javax.jcr.Session;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
 /**
  * @author cabeer
  * @author ajs6f
  */
+@RunWith(MockitoJUnitRunner.class)
 public class BinaryServiceImplTest {
 
     private BinaryServiceImpl testObj;
+
+    private FedoraSession testSession;
 
     @Mock
     private Session mockSession;
@@ -54,8 +60,8 @@ public class BinaryServiceImplTest {
 
     @Before
     public void setUp() throws RepositoryException {
-        initMocks(this);
         testObj = new BinaryServiceImpl();
+        testSession = new FedoraSessionImpl(mockSession);
         when(mockSession.getRootNode()).thenReturn(mockRoot);
         when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockNode);
         when(mockDsNode.getParent()).thenReturn(mockRoot);
@@ -68,7 +74,7 @@ public class BinaryServiceImplTest {
         when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockDsNode);
         when(mockNode.isNodeType(FEDORA_BINARY)).thenReturn(true);
         when(mockSession.getNode("/")).thenReturn(mockRoot);
-        testObj.findOrCreate(mockSession, testPath);
+        testObj.findOrCreate(testSession, testPath);
         verify(mockRoot).getNode(testPath.substring(1));
     }
 
@@ -79,7 +85,7 @@ public class BinaryServiceImplTest {
         when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockDsNode);
         when(mockNode.isNodeType(FEDORA_BINARY)).thenReturn(true);
         when(mockSession.getNode("/")).thenReturn(mockRoot);
-        testObj.findOrCreate(mockSession, testPath);
+        testObj.findOrCreate(testSession, testPath);
         verify(mockRoot).getNode(testPath.substring(1));
     }
 
@@ -90,6 +96,6 @@ public class BinaryServiceImplTest {
         when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockDsNode);
         when(mockNode.isNodeType(FEDORA_BINARY)).thenReturn(true);
         when(mockSession.getNode("/")).thenReturn(mockRoot);
-        testObj.findOrCreate(mockSession, testPath);
+        testObj.findOrCreate(testSession, testPath);
     }
 }

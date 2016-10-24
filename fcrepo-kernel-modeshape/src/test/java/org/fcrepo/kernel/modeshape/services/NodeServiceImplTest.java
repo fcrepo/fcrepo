@@ -21,7 +21,6 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
@@ -31,19 +30,25 @@ import javax.jcr.Session;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeTypeIterator;
 
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.FedoraInvalidNamespaceException;
 import org.fcrepo.kernel.api.services.NodeService;
+import org.fcrepo.kernel.modeshape.FedoraSessionImpl;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 
+import org.junit.runner.RunWith;
+import org.mockito.runners.MockitoJUnitRunner;
+
 /**
  * <p>NodeServiceImplTest class.</p>
  *
  * @author ksclarke
  */
+@RunWith(MockitoJUnitRunner.class)
 public class NodeServiceImplTest {
 
     @Mock
@@ -75,14 +80,16 @@ public class NodeServiceImplTest {
     @Mock
     private NamespaceRegistry mockNameReg;
 
+    private FedoraSession testSession;
+
     final private static String MOCK_PREFIX = "valid_ns";
 
     final private static String MOCK_URI = "http://example.org";
 
     @Before
     public void setUp() throws RepositoryException {
-        initMocks(this);
         testObj = new NodeServiceImpl();
+        testSession = new FedoraSessionImpl(mockSession);
         when(mockSession.getRootNode()).thenReturn(mockRoot);
 
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
@@ -102,7 +109,7 @@ public class NodeServiceImplTest {
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockSession.getNode("bar")).thenReturn(mockObjNode);
         when(mockObjNode.getDepth()).thenReturn(0);
-        testObj.copyObject(mockSession, "foo", "bar");
+        testObj.copyObject(testSession, "foo", "bar");
         verify(mockWorkspace).copy("foo", "bar");
     }
 
@@ -113,7 +120,7 @@ public class NodeServiceImplTest {
         when(mockSession.getNode("bar")).thenReturn(mockObjNode2);
         when(mockObjNode.getDepth()).thenReturn(0);
         when(mockObjNode2.getDepth()).thenReturn(0);
-        testObj.moveObject(mockSession, "foo", "bar");
+        testObj.moveObject(testSession, "foo", "bar");
         verify(mockWorkspace).move("foo", "bar");
     }
 
@@ -121,14 +128,14 @@ public class NodeServiceImplTest {
     public void testExists() throws RepositoryException {
         final String existsPath = "/foo/bar/exists";
         when(mockSession.nodeExists(existsPath)).thenReturn(true);
-        assertEquals(true, testObj.exists(mockSession, existsPath));
-        assertEquals(false, testObj.exists(mockSession, "/foo/bar"));
+        assertEquals(true, testObj.exists(testSession, existsPath));
+        assertEquals(false, testObj.exists(testSession, "/foo/bar"));
     }
 
     @Test(expected = FedoraInvalidNamespaceException.class)
     public void testInvalidPath() throws RepositoryException {
         final String badPath = "/foo/bad_ns:bar";
         when(mockNameReg.getURI("bad_ns")).thenThrow(new FedoraInvalidNamespaceException("Invalid namespace (bad_ns)"));
-        testObj.exists(mockSession, badPath);
+        testObj.exists(testSession, badPath);
     }
 }

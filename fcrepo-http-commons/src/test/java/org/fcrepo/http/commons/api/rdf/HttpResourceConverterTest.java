@@ -18,7 +18,7 @@
 package org.fcrepo.http.commons.api.rdf;
 
 import org.apache.jena.rdf.model.Resource;
-import org.fcrepo.kernel.api.TxSession;
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraBinary;
@@ -26,6 +26,7 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
+import org.fcrepo.kernel.modeshape.FedoraSessionImpl;
 import org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -49,6 +50,7 @@ import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_NODE;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
+import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
@@ -61,10 +63,7 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 public class HttpResourceConverterTest {
 
     @Mock
-    private Session session;
-
-    @Mock
-    private TxSession txSession;
+    private Session session, txSession;
 
     @Mock
     private Node node, versionedNode, contentNode;
@@ -72,6 +71,7 @@ public class HttpResourceConverterTest {
     @Mock
     private Property mockProperty;
 
+    private FedoraSession testSession, testTxSession;
 
     private HttpResourceConverter converter;
     private final String uriTemplate = "http://localhost:8080/some/{path: .*}";
@@ -95,7 +95,10 @@ public class HttpResourceConverterTest {
     @Before
     public void setUp() throws RepositoryException {
         final UriBuilder uriBuilder = UriBuilder.fromUri(uriTemplate);
-        converter = new HttpResourceConverter(session, uriBuilder);
+        testSession = new FedoraSessionImpl(session);
+        testTxSession = new FedoraSessionImpl(txSession);
+        converter = new HttpResourceConverter(testSession, uriBuilder, false);
+
         when(session.getNode("/" + path)).thenReturn(node);
         when(session.getNode("/")).thenReturn(node);
         when(node.getPath()).thenReturn("/" + path);
@@ -141,9 +144,9 @@ public class HttpResourceConverterTest {
 
     @Test
     public void testDoForwardWithTransaction() throws Exception {
-        final HttpResourceConverter converter = new HttpResourceConverter(txSession,
-                UriBuilder.fromUri(uriTemplate));
-        when(txSession.getTxId()).thenReturn("xyz");
+        setField(testTxSession, "id", "xyz");
+        final HttpResourceConverter converter = new HttpResourceConverter(testTxSession,
+                UriBuilder.fromUri(uriTemplate), true);
         when(txSession.getNode("/" + path)).thenReturn(node);
         when(txSession.getWorkspace()).thenReturn(mockWorkspace);
         final Resource resource = createResource("http://localhost:8080/some/tx:xyz/" + path);
@@ -249,9 +252,9 @@ public class HttpResourceConverterTest {
 
     @Test
     public void testDoBackwardWithTransaction() throws Exception {
-        final HttpResourceConverter converter = new HttpResourceConverter(txSession,
-                UriBuilder.fromUri(uriTemplate));
-        when(txSession.getTxId()).thenReturn("xyz");
+        setField(testTxSession, "id", "xyz");
+        final HttpResourceConverter converter = new HttpResourceConverter(testTxSession,
+                UriBuilder.fromUri(uriTemplate), true);
         when(txSession.getNode("/" + path)).thenReturn(node);
         when(txSession.getWorkspace()).thenReturn(mockWorkspace);
         when(node.getSession()).thenReturn(txSession);

@@ -17,14 +17,16 @@
  */
 package org.fcrepo.http.commons.session;
 
-import static org.fcrepo.kernel.modeshape.services.TransactionServiceImpl.isInTransaction;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.security.Principal;
+
 import javax.inject.Inject;
-import javax.jcr.Session;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.ext.Provider;
 
+import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.services.BatchService;
 import org.glassfish.hk2.api.Factory;
 import org.glassfish.jersey.process.internal.RequestScoped;
 import org.slf4j.Logger;
@@ -36,10 +38,13 @@ import org.slf4j.Logger;
  */
 @Provider
 @RequestScoped
-public class SessionProvider implements Factory<Session> {
+public class SessionProvider implements Factory<FedoraSession> {
 
     @Inject
     SessionFactory sessionFactory;
+
+    @Inject
+    BatchService batchService;
 
     private HttpServletRequest request;
 
@@ -55,18 +60,21 @@ public class SessionProvider implements Factory<Session> {
     private static final Logger LOGGER = getLogger(SessionProvider.class);
 
     @Override
-    public Session provide() {
-        final Session session = sessionFactory.getSession(request);
+    public FedoraSession provide() {
+        final FedoraSession session = sessionFactory.getSession(request);
         LOGGER.trace("Providing new session {}", session);
         return session;
     }
 
     @Override
-    public void dispose(final Session session) {
+    public void dispose(final FedoraSession session) {
         LOGGER.trace("Disposing session {}", session);
 
-        if (session.isLive() && !isInTransaction(session)) {
-            session.logout();
+        final Principal principal = request.getUserPrincipal();
+        final String username = principal != null ? principal.getName() : null;
+
+        if (!batchService.exists(session.getId(), username)) {
+            session.expire();
         }
     }
 }

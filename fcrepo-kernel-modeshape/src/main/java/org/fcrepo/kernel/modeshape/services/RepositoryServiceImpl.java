@@ -18,9 +18,13 @@
 package org.fcrepo.kernel.modeshape.services;
 
 import static com.codahale.metrics.MetricRegistry.name;
+import static org.fcrepo.kernel.modeshape.FedoraRepositoryImpl.getJcrRepository;
+import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.fcrepo.kernel.modeshape.services.ServiceHelpers.getRepositoryCount;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.metrics.RegistryService;
 
@@ -51,7 +55,7 @@ import com.codahale.metrics.Timer;
 public class RepositoryServiceImpl extends AbstractService implements RepositoryService {
 
     @Inject
-    private Repository repo;
+    private FedoraRepository repository;
 
     private static final Logger LOGGER = getLogger(RepositoryServiceImpl.class);
 
@@ -68,6 +72,7 @@ public class RepositoryServiceImpl extends AbstractService implements Repository
         try {
 
             LOGGER.debug("Calculating repository size from index");
+            final Repository repo = getJcrRepository(repository);
 
             try (final Timer.Context context = objectSizeCalculationTimer.time()) {
                 // Differentiating between the local getRepositorySize and
@@ -87,6 +92,7 @@ public class RepositoryServiceImpl extends AbstractService implements Repository
      */
     @Override
     public Long getRepositoryObjectCount() {
+        final Repository repo = getJcrRepository(repository);
         try {
             return getRepositoryCount(repo);
         } catch (final RepositoryException e) {
@@ -101,10 +107,11 @@ public class RepositoryServiceImpl extends AbstractService implements Repository
      * .Session, java.io.File)
      */
     @Override
-    public Collection<Throwable> backupRepository(final Session session,
+    public Collection<Throwable> backupRepository(final FedoraSession session,
                                      final File backupDirectory) {
+        final Session jcrSession = getJcrSession(session);
         try {
-            final RepositoryManager repoMgr = ((org.modeshape.jcr.api.Session) session)
+            final RepositoryManager repoMgr = ((org.modeshape.jcr.api.Session) jcrSession)
                     .getWorkspace()
                     .getRepositoryManager();
 
@@ -125,10 +132,11 @@ public class RepositoryServiceImpl extends AbstractService implements Repository
      * jcr.Session, java.io.File)
      */
     @Override
-    public Collection<Throwable> restoreRepository(final Session session,
+    public Collection<Throwable> restoreRepository(final FedoraSession session,
                                       final File backupDirectory) {
+        final Session jcrSession = getJcrSession(session);
         try {
-            final RepositoryManager repoMgr = ((org.modeshape.jcr.api.Session) session)
+            final RepositoryManager repoMgr = ((org.modeshape.jcr.api.Session) jcrSession)
                     .getWorkspace()
                     .getRepositoryManager();
 

@@ -17,15 +17,15 @@
  */
 package org.fcrepo.http.commons.api.rdf;
 
-import static com.google.common.collect.ImmutableList.of;
-import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.Collections.singleton;
+import static com.google.common.collect.ImmutableList.of;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.replaceOnce;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
+import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
-import static org.fcrepo.kernel.modeshape.services.TransactionServiceImpl.getCurrentTransactionId;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getClosestExistingAncestor;
 import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.validatePath;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -47,6 +47,7 @@ import javax.jcr.Session;
 import javax.jcr.version.VersionHistory;
 import javax.ws.rs.core.UriBuilder;
 
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.IdentifierConversionException;
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -79,24 +80,36 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
 
     protected List<Converter<String, String>> translationChain;
 
-    private final Session session;
+    private final FedoraSession session;
     private final UriBuilder uriBuilder;
 
     protected Converter<String, String> forward = identity();
     protected Converter<String, String> reverse = identity();
 
     private final UriTemplate uriTemplate;
+    private final boolean batch;
 
     /**
      * Create a new identifier converter within the given session with the given URI template
      * @param session the session
      * @param uriBuilder the uri builder
      */
-    public HttpResourceConverter(final Session session,
-                                 final UriBuilder uriBuilder) {
+    public HttpResourceConverter(final FedoraSession session, final UriBuilder uriBuilder) {
+        this(session, uriBuilder, false);
+    }
+
+    /**
+     * Create a new identifier converter within the given session with the given URI template
+     * @param session the session
+     * @param uriBuilder the uri builder
+     * @param batch whether this session exists in a batch operation
+     */
+    public HttpResourceConverter(final FedoraSession session,
+                                 final UriBuilder uriBuilder, final boolean batch) {
 
         this.session = session;
         this.uriBuilder = uriBuilder;
+        this.batch = batch;
         this.uriTemplate = new UriTemplate(uriBuilder.toTemplate());
 
         resetTranslationChain();
@@ -110,6 +123,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
     protected FedoraResource doForward(final Resource resource) {
         final Map<String, String> values = new HashMap<>();
         final String path = asString(resource, values);
+        final Session jcrSession = getJcrSession(session);
         try {
             if (path != null) {
                 final Node node = getNode(path);
@@ -127,11 +141,11 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
             throw new IdentifierConversionException("Asked to translate a resource " + resource
                     + " that doesn't match the URI template");
         } catch (final RepositoryException e) {
-            validatePath(session, path);
+            validatePath(jcrSession, path);
 
             if ( e instanceof PathNotFoundException ) {
                 try {
-                    final Node preexistingNode = getClosestExistingAncestor(session, path);
+                    final Node preexistingNode = getClosestExistingAncestor(jcrSession, path);
                     if (TombstoneImpl.hasMixin(preexistingNode)) {
                         throw new TombstoneException(new TombstoneImpl(preexistingNode));
                     }
@@ -264,7 +278,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
             }
         }
         try {
-            return session.getNode(path);
+            return getJcrSession(session).getNode(path);
         } catch (IllegalArgumentException ex) {
             throw new InvalidResourceIdentifierException("Illegal path: " + path);
         }
@@ -291,7 +305,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
              * node.
              */
             final VersionHistory hist =
-                    session.getWorkspace().getVersionManager().getVersionHistory(baseResourcePath);
+                    getJcrSession(session).getWorkspace().getVersionManager().getVersionHistory(baseResourcePath);
             if (hist.hasVersionLabel(label)) {
                 LOGGER.debug("Found version for {} by label {}.", baseResourcePath, label);
                 return hist.getVersionByLabel(label).getFrozenNode();
@@ -306,7 +320,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
 
     private Node getNode(final String baseResourcePath, final String label) throws RepositoryException {
         try {
-            final Node frozenNode = session.getNodeByIdentifier(label);
+            final Node frozenNode = getJcrSession(session).getNodeByIdentifier(label);
 
             /*
              * We found a node whose identifier is the "label" for the version.  Now
@@ -315,7 +329,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
              */
             final Property p = frozenNode.getProperty("jcr:frozenUuid");
             if (p != null) {
-                final Node subjectNode = session.getNode(baseResourcePath);
+                final Node subjectNode = getJcrSession(session).getNode(baseResourcePath);
                 if (p.getString().equals(subjectNode.getIdentifier())) {
                     return frozenNode;
                 }
@@ -387,7 +401,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
         if (translationChain == null) {
             translationChain = getTranslationChain();
             final List<Converter<String, String>> newChain =
-                    new ArrayList<>(singleton(new TransactionIdentifierConverter(session)));
+                    new ArrayList<>(singleton(new TransactionIdentifierConverter(session, batch)));
             newChain.addAll(translationChain);
             setTranslationChain(newChain);
         }
@@ -430,10 +444,12 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
     static class TransactionIdentifierConverter extends Converter<String, String> {
         public static final String TX_PREFIX = "tx:";
 
-        private final Session session;
+        private final FedoraSession session;
+        private final boolean batch;
 
-        public TransactionIdentifierConverter(final Session session) {
+        public TransactionIdentifierConverter(final FedoraSession session, final boolean batch) {
             this.session = session;
+            this.batch = batch;
         }
 
         @Override
@@ -441,7 +457,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
 
             if (path.contains(TX_PREFIX) && !path.contains(txSegment())) {
                 throw new RepositoryRuntimeException("Path " + path
-                        + " is not in current transaction " +  getCurrentTransactionId(session));
+                        + " is not in current transaction " +  session.getId());
             }
 
             return replaceOnce(path, txSegment(), EMPTY);
@@ -453,13 +469,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
         }
 
         private String txSegment() {
-
-            final String txId = getCurrentTransactionId(session);
-
-            if (txId != null) {
-                return "/" + TX_PREFIX + txId;
-            }
-            return EMPTY;
+            return batch ? "/" + TX_PREFIX + session.getId() : EMPTY;
         }
     }
 

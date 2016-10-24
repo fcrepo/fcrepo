@@ -17,6 +17,7 @@
  */
 package org.fcrepo.http.api;
 
+import static java.util.Date.from;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.status;
@@ -25,19 +26,12 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.security.Principal;
 
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
-import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.TxSession;
-import org.fcrepo.kernel.api.services.TransactionService;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
@@ -53,43 +47,39 @@ public class FedoraTransactions extends FedoraBaseResource {
 
     private static final Logger LOGGER = getLogger(FedoraTransactions.class);
 
-    @Inject
-    private TransactionService txService;
-
     /**
      * Create a new transaction resource and add it to the registry
      *
      * @param externalPath the external path
-     * @param req the http servlet request
      * @return 201 with the transaction id and expiration date
      * @throws URISyntaxException if URI syntax exception occurred
      */
     @POST
-    public Response createTransaction(@PathParam("path") final String externalPath,
-                                      @Context final HttpServletRequest req) throws URISyntaxException {
+    public Response createTransaction(@PathParam("path") final String externalPath) throws URISyntaxException {
 
-        if (session instanceof TxSession) {
-            final Transaction t = txService.getTransaction(session);
-            LOGGER.debug("renewing transaction {}", t.getId());
-            t.updateExpiryDate();
-            return noContent().expires(t.getExpires()).build();
+        if (batchService.exists(session.getId(), getUserPrincipal())) {
+            LOGGER.debug("renewing transaction {}", session.getId());
+            batchService.refresh(session.getId(), getUserPrincipal());
+            final Response.ResponseBuilder res = noContent();
+            session.getExpires().ifPresent(expires -> {
+                res.expires(from(expires));
+            });
+            return res.build();
         }
 
         if (externalPath != null && !externalPath.isEmpty()) {
             return status(BAD_REQUEST).build();
         }
 
-        final Principal userPrincipal = req.getUserPrincipal();
-        String userName = null;
-        if (userPrincipal != null) {
-            userName = userPrincipal.getName();
-        }
+        batchService.begin(session, getUserPrincipal());
+        LOGGER.info("Created transaction '{}'", session.getId());
 
-        final Transaction t = txService.beginTransaction(session, userName);
-        LOGGER.info("Created transaction '{}'", t.getId());
-
-        return created(new URI(translator().toDomain("/tx:" + t.getId()).toString())).expires(
-                t.getExpires()).build();
+        final Response.ResponseBuilder res = created(
+                new URI(translator().toDomain("/tx:" + session.getId()).toString()));
+        session.getExpires().ifPresent(expires -> {
+            res.expires(from(expires));
+        });
+        return res.build();
     }
 
     /**
@@ -102,8 +92,7 @@ public class FedoraTransactions extends FedoraBaseResource {
     @Path("fcr:commit")
     public Response commit(@PathParam("path") final String externalPath) {
         LOGGER.info("Commit transaction '{}'", externalPath);
-        return finalizeTransaction(externalPath, true);
-
+        return finalizeTransaction(externalPath, getUserPrincipal(), true);
     }
 
     /**
@@ -115,24 +104,20 @@ public class FedoraTransactions extends FedoraBaseResource {
     @POST
     @Path("fcr:rollback")
     public Response rollback(@PathParam("path") final String externalPath) {
+
         LOGGER.info("Rollback transaction '{}'", externalPath);
-        return finalizeTransaction(externalPath, false);
+        return finalizeTransaction(externalPath, getUserPrincipal(), false);
     }
 
     private Response finalizeTransaction(@PathParam("path")
-        final String externalPath, final boolean commit) {
+        final String externalPath, final String username, final boolean commit) {
 
         final String path = toPath(translator(), externalPath);
         if (!path.equals("/")) {
             return status(BAD_REQUEST).build();
         }
 
-        final String txId;
-        if (session instanceof TxSession) {
-            txId = ((TxSession) session).getTxId();
-        } else {
-            txId = "";
-        }
+        final String txId = batchService.exists(session.getId(), getUserPrincipal()) ? session.getId() : "";
 
         if (txId.isEmpty()) {
             LOGGER.debug("cannot finalize an empty tx id {} at path {}",
@@ -142,12 +127,12 @@ public class FedoraTransactions extends FedoraBaseResource {
 
         if (commit) {
             LOGGER.debug("commiting transaction {} at path {}", txId, path);
-            txService.commit(txId);
+            batchService.commit(txId, username);
 
         } else {
             LOGGER.debug("rolling back transaction {} at path {}", txId,
                     path);
-            txService.rollback(txId);
+            batchService.abort(txId, username);
         }
         return noContent().build();
     }

@@ -25,19 +25,20 @@ import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_HISTORY;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
-import javax.jcr.Session;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
@@ -47,6 +48,7 @@ import javax.ws.rs.core.UriInfo;
  * @author awoods
  * @author ajs6f
  */
+@RunWith(MockitoJUnitRunner.class)
 public class HttpApiResourcesTest {
 
     private HttpApiResources testObj;
@@ -56,7 +58,7 @@ public class HttpApiResourcesTest {
     private HttpResourceConverter mockSubjects;
 
     @Mock
-    private Session mockSession;
+    private FedoraSession mockSession;
 
     @Mock
     private FedoraResource mockResource;
@@ -66,10 +68,9 @@ public class HttpApiResourcesTest {
 
     @Before
     public void setUp() {
-        initMocks(this);
         testObj = new HttpApiResources();
         uriInfo = getUriInfoImpl();
-        mockSubjects = new HttpResourceConverter(mockSession, UriBuilder.fromUri("http://localhost/{path: .*}"));
+        mockSubjects = new HttpResourceConverter(mockSession, UriBuilder.fromUri("http://localhost/{path: .*}"), false);
     }
 
     @Test

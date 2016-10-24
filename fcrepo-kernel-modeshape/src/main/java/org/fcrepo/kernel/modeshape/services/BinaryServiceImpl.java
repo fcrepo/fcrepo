@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.modeshape.services;
 
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.ResourceTypeException;
 import org.fcrepo.kernel.api.models.FedoraBinary;
@@ -27,7 +28,6 @@ import org.springframework.stereotype.Component;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
@@ -57,7 +57,7 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
      * @return datastream
      */
     @Override
-    public FedoraBinary findOrCreate(final Session session, final String path) {
+    public FedoraBinary findOrCreate(final FedoraSession session, final String path) {
         try {
             final Node dsNode = findOrCreateNode(session, path, NT_FILE);
 
@@ -89,7 +89,7 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
      * @return datastream
      */
     @Override
-    public FedoraBinary find(final Session session, final String path) {
+    public FedoraBinary find(final FedoraSession session, final String path) {
         try {
             final Node dsNode = findNode(session, path);
 

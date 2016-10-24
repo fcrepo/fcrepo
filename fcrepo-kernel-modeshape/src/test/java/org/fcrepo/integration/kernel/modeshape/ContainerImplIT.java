@@ -25,6 +25,7 @@ import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FIELD_DELIMITER;
+import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getReferencePropertyName;
 import static org.junit.Assert.assertEquals;
@@ -33,7 +34,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import javax.inject.Inject;
-import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
@@ -41,6 +41,8 @@ import javax.jcr.Value;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 
+import org.fcrepo.kernel.api.FedoraRepository;
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.services.ContainerService;
@@ -60,27 +62,27 @@ import org.springframework.test.context.ContextConfiguration;
 public class ContainerImplIT extends AbstractIT {
 
     @Inject
-    Repository repo;
+    FedoraRepository repo;
 
     @Inject
     ContainerService containerService;
 
-    private Session session;
+    private FedoraSession session;
 
     private DefaultIdentifierTranslator subjects;
 
     @Before
     public void setUp() throws RepositoryException {
         session = repo.login();
-        subjects = new DefaultIdentifierTranslator(session);
+        subjects = new DefaultIdentifierTranslator(getJcrSession(session));
 
     }
 
     @Test
     public void testCreatedObject() throws RepositoryException {
         containerService.findOrCreate(session, "/testObject");
-        session.save();
-        session.logout();
+        session.commit();
+        session.expire();
         session = repo.login();
         final Container obj =
             containerService.findOrCreate(session, "/testObject");
@@ -145,7 +147,7 @@ public class ContainerImplIT extends AbstractIT {
                 "} WHERE {}", object.getTriples(subjects, PROPERTIES));
         assertFalse("found unexpected reference", getJcrNode(object).hasProperty("dcterms:isPartOf"));
 
-        session.save();
+        session.commit();
 
     }
 
@@ -154,19 +156,20 @@ public class ContainerImplIT extends AbstractIT {
         final Container object =
             containerService.findOrCreate(session, "/graphObject");
         final Resource graphSubject = subjects.reverse().convert(object);
+        final Session jcrSession = getJcrSession(session);
 
         object.updateProperties(subjects, "PREFIX some: <info:some#>\n" +
                 "INSERT { <" + graphSubject + "> some:urlProperty " +
                 "<" + graphSubject + "> } WHERE {}", object.getTriples(subjects, PROPERTIES));
 
-        final String prefix = session.getWorkspace().getNamespaceRegistry().getPrefix("info:some#");
+        final String prefix = jcrSession.getWorkspace().getNamespaceRegistry().getPrefix("info:some#");
         final String propertyName = prefix + ":urlProperty";
         final String referencePropertyName = getReferencePropertyName(propertyName);
 
         assertTrue(getJcrNode(object).hasProperty(referencePropertyName));
         assertFalse(getJcrNode(object).hasProperty(propertyName));
 
-        assertEquals(getJcrNode(object), session.getNodeByIdentifier(
+        assertEquals(getJcrNode(object), jcrSession.getNodeByIdentifier(
                 getJcrNode(object).getProperty(prefix + ":urlProperty_ref").getValues()[0].getString()));
 
         object.updateProperties(subjects, "PREFIX some: <info:some#>\n" +
@@ -187,7 +190,7 @@ public class ContainerImplIT extends AbstractIT {
         assertTrue(getJcrNode(object).hasProperty(propertyName));
 
         assertEquals(1, getJcrNode(object).getProperty(prefix + ":urlProperty_ref").getValues().length);
-        assertEquals(getJcrNode(object), session.getNodeByIdentifier(
+        assertEquals(getJcrNode(object), jcrSession.getNodeByIdentifier(
                 getJcrNode(object).getProperty(prefix + ":urlProperty_ref").getValues()[0].getString()));
 
     }

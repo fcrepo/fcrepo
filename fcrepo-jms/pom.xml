@@ -19,7 +19,6 @@
       javax.inject,
       javax.jms,
 
-      com.fasterxml.jackson.*,
       com.google.common.*,
       org.apache.activemq,
 

@@ -29,8 +29,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.ResourceTypeException;
 import org.fcrepo.kernel.api.models.Container;
@@ -58,7 +58,7 @@ public class ContainerServiceImpl extends AbstractService implements ContainerSe
      * @return A {@link org.fcrepo.kernel.api.models.Container} with the proffered PID
      */
     @Override
-    public Container findOrCreate(final Session session, final String path) {
+    public Container findOrCreate(final FedoraSession session, final String path) {
         LOGGER.trace("Executing findOrCreateObject() with path: {}", path);
 
         try {
@@ -91,7 +91,7 @@ public class ContainerServiceImpl extends AbstractService implements ContainerSe
      * @return A {@link org.fcrepo.kernel.api.models.Container} with the proffered PID
      */
     @Override
-    public Container find(final Session session, final String path) {
+    public Container find(final FedoraSession session, final String path) {
         final Node node = findNode(session, path);
 
         return cast(node);

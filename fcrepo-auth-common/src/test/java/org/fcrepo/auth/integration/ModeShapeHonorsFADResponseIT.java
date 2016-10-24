@@ -17,6 +17,7 @@
  */
 package org.fcrepo.auth.integration;
 
+import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.times;
@@ -28,6 +29,8 @@ import org.apache.http.auth.BasicUserPrincipal;
 
 import org.fcrepo.auth.common.FedoraAuthorizationDelegate;
 import org.fcrepo.auth.common.ServletContainerAuthenticationProvider;
+import org.fcrepo.kernel.api.FedoraRepository;
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.services.ContainerService;
 import org.fcrepo.kernel.modeshape.services.ContainerServiceImpl;
@@ -45,7 +48,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import javax.inject.Inject;
 import javax.jcr.AccessDeniedException;
-import javax.jcr.Repository;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.security.Privilege;
@@ -62,7 +64,7 @@ public class ModeShapeHonorsFADResponseIT {
             getLogger(ModeShapeHonorsFADResponseIT.class);
 
     @Inject
-    Repository repo;
+    FedoraRepository repo;
 
     @Inject
     FedoraAuthorizationDelegate fad;
@@ -100,9 +102,9 @@ public class ModeShapeHonorsFADResponseIT {
 
         final ServletCredentials credentials =
                 new ServletCredentials(request);
-        final Session session = repo.login(credentials);
-        final Privilege[] rootPrivs =
-                session.getAccessControlManager().getPrivileges("/");
+        final FedoraSession session = repo.login(credentials);
+        final Session jcrSession = getJcrSession(session);
+        final Privilege[] rootPrivs = jcrSession.getAccessControlManager().getPrivileges("/");
         for (final Privilege p : rootPrivs) {
             logger.debug("got priv: " + p.getName());
         }
@@ -126,7 +128,7 @@ public class ModeShapeHonorsFADResponseIT {
         when(fad.hasPermission(any(Session.class), any(Path.class), any(String[].class))).thenReturn(true, false);
 
         final ServletCredentials credentials = new ServletCredentials(request);
-        final Session session = repo.login(credentials);
+        final FedoraSession session = repo.login(credentials);
         final ContainerService os = new ContainerServiceImpl();
         try {
             os.findOrCreate(session, "/myobject");

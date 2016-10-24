@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.modeshape.services;
 
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.TombstoneException;
 import org.fcrepo.kernel.modeshape.TombstoneImpl;
@@ -27,6 +28,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_PAIRTREE;
+import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getClosestExistingAncestor;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 
@@ -39,17 +41,18 @@ import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 public class AbstractService {
     protected final static JcrTools jcrTools = new JcrTools();
 
-    protected Node findOrCreateNode(final Session session,
+    protected Node findOrCreateNode(final FedoraSession session,
                                     final String path,
                                     final String finalNodeType) throws RepositoryException {
 
-        final Node preexistingNode = getClosestExistingAncestor(session, path);
+        final Session jcrSession = getJcrSession(session);
+        final Node preexistingNode = getClosestExistingAncestor(jcrSession, path);
 
         if (TombstoneImpl.hasMixin(preexistingNode)) {
             throw new TombstoneException(new TombstoneImpl(preexistingNode));
         }
 
-        final Node node = jcrTools.findOrCreateNode(session, path, NT_FOLDER, finalNodeType);
+        final Node node = jcrTools.findOrCreateNode(jcrSession, path, NT_FOLDER, finalNodeType);
 
         if (node.isNew()) {
             tagHierarchyWithPairtreeMixin(preexistingNode, node);
@@ -58,9 +61,10 @@ public class AbstractService {
         return node;
     }
 
-    protected Node findNode(final Session session, final String path) {
+    protected Node findNode(final FedoraSession session, final String path) {
+        final Session jcrSession = getJcrSession(session);
         try {
-            return session.getNode(path);
+            return jcrSession.getNode(path);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -88,9 +92,10 @@ public class AbstractService {
      * @param path the path
      * @return whether T exists at the given path
      */
-    public boolean exists(final Session session, final String path) {
+    public boolean exists(final FedoraSession session, final String path) {
+        final Session jcrSession = getJcrSession(session);
         try {
-            return session.nodeExists(path);
+            return jcrSession.nodeExists(path);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }

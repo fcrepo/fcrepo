@@ -32,8 +32,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import javax.jcr.Session;
-
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.services.RepositoryService;
 import org.junit.Before;
 import org.junit.Test;
@@ -51,7 +50,7 @@ public class FedoraRepositoryBackupTest {
     private RepositoryService mockService;
 
     @Mock
-    private Session mockSession;
+    private FedoraSession mockSession;
 
     @Before
     public void setUp() {
@@ -66,7 +65,7 @@ public class FedoraRepositoryBackupTest {
     @Test
     public void testRunBackup() throws Exception {
         final Collection<Throwable> problems = new ArrayList<>();
-        when(mockService.backupRepository(any(Session.class),
+        when(mockService.backupRepository(any(FedoraSession.class),
                                         any(File.class))).thenReturn(
                 problems);
 
@@ -77,7 +76,7 @@ public class FedoraRepositoryBackupTest {
     @Test
     public void testRunBackupWithDir() throws Exception {
         final Collection<Throwable> problems = new ArrayList<>();
-        when(mockService.backupRepository(any(Session.class),
+        when(mockService.backupRepository(any(FedoraSession.class),
                                         any(File.class))).thenReturn(
                 problems);
 
