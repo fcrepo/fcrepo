@@ -55,7 +55,7 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
 
     private static final Logger LOGGER = getLogger(VersionService.class);
 
-    private static final Pattern invalidLabelPattern = Pattern.compile("[~#@*+%{}<>\\[\\]|\"^]");
+    private static final Pattern invalidLabelPattern = Pattern.compile("[\\s~#@*+%{}<>\\[\\]|\"^]");
 
     @Override
     public String createVersion(final FedoraSession session, final String absPath, final String label) {

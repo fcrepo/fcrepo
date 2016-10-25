@@ -37,6 +37,8 @@ import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.services.VersionService;
 import org.fcrepo.kernel.modeshape.FedoraSessionImpl;
+
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -178,6 +180,25 @@ public class VersionServiceImplTest {
         final Node unversionedNode = mockSession.getNode(EXAMPLE_UNVERSIONED_PATH);
         verify(unversionedNode).isNodeType(VERSIONABLE);
         verify(unversionedNode).addMixin(VERSIONABLE);
+    }
+
+    @Test
+    public void testCreateWithInvalidVersionLabels() throws RepositoryException {
+        // [\\s~#@*+%{}<>\\[\\]|\"^]
+        final String[] invalidChars = { " ", "~", "#", "@", "*", "+", "%", "{", "}",
+            "<", ">", "[", "]", "|", "\"", "^" };
+        for (String s : invalidChars) {
+            testLabel(s);
+        }
+    }
+
+    private void testLabel(final String label) {
+        try {
+            testObj.createVersion(testSession, EXAMPLE_UNVERSIONED_PATH, label);
+            Assert.fail("The previous call should have failed.");
+        } catch (Exception ex) {
+            Assert.assertTrue(ex.getMessage().contains("Invalid label"));
+        }
     }
 
 }
