@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.services.RepositoryService;
 import org.junit.Before;
@@ -50,7 +51,10 @@ public class FedoraRepositoryBackupTest {
     private RepositoryService mockService;
 
     @Mock
-    private FedoraSession mockSession;
+    private HttpSession mockSession;
+
+    @Mock
+    private FedoraSession mockFedoraSession;
 
     @Before
     public void setUp() {
@@ -60,6 +64,7 @@ public class FedoraRepositoryBackupTest {
         setField(repoBackup, "session", mockSession);
         setField(repoBackup, "repositoryService", mockService);
         setField(repoBackup, "uriInfo", getUriInfoImpl());
+        when(mockSession.getFedoraSession()).thenReturn(mockFedoraSession);
     }
 
     @Test

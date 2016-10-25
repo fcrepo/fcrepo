@@ -47,6 +47,7 @@ import javax.jcr.Session;
 import javax.jcr.version.VersionHistory;
 import javax.ws.rs.core.UriBuilder;
 
+import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.IdentifierConversionException;
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
@@ -94,22 +95,12 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
      * @param session the session
      * @param uriBuilder the uri builder
      */
-    public HttpResourceConverter(final FedoraSession session, final UriBuilder uriBuilder) {
-        this(session, uriBuilder, false);
-    }
+    public HttpResourceConverter(final HttpSession session,
+                                 final UriBuilder uriBuilder) {
 
-    /**
-     * Create a new identifier converter within the given session with the given URI template
-     * @param session the session
-     * @param uriBuilder the uri builder
-     * @param batch whether this session exists in a batch operation
-     */
-    public HttpResourceConverter(final FedoraSession session,
-                                 final UriBuilder uriBuilder, final boolean batch) {
-
-        this.session = session;
+        this.session = session.getFedoraSession();
         this.uriBuilder = uriBuilder;
-        this.batch = batch;
+        this.batch = session.isBatchSession();
         this.uriTemplate = new UriTemplate(uriBuilder.toTemplate());
 
         resetTranslationChain();

@@ -17,13 +17,13 @@
  */
 package org.fcrepo.http.commons.session;
 
-import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
-import javax.servlet.http.HttpServletRequest;
-
 import org.fcrepo.kernel.api.FedoraSession;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,40 +31,29 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 /**
- * <p>SessionProviderTest class.</p>
- *
- * @author awoods
+ * Test the HttpSession class
+ * @author acoburn
  */
 @RunWith(MockitoJUnitRunner.class)
-public class SessionProviderTest {
+public class HttpSessionTest {
 
-    SessionProvider testObj;
-
-    @Mock
-    private HttpSession mockSession;
+    private String SESSION_ID = "session-id";
 
     @Mock
-    private FedoraSession mockFedoraSession;
-
-    @Mock
-    private SessionFactory mockSessionFactory;
-
-    @Mock
-    private HttpServletRequest mockHttpServletRequest;
+    private FedoraSession mockSession;
 
     @Before
     public void setUp() {
-        when(mockSessionFactory.getInternalSession()).thenReturn(mockFedoraSession);
-        when(mockSessionFactory.getSession(mockHttpServletRequest)).thenReturn(mockSession);
-        testObj = new SessionProvider(mockHttpServletRequest);
-        setField(testObj, "sessionFactory", mockSessionFactory);
-        setField(testObj, "request", mockHttpServletRequest);
-
+        when(mockSession.getId()).thenReturn(SESSION_ID);
     }
 
     @Test
-    public void testProvide() {
-        final HttpSession inj = testObj.provide();
-        assertNotNull("Didn't get a session", inj);
+    public void testHttpSession() {
+        final HttpSession session = new HttpSession(mockSession);
+        assertFalse(session.isBatchSession());
+        session.makeBatchSession();
+        assertTrue(session.isBatchSession());
+        assertEquals(SESSION_ID, session.getId());
+        assertEquals(mockSession, session.getFedoraSession());
     }
 }

@@ -91,7 +91,7 @@ import org.fcrepo.http.commons.domain.Range;
 import org.fcrepo.http.commons.domain.ldp.LdpPreferTag;
 import org.fcrepo.http.commons.responses.RangeRequestInputStream;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
-import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
@@ -184,7 +184,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             outputStream = new RdfNamespacedStream(
                     new DefaultRdfStream(rdfStream.topic(), concat(rdfStream,
                         getResourceTriples(limit))),
-                    session.getNamespaces());
+                    session.getFedoraSession().getNamespaces());
             if (prefer != null) {
                 prefer.getReturn().addResponseHeaders(servletResponse);
             }
@@ -297,7 +297,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
             // we include an explicit etag, because the default behavior is to use the JCR node's etag, not
             // the jcr:content node digest. The etag is only included if we are not within a transaction.
-            if (!batchService.exists(session.getId(), getUserPrincipal())) {
+            if (!session().isBatchSession()) {
                 checkCacheControlHeaders(request, servletResponse, binary, session());
             }
             final CacheControl cc = new CacheControl();
@@ -460,7 +460,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected void checkCacheControlHeaders(final Request request,
                                                    final HttpServletResponse servletResponse,
                                                    final FedoraResource resource,
-                                                   final FedoraSession session) {
+                                                   final HttpSession session) {
         evaluateRequestPreconditions(request, servletResponse, resource, session, true);
         addCacheControlHeaders(servletResponse, resource, session);
     }
@@ -483,9 +483,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      */
     protected void addCacheControlHeaders(final HttpServletResponse servletResponse,
                                                  final FedoraResource resource,
-                                                 final FedoraSession session) {
+                                                 final HttpSession session) {
 
-        if (batchService.exists(session.getId(), getUserPrincipal())) {
+        if (session.isBatchSession()) {
             // Do not add caching headers if in a transaction
             return;
         }
@@ -523,17 +523,17 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected void evaluateRequestPreconditions(final Request request,
                                                        final HttpServletResponse servletResponse,
                                                        final FedoraResource resource,
-                                                       final FedoraSession session) {
+                                                       final HttpSession session) {
         evaluateRequestPreconditions(request, servletResponse, resource, session, false);
     }
 
     private void evaluateRequestPreconditions(final Request request,
                                                      final HttpServletResponse servletResponse,
                                                      final FedoraResource resource,
-                                                     final FedoraSession session,
+                                                     final HttpSession session,
                                                      final boolean cacheControl) {
 
-        if (batchService.exists(session.getId(), getUserPrincipal())) {
+        if (session.isBatchSession()) {
             // Force cache revalidation if in a transaction
             servletResponse.addHeader(CACHE_CONTROL, "must-revalidate");
             servletResponse.addHeader(CACHE_CONTROL, "max-age=0");

@@ -18,6 +18,7 @@
 package org.fcrepo.http.commons.api.rdf;
 
 import org.apache.jena.rdf.model.Resource;
+import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -73,6 +74,8 @@ public class HttpResourceConverterTest {
 
     private FedoraSession testSession, testTxSession;
 
+    private HttpSession testHttpSession, testHttpBatchSession;
+
     private HttpResourceConverter converter;
     private final String uriTemplate = "http://localhost:8080/some/{path: .*}";
     private final String path = "arbitrary/path";
@@ -97,7 +100,10 @@ public class HttpResourceConverterTest {
         final UriBuilder uriBuilder = UriBuilder.fromUri(uriTemplate);
         testSession = new FedoraSessionImpl(session);
         testTxSession = new FedoraSessionImpl(txSession);
-        converter = new HttpResourceConverter(testSession, uriBuilder, false);
+        testHttpSession = new HttpSession(testSession);
+        testHttpBatchSession = new HttpSession(testTxSession);
+        testHttpBatchSession.makeBatchSession();
+        converter = new HttpResourceConverter(testHttpSession, uriBuilder);
 
         when(session.getNode("/" + path)).thenReturn(node);
         when(session.getNode("/")).thenReturn(node);
@@ -145,8 +151,8 @@ public class HttpResourceConverterTest {
     @Test
     public void testDoForwardWithTransaction() throws Exception {
         setField(testTxSession, "id", "xyz");
-        final HttpResourceConverter converter = new HttpResourceConverter(testTxSession,
-                UriBuilder.fromUri(uriTemplate), true);
+        final HttpResourceConverter converter = new HttpResourceConverter(testHttpBatchSession,
+                UriBuilder.fromUri(uriTemplate));
         when(txSession.getNode("/" + path)).thenReturn(node);
         when(txSession.getWorkspace()).thenReturn(mockWorkspace);
         final Resource resource = createResource("http://localhost:8080/some/tx:xyz/" + path);
@@ -253,8 +259,8 @@ public class HttpResourceConverterTest {
     @Test
     public void testDoBackwardWithTransaction() throws Exception {
         setField(testTxSession, "id", "xyz");
-        final HttpResourceConverter converter = new HttpResourceConverter(testTxSession,
-                UriBuilder.fromUri(uriTemplate), true);
+        final HttpResourceConverter converter = new HttpResourceConverter(testHttpBatchSession,
+                UriBuilder.fromUri(uriTemplate));
         when(txSession.getNode("/" + path)).thenReturn(node);
         when(txSession.getWorkspace()).thenReturn(mockWorkspace);
         when(node.getSession()).thenReturn(txSession);

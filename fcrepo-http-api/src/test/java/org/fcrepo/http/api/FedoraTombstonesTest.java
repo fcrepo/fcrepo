@@ -17,9 +17,8 @@
  */
 package org.fcrepo.http.api;
 
-import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.models.Tombstone;
-import org.fcrepo.kernel.api.services.BatchService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -51,10 +50,7 @@ public class FedoraTombstonesTest {
     private FedoraTombstones testObj;
 
     @Mock
-    private FedoraSession mockSession;
-
-    @Mock
-    private BatchService mockTxService;
+    private HttpSession mockSession;
 
     @Mock
     private SecurityContext mockSecurityContext;
@@ -64,7 +60,6 @@ public class FedoraTombstonesTest {
     public void setUp() {
         testObj = spy(new FedoraTombstones(path));
         setField(testObj, "session", mockSession);
-        setField(testObj, "batchService", mockTxService);
         setField(testObj, "securityContext", mockSecurityContext);
     }
 

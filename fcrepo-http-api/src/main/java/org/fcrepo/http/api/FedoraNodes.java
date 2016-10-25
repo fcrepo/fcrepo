@@ -109,7 +109,7 @@ public class FedoraNodes extends ContentExposingResource {
         try {
             final String source = translator().asString(translator().toDomain(externalPath));
 
-            if (!nodeService.exists(session, source)) {
+            if (!nodeService.exists(session.getFedoraSession(), source)) {
                 throw new ClientErrorException("The source path does not exist", CONFLICT);
             }
 
@@ -117,16 +117,13 @@ public class FedoraNodes extends ContentExposingResource {
 
             if (destination == null) {
                 throw new ServerErrorException("Destination was not a valid resource path", BAD_GATEWAY);
-            } else if (nodeService.exists(session, destination)) {
+            } else if (nodeService.exists(session.getFedoraSession(), destination)) {
                 throw new ClientErrorException("Destination resource already exists", PRECONDITION_FAILED);
             }
 
             LOGGER.info("Copy from '{}' to '{}'", source, destination);
-            nodeService.copyObject(session, source, destination);
-
-            if (!batchService.exists(session.getId(), getUserPrincipal())) {
-                session.commit();
-            }
+            nodeService.copyObject(session.getFedoraSession(), source, destination);
+            session.commit();
 
             return created(new URI(destinationUri)).build();
         } catch (final RepositoryRuntimeException e) {
@@ -162,7 +159,7 @@ public class FedoraNodes extends ContentExposingResource {
 
             final String source = toPath(translator(), externalPath);
 
-            if (!nodeService.exists(session, source)) {
+            if (!nodeService.exists(session.getFedoraSession(), source)) {
                 throw new ClientErrorException("The source path does not exist", CONFLICT);
             }
 
@@ -173,15 +170,13 @@ public class FedoraNodes extends ContentExposingResource {
 
             if (destination == null) {
                 throw new ServerErrorException("Destination was not a valid resource path", BAD_GATEWAY);
-            } else if (nodeService.exists(session, destination)) {
+            } else if (nodeService.exists(session.getFedoraSession(), destination)) {
                 throw new ClientErrorException("Destination resource already exists", PRECONDITION_FAILED);
             }
 
             LOGGER.info("Move from '{}' to '{}'", source, destination);
-            nodeService.moveObject(session, source, destination);
-            if (!batchService.exists(session.getId(), getUserPrincipal())) {
-                session.commit();
-            }
+            nodeService.moveObject(session.getFedoraSession(), source, destination);
+            session.commit();
             return created(new URI(destinationUri)).build();
         } catch (final RepositoryRuntimeException e) {
             final Throwable cause = e.getCause();

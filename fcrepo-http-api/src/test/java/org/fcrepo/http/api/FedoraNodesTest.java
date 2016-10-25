@@ -51,12 +51,12 @@ import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.SecurityContext;
 
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
+import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.api.services.ContainerService;
-import org.fcrepo.kernel.api.services.BatchService;
 import org.fcrepo.kernel.api.services.VersionService;
 import org.fcrepo.kernel.modeshape.FedoraSessionImpl;
 
@@ -81,6 +81,8 @@ public class FedoraNodesTest {
     FedoraNodes testObj;
 
     FedoraSession testSession;
+
+    HttpSession testHttpSession;
 
     @Mock
     private ContainerService mockObjects;
@@ -127,9 +129,6 @@ public class FedoraNodesTest {
     private UriInfo mockUriInfo;
 
     @Mock
-    private BatchService mockTxService;
-
-    @Mock
     private Value mockValue;
 
     @Mock
@@ -144,17 +143,17 @@ public class FedoraNodesTest {
     public void setUp() throws Exception {
         testObj = new FedoraNodes(path);
         testSession = new FedoraSessionImpl(mockSession);
+        testHttpSession = new HttpSession(testSession);
 
         setField(testObj, "request", mockRequest);
         setField(testObj, "servletResponse", mockResponse);
         setField(testObj, "uriInfo", mockUriInfo);
         setField(testObj, "nodeService", mockNodes);
         setField(testObj, "versionService", mockVersions);
-        setField(testObj, "batchService", mockTxService);
         this.mockUriInfo = getUriInfoImpl();
         setField(testObj, "pidMinter", mockPidMinter);
         setField(testObj, "containerService", mockObjects);
-        setField(testObj, "session", testSession);
+        setField(testObj, "session", testHttpSession);
         setField(testObj, "securityContext", mockSecurityContext);
         final Workspace mockWorkspace = mock(Workspace.class);
         when(mockWorkspace.getName()).thenReturn("default");
@@ -169,8 +168,8 @@ public class FedoraNodesTest {
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockSession.getNode(path)).thenReturn(mockNode);
 
-        setField(testObj, "idTranslator", new HttpResourceConverter(testSession,
-                    UriBuilder.fromUri("http://localhost/fcrepo/{path: .*}"), false));
+        setField(testObj, "idTranslator", new HttpResourceConverter(testHttpSession,
+                    UriBuilder.fromUri("http://localhost/fcrepo/{path: .*}")));
     }
 
     @Test

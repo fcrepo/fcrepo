@@ -30,7 +30,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
-import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.junit.Before;
@@ -58,7 +58,7 @@ public class HttpApiResourcesTest {
     private HttpResourceConverter mockSubjects;
 
     @Mock
-    private FedoraSession mockSession;
+    private HttpSession mockSession;
 
     @Mock
     private FedoraResource mockResource;
@@ -70,7 +70,7 @@ public class HttpApiResourcesTest {
     public void setUp() {
         testObj = new HttpApiResources();
         uriInfo = getUriInfoImpl();
-        mockSubjects = new HttpResourceConverter(mockSession, UriBuilder.fromUri("http://localhost/{path: .*}"), false);
+        mockSubjects = new HttpResourceConverter(mockSession, UriBuilder.fromUri("http://localhost/{path: .*}"));
     }
 
     @Test

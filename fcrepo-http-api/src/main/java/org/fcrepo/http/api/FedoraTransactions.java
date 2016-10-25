@@ -27,11 +27,13 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
+import org.fcrepo.kernel.api.services.BatchService;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
@@ -47,6 +49,9 @@ public class FedoraTransactions extends FedoraBaseResource {
 
     private static final Logger LOGGER = getLogger(FedoraTransactions.class);
 
+    @Inject
+    protected BatchService batchService;
+
     /**
      * Create a new transaction resource and add it to the registry
      *
@@ -61,7 +66,7 @@ public class FedoraTransactions extends FedoraBaseResource {
             LOGGER.debug("renewing transaction {}", session.getId());
             batchService.refresh(session.getId(), getUserPrincipal());
             final Response.ResponseBuilder res = noContent();
-            session.getExpires().ifPresent(expires -> {
+            session.getFedoraSession().getExpires().ifPresent(expires -> {
                 res.expires(from(expires));
             });
             return res.build();
@@ -71,12 +76,13 @@ public class FedoraTransactions extends FedoraBaseResource {
             return status(BAD_REQUEST).build();
         }
 
-        batchService.begin(session, getUserPrincipal());
+        batchService.begin(session.getFedoraSession(), getUserPrincipal());
+        session.makeBatchSession();
         LOGGER.info("Created transaction '{}'", session.getId());
 
         final Response.ResponseBuilder res = created(
                 new URI(translator().toDomain("/tx:" + session.getId()).toString()));
-        session.getExpires().ifPresent(expires -> {
+        session.getFedoraSession().getExpires().ifPresent(expires -> {
             res.expires(from(expires));
         });
         return res.build();
@@ -117,22 +123,18 @@ public class FedoraTransactions extends FedoraBaseResource {
             return status(BAD_REQUEST).build();
         }
 
-        final String txId = batchService.exists(session.getId(), getUserPrincipal()) ? session.getId() : "";
-
-        if (txId.isEmpty()) {
-            LOGGER.debug("cannot finalize an empty tx id {} at path {}",
-                    txId, path);
+        if (!session.isBatchSession()) {
+            LOGGER.debug("cannot finalize an empty tx id {} at path {}", session.getId(), path);
             return status(BAD_REQUEST).build();
         }
 
         if (commit) {
-            LOGGER.debug("commiting transaction {} at path {}", txId, path);
-            batchService.commit(txId, username);
+            LOGGER.debug("commiting transaction {} at path {}", session.getId(), path);
+            batchService.commit(session.getId(), username);
 
         } else {
-            LOGGER.debug("rolling back transaction {} at path {}", txId,
-                    path);
-            batchService.abort(txId, username);
+            LOGGER.debug("rolling back transaction {} at path {}", session.getId(), path);
+            batchService.abort(session.getId(), username);
         }
         return noContent().build();
     }

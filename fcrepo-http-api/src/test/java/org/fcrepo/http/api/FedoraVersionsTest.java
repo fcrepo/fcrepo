@@ -35,6 +35,7 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.Variant;
 
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
+import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.api.services.VersionService;
@@ -77,7 +78,10 @@ public class FedoraVersionsTest {
     private Variant mockVariant;
 
     @Mock
-    private FedoraSession mockSession;
+    private HttpSession mockSession;
+
+    @Mock
+    private FedoraSession mockFedoraSession;
 
     private final String path = "/some/path";
     private final String versionLabel = "someLabel";
@@ -93,16 +97,17 @@ public class FedoraVersionsTest {
         when(mockResource.getNode()).thenReturn(mockNode);
         when(mockNodeType.getName()).thenReturn("nt:folder");
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockSession.getFedoraSession()).thenReturn(mockFedoraSession);
 
         setField(testObj, "idTranslator", new HttpResourceConverter(mockSession,
-                    UriBuilder.fromUri("http://localhost/fcrepo/{path: .*}"), false));
+                    UriBuilder.fromUri("http://localhost/fcrepo/{path: .*}")));
     }
 
     @Test
     public void testRevertToVersion() {
         doReturn(path).when(testObj).unversionedResourcePath();
         final Response response = testObj.revertToVersion();
-        verify(mockVersions).revertToVersion(mockSession, path, versionLabel);
+        verify(mockVersions).revertToVersion(mockFedoraSession, path, versionLabel);
         assertNotNull(response);
     }
 
@@ -116,7 +121,7 @@ public class FedoraVersionsTest {
     public void testRemoveVersion() {
         doReturn(path).when(testObj).unversionedResourcePath();
         final Response response = testObj.removeVersion();
-        verify(mockVersions).removeVersion(mockSession, path, versionLabel);
+        verify(mockVersions).removeVersion(mockFedoraSession, path, versionLabel);
         assertNotNull(response);
     }
 

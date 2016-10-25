@@ -20,7 +20,7 @@ package org.fcrepo.auth.integration;
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
-import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.modeshape.jcr.api.JcrTools;
@@ -54,7 +54,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class RootTestResource extends AbstractResource {
 
     @Inject
-    protected FedoraSession session;
+    protected HttpSession session;
 
     private static final Logger LOGGER = getLogger(RootTestResource.class);
 
@@ -74,7 +74,7 @@ public class RootTestResource extends AbstractResource {
 
     private Response doRequest(final String path) throws RepositoryException {
         final JcrTools jcrTools = new JcrTools();
-        final Node node = jcrTools.findOrCreateNode(getJcrSession(session), path);
+        final Node node = jcrTools.findOrCreateNode(getJcrSession(session.getFedoraSession()), path);
         final URI location = uriInfo.getBaseUriBuilder().path(node.getPath()).build();
         return Response.created(location).build();
     }

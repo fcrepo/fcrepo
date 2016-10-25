@@ -108,9 +108,7 @@ public class FedoraVersioning extends FedoraBaseResource {
     public Response enableVersioning() {
         LOGGER.info("Enable versioning for '{}'", externalPath);
         resource().enableVersioning();
-        if (!batchService.exists(session.getId(), getUserPrincipal())) {
-            session.commit();
-        }
+        session.commit();
         return created(uriInfo.getRequestUri()).build();
     }
 
@@ -122,9 +120,7 @@ public class FedoraVersioning extends FedoraBaseResource {
     public Response disableVersioning() {
         LOGGER.info("Disable versioning for '{}'", externalPath);
         resource().disableVersioning();
-        if (!batchService.exists(session.getId(), getUserPrincipal())) {
-            session.commit();
-        }
+        session.commit();
         return noContent().build();
     }
 
@@ -142,7 +138,7 @@ public class FedoraVersioning extends FedoraBaseResource {
         if (!isBlank(slug)) {
             LOGGER.info("Request to add version '{}' for '{}'", slug, externalPath);
             final String path = toPath(translator(), externalPath);
-            versionService.createVersion(session, path, slug);
+            versionService.createVersion(session.getFedoraSession(), path, slug);
             return created(URI.create(nodeToResource(translator()).convert(
                             resource().getBaseVersion().getFrozenNode()).getURI())).build();
         }
@@ -168,7 +164,7 @@ public class FedoraVersioning extends FedoraBaseResource {
         return new RdfNamespacedStream(new DefaultRdfStream(
                 asNode(resource()),
                 resource().getTriples(translator(), VERSIONS)),
-                session().getNamespaces());
+                session().getFedoraSession().getNamespaces());
     }
 
     protected FedoraResource resource() {
