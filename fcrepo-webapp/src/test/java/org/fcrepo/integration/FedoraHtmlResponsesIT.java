@@ -221,7 +221,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         final String updateSparql = "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
                 "PREFIX fedora: <" + REPOSITORY_NAMESPACE + ">\n" +
                 "\n" +
-                "INSERT DATA { <> fedoraconfig:versioningPolicy \"auto-version\" ; dc:title \"Object Title\". }";
+                "INSERT DATA { <> config:versioningPolicy \"auto-version\" ; dc:title \"Object Title\". }";
         postSparqlUpdateUsingHttpClient(updateSparql, pid);
 
         final HtmlPage objectPage = javascriptlessWebClient.getPage(serverAddress + pid);
