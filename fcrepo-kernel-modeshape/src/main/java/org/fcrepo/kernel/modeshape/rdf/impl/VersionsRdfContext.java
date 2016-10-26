@@ -17,6 +17,8 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
+import static java.util.Calendar.getInstance;
+import static java.util.stream.Stream.of;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.Triple.create;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
@@ -25,23 +27,17 @@ import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_LABEL;
-import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
-import static org.fcrepo.kernel.modeshape.utils.UncheckedPredicate.uncheck;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.Arrays;
+import java.util.Calendar;
 import java.util.stream.Stream;
 
-import javax.jcr.RepositoryException;
-import javax.jcr.version.Version;
-import javax.jcr.version.VersionHistory;
 import org.apache.jena.rdf.model.Resource;
 import org.modeshape.common.text.UrlEncoder;
 
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-import org.fcrepo.kernel.modeshape.utils.UncheckedFunction;
 
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -58,7 +54,7 @@ import org.slf4j.Logger;
  */
 public class VersionsRdfContext extends DefaultRdfStream {
 
-    private final VersionHistory versionHistory;
+    private final FedoraResource resource;
 
     private static final Logger LOGGER = getLogger(VersionsRdfContext.class);
 
@@ -69,45 +65,29 @@ public class VersionsRdfContext extends DefaultRdfStream {
      *
      * @param resource the resource
      * @param idTranslator the id translator
-     * @throws RepositoryException if repository exception occurred
      */
     public VersionsRdfContext(final FedoraResource resource,
-                              final IdentifierConverter<Resource, FedoraResource> idTranslator)
-        throws RepositoryException {
+                              final IdentifierConverter<Resource, FedoraResource> idTranslator) {
         super(idTranslator.reverse().convert(resource).asNode());
-        this.versionHistory = resource.getVersionHistory();
+        this.resource = resource;
         concat(versionTriples());
     }
 
     @SuppressWarnings("unchecked")
-    private Stream<Triple> versionTriples() throws RepositoryException {
-        return iteratorToStream(versionHistory.getAllVersions())
-            /* Discard jcr:rootVersion */
-            .filter(uncheck((final Version v) -> !v.getName().equals(versionHistory.getRootVersion().getName())))
-            /* Omit unlabelled versions */
-            .filter(uncheck((final Version v) -> {
-                final String[] labels = versionHistory.getVersionLabels(v);
-                if (labels.length == 0) {
-                    LOGGER.warn("An unlabeled version for {} was found!  Omitting from version listing!",
-                        topic().getURI());
-                } else if (labels.length > 1) {
-                    LOGGER.info("Multiple version labels found for {}!  Using first label, \"{}\".", topic().getURI());
-                }
-                return labels.length > 0;
-            }))
-            .flatMap(UncheckedFunction.uncheck((final Version v) -> {
-                final String[] labels = versionHistory.getVersionLabels(v);
+    private Stream<Triple> versionTriples() {
+        return resource.getVersionLabels()
+            .flatMap(label -> {
                 final Node versionSubject
-                        = createProperty(topic() + "/" + FCR_VERSIONS + "/" + urlEncode(labels[0])).asNode();
+                        = createProperty(topic() + "/" + FCR_VERSIONS + "/" + urlEncode(label)).asNode();
 
-                return Stream.concat(
-                        Arrays.stream(labels).map(x -> create(versionSubject, HAS_VERSION_LABEL.asNode(),
-                                createLiteral(x))),
-
-                        Stream.of(create(topic(), HAS_VERSION.asNode(), versionSubject),
-                            create(versionSubject, CREATED_DATE.asNode(),
-                                createTypedLiteral(v.getCreated()).asNode())));
-            }));
+                // TODO - convert this to java.time.* classes once the kernel-api interface changes
+                final Calendar cal = getInstance();
+                cal.setTime(resource.getVersion(label).getCreatedDate());
+                return of(
+                        create(topic(), HAS_VERSION.asNode(), versionSubject),
+                        create(versionSubject, HAS_VERSION_LABEL.asNode(), createLiteral(label)),
+                        create(versionSubject, CREATED_DATE.asNode(), createTypedLiteral(cal).asNode()));
+            });
     }
 
     private String urlEncode(final String string) {

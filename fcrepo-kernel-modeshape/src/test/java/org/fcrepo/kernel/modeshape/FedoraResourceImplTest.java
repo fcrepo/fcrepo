@@ -62,6 +62,7 @@ import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
+import javax.jcr.version.VersionIterator;
 import javax.jcr.version.VersionManager;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -271,8 +272,8 @@ public class FedoraResourceImplTest {
     }
 
     @Test
-    public void testGetVersionHistory() throws RepositoryException {
-
+    public void testGetVersionLabels() throws RepositoryException {
+        when(mockNode.isNodeType(FROZEN_NODE)).thenReturn(true);
         final VersionHistory mockVersionHistory = mock(VersionHistory.class);
         final Version mockVersion = mock(Version.class);
         when(mockVersion.getName()).thenReturn("uuid");
@@ -280,11 +281,14 @@ public class FedoraResourceImplTest {
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         final VersionManager mockVersionManager = mock(VersionManager.class);
         when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
+        final VersionIterator mockVersionIterator = mock(VersionIterator.class);
+        when(mockVersionHistory.getAllVersions()).thenReturn(mockVersionIterator);
+        when(mockVersionIterator.hasNext()).thenReturn(false);
 
         when(mockVersionManager.getVersionHistory(anyString())).thenReturn(
                 mockVersionHistory);
 
-        testObj.getVersionHistory();
+        testObj.getVersionLabels();
 
         verify(mockVersionManager).getVersionHistory(anyString());
     }

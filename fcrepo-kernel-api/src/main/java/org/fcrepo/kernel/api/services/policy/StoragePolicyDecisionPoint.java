@@ -30,7 +30,7 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 public interface StoragePolicyDecisionPoint extends List<StoragePolicy> {
 
     /**
-     * Given a JCR node (likely a jcr:content node), determine which storage
+     * Given a fedora resource (likely a fedora:Binary resource), determine which storage
      * policy should apply
      *
      * @param resource the resource

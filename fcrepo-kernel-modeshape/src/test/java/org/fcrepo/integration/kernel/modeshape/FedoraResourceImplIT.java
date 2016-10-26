@@ -897,9 +897,13 @@ public class FedoraResourceImplIT extends AbstractIT {
         object.enableVersioning();
         session.commit();
         addVersionLabel("some-label", object);
-        final Version version = object.getVersionHistory().getVersionByLabel("some-label");
         session.commit();
-        final FedoraResourceImpl frozenResource = new FedoraResourceImpl(version.getFrozenNode());
+
+        final javax.jcr.Node node = getJcrNode(object);
+        final Version version = node.getSession().getWorkspace().getVersionManager().getVersionHistory(node.getPath())
+                .getVersionByLabel("some-label");
+
+        final FedoraResource frozenResource = new FedoraResourceImpl(version.getFrozenNode());
 
         assertEquals(object, frozenResource.getUnfrozenResource());
 
@@ -917,8 +921,11 @@ public class FedoraResourceImplIT extends AbstractIT {
         jcrSession.getWorkspace().getVersionManager().checkpoint(object.getPath());
         addVersionLabel("some-label", object);
         session.commit();
-        final Version version = object.getVersionHistory().getVersionByLabel("some-label");
-        final FedoraResourceImpl frozenResource = new FedoraResourceImpl(version.getFrozenNode().getNode("a"));
+
+        final javax.jcr.Node node = getJcrNode(object);
+        final Version version = node.getSession().getWorkspace().getVersionManager()
+                .getVersionHistory(node.getPath()).getVersionByLabel("some-label");
+        final FedoraResource frozenResource = new FedoraResourceImpl(version.getFrozenNode().getNode("a"));
 
         assertEquals(object, frozenResource.getVersionedAncestor().getUnfrozenResource());
     }
@@ -943,8 +950,10 @@ public class FedoraResourceImplIT extends AbstractIT {
         addVersionLabel("child-v0", child);
         session.commit();
 
-        final Version version = object.getVersionHistory().getVersionByLabel("object-v0");
-        final FedoraResourceImpl frozenResource = new FedoraResourceImpl(version.getFrozenNode().getNode("child"));
+        final javax.jcr.Node node = getJcrNode(object);
+        final Version version = node.getSession().getWorkspace().getVersionManager()
+                .getVersionHistory(node.getPath()).getVersionByLabel("object-v0");
+        final FedoraResource frozenResource = new FedoraResourceImpl(version.getFrozenNode().getNode("child"));
 
         assertEquals(child, frozenResource.getVersionedAncestor().getUnfrozenResource());
     }
@@ -969,8 +978,10 @@ public class FedoraResourceImplIT extends AbstractIT {
         child.delete();
         session.commit();
 
-        final Version version = object.getVersionHistory().getVersionByLabel("object-v0");
-        final FedoraResourceImpl frozenResource = new FedoraResourceImpl(version.getFrozenNode());
+        final javax.jcr.Node node = getJcrNode(object);
+        final Version version = node.getSession().getWorkspace().getVersionManager().getVersionHistory(node.getPath())
+                .getVersionByLabel("object-v0");
+        final FedoraResource frozenResource = new FedoraResourceImpl(version.getFrozenNode());
 
         // Parent version is correct
         assertEquals(object, frozenResource.getVersionedAncestor().getUnfrozenResource());
@@ -1003,8 +1014,11 @@ public class FedoraResourceImplIT extends AbstractIT {
         child.delete();
         session.commit();
 
-        final Version version = object.getVersionHistory().getVersionByLabel("object-v0");
-        final FedoraResourceImpl frozenResource = new FedoraResourceImpl(version.getFrozenNode());
+        final javax.jcr.Node node = getJcrNode(object);
+        final Version version = node.getSession().getWorkspace().getVersionManager().getVersionHistory(node.getPath())
+                .getVersionByLabel("object-v0");
+
+        final FedoraResource frozenResource = new FedoraResourceImpl(version.getFrozenNode());
 
         // Parent version is correct
         assertEquals(object, frozenResource.getVersionedAncestor().getUnfrozenResource());
@@ -1065,15 +1079,6 @@ public class FedoraResourceImplIT extends AbstractIT {
         object.getBaseVersion();
     }
 
-
-    @Test (expected = RepositoryRuntimeException.class)
-    public void testNullVersionHistory() throws RepositoryException {
-        final String pid = getRandomPid();
-        final Container object = containerService.findOrCreate(session, "/" + pid);
-        session.commit();
-        object.getVersionHistory();
-    }
-
     @Test
     public void testGetNodeVersion() throws RepositoryException {
         final String pid = getRandomPid();
@@ -1086,8 +1091,10 @@ public class FedoraResourceImplIT extends AbstractIT {
         jcrSession.getWorkspace().getVersionManager().checkpoint(object.getPath());
         addVersionLabel("some-label", object);
         session.commit();
-        final Version version = object.getVersionHistory().getVersionByLabel("some-label");
-        final FedoraResourceImpl frozenResource = new FedoraResourceImpl(version.getFrozenNode());
+        final javax.jcr.Node node = getJcrNode(object);
+        final Version version = node.getSession().getWorkspace().getVersionManager().getVersionHistory(node.getPath())
+                .getVersionByLabel("some-label");
+        final FedoraResource frozenResource = new FedoraResourceImpl(version.getFrozenNode());
         assertNull(frozenResource.getVersion("some-label"));
 
     }
@@ -1104,8 +1111,10 @@ public class FedoraResourceImplIT extends AbstractIT {
         jcrSession.getWorkspace().getVersionManager().checkpoint(object.getPath());
         addVersionLabel("some-label", object);
         session.commit();
-        final Version version = object.getVersionHistory().getVersionByLabel("some-label");
-        final FedoraResourceImpl frozenResource = new FedoraResourceImpl(version.getFrozenNode().getNode("a"));
+        final javax.jcr.Node node = getJcrNode(object);
+        final Version version = node.getSession().getWorkspace().getVersionManager().getVersionHistory(node.getPath())
+                .getVersionByLabel("some-label");
+        final FedoraResource frozenResource = new FedoraResourceImpl(version.getFrozenNode().getNode("a"));
         assertNull(frozenResource.getVersion("some-label"));
 
     }

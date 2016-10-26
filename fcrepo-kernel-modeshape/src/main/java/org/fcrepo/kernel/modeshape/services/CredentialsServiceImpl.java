@@ -17,7 +17,6 @@
  */
 package org.fcrepo.kernel.modeshape.services;
 
-import javax.jcr.Credentials;
 import javax.servlet.http.HttpServletRequest;
 
 import org.fcrepo.kernel.api.services.CredentialsService;
@@ -32,7 +31,7 @@ import org.springframework.stereotype.Component;
 public class CredentialsServiceImpl implements CredentialsService {
 
     @Override
-    public Credentials getCredentials(final Object request) {
+    public Object getCredentials(final Object request) {
         if (request instanceof HttpServletRequest) {
             return new ServletCredentials((HttpServletRequest)request);
         }
