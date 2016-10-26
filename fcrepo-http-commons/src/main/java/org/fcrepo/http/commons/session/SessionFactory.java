@@ -111,8 +111,8 @@ public class SessionFactory {
      * @return the Session
      * @throws RuntimeException if the transaction could not be found
      */
-    public FedoraSession getSession(final HttpServletRequest servletRequest) {
-        final FedoraSession session;
+    public HttpSession getSession(final HttpServletRequest servletRequest) {
+        final HttpSession session;
         final String txId = getEmbeddedId(servletRequest, Prefix.TX);
 
         try {
@@ -136,10 +136,10 @@ public class SessionFactory {
      * @param servletRequest the servlet request
      * @return a newly created JCR session
      */
-    protected FedoraSession createSession(final HttpServletRequest servletRequest) {
+    protected HttpSession createSession(final HttpServletRequest servletRequest) {
 
         LOGGER.debug("Returning an authenticated session in the default workspace");
-        return  repo.login(credentialsService.getCredentials(servletRequest));
+        return  new HttpSession(repo.login(credentialsService.getCredentials(servletRequest)));
     }
 
     /**
@@ -149,14 +149,16 @@ public class SessionFactory {
      * @param txId the transaction id
      * @return a JCR session that is associated with the transaction
      */
-    protected FedoraSession getSessionFromTransaction(final HttpServletRequest servletRequest, final String txId) {
+    protected HttpSession getSessionFromTransaction(final HttpServletRequest servletRequest, final String txId) {
 
         final Principal userPrincipal = servletRequest.getUserPrincipal();
         final String userName = userPrincipal == null ? null : userPrincipal.getName();
 
         final FedoraSession session = batchService.getSession(txId, userName);
-        LOGGER.debug("Returning a session in the batch {} for user {}", session, userName);
-        return session;
+        final HttpSession batchSession = new HttpSession(session);
+        batchSession.makeBatchSession();
+        LOGGER.debug("Returning a session in the batch {} for user {}", batchSession, userName);
+        return batchSession;
     }
 
     /**

@@ -32,6 +32,7 @@ import java.security.Principal;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 
+import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.services.BatchService;
 import org.junit.Before;
@@ -52,6 +53,8 @@ public class FedoraTransactionsTest {
 
     private FedoraTransactions testObj;
 
+    private HttpSession testSession;
+
     @Mock
     private FedoraSession mockSession;
 
@@ -70,18 +73,20 @@ public class FedoraTransactionsTest {
     @Before
     public void setUp() {
         testObj = new FedoraTransactions();
+        testSession = new HttpSession(mockSession);
+        testSession.makeBatchSession();
         when(mockSession.getId()).thenReturn("123");
         when(mockSession.getExpires()).thenReturn(of(now().plusSeconds(100)));
         when(regularSession.getExpires()).thenReturn(of(now().minusSeconds(100)));
         setField(testObj, "uriInfo", getUriInfoImpl());
-        setField(testObj, "session", mockSession);
+        setField(testObj, "session", testSession);
         setField(testObj, "batchService", mockTxService);
         setField(testObj, "securityContext", mockSecurityContext);
     }
 
     @Test
     public void shouldStartANewTransaction() throws URISyntaxException {
-        setField(testObj, "session", regularSession);
+        setField(testObj, "session", new HttpSession(regularSession));
         when(mockSecurityContext.getUserPrincipal()).thenReturn(mockPrincipal);
         when(mockPrincipal.getName()).thenReturn(USER_NAME);
         testObj.createTransaction(null);
@@ -104,14 +109,14 @@ public class FedoraTransactionsTest {
 
     @Test
     public void shouldErrorIfTheContextSessionIsNotATransaction() {
-        setField(testObj, "session", regularSession);
+        setField(testObj, "session", new HttpSession(regularSession));
         final Response commit = testObj.commit(null);
         assertEquals(400, commit.getStatus());
     }
 
     @Test
     public void shouldErrorIfCommitIsNotCalledAtTheRepoRoot() {
-        setField(testObj, "session", regularSession);
+        setField(testObj, "session", new HttpSession(regularSession));
         final Response commit = testObj.commit("a");
         assertEquals(400, commit.getStatus());
     }
@@ -125,14 +130,14 @@ public class FedoraTransactionsTest {
 
     @Test
     public void shouldErrorIfTheContextSessionIsNotATransactionAtRollback() {
-        setField(testObj, "session", regularSession);
+        setField(testObj, "session", new HttpSession(regularSession));
         final Response commit = testObj.rollback(null);
         assertEquals(400, commit.getStatus());
     }
 
     @Test
     public void shouldErrorIfRollbackIsNotCalledAtTheRepoRoot() {
-        setField(testObj, "session", regularSession);
+        setField(testObj, "session", testSession);
         final Response commit = testObj.rollback("a");
         assertEquals(400, commit.getStatus());
     }

@@ -110,7 +110,7 @@ public class FedoraVersions extends ContentExposingResource {
     public Response revertToVersion() {
         LOGGER.info("Reverting {} to version {}.", path,
                 label);
-        versionService.revertToVersion(session, unversionedResourcePath(), label);
+        versionService.revertToVersion(session.getFedoraSession(), unversionedResourcePath(), label);
         return noContent().build();
     }
 
@@ -121,7 +121,7 @@ public class FedoraVersions extends ContentExposingResource {
     @DELETE
     public Response removeVersion() {
         LOGGER.info("Removing {} version {}.", path, label);
-        versionService.removeVersion(session, unversionedResourcePath(), label);
+        versionService.removeVersion(session.getFedoraSession(), unversionedResourcePath(), label);
         return noContent().build();
     }
 

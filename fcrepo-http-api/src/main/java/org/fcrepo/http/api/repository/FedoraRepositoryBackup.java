@@ -34,7 +34,7 @@ import javax.ws.rs.WebApplicationException;
 
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.services.RepositoryService;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
@@ -51,7 +51,7 @@ public class FedoraRepositoryBackup extends AbstractResource {
     private static final Logger LOGGER = getLogger(FedoraRepositoryBackup.class);
 
     @Inject
-    protected FedoraSession session;
+    protected HttpSession session;
 
     /**
      * The fcrepo repository service
@@ -92,7 +92,8 @@ public class FedoraRepositoryBackup extends AbstractResource {
         }
 
         LOGGER.debug("Backing up to: {}", backupDirectory.getAbsolutePath());
-        final Collection<Throwable> problems = repositoryService.backupRepository(session, backupDirectory);
+        final Collection<Throwable> problems = repositoryService.backupRepository(session.getFedoraSession(),
+                backupDirectory);
 
         if (!problems.isEmpty()) {
             LOGGER.error("Problems backing up the repository:");

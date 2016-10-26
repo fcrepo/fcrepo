@@ -68,11 +68,7 @@ public class FedoraTombstones extends FedoraBaseResource {
     public Response delete() {
         LOGGER.info("Delete tombstone: {}", resource());
         resource().delete();
-
-        if (!batchService.exists(session.getId(), getUserPrincipal())) {
-            session.commit();
-        }
-
+        session.commit();
         return noContent().build();
     }
 

@@ -281,9 +281,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         try {
             resource().delete();
-            if (!batchService.exists(session.getId(), getUserPrincipal())) {
-                session.commit();
-            }
+            session.commit();
             return noContent().build();
         } finally {
             lock.release();
@@ -321,7 +319,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         final String path = toPath(translator(), externalPath);
 
-        final AcquiredLock lock = lockManager.lockForWrite(path, session, nodeService);
+        final AcquiredLock lock = lockManager.lockForWrite(path, session.getFedoraSession(), nodeService);
 
         try {
 
@@ -330,7 +328,7 @@ public class FedoraLdp extends ContentExposingResource {
             final MediaType contentType = getSimpleContentType(requestContentType);
 
 
-            if (nodeService.exists(session, path)) {
+            if (nodeService.exists(session.getFedoraSession(), path)) {
                 resource = resource();
             } else {
                 final MediaType effectiveContentType
@@ -373,10 +371,7 @@ public class FedoraLdp extends ContentExposingResource {
                 checkForInsufficientStorageException(e, e);
             }
 
-            if (!batchService.exists(session.getId(), getUserPrincipal())) {
-                session.commit();
-            }
-
+            session.commit();
             return createUpdateResponse(resource, created);
 
         } finally {
@@ -405,7 +400,8 @@ public class FedoraLdp extends ContentExposingResource {
             throw new BadRequestException(resource().getPath() + " is not a valid object to receive a PATCH");
         }
 
-        final AcquiredLock lock = lockManager.lockForWrite(resource().getPath(), session, nodeService);
+        final AcquiredLock lock = lockManager.lockForWrite(resource().getPath(), session.getFedoraSession(),
+                nodeService);
 
         try {
             final String requestBody = IOUtils.toString(requestBodyStream, UTF_8);
@@ -420,9 +416,7 @@ public class FedoraLdp extends ContentExposingResource {
                 LOGGER.info("PATCH for '{}'", externalPath);
                 patchResourcewithSparql(resource(), requestBody, resourceTriples);
             }
-            if (!batchService.exists(session.getId(), getUserPrincipal())) {
-                session.commit();
-            }
+            session.commit();
 
             addCacheControlHeaders(servletResponse, resource().getDescription(), session);
 
@@ -491,7 +485,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         final String newObjectPath = mintNewPid(slug);
 
-        final AcquiredLock lock = lockManager.lockForWrite(newObjectPath, session, nodeService);
+        final AcquiredLock lock = lockManager.lockForWrite(newObjectPath, session.getFedoraSession(), nodeService);
 
         try {
 
@@ -529,9 +523,7 @@ public class FedoraLdp extends ContentExposingResource {
                         }
                     }
                 }
-                if (!batchService.exists(session.getId(), getUserPrincipal())) {
-                    session.commit();
-                }
+                session.commit();
             } catch (final Exception e) {
                 checkForInsufficientStorageException(e, e);
             }
@@ -606,7 +598,7 @@ public class FedoraLdp extends ContentExposingResource {
             }
             final RdfNamespacedStream rdfStream = new RdfNamespacedStream(
                 new DefaultRdfStream(asNode(resource()), getResourceTriples()),
-                    session().getNamespaces());
+                    session().getFedoraSession().getNamespaces());
             return builder.entity(rdfStream).build();
         }
     }
@@ -633,7 +625,7 @@ public class FedoraLdp extends ContentExposingResource {
     protected void addResourceHttpHeaders(final FedoraResource resource) {
         super.addResourceHttpHeaders(resource);
 
-        if (batchService.exists(session.getId(), getUserPrincipal())) {
+        if (session.isBatchSession()) {
             final String canonical = translator().reverse()
                     .convert(resource)
                     .toString()
@@ -706,9 +698,9 @@ public class FedoraLdp extends ContentExposingResource {
         final FedoraResource result;
 
         if (objectType.equals(FEDORA_BINARY)) {
-            result = binaryService.findOrCreate(session, path);
+            result = binaryService.findOrCreate(session.getFedoraSession(), path);
         } else {
-            result = containerService.findOrCreate(session, path);
+            result = containerService.findOrCreate(session.getFedoraSession(), path);
         }
 
         return result;
@@ -741,7 +733,7 @@ public class FedoraLdp extends ContentExposingResource {
         // remove leading slash left over from translation
         LOGGER.trace("Using internal identifier {} to create new resource.", pid);
 
-        if (nodeService.exists(session, pid)) {
+        if (nodeService.exists(session.getFedoraSession(), pid)) {
             LOGGER.trace("Resource with path {} already exists; minting new path instead", pid);
             return mintNewPid(null);
         }

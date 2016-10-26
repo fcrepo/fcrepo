@@ -110,8 +110,8 @@ public class SessionFactoryTest {
     public void testGetSessionFromTransaction() {
         when(mockRequest.getPathInfo()).thenReturn("/tx:123/some/path");
         when(mockTxService.getSession("123", null)).thenReturn(mockTx);
-        final FedoraSession session = testObj.getSessionFromTransaction(mockRequest, "123");
-        assertEquals(mockTx, session);
+        final HttpSession session = testObj.getSessionFromTransaction(mockRequest, "123");
+        assertEquals(mockTx, session.getFedoraSession());
     }
 
     @Test

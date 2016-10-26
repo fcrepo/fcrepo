@@ -25,13 +25,12 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.commons.lang3.StringUtils;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
-import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.exception.SessionMissingException;
 import org.fcrepo.kernel.api.exception.TombstoneException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.Tombstone;
-import org.fcrepo.kernel.api.services.BatchService;
 import org.slf4j.Logger;
 
 import java.security.Principal;
@@ -54,10 +53,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
     private static final Logger LOGGER = getLogger(FedoraBaseResource.class);
 
     @Inject
-    protected FedoraSession session;
-
-    @Inject
-    protected BatchService batchService;
+    protected HttpSession session;
 
     @Context
     protected SecurityContext securityContext;
@@ -66,9 +62,8 @@ abstract public class FedoraBaseResource extends AbstractResource {
 
     protected IdentifierConverter<Resource, FedoraResource> translator() {
         if (idTranslator == null) {
-            final boolean inBatch = batchService.exists(session().getId(), getUserPrincipal());
             idTranslator = new HttpResourceConverter(session(),
-                    uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class), inBatch);
+                    uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class));
         }
 
         return idTranslator;
@@ -115,9 +110,9 @@ abstract public class FedoraBaseResource extends AbstractResource {
             LOGGER.debug("setting baseURL = " + baseURL);
             final ObjectMapper mapper = new ObjectMapper();
             final ObjectNode json = mapper.createObjectNode();
-            session.addSessionData(BASE_URL, baseURL);
+            session.getFedoraSession().addSessionData(BASE_URL, baseURL);
             if (!StringUtils.isBlank(headers.getHeaderString("user-agent"))) {
-                session.addSessionData(USER_AGENT, headers.getHeaderString("user-agent"));
+                session.getFedoraSession().addSessionData(USER_AGENT, headers.getHeaderString("user-agent"));
             }
         } catch (final Exception ex) {
             LOGGER.warn("Error setting baseURL", ex.getMessage());
@@ -138,7 +133,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
         return "";
     }
 
-    protected FedoraSession session() {
+    protected HttpSession session() {
         if (session == null) {
             throw new SessionMissingException("Invalid session");
         }

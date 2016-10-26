@@ -35,7 +35,7 @@ import javax.ws.rs.core.Response;
 
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.services.RepositoryService;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
@@ -52,7 +52,7 @@ public class FedoraRepositoryRestore extends AbstractResource {
     private static final Logger LOGGER = getLogger(FedoraRepositoryRestore.class);
 
     @Inject
-    protected FedoraSession session;
+    protected HttpSession session;
 
     /**
      * The fcrepo repository service
@@ -83,7 +83,8 @@ public class FedoraRepositoryRestore extends AbstractResource {
                             + backupDirectory.getAbsolutePath()).build());
         }
 
-        final Collection<Throwable> problems = repositoryService.restoreRepository(session, backupDirectory);
+        final Collection<Throwable> problems = repositoryService.restoreRepository(session.getFedoraSession(),
+                backupDirectory);
         if (!problems.isEmpty()) {
             LOGGER.error("Problems restoring up the repository:");
 
