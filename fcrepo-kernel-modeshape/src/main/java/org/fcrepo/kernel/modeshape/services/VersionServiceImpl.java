@@ -21,6 +21,7 @@ import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.services.VersionService;
 import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
+
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
@@ -55,7 +56,9 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
 
     private static final Logger LOGGER = getLogger(VersionService.class);
 
-    private static final Pattern invalidLabelPattern = Pattern.compile("[\\s~#@*+%{}<>\\[\\]|\"^]");
+    private static final Pattern invalidLabelPattern = Pattern.compile("[~#@*+%{}<>\\[\\]|\"^]");
+
+    private static final Pattern invalidLabelEndsWithANumberPattern = Pattern.compile("^(.*[\\s]+)?[\\d]*$");
 
     @Override
     public String createVersion(final FedoraSession session, final String absPath, final String label) {
@@ -191,7 +194,11 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
 
     private static boolean validLabel(final String label) {
         final Matcher matcher = invalidLabelPattern.matcher(label);
-        return !matcher.find();
+        if (matcher.find()) {
+            return false;
+        }
+
+        return !invalidLabelEndsWithANumberPattern.matcher(label).find();
     }
 
 }
