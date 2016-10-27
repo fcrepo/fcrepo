@@ -23,6 +23,7 @@ import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.junit.Before;
 import org.junit.Test;
 
+import static javax.ws.rs.core.HttpHeaders.LINK;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response;
 
@@ -83,7 +84,7 @@ public class MalformedRdfExceptionMapperTest {
         Stream.generate(new Random()::nextInt).limit(2000).forEach(error::append);
         final Response response = testObj.toResponse(new MalformedRdfException(error.toString()));
 
-        final String linkHeader = response.getHeaderString("Link");
+        final String linkHeader = response.getHeaderString(LINK);
         assertNotNull(linkHeader);
         assertTrue(linkHeader.length() < 1000);
     }

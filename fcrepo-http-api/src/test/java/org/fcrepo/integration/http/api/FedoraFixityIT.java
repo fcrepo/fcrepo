@@ -18,6 +18,9 @@
 package org.fcrepo.integration.http.api;
 
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.HttpHeaders.ACCEPT;
+
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
@@ -92,7 +95,7 @@ public class FedoraFixityIT extends AbstractResourceIT {
 
         // Set default digest algorithm
         final HttpPatch patch = patchObjMethod(childId + "/fcr:metadata");
-        patch.setHeader("Content-Type", "application/sparql-update");
+        patch.setHeader(CONTENT_TYPE, "application/sparql-update");
         final String updateString = "PREFIX config: <info:fedoraconfig/>\n" +
                 "INSERT DATA { <> " + DEFAULT_DIGEST_ALGORITHM + " \"md5\" }";
         patch.setEntity(new StringEntity(updateString));
@@ -119,7 +122,7 @@ public class FedoraFixityIT extends AbstractResourceIT {
 
         for (final String type : POSSIBLE_RDF_RESPONSE_VARIANTS_STRING) {
             final HttpGet method = new HttpGet(serverAddress + id + "/zxc/fcr:fixity");
-            method.addHeader("Accept", type);
+            method.addHeader(ACCEPT, type);
             assertEquals(type, getContentType(method));
         }
     }

@@ -18,6 +18,7 @@
 package org.fcrepo.integration.http.api;
 
 import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static org.junit.Assert.assertEquals;
 
 import java.io.ByteArrayInputStream;
@@ -101,7 +102,7 @@ public class FedoraCrudConcurrentIT extends AbstractResourceIT {
             pid = pids.get(i);
             final String taskName = "Thread " + (i + 1) + " to update object";
             final HttpPatch request = patchObjMethod(pid);
-            request.addHeader("Content-Type", "application/sparql-update");
+            request.addHeader(CONTENT_TYPE, "application/sparql-update");
             final String subjectUri = request.getURI().toString();
             final BasicHttpEntity e = new BasicHttpEntity();
             e.setContent(new ByteArrayInputStream(

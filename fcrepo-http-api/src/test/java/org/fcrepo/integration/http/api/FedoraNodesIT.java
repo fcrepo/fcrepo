@@ -22,6 +22,7 @@ import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.GONE;
 import static javax.ws.rs.core.Response.Status.OK;
 import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
+import static javax.ws.rs.core.HttpHeaders.LINK;
 import static org.junit.Assert.assertEquals;
 import java.io.IOException;
 import java.net.URI;
@@ -81,7 +82,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertEquals(OK.getStatusCode(), getStatus(httpGet));
         try (final CloseableHttpResponse originalResult = execute(new HttpGet(location))) {
             assertEquals(GONE.getStatusCode(), getStatus(originalResult));
-            final Link tombstone = Link.valueOf(originalResult.getFirstHeader("Link").getValue());
+            final Link tombstone = Link.valueOf(originalResult.getFirstHeader(LINK).getValue());
             assertEquals("hasTombstone", tombstone.getRel());
         }
     }
@@ -98,7 +99,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertEquals(OK.getStatusCode(), getStatus(new HttpGet(serverAddress + id)));
         try (final CloseableHttpResponse originalResult = execute(new HttpGet(location))) {
             assertEquals(GONE.getStatusCode(), getStatus(originalResult));
-            final Link tombstone = Link.valueOf(originalResult.getFirstHeader("Link").getValue());
+            final Link tombstone = Link.valueOf(originalResult.getFirstHeader(LINK).getValue());
             assertEquals("hasTombstone", tombstone.getRel());
         }
     }

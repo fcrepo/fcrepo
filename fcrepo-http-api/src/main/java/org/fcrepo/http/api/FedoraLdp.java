@@ -67,7 +67,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
@@ -84,7 +83,10 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.ServerErrorException;
-import javax.ws.rs.core.HttpHeaders;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.HttpHeaders.ACCEPT;
+import static javax.ws.rs.core.HttpHeaders.LINK;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -93,6 +95,7 @@ import javax.ws.rs.core.Variant.VariantListBuilder;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
@@ -136,6 +139,8 @@ public class FedoraLdp extends ContentExposingResource {
         withKeyValueSeparator(Splitter.on('=').limit(2));
 
     static final String INSUFFICIENT_SPACE_IDENTIFYING_MESSAGE = "No space left on device";
+
+    static final String HTTP_HEADER_ACCEPT_PATCH = "Accept-Patch";
 
     @PathParam("path") protected String externalPath;
 
@@ -247,7 +252,7 @@ public class FedoraLdp extends ContentExposingResource {
     }
 
     private int getChildrenLimit() {
-        final List<String> acceptHeaders = headers.getRequestHeader(HttpHeaders.ACCEPT);
+        final List<String> acceptHeaders = headers.getRequestHeader(ACCEPT);
         if (acceptHeaders != null && acceptHeaders.size() > 0) {
             final List<String> accept = Arrays.asList(acceptHeaders.get(0).split(","));
             if (accept.contains(TEXT_HTML)) {
@@ -309,11 +314,11 @@ public class FedoraLdp extends ContentExposingResource {
     @Consumes
     @Timed
     public Response createOrReplaceObjectRdf(
-            @HeaderParam("Content-Type") final MediaType requestContentType,
+            @HeaderParam(CONTENT_TYPE) final MediaType requestContentType,
             @ContentLocation final InputStream requestBodyStream,
-            @HeaderParam("Content-Disposition") final ContentDisposition contentDisposition,
+            @HeaderParam(CONTENT_DISPOSITION) final ContentDisposition contentDisposition,
             @HeaderParam("If-Match") final String ifMatch,
-            @HeaderParam("Link") final String link,
+            @HeaderParam(LINK) final String link,
             @HeaderParam("Digest") final String digest)
             throws InvalidChecksumException, MalformedRdfException {
 
@@ -467,11 +472,11 @@ public class FedoraLdp extends ContentExposingResource {
     @Produces({TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
             N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
             TURTLE_X, TEXT_HTML_WITH_CHARSET, "*/*"})
-    public Response createObject(@HeaderParam("Content-Disposition") final ContentDisposition contentDisposition,
-                                 @HeaderParam("Content-Type") final MediaType requestContentType,
+    public Response createObject(@HeaderParam(CONTENT_DISPOSITION) final ContentDisposition contentDisposition,
+                                 @HeaderParam(CONTENT_TYPE) final MediaType requestContentType,
                                  @HeaderParam("Slug") final String slug,
                                  @ContentLocation final InputStream requestBodyStream,
-                                 @HeaderParam("Link") final String link,
+                                 @HeaderParam(LINK) final String link,
                                  @HeaderParam("Digest") final String digest)
             throws InvalidChecksumException, IOException, MalformedRdfException {
 
@@ -636,7 +641,7 @@ public class FedoraLdp extends ContentExposingResource {
                     .replaceFirst("/tx:[^/]+", "");
 
 
-            servletResponse.addHeader("Link", "<" + canonical + ">;rel=\"canonical\"");
+            servletResponse.addHeader(LINK, "<" + canonical + ">;rel=\"canonical\"");
 
         }
 
@@ -660,11 +665,11 @@ public class FedoraLdp extends ContentExposingResource {
 
         } else if (resource() instanceof NonRdfSourceDescription) {
             options = "MOVE,COPY,DELETE,POST,HEAD,GET,PUT,PATCH,OPTIONS";
-            servletResponse.addHeader("Accept-Patch", contentTypeSPARQLUpdate);
+            servletResponse.addHeader(HTTP_HEADER_ACCEPT_PATCH, contentTypeSPARQLUpdate);
 
         } else if (resource() instanceof Container) {
             options = "MOVE,COPY,DELETE,POST,HEAD,GET,PUT,PATCH,OPTIONS";
-            servletResponse.addHeader("Accept-Patch", contentTypeSPARQLUpdate);
+            servletResponse.addHeader(HTTP_HEADER_ACCEPT_PATCH, contentTypeSPARQLUpdate);
 
             final String rdfTypes = TURTLE + "," + N3 + "," + N3_ALT2 + ","
                     + RDF_XML + "," + NTRIPLES + "," + JSON_LD;

@@ -25,6 +25,12 @@ import static java.util.TimeZone.getTimeZone;
 import static java.util.regex.Pattern.compile;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.Link.fromUri;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
+import static javax.ws.rs.core.HttpHeaders.ACCEPT;
+import static javax.ws.rs.core.HttpHeaders.LINK;
+
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
@@ -267,11 +273,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpHead headObjMethod = headObjMethod(id + "/x");
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
-            assertEquals(TEXT_PLAIN, response.getFirstHeader("Content-Type").getValue());
-            assertEquals("3", response.getFirstHeader("Content-Length").getValue());
+            assertEquals(TEXT_PLAIN, response.getFirstHeader(CONTENT_TYPE).getValue());
+            assertEquals("3", response.getFirstHeader(CONTENT_LENGTH).getValue());
             assertEquals("bytes", response.getFirstHeader("Accept-Ranges").getValue());
             final ContentDisposition disposition =
-                    new ContentDisposition(response.getFirstHeader("Content-Disposition").getValue());
+                    new ContentDisposition(response.getFirstHeader(CONTENT_DISPOSITION).getValue());
             assertEquals("attachment", disposition.getType());
         }
     }
@@ -282,7 +288,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id);
-        put.addHeader("Content-Type", externalContentType);
+        put.addHeader(CONTENT_TYPE, externalContentType);
         assertEquals(CREATED.getStatusCode(), getStatus(put));
 
         // Configure HEAD request to NOT follow redirects
@@ -293,10 +299,10 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             assertEquals(TEMPORARY_REDIRECT.getStatusCode(), response.getStatusLine().getStatusCode());
-            assertEquals(externalContentType, response.getFirstHeader("Content-Type").getValue());
+            assertEquals(externalContentType, response.getFirstHeader(CONTENT_TYPE).getValue());
             assertEquals("bytes", response.getFirstHeader("Accept-Ranges").getValue());
             final ContentDisposition disposition =
-                    new ContentDisposition(response.getFirstHeader("Content-Disposition").getValue());
+                    new ContentDisposition(response.getFirstHeader(CONTENT_DISPOSITION).getValue());
             assertEquals("attachment", disposition.getType());
         }
     }
@@ -322,7 +328,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse optionsResponse = execute(optionsRequest)) {
             assertEquals(OK.getStatusCode(), optionsResponse.getStatusLine().getStatusCode());
             assertResourceOptionsHeaders(optionsResponse);
-            assertEquals("0", optionsResponse.getFirstHeader("Content-Length").getValue());
+            assertEquals("0", optionsResponse.getFirstHeader(CONTENT_LENGTH).getValue());
         }
     }
 
@@ -444,7 +450,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createObjectAndClose(id);
 
         final HttpGet get = new HttpGet(serverAddress + id);
-        get.addHeader("Accept", "application/turtle");
+        get.addHeader(ACCEPT, "application/turtle");
 
         assertEquals(NOT_ACCEPTABLE.getStatusCode(), getStatus(get));
     }
@@ -484,7 +490,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpGet httpGet = getObjMethod(id);
         final Link tombstone;
         try (final CloseableHttpResponse response = execute(httpGet)) {
-            tombstone = Link.valueOf(response.getFirstHeader("Link").getValue());
+            tombstone = Link.valueOf(response.getFirstHeader(LINK).getValue());
         }
         assertEquals("hasTombstone", tombstone.getRel());
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(tombstone.getUri())));
@@ -497,7 +503,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createObjectAndClose(id);
 
         final HttpPatch patch = patchObjMethod(id);
-        patch.addHeader("Content-Type", "application/sparql-update");
+        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(patch));
     }
 
@@ -508,7 +514,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final String location = serverAddress + id;
         final HttpPatch updateObjectGraphMethod = new HttpPatch(location);
-        updateObjectGraphMethod.addHeader("Content-Type", "application/sparql-update");
+        updateObjectGraphMethod.addHeader(CONTENT_TYPE, "application/sparql-update");
         updateObjectGraphMethod.setEntity(new StringEntity("INSERT { <" + location + "> " +
                 "<http://purl.org/dc/elements/1.1/identifier> \"this is an identifier\" } WHERE {}"));
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(updateObjectGraphMethod));
@@ -520,7 +526,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createDatastream(id, "x", "some content");
 
         final HttpPatch patch = patchObjMethod(id + "/x");
-        patch.addHeader("Content-Type", "application/sparql-update");
+        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(patch));
     }
 
@@ -537,7 +543,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final String location = serverAddress + id + "/x/fcr:metadata";
         final HttpPatch patch = new HttpPatch(location);
-        patch.addHeader("Content-Type", "application/sparql-update");
+        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
         patch.setEntity(new StringEntity("INSERT { <" + serverAddress + id + "/x> "
                 + "<http://purl.org/dc/elements/1.1/identifier> \"this is an identifier\" } WHERE {}"));
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(patch));
@@ -557,7 +563,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String location = resource + "/x/fcr:metadata";
 
         final HttpPatch patch = new HttpPatch(location);
-        patch.addHeader("Content-Type", "application/sparql-update");
+        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
         patch.setEntity(new StringEntity("INSERT { <" +
                 resource + "/x>" + " <" + DC_IDENTIFIER + "> \"identifier\" } WHERE {}"));
         try (final CloseableHttpResponse response = execute(patch)) {
@@ -578,7 +584,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final String location = serverAddress + pid + "/x/fcr:metadata";
         final HttpPatch patch = new HttpPatch(location);
-        patch.addHeader("Content-Type", "application/sparql-update");
+        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
         patch.setEntity(new StringEntity("DELETE { " +
                 "<" + serverAddress + pid + "/x> <" + HAS_MIME_TYPE + "> ?any . } " +
                 "WHERE {" +
@@ -611,7 +617,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final String location = serverAddress + id;
         final HttpPatch updateObjectGraphMethod = patchObjMethod(id);
-        updateObjectGraphMethod.addHeader("Content-Type", "application/sparql-update");
+        updateObjectGraphMethod.addHeader(CONTENT_TYPE, "application/sparql-update");
         updateObjectGraphMethod.setEntity(new StringEntity("INSERT { <" +
                 location + "> <info:some-predicate> _:a .\n " +
                 "_:a <http://purl.org/dc/elements/1.1/title> \"this is a title\"\n" + " } WHERE {}"));
@@ -639,7 +645,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             initialContent = EntityUtils.toString(subjectResponse.getEntity());
         }
         final HttpPut replaceMethod = putObjMethod(id);
-        replaceMethod.addHeader("Content-Type", "application/n3");
+        replaceMethod.addHeader(CONTENT_TYPE, "application/n3");
         replaceMethod
                 .setEntity(new StringEntity(initialContent + "\n<" + subjectURI + "> <info:test#label> \"foo\""));
         try (final CloseableHttpResponse response = execute(replaceMethod)) {
@@ -658,7 +664,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testCreateGraph() throws IOException {
         final String subjectURI = serverAddress + getRandomUniqueId();
         final HttpPut createMethod = new HttpPut(subjectURI);
-        createMethod.addHeader("Content-Type", "application/n3");
+        createMethod.addHeader(CONTENT_TYPE, "application/n3");
         createMethod.setEntity(new StringEntity("<" + subjectURI + "> <info:test#label> \"foo\""));
         assertEquals(CREATED.getStatusCode(), getStatus(createMethod));
 
@@ -673,13 +679,13 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testCreateGraphWithBlanknodes() throws IOException {
         final String subjectURI = serverAddress + getRandomUniqueId();
         final HttpPut createMethod = new HttpPut(subjectURI);
-        createMethod.addHeader("Content-Type", "application/n3");
+        createMethod.addHeader(CONTENT_TYPE, "application/n3");
         createMethod.setEntity(new StringEntity("<" + subjectURI + "> <info:some-predicate> _:a ." +
                 "_:a <info:test#label> \"asdfg\""));
         assertEquals(CREATED.getStatusCode(), getStatus(createMethod));
 
         final HttpGet getObjMethod = new HttpGet(subjectURI);
-        getObjMethod.addHeader("Accept", "application/rdf+xml");
+        getObjMethod.addHeader(ACCEPT, "application/rdf+xml");
         try (final CloseableDataset dataset = getDataset(getObjMethod)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             final Iterator<Quad> quads =
@@ -696,14 +702,14 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final String subjectURI = getLocation(postObjMethod());
         final HttpGet getObjMethod = new HttpGet(subjectURI);
-        getObjMethod.addHeader("Accept", "text/turtle");
+        getObjMethod.addHeader(ACCEPT, "text/turtle");
 
         final Model model = createDefaultModel();
         try (final CloseableHttpResponse getResponse = execute(getObjMethod)) {
             model.read(getResponse.getEntity().getContent(), subjectURI, "TURTLE");
         }
         final HttpPut replaceMethod = new HttpPut(subjectURI);
-        replaceMethod.addHeader("Content-Type", "application/n-triples");
+        replaceMethod.addHeader(CONTENT_TYPE, "application/n-triples");
         try (final StringWriter w = new StringWriter()) {
             model.write(w, "N-TRIPLE");
             replaceMethod.setEntity(new StringEntity(w.toString()));
@@ -733,7 +739,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final String lastmod = response.getFirstHeader("Last-Modified").getValue();
             assertNotNull("Should set Last-Modified for new nodes", lastmod);
             assertNotEquals("Last-Modified should not be blank for new nodes", lastmod.trim(), "");
-            final Link link = Link.valueOf(response.getFirstHeader("Link").getValue());
+            final Link link = Link.valueOf(response.getFirstHeader(LINK).getValue());
             assertEquals("describedby", link.getRel());
         }
     }
@@ -754,7 +760,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(method)) {
             binaryEtag1 = response.getFirstHeader("ETag").getValue();
             binaryLastModed1 = response.getFirstHeader("Last-Modified").getValue();
-            descLocation = Link.valueOf(response.getFirstHeader("Link").getValue()).getUri().toString();
+            descLocation = Link.valueOf(response.getFirstHeader(LINK).getValue()).getUri().toString();
         }
 
         // First check ETags and Last-Modified headers for the binary
@@ -788,7 +794,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         // Next, update the description
         final HttpPatch httpPatch = patchObjMethod(id + "/binary/fcr:metadata");
         assertTrue("Expected weak ETag", descEtag1.startsWith("W/"));
-        httpPatch.addHeader("Content-Type", "application/sparql-update");
+        httpPatch.addHeader(CONTENT_TYPE, "application/sparql-update");
         httpPatch.addHeader("If-Match", descEtag1.substring(2));
         httpPatch.setEntity(new StringEntity(
                 "INSERT { <> <http://purl.org/dc/elements/1.1/title> 'this is a title' } WHERE {}"));
@@ -898,7 +904,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         // Create the DirectContainer
         final HttpPut createContainer = new HttpPut(serverAddress + members);
-        createContainer.addHeader("Content-Type", "text/turtle");
+        createContainer.addHeader(CONTENT_TYPE, "text/turtle");
         final String membersRDF = "<> a <http://www.w3.org/ns/ldp#DirectContainer>; "
             + "<http://www.w3.org/ns/ldp#hasMemberRelation> <http://pcdm.org/models#hasMember>; "
             + "<http://www.w3.org/ns/ldp#membershipResource> <" + serverAddress + id + "> . ";
@@ -934,7 +940,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         // Create the IndirectContainer
         final HttpPut createContainer = new HttpPut(serverAddress + members);
-        createContainer.addHeader("Content-Type", "text/turtle");
+        createContainer.addHeader(CONTENT_TYPE, "text/turtle");
         final String membersRDF = "<> a <http://www.w3.org/ns/ldp#IndirectContainer>; "
             + "<http://www.w3.org/ns/ldp#hasMemberRelation> <info:fedora/test/hasTitle> ; "
             + "<http://www.w3.org/ns/ldp#insertedContentRelation> <http://www.w3.org/2004/02/skos/core#prefLabel>; "
@@ -944,7 +950,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         // Create a child with the appropriate property
         final HttpPut createChild = new HttpPut(serverAddress + child);
-        createChild.addHeader("Content-Type", "text/turtle");
+        createChild.addHeader(CONTENT_TYPE, "text/turtle");
         final String childRDF = "<> <http://www.w3.org/2004/02/skos/core#prefLabel> \"A title\".";
         createChild.setEntity(new StringEntity(childRDF));
         assertEquals("Child container not created!", CREATED.getStatusCode(), getStatus(createChild));
@@ -976,7 +982,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final HttpPut put = putObjMethod(id);
         put.setEntity(new StringEntity(content));
-        put.setHeader("Content-Type", "application/octet-stream");
+        put.setHeader(CONTENT_TYPE, "application/octet-stream");
         assertEquals(
                 "Expected UNSUPPORTED MEDIA TYPE response when PUTing content to an object (as opposed to datastream)",
                 UNSUPPORTED_MEDIA_TYPE.getStatusCode(), getStatus(put));
@@ -998,7 +1004,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final HttpPut put = putObjMethod(id);
         put.setEntity(new StringEntity(content));
-        put.setHeader("Content-Type", "text/plain");
+        put.setHeader(CONTENT_TYPE, "text/plain");
         assertEquals("Expected BAD REQUEST response code when PUTing malformed RDF on an object",
                 BAD_REQUEST.getStatusCode(), getStatus(put));
     }
@@ -1018,7 +1024,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     @Test
     public void testIngestWithNewAndSparqlQuery() throws IOException {
         final HttpPost method = postObjMethod();
-        method.addHeader("Content-Type", "application/sparql-update");
+        method.addHeader(CONTENT_TYPE, "application/sparql-update");
         method.setEntity(new StringEntity(
                 "INSERT { <> <http://purl.org/dc/elements/1.1/title> \"title\" } WHERE {}"));
         try (final CloseableHttpResponse response = execute(method)) {
@@ -1040,7 +1046,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     @Test
     public void testIngestWithSparqlQueryBadNS() throws IOException {
         final HttpPost method = postObjMethod();
-        method.addHeader("Content-Type", "application/sparql-update");
+        method.addHeader(CONTENT_TYPE, "application/sparql-update");
         method.setEntity(new StringEntity("PREFIX fcr: <http://xmlns.com/my-fcr/> "
                 + "INSERT { <> <http://purl.org/dc/elements/1.1/title> \"this is a title\" } WHERE {}"));
         assertNotEquals("Should not get a CREATED response with bad namspace prefix!",
@@ -1050,7 +1056,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     @Test
     public void testIngestWithNewAndGraph() throws IOException {
         final HttpPost method = postObjMethod();
-        method.addHeader("Content-Type", "application/n3");
+        method.addHeader(CONTENT_TYPE, "application/n3");
         method.setEntity(new StringEntity("<> <http://purl.org/dc/elements/1.1/title> \"title\"."));
 
         try (final CloseableHttpResponse response = execute(method)) {
@@ -1098,7 +1104,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     @Test
     public void testIngestWithBinary() throws IOException {
         final HttpPost method = postObjMethod();
-        method.addHeader("Content-Type", "application/octet-stream");
+        method.addHeader(CONTENT_TYPE, "application/octet-stream");
         method.setEntity(new StringEntity("xyz"));
 
         try (final CloseableHttpResponse response = execute(method)) {
@@ -1109,7 +1115,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final String location = getLocation(response);
             assertNotEquals(serverAddress + "/objects", location);
             assertEquals("Object wasn't created!", OK.getStatusCode(), getStatus(new HttpGet(location)));
-            final Link link = Link.valueOf(response.getFirstHeader("Link").getValue());
+            final Link link = Link.valueOf(response.getFirstHeader(LINK).getValue());
 
             assertEquals("describedby", link.getRel());
             assertTrue("Expected an anchor to the newly created resource", link.getParams().containsKey("anchor"));
@@ -1122,8 +1128,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
     @Test
     public void testIngestOpaqueRdfAsBinary() throws IOException {
         final HttpPost method = postObjMethod();
-        method.addHeader("Content-Type", "application/n-triples");
-        method.addHeader("Content-Disposition", "attachment");
+        method.addHeader(CONTENT_TYPE, "application/n-triples");
+        method.addHeader(CONTENT_DISPOSITION, "attachment");
 
         final String rdf = "<test:/subject> <test:/predicate> <test:/object> .";
         method.setEntity(new StringEntity(rdf));
@@ -1136,7 +1142,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
             try (final CloseableHttpResponse getResponse = execute(get)) {
                 final String resp = IOUtils.toString(getResponse.getEntity().getContent());
-                assertEquals("application/n-triples", getResponse.getFirstHeader("Content-Type").getValue());
+                assertEquals("application/n-triples", getResponse.getFirstHeader(CONTENT_TYPE).getValue());
                 assertEquals(rdf, resp);
             }
         }
@@ -1150,7 +1156,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testIngestWithBinaryAndChecksum() {
         final HttpPost method = postObjMethod();
         final File img = new File("src/test/resources/test-objects/img.png");
-        method.addHeader("Content-Type", "application/octet-stream");
+        method.addHeader(CONTENT_TYPE, "application/octet-stream");
         method.addHeader("Digest", "SHA1=f0b632679fab4f22e031010bd81a3b0544294730");
         method.setEntity(new FileEntity(img));
 
@@ -1166,7 +1172,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testIngestWithBinaryAndChecksumMismatch() {
         final HttpPost method = postObjMethod();
         final File img = new File("src/test/resources/test-objects/img.png");
-        method.addHeader("Content-Type", "application/octet-stream");
+        method.addHeader(CONTENT_TYPE, "application/octet-stream");
         method.addHeader("Digest", "SHA1=fedoraicon");
         method.setEntity(new FileEntity(img));
 
@@ -1180,7 +1186,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testIngestWithBinaryAndMalformedDigestHeader() {
         final HttpPost method = postObjMethod();
         final File img = new File("src/test/resources/test-objects/img.png");
-        method.addHeader("Content-Type", "application/octet-stream");
+        method.addHeader(CONTENT_TYPE, "application/octet-stream");
         method.addHeader("Digest", "md5=not a valid hash,SHA1:thisisbadtoo");
         method.setEntity(new FileEntity(img));
 
@@ -1194,7 +1200,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testIngestWithBinaryAndNonSha1DigestHeader() {
         final HttpPost method = postObjMethod();
         final File img = new File("src/test/resources/test-objects/img.png");
-        method.addHeader("Content-Type", "application/octet-stream");
+        method.addHeader(CONTENT_TYPE, "application/octet-stream");
         method.addHeader("Digest", "md5=anything");
         method.setEntity(new FileEntity(img));
 
@@ -1205,7 +1211,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testIngestWithBinaryAndMD5DigestHeader() {
         final HttpPost method = postObjMethod();
         final File img = new File("src/test/resources/test-objects/img.png");
-        method.addHeader("Content-Type", "application/octet-stream");
+        method.addHeader(CONTENT_TYPE, "application/octet-stream");
         method.addHeader("Digest", "md5=6668675a91f39ca1afe46c084e8406ba");
         method.setEntity(new FileEntity(img));
 
@@ -1216,7 +1222,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testIngestWithBinaryAndTwoValidHeadersDigestHeaders() {
         final HttpPost method = postObjMethod();
         final File img = new File("src/test/resources/test-objects/img.png");
-        method.addHeader("Content-Type", "application/octet-stream");
+        method.addHeader(CONTENT_TYPE, "application/octet-stream");
         method.addHeader("Digest", "md5=6668675a91f39ca1afe46c084e8406ba," +
                 " sha256=7b115a72978fe138287c1a6dfe6cc1afce4720fb3610a81d32e4ad518700c923");
         method.setEntity(new FileEntity(img));
@@ -1228,7 +1234,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testIngestWithBinaryAndValidAndInvalidDigestHeaders() {
         final HttpPost method = postObjMethod();
         final File img = new File("src/test/resources/test-objects/img.png");
-        method.addHeader("Content-Type", "application/octet-stream");
+        method.addHeader(CONTENT_TYPE, "application/octet-stream");
         method.addHeader("Digest", "md5=6668675a91f39ca1afe46c084e8406ba," +
                 " sha99=7b115a72978fe138287c1a6dfe6cc1afce4720fb3610a81d32e4ad518700c923");
         method.setEntity(new FileEntity(img));
@@ -1269,7 +1275,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     @Test
     public void testIngestWithRDFLang() throws IOException {
         final HttpPost method = postObjMethod();
-        method.addHeader("Content-Type", "application/n3");
+        method.addHeader(CONTENT_TYPE, "application/n3");
         method.setEntity(new StringEntity("<> <http://purl.org/dc/elements/1.1/title> \"french title\"@fr ."
                 + "<> <http://purl.org/dc/elements/1.1/title> \"english title\"@en ."));
 
@@ -1318,11 +1324,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         try (final CloseableHttpResponse response = execute(getDSMethod(id, "ds1"))) {
             assertEquals("Wasn't able to retrieve a datastream!", OK.getStatusCode(), getStatus(response));
-            assertEquals(TEXT_PLAIN, response.getFirstHeader("Content-Type").getValue());
-            assertEquals("3", response.getFirstHeader("Content-Length").getValue());
+            assertEquals(TEXT_PLAIN, response.getFirstHeader(CONTENT_TYPE).getValue());
+            assertEquals("3", response.getFirstHeader(CONTENT_LENGTH).getValue());
             assertEquals("bytes", response.getFirstHeader("Accept-Ranges").getValue());
             final ContentDisposition disposition =
-                    new ContentDisposition(response.getFirstHeader("Content-Disposition").getValue());
+                    new ContentDisposition(response.getFirstHeader(CONTENT_DISPOSITION).getValue());
             assertEquals("attachment", disposition.getType());
 
             final Collection<String> links = getLinkHeaders(response);
@@ -1344,7 +1350,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     @Test
     public void testGetObjectGraphHtml() throws IOException {
         final HttpGet getObjMethod = new HttpGet(getLocation(postObjMethod()));
-        getObjMethod.addHeader("Accept", "text/html");
+        getObjMethod.addHeader(ACCEPT, "text/html");
         assertEquals(OK.getStatusCode(), getStatus(getObjMethod));
     }
 
@@ -1354,7 +1360,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         for (final Variant variant : POSSIBLE_RDF_VARIANTS) {
             final HttpGet getObjMethod = new HttpGet(location);
             final String type = variant.getMediaType().getType();
-            getObjMethod.addHeader("Accept", type);
+            getObjMethod.addHeader(ACCEPT, type);
             assertEquals("Got bad response for type " + type + " !", OK.getStatusCode(), getStatus(getObjMethod));
         }
     }
@@ -1395,12 +1401,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     private static void verifyResource(final DatasetGraph g, final Node subject, final String ns, final String type) {
         assertTrue("Should find type: " + ns + type, g.contains(ANY, subject, rdfType, createURI(ns + type)));
     }
-
-    private static void verifyAbsenceOfResource(final DatasetGraph g, final Node subject, final String ns,
-            final String type) {
-        assertFalse("Should not find type: " + ns + type, g.contains(ANY, subject, rdfType, createURI(ns + type)));
-    }
-
 
     @Test
     public void testGetObjectGraphWithChild() throws IOException {
@@ -1492,7 +1492,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
         final HttpPatch patch = patchObjMethod(id);
-        patch.setHeader("Content-Type", "application/sparql-update");
+        patch.setHeader(CONTENT_TYPE, "application/sparql-update");
         final String updateString =
                 "INSERT DATA { <> a <" + DIRECT_CONTAINER.getURI() + "> ; <" + MEMBERSHIP_RESOURCE.getURI() +
                         "> <> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_NAMESPACE + "member> .}";
@@ -1522,7 +1522,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createObjectAndClose(id + "/a");
         createObjectAndClose(id + "/b");
         final HttpPatch updateObjectGraphMethod = patchObjMethod(id + "/a");
-        updateObjectGraphMethod.addHeader("Content-Type", "application/sparql-update");
+        updateObjectGraphMethod.addHeader(CONTENT_TYPE, "application/sparql-update");
         updateObjectGraphMethod.setEntity(new StringEntity("INSERT { <" +
                 resourcea + "> <http://purl.org/dc/terms/isPartOf> <" + resourceb + "> . \n <" +
                 resourcea + "> <info:xyz#some-other-property> <" + resourceb + "> } WHERE {}"));
@@ -1555,7 +1555,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         // create an indirect container
         final HttpPut createContainer = new HttpPut(serverAddress + pid1 + "/members");
-        createContainer.addHeader("Content-Type", "text/turtle");
+        createContainer.addHeader(CONTENT_TYPE, "text/turtle");
         final String membersRDF = "<> a <http://www.w3.org/ns/ldp#IndirectContainer>; "
             + "<http://www.w3.org/ns/ldp#hasMemberRelation> <" + memberRelation + ">; "
             + "<http://www.w3.org/ns/ldp#insertedContentRelation> <http://www.openarchives.org/ore/terms/proxyFor>; "
@@ -1569,7 +1569,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         // retrieve the parent and verify the outbound triples exist
         final HttpGet getParent =  new HttpGet(serverAddress + pid1);
-        getParent.addHeader("Accept", "application/n-triples");
+        getParent.addHeader(ACCEPT, "application/n-triples");
         try (final CloseableDataset dataset = getDataset(getParent)) {
             final DatasetGraph parentGraph = dataset.asDatasetGraph();
             assertTrue(parentGraph.contains(Node.ANY,
@@ -1585,7 +1585,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         // retrieve the members container and verify the LDP triples exist
         final HttpGet getContainer =  new HttpGet(serverAddress + pid1 + "/members");
         getContainer.addHeader("Prefer", "return=representation;include=\"http://www.w3.org/ns/ldp#PreferMembership\"");
-        getContainer.addHeader("Accept", "application/n-triples");
+        getContainer.addHeader(ACCEPT, "application/n-triples");
         try (final CloseableDataset dataset = getDataset(getContainer)) {
             final DatasetGraph containerGraph = dataset.asDatasetGraph();
             assertTrue(containerGraph.contains(Node.ANY,
@@ -1608,7 +1608,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         // retrieve the member and verify inbound triples exist
         final HttpGet getMember =  new HttpGet(serverAddress + pid2);
         getMember.addHeader("Prefer", "return=representation; include=\"" + INBOUND_REFERENCES.toString() + "\"");
-        getMember.addHeader("Accept", "application/n-triples");
+        getMember.addHeader(ACCEPT, "application/n-triples");
         try (final CloseableDataset dataset = getDataset(getMember)) {
             final DatasetGraph memberGraph = dataset.asDatasetGraph();
             assertTrue(memberGraph.contains(Node.ANY,
@@ -1629,7 +1629,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
     private static void createProxy(final String parent, final String child) {
         final HttpPost createProxy = new HttpPost(serverAddress + parent + "/members");
-        createProxy.addHeader("Content-Type", "text/turtle");
+        createProxy.addHeader(CONTENT_TYPE, "text/turtle");
         final String proxyRDF = "<> <http://www.openarchives.org/ore/terms/proxyFor> <" + serverAddress + child + ">;"
             + " <http://www.openarchives.org/ore/terms/proxyIn> <" + serverAddress + parent + "> .";
         createProxy.setEntity(new StringEntity(proxyRDF, UTF_8));
@@ -1639,7 +1639,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     @Test
     public void testLinkToNonExistent() throws IOException {
         final HttpPatch patch = new HttpPatch(getLocation(postObjMethod()));
-        patch.addHeader("Content-Type", "application/sparql-update");
+        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
         patch.setEntity(new StringEntity("INSERT { " +
                 "<> <http://some-vocabulary#isMemberOfCollection> <" + serverAddress + "non-existant> } WHERE {}"));
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(patch));
@@ -1649,7 +1649,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testUpdateAndReplaceObjectGraph() throws IOException {
         final String subjectURI = getLocation(postObjMethod());
         final HttpPatch updateObjectGraphMethod = new HttpPatch(subjectURI);
-        updateObjectGraphMethod.addHeader("Content-Type", "application/sparql-update");
+        updateObjectGraphMethod.addHeader(CONTENT_TYPE, "application/sparql-update");
         updateObjectGraphMethod.setEntity(new StringEntity("INSERT {<" + subjectURI + "> <info:test#label> \"foo\" ; " +
                     " <info:test#number> 42 ; " +
                     " <info:test#date> \"1953?\"^^<http://id.loc.gov/datatypes/edtf/EDTF> }" +
@@ -1697,7 +1697,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             void testUpdateWithSparqlQueryJcrNS() throws IOException {
         final String subjectURI = getLocation(postObjMethod());
         final HttpPatch updateObjectGraphMethod = new HttpPatch(subjectURI);
-        updateObjectGraphMethod.addHeader("Content-Type", "application/sparql-update");
+        updateObjectGraphMethod.addHeader(CONTENT_TYPE, "application/sparql-update");
         updateObjectGraphMethod.setEntity(new StringEntity("PREFIX fcr: <http://xmlns.com/my-fcr/> "
                 + "INSERT { <" + subjectURI + "> <info:test#label> \"asdfg\" } WHERE {}"));
         assertNotEquals("Got updated response with jcr namspace prefix!\n",
@@ -1711,19 +1711,19 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 .rel(CONSTRAINED_BY.getURI()).build();
 
         final HttpPatch patchObjMethod = new HttpPatch(subjectURI);
-        patchObjMethod.addHeader("Content-Type", "application/sparql-update");
+        patchObjMethod.addHeader(CONTENT_TYPE, "application/sparql-update");
         patchObjMethod.setEntity(new StringEntity("INSERT { <" +
                 subjectURI + "> <" + REPOSITORY_NAMESPACE + "uuid> \"value-doesn't-matter\" } WHERE {}\n"));
         try (final CloseableHttpResponse response = execute(patchObjMethod)) {
             assertEquals(CONFLICT.getStatusCode(), getStatus(response));
-            assertEquals(ex.toString(), response.getFirstHeader("Link").getValue().toString());
+            assertEquals(ex.toString(), response.getFirstHeader(LINK).getValue().toString());
         }
     }
 
     @Test
     public void testPutResourceBadRdf() throws IOException {
         final HttpPut httpPut = new HttpPut(serverAddress + getRandomUniqueId());
-        httpPut.setHeader("Content-Type", "text/turtle");
+        httpPut.setHeader(CONTENT_TYPE, "text/turtle");
         httpPut.setEntity(new StringEntity("<> a \"still image\"."));
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(httpPut));
     }
@@ -1734,7 +1734,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals(CREATED.getStatusCode(), getStatus(new HttpPut(serverAddress + id)));
 
         final HttpPut secondPut = new HttpPut(serverAddress + id);
-        secondPut.setHeader("Content-Type", "text/turtle");
+        secondPut.setHeader(CONTENT_TYPE, "text/turtle");
         assertEquals(CONFLICT.getStatusCode(), getStatus(secondPut));
     }
 
@@ -1766,7 +1766,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createDatastream(id, "ds1", "some-content");
 
         final HttpGet getObjMethod = new HttpGet(subjectURI + "/" + FCR_METADATA);
-        getObjMethod.addHeader("Accept", "text/turtle");
+        getObjMethod.addHeader(ACCEPT, "text/turtle");
         final Model model = createDefaultModel();
         try (final CloseableHttpResponse getResponse = execute(getObjMethod)) {
             final String graph = EntityUtils.toString(getResponse.getEntity());
@@ -1783,7 +1783,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             replaceMethod.setEntity(new StringEntity(updatedMetadata));
             logger.trace("Transmitting object graph for testRoundTripReplaceGraphForDatastream():\n {}", w);
         }
-        replaceMethod.addHeader("Content-Type", "application/n-triples");
+        replaceMethod.addHeader(CONTENT_TYPE, "application/n-triples");
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(replaceMethod));
     }
 
@@ -1793,7 +1793,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createObjectAndClose(id);
         for (final String type : POSSIBLE_RDF_RESPONSE_VARIANTS_STRING) {
             final HttpGet method = new HttpGet(serverAddress + id);
-            method.addHeader("Accept", type);
+            method.addHeader(ACCEPT, type);
             assertEquals(type, getContentType(method));
         }
     }
@@ -1838,7 +1838,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     private static void validateHTML(final String path) throws IOException, SAXException {
         final HttpGet getMethod = getObjMethod(path);
-        getMethod.addHeader("Accept", "text/html");
+        getMethod.addHeader(ACCEPT, "text/html");
         try (final CloseableHttpResponse response = execute(getMethod)) {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final String content = EntityUtils.toString(response.getEntity());
@@ -1883,7 +1883,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 "INSERT DATA { <" + serverAddress + linkedFrom + "> " +
                         "<http://some-vocabulary#isMemberOfCollection> <" + serverAddress + linkedTo + "> . }";
         final HttpPatch patch = patchObjMethod(linkedFrom);
-        patch.addHeader("Content-Type", "application/sparql-update");
+        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
         patch.setEntity(new ByteArrayEntity(sparql.getBytes()));
         assertEquals("Couldn't link resources!", NO_CONTENT.getStatusCode(), getStatus(patch));
         assertEquals("Error deleting linked-to!", NO_CONTENT.getStatusCode(), getStatus(deleteObjMethod(linkedTo)));
@@ -1896,7 +1896,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse createResponse = createObject(id)) {
             final String subjectURI = getLocation(createResponse);
             final HttpPatch updateObjectGraphMethod = new HttpPatch(subjectURI);
-            updateObjectGraphMethod.addHeader("Content-Type", "application/sparql-update");
+            updateObjectGraphMethod.addHeader(CONTENT_TYPE, "application/sparql-update");
             updateObjectGraphMethod.setEntity(new StringEntity(
                     "INSERT { <> <http://purl.org/dc/elements/1.1/title> \"test\" } WHERE {}"));
             assertEquals(NO_CONTENT.getStatusCode(), getStatus(updateObjectGraphMethod));
@@ -1942,13 +1942,13 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 + "<> <" + HAS_MEMBER_RELATION + "> <info:some/relation> .\n"
                 + " }";
         patch.setEntity(new StringEntity(sparql));
-        patch.addHeader("Content-Type", "application/sparql-update");
+        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
         assertEquals("Expected patch to succeed", NO_CONTENT.getStatusCode(), getStatus(patch));
 
         createObjectAndClose(id + "/b");
         addMixin(id + "/b", DIRECT_CONTAINER.getURI());
         final HttpPatch bPatch = patchObjMethod(id + "/b");
-        bPatch.addHeader("Content-Type", "application/sparql-update");
+        bPatch.addHeader(CONTENT_TYPE, "application/sparql-update");
         final String bSparql = "INSERT DATA { "
                 + "<> <" + MEMBERSHIP_RESOURCE + "> <" + location + "> .\n"
                 + "<> <" + HAS_MEMBER_RELATION + "> <info:some/another-relation> .\n"
@@ -1997,7 +1997,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         // Add LDP properties to indirect container
         final HttpPatch patch = patchObjMethod(indirectContainerId);
-        patch.addHeader("Content-Type", "application/sparql-update");
+        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
         final String sparql = "INSERT DATA { "
                 + "<> <" + MEMBERSHIP_RESOURCE + "> <" + container + "> .\n"
                 + "<> <" + HAS_MEMBER_RELATION + "> <info:some/relation> .\n"
@@ -2012,7 +2012,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 "<> <info:proxy/in>  <" + container + "> ;\n" +
                         "   <info:proxy/for> <" + resource + "> .";
         postIndirectResource.setEntity(new StringEntity(irRdf));
-        postIndirectResource.setHeader("Content-Type", "text/turtle");
+        postIndirectResource.setHeader(CONTENT_TYPE, "text/turtle");
 
         final String indirectResource;
         try (final CloseableHttpResponse postResponse = execute(postIndirectResource)) {
@@ -2045,7 +2045,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     @Test
     public void testWithHashUris() throws IOException {
         final HttpPost method = postObjMethod();
-        method.addHeader("Content-Type", "text/turtle");
+        method.addHeader(CONTENT_TYPE, "text/turtle");
         method.setEntity(new StringEntity("<> <info:some-predicate> <#abc> .\n"
                 + "<#abc> <info:test#label> \"asdfg\" ."));
         try (final CloseableHttpResponse response = execute(method)) {
@@ -2070,7 +2070,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         LOGGER.trace("Entering testCreateAndReplaceGraphMinimal()...");
         final HttpPost httpPost = postObjMethod("/");
         httpPost.addHeader("Slug", getRandomUniqueId());
-        httpPost.addHeader("Content-Type", "text/turtle");
+        httpPost.addHeader(CONTENT_TYPE, "text/turtle");
         httpPost.setEntity(new StringEntity("<> <" + DCTITLE.getURI() + "> \"abc\""));
         final String subjectURI;
         try (final CloseableHttpResponse response = execute(httpPost)) {
@@ -2078,7 +2078,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             subjectURI = getLocation(response);
         }
         final HttpPut replaceMethod = new HttpPut(subjectURI);
-        replaceMethod.addHeader("Content-Type", "text/turtle");
+        replaceMethod.addHeader(CONTENT_TYPE, "text/turtle");
         replaceMethod.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
         replaceMethod.setEntity(new StringEntity("<> <" + DCTITLE.getURI() + "> \"xyz\""));
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(replaceMethod));
@@ -2098,7 +2098,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             void testGraphShouldNotBeTooLumpy() throws IOException {
 
         final HttpPut httpPut = putObjMethod(getRandomUniqueId());
-        httpPut.addHeader("Content-Type", "text/turtle");
+        httpPut.addHeader(CONTENT_TYPE, "text/turtle");
         httpPut.setEntity(new StringEntity("<> a <" + DIRECT_CONTAINER.getURI() + ">;" +
                 "    <" + MEMBERSHIP_RESOURCE.getURI() + "> <> ;" +
                 "    <" + HAS_MEMBER_RELATION.getURI() + "> <" + LDP_NAMESPACE + "member> ;" +
@@ -2125,7 +2125,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals(CREATED.getStatusCode(), getStatus(putDSMethod(id, binaryId, "some test content")));
 
         final HttpPatch httpPatch = patchObjMethod(id + "/" + binaryId + "/fcr:metadata");
-        httpPatch.addHeader("Content-Type", "application/sparql-update");
+        httpPatch.addHeader(CONTENT_TYPE, "application/sparql-update");
         httpPatch.setEntity(new StringEntity(
                 "INSERT { <> <http://purl.org/dc/elements/1.1/title> 'this is a title' } WHERE {}"));
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(httpPatch));
@@ -2149,7 +2149,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
             final String id = getRandomUniqueId();
             final HttpPut httpPut = putObjMethod(id);
-            httpPut.addHeader("Content-Type", "message/external-body; access-type=URL; " +
+            httpPut.addHeader(CONTENT_TYPE, "message/external-body; access-type=URL; " +
                     "URL=\"http://www.example.com/file\"");
 
             try (final CloseableHttpResponse response = execute(httpPut)) {
@@ -2167,7 +2167,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testJsonLdProfile() throws IOException {
         // Create a resource
         final HttpPost method = postObjMethod();
-        method.addHeader("Content-Type", "application/n3");
+        method.addHeader(CONTENT_TYPE, "application/n3");
         final BasicHttpEntity entity = new BasicHttpEntity();
         final String rdf = "<> <http://purl.org/dc/elements/1.1/title> \"ceci n'est pas un titre français\"@fr ." +
                 "<> <http://purl.org/dc/elements/1.1/title> \"this is an english title\"@en .";
@@ -2181,7 +2181,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
         // GET the resource with a JSON profile
         final HttpGet httpGet = new HttpGet(location);
-        httpGet.setHeader("Accept", "application/ld+json; profile=\"http://www.w3.org/ns/json-ld#flattened\"");
+        httpGet.setHeader(ACCEPT, "application/ld+json; profile=\"http://www.w3.org/ns/json-ld#flattened\"");
         final JsonNode json;
         try (final CloseableHttpResponse responseGET = execute(httpGet)) {
             // Inspect the response
@@ -2219,7 +2219,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String location = serverAddress + pid;
         final String otherLocation = serverAddress + otherPid;
         final HttpPatch updateObjectGraphMethod = new HttpPatch(location);
-        updateObjectGraphMethod.addHeader("Content-Type", "application/sparql-update");
+        updateObjectGraphMethod.addHeader(CONTENT_TYPE, "application/sparql-update");
         updateObjectGraphMethod.setEntity(new StringEntity("INSERT { <" + location +
                 "> <http://purl.org/dc/elements/1.1/identifier> \"this is an identifier\". " + "<" + otherLocation +
                 "> <http://purl.org/dc/elements/1.1/identifier> \"this is an identifier\"" + " } WHERE {}"));
@@ -2262,7 +2262,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     @Test
     public void testPutEmptyBody() throws IOException {
         final HttpPut httpPut = putObjMethod(getRandomUniqueId());
-        httpPut.addHeader("Content-Type", "application/ld+json");
+        httpPut.addHeader(CONTENT_TYPE, "application/ld+json");
 
         try (final CloseableHttpResponse response = execute(httpPut)) {
             assertEquals("Should be a client error", BAD_REQUEST.getStatusCode(), getStatus(response));
@@ -2278,7 +2278,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     @Test
     public void testPutReferenceRoot() throws Exception {
         final HttpPut httpPut = putObjMethod(getRandomUniqueId());
-        httpPut.addHeader("Content-Type", "text/turtle");
+        httpPut.addHeader(CONTENT_TYPE, "text/turtle");
         httpPut.setEntity(new StringEntity("@prefix acl: <http://www.w3.org/ns/auth/acl#> . " +
                 "<> a acl:Authorization ; " +
                 "acl:agent \"smith123\" ; " +
@@ -2308,13 +2308,13 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         LOGGER.info("BINARY LITERAL TEST");
 
-        patch.addHeader("Content-Type", "application/sparql-update");
+        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
         patch.setEntity(new StringEntity(
                 "INSERT { <> <" + DC_TITLE + "> \"\"\"" + longLiteral + "\"\"\" } WHERE {}"));
 
         assertEquals("Unable to add property value", NO_CONTENT.getStatusCode(), getStatus(patch));
 
-        delPatch.addHeader("Content-Type", "application/sparql-update");
+        delPatch.addHeader(CONTENT_TYPE, "application/sparql-update");
         delPatch.setEntity(new StringEntity(
                 "DELETE WHERE { <> <" + DC_TITLE + "> \"\"\"" + longLiteral + "\"\"\"}"));
 
@@ -2345,7 +2345,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createObject(id2).close();
 
         final HttpPatch patch = patchObjMethod(id2);
-        patch.addHeader("Content-Type", "application/sparql-update");
+        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
         patch.setEntity(new StringEntity(
                 "INSERT { <> <http://purl.org/dc/elements/1.1/relation> <" + serverAddress + id1 + "> } WHERE {}"));
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(execute(patch)));
@@ -2386,15 +2386,15 @@ public class FedoraLdpIT extends AbstractResourceIT {
             createMethod.addHeader("Prefer", "return=" + prefer);
         }
         if (accept != null) {
-            createMethod.addHeader("Accept", accept);
+            createMethod.addHeader(ACCEPT, accept);
         }
 
         try (final CloseableHttpResponse createResponse = execute(createMethod)) {
             assertEquals(expectedStatus.getStatusCode(), createResponse.getStatusLine().getStatusCode());
             if (expectedType == null) {
-                assertNull(createResponse.getFirstHeader("Content-Type"));
+                assertNull(createResponse.getFirstHeader(CONTENT_TYPE));
             } else {
-                assertTrue(createResponse.getFirstHeader("Content-Type").getValue().startsWith(expectedType));
+                assertTrue(createResponse.getFirstHeader(CONTENT_TYPE).getValue().startsWith(expectedType));
             }
         } catch (final IOException e) {
             throw new AssertionError(e);
@@ -2493,7 +2493,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String path = getRandomUniqueId();
 
         final HttpPut method = new HttpPut(serverAddress + path);
-        method.setHeader("Content-Type", "text/plain");
+        method.setHeader(CONTENT_TYPE, "text/plain");
         method.setEntity(new StringEntity("initial value"));
 
         final String binaryEtag;
@@ -2502,7 +2502,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
             binaryEtag = response.getFirstHeader("ETag").getValue();
         }
 
-        final HttpResponse r1;
         final PutThread[] threads = new PutThread[] {
                 new PutThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 1")),
                 new PutThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 2")),
@@ -2550,7 +2549,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     private HttpPut putBinaryObjMethodIfMatch(final String location, final String etag, final String content) {
          final HttpPut put = putObjMethod(location);
-         put.setHeader("Content-Type", "text/plain");
+         put.setHeader(CONTENT_TYPE, "text/plain");
          put.setHeader("If-Match", etag);
          try {
             put.setEntity(new StringEntity(content));
@@ -2613,7 +2612,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     private int patchWithSparql(final String path, final String sparqlUpdate) {
         try {
             final HttpPatch patch = new HttpPatch(serverAddress + path);
-            patch.addHeader("Content-Type", "application/sparql-update");
+            patch.addHeader(CONTENT_TYPE, "application/sparql-update");
             patch.setEntity(new StringEntity(sparqlUpdate));
             final CloseableHttpResponse r = client.execute(patch);
             final int code = r.getStatusLine().getStatusCode();
@@ -2644,7 +2643,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
 
         final HttpPatch patchBinary = new HttpPatch(binURI + "/fcr:metadata");
-        patchBinary.addHeader("Content-Type", "application/sparql-update");
+        patchBinary.addHeader(CONTENT_TYPE, "application/sparql-update");
         patchBinary.setEntity(new StringEntity("INSERT { <" + binURI + "> " +
                 "<http://www.w3.org/TR/rdf-schema/label> \"this is a label\" } WHERE {}"));
         final long lastmod2;
@@ -2685,7 +2684,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         // update the object properties (last-modified should be updated)
         final HttpPatch patchObject = new HttpPatch(objURI);
-        patchObject.addHeader("Content-Type", "application/sparql-update");
+        patchObject.addHeader(CONTENT_TYPE, "application/sparql-update");
         patchObject.setEntity(new StringEntity("INSERT { <> " +
                 "<http://www.w3.org/TR/rdf-schema/label> \"this is a label\" } WHERE {}"));
         final long lastmod2;
@@ -2700,7 +2699,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         // create a direct container (last-modified should be updated)
         final long lastmod3;
         final HttpPut createContainer = new HttpPut(objURI + "/members");
-        createContainer.addHeader("Content-Type", "text/turtle");
+        createContainer.addHeader(CONTENT_TYPE, "text/turtle");
         final String membersRDF = "<> a <http://www.w3.org/ns/ldp#DirectContainer>; "
             + "<http://www.w3.org/ns/ldp#hasMemberRelation> <http://pcdm.org/models#hasMember>; "
             + "<http://www.w3.org/ns/ldp#membershipResource> <" + objURI + "> . ";

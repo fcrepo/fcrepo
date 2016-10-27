@@ -27,6 +27,7 @@ import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 
+import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.Response.Status.GONE;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -58,7 +59,7 @@ public class TombstoneExceptionMapperTest {
     public void testExceptionWithUri() {
         final Response response = testObj.toResponse(new TombstoneException(mockTombstone, "some:uri"));
         assertEquals(GONE.getStatusCode(), response.getStatus());
-        final Link link = Link.valueOf(response.getHeaderString("Link"));
+        final Link link = Link.valueOf(response.getHeaderString(LINK));
         assertEquals("some:uri", link.getUri().toString());
         assertEquals("hasTombstone", link.getRel());
     }

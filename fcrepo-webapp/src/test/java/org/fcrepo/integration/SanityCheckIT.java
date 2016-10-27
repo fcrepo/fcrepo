@@ -43,6 +43,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.Link;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.HttpHeaders.LINK;
+
 
 /**
  * <p>SanityCheckIT class.</p>
@@ -116,7 +119,7 @@ public class SanityCheckIT {
         // PUT the exact body back to the new resource... successfully
         final HttpPut put = new HttpPut(location);
         put.setEntity(new StringEntity(body));
-        put.setHeader("Content-Type", "text/turtle");
+        put.setHeader(CONTENT_TYPE, "text/turtle");
         executeAndVerify(put, SC_NO_CONTENT);
 
         // Update a server managed property in the resource body... not allowed!
@@ -125,11 +128,11 @@ public class SanityCheckIT {
         // PUT the erroneous body back to the new resource... unsuccessfully
         final HttpPut put2 = new HttpPut(location);
         put2.setEntity(new StringEntity(body2));
-        put2.setHeader("Content-Type", "text/turtle");
+        put2.setHeader(CONTENT_TYPE, "text/turtle");
         final HttpResponse put2Response = executeAndVerify(put2, SC_CONFLICT);
 
         // Verify the returned LINK header
-        final String linkHeader = put2Response.getFirstHeader("Link").getValue();
+        final String linkHeader = put2Response.getFirstHeader(LINK).getValue();
         final Link link = Link.valueOf(linkHeader);
         logger.debug("constraint linkHeader: {}", linkHeader);
 

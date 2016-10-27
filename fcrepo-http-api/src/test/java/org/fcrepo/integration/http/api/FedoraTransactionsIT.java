@@ -25,6 +25,8 @@ import static java.lang.Thread.sleep;
 import static java.util.Arrays.stream;
 import static java.util.UUID.randomUUID;
 import static java.util.regex.Pattern.compile;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.GONE;
@@ -89,7 +91,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 
         try (CloseableHttpResponse resp = execute(new HttpGet(location))) {
             assertEquals(OK.getStatusCode(), getStatus(resp));
-            assertTrue(stream(resp.getHeaders("Link")).anyMatch(
+            assertTrue(stream(resp.getHeaders(LINK)).anyMatch(
                     i -> i.getValue().contains("<" + serverAddress + ">;rel=\"canonical\"")));
             consume(resp.getEntity());
         }
@@ -223,7 +225,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 
         /* update sparql */
         final HttpPatch method = new HttpPatch(newObjectLocation);
-        method.addHeader("Content-Type", "application/sparql-update");
+        method.addHeader(CONTENT_TYPE, "application/sparql-update");
         final String newTitle = "this is a new title";
         method.setEntity(new StringEntity("INSERT { <> <http://purl.org/dc/elements/1.1/title> \"" + newTitle +
                 "\" } WHERE {}"));
