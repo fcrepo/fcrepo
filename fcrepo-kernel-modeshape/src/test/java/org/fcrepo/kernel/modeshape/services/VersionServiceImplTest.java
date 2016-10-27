@@ -184,7 +184,11 @@ public class VersionServiceImplTest {
         testCreateWithValidLabel("version v1234");
     }
 
-
+    /**
+     * This test designed to be pass so long as no exception is thrown.
+     * @param label
+     * @throws RepositoryException
+     */
     private void testCreateWithValidLabel(final String label) throws RepositoryException {
         final VersionManager mockVersionManager = mock(VersionManager.class);
         final VersionHistory mockHistory = mock(VersionHistory.class);
