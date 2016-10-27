@@ -86,11 +86,11 @@ public class PropertiesRdfContextTest {
 
     private static final String RDF_PROPERTY_NAME = "rdf-property-name";
 
-    private static final String RDF_PROPERTY_VALUE = "fedoraconfig:rdf-value";
+    private static final String RDF_PROPERTY_VALUE = "config:rdf-value";
 
     private static final String BINARY_PROPERTY_NAME = "binary-property-name";
 
-    private static final String BINARY_PROPERTY_VALUE = "fedoraconfig:binary-value";
+    private static final String BINARY_PROPERTY_VALUE = "config:binary-value";
 
     private static final String RDF_PATH = "/resource/path";
 
