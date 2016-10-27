@@ -22,6 +22,10 @@ import static java.util.EnumSet.of;
 import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.empty;
 import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
@@ -392,7 +396,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         if (resource instanceof NonRdfSourceDescription) {
             final URI uri = getUri(resource.getDescribedResource());
             final Link link = Link.fromUri(uri).rel("describes").build();
-            servletResponse.addHeader("Link", link.toString());
+            servletResponse.addHeader(LINK, link.toString());
         } else if (resource instanceof FedoraBinary) {
             final URI uri = getUri(resource.getDescription());
             final Link.Builder builder = Link.fromUri(uri).rel("describedby");
@@ -400,7 +404,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             if (includeAnchor) {
                 builder.param("anchor", getUri(resource).toString());
             }
-            servletResponse.addHeader("Link", builder.build().toString());
+            servletResponse.addHeader(LINK, builder.build().toString());
         }
     }
 
@@ -419,29 +423,29 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                     .size(binary.getContentSize())
                     .build();
 
-            servletResponse.addHeader("Content-Type", binary.getMimeType());
-            servletResponse.addHeader("Content-Length", String.valueOf(binary.getContentSize()));
+            servletResponse.addHeader(CONTENT_TYPE, binary.getMimeType());
+            servletResponse.addHeader(CONTENT_LENGTH, String.valueOf(binary.getContentSize()));
             servletResponse.addHeader("Accept-Ranges", "bytes");
-            servletResponse.addHeader("Content-Disposition", contentDisposition.toString());
+            servletResponse.addHeader(CONTENT_DISPOSITION, contentDisposition.toString());
         }
 
-        servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "Resource>;rel=\"type\"");
+        servletResponse.addHeader(LINK, "<" + LDP_NAMESPACE + "Resource>;rel=\"type\"");
 
         if (resource instanceof FedoraBinary) {
-            servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "NonRDFSource>;rel=\"type\"");
+            servletResponse.addHeader(LINK, "<" + LDP_NAMESPACE + "NonRDFSource>;rel=\"type\"");
         } else if (resource instanceof Container) {
-            servletResponse.addHeader("Link", "<" + CONTAINER.getURI() + ">;rel=\"type\"");
+            servletResponse.addHeader(LINK, "<" + CONTAINER.getURI() + ">;rel=\"type\"");
             if (resource.hasType(LDP_BASIC_CONTAINER)) {
-                servletResponse.addHeader("Link", "<" + BASIC_CONTAINER.getURI() + ">;rel=\"type\"");
+                servletResponse.addHeader(LINK, "<" + BASIC_CONTAINER.getURI() + ">;rel=\"type\"");
             } else if (resource.hasType(LDP_DIRECT_CONTAINER)) {
-                servletResponse.addHeader("Link", "<" + DIRECT_CONTAINER.getURI() + ">;rel=\"type\"");
+                servletResponse.addHeader(LINK, "<" + DIRECT_CONTAINER.getURI() + ">;rel=\"type\"");
             } else if (resource.hasType(LDP_INDIRECT_CONTAINER)) {
-                servletResponse.addHeader("Link", "<" + INDIRECT_CONTAINER.getURI() + ">;rel=\"type\"");
+                servletResponse.addHeader(LINK, "<" + INDIRECT_CONTAINER.getURI() + ">;rel=\"type\"");
             } else {
-                servletResponse.addHeader("Link", "<" + BASIC_CONTAINER.getURI() + ">;rel=\"type\"");
+                servletResponse.addHeader(LINK, "<" + BASIC_CONTAINER.getURI() + ">;rel=\"type\"");
             }
         } else {
-            servletResponse.addHeader("Link", "<" + LDP_NAMESPACE + "RDFSource>;rel=\"type\"");
+            servletResponse.addHeader(LINK, "<" + LDP_NAMESPACE + "RDFSource>;rel=\"type\"");
         }
         if (httpHeaderInject != null) {
             httpHeaderInject.addHttpHeaderToResponseStream(servletResponse, uriInfo, resource());
