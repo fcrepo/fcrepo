@@ -55,7 +55,7 @@ public final class RdfLexicon {
     // TODO from UCDetector: Constant "RdfLexicon.FEDORA_CONFIG_NAMESPACE" has 0 references
     // should be referenced again when versioning is back in REST api
     public static final String FEDORA_CONFIG_NAMESPACE = // NO_UCD (unused code)
-            "http://fedora.info/definitions/v4/config#";
+            "info:fedoraconfig/";
 
     /**
      * Linked Data Platform namespace.
@@ -149,11 +149,8 @@ public final class RdfLexicon {
             createProperty(LDP_NAMESPACE + "constrainedBy");
     public static final Property MEMBER_SUBJECT =
             createProperty(LDP_NAMESPACE + "MemberSubject");
-    public static final Property INBOX =
-            createProperty(LDP_NAMESPACE + "inbox");
 
-    public static final Set<Property> ldpProperties = of(CONTAINS, LDP_MEMBER);
-    public static final Set<Resource> ldpResources = of(CONTAINER, DIRECT_CONTAINER);
+    private static final Set<Property> ldpProperties = of(CONTAINS, LDP_MEMBER);
 
     // REPOSITORY INFORMATION
     public static final Property HAS_OBJECT_COUNT =

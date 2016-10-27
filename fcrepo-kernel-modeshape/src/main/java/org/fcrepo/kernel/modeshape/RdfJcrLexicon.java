@@ -22,7 +22,6 @@ import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 
 import java.util.Set;
-import java.util.function.Predicate;
 
 import org.apache.jena.rdf.model.Property;
 
@@ -42,9 +41,6 @@ public final class RdfJcrLexicon {
 
     public static final String JCR_NT_NAMESPACE = "http://www.jcp.org/jcr/nt/1.0";
 
-    public static final Set<String> managedNamespaces = of(
-            JCR_NAMESPACE, MIX_NAMESPACE, JCR_NT_NAMESPACE, MODE_NAMESPACE);
-
     // IMPORTANT JCR PROPERTIES
     public static final Property HAS_PRIMARY_IDENTIFIER =
             createProperty(REPOSITORY_NAMESPACE + "uuid");
@@ -58,9 +54,6 @@ public final class RdfJcrLexicon {
     public static final Set<Property> jcrProperties = of(
             HAS_PRIMARY_IDENTIFIER, HAS_PRIMARY_TYPE, HAS_NODE_TYPE,
             HAS_MIXIN_TYPE);
-
-    private static Predicate<Property> hasJcrNamespace =
-        p -> !p.isAnon() && p.getNameSpace().equals(JCR_NAMESPACE);
 
     private RdfJcrLexicon() {
         // prevent instantiation
