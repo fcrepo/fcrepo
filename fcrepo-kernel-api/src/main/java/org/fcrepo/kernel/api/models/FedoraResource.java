@@ -156,11 +156,11 @@ public interface FedoraResource {
     FedoraResource getBaseVersion();
 
     /**
-     * Get a stream of version labels associated with this resource
+     * Get a stream of version identifiers associated with this resource
      *
-     * @return version labels
+     * @return version identifiers
      */
-    Stream<String> getVersionLabels();
+    Stream<String> getVersionIdentifiers();
 
     /**
      * Check if a resource was created in this session

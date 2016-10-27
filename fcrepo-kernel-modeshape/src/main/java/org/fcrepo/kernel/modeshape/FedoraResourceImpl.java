@@ -910,7 +910,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     }
 
     @Override
-    public Stream<String> getVersionLabels() {
+    public Stream<String> getVersionIdentifiers() {
         try {
             final VersionHistory history = getVersionManager().getVersionHistory(getPath());
             @SuppressWarnings("unchecked")

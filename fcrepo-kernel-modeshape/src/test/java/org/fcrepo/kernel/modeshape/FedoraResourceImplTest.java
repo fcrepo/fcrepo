@@ -288,7 +288,7 @@ public class FedoraResourceImplTest {
         when(mockVersionManager.getVersionHistory(anyString())).thenReturn(
                 mockVersionHistory);
 
-        testObj.getVersionLabels();
+        testObj.getVersionIdentifiers();
 
         verify(mockVersionManager).getVersionHistory(anyString());
     }

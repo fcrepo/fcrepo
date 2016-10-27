@@ -75,7 +75,7 @@ public class VersionsRdfContext extends DefaultRdfStream {
 
     @SuppressWarnings("unchecked")
     private Stream<Triple> versionTriples() {
-        return resource.getVersionLabels()
+        return resource.getVersionIdentifiers()
             .flatMap(label -> {
                 final Node versionSubject
                         = createProperty(topic() + "/" + FCR_VERSIONS + "/" + urlEncode(label)).asNode();
