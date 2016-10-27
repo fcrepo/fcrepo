@@ -36,6 +36,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import org.apache.jena.rdf.model.Resource;
+import org.modeshape.common.text.UrlEncoder;
 
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -60,6 +61,8 @@ public class VersionsRdfContext extends DefaultRdfStream {
     private final VersionHistory versionHistory;
 
     private static final Logger LOGGER = getLogger(VersionsRdfContext.class);
+
+    private static final UrlEncoder URL_ENCODER = new UrlEncoder();
 
     /**
      * Ordinary constructor.
@@ -95,7 +98,7 @@ public class VersionsRdfContext extends DefaultRdfStream {
             .flatMap(UncheckedFunction.uncheck((final Version v) -> {
                 final String[] labels = versionHistory.getVersionLabels(v);
                 final Node versionSubject
-                        = createProperty(topic() + "/" + FCR_VERSIONS + "/" + labels[0]).asNode();
+                        = createProperty(topic() + "/" + FCR_VERSIONS + "/" + urlEncode(labels[0])).asNode();
 
                 return Stream.concat(
                         Arrays.stream(labels).map(x -> create(versionSubject, HAS_VERSION_LABEL.asNode(),
@@ -105,5 +108,9 @@ public class VersionsRdfContext extends DefaultRdfStream {
                             create(versionSubject, CREATED_DATE.asNode(),
                                 createTypedLiteral(v.getCreated()).asNode())));
             }));
+    }
+
+    private String urlEncode(final String string) {
+        return URL_ENCODER.encode(string).replaceAll("[+]", "%20");
     }
 }

@@ -18,6 +18,7 @@
 package org.fcrepo.kernel.modeshape.services;
 
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.VERSIONABLE;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -37,6 +38,7 @@ import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.services.VersionService;
 import org.fcrepo.kernel.modeshape.FedoraSessionImpl;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -169,15 +171,58 @@ public class VersionServiceImplTest {
 
     @Test
     public void testMixinCreationWhenExplicitlyVersioning() throws RepositoryException {
+        testCreateWithValidLabel("LABEL");
+    }
+
+    @Test
+    public void testCreateWithLabelv001() throws RepositoryException {
+        testCreateWithValidLabel("v0.0.1");
+    }
+
+    @Test
+    public void testCreateWithLabelWithSpace() throws RepositoryException {
+        testCreateWithValidLabel("version v1234");
+    }
+
+    /**
+     * This test designed to be pass so long as no exception is thrown.
+     * @param label
+     * @throws RepositoryException
+     */
+    private void testCreateWithValidLabel(final String label) throws RepositoryException {
         final VersionManager mockVersionManager = mock(VersionManager.class);
         final VersionHistory mockHistory = mock(VersionHistory.class);
         when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
         when(mockVersionManager.getVersionHistory(EXAMPLE_UNVERSIONED_PATH)).thenReturn(mockHistory);
-        testObj.createVersion(testSession, EXAMPLE_UNVERSIONED_PATH, "LABEL");
+        testObj.createVersion(testSession, EXAMPLE_UNVERSIONED_PATH, label);
 
         final Node unversionedNode = mockSession.getNode(EXAMPLE_UNVERSIONED_PATH);
         verify(unversionedNode).isNodeType(VERSIONABLE);
         verify(unversionedNode).addMixin(VERSIONABLE);
+    }
+
+    @Test
+    public void testCreateWithInvalidVersionCharacters() throws RepositoryException {
+        final String[] invalidLabels = { "~", "#", "@", "*", "+", "%", "{", "}",
+            "<", ">", "[", "]", "|", "\"", "^", "1234",
+            "label ending in whitespace followed by a number 123","label ending with space "};
+
+        for (String s : invalidLabels) {
+            testInvalidLabel(s);
+        }
+    }
+
+    private void testInvalidLabel(final String label) {
+        try {
+            testObj.createVersion(testSession, EXAMPLE_UNVERSIONED_PATH, label);
+            fail("Expected failure on label \"" + label + "\" did not occur.");
+        } catch (Exception ex) {
+            final Throwable cause = ex.getCause();
+            if (!(cause instanceof VersionException)) {
+                fail("Expected VersionException on label \"" + label + "\": actual exception = " +
+                        cause);
+            }
+        }
     }
 
 }
