@@ -52,11 +52,6 @@ public class RdfStreamProvider implements MessageBodyWriter<RdfNamespacedStream>
 
     private static final Logger LOGGER = getLogger(RdfStreamProvider.class);
 
-    private static boolean isTextHtml(final MediaType mediaType) {
-        return mediaType.getType().equals(TEXT_HTML_TYPE.getType()) &&
-            mediaType.getSubtype().equals(TEXT_HTML_TYPE.getSubtype());
-    }
-
     @Override
     public boolean isWriteable(final Class<?> type, final Type genericType,
             final Annotation[] annotations, final MediaType mediaType) {
