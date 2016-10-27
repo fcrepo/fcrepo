@@ -45,6 +45,7 @@ import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_MIXIN_TYPES;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
+import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.jcrProperties;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.isFrozen;
@@ -760,6 +761,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                         @SuppressWarnings("unchecked")
                         final Iterator<Property> properties = n.getProperties();
                         final boolean hasUserProps = iteratorToStream(properties).map(propertyConverter::convert)
+                            .filter(p -> !jcrProperties.contains(p))
                             .anyMatch(isManagedPredicate.negate());
 
                         final boolean hasUserTypes = Arrays.stream(n.getMixinNodeTypes())

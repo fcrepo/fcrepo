@@ -32,7 +32,7 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.http.util.EntityUtils.consume;
-import static org.fcrepo.kernel.api.RdfLexicon.DC_TITLE;
+import static org.apache.jena.vocabulary.DC.title;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.DEFAULT_TIMEOUT;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.TIMEOUT_SYSTEM_PROPERTY;
 import static org.fcrepo.kernel.modeshape.services.BatchServiceImpl.REAP_INTERVAL;
@@ -224,14 +224,14 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         /* update sparql */
         final HttpPatch method = new HttpPatch(newObjectLocation);
         method.addHeader("Content-Type", "application/sparql-update");
-        final String title = "this is a new title";
-        method.setEntity(new StringEntity("INSERT { <> <http://purl.org/dc/elements/1.1/title> \"" + title +
+        final String newTitle = "this is a new title";
+        method.setEntity(new StringEntity("INSERT { <> <http://purl.org/dc/elements/1.1/title> \"" + newTitle +
                 "\" } WHERE {}"));
         assertEquals("Didn't get a NO CONTENT status!", NO_CONTENT.getStatusCode(), getStatus(method));
         /* make sure the change was made within the tx */
         try (final CloseableDataset dataset = getDataset(new HttpGet(newObjectLocation))) {
             assertTrue("The sparql update did not succeed within a transaction", dataset.asDatasetGraph().contains(ANY,
-                    createURI(newObjectLocation), DC_TITLE.asNode(), createLiteral(title)));
+                    createURI(newObjectLocation), title.asNode(), createLiteral(newTitle)));
         }
         /* commit */
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPost(txLocation + "/fcr:tx/fcr:commit")));
@@ -239,7 +239,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         /* it must exist after commit */
         try (final CloseableDataset dataset = getDataset(new HttpGet(serverAddress + objectInTxCommit))) {
             assertTrue("The inserted triple does not exist after the transaction has committed",
-                    dataset.asDatasetGraph().contains(ANY, ANY, DC_TITLE.asNode(), createLiteral(title)));
+                    dataset.asDatasetGraph().contains(ANY, ANY, title.asNode(), createLiteral(newTitle)));
         }
     }
 

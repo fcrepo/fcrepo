@@ -59,6 +59,7 @@ import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.apache.jena.riot.WebContent.contentTypeTurtle;
 import static org.apache.jena.vocabulary.RDF.type;
+import static org.apache.jena.vocabulary.DC.title;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_VARIANTS;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
@@ -66,25 +67,17 @@ import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
-import static org.fcrepo.kernel.api.RdfLexicon.DC_TITLE;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MIME_TYPE;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_MIXIN_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_ORIGINAL_NAME;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_PRIMARY_IDENTIFIER;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.JCR_NAMESPACE;
-import static org.fcrepo.kernel.api.RdfLexicon.JCR_NT_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_MEMBER;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
-import static org.fcrepo.kernel.api.RdfLexicon.MIX_NAMESPACE;
-import static org.fcrepo.kernel.api.RdfLexicon.MODE_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
@@ -180,7 +173,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     private static final Node rdfType = type.asNode();
 
-    private static final Node DCTITLE = DC_TITLE.asNode();
+    private static final Node DCTITLE = title.asNode();
 
     private static final String INDIRECT_CONTAINER_LINK_HEADER = "<" + INDIRECT_CONTAINER.getURI() + ">;rel=\"type\"";
 
@@ -1349,16 +1342,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testGetRepositoryGraph() throws IOException {
-        try (final CloseableDataset dataset = getDataset(getObjMethod(""))) {
-            final DatasetGraph graph = dataset.asDatasetGraph();
-            logger.trace("Retrieved repository graph:\n" + graph);
-            assertFalse("Should not find the root type", graph.contains(ANY,
-                    ANY, type.asNode(), createURI(MODE_NAMESPACE + "root")));
-        }
-    }
-
-    @Test
     public void testGetObjectGraphHtml() throws IOException {
         final HttpGet getObjMethod = new HttpGet(getLocation(postObjMethod()));
         getObjMethod.addHeader("Accept", "text/html");
@@ -1399,21 +1382,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
         logger.trace("Entering verifyFullSetOfRdfTypes()...");
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
-        addMixin(id, MIX_NAMESPACE + "versionable");
 
         try (final CloseableDataset dataset = getDataset(getObjMethod(id))) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             final Node resource = createURI(serverAddress + id);
             verifyResource(graph, resource, REPOSITORY_NAMESPACE, "Container");
             verifyResource(graph, resource, REPOSITORY_NAMESPACE, "Resource");
-            verifyAbsenceOfResource(graph, resource, MIX_NAMESPACE, "created");
-            verifyAbsenceOfResource(graph, resource, MIX_NAMESPACE, "lastModified");
-            verifyAbsenceOfResource(graph, resource, MIX_NAMESPACE, "referenceable");
-            verifyAbsenceOfResource(graph, resource, MIX_NAMESPACE, "simpleVersionable");
-            verifyAbsenceOfResource(graph, resource, MIX_NAMESPACE, "versionable");
-            verifyAbsenceOfResource(graph, resource, JCR_NT_NAMESPACE, "base");
-            verifyAbsenceOfResource(graph, resource, JCR_NT_NAMESPACE, "folder");
-            verifyAbsenceOfResource(graph, resource, JCR_NT_NAMESPACE, "hierarchyNode");
         }
         logger.trace("Leaving verifyFullSetOfRdfTypes()...");
     }
@@ -1663,59 +1637,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testGetObjectGraphLacksUUID() throws Exception {
-        final String location = getLocation(postObjMethod());
-        final HttpGet getObjMethod = new HttpGet(location);
-        try (final CloseableDataset dataset = getDataset(getObjMethod)) {
-            final Iterator<Quad> iterator =
-                    dataset.asDatasetGraph().find(ANY, createURI(location), HAS_PRIMARY_IDENTIFIER.asNode(), ANY);
-            assertFalse("Graph should not contain a UUID!", iterator.hasNext());
-        }
-    }
-
-    @Test
-    public void testGetObjectGraphLacksPrimaryType() throws Exception {
-        final String location = getLocation(postObjMethod());
-        final HttpGet getObjMethod = new HttpGet(location);
-        try (final CloseableDataset dataset = getDataset(getObjMethod)) {
-            final Iterator<Quad> iterator =
-                    dataset.asDatasetGraph().find(ANY, createURI(location), HAS_PRIMARY_TYPE.asNode(), ANY);
-            assertFalse("Graph should not contain a primaryType!", iterator.hasNext());
-        }
-    }
-
-    @Test
-    public void testGetObjectGraphLacksMixinType() throws Exception {
-        final String location = getLocation(postObjMethod());
-        final HttpGet getObjMethod = new HttpGet(location);
-        try (final CloseableDataset dataset = getDataset(getObjMethod)) {
-            final Iterator<Quad> iterator =
-                    dataset.asDatasetGraph().find(ANY, createURI(location), HAS_MIXIN_TYPE.asNode(), ANY);
-            assertFalse("Graph should not contain a mixinType!", iterator.hasNext());
-        }
-    }
-
-    @Test
-    public void testGetObjectGraphLacksJcrTypes() throws Exception {
-        final String location = getLocation(postObjMethod());
-        final HttpGet getObjMethod = new HttpGet(location);
-        try (final CloseableDataset dataset = getDataset(getObjMethod)) {
-            dataset.asDatasetGraph().find(ANY, createURI(location), type.asNode(), ANY).forEachRemaining(q -> {
-                    final Node o = q.asTriple().getObject();
-                    assertTrue("Type should be a URI", o.isURI());
-                    assertFalse("Graph should not contain an internal JCR type",
-                        o.getURI().startsWith(JCR_NAMESPACE));
-                    assertFalse("Graph should not contain an internal JCR type",
-                        o.getURI().startsWith(MODE_NAMESPACE));
-                    assertFalse("Graph should not contain an internal JCR type",
-                        o.getURI().startsWith(MIX_NAMESPACE));
-                    assertFalse("Graph should not contain an internal JCR type",
-                        o.getURI().startsWith(JCR_NT_NAMESPACE));
-                });
-        }
-    }
-
-    @Test
     public void testLinkToNonExistent() throws IOException {
         final HttpPatch patch = new HttpPatch(getLocation(postObjMethod()));
         patch.addHeader("Content-Type", "application/sparql-update");
@@ -1948,52 +1869,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         @Override
         public void fatalError(final SAXParseException e) {
             fail(e.toString());
-        }
-    }
-
-    /**
-     * I should be able to create two subdirectories of a non-existent parent directory.
-     *
-     * @throws IOException thrown during this function
-     **/
-    @Ignore("Enabled once the FedoraFileSystemConnector becomes readable/writable")
-    // TODO
-            public
-            void testBreakFederation() throws IOException {
-        final String id = getRandomUniqueId();
-        testGetRepositoryGraph();
-        createObjectAndClose("files/a0/" + id + "b0");
-        createObjectAndClose("files/a0/" + id + "b1");
-        testGetRepositoryGraph();
-    }
-
-    /**
-     * I should be able to upload a file to a read/write federated filesystem.
-     *
-     * @throws IOException thrown during this function
-     **/
-    @Ignore("Enabled once the FedoraFileSystemConnector becomes readable/writable")
-    // TODO
-            public
-            void testUploadToProjection() throws IOException {
-        // upload file to federated filesystem using rest api
-        final String id = getRandomUniqueId();
-        final String uploadLocation = serverAddress + "files/" + id + "/ds1";
-        final String uploadContent = "abc123";
-        logger.debug("Uploading to federated filesystem via rest api: " + uploadLocation);
-        // final HttpResponse response = createDatastream("files/" + pid, "ds1", uploadContent);
-        // final String actualLocation = response.getFirstHeader("Location").getValue();
-        // assertEquals("Wrong URI in Location header", uploadLocation, actualLocation);
-
-        // validate content
-        try (final CloseableHttpResponse getResponse = execute(new HttpGet(uploadLocation))) {
-            final String actualContent = EntityUtils.toString(getResponse.getEntity());
-            assertEquals(OK.getStatusCode(), getResponse.getStatusLine().getStatusCode());
-            assertEquals("Content doesn't match", actualContent, uploadContent);
-        }
-        // validate object profile
-        try (final CloseableHttpResponse objResponse = execute(new HttpGet(serverAddress + "files/" + id))) {
-            assertEquals(OK.getStatusCode(), objResponse.getStatusLine().getStatusCode());
         }
     }
 
@@ -2420,7 +2295,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String pid = getRandomUniqueId();
         createObject(pid);
 
-        final Node DC_TITLE = DC_11.title.asNode();
+        final Node DC_TITLE = title.asNode();
         final String location = serverAddress + pid;
         final HttpPatch patch = new HttpPatch(location);
         final HttpPatch delPatch = new HttpPatch(location);

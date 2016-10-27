@@ -20,8 +20,12 @@ package org.fcrepo.http.commons.responses;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.apache.jena.atlas.iterator.Iter.asStream;
 import static org.apache.jena.graph.GraphUtil.listObjects;
-import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.vocabulary.DC.title;
+import static org.apache.jena.vocabulary.RDF.type;
+import static org.apache.jena.vocabulary.RDFS.label;
+import static org.apache.jena.vocabulary.SKOS.prefLabel;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static java.util.Collections.emptyMap;
@@ -30,16 +34,11 @@ import static java.util.stream.Collectors.toMap;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
-import static org.fcrepo.kernel.api.RdfLexicon.DC_TITLE;
-import static org.fcrepo.kernel.api.RdfLexicon.DCTERMS_TITLE;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_LABEL;
-import static org.fcrepo.kernel.api.RdfLexicon.RDFS_LABEL;
-import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.fcrepo.kernel.api.RdfLexicon.SKOS_PREFLABEL;
-import static org.fcrepo.kernel.api.RdfLexicon.WRITABLE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION;
-import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
-import static org.fcrepo.kernel.api.RdfLexicon.DC_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_LABEL;
+import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.WRITABLE;
+import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.text.SimpleDateFormat;
@@ -56,6 +55,7 @@ import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.graph.impl.LiteralLabel;
+import org.apache.jena.vocabulary.DCTerms;
 
 import org.fcrepo.http.commons.api.rdf.TripleOrdering;
 import org.slf4j.Logger;
@@ -81,9 +81,7 @@ public class ViewHelpers {
 
     private static ViewHelpers instance = null;
 
-    private static final List<Property>  TITLE_PROPERTIES = asList(RDFS_LABEL, DC_TITLE, DCTERMS_TITLE, SKOS_PREFLABEL);
-
-    private static final Property DC_FORMAT = createProperty(DC_NAMESPACE + "format");
+    private static final List<Property>  TITLE_PROPERTIES = asList(label, title, DCTerms.title, prefLabel);
 
     private static final String DEFAULT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").format(new Date());
 
@@ -340,7 +338,7 @@ public class ViewHelpers {
                                  final String namespace,
                                  final String resource) {
         LOGGER.trace("Is RDF Resource? s:{}, ns:{}, r:{}, g:{}", subject, namespace, resource, graph);
-        return graph.find(subject, createResource(RDF_NAMESPACE + "type").asNode(),
+        return graph.find(subject, type.asNode(),
                 createResource(namespace + resource).asNode()).hasNext();
     }
 
@@ -415,5 +413,14 @@ public class ViewHelpers {
      */
     public static String parameterize(final String source) {
         return source.toLowerCase().replaceAll("[^a-z0-9\\-_]+", "_");
+    }
+
+    /**
+     * Test if a Predicate is managed
+     * @param property the property
+     * @return whether the property is managed
+     */
+    public static boolean isManagedProperty(final Node property) {
+        return property.isURI() && isManagedPredicate.test(createProperty(property.getURI()));
     }
 }

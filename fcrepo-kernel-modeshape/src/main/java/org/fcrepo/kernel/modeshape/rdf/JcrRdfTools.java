@@ -25,8 +25,9 @@ import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_SKOLEM;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_PAIRTREE;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
-import static org.fcrepo.kernel.api.RdfLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
+import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.jcrProperties;
+import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeToResource;
 import static org.fcrepo.kernel.modeshape.rdf.converters.PropertyConverter.getPropertyNameFromPredicate;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getClosestExistingAncestor;
@@ -265,7 +266,7 @@ public class JcrRdfTools {
 
         final Node node = getJcrNode(resource);
 
-        if (isManagedPredicate.test(predicate)) {
+        if (isManagedPredicate.test(predicate) || jcrProperties.contains(predicate)) {
 
             throw new ServerManagedPropertyException("Could not persist triple containing predicate "
                     + predicate.toString()
@@ -325,7 +326,7 @@ public class JcrRdfTools {
         final Node node = getJcrNode(resource);
         final String propertyName = getPropertyNameFromPredicate(node, predicate, nsPrefixMap);
 
-        if (isManagedPredicate.test(predicate)) {
+        if (isManagedPredicate.test(predicate) || jcrProperties.contains(predicate)) {
 
             throw new ServerManagedPropertyException("Could not remove triple containing predicate "
                     + predicate.toString()

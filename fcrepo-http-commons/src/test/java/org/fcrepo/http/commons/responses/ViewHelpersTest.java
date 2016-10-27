@@ -24,20 +24,18 @@ import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.rdf.model.ResourceFactory.createTypedLiteral;
+import static org.apache.jena.vocabulary.DC.title;
+import static org.apache.jena.vocabulary.RDF.type;
+import static org.apache.jena.vocabulary.RDFS.label;
+import static org.apache.jena.vocabulary.SKOS.prefLabel;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
-import static org.fcrepo.kernel.api.RdfLexicon.DC_TITLE;
-import static org.fcrepo.kernel.api.RdfLexicon.DCTERMS_TITLE;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBES;
-import static org.fcrepo.kernel.api.RdfLexicon.RDFS_LABEL;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.fcrepo.kernel.api.RdfLexicon.SKOS_PREFLABEL;
 import static org.fcrepo.kernel.api.RdfLexicon.WRITABLE;
-import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -61,7 +59,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.DCTerms;
 
 /**
  * <p>ViewHelpersTest class.</p>
@@ -167,29 +165,21 @@ public class ViewHelpersTest {
     @Test
     public void testIsVersionedNode() {
         final Graph mem = createDefaultModel().getGraph();
-        mem.add(new Triple(createURI("a/b/c"), RDF.type.asNode(), createURI(REPOSITORY_NAMESPACE + "Version")));
+        mem.add(new Triple(createURI("a/b/c"), type.asNode(), createURI(REPOSITORY_NAMESPACE + "Version")));
         assertTrue("Node is a versioned node.", testObj.isVersionedNode(mem, createURI("a/b/c")));
-    }
-
-    @Test
-    public void testIsNotVersionedNode() {
-        final Graph mem = createDefaultModel().getGraph();
-        mem.add(new Triple(createURI("a/b/c"), HAS_PRIMARY_TYPE.asNode(), createLiteral("nt:file")));
-        assertFalse("Node is not a versioned node.", testObj.isVersionedNode(mem, createURI("a/b/c")));
     }
 
     @Test
     public void testRdfResource() {
         final String ns = "http://any/namespace#";
-        final String type = "anyType";
+        final String rdfType = "anyType";
         final Graph mem = createDefaultModel().getGraph();
-        mem.add(new Triple(createURI("a/b"),
-                createResource(RDF_NAMESPACE + "type").asNode(),
-                createResource(ns + type).asNode()));
+        mem.add(new Triple(createURI("a/b"), type.asNode(),
+                createResource(ns + rdfType).asNode()));
 
-        assertTrue("Node is a " + type + " node.",
-                testObj.isRdfResource(mem, createURI("a/b"), ns, type));
-        assertFalse("Node is not a " + type + " node.",
+        assertTrue("Node is a " + rdfType + " node.",
+                testObj.isRdfResource(mem, createURI("a/b"), ns, rdfType));
+        assertFalse("Node is not a " + rdfType + " node.",
                 testObj.isRdfResource(mem, createURI("a/b"), ns, "otherType"));
     }
 
@@ -237,10 +227,10 @@ public class ViewHelpersTest {
 
     @Test
     public void shouldExtractTitleFromNode() {
-        shouldExtractTitleFromNode(DC_TITLE);
-        shouldExtractTitleFromNode(DCTERMS_TITLE);
-        shouldExtractTitleFromNode(RDFS_LABEL);
-        shouldExtractTitleFromNode(SKOS_PREFLABEL);
+        shouldExtractTitleFromNode(title);
+        shouldExtractTitleFromNode(DCTerms.title);
+        shouldExtractTitleFromNode(label);
+        shouldExtractTitleFromNode(prefLabel);
     }
 
     private void shouldExtractTitleFromNode( final Property property ) {
@@ -252,7 +242,7 @@ public class ViewHelpersTest {
     @Test
     public void shouldUseTheObjectUriIfATitleIsNotAvailable() {
         final Graph mem = createDefaultModel().getGraph();
-        mem.add(new Triple(createURI("a/b/c"), DC_TITLE.asNode(), createURI("d/e/f")));
+        mem.add(new Triple(createURI("a/b/c"), title.asNode(), createURI("d/e/f")));
 
         assertEquals("a/b/c", testObj.getObjectTitle(mem, createURI("a/b/c")));
 
