@@ -41,6 +41,7 @@ import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static nu.validator.htmlparser.common.DoctypeExpectation.NO_DOCTYPE_ERRORS;
 import static nu.validator.htmlparser.common.XmlViolationPolicy.ALLOW;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
+import static org.apache.http.entity.ContentType.parse;
 import static org.apache.http.impl.client.cache.CacheConfig.DEFAULT;
 import static org.apache.jena.datatypes.TypeMapper.getInstance;
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDinteger;
@@ -110,7 +111,6 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import javax.ws.rs.core.Link;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.Variant;
 
@@ -398,8 +398,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(new HttpGet(serverAddress + id))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final HttpEntity entity = response.getEntity();
-            final String mediaType = MediaType.valueOf(entity.getContentType().getValue()).toString();
-            assertNotNull("Entity is not an RDF serialization!", contentTypeToLang(mediaType));
+            final String contentType = parse(entity.getContentType().getValue()).getMimeType();
+            assertNotNull("Entity is not an RDF serialization!", contentTypeToLang(contentType));
         }
     }
 

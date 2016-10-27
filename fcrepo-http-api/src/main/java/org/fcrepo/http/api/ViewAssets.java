@@ -42,7 +42,7 @@ public class ViewAssets {
      */
     @GET
     @Path("common.css")
-    @Produces({"text/css", "*/*"})
+    @Produces({"text/css; charset=utf-8", "*/*"})
     public Response getViewCss() {
         return ok().entity(this.getClass().getResourceAsStream(StreamingBaseHtmlProvider.commonCssLocation)).build();
     }
@@ -53,7 +53,7 @@ public class ViewAssets {
      */
     @GET
     @Path("common.js")
-    @Produces({"text/javascript", "*/*"})
+    @Produces({"text/javascript; charset=utf-8", "*/*"})
     public Response getViewJs() {
         return ok().entity(this.getClass().getResourceAsStream(StreamingBaseHtmlProvider.commonJsLocation)).build();
     }

@@ -18,6 +18,7 @@
 package org.fcrepo.http.commons.test.util;
 
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.http.entity.ContentType.parse;
 import static java.net.URI.create;
 import static javax.ws.rs.core.UriBuilder.fromUri;
 import static org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM.SHA1;
@@ -51,7 +52,6 @@ import javax.jcr.nodetype.NodeTypeIterator;
 import javax.jcr.nodetype.NodeTypeManager;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryResult;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
@@ -265,8 +265,7 @@ public abstract class TestHelpers {
     }
 
     private static String getRdfSerialization(final HttpEntity entity) {
-        final MediaType mediaType = MediaType.valueOf(entity.getContentType().getValue());
-        final Lang lang = contentTypeToLang(mediaType.toString());
+        final Lang lang = contentTypeToLang(parse(entity.getContentType().getValue()).getMimeType());
         assertNotNull("Entity is not an RDF serialization", lang);
         return lang.getName();
     }
