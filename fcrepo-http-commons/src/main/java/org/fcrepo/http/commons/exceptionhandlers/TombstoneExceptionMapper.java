@@ -25,9 +25,10 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
 import static javax.ws.rs.core.Response.Status.GONE;
-import static org.slf4j.LoggerFactory.getLogger;
 import static javax.ws.rs.core.Response.status;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author cabeer
@@ -50,6 +51,6 @@ public class TombstoneExceptionMapper implements
             response.link(e.getURI(), "hasTombstone");
         }
 
-        return response.build();
+        return response.type(TEXT_PLAIN_TYPE).build();
     }
 }
