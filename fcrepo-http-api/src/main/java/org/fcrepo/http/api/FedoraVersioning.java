@@ -32,7 +32,6 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
-import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeToResource;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
@@ -138,8 +137,7 @@ public class FedoraVersioning extends FedoraBaseResource {
             LOGGER.info("Request to add version '{}' for '{}'", slug, externalPath);
             final String path = toPath(translator(), externalPath);
             versionService.createVersion(session.getFedoraSession(), path, slug);
-            return created(URI.create(nodeToResource(translator()).convert(
-                            resource().getBaseVersion().getFrozenNode()).getURI())).build();
+            return created(URI.create(translator().reverse().convert(resource().getBaseVersion()).getURI())).build();
         }
         return status(BAD_REQUEST).entity("Specify label for version").build();
     }

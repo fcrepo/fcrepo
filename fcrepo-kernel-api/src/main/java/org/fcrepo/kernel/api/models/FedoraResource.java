@@ -24,16 +24,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import javax.jcr.version.Version;
-import javax.jcr.version.VersionHistory;
-
 import org.apache.jena.rdf.model.Resource;
 
+import org.fcrepo.kernel.api.FedoraVersion;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.api.TripleCategory;
-import org.fcrepo.kernel.api.RdfStream;
 
 import org.apache.jena.rdf.model.Model;
 
@@ -44,7 +42,7 @@ import org.apache.jena.rdf.model.Model;
 public interface FedoraResource {
 
     /**
-     * Get the path to the JCR node
+     * Get the path to the resource
      * @return path
      */
     String getPath();
@@ -121,11 +119,7 @@ public interface FedoraResource {
 
     /**
      * Update the provided properties with a SPARQL Update query. The updated
-     * properties may be serialized to the JCR store.
-     *
-     * After applying the statement, clients SHOULD check the result
-     * of #getDatasetProblems, which may include problems when attempting to
-     * serialize the data to JCR.
+     * properties may be serialized to the persistence layer.
      *
      * @param idTranslator the property of idTranslator
      * @param sparqlUpdateStatement sparql update statement
@@ -156,18 +150,18 @@ public interface FedoraResource {
                          final Set<? extends TripleCategory> contexts);
 
     /**
-     * Get the JCR Base version for the node
+     * Get the base version for the node
      *
      * @return base version
      */
-    public Version getBaseVersion();
+    FedoraResource getBaseVersion();
 
     /**
-     * Get JCR VersionHistory for the node.
+     * Get a stream of versions associated with this resource
      *
-     * @return version history
+     * @return the versions associated with this resource
      */
-    public VersionHistory getVersionHistory();
+    Stream<FedoraVersion> getVersions();
 
     /**
      * Check if a resource was created in this session
@@ -189,10 +183,7 @@ public interface FedoraResource {
                                 final RdfStream originalTriples) throws MalformedRdfException;
 
     /**
-         * Construct an ETag value from the last modified date and path. JCR has a
-     * mix:etag type, but it only takes into account binary properties. We
-     * actually want whole-object etag data. TODO : construct and store an ETag
-     * value on object modify
+     * Construct an ETag value for the resource.
      *
      * @return constructed etag value
      */

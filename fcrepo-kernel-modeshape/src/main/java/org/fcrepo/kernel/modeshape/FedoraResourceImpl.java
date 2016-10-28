@@ -100,6 +100,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.graph.Triple;
 
 import org.fcrepo.kernel.api.FedoraTypes;
+import org.fcrepo.kernel.api.FedoraVersion;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.ConstraintViolationException;
@@ -663,22 +664,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
      * @see org.fcrepo.kernel.api.models.FedoraResource#getBaseVersion()
      */
     @Override
-    public Version getBaseVersion() {
+    public FedoraResource getBaseVersion() {
         try {
-            return getVersionManager().getBaseVersion(getPath());
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-    }
-
-    /*
-     * (non-Javadoc)
-     * @see org.fcrepo.kernel.api.models.FedoraResource#getVersionHistory()
-     */
-    @Override
-    public VersionHistory getVersionHistory() {
-        try {
-            return getVersionManager().getVersionHistory(getPath());
+            return new FedoraResourceImpl(getVersionManager().getBaseVersion(getPath()).getFrozenNode());
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -925,17 +913,46 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     }
 
     @Override
+    public Stream<FedoraVersion> getVersions() {
+        try {
+            final VersionHistory history = getVersionManager().getVersionHistory(getPath());
+            @SuppressWarnings("unchecked")
+            final Iterator<Version> versions = history.getAllVersions();
+            return iteratorToStream(versions)
+                /* discard jcr:rootVersion */
+                .filter(UncheckedPredicate.uncheck(version ->
+                            !version.getName().equals(history.getRootVersion().getName())))
+                /* omit unlabelled versions */
+                .filter(UncheckedPredicate.uncheck(version -> {
+                    final String[] labels = history.getVersionLabels(version);
+                    if (labels.length == 0) {
+                        LOGGER.warn("An unlabelled version for {} was found! Omitting from version listing!",
+                                getPath());
+                    } else if (labels.length > 1) {
+                        LOGGER.warn("Multiple version labels found for {}! Using first label, \"{}\".", getPath(),
+                                labels[0]);
+                    }
+                    return labels.length > 0;
+                }))
+                .map(uncheck(version ->
+                        new FedoraVersionImpl(history.getVersionLabels(version)[0], version.getCreated().toInstant())));
+        } catch (final RepositoryException ex) {
+            throw new RepositoryRuntimeException(ex);
+        }
+    }
+
+    @Override
     public String getVersionLabelOfFrozenResource() {
         if (!isFrozenResource()) {
             return null;
         }
 
-        // Version History associated with this resource
-        final VersionHistory versionHistory = getUnfrozenResource().getVersionHistory();
-
         // Frozen node is required to find associated version label
         final Node frozenResource;
         try {
+            // Version History associated with this resource
+            final VersionHistory history = getVersionManager().getVersionHistory(getUnfrozenResource().getPath());
+
             // Possibly the frozen node is nested inside of current child-version-history
             if (getNode().hasProperty(JCR_CHILD_VERSION_HISTORY)) {
                 final Node childVersionHistory = getNodeByProperty(getProperty(JCR_CHILD_VERSION_HISTORY));
@@ -949,10 +966,10 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
             // Loop versions
             @SuppressWarnings("unchecked")
-            final Stream<Version> versions = iteratorToStream(versionHistory.getAllVersions());
+            final Stream<Version> versions = iteratorToStream(history.getAllVersions());
             return versions
                 .filter(UncheckedPredicate.uncheck(version -> version.getFrozenNode().equals(frozenResource)))
-                .map(uncheck(versionHistory::getVersionLabels))
+                .map(uncheck(history::getVersionLabels))
                 .flatMap(Arrays::stream)
                 .findFirst().orElse(null);
         } catch (final RepositoryException e) {

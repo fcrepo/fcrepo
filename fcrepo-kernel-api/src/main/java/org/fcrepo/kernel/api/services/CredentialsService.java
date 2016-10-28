@@ -17,8 +17,6 @@
  */
 package org.fcrepo.kernel.api.services;
 
-import javax.jcr.Credentials;
-
 /**
  * @author acoburn
  * @since Jun 2, 2016
@@ -29,8 +27,8 @@ public interface CredentialsService {
      * Get the credentials for the given request
      *
      * @param request the request
-     * @return the JCR credentials for the given request
+     * @return the credentials for the given request
      */
-    Credentials getCredentials(final Object request);
+    Object getCredentials(final Object request);
 
 }

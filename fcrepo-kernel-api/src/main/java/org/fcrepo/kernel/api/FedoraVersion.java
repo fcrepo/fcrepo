@@ -15,34 +15,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.services.policy;
+package org.fcrepo.kernel.api;
 
-import java.util.List;
-
-import org.fcrepo.kernel.api.models.FedoraResource;
+import java.time.Instant;
 
 /**
- * Service Interface implementation for managing and using {@link org.fcrepo.kernel.api.services.policy.StoragePolicy}
- * @author osmandin
- * @since Aug 14, 2013
- *
+ * @author acoburn
  */
-public interface StoragePolicyDecisionPoint extends List<StoragePolicy> {
+public interface FedoraVersion {
 
     /**
-     * Given a fedora resource (likely a fedora:Binary resource), determine which storage
-     * policy should apply
-     *
-     * @param resource the resource
-     * @return storage policy
+     * Get an identifier for this version
+     * @return an identifier for the version
      */
-    String evaluatePolicies(final FedoraResource resource);
+    String getIdentifier();
 
     /**
-     * Explicitly set the policies this PDP should use
-     *
-     * @param policies the policies
+     * Get the date the version was created
+     * @return the date of the version creation
      */
-    void setPolicies(final List<StoragePolicy> policies);
-
+    Instant getCreated();
 }

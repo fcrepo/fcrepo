@@ -37,7 +37,7 @@ public interface Service<T> {
     /**
      * Retrieve an existing T instance by session and path
      *
-     * @param path jcr path to the node
+     * @param path the path to the node
      * @param session the session
      * @return retrieved T
      */
@@ -46,7 +46,7 @@ public interface Service<T> {
      * Retrieve a T instance by session and path
      *
      * @param session the session
-     * @param path jcr path to the node
+     * @param path the path to the node
      * @return retrieved T
      */
     public T findOrCreate(final FedoraSession session, final String path);

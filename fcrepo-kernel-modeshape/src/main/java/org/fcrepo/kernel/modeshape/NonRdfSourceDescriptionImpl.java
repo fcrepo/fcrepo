@@ -53,6 +53,15 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements N
         return new FedoraBinaryImpl(getContentNode());
     }
 
+    @Override
+    public FedoraResource getBaseVersion() {
+        try {
+            return new NonRdfSourceDescriptionImpl(getVersionManager().getBaseVersion(getPath()).getFrozenNode());
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
     private Node getContentNode() {
         LOGGER.trace("Retrieved datastream content node.");
         try {
