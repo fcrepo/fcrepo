@@ -17,7 +17,6 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
-import static java.util.Calendar.getInstance;
 import static java.util.stream.Stream.of;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.Triple.create;
@@ -75,17 +74,15 @@ public class VersionsRdfContext extends DefaultRdfStream {
 
     @SuppressWarnings("unchecked")
     private Stream<Triple> versionTriples() {
-        return resource.getVersionIdentifiers()
-            .flatMap(label -> {
-                final Node versionSubject
-                        = createProperty(topic() + "/" + FCR_VERSIONS + "/" + urlEncode(label)).asNode();
+        return resource.getVersions()
+            .flatMap(version -> {
+                final Node versionSubject = createProperty(topic() + "/" + FCR_VERSIONS + "/" +
+                        urlEncode(version.getIdentifier())).asNode();
 
-                // TODO - convert this to java.time.* classes once the kernel-api interface changes
-                final Calendar cal = getInstance();
-                cal.setTime(resource.getVersion(label).getCreatedDate());
+                final Calendar cal = new Calendar.Builder().setInstant(version.getCreated().toEpochMilli()).build();
                 return of(
                         create(topic(), HAS_VERSION.asNode(), versionSubject),
-                        create(versionSubject, HAS_VERSION_LABEL.asNode(), createLiteral(label)),
+                        create(versionSubject, HAS_VERSION_LABEL.asNode(), createLiteral(version.getIdentifier())),
                         create(versionSubject, CREATED_DATE.asNode(), createTypedLiteral(cal).asNode()));
             });
     }

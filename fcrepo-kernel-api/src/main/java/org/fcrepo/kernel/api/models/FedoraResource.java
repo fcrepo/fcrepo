@@ -26,11 +26,12 @@ import java.util.stream.Stream;
 
 import org.apache.jena.rdf.model.Resource;
 
+import org.fcrepo.kernel.api.FedoraVersion;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.api.TripleCategory;
-import org.fcrepo.kernel.api.RdfStream;
 
 import org.apache.jena.rdf.model.Model;
 
@@ -160,7 +161,7 @@ public interface FedoraResource {
      *
      * @return version identifiers
      */
-    Stream<String> getVersionIdentifiers();
+    Stream<FedoraVersion> getVersions();
 
     /**
      * Check if a resource was created in this session

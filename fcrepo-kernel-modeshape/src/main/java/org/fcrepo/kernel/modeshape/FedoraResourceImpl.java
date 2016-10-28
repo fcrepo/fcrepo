@@ -99,6 +99,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.graph.Triple;
 
 import org.fcrepo.kernel.api.FedoraTypes;
+import org.fcrepo.kernel.api.FedoraVersion;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.ConstraintViolationException;
@@ -910,7 +911,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     }
 
     @Override
-    public Stream<String> getVersionIdentifiers() {
+    public Stream<FedoraVersion> getVersions() {
         try {
             final VersionHistory history = getVersionManager().getVersionHistory(getPath());
             @SuppressWarnings("unchecked")
@@ -931,7 +932,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                     }
                     return labels.length > 0;
                 }))
-                .map(uncheck(version -> history.getVersionLabels(version)[0]));
+                .map(uncheck(version ->
+                        new FedoraVersionImpl(history.getVersionLabels(version)[0], version.getCreated().toInstant())));
         } catch (final RepositoryException ex) {
             throw new RepositoryRuntimeException(ex);
         }
