@@ -57,6 +57,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_PAIRTREE;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import static java.util.stream.Stream.concat;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -67,7 +68,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
@@ -84,7 +84,11 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.ServerErrorException;
-import javax.ws.rs.core.HttpHeaders;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.HttpHeaders.ACCEPT;
+import static javax.ws.rs.core.HttpHeaders.LINK;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -92,11 +96,15 @@ import javax.ws.rs.core.UriBuilderException;
 import javax.ws.rs.core.Variant.VariantListBuilder;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.output.NullOutputStream;
 import org.apache.commons.lang3.StringUtils;
+
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
+import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
+import org.fcrepo.http.commons.responses.RdfStreamStreamingOutput;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.InsufficientStorageException;
@@ -118,6 +126,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.CountingOutputStream;
 
 /**
  * @author cabeer
@@ -136,6 +145,8 @@ public class FedoraLdp extends ContentExposingResource {
         withKeyValueSeparator(Splitter.on('=').limit(2));
 
     static final String INSUFFICIENT_SPACE_IDENTIFYING_MESSAGE = "No space left on device";
+
+    static final String HTTP_HEADER_ACCEPT_PATCH = "Accept-Patch";
 
     @PathParam("path") protected String externalPath;
 
@@ -189,9 +200,31 @@ public class FedoraLdp extends ContentExposingResource {
 
             // we set the content-type explicitly to avoid content-negotiation from getting in the way
             builder.type(mediaType.toString());
+        } else {
+            final MediaType mediaType = RDFMediaType.TURTLE_TYPE;
+            final RdfStream stream = getResourceAsStream();
+            final RdfStreamStreamingOutput output = new RdfStreamStreamingOutput(stream, session.getFedoraSession()
+                    .getNamespaces(), mediaType);
+
+            try (CountingOutputStream os = new CountingOutputStream(new NullOutputStream())) {
+                output.write(os);
+                builder.header(CONTENT_LENGTH, os.getCount());
+            } catch (IOException e) {
+                throw new RepositoryRuntimeException(e);
+            }
         }
 
         return builder.build();
+    }
+
+    private RdfStream getResourceAsStream() {
+        final AcquiredLock readLock = lockManager.lockForRead(resource().getPath());
+        try (final RdfStream rdfStream = new DefaultRdfStream(asNode(resource()))) {
+            return new DefaultRdfStream(rdfStream.topic(), concat(rdfStream,
+                    getResourceTriples(-1)));
+        } finally {
+            readLock.release();
+        }
     }
 
     /**
@@ -247,7 +280,7 @@ public class FedoraLdp extends ContentExposingResource {
     }
 
     private int getChildrenLimit() {
-        final List<String> acceptHeaders = headers.getRequestHeader(HttpHeaders.ACCEPT);
+        final List<String> acceptHeaders = headers.getRequestHeader(ACCEPT);
         if (acceptHeaders != null && acceptHeaders.size() > 0) {
             final List<String> accept = Arrays.asList(acceptHeaders.get(0).split(","));
             if (accept.contains(TEXT_HTML)) {
@@ -309,11 +342,11 @@ public class FedoraLdp extends ContentExposingResource {
     @Consumes
     @Timed
     public Response createOrReplaceObjectRdf(
-            @HeaderParam("Content-Type") final MediaType requestContentType,
+            @HeaderParam(CONTENT_TYPE) final MediaType requestContentType,
             @ContentLocation final InputStream requestBodyStream,
-            @HeaderParam("Content-Disposition") final ContentDisposition contentDisposition,
+            @HeaderParam(CONTENT_DISPOSITION) final ContentDisposition contentDisposition,
             @HeaderParam("If-Match") final String ifMatch,
-            @HeaderParam("Link") final String link,
+            @HeaderParam(LINK) final String link,
             @HeaderParam("Digest") final String digest)
             throws InvalidChecksumException, MalformedRdfException {
 
@@ -467,11 +500,11 @@ public class FedoraLdp extends ContentExposingResource {
     @Produces({TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
             N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
             TURTLE_X, TEXT_HTML_WITH_CHARSET, "*/*"})
-    public Response createObject(@HeaderParam("Content-Disposition") final ContentDisposition contentDisposition,
-                                 @HeaderParam("Content-Type") final MediaType requestContentType,
+    public Response createObject(@HeaderParam(CONTENT_DISPOSITION) final ContentDisposition contentDisposition,
+                                 @HeaderParam(CONTENT_TYPE) final MediaType requestContentType,
                                  @HeaderParam("Slug") final String slug,
                                  @ContentLocation final InputStream requestBodyStream,
-                                 @HeaderParam("Link") final String link,
+                                 @HeaderParam(LINK) final String link,
                                  @HeaderParam("Digest") final String digest)
             throws InvalidChecksumException, IOException, MalformedRdfException {
 
@@ -636,7 +669,7 @@ public class FedoraLdp extends ContentExposingResource {
                     .replaceFirst("/tx:[^/]+", "");
 
 
-            servletResponse.addHeader("Link", "<" + canonical + ">;rel=\"canonical\"");
+            servletResponse.addHeader(LINK, "<" + canonical + ">;rel=\"canonical\"");
 
         }
 
@@ -660,11 +693,11 @@ public class FedoraLdp extends ContentExposingResource {
 
         } else if (resource() instanceof NonRdfSourceDescription) {
             options = "MOVE,COPY,DELETE,POST,HEAD,GET,PUT,PATCH,OPTIONS";
-            servletResponse.addHeader("Accept-Patch", contentTypeSPARQLUpdate);
+            servletResponse.addHeader(HTTP_HEADER_ACCEPT_PATCH, contentTypeSPARQLUpdate);
 
         } else if (resource() instanceof Container) {
             options = "MOVE,COPY,DELETE,POST,HEAD,GET,PUT,PATCH,OPTIONS";
-            servletResponse.addHeader("Accept-Patch", contentTypeSPARQLUpdate);
+            servletResponse.addHeader(HTTP_HEADER_ACCEPT_PATCH, contentTypeSPARQLUpdate);
 
             final String rdfTypes = TURTLE + "," + N3 + "," + N3_ALT2 + ","
                     + RDF_XML + "," + NTRIPLES + "," + JSON_LD;
