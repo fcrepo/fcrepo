@@ -157,9 +157,9 @@ public interface FedoraResource {
     FedoraResource getBaseVersion();
 
     /**
-     * Get a stream of version identifiers associated with this resource
+     * Get a stream of versions associated with this resource
      *
-     * @return version identifiers
+     * @return the versions associated with this resource
      */
     Stream<FedoraVersion> getVersions();
 
