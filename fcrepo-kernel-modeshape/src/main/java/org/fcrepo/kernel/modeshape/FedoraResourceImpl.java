@@ -69,7 +69,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
-import java.util.Date;
+import java.time.Instant;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -438,10 +438,10 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
      * @see org.fcrepo.kernel.api.models.FedoraResource#getCreatedDate()
      */
     @Override
-    public Date getCreatedDate() {
+    public Instant getCreatedDate() {
         try {
             if (hasProperty(JCR_CREATED)) {
-                return new Date(getTimestamp(JCR_CREATED, NO_TIME));
+                return Instant.ofEpochMilli(getTimestamp(JCR_CREATED, NO_TIME));
             }
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
@@ -467,19 +467,19 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
      * Any method that exposes the last modified date must maintain this illusion so
      * that that external callers are presented with a sensible and consistent
      * representation of this resource.
-     * @return the last modified Date (or the created date if it was after the last
+     * @return the last modified Instant (or the created Instant if it was after the last
      *         modified date)
      */
     @Override
-    public Date getLastModifiedDate() {
+    public Instant getLastModifiedDate() {
 
-        final Date createdDate = getCreatedDate();
+        final Instant createdDate = getCreatedDate();
         try {
-            final long created = createdDate == null ? NO_TIME : createdDate.getTime();
+            final long created = createdDate == null ? NO_TIME : createdDate.toEpochMilli();
             if (hasProperty(FEDORA_LASTMODIFIED)) {
-                return new Date(getTimestamp(FEDORA_LASTMODIFIED, created));
+                return Instant.ofEpochMilli(getTimestamp(FEDORA_LASTMODIFIED, created));
             } else if (hasProperty(JCR_LASTMODIFIED)) {
-                return new Date(getTimestamp(JCR_LASTMODIFIED, created));
+                return Instant.ofEpochMilli(getTimestamp(JCR_LASTMODIFIED, created));
             }
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
@@ -790,10 +790,10 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
      */
     @Override
     public String getEtagValue() {
-        final Date lastModifiedDate = getLastModifiedDate();
+        final Instant lastModifiedDate = getLastModifiedDate();
 
         if (lastModifiedDate != null) {
-            return shaHex(getPath() + lastModifiedDate.getTime());
+            return shaHex(getPath() + lastModifiedDate.toEpochMilli());
         }
         return "";
     }
@@ -1079,12 +1079,11 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         return t -> {
             if (t.getPredicate().toString().equals(LAST_MODIFIED_DATE.toString())
                     && t.getSubject().equals(translator.convert(getJcrNode(r)).asNode())) {
-                final Calendar c = Calendar.getInstance();
-                c.setTime(r.getLastModifiedDate());
+                final Calendar c = new Calendar.Builder().setInstant(r.getLastModifiedDate().toEpochMilli()).build();
                 return new Triple(t.getSubject(), t.getPredicate(), createTypedLiteral(c).asNode());
             }
             return t;
-            };
+        };
     }
 
 }

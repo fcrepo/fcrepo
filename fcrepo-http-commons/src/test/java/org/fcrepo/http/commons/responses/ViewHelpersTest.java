@@ -39,8 +39,9 @@ import static org.fcrepo.kernel.api.RdfLexicon.WRITABLE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static java.time.Instant.now;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -79,7 +80,7 @@ public class ViewHelpersTest {
     public void testGetVersions() {
         final Graph mem = createDefaultModel().getGraph();
         final Node version = createURI("http://localhost/fcrepo/abc/fcr:version/adcd");
-        final String date = new Date().toString();
+        final String date = Instant.now().toString();
         mem.add(new Triple(createURI("http://localhost/fcrepo/abc"), HAS_VERSION.asNode(),
                 version));
         mem.add(new Triple(version, CREATED_DATE.asNode(), createLiteral(date)));
@@ -93,9 +94,9 @@ public class ViewHelpersTest {
         final Node v1 = createURI("http://localhost/fcrepo/abc/fcr:version/1");
         final Node v2 = createURI("http://localhost/fcrepo/abc/fcr:version/2");
         final Node v3 = createURI("http://localhost/fcrepo/abc/fcr:version/3");
-        final Date now = new Date();
-        final Date later = new Date();
-        later.setTime(later.getTime() + 10000l);
+        final String date = Instant.now().toString();
+        final Instant now = Instant.now();
+        final Instant later = now.plusMillis(10000l);
 
         final Graph mem = createDefaultModel().getGraph();
         mem.add(new Triple(resource, HAS_VERSION.asNode(), v1));
@@ -213,7 +214,7 @@ public class ViewHelpersTest {
     @Test
     public void testGetVersionDate() {
         final Graph mem = createDefaultModel().getGraph();
-        final String date = new Date().toString();
+        final String date = Instant.now().toString();
         mem.add(new Triple(createURI("a/b/c"), CREATED_DATE.asNode(),
                 createLiteral(date)));
         assertEquals("Date should be available.", date, testObj.getVersionDate(mem, createURI("a/b/c")).get());

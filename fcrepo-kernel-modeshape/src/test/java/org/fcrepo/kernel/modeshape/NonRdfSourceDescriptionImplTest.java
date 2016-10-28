@@ -35,7 +35,7 @@ import javax.jcr.nodetype.NodeType;
 
 import java.io.InputStream;
 import java.util.Calendar;
-import java.util.Date;
+import java.time.Instant;
 
 import static org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl.hasMixin;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
@@ -108,28 +108,24 @@ public class NonRdfSourceDescriptionImplTest implements FedoraTypes {
 
     @Test
     public void testGetCreatedDate() throws RepositoryException {
-        final Date expected = new Date();
         final Calendar cal = Calendar.getInstance();
-        cal.setTime(expected);
         final Property mockProp = mock(Property.class);
         when(mockProp.getDate()).thenReturn(cal);
         when(mockDsNode.hasProperty(JCR_CREATED)).thenReturn(true);
         when(mockDsNode.getProperty(JCR_CREATED)).thenReturn(mockProp);
-        final Date actual = testObj.getCreatedDate();
-        assertEquals(expected.getTime(), actual.getTime());
+        final Instant actual = testObj.getCreatedDate();
+        assertEquals(cal.getTimeInMillis(), actual.toEpochMilli());
     }
 
     @Test
     public void testGetLastModifiedDate() throws RepositoryException {
-        final Date expected = new Date();
         final Calendar cal = Calendar.getInstance();
-        cal.setTime(expected);
         final Property mockProp = mock(Property.class);
         when(mockProp.getDate()).thenReturn(cal);
         when(mockDsNode.hasProperty(JCR_LASTMODIFIED)).thenReturn(true);
         when(mockDsNode.getProperty(JCR_LASTMODIFIED)).thenReturn(mockProp);
-        final Date actual = testObj.getLastModifiedDate();
-        assertEquals(expected.getTime(), actual.getTime());
+        final Instant actual = testObj.getLastModifiedDate();
+        assertEquals(cal.getTimeInMillis(), actual.toEpochMilli());
     }
 
     @Test

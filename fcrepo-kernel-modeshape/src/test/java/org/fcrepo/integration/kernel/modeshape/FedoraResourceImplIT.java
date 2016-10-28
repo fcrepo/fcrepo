@@ -69,9 +69,9 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.time.Instant;
 
 import javax.inject.Inject;
 import javax.jcr.Value;
@@ -206,9 +206,9 @@ public class FedoraResourceImplIT extends AbstractIT {
         session = repo.login();
 
         final Container obj2 = containerService.findOrCreate(session, "/" + pid);
-        final Date created = roundDate(obj2.getCreatedDate());
-        final Date modified = roundDate(obj2.getLastModifiedDate());
-        assertFalse(modified + " should not be before " + created, modified.before(created));
+        final Instant created = roundDate(obj2.getCreatedDate());
+        final Instant modified = roundDate(obj2.getLastModifiedDate());
+        assertFalse(modified + " should not be before " + created, modified.isBefore(created));
 
         final Graph graph = obj2.getTriples(subjects, PROPERTIES).collect(toModel()).getGraph();
         final Node s = createGraphSubjectNode(obj2);
@@ -231,9 +231,9 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         final Container obj2 = containerService.findOrCreate(session, "/" + pid);
         final FedoraResourceImpl impl = new FedoraResourceImpl(getJcrNode(obj2));
-        final Date oldMod = impl.getLastModifiedDate();
+        final Instant oldMod = impl.getLastModifiedDate();
         impl.touch();
-        assertTrue( oldMod.before(obj2.getLastModifiedDate()) );
+        assertTrue( oldMod.isBefore(obj2.getLastModifiedDate()) );
     }
 
     @Test
@@ -1186,7 +1186,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         v.getContainingHistory().addVersionLabel(v.getName(), label, false);
     }
 
-    private static Date roundDate(final Date date) {
-        return new Date(date.getTime() - date.getTime() % 1000);
+    private static Instant roundDate(final Instant date) {
+        return date.minusMillis(date.toEpochMilli() % 1000);
     }
 }

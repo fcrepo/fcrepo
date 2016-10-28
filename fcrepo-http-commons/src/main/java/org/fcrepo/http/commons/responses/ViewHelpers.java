@@ -26,6 +26,8 @@ import static org.apache.jena.vocabulary.DC.title;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.apache.jena.vocabulary.RDFS.label;
 import static org.apache.jena.vocabulary.SKOS.prefLabel;
+import static java.time.Instant.now;
+import static java.time.ZoneId.of;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static java.util.Collections.emptyMap;
@@ -41,8 +43,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.WRITABLE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.format.DateTimeFormatter;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -83,7 +84,8 @@ public class ViewHelpers {
 
     private static final List<Property>  TITLE_PROPERTIES = asList(label, title, DCTerms.title, prefLabel);
 
-    private static final String DEFAULT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").format(new Date());
+    private static final String DEFAULT =
+        DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(of("GMT")).format(now());
 
     private ViewHelpers() {
         // Exists only to defeat instantiation.

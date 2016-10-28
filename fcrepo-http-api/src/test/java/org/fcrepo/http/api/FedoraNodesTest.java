@@ -28,7 +28,6 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import java.net.URISyntaxException;
-import java.util.Date;
 import java.util.function.Supplier;
 
 import javax.jcr.ItemExistsException;
@@ -123,9 +122,6 @@ public class FedoraNodesTest {
     @Mock
     private Supplier<String> mockPidMinter;
 
-    @Mock
-    private Date mockDate;
-
     private UriInfo mockUriInfo;
 
     @Mock
@@ -160,7 +156,6 @@ public class FedoraNodesTest {
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         final VersionManager mockVM = mock(VersionManager.class);
         when(mockWorkspace.getVersionManager()).thenReturn(mockVM);
-        when(mockDate.getTime()).thenReturn(0L);
         when(mockNode.getPath()).thenReturn(path);
         when(mockContainer.getPath()).thenReturn(path);
         when(mockContainer.getEtagValue()).thenReturn("XYZ");

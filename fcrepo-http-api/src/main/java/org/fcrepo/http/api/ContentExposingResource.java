@@ -52,10 +52,12 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.MINIMAL;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
 
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -410,12 +412,15 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      */
     protected void addResourceHttpHeaders(final FedoraResource resource) {
         if (resource instanceof FedoraBinary) {
-
             final FedoraBinary binary = (FedoraBinary)resource;
+            final Date createdDate = binary.getCreatedDate() != null ? Date.from(binary.getCreatedDate()) : null;
+            final Date modifiedDate =
+                binary.getLastModifiedDate() != null ? Date.from(binary.getCreatedDate()) : null;
+
             final ContentDisposition contentDisposition = ContentDisposition.type("attachment")
                     .fileName(binary.getFilename())
-                    .creationDate(binary.getCreatedDate())
-                    .modificationDate(binary.getLastModifiedDate())
+                    .creationDate(createdDate)
+                    .modificationDate(modifiedDate)
                     .size(binary.getContentSize())
                     .build();
 
@@ -492,7 +497,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
 
         final EntityTag etag;
-        final Date date;
+        final Instant date;
 
         // See note about this code in the javadoc above.
         if (resource instanceof FedoraBinary) {
@@ -510,7 +515,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
 
         if (date != null) {
-            servletResponse.addDateHeader("Last-Modified", date.getTime());
+            servletResponse.addDateHeader("Last-Modified", date.toEpochMilli());
         }
     }
 
@@ -542,8 +547,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
 
         final EntityTag etag;
-        final Date date;
-        final Date roundedDate = new Date();
+        final Instant date;
+        Instant roundedDate = Instant.now();
 
         // See the related note about the next block of code in the
         // ContentExposingResource::addCacheControlHeaders method
@@ -558,14 +563,14 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
 
         if (date != null) {
-            roundedDate.setTime(date.getTime() - date.getTime() % 1000);
+            roundedDate = date.minusMillis(date.toEpochMilli() % 1000);
         }
 
         Response.ResponseBuilder builder = request.evaluatePreconditions(etag);
         if ( builder != null ) {
             builder = builder.entity("ETag mismatch");
         } else {
-            builder = request.evaluatePreconditions(roundedDate);
+            builder = request.evaluatePreconditions(Date.from(roundedDate));
             if ( builder != null ) {
                 builder = builder.entity("Date mismatch");
             }
@@ -578,7 +583,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             // here we are implicitly emitting a 304
             // the exception is not an error, it's genuinely
             // an exceptional condition
-            builder = builder.cacheControl(cc).lastModified(date).tag(etag);
+            builder = builder.cacheControl(cc).lastModified(Date.from(date)).tag(etag);
         }
         if (builder != null) {
             throw new WebApplicationException(builder.build());

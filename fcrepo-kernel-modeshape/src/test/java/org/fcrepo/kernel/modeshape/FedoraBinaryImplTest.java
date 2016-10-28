@@ -40,7 +40,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Calendar;
-import java.util.Date;
+import java.time.Instant;
 
 import static java.util.Collections.singleton;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
@@ -235,28 +235,24 @@ public class FedoraBinaryImplTest implements FedoraTypes {
 
     @Test
     public void testGetCreatedDate() throws RepositoryException {
-        final Date expected = new Date();
         final Calendar cal = Calendar.getInstance();
-        cal.setTime(expected);
         final Property mockProp = mock(Property.class);
         when(mockProp.getDate()).thenReturn(cal);
         when(mockContent.hasProperty(JCR_CREATED)).thenReturn(true);
         when(mockContent.getProperty(JCR_CREATED)).thenReturn(mockProp);
-        final Date actual = testObj.getCreatedDate();
-        assertEquals(expected.getTime(), actual.getTime());
+        final Instant actual = testObj.getCreatedDate();
+        assertEquals(cal.getTimeInMillis(), actual.toEpochMilli());
     }
 
     @Test
     public void testGetLastModifiedDate() throws RepositoryException {
-        final Date expected = new Date();
         final Calendar cal = Calendar.getInstance();
-        cal.setTime(expected);
         final Property mockProp = mock(Property.class);
         when(mockProp.getDate()).thenReturn(cal);
         when(mockContent.hasProperty(JCR_LASTMODIFIED)).thenReturn(true);
         when(mockContent.getProperty(JCR_LASTMODIFIED)).thenReturn(mockProp);
-        final Date actual = testObj.getLastModifiedDate();
-        assertEquals(expected.getTime(), actual.getTime());
+        final Instant actual = testObj.getLastModifiedDate();
+        assertEquals(cal.getTimeInMillis(), actual.toEpochMilli());
     }
 
 }
