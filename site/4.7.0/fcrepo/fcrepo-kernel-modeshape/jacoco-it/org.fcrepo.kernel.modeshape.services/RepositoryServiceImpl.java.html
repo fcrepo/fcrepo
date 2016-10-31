@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>RepositoryServiceImpl.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation (ModeShape)</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.services</a> &gt; <span class="el_source">RepositoryServiceImpl.java</span></div><h1>RepositoryServiceImpl.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.services;
+
+import static com.codahale.metrics.MetricRegistry.name;
+import static org.fcrepo.kernel.modeshape.services.ServiceHelpers.getRepositoryCount;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.metrics.RegistryService;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+
+
+import javax.inject.Inject;
+import javax.jcr.Repository;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+
+import org.fcrepo.kernel.api.services.RepositoryService;
+import org.modeshape.jcr.api.RepositoryManager;
+import org.slf4j.Logger;
+import org.springframework.stereotype.Component;
+
+import com.codahale.metrics.Timer;
+
+/**
+ * Service for repository-wide management and querying
+ *
+ * @author Chris Beer
+ * @since Mar 11, 2013
+ */
+@Component
+<span class="fc" id="L51">public class RepositoryServiceImpl extends AbstractService implements RepositoryService {</span>
+
+    @Inject
+    private Repository repo;
+
+<span class="fc" id="L56">    private static final Logger LOGGER = getLogger(RepositoryServiceImpl.class);</span>
+
+<span class="fc" id="L58">    private final Timer objectSizeCalculationTimer = RegistryService.getInstance().getMetrics().timer(</span>
+<span class="fc" id="L59">            name(RepositoryService.class, &quot;objectSizeCalculation&quot;));</span>
+
+    /**
+     * Calculate the total size of all the binary properties in the repository
+     *
+     * @return size in bytes
+     */
+    @Override
+    public Long getRepositorySize() {
+        try {
+
+<span class="fc" id="L70">            LOGGER.debug(&quot;Calculating repository size from index&quot;);</span>
+
+<span class="pc" id="L72">            try (final Timer.Context context = objectSizeCalculationTimer.time()) {</span>
+                // Differentiating between the local getRepositorySize and
+                // ServiceHelpers
+<span class="fc" id="L75">                return ServiceHelpers.getRepositorySize(repo);</span>
+
+<span class="pc bpc" id="L77" title="6 of 8 branches missed.">            }</span>
+<span class="nc" id="L78">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L79">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.fcrepo.kernel.api.services.RepositoryService#getRepositoryObjectCount()
+     */
+    @Override
+    public Long getRepositoryObjectCount() {
+        try {
+<span class="nc" id="L91">            return getRepositoryCount(repo);</span>
+<span class="nc" id="L92">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L93">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.fcrepo.kernel.api.services.RepositoryService#backupRepository(javax.jcr
+     * .Session, java.io.File)
+     */
+    @Override
+    public Collection&lt;Throwable&gt; backupRepository(final Session session,
+                                     final File backupDirectory) {
+        try {
+<span class="fc" id="L107">            final RepositoryManager repoMgr = ((org.modeshape.jcr.api.Session) session)</span>
+<span class="fc" id="L108">                    .getWorkspace()</span>
+<span class="fc" id="L109">                    .getRepositoryManager();</span>
+
+<span class="fc" id="L111">            final Collection&lt;Throwable&gt; problems = new ArrayList&lt;&gt;();</span>
+
+<span class="pc" id="L113">            repoMgr.backupRepository(backupDirectory).forEach(x -&gt; problems.add(x.getThrowable()));</span>
+
+<span class="fc" id="L115">            return problems;</span>
+<span class="nc" id="L116">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L117">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.fcrepo.kernel.api.services.RepositoryService#restoreRepository(javax.
+     * jcr.Session, java.io.File)
+     */
+    @Override
+    public Collection&lt;Throwable&gt; restoreRepository(final Session session,
+                                      final File backupDirectory) {
+        try {
+<span class="fc" id="L131">            final RepositoryManager repoMgr = ((org.modeshape.jcr.api.Session) session)</span>
+<span class="fc" id="L132">                    .getWorkspace()</span>
+<span class="fc" id="L133">                    .getRepositoryManager();</span>
+
+<span class="fc" id="L135">            final Collection&lt;Throwable&gt; problems = new ArrayList&lt;&gt;();</span>
+
+<span class="pc" id="L137">            repoMgr.restoreRepository(backupDirectory).forEach(x -&gt; problems.add(x.getThrowable()));</span>
+
+<span class="fc" id="L139">            return problems;</span>
+<span class="nc" id="L140">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L141">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>
