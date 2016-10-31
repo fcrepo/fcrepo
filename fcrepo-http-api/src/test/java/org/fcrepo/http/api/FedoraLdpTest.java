@@ -273,10 +273,6 @@ public class FedoraLdpTest {
                 FedoraLdp.HTTP_HEADER_ACCEPT_PATCH));
     }
 
-    private void assertContentLengthGreaterThan0(final String contentLength) {
-        assertTrue("Should have a content length header greater than 0", Integer.parseInt(contentLength) > 0);
-    }
-
     @Test
     public void testHeadWithDefaultContainer() throws Exception {
         setResource(Container.class);
@@ -338,6 +334,10 @@ public class FedoraLdpTest {
         assertShouldBeAnLDPNonRDFSource();
         assertShouldNotAdvertiseAcceptPatchFlavors();
         assertShouldContainLinkToBinaryDescription();
+    }
+
+    private void assertContentLengthGreaterThan0(final String contentLength) {
+        assertTrue("Should have a content length header greater than 0", Integer.parseInt(contentLength) > 0);
     }
 
     private void assertShouldContainLinkToBinaryDescription() {
