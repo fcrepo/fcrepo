@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>FedoraTransactions.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api</a> &gt; <span class="el_source">FedoraTransactions.java</span></div><h1>FedoraTransactions.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.http.api;
+
+import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.noContent;
+import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.security.Principal;
+
+import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
+
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TxSession;
+import org.fcrepo.kernel.api.services.TransactionService;
+import org.slf4j.Logger;
+import org.springframework.context.annotation.Scope;
+
+/**
+ * Transactions over REST
+ *
+ * @author awoods
+ * @author gregjan
+ */
+@Scope(&quot;prototype&quot;)
+@Path(&quot;/{path: .*}/fcr:tx&quot;)
+<span class="fc" id="L52">public class FedoraTransactions extends FedoraBaseResource {</span>
+
+<span class="fc" id="L54">    private static final Logger LOGGER = getLogger(FedoraTransactions.class);</span>
+
+    @Inject
+    private TransactionService txService;
+
+    /**
+     * Create a new transaction resource and add it to the registry
+     *
+     * @param externalPath the external path
+     * @param req the http servlet request
+     * @return 201 with the transaction id and expiration date
+     * @throws URISyntaxException if URI syntax exception occurred
+     */
+    @POST
+    public Response createTransaction(@PathParam(&quot;path&quot;) final String externalPath,
+                                      @Context final HttpServletRequest req) throws URISyntaxException {
+
+<span class="fc bfc" id="L71" title="All 2 branches covered.">        if (session instanceof TxSession) {</span>
+<span class="fc" id="L72">            final Transaction t = txService.getTransaction(session);</span>
+<span class="fc" id="L73">            LOGGER.debug(&quot;renewing transaction {}&quot;, t.getId());</span>
+<span class="fc" id="L74">            t.updateExpiryDate();</span>
+<span class="fc" id="L75">            return noContent().expires(t.getExpires()).build();</span>
+        }
+
+<span class="pc bpc" id="L78" title="3 of 4 branches missed.">        if (externalPath != null &amp;&amp; !externalPath.isEmpty()) {</span>
+<span class="nc" id="L79">            return status(BAD_REQUEST).build();</span>
+        }
+
+<span class="fc" id="L82">        final Principal userPrincipal = req.getUserPrincipal();</span>
+<span class="fc" id="L83">        String userName = null;</span>
+<span class="pc bpc" id="L84" title="1 of 2 branches missed.">        if (userPrincipal != null) {</span>
+<span class="fc" id="L85">            userName = userPrincipal.getName();</span>
+        }
+
+<span class="fc" id="L88">        final Transaction t = txService.beginTransaction(session, userName);</span>
+<span class="fc" id="L89">        LOGGER.info(&quot;Created transaction '{}'&quot;, t.getId());</span>
+
+<span class="fc" id="L91">        return created(new URI(translator().toDomain(&quot;/tx:&quot; + t.getId()).toString())).expires(</span>
+<span class="fc" id="L92">                t.getExpires()).build();</span>
+    }
+
+    /**
+     * Commit a transaction resource
+     *
+     * @param externalPath the external path
+     * @return 204
+     */
+    @POST
+    @Path(&quot;fcr:commit&quot;)
+    public Response commit(@PathParam(&quot;path&quot;) final String externalPath) {
+<span class="fc" id="L104">        LOGGER.info(&quot;Commit transaction '{}'&quot;, externalPath);</span>
+<span class="fc" id="L105">        return finalizeTransaction(externalPath, true);</span>
+
+    }
+
+    /**
+     * Rollback a transaction
+     *
+     * @param externalPath the external path
+     * @return 204
+     */
+    @POST
+    @Path(&quot;fcr:rollback&quot;)
+    public Response rollback(@PathParam(&quot;path&quot;) final String externalPath) {
+<span class="fc" id="L118">        LOGGER.info(&quot;Rollback transaction '{}'&quot;, externalPath);</span>
+<span class="fc" id="L119">        return finalizeTransaction(externalPath, false);</span>
+    }
+
+    private Response finalizeTransaction(@PathParam(&quot;path&quot;)
+        final String externalPath, final boolean commit) {
+
+<span class="fc" id="L125">        final String path = toPath(translator(), externalPath);</span>
+<span class="pc bpc" id="L126" title="1 of 2 branches missed.">        if (!path.equals(&quot;/&quot;)) {</span>
+<span class="nc" id="L127">            return status(BAD_REQUEST).build();</span>
+        }
+
+        final String txId;
+<span class="pc bpc" id="L131" title="1 of 2 branches missed.">        if (session instanceof TxSession) {</span>
+<span class="fc" id="L132">            txId = ((TxSession) session).getTxId();</span>
+        } else {
+<span class="nc" id="L134">            txId = &quot;&quot;;</span>
+        }
+
+<span class="pc bpc" id="L137" title="1 of 2 branches missed.">        if (txId.isEmpty()) {</span>
+<span class="nc" id="L138">            LOGGER.debug(&quot;cannot finalize an empty tx id {} at path {}&quot;,</span>
+                    txId, path);
+<span class="nc" id="L140">            return status(BAD_REQUEST).build();</span>
+        }
+
+<span class="fc bfc" id="L143" title="All 2 branches covered.">        if (commit) {</span>
+<span class="fc" id="L144">            LOGGER.debug(&quot;commiting transaction {} at path {}&quot;, txId, path);</span>
+<span class="fc" id="L145">            txService.commit(txId);</span>
+
+        } else {
+<span class="fc" id="L148">            LOGGER.debug(&quot;rolling back transaction {} at path {}&quot;, txId,</span>
+                    path);
+<span class="fc" id="L150">            txService.rollback(txId);</span>
+        }
+<span class="fc" id="L152">        return noContent().build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>
