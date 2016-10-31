@@ -23,7 +23,6 @@ import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.junit.Before;
 import org.junit.Test;
 
-import static javax.ws.rs.core.HttpHeaders.LINK;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response;
 
@@ -31,6 +30,7 @@ import java.io.IOException;
 import java.util.Random;
 import java.util.stream.Stream;
 
+import static javax.ws.rs.core.HttpHeaders.LINK;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;

@@ -17,12 +17,12 @@
  */
 package org.fcrepo.integration.http.api;
 
+import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.GONE;
 import static javax.ws.rs.core.Response.Status.OK;
 import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
-import static javax.ws.rs.core.HttpHeaders.LINK;
 import static org.junit.Assert.assertEquals;
 import java.io.IOException;
 import java.net.URI;
