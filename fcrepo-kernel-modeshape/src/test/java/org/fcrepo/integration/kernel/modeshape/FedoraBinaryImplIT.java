@@ -40,6 +40,7 @@ import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.HashSet;
 import javax.inject.Inject;
 import javax.jcr.Node;
@@ -206,7 +207,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
             final FedoraBinary orig = binaryService.findOrCreate(session, "/testDatastreamObject/testDatastreamNode3");
             orig.setContent(new ByteArrayInputStream("asdf".getBytes()), "application/octet-stream", null, null, null);
             session.commit();
-            final long origMod = orig.getLastModifiedDate().toEpochMilli();
+            final Instant origMod = orig.getLastModifiedDate();
 
             final FedoraBinary ds = binaryService.findOrCreate(session,
                     "/testDatastreamObject/testDatastreamNode3");
@@ -220,7 +221,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
             final String contentString = IOUtils.toString(ds.getContent(), "ASCII");
 
             assertEquals("0123456789", contentString);
-            assertTrue("Last-modified should be updated", ds.getLastModifiedDate().toEpochMilli() > origMod);
+            assertTrue("Last-modified should be updated", ds.getLastModifiedDate().isAfter(origMod));
         } finally {
             session.expire();
         }
@@ -392,10 +393,11 @@ public class FedoraBinaryImplIT extends AbstractIT {
             final FedoraBinary orig = binaryService.findOrCreate(session, "/testDatastreamObject/testDatastreamNode6");
             orig.setContent(new ByteArrayInputStream("asdf".getBytes()), "application/octet-stream", null, null, null);
             session.commit();
-            final long origMod = orig.getLastModifiedDate().toEpochMilli();
 
             final FedoraResource description = orig.getDescription();
-            final long origDescriptionMod = description.getLastModifiedDate().toEpochMilli();
+
+            final Instant origMod = orig.getLastModifiedDate();
+            final Instant origDescriptionMod = description.getLastModifiedDate();
 
             description.updateProperties(idTranslator, "INSERT { <> <info:fcrepo/foo> \"b\" } WHERE {}",
                     description.getTriples(idTranslator, PROPERTIES));
@@ -403,18 +405,17 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
             final FedoraBinary ds = binaryService.findOrCreate(session, "/testDatastreamObject/testDatastreamNode6");
 
-            final long modMod = ds.getLastModifiedDate().toEpochMilli();
-            final long modDescMod = ds.getDescription().getLastModifiedDate().toEpochMilli();
+            final Instant modMod = ds.getLastModifiedDate();
+            final Instant modDescMod = ds.getDescription().getLastModifiedDate();
 
-            assertEquals("Last-modified on the binary should be the same", modMod,  origMod);
+            assertEquals("Last-modified on the binary should be the same", modMod, origMod);
             assertNotEquals("Last-modified on the description should not be the same", modDescMod, origDescriptionMod);
 
             ds.setContent(new ByteArrayInputStream("0123456789".getBytes()), null, null, null, null);
 
-            assertNotEquals("Last-modified on the binary should have changed",
-                    ds.getLastModifiedDate().toEpochMilli(), modMod);
+            assertNotEquals("Last-modified on the binary should have changed", ds.getLastModifiedDate(), modMod);
             assertNotEquals("Last-modified on the description should have changed",
-                    ds.getDescription().getLastModifiedDate().toEpochMilli(), modDescMod);
+                    ds.getDescription().getLastModifiedDate(), modDescMod);
 
         } finally {
             session.expire();

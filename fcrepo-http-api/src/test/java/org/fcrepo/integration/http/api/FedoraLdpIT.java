@@ -2628,11 +2628,10 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String objURI = serverAddress + objid;
         final String binURI = objURI + "/binary1";
 
-        final long lastmod1;
+        final Instant lastmod1;
         try (final CloseableHttpResponse response = execute(putDSMethod(objid, "binary1", "some test content"))) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
-            lastmod1 = Instant.from(
-                headerFormat.parse(response.getFirstHeader("Last-Modified").getValue())).toEpochMilli();
+            lastmod1 = Instant.from(headerFormat.parse(response.getFirstHeader("Last-Modified").getValue()));
         }
 
         sleep(1000); // wait a second to make sure last-modified value will be different
@@ -2645,22 +2644,21 @@ public class FedoraLdpIT extends AbstractResourceIT {
         patchBinary.addHeader("Content-Type", "application/sparql-update");
         patchBinary.setEntity(new StringEntity("INSERT { <" + binURI + "> " +
                 "<http://www.w3.org/TR/rdf-schema/label> \"this is a label\" } WHERE {}"));
-        final long lastmod2;
+
+        final Instant lastmod2;
         try (final CloseableHttpResponse response = execute(patchBinary)) {
             assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
-            lastmod2 = Instant.from(
-                headerFormat.parse(response.getFirstHeader("Last-Modified").getValue())).toEpochMilli();
-            assertTrue(lastmod2 > lastmod1);
+            lastmod2 = Instant.from(headerFormat.parse(response.getFirstHeader("Last-Modified").getValue()));
+            assertTrue(lastmod2.isAfter(lastmod1));
         }
 
         sleep(1000); // wait a second to make sure last-modified value will be different
 
-        final long lastmod3;
+        final Instant lastmod3;
         try (final CloseableHttpResponse response = execute(putDSMethod(objid, "binary1", "new test content"))) {
             assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
-            lastmod3 = Instant.from(
-                headerFormat.parse(response.getFirstHeader("Last-Modified").getValue())).toEpochMilli();
-            assertTrue(lastmod3 > lastmod2);
+            lastmod3 = Instant.from(headerFormat.parse(response.getFirstHeader("Last-Modified").getValue()));
+            assertTrue(lastmod3.isAfter(lastmod2));
         }
     }
 

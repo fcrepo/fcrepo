@@ -20,6 +20,7 @@ package org.fcrepo.kernel.modeshape;
 import static org.apache.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static org.apache.jena.update.UpdateAction.execute;
 import static org.apache.jena.update.UpdateFactory.create;
+import static java.time.Instant.ofEpochMilli;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static java.util.stream.Collectors.joining;
@@ -441,7 +442,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     public Instant getCreatedDate() {
         try {
             if (hasProperty(JCR_CREATED)) {
-                return Instant.ofEpochMilli(getTimestamp(JCR_CREATED, NO_TIME));
+                return ofEpochMilli(getTimestamp(JCR_CREATED, NO_TIME));
             }
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
@@ -477,9 +478,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         try {
             final long created = createdDate == null ? NO_TIME : createdDate.toEpochMilli();
             if (hasProperty(FEDORA_LASTMODIFIED)) {
-                return Instant.ofEpochMilli(getTimestamp(FEDORA_LASTMODIFIED, created));
+                return ofEpochMilli(getTimestamp(FEDORA_LASTMODIFIED, created));
             } else if (hasProperty(JCR_LASTMODIFIED)) {
-                return Instant.ofEpochMilli(getTimestamp(JCR_LASTMODIFIED, created));
+                return ofEpochMilli(getTimestamp(JCR_LASTMODIFIED, created));
             }
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
