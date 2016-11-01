@@ -414,13 +414,12 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         if (resource instanceof FedoraBinary) {
             final FedoraBinary binary = (FedoraBinary)resource;
             final Date createdDate = binary.getCreatedDate() != null ? Date.from(binary.getCreatedDate()) : null;
-            final Date modifiedDate =
-                binary.getLastModifiedDate() != null ? Date.from(binary.getCreatedDate()) : null;
+            final Date modDate = binary.getLastModifiedDate() != null ? Date.from(binary.getLastModifiedDate()) : null;
 
             final ContentDisposition contentDisposition = ContentDisposition.type("attachment")
                     .fileName(binary.getFilename())
                     .creationDate(createdDate)
-                    .modificationDate(modifiedDate)
+                    .modificationDate(modDate)
                     .size(binary.getContentSize())
                     .build();
 
