@@ -33,6 +33,8 @@ import java.util.UUID;
 import static java.lang.Integer.MAX_VALUE;
 import static java.lang.Integer.parseInt;
 import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -75,7 +77,7 @@ public class LdpTestSuiteIT {
         final BasicHttpEntity entity = new BasicHttpEntity();
         entity.setContent(IOUtils.toInputStream("<> a <" + BASIC_CONTAINER + "> ."));
         request.setEntity(entity);
-        request.setHeader("Content-Type", "text/turtle");
+        request.setHeader(CONTENT_TYPE, "text/turtle");
         final HttpResponse response = client.execute(request);
         assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
 
@@ -101,7 +103,7 @@ public class LdpTestSuiteIT {
                 "    <" + LDP_NAMESPACE + "membershipResource> <> ;" +
                 "    <" + LDP_NAMESPACE + "hasMemberRelation> <" + LDP_NAMESPACE + "member> ."));
         request.setEntity(entity);
-        request.setHeader("Content-Type", "text/turtle");
+        request.setHeader(CONTENT_TYPE, "text/turtle");
         final HttpResponse response = client.execute(request);
         assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
 
@@ -127,7 +129,7 @@ public class LdpTestSuiteIT {
                 "    <" + LDP_NAMESPACE + "insertedContentRelation> <" + LDP_NAMESPACE + "MemberSubject> ;" +
                 "    <" + LDP_NAMESPACE + "hasMemberRelation> <" + LDP_NAMESPACE + "member> ."));
         request.setEntity(entity);
-        request.setHeader("Content-Type", "text/turtle");
+        request.setHeader(CONTENT_TYPE, "text/turtle");
         final HttpResponse response = client.execute(request);
         assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
 

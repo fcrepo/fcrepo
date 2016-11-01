@@ -22,6 +22,9 @@ import static java.lang.Integer.parseInt;
 import static java.util.Arrays.stream;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
+import static javax.ws.rs.core.HttpHeaders.ACCEPT;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.GONE;
@@ -141,7 +144,7 @@ public abstract class AbstractResourceIT {
             throws UnsupportedEncodingException {
         final HttpPut put = new HttpPut(serverAddress + pid + "/" + ds);
         put.setEntity(new StringEntity(content == null ? "" : content));
-        put.setHeader("Content-Type", TEXT_PLAIN);
+        put.setHeader(CONTENT_TYPE, TEXT_PLAIN);
         return put;
     }
 
@@ -269,12 +272,12 @@ public abstract class AbstractResourceIT {
             final int result = getStatus(response);
             assertEquals(OK.getStatusCode(), result);
             EntityUtils.consume(response.getEntity());
-            return response.getFirstHeader("Content-Type").getValue();
+            return response.getFirstHeader(CONTENT_TYPE).getValue();
         }
     }
 
     protected static Collection<String> getLinkHeaders(final HttpResponse response) {
-        return stream(response.getHeaders("Link")).map(Header::getValue).collect(toList());
+        return stream(response.getHeaders(LINK)).map(Header::getValue).collect(toList());
     }
 
     /**
@@ -288,10 +291,10 @@ public abstract class AbstractResourceIT {
      */
     protected CloseableDataset getDataset(final CloseableHttpClient client, final HttpUriRequest req)
             throws IOException {
-        if (!req.containsHeader("Accept")) {
-            req.addHeader("Accept", "application/n-triples");
+        if (!req.containsHeader(ACCEPT)) {
+            req.addHeader(ACCEPT, "application/n-triples");
         }
-        logger.debug("Retrieving RDF using mimeType: {}", req.getFirstHeader("Accept"));
+        logger.debug("Retrieving RDF using mimeType: {}", req.getFirstHeader(ACCEPT));
 
         try (final CloseableHttpResponse response = client.execute(req)) {
             assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
@@ -367,7 +370,7 @@ public abstract class AbstractResourceIT {
     protected CloseableHttpResponse setProperty(final String id, final String txId, final String propertyUri,
             final String value) throws IOException {
         final HttpPatch postProp = new HttpPatch(serverAddress + (txId != null ? txId + "/" : "") + id);
-        postProp.setHeader("Content-Type", "application/sparql-update");
+        postProp.setHeader(CONTENT_TYPE, "application/sparql-update");
         final String updateString =
                 "INSERT { <" + serverAddress + id + "> <" + propertyUri + "> \"" + value + "\" } WHERE { }";
         postProp.setEntity(new StringEntity(updateString));
@@ -393,7 +396,7 @@ public abstract class AbstractResourceIT {
 
     protected static void addMixin(final String pid, final String mixinUrl) throws IOException {
         final HttpPatch updateObjectGraphMethod = new HttpPatch(serverAddress + pid);
-        updateObjectGraphMethod.addHeader("Content-Type", "application/sparql-update");
+        updateObjectGraphMethod.addHeader(CONTENT_TYPE, "application/sparql-update");
         updateObjectGraphMethod.setEntity(new StringEntity(
                 "INSERT DATA { <> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <" + mixinUrl + "> . } "));
         try (final CloseableHttpResponse response = execute(updateObjectGraphMethod)) {

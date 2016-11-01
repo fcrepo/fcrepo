@@ -22,6 +22,9 @@ import static java.lang.Integer.parseInt;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.HttpHeaders.ACCEPT;
+
 import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
 import static org.junit.Assert.assertEquals;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -176,16 +179,16 @@ public abstract class AbstractResourceIT {
         final HttpResponse response = execute(method);
         final int result = response.getStatusLine().getStatusCode();
         assertEquals(OK.getStatusCode(), result);
-        return response.getFirstHeader("Content-Type").getValue();
+        return response.getFirstHeader(CONTENT_TYPE).getValue();
     }
 
     protected Dataset getDataset(final HttpClient client, final HttpUriRequest method) throws IOException {
 
-        if (method.getFirstHeader("Accept") == null) {
-            method.addHeader("Accept", "application/n-triples");
+        if (method.getFirstHeader(ACCEPT) == null) {
+            method.addHeader(ACCEPT, "application/n-triples");
         } else {
             logger.debug("Retrieving RDF in mimeType: {}", method
-                    .getFirstHeader("Accept"));
+                    .getFirstHeader(ACCEPT));
         }
 
         final HttpResponse response = client.execute(method);
@@ -239,7 +242,7 @@ public abstract class AbstractResourceIT {
                                        final String value) throws IOException {
         final HttpPatch postProp = new HttpPatch(serverAddress
                 + (txId != null ? txId + "/" : "") + pid);
-        postProp.setHeader("Content-Type", "application/sparql-update");
+        postProp.setHeader(CONTENT_TYPE, "application/sparql-update");
         final String updateString =
                 "INSERT { <"
                         + serverAddress + pid
@@ -255,7 +258,7 @@ public abstract class AbstractResourceIT {
     protected static void addMixin(final String pid, final String mixinUrl) throws IOException {
         final HttpPatch updateObjectGraphMethod =
                 new HttpPatch(serverAddress + pid);
-        updateObjectGraphMethod.addHeader("Content-Type",
+        updateObjectGraphMethod.addHeader(CONTENT_TYPE,
                 "application/sparql-update");
         final BasicHttpEntity e = new BasicHttpEntity();
 

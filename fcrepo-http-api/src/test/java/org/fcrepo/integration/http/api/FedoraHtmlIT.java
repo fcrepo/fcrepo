@@ -21,6 +21,7 @@ import static org.apache.commons.lang3.StringUtils.contains;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 
 import java.io.IOException;
 
@@ -40,7 +41,7 @@ public class FedoraHtmlIT extends AbstractResourceIT {
     public void testGetRoot() {
 
         final HttpGet method = new HttpGet(serverAddress);
-        method.addHeader("Accept", "text/html");
+        method.addHeader(ACCEPT, "text/html");
         assertEquals(200, getStatus(method));
     }
 
@@ -51,7 +52,7 @@ public class FedoraHtmlIT extends AbstractResourceIT {
         createObject(pid);
 
         final HttpGet method = new HttpGet(serverAddress + pid);
-        method.addHeader("Accept", "text/html");
+        method.addHeader(ACCEPT, "text/html");
         assertEquals(200, getStatus(method));
     }
 
@@ -66,7 +67,7 @@ public class FedoraHtmlIT extends AbstractResourceIT {
         final HttpGet method =
             new HttpGet(serverAddress + pid + "/ds1");
 
-        method.addHeader("Accept", "text/plain");
+        method.addHeader(ACCEPT, "text/plain");
         assertEquals(200, getStatus(method));
     }
 
@@ -77,7 +78,7 @@ public class FedoraHtmlIT extends AbstractResourceIT {
         addMixin(pid, REPOSITORY_NAMESPACE + "Container");
 
         final HttpGet method = new HttpGet(serverAddress + pid);
-        method.addHeader("Accept", "text/html");
+        method.addHeader(ACCEPT, "text/html");
         try (final CloseableHttpResponse response = execute(method)) {
             final String html = EntityUtils.toString(response.getEntity());
             assertTrue(contains(html, "class=\"fcrepo_resource\""));
@@ -90,7 +91,7 @@ public class FedoraHtmlIT extends AbstractResourceIT {
         createDatastream(pid, "file", "binary content");
 
         final HttpGet method = new HttpGet(serverAddress + pid + "/file/fcr:metadata");
-        method.addHeader("Accept", "text/html");
+        method.addHeader(ACCEPT, "text/html");
         try (final CloseableHttpResponse response = execute(method)) {
             final String html = EntityUtils.toString(response.getEntity());
             assertTrue(contains(html, "class=\"fcrepo_binary\""));
@@ -101,7 +102,7 @@ public class FedoraHtmlIT extends AbstractResourceIT {
     public void testGetRootTemplate() throws IOException {
 
         final HttpGet method = new HttpGet(serverAddress);
-        method.addHeader("Accept", "text/html");
+        method.addHeader(ACCEPT, "text/html");
         try (final CloseableHttpResponse response = execute(method)) {
             final String html = EntityUtils.toString(response.getEntity());
             assertTrue(contains(html, "class=\"fcrepo_root\""));

@@ -24,6 +24,8 @@ import static java.util.stream.Stream.of;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
+import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -32,9 +34,9 @@ import static org.apache.commons.io.IOUtils.toInputStream;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.fcrepo.http.api.ContentExposingResource.getSimpleContentType;
+import static org.fcrepo.http.api.FedoraLdp.HTTP_HEADER_ACCEPT_PATCH;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES_TYPE;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
-import static org.fcrepo.http.commons.test.util.TestHelpers.mockSession;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;
@@ -73,6 +75,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.ServerErrorException;
+
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
@@ -228,6 +231,10 @@ public class FedoraLdpTest {
 
     private FedoraResource setResource(final Class<? extends FedoraResource> klass) {
         final FedoraResource mockResource = mock(klass);
+        if (mockResource instanceof FedoraBinary) {
+            when(((FedoraBinary) mockResource).getContentSize()).thenReturn(1l);
+        }
+
         final Answer<RdfStream> answer = invocationOnMock -> new DefaultRdfStream(
                 createURI(invocationOnMock.getMock().toString()),
                 of(Triple.create(createURI(invocationOnMock.getMock().toString()),
@@ -250,10 +257,10 @@ public class FedoraLdpTest {
         setResource(FedoraResource.class);
         final Response actual = testObj.head();
         assertEquals(OK.getStatusCode(), actual.getStatus());
-        assertTrue("Should have a Link header", mockResponse.containsHeader("Link"));
+        assertTrue("Should have a Link header", mockResponse.containsHeader(LINK));
         assertTrue("Should have an Allow header", mockResponse.containsHeader("Allow"));
         assertTrue("Should be an LDP Resource",
-                mockResponse.getHeaders("Link").contains("<" + LDP_NAMESPACE + "Resource>;rel=\"type\""));
+                mockResponse.getHeaders(LINK).contains("<" + LDP_NAMESPACE + "Resource>;rel=\"type\""));
     }
 
     @Test
@@ -262,7 +269,8 @@ public class FedoraLdpTest {
         final Response actual = testObj.head();
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertTrue("Should advertise Accept-Post flavors", mockResponse.containsHeader("Accept-Post"));
-        assertTrue("Should advertise Accept-Patch flavors", mockResponse.containsHeader("Accept-Patch"));
+        assertTrue("Should advertise Accept-Patch flavors", mockResponse.containsHeader(
+                FedoraLdp.HTTP_HEADER_ACCEPT_PATCH));
     }
 
     @Test
@@ -270,10 +278,13 @@ public class FedoraLdpTest {
         setResource(Container.class);
         final Response actual = testObj.head();
         assertEquals(OK.getStatusCode(), actual.getStatus());
-        assertTrue("Should be an LDP BasicContainer",
-                mockResponse.getHeaders("Link").contains("<" + BASIC_CONTAINER.getURI() + ">;rel=\"type\""));
+        assertShouldBeAnLDPBasicContainer();
     }
 
+    private void assertShouldBeAnLDPBasicContainer() {
+        assertTrue("Should be an LDP BasicContainer",
+                mockResponse.getHeaders(LINK).contains("<" + BASIC_CONTAINER.getURI() + ">;rel=\"type\""));
+    }
 
     @Test
     public void testHeadWithBasicContainer() throws Exception {
@@ -281,8 +292,7 @@ public class FedoraLdpTest {
         when(resource.hasType(LDP_BASIC_CONTAINER)).thenReturn(true);
         final Response actual = testObj.head();
         assertEquals(OK.getStatusCode(), actual.getStatus());
-        assertTrue("Should be an LDP BasicContainer",
-                mockResponse.getHeaders("Link").contains("<" + BASIC_CONTAINER.getURI() + ">;rel=\"type\""));
+        assertShouldBeAnLDPBasicContainer();
     }
 
     @Test
@@ -291,8 +301,12 @@ public class FedoraLdpTest {
         when(resource.hasType(LDP_DIRECT_CONTAINER)).thenReturn(true);
         final Response actual = testObj.head();
         assertEquals(OK.getStatusCode(), actual.getStatus());
+        assertShouldBeAnLDPDirectContainer();
+    }
+
+    private void assertShouldBeAnLDPDirectContainer() {
         assertTrue("Should be an LDP DirectContainer",
-                mockResponse.getHeaders("Link").contains("<" + DIRECT_CONTAINER.getURI() + ">;rel=\"type\""));
+                mockResponse.getHeaders(LINK).contains("<" + DIRECT_CONTAINER.getURI() + ">;rel=\"type\""));
     }
 
     @Test
@@ -301,8 +315,12 @@ public class FedoraLdpTest {
         when(resource.hasType(LDP_INDIRECT_CONTAINER)).thenReturn(true);
         final Response actual = testObj.head();
         assertEquals(OK.getStatusCode(), actual.getStatus());
+        assertShouldBeAnLDPIndirectContainer();
+    }
+
+    private void assertShouldBeAnLDPIndirectContainer() {
         assertTrue("Should be an LDP IndirectContainer",
-                mockResponse.getHeaders("Link").contains("<" + INDIRECT_CONTAINER.getURI() + ">;rel=\"type\""));
+                mockResponse.getHeaders(LINK).contains("<" + INDIRECT_CONTAINER.getURI() + ">;rel=\"type\""));
     }
 
     @Test
@@ -312,14 +330,29 @@ public class FedoraLdpTest {
         when(mockResource.getMimeType()).thenReturn("image/jpeg");
         final Response actual = testObj.head();
         assertEquals(OK.getStatusCode(), actual.getStatus());
-        assertTrue("Should be an LDP NonRDFSource", mockResponse.getHeaders("Link").contains("<" + LDP_NAMESPACE +
-                "NonRDFSource>;rel=\"type\""));
-        assertFalse("Should not advertise Accept-Post flavors", mockResponse.containsHeader("Accept-Post"));
-        assertFalse("Should not advertise Accept-Patch flavors", mockResponse.containsHeader("Accept-Patch"));
+        assertContentLengthGreaterThan0(mockResponse.getHeader(CONTENT_LENGTH));
+        assertShouldBeAnLDPNonRDFSource();
+        assertShouldNotAdvertiseAcceptPatchFlavors();
+        assertShouldContainLinkToBinaryDescription();
+    }
+
+    private void assertContentLengthGreaterThan0(final String contentLength) {
+        assertTrue("Should have a content length header greater than 0", Integer.parseInt(contentLength) > 0);
+    }
+
+    private void assertShouldContainLinkToBinaryDescription() {
         assertTrue("Should contain a link to the binary description",
-                mockResponse.getHeaders("Link")
+                mockResponse.getHeaders(LINK)
                         .contains("<" + idTranslator.toDomain(binaryDescriptionPath + "/fcr:metadata")
                                 + ">; rel=\"describedby\""));
+    }
+
+    private void assertShouldNotAdvertiseAcceptPatchFlavors() {
+        assertFalse("Should not advertise Accept-Patch flavors", mockResponse.containsHeader(HTTP_HEADER_ACCEPT_PATCH));
+    }
+
+    private void assertShouldNotAdvertiseAcceptPostFlavors() {
+        assertFalse("Should not advertise Accept-Post flavors", mockResponse.containsHeader("Accept-Post"));
     }
 
     @Test
@@ -329,14 +362,9 @@ public class FedoraLdpTest {
         when(mockResource.getMimeType()).thenReturn("message/external-body; access-type=URL; URL=\"some:uri\"");
         final Response actual = testObj.head();
         assertEquals(TEMPORARY_REDIRECT.getStatusCode(), actual.getStatus());
-        assertTrue("Should be an LDP NonRDFSource", mockResponse.getHeaders("Link").contains("<" + LDP_NAMESPACE +
-                "NonRDFSource>;rel=\"type\""));
-        assertFalse("Should not advertise Accept-Post flavors", mockResponse.containsHeader("Accept-Post"));
-        assertFalse("Should not advertise Accept-Patch flavors", mockResponse.containsHeader("Accept-Patch"));
-        assertTrue("Should contain a link to the binary description",
-                mockResponse.getHeaders("Link")
-                        .contains("<" + idTranslator.toDomain(binaryDescriptionPath + "/fcr:metadata")
-                                + ">; rel=\"describedby\""));
+        assertShouldBeAnLDPNonRDFSource();
+        assertShouldNotAdvertiseAcceptPatchFlavors();
+        assertShouldContainLinkToBinaryDescription();
     }
 
     @Test
@@ -346,13 +374,21 @@ public class FedoraLdpTest {
         when(mockResource.getDescribedResource()).thenReturn(mockBinary);
         final Response actual = testObj.head();
         assertEquals(OK.getStatusCode(), actual.getStatus());
-        assertTrue("Should be an LDP RDFSource", mockResponse.getHeaders("Link").contains("<" + LDP_NAMESPACE +
+        assertTrue("Should be an LDP RDFSource", mockResponse.getHeaders(LINK).contains("<" + LDP_NAMESPACE +
                 "RDFSource>;rel=\"type\""));
-        assertFalse("Should not advertise Accept-Post flavors", mockResponse.containsHeader("Accept-Post"));
-        assertTrue("Should advertise Accept-Patch flavors", mockResponse.containsHeader("Accept-Patch"));
+        assertShouldNotAdvertiseAcceptPostFlavors();
+        assertShouldAdvertiseAcceptPatchFlavors();
+        assertShouldContainLinkToTheBinary();
+    }
+
+    private void assertShouldContainLinkToTheBinary() {
         assertTrue("Should contain a link to the binary",
-                mockResponse.getHeaders("Link")
+                mockResponse.getHeaders(LINK)
                         .contains("<" + idTranslator.toDomain(binaryPath) + ">; rel=\"describes\""));
+    }
+
+    private void assertShouldAdvertiseAcceptPatchFlavors() {
+        assertTrue("Should advertise Accept-Patch flavors", mockResponse.containsHeader(HTTP_HEADER_ACCEPT_PATCH));
     }
 
     @Test
@@ -369,7 +405,7 @@ public class FedoraLdpTest {
         final Response actual = testObj.options();
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertTrue("Should advertise Accept-Post flavors", mockResponse.containsHeader("Accept-Post"));
-        assertTrue("Should advertise Accept-Patch flavors", mockResponse.containsHeader("Accept-Patch"));
+        assertShouldAdvertiseAcceptPatchFlavors();
     }
 
     @Test
@@ -378,12 +414,9 @@ public class FedoraLdpTest {
         when(mockResource.getDescription()).thenReturn(mockNonRdfSourceDescription);
         final Response actual = testObj.options();
         assertEquals(OK.getStatusCode(), actual.getStatus());
-        assertFalse("Should not advertise Accept-Post flavors", mockResponse.containsHeader("Accept-Post"));
-        assertFalse("Should not advertise Accept-Patch flavors", mockResponse.containsHeader("Accept-Patch"));
-        assertTrue("Should contain a link to the binary description",
-                mockResponse.getHeaders("Link")
-                        .contains("<" + idTranslator.toDomain(binaryDescriptionPath + "/fcr:metadata")
-                                + ">; rel=\"describedby\""));
+        assertShouldNotAdvertiseAcceptPostFlavors();
+        assertShouldNotAdvertiseAcceptPatchFlavors();
+        assertShouldContainLinkToBinaryDescription();
     }
 
     @Test
@@ -393,11 +426,9 @@ public class FedoraLdpTest {
         when(mockResource.getDescribedResource()).thenReturn(mockBinary);
         final Response actual = testObj.options();
         assertEquals(OK.getStatusCode(), actual.getStatus());
-        assertFalse("Should not advertise Accept-Post flavors", mockResponse.containsHeader("Accept-Post"));
-        assertTrue("Should advertise Accept-Patch flavors", mockResponse.containsHeader("Accept-Patch"));
-        assertTrue("Should contain a link to the binary",
-                mockResponse.getHeaders("Link")
-                        .contains("<" + idTranslator.toDomain(binaryPath) + ">; rel=\"describes\""));
+        assertShouldNotAdvertiseAcceptPostFlavors();
+        assertShouldAdvertiseAcceptPatchFlavors();
+        assertShouldContainLinkToTheBinary();
     }
 
 
@@ -406,10 +437,10 @@ public class FedoraLdpTest {
         setResource(FedoraResource.class);
         final Response actual = testObj.getResource(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
-        assertTrue("Should have a Link header", mockResponse.containsHeader("Link"));
+        assertTrue("Should have a Link header", mockResponse.containsHeader(LINK));
         assertTrue("Should have an Allow header", mockResponse.containsHeader("Allow"));
         assertTrue("Should be an LDP Resource",
-                mockResponse.getHeaders("Link").contains("<" + LDP_NAMESPACE + "Resource>;rel=\"type\""));
+                mockResponse.getHeaders(LINK).contains("<" + LDP_NAMESPACE + "Resource>;rel=\"type\""));
 
         try (final RdfNamespacedStream entity = (RdfNamespacedStream) actual.getEntity()) {
             final Model model = entity.stream.collect(toModel());
@@ -425,7 +456,7 @@ public class FedoraLdpTest {
         final Response actual = testObj.getResource(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertTrue("Should advertise Accept-Post flavors", mockResponse.containsHeader("Accept-Post"));
-        assertTrue("Should advertise Accept-Patch flavors", mockResponse.containsHeader("Accept-Patch"));
+        assertShouldAdvertiseAcceptPatchFlavors();
 
         try (final RdfNamespacedStream entity = (RdfNamespacedStream) actual.getEntity()) {
             final Model model = entity.stream.collect(toModel());
@@ -442,8 +473,7 @@ public class FedoraLdpTest {
         when(resource.hasType(LDP_BASIC_CONTAINER)).thenReturn(true);
         final Response actual = testObj.getResource(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
-        assertTrue("Should be an LDP BasicContainer",
-                mockResponse.getHeaders("Link").contains("<" + BASIC_CONTAINER.getURI() + ">;rel=\"type\""));
+        assertShouldBeAnLDPBasicContainer();
     }
 
     @Test
@@ -452,8 +482,7 @@ public class FedoraLdpTest {
         when(resource.hasType(LDP_DIRECT_CONTAINER)).thenReturn(true);
         final Response actual = testObj.getResource(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
-        assertTrue("Should be an LDP DirectContainer",
-                mockResponse.getHeaders("Link").contains("<" + DIRECT_CONTAINER.getURI() + ">;rel=\"type\""));
+        assertShouldBeAnLDPDirectContainer();
     }
 
     @Test
@@ -462,8 +491,7 @@ public class FedoraLdpTest {
         when(resource.hasType(LDP_INDIRECT_CONTAINER)).thenReturn(true);
         final Response actual = testObj.getResource(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
-        assertTrue("Should be an LDP IndirectContainer",
-                mockResponse.getHeaders("Link").contains("<" + INDIRECT_CONTAINER.getURI() + ">;rel=\"type\""));
+        assertShouldBeAnLDPIndirectContainer();
     }
 
     @Test
@@ -542,15 +570,16 @@ public class FedoraLdpTest {
         when(mockResource.getContent()).thenReturn(toInputStream("xyz"));
         final Response actual = testObj.getResource(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
-        assertTrue("Should be an LDP NonRDFSource",
-                mockResponse.getHeaders("Link").contains("<" + LDP_NAMESPACE + "NonRDFSource>;rel=\"type\""));
-        assertFalse("Should not advertise Accept-Post flavors", mockResponse.containsHeader("Accept-Post"));
-        assertFalse("Should not advertise Accept-Patch flavors", mockResponse.containsHeader("Accept-Patch"));
-        assertTrue("Should contain a link to the binary description",
-                mockResponse.getHeaders("Link")
-                        .contains("<" + idTranslator.toDomain(binaryDescriptionPath + "/fcr:metadata")
-                                + ">; rel=\"describedby\""));
+        assertShouldBeAnLDPNonRDFSource();
+        assertShouldNotAdvertiseAcceptPatchFlavors();
+        assertShouldContainLinkToBinaryDescription();
         assertTrue(IOUtils.toString((InputStream)actual.getEntity()).equals("xyz"));
+    }
+
+    private void assertShouldBeAnLDPNonRDFSource() {
+        assertTrue("Should be an LDP NonRDFSource",
+                mockResponse.getHeaders(LINK).contains("<" + LDP_NAMESPACE + "NonRDFSource>;rel=\"type\""));
+        assertShouldNotAdvertiseAcceptPostFlavors();
     }
 
     @Test
@@ -561,10 +590,9 @@ public class FedoraLdpTest {
         when(mockResource.getContent()).thenReturn(toInputStream("xyz"));
         final Response actual = testObj.getResource(null);
         assertEquals(TEMPORARY_REDIRECT.getStatusCode(), actual.getStatus());
-        assertTrue("Should be an LDP NonRDFSource", mockResponse.getHeaders("Link").contains("<" + LDP_NAMESPACE +
+        assertTrue("Should be an LDP NonRDFSource", mockResponse.getHeaders(LINK).contains("<" + LDP_NAMESPACE +
                 "NonRDFSource>;rel=\"type\""));
-        assertTrue("Should contain a link to the binary description", mockResponse.getHeaders("Link").contains("<" +
-                idTranslator.toDomain(binaryDescriptionPath + "/fcr:metadata") + ">; rel=\"describedby\""));
+        assertShouldContainLinkToBinaryDescription();
         assertEquals(new URI("some:uri"), actual.getLocation());
     }
 
@@ -584,12 +612,10 @@ public class FedoraLdpTest {
         final Response actual = testObj.getResource(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertTrue("Should be an LDP RDFSource",
-                mockResponse.getHeaders("Link").contains("<" + LDP_NAMESPACE + "RDFSource>;rel=\"type\""));
-        assertFalse("Should not advertise Accept-Post flavors", mockResponse.containsHeader("Accept-Post"));
-        assertTrue("Should advertise Accept-Patch flavors", mockResponse.containsHeader("Accept-Patch"));
-        assertTrue("Should contain a link to the binary",
-                mockResponse.getHeaders("Link")
-                        .contains("<" + idTranslator.toDomain(binaryPath) + ">; rel=\"describes\""));
+                mockResponse.getHeaders(LINK).contains("<" + LDP_NAMESPACE + "RDFSource>;rel=\"type\""));
+        assertShouldNotAdvertiseAcceptPostFlavors();
+        assertShouldAdvertiseAcceptPatchFlavors();
+        assertShouldContainLinkToTheBinary();
 
         final Model model = ((RdfNamespacedStream) actual.getEntity()).stream.collect(toModel());
         final List<String> rdfNodes = model.listObjects().mapWith(RDFNode::toString).toList();

@@ -18,6 +18,8 @@
 package org.fcrepo.integration;
 
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static com.gargoylesoftware.htmlunit.BrowserVersion.FIREFOX_24;
 import static com.google.common.collect.Lists.transform;
 import static java.util.UUID.randomUUID;
@@ -278,7 +280,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
     private static void postSparqlUpdateUsingHttpClient(final String sparql, final String pid) throws IOException {
         final HttpPatch method = new HttpPatch(serverAddress + pid);
-        method.addHeader("Content-Type", "application/sparql-update");
+        method.addHeader(CONTENT_TYPE, "application/sparql-update");
         final BasicHttpEntity entity = new BasicHttpEntity();
         entity.setContent(new ByteArrayInputStream(sparql.getBytes()));
         method.setEntity(entity);
@@ -349,7 +351,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
     private WebClient getDefaultWebClient() {
 
         final WebClient webClient = new WebClient(FIREFOX_24);
-        webClient.addRequestHeader("Accept", "text/html");
+        webClient.addRequestHeader(ACCEPT, "text/html");
 
         webClient.waitForBackgroundJavaScript(1000);
         webClient.waitForBackgroundJavaScriptStartingBefore(10000);

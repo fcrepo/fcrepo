@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.util.Random;
 import java.util.stream.Stream;
 
+import static javax.ws.rs.core.HttpHeaders.LINK;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -83,7 +84,7 @@ public class MalformedRdfExceptionMapperTest {
         Stream.generate(new Random()::nextInt).limit(2000).forEach(error::append);
         final Response response = testObj.toResponse(new MalformedRdfException(error.toString()));
 
-        final String linkHeader = response.getHeaderString("Link");
+        final String linkHeader = response.getHeaderString(LINK);
         assertNotNull(linkHeader);
         assertTrue(linkHeader.length() < 1000);
     }

@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static org.apache.jena.graph.NodeFactory.createBlankNode;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
@@ -59,7 +60,7 @@ public abstract class AbstractIntegrationRdfIT extends AbstractResourceIT {
         try {
             final HttpPut httpPut = new HttpPut(serverAddress + pid);
             httpPut.addHeader("Slug", pid);
-            httpPut.addHeader("Content-Type", "text/turtle");
+            httpPut.addHeader(CONTENT_TYPE, "text/turtle");
             final BasicHttpEntity e = new BasicHttpEntity();
             e.setContent(IOUtils.toInputStream(body));
             httpPut.setEntity(e);

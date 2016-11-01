@@ -26,6 +26,8 @@ import static org.apache.jena.vocabulary.DC.title;
 import static java.util.stream.Stream.empty;
 import static java.util.stream.Stream.of;
 import static javax.ws.rs.core.Link.fromUri;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
@@ -567,7 +569,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
         for (final String type : POSSIBLE_RDF_RESPONSE_VARIANTS_STRING) {
             final HttpGet method = new HttpGet(serverAddress + id + "/fcr:versions");
-            method.addHeader("Accept", type);
+            method.addHeader(ACCEPT, type);
             assertEquals(type, getContentType(method));
         }
     }
@@ -583,7 +585,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
         for (final String type : POSSIBLE_RDF_RESPONSE_VARIANTS_STRING) {
             final HttpGet method = new HttpGet(serverAddress + id + "/fcr:versions/" + versionName);
-            method.addHeader("Accept", type);
+            method.addHeader(ACCEPT, type);
             assertEquals(type, getContentType(method));
         }
     }
@@ -605,7 +607,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
     private static void patchLiteralProperty(final String url, final String predicate, final String literal)
             throws IOException {
         final HttpPatch updateObjectGraphMethod = new HttpPatch(url);
-        updateObjectGraphMethod.addHeader("Content-Type", "application/sparql-update");
+        updateObjectGraphMethod.addHeader(CONTENT_TYPE, "application/sparql-update");
         updateObjectGraphMethod.setEntity(new StringEntity(
                 "INSERT DATA { <> <" + predicate + "> \"" + literal + "\" } "));
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(updateObjectGraphMethod));
