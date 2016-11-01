@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
+import static java.time.Instant.now;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.graph.Triple.create;
@@ -32,7 +33,6 @@ import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
@@ -69,7 +69,7 @@ public class FixityRdfContext extends NodeRdfContext {
 
         concat(StreamSupport.stream(blobs.spliterator(), false).flatMap(uncheck(blob -> {
             final org.apache.jena.graph.Node resultSubject =
-                    createURI(subject().getURI() + "#fixity/" + Calendar.getInstance().getTimeInMillis());
+                    createURI(subject().getURI() + "#fixity/" + now().toEpochMilli());
             final List<Triple> b = new ArrayList<>();
 
             b.add(create(subject(), HAS_FIXITY_RESULT.asNode(), resultSubject));

@@ -19,9 +19,9 @@ package org.fcrepo.integration.http.api;
 
 import static java.lang.Thread.sleep;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.time.ZoneId.of;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
-import static java.util.TimeZone.getTimeZone;
 import static java.util.regex.Pattern.compile;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.Link.fromUri;
@@ -104,11 +104,11 @@ import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -190,14 +190,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     private static final Logger LOGGER = getLogger(FedoraLdpIT.class);
 
-    private static SimpleDateFormat headerFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
+    private static DateTimeFormatter headerFormat =
+      DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US).withZone(of("GMT"));
 
-    private static SimpleDateFormat tripleFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-
-    static {
-        headerFormat.setTimeZone(getTimeZone("GMT"));
-        tripleFormat.setTimeZone(getTimeZone("GMT"));
-    }
+    private static DateTimeFormatter tripleFormat =
+      DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(of("GMT"));
 
     @Test
     public void testHeadRepositoryGraph() {
@@ -1912,10 +1909,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 final Model model = createModelForGraph(graph.getDefaultGraph());
                 final Resource nodeUri = createResource(location);
                 final String lastmodString = response.getFirstHeader("Last-Modified").getValue();
-                headerFormat.parse(lastmodString);
-                final Optional<Date> createdDateTriples =
+                final Optional<Instant> createdDateTriples =
                         getDateFromModel(model, nodeUri, createProperty(REPOSITORY_NAMESPACE + "created"));
-                final Optional<Date> lastmodDateTriples =
+                final Optional<Instant> lastmodDateTriples =
                         getDateFromModel(model, nodeUri, createProperty(REPOSITORY_NAMESPACE + "lastModified"));
                 assertTrue(createdDateTriples.isPresent());
                 assertTrue(lastmodDateTriples.isPresent());
@@ -2203,10 +2199,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(headObjMethod(badLocation)));
     }
 
-    private static Optional<Date> getDateFromModel(final Model model, final Resource subj, final Property pred)
+    private static Optional<Instant> getDateFromModel(final Model model, final Resource subj, final Property pred)
             throws NoSuchElementException, ParseException {
         final StmtIterator stmts = model.listStatements(subj, pred, (String) null);
-        return Optional.ofNullable(stmts.hasNext() ? tripleFormat.parse(stmts.nextStatement().getString()) : null);
+        return Optional.ofNullable(
+           stmts.hasNext() ? Instant.from(tripleFormat.parse(stmts.nextStatement().getString())) : null);
     }
 
     @Test
@@ -2629,10 +2626,10 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String objURI = serverAddress + objid;
         final String binURI = objURI + "/binary1";
 
-        final long lastmod1;
+        final Instant lastmod1;
         try (final CloseableHttpResponse response = execute(putDSMethod(objid, "binary1", "some test content"))) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
-            lastmod1 = headerFormat.parse(response.getFirstHeader("Last-Modified").getValue()).getTime();
+            lastmod1 = Instant.from(headerFormat.parse(response.getFirstHeader("Last-Modified").getValue()));
         }
 
         sleep(1000); // wait a second to make sure last-modified value will be different
@@ -2645,20 +2642,21 @@ public class FedoraLdpIT extends AbstractResourceIT {
         patchBinary.addHeader(CONTENT_TYPE, "application/sparql-update");
         patchBinary.setEntity(new StringEntity("INSERT { <" + binURI + "> " +
                 "<http://www.w3.org/TR/rdf-schema/label> \"this is a label\" } WHERE {}"));
-        final long lastmod2;
+
+        final Instant lastmod2;
         try (final CloseableHttpResponse response = execute(patchBinary)) {
             assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
-            lastmod2 = headerFormat.parse(response.getFirstHeader("Last-Modified").getValue()).getTime();
-            assertTrue(lastmod2 > lastmod1);
+            lastmod2 = Instant.from(headerFormat.parse(response.getFirstHeader("Last-Modified").getValue()));
+            assertTrue(lastmod2.isAfter(lastmod1));
         }
 
         sleep(1000); // wait a second to make sure last-modified value will be different
 
-        final long lastmod3;
+        final Instant lastmod3;
         try (final CloseableHttpResponse response = execute(putDSMethod(objid, "binary1", "new test content"))) {
             assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
-            lastmod3 = headerFormat.parse(response.getFirstHeader("Last-Modified").getValue()).getTime();
-            assertTrue(lastmod3 > lastmod2);
+            lastmod3 = Instant.from(headerFormat.parse(response.getFirstHeader("Last-Modified").getValue()));
+            assertTrue(lastmod3.isAfter(lastmod2));
         }
     }
 
@@ -2671,7 +2669,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final long lastmod1;
         try (final CloseableHttpResponse response = execute(putObjMethod(objid))) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
-            lastmod1 = headerFormat.parse(response.getFirstHeader("Last-Modified").getValue()).getTime();
+            lastmod1 = Instant.from(
+                headerFormat.parse(response.getFirstHeader("Last-Modified").getValue())).toEpochMilli();
         }
 
         sleep(1000); // wait a second to make sure last-modified value will be different
@@ -2689,7 +2688,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final long lastmod2;
         try (final CloseableHttpResponse response = execute(patchObject)) {
             assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
-            lastmod2 = headerFormat.parse(response.getFirstHeader("Last-Modified").getValue()).getTime();
+            lastmod2 = Instant.from(
+                headerFormat.parse(response.getFirstHeader("Last-Modified").getValue())).toEpochMilli();
             assertTrue(lastmod2 > lastmod1);
         }
 
@@ -2705,7 +2705,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createContainer.setEntity(new StringEntity(membersRDF));
         try (final CloseableHttpResponse response = execute(createContainer)) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
-            lastmod3 = headerFormat.parse(response.getFirstHeader("Last-Modified").getValue()).getTime();
+            lastmod3 = Instant.from(
+                headerFormat.parse(response.getFirstHeader("Last-Modified").getValue())).toEpochMilli();
             assertTrue(lastmod3 > lastmod2);
         }
 
@@ -2718,7 +2719,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         // last-modified should be updated
         try (final CloseableHttpResponse response = execute(headObjMethod(objid))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
-            lastmod4 = headerFormat.parse(response.getFirstHeader("Last-Modified").getValue()).getTime();
+            lastmod4 = Instant.from(
+                headerFormat.parse(response.getFirstHeader("Last-Modified").getValue())).toEpochMilli();
             assertTrue(lastmod4 > lastmod3);
         }
     }

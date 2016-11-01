@@ -36,9 +36,9 @@ import java.net.URI;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Date;
 
 import javax.jcr.LoginException;
 import javax.jcr.Node;
@@ -224,8 +224,8 @@ public abstract class TestHelpers {
         when(mockDs.getDescribedResource()).thenReturn(mockBinary);
         when(mockDs.getDescribedResource().getDescription()).thenReturn(mockDs);
         when(mockDs.getPath()).thenReturn("/" + pid + "/" + dsId);
-        when(mockDs.getCreatedDate()).thenReturn(new Date());
-        when(mockDs.getLastModifiedDate()).thenReturn(new Date());
+        when(mockDs.getCreatedDate()).thenReturn(Instant.now());
+        when(mockDs.getLastModifiedDate()).thenReturn(Instant.now());
         if (content != null) {
             final MessageDigest md;
             try {
@@ -245,8 +245,8 @@ public abstract class TestHelpers {
         final FedoraBinary mockBinary = mock(FedoraBinary.class);
         when(mockBinary.getPath()).thenReturn("/" + pid + "/" + dsId + "/jcr:content");
         when(mockBinary.getMimeType()).thenReturn("application/octet-stream");
-        when(mockBinary.getCreatedDate()).thenReturn(new Date());
-        when(mockBinary.getLastModifiedDate()).thenReturn(new Date());
+        when(mockBinary.getCreatedDate()).thenReturn(Instant.now());
+        when(mockBinary.getLastModifiedDate()).thenReturn(Instant.now());
         if (content != null) {
             final MessageDigest md;
             try {

@@ -47,10 +47,10 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
 import java.net.URI;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
+import java.time.Instant;
 
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
@@ -141,8 +141,7 @@ public class FedoraResourceImplTest {
         when(mockProp.getDate()).thenReturn(someDate);
         when(mockNode.hasProperty(JCR_CREATED)).thenReturn(true);
         when(mockNode.getProperty(JCR_CREATED)).thenReturn(mockProp);
-        assertEquals(someDate.getTimeInMillis(), testObj.getCreatedDate()
-                .getTime());
+        assertEquals(someDate.getTimeInMillis(), testObj.getCreatedDate().toEpochMilli());
     }
 
     @Test
@@ -202,8 +201,8 @@ public class FedoraResourceImplTest {
         } catch (final RepositoryException e) {
             e.printStackTrace();
         }
-        final Date actual = testObj.getLastModifiedDate();
-        assertEquals(someDate.getTimeInMillis(), actual.getTime());
+        final Instant actual = testObj.getLastModifiedDate();
+        assertEquals(someDate.getTimeInMillis(), actual.toEpochMilli());
         // this is a read operation, it must not persist the session
         verify(mockSession, never()).save();
     }
@@ -231,8 +230,8 @@ public class FedoraResourceImplTest {
             System.err.println("What are we doing in the second test?");
             e.printStackTrace();
         }
-        final Date actual = testObj.getLastModifiedDate();
-        assertEquals(modDate.getTimeInMillis(), actual.getTime());
+        final Instant actual = testObj.getLastModifiedDate();
+        assertEquals(modDate.getTimeInMillis(), actual.toEpochMilli());
     }
 
     @Test
@@ -249,8 +248,8 @@ public class FedoraResourceImplTest {
         when(mockNode.hasProperty(JCR_LASTMODIFIED)).thenReturn(true);
         when(mockNode.getProperty(JCR_LASTMODIFIED)).thenReturn(mockMod);
         when(mockMod.getDate()).thenReturn(modDate);
-        final Date actual = testObj.getLastModifiedDate();
-        assertEquals(modDate.getTimeInMillis(), actual.getTime());
+        final Instant actual = testObj.getLastModifiedDate();
+        assertEquals(modDate.getTimeInMillis(), actual.toEpochMilli());
     }
 
     @Test
@@ -341,7 +340,7 @@ public class FedoraResourceImplTest {
         when(mockMod.getDate()).thenReturn(modDate);
 
         assertEquals(shaHex("some-path"
-                + testObj.getLastModifiedDate().getTime()), testObj
+                + testObj.getLastModifiedDate().toEpochMilli()), testObj
                 .getEtagValue());
     }
 

@@ -18,7 +18,7 @@
 package org.fcrepo.kernel.api.models;
 
 import java.net.URI;
-import java.util.Date;
+import java.time.Instant;
 
 import java.util.List;
 import java.util.Set;
@@ -91,13 +91,13 @@ public interface FedoraResource {
      * Get the date this resource was created
      * @return created date
      */
-    Date getCreatedDate();
+    Instant getCreatedDate();
 
     /**
      * Get the date this resource was last modified
      * @return last modified date
      */
-    Date getLastModifiedDate();
+    Instant getLastModifiedDate();
 
     /**
      * Check if this object uses a given RDF type
