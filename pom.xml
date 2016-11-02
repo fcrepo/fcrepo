@@ -23,11 +23,13 @@
     <project_name>fcrepo4</project_name>
     <project_organization>fcrepo4</project_organization>
     <!-- Dependency version properties -->
-    <activemq.version>5.10.0</activemq.version>
-    <commons-io.version>2.4</commons-io.version>
-    <commons-lang.version>3.3.2</commons-lang.version>
+    <activemq.version>5.14.1</activemq.version>
+    <commons-codec.version>1.10</commons-codec.version>
+    <commons-io.version>2.5</commons-io.version>
+    <commons-lang.version>3.5</commons-lang.version>
+    <jbossjta.version>4.16.6.Final</jbossjta.version>
     <jetty.version>9.3.1.v20150714</jetty.version>
-    <guava.version>19.0</guava.version>
+    <guava.version>20.0</guava.version>
     <hk2.version>2.3.0</hk2.version>
     <htmlunit.version>2.15</htmlunit.version>
     <httpclient.version>4.4.1</httpclient.version>
@@ -35,25 +37,29 @@
     <httpcore.version>4.4.1</httpcore.version>
     <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
     <javaee-api.version>7.0</javaee-api.version>
-    <jackson2.version>2.3.2</jackson2.version>
-    <jboss-logging.version>3.1.3.GA</jboss-logging.version>
+    <jackson2.version>2.8.4</jackson2.version>
+    <jboss-logging.version>3.3.0.Final</jboss-logging.version>
     <jcr.version>2.0</jcr.version>
     <jena.version>3.1.0</jena.version>
-    <jersey.version>2.22.2</jersey.version>
-    <jgroups.version>3.6.2.Final</jgroups.version>
+    <jersey.version>2.24</jersey.version>
+    <jgroups.version>3.6.11.Final</jgroups.version>
     <jsonld.version>0.8.3</jsonld.version>
-    <logback.version>1.1.2</logback.version>
-    <metrics.version>3.1.0</metrics.version>
-    <modeshape.version>5.1.0.Final</modeshape.version>
-    <slf4j.version>1.7.7</slf4j.version>
-    <spring.version>4.1.1.RELEASE</spring.version>
+    <logback.version>1.1.7</logback.version>
+    <metrics.version>3.1.2</metrics.version>
+    <modeshape.version>5.2.0.Final</modeshape.version>
+    <slf4j.version>1.7.21</slf4j.version>
+    <snappy-java.version>1.1.2.6</snappy-java.version>
+    <spring.version>4.3.3.RELEASE</spring.version>
     <xml-apis.version>1.4.01</xml-apis.version>
     <velocity.version>1.7</velocity.version>
+    <!-- JCBC dependencies -->
+    <postgresql.version>9.4.1211</postgresql.version>
+    <mysql.version>5.1.38</mysql.version>
     <!-- test gear -->
-    <awaitility.version>1.6.2</awaitility.version>
-    <grizzly.version>2.3.16</grizzly.version>
-    <junit.version>4.11</junit.version>
-    <mockito.version>1.10.8</mockito.version>
+    <awaitility.version>1.7.0</awaitility.version>
+    <grizzly.version>2.3.28</grizzly.version>
+    <junit.version>4.12</junit.version>
+    <mockito.version>1.10.19</mockito.version>
     <!-- fcrepo4-specific plugins -->
     <enforcer.plugin.version>1.4</enforcer.plugin.version>
     <enforce-victims.rule.version>1.3.4</enforce-victims.rule.version>
