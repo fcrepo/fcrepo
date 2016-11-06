@@ -4,10 +4,10 @@ jdk:
   - oraclejdk8
 before_install:  
  - "echo $JAVA_OPTS"
- - "export JAVA_OPTS=-Xmx512m"
+ - "export JAVA_OPTS=-Xmx2048m"
 
 script:
- - mvn install -B -V
+ - mvn install -B -V -Dfcrepo.log=WARN -Dfcrepo.log.kernel=WARN -Dfcrepo.log.http.api=WARN
 
 notifications:
   irc: "irc.freenode.org#fcrepo"
