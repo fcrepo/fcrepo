@@ -17,6 +17,7 @@
  */
 package org.fcrepo.http.commons.responses;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 
 import java.io.ByteArrayInputStream;
@@ -36,7 +37,7 @@ public class RangeRequestInputStreamTest {
     public void shouldLimitTheInputStream() throws IOException {
         final InputStream in = new ByteArrayInputStream("0123456789".getBytes());
         try (final RangeRequestInputStream out = new RangeRequestInputStream(in, 5L, 3L)) {
-            final String s = IOUtils.toString(out);
+            final String s = IOUtils.toString(out, UTF_8);
             assertEquals("567", s);
         }
     }
@@ -46,7 +47,7 @@ public class RangeRequestInputStreamTest {
     public void shouldAcceptUnboundedRanges() throws IOException {
         final InputStream in = new ByteArrayInputStream("0123456789".getBytes());
         try (final RangeRequestInputStream out = new RangeRequestInputStream(in, 0L, -1L)) {
-            final String s = IOUtils.toString(out);
+            final String s = IOUtils.toString(out, UTF_8);
             assertEquals("0123456789", s);
         }
     }

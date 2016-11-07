@@ -20,7 +20,7 @@ package org.fcrepo.kernel.modeshape;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static java.util.Calendar.JULY;
-import static org.apache.commons.codec.digest.DigestUtils.shaHex;
+import static org.apache.commons.codec.digest.DigestUtils.sha1Hex;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_PAIRTREE;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TOMBSTONE;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIED;
@@ -339,7 +339,7 @@ public class FedoraResourceImplTest {
         when(mockNode.getProperty(FEDORA_LASTMODIFIED)).thenReturn(mockMod);
         when(mockMod.getDate()).thenReturn(modDate);
 
-        assertEquals(shaHex("some-path"
+        assertEquals(sha1Hex("some-path"
                 + testObj.getLastModifiedDate().toEpochMilli()), testObj
                 .getEtagValue());
     }

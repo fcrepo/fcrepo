@@ -955,7 +955,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String etag1;
         try (final CloseableHttpResponse response = execute(get)) {
             etag1 = response.getFirstHeader("ETag").getValue();
-            final String resp = IOUtils.toString(response.getEntity().getContent());
+            final String resp = IOUtils.toString(response.getEntity().getContent(), UTF_8);
         }
 
         assertEquals("Child resource not deleted!", NO_CONTENT.getStatusCode(),
@@ -964,7 +964,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String etag2;
         try (final CloseableHttpResponse response = execute(get)) {
             etag2 = response.getFirstHeader("ETag").getValue();
-            final String resp = IOUtils.toString(response.getEntity().getContent());
+            final String resp = IOUtils.toString(response.getEntity().getContent(), UTF_8);
         }
 
         assertNotEquals("ETag didn't change!", etag1, etag2);
@@ -1137,7 +1137,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final HttpGet get = new HttpGet(location);
 
             try (final CloseableHttpResponse getResponse = execute(get)) {
-                final String resp = IOUtils.toString(getResponse.getEntity().getContent());
+                final String resp = IOUtils.toString(getResponse.getEntity().getContent(), UTF_8);
                 assertEquals("application/n-triples", getResponse.getFirstHeader(CONTENT_TYPE).getValue());
                 assertEquals(rdf, resp);
             }

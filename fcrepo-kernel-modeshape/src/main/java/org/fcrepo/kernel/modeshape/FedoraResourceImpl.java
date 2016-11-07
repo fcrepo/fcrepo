@@ -28,7 +28,7 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.empty;
 import static java.util.stream.Stream.of;
-import static org.apache.commons.codec.digest.DigestUtils.shaHex;
+import static org.apache.commons.codec.digest.DigestUtils.sha1Hex;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
@@ -782,7 +782,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         final Instant lastModifiedDate = getLastModifiedDate();
 
         if (lastModifiedDate != null) {
-            return shaHex(getPath() + lastModifiedDate.toEpochMilli());
+            return sha1Hex(getPath() + lastModifiedDate.toEpochMilli());
         }
         return "";
     }

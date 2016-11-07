@@ -18,7 +18,6 @@
 package org.fcrepo.integration.jms.observer;
 
 import static com.google.common.base.Strings.nullToEmpty;
-import static com.google.common.base.Throwables.propagate;
 import static com.jayway.awaitility.Awaitility.await;
 import static com.jayway.awaitility.Duration.ONE_HUNDRED_MILLISECONDS;
 import static java.util.UUID.randomUUID;
@@ -196,7 +195,7 @@ abstract class AbstractJmsIT implements MessageListener {
                 return getPath(msg).equals(id) && getEventTypes(msg).contains(eventType)
                         && getResourceTypes(msg).contains(nullToEmpty(type));
             } catch (final JMSException e) {
-                throw propagate(e);
+                throw new RuntimeException(e);
             }
         }));
     }
@@ -228,7 +227,7 @@ abstract class AbstractJmsIT implements MessageListener {
                             + " and baseURL: {}", message.getJMSMessageID(), getPath(message), getTimestamp(message),
                             getEventTypes(message), getResourceTypes(message), getBaseURL(message));
         } catch (final JMSException e) {
-            propagate(e);
+            throw new RuntimeException(e);
         }
         messages.add(message);
     }

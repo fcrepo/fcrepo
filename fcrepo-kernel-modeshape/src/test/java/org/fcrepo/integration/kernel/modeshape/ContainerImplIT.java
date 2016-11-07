@@ -17,6 +17,7 @@
  */
 package org.fcrepo.integration.kernel.modeshape;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptySet;
 import static java.util.regex.Pattern.compile;
 import static org.apache.commons.io.IOUtils.toInputStream;
@@ -222,7 +223,7 @@ public class ContainerImplIT extends AbstractIT {
 
         final Model model = createDefaultModel().read(
                 toInputStream("<> <info:some-property> <relative-url> . \n" +
-                                      "<> <info:some-other-property> <another-relative-url>"),
+                                      "<> <info:some-other-property> <another-relative-url>", UTF_8),
                 subjects.reverse().convert(object).toString(),
                 "TTL");
         MalformedRdfException e = null;
