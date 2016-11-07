@@ -263,7 +263,7 @@
             <debug>true</debug>
             <source>1.8</source>
             <target>1.8</target>
-            <compilerArgument>-Xlint:unchecked</compilerArgument>
+            <compilerArgument>-Xlint:unchecked,deprecation</compilerArgument>
           </configuration>
         </plugin>
 

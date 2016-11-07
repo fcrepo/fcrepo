@@ -17,7 +17,6 @@
  */
 package org.fcrepo.kernel.api.utils;
 
-import static com.google.common.base.Throwables.propagate;
 import static org.apache.commons.codec.binary.Hex.encodeHexString;
 import static org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM.SHA1;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -26,6 +25,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.slf4j.Logger;
 
 /**
@@ -102,7 +102,7 @@ public final class ContentDigest {
         } catch (final URISyntaxException unlikelyException) {
             LOGGER.warn("Exception creating checksum URI: {}",
                                unlikelyException);
-            throw propagate(unlikelyException);
+            throw new RepositoryRuntimeException(unlikelyException);
         }
     }
 

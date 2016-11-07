@@ -20,6 +20,7 @@ package org.fcrepo.http.commons.test.util;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.http.entity.ContentType.parse;
 import static java.net.URI.create;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.UriBuilder.fromUri;
 import static org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM.SHA1;
 import static org.junit.Assert.assertNotNull;
@@ -257,7 +258,7 @@ public abstract class TestHelpers {
             final byte[] digest = md.digest(content.getBytes());
             final URI cd = asURI(SHA1.algorithm, digest);
             when(mockBinary.getContent()).thenReturn(
-                    IOUtils.toInputStream(content));
+                    IOUtils.toInputStream(content, UTF_8));
             when(mockBinary.getContentDigest()).thenReturn(cd);
             when(mockBinary.getEtagValue()).thenReturn(cd.toString());
         }

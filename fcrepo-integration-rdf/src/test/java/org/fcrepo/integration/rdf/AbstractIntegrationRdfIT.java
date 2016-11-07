@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static org.apache.jena.graph.NodeFactory.createBlankNode;
@@ -62,7 +63,7 @@ public abstract class AbstractIntegrationRdfIT extends AbstractResourceIT {
             httpPut.addHeader("Slug", pid);
             httpPut.addHeader(CONTENT_TYPE, "text/turtle");
             final BasicHttpEntity e = new BasicHttpEntity();
-            e.setContent(IOUtils.toInputStream(body));
+            e.setContent(IOUtils.toInputStream(body, UTF_8));
             httpPut.setEntity(e);
             final HttpResponse response = client.execute(httpPut);
             checkResponse(response, CREATED);
@@ -79,7 +80,8 @@ public abstract class AbstractIntegrationRdfIT extends AbstractResourceIT {
             assertFalse(graphStore.isEmpty());
 
             final Graph tidiedGraph = getTidiedGraph(graphStore);
-            final Model expected = ModelFactory.createDefaultModel().read(IOUtils.toInputStream(body), location, "TTL");
+            final Model expected = ModelFactory.createDefaultModel().read(
+                    IOUtils.toInputStream(body, UTF_8), location, "TTL");
 
             final boolean isomorphicWith = tidiedGraph.isIsomorphicWith(getTidiedGraph(expected.getGraph()));
 
@@ -163,7 +165,7 @@ public abstract class AbstractIntegrationRdfIT extends AbstractResourceIT {
     }
 
     protected String getContentFromClasspath(final String path) throws IOException {
-        return IOUtils.toString(this.getClass().getResourceAsStream(path));
+        return IOUtils.toString(this.getClass().getResourceAsStream(path), UTF_8);
     }
 
 

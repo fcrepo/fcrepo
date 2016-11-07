@@ -23,7 +23,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JSR310Module;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
 import org.slf4j.Logger;
 
@@ -42,7 +42,7 @@ public class JsonLDSerializer implements EventSerializer {
      */
     public JsonLDSerializer() {
         // newer versions of jackson rename this to `JavaTimeModule`
-        MAPPER.registerModule(new JSR310Module());
+        MAPPER.registerModule(new JavaTimeModule());
         MAPPER.configure(WRITE_DATES_AS_TIMESTAMPS, false);
     }
 

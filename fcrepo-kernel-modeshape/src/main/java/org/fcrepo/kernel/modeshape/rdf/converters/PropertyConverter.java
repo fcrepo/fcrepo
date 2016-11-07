@@ -23,6 +23,7 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.api.exception.FedoraInvalidNamespaceException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.modeshape.jcr.api.NamespaceRegistry;
 import org.modeshape.jcr.api.Namespaced;
 import org.slf4j.Logger;
@@ -32,7 +33,6 @@ import javax.jcr.RepositoryException;
 
 import java.util.Map;
 
-import static com.google.common.base.Throwables.propagate;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getJcrNamespaceForRDFNamespace;
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
@@ -72,7 +72,7 @@ public class PropertyConverter extends Converter<javax.jcr.Property, Property> {
             }
             return createProperty(property.getName());
         } catch (final RepositoryException e) {
-            throw propagate(e);
+            throw new RepositoryRuntimeException(e);
         }
 
     }

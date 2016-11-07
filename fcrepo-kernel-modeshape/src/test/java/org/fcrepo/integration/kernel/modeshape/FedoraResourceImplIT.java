@@ -18,6 +18,7 @@
 package org.fcrepo.integration.kernel.modeshape;
 
 import static java.net.URI.create;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptySet;
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDstring;
 import static org.apache.jena.graph.Node.ANY;
@@ -1027,7 +1028,7 @@ public class FedoraResourceImplIT extends AbstractIT {
                 new NonRdfSourceDescriptionImpl(version.getFrozenNode().getNode("child"));
         try (final InputStream contentStream = ((FedoraBinary) frozenChild.getDescribedResource()).getContent()) {
             assertNotNull(contentStream);
-            assertEquals(content, IOUtils.toString(contentStream));
+            assertEquals(content, IOUtils.toString(contentStream, UTF_8));
         }
     }
 
