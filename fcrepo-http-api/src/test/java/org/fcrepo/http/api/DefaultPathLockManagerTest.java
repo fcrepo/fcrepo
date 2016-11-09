@@ -185,8 +185,8 @@ public class DefaultPathLockManagerTest {
         private Locker l;
 
         public Actor(final Locker l) {
-            this.start();
             this.l = l;
+            this.start();
         }
 
         @Override
