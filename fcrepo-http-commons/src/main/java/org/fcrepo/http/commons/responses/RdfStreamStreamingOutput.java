@@ -17,15 +17,15 @@
  */
 package org.fcrepo.http.commons.responses;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
-import static com.github.jsonldjava.core.JsonLdProcessor.compact;
-import static com.github.jsonldjava.core.JsonLdProcessor.flatten;
 import static org.apache.jena.riot.Lang.JSONLD;
 import static org.apache.jena.riot.Lang.RDFXML;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.riot.RDFLanguages.getRegisteredLanguages;
 import static org.apache.jena.riot.RDFFormat.RDFXML_PLAIN;
+import static org.apache.jena.riot.RDFFormat.JSONLD_COMPACT_FLAT;
+import static org.apache.jena.riot.RDFFormat.JSONLD_EXPAND_FLAT;
+import static org.apache.jena.riot.RDFFormat.JSONLD_FLATTEN_FLAT;
 import static org.apache.jena.riot.system.StreamRDFWriter.defaultSerialization;
 import static org.apache.jena.riot.system.StreamRDFWriter.getWriterStream;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
@@ -33,21 +33,14 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.util.Map;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.StreamingOutput;
 
-import com.github.jsonldjava.core.JsonLdError;
-import com.github.jsonldjava.core.JsonLdApi;
-import com.github.jsonldjava.core.JsonLdOptions;
-import com.github.jsonldjava.core.RDFDataset;
-import com.github.jsonldjava.utils.JsonUtils;
 import com.google.common.util.concurrent.AbstractFuture;
-import org.apache.jena.graph.Node;
+import org.apache.jena.riot.RiotException;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
@@ -114,7 +107,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
         try {
             LOGGER.debug("Serializing RDF stream in: {}", format);
             write(rdfStream, output, format, mediaType, namespaces);
-        } catch (final IOException | JsonLdError e) {
+        } catch (final IOException | RiotException e) {
             setException(e);
             LOGGER.debug("Error serializing RDF", e.getMessage());
             throw new WebApplicationException(e);
@@ -125,19 +118,12 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
                        final OutputStream output,
                        final Lang dataFormat,
                        final MediaType dataMediaType,
-                       final Map<String, String> nsPrefixes) throws IOException, JsonLdError {
+                       final Map<String, String> nsPrefixes) throws IOException {
 
         final RDFFormat format = defaultSerialization(dataFormat);
 
-        // JSON-LD cannot be streamed directly and in order to support separate profiles
-        // the jsonld libraries must be used directly. See related note below.
-        if (JSONLD.equals(dataFormat)) {
-            final Writer w = new OutputStreamWriter(output, UTF_8);
-            final String profile = dataMediaType.getParameters().getOrDefault("profile", "");
-            JsonUtils.write(w, rdfToJsonLd(rdfStream, nsPrefixes, profile));
-
         // For formats that can be block-streamed (n-triples, turtle)
-        } else if (format != null) {
+        if (format != null) {
             LOGGER.debug("Stream-based serialization of {}", dataFormat.toString());
             final StreamRDF stream = getWriterStream(output, format);
             stream.start();
@@ -153,41 +139,22 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
             // use block output streaming for RDFXML
             if (RDFXML.equals(dataFormat)) {
                 RDFDataMgr.write(output, model.getGraph(), RDFXML_PLAIN);
+            } else if (JSONLD.equals(dataFormat)) {
+                final RDFFormat jsonldFormat = getFormatFromMediaType(dataMediaType);
+                RDFDataMgr.write(output, model.getGraph(), jsonldFormat);
             } else {
                 RDFDataMgr.write(output, model.getGraph(), dataFormat);
             }
         }
     }
 
-    /*
-     * Convert an RdfStream to a JSON object suitable for writing by JsonUtils::write
-     *
-     * Note: we use the jsonld library directly here instead of using Jena's facade
-     * because Jena doesn't permit writing expanded or flattened formats.
-     * Once Jena 3.1.1 is released, much of this code can be dramatically simplified.
-     */
-    private static Object rdfToJsonLd(final RdfStream rdfStream, final Map<String, String> prefixes,
-            final String profile) throws IOException, JsonLdError {
-        final RDFDataset ds = new RDFDataset();
-        rdfStream.forEach(triple -> {
-            final Node s = triple.getSubject();
-            final Node p = triple.getPredicate();
-            final Node o = triple.getObject();
-            if (o.isLiteral()) {
-                ds.addTriple(s.getURI(), p.getURI(), o.getLiteralLexicalForm(), o.getLiteralDatatypeURI(),
-                    o.getLiteralLanguage());
-            } else {
-                ds.addTriple(s.getURI(), p.getURI(), o.getURI());
-            }
-        });
-        final JsonLdOptions opts = new JsonLdOptions();
-        opts.setCompactArrays(true);
-        final Object json = new JsonLdApi(opts).fromRDF(ds);
+    private static RDFFormat getFormatFromMediaType(final MediaType mediaType) {
+        final String profile = mediaType.getParameters().getOrDefault("profile", "");
         if (profile.equals(JSONLD_COMPACTED)) {
-            return compact(json, prefixes, opts);
+            return JSONLD_COMPACT_FLAT;
         } else if (profile.equals(JSONLD_FLATTENED)) {
-            return flatten(json, prefixes, opts);
+            return JSONLD_FLATTEN_FLAT;
         }
-        return json;
+        return JSONLD_EXPAND_FLAT;
     }
 }

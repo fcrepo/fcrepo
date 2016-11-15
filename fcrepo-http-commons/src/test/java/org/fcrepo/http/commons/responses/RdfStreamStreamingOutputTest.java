@@ -19,7 +19,6 @@ package org.fcrepo.http.commons.responses;
 
 import static java.util.stream.Stream.of;
 import static com.google.common.util.concurrent.Futures.addCallback;
-import static com.github.jsonldjava.core.JsonLdError.Error.INVALID_INPUT;
 import static javax.ws.rs.core.MediaType.valueOf;
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDdateTime;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
@@ -47,9 +46,9 @@ import javax.jcr.Session;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 
-import com.github.jsonldjava.core.JsonLdError;
 import com.google.common.util.concurrent.FutureCallback;
 import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.riot.RiotException;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.RdfStream;
 import org.junit.Before;
@@ -191,12 +190,12 @@ public class RdfStreamStreamingOutputTest {
             @Override
             public void onFailure(final Throwable e) {
                 LOGGER.info("Got exception:", e.getMessage());
-                assertTrue("Got wrong kind of exception!", e instanceof JsonLdError);
+                assertTrue("Got wrong kind of exception!", e instanceof RiotException);
             }
         };
         addCallback(testRdfStreamStreamingOutput, callback);
         try (final OutputStream mockOutputStream = mock(OutputStream.class, (Answer<Object>) invocation -> {
-            throw new JsonLdError(INVALID_INPUT, "Expected.");
+            throw new RiotException("Expected.");
         })) {
             testRdfStreamStreamingOutput.write(mockOutputStream);
         }

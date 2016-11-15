@@ -2159,7 +2159,76 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testJsonLdProfile() throws IOException {
+    public void testJsonLdProfileCompacted() throws IOException {
+        // Create a resource
+        final HttpPost method = postObjMethod();
+        method.addHeader(CONTENT_TYPE, "application/n3");
+        final BasicHttpEntity entity = new BasicHttpEntity();
+        final String rdf = "<> <http://purl.org/dc/elements/1.1/title> \"ceci n'est pas un titre français\"@fr ." +
+                "<> <http://purl.org/dc/elements/1.1/title> \"this is an english title\"@en .";
+        entity.setContent(new ByteArrayInputStream(rdf.getBytes()));
+        method.setEntity(entity);
+
+        final String location;
+        try (final CloseableHttpResponse response = execute(method)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            location = response.getFirstHeader("Location").getValue();
+        }
+        // GET the resource with a JSON profile
+        final HttpGet httpGet = new HttpGet(location);
+        httpGet.setHeader(ACCEPT, "application/ld+json; profile=\"http://www.w3.org/ns/json-ld#compacted\"");
+        final JsonNode json;
+        try (final CloseableHttpResponse responseGET = execute(httpGet)) {
+            // Inspect the response
+            final ObjectMapper mapper = new ObjectMapper();
+            json = mapper.readTree(responseGET.getEntity().getContent());
+        }
+
+        final JsonNode titles = json.get("title");
+        assertNotNull(titles);
+        assertTrue("Should be a list", titles.isArray());
+
+        assertEquals("Should be two langs!", 2, titles.findValues("@language").size());
+        assertEquals("Should be two values!", 2, titles.findValues("@value").size());
+    }
+
+    @Test
+    public void testJsonLdProfileExpanded() throws IOException {
+        // Create a resource
+        final HttpPost method = postObjMethod();
+        method.addHeader(CONTENT_TYPE, "application/n3");
+        final BasicHttpEntity entity = new BasicHttpEntity();
+        final String rdf = "<> <http://purl.org/dc/elements/1.1/title> \"ceci n'est pas un titre français\"@fr ." +
+                "<> <http://purl.org/dc/elements/1.1/title> \"this is an english title\"@en .";
+        entity.setContent(new ByteArrayInputStream(rdf.getBytes()));
+        method.setEntity(entity);
+
+        final String location;
+        try (final CloseableHttpResponse response = execute(method)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            location = response.getFirstHeader("Location").getValue();
+        }
+        // GET the resource with a JSON profile
+        final HttpGet httpGet = new HttpGet(location);
+        httpGet.setHeader(ACCEPT, "application/ld+json; profile=\"http://www.w3.org/ns/json-ld#expanded\"");
+        final JsonNode json;
+        try (final CloseableHttpResponse responseGET = execute(httpGet)) {
+            // Inspect the response
+            final ObjectMapper mapper = new ObjectMapper();
+            json = mapper.readTree(responseGET.getEntity().getContent());
+        }
+
+        final List<JsonNode> titlesList = json.findValues("http://purl.org/dc/elements/1.1/title");
+        assertNotNull(titlesList);
+        assertEquals("Should be list of lists", 1, titlesList.size());
+
+        final JsonNode titles = titlesList.get(0);
+        assertEquals("Should be two langs!", 2, titles.findValues("@language").size());
+        assertEquals("Should be two values!", 2, titles.findValues("@value").size());
+    }
+
+    @Test
+    public void testJsonLdProfileFlattened() throws IOException {
         // Create a resource
         final HttpPost method = postObjMethod();
         method.addHeader(CONTENT_TYPE, "application/n3");
@@ -2184,7 +2253,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             json = mapper.readTree(responseGET.getEntity().getContent());
         }
 
-        final List<JsonNode> titlesList = json.findValues("dc:title");
+        final List<JsonNode> titlesList = json.get("@graph").findValues("title");
         assertNotNull(titlesList);
         assertEquals("Should be list of lists", 1, titlesList.size());
 
