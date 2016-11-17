@@ -46,12 +46,14 @@ import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anySetOf;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -61,6 +63,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.text.ParseException;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -74,6 +77,8 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.ServerErrorException;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
@@ -473,6 +478,76 @@ public class FedoraLdpTest {
             assertFalse("Included non-minimal contexts", rdfNodes.contains("LDP_CONTAINMENT"));
         }
 
+    }
+
+    /**
+     * Emulates an 'If-None-Match' precondition failing for a GET request.  There should not be any entity body set
+     * on the response.
+     *
+     * @throws Exception if something exceptional happens
+     */
+    @Test
+    public void testGetWhenIfNoneMatchPreconditionFails() throws Exception {
+        setResource(FedoraResource.class);
+
+        // Set up the expectations for the ResponseBuilder
+        final Response.ResponseBuilder builder = mock(Response.ResponseBuilder.class);
+        when(builder.entity(any())).thenReturn(builder);
+        when(builder.cacheControl(any())).thenReturn(builder);
+        when(builder.lastModified((any()))).thenReturn(builder);
+        when(builder.tag(any(EntityTag.class))).thenReturn(builder);
+
+        // Set up expectations for the Request; returning a ResponseBuilder from evaluatePreconditions(...) indicates
+        // that satisfying the precondition fails, which is what we want to simulate in this test
+        when(mockRequest.evaluatePreconditions(any(EntityTag.class))).thenReturn(builder);
+
+        // Execute the method under test.  Preconditions should fail, resulting in an exception being thrown.
+        try {
+            ContentExposingResource.evaluateRequestPreconditions(mockRequest, mockResponse, testObj.resource(),
+                    mockSession, true);
+            fail("Expected " + WebApplicationException.class.getName() + " to be thrown.");
+        } catch (WebApplicationException e) {
+            // expected
+        }
+
+        // an entity body should _not_ be set under these conditions
+        verify(mockRequest).evaluatePreconditions(any(EntityTag.class));
+        verify(builder, times(0)).entity(any());
+    }
+
+    /**
+     * Emulates an 'If-Modified-Since' precondition failing for a GET request.  There should not be any entity body set
+     * on the response.
+     *
+     * @throws Exception if something exceptional happens
+     */
+    @Test
+    public void testGetWhenIfModifiedSincePreconditionFails() throws Exception {
+        setResource(FedoraResource.class);
+
+        // Set up the expectations for the ResponseBuilder
+        final Response.ResponseBuilder builder = mock(Response.ResponseBuilder.class);
+        when(builder.entity(any())).thenReturn(builder);
+        when(builder.cacheControl(any())).thenReturn(builder);
+        when(builder.lastModified((any()))).thenReturn(builder);
+        when(builder.tag(any(EntityTag.class))).thenReturn(builder);
+
+        // Set up expectations for the Request; returning a ResponseBuilder from evaluatePreconditions(...) indicates
+        // that satisfying the precondition fails, which is what we want to simulate in this test
+        when(mockRequest.evaluatePreconditions(any(Date.class))).thenReturn(builder);
+
+        // Execute the method under test.  Preconditions should fail, resulting in an exception being thrown.
+        try {
+            ContentExposingResource.evaluateRequestPreconditions(mockRequest, mockResponse, testObj.resource(),
+                    mockSession, true);
+            fail("Expected " + WebApplicationException.class.getName() + " to be thrown.");
+        } catch (WebApplicationException e) {
+            // expected
+        }
+
+        // an entity body should _not_ be set under these conditions
+        verify(mockRequest).evaluatePreconditions(any(Date.class));
+        verify(builder, times(0)).entity(any());
     }
 
     @Test
