@@ -115,6 +115,7 @@ import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.jvnet.hk2.annotations.Optional;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.google.common.annotations.VisibleForTesting;
 
 /**
  * An abstract class that sits between AbstractResource and any resource that
@@ -536,7 +537,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         evaluateRequestPreconditions(request, servletResponse, resource, session, false);
     }
 
-    private void evaluateRequestPreconditions(final Request request,
+    @VisibleForTesting
+    void evaluateRequestPreconditions(final Request request,
                                                      final HttpServletResponse servletResponse,
                                                      final FedoraResource resource,
                                                      final HttpSession session,
@@ -570,13 +572,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
 
         Response.ResponseBuilder builder = request.evaluatePreconditions(etag);
-        if ( builder != null ) {
-            builder = builder.entity("ETag mismatch");
-        } else {
+        if ( builder == null ) {
             builder = request.evaluatePreconditions(Date.from(roundedDate));
-            if ( builder != null ) {
-                builder = builder.entity("Date mismatch");
-            }
         }
 
         if (builder != null && cacheControl ) {
@@ -586,7 +583,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             // here we are implicitly emitting a 304
             // the exception is not an error, it's genuinely
             // an exceptional condition
-            builder = builder.cacheControl(cc).lastModified(Date.from(date)).tag(etag);
+            builder = builder.cacheControl(cc).lastModified(Date.from(roundedDate)).tag(etag);
         }
         if (builder != null) {
             throw new WebApplicationException(builder.build());
