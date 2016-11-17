@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ServletContainerAuthenticationProvider.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Authorization Commons Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.auth.common</a> &gt; <span class="el_source">ServletContainerAuthenticationProvider.java</span></div><h1>ServletContainerAuthenticationProvider.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.auth.common;
+
+import java.security.Principal;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import javax.jcr.Credentials;
+import javax.servlet.http.HttpServletRequest;
+
+import org.modeshape.jcr.ExecutionContext;
+import org.modeshape.jcr.api.ServletCredentials;
+import org.modeshape.jcr.security.AuthenticationProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * Authenticates ModeShape logins where JAX-RS credentials are supplied. Capable
+ * of authenticating whether or not container has performed user authentication.
+ * This is a singleton with an injected policy enforcement point. The singleton
+ * pattern allows ModeShape to obtain this instance via classname configuration.
+ *
+ * @author Gregory Jansen
+ */
+public final class ServletContainerAuthenticationProvider implements
+        AuthenticationProvider {
+
+<span class="fc" id="L46">    private static ServletContainerAuthenticationProvider instance = null;</span>
+
+<span class="fc" id="L48">    private ServletContainerAuthenticationProvider() {</span>
+<span class="fc" id="L49">        instance = this;</span>
+<span class="fc" id="L50">    }</span>
+
+    /**
+     * User role for Fedora's admin users
+     */
+    public static final String FEDORA_ADMIN_ROLE = &quot;fedoraAdmin&quot;;
+
+    /**
+     * User role for Fedora's ordinary users
+     */
+    public static final String FEDORA_USER_ROLE = &quot;fedoraUser&quot;;
+
+<span class="fc" id="L62">    private static final Logger LOGGER = LoggerFactory</span>
+<span class="fc" id="L63">            .getLogger(ServletContainerAuthenticationProvider.class);</span>
+
+<span class="fc" id="L65">    private Set&lt;PrincipalProvider&gt; principalProviders = Collections.emptySet();</span>
+
+    private FedoraAuthorizationDelegate fad;
+
+    /**
+     * Provides the singleton bean to ModeShape via reflection based on class
+     * name.
+     *
+     * @return a AuthenticationProvider
+     */
+    public static synchronized AuthenticationProvider getInstance() {
+<span class="pc bpc" id="L76" title="1 of 2 branches missed.">        if (instance != null) {</span>
+<span class="fc" id="L77">            return instance;</span>
+        }
+<span class="nc" id="L79">        instance = new ServletContainerAuthenticationProvider();</span>
+<span class="nc" id="L80">        LOGGER.warn(&quot;Security is MINIMAL, no Policy Enforcement Point configured.&quot;);</span>
+<span class="nc" id="L81">        return instance;</span>
+    }
+
+    /**
+     * @return the principalProviders
+     */
+    public Set&lt;PrincipalProvider&gt; getPrincipalProviders() {
+<span class="fc" id="L88">        return principalProviders;</span>
+    }
+
+    /**
+     * @param principalProviders the principalProviders to set
+     */
+    public void setPrincipalProviders(
+            final Set&lt;PrincipalProvider&gt; principalProviders) {
+<span class="fc" id="L96">        this.principalProviders = principalProviders;</span>
+<span class="fc" id="L97">    }</span>
+
+    /**
+     * Authenticate the user that is using the supplied credentials.
+     * &lt;p&gt;
+     * If the credentials given establish that the authenticated user has the fedoraAdmin role, construct an
+     * ExecutionContext with FedoraAdminSecurityContext as the SecurityContext. Otherwise, construct an
+     * ExecutionContext with FedoraUserSecurityContext as the SecurityContext.
+     * &lt;/p&gt;
+     * &lt;p&gt;
+     * If the authenticated user does not have the fedoraAdmin role, session attributes will be assigned in the
+     * sessionAttributes map:
+     * &lt;/p&gt;
+     * &lt;ul&gt;
+     * &lt;li&gt;FEDORA_SERVLET_REQUEST will be assigned the ServletRequest instance associated with credentials.&lt;/li&gt;
+     * &lt;li&gt;FEDORA_ALL_PRINCIPALS will be assigned the union of all principals obtained from configured
+     * PrincipalProvider instances plus the authenticated user's principal; FEDORA_ALL_PRINCIPALS will be assigned the
+     * singleton set containing the fad.getEveryonePrincipal() principal otherwise.&lt;/li&gt;
+     * &lt;/ul&gt;
+     */
+    @Override
+    public ExecutionContext authenticate(final Credentials credentials,
+            final String repositoryName, final String workspaceName,
+            final ExecutionContext repositoryContext,
+            final Map&lt;String, Object&gt; sessionAttributes) {
+<span class="fc" id="L122">        LOGGER.debug(&quot;Trying to authenticate: {}; FAD: {}&quot;, credentials, fad);</span>
+
+<span class="pc bpc" id="L124" title="1 of 2 branches missed.">        if (!(credentials instanceof ServletCredentials)) {</span>
+<span class="nc" id="L125">            return null;</span>
+        }
+
+<span class="fc" id="L128">        final HttpServletRequest servletRequest =</span>
+<span class="fc" id="L129">                ((ServletCredentials) credentials).getRequest();</span>
+<span class="fc" id="L130">        Principal userPrincipal = servletRequest.getUserPrincipal();</span>
+
+<span class="fc bfc" id="L132" title="All 4 branches covered.">        if (userPrincipal != null &amp;&amp; servletRequest.isUserInRole(FEDORA_ADMIN_ROLE)) {</span>
+            // check if delegation is configured
+<span class="fc" id="L134">            final Principal delegatedPrincipal = getDelegatedPrincipal(credentials);</span>
+<span class="pc bpc" id="L135" title="1 of 2 branches missed.">            if (delegatedPrincipal != null) {</span>
+                // replace the userPrincipal with the delegated principal
+                // then fall through to the normal user processing
+<span class="fc" id="L138">                userPrincipal = delegatedPrincipal;</span>
+<span class="fc" id="L139">                LOGGER.info(&quot;Admin user is delegating to {}&quot;, userPrincipal);</span>
+
+            } else {
+                // delegation is configured, but there is no delegated user set in the header of this request
+<span class="nc" id="L143">                LOGGER.debug(&quot;Returning admin user&quot;);</span>
+<span class="nc" id="L144">                return repositoryContext.with(new FedoraAdminSecurityContext(userPrincipal.getName()));</span>
+            }
+        }
+
+<span class="fc bfc" id="L148" title="All 2 branches covered.">        if (userPrincipal != null) {</span>
+<span class="fc" id="L149">            LOGGER.debug(&quot;Found user-principal: {}.&quot;, userPrincipal.getName());</span>
+
+<span class="fc" id="L151">            sessionAttributes.put(</span>
+                    FedoraAuthorizationDelegate.FEDORA_SERVLET_REQUEST,
+                    servletRequest);
+
+<span class="fc" id="L155">            sessionAttributes.put(</span>
+                    FedoraAuthorizationDelegate.FEDORA_USER_PRINCIPAL,
+                    userPrincipal);
+
+<span class="fc" id="L159">            final Set&lt;Principal&gt; principals = collectPrincipals(credentials);</span>
+<span class="fc" id="L160">            principals.add(userPrincipal);</span>
+<span class="fc" id="L161">            principals.add(fad.getEveryonePrincipal());</span>
+
+<span class="fc" id="L163">            sessionAttributes.put(</span>
+                    FedoraAuthorizationDelegate.FEDORA_ALL_PRINCIPALS,
+                    principals);
+
+<span class="fc" id="L167">            LOGGER.debug(&quot;All principals: {}&quot;, principals);</span>
+
+<span class="fc" id="L169">        } else {</span>
+<span class="fc" id="L170">            LOGGER.debug(&quot;No user-principal found.&quot;);</span>
+
+<span class="fc" id="L172">            sessionAttributes.put(FedoraAuthorizationDelegate.FEDORA_USER_PRINCIPAL,</span>
+<span class="fc" id="L173">                    fad.getEveryonePrincipal());</span>
+
+<span class="fc" id="L175">            sessionAttributes.put(</span>
+                    FedoraAuthorizationDelegate.FEDORA_ALL_PRINCIPALS,
+<span class="fc" id="L177">                    Collections.singleton(fad.getEveryonePrincipal()));</span>
+
+        }
+
+<span class="fc" id="L181">        return repositoryContext.with(new FedoraUserSecurityContext(</span>
+                userPrincipal, fad));
+    }
+
+    private Principal getDelegatedPrincipal(final Credentials credentials) {
+<span class="pc bpc" id="L186" title="1 of 2 branches missed.">        for (final PrincipalProvider provider : this.getPrincipalProviders()) {</span>
+<span class="fc bfc" id="L187" title="All 2 branches covered.">            if (provider instanceof DelegateHeaderPrincipalProvider) {</span>
+<span class="fc" id="L188">                return ((DelegateHeaderPrincipalProvider) provider).getDelegate(credentials);</span>
+            }
+<span class="fc" id="L190">        }</span>
+<span class="nc" id="L191">        return null;</span>
+    }
+
+    /**
+     * @return the authorization delegate
+     */
+    public FedoraAuthorizationDelegate getFad() {
+<span class="nc" id="L198">        return fad;</span>
+    }
+
+    /**
+     * @param fad the authorization delegate to set
+     */
+    public void setFad(final FedoraAuthorizationDelegate fad) {
+<span class="fc" id="L205">        this.fad = fad;</span>
+<span class="fc" id="L206">    }</span>
+
+    private Set&lt;Principal&gt; collectPrincipals(final Credentials credentials) {
+<span class="fc" id="L209">        final Set&lt;Principal&gt; principals = new HashSet&lt;&gt;();</span>
+
+        // TODO add exception handling for principal providers
+<span class="fc bfc" id="L212" title="All 2 branches covered.">        for (final PrincipalProvider p : this.getPrincipalProviders()) {</span>
+            // if the provider is DelegateHeader, it is either already processed (if logged user has fedora admin role)
+            // or should be ignored completely (the user was not in admin role, so on-behalf-of header must be ignored)
+<span class="fc bfc" id="L215" title="All 2 branches covered.">            if (!(p instanceof DelegateHeaderPrincipalProvider)) {</span>
+<span class="fc" id="L216">                final Set&lt;Principal&gt; ps = p.getPrincipals(credentials);</span>
+
+<span class="pc bpc" id="L218" title="1 of 2 branches missed.">                if (ps != null) {</span>
+<span class="fc" id="L219">                    principals.addAll(p.getPrincipals(credentials));</span>
+                }
+            }
+<span class="fc" id="L222">        }</span>
+
+<span class="fc" id="L224">        return principals;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>
