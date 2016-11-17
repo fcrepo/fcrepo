@@ -1,0 +1,22 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+Fedora Repository HTTP API Module,org.fcrepo.http.api.repository,FedoraRepositoryRestore,50,35,3,3,9,9,3,3,0,3
+Fedora Repository HTTP API Module,org.fcrepo.http.api.repository,FedoraRepositoryTransactions,0,3,0,0,0,1,0,1,0,1
+Fedora Repository HTTP API Module,org.fcrepo.http.api.repository,FedoraRepositoryBackup,47,48,5,5,10,12,5,3,0,3
+Fedora Repository HTTP API Module,org.fcrepo.http.api.url,HttpApiResources,0,101,0,6,0,22,0,8,0,5
+Fedora Repository HTTP API Module,org.fcrepo.http.api,FedoraBaseResource,11,147,5,9,1,33,4,11,0,8
+Fedora Repository HTTP API Module,org.fcrepo.http.api,FedoraHttpConfiguration,0,6,0,0,0,2,0,2,0,2
+Fedora Repository HTTP API Module,org.fcrepo.http.api,FedoraLdp,287,1206,61,127,44,230,56,65,4,23
+Fedora Repository HTTP API Module,org.fcrepo.http.api,FedoraVersions,15,148,1,5,6,28,3,11,2,9
+Fedora Repository HTTP API Module,org.fcrepo.http.api,ContentExposingResource,106,913,22,98,21,187,17,72,0,29
+Fedora Repository HTTP API Module,org.fcrepo.http.api,ViewAssets,19,0,0,0,3,0,3,0,3,0
+Fedora Repository HTTP API Module,org.fcrepo.http.api,DefaultPathLockManager.AcquiredMultiPathLock,37,195,3,17,6,51,3,12,1,4
+Fedora Repository HTTP API Module,org.fcrepo.http.api,FedoraVersioning,33,111,0,6,12,24,2,9,2,6
+Fedora Repository HTTP API Module,org.fcrepo.http.api,DefaultPathLockManager,49,151,7,13,8,32,6,13,1,8
+Fedora Repository HTTP API Module,org.fcrepo.http.api,FedoraTombstones,12,32,0,0,5,9,1,4,1,4
+Fedora Repository HTTP API Module,org.fcrepo.http.api,FedoraNodes,64,175,8,12,16,37,10,8,2,6
+Fedora Repository HTTP API Module,org.fcrepo.http.api,DefaultPathLockManager.ActivePath,0,61,0,0,0,11,0,3,0,3
+Fedora Repository HTTP API Module,org.fcrepo.http.api,DefaultPathLockManager.ActivePath.PathScopedLock,25,29,3,1,5,8,2,4,0,4
+Fedora Repository HTTP API Module,org.fcrepo.http.api,FedoraTransactions,22,143,7,9,5,31,6,8,0,6
+Fedora Repository HTTP API Module,org.fcrepo.http.api,FedoraFixity,19,41,1,1,4,10,2,4,1,4
+Fedora Repository HTTP API Module,org.fcrepo.http.api.responses,StreamingBaseHtmlProvider,36,347,7,9,1,68,7,14,2,11
+Fedora Repository HTTP API Module,org.fcrepo.http.api.responses,StreamingHtmlProvider,0,3,0,0,0,1,0,1,0,1
