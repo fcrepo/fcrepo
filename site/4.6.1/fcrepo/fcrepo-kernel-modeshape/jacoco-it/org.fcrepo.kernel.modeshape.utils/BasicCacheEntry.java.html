@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>BasicCacheEntry.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation (ModeShape)</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.utils</a> &gt; <span class="el_source">BasicCacheEntry.java</span></div><h1>BasicCacheEntry.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.utils;
+
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.utils.CacheEntry;
+import org.fcrepo.kernel.api.utils.ContentDigest;
+import org.fcrepo.kernel.api.utils.FixityResult;
+
+import org.slf4j.Logger;
+
+import java.io.IOException;
+import java.net.URI;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Collection;
+
+import static java.util.Arrays.asList;
+import static org.slf4j.LoggerFactory.getLogger;
+
+/**
+ * Cache entry that wraps a binary stream and provides
+ * fixity methods against it
+ *
+ * @author fasseg
+ */
+<span class="fc" id="L42">public abstract class BasicCacheEntry implements CacheEntry {</span>
+
+    public static final int DEV_NULL_BUFFER_SIZE = 4096;
+
+<span class="fc" id="L46">    private static final byte[] devNull = new byte[DEV_NULL_BUFFER_SIZE];</span>
+
+<span class="fc" id="L48">    private static final Logger LOGGER = getLogger(BasicCacheEntry.class);</span>
+
+    /**
+     * Calculate the fixity of a CacheEntry by piping it through
+     * a simple fixity-calculating InputStream
+     *
+     * @param digest the digest
+     * @return the fixity of this cache entry
+     */
+    @Override
+    public Collection&lt;FixityResult&gt; checkFixity(final String digest) {
+
+<span class="pc" id="L60">        try (FixityInputStream fixityInputStream = new FixityInputStream(this.getInputStream(),</span>
+<span class="fc" id="L61">                MessageDigest.getInstance(digest))) {</span>
+            // exhaust our source
+<span class="fc bfc" id="L63" title="All 2 branches covered.">            while (fixityInputStream.read(devNull) != -1) { }</span>
+
+<span class="fc" id="L65">            final URI calculatedChecksum = ContentDigest.asURI(digest,</span>
+<span class="fc" id="L66">                                                                  fixityInputStream.getMessageDigest().digest());</span>
+<span class="fc" id="L67">            final FixityResult result =</span>
+                new FixityResultImpl(this,
+<span class="fc" id="L69">                                    fixityInputStream.getByteCount(),</span>
+                                    calculatedChecksum);
+
+<span class="fc" id="L72">            LOGGER.debug(&quot;Got {}&quot;, result.toString());</span>
+
+<span class="fc" id="L74">            return asList(result);</span>
+<span class="pc bpc" id="L75" title="6 of 8 branches missed.">        } catch (final IOException e) {</span>
+<span class="nc" id="L76">            LOGGER.debug(&quot;Got error closing input stream: {}&quot;, e);</span>
+<span class="nc" id="L77">            throw new RepositoryRuntimeException(e);</span>
+<span class="nc" id="L78">        } catch (final NoSuchAlgorithmException e1) {</span>
+<span class="nc" id="L79">            throw new RepositoryRuntimeException(e1);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>
