@@ -106,6 +106,9 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1913,6 +1916,20 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String id = getRandomUniqueId();
         createDatastream(id, "ds", "content");
         validateHTML(id + "/ds/" + FCR_METADATA);
+    }
+
+    @Test
+    public void testGetWhenIfModifiedSincePreconditionFails() throws Exception {
+        final String location = getLocation(postObjMethod());
+        final HttpGet getObjMethod = new HttpGet(location);
+        final ZonedDateTime one_day_from_now = ZonedDateTime.now(ZoneId.of("UTC")).plusDays(1);
+        getObjMethod.addHeader("If-Modified-Since",
+                one_day_from_now.format(DateTimeFormatter.RFC_1123_DATE_TIME));
+        try (final CloseableHttpResponse response = execute(getObjMethod)) {
+            assertEquals(304, response.getStatusLine().getStatusCode());
+            assertFalse(response.containsHeader("Content-Length"));
+            assertNull(response.getEntity());
+        }
     }
 
     private static void validateHTML(final String path) throws IOException, SAXException {

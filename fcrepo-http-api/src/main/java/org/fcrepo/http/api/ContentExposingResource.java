@@ -107,6 +107,7 @@ import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.jvnet.hk2.annotations.Optional;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.google.common.annotations.VisibleForTesting;
 
 /**
  * An abstract class that sits between AbstractResource and any resource that
@@ -528,7 +529,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         evaluateRequestPreconditions(request, servletResponse, resource, session, false);
     }
 
-    private static void evaluateRequestPreconditions(final Request request,
+    @VisibleForTesting
+    static void evaluateRequestPreconditions(final Request request,
                                                      final HttpServletResponse servletResponse,
                                                      final FedoraResource resource,
                                                      final Session session,
@@ -563,13 +565,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
 
         Response.ResponseBuilder builder = request.evaluatePreconditions(etag);
-        if ( builder != null ) {
-            builder = builder.entity("ETag mismatch");
-        } else {
+        if ( builder == null ) {
             builder = request.evaluatePreconditions(roundedDate);
-            if ( builder != null ) {
-                builder = builder.entity("Date mismatch");
-            }
         }
 
         if (builder != null && cacheControl ) {
