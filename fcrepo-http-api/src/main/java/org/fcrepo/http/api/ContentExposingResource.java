@@ -33,6 +33,7 @@ import static javax.ws.rs.core.Response.temporaryRedirect;
 import static javax.ws.rs.core.Response.Status.PARTIAL_CONTENT;
 import static javax.ws.rs.core.Response.Status.REQUESTED_RANGE_NOT_SATISFIABLE;
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDstring;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
@@ -55,6 +56,7 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_MEMBERSHIP;
 import static org.fcrepo.kernel.api.RequiredRdfContext.MINIMAL;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FIELD_DELIMITER;
 
 
 import java.io.IOException;
@@ -422,7 +424,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             final Date modDate = binary.getLastModifiedDate() != null ? Date.from(binary.getLastModifiedDate()) : null;
 
             final ContentDisposition contentDisposition = ContentDisposition.type("attachment")
-                    .fileName(binary.getFilename())
+                    .fileName(removeXSDType(binary.getFilename()))
                     .creationDate(createdDate)
                     .modificationDate(modDate)
                     .size(binary.getContentSize())
@@ -456,6 +458,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             httpHeaderInject.addHttpHeaderToResponseStream(servletResponse, uriInfo, resource());
         }
 
+    }
+
+    private String removeXSDType(final String value) {
+        return value != null ? value.replace(FIELD_DELIMITER + XSDstring.getURI(), "") : null;
     }
 
     /**
