@@ -342,7 +342,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     public String getFilename() {
         try {
             if (hasProperty(FILENAME)) {
-                return getProperty(FILENAME).getString();
+                return getProperty(FILENAME).getString().replace(FIELD_DELIMITER + XSDstring.getURI(), "");
             }
             return node.getParent().getName();
         } catch (final RepositoryException e) {

@@ -1239,6 +1239,53 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testContentDispositionHeader() throws ParseException, IOException {
+        final HttpPost method = postObjMethod();
+        final File img = new File("src/test/resources/test-objects/img.png");
+        final String filename = "some-file.png";
+        method.addHeader(CONTENT_TYPE, "application/png");
+        method.addHeader(CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"");
+        method.setEntity(new FileEntity(img));
+
+        // Create a binary resource with content-disposition
+        final String location;
+        try (final CloseableHttpResponse response = execute(method)) {
+            assertEquals("Should be a 201 Created!", CREATED.getStatusCode(), getStatus(response));
+            location = getLocation(response);
+        }
+
+        // Retrieve the new resource and verify the content-disposition
+        verifyContentDispositionFilename(location, filename);
+
+        // Update the filename
+        final String filename1 = "new-file.png";
+        final HttpPatch patch = new HttpPatch(location + "/" + FCR_METADATA);
+        patch.setHeader(CONTENT_TYPE, "application/sparql-update");
+        final String updateString = "PREFIX ebucore: <http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#>\n" +
+                "DELETE { <> ebucore:filename ?x}\n" +
+                "INSERT { <> ebucore:filename \"" + filename1 + "\"}\n" +
+                "WHERE { <> ebucore:filename ?x}";
+
+        patch.setEntity(new StringEntity(updateString));
+        assertEquals(location, NO_CONTENT.getStatusCode(), getStatus(patch));
+
+        // Retrieve the new resource and verify the content-disposition
+        verifyContentDispositionFilename(location, filename1);
+    }
+
+    private void verifyContentDispositionFilename(final String location, final String filename)
+            throws IOException, ParseException {
+        final HttpHead head = new HttpHead(location);
+        try (final CloseableHttpResponse headResponse = execute(head)) {
+            final Header header = headResponse.getFirstHeader(CONTENT_DISPOSITION);
+            assertNotNull(header);
+
+            final ContentDisposition contentDisposition = new ContentDisposition(header.getValue());
+            assertEquals(filename, contentDisposition.getFileName());
+        }
+    }
+
+    @Test
     public void testIngestOnSubtree() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
