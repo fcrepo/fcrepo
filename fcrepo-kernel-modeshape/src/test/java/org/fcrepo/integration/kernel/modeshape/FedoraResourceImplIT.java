@@ -798,13 +798,12 @@ public class FedoraResourceImplIT extends AbstractIT {
         final FedoraResource resourceA = containerService.findOrCreate(session, "/" + pid + "/a");
         containerService.findOrCreate(session, "/" + pid + "/b");
         final FedoraResource resourceX = containerService.findOrCreate(session, "/" + pid + "/b/x");
-        final Session jcrSession = getJcrSession(session);
 
         // Create a Weak reference
-        final Value value = jcrSession.getValueFactory().createValue(getJcrNode(resourceX), true);
+        final Value value = session.getValueFactory().createValue(getJcrNode(resourceX), true);
         getJcrNode(resourceA).setProperty("fedora:hasMember", new Value[] { value });
 
-        session.commit();
+        session.save();
 
         // Verify that relationship exists
         final Node s = subjects.reverse().convert(resourceA).asNode();
@@ -816,7 +815,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         // Delete parent of reference target
         containerService.findOrCreate(session, "/" + pid + "/b").delete();
 
-        session.commit();
+        session.save();
 
         // Verify that relationship does NOT exist, and that the resource successfully loads.
         containerService.find(session, "/" + pid + "/a");
