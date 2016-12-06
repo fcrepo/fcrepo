@@ -365,33 +365,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @Override
     public void delete() {
         try {
-            @SuppressWarnings("unchecked")
-            final Iterator<Property> references = node.getReferences();
-            @SuppressWarnings("unchecked")
-            final Iterator<Property> weakReferences = node.getWeakReferences();
-            concat(iteratorToStream(references), iteratorToStream(weakReferences)).forEach(prop -> {
-                try {
-                    final List<Value> newVals = property2values.apply(prop).filter(
-                            UncheckedPredicate.uncheck(value ->
-                                !node.equals(getSession().getNodeByIdentifier(value.getString()))))
-                        .collect(toList());
-
-                    if (newVals.size() == 0) {
-                        prop.remove();
-                    } else {
-                        prop.setValue(newVals.toArray(new Value[newVals.size()]));
-                    }
-                } catch (final RepositoryException ex) {
-                    // Ignore error from trying to update properties on versioned resources
-                    if (ex instanceof javax.jcr.nodetype.ConstraintViolationException &&
-                            ex.getMessage().contains(JCR_VERSION_STORAGE)) {
-                        LOGGER.debug("Ignoring exception trying to remove property from versioned resource: {}",
-                                ex.getMessage());
-                    } else {
-                        throw new RepositoryRuntimeException(ex);
-                    }
-                }
-            });
+            // Remove inbound references to this resource and, recursively, any of its children
+            removeReferences(node);
 
             final Node parent = getNode().getDepth() > 0 ? getNode().getParent() : null;
 
@@ -430,6 +405,52 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
+    }
+
+    private void removeReferences(final Node n) {
+        try {
+            // Remove references to this resource
+            doRemoveReferences(n);
+
+            // Recurse over children of this resource
+            if (n.hasNodes()) {
+                @SuppressWarnings("unchecked")
+                final Iterator<Node> nodes = n.getNodes();
+                nodes.forEachRemaining(this::removeReferences);
+            }
+        } catch (RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    private void doRemoveReferences(final Node n) throws RepositoryException {
+        @SuppressWarnings("unchecked")
+        final Iterator<Property> references = n.getReferences();
+        @SuppressWarnings("unchecked")
+        final Iterator<Property> weakReferences = n.getWeakReferences();
+        concat(iteratorToStream(references), iteratorToStream(weakReferences)).forEach(prop -> {
+            try {
+                final List<Value> newVals = property2values.apply(prop).filter(
+                        UncheckedPredicate.uncheck(value ->
+                                !n.equals(getSession().getNodeByIdentifier(value.getString()))))
+                        .collect(toList());
+
+                if (newVals.size() == 0) {
+                    prop.remove();
+                } else {
+                    prop.setValue(newVals.toArray(new Value[newVals.size()]));
+                }
+            } catch (final RepositoryException ex) {
+                // Ignore error from trying to update properties on versioned resources
+                if (ex instanceof javax.jcr.nodetype.ConstraintViolationException &&
+                        ex.getMessage().contains(JCR_VERSION_STORAGE)) {
+                    LOGGER.debug("Ignoring exception trying to remove property from versioned resource: {}",
+                            ex.getMessage());
+                } else {
+                    throw new RepositoryRuntimeException(ex);
+                }
+            }
+        });
     }
 
     private void createTombstone(final Node parent, final String path) throws RepositoryException {
