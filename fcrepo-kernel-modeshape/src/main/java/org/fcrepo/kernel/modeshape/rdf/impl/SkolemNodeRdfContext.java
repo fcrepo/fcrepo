@@ -26,6 +26,7 @@ import org.fcrepo.kernel.modeshape.rdf.impl.mappings.PropertyValueIterator;
 import org.slf4j.Logger;
 
 import javax.jcr.AccessDeniedException;
+import javax.jcr.ItemNotFoundException;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
@@ -93,6 +94,11 @@ public class SkolemNodeRdfContext extends NodeRdfContext {
             return null;
 
         } catch (final RepositoryException e) {
+            if (e instanceof ItemNotFoundException) {
+                // Effectively skip resources that do not exist
+                LOGGER.warn("Reference to non-existent resource encounterd: {}", v);
+                return null;
+            }
             throw new RepositoryRuntimeException(e);
         }
     };
