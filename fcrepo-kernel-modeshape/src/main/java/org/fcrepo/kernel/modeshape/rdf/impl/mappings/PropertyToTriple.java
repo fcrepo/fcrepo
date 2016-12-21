@@ -22,6 +22,7 @@ import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
 import static com.hp.hpl.jena.graph.Triple.create;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeToResource;
 import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -30,6 +31,8 @@ import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Value;
+
 import com.google.common.base.Converter;
 import com.hp.hpl.jena.graph.impl.LiteralLabel;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -40,6 +43,7 @@ import org.fcrepo.kernel.modeshape.rdf.converters.PropertyConverter;
 import org.fcrepo.kernel.modeshape.rdf.converters.ValueConverter;
 import com.hp.hpl.jena.datatypes.RDFDatatype;
 import com.hp.hpl.jena.graph.Triple;
+import org.slf4j.Logger;
 
 /**
  * Utility for moving from JCR properties to RDF triples.
@@ -48,6 +52,8 @@ import com.hp.hpl.jena.graph.Triple;
  * @since Oct 10, 2013
  */
 public class PropertyToTriple implements Function<Property, Stream<Triple>> {
+
+    private static final Logger LOGGER = getLogger(PropertyToTriple.class);
 
     private static final PropertyConverter propertyConverter = new PropertyConverter();
     private final ValueConverter valueConverter;
@@ -71,7 +77,7 @@ public class PropertyToTriple implements Function<Property, Stream<Triple>> {
             final com.hp.hpl.jena.graph.Node propPredicate = propertyConverter.convert(p).asNode();
             final String propertyName = p.getName();
 
-            return iteratorToStream(new PropertyValueIterator(p)).map(v -> {
+            return iteratorToStream(new PropertyValueIterator(p)).filter(this::valueCanBeConverted).map(v -> {
                 final com.hp.hpl.jena.graph.Node object = valueConverter.convert(v).asNode();
                 if (object.isLiteral()) {
                     // unpack the name of the property for information about what kind of literal
@@ -94,4 +100,23 @@ public class PropertyToTriple implements Function<Property, Stream<Triple>> {
             throw new RepositoryRuntimeException(e);
         }
     }
+
+    /**
+     * This method tests if a given value can be converted.
+     * The scenario when this may not be true is for (weak)reference properties that target an non-existent resource.
+     * This scenario generally should not be possible, but the following bug introduced the possibility:
+     *   https://jira.duraspace.org/browse/FCREPO-2323
+     *
+     * @param value to be tested for whether it can be converted to an RDFNode or not
+     * @return true if value can be converted
+     */
+    private boolean valueCanBeConverted(final Value value) {
+        try {
+            valueConverter.convert(value);
+            return true;
+        } catch (final RepositoryRuntimeException e) {
+            LOGGER.warn("Reference to non-existent resource encounterd: {}", value);
+            return false;
+        }
+    };
 }

@@ -792,6 +792,39 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
+    public void testDeleteObjectWithInboundReferencesToChildren() throws RepositoryException {
+        // Set up resources
+        final String pid = getRandomPid();
+        final FedoraResource resourceA = containerService.findOrCreate(session, "/" + pid + "/a");
+        containerService.findOrCreate(session, "/" + pid + "/b");
+        final FedoraResource resourceX = containerService.findOrCreate(session, "/" + pid + "/b/x");
+
+        // Create a Weak reference
+        final Value value = session.getValueFactory().createValue(getJcrNode(resourceX), true);
+        getJcrNode(resourceA).setProperty("fedora:hasMember", new Value[] { value });
+
+        session.save();
+
+        // Verify that relationship exists
+        final Node s = subjects.reverse().convert(resourceA).asNode();
+        final Node hasMember = createProperty(REPOSITORY_NAMESPACE, "hasMember").asNode();
+
+        final Model rdf = resourceA.getTriples(subjects, PROPERTIES).collect(toModel());
+        assertTrue(rdf.toString(), rdf.getGraph().contains(s, hasMember, ANY));
+
+        // Delete parent of reference target
+        containerService.findOrCreate(session, "/" + pid + "/b").delete();
+
+        session.save();
+
+        // Verify that relationship does NOT exist, and that the resource successfully loads.
+        containerService.find(session, "/" + pid + "/a");
+
+        final Model rdfAfter = resourceA.getTriples(subjects, PROPERTIES).collect(toModel());
+        assertFalse(rdfAfter.getGraph().contains(s, hasMember, ANY));
+    }
+
+    @Test
     public void testGetContainer() {
         final String pid = getRandomPid();
         final Container container = containerService.findOrCreate(session, "/" + pid);
