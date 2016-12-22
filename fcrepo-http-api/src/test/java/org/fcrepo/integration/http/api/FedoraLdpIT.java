@@ -1790,7 +1790,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testUpdateObjectWithoutContentType() throws IOException {
         final HttpPut httpPut = new HttpPut(getLocation(postObjMethod()));
         // use a bytestream-based entity to avoid settin a content type
-        httpPut.setEntity(new ByteArrayEntity("bogus content".getBytes()));
+        httpPut.setEntity(new ByteArrayEntity("bogus content".getBytes(UTF_8)));
         assertEquals(UNSUPPORTED_MEDIA_TYPE.getStatusCode(), getStatus(httpPut));
     }
 
@@ -1890,7 +1890,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             htmlParser.setDoctypeExpectation(NO_DOCTYPE_ERRORS);
             htmlParser.setErrorHandler(new HTMLErrorHandler());
             htmlParser.setContentHandler(new TreeBuilder());
-            try (final InputStream htmlStream = new ByteArrayInputStream(content.getBytes())) {
+            try (final InputStream htmlStream = new ByteArrayInputStream(content.getBytes(UTF_8))) {
                 htmlParser.parse(new InputSource(htmlStream));
             }
             logger.debug("HTML found to be valid.");
@@ -1927,7 +1927,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                         "<http://some-vocabulary#isMemberOfCollection> <" + serverAddress + linkedTo + "> . }";
         final HttpPatch patch = patchObjMethod(linkedFrom);
         patch.addHeader(CONTENT_TYPE, "application/sparql-update");
-        patch.setEntity(new ByteArrayEntity(sparql.getBytes()));
+        patch.setEntity(new ByteArrayEntity(sparql.getBytes(UTF_8)));
         assertEquals("Couldn't link resources!", NO_CONTENT.getStatusCode(), getStatus(patch));
         assertEquals("Error deleting linked-to!", NO_CONTENT.getStatusCode(), getStatus(deleteObjMethod(linkedTo)));
         assertEquals("Linked to should still exist!", OK.getStatusCode(), getStatus(getObjMethod(linkedFrom)));
@@ -2213,7 +2213,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final BasicHttpEntity entity = new BasicHttpEntity();
         final String rdf = "<> <http://purl.org/dc/elements/1.1/title> \"ceci n'est pas un titre français\"@fr ." +
                 "<> <http://purl.org/dc/elements/1.1/title> \"this is an english title\"@en .";
-        entity.setContent(new ByteArrayInputStream(rdf.getBytes()));
+        entity.setContent(new ByteArrayInputStream(rdf.getBytes(UTF_8)));
         method.setEntity(entity);
 
         final String location;
@@ -2247,7 +2247,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final BasicHttpEntity entity = new BasicHttpEntity();
         final String rdf = "<> <http://purl.org/dc/elements/1.1/title> \"ceci n'est pas un titre français\"@fr ." +
                 "<> <http://purl.org/dc/elements/1.1/title> \"this is an english title\"@en .";
-        entity.setContent(new ByteArrayInputStream(rdf.getBytes()));
+        entity.setContent(new ByteArrayInputStream(rdf.getBytes(UTF_8)));
         method.setEntity(entity);
 
         final String location;
@@ -2282,7 +2282,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final BasicHttpEntity entity = new BasicHttpEntity();
         final String rdf = "<> <http://purl.org/dc/elements/1.1/title> \"ceci n'est pas un titre français\"@fr ." +
                 "<> <http://purl.org/dc/elements/1.1/title> \"this is an english title\"@en .";
-        entity.setContent(new ByteArrayInputStream(rdf.getBytes()));
+        entity.setContent(new ByteArrayInputStream(rdf.getBytes(UTF_8)));
         method.setEntity(entity);
 
         final String location;
