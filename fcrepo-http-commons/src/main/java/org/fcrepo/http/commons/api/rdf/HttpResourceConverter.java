@@ -49,6 +49,7 @@ import javax.ws.rs.core.UriBuilder;
 
 import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.exception.FedoraInvalidNamespaceException;
 import org.fcrepo.kernel.api.exception.IdentifierConversionException;
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -132,7 +133,12 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
             throw new IdentifierConversionException("Asked to translate a resource " + resource
                     + " that doesn't match the URI template");
         } catch (final RepositoryException e) {
-            validatePath(jcrSession, path);
+            try {
+                validatePath(jcrSession, path);
+            } catch (FedoraInvalidNamespaceException nse) {
+                LOGGER.error(nse.toString());
+                throw new RepositoryRuntimeException(new PathNotFoundException("Unable to find resource at " + path));
+            }
 
             if ( e instanceof PathNotFoundException ) {
                 try {

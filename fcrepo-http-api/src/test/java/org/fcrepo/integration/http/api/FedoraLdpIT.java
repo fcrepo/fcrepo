@@ -304,6 +304,19 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testHeadInvalidPrefix() throws IOException, ParseException {
+        // Configure HEAD request to NOT follow redirects
+        final HttpHead headObjMethod = headObjMethod("foo:bar");
+        final RequestConfig.Builder requestConfig = RequestConfig.custom();
+        requestConfig.setRedirectsEnabled(false);
+        headObjMethod.setConfig(requestConfig.build());
+
+        try (final CloseableHttpResponse response = execute(headObjMethod)) {
+            assertEquals(NOT_FOUND.getStatusCode(), response.getStatusLine().getStatusCode());
+        }
+    }
+
+    @Test
     public void testOptions() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
