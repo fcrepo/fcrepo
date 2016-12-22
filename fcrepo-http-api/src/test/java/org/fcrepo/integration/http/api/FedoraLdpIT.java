@@ -1916,7 +1916,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testLinkedDeletion() throws IOException {
+    public void testLinkedDeletion() {
         final String linkedFrom = getRandomUniqueId();
         final String linkedTo = getRandomUniqueId();
         createObjectAndClose(linkedFrom);
