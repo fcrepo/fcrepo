@@ -72,6 +72,7 @@
     <module>fcrepo-kernel-api</module>
     <module>fcrepo-kernel-modeshape</module>
     <module>fcrepo-webapp</module>
+    <module>jena-patch</module>
     <module>fcrepo-event-serialization</module>
     <module>fcrepo-jms</module>
     <module>fcrepo-http-commons</module>
