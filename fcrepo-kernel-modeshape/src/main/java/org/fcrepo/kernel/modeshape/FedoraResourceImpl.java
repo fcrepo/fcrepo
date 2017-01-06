@@ -17,9 +17,6 @@
  */
 package org.fcrepo.kernel.modeshape;
 
-import static org.apache.jena.rdf.model.ResourceFactory.createTypedLiteral;
-import static org.apache.jena.update.UpdateAction.execute;
-import static org.apache.jena.update.UpdateFactory.create;
 import static java.time.Instant.ofEpochMilli;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
@@ -29,11 +26,14 @@ import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.empty;
 import static java.util.stream.Stream.of;
 import static org.apache.commons.codec.digest.DigestUtils.sha1Hex;
+import static org.apache.jena.rdf.model.ResourceFactory.createTypedLiteral;
+import static org.apache.jena.update.UpdateAction.execute;
+import static org.apache.jena.update.UpdateFactory.create;
+import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
-import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.RequiredRdfContext.EMBED_RESOURCES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_CONTAINMENT;
@@ -42,9 +42,9 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.MINIMAL;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
 import static org.fcrepo.kernel.api.RequiredRdfContext.VERSIONS;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_MIXIN_TYPES;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
-import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_MIXIN_TYPES;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
 import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.jcrProperties;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
@@ -66,11 +66,11 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
-import java.time.Instant;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -83,6 +83,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.jcr.ItemNotFoundException;
+import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
@@ -92,17 +93,12 @@ import javax.jcr.Value;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
-import javax.jcr.NamespaceRegistry;
 import javax.jcr.version.VersionManager;
-
-import com.google.common.base.Converter;
-import com.google.common.collect.ImmutableMap;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.graph.Triple;
 
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.FedoraVersion;
-import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.ConstraintViolationException;
 import org.fcrepo.kernel.api.exception.InvalidPrefixException;
@@ -110,11 +106,10 @@ import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.modeshape.rdf.converters.PropertyConverter;
-import org.fcrepo.kernel.api.TripleCategory;
-import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.utils.GraphDifferencer;
+import org.fcrepo.kernel.modeshape.rdf.converters.PropertyConverter;
 import org.fcrepo.kernel.modeshape.rdf.impl.AclRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.ChildrenRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.ContentRdfContext;
@@ -124,10 +119,10 @@ import org.fcrepo.kernel.modeshape.rdf.impl.LdpIsMemberOfRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.LdpRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.ParentRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.PropertiesRdfContext;
-import org.fcrepo.kernel.modeshape.rdf.impl.TypeRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.ReferencesRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.RootRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.SkolemNodeRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.TypeRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.VersionsRdfContext;
 import org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.modeshape.utils.JcrPropertyStatementListener;
@@ -136,14 +131,21 @@ import org.fcrepo.kernel.modeshape.utils.UncheckedPredicate;
 import org.fcrepo.kernel.modeshape.utils.iterators.RdfAdder;
 import org.fcrepo.kernel.modeshape.utils.iterators.RdfRemover;
 
-import org.modeshape.jcr.api.JcrTools;
-import org.slf4j.Logger;
-
+import org.apache.jena.graph.Node_URI;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.modify.request.UpdateData;
 import org.apache.jena.sparql.modify.request.UpdateDeleteWhere;
 import org.apache.jena.sparql.modify.request.UpdateModify;
 import org.apache.jena.update.UpdateRequest;
+import org.modeshape.jcr.api.JcrTools;
+import org.slf4j.Logger;
+
+import com.google.common.base.Converter;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 
 /**
  * Common behaviors across {@link org.fcrepo.kernel.api.models.Container} and
@@ -231,6 +233,39 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                     .build();
 
     protected Node node;
+
+    /*
+     * A terminating slash means ModeShape has trouble extracting the localName, e.g., for http://myurl.org/.
+     * 
+     * @see <a href="https://jira.duraspace.org/browse/FCREPO-1409"> FCREPO-1409 </a> for details.
+     */
+    private static final Function<Quad, IllegalArgumentException> validatePredicateEndsWithSlash = uncheck(x -> {
+        if (x.getPredicate().isURI() && x.getPredicate().getURI().endsWith("/")) {
+            return new IllegalArgumentException("Invalid predicate ends with '/': " + x.getPredicate()
+                    .getURI());
+        }
+        return null;
+    });
+
+    /*
+     * Ensures the object URI is valid
+     */
+    private static final Function<Quad, IllegalArgumentException> validateObjectUrl = uncheck(x -> {
+        if (x.getObject().isURI()) {
+            final String uri = ((Node_URI) x.getObject()).toString();
+            try {
+                new URI(uri);
+            } catch (Exception ex) {
+                return new IllegalArgumentException("Invalid object URI (" + uri + " ) : " + ex.getMessage());
+            }
+        }
+        return null;
+    });
+
+    private static final List<Function<Quad, IllegalArgumentException>> quadValidators =
+            ImmutableList.<Function<Quad, IllegalArgumentException>>builder()
+                    .add(validatePredicateEndsWithSlash)
+                    .add(validateObjectUrl).build();
 
     /**
      * Construct a {@link org.fcrepo.kernel.api.models.FedoraResource} from an existing JCR Node
@@ -610,7 +645,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         final UpdateRequest request = create(sparqlUpdateStatement,
                 idTranslator.reverse().convert(this).toString());
 
-        final Collection<IllegalArgumentException> errors = checkInvalidPredicates(request);
+        final Collection<IllegalArgumentException> errors = validateUpdateRequest(request);
 
         final NamespaceRegistry namespaceRegistry = getNamespaceRegistry(getSession());
 
@@ -1011,30 +1046,27 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         }
     }
 
-    /**
-     * Helps ensure that there are no terminating slashes in the predicate.
-     * A terminating slash means ModeShape has trouble extracting the localName, e.g., for
-     * http://myurl.org/.
-     *
-     * @see <a href="https://jira.duraspace.org/browse/FCREPO-1409"> FCREPO-1409 </a> for details.
-     */
-    private static Collection<IllegalArgumentException> checkInvalidPredicates(final UpdateRequest request) {
+    private static Collection<IllegalArgumentException> validateUpdateRequest(final UpdateRequest request) {
         return request.getOperations().stream()
                 .flatMap(x -> {
                     if (x instanceof UpdateModify) {
-                        final UpdateModify y = (UpdateModify)x;
+                        final UpdateModify y = (UpdateModify) x;
                         return concat(y.getInsertQuads().stream(), y.getDeleteQuads().stream());
                     } else if (x instanceof UpdateData) {
-                        return ((UpdateData)x).getQuads().stream();
+                        return ((UpdateData) x).getQuads().stream();
                     } else if (x instanceof UpdateDeleteWhere) {
-                        return ((UpdateDeleteWhere)x).getQuads().stream();
+                        return ((UpdateDeleteWhere) x).getQuads().stream();
                     } else {
                         return empty();
                     }
                 })
-                .filter(x -> x.getPredicate().isURI() && x.getPredicate().getURI().endsWith("/"))
-                .map(x -> new IllegalArgumentException("Invalid predicate ends with '/': " + x.getPredicate().getURI()))
+                .flatMap(x -> validateQuad(x))
+                .filter(x -> x != null)
                 .collect(Collectors.toList());
+    }
+
+    private static Stream<IllegalArgumentException> validateQuad(final Quad quad) {
+        return quadValidators.stream().map(x -> x.apply(quad));
     }
 
     private Node getFrozenNode(final String label) throws RepositoryException {
