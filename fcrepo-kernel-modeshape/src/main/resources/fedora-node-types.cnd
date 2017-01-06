@@ -49,6 +49,8 @@
  */
 <config = 'info:fedoraconfig/'>
 
+<test = 'info:fedora/test/'>
+
 /*
  * Any Fedora resource.
  */
