@@ -150,6 +150,8 @@ import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.vocabulary.DC_11;
+
+import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.junit.Ignore;
@@ -237,17 +239,42 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testHeadTurtleContentType() throws IOException {
+        testHeadDefaultContentType(RDFMediaType.TURTLE_WITH_CHARSET);
+    }
+
+    @Test
+    public void testHeadRDFContentType() throws IOException {
+        testHeadDefaultContentType(RDFMediaType.RDF_XML);
+    }
+
+    @Test
+    public void testHeadJSONLDContentType() throws IOException {
+        testHeadDefaultContentType(RDFMediaType.JSON_LD);
+    }
+
+    @Test
     public void testHeadDefaultContentType() throws IOException {
+        testHeadDefaultContentType(null);
+    }
+
+    private void testHeadDefaultContentType(final String mimeType) throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
         addMixin(id, CONTAINER.getURI());
 
         final HttpHead headObjMethod = headObjMethod(id);
+        String mt = mimeType;
+        if (mt != null) {
+            headObjMethod.addHeader("Accept", mt);
+        } else {
+            mt = RDFMediaType.TURTLE_WITH_CHARSET;
+        }
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
-            final Collection<String> contentType = getHeader(response, CONTENT_TYPE);
-            assertTrue(contentType.size() == 1);
-            assertTrue("Didn't find LDP valid content-type header: " + contentType, !contentType.iterator().next()
-                    .contains("application/octet-stream"));
+            final Collection<String> contentTypes = getHeader(response, CONTENT_TYPE);
+            final String contentType = contentTypes.iterator().next();
+            assertTrue("Didn't find LDP valid content-type header: " + contentType +
+                    "; expected result: " + mt, contentType.contains(mt));
         }
     }
 
