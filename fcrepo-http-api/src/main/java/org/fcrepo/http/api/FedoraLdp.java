@@ -176,6 +176,9 @@ public class FedoraLdp extends ContentExposingResource {
      */
     @HEAD
     @Timed
+    @Produces({TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
+        N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
+        TURTLE_X, TEXT_HTML_WITH_CHARSET})
     public Response head() {
         LOGGER.info("HEAD for: {}", externalPath);
 

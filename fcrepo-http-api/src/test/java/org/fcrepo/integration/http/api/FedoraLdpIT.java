@@ -70,6 +70,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_VARIANTS;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
@@ -232,6 +233,21 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             final Collection<String> links = getLinkHeaders(response);
             assertTrue("Didn't find LDP container link header!", links.contains(BASIC_CONTAINER_LINK_HEADER));
+        }
+    }
+
+    @Test
+    public void testHeadDefaultContentType() throws IOException {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+        addMixin(id, CONTAINER.getURI());
+
+        final HttpHead headObjMethod = headObjMethod(id);
+        try (final CloseableHttpResponse response = execute(headObjMethod)) {
+            final Collection<String> contentType = getHeader(response, CONTENT_TYPE);
+            assertTrue(contentType.size() == 1);
+            assertTrue("Didn't find LDP valid content-type header: " + contentType, !contentType.iterator().next()
+                    .contains("application/octet-stream"));
         }
     }
 
