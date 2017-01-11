@@ -131,7 +131,6 @@ import org.fcrepo.kernel.modeshape.utils.UncheckedPredicate;
 import org.fcrepo.kernel.modeshape.utils.iterators.RdfAdder;
 import org.fcrepo.kernel.modeshape.utils.iterators.RdfRemover;
 
-import org.apache.jena.graph.Node_URI;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
@@ -241,8 +240,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
      */
     private static final Function<Quad, IllegalArgumentException> validatePredicateEndsWithSlash = uncheck(x -> {
         if (x.getPredicate().isURI() && x.getPredicate().getURI().endsWith("/")) {
-            return new IllegalArgumentException("Invalid predicate ends with '/': " + x.getPredicate()
-                    .getURI());
+            return new IllegalArgumentException("Invalid predicate ends with '/': " + x.getPredicate().getURI());
         }
         return null;
     });
@@ -252,7 +250,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
      */
     private static final Function<Quad, IllegalArgumentException> validateObjectUrl = uncheck(x -> {
         if (x.getObject().isURI()) {
-            final String uri = ((Node_URI) x.getObject()).toString();
+            final String uri = x.getObject().toString();
             try {
                 new URI(uri);
             } catch (Exception ex) {
@@ -1060,7 +1058,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                         return empty();
                     }
                 })
-                .flatMap(x -> validateQuad(x))
+                .flatMap(FedoraResourceImpl::validateQuad)
                 .filter(x -> x != null)
                 .collect(Collectors.toList());
     }
