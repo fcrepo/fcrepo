@@ -279,7 +279,11 @@ public abstract class AbstractResourceIT {
     }
 
     protected static Collection<String> getLinkHeaders(final HttpResponse response) {
-        return stream(response.getHeaders(LINK)).map(Header::getValue).collect(toList());
+        return getHeader(response, LINK);
+    }
+
+    protected static Collection<String> getHeader(final HttpResponse response, final String header) {
+        return stream(response.getHeaders(header)).map(Header::getValue).collect(toList());
     }
 
     /**

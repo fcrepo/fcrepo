@@ -87,6 +87,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.ServerErrorException;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -172,10 +173,14 @@ public class FedoraLdp extends ContentExposingResource {
 
     /**
      * Retrieve the node headers
+     * 
      * @return response
      */
     @HEAD
     @Timed
+    @Produces({ TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
+        N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
+        TURTLE_X, TEXT_HTML_WITH_CHARSET })
     public Response head() {
         LOGGER.info("HEAD for: {}", externalPath);
 
@@ -194,6 +199,11 @@ public class FedoraLdp extends ContentExposingResource {
 
             // we set the content-type explicitly to avoid content-negotiation from getting in the way
             builder.type(mediaType.toString());
+        } else {
+            final String accept = headers.getHeaderString(HttpHeaders.ACCEPT);
+            if (accept == null || "*/*".equals(accept)) {
+                builder.type(TURTLE_WITH_CHARSET);
+            }
         }
 
         return builder.build();
