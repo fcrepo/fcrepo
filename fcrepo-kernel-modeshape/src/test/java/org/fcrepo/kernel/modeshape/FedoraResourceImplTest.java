@@ -73,6 +73,7 @@ import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.modeshape.rdf.JcrRdfTools;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.modeshape.testutilities.TestPropertyIterator;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -103,6 +104,12 @@ public class FedoraResourceImplTest {
 
     @Mock
     private Property mockProp, mockContainerProperty;
+
+    @Mock
+    private NamespaceRegistry mockNamespaceRegistry;
+
+    @Mock
+    private Workspace mockWorkspace;
 
     @Mock
     private JcrRdfTools mockJcrRdfTools;
@@ -326,6 +333,34 @@ public class FedoraResourceImplTest {
             replacementModel.add(replacementModel.createResource("a"), replacementModel.createProperty("b"), "n");
 
             testObj.replaceProperties(defaultGraphSubjects, replacementModel, propertiesStream);
+        }
+    }
+
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testUpdateInvalidObjectUrlInSparql() throws RepositoryException {
+        testUpdateInvalidSPARQL(
+                "INSERT DATA {<> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://pcdm.org/models##file> .}");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testUpdateInvalidPredicateUrlInSparql() throws RepositoryException {
+        testUpdateInvalidSPARQL("INSERT DATA {<> <http://www.w3.org/1999/02/> <http://pcdm.org/models#file> .}");
+    }
+
+    private void testUpdateInvalidSPARQL(final String sparqlUpdateStatement) throws RepositoryException {
+
+        final DefaultIdentifierTranslator defaultGraphSubjects = new DefaultIdentifierTranslator(mockSession);
+
+        when(mockNode.getPath()).thenReturn("/xyz");
+        when(mockSession.getNode("/xyz")).thenReturn(mockNode);
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
+        final Model propertiesModel = createDefaultModel();
+        try (final RdfStream propertiesStream = fromModel(createURI("info:fedora/xyz"), propertiesModel)) {
+
+            testObj.updateProperties(defaultGraphSubjects, sparqlUpdateStatement, propertiesStream);
+
         }
     }
 
