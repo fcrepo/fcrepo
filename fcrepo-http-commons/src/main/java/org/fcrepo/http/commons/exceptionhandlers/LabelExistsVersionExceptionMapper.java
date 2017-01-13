@@ -15,38 +15,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import org.slf4j.Logger;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
 
 import javax.jcr.version.LabelExistsVersionException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
-import static javax.ws.rs.core.Response.Status.CONFLICT;
-import static javax.ws.rs.core.Response.status;
-import static org.slf4j.LoggerFactory.getLogger;
-
 /**
- *  Translate LabelExistsVersionException errors into reasonable
- *  HTTP error codes
+ * Translate LabelExistsVersionException errors into reasonable HTTP error codes
  *
  * @author md5wz
  * @since 11/21/14
  */
 @Provider
-public class LabelExistsVersionExceptionMapper implements
-        ExceptionMapper<LabelExistsVersionException>, ExceptionDebugLogging {
+public class LabelExistsVersionExceptionMapper extends FedoraExceptionMapper<LabelExistsVersionException> {
 
-    private static final Logger LOGGER =
-        getLogger(LabelExistsVersionExceptionMapper.class);
-
-    @Override
-    public Response toResponse(final LabelExistsVersionException e) {
-        LOGGER.error("LabelExistsVersionException intercepted by LabelExistsVersionExceptionMapper: {}\n",
-                    e.getMessage());
-        debugException(this, e, LOGGER);
-        return status(CONFLICT).entity(e.getMessage()).build();
+    /**
+     * Default
+     */
+    public LabelExistsVersionExceptionMapper() {
+        super(CONFLICT);
     }
 }

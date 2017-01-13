@@ -15,19 +15,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.http.commons.exceptionhandlers;
 
 import static com.google.common.base.Throwables.getStackTraceAsString;
 import static javax.ws.rs.core.Response.serverError;
-import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.RepositoryException;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.ext.Provider;
 
 import org.fcrepo.kernel.api.exception.SessionMissingException;
-import org.slf4j.Logger;
 
 /**
  * Catch all the exceptions!
@@ -38,13 +37,9 @@ import org.slf4j.Logger;
  * @author fasseg
  */
 @Provider
-public class WildcardExceptionMapper implements
-        ExceptionMapper<Exception>, ExceptionDebugLogging {
+public class WildcardExceptionMapper extends FedoraExceptionMapper<Exception> {
 
     Boolean showStackTrace = true;
-
-    private static final Logger LOGGER =
-        getLogger(WildcardExceptionMapper.class);
 
     @Override
     public Response toResponse(final Exception e) {
@@ -53,21 +48,29 @@ public class WildcardExceptionMapper implements
                     .toResponse((SessionMissingException) e.getCause());
         }
 
-        if ( e.getCause() instanceof RepositoryException) {
+        if (e.getCause() instanceof RepositoryException) {
             return new RepositoryExceptionMapper()
-                    .toResponse((RepositoryException)e.getCause());
+                    .toResponse((RepositoryException) e.getCause());
         }
 
-        LOGGER.error("Exception intercepted by WildcardExceptionMapper: {}\n", e.getMessage());
-        debugException(this, e, LOGGER);
-        return serverError().entity(
-                showStackTrace ? getStackTraceAsString(e) : null).build();
+        return super.toResponse(e);
+    }
+
+    @Override
+    protected ResponseBuilder entity(final ResponseBuilder builder, final Exception e) {
+        return builder.entity(
+                showStackTrace ? getStackTraceAsString(e) : null);
+    }
+
+    @Override
+    protected ResponseBuilder status(final Exception e) {
+        return serverError();
     }
 
     /**
-     * Set whether the full stack trace should be returned as part of the
-     * error response. This may be a bad idea if the stack trace is exposed
-     * to the public.
+     * Set whether the full stack trace should be returned as part of the error response. This may be a bad idea if
+     * the stack trace is exposed to the public.
+     * 
      * @param showStackTrace the boolean value of showing stack trace
      */
     public void setShowStackTrace(final Boolean showStackTrace) {

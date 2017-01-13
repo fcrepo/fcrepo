@@ -15,34 +15,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import org.fcrepo.kernel.api.exception.ResourceTypeException;
-
-import org.slf4j.Logger;
-
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static org.slf4j.LoggerFactory.getLogger;
-import static javax.ws.rs.core.Response.status;
+import org.fcrepo.kernel.api.exception.ResourceTypeException;
 
 /**
  * @author cabeer
  * @since 9/15/14
  */
 @Provider
-public class ResourceTypeExceptionMapper implements
-        ExceptionMapper<ResourceTypeException>, ExceptionDebugLogging {
-
-    private static final Logger LOGGER =
-            getLogger(ResourceTypeExceptionMapper.class);
-
-    @Override
-    public Response toResponse(final ResourceTypeException e) {
-        debugException(this, e, LOGGER);
-        return status(BAD_REQUEST).entity(null).build();
-    }
+public class ResourceTypeExceptionMapper extends FedoraExceptionMapper<ResourceTypeException> {
 }

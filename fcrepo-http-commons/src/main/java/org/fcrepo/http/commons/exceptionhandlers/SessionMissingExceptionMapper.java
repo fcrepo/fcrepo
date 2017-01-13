@@ -15,37 +15,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.GONE;
-import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
 import org.fcrepo.kernel.api.exception.SessionMissingException;
 
-import org.slf4j.Logger;
-
 /**
- * If a session is requested that has been closed (or never existed), just
- * return an HTTP 410 Gone.
+ * If a session is requested that has been closed (or never existed), just return an HTTP 410 Gone.
  *
  * @author awoods
  */
 @Provider
-public class SessionMissingExceptionMapper implements
-        ExceptionMapper<SessionMissingException>, ExceptionDebugLogging {
+public class SessionMissingExceptionMapper extends FedoraExceptionMapper<SessionMissingException> {
 
-    private static final Logger LOGGER =
-            getLogger(SessionMissingExceptionMapper.class);
-
-
-    @Override
-    public Response toResponse(final SessionMissingException e) {
-        debugException(this, e, LOGGER);
-        return status(GONE).entity(e.getMessage()).build();
+    /**
+     * Default
+     */
+    public SessionMissingExceptionMapper() {
+        super(GONE);
     }
 }

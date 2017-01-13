@@ -15,18 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import org.glassfish.jersey.message.internal.HeaderValueException;
-import org.slf4j.Logger;
-
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.ext.Provider;
 
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static org.slf4j.LoggerFactory.getLogger;
-import static javax.ws.rs.core.Response.status;
+import org.glassfish.jersey.message.internal.HeaderValueException;
 
 /**
  * If a client-provided header value fails to parse, return an HTTP 400 Bad Request.
@@ -35,14 +30,10 @@ import static javax.ws.rs.core.Response.status;
  * @since 2015-08-06
  */
 @Provider
-public class HeaderValueExceptionMapper implements
-        ExceptionMapper<HeaderValueException>, ExceptionDebugLogging {
-
-    private static final Logger LOGGER = getLogger(HeaderValueExceptionMapper.class);
+public class HeaderValueExceptionMapper extends FedoraExceptionMapper<HeaderValueException> {
 
     @Override
-    public Response toResponse(final HeaderValueException e) {
-        debugException(this, e, LOGGER);
-        return status(BAD_REQUEST).entity(e.getMessage() + " ...should value be quoted?").build();
+    protected ResponseBuilder entity(final ResponseBuilder builder, final HeaderValueException e) {
+        return builder.entity(e.getMessage() + " ...should value be quoted?");
     }
 }

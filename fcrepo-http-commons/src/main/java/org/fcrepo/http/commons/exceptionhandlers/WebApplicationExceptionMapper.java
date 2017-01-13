@@ -15,17 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.http.commons.exceptionhandlers;
 
 import static javax.ws.rs.core.Response.fromResponse;
-import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.ext.Provider;
-
-import org.slf4j.Logger;
 
 /**
  * Handle Jersey WebApplicationException
@@ -33,18 +30,16 @@ import org.slf4j.Logger;
  * @author lsitu
  */
 @Provider
-public class WebApplicationExceptionMapper implements
-        ExceptionMapper<WebApplicationException>, ExceptionDebugLogging {
-
-    private static final Logger LOGGER =
-        getLogger(WebApplicationExceptionMapper.class);
+public class WebApplicationExceptionMapper extends FedoraExceptionMapper<WebApplicationException> {
 
     @Override
-    public Response toResponse(final WebApplicationException e) {
-        LOGGER.error(
-                "WebApplicationException intercepted by WebApplicationExceptionMapper: {}\n", e.getMessage());
-        debugException(this, e, LOGGER);
+    protected ResponseBuilder entity(final ResponseBuilder builder, final WebApplicationException e) {
         final String msg = null == e.getCause() ? e.getMessage() : e.getCause().getMessage();
-        return fromResponse(e.getResponse()).entity(msg).build();
+        return builder.entity(msg);
+    }
+
+    @Override
+    protected ResponseBuilder status(final WebApplicationException e) {
+        return fromResponse(e.getResponse());
     }
 }

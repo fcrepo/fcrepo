@@ -15,42 +15,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import org.fcrepo.kernel.api.exception.TombstoneException;
+import static javax.ws.rs.core.Response.Status.GONE;
 
-import org.slf4j.Logger;
-
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.ext.Provider;
 
-import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
-import static javax.ws.rs.core.Response.Status.GONE;
-import static javax.ws.rs.core.Response.status;
-import static org.slf4j.LoggerFactory.getLogger;
+import org.fcrepo.kernel.api.exception.TombstoneException;
 
 /**
  * @author cabeer
  * @since 10/16/14
  */
 @Provider
-public class TombstoneExceptionMapper implements
-        ExceptionMapper<TombstoneException>, ExceptionDebugLogging {
-
-    private static final Logger LOGGER =
-            getLogger(TombstoneExceptionMapper.class);
+public class TombstoneExceptionMapper extends FedoraExceptionMapper<TombstoneException> {
 
     @Override
-    public Response toResponse(final TombstoneException e) {
-        debugException(this, e, LOGGER);
-        final Response.ResponseBuilder response = status(GONE)
-                .entity(e.getMessage());
+    protected ResponseBuilder links(final ResponseBuilder builder, final TombstoneException e) {
+        return (e.getURI() != null) ? builder.link(e.getURI(), "hasTombstone") : builder;
+    }
 
-        if (e.getURI() != null) {
-            response.link(e.getURI(), "hasTombstone");
-        }
-
-        return response.type(TEXT_PLAIN_TYPE).build();
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.http.commons.exceptionhandlers.FedoraExceptionMapper#status(java.lang.Throwable)
+     */
+    @Override
+    protected ResponseBuilder status(final TombstoneException e) {
+        return status(GONE);
     }
 }

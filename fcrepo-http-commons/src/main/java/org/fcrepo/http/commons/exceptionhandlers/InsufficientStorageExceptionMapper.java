@@ -18,16 +18,10 @@
 
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import static javax.ws.rs.core.Response.status;
-import static org.slf4j.LoggerFactory.getLogger;
-
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.ext.Provider;
 
 import org.fcrepo.kernel.api.exception.InsufficientStorageException;
-
-import org.slf4j.Logger;
 
 /**
  * Translate InsufficientStorageException errors into HTTP error codes
@@ -36,20 +30,12 @@ import org.slf4j.Logger;
  * @since Oct 7, 2016
  */
 @Provider
-public class InsufficientStorageExceptionMapper implements
-        ExceptionMapper<InsufficientStorageException>, ExceptionDebugLogging {
-
-    private static final Logger LOGGER =
-            getLogger(InsufficientStorageException.class);
+public class InsufficientStorageExceptionMapper extends FedoraExceptionMapper<InsufficientStorageException> {
 
     public static final int INSUFFICIENT_STORAGE_HTTP_CODE = 507;
 
     @Override
-    public Response toResponse(final InsufficientStorageException e) {
-        LOGGER.error("InsufficientStorageException intercepted by {}: {}\n",
-                getClass().getSimpleName(),
-                e.getMessage());
-        debugException(this, e, LOGGER);
-        return status(INSUFFICIENT_STORAGE_HTTP_CODE).entity(e.getMessage()).build();
+    protected ResponseBuilder status(final InsufficientStorageException e) {
+        return status(InsufficientStorageExceptionMapper.INSUFFICIENT_STORAGE_HTTP_CODE);
     }
 }

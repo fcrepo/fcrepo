@@ -17,17 +17,9 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import static javax.ws.rs.core.Response.status;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static org.slf4j.LoggerFactory.getLogger;
-
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
 import org.fcrepo.kernel.api.exception.FedoraInvalidNamespaceException;
-
-import org.slf4j.Logger;
 
 /**
  * For invalid namespace exceptions on CRUD actions for nodes/datastreams
@@ -36,16 +28,5 @@ import org.slf4j.Logger;
  * @since September 12, 2014
  */
 @Provider
-public class FedoraInvalidNamespaceExceptionMapper implements
-        ExceptionMapper<FedoraInvalidNamespaceException>, ExceptionDebugLogging {
-
-    private static final Logger LOGGER = getLogger(FedoraInvalidNamespaceExceptionMapper.class);
-
-    @Override
-    public Response toResponse(final FedoraInvalidNamespaceException e) {
-        LOGGER.error("NamespaceExceptionMapper caught an exception: {}", e.getMessage());
-        debugException(this, e, LOGGER);
-        return status(BAD_REQUEST).entity(e.getMessage()).build();
-    }
-
+public class FedoraInvalidNamespaceExceptionMapper extends FedoraExceptionMapper<FedoraInvalidNamespaceException> {
 }

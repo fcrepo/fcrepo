@@ -15,17 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import org.glassfish.jersey.server.ParamException;
-import org.slf4j.Logger;
+import static javax.ws.rs.core.Response.fromResponse;
 
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.ext.Provider;
 
-import static javax.ws.rs.core.Response.fromResponse;
-import static org.slf4j.LoggerFactory.getLogger;
+import org.glassfish.jersey.server.ParamException;
 
 /**
  * Handle Jersey ParamException
@@ -34,23 +32,20 @@ import static org.slf4j.LoggerFactory.getLogger;
  * @since 2015-01-20
  */
 @Provider
-public class ParamExceptionMapper implements
-        ExceptionMapper<ParamException>, ExceptionDebugLogging {
-
-    private static final Logger LOGGER = getLogger(ParamExceptionMapper.class);
+public class ParamExceptionMapper extends FedoraExceptionMapper<ParamException> {
 
     @Override
-    public Response toResponse(final ParamException e) {
+    protected ResponseBuilder status(final ParamException e) {
+        return fromResponse(e.getResponse());
+    }
 
-        LOGGER.error("ParamException intercepted by ParamExceptionMapper: {}\n", e.getMessage());
-        debugException(this, e, LOGGER);
-
+    @Override
+    protected ResponseBuilder entity(final ResponseBuilder builder, final ParamException e) {
         final StringBuilder msg = new StringBuilder("Error parsing parameter: ");
         msg.append(e.getParameterName());
         msg.append(", of type: ");
         msg.append(e.getParameterType().getSimpleName());
-
-        return fromResponse(e.getResponse()).entity(msg.toString()).build();
+        return builder.entity(msg);
     }
 
 }

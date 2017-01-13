@@ -15,13 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.http.commons.exceptionhandlers;
 
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Link;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
-import javax.ws.rs.ext.ExceptionMapper;
 
 import org.fcrepo.kernel.api.exception.ConstraintViolationException;
 
@@ -32,7 +34,11 @@ import org.fcrepo.kernel.api.exception.ConstraintViolationException;
  * @since 2015-06-24
  * @param <T> Throwable subclass of ConstraintViolationException
  */
-public abstract class ConstraintExceptionMapper<T extends ConstraintViolationException> implements ExceptionMapper<T> {
+public abstract class ConstraintExceptionMapper<T extends ConstraintViolationException>
+        extends FedoraExceptionMapper<T> {
+
+    @Context
+    private UriInfo uriInfo;
 
     /**
      * Where the RDF exception files sit.
@@ -51,6 +57,11 @@ public abstract class ConstraintExceptionMapper<T extends ConstraintViolationExc
                 uriInfo.getBaseUri().getScheme(), uriInfo.getBaseUri().getAuthority(),
                 CONSTRAINT_DIR, e.getClass().toString().substring(e.getClass().toString().lastIndexOf('.') + 1));
         return Link.fromUri(constraintURI).rel(CONSTRAINED_BY.getURI()).build();
+    }
+
+    @Override
+    protected ResponseBuilder links(final ResponseBuilder builder, final T e) {
+        return builder.links(buildConstraintLink(e, uriInfo));
     }
 
 }

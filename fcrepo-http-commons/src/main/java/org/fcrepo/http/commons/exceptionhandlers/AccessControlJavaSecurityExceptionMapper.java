@@ -15,19 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.http.commons.exceptionhandlers;
 
-import static javax.ws.rs.core.Response.status;
-import static javax.ws.rs.core.Response.Status.FORBIDDEN;
-import static org.slf4j.LoggerFactory.getLogger;
+package org.fcrepo.http.commons.exceptionhandlers;
 
 import java.security.AccessControlException;
 
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.core.Response.ResponseBuilder;
+import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.ext.Provider;
-
-import org.slf4j.Logger;
 
 /**
  * Translate Java Security AccessControlExceptions into HTTP 403 Forbidden errors
@@ -37,16 +32,16 @@ import org.slf4j.Logger;
  * @author gregjan
  */
 @Provider
-public class AccessControlJavaSecurityExceptionMapper implements
-        ExceptionMapper<AccessControlException>, ExceptionDebugLogging {
-
-    private static final Logger LOGGER =
-        getLogger(AccessControlJavaSecurityExceptionMapper.class);
+public class AccessControlJavaSecurityExceptionMapper extends FedoraExceptionMapper<AccessControlException> {
 
     @Override
-    public Response toResponse(final AccessControlException e) {
-        debugException(this, e, LOGGER);
-        return status(FORBIDDEN).build();
+    protected ResponseBuilder status(final AccessControlException e) {
+        return super.status(Status.FORBIDDEN);
+    }
+
+    @Override
+    protected ResponseBuilder entity(final ResponseBuilder builder, final AccessControlException e) {
+        return builder.entity("This resource is forbidden..");
     }
 
 }

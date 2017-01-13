@@ -17,30 +17,21 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import javax.ws.rs.ServerErrorException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
-import javax.ws.rs.ext.Provider;
-
-import org.slf4j.Logger;
-
 import static javax.ws.rs.core.Response.fromResponse;
-import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.ws.rs.ServerErrorException;
+import javax.ws.rs.core.Response.ResponseBuilder;
+import javax.ws.rs.ext.Provider;
 
 /**
  * @author awoods
  * @since 11/20/14
  */
 @Provider
-public class ServerErrorExceptionMapper implements
-        ExceptionMapper<ServerErrorException>, ExceptionDebugLogging {
-
-    private static final Logger LOGGER =
-            getLogger(ServerErrorExceptionMapper.class);
+public class ServerErrorExceptionMapper extends FedoraExceptionMapper<ServerErrorException> {
 
     @Override
-    public Response toResponse(final ServerErrorException e) {
-        debugException(this, e, LOGGER);
-        return fromResponse(e.getResponse()).entity(e.getMessage()).build();
+    protected ResponseBuilder status(final ServerErrorException e) {
+        return fromResponse(e.getResponse());
     }
 }
