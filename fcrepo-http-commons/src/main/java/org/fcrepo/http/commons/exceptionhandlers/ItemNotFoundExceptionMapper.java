@@ -15,18 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.ItemNotFoundException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.ext.Provider;
-
-import org.slf4j.Logger;
 
 /**
  * Translate jcr ItemNotFoundException to HTTP 404 Not Found
@@ -34,15 +30,17 @@ import org.slf4j.Logger;
  * @author lsitu
  */
 @Provider
-public class ItemNotFoundExceptionMapper implements
-        ExceptionMapper<ItemNotFoundException>, ExceptionDebugLogging {
+public class ItemNotFoundExceptionMapper extends FedoraExceptionMapper<ItemNotFoundException> {
 
-    private static final Logger LOGGER =
-        getLogger(ItemNotFoundExceptionMapper.class);
+    /**
+     * Default constructor
+     */
+    public ItemNotFoundExceptionMapper() {
+        super(NOT_FOUND);
+    }
 
     @Override
-    public Response toResponse(final ItemNotFoundException e) {
-        debugException(this, e, LOGGER);
-        return status(NOT_FOUND).build();
+    protected ResponseBuilder entity(final ResponseBuilder builder, final ItemNotFoundException e) {
+        return builder.entity("Item not found.");
     }
 }

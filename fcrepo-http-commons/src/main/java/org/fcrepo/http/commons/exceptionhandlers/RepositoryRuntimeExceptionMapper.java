@@ -15,11 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-
-import org.slf4j.Logger;
+import static com.google.common.base.Throwables.getStackTraceAsString;
+import static javax.ws.rs.core.Response.serverError;
 
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
@@ -27,9 +27,7 @@ import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 import javax.ws.rs.ext.Providers;
 
-import static com.google.common.base.Throwables.getStackTraceAsString;
-import static javax.ws.rs.core.Response.serverError;
-import static org.slf4j.LoggerFactory.getLogger;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 
 /**
  * @author cabeer
@@ -44,13 +42,12 @@ public class RepositoryRuntimeExceptionMapper implements
 
     /**
      * Get the context Providers so we can rethrow the cause to an appropriate handler
+     * 
      * @param providers the providers
      */
     public RepositoryRuntimeExceptionMapper(@Context final Providers providers) {
         this.providers = providers;
     }
-
-    private static final Logger LOGGER = getLogger(RepositoryExceptionMapper.class);
 
     @Override
     public Response toResponse(final RepositoryRuntimeException e) {
@@ -61,8 +58,6 @@ public class RepositoryRuntimeExceptionMapper implements
         if (exceptionMapper != null) {
             return exceptionMapper.toResponse(cause);
         }
-        LOGGER.error("Caught a repository exception: {}", e.getMessage());
-        debugException(this, cause, LOGGER);
         return serverError().entity(getStackTraceAsString(e)).build();
     }
 }

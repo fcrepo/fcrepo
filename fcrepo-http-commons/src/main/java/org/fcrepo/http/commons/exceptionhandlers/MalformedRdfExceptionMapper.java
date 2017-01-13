@@ -15,16 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import static javax.ws.rs.core.Response.status;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.ws.rs.core.Link;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.ext.Provider;
 
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
@@ -37,8 +35,7 @@ import org.slf4j.Logger;
  * @since 9/30/14
  */
 @Provider
-public class MalformedRdfExceptionMapper implements
-        ExceptionMapper<MalformedRdfException>, ExceptionDebugLogging {
+public class MalformedRdfExceptionMapper extends FedoraExceptionMapper<MalformedRdfException> {
 
     private static final Logger LOGGER =
             getLogger(MalformedRdfExceptionMapper.class);
@@ -46,14 +43,15 @@ public class MalformedRdfExceptionMapper implements
     private static final int REASONABLE_LENGTH = 500;
 
     @Override
-    public Response toResponse(final MalformedRdfException e) {
-        debugException(this, e, LOGGER);
+    protected ResponseBuilder links(final ResponseBuilder builder, final MalformedRdfException e) {
         final Link link = Link.fromUri(getConstraintUri(e)).rel(CONSTRAINED_BY.getURI()).build();
+        return builder.links(link);
+    }
+
+    @Override
+    protected ResponseBuilder entity(final ResponseBuilder builder, final MalformedRdfException e) {
         final String msg = e.getMessage();
-        if (msg.matches(".*org.*Exception: .*")) {
-            return status(BAD_REQUEST).entity(msg.replaceAll("org.*Exception: ", "")).links(link).build();
-        }
-        return status(BAD_REQUEST).entity(msg).links(link).build();
+        return builder.entity(msg.matches(".*org.*Exception: .*") ? msg.replaceAll("org.*Exception: ", "") : msg);
     }
 
     private static String getConstraintUri(final MalformedRdfException e) {

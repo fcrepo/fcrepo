@@ -15,18 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
-import org.slf4j.Logger;
-
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.status;
-import static org.slf4j.LoggerFactory.getLogger;
+import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 
 /**
  * The class translates {@link org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException}s to its proper
@@ -36,15 +30,6 @@ import static org.slf4j.LoggerFactory.getLogger;
  * @since July 14, 2015.
  */
 @Provider
-public class InvalidResourceIdentifierExceptionMapper implements
-        ExceptionMapper<InvalidResourceIdentifierException>, ExceptionDebugLogging {
-
-    private static final Logger LOGGER = getLogger(InvalidResourceIdentifierExceptionMapper.class);
-
-    @Override
-    public Response toResponse(final InvalidResourceIdentifierException e) {
-        LOGGER.error("InvalidResourceIdentifierExceptionMapper caught an exception: {}", e.getMessage());
-        debugException(this, e, LOGGER);
-        return status(BAD_REQUEST).entity(e.getMessage()).build();
-    }
+public class InvalidResourceIdentifierExceptionMapper extends
+        FedoraExceptionMapper<InvalidResourceIdentifierException> {
 }

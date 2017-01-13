@@ -15,41 +15,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
-import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
-import org.slf4j.Logger;
 
 /**
- *  Translate InvalidChecksumException errors into reasonable
- *  HTTP error codes
+ * Translate InvalidChecksumException errors into reasonable HTTP error codes
  *
  * @author awoods
  * @author ajs6f
  * @author cbeer
  */
 @Provider
-public class InvalidChecksumExceptionMapper implements
-        ExceptionMapper<InvalidChecksumException>, ExceptionDebugLogging {
+public class InvalidChecksumExceptionMapper extends FedoraExceptionMapper<InvalidChecksumException> {
 
-    private static final Logger LOGGER =
-        getLogger(InvalidChecksumExceptionMapper.class);
-
-    @Override
-    public Response toResponse(final InvalidChecksumException e) {
-
-        LOGGER.error("InvalidChecksumException intercepted by InvalidChecksumExceptionMapper: {}\n",
-                e.getMessage());
-        debugException(this, e, LOGGER);
-
-        return status(CONFLICT).entity(e.getMessage()).build();
+    /**
+     * Default constructor
+     */
+    public InvalidChecksumExceptionMapper() {
+        super(CONFLICT);
     }
 }

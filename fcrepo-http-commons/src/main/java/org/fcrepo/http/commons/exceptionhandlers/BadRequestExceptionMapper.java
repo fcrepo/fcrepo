@@ -15,18 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import org.slf4j.Logger;
-
 import javax.ws.rs.BadRequestException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
-
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.status;
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * For generic BadRequestExceptions.
@@ -35,16 +28,5 @@ import static org.slf4j.LoggerFactory.getLogger;
  * @since November 18, 2014
  */
 @Provider
-public class BadRequestExceptionMapper implements
-        ExceptionMapper<BadRequestException>, ExceptionDebugLogging {
-
-    private static final Logger LOGGER = getLogger(BadRequestExceptionMapper.class);
-
-    @Override
-    public Response toResponse(final BadRequestException e) {
-        LOGGER.error("BadRequestExceptionMapper caught an exception: {}", e.getMessage());
-        debugException(this, e, LOGGER);
-        return status(BAD_REQUEST).entity(e.getMessage()).build();
-    }
-
+public class BadRequestExceptionMapper extends FedoraExceptionMapper<BadRequestException> {
 }

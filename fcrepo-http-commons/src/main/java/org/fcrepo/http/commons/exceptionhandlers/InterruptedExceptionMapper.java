@@ -15,18 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import org.fcrepo.kernel.api.exception.InterruptedRuntimeException;
-import org.slf4j.Logger;
-
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.core.Response.ResponseBuilder;
+import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.ext.Provider;
 
-import static javax.ws.rs.core.Response.Status.SERVICE_UNAVAILABLE;
-import static org.slf4j.LoggerFactory.getLogger;
-import static javax.ws.rs.core.Response.status;
+import org.fcrepo.kernel.api.exception.InterruptedRuntimeException;
 
 /**
  * If an HTTP request's processing is interrupted, return an HTTP 503 Service Unavailable.
@@ -34,14 +30,10 @@ import static javax.ws.rs.core.Response.status;
  * @author Mike Durbin
  */
 @Provider
-public class InterruptedExceptionMapper implements
-        ExceptionMapper<InterruptedRuntimeException>, ExceptionDebugLogging {
-
-    private static final Logger LOGGER = getLogger(InterruptedExceptionMapper.class);
+public class InterruptedExceptionMapper extends FedoraExceptionMapper<InterruptedRuntimeException> {
 
     @Override
-    public Response toResponse(final InterruptedRuntimeException e) {
-        debugException(this, e, LOGGER);
-        return status(SERVICE_UNAVAILABLE).entity(e.getMessage()).build();
+    protected ResponseBuilder status(final InterruptedRuntimeException e) {
+        return status(Status.SERVICE_UNAVAILABLE);
     }
 }

@@ -15,18 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.PathNotFoundException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.ext.Provider;
-
-import org.slf4j.Logger;
 
 /**
  * Translate PathNotFound exceptions into HTTP 404 errors
@@ -35,16 +31,17 @@ import org.slf4j.Logger;
  * @author cbeer
  */
 @Provider
-public class PathNotFoundExceptionMapper implements
-        ExceptionMapper<PathNotFoundException>, ExceptionDebugLogging {
+public class PathNotFoundExceptionMapper extends FedoraExceptionMapper<PathNotFoundException> {
 
-    private static final Logger LOGGER =
-        getLogger(PathNotFoundExceptionMapper.class);
-
-    @Override
-    public Response toResponse(final PathNotFoundException e) {
-        debugException(this, e, LOGGER);
-        return status(NOT_FOUND).build();
+    /**
+     * Default
+     */
+    public PathNotFoundExceptionMapper() {
+        super(NOT_FOUND);
     }
 
+    @Override
+    protected ResponseBuilder entity(final ResponseBuilder builder, final PathNotFoundException e) {
+        return builder.entity("Path not found.");
+    }
 }

@@ -15,21 +15,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.http.commons.exceptionhandlers;
 
 import static com.google.common.base.Throwables.getStackTraceAsString;
 import static javax.ws.rs.core.Response.serverError;
-import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.RepositoryException;
 import javax.jcr.ValueFormatException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.ext.Provider;
-
-import org.slf4j.Logger;
 
 /**
  * Provide a quasi-useful stacktrace when a generic RepositoryException is caught
@@ -37,22 +33,20 @@ import org.slf4j.Logger;
  * @author awoods
  */
 @Provider
-public class RepositoryExceptionMapper implements
-        ExceptionMapper<RepositoryException>, ExceptionDebugLogging {
-
-    private static final Logger LOGGER = getLogger(RepositoryExceptionMapper.class);
+public class RepositoryExceptionMapper extends FedoraExceptionMapper<RepositoryException> {
 
     @Override
-    public Response toResponse(final RepositoryException e) {
-
-        LOGGER.error("Caught a repository exception: {}", e.getMessage() );
-        debugException(this, e, LOGGER);
-        if ( e.getMessage().matches("Error converting \".+\" from String to a Name")) {
-            return status(BAD_REQUEST).entity(e.getMessage()).build();
-        } else if ( e instanceof ValueFormatException ) {
-            return status(BAD_REQUEST).entity(e.getMessage()).build();
+    protected ResponseBuilder status(final RepositoryException e) {
+        if (e.getMessage().matches("Error converting \".+\" from String to a Name") ||
+                e instanceof ValueFormatException) {
+            return status(BAD_REQUEST).entity(e.getMessage());
+        } else {
+            return serverError().entity(getStackTraceAsString(e));
         }
+    }
 
-        return serverError().entity(getStackTraceAsString(e)).build();
+    @Override
+    protected ResponseBuilder entity(final ResponseBuilder builder, final RepositoryException e) {
+        return builder;
     }
 }
