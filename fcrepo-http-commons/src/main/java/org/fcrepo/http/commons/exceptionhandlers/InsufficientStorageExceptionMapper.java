@@ -19,6 +19,7 @@
 package org.fcrepo.http.commons.exceptionhandlers;
 
 import static javax.ws.rs.core.Response.status;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.ws.rs.core.Response;
@@ -50,6 +51,6 @@ public class InsufficientStorageExceptionMapper implements
                 getClass().getSimpleName(),
                 e.getMessage());
         debugException(this, e, LOGGER);
-        return status(INSUFFICIENT_STORAGE_HTTP_CODE).entity(e.getMessage()).build();
+        return status(INSUFFICIENT_STORAGE_HTTP_CODE).entity(e.getMessage()).type(TEXT_PLAIN_WITH_CHARSET).build();
     }
 }

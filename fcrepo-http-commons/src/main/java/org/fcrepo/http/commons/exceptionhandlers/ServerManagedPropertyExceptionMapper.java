@@ -28,8 +28,9 @@ import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.Provider;
 
 import static javax.ws.rs.core.Response.Status.CONFLICT;
-import static org.slf4j.LoggerFactory.getLogger;
 import static javax.ws.rs.core.Response.status;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author cabeer
@@ -51,6 +52,6 @@ public class ServerManagedPropertyExceptionMapper extends ConstraintExceptionMap
         debugException(this, e, LOGGER);
         final Link link = buildConstraintLink(e, uriInfo);
         final String msg = e.getMessage();
-        return status(CONFLICT).entity(msg).links(link).build();
+        return status(CONFLICT).entity(msg).links(link).type(TEXT_PLAIN_WITH_CHARSET).build();
     }
 }
