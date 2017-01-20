@@ -17,7 +17,6 @@
  */
 package org.fcrepo.integration.rdf;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -26,7 +25,6 @@ import org.junit.Test;
  */
 public class BibframeIT extends AbstractIntegrationRdfIT {
 
-    @Ignore("Test fails when run from non-UTF8 platform (Windows). Character encoding fix pending:  FCREPO-1979")
     @Test
     public void testBibframe() {
         final String bibframe = "@prefix bf: <http://bibframe.org/vocab/> .\n" +
