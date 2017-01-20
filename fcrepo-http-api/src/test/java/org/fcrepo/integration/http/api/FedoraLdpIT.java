@@ -597,10 +597,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         deleteQuery.addHeader(CONTENT_TYPE, "application/sparql-update");
 
         final String deleteQueryStatement = "" +
-                "DELETE { \n" +
-                " <> <http://example.org/test/a> ?a . \n" +
-                " <> <http://example.org/test/b> ?b . \n" +
-                "} \n" +
+                "DELETE \n" +
                 "WHERE \n" +
                 "{ \n" +
                 "  <> <http://example.org/test/a> ?a . \n" +
