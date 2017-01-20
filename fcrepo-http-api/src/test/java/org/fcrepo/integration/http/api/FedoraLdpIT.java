@@ -24,12 +24,12 @@ import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static java.util.regex.Pattern.compile;
 import static java.util.stream.Collectors.toList;
-import static javax.ws.rs.core.Link.fromUri;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
+import static javax.ws.rs.core.Link.fromUri;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
@@ -64,14 +64,14 @@ import static org.apache.jena.riot.WebContent.contentTypeNTriples;
 import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.apache.jena.riot.WebContent.contentTypeTurtle;
+import static org.apache.jena.vocabulary.DC_11.title;
 import static org.apache.jena.vocabulary.RDF.type;
-import static org.apache.jena.vocabulary.DC.title;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_VARIANTS;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
+import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
@@ -105,8 +105,8 @@ import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.text.ParseException;
-import java.time.format.DateTimeFormatter;
 import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -119,6 +119,9 @@ import java.util.Optional;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.Variant;
+
+import org.fcrepo.http.commons.domain.RDFMediaType;
+import org.fcrepo.http.commons.test.util.CloseableDataset;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
@@ -150,9 +153,6 @@ import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.vocabulary.DC_11;
-
-import org.fcrepo.http.commons.domain.RDFMediaType;
-import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -557,6 +557,72 @@ public class FedoraLdpIT extends AbstractResourceIT {
         updateObjectGraphMethod.setEntity(new StringEntity("INSERT { <" + location + "> " +
                 "<http://purl.org/dc/elements/1.1/identifier> \"this is an identifier\" } WHERE {}"));
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(updateObjectGraphMethod));
+    }
+
+    @Test
+    public void testDeleteMultipleMultiValuedProperties() throws IOException {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+
+        final String location = serverAddress + id;
+        final HttpPatch addTriplesGraphMethod = new HttpPatch(location);
+        addTriplesGraphMethod.addHeader(CONTENT_TYPE, "application/sparql-update");
+
+        final String insertStatement = "INSERT DATA { \n" +
+                "  <> <http://example.org/test/x> \"x\" . \n" +
+                "  <> <http://example.org/test/a> \"1\" . \n" +
+                "  <> <http://example.org/test/a> \"2\" . \n" +
+                "  <> <http://example.org/test/a> \"3\" . \n" +
+                "  <> <http://example.org/test/a> \"4\" . \n" +
+                "  <> <http://example.org/test/b> \"1\" . \n" +
+                "  <> <http://example.org/test/b> \"2\" . \n" +
+                "  <> <http://example.org/test/b> \"3\" . \n" +
+                "  <> <http://example.org/test/b> \"4\" . \n" +
+                "}";
+
+        addTriplesGraphMethod.setEntity(new StringEntity(insertStatement));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(addTriplesGraphMethod));
+
+        // ensure that the triples are there.
+        try (final CloseableDataset dataset = getDataset(getObjMethod(id))) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertTrue("Didn't find a triple we expected!", graph.contains(ANY,
+                    createURI(location), createURI("http://example.org/test/x"), createLiteral("x")));
+            assertTrue("Didn't find a triple we expected!", graph.contains(ANY,
+                    createURI(location), createURI("http://example.org/test/a"), createLiteral("1")));
+
+        }
+
+        final HttpPatch deleteQuery = new HttpPatch(location);
+        deleteQuery.addHeader(CONTENT_TYPE, "application/sparql-update");
+
+        final String deleteQueryStatement = "" +
+                "DELETE { \n" +
+                " <> <http://example.org/test/a> ?a . \n" +
+                " <> <http://example.org/test/b> ?b . \n" +
+                "} \n" +
+                "WHERE \n" +
+                "{ \n" +
+                "  <> <http://example.org/test/a> ?a . \n" +
+                "  <> <http://example.org/test/b> ?b . \n" +
+                "} ";
+
+        deleteQuery.setEntity(new StringEntity(deleteQueryStatement));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteQuery));
+
+        // ensure that the expected triples removed.
+        try (final CloseableDataset dataset = getDataset(getObjMethod(id))) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertTrue("Didn't find a triple we expected!", graph.contains(ANY,
+                    createURI(location), createURI("http://example.org/test/x"), createLiteral("x")));
+            for (int i = 0; i < 4; ++i) {
+                for (String suffix : Arrays.asList("a", "b")) {
+                    assertFalse("Found a triple we deleted!", graph.contains(ANY,
+                            createURI(location), createURI("http://example.org/test/" + suffix), createLiteral(i +
+                                    "")));
+                }
+            }
+        }
     }
 
     @Test
