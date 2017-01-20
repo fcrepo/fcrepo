@@ -21,7 +21,7 @@ import static org.junit.Assert.assertEquals;
 import javax.ws.rs.core.Response;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static org.fcrepo.http.commons.exceptionhandlers.ExceptionMapperConstants.DEFAULT_CONTENT_TYPE;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 
 import org.fcrepo.kernel.api.exception.FedoraInvalidNamespaceException;
 
@@ -51,7 +51,7 @@ public class FedoraInvalidNamespaceExceptionMapperTest {
                 "Invalid namespace", null);
         final Response actual = testObj.toResponse(input);
         assertEquals(BAD_REQUEST.getStatusCode(), actual.getStatus());
-        assertEquals(DEFAULT_CONTENT_TYPE, actual.getHeaderString(CONTENT_TYPE));
+        assertEquals(TEXT_PLAIN_WITH_CHARSET, actual.getHeaderString(CONTENT_TYPE));
 
     }
 }

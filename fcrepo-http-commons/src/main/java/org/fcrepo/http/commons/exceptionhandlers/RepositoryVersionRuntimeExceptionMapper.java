@@ -27,7 +27,7 @@ import javax.ws.rs.ext.Provider;
 
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.status;
-import static org.fcrepo.http.commons.exceptionhandlers.ExceptionMapperConstants.DEFAULT_CONTENT_TYPE;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -44,6 +44,6 @@ public class RepositoryVersionRuntimeExceptionMapper implements
     @Override
     public Response toResponse(final RepositoryVersionRuntimeException e) {
         debugException(this, e, LOGGER);
-        return status(NOT_FOUND).entity("This resource is not versioned").type(DEFAULT_CONTENT_TYPE).build();
+        return status(NOT_FOUND).entity("This resource is not versioned").type(TEXT_PLAIN_WITH_CHARSET).build();
     }
 }

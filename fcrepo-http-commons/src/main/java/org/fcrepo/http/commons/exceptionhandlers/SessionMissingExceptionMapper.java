@@ -19,7 +19,7 @@ package org.fcrepo.http.commons.exceptionhandlers;
 
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.GONE;
-import static org.fcrepo.http.commons.exceptionhandlers.ExceptionMapperConstants.DEFAULT_CONTENT_TYPE;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.ws.rs.core.Response;
@@ -47,6 +47,6 @@ public class SessionMissingExceptionMapper implements
     @Override
     public Response toResponse(final SessionMissingException e) {
         debugException(this, e, LOGGER);
-        return status(GONE).entity(e.getMessage()).type(DEFAULT_CONTENT_TYPE).build();
+        return status(GONE).entity(e.getMessage()).type(TEXT_PLAIN_WITH_CHARSET).build();
     }
 }

@@ -26,7 +26,7 @@ import javax.ws.rs.ext.Provider;
 
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.slf4j.LoggerFactory.getLogger;
-import static org.fcrepo.http.commons.exceptionhandlers.ExceptionMapperConstants.DEFAULT_CONTENT_TYPE;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 import static javax.ws.rs.core.Response.status;
 
 /**
@@ -44,7 +44,7 @@ public class HeaderValueExceptionMapper implements
     @Override
     public Response toResponse(final HeaderValueException e) {
         debugException(this, e, LOGGER);
-        return status(BAD_REQUEST).entity(e.getMessage() + " ...should value be quoted?").type(DEFAULT_CONTENT_TYPE)
+        return status(BAD_REQUEST).entity(e.getMessage() + " ...should value be quoted?").type(TEXT_PLAIN_WITH_CHARSET)
                 .build();
     }
 }

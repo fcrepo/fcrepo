@@ -18,7 +18,7 @@
 package org.fcrepo.http.commons.exceptionhandlers;
 
 import static javax.ws.rs.core.Response.fromResponse;
-import static org.fcrepo.http.commons.exceptionhandlers.ExceptionMapperConstants.DEFAULT_CONTENT_TYPE;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.ws.rs.WebApplicationException;
@@ -46,6 +46,6 @@ public class WebApplicationExceptionMapper implements
                 "WebApplicationException intercepted by WebApplicationExceptionMapper: {}\n", e.getMessage());
         debugException(this, e, LOGGER);
         final String msg = null == e.getCause() ? e.getMessage() : e.getCause().getMessage();
-        return fromResponse(e.getResponse()).entity(msg).type(DEFAULT_CONTENT_TYPE).build();
+        return fromResponse(e.getResponse()).entity(msg).type(TEXT_PLAIN_WITH_CHARSET).build();
     }
 }

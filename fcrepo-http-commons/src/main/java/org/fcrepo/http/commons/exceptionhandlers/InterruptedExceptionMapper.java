@@ -27,7 +27,7 @@ import javax.ws.rs.ext.Provider;
 import static javax.ws.rs.core.Response.Status.SERVICE_UNAVAILABLE;
 import static javax.ws.rs.core.Response.status;
 import static org.slf4j.LoggerFactory.getLogger;
-import static org.fcrepo.http.commons.exceptionhandlers.ExceptionMapperConstants.DEFAULT_CONTENT_TYPE;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 
 /**
  * If an HTTP request's processing is interrupted, return an HTTP 503 Service Unavailable.
@@ -43,6 +43,6 @@ public class InterruptedExceptionMapper implements
     @Override
     public Response toResponse(final InterruptedRuntimeException e) {
         debugException(this, e, LOGGER);
-        return status(SERVICE_UNAVAILABLE).entity(e.getMessage()).type(DEFAULT_CONTENT_TYPE).build();
+        return status(SERVICE_UNAVAILABLE).entity(e.getMessage()).type(TEXT_PLAIN_WITH_CHARSET).build();
     }
 }
