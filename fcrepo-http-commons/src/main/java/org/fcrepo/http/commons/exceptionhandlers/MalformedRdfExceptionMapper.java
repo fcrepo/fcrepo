@@ -19,6 +19,7 @@ package org.fcrepo.http.commons.exceptionhandlers;
 
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static org.fcrepo.http.commons.exceptionhandlers.ExceptionMapperConstants.DEFAULT_CONTENT_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -51,9 +52,10 @@ public class MalformedRdfExceptionMapper implements
         final Link link = Link.fromUri(getConstraintUri(e)).rel(CONSTRAINED_BY.getURI()).build();
         final String msg = e.getMessage();
         if (msg.matches(".*org.*Exception: .*")) {
-            return status(BAD_REQUEST).entity(msg.replaceAll("org.*Exception: ", "")).links(link).build();
+            return status(BAD_REQUEST).entity(msg.replaceAll("org.*Exception: ", "")).links(link).type(
+                    DEFAULT_CONTENT_TYPE).build();
         }
-        return status(BAD_REQUEST).entity(msg).links(link).build();
+        return status(BAD_REQUEST).entity(msg).links(link).type(DEFAULT_CONTENT_TYPE).build();
     }
 
     private static String getConstraintUri(final MalformedRdfException e) {

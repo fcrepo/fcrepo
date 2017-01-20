@@ -17,35 +17,41 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import org.slf4j.Logger;
-
-import javax.ws.rs.BadRequestException;
+import static org.junit.Assert.assertEquals;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
-import javax.ws.rs.ext.Provider;
-
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.status;
-import static org.slf4j.LoggerFactory.getLogger;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static org.fcrepo.http.commons.exceptionhandlers.ExceptionMapperConstants.DEFAULT_CONTENT_TYPE;
 
+import org.fcrepo.kernel.api.exception.FedoraInvalidNamespaceException;
+
+import org.junit.Before;
+import org.junit.Test;
+
 /**
- * For generic BadRequestExceptions.
+ * <p>
+ * FedoraInvalidNamespaceExceptionMapperTest class.
+ * </p>
  *
- * @author md5wz
- * @since November 18, 2014
+ * @author Daniel Bernstein
+ * @since January 19, 2017
  */
-@Provider
-public class BadRequestExceptionMapper implements
-        ExceptionMapper<BadRequestException>, ExceptionDebugLogging {
+public class FedoraInvalidNamespaceExceptionMapperTest {
 
-    private static final Logger LOGGER = getLogger(BadRequestExceptionMapper.class);
+    private FedoraInvalidNamespaceExceptionMapper testObj;
 
-    @Override
-    public Response toResponse(final BadRequestException e) {
-        LOGGER.error("BadRequestExceptionMapper caught an exception: {}", e.getMessage());
-        debugException(this, e, LOGGER);
-        return status(BAD_REQUEST).entity(e.getMessage()).type(DEFAULT_CONTENT_TYPE).build();
+    @Before
+    public void setUp() {
+        testObj = new FedoraInvalidNamespaceExceptionMapper();
     }
 
+    @Test
+    public void testToResponse() {
+        final FedoraInvalidNamespaceException input = new FedoraInvalidNamespaceException(
+                "Invalid namespace", null);
+        final Response actual = testObj.toResponse(input);
+        assertEquals(BAD_REQUEST.getStatusCode(), actual.getStatus());
+        assertEquals(DEFAULT_CONTENT_TYPE, actual.getHeaderString(CONTENT_TYPE));
+
+    }
 }

@@ -29,6 +29,7 @@ import javax.ws.rs.ext.Providers;
 
 import static com.google.common.base.Throwables.getStackTraceAsString;
 import static javax.ws.rs.core.Response.serverError;
+import static org.fcrepo.http.commons.exceptionhandlers.ExceptionMapperConstants.DEFAULT_CONTENT_TYPE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -63,6 +64,6 @@ public class RepositoryRuntimeExceptionMapper implements
         }
         LOGGER.error("Caught a repository exception: {}", e.getMessage());
         debugException(this, cause, LOGGER);
-        return serverError().entity(getStackTraceAsString(e)).build();
+        return serverError().entity(getStackTraceAsString(e)).type(DEFAULT_CONTENT_TYPE).build();
     }
 }

@@ -24,9 +24,10 @@ import javax.ws.rs.ext.Provider;
 
 import org.slf4j.Logger;
 
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static org.slf4j.LoggerFactory.getLogger;
 import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static org.fcrepo.http.commons.exceptionhandlers.ExceptionMapperConstants.DEFAULT_CONTENT_TYPE;
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author cabeer
@@ -42,6 +43,6 @@ public class VersionExceptionMapper implements
     @Override
     public Response toResponse(final VersionException e) {
         debugException(this, e, LOGGER);
-        return status(BAD_REQUEST).entity(e.getMessage()).build();
+        return status(BAD_REQUEST).entity(e.getMessage()).type(DEFAULT_CONTENT_TYPE).build();
     }
 }

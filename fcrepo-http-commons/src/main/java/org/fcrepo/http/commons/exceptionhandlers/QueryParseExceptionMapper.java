@@ -19,6 +19,7 @@ package org.fcrepo.http.commons.exceptionhandlers;
 
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static org.fcrepo.http.commons.exceptionhandlers.ExceptionMapperConstants.DEFAULT_CONTENT_TYPE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.regex.Matcher;
@@ -61,11 +62,11 @@ public class QueryParseExceptionMapper implements
                         "There are one or more undefined namespace(s) in your request [ %s ], " +
                         "please define them before retrying",
                         namespaceMatch.group(1));
-                return status(BAD_REQUEST).entity(msg).build();
+                return status(BAD_REQUEST).entity(msg).type(DEFAULT_CONTENT_TYPE).build();
             }
         }
 
-        return status(BAD_REQUEST).entity(e.getMessage()).build();
+        return status(BAD_REQUEST).entity(e.getMessage()).type(DEFAULT_CONTENT_TYPE).build();
     }
 
 }

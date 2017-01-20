@@ -19,6 +19,7 @@ package org.fcrepo.http.commons.exceptionhandlers;
 
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static org.fcrepo.http.commons.exceptionhandlers.ExceptionMapperConstants.DEFAULT_CONTENT_TYPE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.ws.rs.core.Response;
@@ -45,7 +46,7 @@ public class InvalidPrefixExceptionMapper implements
     public Response toResponse(final InvalidPrefixException e) {
         LOGGER.error("FedoraInvalidPrefixExceptionMapper caught an exception: {}", e.getMessage());
         debugException(this, e, LOGGER);
-        return status(BAD_REQUEST).entity(e.getMessage()).build();
+        return status(BAD_REQUEST).entity(e.getMessage()).type(DEFAULT_CONTENT_TYPE).build();
     }
 
 }

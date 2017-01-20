@@ -25,6 +25,7 @@ import javax.ws.rs.ext.Provider;
 import org.slf4j.Logger;
 
 import static javax.ws.rs.core.Response.fromResponse;
+import static org.fcrepo.http.commons.exceptionhandlers.ExceptionMapperConstants.DEFAULT_CONTENT_TYPE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -40,6 +41,6 @@ public class ClientErrorExceptionMapper implements
     @Override
     public Response toResponse(final ClientErrorException e) {
         debugException(this, e, LOGGER);
-        return fromResponse(e.getResponse()).entity(e.getMessage()).build();
+        return fromResponse(e.getResponse()).entity(e.getMessage()).type(DEFAULT_CONTENT_TYPE).build();
     }
 }

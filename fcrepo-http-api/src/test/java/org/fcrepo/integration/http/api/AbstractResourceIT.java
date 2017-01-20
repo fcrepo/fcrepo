@@ -41,9 +41,11 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Collection;
 
-import org.apache.http.Header;
+import javax.ws.rs.core.Response.Status;
+
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 
+import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
@@ -268,9 +270,14 @@ public abstract class AbstractResourceIT {
     }
 
     protected String getContentType(final HttpUriRequest method) throws ClientProtocolException, IOException {
+        return getContentType(method, OK);
+    }
+
+    protected String getContentType(final HttpUriRequest method, final Status httpStatus) throws ClientProtocolException,
+            IOException {
         try (final CloseableHttpResponse response = execute(method)) {
             final int result = getStatus(response);
-            assertEquals(OK.getStatusCode(), result);
+            assertEquals(httpStatus.getStatusCode(), result);
             EntityUtils.consume(response.getEntity());
             return response.getFirstHeader(CONTENT_TYPE).getValue();
         }

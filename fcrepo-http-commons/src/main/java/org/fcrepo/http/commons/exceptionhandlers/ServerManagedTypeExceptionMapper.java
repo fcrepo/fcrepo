@@ -19,6 +19,7 @@ package org.fcrepo.http.commons.exceptionhandlers;
 
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static org.fcrepo.http.commons.exceptionhandlers.ExceptionMapperConstants.DEFAULT_CONTENT_TYPE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.ws.rs.core.Context;
@@ -50,6 +51,6 @@ public class ServerManagedTypeExceptionMapper extends ConstraintExceptionMapper<
         debugException(this, e, LOGGER);
         final Link link = buildConstraintLink(e, uriInfo);
         final String msg = e.getMessage();
-        return status(CONFLICT).entity(msg).links(link).build();
+        return status(CONFLICT).entity(msg).links(link).type(DEFAULT_CONTENT_TYPE).build();
     }
 }
