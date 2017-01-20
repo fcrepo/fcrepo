@@ -17,36 +17,41 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import static javax.ws.rs.core.Response.status;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
-import static org.slf4j.LoggerFactory.getLogger;
-
+import static org.junit.Assert.assertEquals;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
-import javax.ws.rs.ext.Provider;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 
-import org.fcrepo.kernel.api.exception.InvalidPrefixException;
+import org.fcrepo.kernel.api.exception.FedoraInvalidNamespaceException;
 
-import org.slf4j.Logger;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
- * For invalid namespace exceptions on CRUD actions for nodes/datastreams
+ * <p>
+ * FedoraInvalidNamespaceExceptionMapperTest class.
+ * </p>
  *
- * @author nianma
- * @since November 2, 2015
+ * @author Daniel Bernstein
+ * @since January 19, 2017
  */
-@Provider
-public class InvalidPrefixExceptionMapper implements
-        ExceptionMapper<InvalidPrefixException>, ExceptionDebugLogging {
+public class FedoraInvalidNamespaceExceptionMapperTest {
 
-    private static final Logger LOGGER = getLogger(InvalidPrefixExceptionMapper.class);
+    private FedoraInvalidNamespaceExceptionMapper testObj;
 
-    @Override
-    public Response toResponse(final InvalidPrefixException e) {
-        LOGGER.error("FedoraInvalidPrefixExceptionMapper caught an exception: {}", e.getMessage());
-        debugException(this, e, LOGGER);
-        return status(BAD_REQUEST).entity(e.getMessage()).type(TEXT_PLAIN_WITH_CHARSET).build();
+    @Before
+    public void setUp() {
+        testObj = new FedoraInvalidNamespaceExceptionMapper();
     }
 
+    @Test
+    public void testToResponse() {
+        final FedoraInvalidNamespaceException input = new FedoraInvalidNamespaceException(
+                "Invalid namespace", null);
+        final Response actual = testObj.toResponse(input);
+        assertEquals(BAD_REQUEST.getStatusCode(), actual.getStatus());
+        assertEquals(TEXT_PLAIN_WITH_CHARSET, actual.getHeaderString(CONTENT_TYPE));
+
+    }
 }

@@ -19,6 +19,7 @@ package org.fcrepo.http.commons.exceptionhandlers;
 
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 
 import org.fcrepo.kernel.api.exception.IncorrectTripleSubjectException;
 
@@ -50,6 +51,6 @@ public class IncorrectTripleSubjectExceptionMapper extends ConstraintExceptionMa
         debugException(this, e, LOGGER);
         final Link link = buildConstraintLink(e, uriInfo);
         final String msg = e.getMessage();
-        return status(FORBIDDEN).entity(msg).links(link).build();
+        return status(FORBIDDEN).entity(msg).links(link).type(TEXT_PLAIN_WITH_CHARSET).build();
     }
 }

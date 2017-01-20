@@ -19,6 +19,7 @@ package org.fcrepo.http.commons.exceptionhandlers;
 
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.fcrepo.kernel.api.exception.OutOfDomainSubjectException;
@@ -51,7 +52,7 @@ public class OutOfDomainSubjectExceptionMapper extends ConstraintExceptionMapper
         debugException(this, e, LOGGER);
         final Link link = buildConstraintLink(e, uriInfo);
         final String msg = e.getMessage();
-        return status(BAD_REQUEST).entity(msg).links(link).build();
+        return status(BAD_REQUEST).entity(msg).links(link).type(TEXT_PLAIN_WITH_CHARSET).build();
     }
 
 }
