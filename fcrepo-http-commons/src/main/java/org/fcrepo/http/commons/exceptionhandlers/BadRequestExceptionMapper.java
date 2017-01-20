@@ -27,6 +27,7 @@ import javax.ws.rs.ext.Provider;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.status;
 import static org.slf4j.LoggerFactory.getLogger;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 
 /**
  * For generic BadRequestExceptions.
@@ -44,7 +45,7 @@ public class BadRequestExceptionMapper implements
     public Response toResponse(final BadRequestException e) {
         LOGGER.error("BadRequestExceptionMapper caught an exception: {}", e.getMessage());
         debugException(this, e, LOGGER);
-        return status(BAD_REQUEST).entity(e.getMessage()).build();
+        return status(BAD_REQUEST).entity(e.getMessage()).type(TEXT_PLAIN_WITH_CHARSET).build();
     }
 
 }

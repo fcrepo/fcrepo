@@ -68,6 +68,8 @@ import static org.apache.jena.vocabulary.RDF.type;
 import static org.apache.jena.vocabulary.DC.title;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_VARIANTS;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
@@ -1028,6 +1030,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testInvalidNamespaceOnHeadReturnsCorrectContentType() throws IOException {
+        assertEquals("Expected " + TEXT_PLAIN_WITH_CHARSET,
+                TEXT_PLAIN_WITH_CHARSET, getContentType(headObjMethod("/fcr:accessroles"), Status.BAD_REQUEST));
+    }
+
+    @Test
     public void testEmptyPutToExistingObject() {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -1228,7 +1236,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         method.addHeader(CONTENT_TYPE, "application/octet-stream");
         method.addHeader("Digest", "md5=not a valid hash,SHA1:thisisbadtoo");
         method.setEntity(new FileEntity(img));
-
         assertEquals("Should be a 400 BAD REQUEST!", BAD_REQUEST.getStatusCode(), getStatus(method));
     }
 

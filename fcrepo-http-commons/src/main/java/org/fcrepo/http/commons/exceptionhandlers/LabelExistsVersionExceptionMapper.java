@@ -26,6 +26,7 @@ import javax.ws.rs.ext.Provider;
 
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.status;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -47,6 +48,6 @@ public class LabelExistsVersionExceptionMapper implements
         LOGGER.error("LabelExistsVersionException intercepted by LabelExistsVersionExceptionMapper: {}\n",
                     e.getMessage());
         debugException(this, e, LOGGER);
-        return status(CONFLICT).entity(e.getMessage()).build();
+        return status(CONFLICT).entity(e.getMessage()).type(TEXT_PLAIN_WITH_CHARSET).build();
     }
 }
