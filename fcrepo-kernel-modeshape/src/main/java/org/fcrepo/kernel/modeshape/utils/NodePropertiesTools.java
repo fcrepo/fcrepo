@@ -237,8 +237,6 @@ public class NodePropertiesTools {
                 } else {
                     LOGGER.debug("Value not removed from property name '{}' (value '{}')", propertyName,
                             strValueToRemove);
-                    throw new RepositoryException ("Property '" + propertyName + "': Unable to remove value '" +
-                            StringUtils.substring(strValueToRemove, 0, 50) + "...'");
                 }
             } else {
 
