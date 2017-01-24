@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>FedoraAdminSecurityContext.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Authorization Commons Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.auth.common</a> &gt; <span class="el_source">FedoraAdminSecurityContext.java</span></div><h1>FedoraAdminSecurityContext.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.auth.common;
+
+import org.modeshape.jcr.ExecutionContext;
+import org.modeshape.jcr.security.AuthorizationProvider;
+import org.modeshape.jcr.security.SecurityContext;
+import org.modeshape.jcr.value.Path;
+
+/**
+ * This is a pass-through security context for authenticated Fedora
+ * administrators.
+ *
+ * @author Gregory Jansen
+ */
+public class FedoraAdminSecurityContext implements AuthorizationProvider,
+        SecurityContext {
+
+<span class="nc" id="L34">    private String username = null;</span>
+
+<span class="nc" id="L36">    private boolean loggedIn = true;</span>
+
+    /**
+     * @param username the user name
+     */
+    public FedoraAdminSecurityContext(final String username) {
+<span class="nc" id="L42">        super();</span>
+<span class="nc" id="L43">        this.username = username;</span>
+<span class="nc" id="L44">    }</span>
+
+    /*
+     * (non-Javadoc)
+     * @see org.modeshape.jcr.security.SecurityContext#isAnonymous()
+     */
+    @Override
+    public boolean isAnonymous() {
+<span class="nc bnc" id="L52" title="All 2 branches missed.">        return username != null;</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.modeshape.jcr.security.SecurityContext#getUserName()
+     */
+    @Override
+    public String getUserName() {
+<span class="nc" id="L61">        return username;</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.modeshape.jcr.security.SecurityContext#hasRole(java.lang.String)
+     */
+    @Override
+    public boolean hasRole(final String roleName) {
+<span class="nc" id="L70">        return true;</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.modeshape.jcr.security.SecurityContext#logout()
+     */
+    @Override
+    public void logout() {
+<span class="nc" id="L79">        this.loggedIn = false;</span>
+<span class="nc" id="L80">    }</span>
+
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.modeshape.jcr.security.AuthorizationProvider#hasPermission(
+     * org.modeshape.jcr.ExecutionContext, java.lang.String,
+     * java.lang.String,
+     * java.lang.String, org.modeshape.jcr.value.Path, java.lang.String[])
+     */
+    @Override
+    public boolean hasPermission(final ExecutionContext context,
+            final String repositoryName,
+            final String repositorySourceName, final String workspaceName,
+            final Path absPath, final String... actions) {
+<span class="nc" id="L95">        return this.loggedIn;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>
