@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>AbstractJMSPublisher.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository JMS Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.jms</a> &gt; <span class="el_source">AbstractJMSPublisher.java</span></div><h1>AbstractJMSPublisher.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.jms;
+
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.inject.Inject;
+import javax.jms.Connection;
+import javax.jms.Destination;
+import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.MessageProducer;
+import javax.jms.Session;
+
+import org.apache.activemq.ActiveMQConnectionFactory;
+import org.fcrepo.kernel.api.observer.FedoraEvent;
+import org.slf4j.Logger;
+
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
+
+/**
+ * Machinery to publish JMS messages when an EventBus
+ * message is received.
+ *
+ * @author barmintor
+ * @author awoods
+ * @author acoburn
+ */
+<span class="fc" id="L49">abstract class AbstractJMSPublisher {</span>
+
+    @Inject
+    protected EventBus eventBus;
+
+    @Inject
+    protected ActiveMQConnectionFactory connectionFactory;
+
+    @Inject
+    protected JMSEventMessageFactory eventFactory;
+
+    protected Connection connection;
+
+    protected Session jmsSession;
+
+    protected MessageProducer producer;
+
+<span class="fc" id="L66">    protected static final Logger LOGGER = getLogger(AbstractJMSPublisher.class);</span>
+
+    protected abstract Destination createDestination() throws JMSException;
+
+    /**
+     * When an EventBus mesage is received, map it to our JMS
+     * message payload and push it onto the queue.
+     *
+     * @param fedoraEvent the fedora event
+     * @throws JMSException if JMS exception occurred
+     * @throws IOException if IO exception occurred
+     */
+    @Subscribe
+    public void publishJCREvent(final FedoraEvent fedoraEvent) throws JMSException, IOException {
+<span class="fc" id="L80">        LOGGER.debug(&quot;Received an event from the internal bus.&quot;);</span>
+<span class="fc" id="L81">        final Message tm =</span>
+<span class="fc" id="L82">                eventFactory.getMessage(fedoraEvent, jmsSession);</span>
+<span class="fc" id="L83">        LOGGER.debug(&quot;Transformed the event to a JMS message.&quot;);</span>
+<span class="fc" id="L84">        producer.send(tm);</span>
+
+<span class="fc" id="L86">        LOGGER.debug(&quot;Put event: {} onto JMS.&quot;, tm.getJMSMessageID());</span>
+<span class="fc" id="L87">    }</span>
+
+    /**
+     * Connect to JCR Repostory and JMS queue
+     *
+     * @throws JMSException if JMS Exception occurred
+     */
+    @PostConstruct
+    public void acquireConnections() throws JMSException {
+<span class="fc" id="L96">        LOGGER.debug(&quot;Initializing: {}&quot;, this.getClass().getCanonicalName());</span>
+
+<span class="fc" id="L98">        connection = connectionFactory.createConnection();</span>
+<span class="fc" id="L99">        connection.start();</span>
+<span class="fc" id="L100">        jmsSession = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);</span>
+<span class="fc" id="L101">        producer = jmsSession.createProducer(createDestination());</span>
+<span class="fc" id="L102">        eventBus.register(this);</span>
+<span class="fc" id="L103">    }</span>
+
+    /**
+     * Close external connections
+     *
+     * @throws JMSException if JMS exception occurred
+     */
+    @PreDestroy
+    public void releaseConnections() throws JMSException {
+<span class="fc" id="L112">        LOGGER.debug(&quot;Tearing down: {}&quot;, this.getClass().getCanonicalName());</span>
+
+<span class="fc" id="L114">        producer.close();</span>
+<span class="fc" id="L115">        jmsSession.close();</span>
+<span class="fc" id="L116">        connection.close();</span>
+<span class="fc" id="L117">        eventBus.unregister(this);</span>
+<span class="fc" id="L118">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>
