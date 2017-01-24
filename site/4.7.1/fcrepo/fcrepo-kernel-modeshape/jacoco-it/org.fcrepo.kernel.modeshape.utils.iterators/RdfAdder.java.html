@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>RdfAdder.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation (ModeShape)</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.utils.iterators</a> &gt; <span class="el_source">RdfAdder.java</span></div><h1>RdfAdder.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.utils.iterators;
+
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
+import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaces;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.RdfStream;
+import org.slf4j.Logger;
+
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
+
+/**
+ * Consumes an {@link RdfStream} by adding its contents to the
+ * JCR.
+ *
+ * @see RdfRemover
+ * @author ajs6f
+ * @since Oct 24, 2013
+ */
+public class RdfAdder extends PersistingRdfStreamConsumer {
+
+<span class="fc" id="L45">    private static final Logger LOGGER = getLogger(RdfAdder.class);</span>
+
+    /**
+     * Ordinary constructor.
+     *
+     * @param idTranslator the id translator
+     * @param session the session
+     * @param stream the rdf stream
+     */
+    public RdfAdder(final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator, final Session session,
+        final RdfStream stream) {
+<span class="fc" id="L56">        super(idTranslator, session, stream);</span>
+<span class="fc" id="L57">    }</span>
+
+    @Override
+    protected void operateOnMixin(final Resource mixinResource, final FedoraResource resource)
+            throws RepositoryException {
+<span class="fc" id="L62">        jcrRdfTools().addMixin(resource, mixinResource, getNamespaces(getJcrNode(resource).getSession()));</span>
+<span class="fc" id="L63">    }</span>
+
+
+    @Override
+    protected void operateOnProperty(final Statement t, final FedoraResource resource) throws RepositoryException {
+<span class="fc" id="L68">        LOGGER.debug(&quot;Adding property from triple: {} to resource: {}.&quot;, t, resource</span>
+<span class="fc" id="L69">                .getPath());</span>
+
+<span class="fc" id="L71">        jcrRdfTools().addProperty(resource, t.getPredicate(), t.getObject(),</span>
+<span class="fc" id="L72">                getNamespaces(getJcrNode(resource).getSession()));</span>
+<span class="fc" id="L73">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>
