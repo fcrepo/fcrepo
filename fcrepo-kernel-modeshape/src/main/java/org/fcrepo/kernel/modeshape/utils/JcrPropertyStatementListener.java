@@ -45,6 +45,8 @@ import org.apache.jena.vocabulary.RDF;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Listen to Jena statement events, and when the statement is changed in the
@@ -55,6 +57,16 @@ import java.util.List;
 public class JcrPropertyStatementListener extends StatementListener {
 
     private static final Logger LOGGER = getLogger(JcrPropertyStatementListener.class);
+
+    private static enum Operation {
+        ADD, REMOVE
+    }
+
+    /*
+     * map statement hashcodes to the last successful operation on the statement
+     * to prevent large, redundant SPARQL solution sets from exhausting the heap
+     */
+    private final Map<Statement,Operation> statements;
 
     private final JcrRdfTools jcrRdfTools;
 
@@ -78,6 +90,7 @@ public class JcrPropertyStatementListener extends StatementListener {
 
     /**
      * Construct a statement listener within the given session
+     * This listener is not reusable across requests.
      *
      * @param idTranslator the id translator
      * @param jcrRdfTools the jcr rdf tools
@@ -90,7 +103,9 @@ public class JcrPropertyStatementListener extends StatementListener {
         this.jcrRdfTools = jcrRdfTools;
         this.exceptions = new ArrayList<>();
         this.topic = topic;
+        this.statements = new ConcurrentHashMap<>();
     }
+
 
     /**
      * When a statement is added to the graph, serialize it to a JCR property
@@ -99,9 +114,11 @@ public class JcrPropertyStatementListener extends StatementListener {
      */
     @Override
     public void addedStatement(final Statement input) {
-
-        final Resource subject = input.getSubject();
+        if (Operation.ADD == statements.get(input)) {
+            return;
+        }
         try {
+            final Resource subject = input.getSubject();
             validateSubject(subject);
             LOGGER.debug(">> adding statement {}", input);
 
@@ -117,10 +134,12 @@ public class JcrPropertyStatementListener extends StatementListener {
             if (property.equals(RDF.type) && objectNode.isResource()) {
                 final Resource mixinResource = objectNode.asResource();
                 jcrRdfTools.addMixin(resource, mixinResource, input.getModel().getNsPrefixMap());
+                statements.put(input, Operation.ADD);
                 return;
             }
 
             jcrRdfTools.addProperty(resource, property, objectNode, input.getModel().getNsPrefixMap());
+            statements.put(input, Operation.ADD);
         } catch (final ConstraintViolationException e) {
             throw e;
         } catch (final javax.jcr.AccessDeniedException e) {
@@ -138,6 +157,9 @@ public class JcrPropertyStatementListener extends StatementListener {
      */
     @Override
     public void removedStatement(final Statement s) {
+        if (Operation.REMOVE == statements.get(s)) {
+            return;
+        }
         try {
             // if it's not about the right kind of node, ignore it.
             final Resource subject = s.getSubject();
@@ -155,10 +177,12 @@ public class JcrPropertyStatementListener extends StatementListener {
             if (property.equals(RDF.type) && objectNode.isResource()) {
                 final Resource mixinResource = objectNode.asResource();
                 jcrRdfTools.removeMixin(resource, mixinResource, s.getModel().getNsPrefixMap());
+                statements.put(s, Operation.REMOVE);
                 return;
             }
 
             jcrRdfTools.removeProperty(resource, property, objectNode, s.getModel().getNsPrefixMap());
+            statements.put(s, Operation.REMOVE);
         } catch (final ConstraintViolationException e) {
             throw e;
         } catch (final RepositoryException | RepositoryRuntimeException e) {
