@@ -96,9 +96,11 @@
         if (res.status >= 400 || res.getResponseHeader('Link') == null) {
           var newLocation = url;
           // Note: HEADing an external resource returns a temporary redirect to the external resource:
-          // therefore there is no Link header. However what we want is to see is the metadata 
+          // therefore there is no Link header. However what we want to see is the metadata 
           // for the external reference rather than  the external object itself.
           // (c.f. https://jira.duraspace.org/browse/FCREPO-2387)
+          // WARNING: Fragile code relying on magic suffix '/fcr:metadata' and absence of 'Link' header 
+          // on external resource.
           if(!url.match(/.*fcr:metadata/)){
             newLocation = url + "/fcr:metadata";
           }
