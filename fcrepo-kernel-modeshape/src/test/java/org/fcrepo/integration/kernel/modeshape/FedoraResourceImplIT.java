@@ -69,9 +69,13 @@ import static org.junit.Assert.fail;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.time.Instant;
 
 import javax.inject.Inject;
@@ -436,6 +440,39 @@ public class FedoraResourceImplIT extends AbstractIT {
         o = createPlainLiteral("b");
         assertTrue("could not find new value", model.contains(s, p, o));
 
+    }
+
+    /**
+     * Test technically correct DELETE/WHERE with multiple patterns on the same subject and predicate.
+     * See also FCREPO-2391
+     */
+    @Test
+    public void testUpdatesWithMultiplePredicateMatches() throws IOException {
+        final Node subject = createURI("info:fedora/testUpdatesWithMultiplePredicateMatches");
+        final FedoraResource object =
+            containerService.findOrCreate(session, "/testUpdatesWithMultiplePredicateMatches");
+        final Function<String, String> read = i -> {
+            try {
+                return IOUtils.toString(getClass().getResource(i), Charset.forName("UTF8"));
+            } catch (IOException ex) {
+                throw new UncheckedIOException(ex);
+            }
+        };
+        final Function<FedoraResource, Model> modelOf = o -> {
+            return o.getTriples(subjects, PROPERTIES).collect(toModel());
+        };
+        final BiFunction<FedoraResource, String, FedoraResource> update = (o, s) -> {
+            o.updateProperties(subjects, read.apply(s), DefaultRdfStream.fromModel(subject, modelOf.apply(o)));
+            return o;
+        };
+        update.apply(update.apply(object, "/patch-test/insert-data.txt"), "/patch-test/delete-where.txt");
+        final Resource s = createResource(createGraphSubjectNode(object).getURI());
+        final Property pid = createProperty("info:fedora/fedora-system:def/model#PID");
+        final Literal o = createPlainLiteral("cdc:17256");
+        final Model model = modelOf.apply(object);
+        assertTrue(model.contains(s, pid, o));
+        final Property dcSubject = createProperty("http://purl.org/dc/elements/1.1/subject");
+        assertFalse(model.contains(s, dcSubject, (RDFNode)null));
     }
 
     @Test
