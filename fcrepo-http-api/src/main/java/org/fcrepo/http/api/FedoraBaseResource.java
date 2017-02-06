@@ -17,8 +17,6 @@
  */
 package org.fcrepo.http.api;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Resource;
@@ -33,6 +31,7 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.Tombstone;
 import org.slf4j.Logger;
 
+import java.net.URI;
 import java.security.Principal;
 import javax.inject.Inject;
 import javax.ws.rs.core.Context;
@@ -110,8 +109,6 @@ abstract public class FedoraBaseResource extends AbstractResource {
                 baseURL = uriInfo.getBaseUri().toString();
             }
             LOGGER.debug("setting baseURL = " + baseURL);
-            final ObjectMapper mapper = new ObjectMapper();
-            final ObjectNode json = mapper.createObjectNode();
             session.getFedoraSession().addSessionData(BASE_URL, baseURL);
             if (!StringUtils.isBlank(headers.getHeaderString("user-agent"))) {
                 session.getFedoraSession().addSessionData(USER_AGENT, headers.getHeaderString("user-agent"));
@@ -124,26 +121,18 @@ abstract public class FedoraBaseResource extends AbstractResource {
     /**
      * Produce a baseURL for JMS events using the system property fcrepo.jms.baseUrl of the form http[s]://host[:port],
      * if it exists.
-     * <p>
-     * Implementation note: forwards to {@link #getBaseUrlProperty(UriInfo)}, using the internal {@code UriInfo}.
-     * </p>
-     * @return String the base Url
-     */
-    protected String getBaseUrlProperty() {
-        return getBaseUrlProperty(uriInfo);
-    }
-
-    /**
-     * Produce a baseURL for JMS events using the system property fcrepo.jms.baseUrl of the form http[s]://host[:port],
-     * if it exists.
      *
      * @param uriInfo used to build the base url
      * @return String the base Url
      */
-    protected String getBaseUrlProperty(final UriInfo uriInfo) {
-        final String propBaseURL = System.getProperty("fcrepo.jms.baseUrl", "");
+    private String getBaseUrlProperty(final UriInfo uriInfo) {
+        final String propBaseURL = System.getProperty(JMS_BASEURL_PROP, "");
         if (propBaseURL.length() > 0 && propBaseURL.startsWith("http")) {
-            return uriInfo.getBaseUriBuilder().uri(propBaseURL).toString();
+            final URI propBaseUri = URI.create(propBaseURL);
+            if (propBaseUri.getPort() < 0) {
+                return uriInfo.getBaseUriBuilder().port(-1).uri(propBaseUri).toString();
+            }
+            return uriInfo.getBaseUriBuilder().uri(propBaseUri).toString();
         }
         return "";
     }
