@@ -52,6 +52,8 @@ abstract public class FedoraBaseResource extends AbstractResource {
 
     private static final Logger LOGGER = getLogger(FedoraBaseResource.class);
 
+    static final String JMS_BASEURL_PROP = "fcrepo.jms.baseUrl";
+
     @Inject
     protected HttpSession session;
 
@@ -103,7 +105,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
      **/
     protected void setUpJMSInfo(final UriInfo uriInfo, final HttpHeaders headers) {
         try {
-            String baseURL = getBaseUrlProperty();
+            String baseURL = getBaseUrlProperty(uriInfo);
             if (baseURL.length() == 0) {
                 baseURL = uriInfo.getBaseUri().toString();
             }
@@ -122,10 +124,23 @@ abstract public class FedoraBaseResource extends AbstractResource {
     /**
      * Produce a baseURL for JMS events using the system property fcrepo.jms.baseUrl of the form http[s]://host[:port],
      * if it exists.
-     *
+     * <p>
+     * Implementation note: forwards to {@link #getBaseUrlProperty(UriInfo)}, using the internal {@code UriInfo}.
+     * </p>
      * @return String the base Url
      */
     protected String getBaseUrlProperty() {
+        return getBaseUrlProperty(uriInfo);
+    }
+
+    /**
+     * Produce a baseURL for JMS events using the system property fcrepo.jms.baseUrl of the form http[s]://host[:port],
+     * if it exists.
+     *
+     * @param uriInfo used to build the base url
+     * @return String the base Url
+     */
+    protected String getBaseUrlProperty(final UriInfo uriInfo) {
         final String propBaseURL = System.getProperty("fcrepo.jms.baseUrl", "");
         if (propBaseURL.length() > 0 && propBaseURL.startsWith("http")) {
             return uriInfo.getBaseUriBuilder().uri(propBaseURL).toString();
