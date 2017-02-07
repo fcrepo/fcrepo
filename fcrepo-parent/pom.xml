@@ -497,6 +497,12 @@
             </plugin>
           </plugins>
         </pluginManagement>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+          </plugin>
+        </plugins>
       </build>
     </profile>
   </profiles>
@@ -520,6 +526,10 @@
       <name>Sonatype Nexus Shapshots</name>
       <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
     </snapshotRepository>
+    <repository>
+      <id>sonatype-nexus-staging</id>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+    </repository>
   </distributionManagement>
 
   <mailingLists>
@@ -531,4 +541,147 @@
       <archive>https://groups.google.com/d/forum/fedora-tech</archive>
     </mailingList>
   </mailingLists>
+
+  <developers>
+    <developer>
+      <id>ajs6f</id>
+      <name>Adam Soroka</name>
+      <email>ajs6f @ (domain of organization url)</email>
+      <organization>University of Virginia</organization>
+      <organizationUrl>http://www.virginia.edu/</organizationUrl>
+      <roles>
+        <role>developer</role>
+      </roles>
+      <timezone>-5</timezone>
+    </developer>
+    <developer>
+      <id>mikedurbin</id>
+      <name>Michael Durbin</name>
+      <email>md5wz @ (domain of organization url)</email>
+      <organization>University of Virginia</organization>
+      <organizationUrl>http://www.virginia.edu/</organizationUrl>
+      <roles>
+        <role>developer</role>
+      </roles>
+      <timezone>-5</timezone>
+    </developer>
+    <developer>
+      <id>barmintor</id>
+      <name>Ben Armintor</name>
+      <email>ba2213 @ (domain of organization url)</email>
+      <organization>Columbia University</organization>
+      <organizationUrl>http://www.columbia.edu/</organizationUrl>
+      <roles>
+        <role>developer</role>
+      </roles>
+      <timezone>-5</timezone>
+    </developer>
+    <developer>
+      <id>cbeer</id>
+      <name>Chris Beer</name>
+      <email>cbeer @ (domain of organization url)</email>
+      <organization>Stanford University</organization>
+      <organizationUrl>http://www.stanford.edu/</organizationUrl>
+      <roles>
+        <role>developer</role>
+      </roles>
+      <timezone>-8</timezone>
+    </developer>
+    <developer>
+      <id>osmandin</id>
+      <name>Osman Din</name>
+      <email>osman.din@yale.edu</email>
+      <organization>Yale University</organization>
+      <organizationUrl>http://yale.edu</organizationUrl>
+      <roles>
+        <role>developer</role>
+      </roles>
+      <timezone>-5</timezone>
+    </developer>
+    <developer>
+      <id>awoods</id>
+      <name>Andrew Woods</name>
+      <email>awoods @ (domain of organization url)</email>
+      <organization>DuraSpace</organization>
+      <organizationUrl>http://www.duraspace.org/</organizationUrl>
+      <roles>
+        <role>developer</role>
+      </roles>
+      <timezone>-7</timezone>
+    </developer>
+    <developer>
+      <id>birkland</id>
+      <name>Aaron Birkland</name>
+      <email>birkie @ gmail dot com</email>
+      <organization>Johns Hopkins University</organization>
+      <organizationUrl>https://www.jhu.edu/</organizationUrl>
+      <roles>
+        <role>developer</role>
+      </roles>
+      <timezone>-5</timezone>
+    </developer>
+    <developer>
+      <id>acoburn</id>
+      <name>Aaron Coburn</name>
+      <email>acoburn @ (domain of organization url)</email>
+      <organization>Amherst College</organization>
+      <organizationUrl>https://www.amherst.edu/</organizationUrl>
+      <roles>
+        <role>developer</role>
+      </roles>
+      <timezone>-5</timezone>
+    </developer>
+    <developer>
+      <id>escowles</id>
+      <name>Esmé Cowles</name>
+      <email>escowles @ ticklefish dot org</email>
+      <organization>Princeton University</organization>
+      <organizationUrl>https://www.princeton.edu/</organizationUrl>
+      <roles>
+        <role>developer</role>
+      </roles>
+      <timezone>-5</timezone>
+    </developer>
+    <developer>
+      <id>ruebot</id>
+      <name>Nick Ruest</name>
+      <email>ruestn @ yorku dot ca</email>
+      <organization>York University</organization>
+      <organizationUrl>http://www.yorku.ca/</organizationUrl>
+      <roles>
+        <role>developer</role>
+      </roles>
+      <timezone>-5</timezone>
+    </developer>
+    <developer>
+      <id>bseeger</id>
+      <name>Bethany Seeger</name>
+      <email>bseeger @ amherst dot edu</email>
+      <organization>Amherst College</organization>
+      <organizationUrl>https://www.amherst.edu/</organizationUrl>
+      <roles>
+        <role>developer</role>
+      </roles>
+      <timezone>-5</timezone>
+    </developer>
+    <developer>
+      <id>whikloj</id>
+      <name>Jared Whiklo</name>
+      <email>jwhiklo @ gmail dot com</email>
+      <organization>University of Manitoba</organization>
+      <organizationUrl>http://umanitoba.ca/</organizationUrl>
+      <roles>
+        <role>developer</role>
+      </roles>
+      <timezone>-6</timezone>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:git:git://github.com/${project_organization}/${project_name}.git</connection>
+    <developerConnection>scm:git:git@github.com:${project_organization}/${project_name}.git</developerConnection>
+    <url>https://github.com/${project_organization}/${project_name}</url>
+    <tag>HEAD</tag>
+  </scm>
+
 </project>
