@@ -46,6 +46,14 @@ public class WebApplicationExceptionMapper implements
                 "WebApplicationException intercepted by WebApplicationExceptionMapper: {}\n", e.getMessage());
         debugException(this, e, LOGGER);
         final String msg = null == e.getCause() ? e.getMessage() : e.getCause().getMessage();
-        return fromResponse(e.getResponse()).entity(msg).type(TEXT_PLAIN_WITH_CHARSET).build();
+        // 204, 205, 304 MUST NOT contain an entity body - RFC2616
+        switch (e.getResponse().getStatus()) {
+            case 204:
+            case 205:
+            case 304:
+                return fromResponse(e.getResponse()).entity(null).build();
+            default:
+                return fromResponse(e.getResponse()).entity(msg).type(TEXT_PLAIN_WITH_CHARSET).build();
+        }
     }
 }
