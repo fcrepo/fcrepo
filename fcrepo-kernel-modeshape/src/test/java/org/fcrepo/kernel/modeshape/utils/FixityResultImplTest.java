@@ -40,6 +40,10 @@ public class FixityResultImplTest {
         assertEquals(new FixityResultImpl(100L, new URI("urn:123")),
                 new FixityResultImpl(100L, new URI("urn:123")));
 
+        assertEquals(
+                new FixityResultImpl("id", 100L, new URI("urn:123"), "MD5"),
+                new FixityResultImpl("id", 100L, new URI("urn:123"), "MD5"));
+
         assertNotEquals(new FixityResultImpl(99L, new URI("urn:123")),
                 new FixityResultImpl(100L, new URI("urn:123")));
 
@@ -48,6 +52,19 @@ public class FixityResultImplTest {
 
         assertNotEquals(new FixityResultImpl(99L, new URI("urn:321")),
                 new FixityResultImpl(100L, new URI("urn:123")));
+
+        assertNotEquals(
+                new FixityResultImpl("id", 100L, new URI("urn:123"), "MD5"),
+                new FixityResultImpl("id", 100L, new URI("urn:123"), "SHA-1"));
+
+        assertNotEquals(
+                new FixityResultImpl("id", 99L, new URI("urn:123"), "MD5"),
+                new FixityResultImpl("id", 100L, new URI("urn:123"), "MD5"));
+
+        assertNotEquals(
+                new FixityResultImpl("id", 99L, new URI("urn:123"), "MD5"),
+                new FixityResultImpl("id", 100L, new URI("urn:123"), "SHA-1"));
+
     }
 
     @Test

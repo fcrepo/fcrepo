@@ -84,8 +84,13 @@ public final class RdfLexicon {
     // FIXITY
 
     public static final Resource FIXITY_TYPE = createResource(PREMIS_NAMESPACE + "Fixity");
+
+    public static final Property HAS_MESSAGE_DIGEST_ALGORITHM =
+            createProperty(PREMIS_NAMESPACE + "hasMessageDigestAlgorithm");
+
     public static final Property HAS_MESSAGE_DIGEST =
-        createProperty(PREMIS_NAMESPACE + "hasMessageDigest");
+            createProperty(PREMIS_NAMESPACE + "hasMessageDigest");
+
     public static final Property HAS_SIZE =
         createProperty(PREMIS_NAMESPACE + "hasSize");
     public static final Property HAS_FIXITY_RESULT =

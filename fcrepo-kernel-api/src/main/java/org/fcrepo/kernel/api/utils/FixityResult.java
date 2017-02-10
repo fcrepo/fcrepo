@@ -81,4 +81,9 @@ public interface FixityResult {
      */
     URI getComputedChecksum();
 
+    /**
+     * @return the algorithm uses to compute the checksum
+     */
+    String getUsedAlgorithm();
+
 }
