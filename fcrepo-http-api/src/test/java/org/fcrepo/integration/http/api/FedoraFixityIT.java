@@ -30,6 +30,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.DEFAULT_DIGEST_ALGORITHM;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_RESULT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_STATE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST_ALGORITHM;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -63,6 +64,7 @@ import org.apache.jena.sparql.core.Quad;
 public class FedoraFixityIT extends AbstractResourceIT {
 
     private static final RDFDatatype IntegerType = TypeMapper.getInstance().getTypeByClass(Integer.class);
+    private static final RDFDatatype StringType = TypeMapper.getInstance().getTypeByClass(String.class);
 
     @Test
     public void testCheckDatastreamFixity() throws IOException {
@@ -80,6 +82,7 @@ public class FedoraFixityIT extends AbstractResourceIT {
             assertTrue(graphStore.contains(ANY, ANY, HAS_FIXITY_STATE.asNode(), createLiteral("SUCCESS")));
             assertTrue(graphStore.contains(ANY,
                     ANY, HAS_MESSAGE_DIGEST.asNode(), createURI("urn:sha1:0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33")));
+            assertTrue(graphStore.contains(ANY, ANY, HAS_MESSAGE_DIGEST_ALGORITHM.asNode(), ANY));
             assertTrue(graphStore.contains(ANY, ANY, HAS_SIZE.asNode(), createLiteral("3", IntegerType)));
         }
     }
@@ -110,6 +113,8 @@ public class FedoraFixityIT extends AbstractResourceIT {
             assertTrue(graphStore.contains(ANY, ANY, HAS_FIXITY_STATE.asNode(), createLiteral("SUCCESS")));
             assertTrue(graphStore.contains(ANY,
                     ANY, HAS_MESSAGE_DIGEST.asNode(), createURI("urn:md5:888c09337d6869fa48bbeff802ddd05a")));
+            assertTrue(graphStore.contains(ANY, ANY, HAS_MESSAGE_DIGEST_ALGORITHM.asNode(),
+                    createLiteral("MD5", StringType)));
             assertTrue(graphStore.contains(ANY, ANY, HAS_SIZE.asNode(), createLiteral("9", IntegerType)));
         }
     }

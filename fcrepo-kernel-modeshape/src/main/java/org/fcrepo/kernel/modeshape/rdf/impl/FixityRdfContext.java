@@ -25,6 +25,7 @@ import static org.apache.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.api.RdfLexicon.FIXITY_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST_ALGORITHM;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
 import static org.fcrepo.kernel.api.RdfLexicon.EVENT_OUTCOME_INFORMATION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_RESULT;
@@ -79,8 +80,10 @@ public class FixityRdfContext extends NodeRdfContext {
             blob.getStatus(size, digest).stream().map(state -> createLiteral(state.toString()))
                     .map(state -> create(resultSubject, HAS_FIXITY_STATE.asNode(), state)).forEach(b::add);
 
+            b.add(create(resultSubject, HAS_MESSAGE_DIGEST_ALGORITHM.asNode(),
+                    createTypedLiteral(blob.getUsedAlgorithm()).asNode()));
             b.add(create(resultSubject, HAS_MESSAGE_DIGEST.asNode(), createURI(blob.getComputedChecksum().toString())));
-            b.add(create(resultSubject, HAS_SIZE.asNode(),createTypedLiteral(blob.getComputedSize()).asNode()));
+            b.add(create(resultSubject, HAS_SIZE.asNode(), createTypedLiteral(blob.getComputedSize()).asNode()));
 
             return b.stream();
         })));
