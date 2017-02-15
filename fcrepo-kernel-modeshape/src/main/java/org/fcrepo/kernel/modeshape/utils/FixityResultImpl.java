@@ -17,7 +17,6 @@
  */
 package org.fcrepo.kernel.modeshape.utils;
 
-import org.fcrepo.kernel.api.utils.CacheEntry;
 import org.fcrepo.kernel.api.utils.FixityResult;
 
 import static java.util.Objects.hash;
@@ -36,17 +35,17 @@ public class FixityResultImpl implements FixityResult {
 
     /**
      * the size computed by the fixity check
-     * @todo make this private
      */
     private final long computedSize;
 
     /**
      * the checksum computed by the fixity check
-     * @todo make this private
      */
     private final URI computedChecksum;
 
     private final String storeIdentifier;
+
+    private final String usedAlgorithm;
 
     /**
      * Prepare a fixity result given the computed checksum and size
@@ -58,14 +57,13 @@ public class FixityResultImpl implements FixityResult {
     }
 
     /**
-     * Prepare a fixity result with the expected size and checksum
-     * @param entry the entry
-     * @param size the expected size
+     *
+     * @param storeIdentifier the store identifier
+     * @param size the size
      * @param checksum the checksum
      */
-    public FixityResultImpl(final CacheEntry entry, final long size,
-                        final URI checksum) {
-        this(entry.getExternalIdentifier(), size, checksum);
+    public FixityResultImpl(final String storeIdentifier, final long size, final URI checksum) {
+        this(storeIdentifier, size, checksum, null);
     }
 
     /**
@@ -73,12 +71,15 @@ public class FixityResultImpl implements FixityResult {
      * @param storeIdentifier the store identifier
      * @param size the size
      * @param checksum the checksum
+     * @param algorithm the algorithm used to calculate the checksum
      */
-    public FixityResultImpl(final String storeIdentifier, final long size, final URI checksum) {
+    public FixityResultImpl(final String storeIdentifier, final long size, final URI checksum, final String algorithm) {
         this.storeIdentifier = storeIdentifier;
         computedSize = size;
         computedChecksum = checksum;
+        usedAlgorithm = algorithm;
     }
+
 
     /**
      * Get the identifier for the entry's store
@@ -91,16 +92,19 @@ public class FixityResultImpl implements FixityResult {
 
     @Override
     public boolean equals(final Object obj) {
-
-        boolean result = false;
         if (obj instanceof FixityResult) {
             final FixityResult that = (FixityResult) obj;
-            result =
-                    computedSize == that.getComputedSize() &&
-                            computedChecksum.equals(that.getComputedChecksum());
+            return computedSize == that.getComputedSize() &&
+                    computedChecksum.equals(that.getComputedChecksum()) &&
+                    equalsNullAware(usedAlgorithm, that.getUsedAlgorithm());
         }
+        return false;
+    }
 
-        return result;
+    private boolean equalsNullAware(final Object a, final Object b) {
+        return (a == null && b == null) ||
+                (a != null && a.equals(b)) ||
+                (b != null && b.equals(a));
     }
 
     @Override
@@ -184,4 +188,8 @@ public class FixityResultImpl implements FixityResult {
         return computedChecksum;
     }
 
+    @Override
+    public String getUsedAlgorithm() {
+        return usedAlgorithm;
+    }
 }

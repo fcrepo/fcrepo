@@ -41,7 +41,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public abstract class BasicCacheEntry implements CacheEntry {
 
-    public static final int DEV_NULL_BUFFER_SIZE = 4096;
+    private static final int DEV_NULL_BUFFER_SIZE = 4096;
 
     private static final byte[] devNull = new byte[DEV_NULL_BUFFER_SIZE];
 
@@ -51,23 +51,26 @@ public abstract class BasicCacheEntry implements CacheEntry {
      * Calculate the fixity of a CacheEntry by piping it through
      * a simple fixity-calculating InputStream
      *
-     * @param digest the digest
+     * @param algorithm the digest algorithm to be used
      * @return the fixity of this cache entry
      */
     @Override
-    public Collection<FixityResult> checkFixity(final String digest) {
+    public Collection<FixityResult> checkFixity(final String algorithm) {
 
-        try (FixityInputStream fixityInputStream = new FixityInputStream(this.getInputStream(),
-                MessageDigest.getInstance(digest))) {
-            // exhaust our source
+        try (FixityInputStream fixityInputStream = new FixityInputStream(
+                this.getInputStream(), MessageDigest.getInstance(algorithm))) {
+
+            // actually calculate the digest by consuming the stream
             while (fixityInputStream.read(devNull) != -1) { }
 
-            final URI calculatedChecksum = ContentDigest.asURI(digest,
-                                                                  fixityInputStream.getMessageDigest().digest());
+            final URI calculatedChecksum =
+                    ContentDigest.asURI(algorithm, fixityInputStream.getMessageDigest().digest());
+
             final FixityResult result =
-                new FixityResultImpl(this,
+                new FixityResultImpl(getExternalIdentifier(),
                                     fixityInputStream.getByteCount(),
-                                    calculatedChecksum);
+                                    calculatedChecksum,
+                                    algorithm);
 
             LOGGER.debug("Got {}", result.toString());
 
