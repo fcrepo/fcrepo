@@ -55,6 +55,8 @@
     <!-- JCBC dependencies -->
     <postgresql.version>9.4.1211</postgresql.version>
     <mysql.version>5.1.38</mysql.version>
+    <!-- AWS S3 dependencies -->
+    <aws.client.version>1.11.95</aws.client.version>
     <!-- test gear -->
     <awaitility.version>1.7.0</awaitility.version>
     <grizzly.version>2.3.28</grizzly.version>
