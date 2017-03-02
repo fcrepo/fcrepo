@@ -35,5 +35,10 @@
             { "classname" : "org.fcrepo.auth.common.BypassSecurityServletAuthenticationProvider" }
         ]
     },
+    "garbageCollection" : {
+        "threadPool" : "modeshape-gc-pool",
+        "initialTime" : "00:00",
+        "intervalInHours" : 24
+    },
     "node-types" : ["fedora-node-types.cnd"]
 }
