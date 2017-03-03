@@ -36,7 +36,7 @@
         ]
     },
     "garbageCollection" : {
-        "threadPool" : "modeshape-gc-pool",
+        "threadPool" : "modeshape-gc",
         "initialTime" : "00:00",
         "intervalInHours" : 24
     },
