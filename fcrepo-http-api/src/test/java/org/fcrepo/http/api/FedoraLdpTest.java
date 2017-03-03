@@ -71,6 +71,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
@@ -388,6 +389,7 @@ public class FedoraLdpTest {
         assertShouldNotAdvertiseAcceptPostFlavors();
         assertShouldAdvertiseAcceptPatchFlavors();
         assertShouldContainLinkToTheBinary();
+        assertShouldAllowOnlyResourceDescriptionMethods();
     }
 
     private void assertShouldContainLinkToTheBinary() {
@@ -695,6 +697,7 @@ public class FedoraLdpTest {
         assertShouldNotAdvertiseAcceptPostFlavors();
         assertShouldAdvertiseAcceptPatchFlavors();
         assertShouldContainLinkToTheBinary();
+        assertShouldAllowOnlyResourceDescriptionMethods();
 
         final Model model = ((RdfNamespacedStream) actual.getEntity()).stream.collect(toModel());
         final List<String> rdfNodes = model.listObjects().mapWith(RDFNode::toString).toList();
@@ -702,6 +705,18 @@ public class FedoraLdpTest {
         assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
                 "LDP_CONTAINMENT", "LDP_MEMBERSHIP", "PROPERTIES", "SERVER_MANAGED")));
 
+    }
+
+    private void assertShouldAllowOnlyResourceDescriptionMethods() {
+        final String[] allows = mockResponse.getHeader(HttpHeaders.ALLOW).split(",");
+
+        final Set<String> allowedMethods = new HashSet<>(Arrays.asList(allows));
+        final Set<String> validMethods = ImmutableSet.of("GET", "HEAD", "DELETE", "PUT", "PATCH",
+                "OPTIONS");
+
+        allowedMethods.removeAll(validMethods);
+
+        assertEquals("Allow header contains invalid methods: " + allowedMethods, 0, allowedMethods.size());
     }
 
     @Test
