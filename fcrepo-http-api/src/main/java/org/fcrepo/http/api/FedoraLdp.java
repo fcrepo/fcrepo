@@ -669,12 +669,11 @@ public class FedoraLdp extends ContentExposingResource {
 
         // Add Options headers
         final String options;
-
         if (resource() instanceof FedoraBinary) {
             options = "DELETE,HEAD,GET,PUT,OPTIONS";
 
         } else if (resource() instanceof NonRdfSourceDescription) {
-            options = "MOVE,COPY,DELETE,POST,HEAD,GET,PUT,PATCH,OPTIONS";
+            options = "HEAD,GET,DELETE,PUT,PATCH,OPTIONS";
             servletResponse.addHeader(HTTP_HEADER_ACCEPT_PATCH, contentTypeSPARQLUpdate);
 
         } else if (resource() instanceof Container) {
