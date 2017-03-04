@@ -381,7 +381,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpOptions optionsRequest = new HttpOptions(serverAddress + id + "/x/fcr:metadata");
         try (final CloseableHttpResponse optionsResponse = execute(optionsRequest)) {
             assertEquals(OK.getStatusCode(), optionsResponse.getStatusLine().getStatusCode());
-            assertRdfOptionsHeaders(optionsResponse);
+            assertNonRdfResourceDescriptionOptionsHeaders(optionsResponse);
         }
     }
 
@@ -394,7 +394,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpOptions optionsRequest = new HttpOptions(location);
         try (final CloseableHttpResponse optionsResponse = execute(optionsRequest)) {
             assertEquals(OK.getStatusCode(), optionsResponse.getStatusLine().getStatusCode());
-            assertRdfOptionsHeaders(optionsResponse);
+            assertNonRdfResourceDescriptionOptionsHeaders(optionsResponse);
         }
     }
 
@@ -419,6 +419,15 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertTrue("Should allow MOVE", methods.contains("MOVE"));
         assertTrue("Should allow COPY", methods.contains("COPY"));
 
+        final List<String> patchTypes = headerValues(httpResponse, "Accept-Patch");
+        assertTrue("PATCH should support application/sparql-update", patchTypes.contains(contentTypeSPARQLUpdate));
+        assertResourceOptionsHeaders(httpResponse);
+    }
+
+    private static void assertNonRdfResourceDescriptionOptionsHeaders(final HttpResponse httpResponse) {
+        final List<String> methods = headerValues(httpResponse, "Allow");
+        assertTrue("Should allow PATCH", methods.contains(HttpPatch.METHOD_NAME));
+        assertTrue("Should allow HEAD", methods.contains(HttpHead.METHOD_NAME));
         final List<String> patchTypes = headerValues(httpResponse, "Accept-Patch");
         assertTrue("PATCH should support application/sparql-update", patchTypes.contains(contentTypeSPARQLUpdate));
         assertResourceOptionsHeaders(httpResponse);
