@@ -34,6 +34,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
@@ -128,7 +130,21 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
             final StreamRDF stream = getWriterStream(output, format);
             stream.start();
             nsPrefixes.forEach(stream::prefix);
-            rdfStream.forEach(stream::triple);
+
+            // ensure that writes to the stream object are serialized
+            // in case the rdfStream object is running in parallel mode.
+            final ReentrantLock lock = new ReentrantLock();
+            rdfStream.forEach(x -> {
+                try {
+                    lock.tryLock(30, TimeUnit.SECONDS);
+                    stream.triple(x);
+                } catch (Exception e) {
+                    LOGGER.error("failed to stream triple " + x + "; meesage=" + e.getMessage(), e);
+                    throw new RuntimeException(e);
+                } finally {
+                    lock.unlock();
+                }
+            });
             stream.finish();
 
         // For formats that require analysis of the entire model and cannot be streamed directly (rdfxml, n3)
