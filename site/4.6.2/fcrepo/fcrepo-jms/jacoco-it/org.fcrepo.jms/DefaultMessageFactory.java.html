@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>DefaultMessageFactory.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository JMS Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.jms</a> &gt; <span class="el_source">DefaultMessageFactory.java</span></div><h1>DefaultMessageFactory.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.jms;
+
+import static java.lang.String.join;
+import static java.util.stream.Collectors.joining;
+import static org.fcrepo.kernel.api.observer.OptionalValues.BASE_URL;
+import static org.fcrepo.kernel.api.observer.OptionalValues.USER_AGENT;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.Set;
+import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.Session;
+
+import org.fcrepo.kernel.api.observer.EventType;
+import org.fcrepo.kernel.api.observer.FedoraEvent;
+import org.fcrepo.event.serialization.EventSerializer;
+import org.fcrepo.event.serialization.JsonLDSerializer;
+
+import org.slf4j.Logger;
+
+/**
+ * Generates JMS {@link Message}s composed entirely of headers, based entirely
+ * on information found in the {@link FedoraEvent} that triggers publication.
+ *
+ * @author ajs6f
+ * @author escowles
+ * @since Dec 2, 2013
+ */
+<span class="fc" id="L46">public class DefaultMessageFactory implements JMSEventMessageFactory {</span>
+
+    public static final String JMS_NAMESPACE = &quot;org.fcrepo.jms.&quot;;
+
+    public static final String TIMESTAMP_HEADER_NAME = JMS_NAMESPACE
+            + &quot;timestamp&quot;;
+
+    public static final String IDENTIFIER_HEADER_NAME = JMS_NAMESPACE
+            + &quot;identifier&quot;;
+
+    public static final String EVENT_TYPE_HEADER_NAME = JMS_NAMESPACE
+            + &quot;eventType&quot;;
+
+    public static final String BASE_URL_HEADER_NAME = JMS_NAMESPACE
+            + &quot;baseURL&quot;;
+
+    public static final String RESOURCE_TYPE_HEADER_NAME = JMS_NAMESPACE + &quot;resourceType&quot;;
+
+    public static final String USER_HEADER_NAME = JMS_NAMESPACE + &quot;user&quot;;
+    public static final String USER_AGENT_HEADER_NAME = JMS_NAMESPACE + &quot;userAgent&quot;;
+    public static final String EVENT_ID_HEADER_NAME = JMS_NAMESPACE + &quot;eventID&quot;;
+
+    @Override
+    public Message getMessage(final FedoraEvent event, final Session jmsSession)
+            throws JMSException {
+
+<span class="fc" id="L72">        final EventSerializer serializer = new JsonLDSerializer();</span>
+<span class="fc" id="L73">        final String body = serializer.serialize(event);</span>
+<span class="fc" id="L74">        final Message message = jmsSession.createTextMessage(body);</span>
+
+<span class="fc" id="L76">        message.setLongProperty(TIMESTAMP_HEADER_NAME, event.getDate().toEpochMilli());</span>
+
+<span class="pc bpc" id="L78" title="1 of 2 branches missed.">        if (event.getInfo().containsKey(BASE_URL)) {</span>
+<span class="nc" id="L79">            message.setStringProperty(BASE_URL_HEADER_NAME, event.getInfo().get(BASE_URL));</span>
+        } else {
+<span class="fc" id="L81">            LOGGER.warn(&quot;Could not extract baseUrl from FedoraEvent!&quot;);</span>
+        }
+<span class="pc bpc" id="L83" title="1 of 2 branches missed.">        if (event.getInfo().containsKey(USER_AGENT)) {</span>
+<span class="nc" id="L84">            message.setStringProperty(USER_AGENT_HEADER_NAME, event.getInfo().get(USER_AGENT));</span>
+        }
+
+<span class="fc" id="L87">        message.setStringProperty(IDENTIFIER_HEADER_NAME, event.getPath());</span>
+<span class="fc" id="L88">        message.setStringProperty(EVENT_TYPE_HEADER_NAME, getEventURIs(event.getTypes()));</span>
+<span class="fc" id="L89">        message.setStringProperty(USER_HEADER_NAME, event.getUserID());</span>
+<span class="fc" id="L90">        message.setStringProperty(RESOURCE_TYPE_HEADER_NAME, join(&quot;,&quot;, event.getResourceTypes()));</span>
+<span class="fc" id="L91">        message.setStringProperty(EVENT_ID_HEADER_NAME, event.getEventID());</span>
+
+<span class="fc" id="L93">        LOGGER.trace(&quot;getMessage() returning: {}&quot;, message);</span>
+<span class="fc" id="L94">        return message;</span>
+    }
+
+    private static String getEventURIs(final Set&lt;EventType&gt; types) {
+<span class="fc" id="L98">        final String uris = types.stream()</span>
+<span class="fc" id="L99">                                 .map(EventType::getType)</span>
+<span class="fc" id="L100">                                 .collect(joining(&quot;,&quot;));</span>
+
+<span class="fc" id="L102">        LOGGER.debug(&quot;Constructed event type URIs: {}&quot;, uris);</span>
+<span class="fc" id="L103">        return uris;</span>
+    }
+
+<span class="fc" id="L106">    private static final Logger LOGGER = getLogger(DefaultMessageFactory.class);</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>
