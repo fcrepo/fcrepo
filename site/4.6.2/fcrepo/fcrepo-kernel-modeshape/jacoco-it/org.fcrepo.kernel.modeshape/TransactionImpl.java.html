@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>TransactionImpl.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation (ModeShape)</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape</a> &gt; <span class="el_source">TransactionImpl.java</span></div><h1>TransactionImpl.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape;
+
+import static java.lang.System.currentTimeMillis;
+import static java.util.UUID.randomUUID;
+import static org.fcrepo.kernel.api.Transaction.State.COMMITED;
+import static org.fcrepo.kernel.api.Transaction.State.DIRTY;
+import static org.fcrepo.kernel.api.Transaction.State.NEW;
+import static org.fcrepo.kernel.api.Transaction.State.ROLLED_BACK;
+
+import java.util.Calendar;
+import java.util.Date;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+
+/**
+ * A Fedora Transaction wraps a JCR session with some expiration logic.
+ * Whenever the transaction's session is requested, the expiration is extended
+ *
+ * @author bbpennel
+ */
+public class TransactionImpl implements Transaction {
+
+    // the default timeout is 3 minutes
+    public static final long DEFAULT_TIMEOUT = 3L * 60L * 1000L;
+
+    public static final String TIMEOUT_SYSTEM_PROPERTY = &quot;fcrepo.transactions.timeout&quot;;
+
+    private final Session session;
+
+    private final String id;
+
+    private final String userName;
+
+    private final Date created;
+
+    private final Calendar expires;
+
+<span class="fc" id="L59">    private State state = NEW;</span>
+
+    /**
+     * Create a transaction for the given Session
+     * @param session the given session
+     * @param userName the user name
+     */
+
+    public TransactionImpl(final Session session, final String userName) {
+<span class="fc" id="L68">        super();</span>
+<span class="fc" id="L69">        this.session = session;</span>
+<span class="fc" id="L70">        this.created = new Date();</span>
+<span class="fc" id="L71">        this.id = randomUUID().toString();</span>
+<span class="fc" id="L72">        this.expires = Calendar.getInstance();</span>
+<span class="fc" id="L73">        this.updateExpiryDate();</span>
+<span class="fc" id="L74">        this.userName = userName;</span>
+<span class="fc" id="L75">    }</span>
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.api.Transaction#getSession()
+     */
+    @Override
+    public Session getSession() {
+<span class="nc" id="L82">        updateExpiryDate();</span>
+<span class="nc" id="L83">        return TxAwareSession.newInstance(session, id);</span>
+    }
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.api.Transaction#getCreated()
+     */
+    @Override
+    public Date getCreated() {
+<span class="nc" id="L91">        return new Date(created.getTime());</span>
+    }
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.api.Transaction#getId()
+     */
+    @Override
+    public String getId() {
+<span class="fc" id="L99">        return id;</span>
+    }
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.api.Transaction#getState()
+     */
+    @Override
+    public State getState() {
+        try {
+<span class="nc bnc" id="L108" title="All 4 branches missed.">            if (this.session != null &amp;&amp; this.session.hasPendingChanges()) {</span>
+<span class="nc" id="L109">                return DIRTY;</span>
+            }
+<span class="nc" id="L111">            return state;</span>
+<span class="nc" id="L112">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L113">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.api.Transaction#getExpires()
+     */
+    @Override
+    public Date getExpires() {
+<span class="fc" id="L122">        return expires.getTime();</span>
+    }
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.api.Transaction#commit(org.fcrepo.kernel.api.services.VersionService)
+     */
+    @Override
+    public void commit() {
+
+        try {
+<span class="fc" id="L132">            this.session.save();</span>
+<span class="fc" id="L133">            this.state = COMMITED;</span>
+<span class="fc" id="L134">            this.expire();</span>
+<span class="nc" id="L135">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L136">            throw new RepositoryRuntimeException(e);</span>
+<span class="fc" id="L137">        }</span>
+<span class="fc" id="L138">    }</span>
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.api.Transaction#expire()
+     */
+    @Override
+    public void expire() {
+<span class="fc" id="L145">        this.session.logout();</span>
+<span class="fc" id="L146">        this.expires.setTimeInMillis(currentTimeMillis());</span>
+<span class="fc" id="L147">    }</span>
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.api.Transaction#isAssociatedWithUser()
+     */
+    @Override
+    public boolean isAssociatedWithUser(final String userName) {
+<span class="fc" id="L154">        boolean associatedWith = false;</span>
+<span class="pc bpc" id="L155" title="1 of 2 branches missed.">        if (this.userName == null) {</span>
+<span class="nc bnc" id="L156" title="All 2 branches missed.">            if (userName == null) {</span>
+<span class="nc" id="L157">                associatedWith = true;</span>
+            }
+        } else {
+<span class="fc" id="L160">            associatedWith = this.userName.equals(userName);</span>
+        }
+<span class="fc" id="L162">        return associatedWith;</span>
+    }
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.api.Transaction#rollback()
+     */
+    @Override
+    public void rollback() {
+<span class="fc" id="L170">        this.state = ROLLED_BACK;</span>
+        try {
+<span class="fc" id="L172">            this.session.refresh(false);</span>
+<span class="fc" id="L173">        } catch (final RepositoryException e) {</span>
+<span class="fc" id="L174">            throw new RepositoryRuntimeException(e);</span>
+<span class="fc" id="L175">        }</span>
+<span class="fc" id="L176">        this.expire();</span>
+<span class="fc" id="L177">    }</span>
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.api.Transaction#updateExpiryDate()
+     */
+    @Override
+    public void updateExpiryDate() {
+        long duration;
+<span class="pc bpc" id="L185" title="1 of 2 branches missed.">        if (System.getProperty(TIMEOUT_SYSTEM_PROPERTY) != null) {</span>
+<span class="nc" id="L186">            duration =</span>
+<span class="nc" id="L187">                    Long.parseLong(System.getProperty(TIMEOUT_SYSTEM_PROPERTY));</span>
+        } else {
+<span class="fc" id="L189">            duration = DEFAULT_TIMEOUT;</span>
+        }
+<span class="fc" id="L191">        this.expires.setTimeInMillis(currentTimeMillis() + duration);</span>
+<span class="fc" id="L192">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

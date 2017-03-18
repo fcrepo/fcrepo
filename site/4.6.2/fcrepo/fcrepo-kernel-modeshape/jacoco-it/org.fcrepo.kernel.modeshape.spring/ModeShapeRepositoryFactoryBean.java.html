@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ModeShapeRepositoryFactoryBean.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation (ModeShape)</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.spring</a> &gt; <span class="el_source">ModeShapeRepositoryFactoryBean.java</span></div><h1>ModeShapeRepositoryFactoryBean.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.spring;
+
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.inject.Inject;
+
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.modeshape.jcr.JcrRepository;
+import org.modeshape.jcr.ModeShapeEngine;
+import org.modeshape.jcr.NoSuchRepositoryException;
+import org.modeshape.jcr.RepositoryConfiguration;
+import org.slf4j.Logger;
+import org.springframework.beans.factory.FactoryBean;
+import org.springframework.core.io.Resource;
+
+/**
+ * A Modeshape factory shim to make it play nice with our Spring-based
+ * configuration
+ *
+ * @author Edwin Shin
+ * @since Feb 7, 2013
+ */
+<span class="fc" id="L45">public class ModeShapeRepositoryFactoryBean implements</span>
+        FactoryBean&lt;JcrRepository&gt; {
+
+<span class="fc" id="L48">    private static final Logger LOGGER =</span>
+<span class="fc" id="L49">            getLogger(ModeShapeRepositoryFactoryBean.class);</span>
+
+    private DefaultPropertiesLoader propertiesLoader;
+
+    @Inject
+    private ModeShapeEngine modeShapeEngine;
+
+    private Resource repositoryConfiguration;
+
+    private JcrRepository repository;
+
+    /**
+     * Generate a JCR repository from the given configuration
+     *
+     */
+    @PostConstruct
+    public void buildRepository() {
+        try {
+<span class="fc" id="L67">            LOGGER.info(&quot;Using repo config (classpath): {}&quot;, repositoryConfiguration.getURL());</span>
+<span class="fc" id="L68">            getPropertiesLoader().loadSystemProperties();</span>
+
+<span class="fc" id="L70">            final RepositoryConfiguration config =</span>
+<span class="fc" id="L71">                    RepositoryConfiguration.read(repositoryConfiguration.getURL());</span>
+<span class="fc" id="L72">            repository = modeShapeEngine.deploy(config);</span>
+
+            // next line ensures that repository starts before the factory is used.
+<span class="fc" id="L75">            final org.modeshape.common.collection.Problems problems =</span>
+<span class="fc" id="L76">                    repository.getStartupProblems();</span>
+<span class="pc bpc" id="L77" title="1 of 2 branches missed.">            for (final org.modeshape.common.collection.Problem p : problems) {</span>
+<span class="nc" id="L78">                LOGGER.error(&quot;ModeShape Start Problem: {}&quot;, p.getMessageString());</span>
+                // TODO determine problems that should be runtime errors
+<span class="nc" id="L80">            }</span>
+<span class="nc" id="L81">        } catch (final Exception e) {</span>
+<span class="nc" id="L82">            throw new RepositoryRuntimeException(e);</span>
+<span class="fc" id="L83">        }</span>
+<span class="fc" id="L84">    }</span>
+
+    /**
+     * Attempts to undeploy the repository and shutdown the ModeShape engine on
+     * context destroy.
+     *
+     * @throws InterruptedException if interrupted exception occurred
+     */
+    @PreDestroy
+    public void stopRepository() throws InterruptedException {
+<span class="fc" id="L94">        LOGGER.info(&quot;Initiating shutdown of ModeShape&quot;);</span>
+<span class="fc" id="L95">        final String repoName = repository.getName();</span>
+        try {
+<span class="fc" id="L97">            final Future&lt;Boolean&gt; futureUndeployRepo = modeShapeEngine.undeploy(repoName);</span>
+<span class="pc bpc" id="L98" title="1 of 2 branches missed.">            if (futureUndeployRepo.get()) {</span>
+<span class="fc" id="L99">                LOGGER.info(&quot;ModeShape repository {} has undeployed.&quot;, repoName);</span>
+            } else {
+<span class="nc" id="L101">                LOGGER.error(&quot;ModeShape repository {} undeploy failed without an exception, still deployed.&quot;, repoName);</span>
+            }
+<span class="fc" id="L103">            LOGGER.info(&quot;Repository {} undeployed.&quot;, repoName);</span>
+<span class="nc" id="L104">        } catch (final NoSuchRepositoryException e) {</span>
+<span class="nc" id="L105">            LOGGER.error(&quot;Repository {} unknown, cannot undeploy.&quot;, repoName, e);</span>
+<span class="nc" id="L106">        } catch (final ExecutionException e) {</span>
+<span class="nc" id="L107">            LOGGER.error(&quot;Repository {} cannot undeploy.&quot;, repoName, e.getCause());</span>
+<span class="pc" id="L108">        }</span>
+<span class="nc" id="L109">        final Future&lt;Boolean&gt; futureShutdownEngine = modeShapeEngine.shutdown();</span>
+        try {
+<span class="nc bnc" id="L111" title="All 2 branches missed.">            if (futureShutdownEngine.get()) {</span>
+<span class="nc" id="L112">                LOGGER.info(&quot;ModeShape Engine has shutdown.&quot;);</span>
+            } else {
+<span class="nc" id="L114">                LOGGER.error(&quot;ModeShape Engine shutdown failed without an exception, still running.&quot;);</span>
+            }
+<span class="nc" id="L116">        } catch (final ExecutionException e) {</span>
+<span class="nc" id="L117">            LOGGER.error(&quot;ModeShape Engine shutdown failed.&quot;, e.getCause());</span>
+<span class="nc" id="L118">        }</span>
+<span class="nc" id="L119">    }</span>
+
+    @Override
+    public JcrRepository getObject() {
+<span class="fc" id="L123">        return repository;</span>
+    }
+
+    @Override
+    public Class&lt;?&gt; getObjectType() {
+<span class="fc" id="L128">        return JcrRepository.class;</span>
+    }
+
+    @Override
+    public boolean isSingleton() {
+<span class="fc" id="L133">        return true;</span>
+    }
+
+    /**
+     * Set the configuration to use for creating the repository
+     *
+     * @param repositoryConfiguration the repository configuration
+     */
+    public void setRepositoryConfiguration(
+            final Resource repositoryConfiguration) {
+<span class="fc" id="L143">        this.repositoryConfiguration = repositoryConfiguration;</span>
+<span class="fc" id="L144">    }</span>
+
+    private DefaultPropertiesLoader getPropertiesLoader() {
+<span class="pc bpc" id="L147" title="1 of 2 branches missed.">        if (null == propertiesLoader) {</span>
+<span class="fc" id="L148">            propertiesLoader = new DefaultPropertiesLoader();</span>
+        }
+<span class="fc" id="L150">        return propertiesLoader;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

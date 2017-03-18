@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>PropertyToTriple.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation (ModeShape)</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.rdf.impl.mappings</a> &gt; <span class="el_source">PropertyToTriple.java</span></div><h1>PropertyToTriple.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.rdf.impl.mappings;
+
+import static com.hp.hpl.jena.datatypes.xsd.XSDDatatype.XSDstring;
+import static com.hp.hpl.jena.graph.NodeFactory.createLiteral;
+import static com.hp.hpl.jena.graph.Triple.create;
+import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeToResource;
+import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.function.Function;
+import java.util.stream.Stream;
+
+import javax.jcr.Node;
+import javax.jcr.Property;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.Value;
+
+import com.google.common.base.Converter;
+import com.hp.hpl.jena.graph.impl.LiteralLabel;
+import com.hp.hpl.jena.rdf.model.Resource;
+
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.modeshape.rdf.converters.PropertyConverter;
+import org.fcrepo.kernel.modeshape.rdf.converters.ValueConverter;
+import com.hp.hpl.jena.datatypes.RDFDatatype;
+import com.hp.hpl.jena.graph.Triple;
+import org.slf4j.Logger;
+
+/**
+ * Utility for moving from JCR properties to RDF triples.
+ *
+ * @author ajs6f
+ * @since Oct 10, 2013
+ */
+public class PropertyToTriple implements Function&lt;Property, Stream&lt;Triple&gt;&gt; {
+
+<span class="fc" id="L56">    private static final Logger LOGGER = getLogger(PropertyToTriple.class);</span>
+
+<span class="fc" id="L58">    private static final PropertyConverter propertyConverter = new PropertyConverter();</span>
+    private final ValueConverter valueConverter;
+    private final Converter&lt;Node, Resource&gt; translator;
+
+    /**
+     * Default constructor. We require a {@link Converter} in order to construct the RDF subjects of our triples.
+     *
+     * @param converter a converter between RDF and the Fedora model
+     * @param session the JCR session
+     */
+<span class="fc" id="L68">    public PropertyToTriple(final Session session, final Converter&lt;Resource, FedoraResource&gt; converter) {</span>
+<span class="fc" id="L69">        this.valueConverter = new ValueConverter(session, converter);</span>
+<span class="fc" id="L70">        this.translator = nodeToResource(converter);</span>
+<span class="fc" id="L71">    }</span>
+
+    @Override
+    public Stream&lt;Triple&gt; apply(final Property p) {
+        try {
+<span class="fc" id="L76">            final com.hp.hpl.jena.graph.Node subject = translator.convert(p.getParent()).asNode();</span>
+<span class="fc" id="L77">            final com.hp.hpl.jena.graph.Node propPredicate = propertyConverter.convert(p).asNode();</span>
+<span class="fc" id="L78">            final String propertyName = p.getName();</span>
+
+<span class="fc" id="L80">            return iteratorToStream(new PropertyValueIterator(p)).filter(this::valueCanBeConverted).map(v -&gt; {</span>
+<span class="fc" id="L81">                final com.hp.hpl.jena.graph.Node object = valueConverter.convert(v).asNode();</span>
+<span class="fc bfc" id="L82" title="All 2 branches covered.">                if (object.isLiteral()) {</span>
+                    // unpack the name of the property for information about what kind of literal
+<span class="fc" id="L84">                    final int i = propertyName.indexOf('@');</span>
+<span class="pc bpc" id="L85" title="1 of 2 branches missed.">                    if (i &gt; 0) {</span>
+<span class="nc" id="L86">                        final LiteralLabel literal = object.getLiteral();</span>
+<span class="nc" id="L87">                        final RDFDatatype datatype = literal.getDatatype();</span>
+<span class="nc" id="L88">                        final String datatypeURI = datatype.getURI();</span>
+<span class="nc bnc" id="L89" title="All 4 branches missed.">                        if (datatypeURI.isEmpty() || datatype.equals(XSDstring)) {</span>
+                            // this is an RDF string literal and could involve an RDF lang tag
+<span class="nc" id="L91">                            final String lang = propertyName.substring(i + 1);</span>
+<span class="nc" id="L92">                            final String lex = literal.getLexicalForm();</span>
+<span class="nc" id="L93">                            return create(subject, propPredicate, createLiteral(lex, lang, datatype));</span>
+                        }
+                    }
+                }
+<span class="fc" id="L97">                return create(subject, propPredicate, object);</span>
+            });
+<span class="nc" id="L99">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L100">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    /**
+     * This method tests if a given value can be converted.
+     * The scenario when this may not be true is for (weak)reference properties that target an non-existent resource.
+     * This scenario generally should not be possible, but the following bug introduced the possibility:
+     *   https://jira.duraspace.org/browse/FCREPO-2323
+     *
+     * @param value to be tested for whether it can be converted to an RDFNode or not
+     * @return true if value can be converted
+     */
+    private boolean valueCanBeConverted(final Value value) {
+        try {
+<span class="fc" id="L115">            valueConverter.convert(value);</span>
+<span class="fc" id="L116">            return true;</span>
+<span class="nc" id="L117">        } catch (final RepositoryRuntimeException e) {</span>
+<span class="nc" id="L118">            LOGGER.warn(&quot;Reference to non-existent resource encounterd: {}&quot;, value);</span>
+<span class="nc" id="L119">            return false;</span>
+        }
+    };
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>
