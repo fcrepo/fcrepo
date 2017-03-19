@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>ViewAssets.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api</a> &gt; <span class="el_source">ViewAssets.java</span></div><h1>ViewAssets.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.http.api;
+
+
+import org.fcrepo.http.api.responses.StreamingBaseHtmlProvider;
+import org.springframework.context.annotation.Scope;
+
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Response;
+
+import static javax.ws.rs.core.Response.ok;
+
+/**
+ * @author md5wz
+ * @since 11/12/2014
+ */
+@Scope(&quot;request&quot;)
+@Path(&quot;/fcr:assets&quot;)
+<span class="nc" id="L37">public class ViewAssets {</span>
+
+    /**
+     * Gets the common css file referenced in all velocity views.
+     * @return the common css file referenced in all velocity views
+     */
+    @GET
+    @Path(&quot;common.css&quot;)
+    @Produces({&quot;text/css; charset=utf-8&quot;, &quot;*/*&quot;})
+    public Response getViewCss() {
+<span class="nc" id="L47">        return ok().entity(this.getClass().getResourceAsStream(StreamingBaseHtmlProvider.commonCssLocation)).build();</span>
+    }
+
+    /**
+     * Gets the common js file referenced in all velocity views.
+     * @return the response
+     */
+    @GET
+    @Path(&quot;common.js&quot;)
+    @Produces({&quot;text/javascript; charset=utf-8&quot;, &quot;*/*&quot;})
+    public Response getViewJs() {
+<span class="nc" id="L58">        return ok().entity(this.getClass().getResourceAsStream(StreamingBaseHtmlProvider.commonJsLocation)).build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>
