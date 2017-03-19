@@ -1,0 +1,5 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+Fedora Repository JMS Module,org.fcrepo.jms,JMSQueuePublisher,4,12,0,0,2,4,1,2,1,2
+Fedora Repository JMS Module,org.fcrepo.jms,JMSTopicPublisher,0,16,0,0,0,6,0,3,0,3
+Fedora Repository JMS Module,org.fcrepo.jms,AbstractJMSPublisher,0,83,0,0,0,22,0,5,0,5
+Fedora Repository JMS Module,org.fcrepo.jms,DefaultMessageFactory,3,101,2,2,1,22,2,4,0,4
