@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>FedoraVersions.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api</a> &gt; <span class="el_source">FedoraVersions.java</span></div><h1>FedoraVersions.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.http.api;
+
+
+import static javax.ws.rs.core.MediaType.APPLICATION_XHTML_XML;
+import static javax.ws.rs.core.MediaType.APPLICATION_XML;
+import static javax.ws.rs.core.MediaType.TEXT_HTML;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
+import static javax.ws.rs.core.Response.noContent;
+import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
+import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
+import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+
+import javax.annotation.PostConstruct;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Response;
+
+import org.fcrepo.http.commons.domain.PATCH;
+import org.fcrepo.kernel.api.models.FedoraBinary;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.RdfStream;
+import org.slf4j.Logger;
+import org.springframework.context.annotation.Scope;
+
+import com.google.common.annotations.VisibleForTesting;
+
+/**
+ * Endpoint for managing versions of nodes
+ *
+ * @author awoods
+ * @author ajs6f
+ */
+@Scope(&quot;request&quot;)
+@Path(&quot;/{path: .*}/fcr:versions/{labelAndOptionalPathIntoVersion: .*}&quot;)
+public class FedoraVersions extends ContentExposingResource {
+
+<span class="fc" id="L67">    private static final Logger LOGGER = getLogger(FedoraVersions.class);</span>
+
+    @PathParam(&quot;path&quot;) protected String externalPath;
+
+    @PathParam(&quot;labelAndOptionalPathIntoVersion&quot;) protected String pathListIntoVersion;
+
+    protected String path;
+    protected String label;
+    protected String pathIntoVersion;
+
+    protected FedoraResource baseResource;
+
+    /**
+     * Default JAX-RS entry point
+     */
+    public FedoraVersions() {
+<span class="fc" id="L83">        super();</span>
+<span class="fc" id="L84">    }</span>
+
+    /**
+     * Create a new FedoraNodes instance for a given path
+     * @param path the path
+     * @param label the label
+     * @param pathIntoVersion the string value of pathIntoVersion
+     */
+    @VisibleForTesting
+<span class="nc" id="L93">    public FedoraVersions(final String path, final String label, final String pathIntoVersion) {</span>
+<span class="nc" id="L94">        this.path = path;</span>
+<span class="nc" id="L95">        this.label = label;</span>
+<span class="nc" id="L96">        this.pathIntoVersion = pathIntoVersion;</span>
+<span class="nc" id="L97">    }</span>
+
+    @PostConstruct
+    private void postConstruct() {
+<span class="fc" id="L101">        this.path = externalPath + &quot;/&quot; + FCR_VERSIONS + &quot;/&quot; + pathListIntoVersion;</span>
+<span class="fc" id="L102">        this.label = pathListIntoVersion.split(&quot;/&quot;, 2)[0];</span>
+<span class="fc" id="L103">    }</span>
+
+    /**
+     * Reverts the resource at the given path to the version specified by
+     * the label.
+     * @return response
+     */
+    @PATCH
+    public Response revertToVersion() {
+<span class="fc" id="L112">        LOGGER.info(&quot;Reverting {} to version {}.&quot;, path,</span>
+                label);
+<span class="fc" id="L114">        versionService.revertToVersion(session, unversionedResourcePath(), label);</span>
+<span class="fc" id="L115">        return noContent().build();</span>
+    }
+
+    /**
+     * Removes the version specified by the label.
+     * @return 204 No Content
+    **/
+    @DELETE
+    public Response removeVersion() {
+<span class="fc" id="L124">        LOGGER.info(&quot;Removing {} version {}.&quot;, path, label);</span>
+<span class="fc" id="L125">        versionService.removeVersion(session, unversionedResourcePath(), label);</span>
+<span class="fc" id="L126">        return noContent().build();</span>
+    }
+
+    /**
+     * Retrieve a version of an object.  The path structure is as follows
+     * (though these URLs are returned from getVersionList and need not be
+     * constructed manually):
+     * /versionable-node/fcr:versions/label/path/to/any/copied/unversionable/nodes
+     * @param rangeValue the range value
+     * @throws IOException if IO exception occurred
+     * @return the version of the object as RDF in the requested format
+     */
+    @SuppressWarnings(&quot;resource&quot;)
+    @GET
+    @Produces({TURTLE + &quot;;qs=1.0&quot;, JSON_LD + &quot;;qs=0.8&quot;,
+            N3, N3_ALT2, RDF_XML, NTRIPLES, APPLICATION_XML, TEXT_PLAIN, TURTLE_X,
+            TEXT_HTML, APPLICATION_XHTML_XML, &quot;*/*&quot;})
+    public Response getVersion(@HeaderParam(&quot;Range&quot;) final String rangeValue) throws IOException {
+<span class="fc" id="L144">        LOGGER.trace(&quot;Getting version profile for: {} at version: {}&quot;, path,</span>
+                label);
+<span class="fc" id="L146">        checkCacheControlHeaders(request, servletResponse, resource(), session);</span>
+<span class="fc" id="L147">        final RdfStream rdfStream = new DefaultRdfStream(asNode(resource()));</span>
+<span class="fc" id="L148">        addResourceHttpHeaders(resource());</span>
+
+<span class="fc" id="L150">        return getContent(rangeValue, rdfStream);</span>
+    }
+
+    protected String unversionedResourcePath() {
+
+<span class="pc bpc" id="L155" title="1 of 2 branches missed.">        if (baseResource == null) {</span>
+<span class="fc" id="L156">            baseResource = getResourceFromPath(externalPath);</span>
+<span class="fc bfc" id="L157" title="All 2 branches covered.">            if ( baseResource instanceof FedoraBinary ) {</span>
+<span class="fc" id="L158">                baseResource = ((FedoraBinary)baseResource).getDescription();</span>
+            }
+        }
+
+<span class="fc" id="L162">        return baseResource.getPath();</span>
+    }
+
+    @Override
+    protected FedoraResource resource() {
+
+<span class="fc bfc" id="L168" title="All 2 branches covered.">        if (resource == null) {</span>
+<span class="fc" id="L169">            resource = getResourceFromPath(path);</span>
+        }
+
+<span class="fc" id="L172">        return resource;</span>
+    }
+
+    @Override
+    protected void addResourceHttpHeaders(final FedoraResource resource) {
+<span class="fc" id="L177">        super.addResourceHttpHeaders(resource);</span>
+<span class="fc" id="L178">        super.addResourceLinkHeaders(resource);</span>
+<span class="fc" id="L179">    }</span>
+
+    @Override
+    protected String externalPath() {
+<span class="nc" id="L183">        return externalPath;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>
