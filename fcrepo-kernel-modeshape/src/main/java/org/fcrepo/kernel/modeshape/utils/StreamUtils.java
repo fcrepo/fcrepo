@@ -37,10 +37,10 @@ public class StreamUtils {
 
     private static Boolean enableParallel = false;
 
-    private static final String FCREPO_ENABLE_PARALLEL_STREAMING_BY_DEFAULT_KEY =
-            "fcrepo.enable-parallel-streaming-by-default";
+    private static final String FCREPO_STEAMING_PARALLEL_KEY =
+            "fcrepo.streaming.parallel";
     static {
-        final String enableParallelVal = System.getProperty(FCREPO_ENABLE_PARALLEL_STREAMING_BY_DEFAULT_KEY, "false")
+        final String enableParallelVal = System.getProperty(FCREPO_STEAMING_PARALLEL_KEY, "false")
                 .trim()
                 .toLowerCase();
         if (!enableParallelVal.equals("true") && !enableParallelVal.equals("false")) {
@@ -48,7 +48,7 @@ public class StreamUtils {
                     "The {} parameter contains an invalid value of {}:  " +
                             "allowed values are 'true' and 'false'. " +
                             "The default value of {} remain unchanged.",
-                    FCREPO_ENABLE_PARALLEL_STREAMING_BY_DEFAULT_KEY, enableParallelVal, enableParallel);
+                    FCREPO_STEAMING_PARALLEL_KEY, enableParallelVal, enableParallel);
         } else {
             StreamUtils.enableParallel = Boolean.valueOf(enableParallelVal);
         }
