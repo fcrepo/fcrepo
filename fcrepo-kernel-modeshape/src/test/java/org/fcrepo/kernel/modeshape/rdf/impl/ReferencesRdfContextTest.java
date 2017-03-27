@@ -117,9 +117,6 @@ public class ReferencesRdfContextTest {
     @Test
     public void testStrongReferences() {
         final Model model = testObj.collect(toModel());
-        //ensure that objects have all been resolved
-        //in case of parallel processing enabled
-        model.listObjects();
         assertTrue(model.contains(createResource("info:fedora/b"),
                 createProperty("info:strong"),
                 createResource("info:fedora/a")));
@@ -129,9 +126,6 @@ public class ReferencesRdfContextTest {
     public void testWeakReferences() {
 
         final Model model = testObj.collect(toModel());
-        //ensure that objects have all been resolved
-        //in case of parallel processing enabled
-        model.listObjects();
         assertTrue(model.contains(createResource("info:fedora/b"),
                 createProperty("info:weak"),
                 createResource("info:fedora/a")));
