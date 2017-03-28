@@ -55,10 +55,10 @@
       http(method, url, headers, data, function(res) {
         if (res.status == 201) {
           const loc = res.getResponseHeader('Location');
-          const link = res.getResponseHeader('Link');
-          if (link != null && link.match('rel="describedby"')) {
-            const str = link.match(/<[^>]+>/)[0];
-            window.location = str.slice(1, str.length - 1);
+          const linkheaders = (res.getResponseHeader('Link') != null) ? res.getResponseHeader('Link').split(", ") : null;
+          const link = (linkheaders != null) ? linkheaders.filter(function(h) { return h.match(/rel="describedby"/)}) : "";
+          if (linkheaders != null && link.length > 0) {
+            window.location = link[0].substr(1, link[0].indexOf('>') - 1);
           } else if (loc != null) {
             window.location = loc;
           } else {
