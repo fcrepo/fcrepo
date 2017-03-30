@@ -23,6 +23,8 @@ import org.fcrepo.kernel.modeshape.testutilities.TestPropertyIterator;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -103,10 +105,22 @@ public class ReferencesRdfContextTest {
         when(mockStrongValue.getString()).thenReturn("uuid");
 
         weakReferencesProperties = new TestPropertyIterator(mockWeakProperty);
-        when(mockNode.getWeakReferences()).thenReturn(weakReferencesProperties);
+        when(mockNode.getWeakReferences()).then(new Answer<TestPropertyIterator>() {
+
+            @Override
+            public TestPropertyIterator answer(final InvocationOnMock invocation) throws Throwable {
+                return new TestPropertyIterator(mockWeakProperty);
+            }
+        });
 
         strongReferencesProperties = new TestPropertyIterator(mockStrongProperty);
-        when(mockNode.getReferences()).thenReturn(strongReferencesProperties);
+        when(mockNode.getReferences()).then(new Answer<TestPropertyIterator>() {
+
+            @Override
+            public TestPropertyIterator answer(final InvocationOnMock invocation) throws Throwable {
+                return new TestPropertyIterator(mockStrongProperty);
+            }
+        });
 
         when(mockPropertyParent.getProperties()).thenReturn(mockPropertyIterator);
         when(mockPropertyIterator.hasNext()).thenReturn(false);

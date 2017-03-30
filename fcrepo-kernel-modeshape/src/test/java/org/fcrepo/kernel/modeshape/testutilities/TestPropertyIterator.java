@@ -19,7 +19,6 @@ package org.fcrepo.kernel.modeshape.testutilities;
 
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
 
 import javax.jcr.Property;
 import javax.jcr.PropertyIterator;
@@ -33,10 +32,6 @@ import javax.jcr.PropertyIterator;
 public class TestPropertyIterator implements PropertyIterator {
 
     private final Iterator<Property> iterator;
-
-    public TestPropertyIterator(final List<Property> properties) {
-        this.iterator = properties.iterator();
-    }
 
     public TestPropertyIterator(final Property... properties) {
         this.iterator = Arrays.asList(properties).iterator();
