@@ -96,7 +96,6 @@ public class ReferencesRdfContext extends NodeRdfContext {
 
     @SuppressWarnings("unchecked")
     private static Stream<Property> getAllReferences(final Node node) throws RepositoryException {
-        return Stream.concat(iteratorToStream(node.getReferences(), false),
-                             iteratorToStream(node.getWeakReferences(),false));
+        return Stream.concat(iteratorToStream(node.getReferences()), iteratorToStream(node.getWeakReferences()));
     }
 }
