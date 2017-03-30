@@ -22,6 +22,7 @@ import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.servlet.ServletContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response;
@@ -46,10 +47,13 @@ public class ServerManagedTypeExceptionMapper extends ConstraintExceptionMapper<
     @Context
     private UriInfo uriInfo;
 
+    @Context
+    private ServletContext context;
+
     @Override
     public Response toResponse(final ServerManagedTypeException e) {
         debugException(this, e, LOGGER);
-        final Link link = buildConstraintLink(e, uriInfo);
+        final Link link = buildConstraintLink(e, context, uriInfo);
         final String msg = e.getMessage();
         return status(CONFLICT).entity(msg).links(link).type(TEXT_PLAIN_WITH_CHARSET).build();
     }

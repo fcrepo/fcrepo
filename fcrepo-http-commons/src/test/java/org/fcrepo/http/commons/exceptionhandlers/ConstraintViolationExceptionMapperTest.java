@@ -24,9 +24,11 @@ import javax.ws.rs.core.UriInfo;
 import org.fcrepo.kernel.api.exception.ConstraintViolationException;
 
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
+import static org.fcrepo.http.commons.test.util.TestHelpers.getServletContextImpl;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.junit.Assert.assertEquals;
 
+import javax.servlet.ServletContext;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -44,21 +46,24 @@ public class ConstraintViolationExceptionMapperTest {
 
     private UriInfo mockInfo;
 
+    private ServletContext mockContext;
+
     @Mock
     private ConstraintViolationExceptionMapper mapper;
 
     @Before
     public void setUp() {
         this.mockInfo = getUriInfoImpl();
+        this.mockContext = getServletContextImpl();
     }
 
     @Test
     public void testBuildConstraintLink() {
-        final URI testLink = URI.create("http://localhost/static/constraints/ConstraintViolationException.rdf");
+        final URI testLink = URI.create("http://localhost/fcrepo/static/constraints/ConstraintViolationException.rdf");
 
         final ConstraintViolationException ex = new ConstraintViolationException("This is an error.");
 
-        final Link link = ConstraintViolationExceptionMapper.buildConstraintLink(ex, mockInfo);
+        final Link link = ConstraintViolationExceptionMapper.buildConstraintLink(ex, mockContext, mockInfo);
 
         assertEquals(link.getRel(), CONSTRAINED_BY.getURI());
         assertEquals(link.getUri(), testLink);
