@@ -101,13 +101,13 @@ public class ReferencesRdfContextTest {
         when(mockStrongValue.getType()).thenReturn(REFERENCE);
         when(mockStrongValue.getString()).thenReturn("uuid");
 
-        when(mockNode.getWeakReferences()).then((Answer<TestPropertyIterator>) invocation -> {
-                return new TestPropertyIterator(mockWeakProperty);
-        });
+        when(mockNode.getWeakReferences()).then((Answer<TestPropertyIterator>) invocation ->
+                new TestPropertyIterator(mockWeakProperty)
+        );
 
-        when(mockNode.getReferences()).then((Answer<TestPropertyIterator>) invocation -> {
-                return new TestPropertyIterator(mockStrongProperty);
-        });
+        when(mockNode.getReferences()).then((Answer<TestPropertyIterator>) invocation ->
+                new TestPropertyIterator(mockStrongProperty)
+        );
 
         when(mockPropertyParent.getProperties()).thenReturn(mockPropertyIterator);
         when(mockPropertyIterator.hasNext()).thenReturn(false);
