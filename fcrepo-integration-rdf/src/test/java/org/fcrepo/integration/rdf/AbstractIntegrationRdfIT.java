@@ -125,7 +125,7 @@ public abstract class AbstractIntegrationRdfIT extends AbstractResourceIT {
 
             Triple replacement = next;
 
-            if (replacement.getSubject().toString().contains(".well-known")) {
+            if (replacement.getSubject().toString().contains("#genid")) {
                 if (!bnodeMap.containsKey(replacement.getSubject())) {
                     bnodeMap.put(replacement.getSubject(), createBlankNode());
                 }
@@ -135,7 +135,7 @@ public abstract class AbstractIntegrationRdfIT extends AbstractResourceIT {
                         replacement.getObject());
             }
 
-            if (replacement.getObject().toString().contains(".well-known")) {
+            if (replacement.getObject().toString().contains("#genid")) {
 
                 if (!bnodeMap.containsKey(replacement.getObject())) {
                     bnodeMap.put(replacement.getObject(), createBlankNode());

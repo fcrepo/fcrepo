@@ -756,7 +756,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
             final javax.jcr.Node skolemizedNode = jcrSession.getNodeByIdentifier(values[0].getString());
 
-            assertTrue(skolemizedNode.getPath().contains("/.well-known/genid/"));
+            assertTrue(skolemizedNode.getPath().contains("/#/"));
             assertEquals("xyz" + FIELD_DELIMITER + XSDstring.getURI(),
                     skolemizedNode.getProperty("dc:title").getValues()[0].getString());
         }
