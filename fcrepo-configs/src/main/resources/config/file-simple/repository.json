@@ -4,7 +4,8 @@
     "workspaces" : {
         "predefined" : ["default"],
         "default" : "default",
-        "allowCreation" : true
+        "allowCreation" : true,
+        "cacheSize" : 10000
     },
     "storage" : {
         "persistence": {

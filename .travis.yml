@@ -18,7 +18,7 @@ script:
  - sudo service resolvconf stop
  - sudo service sshguard stop
  - sudo service ssh stop
- - mvn install -B -V
+ - mvn -Dfcrepo.streaming.parallel=true install -B -V
 
 notifications:
   irc: "irc.freenode.org#fcrepo"

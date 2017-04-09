@@ -20,15 +20,39 @@ package org.fcrepo.kernel.modeshape.utils;
 import static java.util.Spliterator.IMMUTABLE;
 import static java.util.Spliterators.spliteratorUnknownSize;
 import static java.util.stream.StreamSupport.stream;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Iterator;
 import java.util.stream.Stream;
+
+import org.slf4j.Logger;
 
 /**
  * @author acoburn
  * @since February 10, 2016
  */
 public class StreamUtils {
+
+    private static final Logger LOGGER = getLogger(StreamUtils.class);
+
+    private static Boolean enableParallel = false;
+
+    private static final String FCREPO_STEAMING_PARALLEL_KEY =
+            "fcrepo.streaming.parallel";
+    static {
+        final String enableParallelVal = System.getProperty(FCREPO_STEAMING_PARALLEL_KEY, "false")
+                .trim()
+                .toLowerCase();
+        if (!enableParallelVal.equals("true") && !enableParallelVal.equals("false")) {
+            LOGGER.warn(
+                    "The {} parameter contains an invalid value of {}:  " +
+                            "allowed values are 'true' and 'false'. " +
+                            "The default value of {} remain unchanged.",
+                    FCREPO_STEAMING_PARALLEL_KEY, enableParallelVal, enableParallel);
+        } else {
+            StreamUtils.enableParallel = Boolean.valueOf(enableParallelVal);
+        }
+    }
 
     /**
      * Convert an Iterator to a Stream
@@ -38,7 +62,7 @@ public class StreamUtils {
      * @return the stream
      */
     public static <T> Stream<T> iteratorToStream(final Iterator<T> iterator) {
-        return iteratorToStream(iterator, false);
+        return iteratorToStream(iterator, enableParallel);
     }
 
     /**

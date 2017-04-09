@@ -125,7 +125,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
         // For formats that can be block-streamed (n-triples, turtle)
         if (format != null) {
             LOGGER.debug("Stream-based serialization of {}", dataFormat.toString());
-            final StreamRDF stream = getWriterStream(output, format);
+            final StreamRDF stream = new SynchonizedStreamRDFWrapper(getWriterStream(output, format));
             stream.start();
             nsPrefixes.forEach(stream::prefix);
             rdfStream.forEach(stream::triple);
