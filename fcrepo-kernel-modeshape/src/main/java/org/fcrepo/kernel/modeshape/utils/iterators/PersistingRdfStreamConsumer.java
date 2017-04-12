@@ -149,7 +149,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
     protected void operateOnTriple(final Statement input) throws MalformedRdfException {
         try {
 
-            final Statement t = jcrRdfTools.skolemize(idTranslator, input);
+            final Statement t = jcrRdfTools.skolemize(idTranslator, input, stream().topic().toString());
 
             final Resource subject = t.getSubject();
             final FedoraResource subjectNode = translator().convert(subject);
