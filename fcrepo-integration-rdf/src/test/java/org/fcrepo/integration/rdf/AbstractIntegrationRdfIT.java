@@ -39,6 +39,7 @@ import org.fcrepo.integration.http.api.AbstractResourceIT;
 import javax.ws.rs.core.Response;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -125,7 +126,7 @@ public abstract class AbstractIntegrationRdfIT extends AbstractResourceIT {
 
             Triple replacement = next;
 
-            if (replacement.getSubject().toString().contains("#genid")) {
+            if (isSkolemizedBnode(replacement.getSubject())) {
                 if (!bnodeMap.containsKey(replacement.getSubject())) {
                     bnodeMap.put(replacement.getSubject(), createBlankNode());
                 }
@@ -135,7 +136,7 @@ public abstract class AbstractIntegrationRdfIT extends AbstractResourceIT {
                         replacement.getObject());
             }
 
-            if (replacement.getObject().toString().contains("#genid")) {
+            if (isSkolemizedBnode(replacement.getObject())) {
 
                 if (!bnodeMap.containsKey(replacement.getObject())) {
                     bnodeMap.put(replacement.getObject(), createBlankNode());
@@ -157,6 +158,14 @@ public abstract class AbstractIntegrationRdfIT extends AbstractResourceIT {
             betterGraph.add(replacement);
         }
         return betterGraph;
+    }
+
+    private static boolean isSkolemizedBnode(final Node node) {
+        if (!node.isURI()) {
+            return false;
+        }
+        final URI uri = URI.create(node.toString());
+        return uri.getFragment() != null && uri.getFragment().startsWith("genid");
     }
 
     protected void checkResponse(final HttpResponse response, final Response.StatusType expected) {
