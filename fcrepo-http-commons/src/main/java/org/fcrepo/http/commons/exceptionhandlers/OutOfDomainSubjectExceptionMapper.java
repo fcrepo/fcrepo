@@ -26,6 +26,7 @@ import org.fcrepo.kernel.api.exception.OutOfDomainSubjectException;
 
 import org.slf4j.Logger;
 
+import javax.servlet.ServletContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response;
@@ -46,11 +47,14 @@ public class OutOfDomainSubjectExceptionMapper extends ConstraintExceptionMapper
     @Context
     private UriInfo uriInfo;
 
+    @Context
+    private ServletContext context;
+
     @Override
     public Response toResponse(final OutOfDomainSubjectException e) {
 
         debugException(this, e, LOGGER);
-        final Link link = buildConstraintLink(e, uriInfo);
+        final Link link = buildConstraintLink(e, context, uriInfo);
         final String msg = e.getMessage();
         return status(BAD_REQUEST).entity(msg).links(link).type(TEXT_PLAIN_WITH_CHARSET).build();
     }

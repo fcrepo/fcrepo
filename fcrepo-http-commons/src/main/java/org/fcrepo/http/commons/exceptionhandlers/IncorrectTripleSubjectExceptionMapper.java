@@ -26,6 +26,7 @@ import org.fcrepo.kernel.api.exception.IncorrectTripleSubjectException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.ServletContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response;
@@ -46,10 +47,13 @@ public class IncorrectTripleSubjectExceptionMapper extends ConstraintExceptionMa
     @Context
     private UriInfo uriInfo;
 
+    @Context
+    private ServletContext context;
+
     @Override
     public Response toResponse(final IncorrectTripleSubjectException e) {
         debugException(this, e, LOGGER);
-        final Link link = buildConstraintLink(e, uriInfo);
+        final Link link = buildConstraintLink(e, context, uriInfo);
         final String msg = e.getMessage();
         return status(FORBIDDEN).entity(msg).links(link).type(TEXT_PLAIN_WITH_CHARSET).build();
     }

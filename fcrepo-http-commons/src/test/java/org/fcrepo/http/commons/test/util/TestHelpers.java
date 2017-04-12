@@ -53,6 +53,7 @@ import javax.jcr.nodetype.NodeTypeIterator;
 import javax.jcr.nodetype.NodeTypeManager;
 import javax.jcr.query.Query;
 import javax.jcr.query.QueryResult;
+import javax.servlet.ServletContext;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
@@ -86,6 +87,12 @@ public abstract class TestHelpers {
     public static String MOCK_PREFIX = "mockPrefix";
 
     public static String MOCK_URI_STRING = "mock.namespace.org";
+
+    public static ServletContext getServletContextImpl() {
+        final ServletContext sc = mock(ServletContext.class);
+        when(sc.getContextPath()).thenReturn("/fcrepo");
+        return sc;
+    }
 
     public static UriInfo getUriInfoImpl() {
         // UriInfo ui = mock(UriInfo.class,withSettings().verboseLogging());
