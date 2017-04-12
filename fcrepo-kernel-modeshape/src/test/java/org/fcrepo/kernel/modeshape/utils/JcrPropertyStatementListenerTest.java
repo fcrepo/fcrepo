@@ -22,6 +22,7 @@ import static org.apache.jena.vocabulary.RDF.type;
 import static javax.jcr.PropertyType.URI;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getPropertyType;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -147,7 +148,7 @@ public class JcrPropertyStatementListenerTest {
 
         when(mockModel.getNsPrefixMap()).thenReturn(mockNsMapping);
         resource = idTranslator.convert(mockResource);
-        when(mockJcrRdfTools.skolemize(idTranslator, mockStatement)).thenReturn(mockStatement);
+        when(mockJcrRdfTools.skolemize(idTranslator, mockStatement, anyString())).thenReturn(mockStatement);
     }
 
     @Test
@@ -215,7 +216,7 @@ public class JcrPropertyStatementListenerTest {
                 + "object");
         final Statement statement = model.createStatement(mockResource, RDF.type, type);
         when(mockSubjectNode.canAddMixin("fedora:object")).thenReturn(true);
-        when(mockJcrRdfTools.skolemize(idTranslator, statement)).thenReturn(statement);
+        when(mockJcrRdfTools.skolemize(idTranslator, statement, anyString())).thenReturn(statement);
         testObj.addedStatement(statement);
         verify(mockJcrRdfTools).addMixin(resource, type, mockNsMapping);
     }
@@ -254,7 +255,7 @@ public class JcrPropertyStatementListenerTest {
                 type,
                 model.createResource(REPOSITORY_NAMESPACE + "Container"));
         when(mockSubjectNode.canAddMixin("fedora:object")).thenReturn(true);
-        when(mockJcrRdfTools.skolemize(idTranslator, statement)).thenReturn(statement);
+        when(mockJcrRdfTools.skolemize(idTranslator, statement, anyString())).thenReturn(statement);
         testObj.addedStatement(statement);
         verify(mockSubjectNode, never()).addMixin("fedora:object");
     }
