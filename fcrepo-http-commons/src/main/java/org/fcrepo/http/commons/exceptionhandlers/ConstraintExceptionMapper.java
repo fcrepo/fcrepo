@@ -19,6 +19,7 @@ package org.fcrepo.http.commons.exceptionhandlers;
 
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 
+import javax.servlet.ServletContext;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.ExceptionMapper;
@@ -43,12 +44,21 @@ public abstract class ConstraintExceptionMapper<T extends ConstraintViolationExc
      * Creates a constrainedBy link header with the appropriate RDF URL for the exception.
      *
      * @param e ConstraintViolationException Exception which implements the buildContraintUri method.
+     * @param context ServletContext ServletContext that we're running in.
      * @param uriInfo UriInfo UriInfo from the ExceptionMapper.
      * @return Link A http://www.w3.org/ns/ldp#constrainedBy link header
      */
-    public static Link buildConstraintLink(final ConstraintViolationException e, final UriInfo uriInfo) {
-        final String constraintURI = uriInfo == null ? "" : String.format("%s://%s%s%s.rdf",
-                uriInfo.getBaseUri().getScheme(), uriInfo.getBaseUri().getAuthority(),
+    public static Link buildConstraintLink(final ConstraintViolationException e,
+                                           final ServletContext context,
+                                           final UriInfo uriInfo) {
+
+        String path = context.getContextPath();
+        if (path.equals("/")) {
+            path = "";
+        }
+
+        final String constraintURI = uriInfo == null ? "" : String.format("%s://%s%s%s%s.rdf",
+                uriInfo.getBaseUri().getScheme(), uriInfo.getBaseUri().getAuthority(), path,
                 CONSTRAINT_DIR, e.getClass().toString().substring(e.getClass().toString().lastIndexOf('.') + 1));
         return Link.fromUri(constraintURI).rel(CONSTRAINED_BY.getURI()).build();
     }
