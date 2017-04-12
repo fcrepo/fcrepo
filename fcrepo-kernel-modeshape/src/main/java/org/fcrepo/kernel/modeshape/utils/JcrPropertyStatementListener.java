@@ -122,7 +122,7 @@ public class JcrPropertyStatementListener extends StatementListener {
             validateSubject(subject);
             LOGGER.debug(">> adding statement {}", input);
 
-            final Statement s = jcrRdfTools.skolemize(idTranslator, input);
+            final Statement s = jcrRdfTools.skolemize(idTranslator, input, topic.toString());
 
             final FedoraResource resource = idTranslator.convert(s.getSubject());
 

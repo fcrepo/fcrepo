@@ -34,6 +34,7 @@ import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_NODE;
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getJcrNamespaceForRDFNamespace;
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
@@ -283,7 +284,7 @@ public class JcrRdfToolsTest implements FedoraTypes {
         final Statement x = m.createStatement(testSubjects.toDomain("/"),
                 createProperty("info:x"),
                 createPlainLiteral("x"));
-        final Statement statement = testObj.skolemize(testSubjects, x);
+        final Statement statement = testObj.skolemize(testSubjects, x, "info:fedora/");
 
         assertEquals(x, statement);
     }
@@ -291,31 +292,42 @@ public class JcrRdfToolsTest implements FedoraTypes {
     @Test
     public void shouldSkolemizeBlankNodeSubjects() throws RepositoryException {
         final Model m = createDefaultModel();
-        final Statement x = m.createStatement(createResource(),
+        final Resource resource = createResource();
+        final Statement x = m.createStatement(resource,
                 createProperty("info:x"),
                 testSubjects.toDomain("/"));
         testObj.jcrTools = mock(JcrTools.class);
-        when(testObj.jcrTools.findOrCreateNode(eq(mockSession), anyString())).thenReturn(mockNode);
-        when(mockNode.getPath()).thenReturn("/.well-known/x");
-        final Statement statement = testObj.skolemize(testSubjects, x);
+        when(testObj.jcrTools.findOrCreateNode(eq(mockSession), anyString(), eq(NT_FOLDER))).thenReturn(mockNode);
+        when(mockNode.getPath()).thenReturn("/#/x");
+        when(mockNode.getParent()).thenReturn(mockHashNode);
+        when(mockHashNode.getParent()).thenReturn(mockChildNode);
+        when(mockHashNode.isNew()).thenReturn(true);
+        when(FedoraTypesUtils.getClosestExistingAncestor(mockSession, anyString())).thenReturn(mockHashNode);
+        final Statement statement = testObj.skolemize(testSubjects, x, "info:fedora/");
 
-
-        assertEquals("info:fedora/.well-known/x", statement.getSubject().toString());
+        assertTrue("Doesn't match: " + statement.getSubject().toString(),
+                statement.getSubject().toString().startsWith("info:fedora/#"));
+        verify(mockNode).addMixin(FEDORA_RESOURCE);
     }
 
     @Test
     public void shouldSkolemizeBlankNodeObjects() throws RepositoryException {
         final Model m = createDefaultModel();
-        final Statement x = m.createStatement(testSubjects.toDomain("/"),
+        final Statement x = m.createStatement(testSubjects.toDomain("/foo"),
                 createProperty("info:x"),
                 createResource());
         testObj.jcrTools = mock(JcrTools.class);
-        when(testObj.jcrTools.findOrCreateNode(eq(mockSession), anyString())).thenReturn(mockNode);
-        when(mockNode.getPath()).thenReturn("/.well-known/x");
-        final Statement statement = testObj.skolemize(testSubjects, x);
+        when(testObj.jcrTools.findOrCreateNode(eq(mockSession), anyString(), eq(NT_FOLDER))).thenReturn(mockNode);
+        when(mockNode.getPath()).thenReturn("/foo#abc");
+        when(mockNode.getParent()).thenReturn(mockHashNode);
+        when(mockHashNode.getParent()).thenReturn(mockChildNode);
+        when(mockHashNode.isNew()).thenReturn(true);
+        when(FedoraTypesUtils.getClosestExistingAncestor(mockSession, anyString())).thenReturn(mockHashNode);
+        final Statement statement = testObj.skolemize(testSubjects, x, x.getSubject().toString());
 
-
-        assertEquals("info:fedora/.well-known/x", statement.getObject().toString());
+        assertTrue(statement.getObject().toString().startsWith("info:fedora/foo#"));
+        verify(mockNode).addMixin(FEDORA_RESOURCE);
+        verify(mockNode.getParent()).addMixin(FEDORA_PAIRTREE);
     }
 
     @Test
@@ -326,13 +338,15 @@ public class JcrRdfToolsTest implements FedoraTypes {
                 createProperty("info:x"),
                 resource);
         testObj.jcrTools = mock(JcrTools.class);
-        when(testObj.jcrTools.findOrCreateNode(eq(mockSession), anyString())).thenReturn(mockNode);
-        when(mockNode.getPath()).thenReturn("/.well-known/x");
-        final Statement statement = testObj.skolemize(testSubjects, x);
+        when(testObj.jcrTools.findOrCreateNode(eq(mockSession), anyString(), eq(NT_FOLDER))).thenReturn(mockNode);
+        when(mockNode.getPath()).thenReturn("/#/x");
+        when(mockNode.getParent()).thenReturn(mockHashNode);
+        when(mockHashNode.getParent()).thenReturn(mockChildNode);
+        when(FedoraTypesUtils.getClosestExistingAncestor(mockSession, anyString())).thenReturn(mockHashNode);
+        final Statement statement = testObj.skolemize(testSubjects, x, "info:fedora/");
 
-
-        assertEquals("info:fedora/.well-known/x", statement.getSubject().toString());
-        assertEquals("info:fedora/.well-known/x", statement.getObject().toString());
+        assertTrue(statement.getSubject().toString().startsWith("info:fedora/#"));
+        assertTrue(statement.getObject().toString().startsWith("info:fedora/#"));
     }
 
     @Test
@@ -349,34 +363,11 @@ public class JcrRdfToolsTest implements FedoraTypes {
         when(mockChildNode.isNew()).thenReturn(false);
         when(testObj.jcrTools.findOrCreateNode(mockSession, "/some/#/abc", NT_FOLDER)).thenReturn(mockNode);
         when(mockHashNode.isNew()).thenReturn(true);
-        final Statement statement = testObj.skolemize(testSubjects, x);
+        final Statement statement = testObj.skolemize(testSubjects, x, "/some/#/abc");
         assertEquals(x, statement);
         verify(testObj.jcrTools).findOrCreateNode(mockSession, "/some/#/abc", NT_FOLDER);
         verify(mockNode).addMixin(FEDORA_RESOURCE);
         verify(mockHashNode).addMixin(FEDORA_PAIRTREE);
-    }
-
-    @Test
-    public void shouldAddBlankNodePairtreeMixin() throws RepositoryException {
-        final Model m = createDefaultModel();
-        final Resource resource = createResource();
-        final Statement x = m.createStatement(resource,
-                createProperty("info:x"),
-                resource);
-        testObj.jcrTools = mock(JcrTools.class);
-        when(testObj.jcrTools.findOrCreateNode(eq(mockSession), anyString())).thenReturn(mockNode);
-        when(mockNode.getPath()).thenReturn("/x");
-        when(mockNode.getParent()).thenReturn(mockHashNode);
-        when(mockHashNode.getParent()).thenReturn(mockChildNode);
-        when(mockHashNode.isNew()).thenReturn(true);
-        when(FedoraTypesUtils.getClosestExistingAncestor(mockSession,"/.well-known/genid/"))
-                .thenReturn(mockChildNode);
-        final Statement statement = testObj.skolemize(testSubjects, x);
-        assertEquals("info:fedora/x", statement.getSubject().toString());
-        assertEquals("info:fedora/x", statement.getObject().toString());
-        verify(testObj.jcrTools).findOrCreateNode(mockSession, "/.well-known/genid/");
-        verify(mockNode).addMixin(FEDORA_SKOLEM);
-        verify(mockNode.getParent()).addMixin(FEDORA_PAIRTREE);
     }
 
     @Test
@@ -395,7 +386,7 @@ public class JcrRdfToolsTest implements FedoraTypes {
         when(mockChildNode.getNode("#")).thenReturn(mockHashNode);
         when(mockHashNode.isNew()).thenReturn(false);
         when(testObj.jcrTools.findOrCreateNode(mockSession, "/some/#/abc", NT_FOLDER)).thenReturn(mockNode);
-        final Statement statement = testObj.skolemize(testSubjects, x);
+        final Statement statement = testObj.skolemize(testSubjects, x, "/some/#/abc");
         assertEquals(x, statement);
         verify(testObj.jcrTools).findOrCreateNode(mockSession, "/some/#/abc", NT_FOLDER);
         verify(mockNode).addMixin(FEDORA_RESOURCE);
@@ -412,7 +403,9 @@ public class JcrRdfToolsTest implements FedoraTypes {
         when(mockHashNode.getParent()).thenReturn(mockChildNode);
         when(mockSession.nodeExists("/some")).thenReturn(false);
         when(testObj.jcrTools.findOrCreateNode(mockSession, "/some/#/abc", NT_FOLDER)).thenReturn(mockNode);
-        testObj.skolemize(testSubjects, x);
+        when(FedoraTypesUtils.getClosestExistingAncestor(mockSession,"/some/#/abc"))
+                .thenReturn(mockNode);
+        testObj.skolemize(testSubjects, x, "/some");
     }
 
     @Test
@@ -428,7 +421,7 @@ public class JcrRdfToolsTest implements FedoraTypes {
         when(mockSession.nodeExists("/some")).thenReturn(true);
         when(mockSession.getNode("/some")).thenReturn(mockChildNode);
         when(testObj.jcrTools.findOrCreateNode(mockSession, "/some/#/abc", NT_FOLDER)).thenReturn(mockNode);
-        final Statement statement = testObj.skolemize(testSubjects, x);
+        final Statement statement = testObj.skolemize(testSubjects, x, "/");
         assertEquals(x, statement);
         verify(testObj.jcrTools).findOrCreateNode(mockSession, "/some/#/abc", NT_FOLDER);
         verify(mockNode).addMixin(FEDORA_RESOURCE);
@@ -442,7 +435,7 @@ public class JcrRdfToolsTest implements FedoraTypes {
                 testSubjects.toDomain("/"),
                 createProperty("info:x"),
                 createResource("info:x#abc"));
-        final Statement statement = testObj.skolemize(testSubjects, x);
+        final Statement statement = testObj.skolemize(testSubjects, x, "/");
         assertEquals(x, statement);
     }
 
