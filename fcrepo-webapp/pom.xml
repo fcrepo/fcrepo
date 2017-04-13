@@ -500,7 +500,7 @@
             <directory>src/main/resources</directory>
             <filtering>true</filtering>
             <includes>
-              <include>**/repo.xml</include>
+              <include>**/fcrepo-config.xml</include>
             </includes>
           </resource>
         </resources>
