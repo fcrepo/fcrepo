@@ -43,15 +43,15 @@ public class CannotCreateResourceExceptionMapper extends ConstraintExceptionMapp
     private static final Logger LOGGER = getLogger(CannotCreateResourceExceptionMapper.class);
 
     @Context
-    private ServletContext context; /* soon!! */
+    private UriInfo uriInfo;
 
     @Context
-    private UriInfo uriInfo;
+    private ServletContext context;
 
     @Override
     public Response toResponse(final CannotCreateResourceException e) {
         debugException(this, e, LOGGER);
-        final Link link = buildConstraintLink(e, uriInfo);
+        final Link link = buildConstraintLink(e, context, uriInfo);
         final String msg = e.getMessage();
         return status(BAD_REQUEST).entity(msg).links(link).type(TEXT_PLAIN_WITH_CHARSET).build();
     }
