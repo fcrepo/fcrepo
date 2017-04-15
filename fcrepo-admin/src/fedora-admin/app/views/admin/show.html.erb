@@ -1,0 +1,44 @@
+<h1>The future is here.</h1>
+
+<div class="row">
+  <div class="span8">
+    <table class="table">
+      <tr>
+        <th>Label</th>
+        <td><%= @object.label %></td>
+      </tr>
+      <tr>
+        <th>Owner</th>
+        <td><%= @object.owner %></td>
+      </tr>
+      <tr>
+        <th>Created</th>
+        <td><%= @object.created %></td>
+      </tr>
+      <tr>
+        <th>Modified</th>
+        <td><%= @object.modified %></td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<div class="row">
+  <h2>Datastreams:</h2>
+  <div class="span4">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Name</th>
+        </tr>
+      </thead>
+      <% @object.datastreams.each do |ds| %>
+        <tr>
+          <td><%= link_to ds.name, fedora_object_datastream_path(@object, ds) %></td>
+          <td><%= button_to "Download", download_fedora_object_datastream_path(@object, ds), method: :get, :class=>'btn btn-mini' %></td>
+        </tr>
+      <% end %>
+    </table>
+  </div>
+</div>
+

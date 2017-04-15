@@ -1,0 +1,20 @@
+<h1>The future is here.</h1>
+
+<div class="span8">
+  <table class="table">
+    <thead>
+      <tr>
+      <th>Object ID</th>
+      <th>Path</th>
+      </tr>
+    </thead>
+    <tbody>
+    <% @objects.each do |f| %>
+      <tr>
+      <td><%= f.name %></td>
+      <td><%= link_to f.path, f %></td>
+      </tr>
+    <% end %>
+    </tbody>
+  </table>
+</div>

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>FedoraAdmin</title>
+  <%= stylesheet_link_tag    "application", :media => "all" %>
+  <%= javascript_include_tag "application" %>
+  <%= csrf_meta_tags %>
+</head>
+<body>
+<div class="navbar">
+  <div class="navbar-inner">
+    <%= link_to "Fedora Core 4 Admin", root_path, class: "brand" %>
+  </div>
+</div>
+<div class="container">
+  <%= yield %>
+</div>
+
+
+
+</body>
+</html>
