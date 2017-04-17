@@ -27,6 +27,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
 
+import org.fcrepo.kernel.api.exception.BackupException;
 import org.fcrepo.kernel.api.exception.FedoraInvalidNamespaceException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.junit.Before;
@@ -82,6 +83,13 @@ public class NamespaceToolsTest {
         when(mockWork.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
         when(mockNamespaceRegistry.getURI("invalid")).thenThrow(new NamespaceException());
         validatePath(mockSession, "easy/invalid:test");
+    }
+
+    @Test (expected = BackupException.class)
+    public void testValidatePathWithNonRootBackupURL() throws RepositoryException {
+        when(mockWork.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
+        when(mockNamespaceRegistry.getURI("fcr")).thenThrow(new NamespaceException());
+        validatePath(mockSession, "test/node/fcr:backup");
     }
 
     @Test (expected = FedoraInvalidNamespaceException.class)
