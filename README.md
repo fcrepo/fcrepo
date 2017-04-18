@@ -14,7 +14,7 @@ as scientific data. Fedora has a worldwide installed user base that includes aca
 organizations, universities, research institutions, university libraries, national libraries, and government agencies.
 The Fedora community is supported by the stewardship of the [DuraSpace](http://www.duraspace.org) organization.
 
-##Technical goals:
+## Technical goals:
 * Improved scalability and performance
 * More flexible storage options
 * Improved reporting and metrics
