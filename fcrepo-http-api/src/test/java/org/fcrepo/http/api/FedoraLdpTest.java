@@ -82,7 +82,6 @@ import java.util.Set;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
-import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.HttpHeaders;
@@ -106,6 +105,8 @@ import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.TripleCategory;
+import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
+import org.fcrepo.kernel.api.exception.ConstraintViolationException;
 import org.fcrepo.kernel.api.exception.InsufficientStorageException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
@@ -742,7 +743,7 @@ public class FedoraLdpTest {
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
     }
 
-    @Test(expected = ServerErrorException.class)
+    @Test(expected = CannotCreateResourceException.class)
     public void testPutNewObjectLdpr() throws Exception {
         testObj.createOrReplaceObjectRdf(null, null, null, null,
                 "<http://www.w3.org/ns/ldp#Resource>; rel=\"type\"", null);
@@ -1006,8 +1007,8 @@ public class FedoraLdpTest {
         testObj.createObject(null, null, null, null, null, null);
     }
 
-    @Test(expected = ServerErrorException.class)
-    public void testLDPRNotImplemented() throws MalformedRdfException, InvalidChecksumException,
+    @Test(expected = CannotCreateResourceException.class)
+    public void testLDPRNotImplemented() throws ConstraintViolationException, InvalidChecksumException,
             IOException {
         testObj.createObject(null, null, null, null, "<http://www.w3.org/ns/ldp#Resource>; rel=\"type\"", null);
     }

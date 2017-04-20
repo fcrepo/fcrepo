@@ -20,6 +20,7 @@ package org.fcrepo.integration;
 import static java.lang.Integer.MAX_VALUE;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
+import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_CONFLICT;
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
@@ -147,4 +148,27 @@ public class SanityCheckIT {
         executeAndVerify(getLink, SC_OK);
     }
 
+    @Test
+    public void testCannotCreateResourceConstraintLink() throws Exception {
+        // Create a ldp:Resource resource, this should fail
+        final HttpPost post = new HttpPost(serverAddress + "rest/");
+        post.setHeader(LINK,"<http://www.w3.org/ns/ldp#Resource>; rel=\"type\"");
+        final HttpResponse postResponse = executeAndVerify(post, SC_BAD_REQUEST);
+
+        // Verify the returned LINK header
+        final String linkHeader = postResponse.getFirstHeader(LINK).getValue();
+        final Link link = Link.valueOf(linkHeader);
+        logger.debug("constraint linkHeader: {}", linkHeader);
+
+        // Verify the LINK rel
+        final String linkRel = link.getRel();
+        assertEquals(CONSTRAINED_BY.getURI(), linkRel);
+
+        // Verify the LINK URI by fetching it
+        final URI linkURI = link.getUri();
+        logger.debug("constraint linkURI: {}", linkURI);
+
+        final HttpGet getLink = new HttpGet(linkURI);
+        executeAndVerify(getLink, SC_OK);
+    }
 }
