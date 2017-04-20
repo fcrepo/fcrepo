@@ -31,6 +31,7 @@ import com.codahale.metrics.MetricRegistry;
 
 import java.util.logging.Logger;
 
+import static org.glassfish.jersey.server.ServerProperties.OUTBOUND_CONTENT_LENGTH_BUFFER;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -56,6 +57,9 @@ public class FedoraApplication extends ResourceConfig {
         }
 
         register(new InstrumentedResourceMethodApplicationListener(new MetricRegistry()));
+
+        // Disable output buffering
+        property(OUTBOUND_CONTENT_LENGTH_BUFFER, 0);
     }
 
     static class FactoryBinder extends AbstractBinder {
