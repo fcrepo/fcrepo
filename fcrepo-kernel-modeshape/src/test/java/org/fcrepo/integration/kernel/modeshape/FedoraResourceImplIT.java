@@ -112,6 +112,7 @@ import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
+import org.fcrepo.kernel.modeshape.utils.BNodeSkolemizationUtil;
 
 import org.junit.After;
 import org.junit.Before;
@@ -689,7 +690,18 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testReplaceProperties() throws RepositoryException {
+    public void testReplacePropertiesWithBNodeToHashURISkolemizationStrategy() throws RepositoryException {
+        BNodeSkolemizationUtil.setSkolemizeToHashURIs(true);
+        testReplaceProperties();
+    }
+
+    @Test
+    public void testReplacePropertiesWithDefaultBNodeSkolemizationStrategy() throws RepositoryException {
+        BNodeSkolemizationUtil.setSkolemizeToHashURIs(false);
+        testReplaceProperties();
+    }
+
+    private void testReplaceProperties() throws RepositoryException {
         final String pid = getRandomPid();
         final Container object = containerService.findOrCreate(session, pid);
         final Session jcrSession = getJcrSession(session);
@@ -719,7 +731,12 @@ public class FedoraResourceImplIT extends AbstractIT {
 
             final javax.jcr.Node skolemizedNode = jcrSession.getNodeByIdentifier(values[0].getString());
 
-            assertTrue(skolemizedNode.getPath().contains("/#/"));
+            if (BNodeSkolemizationUtil.isSkolemizeToHashURIs()) {
+                assertTrue(skolemizedNode.getPath().contains("/#/"));
+            } else {
+                assertTrue(skolemizedNode.getPath().contains("/.well-known/genid/"));
+            }
+
             assertEquals("xyz" + FIELD_DELIMITER + XSDstring.getURI(),
                     skolemizedNode.getProperty("dc:title").getValues()[0].getString());
         }
