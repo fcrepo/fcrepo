@@ -24,11 +24,13 @@ import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.UNDEFINED;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_SKOLEM;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_PAIRTREE;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.jcrProperties;
 import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.JCR_NAMESPACE;
+import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeToResource;
 import static org.fcrepo.kernel.modeshape.rdf.converters.PropertyConverter.getPropertyNameFromPredicate;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getClosestExistingAncestor;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
@@ -55,13 +57,17 @@ import org.apache.jena.rdf.model.AnonId;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Statement;
 
+import org.fcrepo.kernel.modeshape.services.AbstractService;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.services.functions.HierarchicalIdentifierSupplier;
+import org.fcrepo.kernel.api.services.functions.UniqueValueSupplier;
 import org.fcrepo.kernel.modeshape.rdf.converters.ValueConverter;
+import org.fcrepo.kernel.modeshape.utils.BNodeSkolemizationUtil;
 import org.fcrepo.kernel.modeshape.utils.NodePropertiesTools;
 
 import org.modeshape.jcr.api.JcrTools;
@@ -109,6 +115,7 @@ public class JcrRdfTools {
 
     private static final Model m = createDefaultModel();
 
+    private static final UniqueValueSupplier pidMinter =  new DefaultPathMinter();
     /**
      * Constructor with even more context.
      *
@@ -348,6 +355,7 @@ public class JcrRdfTools {
      *
      * @param idTranslator the property of idTranslator
      * @param t the statement
+     * @param topic the topic
      * @return the persistable statement
      * @throws RepositoryException if repository exception occurred
      */
@@ -405,20 +413,44 @@ public class JcrRdfTools {
     }
 
     private Resource getSkolemizedResource(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-                                           final RDFNode resource, final String topic) throws RepositoryException {
+            final RDFNode resource, final String topic) throws RepositoryException {
         final AnonId id = resource.asResource().getId();
 
         if (!skolemizedBnodeMap.containsKey(id)) {
-            final String base = idTranslator.asString(createResource(topic));
-            final Resource skolemizedSubject = idTranslator.toDomain(base + "#" + blankNodeIdentifier());
-            findOrCreateHashUri(idTranslator, skolemizedSubject);
-            skolemizedBnodeMap.put(id, skolemizedSubject);
+            if (BNodeSkolemizationUtil.isSkolemizeToHashURIs()) {
+                final String base = idTranslator.asString(createResource(topic));
+                final Resource skolemizedSubject = idTranslator.toDomain(base + "#" + blankNodeIdentifier());
+                findOrCreateHashUri(idTranslator, skolemizedSubject);
+                skolemizedBnodeMap.put(id, skolemizedSubject);
+
+            } else {
+                jcrTools.findOrCreateNode(session, skolemizedPrefix());
+                final String pid = pidMinter.get();
+                final String path = skolemizedPrefix() + pid;
+                final Node preexistingNode = getClosestExistingAncestor(session, path);
+                final Node orCreateNode = jcrTools.findOrCreateNode(session, path);
+                orCreateNode.addMixin(FEDORA_SKOLEM);
+
+                if (preexistingNode != null) {
+                    AbstractService.tagHierarchyWithPairtreeMixin(preexistingNode,
+                            orCreateNode);
+                }
+
+                final Resource skolemizedSubject = nodeToResource(idTranslator).convert(orCreateNode);
+                skolemizedBnodeMap.put(id, skolemizedSubject);
+            }
         }
 
         return skolemizedBnodeMap.get(id);
     }
 
+    private static String skolemizedPrefix() {
+        return "/.well-known/genid/";
+    }
+
     private String blankNodeIdentifier() {
         return "genid" + randomUUID().toString();
     }
+
+    private static class DefaultPathMinter implements HierarchicalIdentifierSupplier { }
 }

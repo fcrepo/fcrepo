@@ -43,6 +43,7 @@ import java.util.Collection;
 
 import org.apache.http.Header;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
+import org.fcrepo.kernel.modeshape.utils.BNodeSkolemizationUtil;
 
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -89,6 +90,7 @@ public abstract class AbstractResourceIT {
     @Before
     public void setLogger() {
         logger = getLogger(this.getClass());
+        BNodeSkolemizationUtil.setSkolemizeToHashURIs(true);
     }
 
     protected static final int SERVER_PORT = parseInt(System.getProperty("fcrepo.dynamic.test.port", "8080"));

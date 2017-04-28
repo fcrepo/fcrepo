@@ -35,6 +35,7 @@ import org.apache.http.entity.BasicHttpEntity;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFLanguages;
 import org.fcrepo.integration.http.api.AbstractResourceIT;
+import org.fcrepo.kernel.modeshape.utils.BNodeSkolemizationUtil;
 
 import javax.ws.rs.core.Response;
 import java.io.ByteArrayOutputStream;
@@ -164,8 +165,13 @@ public abstract class AbstractIntegrationRdfIT extends AbstractResourceIT {
         if (!node.isURI()) {
             return false;
         }
-        final URI uri = URI.create(node.toString());
-        return uri.getFragment() != null && uri.getFragment().startsWith("genid");
+
+        if (BNodeSkolemizationUtil.isSkolemizeToHashURIs()) {
+            final URI uri = URI.create(node.toString());
+            return uri.getFragment() != null && uri.getFragment().startsWith("genid");
+        } else {
+            return node.toString().contains(".well-known");
+        }
     }
 
     protected void checkResponse(final HttpResponse response, final Response.StatusType expected) {

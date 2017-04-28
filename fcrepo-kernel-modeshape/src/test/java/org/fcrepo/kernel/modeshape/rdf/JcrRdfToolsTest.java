@@ -81,6 +81,7 @@ import org.fcrepo.kernel.api.utils.CacheEntry;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 import org.fcrepo.kernel.modeshape.testutilities.TestPropertyIterator;
+import org.fcrepo.kernel.modeshape.utils.BNodeSkolemizationUtil;
 import org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -118,6 +119,7 @@ public class JcrRdfToolsTest implements FedoraTypes {
         testSubjects = new DefaultIdentifierTranslator(mockSession);
         buildMockNodeAndSurroundings();
         testObj = new JcrRdfTools(testSubjects, mockSession);
+        BNodeSkolemizationUtil.setSkolemizeToHashURIs(true);
     }
 
     private void buildMockNodeAndSurroundings() throws RepositoryException {
@@ -290,7 +292,8 @@ public class JcrRdfToolsTest implements FedoraTypes {
     }
 
     @Test
-    public void shouldSkolemizeBlankNodeSubjects() throws RepositoryException {
+    public void shouldSkolemizeBlankNodeSubjectsToHashURIs() throws RepositoryException {
+        BNodeSkolemizationUtil.setSkolemizeToHashURIs(true);
         final Model m = createDefaultModel();
         final Resource resource = createResource();
         final Statement x = m.createStatement(resource,
@@ -311,7 +314,9 @@ public class JcrRdfToolsTest implements FedoraTypes {
     }
 
     @Test
-    public void shouldSkolemizeBlankNodeObjects() throws RepositoryException {
+    public void shouldSkolemizeBlankNodeObjectsToHashURIs() throws RepositoryException {
+        BNodeSkolemizationUtil.setSkolemizeToHashURIs(true);
+
         final Model m = createDefaultModel();
         final Statement x = m.createStatement(testSubjects.toDomain("/foo"),
                 createProperty("info:x"),
@@ -331,7 +336,9 @@ public class JcrRdfToolsTest implements FedoraTypes {
     }
 
     @Test
-    public void shouldSkolemizeBlankNodeSubjectsAndObjects() throws RepositoryException {
+    public void shouldSkolemizeBlankNodeSubjectsAndObjectsToHashURIs() throws RepositoryException {
+        BNodeSkolemizationUtil.setSkolemizeToHashURIs(true);
+
         final Model m = createDefaultModel();
         final Resource resource = createResource();
         final Statement x = m.createStatement(resource,
@@ -347,6 +354,56 @@ public class JcrRdfToolsTest implements FedoraTypes {
 
         assertTrue(statement.getSubject().toString().startsWith("info:fedora/#"));
         assertTrue(statement.getObject().toString().startsWith("info:fedora/#"));
+    }
+
+    @Test
+    public void shouldSkolemizeBlankNodeSubjectsAndObjects() throws RepositoryException {
+        BNodeSkolemizationUtil.setSkolemizeToHashURIs(false);
+
+        final Model m = createDefaultModel();
+        final Resource resource = createResource();
+        final Statement x = m.createStatement(resource,
+                createProperty("info:x"),
+                resource);
+        testObj.jcrTools = mock(JcrTools.class);
+        when(testObj.jcrTools.findOrCreateNode(eq(mockSession), anyString())).thenReturn(mockNode);
+        when(mockNode.getPath()).thenReturn("/.well-known/x");
+        final Statement statement = testObj.skolemize(testSubjects, x, "info:fedora/");
+
+        assertEquals("info:fedora/.well-known/x", statement.getSubject().toString());
+        assertEquals("info:fedora/.well-known/x", statement.getObject().toString());
+    }
+
+    @Test
+    public void shouldSkolemizeBlankNodeSubjects() throws RepositoryException {
+        BNodeSkolemizationUtil.setSkolemizeToHashURIs(false);
+        final Model m = createDefaultModel();
+        final Resource resource = createResource();
+        final Statement x = m.createStatement(resource,
+                createProperty("info:x"),
+                testSubjects.toDomain("/"));
+        testObj.jcrTools = mock(JcrTools.class);
+        when(testObj.jcrTools.findOrCreateNode(eq(mockSession), anyString())).thenReturn(mockNode);
+               when(mockNode.getPath()).thenReturn("/.well-known/x");
+        final Statement statement = testObj.skolemize(testSubjects, x, "info:fedora/");
+        assertEquals("info:fedora/.well-known/x", statement.getSubject().toString());
+    }
+
+
+    @Test
+    public void shouldSkolemizeBlankNodeObjects() throws RepositoryException {
+        BNodeSkolemizationUtil.setSkolemizeToHashURIs(false);
+
+        final Model m = createDefaultModel();
+        final Statement x = m.createStatement(testSubjects.toDomain("/foo"),
+                createProperty("info:x"),
+                createResource());
+        testObj.jcrTools = mock(JcrTools.class);
+        when(testObj.jcrTools.findOrCreateNode(eq(mockSession), anyString())).thenReturn(mockNode);
+                when(mockNode.getPath()).thenReturn("/.well-known/x");
+        final Statement statement = testObj.skolemize(testSubjects, x, x.getSubject().toString());
+
+        assertEquals("info:fedora/.well-known/x", statement.getObject().toString());
     }
 
     @Test
