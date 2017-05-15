@@ -698,7 +698,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         if (value instanceof XSDDateTime) {
             return ((XSDDateTime) value).asCalendar();
         } else {
-            System.out.println(value.getClass().getName());
             throw new MalformedRdfException(stmt.getPredicate().getURI() + " must be an xsd:dateTime.");
         }
     }

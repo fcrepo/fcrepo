@@ -362,8 +362,7 @@ public class FedoraLdp extends ContentExposingResource {
             evaluateRequestPreconditions(request, servletResponse, resource, session);
             final boolean created = resource.isNew();
 
-            try (final RdfStream resourceTriples =
-                    created ? new DefaultRdfStream(asNode(resource())) : getResourceTriples()) {
+            try (final RdfStream resourceTriples = getResourceTriples()) {
 
                 LOGGER.info("PUT resource '{}'", externalPath);
                 if (resource instanceof FedoraBinary) {
@@ -515,8 +514,7 @@ public class FedoraLdp extends ContentExposingResource {
                     = requestBodyStream == null || requestContentType == null ? null : contentType;
             resource = createFedoraResource(newObjectPath, effectiveContentType, contentDisposition);
 
-            try (final RdfStream resourceTriples =
-                    resource.isNew() ? new DefaultRdfStream(asNode(resource())) : getResourceTriples()) {
+            try (final RdfStream resourceTriples = getResourceTriples()) {
 
                 if (requestBodyStream == null) {
                     LOGGER.trace("No request body detected");

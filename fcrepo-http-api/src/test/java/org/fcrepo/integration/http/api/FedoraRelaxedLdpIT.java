@@ -17,40 +17,51 @@
  */
 package org.fcrepo.integration.http.api;
 
+import org.apache.http.Header;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.util.EntityUtils;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.Quad;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import javax.ws.rs.core.Link;
 import javax.xml.bind.DatatypeConverter;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.Calendar;
+import java.util.Iterator;
 
 import static java.util.Calendar.getInstance;
 import static java.util.TimeZone.getTimeZone;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
+import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createLiteralByValue;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createModelForGraph;
+import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
@@ -66,7 +77,7 @@ import static org.junit.Assert.assertTrue;
 @RunWith(SpringJUnit4ClassRunner.class)
 public class FedoraRelaxedLdpIT extends AbstractResourceIT {
 
-    private final String forgedUsername = "forged-username";
+    private String forgedUsername = "forged-username";
     private Calendar forgedDate;
 
     public FedoraRelaxedLdpIT() {
@@ -149,19 +160,112 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         }
     }
 
+    /**
+     * The behavior that is *probably* the most intuative is the one we're testing here.
+     *
+     * That behavior can be summarized as: if you create a child resource with an explicitly provided
+     * creation date, in the absence of other, more recent (than the provided date) modifications to the
+     * parent, the parent's modification date should be set to the creation date of the child.
+     * @throws IOException
+     */
+    @Ignore
+    @Test
+    public void testTouchingParentByChildCreation() throws IOException {
+        assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
 
-    // Things to test
-    public void testCreatingNodesWithoutTouchingParents() {
+        final Calendar firstDate = nowUTC();
+        firstDate.add(Calendar.YEAR, -20);
+        final String firstUser = "first";
+
+        final Calendar secondDate = nowUTC();
+        secondDate.add(Calendar.YEAR, -15);
+        final String secondUser = "second";
+
+        // create a resource 20 years ago
+        final String subjectURI;
+        try (CloseableHttpResponse response = postResourceWithTTL(
+                getTTLThatUpdatesServerManagedTriples(firstUser, firstDate, firstUser, firstDate))) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            subjectURI = getLocation(response);
+        }
+
+        // add a child 15 years ago
+        forgedDate.add(Calendar.YEAR, 5);
+        forgedUsername = "child-of-" + forgedUsername;
+        final String childURI = subjectURI + "/child";
+        try (CloseableHttpResponse response = putResourceWithTTL(childURI,
+                getTTLThatUpdatesServerManagedTriples(secondUser, secondDate, null, null))) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            assertEquals(childURI, getLocation(response));
+        }
+
+        try (CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
+            triples(subjectURI, dataset)
+                    .mustHave(CREATED_BY.asNode(), createLiteral(firstUser))
+                    .mustHave(CREATED_DATE.asNode(), createDateTime(firstDate))
+                    .mustHave(LAST_MODIFIED_BY.asNode(), createLiteral(secondUser))
+                    .mustHave(LAST_MODIFIED_DATE.asNode(), createDateTime(secondDate));
+        }
+
+        try (CloseableDataset dataset = getDataset(new HttpGet(childURI))) {
+            triples(subjectURI, dataset)
+                    .mustHave(CREATED_BY.asNode(), createLiteral(secondUser))
+                    .mustHave(CREATED_DATE.asNode(), createDateTime(secondDate))
+                    .mustHave(LAST_MODIFIED_BY.asNode(), createLiteral(secondUser))
+                    .mustHave(LAST_MODIFIED_DATE.asNode(), createDateTime(secondDate));
+        }
 
     }
 
-    // test setting an old created and modified date then touching it and ensuring that the modified date and modified
-    // were update
+    @Test
+    public void setSimpleRoundtripping() throws IOException {
+        assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
 
-    // create something, change it's creation date, make an update, ensure that the creation date is correct.
+        final String subjectURI;
+        try (CloseableHttpResponse response
+                     = postResourceWithTTL("<> <http://purl.org/dc/elements/1.1/title> 'title' .")) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            subjectURI = getLocation(response);
+        }
 
-    // create a container with explicit dates, create a child with explicit dates, make sure the parent's
-    // modification date hasn't changed
+        final Header contentType;
+        final String body;
+        try (CloseableHttpResponse response = execute(new HttpGet(subjectURI))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            contentType = response.getFirstHeader("Content-Type");
+            body = EntityUtils.toString(response.getEntity());
+        }
+
+        try (CloseableHttpResponse response = execute(new HttpDelete(subjectURI))) {
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
+            try (final CloseableHttpResponse r2 = execute(new HttpGet(subjectURI))) {
+                final Link tombstone = Link.valueOf(r2.getFirstHeader(LINK).getValue());
+                assertEquals("hasTombstone", tombstone.getRel());
+                assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(tombstone.getUri())));
+            }
+        }
+
+        final HttpPut put = new HttpPut(subjectURI);
+        put.setHeader(contentType);
+        put.setEntity(new StringEntity(body));
+        assertEquals(CREATED.getStatusCode(), getStatus(put));
+
+        try (CloseableDataset roundtripped = getDataset(new HttpGet(subjectURI))) {
+            try (CloseableDataset original = parseTriples(new ByteArrayInputStream(body.getBytes()))) {
+                final DatasetGraph originalGraph = original.asDatasetGraph();
+                final DatasetGraph roundtrippedGraph = roundtripped.asDatasetGraph();
+                final Iterator<Quad> originalQuadIt = originalGraph.find();
+                while (originalQuadIt.hasNext()) {
+                    final Quad q = originalQuadIt.next();
+                    assertTrue(q + " should be preserved through a roundtrip!", roundtrippedGraph.contains(q));
+                    roundtrippedGraph.delete(q);
+                }
+                assertTrue("Roundtripped graph had extra quads!", roundtrippedGraph.isEmpty());
+            }
+
+        }
+
+    }
 
     @After
     public void switchToStrictMode() {

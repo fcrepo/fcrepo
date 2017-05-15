@@ -464,7 +464,6 @@ public abstract class AbstractResourceIT {
                     + "\"^^<http://www.w3.org/2001/XMLSchema#dateTime>");
         }
         ttl.append(" .\n");
-        System.out.println(ttl.toString());
         return ttl.toString();
 
     }

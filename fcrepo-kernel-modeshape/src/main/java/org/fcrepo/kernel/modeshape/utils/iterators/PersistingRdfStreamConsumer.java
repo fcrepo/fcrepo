@@ -64,8 +64,6 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
 
     private final RdfStream stream;
 
-    protected boolean allowServerManagedTriples;
-
     private final IdentifierConverter<Resource, FedoraResource> idTranslator;
 
     // if it's not about a Fedora resource, we don't care.
