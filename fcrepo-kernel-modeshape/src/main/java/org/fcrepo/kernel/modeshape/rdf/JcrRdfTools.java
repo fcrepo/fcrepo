@@ -24,9 +24,17 @@ import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.UNDEFINED;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIED;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIEDBY;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CREATED;;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CREATEDBY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_PAIRTREE;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIEDBY;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATEDBY;
 import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.jcrProperties;
 import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.modeshape.rdf.converters.PropertyConverter.getPropertyNameFromPredicate;
@@ -269,8 +277,23 @@ public class JcrRdfTools {
                     + node.getPath());
         }
 
-        final String propertyName =
+        String propertyName =
                 getPropertyNameFromPredicate(node, predicate, namespaces);
+
+        // In earlier versions of Fedora the following JCR properties were
+        // used for properties.  When the behavior changed such that they could
+        // be set explicitly in some cases, we changed the underlying representation
+        // such that the "fedora"-namespaced property could be set, and when present
+        // would be presented instead of the underlying JCR-managed property.
+        if (propertyName.equals(JCR_LASTMODIFIEDBY)) {
+            propertyName = FEDORA_LASTMODIFIEDBY;
+        } else if (propertyName.equals(JCR_LASTMODIFIED)) {
+            propertyName = FEDORA_LASTMODIFIED;
+        } else if (propertyName.equals(JCR_CREATEDBY)) {
+            propertyName = FEDORA_CREATEDBY;
+        } else if (propertyName.equals(JCR_CREATED)) {
+            propertyName = FEDORA_CREATED;
+        }
 
         if (value.isURIResource()
                 && idTranslator.inDomain(value.asResource())

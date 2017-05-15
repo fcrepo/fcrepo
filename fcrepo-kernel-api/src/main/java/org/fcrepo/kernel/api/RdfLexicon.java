@@ -21,6 +21,9 @@ import static com.google.common.collect.ImmutableSet.of;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -234,6 +237,9 @@ public final class RdfLexicon {
     public static final Property SERVER_MANAGED = createProperty(REPOSITORY_NAMESPACE + "ServerManaged");
 
     public static final Set<Property> managedProperties;
+    public static final Set<Property> relaxableProperties
+            = Collections.unmodifiableSet(new HashSet<Property>(Arrays.asList(new Property[]{
+            LAST_MODIFIED_BY, LAST_MODIFIED_DATE, CREATED_BY, CREATED_DATE})));
 
     static {
         final ImmutableSet.Builder<Property> b = ImmutableSet.builder();
@@ -244,14 +250,28 @@ public final class RdfLexicon {
         managedProperties = b.build();
     }
 
+    public static final String SERVER_MANAGED_PROPERTIES_MODE = "fcrepo.properties.management";
+
     private static Predicate<Property> hasFedoraNamespace =
         p -> !p.isAnon() && p.getNameSpace().startsWith(REPOSITORY_NAMESPACE);
+
+    private static final Predicate<Property> isStrictlyManagedPredicate =
+            hasFedoraNamespace.or(p -> managedProperties.contains(p));
+
+    private static final Predicate<Property> isRelaxablePredicate =
+            p -> relaxableProperties.contains(p);
+
+    private static final Predicate<Property> isRelaxed =
+            isRelaxablePredicate.and(p -> ("relaxed".equals(System.getProperty(SERVER_MANAGED_PROPERTIES_MODE))));
 
     /**
      * Detects whether an RDF property is managed by the repository.
      */
     public static final Predicate<Property> isManagedPredicate =
         hasFedoraNamespace.or(p -> managedProperties.contains(p));
+
+    //public static final Predicate<Property> isManagedPredicate =
+    //        isStrictlyManagedPredicate.and(isRelaxed.negate());
 
     private RdfLexicon() {
 

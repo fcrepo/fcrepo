@@ -17,14 +17,11 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIED;
-import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
 import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.fixDatesIfNecessary;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeToResource;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalProperty;
 import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
-import static org.fcrepo.kernel.modeshape.utils.UncheckedPredicate.uncheck;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.stream.Stream;
@@ -37,6 +34,7 @@ import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.modeshape.rdf.impl.mappings.PropertyToTriple;
 
+import org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils;
 import org.slf4j.Logger;
 
 import org.apache.jena.graph.Triple;
@@ -75,8 +73,7 @@ public class PropertiesRdfContext extends NodeRdfContext {
             throws RepositoryException {
         LOGGER.trace("Creating triples for node: {}", n);
         return iteratorToStream(getJcrNode(n).getProperties())
-            .filter(isInternalProperty.negate().or(uncheck(prop ->
-                prop.getName().equals(JCR_LASTMODIFIED) && !n.hasProperty(FEDORA_LASTMODIFIED))))
+            .filter(isInternalProperty.negate().or(new FedoraTypesUtils.IsExposedJCRPropertyPredicate(n)))
             .flatMap(propertyToTriple).map(fixDatesIfNecessary(n, translator));
     }
 

@@ -18,6 +18,7 @@
 package org.fcrepo.kernel.modeshape.utils;
 
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -93,6 +94,9 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
             JCR_CONTENT,
             JCR_PRIMARY_TYPE,
             JCR_LASTMODIFIED,
+            JCR_LASTMODIFIEDBY,
+            JCR_CREATED,
+            JCR_CREATEDBY,
             JCR_MIXIN_TYPES,
             FROZEN_MIXIN_TYPES,
             FROZEN_PRIMARY_TYPE);
@@ -100,6 +104,7 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
     private static Set<String> validJcrProperties = of(
             JCR_CREATED,
             JCR_CREATEDBY,
+            JCR_LASTMODIFIED,
             JCR_LASTMODIFIEDBY);
 
     /**
@@ -176,6 +181,38 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
     public static Predicate<Property> isInternalProperty = isBinaryContentProperty
                             .or(isProtectedAndShouldBeHidden::test)
                             .or(uncheck(p -> privateProperties.contains(p.getName())));
+
+    /**
+     * A functional predicate to check whether a property is a JCR property that should be exposed.
+     * Historically we exposed JCR properties when they seemed to match a fedora property we wanted to track,
+     * but when control over the property became a requirement, we introduced the direct storage
+     * of fedora properties that when present should overrule the JCR property.
+     */
+    public static class IsExposedJCRPropertyPredicate implements Predicate<Property> {
+
+        private final FedoraResource subject;
+
+        /**
+         * Contstructs this functional predicate for testing properties on the given
+         * resource.
+         * @param resource the resource whose propertis can be tested by this predicate
+         */
+        public IsExposedJCRPropertyPredicate(final FedoraResource resource) {
+            subject = resource;
+        }
+
+        @Override
+        public boolean test(final Property prop) {
+            try {
+                return (prop.getName().equals(JCR_LASTMODIFIED) && !subject.hasProperty(FEDORA_LASTMODIFIED))
+                        || (prop.getName().equals(JCR_LASTMODIFIEDBY) && !subject.hasProperty(FEDORA_LASTMODIFIEDBY))
+                        || (prop.getName().equals(JCR_CREATED) && !subject.hasProperty(FEDORA_CREATED))
+                        || (prop.getName().equals(JCR_CREATEDBY) && !subject.hasProperty(FEDORA_CREATEDBY));
+            } catch (RepositoryException e) {
+                throw new RepositoryRuntimeException(e);
+            }
+        }
+    }
 
     /**
      * Check if a node is "internal" and should not be exposed e.g. via the REST
@@ -364,21 +401,30 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
         };
     }
 
-
     /**
-     * Update the fedora:lastModified date of the parent's ldp:membershipResource if that node is a direct
-     * or indirect container, provided the LDP constraints are valid.
+     * Update the fedora:lastModified date and fedora:lastModifiedBy of the parent's ldp:membershipResource if that
+     * node is a direct or indirect container, provided the LDP constraints are valid.
      *
      * @param node The JCR node
      */
     public static void touchLdpMembershipResource(final Node node) {
+        touchLdpMembershipResource(node, null, null);
+    }
+
+    /**
+     * Update the fedora:lastModified date and fedora:lastModifiedBy of the parent's ldp:membershipResource if that
+     * node is a direct or indirect container, provided the LDP constraints are valid.
+     *
+     * @param node The JCR node
+     */
+    public static void touchLdpMembershipResource(final Node node, final Calendar date, final String user) {
         getContainingNode(node).filter(uncheck(parent -> parent.hasProperty(LDP_MEMBER_RESOURCE))).ifPresent(parent -> {
             try {
                 final Optional<String> hasInsertedContentProperty = ldpInsertedContentProperty(node)
                         .flatMap(resourceToProperty(node.getSession())).filter(uncheck(node::hasProperty));
                 if (parent.isNodeType(LDP_DIRECT_CONTAINER) ||
                         (parent.isNodeType(LDP_INDIRECT_CONTAINER) && hasInsertedContentProperty.isPresent())) {
-                    touch(parent.getProperty(LDP_MEMBER_RESOURCE).getNode());
+                    touch(parent.getProperty(LDP_MEMBER_RESOURCE).getNode(), date, user);
                 }
             } catch (final javax.jcr.AccessDeniedException ex) {
                 throw new AccessDeniedException(ex);
@@ -389,18 +435,83 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
     }
 
     /**
-     * Update the fedora:lastModified date of the node.
+     * Updates the (sometimes) implicitly managed properties.
+     *
+     * This method may be called any time a resource is modified to ensure that things like modification dates
+     * and modifying users are updated.  When modifying
      *
      * @param node The JCR node
+     *
      */
     public static void touch(final Node node) {
+        touch(node, null, null, null, null);
+    }
+
+    /**
+     * Updates the (sometimes) implicitly managed properties.
+     *
+     * This method may be called any time a resource is modified to ensure that things like modification dates
+     * and modifying users are updated.  When modifying
+     *
+     * @param node The JCR node
+     * @param modified the modification date, or null if not explicitly set
+     * @param modifyingUser the userID who modified this resource or null if not explicitly set
+     *
+     */
+    public static void touch(final Node node, final Calendar modified, final String modifyingUser) {
+        touch(node, null, null, modified, modifyingUser);
+    }
+
+    /**
+     * Updates the (sometimes) implicitly managed properties.
+     *
+     * This method may be called any time a resource is modified to ensure that things like modification dates
+     * and modifying users are updated.  When modifying
+     *
+     * @param node The JCR node
+     * @param modified the modification date, or null if not explicitly set
+     * @param modifyingUser the userID who modified this resource or null if not explicitly set
+     *
+     */
+    public static void touch(final Node node, final Calendar created, final String creatingUser,
+                             final Calendar modified, final String modifyingUser) {
         try {
-            node.setProperty(FEDORA_LASTMODIFIED, getInstance(getTimeZone("UTC")));
+            if (created != null) {
+                node.setProperty(FEDORA_CREATED, created);
+            }
+
+            if (creatingUser != null) {
+                node.setProperty(FEDORA_CREATEDBY, creatingUser);
+            }
+
+            if (modified != null) {
+                node.setProperty(FEDORA_LASTMODIFIED, modified);
+            } else {
+                node.setProperty(FEDORA_LASTMODIFIED, getInstance(getTimeZone("UTC")));
+            }
+
+            if (modifyingUser != null) {
+                node.setProperty(FEDORA_LASTMODIFIEDBY, modifyingUser);
+            } else {
+                // revert to the modeshape-managed property
+                if (node.hasProperty(FEDORA_LASTMODIFIEDBY)) {
+                    node.getProperty(FEDORA_LASTMODIFIEDBY).remove();
+                }
+            }
         } catch (final javax.jcr.AccessDeniedException ex) {
             throw new AccessDeniedException(ex);
         } catch (final RepositoryException ex) {
             throw new RepositoryRuntimeException(ex);
         }
+    }
+
+    /**
+     * Touches the node such that the last modification date and last modifying user
+     * are now, and the current user respectively.
+     * @param node
+     */
+    public static void implicitTouch(final Node node) {
+        touch(node, getInstance(getTimeZone("UTC")), null);
     }
 
     /**

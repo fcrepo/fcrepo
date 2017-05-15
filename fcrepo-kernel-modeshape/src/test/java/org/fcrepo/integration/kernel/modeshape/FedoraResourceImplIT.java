@@ -32,6 +32,8 @@ import static org.apache.jena.vocabulary.DC.title;
 import static javax.jcr.PropertyType.BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CREATEDBY;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIEDBY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
@@ -72,8 +74,11 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.URI;
 import java.nio.charset.Charset;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.time.Instant;
@@ -222,7 +227,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testTouch() throws RepositoryException {
+    public void testImplicitTouch() throws RepositoryException {
         final String pid = getRandomPid();
         containerService.findOrCreate(session, "/" + pid);
 
@@ -237,9 +242,40 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Container obj2 = containerService.findOrCreate(session, "/" + pid);
         final FedoraResourceImpl impl = new FedoraResourceImpl(getJcrNode(obj2));
         final Instant oldMod = impl.getLastModifiedDate();
-        impl.touch();
-        assertTrue( oldMod.isBefore(obj2.getLastModifiedDate()) );
+        impl.touch(false, null, null, null, null);
+        assertTrue(oldMod.isBefore(obj2.getLastModifiedDate()));
     }
+
+    @Test
+    public void testTouch() throws RepositoryException {
+        final Calendar forgedDate = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+        forgedDate.add(Calendar.YEAR, 1);
+
+        final String pid = getRandomPid();
+        containerService.findOrCreate(session, "/" + pid);
+
+        try {
+            session.commit();
+        } finally {
+            session.expire();
+        }
+
+        session = repo.login();
+
+        final Container obj2 = containerService.findOrCreate(session, "/" + pid);
+        final FedoraResourceImpl impl = new FedoraResourceImpl(getJcrNode(obj2));
+
+        final String forgedUser = "me";
+        forgedDate.add(Calendar.YEAR, 1);
+
+        impl.touch(false, forgedDate, forgedUser, forgedDate, forgedUser);
+
+        assertEquals(forgedUser, impl.getNode().getProperty(FEDORA_LASTMODIFIEDBY).getString());
+        assertEquals(forgedUser, impl.getNode().getProperty(FEDORA_CREATEDBY).getString());
+        assertEquals(forgedDate.getTime(), Date.from(obj2.getLastModifiedDate()));
+        assertEquals(forgedDate.getTime(), Date.from(obj2.getCreatedDate()));
+    }
+
 
     @Test
     public void testRepositoryRootGraph() {

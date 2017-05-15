@@ -20,6 +20,7 @@ package org.fcrepo.kernel.api.models;
 import java.net.URI;
 import java.time.Instant;
 
+import java.util.Calendar;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -181,6 +182,24 @@ public interface FedoraResource {
     void replaceProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
                                 final Model inputModel,
                                 final RdfStream originalTriples) throws MalformedRdfException;
+    /**
+     * Replace the properties of this object with the properties from the given
+     * model
+     *
+     * @param idTranslator the given property of idTranslator
+     * @param inputModel the input model
+     * @param originalTriples the original triples
+     * @param createdDate the date to use to override the creation date
+     * @param createdUser the date to use to override the created by username
+     * @param date the date this action will appear to have happened
+     * @param user the user who will appear to have performed this action
+     * @throws MalformedRdfException if malformed rdf exception occurred
+     */
+    void replaceProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
+                           final Model inputModel,
+                           final RdfStream originalTriples,
+                           final Calendar createdDate, final String createdUser,
+                           final Calendar date, final String user) throws MalformedRdfException;
 
     /**
      * Construct an ETag value for the resource.

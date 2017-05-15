@@ -43,9 +43,14 @@ import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
+import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
+import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.SERVER_MANAGED_PROPERTIES_MODE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 import static org.fcrepo.kernel.api.RequiredRdfContext.EMBED_RESOURCES;
@@ -63,6 +68,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -86,8 +92,11 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 
 import org.apache.jena.atlas.RuntimeIOException;
+import org.apache.jena.datatypes.xsd.XSDDateTime;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RiotException;
 import org.fcrepo.http.commons.api.HttpHeaderInjector;
@@ -636,7 +645,62 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             throw new RepositoryRuntimeException(e);
         }
 
-        resource.replaceProperties(translator(), inputModel, resourceTriples);
+        Calendar createdDate = null;
+        String creatingUser = null;
+        Calendar modifiedDate = null;
+        String modifyingUser = null;
+        final Boolean isNew = resource.isNew();
+        if ("relaxed".equals(System.getProperty(SERVER_MANAGED_PROPERTIES_MODE))) {
+            final StmtIterator it = inputModel.listStatements();
+            while (it.hasNext()) {
+                final Statement next = it.next();
+                if (next.getPredicate().equals(CREATED_DATE)) {
+                    if (createdDate == null) {
+                        if (isNew) {
+                            createdDate = parseDateValue(next);
+                            it.remove();
+                        }
+                    } else {
+                        throw new MalformedRdfException(CREATED_DATE + " may only appear once!");
+                    }
+                } else if (next.getPredicate().equals(CREATED_BY)) {
+                    if (creatingUser == null) {
+                        if (isNew) {
+                            creatingUser = next.getObject().asLiteral().getString();
+                            it.remove();
+                        }
+                    } else {
+                        throw new MalformedRdfException(CREATED_BY + " may only appear once!");
+                    }
+                } else if (next.getPredicate().equals(LAST_MODIFIED_DATE)) {
+                    if (modifiedDate == null) {
+                        modifiedDate = parseDateValue(next);
+                        it.remove();
+                    } else {
+                        throw new MalformedRdfException(LAST_MODIFIED_DATE + " may only appear once!");
+                    }
+                } else if (next.getPredicate().equals(LAST_MODIFIED_BY)) {
+                    if (modifyingUser == null) {
+                        modifyingUser = next.getObject().asLiteral().getString();
+                        it.remove();
+                    } else {
+                        throw new MalformedRdfException(LAST_MODIFIED_BY + " may only appear once!");
+                    }
+                }
+            }
+        }
+        resource.replaceProperties(translator(), inputModel, resourceTriples, createdDate, creatingUser,
+                modifiedDate, modifyingUser);
+    }
+
+    private Calendar parseDateValue(final Statement stmt) {
+        final Object value = stmt.getObject().asLiteral().getValue();
+        if (value instanceof XSDDateTime) {
+            return ((XSDDateTime) value).asCalendar();
+        } else {
+            System.out.println(value.getClass().getName());
+            throw new MalformedRdfException(stmt.getPredicate().getURI() + " must be an xsd:dateTime.");
+        }
     }
 
     protected void patchResourcewithSparql(final FedoraResource resource,
