@@ -49,6 +49,7 @@ import java.util.Collection;
 import javax.ws.rs.core.Response.Status;
 import javax.xml.bind.DatatypeConverter;
 
+import org.apache.http.HeaderElement;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 
 import org.apache.http.Header;

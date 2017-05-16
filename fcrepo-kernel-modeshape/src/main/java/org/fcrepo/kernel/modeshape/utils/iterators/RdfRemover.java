@@ -17,7 +17,6 @@
  */
 package org.fcrepo.kernel.modeshape.utils.iterators;
 
-import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaces;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -25,8 +24,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.fcrepo.kernel.api.exception.MalformedRdfException;
-import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.RdfStream;
@@ -57,21 +54,6 @@ public class RdfRemover extends PersistingRdfStreamConsumer {
     public RdfRemover(final IdentifierConverter<Resource, FedoraResource> idTranslator, final Session session,
         final RdfStream stream) {
         super(idTranslator, session, stream);
-    }
-
-    @Override
-    protected void operateOnTriple(final Statement input) throws MalformedRdfException {
-        if (isManagedPredicate.test(input.getPredicate())) {
-            LOGGER.debug("Skipping server managed triple: {}", input);
-        } else {
-            try {
-                super.operateOnTriple(input);
-            } catch (ServerManagedTypeException e) {
-                // the superclass threw an exception when dealing with an apparently missing protected mixin
-                // (rdf type) Because protected mixin types cannot be modified as a result of user-provided RDF
-                // streams, we can ignore this exception, leaving that rdf type intact.
-            }
-        }
     }
 
     @Override

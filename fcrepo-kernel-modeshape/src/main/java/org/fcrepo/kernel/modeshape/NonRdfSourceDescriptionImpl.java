@@ -18,16 +18,21 @@
 package org.fcrepo.kernel.modeshape;
 
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isNonRdfSourceDescription;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.touchLdpMembershipResource;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils;
 import org.slf4j.Logger;
+
+import java.util.Calendar;
 
 /**
  * Abstraction for a Fedora datastream backed by a JCR node.
@@ -79,6 +84,23 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements N
      */
     public static boolean hasMixin(final Node node) {
         return isNonRdfSourceDescription.test(node);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * Overrides the superclass to touch the node for the binary.
+     */
+    @VisibleForTesting
+    public void touch(final boolean includeMembershipResource, final Calendar createdDate, final String createdUser,
+                      final Calendar modifiedDate, final String modifyingUser) throws RepositoryException {
+        FedoraTypesUtils.touch(getContentNode(), createdDate, createdUser, modifiedDate, modifyingUser);
+
+        // If the ldp:insertedContentRelation property was changed, update the
+        // ldp:membershipResource resource.
+        if (includeMembershipResource) {
+            touchLdpMembershipResource(getNode(), modifiedDate, modifyingUser);
+        }
     }
 
 }

@@ -650,13 +650,14 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         Calendar modifiedDate = null;
         String modifyingUser = null;
         final Boolean isNew = resource.isNew();
+        final Boolean canUpdateCreationMetadata = isNew || resource instanceof NonRdfSourceDescription;
         if ("relaxed".equals(System.getProperty(SERVER_MANAGED_PROPERTIES_MODE))) {
             final StmtIterator it = inputModel.listStatements();
             while (it.hasNext()) {
                 final Statement next = it.next();
                 if (next.getPredicate().equals(CREATED_DATE)) {
                     if (createdDate == null) {
-                        if (isNew) {
+                        if (canUpdateCreationMetadata) {
                             createdDate = parseDateValue(next);
                             it.remove();
                         }
@@ -665,7 +666,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                     }
                 } else if (next.getPredicate().equals(CREATED_BY)) {
                     if (creatingUser == null) {
-                        if (isNew) {
+                        if (canUpdateCreationMetadata) {
                             creatingUser = next.getObject().asLiteral().getString();
                             it.remove();
                         }

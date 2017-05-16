@@ -21,6 +21,7 @@ import org.apache.http.Header;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
@@ -44,6 +45,7 @@ import javax.ws.rs.core.Link;
 import javax.xml.bind.DatatypeConverter;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Iterator;
@@ -52,6 +54,7 @@ import static java.util.Calendar.getInstance;
 import static java.util.TimeZone.getTimeZone;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
@@ -102,6 +105,30 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         }
 
         try (CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
+            triples(subjectURI, dataset)
+                    .mustHave(CREATED_BY.asNode(), createLiteral(forgedUsername))
+                    .mustHave(CREATED_DATE.asNode(), createDateTime(forgedDate));
+        }
+    }
+
+    @Test
+    public void testCreateNonRdfResourceWithForgedCreationInformationIsAllowed() throws IOException, ParseException {
+        assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
+
+        final String subjectURI;
+        try (CloseableHttpResponse response = postBinaryResource("this is the binary")) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            subjectURI = getLocation(response);
+        }
+
+        final String describedByURI = subjectURI + "/fcr:metadata";
+
+        try (CloseableHttpResponse response = putResourceWithTTL(describedByURI,
+                getTTLThatUpdatesServerManagedTriples(forgedUsername, forgedDate, null, null))) {
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
+        }
+
+        try (CloseableDataset dataset = getDataset(new HttpGet(describedByURI))) {
             triples(subjectURI, dataset)
                     .mustHave(CREATED_BY.asNode(), createLiteral(forgedUsername))
                     .mustHave(CREATED_DATE.asNode(), createDateTime(forgedDate));
@@ -272,6 +299,12 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         System.clearProperty(SERVER_MANAGED_PROPERTIES_MODE);
     }
 
+    private CloseableHttpResponse postBinaryResource(final String content) throws IOException {
+        final HttpPost post = postObjMethod("/");
+        post.setEntity(new StringEntity(content == null ? "" : content));
+        post.setHeader(CONTENT_TYPE, TEXT_PLAIN);
+        return execute(post);
+    }
 
     private CloseableHttpResponse postResourceWithTTL(final String ttl) throws IOException {
         final HttpPost httpPost = postObjMethod("/");
@@ -281,8 +314,10 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         return execute(httpPost);
     }
 
-    private CloseableHttpResponse putResourceWithTTL(final String uri, final String ttl) throws IOException {
+    private CloseableHttpResponse putResourceWithTTL(final String uri, final String ttl)
+            throws IOException {
         final HttpPut httpPut = new HttpPut(uri);
+        httpPut.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
         httpPut.addHeader(CONTENT_TYPE, "text/turtle");
         httpPut.setEntity(new StringEntity(ttl));
         return execute(httpPut);

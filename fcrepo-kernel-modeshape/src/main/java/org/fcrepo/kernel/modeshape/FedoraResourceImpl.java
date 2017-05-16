@@ -809,9 +809,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @VisibleForTesting
     public void touch(final boolean includeMembershipResource, final Calendar createdDate, final String createdUser,
                       final Calendar modifiedDate, final String modifyingUser) throws RepositoryException {
-        // Update the sometimes-managed properties
-        // it is expected that replacementStream only contains triples that can actually be updated
-
         FedoraTypesUtils.touch(getNode(), createdDate, createdUser, modifiedDate, modifyingUser);
 
         // If the ldp:insertedContentRelation property was changed, update the
@@ -831,14 +828,14 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                         @SuppressWarnings("unchecked")
                         final Iterator<Property> properties = n.getProperties();
                         final boolean hasUserProps = iteratorToStream(properties).map(propertyConverter::convert)
-                            .filter(p -> !jcrProperties.contains(p))
-                            .anyMatch(isManagedPredicate.negate());
+                                .filter(p -> !jcrProperties.contains(p))
+                                .anyMatch(isManagedPredicate.negate());
 
                         final boolean hasUserTypes = Arrays.stream(n.getMixinNodeTypes())
-                            .map(uncheck(NodeType::getName)).filter(hasInternalNamespace.negate())
-                            .map(uncheck(type ->
-                                getSession().getWorkspace().getNamespaceRegistry().getURI(type.split(":")[0])))
-                            .anyMatch(isManagedNamespace.negate());
+                                .map(uncheck(NodeType::getName)).filter(hasInternalNamespace.negate())
+                                .map(uncheck(type ->
+                                        getSession().getWorkspace().getNamespaceRegistry().getURI(type.split(":")[0])))
+                                .anyMatch(isManagedNamespace.negate());
 
                         if (!hasUserProps && !hasUserTypes && !n.getWeakReferences().hasNext() &&
                                 !n.getReferences().hasNext()) {
@@ -860,10 +857,18 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
      */
     @Override
     public String getEtagValue() {
-        final Instant lastModifiedDate = getLastModifiedDate();
-
-        if (lastModifiedDate != null) {
-            return sha1Hex(getPath() + lastModifiedDate.toEpochMilli());
+        try {
+            if (hasProperty(JCR_LASTMODIFIED)) {
+                final Instant lastModifiedDate
+                        = ofEpochMilli(getProperty(JCR_LASTMODIFIED).getDate().getTimeInMillis());
+                if (lastModifiedDate != null) {
+                    return sha1Hex(getPath() + lastModifiedDate.toEpochMilli());
+                }
+            }
+        } catch (final PathNotFoundException e) {
+            throw new PathNotFoundRuntimeException(e);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
         return "";
     }
