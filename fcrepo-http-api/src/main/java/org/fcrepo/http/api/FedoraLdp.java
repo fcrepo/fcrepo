@@ -516,7 +516,7 @@ public class FedoraLdp extends ContentExposingResource {
             resource = createFedoraResource(newObjectPath, effectiveContentType, contentDisposition);
 
             try (final RdfStream resourceTriples =
-                         resource.isNew() ? new DefaultRdfStream(asNode(resource())) : getResourceTriples()) {
+                    resource.isNew() ? new DefaultRdfStream(asNode(resource())) : getResourceTriples()) {
 
                 if (requestBodyStream == null) {
                     LOGGER.trace("No request body detected");

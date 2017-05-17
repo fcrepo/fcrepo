@@ -665,14 +665,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
     }
 
-    private Calendar parseDateValue(final Statement stmt) {
-        try {
-            return RelaxedPropertiesHelper.parseExpectedXsdDateTimeValue(stmt.getObject());
-        } catch (IllegalArgumentException ex) {
-            throw new MalformedRdfException(stmt.getPredicate().getURI() + " must be an xsd:dateTime.");
-        }
-    }
-
     protected void patchResourcewithSparql(final FedoraResource resource,
             final String requestBody,
             final RdfStream resourceTriples) {
