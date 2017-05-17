@@ -32,6 +32,7 @@ import static org.apache.jena.update.UpdateFactory.create;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.SERVER_MANAGED_PROPERTIES_MODE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 import static org.fcrepo.kernel.api.RequiredRdfContext.EMBED_RESOURCES;
@@ -519,9 +520,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     /**
      * This method gets the last modified date for this FedoraResource.  Because
      * the last modified date is managed by fcrepo (not ModeShape) while the created
-     * date *is* managed by ModeShape in the current implementation it's possible that
-     * the last modified date will be before the created date.  Instead of making
-     * a second update to correct the modified date, in cases where the modified
+     * date *is* sometimes managed by ModeShape in the current implementation it's
+     * possible that the last modified date will be before the created date.  Instead
+     * of making a second update to correct the modified date, in cases where the modified
      * date is ealier than the created date, this class presents the created date instead.
      *
      * Any method that exposes the last modified date must maintain this illusion so
@@ -797,6 +798,29 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     }
 
     /**
+     * Sets the protected properties to the given values (if updating these properties is permitted
+     * for the repository).
+     * @param createdDate the date the resource was created
+     * @param creatingUser the user who created the resource
+     * @param modifiedDate the date the resource was modified
+     * @param modifyingUser the user who last modified the resource
+     *
+     */
+    public void setProtectedMetadata(final Calendar createdDate,
+                                     final String creatingUser, final Calendar modifiedDate,
+                                     final String modifyingUser) {
+        if (!"relaxed".equals(System.getProperty(SERVER_MANAGED_PROPERTIES_MODE))) {
+            throw new RepositoryRuntimeException("Repository isn't configured to allow modification of server" +
+                    " managed properties!");
+        }
+        try {
+            this.touch(false, createdDate, creatingUser, modifiedDate, modifyingUser);
+        } catch (RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    /**
      * Touches a resource to ensure that the implicitly updated properties are updated if
      * not explicitly set.
      * @param includeMembershipResource true if this touch should propagate through to
@@ -857,18 +881,10 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
      */
     @Override
     public String getEtagValue() {
-        try {
-            if (hasProperty(JCR_LASTMODIFIED)) {
-                final Instant lastModifiedDate
-                        = ofEpochMilli(getProperty(JCR_LASTMODIFIED).getDate().getTimeInMillis());
-                if (lastModifiedDate != null) {
-                    return sha1Hex(getPath() + lastModifiedDate.toEpochMilli());
-                }
-            }
-        } catch (final PathNotFoundException e) {
-            throw new PathNotFoundRuntimeException(e);
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
+        final Instant lastModifiedDate = getLastModifiedDate();
+
+        if (lastModifiedDate != null) {
+            return sha1Hex(getPath() + lastModifiedDate.toEpochMilli());
         }
         return "";
     }

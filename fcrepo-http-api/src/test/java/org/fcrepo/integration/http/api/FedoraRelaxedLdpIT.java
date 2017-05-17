@@ -21,7 +21,6 @@ import org.apache.http.Header;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
@@ -30,6 +29,7 @@ import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.Quad;
@@ -44,8 +44,8 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import javax.ws.rs.core.Link;
 import javax.xml.bind.DatatypeConverter;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Iterator;
@@ -112,7 +112,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testCreateNonRdfResourceWithForgedCreationInformationIsAllowed() throws IOException, ParseException {
+    public void testUpdateNonRdfResourceWithForgedInformationIsAllowed() throws IOException, ParseException {
         assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
 
         final String subjectURI;
@@ -124,7 +124,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         final String describedByURI = subjectURI + "/fcr:metadata";
 
         try (CloseableHttpResponse response = putResourceWithTTL(describedByURI,
-                getTTLThatUpdatesServerManagedTriples(forgedUsername, forgedDate, null, null))) {
+                getTTLThatUpdatesServerManagedTriples(forgedUsername, forgedDate, forgedUsername, forgedDate))) {
             assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
         }
 
@@ -244,8 +244,13 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
 
     }
 
+    /**
+     * Tests a lossless roundtrip of a resource.  This method is written witout using PUT
+     * because it may not be supported by the Fedora Spec.
+     * @throws IOException
+     */
     @Test
-    public void setSimpleRoundtripping() throws IOException {
+    public void testSimpleRoundtripping() throws IOException {
         assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
 
         final String subjectURI;
@@ -272,10 +277,29 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
             }
         }
 
-        final HttpPut put = new HttpPut(subjectURI);
-        put.setHeader(contentType);
-        put.setEntity(new StringEntity(body));
-        assertEquals(CREATED.getStatusCode(), getStatus(put));
+        final String rdf;
+        try (CloseableDataset original = parseTriples(new ByteArrayInputStream(body.getBytes()))) {
+            final Model m = original.getDefaultModel();
+            final StmtIterator it = m.listStatements();
+            while (it.hasNext()) {
+                final Statement stmt = it.nextStatement();
+                if (!(stmt.getPredicate().equals(CREATED_BY) || stmt.getPredicate().equals(CREATED_DATE)
+                        || stmt.getPredicate().equals(LAST_MODIFIED_BY)
+                        || stmt.getPredicate().equals(LAST_MODIFIED_DATE)
+                        || stmt.getPredicate().getURI().equals("http://purl.org/dc/elements/1.1/title"))) {
+                    it.remove();
+                }
+            }
+            final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            m.write(baos, "ttl");
+            rdf = baos.toString();
+        }
+
+        final HttpPost post = new HttpPost(serverAddress);
+        post.setHeader(contentType);
+        post.setHeader("Slug", subjectURI.substring(serverAddress.length()));
+        post.setEntity(new StringEntity(rdf));
+        assertEquals(CREATED.getStatusCode(), getStatus(post));
 
         try (CloseableDataset roundtripped = getDataset(new HttpGet(subjectURI))) {
             try (CloseableDataset original = parseTriples(new ByteArrayInputStream(body.getBytes()))) {

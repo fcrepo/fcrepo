@@ -202,6 +202,18 @@ public interface FedoraResource {
                            final Calendar date, final String user) throws MalformedRdfException;
 
     /**
+     * Sets the protected properties to the given values (if updating these properties is permitted
+     * for the repository).
+     * @param createdDate the date the resource was created
+     * @param creatingUser the user who created the resource
+     * @param modifiedDate the date the resource was modified
+     * @param modifyingUser the user who last modified the resource
+     *
+     */
+    public void setProtectedMetadata(final Calendar createdDate, final String creatingUser,
+                                     final Calendar modifiedDate, final String modifyingUser);
+
+    /**
      * Construct an ETag value for the resource.
      *
      * @return constructed etag value

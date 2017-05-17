@@ -649,49 +649,54 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         String creatingUser = null;
         Calendar modifiedDate = null;
         String modifyingUser = null;
+        boolean modifiesProtectedProperty = false;
         final Boolean isNew = resource.isNew();
-        final Boolean canUpdateCreationMetadata = isNew || resource instanceof NonRdfSourceDescription;
-        if ("relaxed".equals(System.getProperty(SERVER_MANAGED_PROPERTIES_MODE))) {
-            final StmtIterator it = inputModel.listStatements();
-            while (it.hasNext()) {
-                final Statement next = it.next();
-                if (next.getPredicate().equals(CREATED_DATE)) {
-                    if (createdDate == null) {
-                        if (canUpdateCreationMetadata) {
-                            createdDate = parseDateValue(next);
-                            it.remove();
-                        }
-                    } else {
-                        throw new MalformedRdfException(CREATED_DATE + " may only appear once!");
-                    }
-                } else if (next.getPredicate().equals(CREATED_BY)) {
-                    if (creatingUser == null) {
-                        if (canUpdateCreationMetadata) {
-                            creatingUser = next.getObject().asLiteral().getString();
-                            it.remove();
-                        }
-                    } else {
-                        throw new MalformedRdfException(CREATED_BY + " may only appear once!");
-                    }
-                } else if (next.getPredicate().equals(LAST_MODIFIED_DATE)) {
-                    if (modifiedDate == null) {
-                        modifiedDate = parseDateValue(next);
-                        it.remove();
-                    } else {
-                        throw new MalformedRdfException(LAST_MODIFIED_DATE + " may only appear once!");
-                    }
-                } else if (next.getPredicate().equals(LAST_MODIFIED_BY)) {
-                    if (modifyingUser == null) {
-                        modifyingUser = next.getObject().asLiteral().getString();
-                        it.remove();
-                    } else {
-                        throw new MalformedRdfException(LAST_MODIFIED_BY + " may only appear once!");
-                    }
+        final Boolean relaxed = "relaxed".equals(System.getProperty(SERVER_MANAGED_PROPERTIES_MODE));
+        final Boolean canUpdateCreatedProperties = (isNew || resource instanceof NonRdfSourceDescription) && relaxed;
+        final Boolean canUpdateModifiedProperties  = relaxed;
+        final StmtIterator it = inputModel.listStatements();
+        while (it.hasNext()) {
+            final Statement next = it.next();
+            if (next.getPredicate().equals(CREATED_DATE)) {
+                modifiesProtectedProperty = true;
+                if (createdDate == null && canUpdateCreatedProperties) {
+                    createdDate = parseDateValue(next);
+                    it.remove();
+                } else if (createdDate != null) {
+                    throw new MalformedRdfException(CREATED_DATE + " may only appear once!");
+                }
+            } else if (next.getPredicate().equals(CREATED_BY)) {
+                modifiesProtectedProperty = true;
+                if (creatingUser == null && canUpdateCreatedProperties) {
+                    creatingUser = next.getObject().asLiteral().getString();
+                    it.remove();
+                } else if (creatingUser != null) {
+                    throw new MalformedRdfException(CREATED_BY + " may only appear once!");
+                }
+            } else if (next.getPredicate().equals(LAST_MODIFIED_DATE)) {
+                modifiesProtectedProperty = true;
+                if (modifiedDate == null && canUpdateModifiedProperties) {
+                    modifiedDate = parseDateValue(next);
+                    it.remove();
+                } else if (modifiedDate != null) {
+                    throw new MalformedRdfException(LAST_MODIFIED_DATE + " may only appear once!");
+                }
+            } else if (next.getPredicate().equals(LAST_MODIFIED_BY)) {
+                modifiesProtectedProperty = true;
+                if (modifyingUser == null && canUpdateModifiedProperties) {
+                    modifyingUser = next.getObject().asLiteral().getString();
+                    it.remove();
+                } else if (modifyingUser != null) {
+                    throw new MalformedRdfException(LAST_MODIFIED_BY + " may only appear once!");
                 }
             }
         }
         resource.replaceProperties(translator(), inputModel, resourceTriples, createdDate, creatingUser,
                 modifiedDate, modifyingUser);
+        if (relaxed && modifiesProtectedProperty && resource instanceof NonRdfSourceDescription) {
+            ((NonRdfSourceDescription) resource).getDescribedResource()
+                    .setProtectedMetadata(createdDate, creatingUser, modifiedDate, modifyingUser);
+        }
     }
 
     private Calendar parseDateValue(final Statement stmt) {
