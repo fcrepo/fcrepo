@@ -198,8 +198,8 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
             verifyChecksums(nonNullChecksums, dataProperty);
 
             decorateContentNode(contentNode, nonNullChecksums);
-            FedoraTypesUtils.implicitTouch(getNode());
-            FedoraTypesUtils.implicitTouch(((FedoraResourceImpl) getDescription()).getNode());
+            FedoraTypesUtils.touch(getNode());
+            FedoraTypesUtils.touch(((FedoraResourceImpl) getDescription()).getNode());
 
             LOGGER.debug("Created data property at path: {}", dataProperty.getPath());
 

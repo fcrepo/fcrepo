@@ -424,7 +424,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                             shouldUpdateIndirectResource)))
                     .ifPresent(ancestor -> {
                         try {
-                            FedoraTypesUtils.implicitTouch(ancestor.getProperty(LDP_MEMBER_RESOURCE).getNode());
+                            FedoraTypesUtils.touch(ancestor.getProperty(LDP_MEMBER_RESOURCE).getNode());
                         } catch (final RepositoryException ex) {
                             throw new RepositoryRuntimeException(ex);
                         }
@@ -432,7 +432,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
                 // update the lastModified date on the parent node
                 containingNode.ifPresent(ancestor -> {
-                    FedoraTypesUtils.implicitTouch(ancestor);
+                    FedoraTypesUtils.touch(ancestor);
                 });
             }
         } catch (final javax.jcr.AccessDeniedException e) {
@@ -756,7 +756,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             final GraphDifferencer differencer =
                 new GraphDifferencer(inputModel, originalTriples);
 
-             final StringBuilder exceptions = new StringBuilder();
+            final StringBuilder exceptions = new StringBuilder();
             try (final DefaultRdfStream diffStream =
                     new DefaultRdfStream(replacementStream.topic(), differencer.difference())) {
                 new RdfRemover(idTranslator, getSession(), diffStream).consume();
@@ -853,14 +853,14 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                         @SuppressWarnings("unchecked")
                         final Iterator<Property> properties = n.getProperties();
                         final boolean hasUserProps = iteratorToStream(properties).map(propertyConverter::convert)
-                                .filter(p -> !jcrProperties.contains(p))
-                                .anyMatch(isManagedPredicate.negate());
+                            .filter(p -> !jcrProperties.contains(p))
+                            .anyMatch(isManagedPredicate.negate());
 
                         final boolean hasUserTypes = Arrays.stream(n.getMixinNodeTypes())
-                                .map(uncheck(NodeType::getName)).filter(hasInternalNamespace.negate())
-                                .map(uncheck(type ->
-                                        getSession().getWorkspace().getNamespaceRegistry().getURI(type.split(":")[0])))
-                                .anyMatch(isManagedNamespace.negate());
+                            .map(uncheck(NodeType::getName)).filter(hasInternalNamespace.negate())
+                            .map(uncheck(type ->
+                                getSession().getWorkspace().getNamespaceRegistry().getURI(type.split(":")[0])))
+                            .anyMatch(isManagedNamespace.negate());
 
                         if (!hasUserProps && !hasUserTypes && !n.getWeakReferences().hasNext() &&
                                 !n.getReferences().hasNext()) {

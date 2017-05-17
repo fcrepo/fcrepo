@@ -72,34 +72,6 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements N
     }
 
     /**
-     * Becuase triples are only provided
-     * @param includeMembershipResource true if this touch should propagate through to
-     *                                  ldp membership resources
-     * @param createdDate
-     * @param createdUser
-     * @param modifiedDate the date to which the modified date should be set or null to use now
-     *
-     * @param modifyingUser the user making the modification or null to use the current user
-     * @throws RepositoryException
-
-    @VisibleForTesting
-    public void touch(final boolean includeMembershipResource, final Calendar createdDate, final String createdUser,
-                      final Calendar modifiedDate, final String modifyingUser) throws RepositoryException {
-
-        // only touch content node when explicitly setting something, since any touch
-        if (createdDate != null || createdUser != null || modifiedDate != null || modifyingUser != null) {
-            FedoraTypesUtils.touch(getContentNode(), createdDate, createdUser, modifiedDate, modifyingUser);
-        }
-
-        // If the ldp:insertedContentRelation property was changed, update the
-        // ldp:membershipResource resource.
-        if (includeMembershipResource) {
-            touchLdpMembershipResource(getNode(), modifiedDate, modifyingUser);
-        }
-    }
-    */
-
-    /**
      * Check if the node has a fedora:datastream mixin
      *
      * @param node node to check

@@ -435,10 +435,8 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
     }
 
     /**
-     * Updates the (sometimes) implicitly managed properties.
-     *
-     * This method may be called any time a resource is modified to ensure that things like modification dates
-     * and modifying users are updated.  When modifying
+     * Updates the LAST_MODIFIED_DATE and LAST_MODIFIED_BY properties to now, and the current user
+     * respectively.
      *
      * @param node The JCR node
      *
@@ -448,10 +446,7 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
     }
 
     /**
-     * Updates the (sometimes) implicitly managed properties.
-     *
-     * This method may be called any time a resource is modified to ensure that things like modification dates
-     * and modifying users are updated.  When modifying
+     * Updates the LAST_MODIFIED_DATE and LAST_MODIFIED_BY properties to the provided values.
      *
      * @param node The JCR node
      * @param modified the modification date, or null if not explicitly set
@@ -463,12 +458,11 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
     }
 
     /**
-     * Updates the (sometimes) implicitly managed properties.
-     *
-     * This method may be called any time a resource is modified to ensure that things like modification dates
-     * and modifying users are updated.  When modifying
+     * Updates the LAST_MODIFIED_DATE, LAST_MODIFIED_BY, CREATED_DATE and CREATED_BY properties to the provided values.
      *
      * @param node The JCR node
+     * @param created the date the resource was created, or null if not explicitly set
+     * @param creatingUser the userID of created this resource or null if not explicitly set
      * @param modified the modification date, or null if not explicitly set
      * @param modifyingUser the userID who modified this resource or null if not explicitly set
      *
@@ -503,15 +497,6 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
         } catch (final RepositoryException ex) {
             throw new RepositoryRuntimeException(ex);
         }
-    }
-
-    /**
-     * Touches the node such that the last modification date and last modifying user
-     * are now, and the current user respectively.
-     * @param node
-     */
-    public static void implicitTouch(final Node node) {
-        touch(node, getInstance(getTimeZone("UTC")), null);
     }
 
     /**
