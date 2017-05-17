@@ -92,7 +92,6 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 
 import org.apache.jena.atlas.RuntimeIOException;
-import org.apache.jena.datatypes.xsd.XSDDateTime;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Statement;
@@ -120,6 +119,7 @@ import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 
+import org.fcrepo.kernel.api.utils.RdfLiteralHelper;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.jvnet.hk2.annotations.Optional;
 
@@ -652,14 +652,12 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         boolean modifiesProtectedProperty = false;
         final Boolean isNew = resource.isNew();
         final Boolean relaxed = "relaxed".equals(System.getProperty(SERVER_MANAGED_PROPERTIES_MODE));
-        final Boolean canUpdateCreatedProperties = (isNew || resource instanceof NonRdfSourceDescription) && relaxed;
-        final Boolean canUpdateModifiedProperties  = relaxed;
         final StmtIterator it = inputModel.listStatements();
         while (it.hasNext()) {
             final Statement next = it.next();
             if (next.getPredicate().equals(CREATED_DATE)) {
                 modifiesProtectedProperty = true;
-                if (createdDate == null && canUpdateCreatedProperties) {
+                if (createdDate == null && relaxed) {
                     createdDate = parseDateValue(next);
                     it.remove();
                 } else if (createdDate != null) {
@@ -667,7 +665,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 }
             } else if (next.getPredicate().equals(CREATED_BY)) {
                 modifiesProtectedProperty = true;
-                if (creatingUser == null && canUpdateCreatedProperties) {
+                if (creatingUser == null && relaxed) {
                     creatingUser = next.getObject().asLiteral().getString();
                     it.remove();
                 } else if (creatingUser != null) {
@@ -675,7 +673,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 }
             } else if (next.getPredicate().equals(LAST_MODIFIED_DATE)) {
                 modifiesProtectedProperty = true;
-                if (modifiedDate == null && canUpdateModifiedProperties) {
+                if (modifiedDate == null && relaxed) {
                     modifiedDate = parseDateValue(next);
                     it.remove();
                 } else if (modifiedDate != null) {
@@ -683,7 +681,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 }
             } else if (next.getPredicate().equals(LAST_MODIFIED_BY)) {
                 modifiesProtectedProperty = true;
-                if (modifyingUser == null && canUpdateModifiedProperties) {
+                if (modifyingUser == null && relaxed) {
                     modifyingUser = next.getObject().asLiteral().getString();
                     it.remove();
                 } else if (modifyingUser != null) {
@@ -700,10 +698,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     }
 
     private Calendar parseDateValue(final Statement stmt) {
-        final Object value = stmt.getObject().asLiteral().getValue();
-        if (value instanceof XSDDateTime) {
-            return ((XSDDateTime) value).asCalendar();
-        } else {
+        try {
+            return RdfLiteralHelper.parseExpectedXsdDateTimeValue(stmt.getObject());
+        } catch (IllegalArgumentException ex) {
             throw new MalformedRdfException(stmt.getPredicate().getURI() + " must be an xsd:dateTime.");
         }
     }

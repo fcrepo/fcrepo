@@ -255,13 +255,10 @@ public final class RdfLexicon {
     private static Predicate<Property> hasFedoraNamespace =
         p -> !p.isAnon() && p.getNameSpace().startsWith(REPOSITORY_NAMESPACE);
 
-    private static final Predicate<Property> isStrictlyManagedPredicate =
-            hasFedoraNamespace.or(p -> managedProperties.contains(p));
-
-    private static final Predicate<Property> isRelaxablePredicate =
+    public static final Predicate<Property> isRelaxablePredicate =
             p -> relaxableProperties.contains(p);
 
-    private static final Predicate<Property> isRelaxed =
+    public static final Predicate<Property> isRelaxed =
             isRelaxablePredicate.and(p -> ("relaxed".equals(System.getProperty(SERVER_MANAGED_PROPERTIES_MODE))));
 
     /**
@@ -269,9 +266,6 @@ public final class RdfLexicon {
      */
     public static final Predicate<Property> isManagedPredicate =
         hasFedoraNamespace.or(p -> managedProperties.contains(p));
-
-    //public static final Predicate<Property> isManagedPredicate =
-    //        isStrictlyManagedPredicate.and(isRelaxed.negate());
 
     private RdfLexicon() {
 

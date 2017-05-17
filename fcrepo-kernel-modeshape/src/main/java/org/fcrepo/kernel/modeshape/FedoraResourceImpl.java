@@ -127,7 +127,7 @@ import org.fcrepo.kernel.modeshape.rdf.impl.SkolemNodeRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.TypeRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.VersionsRdfContext;
 import org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils;
-import org.fcrepo.kernel.modeshape.utils.JcrPropertyStatementListener;
+import org.fcrepo.kernel.modeshape.utils.FilteringJcrPropertyStatementListener;
 import org.fcrepo.kernel.modeshape.utils.PropertyChangedListener;
 import org.fcrepo.kernel.modeshape.utils.UncheckedPredicate;
 import org.fcrepo.kernel.modeshape.utils.iterators.RdfAdder;
@@ -666,7 +666,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             throw new IllegalArgumentException(errors.stream().map(Exception::getMessage).collect(joining(",\n")));
         }
 
-        final JcrPropertyStatementListener listener = new JcrPropertyStatementListener(
+        final FilteringJcrPropertyStatementListener listener = new FilteringJcrPropertyStatementListener(
                 idTranslator, getSession(), idTranslator.reverse().convert(this).asNode());
 
         model.register(listener);
@@ -687,7 +687,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         listener.assertNoExceptions();
 
         try {
-            touch(propertyChanged.get(), null, null, null, null);
+            touch(propertyChanged.get(), listener.getAddedCreatedDate(), listener.getAddedCreatedBy(),
+                    listener.getAddedModifiedDate(), listener.getAddedModifiedBy());
         } catch (RepositoryException e) {
             throw new RuntimeException(e);
         }

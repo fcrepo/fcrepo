@@ -21,22 +21,25 @@ import org.apache.http.Header;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.Quad;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
+import org.fcrepo.kernel.api.utils.GraphDifferencer;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -47,15 +50,18 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
+import java.util.stream.Stream;
 
 import static java.util.Calendar.getInstance;
 import static java.util.TimeZone.getTimeZone;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
-import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -63,13 +69,16 @@ import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createLiteralByValue;
 import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ModelFactory.createModelForGraph;
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.SERVER_MANAGED_PROPERTIES_MODE;
+import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -116,7 +125,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
 
         final String subjectURI;
-        try (CloseableHttpResponse response = postBinaryResource("this is the binary")) {
+        try (CloseableHttpResponse response = postBinaryResource(serverAddress, "this is the binary")) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
             subjectURI = getLocation(response);
         }
@@ -132,33 +141,6 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
             triples(subjectURI, dataset)
                     .mustHave(CREATED_BY.asNode(), createLiteral(forgedUsername))
                     .mustHave(CREATED_DATE.asNode(), createDateTime(forgedDate));
-        }
-    }
-
-    @Test
-    public void testUpdateResourceWithForgedCreationInformationIsDisallowed() throws IOException, ParseException {
-        assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
-
-        final String subjectURI;
-        try (CloseableHttpResponse response = createObject()) {
-            assertEquals(CREATED.getStatusCode(), getStatus(response));
-            subjectURI = getLocation(response);
-        }
-
-        try (CloseableHttpResponse response = putResourceWithTTL(subjectURI,
-                getTTLThatUpdatesServerManagedTriples(forgedUsername, null, null, null))) {
-            assertEquals(CONFLICT.getStatusCode(), getStatus(response));
-        }
-
-        try (CloseableHttpResponse response = putResourceWithTTL(subjectURI,
-                getTTLThatUpdatesServerManagedTriples(null, forgedDate, null, null))) {
-            assertEquals(CONFLICT.getStatusCode(), getStatus(response));
-        }
-
-        try (CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
-            triples(subjectURI, dataset)
-                    .mustNotHave(CREATED_BY.asNode(), createLiteral(forgedUsername))
-                    .mustNotHave(CREATED_DATE.asNode(), createDateTime(forgedDate));
         }
     }
 
@@ -188,134 +170,95 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
     }
 
     /**
-     * The behavior that is *probably* the most intuative is the one we're testing here.
-     *
-     * That behavior can be summarized as: if you create a child resource with an explicitly provided
-     * creation date, in the absence of other, more recent (than the provided date) modifications to the
-     * parent, the parent's modification date should be set to the creation date of the child.
-     * @throws IOException
-     */
-    @Ignore
-    @Test
-    public void testTouchingParentByChildCreation() throws IOException {
-        assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
-
-        final Calendar firstDate = nowUTC();
-        firstDate.add(Calendar.YEAR, -20);
-        final String firstUser = "first";
-
-        final Calendar secondDate = nowUTC();
-        secondDate.add(Calendar.YEAR, -15);
-        final String secondUser = "second";
-
-        // create a resource 20 years ago
-        final String subjectURI;
-        try (CloseableHttpResponse response = postResourceWithTTL(
-                getTTLThatUpdatesServerManagedTriples(firstUser, firstDate, firstUser, firstDate))) {
-            assertEquals(CREATED.getStatusCode(), getStatus(response));
-            subjectURI = getLocation(response);
-        }
-
-        // add a child 15 years ago
-        forgedDate.add(Calendar.YEAR, 5);
-        forgedUsername = "child-of-" + forgedUsername;
-        final String childURI = subjectURI + "/child";
-        try (CloseableHttpResponse response = putResourceWithTTL(childURI,
-                getTTLThatUpdatesServerManagedTriples(secondUser, secondDate, null, null))) {
-            assertEquals(CREATED.getStatusCode(), getStatus(response));
-            assertEquals(childURI, getLocation(response));
-        }
-
-        try (CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
-            triples(subjectURI, dataset)
-                    .mustHave(CREATED_BY.asNode(), createLiteral(firstUser))
-                    .mustHave(CREATED_DATE.asNode(), createDateTime(firstDate))
-                    .mustHave(LAST_MODIFIED_BY.asNode(), createLiteral(secondUser))
-                    .mustHave(LAST_MODIFIED_DATE.asNode(), createDateTime(secondDate));
-        }
-
-        try (CloseableDataset dataset = getDataset(new HttpGet(childURI))) {
-            triples(subjectURI, dataset)
-                    .mustHave(CREATED_BY.asNode(), createLiteral(secondUser))
-                    .mustHave(CREATED_DATE.asNode(), createDateTime(secondDate))
-                    .mustHave(LAST_MODIFIED_BY.asNode(), createLiteral(secondUser))
-                    .mustHave(LAST_MODIFIED_DATE.asNode(), createDateTime(secondDate));
-        }
-
-    }
-
-    /**
      * Tests a lossless roundtrip of a resource.  This method is written witout using PUT
      * because it may not be supported by the Fedora Spec.
      * @throws IOException
      */
     @Test
-    public void testSimpleRoundtripping() throws IOException {
+    public void testRoundtripping() throws IOException {
         assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
 
-        final String subjectURI;
+        // POST a resource with one user-managed triple
+        final String containerURI;
         try (CloseableHttpResponse response
                      = postResourceWithTTL("<> <http://purl.org/dc/elements/1.1/title> 'title' .")) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
-            subjectURI = getLocation(response);
+            containerURI = getLocation(response);
         }
 
-        final Header contentType;
-        final String body;
-        try (CloseableHttpResponse response = execute(new HttpGet(subjectURI))) {
+        // POST a non-rdf child resource
+        final String containedBinaryURI;
+        final String containedBinaryDescriptionURI;
+        try (CloseableHttpResponse response = postBinaryResource(containerURI, "content")) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            containedBinaryURI = getLocation(response);
+            containedBinaryDescriptionURI = containedBinaryURI + "/fcr:metadata";
+        }
+
+        // export the RDF of the container
+        final Header containerContentType;
+        final String containerBody;
+        try (CloseableHttpResponse response = execute(new HttpGet(containerURI))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
-            contentType = response.getFirstHeader("Content-Type");
-            body = EntityUtils.toString(response.getEntity());
+            containerContentType = response.getFirstHeader("Content-Type");
+            containerBody = EntityUtils.toString(response.getEntity());
         }
 
-        try (CloseableHttpResponse response = execute(new HttpDelete(subjectURI))) {
+        // export the RDF of the child
+        final Header containedBinaryDescriptionContentType;
+        final String containedBinaryDescriptionBody;
+        try (CloseableHttpResponse response = execute(new HttpGet(containedBinaryDescriptionURI))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            containedBinaryDescriptionContentType = response.getFirstHeader("Content-Type");
+            containedBinaryDescriptionBody = EntityUtils.toString(response.getEntity());
+        }
+
+
+        // delete the container and its tombstone
+        try (CloseableHttpResponse response = execute(new HttpDelete(containerURI))) {
             assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
-            try (final CloseableHttpResponse r2 = execute(new HttpGet(subjectURI))) {
+            try (final CloseableHttpResponse r2 = execute(new HttpGet(containerURI))) {
                 final Link tombstone = Link.valueOf(r2.getFirstHeader(LINK).getValue());
                 assertEquals("hasTombstone", tombstone.getRel());
                 assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(tombstone.getUri())));
             }
         }
 
-        final String rdf;
-        try (CloseableDataset original = parseTriples(new ByteArrayInputStream(body.getBytes()))) {
-            final Model m = original.getDefaultModel();
-            final StmtIterator it = m.listStatements();
-            while (it.hasNext()) {
-                final Statement stmt = it.nextStatement();
-                if (!(stmt.getPredicate().equals(CREATED_BY) || stmt.getPredicate().equals(CREATED_DATE)
-                        || stmt.getPredicate().equals(LAST_MODIFIED_BY)
-                        || stmt.getPredicate().equals(LAST_MODIFIED_DATE)
-                        || stmt.getPredicate().getURI().equals("http://purl.org/dc/elements/1.1/title"))) {
-                    it.remove();
-                }
-            }
-            final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            m.write(baos, "ttl");
-            rdf = baos.toString();
+
+        // post the container from the export
+        final String containerRdf = filterRdf(containerBody, CREATED_BY, CREATED_DATE, LAST_MODIFIED_BY,
+                LAST_MODIFIED_DATE, createProperty("http://purl.org/dc/elements/1.1/title"));
+        try (CloseableHttpResponse response = postResourceWithTTL(containerURI, containerRdf)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
         }
 
-        final HttpPost post = new HttpPost(serverAddress);
-        post.setHeader(contentType);
-        post.setHeader("Slug", subjectURI.substring(serverAddress.length()));
-        post.setEntity(new StringEntity(rdf));
-        assertEquals(CREATED.getStatusCode(), getStatus(post));
-
-        try (CloseableDataset roundtripped = getDataset(new HttpGet(subjectURI))) {
-            try (CloseableDataset original = parseTriples(new ByteArrayInputStream(body.getBytes()))) {
-                final DatasetGraph originalGraph = original.asDatasetGraph();
-                final DatasetGraph roundtrippedGraph = roundtripped.asDatasetGraph();
-                final Iterator<Quad> originalQuadIt = originalGraph.find();
-                while (originalQuadIt.hasNext()) {
-                    final Quad q = originalQuadIt.next();
-                    assertTrue(q + " should be preserved through a roundtrip!", roundtrippedGraph.contains(q));
-                    roundtrippedGraph.delete(q);
-                }
-                assertTrue("Roundtripped graph had extra quads!", roundtrippedGraph.isEmpty());
-            }
-
+        // post the binary then patch its metadata to match the export
+        try (CloseableHttpResponse response = postBinaryResource(containerURI,
+                containedBinaryURI.substring(containerURI.length() + 1), "content")) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+        }
+        final String sparqlUpdate;
+        try (CloseableDataset d = getDataset(new HttpGet(containedBinaryDescriptionURI))) {
+            final Model model = createDefaultModel();
+            model.read(new ByteArrayInputStream(containedBinaryDescriptionBody.getBytes()), "", "N3");
+            final GraphDifferencer diff = new GraphDifferencer(model,
+                    iteratorToStream(d.getDefaultModel().listStatements()).map(statement -> statement.asTriple()));
+            sparqlUpdate = buildSparqlUpdate(diff.difference(), diff.notCommon(), CREATED_BY, CREATED_DATE,
+                    LAST_MODIFIED_BY, LAST_MODIFIED_DATE);
+        }
+        final HttpPatch patch = new HttpPatch(containedBinaryDescriptionURI);
+        patch.setHeader("Content-type", "application/sparql-update");
+        patch.setEntity(new StringEntity(sparqlUpdate));
+        try (CloseableHttpResponse response = execute(patch)) {
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
         }
 
+        // Because the creation of the contained resource resulted in an implicit modification to
+        // the triples on the parent, we need to overwrite them again...
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(putResourceWithTTL(containerURI, containerRdf)));
+
+        assertIdentical(containerURI, containerBody);
+        assertIdentical(containedBinaryDescriptionURI, containedBinaryDescriptionBody);
     }
 
     @After
@@ -323,16 +266,96 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         System.clearProperty(SERVER_MANAGED_PROPERTIES_MODE);
     }
 
-    private CloseableHttpResponse postBinaryResource(final String content) throws IOException {
-        final HttpPost post = postObjMethod("/");
+    private void assertIdentical(final String uri, final String originalRdf) throws IOException {
+        try (CloseableDataset roundtripped = getDataset(new HttpGet(uri))) {
+            try (CloseableDataset original = parseTriples(new ByteArrayInputStream(originalRdf.getBytes()))) {
+                final DatasetGraph originalGraph = original.asDatasetGraph();
+                final DatasetGraph roundtrippedGraph = roundtripped.asDatasetGraph();
+                final Iterator<Quad> originalQuadIt = originalGraph.find();
+                while (originalQuadIt.hasNext()) {
+                    final Quad q = originalQuadIt.next();
+                    assertTrue(q + " should be preserved through a roundtrip! \nOriginal RDF: " + originalRdf
+                            + "\nRoundtripped Graph:\n" + roundtrippedGraph, roundtrippedGraph.contains(q));
+                    roundtrippedGraph.delete(q);
+                }
+                assertTrue("Roundtripped graph had extra quads! " + roundtrippedGraph, roundtrippedGraph.isEmpty());
+            }
+        }
+    }
+
+    private String buildSparqlUpdate(final Stream<Triple> toRemove, final Stream<Triple> toAdd,
+                                     final Property ... predicates) {
+        final Set<Property> allowedPredicates = new HashSet<>(Arrays.asList(predicates));
+        final StringBuffer r = new StringBuffer();
+        r.append("DELETE { \n");
+        toRemove.filter(t -> allowedPredicates.contains(createProperty(t.getPredicate().getURI())))
+                .forEach(triple -> r.append(" <> <" + triple.getPredicate().toString() + "> "
+                        + wrapLiteral(triple.getObject()) + " .\n"));
+        r.append("}\nINSERT { ");
+        toAdd.filter(t -> allowedPredicates.contains(createProperty(t.getPredicate().getURI())))
+                .forEach(triple -> r.append(" <> <" + triple.getPredicate().toString() + "> "
+                        + wrapLiteral(triple.getObject()) + " .\n"));
+        r.append("} WHERE {}");
+        return r.toString();
+    }
+
+    private String wrapLiteral(final Node node) {
+        return "\"" + node.getLiteralLexicalForm() + "\"^^<" + node.getLiteralDatatype().getURI() + ">";
+    }
+
+    /**
+     * Parses the provided triples andfilters it to just include statements with the
+     * specified predicates.
+     * @param triples
+     * @param predicates
+     * @return
+     */
+    private String filterRdf(final String triples, final Property ... predicates) {
+        final String containerRdf;
+        try (CloseableDataset original = parseTriples(new ByteArrayInputStream(triples.getBytes()))) {
+            final Model m = original.getDefaultModel();
+            final StmtIterator it = m.listStatements();
+            while (it.hasNext()) {
+                final Statement stmt = it.nextStatement();
+                boolean keep = false;
+                for (Property p : predicates) {
+                    if (stmt.getPredicate().equals(p)) {
+                        keep = true;
+                        break;
+                    }
+                }
+                if (!keep) {
+                    it.remove();
+                }
+            }
+            final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            m.write(baos, "N3");
+            return baos.toString();
+        }
+    }
+
+    private CloseableHttpResponse postBinaryResource(final String parentURI, final String content) throws IOException {
+        return postBinaryResource(parentURI, null, content);
+    }
+
+    private CloseableHttpResponse postBinaryResource(final String parentURI, final String slug,
+                                                     final String content) throws IOException {
+        final HttpPost post = new HttpPost(parentURI);
+        if (slug != null) {
+            post.setHeader("Slug", slug);
+        }
         post.setEntity(new StringEntity(content == null ? "" : content));
         post.setHeader(CONTENT_TYPE, TEXT_PLAIN);
         return execute(post);
     }
 
     private CloseableHttpResponse postResourceWithTTL(final String ttl) throws IOException {
-        final HttpPost httpPost = postObjMethod("/");
-        httpPost.addHeader("Slug", getRandomUniqueId());
+        return this.postResourceWithTTL(null, ttl);
+    }
+
+    private CloseableHttpResponse postResourceWithTTL(final String uri, final String ttl) throws IOException {
+        final HttpPost httpPost = new HttpPost(serverAddress);
+        httpPost.addHeader("Slug", uri == null ? getRandomUniqueId() : uri.substring(serverAddress.length()));
         httpPost.addHeader(CONTENT_TYPE, "text/turtle");
         httpPost.setEntity(new StringEntity(ttl));
         return execute(httpPost);
