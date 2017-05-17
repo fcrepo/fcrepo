@@ -43,16 +43,12 @@ import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
-import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
-import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
-import static org.fcrepo.kernel.api.RdfLexicon.SERVER_MANAGED_PROPERTIES_MODE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
+import static org.fcrepo.kernel.api.RdfLexicon.isRelaxed;
 import static org.fcrepo.kernel.api.RequiredRdfContext.EMBED_RESOURCES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_CONTAINMENT;
@@ -60,6 +56,10 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_MEMBERSHIP;
 import static org.fcrepo.kernel.api.RequiredRdfContext.MINIMAL;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
+import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.getCreatedBy;
+import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.getCreatedDate;
+import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.getModifiedBy;
+import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.getModifiedDate;
 
 
 import java.io.IOException;
@@ -119,7 +119,7 @@ import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 
-import org.fcrepo.kernel.api.utils.RdfLiteralHelper;
+import org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.jvnet.hk2.annotations.Optional;
 
@@ -645,61 +645,29 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             throw new RepositoryRuntimeException(e);
         }
 
-        Calendar createdDate = null;
-        String creatingUser = null;
-        Calendar modifiedDate = null;
-        String modifyingUser = null;
-        boolean modifiesProtectedProperty = false;
-        final Boolean isNew = resource.isNew();
-        final Boolean relaxed = "relaxed".equals(System.getProperty(SERVER_MANAGED_PROPERTIES_MODE));
+        final List<Statement> filteredStatements = new ArrayList<Statement>();
         final StmtIterator it = inputModel.listStatements();
         while (it.hasNext()) {
             final Statement next = it.next();
-            if (next.getPredicate().equals(CREATED_DATE)) {
-                modifiesProtectedProperty = true;
-                if (createdDate == null && relaxed) {
-                    createdDate = parseDateValue(next);
-                    it.remove();
-                } else if (createdDate != null) {
-                    throw new MalformedRdfException(CREATED_DATE + " may only appear once!");
-                }
-            } else if (next.getPredicate().equals(CREATED_BY)) {
-                modifiesProtectedProperty = true;
-                if (creatingUser == null && relaxed) {
-                    creatingUser = next.getObject().asLiteral().getString();
-                    it.remove();
-                } else if (creatingUser != null) {
-                    throw new MalformedRdfException(CREATED_BY + " may only appear once!");
-                }
-            } else if (next.getPredicate().equals(LAST_MODIFIED_DATE)) {
-                modifiesProtectedProperty = true;
-                if (modifiedDate == null && relaxed) {
-                    modifiedDate = parseDateValue(next);
-                    it.remove();
-                } else if (modifiedDate != null) {
-                    throw new MalformedRdfException(LAST_MODIFIED_DATE + " may only appear once!");
-                }
-            } else if (next.getPredicate().equals(LAST_MODIFIED_BY)) {
-                modifiesProtectedProperty = true;
-                if (modifyingUser == null && relaxed) {
-                    modifyingUser = next.getObject().asLiteral().getString();
-                    it.remove();
-                } else if (modifyingUser != null) {
-                    throw new MalformedRdfException(LAST_MODIFIED_BY + " may only appear once!");
-                }
+            if (isRelaxed.test(next.getPredicate())) {
+                filteredStatements.add(next);
+                it.remove();
             }
         }
-        resource.replaceProperties(translator(), inputModel, resourceTriples, createdDate, creatingUser,
-                modifiedDate, modifyingUser);
-        if (relaxed && modifiesProtectedProperty && resource instanceof NonRdfSourceDescription) {
+
+        resource.replaceProperties(translator(), inputModel, resourceTriples, getCreatedDate(filteredStatements),
+                getCreatedBy(filteredStatements), getModifiedDate(filteredStatements),
+                getModifiedBy(filteredStatements));
+        if (!filteredStatements.isEmpty() && resource instanceof NonRdfSourceDescription) {
             ((NonRdfSourceDescription) resource).getDescribedResource()
-                    .setProtectedMetadata(createdDate, creatingUser, modifiedDate, modifyingUser);
+                    .setProtectedMetadata(getCreatedDate(filteredStatements), getCreatedBy(filteredStatements),
+                            getModifiedDate(filteredStatements), getModifiedBy(filteredStatements));
         }
     }
 
     private Calendar parseDateValue(final Statement stmt) {
         try {
-            return RdfLiteralHelper.parseExpectedXsdDateTimeValue(stmt.getObject());
+            return RelaxedPropertiesHelper.parseExpectedXsdDateTimeValue(stmt.getObject());
         } catch (IllegalArgumentException ex) {
             throw new MalformedRdfException(stmt.getPredicate().getURI() + " must be an xsd:dateTime.");
         }

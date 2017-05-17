@@ -20,10 +20,9 @@ package org.fcrepo.kernel.modeshape.utils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
-import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.utils.RdfLiteralHelper;
+import org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper;
 import org.slf4j.Logger;
 
 import javax.jcr.Session;
@@ -32,10 +31,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
-import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
-import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
-import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
-import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.isRelaxed;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -85,17 +80,7 @@ public class FilteringJcrPropertyStatementListener extends JcrPropertyStatementL
      *         untouched
      */
     public Calendar getAddedCreatedDate() {
-        Calendar cal = null;
-        for (Statement added : filteredAddStatements) {
-            if (added.getPredicate().equals(CREATED_DATE)) {
-                if (cal == null) {
-                    cal = RdfLiteralHelper.parseExpectedXsdDateTimeValue(added.getObject());
-                } else {
-                    throw new MalformedRdfException(CREATED_DATE + " may only appear once!");
-                }
-            }
-        }
-        return cal;
+        return RelaxedPropertiesHelper.getCreatedDate(filteredAddStatements);
     }
 
     /**
@@ -105,17 +90,7 @@ public class FilteringJcrPropertyStatementListener extends JcrPropertyStatementL
      *         untouched
      */
     public String getAddedCreatedBy() {
-        String username = null;
-        for (Statement added : filteredAddStatements) {
-            if (added.getPredicate().equals(CREATED_BY)) {
-                if (username == null) {
-                    username = added.getObject().asLiteral().getString();
-                } else {
-                    throw new MalformedRdfException(CREATED_BY + " may only appear once!");
-                }
-            }
-        }
-        return username;
+        return RelaxedPropertiesHelper.getCreatedBy(filteredAddStatements);
     }
 
     /**
@@ -125,17 +100,7 @@ public class FilteringJcrPropertyStatementListener extends JcrPropertyStatementL
      *         untouched
      */
     public Calendar getAddedModifiedDate() {
-        Calendar cal = null;
-        for (Statement added : filteredAddStatements) {
-            if (added.getPredicate().equals(LAST_MODIFIED_DATE)) {
-                if (cal == null) {
-                    cal = RdfLiteralHelper.parseExpectedXsdDateTimeValue(added.getObject());
-                } else {
-                    throw new MalformedRdfException(LAST_MODIFIED_DATE + " may only appear once!");
-                }
-            }
-        }
-        return cal;
+        return RelaxedPropertiesHelper.getModifiedDate(filteredAddStatements);
     }
 
     /**
@@ -145,16 +110,6 @@ public class FilteringJcrPropertyStatementListener extends JcrPropertyStatementL
      *         untouched
      */
     public String getAddedModifiedBy() {
-        String username = null;
-        for (Statement added : filteredAddStatements) {
-            if (added.getPredicate().equals(LAST_MODIFIED_BY)) {
-                if (username == null) {
-                    username = added.getObject().asLiteral().getString();
-                } else {
-                    throw new MalformedRdfException(LAST_MODIFIED_BY + " may only appear once!");
-                }
-            }
-        }
-        return username;
+        return RelaxedPropertiesHelper.getModifiedBy(filteredAddStatements);
     }
 }
