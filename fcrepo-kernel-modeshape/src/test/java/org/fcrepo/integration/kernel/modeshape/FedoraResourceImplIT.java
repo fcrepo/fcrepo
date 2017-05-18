@@ -330,23 +330,23 @@ public class FedoraResourceImplIT extends AbstractIT {
         final NodeTypeManager mgr = jcrSession.getWorkspace().getNodeTypeManager();
         //create supertype mixin
         final NodeTypeTemplate type1 = mgr.createNodeTypeTemplate();
-        type1.setName("config:aSupertype");
+        type1.setName("fedoraconfig:aSupertype");
         type1.setMixin(true);
         final NodeTypeDefinition[] nodeTypes = new NodeTypeDefinition[]{type1};
         mgr.registerNodeTypes(nodeTypes, true);
 
         //create a type inheriting above supertype
         final NodeTypeTemplate type2 = mgr.createNodeTypeTemplate();
-        type2.setName("config:testInher");
+        type2.setName("fedoraconfig:testInher");
         type2.setMixin(true);
-        type2.setDeclaredSuperTypeNames(new String[]{"config:aSupertype"});
+        type2.setDeclaredSuperTypeNames(new String[]{"fedoraconfig:aSupertype"});
         final NodeTypeDefinition[] nodeTypes2 = new NodeTypeDefinition[]{type2};
         mgr.registerNodeTypes(nodeTypes2, true);
 
         //create object with inheriting type
         FedoraResource object = containerService.findOrCreate(session, "/testNTTnheritanceObject");
         final javax.jcr.Node node = getJcrNode(object);
-        node.addMixin("config:testInher");
+        node.addMixin("fedoraconfig:testInher");
 
         session.commit();
         session.expire();
@@ -358,7 +358,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Node s = createGraphSubjectNode(object);
         final Node p = type.asNode();
         final Node o = createProperty("info:fedoraconfig/aSupertype").asNode();
-        assertTrue("supertype config:aSupertype not found inherited in fedora:testInher!",
+        assertTrue("supertype fedoraconfig:aSupertype not found inherited in fedora:testInher!",
                 object.getTriples(subjects, PROPERTIES).collect(toModel()).getGraph().contains(s, p, o));
     }
 
@@ -1184,7 +1184,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testDeletePartOfMultiValueProperty() throws RepositoryException {
         final String pid = getRandomPid();
-        final String relation = "config:fakeRel";
+        final String relation = "fedoraconfig:fakeRel";
         containerService.findOrCreate(session, pid);
         final Container subject = containerService.findOrCreate(session, pid + "/a");
         final Container referent1 = containerService.findOrCreate(session, pid + "/b");
