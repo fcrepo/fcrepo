@@ -18,6 +18,7 @@
 package org.fcrepo.kernel.api.utils;
 
 import org.apache.jena.datatypes.xsd.XSDDateTime;
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Statement;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
@@ -45,18 +46,9 @@ public class RelaxedPropertiesHelper {
      *         untouched
      */
     public static Calendar getCreatedDate(final Iterable<Statement> statements) {
-        Calendar cal = null;
-        for (Statement added : statements) {
-            if (added.getPredicate().equals(CREATED_DATE)) {
-                if (cal == null) {
-                    cal = RelaxedPropertiesHelper.parseExpectedXsdDateTimeValue(added.getObject());
-                } else {
-                    throw new MalformedRdfException(CREATED_DATE + " may only appear once!");
-                }
-            }
-        }
-        return cal;
+        return extractSingleCalendarValue(statements, CREATED_DATE);
     }
+
     /**
      * Gets the created by user (if any) that is included within the statements.
      * @param statements statements to consider
@@ -64,17 +56,7 @@ public class RelaxedPropertiesHelper {
      *         untouched
      */
     public static String getCreatedBy(final Iterable<Statement> statements) {
-        String username = null;
-        for (Statement added : statements) {
-            if (added.getPredicate().equals(CREATED_BY)) {
-                if (username == null) {
-                    username = added.getObject().asLiteral().getString();
-                } else {
-                    throw new MalformedRdfException(CREATED_BY + " may only appear once!");
-                }
-            }
-        }
-        return username;
+        return extractSingleStringValue(statements, CREATED_BY);
     }
 
     /**
@@ -84,17 +66,7 @@ public class RelaxedPropertiesHelper {
      *         untouched
      */
     public static Calendar getModifiedDate(final Iterable<Statement> statements) {
-        Calendar cal = null;
-        for (Statement added : statements) {
-            if (added.getPredicate().equals(LAST_MODIFIED_DATE)) {
-                if (cal == null) {
-                    cal = RelaxedPropertiesHelper.parseExpectedXsdDateTimeValue(added.getObject());
-                } else {
-                    throw new MalformedRdfException(LAST_MODIFIED_DATE + " may only appear once!");
-                }
-            }
-        }
-        return cal;
+        return extractSingleCalendarValue(statements, LAST_MODIFIED_DATE);
     }
 
     /**
@@ -104,17 +76,36 @@ public class RelaxedPropertiesHelper {
      *         untouched
      */
     public static String getModifiedBy(final Iterable<Statement> statements) {
+       return extractSingleStringValue(statements, LAST_MODIFIED_BY);
+    }
+
+    private static String extractSingleStringValue(final Iterable<Statement> statements, final Property predicate) {
         String username = null;
         for (Statement added : statements) {
-            if (added.getPredicate().equals(LAST_MODIFIED_BY)) {
+            if (added.getPredicate().equals(predicate)) {
                 if (username == null) {
                     username = added.getObject().asLiteral().getString();
                 } else {
-                    throw new MalformedRdfException(LAST_MODIFIED_BY + " may only appear once!");
+                    throw new MalformedRdfException(predicate + " may only appear once!");
                 }
             }
         }
         return username;
+    }
+
+    private static Calendar extractSingleCalendarValue(final Iterable<Statement> statements,
+                                                       final Property predicate) {
+        Calendar cal = null;
+        for (Statement added : statements) {
+            if (added.getPredicate().equals(predicate)) {
+                if (cal == null) {
+                    cal = RelaxedPropertiesHelper.parseExpectedXsdDateTimeValue(added.getObject());
+                } else {
+                    throw new MalformedRdfException(predicate + " may only appear once!");
+                }
+            }
+        }
+        return cal;
     }
 
     /**
@@ -123,7 +114,7 @@ public class RelaxedPropertiesHelper {
      * @param node a node representing an xsd:dateTime literal
      * @return a Calendar representation of the expressed dateTime
      */
-    public static Calendar parseExpectedXsdDateTimeValue(final RDFNode node) {
+    private static Calendar parseExpectedXsdDateTimeValue(final RDFNode node) {
         final Object value = node.asLiteral().getValue();
         if (value instanceof XSDDateTime) {
             return ((XSDDateTime) value).asCalendar();
@@ -132,6 +123,7 @@ public class RelaxedPropertiesHelper {
         }
     }
 
+    // Prevent instantiation
     private RelaxedPropertiesHelper() {
 
     }

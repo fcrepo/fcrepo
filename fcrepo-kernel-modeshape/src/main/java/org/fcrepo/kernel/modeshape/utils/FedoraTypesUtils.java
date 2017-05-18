@@ -193,9 +193,9 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
         private final FedoraResource subject;
 
         /**
-         * Contstructs this functional predicate for testing properties on the given
+         * Constructs this functional predicate for testing properties on the given
          * resource.
-         * @param resource the resource whose propertis can be tested by this predicate
+         * @param resource the resource whose properties can be tested by this predicate
          */
         public IsExposedJCRPropertyPredicate(final FedoraResource resource) {
             subject = resource;

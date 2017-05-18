@@ -35,6 +35,15 @@ import static org.fcrepo.kernel.api.RdfLexicon.isRelaxed;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
+ * A subclass of JcrProeprtyStatementListener that intercepts all requests to modify
+ * "relaxed" server-managed triples and provides methods to get those intercepted values.
+ *
+ * A "relaxed" server-managed triple is one that is typically server-managed but for which
+ * the current configuration allows them to be set explicitly under certain circumstances.
+ *
+ * This class behaves exactly like FilteringJcrPropertyStatementListener in the event that
+ * there are no "relaxed" server managed triples.
+ *
  * @author Mike Durbin
  */
 public class FilteringJcrPropertyStatementListener extends JcrPropertyStatementListener {
@@ -54,13 +63,14 @@ public class FilteringJcrPropertyStatementListener extends JcrPropertyStatementL
     public FilteringJcrPropertyStatementListener(final IdentifierConverter<Resource, FedoraResource> idTranslator,
                                                  final Session session, final Node topic) {
         super(idTranslator, session, topic);
-        filteredAddStatements = new ArrayList<Statement>();
+        filteredAddStatements = new ArrayList<>();
     }
 
     @Override
     public void addedStatement(final Statement input) {
         if (isRelaxed.test(input.getPredicate())) {
             filteredAddStatements.add(input);
+            LOGGER.trace("The added statement " + input + " was intercepted from the update request.");
         } else {
             super.addedStatement(input);
         }
@@ -69,6 +79,7 @@ public class FilteringJcrPropertyStatementListener extends JcrPropertyStatementL
     @Override
     public void removedStatement(final Statement input) {
         if (!isRelaxed.test(input.getPredicate())) {
+            LOGGER.trace("The removed statement " + input + " was intercepted from the update request.");
             super.removedStatement(input);
         }
     }

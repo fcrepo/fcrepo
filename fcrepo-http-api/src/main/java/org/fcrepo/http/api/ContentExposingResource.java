@@ -68,7 +68,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -119,7 +118,6 @@ import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 
-import org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.jvnet.hk2.annotations.Optional;
 
@@ -645,7 +643,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             throw new RepositoryRuntimeException(e);
         }
 
-        final List<Statement> filteredStatements = new ArrayList<Statement>();
+        // remove any statements that update "relaxed" server-managed triples so they can be updated separately
+        final List<Statement> filteredStatements = new ArrayList<>();
         final StmtIterator it = inputModel.listStatements();
         while (it.hasNext()) {
             final Statement next = it.next();
@@ -659,7 +658,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 getCreatedBy(filteredStatements), getModifiedDate(filteredStatements),
                 getModifiedBy(filteredStatements));
         if (!filteredStatements.isEmpty() && resource instanceof NonRdfSourceDescription) {
-            ((NonRdfSourceDescription) resource).getDescribedResource()
+            resource.getDescribedResource()
                     .setProtectedMetadata(getCreatedDate(filteredStatements), getCreatedBy(filteredStatements),
                             getModifiedDate(filteredStatements), getModifiedBy(filteredStatements));
         }

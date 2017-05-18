@@ -499,7 +499,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     public Instant getCreatedDate() {
         try {
             if (hasProperty(FEDORA_CREATED)) {
-                return ofEpochMilli(getProperty(FEDORA_CREATED).getDate().getTimeInMillis());
+                return ofEpochMilli(getTimestamp(FEDORA_CREATED, NO_TIME));
             }
             if (hasProperty(JCR_CREATED)) {
                 return ofEpochMilli(getTimestamp(JCR_CREATED, NO_TIME));
@@ -1074,8 +1074,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             return versions
                 .filter(UncheckedPredicate.uncheck(version -> version.getFrozenNode().equals(frozenResource)))
                 .map(uncheck(history::getVersionLabels))
-                .flatMap(Arrays::stream)
-                .findFirst().orElse(null);
+                    .flatMap(Arrays::stream)
+                    .findFirst().orElse(null);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }

@@ -446,7 +446,7 @@ public abstract class AbstractResourceIT {
 
     protected static String getTTLThatUpdatesServerManagedTriples(final String createdBy, final Calendar created,
                                                                   final String modifiedBy, final Calendar modified) {
-        final StringBuffer ttl = new StringBuffer();
+        final StringBuilder ttl = new StringBuilder();
         if (createdBy != null) {
             addClause(ttl, CREATED_BY.getURI(), "\"" + createdBy + "\"");
         }
@@ -468,7 +468,7 @@ public abstract class AbstractResourceIT {
 
     }
 
-    private static void addClause(final StringBuffer ttl, final String predicateUri, final String literal) {
+    private static void addClause(final StringBuilder ttl, final String predicateUri, final String literal) {
         if (ttl.length() == 0) {
             ttl.append("<>");
         } else {

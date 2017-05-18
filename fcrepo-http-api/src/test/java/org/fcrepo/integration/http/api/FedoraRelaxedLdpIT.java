@@ -17,7 +17,6 @@
  */
 package org.fcrepo.integration.http.api;
 
-import org.apache.http.Header;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -62,6 +61,7 @@ import static java.util.TimeZone.getTimeZone;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -140,7 +140,68 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         try (CloseableDataset dataset = getDataset(new HttpGet(describedByURI))) {
             triples(subjectURI, dataset)
                     .mustHave(CREATED_BY.asNode(), createLiteral(forgedUsername))
-                    .mustHave(CREATED_DATE.asNode(), createDateTime(forgedDate));
+                    .mustHave(CREATED_DATE.asNode(), createDateTime(forgedDate))
+                    .mustHave(LAST_MODIFIED_BY.asNode(), createLiteral(forgedUsername))
+                    .mustHave(LAST_MODIFIED_DATE.asNode(), createDateTime(forgedDate));
+        }
+    }
+
+    @Test
+    public void testValidSparqlUpdate() throws IOException {
+        assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
+
+        final String subjectURI;
+        try (CloseableHttpResponse response = postResourceWithTTL(
+                getTTLThatUpdatesServerManagedTriples(forgedUsername, forgedDate, null, null))) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            subjectURI = getLocation(response);
+        }
+
+        final Calendar updatedDate = Calendar.getInstance(getTimeZone("UTC"));
+        final String sparqlUpdate = "PREFIX fedora: <http://fedora.info/definitions/v4/repository#>\n" +
+                "\n" +
+                "DELETE { <> fedora:created \"" + DatatypeConverter.printDateTime(forgedDate)
+                        + "\"^^<http://www.w3.org/2001/XMLSchema#dateTime> }\n" +
+                "INSERT { <> fedora:created \"" + DatatypeConverter.printDateTime(updatedDate)
+                        + "\"^^<http://www.w3.org/2001/XMLSchema#dateTime> }\n" +
+                "WHERE { }";
+        try (CloseableHttpResponse response = patchResource(subjectURI, sparqlUpdate)) {
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
+        }
+
+        try (CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
+            triples(subjectURI, dataset)
+                    .mustHave(CREATED_BY.asNode(), createLiteral(forgedUsername))
+                    .mustHave(CREATED_DATE.asNode(), createDateTime(updatedDate));
+        }
+    }
+
+    @Test
+    public void testInvalidSparqlUpdate() throws IOException {
+        assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
+
+        final String subjectURI;
+        try (CloseableHttpResponse response = execute(postObjMethod())) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            subjectURI = getLocation(response);
+        }
+
+        final Calendar updatedDate = Calendar.getInstance(getTimeZone("UTC"));
+        final String sparqlUpdate = "PREFIX fedora: <http://fedora.info/definitions/v4/repository#>\n" +
+                "\n" +
+                "INSERT { <> fedora:created \"" + DatatypeConverter.printDateTime(updatedDate) +
+                "\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .\n" +
+                " <> fedora:created \"" + DatatypeConverter.printDateTime(forgedDate) +
+                "\"^^<http://www.w3.org/2001/XMLSchema#dateTime> }\n" +
+                "WHERE { }";
+        try (CloseableHttpResponse response = patchResource(subjectURI, sparqlUpdate)) {
+            assertEquals(BAD_REQUEST.getStatusCode(), getStatus(response));
+        }
+
+        try (CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
+            triples(subjectURI, dataset)
+                    .mustNotHave(CREATED_BY.asNode(), createLiteral(forgedUsername))
+                    .mustNotHave(CREATED_DATE.asNode(), createDateTime(updatedDate));
         }
     }
 
@@ -170,8 +231,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
     }
 
     /**
-     * Tests a lossless roundtrip of a resource.  This method is written witout using PUT
-     * because it may not be supported by the Fedora Spec.
+     * Tests a lossless roundtrip of a resource.
      * @throws IOException
      */
     @Test
@@ -196,20 +256,16 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         }
 
         // export the RDF of the container
-        final Header containerContentType;
         final String containerBody;
         try (CloseableHttpResponse response = execute(new HttpGet(containerURI))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
-            containerContentType = response.getFirstHeader("Content-Type");
             containerBody = EntityUtils.toString(response.getEntity());
         }
 
         // export the RDF of the child
-        final Header containedBinaryDescriptionContentType;
         final String containedBinaryDescriptionBody;
         try (CloseableHttpResponse response = execute(new HttpGet(containedBinaryDescriptionURI))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
-            containedBinaryDescriptionContentType = response.getFirstHeader("Content-Type");
             containedBinaryDescriptionBody = EntityUtils.toString(response.getEntity());
         }
 
@@ -242,19 +298,18 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
             final Model model = createDefaultModel();
             model.read(new ByteArrayInputStream(containedBinaryDescriptionBody.getBytes()), "", "N3");
             final GraphDifferencer diff = new GraphDifferencer(model,
-                    iteratorToStream(d.getDefaultModel().listStatements()).map(statement -> statement.asTriple()));
+                    iteratorToStream(d.getDefaultModel().listStatements()).map(Statement::asTriple));
             sparqlUpdate = buildSparqlUpdate(diff.difference(), diff.notCommon(), CREATED_BY, CREATED_DATE,
                     LAST_MODIFIED_BY, LAST_MODIFIED_DATE);
         }
-        final HttpPatch patch = new HttpPatch(containedBinaryDescriptionURI);
-        patch.setHeader("Content-type", "application/sparql-update");
-        patch.setEntity(new StringEntity(sparqlUpdate));
-        try (CloseableHttpResponse response = execute(patch)) {
+
+        try (CloseableHttpResponse response = patchResource(containedBinaryDescriptionURI, sparqlUpdate)) {
             assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
         }
 
         // Because the creation of the contained resource resulted in an implicit modification to
-        // the triples on the parent, we need to overwrite them again...
+        // the triples on the parent, we need to overwrite them again...  This is done doing a PUT
+        // but could be achieved using a sparql update.
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(putResourceWithTTL(containerURI, containerRdf)));
 
         assertIdentical(containerURI, containerBody);
@@ -286,7 +341,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
     private String buildSparqlUpdate(final Stream<Triple> toRemove, final Stream<Triple> toAdd,
                                      final Property ... predicates) {
         final Set<Property> allowedPredicates = new HashSet<>(Arrays.asList(predicates));
-        final StringBuffer r = new StringBuffer();
+        final StringBuilder r = new StringBuilder();
         r.append("DELETE { \n");
         toRemove.filter(t -> allowedPredicates.contains(createProperty(t.getPredicate().getURI())))
                 .forEach(triple -> r.append(" <> <" + triple.getPredicate().toString() + "> "
@@ -304,14 +359,13 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
     }
 
     /**
-     * Parses the provided triples andfilters it to just include statements with the
+     * Parses the provided triples and filters it to just include statements with the
      * specified predicates.
      * @param triples
      * @param predicates
      * @return
      */
     private String filterRdf(final String triples, final Property ... predicates) {
-        final String containerRdf;
         try (CloseableDataset original = parseTriples(new ByteArrayInputStream(triples.getBytes()))) {
             final Model m = original.getDefaultModel();
             final StmtIterator it = m.listStatements();
@@ -332,6 +386,13 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
             m.write(baos, "N3");
             return baos.toString();
         }
+    }
+
+    private CloseableHttpResponse patchResource(final String uri, final String sparqlUpdate) throws IOException {
+        final HttpPatch patch = new HttpPatch(uri);
+        patch.setHeader("Content-type", "application/sparql-update");
+        patch.setEntity(new StringEntity(sparqlUpdate));
+        return execute(patch);
     }
 
     private CloseableHttpResponse postBinaryResource(final String parentURI, final String content) throws IOException {
@@ -389,7 +450,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
             final Model model = createModelForGraph(graph.getDefaultGraph());
             nodeUri = createURI(subjectURI);
 
-            final StringBuffer statements = new StringBuffer();
+            final StringBuilder statements = new StringBuilder();
             final StmtIterator it = model.listStatements();
             while (it.hasNext()) {
                 statements.append(it.next() + "\n");
