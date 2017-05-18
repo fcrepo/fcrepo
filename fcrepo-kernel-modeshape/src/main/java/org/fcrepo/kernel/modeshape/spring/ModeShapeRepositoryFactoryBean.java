@@ -166,11 +166,12 @@ public class ModeShapeRepositoryFactoryBean implements
         if ("strict".equals(value) || "relaxed".equals(value)) {
             final String propertyValue = System.getProperty(SERVER_MANAGED_PROPERTIES_MODE);
             if (propertyValue != null) {
-                LOGGER.warn("Overriding the server managed properties mode \"{}\" that was specified in the system " +
-                                "property \"{}\" with the value \"{}\" from the spring configuration!", propertyValue,
-                        SERVER_MANAGED_PROPERTIES_MODE, value);
+                LOGGER.warn("The system property \"{}\" with the value \"{}\" is being used instead of the" +
+                                "serverManagedPropertiesMode of \"{}\" specified in the Spring configuration!",
+                        SERVER_MANAGED_PROPERTIES_MODE, propertyValue, value);
+            } else {
+                System.setProperty(SERVER_MANAGED_PROPERTIES_MODE, value);
             }
-            System.setProperty(SERVER_MANAGED_PROPERTIES_MODE, value);
         } else {
             throw new IllegalArgumentException("Invalid value \"" + value
                     + "\" supplied for serverManagedPropertiesMode (expecting \"strict\" or \"relaxed\")!");
