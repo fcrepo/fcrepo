@@ -1064,8 +1064,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             return versions
                 .filter(UncheckedPredicate.uncheck(version -> version.getFrozenNode().equals(frozenResource)))
                 .map(uncheck(history::getVersionLabels))
-                    .flatMap(Arrays::stream)
-                    .findFirst().orElse(null);
+                .flatMap(Arrays::stream)
+                .findFirst().orElse(null);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }

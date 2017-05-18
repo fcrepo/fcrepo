@@ -237,6 +237,7 @@ public final class RdfLexicon {
     public static final Property SERVER_MANAGED = createProperty(REPOSITORY_NAMESPACE + "ServerManaged");
 
     public static final Set<Property> managedProperties;
+
     static {
         final ImmutableSet.Builder<Property> b = ImmutableSet.builder();
         b.addAll(membershipProperties).addAll(fixityProperties).addAll(ldpProperties).addAll(
@@ -249,7 +250,6 @@ public final class RdfLexicon {
     public static final Set<Property> relaxableProperties
             = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(new Property[]{
             LAST_MODIFIED_BY, LAST_MODIFIED_DATE, CREATED_BY, CREATED_DATE})));
-
 
     public static final String SERVER_MANAGED_PROPERTIES_MODE = "fcrepo.properties.management";
 
