@@ -65,7 +65,7 @@ public interface FedoraTypes {
 
     String CONTENT_DIGEST = "premis:hasMessageDigest";
 
-    String DEFAULT_DIGEST_ALGORITHM = "config:defaultDigestAlgorithm";
+    String DEFAULT_DIGEST_ALGORITHM = "fedoraconfig:defaultDigestAlgorithm";
 
     String FCR_METADATA = "fcr:metadata";
 
