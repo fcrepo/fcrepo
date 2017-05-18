@@ -19,14 +19,16 @@ package org.fcrepo.kernel.modeshape.utils.iterators;
 
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
-import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaces;
 
+import java.util.Iterator;
+import java.util.Map;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.modeshape.utils.NamespaceTools;
 import org.slf4j.Logger;
 
 import org.apache.jena.rdf.model.Resource;
@@ -43,6 +45,7 @@ import org.apache.jena.rdf.model.Statement;
 public class RdfAdder extends PersistingRdfStreamConsumer {
 
     private static final Logger LOGGER = getLogger(RdfAdder.class);
+    private Map<String, String> userNamespaces;
 
     /**
      * Ordinary constructor.
@@ -53,7 +56,38 @@ public class RdfAdder extends PersistingRdfStreamConsumer {
      */
     public RdfAdder(final IdentifierConverter<Resource, FedoraResource> idTranslator, final Session session,
         final RdfStream stream) {
+        this(idTranslator, session, stream, null);
+    }
+
+    /**
+     * Ordinary constructor.
+     *
+     * @param idTranslator the id translator
+     * @param session the session
+     * @param stream the rdf stream
+     * @param userNamespaces user-provided namespace mapping
+     */
+    public RdfAdder(final IdentifierConverter<Resource, FedoraResource> idTranslator, final Session session,
+        final RdfStream stream, final Map<String, String> userNamespaces) {
         super(idTranslator, session, stream);
+        this.userNamespaces = userNamespaces;
+    }
+
+    private Map<String, String> getNamespaces(final Session session) {
+        final Map<String, String> namespaces = NamespaceTools.getNamespaces(session);
+        if (userNamespaces != null) {
+            for (final Iterator<String> it = userNamespaces.keySet().iterator(); it.hasNext(); ) {
+                final String prefix = it.next();
+                final String uri = userNamespaces.get(prefix);
+                if (!namespaces.containsKey(prefix) && !namespaces.containsValue(uri)) {
+                    LOGGER.debug("Adding user-supplied namespace mapping {}: {}", prefix, uri);
+                    namespaces.put(prefix, uri);
+                } else {
+                    LOGGER.debug("Not adding conflicting user-supplied namespace mapping {}: {}", prefix, uri);
+                }
+            }
+        }
+        return namespaces;
     }
 
     @Override

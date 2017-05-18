@@ -2556,7 +2556,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final String response = EntityUtils.toString(getResponse.getEntity());
             try (final StringReader r = new StringReader(response)) {
                 model.read(r, subjectURI, "TURTLE");
-                assertEquals("http://asdf.org/", model.getNSPrefixMap().get("asdf"));
+                assertEquals("http://asdf.org/", model.getNsPrefixMap().get("asdf"));
             }
         }
     }
