@@ -89,12 +89,12 @@ import static org.junit.Assert.assertTrue;
 @RunWith(SpringJUnit4ClassRunner.class)
 public class FedoraRelaxedLdpIT extends AbstractResourceIT {
 
-    private String forgedUsername = "forged-username";
-    private Calendar forgedDate;
+    private String providedUsername = "provided-username";
+    private Calendar providedDate;
 
     public FedoraRelaxedLdpIT() {
-        forgedDate = nowUTC();
-        forgedDate.add(Calendar.YEAR, -20);
+        providedDate = nowUTC();
+        providedDate.add(Calendar.YEAR, -20);
     }
 
     @Before
@@ -104,24 +104,45 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
 
 
     @Test
-    public void testCreateResourceWithForgedCreationInformationIsAllowed() throws IOException, ParseException {
+    public void testBasicPutRoundtrip() throws IOException {
+        final String subjectURI;
+        try (CloseableHttpResponse response = execute(postObjMethod())) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            subjectURI = getLocation(response);
+        }
+
+        final String body;
+        final HttpGet get = new HttpGet(subjectURI);
+        try (CloseableHttpResponse response = execute(get)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            body = EntityUtils.toString(response.getEntity());
+        }
+
+        final HttpPut put = new HttpPut(subjectURI);
+        put.setEntity(new StringEntity(body));
+        put.setHeader(CONTENT_TYPE, "text/turtle");
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(put));
+    }
+
+    @Test
+    public void testCreateResourceWithSpecificCreationInformationIsAllowed() throws IOException, ParseException {
         assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
         final String subjectURI;
         try (CloseableHttpResponse response = postResourceWithTTL(
-                getTTLThatUpdatesServerManagedTriples(forgedUsername, forgedDate, null, null))) {
+                getTTLThatUpdatesServerManagedTriples(providedUsername, providedDate, null, null))) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
             subjectURI = getLocation(response);
         }
 
         try (CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
             triples(subjectURI, dataset)
-                    .mustHave(CREATED_BY.asNode(), createLiteral(forgedUsername))
-                    .mustHave(CREATED_DATE.asNode(), createDateTime(forgedDate));
+                    .mustHave(CREATED_BY.asNode(), createLiteral(providedUsername))
+                    .mustHave(CREATED_DATE.asNode(), createDateTime(providedDate));
         }
     }
 
     @Test
-    public void testUpdateNonRdfResourceWithForgedInformationIsAllowed() throws IOException, ParseException {
+    public void testUpdateNonRdfResourceWithSpecificInformationIsAllowed() throws IOException, ParseException {
         assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
 
         final String subjectURI;
@@ -133,16 +154,17 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         final String describedByURI = subjectURI + "/fcr:metadata";
 
         try (CloseableHttpResponse response = putResourceWithTTL(describedByURI,
-                getTTLThatUpdatesServerManagedTriples(forgedUsername, forgedDate, forgedUsername, forgedDate))) {
+                getTTLThatUpdatesServerManagedTriples(providedUsername, providedDate,
+                                                      providedUsername, providedDate))) {
             assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
         }
 
         try (CloseableDataset dataset = getDataset(new HttpGet(describedByURI))) {
             triples(subjectURI, dataset)
-                    .mustHave(CREATED_BY.asNode(), createLiteral(forgedUsername))
-                    .mustHave(CREATED_DATE.asNode(), createDateTime(forgedDate))
-                    .mustHave(LAST_MODIFIED_BY.asNode(), createLiteral(forgedUsername))
-                    .mustHave(LAST_MODIFIED_DATE.asNode(), createDateTime(forgedDate));
+                    .mustHave(CREATED_BY.asNode(), createLiteral(providedUsername))
+                    .mustHave(CREATED_DATE.asNode(), createDateTime(providedDate))
+                    .mustHave(LAST_MODIFIED_BY.asNode(), createLiteral(providedUsername))
+                    .mustHave(LAST_MODIFIED_DATE.asNode(), createDateTime(providedDate));
         }
     }
 
@@ -152,7 +174,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
 
         final String subjectURI;
         try (CloseableHttpResponse response = postResourceWithTTL(
-                getTTLThatUpdatesServerManagedTriples(forgedUsername, forgedDate, null, null))) {
+                getTTLThatUpdatesServerManagedTriples(providedUsername, providedDate, null, null))) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
             subjectURI = getLocation(response);
         }
@@ -160,7 +182,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         final Calendar updatedDate = Calendar.getInstance(getTimeZone("UTC"));
         final String sparqlUpdate = "PREFIX fedora: <http://fedora.info/definitions/v4/repository#>\n" +
                 "\n" +
-                "DELETE { <> fedora:created \"" + DatatypeConverter.printDateTime(forgedDate)
+                "DELETE { <> fedora:created \"" + DatatypeConverter.printDateTime(providedDate)
                         + "\"^^<http://www.w3.org/2001/XMLSchema#dateTime> }\n" +
                 "INSERT { <> fedora:created \"" + DatatypeConverter.printDateTime(updatedDate)
                         + "\"^^<http://www.w3.org/2001/XMLSchema#dateTime> }\n" +
@@ -171,7 +193,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
 
         try (CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
             triples(subjectURI, dataset)
-                    .mustHave(CREATED_BY.asNode(), createLiteral(forgedUsername))
+                    .mustHave(CREATED_BY.asNode(), createLiteral(providedUsername))
                     .mustHave(CREATED_DATE.asNode(), createDateTime(updatedDate));
         }
     }
@@ -191,7 +213,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
                 "\n" +
                 "INSERT { <> fedora:created \"" + DatatypeConverter.printDateTime(updatedDate) +
                 "\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .\n" +
-                " <> fedora:created \"" + DatatypeConverter.printDateTime(forgedDate) +
+                " <> fedora:created \"" + DatatypeConverter.printDateTime(providedDate) +
                 "\"^^<http://www.w3.org/2001/XMLSchema#dateTime> }\n" +
                 "WHERE { }";
         try (CloseableHttpResponse response = patchResource(subjectURI, sparqlUpdate)) {
@@ -200,13 +222,13 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
 
         try (CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
             triples(subjectURI, dataset)
-                    .mustNotHave(CREATED_BY.asNode(), createLiteral(forgedUsername))
+                    .mustNotHave(CREATED_BY.asNode(), createLiteral(providedUsername))
                     .mustNotHave(CREATED_DATE.asNode(), createDateTime(updatedDate));
         }
     }
 
     @Test
-    public void testUpdateResourceWithForgedModificationInformationIsAllowed() throws IOException, ParseException {
+    public void testUpdateResourceWithSpecificModificationInformationIsAllowed() throws IOException, ParseException {
         assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
 
         final String subjectURI;
@@ -215,18 +237,18 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
             subjectURI = getLocation(response);
         }
 
-        forgedDate = nowUTC();
-        forgedDate.add(Calendar.MONTH, 1);
+        providedDate = nowUTC();
+        providedDate.add(Calendar.MONTH, 1);
 
         try (CloseableHttpResponse response = putResourceWithTTL(subjectURI,
-                getTTLThatUpdatesServerManagedTriples(null, null, forgedUsername, forgedDate))) {
+                getTTLThatUpdatesServerManagedTriples(null, null, providedUsername, providedDate))) {
             assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
         }
 
         try (CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
             triples(subjectURI, dataset)
-                    .mustHave(LAST_MODIFIED_BY.asNode(), createLiteral(forgedUsername))
-                    .mustHave(LAST_MODIFIED_DATE.asNode(), createDateTime(forgedDate));
+                    .mustHave(LAST_MODIFIED_BY.asNode(), createLiteral(providedUsername))
+                    .mustHave(LAST_MODIFIED_DATE.asNode(), createDateTime(providedDate));
         }
     }
 

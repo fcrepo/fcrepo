@@ -72,7 +72,6 @@ import java.io.InputStream;
 import java.net.URI;
 import java.text.ParseException;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
@@ -765,8 +764,7 @@ public class FedoraLdpTest {
                 toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null);
 
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        verify(mockContainer).replaceProperties(eq(idTranslator), any(Model.class), any(RdfStream.class),
-                any(Calendar.class), any(String.class), any(Calendar.class), any(String.class));
+        verify(mockContainer).replaceProperties(eq(idTranslator), any(Model.class), any(RdfStream.class));
     }
 
     @Test
@@ -800,8 +798,7 @@ public class FedoraLdpTest {
                 toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null);
 
         assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
-        verify(mockObject).replaceProperties(eq(idTranslator), any(Model.class), any(RdfStream.class),
-                any(Calendar.class), any(String.class), any(Calendar.class), any(String.class));
+        verify(mockObject).replaceProperties(eq(idTranslator), any(Model.class), any(RdfStream.class));
     }
 
     @Test(expected = ClientErrorException.class)
@@ -893,8 +890,7 @@ public class FedoraLdpTest {
         final Response actual = testObj.createObject(null, NTRIPLES_TYPE, "b",
                 toInputStream("_:a <info:b> _:c .", UTF_8), null, null);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        verify(mockContainer).replaceProperties(eq(idTranslator), any(Model.class), any(RdfStream.class),
-                any(Calendar.class), any(String.class), any(Calendar.class), any(String.class));
+        verify(mockContainer).replaceProperties(eq(idTranslator), any(Model.class), any(RdfStream.class));
     }
 
 

@@ -48,7 +48,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
-import static org.fcrepo.kernel.api.RdfLexicon.isRelaxed;
 import static org.fcrepo.kernel.api.RequiredRdfContext.EMBED_RESOURCES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_CONTAINMENT;
@@ -56,11 +55,6 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_MEMBERSHIP;
 import static org.fcrepo.kernel.api.RequiredRdfContext.MINIMAL;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
-import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.getCreatedBy;
-import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.getCreatedDate;
-import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.getModifiedBy;
-import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.getModifiedDate;
-
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -93,8 +87,6 @@ import javax.ws.rs.core.Response;
 import org.apache.jena.atlas.RuntimeIOException;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RiotException;
 import org.fcrepo.http.commons.api.HttpHeaderInjector;
@@ -643,25 +635,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             throw new RepositoryRuntimeException(e);
         }
 
-        // remove any statements that update "relaxed" server-managed triples so they can be updated separately
-        final List<Statement> filteredStatements = new ArrayList<>();
-        final StmtIterator it = inputModel.listStatements();
-        while (it.hasNext()) {
-            final Statement next = it.next();
-            if (isRelaxed.test(next.getPredicate())) {
-                filteredStatements.add(next);
-                it.remove();
-            }
-        }
-
-        resource.replaceProperties(translator(), inputModel, resourceTriples, getCreatedDate(filteredStatements),
-                getCreatedBy(filteredStatements), getModifiedDate(filteredStatements),
-                getModifiedBy(filteredStatements));
-        if (!filteredStatements.isEmpty() && resource instanceof NonRdfSourceDescription) {
-            resource.getDescribedResource()
-                    .setProtectedMetadata(getCreatedDate(filteredStatements), getCreatedBy(filteredStatements),
-                            getModifiedDate(filteredStatements), getModifiedBy(filteredStatements));
-        }
+        resource.replaceProperties(translator(), inputModel, resourceTriples);
     }
 
     protected void patchResourcewithSparql(final FedoraResource resource,

@@ -26,15 +26,16 @@ import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.empty;
 import static java.util.stream.Stream.of;
 import static org.apache.commons.codec.digest.DigestUtils.sha1Hex;
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static org.apache.jena.update.UpdateAction.execute;
 import static org.apache.jena.update.UpdateFactory.create;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.fcrepo.kernel.api.RdfLexicon.SERVER_MANAGED_PROPERTIES_MODE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
+import static org.fcrepo.kernel.api.RdfLexicon.isRelaxed;
 import static org.fcrepo.kernel.api.RequiredRdfContext.EMBED_RESOURCES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_CONTAINMENT;
@@ -97,8 +98,11 @@ import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionManager;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.FedoraVersion;
+import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
@@ -111,6 +115,7 @@ import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.utils.GraphDifferencer;
+import org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper;
 import org.fcrepo.kernel.modeshape.rdf.converters.PropertyConverter;
 import org.fcrepo.kernel.modeshape.rdf.impl.AclRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.ChildrenRdfContext;
@@ -739,22 +744,27 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @Override
     public void replaceProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
         final Model inputModel, final RdfStream originalTriples) throws MalformedRdfException {
-        replaceProperties(idTranslator, inputModel, originalTriples, null, null, null, null);
-    }
 
-    /* (non-Javadoc)
-     * @see org.fcrepo.kernel.api.models.FedoraResource#replaceProperties
-     *     (org.fcrepo.kernel.api.identifiers.IdentifierConverter, org.apache.jena.rdf.model.Model)
-     */
-    @Override
-    public void replaceProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-        final Model inputModel, final RdfStream originalTriples, final Calendar createdDate,
-        final String createdUser, final Calendar date, final String user) throws MalformedRdfException {
+        // remove any statements that update "relaxed" server-managed triples so they can be updated separately
+        final List<Statement> filteredStatements = new ArrayList<>();
+        final StmtIterator it = inputModel.listStatements();
+        while (it.hasNext()) {
+            final Statement next = it.next();
+            if (RdfLexicon.isRelaxed.test(next.getPredicate())) {
+                filteredStatements.add(next);
+                it.remove();
+            }
+        }
+        // remove any "relaxed" server-managed triples from the existing triples
+        final RdfStream filteredTriples = new DefaultRdfStream(originalTriples.topic(),
+                originalTriples.filter(triple -> !isRelaxed.test(createProperty(triple.getPredicate().getURI()))));
+
+
         try (final RdfStream replacementStream =
                 new DefaultRdfStream(idTranslator.reverse().convert(this).asNode())) {
 
             final GraphDifferencer differencer =
-                new GraphDifferencer(inputModel, originalTriples);
+                new GraphDifferencer(inputModel, filteredTriples);
 
             final StringBuilder exceptions = new StringBuilder();
             try (final DefaultRdfStream diffStream =
@@ -791,33 +801,13 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             }
 
             try {
-                touch(propertyChanged.get(), createdDate, createdUser, date, user);
+                touch(propertyChanged.get(), RelaxedPropertiesHelper.getCreatedDate(filteredStatements),
+                        RelaxedPropertiesHelper.getCreatedBy(filteredStatements),
+                        RelaxedPropertiesHelper.getModifiedDate(filteredStatements),
+                        RelaxedPropertiesHelper.getModifiedBy(filteredStatements));
             } catch (RepositoryException e) {
                 throw new RuntimeException(e);
             }
-        }
-    }
-
-    /**
-     * Sets the protected properties to the given values (if updating these properties is permitted
-     * for the repository).
-     * @param createdDate the date the resource was created
-     * @param creatingUser the user who created the resource
-     * @param modifiedDate the date the resource was modified
-     * @param modifyingUser the user who last modified the resource
-     *
-     */
-    public void setProtectedMetadata(final Calendar createdDate,
-                                     final String creatingUser, final Calendar modifiedDate,
-                                     final String modifyingUser) {
-        if (!"relaxed".equals(System.getProperty(SERVER_MANAGED_PROPERTIES_MODE))) {
-            throw new RepositoryRuntimeException("Repository isn't configured to allow modification of server" +
-                    " managed properties!");
-        }
-        try {
-            this.touch(false, createdDate, creatingUser, modifiedDate, modifyingUser);
-        } catch (RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
         }
     }
 

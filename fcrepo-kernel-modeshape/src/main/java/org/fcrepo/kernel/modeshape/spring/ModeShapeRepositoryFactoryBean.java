@@ -170,6 +170,8 @@ public class ModeShapeRepositoryFactoryBean implements
                                 "serverManagedPropertiesMode of \"{}\" specified in the Spring configuration!",
                         SERVER_MANAGED_PROPERTIES_MODE, propertyValue, value);
             } else {
+                LOGGER.info("Set sytem property \"{}\" to \"{}\" to correspond to serverManagedPropertiesMode.",
+                        SERVER_MANAGED_PROPERTIES_MODE, value);
                 System.setProperty(SERVER_MANAGED_PROPERTIES_MODE, value);
             }
         } else {

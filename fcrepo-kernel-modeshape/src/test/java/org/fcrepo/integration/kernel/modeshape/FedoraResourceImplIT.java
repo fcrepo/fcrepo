@@ -248,8 +248,8 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     @Test
     public void testTouch() throws RepositoryException {
-        final Calendar forgedDate = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
-        forgedDate.add(Calendar.YEAR, 1);
+        final Calendar specified = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+        specified.add(Calendar.YEAR, 1);
 
         final String pid = getRandomPid();
         containerService.findOrCreate(session, "/" + pid);
@@ -265,15 +265,15 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Container obj2 = containerService.findOrCreate(session, "/" + pid);
         final FedoraResourceImpl impl = new FedoraResourceImpl(getJcrNode(obj2));
 
-        final String forgedUser = "me";
-        forgedDate.add(Calendar.YEAR, 1);
+        final String specifiedUser = "me";
+        specified.add(Calendar.YEAR, 1);
 
-        impl.touch(false, forgedDate, forgedUser, forgedDate, forgedUser);
+        impl.touch(false, specified, specifiedUser, specified, specifiedUser);
 
-        assertEquals(forgedUser, impl.getNode().getProperty(FEDORA_LASTMODIFIEDBY).getString());
-        assertEquals(forgedUser, impl.getNode().getProperty(FEDORA_CREATEDBY).getString());
-        assertEquals(forgedDate.getTime(), Date.from(obj2.getLastModifiedDate()));
-        assertEquals(forgedDate.getTime(), Date.from(obj2.getCreatedDate()));
+        assertEquals(specifiedUser, impl.getNode().getProperty(FEDORA_LASTMODIFIEDBY).getString());
+        assertEquals(specifiedUser, impl.getNode().getProperty(FEDORA_CREATEDBY).getString());
+        assertEquals(specified.getTime(), Date.from(obj2.getLastModifiedDate()));
+        assertEquals(specified.getTime(), Date.from(obj2.getCreatedDate()));
     }
 
 
