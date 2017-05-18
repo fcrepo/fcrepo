@@ -29,13 +29,12 @@
 <ebucore = 'http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#'>
 
 /*
- * An implementation-specific fedora namespace for properties a user may set on a node that may
+ * A fedora namespace for properties a user may set on a node that may
  * enable or disable a fedora-specific behavior of that node.
  */
-<fedoraconfig = 'info:fedoraconfig/'>
+<fedoraconfig = 'http://fedora.info/definitions/v4/config#'>
 
 <test = 'info:fedora/test/'>
-
 /*
  * Any Fedora resource.
  */
