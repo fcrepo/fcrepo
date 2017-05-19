@@ -21,9 +21,6 @@ import static com.google.common.collect.ImmutableSet.of;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -248,19 +245,16 @@ public final class RdfLexicon {
     }
 
     public static final Set<Property> relaxableProperties
-            = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(new Property[]{
-            LAST_MODIFIED_BY, LAST_MODIFIED_DATE, CREATED_BY, CREATED_DATE})));
+            = of(LAST_MODIFIED_BY, LAST_MODIFIED_DATE, CREATED_BY, CREATED_DATE);
 
     public static final String SERVER_MANAGED_PROPERTIES_MODE = "fcrepo.properties.management";
 
     private static Predicate<Property> hasFedoraNamespace =
         p -> !p.isAnon() && p.getNameSpace().startsWith(REPOSITORY_NAMESPACE);
 
-    public static final Predicate<Property> isRelaxablePredicate =
-            p -> relaxableProperties.contains(p);
-
     public static final Predicate<Property> isRelaxed =
-            isRelaxablePredicate.and(p -> ("relaxed".equals(System.getProperty(SERVER_MANAGED_PROPERTIES_MODE))));
+            p -> relaxableProperties.contains(p)
+                    && ("relaxed".equals(System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)));
 
     /**
      * Detects whether an RDF property is managed by the repository.
