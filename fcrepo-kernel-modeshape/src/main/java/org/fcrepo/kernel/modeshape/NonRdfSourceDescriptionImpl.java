@@ -89,7 +89,7 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements N
     public void touch(final boolean includeMembershipResource, final Calendar createdDate, final String createdUser,
                       final Calendar modifiedDate, final String modifyingUser) throws RepositoryException {
         super.touch(includeMembershipResource, createdDate, createdUser, modifiedDate, modifyingUser);
-        if (createdDate != null || createdUser != null || modifiedDate != null | modifyingUser != null) {
+        if (createdDate != null || createdUser != null || modifiedDate != null || modifyingUser != null) {
             ((FedoraBinaryImpl) getDescribedResource()).touch(false, createdDate, createdUser,
                     modifiedDate, modifyingUser);
         }

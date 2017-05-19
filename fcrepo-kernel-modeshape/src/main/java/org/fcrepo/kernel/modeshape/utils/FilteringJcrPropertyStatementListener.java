@@ -35,7 +35,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.isRelaxed;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
- * A subclass of JcrProeprtyStatementListener that intercepts all requests to modify
+ * A subclass of JcrPropertyStatementListener that intercepts all requests to modify
  * "relaxed" server-managed triples and provides methods to get those intercepted values.
  *
  * A "relaxed" server-managed triple is one that is typically server-managed but for which
@@ -70,7 +70,7 @@ public class FilteringJcrPropertyStatementListener extends JcrPropertyStatementL
     public void addedStatement(final Statement input) {
         if (isRelaxed.test(input.getPredicate())) {
             filteredAddStatements.add(input);
-            LOGGER.trace("The added statement " + input + " was intercepted from the update request.");
+            LOGGER.trace("The added statement {} was intercepted from the update request.", input);
         } else {
             super.addedStatement(input);
         }
@@ -79,13 +79,14 @@ public class FilteringJcrPropertyStatementListener extends JcrPropertyStatementL
     @Override
     public void removedStatement(final Statement input) {
         if (!isRelaxed.test(input.getPredicate())) {
-            LOGGER.trace("The removed statement " + input + " was intercepted from the update request.");
             super.removedStatement(input);
+        } else {
+            LOGGER.trace("The removed statement {} was intercepted from the update request.", input);
         }
     }
 
     /**
-     * Gets the created date (if any) that was specified to be applied as part of the statments
+     * Gets the created date (if any) that was specified to be applied as part of the statements
      * made to the model to which this StatementListener is listening.
      * @return the date that should be set for the CREATED_DATE or null if it should be
      *         untouched
@@ -95,9 +96,9 @@ public class FilteringJcrPropertyStatementListener extends JcrPropertyStatementL
     }
 
     /**
-     * Gets the created by user (if any) that was specified to be applied as part of the statments
+     * Gets the created by user (if any) that was specified to be applied as part of the statements
      * made to the model to which this StatementListener is listening.
-     * @return the date that should be set for the CREATED_BY or null if it should be
+     * @return the user that should be set for the CREATED_BY or null if it should be
      *         untouched
      */
     public String getAddedCreatedBy() {
@@ -105,7 +106,7 @@ public class FilteringJcrPropertyStatementListener extends JcrPropertyStatementL
     }
 
     /**
-     * Gets the modified date (if any) that was specified to be applied as part of the statments
+     * Gets the modified date (if any) that was specified to be applied as part of the statements
      * made to the model to which this StatementListener is listening.
      * @return the date that should be set for the LAST_MODIFIED_DATE or null if it should be
      *         untouched
@@ -115,9 +116,9 @@ public class FilteringJcrPropertyStatementListener extends JcrPropertyStatementL
     }
 
     /**
-     * Gets the modified by user (if any) that was specified to be applied as part of the statments
+     * Gets the modified by user (if any) that was specified to be applied as part of the statements
      * made to the model to which this StatementListener is listening.
-     * @return the date that should be set for the MODIFIED_BY or null if it should be
+     * @return the user that should be set for the MODIFIED_BY or null if it should be
      *         untouched
      */
     public String getAddedModifiedBy() {
