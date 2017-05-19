@@ -482,7 +482,7 @@ public class FedoraResourceImplIT extends AbstractIT {
      * See also FCREPO-2391
      */
     @Test
-    public void testUpdatesWithMultiplePredicateMatches() throws IOException {
+    public void testUpdatesWithMultiplePredicateMatches() {
         final Node subject = createURI("info:fedora/testUpdatesWithMultiplePredicateMatches");
         final FedoraResource object =
             containerService.findOrCreate(session, "/testUpdatesWithMultiplePredicateMatches");

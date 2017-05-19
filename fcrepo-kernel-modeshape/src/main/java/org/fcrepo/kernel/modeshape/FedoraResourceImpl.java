@@ -816,10 +816,11 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
      * not explicitly set.
      * @param includeMembershipResource true if this touch should propagate through to
      *                                  ldp membership resources
+     * @param createdDate the date to which the created date should be set or null to leave it unchanged
+     * @param createdUser the user to which the created by should be set or null to leave it unchanged
      * @param modifiedDate the date to which the modified date should be set or null to use now
-     *
      * @param modifyingUser the user making the modification or null to use the current user
-     * @throws RepositoryException
+     * @throws RepositoryException an error occurs while updating the repository
      */
     @VisibleForTesting
     public void touch(final boolean includeMembershipResource, final Calendar createdDate, final String createdUser,

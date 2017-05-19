@@ -254,7 +254,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
 
     /**
      * Tests a lossless roundtrip of a resource.
-     * @throws IOException
+     * @throws IOException if an error occurs while reading or writing to repository over HTTP
      */
     @Test
     public void testRoundtripping() throws IOException {

@@ -371,6 +371,7 @@ public class JcrRdfTools {
      *
      * @param idTranslator the property of idTranslator
      * @param t the statement
+     * @param topic the topic
      * @return the persistable statement
      * @throws RepositoryException if repository exception occurred
      */

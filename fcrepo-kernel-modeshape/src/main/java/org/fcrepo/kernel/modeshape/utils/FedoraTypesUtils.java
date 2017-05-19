@@ -416,6 +416,8 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
      * node is a direct or indirect container, provided the LDP constraints are valid.
      *
      * @param node The JCR node
+     * @param date the date the modification was supposed to have occurred or null to indicate now
+     * @param user the user who performed the action or null to indicate the user associated with the current session
      */
     public static void touchLdpMembershipResource(final Node node, final Calendar date, final String user) {
         getContainingNode(node).filter(uncheck(parent -> parent.hasProperty(LDP_MEMBER_RESOURCE))).ifPresent(parent -> {
