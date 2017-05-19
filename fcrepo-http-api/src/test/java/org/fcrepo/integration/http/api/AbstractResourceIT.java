@@ -32,6 +32,10 @@ import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
+import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
+import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
+import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
+import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
@@ -39,9 +43,11 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.Calendar;
 import java.util.Collection;
 
 import javax.ws.rs.core.Response.Status;
+import javax.xml.bind.DatatypeConverter;
 
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 
@@ -437,4 +443,39 @@ public abstract class AbstractResourceIT {
         assertThat("Expected object to be deleted", getStatus(new HttpHead(location)), is(GONE.getStatusCode()));
         assertThat("Expected object to be deleted", getStatus(new HttpGet(location)), is(GONE.getStatusCode()));
     }
+
+    protected static String getTTLThatUpdatesServerManagedTriples(final String createdBy, final Calendar created,
+                                                                  final String modifiedBy, final Calendar modified) {
+        final StringBuilder ttl = new StringBuilder();
+        if (createdBy != null) {
+            addClause(ttl, CREATED_BY.getURI(), "\"" + createdBy + "\"");
+        }
+        if (created != null) {
+            addClause(ttl, CREATED_DATE.getURI(),
+                    "\"" + DatatypeConverter.printDateTime(created)
+                    + "\"^^<http://www.w3.org/2001/XMLSchema#dateTime>");
+        }
+        if (modifiedBy != null) {
+            addClause(ttl, LAST_MODIFIED_BY.getURI(), "\"" + modifiedBy + "\"");
+        }
+        if (modified != null) {
+            addClause(ttl, LAST_MODIFIED_DATE.getURI(),
+                    "\"" + DatatypeConverter.printDateTime(modified)
+                    + "\"^^<http://www.w3.org/2001/XMLSchema#dateTime>");
+        }
+        ttl.append(" .\n");
+        return ttl.toString();
+
+    }
+
+    private static void addClause(final StringBuilder ttl, final String predicateUri, final String literal) {
+        if (ttl.length() == 0) {
+            ttl.append("<>");
+        } else {
+            ttl.append(" ;\n");
+        }
+        ttl.append(" <" + predicateUri + "> ");
+        ttl.append(literal);
+    }
+
 }

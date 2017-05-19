@@ -2091,6 +2091,17 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testPostCreateDate() throws IOException {
+        final HttpPost httpPost = postObjMethod("/");
+        httpPost.addHeader("Slug", getRandomUniqueId());
+        httpPost.addHeader(CONTENT_TYPE, "text/turtle");
+        httpPost.setEntity(new StringEntity(getTTLThatUpdatesServerManagedTriples("fakeuser", null, null, null)));
+        try (final CloseableHttpResponse response = execute(httpPost)) {
+            assertEquals("Must not be able to update createdBy!", CONFLICT.getStatusCode(), getStatus(response));
+        }
+    }
+
+    @Test
     public void testLdpContainerInteraction() throws IOException {
 
         final String id = getRandomUniqueId();

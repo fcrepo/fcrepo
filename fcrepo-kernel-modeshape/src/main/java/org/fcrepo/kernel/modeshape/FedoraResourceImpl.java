@@ -26,6 +26,7 @@ import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.empty;
 import static java.util.stream.Stream.of;
 import static org.apache.commons.codec.digest.DigestUtils.sha1Hex;
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static org.apache.jena.update.UpdateAction.execute;
 import static org.apache.jena.update.UpdateFactory.create;
@@ -34,6 +35,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
+import static org.fcrepo.kernel.api.RdfLexicon.isRelaxed;
 import static org.fcrepo.kernel.api.RequiredRdfContext.EMBED_RESOURCES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_CONTAINMENT;
@@ -95,8 +97,12 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionManager;
 
+import com.google.common.annotations.VisibleForTesting;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.FedoraVersion;
+import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
@@ -109,6 +115,7 @@ import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.utils.GraphDifferencer;
+import org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper;
 import org.fcrepo.kernel.modeshape.rdf.converters.PropertyConverter;
 import org.fcrepo.kernel.modeshape.rdf.impl.AclRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.ChildrenRdfContext;
@@ -125,7 +132,7 @@ import org.fcrepo.kernel.modeshape.rdf.impl.SkolemNodeRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.TypeRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.VersionsRdfContext;
 import org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils;
-import org.fcrepo.kernel.modeshape.utils.JcrPropertyStatementListener;
+import org.fcrepo.kernel.modeshape.utils.FilteringJcrPropertyStatementListener;
 import org.fcrepo.kernel.modeshape.utils.PropertyChangedListener;
 import org.fcrepo.kernel.modeshape.utils.UncheckedPredicate;
 import org.fcrepo.kernel.modeshape.utils.iterators.RdfAdder;
@@ -496,6 +503,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @Override
     public Instant getCreatedDate() {
         try {
+            if (hasProperty(FEDORA_CREATED)) {
+                return ofEpochMilli(getTimestamp(FEDORA_CREATED, NO_TIME));
+            }
             if (hasProperty(JCR_CREATED)) {
                 return ofEpochMilli(getTimestamp(JCR_CREATED, NO_TIME));
             }
@@ -515,9 +525,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     /**
      * This method gets the last modified date for this FedoraResource.  Because
      * the last modified date is managed by fcrepo (not ModeShape) while the created
-     * date *is* managed by ModeShape in the current implementation it's possible that
-     * the last modified date will be before the created date.  Instead of making
-     * a second update to correct the modified date, in cases where the modified
+     * date *is* sometimes managed by ModeShape in the current implementation it's
+     * possible that the last modified date will be before the created date.  Instead
+     * of making a second update to correct the modified date, in cases where the modified
      * date is ealier than the created date, this class presents the created date instead.
      *
      * Any method that exposes the last modified date must maintain this illusion so
@@ -560,13 +570,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             return created;
         }
         return timestamp;
-    }
-
-    /**
-     * Set the last-modified date to the current date.
-     */
-    public void touch() {
-        FedoraTypesUtils.touch(getNode());
     }
 
     @Override
@@ -668,7 +671,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             throw new IllegalArgumentException(errors.stream().map(Exception::getMessage).collect(joining(",\n")));
         }
 
-        final JcrPropertyStatementListener listener = new JcrPropertyStatementListener(
+        final FilteringJcrPropertyStatementListener listener = new FilteringJcrPropertyStatementListener(
                 idTranslator, getSession(), idTranslator.reverse().convert(this).asNode());
 
         model.register(listener);
@@ -688,13 +691,11 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
         listener.assertNoExceptions();
 
-        // Update the fedora:lastModified property
-        touch();
-
-        // Update the fedora:lastModified property of the ldp:memberResource
-        // resource, if necessary.
-        if (propertyChanged.get()) {
-            touchLdpMembershipResource(getNode());
+        try {
+            touch(propertyChanged.get(), listener.getAddedCreatedDate(), listener.getAddedCreatedBy(),
+                    listener.getAddedModifiedDate(), listener.getAddedModifiedBy());
+        } catch (RepositoryException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -737,17 +738,33 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
     /* (non-Javadoc)
      * @see org.fcrepo.kernel.api.models.FedoraResource#replaceProperties
-     *     (org.fcrepo.kernel.api.identifiers.IdentifierConverter, org.apache.jena.rdf.model.Model)
+     *     (org.fcrepo.kernel.api.identifiers.IdentifierConverter, org.apache.jena.rdf.model.Model,
+     *     org.fcrepo.kernel.api.RdfStream)
      */
     @Override
     public void replaceProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
         final Model inputModel, final RdfStream originalTriples) throws MalformedRdfException {
 
+        // remove any statements that update "relaxed" server-managed triples so they can be updated separately
+        final List<Statement> filteredStatements = new ArrayList<>();
+        final StmtIterator it = inputModel.listStatements();
+        while (it.hasNext()) {
+            final Statement next = it.next();
+            if (RdfLexicon.isRelaxed.test(next.getPredicate())) {
+                filteredStatements.add(next);
+                it.remove();
+            }
+        }
+        // remove any "relaxed" server-managed triples from the existing triples
+        final RdfStream filteredTriples = new DefaultRdfStream(originalTriples.topic(),
+                originalTriples.filter(triple -> !isRelaxed.test(createProperty(triple.getPredicate().getURI()))));
+
+
         try (final RdfStream replacementStream =
                 new DefaultRdfStream(idTranslator.reverse().convert(this).asNode())) {
 
             final GraphDifferencer differencer =
-                new GraphDifferencer(inputModel, originalTriples);
+                new GraphDifferencer(inputModel, filteredTriples);
 
             final StringBuilder exceptions = new StringBuilder();
             try (final DefaultRdfStream diffStream =
@@ -783,14 +800,37 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                 throw new MalformedRdfException(exceptions.toString());
             }
 
-            // Update the fedora:lastModified property
-            touch();
-
-            // If the ldp:insertedContentRelation property was changed, update the
-            // ldp:membershipResource resource.
-            if (propertyChanged.get()) {
-                touchLdpMembershipResource(getNode());
+            try {
+                touch(propertyChanged.get(), RelaxedPropertiesHelper.getCreatedDate(filteredStatements),
+                        RelaxedPropertiesHelper.getCreatedBy(filteredStatements),
+                        RelaxedPropertiesHelper.getModifiedDate(filteredStatements),
+                        RelaxedPropertiesHelper.getModifiedBy(filteredStatements));
+            } catch (RepositoryException e) {
+                throw new RuntimeException(e);
             }
+        }
+    }
+
+    /**
+     * Touches a resource to ensure that the implicitly updated properties are updated if
+     * not explicitly set.
+     * @param includeMembershipResource true if this touch should propagate through to
+     *                                  ldp membership resources
+     * @param createdDate the date to which the created date should be set or null to leave it unchanged
+     * @param createdUser the user to which the created by should be set or null to leave it unchanged
+     * @param modifiedDate the date to which the modified date should be set or null to use now
+     * @param modifyingUser the user making the modification or null to use the current user
+     * @throws RepositoryException an error occurs while updating the repository
+     */
+    @VisibleForTesting
+    public void touch(final boolean includeMembershipResource, final Calendar createdDate, final String createdUser,
+                      final Calendar modifiedDate, final String modifyingUser) throws RepositoryException {
+        FedoraTypesUtils.touch(getNode(), createdDate, createdUser, modifiedDate, modifyingUser);
+
+        // If the ldp:insertedContentRelation property was changed, update the
+        // ldp:membershipResource resource.
+        if (includeMembershipResource) {
+            touchLdpMembershipResource(getNode(), modifiedDate, modifyingUser);
         }
     }
 
