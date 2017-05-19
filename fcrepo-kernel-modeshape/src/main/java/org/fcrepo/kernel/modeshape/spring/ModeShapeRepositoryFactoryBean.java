@@ -37,6 +37,8 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.core.io.Resource;
 
+import static org.fcrepo.kernel.api.RdfLexicon.SERVER_MANAGED_PROPERTIES_MODE;
+
 /**
  * A Modeshape factory shim to make it play nice with our Spring-based
  * configuration
@@ -150,5 +152,31 @@ public class ModeShapeRepositoryFactoryBean implements
             propertiesLoader = new DefaultPropertiesLoader();
         }
         return propertiesLoader;
+    }
+
+    /**
+     * Set the mode for server managed properties.  The value "strict" (default)
+     * will result in the classic behavior where certain provenance-related
+     * properties cannot be set, while "relaxed" will allow for them to be
+     * set in some circumstances.
+     *
+     * @param value the value (must be either "strict" or "relaxed")
+     */
+    public void setServerManagedPropertiesMode(final String value) {
+        if ("strict".equals(value) || "relaxed".equals(value)) {
+            final String propertyValue = System.getProperty(SERVER_MANAGED_PROPERTIES_MODE);
+            if (propertyValue != null) {
+                LOGGER.warn("The system property \"{}\" with the value \"{}\" is being used instead of the" +
+                                "serverManagedPropertiesMode of \"{}\" specified in the Spring configuration!",
+                        SERVER_MANAGED_PROPERTIES_MODE, propertyValue, value);
+            } else {
+                LOGGER.info("Set sytem property \"{}\" to \"{}\" to correspond to serverManagedPropertiesMode.",
+                        SERVER_MANAGED_PROPERTIES_MODE, value);
+                System.setProperty(SERVER_MANAGED_PROPERTIES_MODE, value);
+            }
+        } else {
+            throw new IllegalArgumentException("Invalid value \"" + value
+                    + "\" supplied for serverManagedPropertiesMode (expecting \"strict\" or \"relaxed\")!");
+        }
     }
 }

@@ -13,7 +13,8 @@
 
     <bean name="modeshapeRepofactory"
         class="org.fcrepo.kernel.modeshape.spring.ModeShapeRepositoryFactoryBean"
-        p:repositoryConfiguration="${fcrepo.modeshape.configuration:test_repository.json}"/>
+        p:repositoryConfiguration="${fcrepo.modeshape.configuration:test_repository.json}"
+        p:serverManagedPropertiesMode="strict" />
 
     <bean class="org.modeshape.jcr.ModeShapeEngine" init-method="start"/>
 

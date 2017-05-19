@@ -244,8 +244,17 @@ public final class RdfLexicon {
         managedProperties = b.build();
     }
 
+    public static final Set<Property> relaxableProperties
+            = of(LAST_MODIFIED_BY, LAST_MODIFIED_DATE, CREATED_BY, CREATED_DATE);
+
+    public static final String SERVER_MANAGED_PROPERTIES_MODE = "fcrepo.properties.management";
+
     private static Predicate<Property> hasFedoraNamespace =
         p -> !p.isAnon() && p.getNameSpace().startsWith(REPOSITORY_NAMESPACE);
+
+    public static final Predicate<Property> isRelaxed =
+            p -> relaxableProperties.contains(p)
+                    && ("relaxed".equals(System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)));
 
     /**
      * Detects whether an RDF property is managed by the repository.

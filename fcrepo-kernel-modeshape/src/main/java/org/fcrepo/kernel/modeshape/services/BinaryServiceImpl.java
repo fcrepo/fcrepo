@@ -51,10 +51,7 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
     private static final Logger LOGGER = getLogger(BinaryServiceImpl.class);
 
     /**
-     * Retrieve or create a Datastream instance by pid and dsid
-     *
-     * @param path jcr path to the datastream
-     * @return datastream
+     * {@inheritDoc}
      */
     @Override
     public FedoraBinary findOrCreate(final FedoraSession session, final String path) {
@@ -73,7 +70,7 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
             final FedoraBinaryImpl binary = new FedoraBinaryImpl(dsNode.getNode(JCR_CONTENT));
 
             if (dsNode.isNew()) {
-                binary.touch();
+                touch(binary.getNode());
             }
 
             return binary;
