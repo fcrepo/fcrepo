@@ -57,6 +57,12 @@ public interface FedoraTypes {
 
     String FEDORA_LASTMODIFIED = "fedora:lastModified";
 
+    String FEDORA_CREATED = "fedora:created";
+
+    String FEDORA_LASTMODIFIEDBY = "fedora:lastModifiedBy";
+
+    String FEDORA_CREATEDBY = "fedora:createdBy";
+
     String FILENAME = "ebucore:filename";
 
     String HAS_MIME_TYPE = "ebucore:hasMimeType";

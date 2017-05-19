@@ -34,6 +34,7 @@ import org.fcrepo.kernel.api.utils.CacheEntry;
 import org.fcrepo.kernel.api.utils.ContentDigest;
 import org.fcrepo.kernel.api.utils.FixityResult;
 import org.fcrepo.kernel.modeshape.rdf.impl.FixityRdfContext;
+import org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.modeshape.utils.impl.CacheEntryFactory;
 import org.fcrepo.metrics.RegistryService;
 import org.modeshape.jcr.api.Binary;
@@ -197,8 +198,8 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
             verifyChecksums(nonNullChecksums, dataProperty);
 
             decorateContentNode(contentNode, nonNullChecksums);
-            touch();
-            ((FedoraResourceImpl) getDescription()).touch();
+            FedoraTypesUtils.touch(getNode());
+            FedoraTypesUtils.touch(((FedoraResourceImpl) getDescription()).getNode());
 
             LOGGER.debug("Created data property at path: {}", dataProperty.getPath());
 

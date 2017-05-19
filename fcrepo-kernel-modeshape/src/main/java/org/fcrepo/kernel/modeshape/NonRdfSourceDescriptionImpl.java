@@ -29,6 +29,8 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.slf4j.Logger;
 
+import java.util.Calendar;
+
 /**
  * Abstraction for a Fedora datastream backed by a JCR node.
  *
@@ -79,6 +81,18 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements N
      */
     public static boolean hasMixin(final Node node) {
         return isNonRdfSourceDescription.test(node);
+    }
+
+    /**
+     * Overrides the superclass to propagate updates to certain properties to the binary if explicitly set.
+     */
+    public void touch(final boolean includeMembershipResource, final Calendar createdDate, final String createdUser,
+                      final Calendar modifiedDate, final String modifyingUser) throws RepositoryException {
+        super.touch(includeMembershipResource, createdDate, createdUser, modifiedDate, modifyingUser);
+        if (createdDate != null || createdUser != null || modifiedDate != null || modifyingUser != null) {
+            ((FedoraBinaryImpl) getDescribedResource()).touch(false, createdDate, createdUser,
+                    modifiedDate, modifyingUser);
+        }
     }
 
 }

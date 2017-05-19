@@ -41,6 +41,9 @@
 [fedora:Resource] > mix:created, mix:lastModified, mix:referenceable mixin
   - rdf:type (URI) multiple
   - fedora:lastModified (DATE)
+  - fedora:created (DATE)
+  - fedora:lastModifiedBy (STRING)
+  - fedora:createdBy (STRING)
   - * (undefined) multiple
   - * (undefined)
 
