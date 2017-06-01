@@ -69,11 +69,13 @@ public class GraphDifferencer {
         notCommon = replacement;
         common = createDefaultGraph();
         original.forEach(x -> {
-            if (notCommon.contains(x)) {
-                notCommon.remove(x.getSubject(), x.getPredicate(), x.getObject());
-                common.add(x);
-            } else if (!common.contains(x)) {
-                source.accept(x);
+            synchronized (this) {
+                if (notCommon.contains(x)) {
+                    notCommon.remove(x.getSubject(), x.getPredicate(), x.getObject());
+                    common.add(x);
+                } else if (!common.contains(x)) {
+                    source.accept(x);
+                }
             }
         });
     }
