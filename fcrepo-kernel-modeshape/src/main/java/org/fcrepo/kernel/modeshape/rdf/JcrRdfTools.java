@@ -26,7 +26,7 @@ import static javax.jcr.PropertyType.UNDEFINED;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIED;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIEDBY;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CREATED;;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CREATED;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CREATEDBY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_PAIRTREE;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
