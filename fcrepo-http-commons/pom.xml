@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.fcrepo</groupId>
     <artifactId>fcrepo</artifactId>
-    <version>4.7.3</version>
+    <version>4.7.4-SNAPSHOT</version>
   </parent>
   <artifactId>fcrepo-http-commons</artifactId>
   <name>Fedora Repository HTTP Commons Module</name>
