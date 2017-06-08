@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>CopyOfRelation.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Jena Output Patch Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.jena</a> &gt; <span class="el_source">CopyOfRelation.java</span></div><h1>CopyOfRelation.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.jena;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import org.apache.jena.util.iterator.Map1Iterator ;
+import org.apache.jena.util.iterator.WrappedIterator ;
+
+/**
+ * A sparse 2 dimensional array of boolean indexed by Object.
+ *
+ * Complete with transitive closure algorithm.
+ */
+class CopyOfRelation&lt;T&gt; {
+    final private Map&lt;T, Set&lt;T&gt;&gt; rows;
+    final private Map&lt;T, Set&lt;T&gt;&gt; cols;
+    final private Set&lt;T&gt; index;
+    /** The empty Relation.
+     */
+<span class="fc" id="L40">    public CopyOfRelation() {</span>
+<span class="fc" id="L41">        rows = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L42">        cols = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L43">        index = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L44">    }</span>
+    /** &lt;code&gt;a&lt;/code&gt; is now related to &lt;code&gt;b&lt;/code&gt;
+     *
+     */
+    synchronized public void set(T a, T b) {
+<span class="fc" id="L49">        index.add(a);</span>
+<span class="fc" id="L50">        index.add(b);</span>
+<span class="fc" id="L51">        innerAdd(rows, a, b);</span>
+<span class="fc" id="L52">        innerAdd(cols, b, a);</span>
+<span class="fc" id="L53">    }</span>
+    /** Uniquely &lt;code&gt;a&lt;/code&gt; is now related to uniquely &lt;code&gt;b&lt;/code&gt;.
+     *
+     *  When this is called any other &lt;code&gt;a&lt;/code&gt; related to this &lt;code&gt;b&lt;/code&gt; is removed.
+     *  When this is called any other &lt;code&gt;b&lt;/code&gt; related to this &lt;code&gt;a&lt;/code&gt; is removed.
+     *
+     */
+    synchronized public void set11(T a, T b) {
+<span class="fc" id="L61">        clearX(a, forward(a));</span>
+<span class="fc" id="L62">        clearX(backward(b), b);</span>
+<span class="fc" id="L63">        set(a, b);</span>
+<span class="fc" id="L64">    }</span>
+    /** Uniquely &lt;code&gt;a&lt;/code&gt; is now related to &lt;code&gt;b&lt;/code&gt;.
+     *  Many &lt;code&gt;b&lt;/code&gt;'s can be related to each &lt;code&gt;a&lt;/code&gt;.
+     *  When this is called any other &lt;code&gt;a&lt;/code&gt; related to this &lt;code&gt;b&lt;/code&gt; is removed.
+     */
+    synchronized public void set1N(T a, T b) {
+<span class="nc" id="L70">        clearX(backward(b), b);</span>
+<span class="nc" id="L71">        set(a, b);</span>
+<span class="nc" id="L72">    }</span>
+    /** &lt;code&gt;a&lt;/code&gt; is now related to uniquely &lt;code&gt;b&lt;/code&gt;.
+     *  Many &lt;code&gt;a&lt;/code&gt;'s can be related to each &lt;code&gt;b&lt;/code&gt;.
+     *  When this is called any other &lt;code&gt;b&lt;/code&gt; related to this &lt;code&gt;a&lt;/code&gt; is removed.
+     */
+    synchronized public void setN1(T a, T b) {
+<span class="nc" id="L78">        clearX(a, forward(a));</span>
+<span class="nc" id="L79">        set(a, b);</span>
+<span class="nc" id="L80">    }</span>
+    /** &lt;code&gt;a&lt;/code&gt; is now related to &lt;code&gt;b&lt;/code&gt;
+     *
+     */
+    synchronized public void setNN(T a, T b) {
+<span class="nc" id="L85">        set(a, b);</span>
+<span class="nc" id="L86">    }</span>
+    /** &lt;code&gt;a&lt;/code&gt; is now &lt;em&gt;not&lt;/em&gt; related to &lt;code&gt;b&lt;/code&gt;
+     *
+     */
+    synchronized public void clear(T a, T b) {
+<span class="fc" id="L91">        innerClear(rows, a, b);</span>
+<span class="fc" id="L92">        innerClear(cols, b, a);</span>
+<span class="fc" id="L93">    }</span>
+    private void clearX(Set&lt;T&gt; s, T b) {
+<span class="fc bfc" id="L95" title="All 2 branches covered.">        if (s == null)</span>
+<span class="fc" id="L96">            return;</span>
+<span class="pc bpc" id="L97" title="1 of 2 branches missed.">        for ( T value : s )</span>
+        {
+<span class="nc" id="L99">            clear( value, b );</span>
+<span class="nc" id="L100">        }</span>
+<span class="fc" id="L101">    }</span>
+    private void clearX(T a, Set&lt;T&gt; s) {
+<span class="fc bfc" id="L103" title="All 2 branches covered.">        if (s == null)</span>
+<span class="fc" id="L104">            return;</span>
+<span class="fc bfc" id="L105" title="All 2 branches covered.">        for ( T value : s )</span>
+        {
+<span class="fc" id="L107">            clear( a, value );</span>
+<span class="fc" id="L108">        }</span>
+<span class="fc" id="L109">    }</span>
+    static private &lt;T&gt; void innerAdd(Map&lt;T, Set&lt;T&gt;&gt; s, T a, T b) {
+<span class="fc" id="L111">        Set&lt;T&gt; vals = s.get(a);</span>
+<span class="fc bfc" id="L112" title="All 2 branches covered.">        if (vals == null) {</span>
+<span class="fc" id="L113">            vals = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L114">            s.put(a, vals);</span>
+        }
+<span class="fc" id="L116">        vals.add(b);</span>
+<span class="fc" id="L117">    }</span>
+    static private &lt;T&gt; void innerClear(Map&lt;T, Set&lt;T&gt;&gt; s, T a, T b) {
+<span class="fc" id="L119">        Set&lt;T&gt; vals = s.get(a);</span>
+<span class="pc bpc" id="L120" title="1 of 2 branches missed.">        if (vals != null) {</span>
+<span class="fc" id="L121">            vals.remove(b);</span>
+        }
+<span class="fc" id="L123">    }</span>
+    /** Is &lt;code&gt;a&lt;/code&gt; related to &lt;code&gt;b&lt;/code&gt;?
+     *
+     */
+    public boolean get(T a, T b) {
+<span class="nc" id="L128">        Set &lt;T&gt; vals = rows.get(a);</span>
+<span class="nc bnc" id="L129" title="All 4 branches missed.">        return vals != null &amp;&amp; vals.contains(b);</span>
+    }
+    /**
+     * Takes this to its transitive closure.
+     See B. Roy. &lt;b&gt;Transitivit� et connexit�.&lt;/b&gt; &lt;i&gt;C.R. Acad. Sci.&lt;/i&gt; Paris &lt;b&gt;249&lt;/b&gt;, 1959 pp 216-218.
+     or
+     S. Warshall, &lt;b&gt;A theorem on Boolean matrices&lt;/b&gt;, &lt;i&gt;Journal of the ACM&lt;/i&gt;, &lt;b&gt;9&lt;/b&gt;(1), 1962, pp11-12
+
+
+     */
+    synchronized public void transitiveClosure() {
+<span class="nc bnc" id="L140" title="All 2 branches missed.">        for ( T oj : index )</span>
+        {
+<span class="nc" id="L142">            Set&lt;T&gt; si = cols.get( oj );</span>
+<span class="nc" id="L143">            Set&lt;T&gt; sk = rows.get( oj );</span>
+<span class="nc bnc" id="L144" title="All 4 branches missed.">            if ( si != null &amp;&amp; sk != null )</span>
+            {
+<span class="nc" id="L146">                Iterator&lt;T&gt; i = si.iterator();</span>
+<span class="nc bnc" id="L147" title="All 2 branches missed.">                while ( i.hasNext() )</span>
+                {
+<span class="nc" id="L149">                    T oi = i.next();</span>
+<span class="nc bnc" id="L150" title="All 2 branches missed.">                    if ( oi != oj )</span>
+                    {
+<span class="nc" id="L152">                        Iterator&lt;T&gt; k = sk.iterator();</span>
+<span class="nc bnc" id="L153" title="All 2 branches missed.">                        while ( k.hasNext() )</span>
+                        {
+<span class="nc" id="L155">                            T ok = k.next();</span>
+<span class="nc bnc" id="L156" title="All 2 branches missed.">                            if ( ok != oj )</span>
+                            {
+<span class="nc" id="L158">                                set( oi, ok );</span>
+                            }
+<span class="nc" id="L160">                        }</span>
+                    }
+<span class="nc" id="L162">                }</span>
+            }
+<span class="nc" id="L164">        }</span>
+<span class="nc" id="L165">    }</span>
+    /**
+     * The set of &lt;code&gt;a&lt;/code&gt; such that &lt;code&gt;a&lt;/code&gt; is related to &lt;code&gt;a&lt;/code&gt;.
+     *
+     */
+    synchronized public Set&lt;T&gt; getDiagonal() {
+<span class="nc" id="L171">        Set&lt;T&gt; rslt = new HashSet&lt;&gt;();</span>
+<span class="nc bnc" id="L172" title="All 2 branches missed.">        for ( T o : index )</span>
+        {
+<span class="nc bnc" id="L174" title="All 2 branches missed.">            if ( get( o, o ) )</span>
+            {
+<span class="nc" id="L176">                rslt.add( o );</span>
+            }
+<span class="nc" id="L178">        }</span>
+<span class="nc" id="L179">        return rslt;</span>
+    }
+
+    synchronized public CopyOfRelation&lt;T&gt; copy() {
+<span class="nc" id="L183">        CopyOfRelation&lt;T&gt; rslt = new CopyOfRelation&lt;&gt;();</span>
+<span class="nc" id="L184">        Iterator&lt;CopyOfPairEntry&lt;T, T&gt;&gt; it = iterator();</span>
+<span class="nc bnc" id="L185" title="All 2 branches missed.">        while ( it.hasNext() ) {</span>
+<span class="nc" id="L186">            Map.Entry&lt;T, T&gt; e = it.next();</span>
+<span class="nc" id="L187">            rslt.set(e.getKey(),e.getValue());</span>
+<span class="nc" id="L188">        }</span>
+<span class="nc" id="L189">        return rslt;</span>
+    }
+
+    /**
+     * The set of &lt;code&gt;b&lt;/code&gt; such that &lt;code&gt;a&lt;/code&gt; is related to &lt;code&gt;b&lt;/code&gt;.
+     *
+     */
+    public Set&lt;T&gt; forward(T a) {
+<span class="fc" id="L197">        return rows.get(a);</span>
+    }
+    /**
+     * The set of &lt;code&gt;a&lt;/code&gt; such that &lt;code&gt;a&lt;/code&gt; is related to &lt;code&gt;b&lt;/code&gt;.
+     *
+     */
+    public Set&lt;T&gt; backward(T b) {
+<span class="fc" id="L204">        return cols.get(b);</span>
+    }
+
+    private static &lt;T&gt; Iterator&lt;CopyOfPairEntry&lt;T, T&gt;&gt; pairEntry(Map.Entry&lt;T, Set&lt;T&gt;&gt; pair)
+    {
+<span class="nc" id="L209">        final T a = pair.getKey() ;</span>
+<span class="nc" id="L210">        Set&lt;T&gt; bs = pair.getValue() ;</span>
+<span class="nc" id="L211">        return new Map1Iterator&lt;&gt;(b -&gt; new CopyOfPairEntry&lt;&gt;(a, b), bs.iterator()) ;</span>
+    }
+
+    /**
+     * An Iterator over the pairs of the Relation.
+     * Each pair is returned as a java.util.Map.Entry.
+     * The first element is accessed through &lt;code&gt;getKey()&lt;/code&gt;,
+     * the second through &lt;code&gt;getValue()&lt;/code&gt;.
+     *@see java.util.Map.Entry
+     */
+    public Iterator&lt;CopyOfPairEntry&lt;T, T&gt;&gt; iterator()
+    {
+<span class="nc" id="L223">        Map1Iterator&lt;Map.Entry&lt;T, Set&lt;T&gt;&gt;,Iterator&lt;CopyOfPairEntry&lt;T, T&gt;&gt;&gt; iter1 =</span>
+<span class="nc" id="L224">                new Map1Iterator&lt;&gt;( entry -&gt; pairEntry(entry) , rows.entrySet().iterator()) ;</span>
+        // And now flatten it.
+<span class="nc" id="L226">        Iterator&lt;CopyOfPairEntry&lt;T, T&gt;&gt; iter2 = WrappedIterator.createIteratorIterator(iter1) ;</span>
+<span class="nc" id="L227">        return iter2 ;</span>
+    }
+}
+
+// Old version - exactly as original except with the generics.
+// Hard(er) to read.
+//        return new IteratorIterator&lt;PairEntry&lt;T, T&gt;&gt;(new Map1Iterator&lt;Map.Entry&lt;T, Set&lt;T&gt;&gt;, Iterator&lt;PairEntry&lt;T, T&gt;&gt;&gt;(new Map1&lt;Map.Entry&lt;T, Set&lt;T&gt;&gt;, Iterator&lt;PairEntry&lt;T, T&gt;&gt;&gt;() {
+//            // Convert a Map.Entry into an iterator over Map.Entry
+//            public Iterator&lt;PairEntry&lt;T, T&gt;&gt; map1(Map.Entry&lt;T, Set&lt;T&gt;&gt; pair)
+//            {
+//                final T a = pair.getKey() ;
+//                Set&lt;T&gt; bs = pair.getValue() ;
+//                return new Map1Iterator&lt;T, PairEntry&lt;T, T&gt;&gt;(
+//                // Converts a b into a Map.Entry pair.
+//                                                            new Map1&lt;T, PairEntry&lt;T, T&gt;&gt;() {
+//                                                                public PairEntry&lt;T, T&gt; map1(T b)
+//                                                                {
+//                                                                    return new PairEntry&lt;T, T&gt;(a, b) ;
+//                                                                }
+//                                                            }, bs.iterator()) ;
+//            }
+//            //Map&lt;T, Set&lt;T&gt;&gt;
+//        }
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>CopyOfWriterStreamRDFPlain.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Jena Output Patch Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.jena</a> &gt; <span class="el_source">CopyOfWriterStreamRDFPlain.java</span></div><h1>CopyOfWriterStreamRDFPlain.java</h1><pre class="source lang-java linenums">/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.jena;
+
+import org.apache.jena.atlas.io.AWriter ;
+import org.apache.jena.atlas.io.IO ;
+import org.apache.jena.atlas.lib.CharSpace ;
+import org.apache.jena.graph.Node ;
+import org.apache.jena.graph.Triple ;
+import org.apache.jena.riot.out.NodeFormatter ;
+import org.apache.jena.riot.out.NodeFormatterNT ;
+import org.apache.jena.riot.system.StreamRDF ;
+import org.apache.jena.riot.system.StreamRDFLib ;
+import org.apache.jena.sparql.core.Quad ;
+
+/**
+ * An output of triples / quads that is streaming. It writes N-triples/N-quads.
+ */
+
+public class CopyOfWriterStreamRDFPlain implements StreamRDF {
+    // This class is the overall structure - the NodeFormatter controls the
+    // appearance of the Nodes themselves.
+
+    // NOTE, Fedora change: remove 'final' on NodeFormatter
+    protected final AWriter       out ;
+    protected NodeFormatter nodeFmt ;
+
+    /**
+     * Output tuples, using UTF8 output See {@link StreamRDFLib#writer} for
+     * ways to create a AWriter object.
+     */
+    public CopyOfWriterStreamRDFPlain(AWriter w) {
+<span class="nc" id="L49">        this(w, CharSpace.UTF8) ;</span>
+<span class="nc" id="L50">    }</span>
+
+    /**
+     * Output tuples, choosing ASCII or UTF8 See
+     * {@link StreamRDFLib#writer} for ways to create a AWriter object.
+     */
+<span class="fc" id="L56">    public CopyOfWriterStreamRDFPlain(AWriter w, CharSpace charSpace) {</span>
+<span class="fc" id="L57">        out = w ;</span>
+<span class="fc" id="L58">        nodeFmt = new NodeFormatterNT(charSpace) ;</span>
+<span class="fc" id="L59">    }</span>
+
+    @Override
+<span class="fc" id="L62">    public void start() {}</span>
+
+    @Override
+    public void finish() {
+<span class="fc" id="L66">        IO.flush(out) ;</span>
+<span class="fc" id="L67">    }</span>
+
+    @Override
+    public void triple(Triple triple) {
+<span class="fc" id="L71">        Node s = triple.getSubject() ;</span>
+<span class="fc" id="L72">        Node p = triple.getPredicate() ;</span>
+<span class="fc" id="L73">        Node o = triple.getObject() ;</span>
+
+<span class="fc" id="L75">        format(s) ;</span>
+<span class="fc" id="L76">        out.print(&quot; &quot;) ;</span>
+<span class="fc" id="L77">        format(p) ;</span>
+<span class="fc" id="L78">        out.print(&quot; &quot;) ;</span>
+<span class="fc" id="L79">        format(o) ;</span>
+<span class="fc" id="L80">        out.print(&quot; .\n&quot;) ;</span>
+<span class="fc" id="L81">    }</span>
+
+    @Override
+    public void quad(Quad quad) {
+<span class="nc" id="L85">        Node s = quad.getSubject() ;</span>
+<span class="nc" id="L86">        Node p = quad.getPredicate() ;</span>
+<span class="nc" id="L87">        Node o = quad.getObject() ;</span>
+<span class="nc" id="L88">        Node g = quad.getGraph() ;</span>
+
+<span class="nc" id="L90">        format(s) ;</span>
+<span class="nc" id="L91">        out.print(&quot; &quot;) ;</span>
+<span class="nc" id="L92">        format(p) ;</span>
+<span class="nc" id="L93">        out.print(&quot; &quot;) ;</span>
+<span class="nc" id="L94">        format(o) ;</span>
+
+<span class="nc bnc" id="L96" title="All 2 branches missed.">        if ( outputGraphSlot(g) ) {</span>
+<span class="nc" id="L97">            out.print(&quot; &quot;) ;</span>
+<span class="nc" id="L98">            format(g) ;</span>
+        }
+<span class="nc" id="L100">        out.print(&quot; .\n&quot;) ;</span>
+<span class="nc" id="L101">    }</span>
+
+    private void format(Node n) {
+<span class="fc" id="L104">        nodeFmt.format(out, n) ;</span>
+<span class="fc" id="L105">    }</span>
+
+    @Override
+<span class="nc" id="L108">    public void base(String base) {}</span>
+
+    @Override
+<span class="fc" id="L111">    public void prefix(String prefix, String iri) {}</span>
+
+    private static boolean outputGraphSlot(Node g) {
+<span class="nc bnc" id="L114" title="All 6 branches missed.">        return (g != null &amp;&amp; g != Quad.tripleInQuad &amp;&amp; !Quad.isDefaultGraph(g)) ;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

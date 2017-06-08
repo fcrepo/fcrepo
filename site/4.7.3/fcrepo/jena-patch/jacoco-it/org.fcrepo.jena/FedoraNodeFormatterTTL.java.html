@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>FedoraNodeFormatterTTL.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Jena Output Patch Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.jena</a> &gt; <span class="el_source">FedoraNodeFormatterTTL.java</span></div><h1>FedoraNodeFormatterTTL.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.jena;
+
+import org.apache.jena.atlas.io.AWriter;
+import org.apache.jena.datatypes.RDFDatatype;
+import org.apache.jena.datatypes.xsd.XSDDatatype;
+import org.apache.jena.graph.Node;
+import org.apache.jena.riot.out.NodeFormatterTTL;
+import org.apache.jena.riot.out.NodeToLabel;
+import org.apache.jena.riot.system.PrefixMap;
+import org.apache.jena.riot.system.RiotChars;
+
+/**
+ * @author awoods
+ * @since 2017/01/03
+ */
+public class FedoraNodeFormatterTTL extends NodeFormatterTTL {
+
+    /**
+     * @param baseIRI
+     * @param prefixMap
+     * @param nodeToLabel
+     */
+    public FedoraNodeFormatterTTL(final String baseIRI, final PrefixMap prefixMap, final NodeToLabel nodeToLabel) {
+<span class="fc" id="L41">        super(baseIRI, prefixMap, nodeToLabel);</span>
+<span class="fc" id="L42">    }</span>
+
+    /**
+     * @param w
+     * @param n
+     */
+    @Override
+    public void formatLiteral(final AWriter w, final Node n) {
+<span class="fc" id="L50">        final RDFDatatype dt = n.getLiteralDatatype();</span>
+<span class="fc" id="L51">        final String lang = n.getLiteralLanguage();</span>
+<span class="fc" id="L52">        final String lex = n.getLiteralLexicalForm();</span>
+
+<span class="pc bpc" id="L54" title="2 of 4 branches missed.">        if (lang != null &amp;&amp; !lang.equals(&quot;&quot;)) {</span>
+<span class="nc" id="L55">            formatLitLang(w, lex, lang);</span>
+<span class="pc bpc" id="L56" title="1 of 2 branches missed.">        } else if (dt == null) {</span>
+            // RDF 1.0, simple literal.
+<span class="nc" id="L58">            formatLitString(w, lex);</span>
+            // NOTE, Fedora change: remove condition
+//        } else if ( JenaRuntime.isRDF11 &amp;&amp; dt.equals(XSDDatatype.XSDstring) ) {
+//            // RDF 1.1, xsd:string - output as short string.
+//            formatLitString(w, lex) ;
+        } else {
+            // Datatype, no language tag, not short string.
+<span class="fc" id="L65">            formatLitDT(w, lex, dt.getURI());</span>
+        }
+<span class="fc" id="L67">    }</span>
+
+    // NOTE, Fedora change: private -&gt; protected
+<span class="fc" id="L70">    protected static final String dtDecimal = XSDDatatype.XSDdecimal.getURI() ;</span>
+<span class="fc" id="L71">    protected static final String dtInteger = XSDDatatype.XSDinteger.getURI() ;</span>
+<span class="fc" id="L72">    protected static final String dtDouble  = XSDDatatype.XSDdouble.getURI() ;</span>
+
+    /**
+     * Write in a short form, e.g. integer.
+     *
+     * @return True if a short form was output else false.
+     */
+    protected boolean writeLiteralAbbreviated(final AWriter w, final String lex, final String datatypeURI) {
+<span class="pc bpc" id="L80" title="1 of 2 branches missed.">        if (dtDecimal.equals(datatypeURI)) {</span>
+<span class="nc bnc" id="L81" title="All 2 branches missed.">            if (validDecimal(lex)) {</span>
+<span class="nc" id="L82">                w.print(lex);</span>
+<span class="nc" id="L83">                return true;</span>
+            }
+<span class="pc bpc" id="L85" title="1 of 2 branches missed.">        } else if (dtInteger.equals(datatypeURI)) {</span>
+<span class="nc bnc" id="L86" title="All 2 branches missed.">            if (validInteger(lex)) {</span>
+<span class="nc" id="L87">                w.print(lex);</span>
+<span class="nc" id="L88">                return true;</span>
+            }
+<span class="pc bpc" id="L90" title="1 of 2 branches missed.">        } else if (dtDouble.equals(datatypeURI)) {</span>
+<span class="nc bnc" id="L91" title="All 2 branches missed.">            if (validDouble(lex)) {</span>
+<span class="nc" id="L92">                w.print(lex);</span>
+<span class="nc" id="L93">                return true;</span>
+            }
+            // NOTE, Fedora change: Remove condition
+//        } else if ( dtBoolean.equals(datatypeURI) ) {
+//            // We leave &quot;0&quot; and &quot;1&quot; as-is assumign that if written like that,
+//            // there was a reason.
+//            if ( lex.equals(&quot;true&quot;) || lex.equals(&quot;false&quot;) ) {
+//                w.print(lex) ;
+//                return true ;
+//            }
+        }
+<span class="fc" id="L104">        return false;</span>
+    }
+
+    //********************************************************************
+    // NOTE, Fedora: Below are added from NodeFormatterTTL without change.
+    //********************************************************************
+
+    private static boolean validInteger(String lex) {
+<span class="nc" id="L112">        int N = lex.length() ;</span>
+<span class="nc bnc" id="L113" title="All 2 branches missed.">        if ( N == 0 )</span>
+<span class="nc" id="L114">            return false ;</span>
+<span class="nc" id="L115">        int idx = 0 ;</span>
+
+<span class="nc" id="L117">        idx = skipSign(lex, idx) ;</span>
+<span class="nc" id="L118">        idx = skipDigits(lex, idx) ;</span>
+<span class="nc bnc" id="L119" title="All 2 branches missed.">        return (idx == N) ;</span>
+    }
+
+    private static boolean validDecimal(String lex) {
+        // case : In N3, &quot;.&quot; illegal, as is &quot;+.&quot; and -.&quot; but legal in Turtle.
+<span class="nc" id="L124">        int N = lex.length() ;</span>
+<span class="nc bnc" id="L125" title="All 2 branches missed.">        if ( N &lt;= 1 )</span>
+<span class="nc" id="L126">            return false ;</span>
+<span class="nc" id="L127">        int idx = 0 ;</span>
+
+<span class="nc" id="L129">        idx = skipSign(lex, idx) ;</span>
+<span class="nc" id="L130">        idx = skipDigits(lex, idx) ; // Maybe none.</span>
+
+        // DOT required.
+<span class="nc bnc" id="L133" title="All 2 branches missed.">        if ( idx &gt;= N )</span>
+<span class="nc" id="L134">            return false ;</span>
+
+<span class="nc" id="L136">        char ch = lex.charAt(idx) ;</span>
+<span class="nc bnc" id="L137" title="All 2 branches missed.">        if ( ch != '.' )</span>
+<span class="nc" id="L138">            return false ;</span>
+<span class="nc" id="L139">        idx++ ;</span>
+        // Digit required.
+<span class="nc bnc" id="L141" title="All 2 branches missed.">        if ( idx &gt;= N )</span>
+<span class="nc" id="L142">            return false ;</span>
+<span class="nc" id="L143">        idx = skipDigits(lex, idx) ;</span>
+<span class="nc bnc" id="L144" title="All 2 branches missed.">        return (idx == N) ;</span>
+    }
+
+    private static boolean validDouble(String lex) {
+<span class="nc" id="L148">        int N = lex.length() ;</span>
+<span class="nc bnc" id="L149" title="All 2 branches missed.">        if ( N == 0 )</span>
+<span class="nc" id="L150">            return false ;</span>
+<span class="nc" id="L151">        int idx = 0 ;</span>
+
+        // Decimal part (except 12. is legal)
+
+<span class="nc" id="L155">        idx = skipSign(lex, idx) ;</span>
+
+<span class="nc" id="L157">        int idx2 = skipDigits(lex, idx) ;</span>
+<span class="nc bnc" id="L158" title="All 2 branches missed.">        boolean initialDigits = (idx != idx2) ;</span>
+<span class="nc" id="L159">        idx = idx2 ;</span>
+        // Exponent required.
+<span class="nc bnc" id="L161" title="All 2 branches missed.">        if ( idx &gt;= N )</span>
+<span class="nc" id="L162">            return false ;</span>
+<span class="nc" id="L163">        char ch = lex.charAt(idx) ;</span>
+<span class="nc bnc" id="L164" title="All 2 branches missed.">        if ( ch == '.' ) {</span>
+<span class="nc" id="L165">            idx++ ;</span>
+<span class="nc bnc" id="L166" title="All 2 branches missed.">            if ( idx &gt;= N )</span>
+<span class="nc" id="L167">                return false ;</span>
+<span class="nc" id="L168">            idx2 = skipDigits(lex, idx) ;</span>
+<span class="nc bnc" id="L169" title="All 2 branches missed.">            boolean trailingDigits = (idx != idx2) ;</span>
+<span class="nc" id="L170">            idx = idx2 ;</span>
+<span class="nc bnc" id="L171" title="All 2 branches missed.">            if ( idx &gt;= N )</span>
+<span class="nc" id="L172">                return false ;</span>
+<span class="nc bnc" id="L173" title="All 4 branches missed.">            if ( !initialDigits &amp;&amp; !trailingDigits )</span>
+<span class="nc" id="L174">                return false ;</span>
+        }
+        // &quot;e&quot; or &quot;E&quot;
+<span class="nc" id="L177">        ch = lex.charAt(idx) ;</span>
+<span class="nc bnc" id="L178" title="All 4 branches missed.">        if ( ch != 'e' &amp;&amp; ch != 'E' )</span>
+<span class="nc" id="L179">            return false ;</span>
+<span class="nc" id="L180">        idx++ ;</span>
+<span class="nc bnc" id="L181" title="All 2 branches missed.">        if ( idx &gt;= N )</span>
+<span class="nc" id="L182">            return false ;</span>
+<span class="nc" id="L183">        idx = skipSign(lex, idx) ;</span>
+<span class="nc bnc" id="L184" title="All 2 branches missed.">        if ( idx &gt;= N )</span>
+<span class="nc" id="L185">            return false ; // At least one digit.</span>
+<span class="nc" id="L186">        idx = skipDigits(lex, idx) ;</span>
+<span class="nc bnc" id="L187" title="All 2 branches missed.">        return (idx == N) ;</span>
+    }
+
+    /**
+     * Skip digits [0-9] and return the index just after the digits, which may
+     * be beyond the length of the string. May skip zero.
+     */
+    private static int skipDigits(String str, int start) {
+<span class="nc" id="L195">        int N = str.length() ;</span>
+<span class="nc bnc" id="L196" title="All 2 branches missed.">        for (int i = start; i &lt; N; i++) {</span>
+<span class="nc" id="L197">            char ch = str.charAt(i) ;</span>
+<span class="nc bnc" id="L198" title="All 2 branches missed.">            if ( !RiotChars.isDigit(ch) )</span>
+<span class="nc" id="L199">                return i ;</span>
+        }
+<span class="nc" id="L201">        return N ;</span>
+    }
+
+    /** Skip any plus or minus */
+    private static int skipSign(String str, int idx) {
+<span class="nc" id="L206">        int N = str.length() ;</span>
+<span class="nc" id="L207">        char ch = str.charAt(idx) ;</span>
+<span class="nc bnc" id="L208" title="All 4 branches missed.">        if ( ch == '+' || ch == '-' )</span>
+<span class="nc" id="L209">            return idx + 1 ;</span>
+<span class="nc" id="L210">        return idx ;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

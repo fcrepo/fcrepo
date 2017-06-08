@@ -1,0 +1,22 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+Jena Output Patch Module,org.fcrepo.jena,CopyOfBasic,170,279,15,11,23,56,13,16,4,12
+Jena Output Patch Module,org.fcrepo.jena,CopyOfWriterStreamRDFPlain,62,56,8,0,18,20,8,6,4,6
+Jena Output Patch Module,org.fcrepo.jena,CopyOfPairEntry,53,0,8,0,12,0,10,0,6,0
+Jena Output Patch Module,org.fcrepo.jena,FedoraTurtleWriterFlat,20,0,0,0,7,0,2,0,2,0
+Jena Output Patch Module,org.fcrepo.jena,FedoraNodeFormatterNT,11,28,3,3,2,9,3,2,0,2
+Jena Output Patch Module,org.fcrepo.jena,CopyOfBaseXMLWriter,1340,673,193,61,237,172,148,39,31,28
+Jena Output Patch Module,org.fcrepo.jena,FedoraRDFXMLPlainWriter,0,7,0,0,0,2,0,2,0,2
+Jena Output Patch Module,org.fcrepo.jena,FedoraWriterStreamRDFBlocks,6,18,0,0,3,5,1,2,1,2
+Jena Output Patch Module,org.fcrepo.jena,FedoraTurtleWriter.TurtleWriter.,0,29,2,2,0,8,2,2,0,2
+Jena Output Patch Module,org.fcrepo.jena,CopyOfBaseXMLWriter.new SimpleLogger() {...},9,3,0,0,4,1,2,1,2,1
+Jena Output Patch Module,org.fcrepo.jena,CopyOfTurtleShell.ShellGraph,1177,581,137,51,297,146,103,33,22,20
+Jena Output Patch Module,org.fcrepo.jena,FedoraWriterStreamRDFFlat,24,0,0,0,8,0,3,0,3,0
+Jena Output Patch Module,org.fcrepo.jena,CopyOfTurtleShell.ComparePredicates,4,50,3,9,2,15,3,6,0,3
+Jena Output Patch Module,org.fcrepo.jena,FedoraTurtleWriter,0,15,0,0,0,4,0,2,0,2
+Jena Output Patch Module,org.fcrepo.jena,FedoraWriterStreamRDFPlain,0,11,0,0,0,3,0,1,0,1
+Jena Output Patch Module,org.fcrepo.jena,FedoraTurtleWriterBlocks,20,0,0,0,7,0,2,0,2,0
+Jena Output Patch Module,org.fcrepo.jena,FedoraNodeFormatterTTL,254,54,62,6,78,16,39,4,5,4
+Jena Output Patch Module,org.fcrepo.jena,CopyOfRelation,196,140,26,10,49,39,25,14,11,10
+Jena Output Patch Module,org.fcrepo.jena,CopyOfTurtleShell,35,78,7,3,8,24,6,9,1,9
+Jena Output Patch Module,org.fcrepo.jena,FedoraBasic,40,44,4,2,4,10,3,2,0,2
+Jena Output Patch Module,org.fcrepo.jena,RdfWriterHelper,24,85,3,5,6,28,5,6,2,5
