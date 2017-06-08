@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>FedoraUserSecurityContext.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Authorization Commons Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.auth.common</a> &gt; <span class="el_source">FedoraUserSecurityContext.java</span></div><h1>FedoraUserSecurityContext.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.auth.common;
+
+import static org.modeshape.jcr.ModeShapePermissions.READ;
+import static org.modeshape.jcr.ModeShapePermissions.REGISTER_NAMESPACE;
+import static org.modeshape.jcr.ModeShapePermissions.REGISTER_TYPE;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+
+import java.security.Principal;
+import java.util.Set;
+
+import org.modeshape.jcr.security.AdvancedAuthorizationProvider;
+import org.modeshape.jcr.security.SecurityContext;
+import org.modeshape.jcr.value.Path;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.Sets;
+
+/**
+ * The security context for Fedora servlet users. These users are not
+ * necessarily authenticated by the container, i.e. users may include the
+ * general public. This security context delegates all access decisions to the
+ * configured authorization delegate.
+ *
+ * @author Gregory Jansen
+ */
+public class FedoraUserSecurityContext implements SecurityContext,
+        AdvancedAuthorizationProvider {
+
+<span class="fc" id="L47">    private static final Logger LOGGER = LoggerFactory</span>
+<span class="fc" id="L48">            .getLogger(FedoraUserSecurityContext.class);</span>
+
+<span class="fc" id="L50">    private Principal userPrincipal = null;</span>
+
+<span class="fc" id="L52">    private FedoraAuthorizationDelegate fad = null;</span>
+
+<span class="fc" id="L54">    private boolean loggedIn = true;</span>
+
+    /**
+     * Constructs a new security context.
+     *
+     * @param userPrincipal the user principal associated with this security
+     *        context
+     * @param fad the authorization delegate
+     */
+    protected FedoraUserSecurityContext(final Principal userPrincipal,
+<span class="fc" id="L64">            final FedoraAuthorizationDelegate fad) {</span>
+<span class="fc" id="L65">        this.fad = fad;</span>
+<span class="fc" id="L66">        this.userPrincipal = userPrincipal;</span>
+
+<span class="pc bpc" id="L68" title="1 of 2 branches missed.">        if (this.fad == null) {</span>
+<span class="nc" id="L69">            LOGGER.warn(&quot;This security context must have a FAD injected&quot;);</span>
+<span class="nc" id="L70">            throw new IllegalArgumentException(</span>
+                    &quot;This security context must have a FAD injected&quot;);
+        }
+<span class="fc" id="L73">    }</span>
+
+    /**
+     * {@inheritDoc}
+     *
+     * @see org.modeshape.jcr.security.SecurityContext#isAnonymous()
+     */
+    @Override
+    public boolean isAnonymous() {
+<span class="nc bnc" id="L82" title="All 2 branches missed.">        return this.userPrincipal == null;</span>
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @see SecurityContext#getUserName()
+     */
+    @Override
+    public final String getUserName() {
+<span class="fc" id="L92">        return getEffectiveUserPrincipal().getName();</span>
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @see SecurityContext#hasRole(String)
+     */
+    @Override
+    public final boolean hasRole(final String roleName) {
+        // Under this custom PEP regime, all users have modeshape read and write
+        // roles.
+<span class="pc bpc" id="L104" title="1 of 2 branches missed.">        if (&quot;read&quot;.equals(roleName)) {</span>
+<span class="nc" id="L105">            return true;</span>
+<span class="pc bpc" id="L106" title="1 of 2 branches missed.">        } else if (&quot;write&quot;.equals(roleName)) {</span>
+<span class="nc" id="L107">            return true;</span>
+<span class="fc bfc" id="L108" title="All 2 branches covered.">        } else if (&quot;admin&quot;.equals(roleName)) {</span>
+<span class="fc" id="L109">            return true;</span>
+        }
+<span class="fc" id="L111">        return false;</span>
+    }
+
+    /**
+     * Get the user principal associated with this context.
+     *
+     * @return the user principal associated with this security context
+     */
+    public Principal getEffectiveUserPrincipal() {
+<span class="pc bpc" id="L120" title="1 of 4 branches missed.">        if (this.loggedIn &amp;&amp; this.userPrincipal != null) {</span>
+<span class="fc" id="L121">            return this.userPrincipal;</span>
+        }
+<span class="fc" id="L123">        return fad.getEveryonePrincipal();</span>
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @see org.modeshape.jcr.security.SecurityContext#logout()
+     */
+    @Override
+    public void logout() {
+<span class="fc" id="L133">        this.loggedIn = false;</span>
+<span class="fc" id="L134">    }</span>
+
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.modeshape.jcr.security.AdvancedAuthorizationProvider#hasPermission
+     * (org.modeshape.jcr.security.AdvancedAuthorizationProvider.Context,
+     * org.modeshape.jcr.value.Path, java.lang.String[])
+     */
+    @Override
+    public boolean hasPermission(final Context context, final Path absPath,
+            final String... actions) {
+<span class="pc bpc" id="L146" title="1 of 2 branches missed.">        if (!this.loggedIn) {</span>
+<span class="nc" id="L147">            return false;</span>
+        }
+
+<span class="fc bfc" id="L150" title="All 2 branches covered.">        if (absPath == null) {</span>
+            // this permission is required for login
+<span class="pc bpc" id="L152" title="2 of 4 branches missed.">            if (actions.length == 1 &amp;&amp; READ.equals(actions[0])) {</span>
+<span class="fc" id="L153">                return true;</span>
+            }
+            // The REGISTER_NAMESPACE action and the REGISTER_TYPE action don't include
+            // a path and are allowed for all users.  The fedora 4 code base doesn't expose
+            // any endpoint that *JUST* registers a namespace or type, so the operations
+            // that perform these actions will have to be authorized in context (for instance
+            // setting a property).
+<span class="nc" id="L160">            final Set&lt;String&gt; filteredActions = Sets.newHashSet(actions);</span>
+<span class="nc" id="L161">            filteredActions.remove(REGISTER_NAMESPACE);</span>
+<span class="nc" id="L162">            filteredActions.remove(REGISTER_TYPE);</span>
+<span class="nc" id="L163">            return filteredActions.isEmpty();</span>
+        }
+
+        // Trim jcr:content from paths, if necessary
+        final Path path;
+<span class="fc bfc" id="L168" title="All 4 branches covered.">        if (null != absPath.getLastSegment() &amp;&amp; absPath.getLastSegment().getString().equals(JCR_CONTENT)) {</span>
+<span class="fc" id="L169">            path = absPath.subpath(0, absPath.size() - 1);</span>
+<span class="fc" id="L170">            LOGGER.debug(&quot;..new path to be verified: {}&quot;, path);</span>
+        } else {
+<span class="fc" id="L172">            path = absPath;</span>
+        }
+
+        // delegate
+<span class="pc bpc" id="L176" title="1 of 2 branches missed.">        if (fad != null) {</span>
+<span class="fc" id="L177">            return fad.hasPermission(context.getSession(), path, actions);</span>
+        }
+<span class="nc" id="L179">        return false;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>
