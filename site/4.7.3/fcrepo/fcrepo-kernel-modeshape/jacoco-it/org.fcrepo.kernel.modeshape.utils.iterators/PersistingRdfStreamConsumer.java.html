@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>PersistingRdfStreamConsumer.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation (ModeShape)</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.utils.iterators</a> &gt; <span class="el_source">PersistingRdfStreamConsumer.java</span></div><h1>PersistingRdfStreamConsumer.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.utils.iterators;
+
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.vocabulary.RDF.type;
+import static java.lang.String.join;
+import static org.fcrepo.kernel.modeshape.rdf.ManagedRdf.isManagedMixin;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFedoraBinary;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.exception.ConstraintViolationException;
+import org.fcrepo.kernel.api.exception.IncorrectTripleSubjectException;
+import org.fcrepo.kernel.api.exception.MalformedRdfException;
+import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
+import org.fcrepo.kernel.api.exception.OutOfDomainSubjectException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.modeshape.rdf.JcrRdfTools;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.slf4j.Logger;
+
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Predicate;
+
+/**
+ * @author ajs6f
+ * @since Oct 24, 2013
+ */
+public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
+
+    private final RdfStream stream;
+
+    private final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator;
+
+    // if it's not about a Fedora resource, we don't care.
+    protected final Predicate&lt;Triple&gt; isFedoraSubjectTriple;
+
+    private final JcrRdfTools jcrRdfTools;
+
+<span class="fc" id="L74">    private static final Model m = createDefaultModel();</span>
+
+<span class="fc" id="L76">    private static final Logger LOGGER = getLogger(PersistingRdfStreamConsumer.class);</span>
+
+    private final List&lt;String&gt; exceptions;
+
+    /**
+     * Ordinary constructor.
+     *
+     * @param idTranslator the id translator
+     * @param session the session
+     * @param stream the rdf stream
+     */
+    public PersistingRdfStreamConsumer(final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator,
+<span class="fc" id="L88">            final Session session, final RdfStream stream) {</span>
+<span class="fc" id="L89">        this.idTranslator = idTranslator;</span>
+<span class="fc" id="L90">        this.jcrRdfTools = new JcrRdfTools(idTranslator, session);</span>
+<span class="fc" id="L91">        this.isFedoraSubjectTriple = t -&gt; {</span>
+
+<span class="fc" id="L93">            final Node subject = t.getSubject();</span>
+<span class="fc" id="L94">            final Node topic = stream().topic();</span>
+
+            // blank nodes are okay
+<span class="fc bfc" id="L97" title="All 2 branches covered.">            if (!t.getSubject().isBlank()) {</span>
+<span class="fc" id="L98">                final String subjectURI = subject.getURI();</span>
+<span class="fc" id="L99">                final int hashIndex = subjectURI.lastIndexOf(&quot;#&quot;);</span>
+                // a hash URI with the same base as the topic is okay, as is the topic itself
+<span class="pc bpc" id="L101" title="1 of 4 branches missed.">                if ((hashIndex &gt; 0 &amp;&amp; topic.getURI().equals(subjectURI.substring(0, hashIndex)))</span>
+<span class="pc bpc" id="L102" title="1 of 2 branches missed.">                        || topic.equals(subject)) {</span>
+<span class="fc" id="L103">                    LOGGER.debug(&quot;Discovered a Fedora-relevant subject in triple: {}.&quot;, t);</span>
+<span class="fc" id="L104">                    return true;</span>
+<span class="nc bnc" id="L105" title="All 2 branches missed.">                } else if (topic.getURI().equals(subject.getURI() + &quot;/&quot; + FCR_METADATA)</span>
+<span class="nc bnc" id="L106" title="All 2 branches missed.">                       &amp;&amp; isFedoraBinary.test(getJcrNode(translator().convert(createResource(subject.getURI()))))) {</span>
+<span class="nc" id="L107">                    LOGGER.debug(&quot;Discovered a NonRDFSource subject in triple: {}.&quot;, t);</span>
+<span class="nc" id="L108">                    return true;</span>
+                }
+                // the subject was inappropriate in one of two ways
+<span class="nc bnc" id="L111" title="All 2 branches missed.">                if (translator().inDomain(m.asRDFNode(subject).asResource())) {</span>
+                    // it was in-domain, but not within this resource
+<span class="nc" id="L113">                    LOGGER.error(&quot;{} is not in the topic of this RDF, which is {}.&quot;, subject, topic);</span>
+<span class="nc" id="L114">                    throw new IncorrectTripleSubjectException(subject +</span>
+                            &quot; is not in the topic of this RDF, which is &quot; + topic);
+                }
+                // it wasn't even in in-domain!
+<span class="nc" id="L118">                LOGGER.error(&quot;subject {} is not in repository domain.&quot;, subject);</span>
+<span class="nc" id="L119">                throw new OutOfDomainSubjectException(subject);</span>
+            }
+<span class="fc" id="L121">            return true;</span>
+        };
+
+<span class="fc" id="L124">        this.stream = new DefaultRdfStream(stream.topic(), stream.filter(isFedoraSubjectTriple));</span>
+
+<span class="fc" id="L126">        this.exceptions = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L127">    }</span>
+
+    @Override
+    public void consume() throws MalformedRdfException {
+<span class="fc" id="L131">        stream.forEach(t -&gt; {</span>
+<span class="fc" id="L132">            final Statement s = m.asStatement(t);</span>
+<span class="fc" id="L133">            LOGGER.debug(&quot;Operating on triple {}.&quot;, s);</span>
+
+            try {
+<span class="fc" id="L136">                operateOnTriple(s);</span>
+<span class="nc" id="L137">            } catch (final ConstraintViolationException e) {</span>
+<span class="nc" id="L138">                throw e;</span>
+<span class="fc" id="L139">            } catch (final MalformedRdfException e) {</span>
+<span class="fc" id="L140">                exceptions.add(e.getMessage());</span>
+<span class="fc" id="L141">            }</span>
+<span class="fc" id="L142">        });</span>
+
+<span class="fc bfc" id="L144" title="All 2 branches covered.">        if (!exceptions.isEmpty()) {</span>
+<span class="fc" id="L145">            throw new MalformedRdfException(join(&quot;\n&quot;, exceptions));</span>
+        }
+<span class="fc" id="L147">    }</span>
+
+    protected void operateOnTriple(final Statement input) throws MalformedRdfException {
+        try {
+
+<span class="fc" id="L152">            final Statement t = jcrRdfTools.skolemize(idTranslator, input);</span>
+
+<span class="fc" id="L154">            final Resource subject = t.getSubject();</span>
+<span class="fc" id="L155">            final FedoraResource subjectNode = translator().convert(subject);</span>
+
+            // if this is a user-managed RDF type assertion, update the node's
+            // mixins. If it isn't, treat it as a &quot;data&quot; property.
+<span class="pc bpc" id="L159" title="1 of 4 branches missed.">            if (t.getPredicate().equals(type) &amp;&amp; t.getObject().isResource()) {</span>
+<span class="fc" id="L160">                final Resource mixinResource = t.getObject().asResource();</span>
+<span class="pc bpc" id="L161" title="1 of 2 branches missed.">                if (!isManagedMixin.test(mixinResource)) {</span>
+<span class="fc" id="L162">                    LOGGER.debug(&quot;Operating on node: {} with mixin: {}.&quot;,</span>
+                            subjectNode, mixinResource);
+<span class="fc" id="L164">                    operateOnMixin(mixinResource, subjectNode);</span>
+                } else {
+<span class="nc" id="L166">                    LOGGER.error(&quot;Found repository-managed mixin {} in triple {} on which we will not operate.&quot;,</span>
+                            mixinResource, t);
+<span class="nc" id="L168">                    throw new ServerManagedTypeException(String.format(</span>
+                            &quot;The repository type (%s) of this resource is system managed.&quot;, mixinResource));
+                }
+<span class="fc" id="L171">            } else {</span>
+<span class="fc" id="L172">                LOGGER.debug(&quot;Operating on node: {} from triple: {}.&quot;, subjectNode,</span>
+                        t);
+<span class="fc" id="L174">                operateOnProperty(t, subjectNode);</span>
+            }
+<span class="nc" id="L176">        } catch (final ConstraintViolationException e) {</span>
+<span class="nc" id="L177">            throw e;</span>
+<span class="fc" id="L178">        } catch (final RepositoryException | RepositoryRuntimeException e) {</span>
+<span class="fc" id="L179">            throw new MalformedRdfException(e.getMessage(), e);</span>
+<span class="fc" id="L180">        }</span>
+<span class="fc" id="L181">    }</span>
+
+    protected abstract void operateOnProperty(final Statement t,
+        final FedoraResource subjectNode) throws RepositoryException;
+
+    protected abstract void operateOnMixin(final Resource mixinResource,
+        final FedoraResource subjectNode) throws RepositoryException;
+
+    @Override
+    public ListenableFuture&lt;Boolean&gt; consumeAsync() {
+        // TODO make this actually asynch
+<span class="nc" id="L192">        final SettableFuture&lt;Boolean&gt; result = SettableFuture.create();</span>
+        try {
+<span class="nc" id="L194">            consume();</span>
+<span class="nc" id="L195">            result.set(true);</span>
+<span class="nc" id="L196">        } catch (final MalformedRdfException e) {</span>
+<span class="nc" id="L197">            LOGGER.warn(&quot;Got exception consuming RDF stream&quot;, e);</span>
+<span class="nc" id="L198">            result.setException(e);</span>
+<span class="nc" id="L199">            result.set(false);</span>
+<span class="nc" id="L200">        }</span>
+<span class="nc" id="L201">        return result;</span>
+    }
+
+
+    /**
+     * @return the stream
+     */
+    public RdfStream stream() {
+<span class="fc" id="L209">        return stream;</span>
+    }
+
+    /**
+     * @return the idTranslator
+     */
+    public IdentifierConverter&lt;Resource, FedoraResource&gt; translator() {
+<span class="fc" id="L216">        return idTranslator;</span>
+    }
+
+    /**
+     * @return the jcrRdfTools
+     */
+    public JcrRdfTools jcrRdfTools() {
+<span class="fc" id="L223">        return jcrRdfTools;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

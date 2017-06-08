@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>SimpleObserver.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation (ModeShape)</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.observer</a> &gt; <span class="el_source">SimpleObserver.java</span></div><h1>SimpleObserver.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.observer;
+
+import static com.codahale.metrics.MetricRegistry.name;
+import static com.google.common.collect.Iterators.filter;
+import static java.util.stream.Collectors.toSet;
+import static java.util.stream.Stream.concat;
+import static java.util.stream.Stream.of;
+import static javax.jcr.observation.Event.NODE_ADDED;
+import static javax.jcr.observation.Event.NODE_MOVED;
+import static javax.jcr.observation.Event.NODE_REMOVED;
+import static javax.jcr.observation.Event.PROPERTY_ADDED;
+import static javax.jcr.observation.Event.PROPERTY_CHANGED;
+import static javax.jcr.observation.Event.PROPERTY_REMOVED;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_RDF_SOURCE;
+import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_DELETION;
+import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_RELOCATION;
+import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
+import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.JCR_NAMESPACE;
+import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.JCR_NT_NAMESPACE;
+import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.MIX_NAMESPACE;
+import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.MODE_NAMESPACE;
+import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaceRegistry;
+import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
+import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import  org.fcrepo.metrics.RegistryService;
+
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Stream;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.inject.Inject;
+import javax.jcr.NamespaceRegistry;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.observation.Event;
+import javax.jcr.observation.EventListener;
+
+import org.fcrepo.kernel.api.FedoraRepository;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.observer.FedoraEvent;
+import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
+import org.fcrepo.kernel.modeshape.observer.eventmappings.InternalExternalEventMapper;
+
+import org.slf4j.Logger;
+
+import com.codahale.metrics.Counter;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.eventbus.EventBus;
+
+/**
+ * Simple JCR EventListener that filters JCR Events through a Fedora EventFilter, maps the results through a mapper,
+ * and puts the resulting stream onto the internal Fedora EventBus as a stream of FedoraEvents.
+ *
+ * @author eddies
+ * @author ajs6f
+ * @since Feb 7, 2013
+ */
+<span class="fc" id="L90">public class SimpleObserver implements EventListener {</span>
+
+<span class="fc" id="L92">    private static final Logger LOGGER = getLogger(SimpleObserver.class);</span>
+
+<span class="fc" id="L94">    private static final Set&lt;String&gt; filteredNamespaces = ImmutableSet.of(</span>
+            JCR_NAMESPACE, MIX_NAMESPACE, JCR_NT_NAMESPACE, MODE_NAMESPACE);
+
+    /**
+     * A simple counter of events that pass through this observer
+     */
+    static final Counter EVENT_COUNTER =
+<span class="fc" id="L101">            RegistryService.getInstance().getMetrics().counter(name(SimpleObserver.class, &quot;onEvent&quot;));</span>
+
+<span class="fc" id="L103">    static final Integer EVENT_TYPES = NODE_ADDED + NODE_REMOVED + NODE_MOVED + PROPERTY_ADDED + PROPERTY_CHANGED</span>
+            + PROPERTY_REMOVED;
+
+    /**
+     * Note: This function maps a FedoraEvent to a Stream of some number of FedoraEvents. This is because a MOVE event
+     * may lead to an arbitrarily large number of additional events for any child resources. In the event of this not
+     * being a MOVE event, the same FedoraEvent is returned, wrapped in a Stream. For a MOVEd resource, the resource in
+     * question will be translated to two FedoraEvents: a MOVED event for the new resource location and a REMOVED event
+     * corresponding to the old location. The same pair of FedoraEvents will also be generated for each child resource.
+     */
+    private static Function&lt;FedoraEvent, Stream&lt;FedoraEvent&gt;&gt; handleMoveEvents(final Session session) {
+<span class="fc" id="L114">        return evt -&gt; {</span>
+<span class="fc bfc" id="L115" title="All 2 branches covered.">            if (evt.getTypes().contains(RESOURCE_RELOCATION)) {</span>
+<span class="fc" id="L116">                final Map&lt;String, String&gt; movePath = evt.getInfo();</span>
+<span class="fc" id="L117">                final String dest = movePath.get(&quot;destAbsPath&quot;);</span>
+<span class="fc" id="L118">                final String src = movePath.get(&quot;srcAbsPath&quot;);</span>
+                try {
+<span class="fc" id="L120">                    final FedoraResource resource = new FedoraResourceImpl(session.getNode(evt.getPath()));</span>
+<span class="fc" id="L121">                    return concat(of(evt), resource.getChildren(true).map(FedoraResource::getPath)</span>
+<span class="fc" id="L122">                        .flatMap(path -&gt; of(</span>
+<span class="fc" id="L123">                            new FedoraEventImpl(RESOURCE_RELOCATION, path, evt.getResourceTypes(), evt.getUserID(),</span>
+<span class="fc" id="L124">                                evt.getDate(), evt.getInfo()),</span>
+<span class="fc" id="L125">                            new FedoraEventImpl(RESOURCE_DELETION, path.replaceFirst(dest, src), evt.getResourceTypes(),</span>
+<span class="fc" id="L126">                                evt.getUserID(), evt.getDate(), evt.getInfo()))));</span>
+<span class="nc" id="L127">                } catch (final RepositoryException ex) {</span>
+<span class="nc" id="L128">                    throw new RepositoryRuntimeException(ex);</span>
+                }
+            }
+<span class="fc" id="L131">            return of(evt);</span>
+        };
+    }
+
+    /**
+     * Note: Certain RDF types are generated dynamically. These are added here, based on
+     * certain type hints.
+     */
+<span class="fc" id="L139">    private static Function&lt;String, Stream&lt;String&gt;&gt; dynamicTypes = type -&gt; {</span>
+<span class="fc bfc" id="L140" title="All 2 branches covered.">        if (type.equals(ROOT)) {</span>
+<span class="fc" id="L141">            return of(FEDORA_REPOSITORY_ROOT, FEDORA_RESOURCE, FEDORA_CONTAINER, LDP_CONTAINER, LDP_RDF_SOURCE,</span>
+                    LDP_BASIC_CONTAINER);
+<span class="fc bfc" id="L143" title="All 2 branches covered.">        } else if (type.equals(FEDORA_CONTAINER)) {</span>
+<span class="fc" id="L144">            return of(FEDORA_CONTAINER, LDP_CONTAINER, LDP_RDF_SOURCE);</span>
+<span class="fc bfc" id="L145" title="All 2 branches covered.">        } else if (type.equals(FEDORA_BINARY)) {</span>
+<span class="fc" id="L146">            return of(FEDORA_BINARY, LDP_NON_RDF_SOURCE);</span>
+        } else {
+<span class="fc" id="L148">            return of(type);</span>
+        }
+    };
+
+    private static Function&lt;FedoraEvent, FedoraEvent&gt; filterAndDerefResourceTypes(final Session session) {
+<span class="fc" id="L153">        final NamespaceRegistry registry = getNamespaceRegistry(session);</span>
+<span class="fc" id="L154">        return evt -&gt; {</span>
+<span class="fc" id="L155">            final Set&lt;String&gt; resourceTypes = evt.getResourceTypes().stream()</span>
+<span class="fc" id="L156">                .flatMap(dynamicTypes).map(type -&gt; type.split(&quot;:&quot;))</span>
+<span class="pc bpc" id="L157" title="1 of 2 branches missed.">                .filter(pair -&gt; pair.length == 2).map(uncheck(pair -&gt; new String[]{registry.getURI(pair[0]), pair[1]}))</span>
+<span class="fc bfc" id="L158" title="All 2 branches covered.">                .filter(pair -&gt; !filteredNamespaces.contains(pair[0])).map(pair -&gt; pair[0] + pair[1]).collect(toSet());</span>
+<span class="fc" id="L159">            return new FedoraEventImpl(evt.getTypes(), evt.getPath(), resourceTypes, evt.getUserID(),</span>
+<span class="fc" id="L160">                    evt.getDate(), evt.getInfo());</span>
+        };
+    }
+
+    @Inject
+    private FedoraRepository repository;
+
+    @Inject
+    private EventBus eventBus;
+
+    @Inject
+    private InternalExternalEventMapper eventMapper;
+
+    @Inject
+    private EventFilter eventFilter;
+
+    // THIS SESSION SHOULD NOT BE USED TO LOOK UP NODES
+    // it is used only to register and deregister this observer to the JCR
+    private Session session;
+
+    /**
+     * Register this observer with the JCR event listeners
+     *
+     * @throws RepositoryException if repository exception occurred
+     */
+    @PostConstruct
+    public void buildListener() throws RepositoryException {
+<span class="fc" id="L187">        LOGGER.debug(&quot;Constructing an observer for JCR events...&quot;);</span>
+<span class="fc" id="L188">        session = getJcrSession(repository.login());</span>
+<span class="fc" id="L189">        session.getWorkspace().getObservationManager()</span>
+<span class="fc" id="L190">                .addEventListener(this, EVENT_TYPES, &quot;/&quot;, true, null, null, false);</span>
+<span class="fc" id="L191">        session.save();</span>
+<span class="fc" id="L192">    }</span>
+
+    /**
+     * logout of the session
+     *
+     * @throws RepositoryException if repository exception occurred
+     */
+    @PreDestroy
+    public void stopListening() throws RepositoryException {
+        try {
+<span class="fc" id="L202">            LOGGER.debug(&quot;Destroying an observer for JCR events...&quot;);</span>
+<span class="fc" id="L203">            session.getWorkspace().getObservationManager().removeEventListener(this);</span>
+        } finally {
+<span class="pc" id="L205">            session.logout();</span>
+<span class="fc" id="L206">        }</span>
+<span class="fc" id="L207">    }</span>
+
+    /**
+     * Filter JCR events and transform them into our own FedoraEvents.
+     *
+     * @param events the JCR events
+     */
+    @Override
+    public void onEvent(final javax.jcr.observation.EventIterator events) {
+<span class="fc" id="L216">        Session lookupSession = null;</span>
+        try {
+<span class="fc" id="L218">            lookupSession = getJcrSession(repository.login());</span>
+
+            @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L221">            final Iterator&lt;Event&gt; filteredEvents = filter(events, eventFilter::test);</span>
+<span class="fc" id="L222">            eventMapper.apply(iteratorToStream(filteredEvents))</span>
+<span class="fc" id="L223">                .map(filterAndDerefResourceTypes(lookupSession))</span>
+<span class="fc" id="L224">                .flatMap(handleMoveEvents(lookupSession))</span>
+<span class="fc" id="L225">                .forEach(this::post);</span>
+        } finally {
+<span class="pc bpc" id="L227" title="3 of 4 branches missed.">            if (lookupSession != null) {</span>
+<span class="pc" id="L228">                lookupSession.logout();</span>
+            }
+        }
+<span class="fc" id="L231">    }</span>
+
+    private void post(final FedoraEvent evt) {
+<span class="fc" id="L234">        eventBus.post(evt);</span>
+<span class="fc" id="L235">        EVENT_COUNTER.inc();</span>
+<span class="fc" id="L236">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>
