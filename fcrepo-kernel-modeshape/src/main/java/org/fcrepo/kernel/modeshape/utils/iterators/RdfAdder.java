@@ -53,18 +53,6 @@ public class RdfAdder extends PersistingRdfStreamConsumer {
      * @param idTranslator the id translator
      * @param session the session
      * @param stream the rdf stream
-     */
-    public RdfAdder(final IdentifierConverter<Resource, FedoraResource> idTranslator, final Session session,
-        final RdfStream stream) {
-        this(idTranslator, session, stream, null);
-    }
-
-    /**
-     * Ordinary constructor.
-     *
-     * @param idTranslator the id translator
-     * @param session the session
-     * @param stream the rdf stream
      * @param userNamespaces user-provided namespace mapping
      */
     public RdfAdder(final IdentifierConverter<Resource, FedoraResource> idTranslator, final Session session,

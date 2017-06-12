@@ -37,6 +37,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.util.stream.Stream;
+import java.util.Map;
 
 import javax.jcr.NamespaceException;
 import javax.jcr.Node;
@@ -118,7 +119,7 @@ public class RdfAdderTest {
 
     @Test
     public void testAddingProperty() throws Exception {
-        testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream);
+        testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream, userNamespaces);
         when(mockNode.setProperty(propertyShortName, mockValue, UNDEFINED)).thenReturn(mockProperty);
         testAdder.operateOnProperty(descriptiveStmnt, resource);
         verify(mockNode).setProperty(propertyShortName, mockValue, UNDEFINED);
@@ -127,14 +128,14 @@ public class RdfAdderTest {
 
     @Test
     public void testAddingModelWithStreamNamespace() throws Exception {
-        testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream);
+        testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream, userNamespaces);
         testAdder.operateOnMixin(mixinStmnt.getObject().asResource(), resource);
         verify(mockNode).addMixin(anyString());
     }
 
     @Test
     public void testAddingModelWithPrimaryType() throws Exception {
-        testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream);
+        testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream, userNamespaces);
         when(mockNode.isNodeType(mixinShortName)).thenReturn(true);
         testAdder.operateOnMixin(createResource(mixinLongName), resource);
         verify(mockNode, never()).addMixin(mixinShortName);
@@ -148,7 +149,7 @@ public class RdfAdderTest {
                 mockSession
                         .getNamespacePrefix(getJcrNamespaceForRDFNamespace(type
                                 .getNameSpace()))).thenThrow(new NamespaceException("Expected."));
-        testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream);
+        testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream, userNamespaces);
         testAdder.operateOnMixin(mixinStmnt.getObject().asResource(), resource);
     }
 
@@ -160,21 +161,21 @@ public class RdfAdderTest {
                 mockSession
                         .getNamespacePrefix(getJcrNamespaceForRDFNamespace(type
                                 .getNameSpace()))).thenReturn("rdf");
-        testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream);
+        testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream, userNamespaces);
         testAdder.operateOnMixin(mixinStmnt.getObject().asResource(), resource);
     }
 
     @Test(expected = MalformedRdfException.class)
     public void testAddingWithBadMixinOnNode() throws Exception {
         when(mockNode.canAddMixin(mixinShortName)).thenReturn(false);
-        testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream);
+        testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream, userNamespaces);
         testAdder.operateOnMixin(mixinStmnt.getObject().asResource(), resource);
     }
 
     @Test
     public void testAddingWithBadMixinForRepo() throws Exception {
         when(mockNodeTypeManager.hasNodeType(mixinShortName)).thenReturn(false);
-        testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream);
+        testAdder = new RdfAdder(mockGraphSubjects, mockSession, testStream, userNamespaces);
         testAdder.operateOnMixin(mixinStmnt.getObject().asResource(), resource);
         verify(mockNodeTypeManager).registerNodeType(mockNodeTypeTemplate, false);
         verify(mockNodeTypeTemplate).setName(mixinShortName);
@@ -230,6 +231,7 @@ public class RdfAdderTest {
         //TODO? when(mockReverseGraphSubjects.convert(mockNode)).thenReturn(mockNodeSubject);
         resource = new FedoraResourceImpl(mockNode);
         testStream = new DefaultRdfStream(testSubject, mockTriples);
+        userNamespaces = null;
     }
 
     private FedoraResource resource;
@@ -268,6 +270,7 @@ public class RdfAdderTest {
     private Stream<Triple> mockTriples;
 
     private RdfStream testStream;
+    private Map<String, String> userNamespaces;
 
     @Mock
     private IdentifierConverter<Resource, FedoraResource> mockGraphSubjects;
