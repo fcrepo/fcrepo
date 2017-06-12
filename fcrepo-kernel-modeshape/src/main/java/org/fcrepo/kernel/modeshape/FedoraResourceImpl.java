@@ -779,7 +779,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
             try (final DefaultRdfStream notCommonStream =
                     new DefaultRdfStream(replacementStream.topic(), differencer.notCommon())) {
-                new RdfAdder(idTranslator, getSession(), notCommonStream).consume();
+                new RdfAdder(idTranslator, getSession(), notCommonStream, inputModel.getNsPrefixMap()).consume();
             } catch (final ConstraintViolationException e) {
                 throw e;
             } catch (final MalformedRdfException e) {
