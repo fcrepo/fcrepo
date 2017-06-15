@@ -37,7 +37,6 @@ import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.vocabulary.RDF.type;
-
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;
@@ -46,6 +45,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 import static org.fcrepo.kernel.api.RequiredRdfContext.EMBED_RESOURCES;
@@ -55,12 +55,13 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_MEMBERSHIP;
 import static org.fcrepo.kernel.api.RequiredRdfContext.MINIMAL;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
-
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.text.MessageFormat;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -85,11 +86,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 
-import org.apache.jena.atlas.RuntimeIOException;
-import org.apache.jena.graph.Triple;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.RiotException;
 import org.fcrepo.http.commons.api.HttpHeaderInjector;
 import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
 import org.fcrepo.http.commons.domain.MultiPrefer;
@@ -99,6 +95,7 @@ import org.fcrepo.http.commons.domain.ldp.LdpPreferTag;
 import org.fcrepo.http.commons.responses.RangeRequestInputStream;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.http.commons.session.HttpSession;
+import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
@@ -111,8 +108,17 @@ import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 
+import org.apache.jena.atlas.RuntimeIOException;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RiotException;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.jvnet.hk2.annotations.Optional;
+import org.slf4j.Logger;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.google.common.annotations.VisibleForTesting;
@@ -127,6 +133,7 @@ import com.google.common.annotations.VisibleForTesting;
  */
 public abstract class ContentExposingResource extends FedoraBaseResource {
 
+    private static final Logger LOGGER = getLogger(ContentExposingResource.class);
     public static final MediaType MESSAGE_EXTERNAL_BODY = MediaType.valueOf("message/external-body");
 
     @Context protected Request request;
@@ -625,7 +632,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         final Model inputModel = createDefaultModel();
         try {
             inputModel.read(requestBodyStream, getUri(resource).toString(), format.getName().toUpperCase());
-
         } catch (final RiotException e) {
             throw new BadRequestException("RDF was not parsable: " + e.getMessage(), e);
 
@@ -636,7 +642,36 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             throw new RepositoryRuntimeException(e);
         }
 
+        ensureConsistencyOfInput(inputModel);
+
         resource.replaceProperties(translator(), inputModel, resourceTriples);
+    }
+
+    private void ensureConsistencyOfInput(final Model inputModel) throws BadRequestException {
+        LOGGER.info("ensuring consistency!");
+        // check that ldp:hasMemberRelation value is not server managed predicate.
+        final StmtIterator iterator = inputModel.listStatements();
+        LOGGER.info("iterator.hasNext()={}", iterator.hasNext());
+
+        while (iterator.hasNext()) {
+            final Statement s = iterator.next();
+            LOGGER.debug("statement: s={}, p={}, o={}", s.getSubject(), s.getPredicate(), s.getObject());
+            if (s.getPredicate().equals(HAS_MEMBER_RELATION)) {
+                final RDFNode obj = s.getObject();
+                if (obj.isResource()) {
+                    final String uri = obj.asResource().getURI();
+                    RdfLexicon.serverManagedProperties.forEach(p -> {
+                        if (p.getURI().equals(uri)) {
+                            throw new BadRequestException(
+                                    MessageFormat.format(
+                                            "{0} cannot take a server managed property " +
+                                                    "as an object: property value = {1}.",
+                                            HAS_MEMBER_RELATION.toString(), uri));
+                        }
+                    });
+                }
+            }
+        }
     }
 
     protected void patchResourcewithSparql(final FedoraResource resource,
