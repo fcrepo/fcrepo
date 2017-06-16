@@ -155,7 +155,7 @@ public final class RdfLexicon {
     public static final Property MEMBER_SUBJECT =
             createProperty(LDP_NAMESPACE + "MemberSubject");
 
-    private static final Set<Property> ldpProperties = of(CONTAINS, LDP_MEMBER);
+    private static final Set<Property> ldpManagedProperties = of(CONTAINS);
 
     // REPOSITORY INFORMATION
     public static final Property HAS_OBJECT_COUNT =
@@ -237,7 +237,7 @@ public final class RdfLexicon {
 
     static {
         final ImmutableSet.Builder<Property> b = ImmutableSet.builder();
-        b.addAll(membershipProperties).addAll(fixityProperties).addAll(ldpProperties).addAll(
+        b.addAll(membershipProperties).addAll(fixityProperties).addAll(ldpManagedProperties).addAll(
                 repositoryProperties).addAll(namespaceProperties).addAll(
                 otherServiceProperties).addAll(structProperties).addAll(contentProperties).addAll(
                 versioningProperties).addAll(serverManagedProperties);
