@@ -95,12 +95,12 @@ import org.fcrepo.http.commons.domain.ldp.LdpPreferTag;
 import org.fcrepo.http.commons.responses.RangeRequestInputStream;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.http.commons.session.HttpSession;
-import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -113,7 +113,6 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RiotException;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
@@ -642,36 +641,39 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             throw new RepositoryRuntimeException(e);
         }
 
-        ensureConsistencyOfInput(inputModel);
+        ensureValidMemberRelation(inputModel);
 
         resource.replaceProperties(translator(), inputModel, resourceTriples);
     }
 
-    private void ensureConsistencyOfInput(final Model inputModel) throws BadRequestException {
-        LOGGER.info("ensuring consistency!");
+    /**
+     * This method throws an exception if the arg model contains a triple with 'ldp:hasMemberRelation' as a predicate
+     *   and a server-managed property as the object.
+     *
+     * @param inputModel to be checked
+     * @throws ServerManagedPropertyException
+     */
+    private void ensureValidMemberRelation(final Model inputModel) throws BadRequestException {
         // check that ldp:hasMemberRelation value is not server managed predicate.
-        final StmtIterator iterator = inputModel.listStatements();
-        LOGGER.info("iterator.hasNext()={}", iterator.hasNext());
-
-        while (iterator.hasNext()) {
-            final Statement s = iterator.next();
+        inputModel.listStatements().forEachRemaining((Statement s) -> {
             LOGGER.debug("statement: s={}, p={}, o={}", s.getSubject(), s.getPredicate(), s.getObject());
+
             if (s.getPredicate().equals(HAS_MEMBER_RELATION)) {
                 final RDFNode obj = s.getObject();
-                if (obj.isResource()) {
+                if (obj.isURIResource()) {
                     final String uri = obj.asResource().getURI();
-                    RdfLexicon.serverManagedProperties.forEach(p -> {
-                        if (p.getURI().equals(uri)) {
-                            throw new BadRequestException(
+
+                    // Throw exception if object is a server-managed property
+                    if (isManagedPredicate.test(createProperty(uri))) {
+                            throw new ServerManagedPropertyException(
                                     MessageFormat.format(
                                             "{0} cannot take a server managed property " +
                                                     "as an object: property value = {1}.",
-                                            HAS_MEMBER_RELATION.toString(), uri));
-                        }
-                    });
+                                            HAS_MEMBER_RELATION, uri));
+                    }
                 }
             }
-        }
+        });
     }
 
     protected void patchResourcewithSparql(final FedoraResource resource,

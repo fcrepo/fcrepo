@@ -2529,7 +2529,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         httpPut.setEntity(new StringEntity(body));
 
         try (final CloseableHttpResponse response = execute(httpPut)) {
-            assertEquals("Should be a 400 BAD REQUEST!", BAD_REQUEST.getStatusCode(), getStatus(response));
+            assertEquals("Should be a 400 BAD REQUEST!", CONFLICT.getStatusCode(), getStatus(response));
         }
     }
 
