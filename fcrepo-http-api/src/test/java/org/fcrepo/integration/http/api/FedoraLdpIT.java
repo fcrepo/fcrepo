@@ -2505,6 +2505,35 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testPutServerManagedPredicateInIndirectContainer() throws IOException {
+        logger.info("running testPutServerManagedPredicateInIndirectContainer");
+        // Create a resource
+        final String id = getRandomUniqueId();
+        executeAndClose(putObjMethod(id));
+
+        final String child1 = id + "/1";
+        executeAndClose(putObjMethod(child1));
+
+        // create indirect container using a server managed triple.
+        final String body =
+                "@prefix ore: <http://www.openarchives.org/ore/terms/> .\n" +
+                        "@prefix ldp: <http://www.w3.org/ns/ldp#> .\n" +
+                        "@prefix pcdm: <http://pcdm.org/models#> .\n" +
+                        "<> a ldp:IndirectContainer ;\n" +
+                        "   ldp:hasMemberRelation <http://fedora.info/definitions/v4/repository#lastModified> ; \n" +
+                        "   ldp:insertedContentRelation ore:proxyFor ; \n" +
+                        "   ldp:membershipResource <" + serverAddress + child1 + "> . ";
+        final String child1MembersId = child1 + "/members";
+        final HttpPut httpPut = putObjMethod(child1MembersId);
+        httpPut.addHeader("Content-Type", "text/turtle");
+        httpPut.setEntity(new StringEntity(body));
+
+        try (final CloseableHttpResponse response = execute(httpPut)) {
+            assertEquals("Should be a 409 CONFLICT!", CONFLICT.getStatusCode(), getStatus(response));
+        }
+    }
+
+    @Test
     public void testPutEmptyBody() throws IOException {
         final HttpPut httpPut = putObjMethod(getRandomUniqueId());
         httpPut.addHeader(CONTENT_TYPE, "application/ld+json");
