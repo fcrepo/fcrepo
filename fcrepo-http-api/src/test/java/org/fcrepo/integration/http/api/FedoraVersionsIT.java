@@ -17,24 +17,24 @@
  */
 package org.fcrepo.integration.http.api;
 
+import static com.google.common.collect.Iterators.size;
+import static java.util.stream.Stream.empty;
+import static java.util.stream.Stream.of;
+import static javax.ws.rs.core.HttpHeaders.ACCEPT;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.Link.fromUri;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
+import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.vocabulary.DC_11.title;
 import static org.apache.jena.vocabulary.RDF.type;
-import static org.apache.jena.vocabulary.DC.title;
-import static java.util.stream.Stream.empty;
-import static java.util.stream.Stream.of;
-import static javax.ws.rs.core.Link.fromUri;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static javax.ws.rs.core.HttpHeaders.ACCEPT;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.CONFLICT;
-import static javax.ws.rs.core.Response.Status.NO_CONTENT;
-import static javax.ws.rs.core.Response.Status.CREATED;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static javax.ws.rs.core.Response.Status.OK;
-import static com.google.common.collect.Iterators.size;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
@@ -44,6 +44,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_HISTORY;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -57,25 +58,24 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.http.client.methods.HttpHead;
+import javax.ws.rs.core.Link;
+
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
-import org.junit.Test;
-
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.Quad;
-
-import javax.ws.rs.core.Link;
+import org.junit.Test;
 
 /**
  * <p>
@@ -243,6 +243,36 @@ public class FedoraVersionsIT extends AbstractResourceIT {
                     resultSet.contains(NON_RDF_SOURCE_LINK));
             assertTrue("Didn't find describedby link header! " + DESCRIBED_BY_LINK + " ?= " + linkHeaders,
                     resultSet.contains(DESCRIBED_BY_LINK));
+        }
+    }
+
+    @Test
+    public void testVersionListHeaders() throws IOException {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+        enableVersioning(id);
+
+        final Link RDF_SOURCE_LINK = fromUri(RDF_SOURCE.getURI()).rel(type.getLocalName()).build();
+
+        final HttpHead head = new HttpHead(serverAddress + id + "/fcr:versions");
+
+        try (final CloseableHttpResponse response = execute(head)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+
+            final Collection<String> linkHeaders = getLinkHeaders(response);
+
+            final Set<Link> resultSet = linkHeaders.stream().map(Link::valueOf).flatMap(link -> {
+                final String linkRel = link.getRel();
+                final URI linkUri = link.getUri();
+                if (linkRel.equals(RDF_SOURCE_LINK.getRel()) && linkUri.equals(RDF_SOURCE_LINK.getUri())) {
+                    // Found nonRdfSource!
+                    return of(RDF_SOURCE_LINK);
+                }
+                return empty();
+            }).collect(Collectors.toSet());
+            assertTrue("No link headers found!", !linkHeaders.isEmpty());
+            assertTrue("Didn't find RdfSource link header! " + RDF_SOURCE_LINK + " ?= " + linkHeaders,
+                resultSet.contains(RDF_SOURCE_LINK));
         }
     }
 
