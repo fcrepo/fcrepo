@@ -18,6 +18,7 @@
 package org.fcrepo.http.api;
 
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.status;
@@ -32,6 +33,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
+import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
@@ -47,6 +49,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -56,6 +59,7 @@ import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.kernel.api.exception.RepositoryVersionRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
@@ -159,6 +163,11 @@ public class FedoraVersioning extends FedoraBaseResource {
             throw new RepositoryVersionRuntimeException("This operation requires that the node be versionable");
         }
 
+        final Link.Builder resourceLink = Link.fromUri(LDP_NAMESPACE + "Resource").rel("type");
+        servletResponse.addHeader(LINK, resourceLink.build().toString());
+        final Link.Builder rdfSourceLink = Link.fromUri(LDP_NAMESPACE + "RDFSource").rel("type");
+        servletResponse.addHeader(LINK, rdfSourceLink.build().toString());
+
         return new RdfNamespacedStream(new DefaultRdfStream(
                 asNode(resource()),
                 resource().getTriples(translator(), VERSIONS)),
@@ -172,5 +181,4 @@ public class FedoraVersioning extends FedoraBaseResource {
 
         return resource;
     }
-
 }
