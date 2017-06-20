@@ -44,6 +44,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_HISTORY;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -58,6 +59,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.http.client.methods.HttpHead;
+
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -243,6 +245,36 @@ public class FedoraVersionsIT extends AbstractResourceIT {
                     resultSet.contains(NON_RDF_SOURCE_LINK));
             assertTrue("Didn't find describedby link header! " + DESCRIBED_BY_LINK + " ?= " + linkHeaders,
                     resultSet.contains(DESCRIBED_BY_LINK));
+        }
+    }
+
+    @Test
+    public void testVersionListHeaders() throws IOException {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+        enableVersioning(id);
+
+        final Link RDF_SOURCE_LINK = fromUri(RDF_SOURCE.getURI()).rel(type.getLocalName()).build();
+
+        final HttpHead head = new HttpHead(serverAddress + id + "/fcr:versions");
+
+        try (final CloseableHttpResponse response = execute(head)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+
+            final Collection<String> linkHeaders = getLinkHeaders(response);
+
+            final Set<Link> resultSet = linkHeaders.stream().map(Link::valueOf).flatMap(link -> {
+                final String linkRel = link.getRel();
+                final URI linkUri = link.getUri();
+                if (linkRel.equals(RDF_SOURCE_LINK.getRel()) && linkUri.equals(RDF_SOURCE_LINK.getUri())) {
+                    // Found RdfSource!
+                    return of(RDF_SOURCE_LINK);
+                }
+                return empty();
+            }).collect(Collectors.toSet());
+            assertTrue("No link headers found!", !linkHeaders.isEmpty());
+            assertTrue("Didn't find RdfSource link header! " + RDF_SOURCE_LINK + " ?= " + linkHeaders,
+                resultSet.contains(RDF_SOURCE_LINK));
         }
     }
 
