@@ -49,6 +49,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -162,8 +163,10 @@ public class FedoraVersioning extends FedoraBaseResource {
             throw new RepositoryVersionRuntimeException("This operation requires that the node be versionable");
         }
 
-        servletResponse.addHeader(LINK, "<" + LDP_NAMESPACE + "Resource>;rel=\"type\"");
-        servletResponse.addHeader(LINK, "<" + LDP_NAMESPACE + "RDFSource>;rel=\"type\"");
+        final Link.Builder resourceLink = Link.fromUri(LDP_NAMESPACE + "Resource").rel("type");
+        servletResponse.addHeader(LINK, resourceLink.build().toString());
+        final Link.Builder rdfSourceLink = Link.fromUri(LDP_NAMESPACE + "RDFSource").rel("type");
+        servletResponse.addHeader(LINK, rdfSourceLink.build().toString());
 
         return new RdfNamespacedStream(new DefaultRdfStream(
                 asNode(resource()),
