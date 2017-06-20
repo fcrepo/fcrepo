@@ -17,13 +17,17 @@
  */
 package org.fcrepo.integration.http.api;
 
+import static java.util.stream.Stream.empty;
+import static java.util.stream.Stream.of;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.Link.fromUri;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
-
+import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.vocabulary.RDF.type;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
 import static org.fcrepo.kernel.api.FedoraTypes.DEFAULT_DIGEST_ALGORITHM;
@@ -32,15 +36,21 @@ import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_STATE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST_ALGORITHM;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.net.URI;
+import java.util.Collection;
 import java.util.Iterator;
-
+import java.util.Set;
+import java.util.stream.Collectors;
+import javax.ws.rs.core.Link;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 
@@ -116,6 +126,36 @@ public class FedoraFixityIT extends AbstractResourceIT {
             assertTrue(graphStore.contains(ANY, ANY, HAS_MESSAGE_DIGEST_ALGORITHM.asNode(),
                     createLiteral("MD5", StringType)));
             assertTrue(graphStore.contains(ANY, ANY, HAS_SIZE.asNode(), createLiteral("9", IntegerType)));
+        }
+    }
+
+    @Test
+    public void testFixityHeaders() throws IOException {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+        createDatastream(id, "zxc", "foo");
+
+        final Link RDF_SOURCE_LINK = fromUri(RDF_SOURCE.getURI()).rel(type.getLocalName()).build();
+
+        final HttpHead head = new HttpHead(serverAddress + id + "/zxc/fcr:fixity");
+
+        try (final CloseableHttpResponse response = execute(head)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+
+            final Collection<String> linkHeaders = getLinkHeaders(response);
+
+            final Set<Link> resultSet = linkHeaders.stream().map(Link::valueOf).flatMap(link -> {
+                final String linkRel = link.getRel();
+                final URI linkUri = link.getUri();
+                if (linkRel.equals(RDF_SOURCE_LINK.getRel()) && linkUri.equals(RDF_SOURCE_LINK.getUri())) {
+                    // Found RdfSource!
+                    return of(RDF_SOURCE_LINK);
+                }
+                return empty();
+            }).collect(Collectors.toSet());
+            assertTrue("No link headers found!", !linkHeaders.isEmpty());
+            assertTrue("Didn't find RdfSource link header! " + RDF_SOURCE_LINK + " ?= " + linkHeaders,
+                resultSet.contains(RDF_SOURCE_LINK));
         }
     }
 

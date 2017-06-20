@@ -17,6 +17,7 @@
  */
 package org.fcrepo.http.api;
 
+import static javax.ws.rs.core.HttpHeaders.LINK;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2_WITH_CHARSET;
@@ -26,6 +27,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
+import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.ws.rs.GET;
@@ -33,7 +35,7 @@ import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-
+import javax.ws.rs.core.Link;
 import com.google.common.annotations.VisibleForTesting;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
@@ -92,6 +94,11 @@ public class FedoraFixity extends ContentExposingResource {
         if (!(resource() instanceof FedoraBinary)) {
             throw new NotFoundException(resource() + " is not a binary");
         }
+
+        final Link.Builder resourceLink = Link.fromUri(LDP_NAMESPACE + "Resource").rel("type");
+        servletResponse.addHeader(LINK, resourceLink.build().toString());
+        final Link.Builder rdfSourceLink = Link.fromUri(LDP_NAMESPACE + "RDFSource").rel("type");
+        servletResponse.addHeader(LINK, rdfSourceLink.build().toString());
 
         LOGGER.info("Get fixity for '{}'", externalPath);
         return new RdfNamespacedStream(
