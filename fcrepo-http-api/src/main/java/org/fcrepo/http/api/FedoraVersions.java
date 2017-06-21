@@ -58,7 +58,7 @@ import com.google.common.annotations.VisibleForTesting;
  * @author ajs6f
  */
 @Scope("request")
-@Path("/{path: .*}/fcr:versions/{labelAndOptionalPathIntoVersion: .*}")
+@Path("/{path: .*}/fcr:versions/{labelAndOptionalPathIntoVersion: .*(?<!/fcr:fixity)$}")
 public class FedoraVersions extends ContentExposingResource {
 
     private static final Logger LOGGER = getLogger(FedoraVersions.class);
