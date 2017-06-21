@@ -636,6 +636,22 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         }
     }
 
+    @Test
+    public void testFixityOnVersionedResource() throws IOException {
+        final String id = getRandomUniqueId();
+        final String childId = id + "/child1";
+        createObjectAndClose(id);
+        createDatastream(id, "child1", "foo");
+        enableVersioning(childId);
+        postObjectVersion(childId, "v0");
+
+        final HttpGet checkFixity = getObjMethod(childId + "/fcr:versions/v0/fcr:fixity");
+        try (final CloseableHttpResponse response = execute(checkFixity)) {
+            assertEquals("Did not get OK response", OK.getStatusCode(), getStatus(response));
+        }
+
+    }
+
     private static void patchLiteralProperty(final String url, final String predicate, final String literal)
             throws IOException {
         final HttpPatch updateObjectGraphMethod = new HttpPatch(url);
