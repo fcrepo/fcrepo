@@ -21,7 +21,6 @@ package org.fcrepo.http.api;
 import static com.google.common.base.Strings.nullToEmpty;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
-import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
 import static javax.ws.rs.core.MediaType.WILDCARD;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
@@ -42,6 +41,11 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
+import static org.apache.jena.atlas.web.ContentType.create;
+import static org.apache.jena.riot.WebContent.ctTextPlain;
+import static org.apache.jena.riot.WebContent.ctTextCSV;
+import static org.apache.jena.riot.WebContent.ctSPARQLUpdate;
+import static org.apache.jena.riot.WebContent.matchContentType;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_WITH_CHARSET;
@@ -99,6 +103,7 @@ import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
+import org.apache.jena.atlas.web.ContentType;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
@@ -694,10 +699,14 @@ public class FedoraLdp extends ContentExposingResource {
                                           final ContentDisposition contentDisposition) {
 
         if (requestContentType != null) {
-            final String s = requestContentType.toString();
-            if (!s.equals(contentTypeSPARQLUpdate) && !isRdfContentType(s) || s.equals(TEXT_PLAIN)) {
-                return FEDORA_BINARY;
-            }
+          final ContentType ctRequest = create(requestContentType.toString());
+
+          // Text files and CSV files are not considered RDF to Fedora, though CSV is a valid
+          // RDF type to Jena (although deprecated).  SPARQL updates are done on containers.
+          if (matchContentType(ctRequest, ctTextPlain) || matchContentType(ctRequest, ctTextCSV) ||
+              !isRdfContentType(requestContentType.toString()) && !matchContentType(ctRequest, ctSPARQLUpdate)) {
+              return FEDORA_BINARY;
+          }
         }
 
         if (contentDisposition != null && contentDisposition.getType().equals("attachment")) {
