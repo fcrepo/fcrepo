@@ -758,7 +758,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             initialContent = EntityUtils.toString(subjectResponse.getEntity());
         }
         final HttpPut replaceMethod = putObjMethod(id);
-        replaceMethod.addHeader(CONTENT_TYPE, "application/n3");
+        replaceMethod.addHeader(CONTENT_TYPE, "text/n3");
         replaceMethod
                 .setEntity(new StringEntity(initialContent + "\n<" + subjectURI + "> <info:test#label> \"foo\""));
         try (final CloseableHttpResponse response = execute(replaceMethod)) {
@@ -777,7 +777,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testCreateGraph() throws IOException {
         final String subjectURI = serverAddress + getRandomUniqueId();
         final HttpPut createMethod = new HttpPut(subjectURI);
-        createMethod.addHeader(CONTENT_TYPE, "application/n3");
+        createMethod.addHeader(CONTENT_TYPE, "text/n3");
         createMethod.setEntity(new StringEntity("<" + subjectURI + "> <info:test#label> \"foo\""));
         assertEquals(CREATED.getStatusCode(), getStatus(createMethod));
 
@@ -792,7 +792,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testCreateGraphWithBlanknodes() throws IOException {
         final String subjectURI = serverAddress + getRandomUniqueId();
         final HttpPut createMethod = new HttpPut(subjectURI);
-        createMethod.addHeader(CONTENT_TYPE, "application/n3");
+        createMethod.addHeader(CONTENT_TYPE, "text/n3");
         createMethod.setEntity(new StringEntity("<" + subjectURI + "> <info:some-predicate> _:a ." +
                 "_:a <info:test#label> \"asdfg\""));
         assertEquals(CREATED.getStatusCode(), getStatus(createMethod));
@@ -1175,7 +1175,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     @Test
     public void testIngestWithNewAndGraph() throws IOException {
         final HttpPost method = postObjMethod();
-        method.addHeader(CONTENT_TYPE, "application/n3");
+        method.addHeader(CONTENT_TYPE, "text/n3");
         method.setEntity(new StringEntity("<> <http://purl.org/dc/elements/1.1/title> \"title\"."));
 
         try (final CloseableHttpResponse response = execute(method)) {
@@ -1440,7 +1440,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     @Test
     public void testIngestWithRDFLang() throws IOException {
         final HttpPost method = postObjMethod();
-        method.addHeader(CONTENT_TYPE, "application/n3");
+        method.addHeader(CONTENT_TYPE, "text/n3");
         method.setEntity(new StringEntity("<> <http://purl.org/dc/elements/1.1/title> \"french title\"@fr ."
                 + "<> <http://purl.org/dc/elements/1.1/title> \"english title\"@en ."));
 
@@ -1925,6 +1925,45 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testCreateBinaryUpperCaseMimeType() throws IOException {
+        final String subjectURI = serverAddress + getRandomUniqueId();
+        final HttpPut createMethod = new HttpPut(subjectURI);
+        createMethod.addHeader(CONTENT_TYPE, "TEXT/PlAiN");
+        createMethod.setEntity(new StringEntity("Some text here."));
+
+        try (final CloseableHttpResponse response = execute(createMethod)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+
+            final String receivedLocation = response.getFirstHeader("Location").getValue();
+            assertEquals("Got wrong URI in Location header for datastream creation!", subjectURI, receivedLocation);
+
+            final Link link = Link.valueOf(response.getFirstHeader(LINK).getValue());
+            // ensure it's a binary; if it doesn't have describedby, then it's not
+            assertEquals("No described by header!", "describedby", link.getRel());
+        }
+    }
+
+    @Test
+    public void testCreateBinaryCSV() throws IOException {
+        final String subjectURI = serverAddress + getRandomUniqueId();
+        final HttpPut createMethod = new HttpPut(subjectURI);
+        createMethod.addHeader(CONTENT_TYPE, "text/csv");
+        createMethod.setEntity(new StringEntity("Header 1, Header 2, Header 3\r1,2,3\r1,2,3"));
+
+        try (final CloseableHttpResponse response = execute(createMethod)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+
+            final String receivedLocation = response.getFirstHeader("Location").getValue();
+
+            assertEquals("Got wrong URI in Location header for datastream creation!", subjectURI, receivedLocation);
+
+            final Link link = Link.valueOf(response.getFirstHeader(LINK).getValue());
+            // ensure it's a binary; if it doesn't have describedby, then it's not
+            assertEquals("No described by header!", "describedby", link.getRel());
+        }
+    }
+
+    @Test
     public void testRoundTripReplaceGraphForDatastreamDescription() throws IOException {
         final String id = getRandomUniqueId();
         final String subjectURI = serverAddress + id + "/ds1";
@@ -2342,7 +2381,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testJsonLdProfileCompacted() throws IOException {
         // Create a resource
         final HttpPost method = postObjMethod();
-        method.addHeader(CONTENT_TYPE, "application/n3");
+        method.addHeader(CONTENT_TYPE, "text/n3");
         final BasicHttpEntity entity = new BasicHttpEntity();
         final String rdf = "<> <http://purl.org/dc/elements/1.1/title> \"ceci n'est pas un titre français\"@fr ." +
                 "<> <http://purl.org/dc/elements/1.1/title> \"this is an english title\"@en .";
@@ -2376,7 +2415,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testJsonLdProfileExpanded() throws IOException {
         // Create a resource
         final HttpPost method = postObjMethod();
-        method.addHeader(CONTENT_TYPE, "application/n3");
+        method.addHeader(CONTENT_TYPE, "text/n3");
         final BasicHttpEntity entity = new BasicHttpEntity();
         final String rdf = "<> <http://purl.org/dc/elements/1.1/title> \"ceci n'est pas un titre français\"@fr ." +
                 "<> <http://purl.org/dc/elements/1.1/title> \"this is an english title\"@en .";
@@ -2411,7 +2450,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testJsonLdProfileFlattened() throws IOException {
         // Create a resource
         final HttpPost method = postObjMethod();
-        method.addHeader(CONTENT_TYPE, "application/n3");
+        method.addHeader(CONTENT_TYPE, "text/n3");
         final BasicHttpEntity entity = new BasicHttpEntity();
         final String rdf = "<> <http://purl.org/dc/elements/1.1/title> \"ceci n'est pas un titre français\"@fr ." +
                 "<> <http://purl.org/dc/elements/1.1/title> \"this is an english title\"@en .";
