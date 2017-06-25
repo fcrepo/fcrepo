@@ -77,7 +77,6 @@ import javax.inject.Inject;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.BeanParam;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.EntityTag;
@@ -99,6 +98,7 @@ import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
+import org.fcrepo.kernel.api.exception.PreconditionException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
 import org.fcrepo.kernel.api.models.Container;
@@ -591,8 +591,12 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             // an exceptional condition
             builder = builder.cacheControl(cc).lastModified(Date.from(roundedDate)).tag(etag);
         }
+
         if (builder != null) {
-            throw new WebApplicationException(builder.build());
+            final Response response = builder.build();
+            final Object message = response.getEntity();
+            throw new PreconditionException(message != null ? message.toString()
+                    : "Request failed due to unspecified failed precondition.", response.getStatus());
         }
     }
 

@@ -32,6 +32,8 @@ import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static javax.ws.rs.core.Response.Status.TEMPORARY_REDIRECT;
+import static javax.ws.rs.core.Response.Status.NOT_MODIFIED;
+
 import static org.apache.commons.io.IOUtils.toInputStream;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
@@ -82,7 +84,6 @@ import java.util.Set;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -110,6 +111,7 @@ import org.fcrepo.kernel.api.exception.ConstraintViolationException;
 import org.fcrepo.kernel.api.exception.InsufficientStorageException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
+import org.fcrepo.kernel.api.exception.PreconditionException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
@@ -537,10 +539,15 @@ public class FedoraLdpTest {
 
         // Set up the expectations for the ResponseBuilder
         final Response.ResponseBuilder builder = mock(Response.ResponseBuilder.class);
+        final Response response = mock(Response.class);
+
         when(builder.entity(any())).thenReturn(builder);
         when(builder.cacheControl(any())).thenReturn(builder);
         when(builder.lastModified((any()))).thenReturn(builder);
         when(builder.tag(any(EntityTag.class))).thenReturn(builder);
+        when(builder.build()).thenReturn(response);
+        when(response.getEntity()).thenReturn("precondition failed message");
+        when(response.getStatus()).thenReturn(NOT_MODIFIED.getStatusCode());
 
         // Set up expectations for the Request; returning a ResponseBuilder from evaluatePreconditions(...) indicates
         // that satisfying the precondition fails, which is what we want to simulate in this test
@@ -550,8 +557,8 @@ public class FedoraLdpTest {
         try {
             testObj.evaluateRequestPreconditions(mockRequest, mockResponse, testObj.resource(),
                     mockSession, true);
-            fail("Expected " + WebApplicationException.class.getName() + " to be thrown.");
-        } catch (WebApplicationException e) {
+            fail("Expected " + PreconditionException.class.getName() + " to be thrown.");
+        } catch (PreconditionException e) {
             // expected
         }
 
@@ -572,11 +579,16 @@ public class FedoraLdpTest {
 
         // Set up the expectations for the ResponseBuilder
         final Response.ResponseBuilder builder = mock(Response.ResponseBuilder.class);
+        final Response response = mock(Response.class);
+
         when(builder.entity(any())).thenReturn(builder);
         when(builder.cacheControl(any())).thenReturn(builder);
         when(builder.lastModified((any()))).thenReturn(builder);
         when(builder.tag(any(EntityTag.class))).thenReturn(builder);
+        when(builder.build()).thenReturn(response);
+        when(response.getStatus()).thenReturn(NOT_MODIFIED.getStatusCode());
 
+        when(response.getEntity()).thenReturn("precondition failed message");
         // Set up expectations for the Request; returning a ResponseBuilder from evaluatePreconditions(...) indicates
         // that satisfying the precondition fails, which is what we want to simulate in this test
         when(mockRequest.evaluatePreconditions(any(Date.class))).thenReturn(builder);
@@ -585,8 +597,8 @@ public class FedoraLdpTest {
         try {
             testObj.evaluateRequestPreconditions(mockRequest, mockResponse, testObj.resource(),
                     mockSession, true);
-            fail("Expected " + WebApplicationException.class.getName() + " to be thrown.");
-        } catch (WebApplicationException e) {
+            fail("Expected " + PreconditionException.class.getName() + " to be thrown.");
+        } catch (PreconditionException e) {
             // expected
         }
 
