@@ -2,5 +2,5 @@
 <script src="../static/js/jquery-1.9.1.min.js" ></script>
 <script src="../static/js/bootstrap-3.0.0.min.js"></script>
 <link href="../static/css/bootstrap-3.0.0.min.css" rel="stylesheet">
-<script type="text/javascript" src="./fcr:assets/common.js"></script>
-<link rel="stylesheet" type="text/css" href="./fcr:assets/common.css">
+<script type="text/javascript" src="fcr:assets/common.js"></script>
+<link rel="stylesheet" type="text/css" href="fcr:assets/common.css">
