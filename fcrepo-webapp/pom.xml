@@ -505,7 +505,7 @@
             <directory>src/main/resources</directory>
             <filtering>true</filtering>
             <includes>
-              <include>**/fcrepo-config.xml</include>
+              <include>**/repo.xml</include>
             </includes>
           </resource>
         </resources>
