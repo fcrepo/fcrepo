@@ -51,4 +51,16 @@ public class RangeRequestInputStreamTest {
             assertEquals("0123456789", s);
         }
     }
+
+    @Test
+    public void getGetLongRange() throws IOException {
+        final StringBuffer buf = new StringBuffer();
+        while ( buf.length() < 9000 ) {
+            buf.append("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+        }
+        final InputStream in = new ByteArrayInputStream(buf.toString().getBytes());
+        try (final RangeRequestInputStream out = new RangeRequestInputStream(in, 0L, 9000)) {
+            assertEquals(9000, IOUtils.toString(out, UTF_8).length());
+        }
+    }
 }
