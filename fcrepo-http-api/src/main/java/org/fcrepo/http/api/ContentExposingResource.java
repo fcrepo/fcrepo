@@ -348,7 +348,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                             new RangeRequestInputStream(binary.getContent(), range.start(), range.size());
 
                     builder = status(PARTIAL_CONTENT).entity(rangeInputStream)
-                            .header("Content-Range", contentRangeValue);
+                            .header("Content-Range", contentRangeValue)
+                            .header(CONTENT_LENGTH, range.size());
                 }
 
             } else {
