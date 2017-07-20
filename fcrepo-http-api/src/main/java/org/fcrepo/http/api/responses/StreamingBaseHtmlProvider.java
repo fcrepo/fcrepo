@@ -90,16 +90,6 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
     public static final String templatesLocation = "/views";
 
     /**
-     * Location in the classpath where the common css file is to be found.
-     */
-    public static final String commonCssLocation = "/views/common.css";
-
-    /**
-     * Location in the classpath where the common javascript file is to be found.
-     */
-    public static final String commonJsLocation = "/views/common.js";
-
-    /**
      * A map from String names for primary node types to the Velocity templates
      * that should be used for those node types.
      */
