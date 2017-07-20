@@ -47,7 +47,7 @@
  * An implementation-specific fedora namespace for properties a user may set on a node that may
  * enable or disable a fedora-specific behavior of that node.
  */
-<config = 'info:fedoraconfig/'>
+<fedoraconfig = 'info:fedoraconfig/'>
 
 <test = 'info:fedora/test/'>
 
