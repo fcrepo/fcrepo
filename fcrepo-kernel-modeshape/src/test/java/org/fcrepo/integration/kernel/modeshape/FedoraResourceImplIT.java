@@ -370,23 +370,23 @@ public class FedoraResourceImplIT extends AbstractIT {
         final NodeTypeManager mgr = jcrSession.getWorkspace().getNodeTypeManager();
         //create supertype mixin
         final NodeTypeTemplate type1 = mgr.createNodeTypeTemplate();
-        type1.setName("fedoraconfig:aSupertype");
+        type1.setName("test:aSupertype");
         type1.setMixin(true);
         final NodeTypeDefinition[] nodeTypes = new NodeTypeDefinition[]{type1};
         mgr.registerNodeTypes(nodeTypes, true);
 
         //create a type inheriting above supertype
         final NodeTypeTemplate type2 = mgr.createNodeTypeTemplate();
-        type2.setName("fedoraconfig:testInher");
+        type2.setName("test:testInher");
         type2.setMixin(true);
-        type2.setDeclaredSuperTypeNames(new String[]{"fedoraconfig:aSupertype"});
+        type2.setDeclaredSuperTypeNames(new String[]{"test:aSupertype"});
         final NodeTypeDefinition[] nodeTypes2 = new NodeTypeDefinition[]{type2};
         mgr.registerNodeTypes(nodeTypes2, true);
 
         //create object with inheriting type
         FedoraResource object = containerService.findOrCreate(session, "/testNTTnheritanceObject");
         final javax.jcr.Node node = getJcrNode(object);
-        node.addMixin("fedoraconfig:testInher");
+        node.addMixin("test:testInher");
 
         session.commit();
         session.expire();
@@ -397,8 +397,8 @@ public class FedoraResourceImplIT extends AbstractIT {
         //test that supertype has been inherited as rdf:type
         final Node s = createGraphSubjectNode(object);
         final Node p = type.asNode();
-        final Node o = createProperty("info:fedoraconfig/aSupertype").asNode();
-        assertTrue("supertype fedoraconfig:aSupertype not found inherited in fedora:testInher!",
+        final Node o = createProperty("info:fedora/test/aSupertype").asNode();
+        assertTrue("supertype test:aSupertype not found inherited in test:testInher!",
                 object.getTriples(subjects, PROPERTIES).collect(toModel()).getGraph().contains(s, p, o));
     }
 
@@ -1257,7 +1257,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testDeletePartOfMultiValueProperty() throws RepositoryException {
         final String pid = getRandomPid();
-        final String relation = "fedoraconfig:fakeRel";
+        final String relation = "test:fakeRel";
         containerService.findOrCreate(session, pid);
         final Container subject = containerService.findOrCreate(session, pid + "/a");
         final Container referent1 = containerService.findOrCreate(session, pid + "/b");
@@ -1273,11 +1273,11 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Model model1 = referent1.getTriples(subjects, INBOUND_REFERENCES).collect(toModel());
 
         assertTrue(model1.contains(subjects.reverse().convert(subject),
-                createProperty("info:fedoraconfig/fakeRel"),
+                createProperty("info:fedora/test/fakeRel"),
                 createResource("info:fedora/" + pid + "/b")));
 
         assertTrue(model1.contains(subjects.reverse().convert(subject),
-                createProperty("info:fedoraconfig/fakeRel"),
+                createProperty("info:fedora/test/fakeRel"),
                 createResource("info:fedora/" + pid + "/c")));
 
         // This is the test! Ensure that only the delete resource is removed from the "subject" container.
@@ -1286,11 +1286,11 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Model model2 = referent1.getTriples(subjects, INBOUND_REFERENCES).collect(toModel());
 
         assertTrue(model2.contains(subjects.reverse().convert(subject),
-            createProperty("info:fedoraconfig/fakeRel"),
+            createProperty("info:fedora/test/fakeRel"),
             createResource("info:fedora/" + pid + "/b")));
 
         assertFalse(model2.contains(subjects.reverse().convert(subject),
-                createProperty("info:fedoraconfig/fakeRel"),
+                createProperty("info:fedora/test/fakeRel"),
                 createResource("info:fedora/" + pid + "/c")));
     }
 
