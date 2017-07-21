@@ -1,6 +1,6 @@
-<link rel="icon" type="image/png" href="$uriInfo.baseUriBuilder.build()../static/images/fcrepo-favicon.png">
-<script src="$uriInfo.baseUriBuilder.build()../static/js/jquery-1.9.1.min.js" ></script>
-<script src="$uriInfo.baseUriBuilder.build()../static/js/bootstrap-3.0.0.min.js"></script>
-<link href="$uriInfo.baseUriBuilder.build()../static/css/bootstrap-3.0.0.min.css" rel="stylesheet">
-<script type="text/javascript" src="$uriInfo.baseUriBuilder.build()fcr:assets/common.js"></script>
-<link rel="stylesheet" type="text/css" href="$uriInfo.baseUriBuilder.build()fcr:assets/common.css">
+<link rel="icon" type="image/png" href="$staticBaseUrl/static/images/fcrepo-favicon.png">
+<script src="$staticBaseUrl/static/js/jquery-1.9.1.min.js" ></script>
+<script src="$staticBaseUrl/static/js/bootstrap-3.0.0.min.js"></script>
+<link href="$staticBaseUrl/static/css/bootstrap-3.0.0.min.css" rel="stylesheet">
+<script type="text/javascript" src="$staticBaseUrl/static/js/common.js"></script>
+<link rel="stylesheet" type="text/css" href="$staticBaseUrl/static/css/common.css">
