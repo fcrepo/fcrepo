@@ -3,7 +3,7 @@
   <parent>
     <artifactId>fcrepo-parent</artifactId>
     <groupId>org.fcrepo</groupId>
-    <version>4.7.4</version>
+    <version>4.7.5-SNAPSHOT</version>
     <relativePath>../fcrepo-parent/pom.xml</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
