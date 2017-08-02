@@ -1,0 +1,909 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>CopyOfBaseXMLWriter.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Jena Output Patch Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.jena</a> &gt; <span class="el_source">CopyOfBaseXMLWriter.java</span></div><h1>CopyOfBaseXMLWriter.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.jena;
+
+import java.io.OutputStream ;
+import java.io.OutputStreamWriter ;
+import java.io.PrintWriter ;
+import java.io.Writer ;
+import java.util.* ;
+import java.util.Map.Entry ;
+import java.util.regex.Pattern ;
+
+import org.apache.jena.JenaRuntime ;
+import org.apache.jena.iri.IRI ;
+import org.apache.jena.iri.IRIFactory ;
+import org.apache.jena.rdf.model.* ;
+import org.apache.jena.rdf.model.impl.RDFDefaultErrorHandler ;
+import org.apache.jena.rdf.model.impl.ResourceImpl ;
+import org.apache.jena.rdf.model.impl.Util ;
+import org.apache.jena.rdfxml.xmloutput.RDFXMLWriterI ;
+import org.apache.jena.rdfxml.xmloutput.impl.SimpleLogger;
+import org.apache.jena.shared.* ;
+import org.apache.jena.util.CharEncoding ;
+import org.apache.jena.util.FileUtils ;
+import org.apache.jena.vocabulary.* ;
+import org.apache.xerces.util.XMLChar ;
+import org.slf4j.Logger ;
+import org.slf4j.LoggerFactory ;
+
+/**
+ * This is not part of the public API.
+ * Base class for XML serializers.
+ * All methods with side-effects should be synchronized in this class and its
+ * subclasses. (i. e. XMLWriters assume that the world is not changing around
+ * them while they are writing).
+ *
+ * Functionality:
+ *
+ * &lt;ul&gt;
+ * &lt;li&gt;setProperty etc
+ * &lt;li&gt;namespace prefixes
+ * &lt;li&gt;xmlbase
+ * &lt;li&gt;relative URIs
+ * &lt;li&gt;encoding issues
+ * &lt;li&gt;anonymous node presentational
+ * &lt;li&gt;errorHandler
+ * &lt;/ul&gt;
+ */
+abstract public class CopyOfBaseXMLWriter implements RDFXMLWriterI {
+
+<span class="fc" id="L67">    private static final String newline =</span>
+<span class="fc" id="L68">            JenaRuntime.getSystemProperty( &quot;line.separator&quot; );</span>
+    static private final String DEFAULT_NS_ENTITY_NAME = &quot;this&quot;;
+    static private final String DEFAULT_NS_ENTITY_NAME_ALT = &quot;here&quot;;
+<span class="fc" id="L71">    private String defaultNSEntityName = &quot;UNSET&quot; ;</span>
+
+<span class="fc" id="L73">    public CopyOfBaseXMLWriter() {</span>
+<span class="fc" id="L74">        setupMaps();</span>
+<span class="fc" id="L75">    }</span>
+
+<span class="fc" id="L77">    private static Logger xlogger = LoggerFactory.getLogger( CopyOfBaseXMLWriter.class );</span>
+
+<span class="fc" id="L79">    protected static SimpleLogger logger = new SimpleLogger() {</span>
+        @Override
+        public void warn(String s) {
+<span class="nc" id="L82">            xlogger.warn(s);</span>
+<span class="nc" id="L83">        }</span>
+        @Override
+        public void warn(String s, Exception e) {
+<span class="nc" id="L86">            xlogger.warn(s,e);</span>
+<span class="nc" id="L87">        }</span>
+    };
+
+    public static SimpleLogger setLogger(SimpleLogger lg) {
+<span class="nc" id="L91">        SimpleLogger old = logger;</span>
+<span class="nc" id="L92">        logger= lg;</span>
+<span class="nc" id="L93">        return old;</span>
+    }
+
+    abstract protected void unblockAll();
+
+    abstract protected void blockRule(Resource r);
+
+    abstract protected void writeBody
+            ( Model mdl, PrintWriter pw, String baseUri, boolean inclXMLBase );
+
+<span class="fc" id="L103">    static private Set&lt;String&gt; badRDF = new HashSet&lt;&gt;();</span>
+
+    /**
+     Counter used for allocating Jena transient namespace declarations.
+     */
+    private int jenaPrefixCount;
+
+<span class="fc" id="L110">    static String RDFNS = RDF.getURI();</span>
+
+
+    static private Pattern jenaNamespace;
+
+    static {
+<span class="fc" id="L116">        jenaNamespace =</span>
+<span class="fc" id="L117">                Pattern.compile(&quot;j\\.([1-9][0-9]*|cook\\.up)&quot;);</span>
+
+<span class="fc" id="L119">        badRDF.add(&quot;RDF&quot;);</span>
+<span class="fc" id="L120">        badRDF.add(&quot;Description&quot;);</span>
+<span class="fc" id="L121">        badRDF.add(&quot;li&quot;);</span>
+<span class="fc" id="L122">        badRDF.add(&quot;about&quot;);</span>
+<span class="fc" id="L123">        badRDF.add(&quot;aboutEach&quot;);</span>
+<span class="fc" id="L124">        badRDF.add(&quot;aboutEachPrefix&quot;);</span>
+<span class="fc" id="L125">        badRDF.add(&quot;ID&quot;);</span>
+<span class="fc" id="L126">        badRDF.add(&quot;nodeID&quot;);</span>
+<span class="fc" id="L127">        badRDF.add(&quot;parseType&quot;);</span>
+<span class="fc" id="L128">        badRDF.add(&quot;datatype&quot;);</span>
+<span class="fc" id="L129">        badRDF.add(&quot;bagID&quot;);</span>
+<span class="fc" id="L130">        badRDF.add(&quot;resource&quot;);</span>
+    }
+
+<span class="fc" id="L133">    String xmlBase = null;</span>
+
+    private IRI baseURI;
+
+<span class="fc" id="L137">    boolean longId = false;</span>
+
+<span class="fc" id="L139">    private boolean demandGoodURIs = true;</span>
+
+<span class="fc" id="L141">    int tabSize = 2;</span>
+
+<span class="fc" id="L143">    int width = 60;</span>
+
+<span class="fc" id="L145">    HashMap&lt;AnonId, String&gt; anonMap = new HashMap&lt;&gt;();</span>
+
+<span class="fc" id="L147">    int anonCount = 0;</span>
+
+<span class="fc" id="L149">    static private RDFDefaultErrorHandler defaultErrorHandler =</span>
+            new RDFDefaultErrorHandler();
+
+<span class="fc" id="L152">    RDFErrorHandler errorHandler = defaultErrorHandler;</span>
+
+<span class="fc" id="L154">    Boolean showXmlDeclaration = null;</span>
+
+<span class="fc" id="L156">    protected Boolean showDoctypeDeclaration = Boolean.FALSE;</span>
+
+	/*
+	 * There are two sorts of id's for anonymous resources.  Short id's are the
+	 * default, but require a mapping table.  The mapping table means that
+	 * serializing a large model could run out of memory.  Long id's require no
+	 * mapping table, but are less readable.
+	 */
+
+    String anonId(Resource r)  {
+<span class="nc bnc" id="L166" title="All 2 branches missed.">        return longId ? longAnonId( r ) : shortAnonId( r );</span>
+    }
+
+    /*
+     * A shortAnonId is computed by maintaining a mapping table from the internal
+     * id's of anon resources.  The short id is the index into the table of the
+     * internal id.
+     */
+    private String shortAnonId(Resource r)  {
+<span class="nc" id="L175">        String result = anonMap.get(r.getId());</span>
+<span class="nc bnc" id="L176" title="All 2 branches missed.">        if (result == null) {</span>
+<span class="nc" id="L177">            result = &quot;A&quot; + Integer.toString(anonCount++);</span>
+<span class="nc" id="L178">            anonMap.put(r.getId(), result);</span>
+        }
+<span class="nc" id="L180">        return result;</span>
+    }
+
+	/*
+	 * A longAnonId is the internal id of the anon resource expressed as a
+	 * character string.
+	 *
+	 * This code makes no assumptions about the characters used in the
+	 * implementation of an anon id.  It checks if they are valid namechar
+	 * characters and escapes the id if not.
+	 */
+
+    private String longAnonId(Resource r)  {
+<span class="nc" id="L193">        String rid = r.getId().toString();</span>
+<span class="nc bnc" id="L194" title="All 2 branches missed.">        return XMLChar.isValidNCName( rid ) ? rid : escapedId( rid );</span>
+    }
+
+    /**
+     true means all namespaces defined in the model prefixes will be noted in xmlns
+     declarations; false means only &quot;required&quot; ones will be noted. Hook for configuration.
+     */
+<span class="fc" id="L201">    private boolean writingAllModelPrefixNamespaces = true;</span>
+
+<span class="fc" id="L203">    private CopyOfRelation&lt;String&gt; nameSpaces = new CopyOfRelation&lt;&gt;();</span>
+
+    private Map&lt;String, String&gt; ns;
+
+    private PrefixMapping modelPrefixMapping;
+
+    private Set&lt;String&gt; namespacesNeeded;
+
+    void addNameSpace(String uri) {
+<span class="fc" id="L212">        namespacesNeeded.add(uri);</span>
+<span class="fc" id="L213">    }</span>
+
+    boolean isDefaultNamespace( String uri ) {
+<span class="nc" id="L216">        return &quot;&quot;.equals( ns.get( uri ) );</span>
+    }
+
+    private void addNameSpaces( Model model )  {
+<span class="fc" id="L220">        NsIterator nsIter = model.listNameSpaces();</span>
+<span class="fc bfc" id="L221" title="All 2 branches covered.">        while (nsIter.hasNext()) this.addNameSpace( nsIter.nextNs() );</span>
+<span class="fc" id="L222">    }</span>
+
+    private void primeNamespace( Model model )
+    {
+<span class="fc" id="L226">        Map&lt;String, String&gt; m = model.getNsPrefixMap();</span>
+<span class="fc bfc" id="L227" title="All 2 branches covered.">        for ( Entry&lt;String, String&gt; e : m.entrySet() )</span>
+        {
+<span class="fc" id="L229">            String value = e.getValue();</span>
+<span class="fc" id="L230">            String already = this.getPrefixFor( value );</span>
+<span class="fc bfc" id="L231" title="All 2 branches covered.">            if ( already == null )</span>
+            {
+<span class="fc" id="L233">                this.setNsPrefix( model.getNsURIPrefix( value ), value );</span>
+<span class="pc bpc" id="L234" title="1 of 2 branches missed.">                if ( writingAllModelPrefixNamespaces )</span>
+                {
+<span class="fc" id="L236">                    this.addNameSpace( value );</span>
+                }
+            }
+<span class="fc" id="L239">        }</span>
+
+<span class="pc bpc" id="L241" title="1 of 2 branches missed.">        if ( usesPrefix(model, &quot;&quot;) )</span>
+        {
+            // Doing &quot;&quot; prefix.  Ensure it is a non-clashing, non-empty entity name.
+<span class="nc" id="L244">            String entityForEmptyPrefix = DEFAULT_NS_ENTITY_NAME ;</span>
+<span class="nc bnc" id="L245" title="All 2 branches missed.">            if ( usesPrefix(model, entityForEmptyPrefix) )</span>
+<span class="nc" id="L246">                entityForEmptyPrefix = DEFAULT_NS_ENTITY_NAME_ALT ;</span>
+<span class="nc" id="L247">            int i = 0 ;</span>
+<span class="nc bnc" id="L248" title="All 2 branches missed.">            while ( usesPrefix(model,entityForEmptyPrefix) )</span>
+            {
+<span class="nc" id="L250">                entityForEmptyPrefix = DEFAULT_NS_ENTITY_NAME_ALT+&quot;.&quot;+i ;</span>
+<span class="nc" id="L251">                i++ ;</span>
+            }
+<span class="nc" id="L253">            defaultNSEntityName = entityForEmptyPrefix ;</span>
+        }
+<span class="fc" id="L255">    }</span>
+
+    void setupMaps() {
+<span class="fc" id="L258">        nameSpaces.set11(RDF.getURI(), &quot;rdf&quot;);</span>
+<span class="fc" id="L259">        nameSpaces.set11(RDFS.getURI(), &quot;rdfs&quot;);</span>
+<span class="fc" id="L260">        nameSpaces.set11(DC.getURI(), &quot;dc&quot;);</span>
+<span class="fc" id="L261">        nameSpaces.set11(RSS.getURI(), &quot;rss&quot;);</span>
+<span class="fc" id="L262">        nameSpaces.set11(&quot;http://www.daml.org/2001/03/daml+oil.daml#&quot;, &quot;daml&quot;);</span>
+<span class="fc" id="L263">        nameSpaces.set11(VCARD.getURI(), &quot;vcard&quot;);</span>
+<span class="fc" id="L264">        nameSpaces.set11(&quot;http://www.w3.org/2002/07/owl#&quot;, &quot;owl&quot;);</span>
+<span class="fc" id="L265">    }</span>
+
+    void workOutNamespaces() {
+<span class="pc bpc" id="L268" title="1 of 2 branches missed.">        if (ns == null) {</span>
+<span class="fc" id="L269">            ns = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L270">            Set&lt;String&gt; prefixesUsed = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L271">            setFromWriterSystemProperties( ns, prefixesUsed );</span>
+<span class="fc" id="L272">            setFromGivenNamespaces( ns, prefixesUsed );</span>
+        }
+<span class="fc" id="L274">    }</span>
+
+    private void setFromWriterSystemProperties( Map&lt;String, String&gt; ns, Set&lt;String&gt; prefixesUsed ) {
+<span class="fc bfc" id="L277" title="All 2 branches covered.">        for ( String uri : namespacesNeeded )</span>
+        {
+<span class="fc" id="L279">            String val = JenaRuntime.getSystemProperty( RDFWriter.NSPREFIXPROPBASE + uri );</span>
+<span class="pc bpc" id="L280" title="5 of 6 branches missed.">            if ( val != null &amp;&amp; checkLegalPrefix( val ) &amp;&amp; !prefixesUsed.contains( val ) )</span>
+            {
+<span class="nc" id="L282">                ns.put( uri, val );</span>
+<span class="nc" id="L283">                prefixesUsed.add( val );</span>
+            }
+<span class="fc" id="L285">        }</span>
+<span class="fc" id="L286">    }</span>
+
+    private void setFromGivenNamespaces( Map&lt;String, String&gt; ns, Set&lt;String&gt; prefixesUsed ) {
+<span class="fc bfc" id="L289" title="All 2 branches covered.">        for ( String uri : namespacesNeeded )</span>
+        {
+<span class="pc bpc" id="L291" title="1 of 2 branches missed.">            if ( ns.containsKey( uri ) )</span>
+            {
+<span class="nc" id="L293">                continue;</span>
+            }
+<span class="fc" id="L295">            String val = null;</span>
+<span class="fc" id="L296">            Set&lt;String&gt; s = nameSpaces.forward( uri );</span>
+<span class="pc bpc" id="L297" title="1 of 2 branches missed.">            if ( s != null )</span>
+            {
+<span class="fc" id="L299">                Iterator&lt;String&gt; it2 = s.iterator();</span>
+<span class="pc bpc" id="L300" title="1 of 2 branches missed.">                if ( it2.hasNext() )</span>
+                {
+<span class="fc" id="L302">                    val = it2.next();</span>
+                }
+<span class="pc bpc" id="L304" title="1 of 2 branches missed.">                if ( prefixesUsed.contains( val ) )</span>
+                {
+<span class="nc" id="L306">                    val = null;</span>
+                }
+            }
+<span class="pc bpc" id="L309" title="1 of 2 branches missed.">            if ( val == null )</span>
+            {
+                // just in case the prefix has already been used, look for a free one.
+                // (the usual source of such prefixes is reading in a model we wrote out earlier)
+                do
+                {
+<span class="nc" id="L315">                    val = &quot;j.&quot; + ( jenaPrefixCount++ );</span>
+                }
+<span class="nc bnc" id="L317" title="All 2 branches missed.">                while ( prefixesUsed.contains( val ) );</span>
+            }
+<span class="fc" id="L319">            ns.put( uri, val );</span>
+<span class="fc" id="L320">            prefixesUsed.add( val );</span>
+<span class="fc" id="L321">        }</span>
+<span class="fc" id="L322">    }</span>
+
+    final synchronized public void setNsPrefix(String prefix, String ns) {
+<span class="pc bpc" id="L325" title="1 of 2 branches missed.">        if (checkLegalPrefix(prefix)) {</span>
+<span class="fc" id="L326">            nameSpaces.set11(ns, prefix);</span>
+        }
+<span class="fc" id="L328">    }</span>
+
+    final public String getPrefixFor( String uri )
+    {
+        // xml and xmlns namespaces are pre-bound
+<span class="fc bfc" id="L333" title="All 2 branches covered.">        if (&quot;http://www.w3.org/XML/1998/namespace&quot;.equals(uri)) return &quot;xml&quot;;</span>
+<span class="fc bfc" id="L334" title="All 2 branches covered.">        if (&quot;http://www.w3.org/2000/xmlns/&quot;.equals(uri)) return &quot;xmlns&quot;;</span>
+<span class="fc" id="L335">        Set&lt;String&gt; s = nameSpaces.backward( uri );</span>
+<span class="pc bpc" id="L336" title="3 of 4 branches missed.">        if (s != null &amp;&amp; s.size() == 1) return s.iterator().next();</span>
+<span class="fc" id="L337">        return null;</span>
+    }
+
+    String xmlnsDecl() {
+<span class="fc" id="L341">        workOutNamespaces();</span>
+<span class="fc" id="L342">        StringBuilder result = new StringBuilder();</span>
+<span class="fc" id="L343">        Iterator&lt;Entry&lt;String, String&gt;&gt; it = ns.entrySet().iterator();</span>
+<span class="fc bfc" id="L344" title="All 2 branches covered.">        while (it.hasNext()) {</span>
+<span class="fc" id="L345">            Entry&lt;String, String&gt; ent = it.next();</span>
+<span class="fc" id="L346">            String prefix = ent.getValue();</span>
+<span class="fc" id="L347">            String uri = ent.getKey();</span>
+<span class="fc" id="L348">            result.append( newline ).append( &quot;    xmlns&quot; );</span>
+<span class="pc bpc" id="L349" title="1 of 2 branches missed.">            if (prefix.length() &gt; 0) result.append( ':' ).append( prefix );</span>
+<span class="fc" id="L350">            result.append( '=' ).append( substitutedAttribute( checkURI( uri ) ) );</span>
+<span class="fc" id="L351">        }</span>
+<span class="fc" id="L352">        return result.toString();</span>
+    }
+
+    static final private int FAST = 1;
+    static final private int START = 2;
+    static final private int END = 3;
+    static final private int ATTR = 4;
+    static final private int FASTATTR = 5;
+
+    String rdfEl(String local) {
+<span class="fc" id="L362">        return tag(RDFNS, local, FAST, true);</span>
+    }
+
+    String startElementTag(String uri, String local) {
+<span class="fc" id="L366">        return tag(uri, local, START, false);</span>
+    }
+
+    protected String startElementTag(String uriref) {
+<span class="nc" id="L370">        return splitTag(uriref, START);</span>
+    }
+
+    String attributeTag(String uriref) {
+<span class="nc" id="L374">        return splitTag(uriref, ATTR);</span>
+    }
+
+    String attributeTag(String uri, String local) {
+<span class="nc" id="L378">        return tag(uri, local, ATTR, false);</span>
+    }
+
+    String rdfAt(String local) {
+<span class="fc" id="L382">        return tag(RDFNS, local, FASTATTR, true);</span>
+    }
+
+    String endElementTag(String uri, String local) {
+<span class="fc" id="L386">        return tag(uri, local, END, false);</span>
+    }
+
+    protected String endElementTag(String uriref) {
+<span class="nc" id="L390">        return splitTag(uriref, END);</span>
+    }
+
+    String splitTag(String uriref, int type) {
+<span class="nc" id="L394">        int split = Util.splitNamespaceXML( uriref );</span>
+<span class="nc bnc" id="L395" title="All 2 branches missed.">        if (split == uriref.length()) throw new InvalidPropertyURIException( uriref );</span>
+<span class="nc" id="L396">        return tag( uriref.substring( 0, split ), uriref.substring( split ), type, true );</span>
+    }
+
+<span class="fc" id="L399">    static public boolean dbg = false;</span>
+
+    String tag( String namespace, String local, int type, boolean localIsQname)  {
+<span class="pc bpc" id="L402" title="1 of 2 branches missed.">        if (dbg)</span>
+<span class="nc" id="L403">            System.err.println(namespace + &quot; - &quot; + local);</span>
+<span class="fc" id="L404">        String prefix = ns.get( namespace );</span>
+<span class="fc bfc" id="L405" title="All 4 branches covered.">        if (type != FAST &amp;&amp; type != FASTATTR) {</span>
+<span class="pc bpc" id="L406" title="2 of 4 branches missed.">            if ((!localIsQname) &amp;&amp; !XMLChar.isValidNCName(local))</span>
+<span class="nc" id="L407">                return splitTag(namespace + local, type);</span>
+<span class="fc bfc" id="L408" title="All 2 branches covered.">            if (namespace.equals(RDFNS)) {</span>
+                // Description, ID, nodeID, about, aboutEach, aboutEachPrefix, li
+                // bagID parseType resource datatype RDF
+<span class="pc bpc" id="L411" title="1 of 2 branches missed.">                if (badRDF.contains(local)) {</span>
+<span class="nc" id="L412">                    logger.warn(	&quot;The URI rdf:&quot; + local + &quot; cannot be serialized in RDF/XML.&quot; );</span>
+<span class="nc" id="L413">                    throw new InvalidPropertyURIException( &quot;rdf:&quot; + local );</span>
+                }
+            }
+        }
+<span class="fc" id="L417">        boolean cookUp = false;</span>
+<span class="pc bpc" id="L418" title="1 of 2 branches missed.">        if (prefix == null) {</span>
+<span class="nc" id="L419">            checkURI( namespace );</span>
+<span class="nc" id="L420">            logger.warn(</span>
+                    &quot;Internal error: unexpected QName URI: &lt;&quot;
+                            + namespace
+                            + &quot;&gt;.  Fixing up with j.cook.up code.&quot;,
+                    new BrokenException( &quot;unexpected QName URI &quot; + namespace ));
+<span class="nc" id="L425">            cookUp = true;</span>
+<span class="pc bpc" id="L426" title="1 of 2 branches missed.">        } else if (prefix.length() == 0) {</span>
+<span class="nc bnc" id="L427" title="All 4 branches missed.">            if (type == ATTR || type == FASTATTR)</span>
+<span class="nc" id="L428">                cookUp = true;</span>
+            else
+<span class="nc" id="L430">                return local;</span>
+        }
+<span class="pc bpc" id="L432" title="1 of 2 branches missed.">        if (cookUp) return cookUpAttribution( type, namespace, local );</span>
+<span class="fc" id="L433">        return prefix + &quot;:&quot; + local;</span>
+    }
+
+    private String cookUpAttribution( int type, String namespace, String local )
+    {
+<span class="nc" id="L438">        String prefix = &quot;j.cook.up&quot;;</span>
+<span class="nc bnc" id="L439" title="All 4 branches missed.">        switch (type) {</span>
+            case FASTATTR :
+            case ATTR :
+<span class="nc" id="L442">                return &quot;xmlns:&quot; + prefix + &quot;=&quot; + substitutedAttribute( namespace ) + &quot; &quot; + prefix + &quot;:&quot; + local;</span>
+            case START :
+<span class="nc" id="L444">                return prefix  + &quot;:&quot; + local + &quot; xmlns:&quot; + prefix+ &quot;=&quot; + substitutedAttribute( namespace );</span>
+            default:
+            case END :
+<span class="nc" id="L447">                return prefix + &quot;:&quot; + local;</span>
+            case FAST :
+                //  logger.error(&quot;Unreachable code - reached.&quot;);
+<span class="nc" id="L450">                throw new BrokenException( &quot;cookup reached final FAST&quot; );</span>
+        }
+    }
+
+    /** Write out an XML serialization of a model.
+     * @param model the model to be serialized
+     * @param out the OutputStream to receive the serialization
+     * @param base The URL at which the file will be placed.
+     */
+    @Override
+    final public void write(Model model, OutputStream out, String base)
+<span class="fc" id="L461">    { write( model, FileUtils.asUTF8(out), base ); }</span>
+
+    /** Serialize Model &lt;code&gt;model&lt;/code&gt; to Writer &lt;code&gt;out&lt;/out&gt;.
+     * @param model The model to be written.
+     * @param out The Writer to which the serialization should be sent.
+     * @param base the base URI for relative URI calculations.  &lt;code&gt;null&lt;/code&gt; means use only absolute URI's.
+     */
+    @Override
+    synchronized public void write(Model model, Writer out, String base)
+    {
+<span class="fc" id="L471">        setupNamespaces( model );</span>
+<span class="pc bpc" id="L472" title="1 of 2 branches missed.">        PrintWriter pw = out instanceof PrintWriter ? (PrintWriter) out : new PrintWriter( out );</span>
+<span class="pc bpc" id="L473" title="1 of 2 branches missed.">        if (!Boolean.FALSE.equals(showXmlDeclaration)) writeXMLDeclaration( out, pw );</span>
+<span class="fc" id="L474">        writeXMLBody( model, pw, base );</span>
+<span class="fc" id="L475">        pw.flush();</span>
+<span class="fc" id="L476">    }</span>
+
+    /**
+     @param baseModel
+     @param model
+     */
+    private void setupNamespaces( Model model )
+    {
+<span class="fc" id="L484">        this.namespacesNeeded = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L485">        this.ns = null;</span>
+<span class="fc" id="L486">        this.modelPrefixMapping = model;</span>
+<span class="fc" id="L487">        primeNamespace( model );</span>
+<span class="fc" id="L488">        addNameSpace( RDF.getURI() );</span>
+<span class="fc" id="L489">        addNameSpaces(model);</span>
+<span class="fc" id="L490">        jenaPrefixCount = 0;</span>
+<span class="fc" id="L491">    }</span>
+
+    @SuppressWarnings(&quot;deprecation&quot;)
+<span class="fc" id="L494">    static IRIFactory factory = IRIFactory.jenaImplementation();</span>
+
+
+    private void writeXMLBody( Model model, PrintWriter pw, String base ) {
+<span class="pc bpc" id="L498" title="1 of 2 branches missed.">        if (showDoctypeDeclaration.booleanValue()) generateDoctypeDeclaration( model, pw );</span>
+//		try {
+        // errors?
+<span class="pc bpc" id="L501" title="1 of 2 branches missed.">        if (xmlBase == null) {</span>
+<span class="pc bpc" id="L502" title="3 of 4 branches missed.">            baseURI = (base == null || base.length() == 0) ? null : factory.create(base);</span>
+<span class="fc" id="L503">            writeBody(model, pw, base, false);</span>
+        } else {
+<span class="nc bnc" id="L505" title="All 2 branches missed.">            baseURI = xmlBase.length() == 0 ? null : factory.create(xmlBase);</span>
+<span class="nc" id="L506">            writeBody(model, pw, xmlBase, true);</span>
+        }
+//		} catch (MalformedURIException e) {
+//			throw new BadURIException( e.getMessage(), e);
+//		}
+<span class="fc" id="L511">    }</span>
+
+<span class="fc" id="L513">    protected static final Pattern predefinedEntityNames = Pattern.compile( &quot;amp|lt|gt|apos|quot&quot; );</span>
+
+    public boolean isPredefinedEntityName( String name )
+<span class="nc" id="L516">    { return predefinedEntityNames.matcher( name ).matches(); }</span>
+
+<span class="fc" id="L518">    private String attributeQuoteChar =&quot;\&quot;&quot;;</span>
+
+    protected String attributeQuoted( String s )
+<span class="fc" id="L521">    { return attributeQuoteChar + s + attributeQuoteChar; }</span>
+
+    protected String substitutedAttribute( String s )
+    {
+<span class="fc" id="L525">        String substituted = Util.substituteStandardEntities( s );</span>
+<span class="pc bpc" id="L526" title="1 of 2 branches missed.">        if (!showDoctypeDeclaration.booleanValue())</span>
+<span class="fc" id="L527">            return attributeQuoted( substituted );</span>
+        else
+        {
+<span class="nc" id="L530">            int split = Util.splitNamespaceXML( substituted );</span>
+<span class="nc" id="L531">            String namespace = substituted.substring(  0, split );</span>
+<span class="nc" id="L532">            String prefix = modelPrefixMapping.getNsURIPrefix( namespace );</span>
+<span class="nc bnc" id="L533" title="All 4 branches missed.">            return prefix == null || isPredefinedEntityName( prefix )</span>
+<span class="nc" id="L534">                    ? attributeQuoted( substituted )</span>
+<span class="nc" id="L535">                    : attributeQuoted( &quot;&amp;&quot; + strForPrefix(prefix) + &quot;;&quot; + substituted.substring( split ) )</span>
+                    ;
+        }
+    }
+
+    private void generateDoctypeDeclaration( Model model, PrintWriter pw )
+    {
+<span class="nc" id="L542">        String rdfns = RDF.getURI();</span>
+<span class="nc" id="L543">        String rdfRDF = model.qnameFor( rdfns + &quot;RDF&quot; );</span>
+<span class="nc bnc" id="L544" title="All 2 branches missed.">        if ( rdfRDF == null ) {</span>
+<span class="nc" id="L545">            model.setNsPrefix(&quot;rdf&quot;,rdfns);</span>
+<span class="nc" id="L546">            rdfRDF = &quot;rdf:RDF&quot;;</span>
+        }
+<span class="nc" id="L548">        Map&lt;String, String&gt; prefixes = model.getNsPrefixMap();</span>
+<span class="nc" id="L549">        pw.print( &quot;&lt;!DOCTYPE &quot; + rdfRDF +&quot; [&quot; );</span>
+<span class="nc bnc" id="L550" title="All 2 branches missed.">        for ( String prefix : prefixes.keySet() )</span>
+        {
+<span class="nc bnc" id="L552" title="All 2 branches missed.">            if ( isPredefinedEntityName( prefix ) )</span>
+            {
+<span class="nc" id="L554">                continue;</span>
+            }
+<span class="nc" id="L556">            pw.print(</span>
+<span class="nc" id="L557">                    newline + &quot;  &lt;!ENTITY &quot; + strForPrefix( prefix ) + &quot; '&quot; + Util.substituteEntitiesInEntityValue(</span>
+<span class="nc" id="L558">                            prefixes.get( prefix ) ) + &quot;'&gt;&quot; );</span>
+<span class="nc" id="L559">        }</span>
+<span class="nc" id="L560">        pw.print( &quot;]&gt;&quot; + newline );</span>
+<span class="nc" id="L561">    }</span>
+
+    private String strForPrefix(String prefix)
+    {
+<span class="nc bnc" id="L565" title="All 2 branches missed.">        if ( prefix.length() == 0 )</span>
+<span class="nc" id="L566">            return defaultNSEntityName ;</span>
+<span class="nc" id="L567">        return prefix ;</span>
+    }
+
+    private static boolean usesPrefix(Model model, String prefix)
+    {
+<span class="pc bpc" id="L572" title="1 of 2 branches missed.">        return model.getNsPrefixURI(prefix) != null ;</span>
+    }
+
+    private void writeXMLDeclaration(Writer out, PrintWriter pw) {
+<span class="fc" id="L576">        String decl = null;</span>
+<span class="pc bpc" id="L577" title="1 of 2 branches missed.">        if (out instanceof OutputStreamWriter) {</span>
+<span class="fc" id="L578">            String javaEnc = ((OutputStreamWriter) out).getEncoding();</span>
+            // System.err.println(javaEnc);
+<span class="pc bpc" id="L580" title="3 of 4 branches missed.">            if (!(javaEnc.equals(&quot;UTF8&quot;) || javaEnc.equals(&quot;UTF-16&quot;))) {</span>
+<span class="nc" id="L581">                CharEncoding encodingInfo = CharEncoding.create(javaEnc);</span>
+
+<span class="nc" id="L583">                String ianaEnc = encodingInfo.name();</span>
+<span class="nc" id="L584">                decl = &quot;&lt;?xml version=&quot;+attributeQuoted(&quot;1.0&quot;)+&quot; encoding=&quot; + attributeQuoted(ianaEnc) + &quot;?&gt;&quot;;</span>
+<span class="nc bnc" id="L585" title="All 2 branches missed.">                if (!encodingInfo.isIANA())</span>
+<span class="nc" id="L586">                    logger.warn(encodingInfo.warningMessage()+&quot;\n&quot;+</span>
+                            &quot;   It is better to use a FileOutputStream, in place of a FileWriter.&quot;);
+
+            }
+        }
+<span class="pc bpc" id="L591" title="2 of 4 branches missed.">        if (decl == null &amp;&amp; showXmlDeclaration != null)</span>
+<span class="nc" id="L592">            decl = &quot;&lt;?xml version=&quot;+attributeQuoted(&quot;1.0&quot;)+&quot;?&gt;&quot;;</span>
+<span class="pc bpc" id="L593" title="1 of 2 branches missed.">        if (decl != null) {</span>
+<span class="nc" id="L594">            pw.println(decl);</span>
+        }
+<span class="fc" id="L596">    }</span>
+
+    /** Set an error handler.
+     * @param errHandler The new error handler to be used, or null for the default handler.
+     * @return the old error handler
+     */
+    @Override
+    synchronized public RDFErrorHandler setErrorHandler(RDFErrorHandler errHandler) {
+        // null means no user defined error handler.
+        // We implement this using defaultErrorHandler,
+        // but hide this fact from the user.
+<span class="nc" id="L607">        RDFErrorHandler rslt = errorHandler;</span>
+<span class="nc bnc" id="L608" title="All 2 branches missed.">        if (rslt == defaultErrorHandler) rslt = null;</span>
+<span class="nc bnc" id="L609" title="All 2 branches missed.">        errorHandler = errHandler == null ? defaultErrorHandler : errHandler;</span>
+<span class="nc" id="L610">        return rslt;</span>
+    }
+
+    static private final char ESCAPE = 'X';
+
+    static private String escapedId(String id) {
+<span class="nc" id="L616">        StringBuffer result = new StringBuffer();</span>
+<span class="nc bnc" id="L617" title="All 2 branches missed.">        for (int i = 0; i &lt; id.length(); i++) {</span>
+<span class="nc" id="L618">            char ch = id.charAt(i);</span>
+<span class="nc bnc" id="L619" title="All 4 branches missed.">            if (ch != ESCAPE</span>
+<span class="nc bnc" id="L620" title="All 4 branches missed.">                    &amp;&amp; (i == 0 ? XMLChar.isNCNameStart(ch) : XMLChar.isNCName(ch))) {</span>
+<span class="nc" id="L621">                result.append( ch );</span>
+            } else {
+<span class="nc" id="L623">                escape( result, ch );</span>
+            }
+        }
+<span class="nc" id="L626">        return result.toString();</span>
+    }
+
+<span class="fc" id="L629">    static final char [] hexchar = &quot;0123456789abcdef&quot;.toCharArray();</span>
+
+    static private void escape( StringBuffer sb, char ch) {
+<span class="nc" id="L632">        sb.append( ESCAPE );</span>
+<span class="nc" id="L633">        int charcode = ch;</span>
+        do {
+<span class="nc" id="L635">            sb.append( hexchar[charcode &amp; 15] );</span>
+<span class="nc" id="L636">            charcode = charcode &gt;&gt; 4;</span>
+<span class="nc bnc" id="L637" title="All 2 branches missed.">        } while (charcode != 0);</span>
+<span class="nc" id="L638">        sb.append( ESCAPE );</span>
+<span class="nc" id="L639">    }</span>
+
+    /**
+     Set the writer property propName to the value obtained from propValue. Return an
+     Object representation of the original value.
+
+     @see org.apache.jena.rdf.model.RDFWriter#setProperty(java.lang.String, java.lang.Object)
+     */
+    @Override
+    final synchronized public Object setProperty( String propName, Object propValue ) {
+<span class="nc bnc" id="L649" title="All 2 branches missed.">        if (propName.equalsIgnoreCase(&quot;showXmlDeclaration&quot;)) {</span>
+<span class="nc" id="L650">            return setShowXmlDeclaration(propValue);</span>
+<span class="nc bnc" id="L651" title="All 2 branches missed.">        } else if (propName.equalsIgnoreCase( &quot;showDoctypeDeclaration&quot; )) {</span>
+<span class="nc" id="L652">            return setShowDoctypeDeclaration( propValue );</span>
+<span class="nc bnc" id="L653" title="All 2 branches missed.">        } else if (propName.equalsIgnoreCase( &quot;minimalPrefixes&quot; )) {</span>
+<span class="nc bnc" id="L654" title="All 2 branches missed.">            try { return new Boolean( !writingAllModelPrefixNamespaces ); }</span>
+<span class="nc bnc" id="L655" title="All 4 branches missed.">            finally { writingAllModelPrefixNamespaces = !getBoolean( propValue ); }</span>
+<span class="nc bnc" id="L656" title="All 2 branches missed.">        } else if (propName.equalsIgnoreCase(&quot;xmlbase&quot;)) {</span>
+<span class="nc" id="L657">            String result = xmlBase;</span>
+<span class="nc" id="L658">            xmlBase = (String) propValue;</span>
+<span class="nc" id="L659">            return result;</span>
+<span class="nc bnc" id="L660" title="All 2 branches missed.">        } else if (propName.equalsIgnoreCase(&quot;tab&quot;)) {</span>
+<span class="nc" id="L661">            return setTab( propValue );</span>
+<span class="nc bnc" id="L662" title="All 2 branches missed.">        } else if (propName.equalsIgnoreCase(&quot;width&quot;)) {</span>
+<span class="nc" id="L663">            return setWidth(propValue);</span>
+<span class="nc bnc" id="L664" title="All 2 branches missed.">        } else if (propName.equalsIgnoreCase(&quot;longid&quot;)) {</span>
+<span class="nc" id="L665">            Boolean result = new Boolean(longId);</span>
+<span class="nc" id="L666">            longId = getBoolean(propValue);</span>
+<span class="nc" id="L667">            return result;</span>
+<span class="nc bnc" id="L668" title="All 2 branches missed.">        } else if (propName.equalsIgnoreCase(&quot;attributeQuoteChar&quot;)) {</span>
+<span class="nc" id="L669">            return setAttributeQuoteChar(propValue);</span>
+<span class="nc bnc" id="L670" title="All 2 branches missed.">        } else if (propName.equalsIgnoreCase( &quot;allowBadURIs&quot; )) {</span>
+<span class="nc bnc" id="L671" title="All 2 branches missed.">            Boolean result = new Boolean( !demandGoodURIs );</span>
+<span class="nc bnc" id="L672" title="All 2 branches missed.">            demandGoodURIs = !getBoolean(propValue);</span>
+<span class="nc" id="L673">            return result;</span>
+<span class="nc bnc" id="L674" title="All 2 branches missed.">        } else if (propName.equalsIgnoreCase(&quot;prettyTypes&quot;)) {</span>
+<span class="nc" id="L675">            return setTypes((Resource[]) propValue);</span>
+<span class="nc bnc" id="L676" title="All 2 branches missed.">        } else if (propName.equalsIgnoreCase(&quot;relativeURIs&quot;)) {</span>
+<span class="nc" id="L677">            int old = relativeFlags;</span>
+<span class="nc" id="L678">            relativeFlags = str2flags((String) propValue);</span>
+<span class="nc" id="L679">            return flags2str(old);</span>
+<span class="nc bnc" id="L680" title="All 2 branches missed.">        } else if (propName.equalsIgnoreCase(&quot;blockRules&quot;)) {</span>
+<span class="nc" id="L681">            return setBlockRules(propValue);</span>
+        } else {
+<span class="nc" id="L683">            logger.warn(&quot;Unsupported property: &quot; + propName);</span>
+<span class="nc" id="L684">            return null;</span>
+        }
+    }
+
+    private String setAttributeQuoteChar(Object propValue) {
+<span class="nc" id="L689">        String oldValue = attributeQuoteChar;</span>
+<span class="nc bnc" id="L690" title="All 4 branches missed.">        if ( &quot;\&quot;&quot;.equals(propValue) || &quot;'&quot;.equals(propValue) )</span>
+<span class="nc" id="L691">            attributeQuoteChar = (String)propValue;</span>
+        else
+<span class="nc" id="L693">            logger.warn(&quot;attributeQutpeChar must be either \&quot;\\\&quot;\&quot; or \', not \&quot;&quot;+propValue+&quot;\&quot;&quot; );</span>
+<span class="nc" id="L694">        return oldValue;</span>
+    }
+
+    private Integer setWidth(Object propValue) {
+<span class="nc" id="L698">        Integer oldValue = new Integer(width);</span>
+<span class="nc bnc" id="L699" title="All 2 branches missed.">        if (propValue instanceof Integer) {</span>
+<span class="nc" id="L700">            width = ((Integer) propValue).intValue();</span>
+        } else {
+            try {
+<span class="nc" id="L703">                width = Integer.parseInt((String) propValue);</span>
+<span class="nc" id="L704">            } catch (Exception e) {</span>
+<span class="nc" id="L705">                logger.warn(	&quot;Bad value for width: '&quot; + propValue + &quot;' [&quot; + e.getMessage() + &quot;]&quot; );</span>
+<span class="nc" id="L706">            }</span>
+        }
+<span class="nc" id="L708">        return oldValue;</span>
+    }
+
+    private Integer setTab(Object propValue) {
+<span class="nc" id="L712">        Integer result = new Integer(tabSize);</span>
+<span class="nc bnc" id="L713" title="All 2 branches missed.">        if (propValue instanceof Integer) {</span>
+<span class="nc" id="L714">            tabSize = ((Integer) propValue).intValue();</span>
+        } else {
+            try {
+<span class="nc" id="L717">                tabSize = Integer.parseInt((String) propValue);</span>
+<span class="nc" id="L718">            } catch (Exception e) {</span>
+<span class="nc" id="L719">                logger.warn(	&quot;Bad value for tab: '&quot; + propValue + &quot;' [&quot; + e.getMessage() + &quot;]&quot; );</span>
+<span class="nc" id="L720">            }</span>
+        }
+<span class="nc" id="L722">        return result;</span>
+    }
+
+    private String setShowDoctypeDeclaration( Object propValue )
+    {
+<span class="nc" id="L727">        String oldValue = showDoctypeDeclaration.toString();</span>
+<span class="nc" id="L728">        showDoctypeDeclaration = getBooleanValue( propValue, Boolean.FALSE );</span>
+<span class="nc" id="L729">        return oldValue;</span>
+    }
+
+    private String setShowXmlDeclaration( Object propValue )
+    {
+<span class="nc bnc" id="L734" title="All 2 branches missed.">        String oldValue = showXmlDeclaration == null ? null : showXmlDeclaration.toString();</span>
+<span class="nc" id="L735">        showXmlDeclaration = getBooleanValue( propValue, null );</span>
+<span class="nc" id="L736">        return oldValue;</span>
+    }
+
+    /**
+     Answer the boolean value corresponding to o, which must either be a Boolean,
+     or a String parsable as a Boolean.
+     */
+    static private boolean getBoolean( Object o )
+<span class="nc" id="L744">    { return getBooleanValue( o, Boolean.FALSE ).booleanValue(); }</span>
+
+    private static Boolean getBooleanValue( Object propValue, Boolean theDefault )
+    {
+<span class="nc bnc" id="L748" title="All 2 branches missed.">        if (propValue == null)</span>
+<span class="nc" id="L749">            return theDefault;</span>
+<span class="nc bnc" id="L750" title="All 2 branches missed.">        else if (propValue instanceof Boolean)</span>
+<span class="nc" id="L751">            return (Boolean) propValue;</span>
+<span class="nc bnc" id="L752" title="All 2 branches missed.">        else if (propValue instanceof String)</span>
+<span class="nc" id="L753">            return stringToBoolean( (String) propValue, theDefault );</span>
+        else
+<span class="nc" id="L755">            throw new JenaException( &quot;cannot treat as boolean: &quot; + propValue );</span>
+    }
+
+    private static Boolean stringToBoolean( String b, Boolean theDefault )
+    {
+<span class="nc bnc" id="L760" title="All 2 branches missed.">        if (b.equals( &quot;default&quot; )) return theDefault;</span>
+<span class="nc bnc" id="L761" title="All 2 branches missed.">        if (b.equalsIgnoreCase( &quot;true&quot; )) return Boolean.TRUE;</span>
+<span class="nc bnc" id="L762" title="All 2 branches missed.">        if (b.equalsIgnoreCase( &quot;false&quot; )) return Boolean.FALSE;</span>
+<span class="nc" id="L763">        throw new BadBooleanException( b );</span>
+    }
+
+    Resource[] setTypes( Resource x[] ) {
+<span class="nc" id="L767">        logger.warn( &quot;prettyTypes is not a property on the Basic RDF/XML writer.&quot; );</span>
+<span class="nc" id="L768">        return null;</span>
+    }
+
+<span class="fc" id="L771">    private Resource blockedRules[] = new Resource[]{RDFSyntax.propertyAttr};</span>
+
+    Resource[] setBlockRules(Object o) {
+<span class="nc" id="L774">        Resource rslt[] = blockedRules;</span>
+<span class="nc" id="L775">        unblockAll();</span>
+<span class="nc bnc" id="L776" title="All 2 branches missed.">        if (o instanceof Resource[]) {</span>
+<span class="nc" id="L777">            blockedRules = (Resource[]) o;</span>
+        } else {
+<span class="nc" id="L779">            StringTokenizer tkn = new StringTokenizer((String) o, &quot;, &quot;);</span>
+<span class="nc" id="L780">            Vector&lt;Resource&gt; v = new Vector&lt;&gt;();</span>
+<span class="nc bnc" id="L781" title="All 2 branches missed.">            while (tkn.hasMoreElements()) {</span>
+<span class="nc" id="L782">                String frag = tkn.nextToken();</span>
+                //  System.err.println(&quot;Blocking &quot; + frag);
+<span class="nc" id="L784">                v.add(new ResourceImpl(RDFSyntax.getURI() + frag));</span>
+<span class="nc" id="L785">            }</span>
+
+<span class="nc" id="L787">            blockedRules = new Resource[v.size()];</span>
+<span class="nc" id="L788">            v.copyInto(blockedRules);</span>
+        }
+<span class="nc bnc" id="L790" title="All 2 branches missed.">        for ( Resource blockedRule : blockedRules )</span>
+        {
+<span class="nc" id="L792">            blockRule( blockedRule );</span>
+        }
+<span class="nc" id="L794">        return rslt;</span>
+    }
+    /*
+    private boolean sameDocument = true;
+    private boolean network = false;
+    private boolean absolute = true;
+    private boolean relative = true;
+    private boolean parent = true;
+    private boolean grandparent = false;
+    */
+<span class="fc" id="L804">    private int relativeFlags =</span>
+            IRI.SAMEDOCUMENT | IRI.ABSOLUTE | IRI.CHILD | IRI.PARENT;
+
+    /**
+     Answer the form of the URI after relativisation according to the relativeFlags set
+     by properties. If the flags are 0 or the base URI is null, answer the original URI.
+     Throw an exception if the URI is &quot;bad&quot; and we demandGoodURIs.
+     */
+    protected String relativize( String uri ) {
+<span class="pc bpc" id="L813" title="2 of 4 branches missed.">        return relativeFlags != 0 &amp;&amp; baseURI != null</span>
+<span class="pc" id="L814">                ? relativize( baseURI, uri )</span>
+<span class="fc" id="L815">                : checkURI( uri );</span>
+    }
+
+    /**
+     Answer the relative form of the URI against the base, according to the relativeFlags.
+     */
+    private String relativize( IRI base, String uri )  {
+        // errors?
+<span class="nc" id="L823">        return base.relativize( uri, relativeFlags).toString();</span>
+    }
+
+    /**
+     Answer the argument URI, but if we demandGoodURIs and it isn't good, throw
+     a JenaException that encapsulates a MalformedURIException. There doesn't
+     appear to be a convenient URI.checkGood() kind of method, alas.
+     */
+    private String checkURI( String uri ) {
+<span class="pc bpc" id="L832" title="1 of 2 branches missed.">        if (demandGoodURIs) {</span>
+<span class="fc" id="L833">            IRI iri = factory.create( uri );</span>
+
+<span class="pc bpc" id="L835" title="1 of 2 branches missed.">            if (iri.hasViolation(false) )</span>
+<span class="nc" id="L836">                throw new BadURIException( &quot;Only well-formed absolute URIrefs can be included in RDF/XML output: &quot;</span>
+<span class="nc" id="L837">                        + (iri.violations(false).next()).getShortMessage());</span>
+        }
+
+
+<span class="fc" id="L841">        return uri;</span>
+    }
+
+    /**
+     Answer true iff prefix is a &quot;legal&quot; prefix to use, ie, is empty [for the default namespace]
+     or an NCName that does not start with &quot;xml&quot; and does not match the reserved-to-Jena
+     pattern.
+     */
+    private boolean checkLegalPrefix( String prefix ) {
+<span class="pc bpc" id="L850" title="1 of 2 branches missed.">        if (prefix.equals(&quot;&quot;))</span>
+<span class="nc" id="L851">            return true;</span>
+<span class="pc bpc" id="L852" title="1 of 2 branches missed.">        if (prefix.toLowerCase().startsWith( &quot;xml&quot; ))</span>
+<span class="nc" id="L853">            logger.warn( &quot;Namespace prefix '&quot; + prefix + &quot;' is reserved by XML.&quot; );</span>
+<span class="pc bpc" id="L854" title="1 of 2 branches missed.">        else if (!XMLChar.isValidNCName(prefix))</span>
+<span class="nc" id="L855">            logger.warn( &quot;'&quot; + prefix + &quot;' is not a legal namespace prefix.&quot; );</span>
+<span class="pc bpc" id="L856" title="1 of 2 branches missed.">        else if (jenaNamespace.matcher(prefix).matches())</span>
+<span class="nc" id="L857">            logger.warn( &quot;Namespace prefix '&quot; + prefix + &quot;' is reserved by Jena.&quot; );</span>
+        else
+<span class="fc" id="L859">            return true;</span>
+<span class="nc" id="L860">        return false;</span>
+    }
+
+    static private String flags2str(int f) {
+<span class="nc" id="L864">        StringBuffer oldValue = new StringBuffer(64);</span>
+<span class="nc bnc" id="L865" title="All 2 branches missed.">        if ( (f&amp;IRI.SAMEDOCUMENT)!=0 )</span>
+<span class="nc" id="L866">            oldValue.append( &quot;same-document, &quot; );</span>
+<span class="nc bnc" id="L867" title="All 2 branches missed.">        if ( (f&amp;IRI.NETWORK)!=0 )</span>
+<span class="nc" id="L868">            oldValue.append( &quot;network, &quot;);</span>
+<span class="nc bnc" id="L869" title="All 2 branches missed.">        if ( (f&amp;IRI.ABSOLUTE)!=0 )</span>
+<span class="nc" id="L870">            oldValue.append(&quot;absolute, &quot;);</span>
+<span class="nc bnc" id="L871" title="All 2 branches missed.">        if ( (f&amp;IRI.CHILD)!=0 )</span>
+<span class="nc" id="L872">            oldValue.append(&quot;relative, &quot;);</span>
+<span class="nc bnc" id="L873" title="All 2 branches missed.">        if ((f&amp;IRI.PARENT)!=0)</span>
+<span class="nc" id="L874">            oldValue.append(&quot;parent, &quot;);</span>
+<span class="nc bnc" id="L875" title="All 2 branches missed.">        if ((f&amp;IRI.GRANDPARENT)!=0)</span>
+<span class="nc" id="L876">            oldValue.append(&quot;grandparent, &quot;);</span>
+<span class="nc bnc" id="L877" title="All 2 branches missed.">        if (oldValue.length() &gt; 0)</span>
+<span class="nc" id="L878">            oldValue.setLength(oldValue.length()-2);</span>
+<span class="nc" id="L879">        return oldValue.toString();</span>
+    }
+
+    public static int str2flags(String pv){
+<span class="nc" id="L883">        StringTokenizer tkn = new StringTokenizer(pv,&quot;, &quot;);</span>
+<span class="nc" id="L884">        int rslt = 0;</span>
+<span class="nc bnc" id="L885" title="All 2 branches missed.">        while ( tkn.hasMoreElements() ) {</span>
+<span class="nc" id="L886">            String flag = tkn.nextToken();</span>
+<span class="nc bnc" id="L887" title="All 2 branches missed.">            if ( flag.equals(&quot;same-document&quot;) )</span>
+<span class="nc" id="L888">                rslt |= IRI.SAMEDOCUMENT;</span>
+<span class="nc bnc" id="L889" title="All 2 branches missed.">            else if ( flag.equals(&quot;network&quot;) )</span>
+<span class="nc" id="L890">                rslt |= IRI.NETWORK;</span>
+<span class="nc bnc" id="L891" title="All 2 branches missed.">            else if ( flag.equals(&quot;absolute&quot;) )</span>
+<span class="nc" id="L892">                rslt |= IRI.ABSOLUTE;</span>
+<span class="nc bnc" id="L893" title="All 2 branches missed.">            else if ( flag.equals(&quot;relative&quot;) )</span>
+<span class="nc" id="L894">                rslt |= IRI.CHILD;</span>
+<span class="nc bnc" id="L895" title="All 2 branches missed.">            else if ( flag.equals(&quot;parent&quot;) )</span>
+<span class="nc" id="L896">                rslt |= IRI.PARENT;</span>
+<span class="nc bnc" id="L897" title="All 2 branches missed.">            else if ( flag.equals(&quot;grandparent&quot;) )</span>
+<span class="nc" id="L898">                rslt |= IRI.GRANDPARENT;</span>
+            else
+
+<span class="nc" id="L901">                logger.warn(</span>
+                        &quot;Incorrect property value for relativeURIs: &quot; + flag
+                );
+<span class="nc" id="L904">        }</span>
+<span class="nc" id="L905">        return rslt;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

@@ -1,0 +1,983 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>CopyOfTurtleShell.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Jena Output Patch Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.jena</a> &gt; <span class="el_source">CopyOfTurtleShell.java</span></div><h1>CopyOfTurtleShell.java</h1><pre class="source lang-java linenums">/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for ad
+ * ditional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.jena;
+
+import static org.apache.jena.riot.writer.WriterConst.GAP_P_O ;
+import static org.apache.jena.riot.writer.WriterConst.GAP_S_P ;
+import static org.apache.jena.riot.writer.WriterConst.INDENT_OBJECT ;
+import static org.apache.jena.riot.writer.WriterConst.INDENT_PREDICATE ;
+import static org.apache.jena.riot.writer.WriterConst.LONG_PREDICATE ;
+import static org.apache.jena.riot.writer.WriterConst.LONG_SUBJECT ;
+import static org.apache.jena.riot.writer.WriterConst.MIN_PREDICATE ;
+import static org.apache.jena.riot.writer.WriterConst.OBJECT_LISTS ;
+import static org.apache.jena.riot.writer.WriterConst.RDF_First ;
+import static org.apache.jena.riot.writer.WriterConst.RDF_Nil ;
+import static org.apache.jena.riot.writer.WriterConst.RDF_Rest ;
+import static org.apache.jena.riot.writer.WriterConst.RDF_type ;
+import static org.apache.jena.riot.writer.WriterConst.rdfNS ;
+
+import java.util.* ;
+
+import org.apache.jena.atlas.io.IndentedWriter ;
+import org.apache.jena.atlas.iterator.Iter ;
+import org.apache.jena.atlas.lib.InternalErrorException ;
+import org.apache.jena.atlas.lib.Pair ;
+import org.apache.jena.atlas.lib.SetUtils ;
+import org.apache.jena.graph.Graph ;
+import org.apache.jena.graph.Node ;
+import org.apache.jena.graph.Triple ;
+import org.apache.jena.riot.RIOT ;
+import org.apache.jena.riot.other.GLib ;
+import org.apache.jena.riot.out.NodeFormatter ;
+import org.apache.jena.riot.out.NodeFormatterTTL ;
+import org.apache.jena.riot.out.NodeFormatterTTL_MultiLine ;
+import org.apache.jena.riot.out.NodeToLabel ;
+import org.apache.jena.riot.system.PrefixMap ;
+import org.apache.jena.riot.system.PrefixMapFactory ;
+import org.apache.jena.riot.system.RiotLib ;
+import org.apache.jena.sparql.core.DatasetGraph ;
+import org.apache.jena.sparql.core.Quad ;
+import org.apache.jena.sparql.util.Context ;
+import org.apache.jena.util.iterator.ExtendedIterator ;
+import org.apache.jena.vocabulary.RDF ;
+import org.apache.jena.vocabulary.RDFS ;
+
+/**
+ * Base class to support the pretty forms of Turtle-related languages (Turtle, TriG)
+ */
+public abstract class CopyOfTurtleShell {
+    protected final IndentedWriter out ;
+    protected final NodeFormatter  nodeFmt ;
+    protected final PrefixMap      prefixMap ;
+    protected final String         baseURI ;
+
+<span class="fc" id="L71">    protected CopyOfTurtleShell(IndentedWriter out, PrefixMap pmap, String baseURI, Context context) {</span>
+<span class="fc" id="L72">        this.out = out ;</span>
+<span class="pc bpc" id="L73" title="1 of 2 branches missed.">        if ( pmap == null )</span>
+<span class="nc" id="L74">            pmap = PrefixMapFactory.emptyPrefixMap() ;</span>
+<span class="fc" id="L75">        this.prefixMap = pmap ;</span>
+<span class="fc" id="L76">        this.baseURI = baseURI ;</span>
+<span class="pc bpc" id="L77" title="2 of 4 branches missed.">        if ( context != null &amp;&amp; context.isTrue(RIOT.multilineLiterals) )</span>
+<span class="nc" id="L78">            this.nodeFmt = new NodeFormatterTTL_MultiLine(baseURI, pmap, NodeToLabel.createScopeByDocument()) ;</span>
+        else {
+            // NOTE, Fedora change: NodeFormatterTTL -&gt; FedoraNodeFormatterTTL
+<span class="fc" id="L81">            this.nodeFmt = new FedoraNodeFormatterTTL(baseURI, pmap, NodeToLabel.createScopeByDocument()) ;</span>
+        }
+<span class="fc" id="L83">    }</span>
+
+    protected void writeBase(String base) {
+<span class="fc" id="L86">        RiotLib.writeBase(out, base) ;</span>
+<span class="fc" id="L87">    }</span>
+
+    protected void writePrefixes(PrefixMap prefixMap) {
+<span class="fc" id="L90">        RiotLib.writePrefixes(out, prefixMap) ;</span>
+<span class="fc" id="L91">    }</span>
+
+    /** Write graph in Turtle syntax (or part of TriG) */
+    protected void writeGraphTTL(Graph graph) {
+<span class="fc" id="L95">        ShellGraph x = new ShellGraph(graph, null, null) ;</span>
+<span class="fc" id="L96">        x.writeGraph() ;</span>
+<span class="fc" id="L97">    }</span>
+
+    /** Write graph in Turtle syntax (or part of TriG). graphName is null for default graph. */
+    protected void writeGraphTTL(DatasetGraph dsg, Node graphName) {
+<span class="nc bnc" id="L101" title="All 4 branches missed.">        Graph g = (graphName == null || Quad.isDefaultGraph(graphName))</span>
+<span class="nc" id="L102">                ? dsg.getDefaultGraph()</span>
+<span class="nc" id="L103">                : dsg.getGraph(graphName) ;</span>
+<span class="nc" id="L104">        ShellGraph x = new ShellGraph(g, graphName, dsg) ;</span>
+<span class="nc" id="L105">        x.writeGraph() ;</span>
+<span class="nc" id="L106">    }</span>
+
+    // Write one graph - using an inner object class to isolate
+    // the state variables for writing a single graph.
+    private final class ShellGraph {
+        // Dataset (for writing graphs indatasets) -- may be null
+        private final DatasetGraph          dsg ;
+        private final Collection&lt;Node&gt;      graphNames ;
+        private final Node                  graphName ;
+        private final Graph                 graph ;
+
+        // Blank nodes that have one incoming triple
+        private /*final*/ Set&lt;Node&gt;             nestedObjects ;
+        private final Set&lt;Node&gt;             nestedObjectsWritten ;
+
+        // Blank node subjects that are not referenced as objects or graph names
+        // excluding unlnked lists.
+        private final Set&lt;Node&gt;             freeBnodes ;
+
+        // The head node in each well-formed list -&gt; list elements
+        private /*final*/ Map&lt;Node, List&lt;Node&gt;&gt; lists ;
+
+        // List that do not have any incoming triples
+        private final Map&lt;Node, List&lt;Node&gt;&gt; freeLists ;
+
+        // Lists that have more than one incoming triple
+        private final Map&lt;Node, List&lt;Node&gt;&gt; nLinkedLists ;
+
+        // All nodes that are part of list structures.
+        private final Collection&lt;Node&gt;      listElts ;
+
+        // Allow lists and nest bnode objects.
+        // This is true for the main pretty printing then
+        // false when we are clearing up unwritten triples.
+<span class="fc" id="L140">        private boolean allowDeepPretty = true ;</span>
+
+<span class="fc" id="L142">        private ShellGraph(Graph graph, Node graphName, DatasetGraph dsg) {</span>
+<span class="fc" id="L143">            this.dsg = dsg ;</span>
+<span class="fc" id="L144">            this.graphName = graphName ;</span>
+
+<span class="pc bpc" id="L146" title="1 of 2 branches missed.">            this.graphNames = (dsg != null) ? Iter.toSet(dsg.listGraphNodes()) : null ;</span>
+
+<span class="fc" id="L148">            this.graph = graph ;</span>
+<span class="fc" id="L149">            this.nestedObjects = new HashSet&lt;&gt;() ;</span>
+<span class="fc" id="L150">            this.nestedObjectsWritten = new HashSet&lt;&gt;() ;</span>
+<span class="fc" id="L151">            this.freeBnodes = new HashSet&lt;&gt;() ;</span>
+
+<span class="fc" id="L153">            this.lists = new HashMap&lt;&gt;() ;</span>
+<span class="fc" id="L154">            this.freeLists = new HashMap&lt;&gt;() ;</span>
+<span class="fc" id="L155">            this.nLinkedLists = new HashMap&lt;&gt;() ;</span>
+<span class="fc" id="L156">            this.listElts = new HashSet&lt;&gt;() ;</span>
+<span class="fc" id="L157">            this.allowDeepPretty = true ;</span>
+
+            // Must be in this order.
+<span class="fc" id="L160">            findLists() ;</span>
+<span class="fc" id="L161">            findBNodesSyntax1() ;</span>
+            // Stop head of lists printed as triples going all the way to the
+            // good part.
+<span class="fc" id="L164">            nestedObjects.removeAll(listElts) ;</span>
+
+            //printDetails() ;
+<span class="fc" id="L167">        }</span>
+
+        // Debug
+        private void printDetails() {
+<span class="nc" id="L171">            printDetails(&quot;nestedObjects&quot;, nestedObjects) ;</span>
+            //printDetails(&quot;nestedObjectsWritten&quot;, nestedObjectsWritten) ;
+<span class="nc" id="L173">            printDetails(&quot;freeBnodes&quot;, freeBnodes) ;</span>
+
+<span class="nc" id="L175">            printDetails(&quot;lists&quot;, lists) ;</span>
+<span class="nc" id="L176">            printDetails(&quot;freeLists&quot;, freeLists) ;</span>
+<span class="nc" id="L177">            printDetails(&quot;nLinkedLists&quot;, nLinkedLists) ;</span>
+<span class="nc" id="L178">            printDetails(&quot;listElts&quot;, listElts) ;</span>
+<span class="nc" id="L179">        }</span>
+
+        private void printDetails(String label, Map&lt;Node, List&lt;Node&gt;&gt; map) {
+<span class="nc" id="L182">            System.err.print(&quot;## &quot;) ;</span>
+<span class="nc" id="L183">            System.err.print(label) ;</span>
+<span class="nc" id="L184">            System.err.print(&quot; = &quot;) ;</span>
+<span class="nc" id="L185">            System.err.println(map) ;</span>
+<span class="nc" id="L186">        }</span>
+
+        private void printDetails(String label, Collection&lt;Node&gt; nodes) {
+<span class="nc" id="L189">            System.err.print(&quot;## &quot;) ;</span>
+<span class="nc" id="L190">            System.err.print(label) ;</span>
+<span class="nc" id="L191">            System.err.print(&quot; = &quot;) ;</span>
+<span class="nc" id="L192">            System.err.println(nodes) ;</span>
+<span class="nc" id="L193">        }</span>
+        // Debug
+
+        private ShellGraph(Graph graph) {
+<span class="nc" id="L197">            this(graph, null, null) ;</span>
+<span class="nc" id="L198">        }</span>
+
+        // ---- Data access
+        /** Get all the triples for the graph.find */
+        private List&lt;Triple&gt; triples(Node s, Node p, Node o) {
+<span class="fc" id="L203">            List&lt;Triple&gt; acc = new ArrayList&lt;&gt;() ;</span>
+<span class="fc" id="L204">            RiotLib.accTriples(acc, graph, s, p, o) ;</span>
+<span class="fc" id="L205">            return acc ;</span>
+        }
+
+        /** Get exactly one triple or null for none or more than one. */
+        private Triple triple1(Node s, Node p, Node o) {
+<span class="nc bnc" id="L210" title="All 2 branches missed.">            if ( dsg != null )</span>
+<span class="nc" id="L211">                return RiotLib.triple1(dsg, s, p, o) ;</span>
+            else
+<span class="nc" id="L213">                return RiotLib.triple1(graph, s, p, o) ;</span>
+        }
+
+        /** Get exactly one triple, or null for none or more than one. */
+        private Triple triple1(DatasetGraph dsg, Node s, Node p, Node o) {
+<span class="nc" id="L218">            Iterator&lt;Quad&gt; iter = dsg.find(Node.ANY, s, p, o) ;</span>
+<span class="nc bnc" id="L219" title="All 2 branches missed.">            if ( !iter.hasNext() )</span>
+<span class="nc" id="L220">                return null ;</span>
+<span class="nc" id="L221">            Quad q = iter.next() ;</span>
+<span class="nc bnc" id="L222" title="All 2 branches missed.">            if ( iter.hasNext() )</span>
+<span class="nc" id="L223">                return null ;</span>
+<span class="nc" id="L224">            return q.asTriple() ;</span>
+        }
+
+        private long countTriples(Node s, Node p, Node o) {
+<span class="nc bnc" id="L228" title="All 2 branches missed.">            if ( dsg != null )</span>
+<span class="nc" id="L229">                return RiotLib.countTriples(dsg, s, p, o) ;</span>
+            else
+<span class="nc" id="L231">                return RiotLib.countTriples(graph, s, p, o) ;</span>
+        }
+
+        private ExtendedIterator&lt;Triple&gt; find(Node s, Node p, Node o) {
+<span class="fc" id="L235">            return graph.find(s, p, o) ;</span>
+        }
+
+        /** returns 0,1,2 (where 2 really means &quot;more than 1&quot;) */
+        private int inLinks(Node obj) {
+<span class="nc bnc" id="L240" title="All 2 branches missed.">            if ( dsg != null ) {</span>
+<span class="nc" id="L241">                Iterator&lt;Quad&gt; iter = dsg.find(Node.ANY, Node.ANY, Node.ANY, obj) ;</span>
+<span class="nc" id="L242">                return count012(iter) ;</span>
+            } else {
+<span class="nc" id="L244">                ExtendedIterator&lt;Triple&gt; iter = graph.find(Node.ANY, Node.ANY, obj) ;</span>
+<span class="nc" id="L245">                try { return count012(iter) ; }</span>
+<span class="nc" id="L246">                finally { iter.close() ; }</span>
+            }
+        }
+
+        /** returns 0,1,2 (where 2 really means &quot;more than 1&quot;) */
+        private int occursAsSubject(Node subj) {
+<span class="nc bnc" id="L252" title="All 2 branches missed.">            if ( dsg != null ) {</span>
+<span class="nc" id="L253">                Iterator&lt;Quad&gt; iter = dsg.find(Node.ANY, subj, Node.ANY, Node.ANY) ;</span>
+<span class="nc" id="L254">                return count012(iter) ;</span>
+            } else {
+<span class="nc" id="L256">                ExtendedIterator&lt;Triple&gt; iter = graph.find(subj, Node.ANY, Node.ANY) ;</span>
+<span class="nc" id="L257">                try { return count012(iter) ; }</span>
+<span class="nc" id="L258">                finally { iter.close() ; }</span>
+            }
+        }
+
+        private int count012(Iterator&lt;? &gt; iter) {
+<span class="nc bnc" id="L263" title="All 2 branches missed.">            if ( !iter.hasNext() )</span>
+<span class="nc" id="L264">                return 0 ;</span>
+<span class="nc" id="L265">            iter.next() ;</span>
+<span class="nc bnc" id="L266" title="All 2 branches missed.">            if ( !iter.hasNext() )</span>
+<span class="nc" id="L267">                return 1 ;</span>
+<span class="nc" id="L268">            return 2 ;</span>
+        }
+
+        /** Check whether a node is used only in the graph we're working on */
+        private boolean containedInOneGraph(Node node) {
+<span class="nc bnc" id="L273" title="All 2 branches missed.">            if ( dsg == null )</span>
+                // Single graph
+<span class="nc" id="L275">                return true ;</span>
+
+<span class="nc bnc" id="L277" title="All 2 branches missed.">            if ( graphNames.contains(node) )</span>
+                // Used as a graph name.
+<span class="nc" id="L279">                return false ;</span>
+
+<span class="nc" id="L281">            Iterator&lt;Quad&gt; iter = dsg.find(Node.ANY, node, Node.ANY, Node.ANY) ;</span>
+<span class="nc bnc" id="L282" title="All 2 branches missed.">            if ( ! quadsThisGraph(iter) )</span>
+<span class="nc" id="L283">                return false ;</span>
+
+<span class="nc" id="L285">            iter = dsg.find(Node.ANY, Node.ANY, node, Node.ANY) ;</span>
+<span class="nc bnc" id="L286" title="All 2 branches missed.">            if ( ! quadsThisGraph(iter) )</span>
+<span class="nc" id="L287">                return false ;</span>
+
+<span class="nc" id="L289">            iter = dsg.find(Node.ANY, Node.ANY, Node.ANY, node) ;</span>
+<span class="nc bnc" id="L290" title="All 2 branches missed.">            if ( ! quadsThisGraph(iter) )</span>
+<span class="nc" id="L291">                return false ;</span>
+<span class="nc" id="L292">            return true ;</span>
+        }
+
+        /** Check whether an iterator of quads is all in the same graph (dataset assumed) */
+        private boolean quadsThisGraph(Iterator&lt;Quad&gt; iter) {
+<span class="nc bnc" id="L297" title="All 2 branches missed.">            if ( ! iter.hasNext() )</span>
+                // Empty iterator
+<span class="nc" id="L299">                return true ;</span>
+<span class="nc" id="L300">            Quad q = iter.next() ;</span>
+<span class="nc" id="L301">            Node gn = q.getGraph() ;</span>
+
+            // Test first quad - both default graph (various forms) or same named graph
+<span class="nc bnc" id="L304" title="All 2 branches missed.">            if ( isDefaultGraph(gn) ) {</span>
+<span class="nc bnc" id="L305" title="All 2 branches missed.">                if ( ! isDefaultGraph(graphName) )</span>
+<span class="nc" id="L306">                    return false ;</span>
+            } else {
+<span class="nc bnc" id="L308" title="All 2 branches missed.">                if ( ! Objects.equals(gn, graphName) )</span>
+                    // Not both same named graph
+<span class="nc" id="L310">                    return false ;</span>
+            }
+            // Check rest of iterator.
+<span class="nc bnc" id="L313" title="All 2 branches missed.">            for ( ; iter.hasNext() ; ) {</span>
+<span class="nc" id="L314">                Quad q2 = iter.next() ;</span>
+<span class="nc bnc" id="L315" title="All 2 branches missed.">                if ( ! Objects.equals(gn, q2.getGraph()) )</span>
+<span class="nc" id="L316">                    return false ;</span>
+<span class="nc" id="L317">            }</span>
+<span class="nc" id="L318">            return true ;</span>
+        }
+
+        private boolean isDefaultGraph(Node node) {
+<span class="nc bnc" id="L322" title="All 4 branches missed.">            return node == null || Quad.isDefaultGraph(node) ;</span>
+        }
+
+        /** Get triples with the same subject */
+        private Collection&lt;Triple&gt; triplesOfSubject(Node subj) {
+<span class="fc" id="L327">            return RiotLib.triplesOfSubject(graph, subj) ;</span>
+        }
+
+        private Iterator&lt;Node&gt; listSubjects() {
+<span class="fc" id="L331">            return GLib.listSubjects(graph) ;</span>
+        }
+
+        // ---- Data access
+
+        /** Find Bnodes that can written as []
+         * Subject position (top level) - only used for subject position anywhere in the dataset
+         * Object position (any level) - only used as object once anywhere in the dataset
+         */
+        private void findBNodesSyntax1() {
+<span class="fc" id="L341">            Set&lt;Node&gt; rejects = new HashSet&lt;&gt;() ; // Nodes known not to meet the requirement.</span>
+
+<span class="fc" id="L343">            ExtendedIterator&lt;Triple&gt; iter = find(Node.ANY, Node.ANY, Node.ANY) ;</span>
+            try {
+<span class="fc bfc" id="L345" title="All 2 branches covered.">                for ( ; iter.hasNext() ; ) {</span>
+<span class="fc" id="L346">                    Triple t = iter.next() ;</span>
+<span class="fc" id="L347">                    Node subj = t.getSubject() ;</span>
+<span class="fc" id="L348">                    Node obj = t.getObject() ;</span>
+
+<span class="pc bpc" id="L350" title="1 of 2 branches missed.">                    if ( subj.isBlank() )</span>
+                    {
+<span class="nc" id="L352">                        int sConn = inLinks(subj) ;</span>
+<span class="nc bnc" id="L353" title="All 4 branches missed.">                        if ( sConn == 0 &amp;&amp; containedInOneGraph(subj) )</span>
+                            // Not used as an object in this graph.
+<span class="nc" id="L355">                            freeBnodes.add(subj) ;</span>
+                    }
+
+<span class="pc bpc" id="L358" title="1 of 2 branches missed.">                    if ( ! obj.isBlank() )</span>
+<span class="fc" id="L359">                        continue ;</span>
+<span class="nc bnc" id="L360" title="All 2 branches missed.">                    if ( rejects.contains(obj) )</span>
+<span class="nc" id="L361">                        continue ;</span>
+
+<span class="nc" id="L363">                    int connectivity = inLinks(obj) ;</span>
+<span class="nc bnc" id="L364" title="All 4 branches missed.">                    if ( connectivity == 1 &amp;&amp; containedInOneGraph(obj) ) {</span>
+                        // If not used in another graph (or as graph name)
+<span class="nc" id="L366">                        nestedObjects.add(obj) ;</span>
+                    }
+                    else
+                        // Uninteresting object connected multiple times.
+<span class="nc" id="L370">                        rejects.add(obj) ;</span>
+<span class="nc" id="L371">                }</span>
+<span class="pc" id="L372">            } finally { iter.close() ; }</span>
+<span class="fc" id="L373">        }</span>
+
+        // --- Lists setup
+        /*
+         * Find all list heads and all nodes in well-formed lists. Return a
+         * (list head -&gt; Elements map), list elements)
+         */
+        private void findLists() {
+<span class="fc" id="L381">            List&lt;Triple&gt; tails = triples(Node.ANY, RDF_Rest, RDF_Nil) ;</span>
+<span class="pc bpc" id="L382" title="1 of 2 branches missed.">            for ( Triple t : tails ) {</span>
+                // Returns the elements, reversed.
+<span class="nc" id="L384">                Collection&lt;Node&gt; listElts2 = new HashSet&lt;&gt;() ;</span>
+<span class="nc" id="L385">                Pair&lt;Node, List&lt;Node&gt;&gt; p = followTailToHead(t.getSubject(), listElts2) ;</span>
+<span class="nc bnc" id="L386" title="All 2 branches missed.">                if ( p != null ) {</span>
+<span class="nc" id="L387">                    Node headElt = p.getLeft() ;</span>
+                    // Free standing/private
+<span class="nc" id="L389">                    List&lt;Node&gt; elts = p.getRight() ;</span>
+<span class="nc" id="L390">                    long numLinks = countTriples(null, null, headElt) ;</span>
+<span class="nc bnc" id="L391" title="All 2 branches missed.">                    if ( numLinks == 1 )</span>
+<span class="nc" id="L392">                        lists.put(headElt, elts) ;</span>
+<span class="nc bnc" id="L393" title="All 2 branches missed.">                    else if ( numLinks == 0 )</span>
+                        // 0 connected lists
+<span class="nc" id="L395">                        freeLists.put(headElt, elts) ;</span>
+                    else
+                        // Two triples to this list.
+<span class="nc" id="L398">                        nLinkedLists.put(headElt, elts) ;</span>
+<span class="nc" id="L399">                    listElts.addAll(listElts2) ;</span>
+                }
+<span class="nc" id="L401">            }</span>
+<span class="fc" id="L402">        }</span>
+
+        // return head elt node, list of elements.
+        private Pair&lt;Node, List&lt;Node&gt;&gt; followTailToHead(Node lastListElt, Collection&lt;Node&gt; listElts) {
+<span class="nc" id="L406">            List&lt;Node&gt; listCells = new ArrayList&lt;&gt;() ;</span>
+<span class="nc" id="L407">            List&lt;Node&gt; eltsReversed = new ArrayList&lt;&gt;() ;</span>
+<span class="nc" id="L408">            List&lt;Triple&gt; acc = new ArrayList&lt;&gt;() ;</span>
+<span class="nc" id="L409">            Node x = lastListElt ;</span>
+
+            for ( ; ; ) {
+<span class="nc bnc" id="L412" title="All 2 branches missed.">                if ( !validListElement(x, acc) ) {</span>
+<span class="nc bnc" id="L413" title="All 2 branches missed.">                    if ( listCells.size() == 0 )</span>
+                        // No earlier valid list.
+<span class="nc" id="L415">                        return null ;</span>
+                    // Fix up to previous valid list cell.
+<span class="nc" id="L417">                    x = listCells.remove(listCells.size() - 1) ;</span>
+<span class="nc" id="L418">                    break ;</span>
+                }
+
+<span class="nc" id="L421">                Triple t = triple1(x, RDF_First, null) ;</span>
+<span class="nc bnc" id="L422" title="All 2 branches missed.">                if ( t == null )</span>
+<span class="nc" id="L423">                    return null ;</span>
+<span class="nc" id="L424">                eltsReversed.add(t.getObject()) ;</span>
+<span class="nc" id="L425">                listCells.add(x) ;</span>
+
+                // Try to move up the list.
+<span class="nc" id="L428">                List&lt;Triple&gt; acc2 = triples(null, null, x) ;</span>
+<span class="nc" id="L429">                long numRest = countTriples(null, RDF_Rest, x) ;</span>
+<span class="nc bnc" id="L430" title="All 2 branches missed.">                if ( numRest != 1 ) {</span>
+                    // Head of well-formed list.
+                    // Classified by 0,1,more links later.
+<span class="nc" id="L433">                    listCells.add(x) ;</span>
+<span class="nc" id="L434">                    break ;</span>
+                }
+                // numRest == 1
+<span class="nc" id="L437">                int numLinks = acc2.size() ;</span>
+<span class="nc bnc" id="L438" title="All 2 branches missed.">                if ( numLinks &gt; 1 )</span>
+                    // Non-list links to x
+<span class="nc" id="L440">                    break ;</span>
+                // Valid.
+<span class="nc" id="L442">                Triple tLink = acc2.get(0) ;</span>
+<span class="nc" id="L443">                x = tLink.getSubject() ;</span>
+<span class="nc" id="L444">            }</span>
+            // Success.
+<span class="nc" id="L446">            listElts.addAll(listCells) ;</span>
+<span class="nc" id="L447">            Collections.reverse(eltsReversed) ;</span>
+<span class="nc" id="L448">            return Pair.create(x, eltsReversed) ;</span>
+        }
+
+        /** Return the triples of the list element, or null if invalid list */
+        private boolean validListElement(Node x, List&lt;Triple&gt; acc) {
+<span class="nc" id="L453">            Triple t1 = triple1(x, RDF_Rest, null) ; // Which we came up to get</span>
+            // here :-(
+<span class="nc bnc" id="L455" title="All 2 branches missed.">            if ( t1 == null )</span>
+<span class="nc" id="L456">                return false ;</span>
+<span class="nc" id="L457">            Triple t2 = triple1(x, RDF_First, null) ;</span>
+<span class="nc bnc" id="L458" title="All 2 branches missed.">            if ( t2 == null )</span>
+<span class="nc" id="L459">                return false ;</span>
+<span class="nc" id="L460">            long N = countTriples(x, null, null) ;</span>
+<span class="nc bnc" id="L461" title="All 2 branches missed.">            if ( N != 2 )</span>
+<span class="nc" id="L462">                return false ;</span>
+<span class="nc" id="L463">            acc.add(t1) ;</span>
+<span class="nc" id="L464">            acc.add(t2) ;</span>
+<span class="nc" id="L465">            return true ;</span>
+        }
+
+        // ----
+
+        private void writeGraph() {
+<span class="fc" id="L471">            Iterator&lt;Node&gt; subjects = listSubjects() ;</span>
+<span class="fc" id="L472">            boolean somethingWritten = writeBySubject(subjects) ;</span>
+            // Write remainders
+            // 1 - Shared lists
+<span class="fc" id="L475">            somethingWritten = writeRemainingNLinkedLists(somethingWritten) ;</span>
+
+            // 2 - Free standing lists
+<span class="fc" id="L478">            somethingWritten = writeRemainingFreeLists(somethingWritten) ;</span>
+
+            // 3 - Blank nodes that are unwrittern single objects.
+            //            System.err.println(&quot;## ## ##&quot;) ;
+            //            printDetails(&quot;nestedObjects&quot;, nestedObjects) ;
+            //            printDetails(&quot;nestedObjectsWritten&quot;, nestedObjectsWritten) ;
+<span class="fc" id="L484">            Set&lt;Node&gt; singleNodes = SetUtils.difference(nestedObjects, nestedObjectsWritten) ;</span>
+<span class="fc" id="L485">            somethingWritten = writeRemainingNestedObjects(singleNodes, somethingWritten) ;</span>
+<span class="fc" id="L486">        }</span>
+
+        private boolean writeRemainingNLinkedLists(boolean somethingWritten) {
+            // Print carefully - need a label for the first cell.
+            // So we write out the first element of the list in triples, then
+            // put the remainer as a pretty list
+<span class="pc bpc" id="L492" title="1 of 2 branches missed.">            for ( Node n : nLinkedLists.keySet() ) {</span>
+<span class="nc bnc" id="L493" title="All 2 branches missed.">                if ( somethingWritten )</span>
+<span class="nc" id="L494">                    out.println() ;</span>
+<span class="nc" id="L495">                somethingWritten = true ;</span>
+
+<span class="nc" id="L497">                List&lt;Node&gt; x = nLinkedLists.get(n) ;</span>
+<span class="nc" id="L498">                writeNode(n) ;</span>
+
+<span class="nc" id="L500">                write_S_P_Gap();</span>
+<span class="nc" id="L501">                out.pad() ;</span>
+
+<span class="nc" id="L503">                writeNode(RDF_First) ;</span>
+<span class="nc" id="L504">                print(&quot; &quot;) ;</span>
+<span class="nc" id="L505">                writeNode(x.get(0)) ;</span>
+<span class="nc" id="L506">                print(&quot; ;&quot;) ;</span>
+<span class="nc" id="L507">                println() ;</span>
+<span class="nc" id="L508">                writeNode(RDF_Rest) ;</span>
+<span class="nc" id="L509">                print(&quot;  &quot;) ;</span>
+<span class="nc" id="L510">                x = x.subList(1, x.size()) ;</span>
+<span class="nc" id="L511">                writeList(x) ;</span>
+<span class="nc" id="L512">                print(&quot; .&quot;) ;</span>
+<span class="nc" id="L513">                out.decIndent(INDENT_PREDICATE) ;</span>
+<span class="nc" id="L514">                println() ;</span>
+<span class="nc" id="L515">            }</span>
+<span class="fc" id="L516">            return somethingWritten ;</span>
+        }
+
+        // Write free standing lists - ones where the head is not an object of
+        // some other triple. Turtle does not allow free standing (... ) .
+        // so write as a predicateObjectList for one element.
+        private boolean writeRemainingFreeLists(boolean somethingWritten) {
+<span class="pc bpc" id="L523" title="1 of 2 branches missed.">            for ( Node n : freeLists.keySet() ) {</span>
+<span class="nc bnc" id="L524" title="All 2 branches missed.">                if ( somethingWritten )</span>
+<span class="nc" id="L525">                    out.println() ;</span>
+<span class="nc" id="L526">                somethingWritten = true ;</span>
+
+<span class="nc" id="L528">                List&lt;Node&gt; x = freeLists.get(n) ;</span>
+                // Print first element for the [ ... ]
+<span class="nc" id="L530">                out.print(&quot;[ &quot;) ;</span>
+
+<span class="nc" id="L532">                writeNode(RDF_First) ;</span>
+<span class="nc" id="L533">                print(&quot; &quot;) ;</span>
+<span class="nc" id="L534">                writeNode(x.get(0)) ;</span>
+<span class="nc" id="L535">                print(&quot; ; &quot;) ;</span>
+<span class="nc" id="L536">                writeNode(RDF_Rest) ;</span>
+<span class="nc" id="L537">                print(&quot; &quot;) ;</span>
+<span class="nc" id="L538">                x = x.subList(1, x.size()) ;</span>
+                // Print remainder.
+<span class="nc" id="L540">                writeList(x) ;</span>
+<span class="nc" id="L541">                out.println(&quot; ] .&quot;) ;</span>
+<span class="nc" id="L542">            }</span>
+<span class="fc" id="L543">            return somethingWritten ;</span>
+        }
+
+        // Write any left over nested objects
+        // These come from blank node cycles : _:a &lt;p&gt; _:b . _b: &lt;p&gt; _:a .
+        // Also from from blank node cycles + tail: _:a &lt;p&gt; _:b . _:a &lt;p&gt; &quot;&quot; .  _b: &lt;p&gt; _:a .
+        private boolean writeRemainingNestedObjects(Set&lt;Node&gt; objects, boolean somethingWritten) {
+<span class="pc bpc" id="L550" title="1 of 2 branches missed.">            for ( Node n : objects ) {</span>
+<span class="nc bnc" id="L551" title="All 2 branches missed.">                if ( somethingWritten )</span>
+<span class="nc" id="L552">                    out.println() ;</span>
+<span class="nc" id="L553">                somethingWritten = true ;</span>
+
+<span class="nc" id="L555">                Triple t = triple1(null, null, n) ;</span>
+<span class="nc bnc" id="L556" title="All 2 branches missed.">                if ( t == null )</span>
+<span class="nc" id="L557">                    throw new InternalErrorException(&quot;Expected exactly one triple&quot;) ;</span>
+
+<span class="nc" id="L559">                Node subj = t.getSubject() ;</span>
+<span class="nc" id="L560">                boolean b = allowDeepPretty ;</span>
+                try {
+<span class="nc" id="L562">                    allowDeepPretty = false;</span>
+<span class="nc" id="L563">                    Collection&lt;Triple&gt; triples = triples(subj, null, null) ;</span>
+<span class="nc" id="L564">                    writeCluster(subj, triples);</span>
+<span class="nc" id="L565">                } finally { allowDeepPretty = b ; }</span>
+<span class="nc" id="L566">            }</span>
+
+<span class="fc" id="L568">            return somethingWritten ;</span>
+        }
+
+        // Write triples, flat and simply.
+        // Reset the state variables so &quot;isPretty&quot; return false.
+        private void writeTriples(Node subj, Iterator&lt;Triple&gt; iter) {
+<span class="nc" id="L574">            allowDeepPretty = false;</span>
+<span class="nc" id="L575">            writeCluster(subj, Iter.toList(iter));</span>
+<span class="nc" id="L576">        }</span>
+
+        // return true if did write something.
+        private boolean writeBySubject(Iterator&lt;Node&gt; subjects) {
+<span class="fc" id="L580">            boolean first = true ;</span>
+<span class="fc bfc" id="L581" title="All 2 branches covered.">            for ( ; subjects.hasNext() ; ) {</span>
+<span class="fc" id="L582">                Node subj = subjects.next() ;</span>
+<span class="pc bpc" id="L583" title="1 of 2 branches missed.">                if ( nestedObjects.contains(subj) )</span>
+<span class="nc" id="L584">                    continue ;</span>
+<span class="pc bpc" id="L585" title="1 of 2 branches missed.">                if ( listElts.contains(subj) )</span>
+<span class="nc" id="L586">                    continue ;</span>
+<span class="pc bpc" id="L587" title="1 of 2 branches missed.">                if ( !first )</span>
+<span class="nc" id="L588">                    out.println() ;</span>
+<span class="fc" id="L589">                first = false ;</span>
+<span class="pc bpc" id="L590" title="1 of 2 branches missed.">                if ( freeBnodes.contains(subj) ) {</span>
+                    // Top level: write in &quot;[....]&quot; on &quot;[] :p&quot; form.
+<span class="nc" id="L592">                    writeNestedObjectTopLevel(subj) ;</span>
+<span class="nc" id="L593">                    continue ;</span>
+                }
+
+<span class="fc" id="L596">                Collection&lt;Triple&gt; cluster = triplesOfSubject(subj) ;</span>
+<span class="fc" id="L597">                writeCluster(subj, cluster) ;</span>
+<span class="fc" id="L598">            }</span>
+<span class="pc bpc" id="L599" title="1 of 2 branches missed.">            return !first ;</span>
+        }
+
+        // A Cluster is a collection of triples with the same subject.
+        private void writeCluster(Node subject, Collection&lt;Triple&gt; cluster) {
+<span class="pc bpc" id="L604" title="1 of 2 branches missed.">            if ( cluster.isEmpty() )</span>
+<span class="nc" id="L605">                return ;</span>
+<span class="fc" id="L606">            writeNode(subject) ;</span>
+<span class="fc" id="L607">            writeClusterPredicateObjectList(INDENT_PREDICATE, cluster) ;</span>
+<span class="fc" id="L608">        }</span>
+
+        // Write the PredicateObjectList fora subject already output.
+        // The subject may have been a &quot;[]&quot; or a URI - the indentation is passed in.
+        private void writeClusterPredicateObjectList(int indent, Collection&lt;Triple&gt; cluster) {
+<span class="fc" id="L613">            write_S_P_Gap() ;</span>
+<span class="fc" id="L614">            out.incIndent(indent) ;</span>
+<span class="fc" id="L615">            out.pad() ;</span>
+<span class="fc" id="L616">            writePredicateObjectList(cluster) ;</span>
+<span class="fc" id="L617">            out.decIndent(indent) ;</span>
+<span class="fc" id="L618">            print(&quot; .&quot;) ;</span>
+<span class="fc" id="L619">            println() ;</span>
+<span class="fc" id="L620">        }</span>
+
+        // Writing predicate-object lists.
+        // We group the cluster by predicate and within each group
+        // we print:
+        //    literals, then simple objects, then pretty objects
+
+        private void writePredicateObjectList(Collection&lt;Triple&gt; cluster) {
+<span class="fc" id="L628">            Map&lt;Node, List&lt;Node&gt;&gt; pGroups = groupByPredicates(cluster) ;</span>
+<span class="fc" id="L629">            Collection&lt;Node&gt; predicates = pGroups.keySet() ;</span>
+
+            // Find longest predicate URI
+<span class="fc" id="L632">            int predicateMaxWidth = RiotLib.calcWidth(prefixMap, baseURI, predicates, MIN_PREDICATE, LONG_PREDICATE) ;</span>
+
+<span class="fc" id="L634">            boolean first = true ;</span>
+
+<span class="pc bpc" id="L636" title="1 of 2 branches missed.">            if ( !OBJECT_LISTS ) {</span>
+<span class="nc bnc" id="L637" title="All 2 branches missed.">                for ( Node p : predicates ) {</span>
+<span class="nc bnc" id="L638" title="All 2 branches missed.">                    for ( Node o : pGroups.get(p) ) {</span>
+<span class="nc" id="L639">                        writePredicateObject(p, o, predicateMaxWidth, first) ;</span>
+<span class="nc" id="L640">                        first = false ;</span>
+<span class="nc" id="L641">                    }</span>
+<span class="nc" id="L642">                }</span>
+<span class="nc" id="L643">                return ;</span>
+            }
+
+<span class="fc bfc" id="L646" title="All 2 branches covered.">            for ( Node p : predicates ) {</span>
+                // Literals in the group
+<span class="fc" id="L648">                List&lt;Node&gt; rdfLiterals = new ArrayList&lt;&gt;() ;</span>
+                // Non-literals, printed
+<span class="fc" id="L650">                List&lt;Node&gt; rdfSimpleNodes = new ArrayList&lt;&gt;() ;</span>
+                // Non-literals, printed (), or []-embedded
+<span class="fc" id="L652">                List&lt;Node&gt; rdfComplexNodes = new ArrayList&lt;&gt;() ;</span>
+
+<span class="fc bfc" id="L654" title="All 2 branches covered.">                for ( Node o : pGroups.get(p) ) {</span>
+<span class="fc bfc" id="L655" title="All 2 branches covered.">                    if ( o.isLiteral() ) {</span>
+<span class="fc" id="L656">                        rdfLiterals.add(o) ;</span>
+<span class="fc" id="L657">                        continue ;</span>
+                    }
+<span class="pc bpc" id="L659" title="1 of 2 branches missed.">                    if ( isPrettyNode(o) ) {</span>
+<span class="nc" id="L660">                        rdfComplexNodes.add(o) ;</span>
+<span class="nc" id="L661">                        continue ;</span>
+                    }
+<span class="fc" id="L663">                    rdfSimpleNodes.add(o) ;</span>
+<span class="fc" id="L664">                }</span>
+
+<span class="fc bfc" id="L666" title="All 2 branches covered.">                if ( ! rdfLiterals.isEmpty() ) {</span>
+<span class="fc" id="L667">                    writePredicateObjectList(p, rdfLiterals, predicateMaxWidth, first) ;</span>
+<span class="fc" id="L668">                    first = false ;</span>
+                }
+<span class="fc bfc" id="L670" title="All 2 branches covered.">                if ( ! rdfSimpleNodes.isEmpty() ) {</span>
+<span class="fc" id="L671">                    writePredicateObjectList(p, rdfSimpleNodes, predicateMaxWidth, first) ;</span>
+<span class="fc" id="L672">                    first = false ;</span>
+                }
+
+<span class="pc bpc" id="L675" title="1 of 2 branches missed.">                for ( Node o : rdfComplexNodes ) {</span>
+<span class="nc" id="L676">                    writePredicateObject(p, o, predicateMaxWidth, first) ;</span>
+<span class="nc" id="L677">                    first = false ;</span>
+<span class="nc" id="L678">                }</span>
+<span class="fc" id="L679">            }</span>
+<span class="fc" id="L680">        }</span>
+
+        private void writePredicateObject(Node p, Node obj, int predicateMaxWidth, boolean first) {
+<span class="nc" id="L683">            writePredicate(p, predicateMaxWidth, first) ;</span>
+<span class="nc" id="L684">            out.incIndent(INDENT_OBJECT) ;</span>
+<span class="nc" id="L685">            writeNodePretty(obj) ;</span>
+<span class="nc" id="L686">            out.decIndent(INDENT_OBJECT) ;</span>
+<span class="nc" id="L687">        }</span>
+
+        private void writePredicateObjectList(Node p, List&lt;Node&gt; objects, int predicateMaxWidth, boolean first) {
+<span class="fc" id="L690">            writePredicate(p, predicateMaxWidth, first) ;</span>
+<span class="fc" id="L691">            out.incIndent(INDENT_OBJECT) ;</span>
+
+<span class="fc" id="L693">            boolean lastObjectMultiLine = false ;</span>
+<span class="fc" id="L694">            boolean firstObject = true ;</span>
+<span class="fc bfc" id="L695" title="All 2 branches covered.">            for ( Node o : objects ) {</span>
+<span class="fc bfc" id="L696" title="All 2 branches covered.">                if ( !firstObject ) {</span>
+<span class="pc bpc" id="L697" title="1 of 2 branches missed.">                    if ( out.getCurrentOffset() &gt; 0 )</span>
+<span class="fc" id="L698">                        out.print(&quot; , &quot;) ;</span>
+                    else
+                        // Before the current indent, due to a multiline literal being written raw.
+                        // We will pad spaces to indent on output spaces.  Don't add a first &quot; &quot;
+<span class="nc" id="L702">                        out.print(&quot;, &quot;) ;</span>
+                }
+                else
+<span class="fc" id="L705">                    firstObject = false ;</span>
+<span class="fc" id="L706">                int row1 = out.getRow() ;</span>
+<span class="fc" id="L707">                writeNode(o) ;</span>
+<span class="fc" id="L708">                int row2 = out.getRow();</span>
+<span class="pc bpc" id="L709" title="1 of 2 branches missed.">                lastObjectMultiLine = (row2 &gt; row1) ;</span>
+<span class="fc" id="L710">            }</span>
+<span class="fc" id="L711">            out.decIndent(INDENT_OBJECT) ;</span>
+<span class="fc" id="L712">        }</span>
+
+        /** Write a predicate - jump to next line if deemed long */
+        private void writePredicate(Node p, int predicateMaxWidth, boolean first) {
+<span class="fc bfc" id="L716" title="All 2 branches covered.">            if ( first )</span>
+<span class="fc" id="L717">                first = false ;</span>
+            else {
+<span class="fc" id="L719">                print(&quot; ;&quot;) ;</span>
+<span class="fc" id="L720">                println() ;</span>
+            }
+<span class="fc" id="L722">            int colPredicateStart = out.getAbsoluteIndent() ;</span>
+
+<span class="pc bpc" id="L724" title="1 of 4 branches missed.">            if ( !prefixMap.contains(rdfNS) &amp;&amp; RDF_type.equals(p) )</span>
+<span class="fc" id="L725">                print(&quot;a&quot;) ;</span>
+            else
+<span class="fc" id="L727">                writeNode(p) ;</span>
+<span class="fc" id="L728">            int colPredicateFinish = out.getCol() ;</span>
+<span class="fc" id="L729">            int wPredicate = (colPredicateFinish - colPredicateStart) ;</span>
+
+<span class="pc bpc" id="L731" title="1 of 2 branches missed.">            if ( wPredicate &gt; LONG_PREDICATE )</span>
+<span class="nc" id="L732">                println() ;</span>
+            else {
+<span class="fc" id="L734">                out.pad(predicateMaxWidth) ;</span>
+                // out.print(' ', predicateMaxWidth-wPredicate) ;
+<span class="fc" id="L736">                gap(GAP_P_O) ;</span>
+            }
+<span class="fc" id="L738">        }</span>
+
+        private Map&lt;Node, List&lt;Node&gt;&gt; groupByPredicates(Collection&lt;Triple&gt; cluster) {
+<span class="fc" id="L741">            SortedMap&lt;Node, List&lt;Node&gt;&gt; x = new TreeMap&lt;&gt;(compPredicates) ;</span>
+<span class="fc bfc" id="L742" title="All 2 branches covered.">            for ( Triple t : cluster ) {</span>
+<span class="fc" id="L743">                Node p = t.getPredicate() ;</span>
+<span class="fc bfc" id="L744" title="All 2 branches covered.">                if ( !x.containsKey(p) )</span>
+<span class="fc" id="L745">                    x.put(p, new ArrayList&lt;Node&gt;()) ;</span>
+<span class="fc" id="L746">                x.get(p).add(t.getObject()) ;</span>
+<span class="fc" id="L747">            }</span>
+
+<span class="fc" id="L749">            return x ;</span>
+        }
+
+        private int countPredicates(Collection&lt;Triple&gt; cluster) {
+<span class="nc" id="L753">            Set&lt;Node&gt; x = new HashSet&lt;&gt;() ;</span>
+<span class="nc bnc" id="L754" title="All 2 branches missed.">            for ( Triple t : cluster ) {</span>
+<span class="nc" id="L755">                Node p = t.getPredicate() ;</span>
+<span class="nc" id="L756">                x.add(p) ;</span>
+<span class="nc" id="L757">            }</span>
+<span class="nc" id="L758">            return x.size() ;</span>
+        }
+
+        // [ :p &quot;abc&quot; ] .  or    [] : &quot;abc&quot; .
+        private void writeNestedObjectTopLevel(Node subject) {
+            if ( true ) {
+<span class="nc" id="L764">                writeNestedObject(subject) ;</span>
+<span class="nc" id="L765">                out.println(&quot; .&quot;) ;</span>
+            } else {
+                // Alternative.
+                Collection&lt;Triple&gt; cluster = triplesOfSubject(subject) ;
+                print(&quot;[]&quot;) ;
+                writeClusterPredicateObjectList(0, cluster) ;
+            }
+<span class="nc" id="L772">        }</span>
+
+        private void writeNestedObject(Node node) {
+<span class="nc" id="L775">            Collection&lt;Triple&gt; x = triplesOfSubject(node) ;</span>
+
+<span class="nc bnc" id="L777" title="All 2 branches missed.">            if ( x.isEmpty() ) {</span>
+<span class="nc" id="L778">                print(&quot;[] &quot;) ;</span>
+<span class="nc" id="L779">                return ;</span>
+            }
+
+<span class="nc" id="L782">            int pCount = countPredicates(x) ;</span>
+
+<span class="nc bnc" id="L784" title="All 2 branches missed.">            if ( pCount == 1 ) {</span>
+<span class="nc" id="L785">                print(&quot;[ &quot;) ;</span>
+<span class="nc" id="L786">                out.incIndent(2) ;</span>
+<span class="nc" id="L787">                writePredicateObjectList(x) ;</span>
+<span class="nc" id="L788">                out.decIndent(2) ;</span>
+<span class="nc" id="L789">                print(&quot; ]&quot;) ;</span>
+<span class="nc" id="L790">                return ;</span>
+            }
+
+            // Two or more.
+<span class="nc" id="L794">            int indent0 = out.getAbsoluteIndent() ;</span>
+<span class="nc" id="L795">            int here = out.getCol() ;</span>
+<span class="nc" id="L796">            out.setAbsoluteIndent(here) ;</span>
+<span class="nc" id="L797">            print(&quot;[ &quot;) ;</span>
+<span class="nc" id="L798">            out.incIndent(2) ;</span>
+<span class="nc" id="L799">            writePredicateObjectList(x) ;</span>
+<span class="nc" id="L800">            out.decIndent(2) ;</span>
+            if ( true ) {
+<span class="nc" id="L802">                println() ; // Newline for &quot;]&quot;</span>
+<span class="nc" id="L803">                print(&quot;]&quot;) ;</span>
+            } else { // Compact
+                print(&quot; ]&quot;) ;
+            }
+<span class="nc" id="L807">            out.setAbsoluteIndent(indent0) ;</span>
+<span class="nc" id="L808">        }</span>
+
+        // Write a list
+        private void writeList(List&lt;Node&gt; elts) {
+<span class="nc bnc" id="L812" title="All 2 branches missed.">            if ( elts.size() == 0 ) {</span>
+<span class="nc" id="L813">                out.print(&quot;()&quot;) ;</span>
+<span class="nc" id="L814">                return ;</span>
+            }
+
+            if ( false ) {
+                out.print(&quot;(&quot;) ;
+                for ( Node n : elts ) {
+                    out.print(&quot; &quot;) ;
+                    writeNodePretty(n) ;
+                }
+                out.print(&quot; )&quot;) ;
+            }
+
+            if ( true ) {
+                // &quot;fresh line mode&quot; means printed one on new line
+                // Multi line items are ones that can be multiple lines. Non-literals.
+                // Was the previous row a multiLine?
+<span class="nc" id="L830">                boolean lastItemFreshLine = false ;</span>
+                // Have there been any items that causes &quot;fresh line&quot; mode?
+<span class="nc" id="L832">                boolean multiLineAny = false ;</span>
+<span class="nc" id="L833">                boolean first = true ;</span>
+
+                // Where we started.
+<span class="nc" id="L836">                int originalIndent = out.getAbsoluteIndent() ;</span>
+                // Rebase indent here.
+<span class="nc" id="L838">                int x = out.getCol() ;</span>
+<span class="nc" id="L839">                out.setAbsoluteIndent(x);</span>
+
+<span class="nc" id="L841">                out.print(&quot;(&quot;) ;</span>
+<span class="nc" id="L842">                out.incIndent(2);</span>
+<span class="nc bnc" id="L843" title="All 2 branches missed.">                for ( Node n : elts ) {</span>
+
+                    // Print this item on a fresh line? (still to check: first line)
+<span class="nc" id="L846">                    boolean thisItemFreshLine = /* multiLineAny | */ n.isBlank() ;</span>
+
+                    // Special case List in List.
+                    // Start on this line if last item was on this line.
+<span class="nc bnc" id="L850" title="All 2 branches missed.">                    if ( lists.containsKey(n) )</span>
+<span class="nc" id="L851">                        thisItemFreshLine = lastItemFreshLine ;</span>
+
+                    // Starting point.
+<span class="nc bnc" id="L854" title="All 2 branches missed.">                    if ( ! first ) {</span>
+<span class="nc bnc" id="L855" title="All 2 branches missed.">                        if ( lastItemFreshLine | thisItemFreshLine )</span>
+<span class="nc" id="L856">                            out.println() ;</span>
+                        else
+<span class="nc" id="L858">                            out.print(&quot; &quot;) ;</span>
+                    }
+
+<span class="nc" id="L861">                    first = false ;</span>
+                    //Literals with newlines: int x1 = out.getRow() ;
+                    // Adds INDENT_OBJECT even for a [ one triple ]
+                    // Special case [ one triple ]??
+<span class="nc" id="L865">                    writeNodePretty(n) ;</span>
+                    //Literals with newlines:int x2 = out.getRow() ;
+                    //Literals with newlines: boolean multiLineAnyway = ( x1 != x2 ) ;
+<span class="nc" id="L868">                    lastItemFreshLine = thisItemFreshLine ;</span>
+<span class="nc" id="L869">                    multiLineAny  = multiLineAny | thisItemFreshLine ;</span>
+
+<span class="nc" id="L871">                }</span>
+<span class="nc bnc" id="L872" title="All 2 branches missed.">                if ( multiLineAny )</span>
+<span class="nc" id="L873">                    out.println() ;</span>
+                else
+<span class="nc" id="L875">                    out.print(&quot; &quot;) ;</span>
+<span class="nc" id="L876">                out.decIndent(2);</span>
+<span class="nc" id="L877">                out.setAbsoluteIndent(x);</span>
+<span class="nc" id="L878">                out.print(&quot;)&quot;) ;</span>
+<span class="nc" id="L879">                out.setAbsoluteIndent(originalIndent) ;</span>
+            }
+<span class="nc" id="L881">        }</span>
+
+        private boolean isPrettyNode(Node n) {
+            // Order matters? - one connected objects may include list elements.
+<span class="pc bpc" id="L885" title="1 of 2 branches missed.">            if ( allowDeepPretty ) {</span>
+<span class="pc bpc" id="L886" title="1 of 2 branches missed.">                if ( lists.containsKey(n) )</span>
+<span class="nc" id="L887">                    return true ;</span>
+<span class="pc bpc" id="L888" title="1 of 2 branches missed.">                if ( nestedObjects.contains(n) )</span>
+<span class="nc" id="L889">                    return true ;</span>
+            }
+<span class="pc bpc" id="L891" title="1 of 2 branches missed.">            if ( RDF_Nil.equals(n) )</span>
+<span class="nc" id="L892">                return true ;</span>
+<span class="fc" id="L893">            return false ;</span>
+        }
+
+        // --&gt; write S or O??
+        private void writeNodePretty(Node obj) {
+            // Assumes &quot;isPrettyNode&quot; is true.
+            // Order matters? - one connected objects may include list elements.
+<span class="nc bnc" id="L900" title="All 2 branches missed.">            if ( lists.containsKey(obj) )</span>
+<span class="nc" id="L901">                writeList(lists.get(obj)) ;</span>
+<span class="nc bnc" id="L902" title="All 2 branches missed.">            else if ( nestedObjects.contains(obj) )</span>
+<span class="nc" id="L903">                writeNestedObject(obj) ;</span>
+<span class="nc bnc" id="L904" title="All 2 branches missed.">            else if ( RDF_Nil.equals(obj) )</span>
+<span class="nc" id="L905">                out.print(&quot;()&quot;) ;</span>
+            else
+<span class="nc" id="L907">                writeNode(obj) ;</span>
+<span class="nc bnc" id="L908" title="All 2 branches missed.">            if ( nestedObjects.contains(obj) )</span>
+<span class="nc" id="L909">                nestedObjectsWritten.add(obj) ;</span>
+
+<span class="nc" id="L911">        }</span>
+
+        // Order of properties.
+        // rdf:type (&quot;a&quot;)
+        // RDF and RDFS
+        // Other.
+        // Sorted by URI.
+
+        private void write_S_P_Gap() {
+<span class="pc bpc" id="L920" title="1 of 2 branches missed.">            if ( out.getCol() &gt; LONG_SUBJECT )</span>
+<span class="fc" id="L921">                out.println() ;</span>
+            else
+<span class="nc" id="L923">                gap(GAP_S_P) ;</span>
+<span class="fc" id="L924">        }</span>
+    }
+
+    // Order of properties.
+    // rdf:type (&quot;a&quot;)
+    // RDF and RDFS
+    // Other.
+    // Sorted by URI.
+
+<span class="fc" id="L933">    private static final class ComparePredicates implements Comparator&lt;Node&gt; {</span>
+        private static int classification(Node p) {
+<span class="fc bfc" id="L935" title="All 2 branches covered.">            if ( p.equals(RDF_type) )</span>
+<span class="fc" id="L936">                return 0 ;</span>
+
+<span class="pc bpc" id="L938" title="2 of 4 branches missed.">            if ( p.getURI().startsWith(RDF.getURI()) || p.getURI().startsWith(RDFS.getURI()) )</span>
+<span class="nc" id="L939">                return 1 ;</span>
+
+<span class="fc" id="L941">            return 2 ;</span>
+        }
+
+        @Override
+        public int compare(Node t1, Node t2) {
+<span class="fc" id="L946">            int class1 = classification(t1) ;</span>
+<span class="fc" id="L947">            int class2 = classification(t2) ;</span>
+<span class="fc bfc" id="L948" title="All 2 branches covered.">            if ( class1 != class2 ) {</span>
+                // Java 1.7
+                // return Integer.compare(class1, class2) ;
+<span class="fc bfc" id="L951" title="All 2 branches covered.">                if ( class1 &lt; class2 )</span>
+<span class="fc" id="L952">                    return -1 ;</span>
+<span class="pc bpc" id="L953" title="1 of 2 branches missed.">                if ( class1 &gt; class2 )</span>
+<span class="fc" id="L954">                    return 1 ;</span>
+<span class="nc" id="L955">                return 0 ;</span>
+            }
+<span class="fc" id="L957">            String p1 = t1.getURI() ;</span>
+<span class="fc" id="L958">            String p2 = t2.getURI() ;</span>
+<span class="fc" id="L959">            return p1.compareTo(p2) ;</span>
+        }
+    }
+
+<span class="fc" id="L963">    private static Comparator&lt;Node&gt; compPredicates = new ComparePredicates() ;</span>
+
+    protected final void writeNode(Node node) {
+<span class="fc" id="L966">        nodeFmt.format(out, node) ;</span>
+<span class="fc" id="L967">    }</span>
+
+    private void print(String x) {
+<span class="fc" id="L970">        out.print(x) ;</span>
+<span class="fc" id="L971">    }</span>
+
+    private void gap(int gap) {
+<span class="fc" id="L974">        out.print(' ', gap) ;</span>
+<span class="fc" id="L975">    }</span>
+
+    // flush aggressively (debugging)
+    private void println() {
+<span class="fc" id="L979">        out.println() ;</span>
+        // out.flush() ;
+<span class="fc" id="L981">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>
