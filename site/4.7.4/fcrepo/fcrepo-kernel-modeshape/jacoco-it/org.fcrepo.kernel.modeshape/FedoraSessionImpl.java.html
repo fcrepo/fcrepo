@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>FedoraSessionImpl.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation (ModeShape)</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape</a> &gt; <span class="el_source">FedoraSessionImpl.java</span></div><h1>FedoraSessionImpl.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape;
+
+import static java.lang.Long.parseLong;
+import static java.time.Duration.ofMillis;
+import static java.time.Duration.ofMinutes;
+import static java.time.Instant.now;
+import static java.util.Collections.singleton;
+import static java.util.Optional.of;
+import static java.util.UUID.randomUUID;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.observation.ObservationManager;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.annotations.VisibleForTesting;
+import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.exception.AccessDeniedException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.modeshape.utils.NamespaceTools;
+
+/**
+ * An implementation of the FedoraSession abstraction
+ * @author acoburn
+ */
+public class FedoraSessionImpl implements FedoraSession {
+
+    // The default timeout is 3 minutes
+    @VisibleForTesting
+<span class="fc" id="L56">    public static final String DEFAULT_TIMEOUT = Long.toString(ofMinutes(3).toMillis());</span>
+
+    @VisibleForTesting
+    public static final String TIMEOUT_SYSTEM_PROPERTY = &quot;fcrepo.session.timeout&quot;;
+
+    private final Session jcrSession;
+    private final String id;
+    private final Instant created;
+    private final ConcurrentHashMap&lt;String, String&gt; sessionData;
+    private Instant expires;
+
+    /**
+     * A key for looking up the transaction id in a session key-value pair
+     */
+    public static final String FCREPO_TX_ID = &quot;fcrepo.tx.id&quot;;
+
+<span class="fc" id="L72">    private static final ObjectMapper mapper = new ObjectMapper();</span>
+
+    /**
+     * Create a Fedora session with a JCR session
+     * @param session the JCR session
+     */
+<span class="fc" id="L78">    public FedoraSessionImpl(final Session session) {</span>
+<span class="fc" id="L79">        this.jcrSession = session;</span>
+
+<span class="fc" id="L81">        created = now();</span>
+<span class="fc" id="L82">        id = randomUUID().toString();</span>
+<span class="fc" id="L83">        expires = created.plus(operationTimeout());</span>
+<span class="fc" id="L84">        sessionData = new ConcurrentHashMap&lt;&gt;();</span>
+<span class="fc" id="L85">    }</span>
+
+    @Override
+    public void commit() {
+        try {
+<span class="fc bfc" id="L90" title="All 2 branches covered.">            if (jcrSession.isLive()) {</span>
+<span class="fc" id="L91">                final ObservationManager obs = jcrSession.getWorkspace().getObservationManager();</span>
+<span class="fc" id="L92">                final ObjectNode json = mapper.createObjectNode();</span>
+<span class="fc" id="L93">                sessionData.forEach(json::put);</span>
+<span class="fc" id="L94">                obs.setUserData(mapper.writeValueAsString(json));</span>
+<span class="fc" id="L95">                jcrSession.save();</span>
+            }
+<span class="nc" id="L97">        } catch (final javax.jcr.AccessDeniedException ex) {</span>
+<span class="nc" id="L98">            throw new AccessDeniedException(ex);</span>
+<span class="nc" id="L99">        } catch (final RepositoryException | JsonProcessingException ex) {</span>
+<span class="nc" id="L100">            throw new RepositoryRuntimeException(ex);</span>
+<span class="fc" id="L101">        }</span>
+<span class="fc" id="L102">    }</span>
+
+    @Override
+    public void expire() {
+<span class="fc" id="L106">        expires = now();</span>
+        try {
+<span class="fc bfc" id="L108" title="All 2 branches covered.">            if (jcrSession.isLive()) {</span>
+<span class="fc" id="L109">                jcrSession.refresh(false);</span>
+<span class="fc" id="L110">                jcrSession.logout();</span>
+            }
+<span class="nc" id="L112">        } catch (final RepositoryException ex) {</span>
+<span class="nc" id="L113">            throw new RepositoryRuntimeException(ex);</span>
+<span class="fc" id="L114">        }</span>
+<span class="fc" id="L115">    }</span>
+
+    @Override
+    public Instant updateExpiry(final Duration amountToAdd) {
+<span class="nc bnc" id="L119" title="All 2 branches missed.">        if (jcrSession.isLive()) {</span>
+<span class="nc" id="L120">            expires = now().plus(amountToAdd);</span>
+        }
+<span class="nc" id="L122">        return expires;</span>
+    }
+
+    @Override
+    public Instant getCreated() {
+<span class="nc" id="L127">        return created;</span>
+    }
+
+    @Override
+    public Optional&lt;Instant&gt; getExpires() {
+<span class="fc" id="L132">        return of(expires);</span>
+    }
+
+    @Override
+    public String getId() {
+<span class="fc" id="L137">        return id;</span>
+    }
+
+    @Override
+    public String getUserId() {
+<span class="nc" id="L142">        return jcrSession.getUserID();</span>
+    }
+
+    @Override
+    public Map&lt;String, String&gt; getNamespaces() {
+<span class="nc" id="L147">        return NamespaceTools.getNamespaces(jcrSession);</span>
+    }
+
+    /**
+     *  Add session data
+     *  @param key the data key
+     *  @param value the data value
+     *
+     *  Note: while the FedoraSession interface permits multi-valued
+     *  session data, this implementation constrains that to be single-valued.
+     *  That is, calling obj.addSessionData(&quot;key&quot;, &quot;value1&quot;) followed by
+     *  obj.addSessionData(&quot;key&quot;, &quot;value2&quot;) will result in only &quot;value2&quot; being associated
+     *  with the given key.
+     */
+    @Override
+    public void addSessionData(final String key, final String value) {
+<span class="nc" id="L163">        sessionData.put(key, value);</span>
+<span class="nc" id="L164">    }</span>
+
+    @Override
+    public Collection&lt;String&gt; getSessionData(final String key) {
+<span class="nc" id="L168">        return singleton(sessionData.get(key));</span>
+    }
+
+    @Override
+    public void removeSessionData(final String key, final String value) {
+<span class="nc" id="L173">        sessionData.remove(key, value);</span>
+<span class="nc" id="L174">    }</span>
+
+    @Override
+    public void removeSessionData(final String key) {
+<span class="nc" id="L178">        sessionData.remove(key);</span>
+<span class="nc" id="L179">    }</span>
+
+    /**
+     * Get the internal JCR session
+     * @return the internal JCR session
+     */
+    public Session getJcrSession() {
+<span class="fc" id="L186">        return jcrSession;</span>
+    }
+
+    /**
+     * Get the internal JCR session from an existing FedoraSession
+     * @param session the FedoraSession
+     * @return the JCR session
+     */
+    public static Session getJcrSession(final FedoraSession session) {
+<span class="pc bpc" id="L195" title="1 of 2 branches missed.">        if (session instanceof FedoraSessionImpl) {</span>
+<span class="fc" id="L196">            return ((FedoraSessionImpl)session).getJcrSession();</span>
+        }
+<span class="nc" id="L198">        throw new ClassCastException(&quot;FedoraSession is not a &quot; + FedoraSessionImpl.class.getCanonicalName());</span>
+    }
+
+    /**
+     * Retrieve the default operation timeout value
+     * @return the default timeout value
+     */
+    public static Duration operationTimeout() {
+<span class="fc" id="L206">       return ofMillis(parseLong(System.getProperty(TIMEOUT_SYSTEM_PROPERTY, DEFAULT_TIMEOUT)));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

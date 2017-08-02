@@ -1,0 +1,1199 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>FedoraResourceImpl.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation (ModeShape)</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape</a> &gt; <span class="el_source">FedoraResourceImpl.java</span></div><h1>FedoraResourceImpl.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape;
+
+import static java.time.Instant.ofEpochMilli;
+import static java.util.Arrays.asList;
+import static java.util.Collections.singleton;
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Stream.concat;
+import static java.util.stream.Stream.empty;
+import static java.util.stream.Stream.of;
+import static org.apache.commons.codec.digest.DigestUtils.sha1Hex;
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
+import static org.apache.jena.rdf.model.ResourceFactory.createTypedLiteral;
+import static org.apache.jena.update.UpdateAction.execute;
+import static org.apache.jena.update.UpdateFactory.create;
+import static org.fcrepo.kernel.api.RdfCollectors.toModel;
+import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
+import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
+import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
+import static org.fcrepo.kernel.api.RdfLexicon.isRelaxed;
+import static org.fcrepo.kernel.api.RequiredRdfContext.EMBED_RESOURCES;
+import static org.fcrepo.kernel.api.RequiredRdfContext.INBOUND_REFERENCES;
+import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_CONTAINMENT;
+import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_MEMBERSHIP;
+import static org.fcrepo.kernel.api.RequiredRdfContext.MINIMAL;
+import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
+import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
+import static org.fcrepo.kernel.api.RequiredRdfContext.VERSIONS;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_MIXIN_TYPES;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
+import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.jcrProperties;
+import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
+import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
+import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.isFrozen;
+import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.property2values;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getContainingNode;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.hasInternalNamespace;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFrozenNode;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalNode;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.ldpInsertedContentProperty;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.resourceToProperty;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.touchLdpMembershipResource;
+import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaceRegistry;
+import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
+import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.net.URI;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.jcr.ItemNotFoundException;
+import javax.jcr.NamespaceRegistry;
+import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
+import javax.jcr.Property;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.Value;
+import javax.jcr.nodetype.NodeType;
+import javax.jcr.version.Version;
+import javax.jcr.version.VersionHistory;
+import javax.jcr.version.VersionManager;
+
+import com.google.common.annotations.VisibleForTesting;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
+import org.fcrepo.kernel.api.FedoraTypes;
+import org.fcrepo.kernel.api.FedoraVersion;
+import org.fcrepo.kernel.api.RdfLexicon;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.TripleCategory;
+import org.fcrepo.kernel.api.exception.AccessDeniedException;
+import org.fcrepo.kernel.api.exception.ConstraintViolationException;
+import org.fcrepo.kernel.api.exception.InvalidPrefixException;
+import org.fcrepo.kernel.api.exception.MalformedRdfException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.utils.GraphDifferencer;
+import org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper;
+import org.fcrepo.kernel.modeshape.rdf.converters.PropertyConverter;
+import org.fcrepo.kernel.modeshape.rdf.impl.AclRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.ChildrenRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.ContentRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.HashRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.LdpContainerRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.LdpIsMemberOfRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.LdpRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.ParentRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.PropertiesRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.ReferencesRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.RootRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.SkolemNodeRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.TypeRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.VersionsRdfContext;
+import org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils;
+import org.fcrepo.kernel.modeshape.utils.FilteringJcrPropertyStatementListener;
+import org.fcrepo.kernel.modeshape.utils.PropertyChangedListener;
+import org.fcrepo.kernel.modeshape.utils.UncheckedPredicate;
+import org.fcrepo.kernel.modeshape.utils.iterators.RdfAdder;
+import org.fcrepo.kernel.modeshape.utils.iterators.RdfRemover;
+
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.modify.request.UpdateData;
+import org.apache.jena.sparql.modify.request.UpdateDeleteWhere;
+import org.apache.jena.sparql.modify.request.UpdateModify;
+import org.apache.jena.update.UpdateRequest;
+import org.modeshape.jcr.api.JcrTools;
+import org.slf4j.Logger;
+
+import com.google.common.base.Converter;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+
+/**
+ * Common behaviors across {@link org.fcrepo.kernel.api.models.Container} and
+ * {@link org.fcrepo.kernel.api.models.NonRdfSourceDescription} types; also used
+ * when the exact type of an object is irrelevant
+ *
+ * @author ajs6f
+ */
+public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraResource {
+
+<span class="fc" id="L165">    private static final Logger LOGGER = getLogger(FedoraResourceImpl.class);</span>
+
+    private static final long NO_TIME = 0L;
+    private static final String JCR_CHILD_VERSION_HISTORY = &quot;jcr:childVersionHistory&quot;;
+    private static final String JCR_VERSIONABLE_UUID = &quot;jcr:versionableUuid&quot;;
+    private static final String JCR_FROZEN_UUID = &quot;jcr:frozenUuid&quot;;
+    private static final String JCR_VERSION_STORAGE = &quot;jcr:versionStorage&quot;;
+
+<span class="fc" id="L173">    private static final PropertyConverter propertyConverter = new PropertyConverter();</span>
+
+    // A curried type accepting resource, translator, and &quot;minimality&quot;, returning triples.
+    private static interface RdfGenerator extends Function&lt;FedoraResource,
+    Function&lt;IdentifierConverter&lt;Resource, FedoraResource&gt;, Function&lt;Boolean, Stream&lt;Triple&gt;&gt;&gt;&gt; {}
+
+    @SuppressWarnings(&quot;resource&quot;)
+<span class="fc" id="L180">    private static RdfGenerator getDefaultTriples = resource -&gt; translator -&gt; uncheck(minimal -&gt; {</span>
+<span class="fc" id="L181">        final Stream&lt;Stream&lt;Triple&gt;&gt; min = of(</span>
+            new TypeRdfContext(resource, translator),
+            new PropertiesRdfContext(resource, translator));
+<span class="pc bpc" id="L184" title="1 of 2 branches missed.">        if (!minimal) {</span>
+<span class="fc" id="L185">            final Stream&lt;Stream&lt;Triple&gt;&gt; extra = of(</span>
+                new HashRdfContext(resource, translator),
+                new SkolemNodeRdfContext(resource, translator));
+<span class="fc" id="L188">            return concat(min, extra).reduce(empty(), Stream::concat);</span>
+        }
+<span class="nc" id="L190">        return min.reduce(empty(), Stream::concat);</span>
+    });
+
+<span class="pc" id="L193">    private static RdfGenerator getEmbeddedResourceTriples = resource -&gt; translator -&gt; uncheck(minimal -&gt;</span>
+<span class="nc" id="L194">            resource.getChildren().flatMap(child -&gt; child.getTriples(translator, PROPERTIES)));</span>
+
+<span class="fc" id="L196">    private static RdfGenerator getInboundTriples = resource -&gt; translator -&gt; uncheck(_minimal -&gt; {</span>
+<span class="fc" id="L197">        return new ReferencesRdfContext(resource, translator);</span>
+    });
+
+<span class="pc" id="L200">    private static RdfGenerator getLdpContainsTriples = resource -&gt; translator -&gt; uncheck(_minimal -&gt; {</span>
+<span class="nc" id="L201">        return new ChildrenRdfContext(resource, translator);</span>
+    });
+
+<span class="fc" id="L204">    private static RdfGenerator getVersioningTriples = resource -&gt; translator -&gt; uncheck(_minimal -&gt; {</span>
+<span class="fc" id="L205">        return new VersionsRdfContext(resource, translator);</span>
+    });
+
+    @SuppressWarnings(&quot;resource&quot;)
+<span class="fc" id="L209">    private static RdfGenerator getServerManagedTriples = resource -&gt; translator -&gt; uncheck(minimal -&gt; {</span>
+<span class="pc bpc" id="L210" title="1 of 2 branches missed.">        if (minimal) {</span>
+<span class="nc" id="L211">            return new LdpRdfContext(resource, translator);</span>
+        }
+<span class="fc" id="L213">        final Stream&lt;Stream&lt;Triple&gt;&gt; streams = of(</span>
+            new LdpRdfContext(resource, translator),
+            new AclRdfContext(resource, translator),
+            new RootRdfContext(resource, translator),
+            new ContentRdfContext(resource, translator),
+            new ParentRdfContext(resource, translator));
+<span class="fc" id="L219">        return streams.reduce(empty(), Stream::concat);</span>
+    });
+
+    @SuppressWarnings(&quot;resource&quot;)
+<span class="pc" id="L223">    private static RdfGenerator getLdpMembershipTriples = resource -&gt; translator -&gt; uncheck(_minimal -&gt; {</span>
+<span class="nc" id="L224">        final Stream&lt;Stream&lt;Triple&gt;&gt; streams = of(</span>
+            new LdpContainerRdfContext(resource, translator),
+            new LdpIsMemberOfRdfContext(resource, translator));
+<span class="nc" id="L227">        return streams.reduce(empty(), Stream::concat);</span>
+    });
+
+    private static final Map&lt;TripleCategory, RdfGenerator&gt; contextMap =
+<span class="fc" id="L231">            ImmutableMap.&lt;TripleCategory, RdfGenerator&gt;builder()</span>
+<span class="fc" id="L232">                    .put(PROPERTIES, getDefaultTriples)</span>
+<span class="fc" id="L233">                    .put(VERSIONS, getVersioningTriples)</span>
+<span class="fc" id="L234">                    .put(EMBED_RESOURCES, getEmbeddedResourceTriples)</span>
+<span class="fc" id="L235">                    .put(INBOUND_REFERENCES, getInboundTriples)</span>
+<span class="fc" id="L236">                    .put(SERVER_MANAGED, getServerManagedTriples)</span>
+<span class="fc" id="L237">                    .put(LDP_MEMBERSHIP, getLdpMembershipTriples)</span>
+<span class="fc" id="L238">                    .put(LDP_CONTAINMENT, getLdpContainsTriples)</span>
+<span class="fc" id="L239">                    .build();</span>
+
+    protected Node node;
+
+    /*
+     * A terminating slash means ModeShape has trouble extracting the localName, e.g., for http://myurl.org/.
+     * 
+     * @see &lt;a href=&quot;https://jira.duraspace.org/browse/FCREPO-1409&quot;&gt; FCREPO-1409 &lt;/a&gt; for details.
+     */
+<span class="fc" id="L248">    private static final Function&lt;Quad, IllegalArgumentException&gt; validatePredicateEndsWithSlash = uncheck(x -&gt; {</span>
+<span class="pc bpc" id="L249" title="1 of 4 branches missed.">        if (x.getPredicate().isURI() &amp;&amp; x.getPredicate().getURI().endsWith(&quot;/&quot;)) {</span>
+<span class="fc" id="L250">            return new IllegalArgumentException(&quot;Invalid predicate ends with '/': &quot; + x.getPredicate().getURI());</span>
+        }
+<span class="fc" id="L252">        return null;</span>
+    });
+
+    /*
+     * Ensures the object URI is valid
+     */
+<span class="fc" id="L258">    private static final Function&lt;Quad, IllegalArgumentException&gt; validateObjectUrl = uncheck(x -&gt; {</span>
+<span class="fc bfc" id="L259" title="All 2 branches covered.">        if (x.getObject().isURI()) {</span>
+<span class="fc" id="L260">            final String uri = x.getObject().toString();</span>
+            try {
+<span class="fc" id="L262">                new URI(uri);</span>
+<span class="nc" id="L263">            } catch (Exception ex) {</span>
+<span class="nc" id="L264">                return new IllegalArgumentException(&quot;Invalid object URI (&quot; + uri + &quot; ) : &quot; + ex.getMessage());</span>
+<span class="fc" id="L265">            }</span>
+        }
+<span class="fc" id="L267">        return null;</span>
+    });
+
+    private static final List&lt;Function&lt;Quad, IllegalArgumentException&gt;&gt; quadValidators =
+<span class="fc" id="L271">            ImmutableList.&lt;Function&lt;Quad, IllegalArgumentException&gt;&gt;builder()</span>
+<span class="fc" id="L272">                    .add(validatePredicateEndsWithSlash)</span>
+<span class="fc" id="L273">                    .add(validateObjectUrl).build();</span>
+
+    /**
+     * Construct a {@link org.fcrepo.kernel.api.models.FedoraResource} from an existing JCR Node
+     * @param node an existing JCR node to treat as an fcrepo object
+     */
+<span class="fc" id="L279">    public FedoraResourceImpl(final Node node) {</span>
+<span class="fc" id="L280">        this.node = node;</span>
+<span class="fc" id="L281">    }</span>
+
+    /**
+     * Return the underlying JCR Node for this resource
+     *
+     * @return the JCR Node
+     */
+    public Node getNode() {
+<span class="fc" id="L289">        return node;</span>
+    }
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraResource#getPath()
+     */
+    @Override
+    public String getPath() {
+        try {
+<span class="fc" id="L298">            final String path = node.getPath();</span>
+<span class="fc bfc" id="L299" title="All 2 branches covered.">            return path.endsWith(&quot;/&quot; + JCR_CONTENT) ? path.substring(0, path.length() - JCR_CONTENT.length() - 1)</span>
+                : path;
+<span class="fc" id="L301">        } catch (final RepositoryException e) {</span>
+<span class="fc" id="L302">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraResource#getChildren(Boolean recursive)
+     */
+    @Override
+    public Stream&lt;FedoraResource&gt; getChildren(final Boolean recursive) {
+        try {
+<span class="fc bfc" id="L312" title="All 2 branches covered.">            if (recursive) {</span>
+<span class="fc" id="L313">                return nodeToGoodChildren(node).flatMap(FedoraResourceImpl::getAllChildren);</span>
+            }
+<span class="fc" id="L315">            return nodeToGoodChildren(node);</span>
+<span class="nc" id="L316">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L317">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraResource#getDescription()
+     */
+    @Override
+    public FedoraResource getDescription() {
+<span class="nc" id="L326">        return this;</span>
+    }
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraResource#getDescribedResource()
+     */
+    @Override
+    public FedoraResource getDescribedResource() {
+<span class="fc" id="L334">        return this;</span>
+    }
+
+    /**
+     * Get the &quot;good&quot; children for a node by skipping all pairtree nodes in the way.
+     * @param input
+     * @return
+     * @throws RepositoryException
+     */
+    @SuppressWarnings(&quot;unchecked&quot;)
+    private Stream&lt;FedoraResource&gt; nodeToGoodChildren(final Node input) throws RepositoryException {
+<span class="fc" id="L345">        return iteratorToStream(input.getNodes()).filter(nastyChildren.negate())</span>
+<span class="fc bfc" id="L346" title="All 2 branches covered.">            .flatMap(uncheck((final Node child) -&gt; child.isNodeType(FEDORA_PAIRTREE) ? nodeToGoodChildren(child) :</span>
+<span class="fc" id="L347">                        of(nodeToObjectBinaryConverter.convert(child))));</span>
+    }
+
+    /**
+     * Get all children recursively, and flatten into a single Stream.
+     */
+    private static Stream&lt;FedoraResource&gt; getAllChildren(final FedoraResource resource) {
+<span class="fc" id="L354">        return concat(of(resource), resource.getChildren().flatMap(FedoraResourceImpl::getAllChildren));</span>
+    }
+
+    /**
+     * Children for whom we will not generate triples.
+     */
+<span class="fc" id="L360">    private static Predicate&lt;Node&gt; nastyChildren = isInternalNode</span>
+<span class="fc" id="L361">                    .or(TombstoneImpl::hasMixin)</span>
+<span class="fc" id="L362">                    .or(UncheckedPredicate.uncheck(p -&gt; p.getName().equals(JCR_CONTENT)))</span>
+<span class="fc" id="L363">                    .or(UncheckedPredicate.uncheck(p -&gt; p.getName().equals(&quot;#&quot;)));</span>
+
+<span class="fc" id="L365">    private static final Converter&lt;FedoraResource, FedoraResource&gt; datastreamToBinary</span>
+<span class="fc" id="L366">            = new Converter&lt;FedoraResource, FedoraResource&gt;() {</span>
+
+        @Override
+        protected FedoraResource doForward(final FedoraResource fedoraResource) {
+<span class="fc" id="L370">            return fedoraResource.getDescribedResource();</span>
+        }
+
+        @Override
+        protected FedoraResource doBackward(final FedoraResource fedoraResource) {
+<span class="nc" id="L375">            return fedoraResource.getDescription();</span>
+        }
+    };
+
+<span class="fc" id="L379">    private static final Converter&lt;Node, FedoraResource&gt; nodeToObjectBinaryConverter</span>
+<span class="fc" id="L380">            = nodeConverter.andThen(datastreamToBinary);</span>
+
+    @Override
+    public FedoraResource getContainer() {
+<span class="fc" id="L384">        return getContainingNode(getNode()).map(nodeConverter::convert).orElse(null);</span>
+    }
+
+    @Override
+    public FedoraResource getChild(final String relPath) {
+        try {
+<span class="nc" id="L390">            return nodeConverter.convert(getNode().getNode(relPath));</span>
+<span class="nc" id="L391">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L392">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    @Override
+    public boolean hasProperty(final String relPath) {
+        try {
+<span class="fc" id="L399">            return getNode().hasProperty(relPath);</span>
+<span class="nc" id="L400">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L401">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    @Override
+    public void delete() {
+        try {
+            // Remove inbound references to this resource and, recursively, any of its children
+<span class="fc" id="L409">            removeReferences(node);</span>
+
+<span class="pc bpc" id="L411" title="1 of 2 branches missed.">            final Node parent = getNode().getDepth() &gt; 0 ? getNode().getParent() : null;</span>
+
+<span class="fc" id="L413">            final String name = getNode().getName();</span>
+
+            // This is resolved immediately b/c we delete the node before updating an indirect container's target
+<span class="fc" id="L416">            final boolean shouldUpdateIndirectResource = ldpInsertedContentProperty(node)</span>
+<span class="fc" id="L417">                .flatMap(resourceToProperty(getSession())).filter(this::hasProperty).isPresent();</span>
+
+<span class="fc" id="L419">            final Optional&lt;Node&gt; containingNode = getContainingNode(getNode());</span>
+
+<span class="fc" id="L421">            node.remove();</span>
+
+<span class="pc bpc" id="L423" title="1 of 2 branches missed.">            if (parent != null) {</span>
+<span class="fc" id="L424">                createTombstone(parent, name);</span>
+
+                // also update membershipResources for Direct/Indirect Containers
+<span class="fc" id="L427">                containingNode.filter(UncheckedPredicate.uncheck((final Node ancestor) -&gt;</span>
+<span class="pc bpc" id="L428" title="1 of 6 branches missed.">                            ancestor.hasProperty(LDP_MEMBER_RESOURCE) &amp;&amp; (ancestor.isNodeType(LDP_DIRECT_CONTAINER) ||</span>
+                            shouldUpdateIndirectResource)))
+<span class="fc" id="L430">                    .ifPresent(ancestor -&gt; {</span>
+                        try {
+<span class="fc" id="L432">                            FedoraTypesUtils.touch(ancestor.getProperty(LDP_MEMBER_RESOURCE).getNode());</span>
+<span class="nc" id="L433">                        } catch (final RepositoryException ex) {</span>
+<span class="nc" id="L434">                            throw new RepositoryRuntimeException(ex);</span>
+<span class="fc" id="L435">                        }</span>
+<span class="fc" id="L436">                    });</span>
+
+                // update the lastModified date on the parent node
+<span class="fc" id="L439">                containingNode.ifPresent(ancestor -&gt; {</span>
+<span class="fc" id="L440">                    FedoraTypesUtils.touch(ancestor);</span>
+<span class="fc" id="L441">                });</span>
+            }
+<span class="nc" id="L443">        } catch (final javax.jcr.AccessDeniedException e) {</span>
+<span class="nc" id="L444">            throw new AccessDeniedException(e);</span>
+<span class="nc" id="L445">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L446">            throw new RepositoryRuntimeException(e);</span>
+<span class="fc" id="L447">        }</span>
+<span class="fc" id="L448">    }</span>
+
+    private void removeReferences(final Node n) {
+        try {
+            // Remove references to this resource
+<span class="fc" id="L453">            doRemoveReferences(n);</span>
+
+            // Recurse over children of this resource
+<span class="fc bfc" id="L456" title="All 2 branches covered.">            if (n.hasNodes()) {</span>
+                @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L458">                final Iterator&lt;Node&gt; nodes = n.getNodes();</span>
+<span class="fc" id="L459">                nodes.forEachRemaining(this::removeReferences);</span>
+            }
+<span class="nc" id="L461">        } catch (RepositoryException e) {</span>
+<span class="nc" id="L462">            throw new RepositoryRuntimeException(e);</span>
+<span class="fc" id="L463">        }</span>
+<span class="fc" id="L464">    }</span>
+
+    private void doRemoveReferences(final Node n) throws RepositoryException {
+        @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L468">        final Iterator&lt;Property&gt; references = n.getReferences();</span>
+        @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L470">        final Iterator&lt;Property&gt; weakReferences = n.getWeakReferences();</span>
+<span class="fc" id="L471">        concat(iteratorToStream(references), iteratorToStream(weakReferences)).forEach(prop -&gt; {</span>
+            try {
+<span class="fc" id="L473">                final List&lt;Value&gt; newVals = property2values.apply(prop).filter(</span>
+<span class="fc" id="L474">                        UncheckedPredicate.uncheck(value -&gt;</span>
+<span class="fc bfc" id="L475" title="All 2 branches covered.">                                !n.equals(getSession().getNodeByIdentifier(value.getString()))))</span>
+<span class="fc" id="L476">                        .collect(toList());</span>
+
+<span class="fc bfc" id="L478" title="All 2 branches covered.">                if (newVals.size() == 0) {</span>
+<span class="fc" id="L479">                    prop.remove();</span>
+                } else {
+<span class="fc" id="L481">                    prop.setValue(newVals.toArray(new Value[newVals.size()]));</span>
+                }
+<span class="fc" id="L483">            } catch (final RepositoryException ex) {</span>
+                // Ignore error from trying to update properties on versioned resources
+<span class="pc bpc" id="L485" title="1 of 2 branches missed.">                if (ex instanceof javax.jcr.nodetype.ConstraintViolationException &amp;&amp;</span>
+<span class="pc bpc" id="L486" title="1 of 2 branches missed.">                        ex.getMessage().contains(JCR_VERSION_STORAGE)) {</span>
+<span class="fc" id="L487">                    LOGGER.debug(&quot;Ignoring exception trying to remove property from versioned resource: {}&quot;,</span>
+<span class="fc" id="L488">                            ex.getMessage());</span>
+                } else {
+<span class="nc" id="L490">                    throw new RepositoryRuntimeException(ex);</span>
+                }
+<span class="fc" id="L492">            }</span>
+<span class="fc" id="L493">        });</span>
+<span class="fc" id="L494">    }</span>
+
+    private void createTombstone(final Node parent, final String path) throws RepositoryException {
+<span class="fc" id="L497">        findOrCreateChild(parent, path, FEDORA_TOMBSTONE);</span>
+<span class="fc" id="L498">    }</span>
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraResource#getCreatedDate()
+     */
+    @Override
+    public Instant getCreatedDate() {
+        try {
+<span class="fc bfc" id="L506" title="All 2 branches covered.">            if (hasProperty(FEDORA_CREATED)) {</span>
+<span class="fc" id="L507">                return ofEpochMilli(getTimestamp(FEDORA_CREATED, NO_TIME));</span>
+            }
+<span class="fc bfc" id="L509" title="All 2 branches covered.">            if (hasProperty(JCR_CREATED)) {</span>
+<span class="fc" id="L510">                return ofEpochMilli(getTimestamp(JCR_CREATED, NO_TIME));</span>
+            }
+<span class="nc" id="L512">        } catch (final PathNotFoundException e) {</span>
+<span class="nc" id="L513">            throw new PathNotFoundRuntimeException(e);</span>
+<span class="nc" id="L514">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L515">            throw new RepositoryRuntimeException(e);</span>
+<span class="fc" id="L516">        }</span>
+<span class="fc" id="L517">        LOGGER.debug(&quot;Node {} does not have a createdDate&quot;, node);</span>
+<span class="fc" id="L518">        return null;</span>
+    }
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraResource#getLastModifiedDate()
+     */
+
+    /**
+     * This method gets the last modified date for this FedoraResource.  Because
+     * the last modified date is managed by fcrepo (not ModeShape) while the created
+     * date *is* sometimes managed by ModeShape in the current implementation it's
+     * possible that the last modified date will be before the created date.  Instead
+     * of making a second update to correct the modified date, in cases where the modified
+     * date is ealier than the created date, this class presents the created date instead.
+     *
+     * Any method that exposes the last modified date must maintain this illusion so
+     * that that external callers are presented with a sensible and consistent
+     * representation of this resource.
+     * @return the last modified Instant (or the created Instant if it was after the last
+     *         modified date)
+     */
+    @Override
+    public Instant getLastModifiedDate() {
+
+<span class="fc" id="L542">        final Instant createdDate = getCreatedDate();</span>
+        try {
+<span class="fc bfc" id="L544" title="All 2 branches covered.">            final long created = createdDate == null ? NO_TIME : createdDate.toEpochMilli();</span>
+<span class="pc bpc" id="L545" title="1 of 2 branches missed.">            if (hasProperty(FEDORA_LASTMODIFIED)) {</span>
+<span class="fc" id="L546">                return ofEpochMilli(getTimestamp(FEDORA_LASTMODIFIED, created));</span>
+<span class="nc bnc" id="L547" title="All 2 branches missed.">            } else if (hasProperty(JCR_LASTMODIFIED)) {</span>
+<span class="nc" id="L548">                return ofEpochMilli(getTimestamp(JCR_LASTMODIFIED, created));</span>
+            }
+<span class="nc" id="L550">        } catch (final PathNotFoundException e) {</span>
+<span class="nc" id="L551">            throw new PathNotFoundRuntimeException(e);</span>
+<span class="nc" id="L552">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L553">            throw new RepositoryRuntimeException(e);</span>
+<span class="nc" id="L554">        }</span>
+<span class="nc" id="L555">        LOGGER.debug(&quot;Could not get last modified date property for node {}&quot;, node);</span>
+
+<span class="nc bnc" id="L557" title="All 2 branches missed.">        if (createdDate != null) {</span>
+<span class="nc" id="L558">            LOGGER.trace(&quot;Using created date for last modified date for node {}&quot;, node);</span>
+<span class="nc" id="L559">            return createdDate;</span>
+        }
+
+<span class="nc" id="L562">        return null;</span>
+    }
+
+    private long getTimestamp(final String property, final long created) throws RepositoryException {
+<span class="fc" id="L566">        LOGGER.trace(&quot;Using {} date&quot;, property);</span>
+<span class="fc" id="L567">        final long timestamp = getProperty(property).getDate().getTimeInMillis();</span>
+<span class="pc bpc" id="L568" title="1 of 4 branches missed.">        if (timestamp &lt; created &amp;&amp; created &gt; NO_TIME) {</span>
+<span class="fc" id="L569">            LOGGER.trace(&quot;Returning the later created date ({} &gt; {}) for {}&quot;, created, timestamp, property);</span>
+<span class="fc" id="L570">            return created;</span>
+        }
+<span class="fc" id="L572">        return timestamp;</span>
+    }
+
+    @Override
+    public boolean hasType(final String type) {
+        try {
+<span class="fc bfc" id="L578" title="All 2 branches covered.">            if (type.equals(FEDORA_REPOSITORY_ROOT)) {</span>
+<span class="fc" id="L579">                return node.isNodeType(ROOT);</span>
+<span class="pc bpc" id="L580" title="1 of 4 branches missed.">            } else if (isFrozen.test(node) &amp;&amp; hasProperty(FROZEN_MIXIN_TYPES)) {</span>
+<span class="fc" id="L581">                return property2values.apply(getProperty(FROZEN_MIXIN_TYPES)).map(uncheck(Value::getString))</span>
+<span class="fc" id="L582">                    .anyMatch(type::equals);</span>
+            }
+<span class="fc" id="L584">            return node.isNodeType(type);</span>
+<span class="nc" id="L585">        } catch (final PathNotFoundException e) {</span>
+<span class="nc" id="L586">            throw new PathNotFoundRuntimeException(e);</span>
+<span class="nc" id="L587">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L588">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    @Override
+    public List&lt;URI&gt; getTypes() {
+        try {
+<span class="fc" id="L595">            final List&lt;NodeType&gt; nodeTypes = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L596">            final NodeType primaryNodeType = node.getPrimaryNodeType();</span>
+<span class="fc" id="L597">            nodeTypes.add(primaryNodeType);</span>
+<span class="fc" id="L598">            nodeTypes.addAll(asList(primaryNodeType.getSupertypes()));</span>
+<span class="fc" id="L599">            final List&lt;NodeType&gt; mixinTypes = asList(node.getMixinNodeTypes());</span>
+
+<span class="fc" id="L601">            nodeTypes.addAll(mixinTypes);</span>
+<span class="fc" id="L602">            mixinTypes.stream()</span>
+<span class="fc" id="L603">                .map(NodeType::getSupertypes)</span>
+<span class="fc" id="L604">                .flatMap(Arrays::stream)</span>
+<span class="fc" id="L605">                .forEach(nodeTypes::add);</span>
+
+<span class="fc" id="L607">            final List&lt;URI&gt; types = nodeTypes.stream()</span>
+<span class="fc" id="L608">                .map(uncheck(NodeType::getName))</span>
+<span class="fc" id="L609">                .filter(hasInternalNamespace.negate())</span>
+<span class="fc" id="L610">                .distinct()</span>
+<span class="fc" id="L611">                .map(nodeTypeNameToURI)</span>
+<span class="fc" id="L612">                .peek(x -&gt; LOGGER.debug(&quot;node has rdf:type {}&quot;, x))</span>
+<span class="fc" id="L613">                .collect(Collectors.toList());</span>
+
+<span class="pc bpc" id="L615" title="1 of 2 branches missed.">            if (isFrozenResource()) {</span>
+<span class="nc" id="L616">                types.add(URI.create(REPOSITORY_NAMESPACE + &quot;Version&quot;));</span>
+            }
+
+<span class="fc" id="L619">            return types;</span>
+
+<span class="nc" id="L621">        } catch (final PathNotFoundException e) {</span>
+<span class="nc" id="L622">            throw new PathNotFoundRuntimeException(e);</span>
+<span class="nc" id="L623">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L624">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+<span class="fc" id="L628">    private final Function&lt;String, URI&gt; nodeTypeNameToURI = uncheck(name -&gt; {</span>
+<span class="fc" id="L629">        final String prefix = name.split(&quot;:&quot;)[0];</span>
+<span class="fc" id="L630">        final String typeName = name.split(&quot;:&quot;)[1];</span>
+<span class="fc" id="L631">        final String namespace = getSession().getWorkspace().getNamespaceRegistry().getURI(prefix);</span>
+<span class="fc" id="L632">        return URI.create(getRDFNamespaceForJcrNamespace(namespace) + typeName);</span>
+    });
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraResource#updateProperties
+     *     (org.fcrepo.kernel.api.identifiers.IdentifierConverter, java.lang.String, RdfStream)
+     */
+    @Override
+    public void updateProperties(final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator,
+                                 final String sparqlUpdateStatement, final RdfStream originalTriples)
+            throws MalformedRdfException, AccessDeniedException {
+
+<span class="fc" id="L644">        final Model model = originalTriples.collect(toModel());</span>
+
+<span class="fc" id="L646">        final UpdateRequest request = create(sparqlUpdateStatement,</span>
+<span class="fc" id="L647">                idTranslator.reverse().convert(this).toString());</span>
+
+<span class="fc" id="L649">        final Collection&lt;IllegalArgumentException&gt; errors = validateUpdateRequest(request);</span>
+
+<span class="fc" id="L651">        final NamespaceRegistry namespaceRegistry = getNamespaceRegistry(getSession());</span>
+
+<span class="fc" id="L653">        request.getPrefixMapping().getNsPrefixMap().forEach(</span>
+            (k,v) -&gt; {
+                try {
+<span class="fc" id="L656">                    LOGGER.debug(&quot;Prefix mapping is key:{} -&gt; value:{}&quot;, k, v);</span>
+<span class="fc bfc" id="L657" title="All 2 branches covered.">                    if (Arrays.asList(namespaceRegistry.getPrefixes()).contains(k)</span>
+<span class="fc bfc" id="L658" title="All 2 branches covered.">                        &amp;&amp;  !v.equals(namespaceRegistry.getURI(k))) {</span>
+
+<span class="fc" id="L660">                        final String namespaceURI = namespaceRegistry.getURI(k);</span>
+<span class="fc" id="L661">                        LOGGER.debug(&quot;Prefix has already been defined: {}:{}&quot;, k, namespaceURI);</span>
+<span class="fc" id="L662">                        throw new InvalidPrefixException(&quot;Prefix already exists as: &quot; + k + &quot; -&gt; &quot; + namespaceURI);</span>
+                   }
+
+<span class="nc" id="L665">                } catch (final RepositoryException e) {</span>
+<span class="nc" id="L666">                    throw new RepositoryRuntimeException(e);</span>
+<span class="fc" id="L667">                }</span>
+<span class="fc" id="L668">           });</span>
+
+<span class="fc bfc" id="L670" title="All 2 branches covered.">        if (!errors.isEmpty()) {</span>
+<span class="fc" id="L671">            throw new IllegalArgumentException(errors.stream().map(Exception::getMessage).collect(joining(&quot;,\n&quot;)));</span>
+        }
+
+<span class="fc" id="L674">        final FilteringJcrPropertyStatementListener listener = new FilteringJcrPropertyStatementListener(</span>
+<span class="fc" id="L675">                idTranslator, getSession(), idTranslator.reverse().convert(this).asNode());</span>
+
+<span class="fc" id="L677">        model.register(listener);</span>
+
+        // If this resource's structural parent is an IndirectContainer, check whether the
+        // ldp:insertedContentRelation property is present in the stream of changed triples.
+        // If so, set the propertyChanged value to true.
+<span class="fc" id="L682">        final AtomicBoolean propertyChanged = new AtomicBoolean();</span>
+<span class="fc" id="L683">        ldpInsertedContentProperty(getNode()).ifPresent(resource -&gt; {</span>
+<span class="fc" id="L684">            model.register(new PropertyChangedListener(resource, propertyChanged));</span>
+<span class="fc" id="L685">        });</span>
+
+<span class="fc" id="L687">        model.setNsPrefixes(request.getPrefixMapping());</span>
+<span class="fc" id="L688">        execute(request, model);</span>
+
+<span class="fc" id="L690">        removeEmptyFragments();</span>
+
+<span class="fc" id="L692">        listener.assertNoExceptions();</span>
+
+        try {
+<span class="fc" id="L695">            touch(propertyChanged.get(), listener.getAddedCreatedDate(), listener.getAddedCreatedBy(),</span>
+<span class="fc" id="L696">                    listener.getAddedModifiedDate(), listener.getAddedModifiedBy());</span>
+<span class="nc" id="L697">        } catch (RepositoryException e) {</span>
+<span class="nc" id="L698">            throw new RuntimeException(e);</span>
+<span class="fc" id="L699">        }</span>
+<span class="fc" id="L700">    }</span>
+
+    @Override
+    public RdfStream getTriples(final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator,
+                                final TripleCategory context) {
+<span class="fc" id="L705">        return getTriples(idTranslator, singleton(context));</span>
+    }
+
+    @Override
+    public RdfStream getTriples(final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator,
+                                final Set&lt;? extends TripleCategory&gt; contexts) {
+
+<span class="fc" id="L712">        return new DefaultRdfStream(idTranslator.reverse().convert(this).asNode(), contexts.stream()</span>
+<span class="fc" id="L713">                .filter(contextMap::containsKey)</span>
+<span class="fc" id="L714">                .map(x -&gt; contextMap.get(x).apply(this).apply(idTranslator).apply(contexts.contains(MINIMAL)))</span>
+<span class="fc" id="L715">                .reduce(empty(), Stream::concat));</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraResource#getBaseVersion()
+     */
+    @Override
+    public FedoraResource getBaseVersion() {
+        try {
+<span class="nc" id="L725">            return new FedoraResourceImpl(getVersionManager().getBaseVersion(getPath()).getFrozenNode());</span>
+<span class="fc" id="L726">        } catch (final RepositoryException e) {</span>
+<span class="fc" id="L727">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraResource#isNew()
+     */
+    @Override
+    public Boolean isNew() {
+<span class="nc" id="L736">        return node.isNew();</span>
+    }
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraResource#replaceProperties
+     *     (org.fcrepo.kernel.api.identifiers.IdentifierConverter, org.apache.jena.rdf.model.Model,
+     *     org.fcrepo.kernel.api.RdfStream)
+     */
+    @Override
+    public void replaceProperties(final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator,
+        final Model inputModel, final RdfStream originalTriples) throws MalformedRdfException {
+
+        // remove any statements that update &quot;relaxed&quot; server-managed triples so they can be updated separately
+<span class="fc" id="L749">        final List&lt;Statement&gt; filteredStatements = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L750">        final StmtIterator it = inputModel.listStatements();</span>
+<span class="fc bfc" id="L751" title="All 2 branches covered.">        while (it.hasNext()) {</span>
+<span class="fc" id="L752">            final Statement next = it.next();</span>
+<span class="pc bpc" id="L753" title="1 of 2 branches missed.">            if (RdfLexicon.isRelaxed.test(next.getPredicate())) {</span>
+<span class="nc" id="L754">                filteredStatements.add(next);</span>
+<span class="nc" id="L755">                it.remove();</span>
+            }
+<span class="fc" id="L757">        }</span>
+        // remove any &quot;relaxed&quot; server-managed triples from the existing triples
+<span class="fc" id="L759">        final RdfStream filteredTriples = new DefaultRdfStream(originalTriples.topic(),</span>
+<span class="pc bpc" id="L760" title="1 of 2 branches missed.">                originalTriples.filter(triple -&gt; !isRelaxed.test(createProperty(triple.getPredicate().getURI()))));</span>
+
+
+<span class="fc" id="L763">        try (final RdfStream replacementStream =</span>
+<span class="fc" id="L764">                new DefaultRdfStream(idTranslator.reverse().convert(this).asNode())) {</span>
+
+<span class="fc" id="L766">            final GraphDifferencer differencer =</span>
+                new GraphDifferencer(inputModel, filteredTriples);
+
+<span class="fc" id="L769">            final StringBuilder exceptions = new StringBuilder();</span>
+<span class="pc" id="L770">            try (final DefaultRdfStream diffStream =</span>
+<span class="fc" id="L771">                    new DefaultRdfStream(replacementStream.topic(), differencer.difference())) {</span>
+<span class="fc" id="L772">                new RdfRemover(idTranslator, getSession(), diffStream).consume();</span>
+<span class="pc bpc" id="L773" title="6 of 8 branches missed.">            } catch (final ConstraintViolationException e) {</span>
+<span class="nc" id="L774">                throw e;</span>
+<span class="nc" id="L775">            } catch (final MalformedRdfException e) {</span>
+<span class="nc" id="L776">                exceptions.append(e.getMessage());</span>
+<span class="nc" id="L777">                exceptions.append(&quot;\n&quot;);</span>
+<span class="fc" id="L778">            }</span>
+
+<span class="fc" id="L780">            try (final DefaultRdfStream notCommonStream =</span>
+<span class="fc" id="L781">                    new DefaultRdfStream(replacementStream.topic(), differencer.notCommon())) {</span>
+<span class="fc" id="L782">                new RdfAdder(idTranslator, getSession(), notCommonStream).consume();</span>
+<span class="pc bpc" id="L783" title="4 of 8 branches missed.">            } catch (final ConstraintViolationException e) {</span>
+<span class="nc" id="L784">                throw e;</span>
+<span class="fc" id="L785">            } catch (final MalformedRdfException e) {</span>
+<span class="fc" id="L786">                exceptions.append(e.getMessage());</span>
+<span class="fc" id="L787">            }</span>
+
+            // If this resource's structural parent is an IndirectContainer, check whether the
+            // ldp:insertedContentRelation property is present in the stream of changed triples.
+            // If so, set the propertyChanged value to true.
+<span class="fc" id="L792">            final AtomicBoolean propertyChanged = new AtomicBoolean();</span>
+<span class="fc" id="L793">            ldpInsertedContentProperty(getNode()).ifPresent(resource -&gt; {</span>
+<span class="nc" id="L794">                propertyChanged.set(differencer.notCommon().map(Triple::getPredicate).anyMatch(resource::equals));</span>
+<span class="nc" id="L795">            });</span>
+
+<span class="fc" id="L797">            removeEmptyFragments();</span>
+
+<span class="fc bfc" id="L799" title="All 2 branches covered.">            if (exceptions.length() &gt; 0) {</span>
+<span class="fc" id="L800">                throw new MalformedRdfException(exceptions.toString());</span>
+            }
+
+            try {
+<span class="fc" id="L804">                touch(propertyChanged.get(), RelaxedPropertiesHelper.getCreatedDate(filteredStatements),</span>
+<span class="fc" id="L805">                        RelaxedPropertiesHelper.getCreatedBy(filteredStatements),</span>
+<span class="fc" id="L806">                        RelaxedPropertiesHelper.getModifiedDate(filteredStatements),</span>
+<span class="fc" id="L807">                        RelaxedPropertiesHelper.getModifiedBy(filteredStatements));</span>
+<span class="nc" id="L808">            } catch (RepositoryException e) {</span>
+<span class="nc" id="L809">                throw new RuntimeException(e);</span>
+<span class="fc" id="L810">            }</span>
+<span class="pc bpc" id="L811" title="4 of 8 branches missed.">        }</span>
+<span class="fc" id="L812">    }</span>
+
+    /**
+     * Touches a resource to ensure that the implicitly updated properties are updated if
+     * not explicitly set.
+     * @param includeMembershipResource true if this touch should propagate through to
+     *                                  ldp membership resources
+     * @param createdDate the date to which the created date should be set or null to leave it unchanged
+     * @param createdUser the user to which the created by should be set or null to leave it unchanged
+     * @param modifiedDate the date to which the modified date should be set or null to use now
+     * @param modifyingUser the user making the modification or null to use the current user
+     * @throws RepositoryException an error occurs while updating the repository
+     */
+    @VisibleForTesting
+    public void touch(final boolean includeMembershipResource, final Calendar createdDate, final String createdUser,
+                      final Calendar modifiedDate, final String modifyingUser) throws RepositoryException {
+<span class="fc" id="L828">        FedoraTypesUtils.touch(getNode(), createdDate, createdUser, modifiedDate, modifyingUser);</span>
+
+        // If the ldp:insertedContentRelation property was changed, update the
+        // ldp:membershipResource resource.
+<span class="fc bfc" id="L832" title="All 2 branches covered.">        if (includeMembershipResource) {</span>
+<span class="fc" id="L833">            touchLdpMembershipResource(getNode(), modifiedDate, modifyingUser);</span>
+        }
+<span class="fc" id="L835">    }</span>
+
+    private void removeEmptyFragments() {
+        try {
+<span class="fc bfc" id="L839" title="All 2 branches covered.">            if (node.hasNode(&quot;#&quot;)) {</span>
+                @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L841">                final Iterator&lt;Node&gt; nodes = node.getNode(&quot;#&quot;).getNodes();</span>
+<span class="fc" id="L842">                nodes.forEachRemaining(n -&gt; {</span>
+                    try {
+                        @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L845">                        final Iterator&lt;Property&gt; properties = n.getProperties();</span>
+<span class="fc" id="L846">                        final boolean hasUserProps = iteratorToStream(properties).map(propertyConverter::convert)</span>
+<span class="fc bfc" id="L847" title="All 2 branches covered.">                            .filter(p -&gt; !jcrProperties.contains(p))</span>
+<span class="fc" id="L848">                            .anyMatch(isManagedPredicate.negate());</span>
+
+<span class="fc" id="L850">                        final boolean hasUserTypes = Arrays.stream(n.getMixinNodeTypes())</span>
+<span class="fc" id="L851">                            .map(uncheck(NodeType::getName)).filter(hasInternalNamespace.negate())</span>
+<span class="fc" id="L852">                            .map(uncheck(type -&gt;</span>
+<span class="fc" id="L853">                                getSession().getWorkspace().getNamespaceRegistry().getURI(type.split(&quot;:&quot;)[0])))</span>
+<span class="fc" id="L854">                            .anyMatch(isManagedNamespace.negate());</span>
+
+<span class="fc bfc" id="L856" title="All 6 branches covered.">                        if (!hasUserProps &amp;&amp; !hasUserTypes &amp;&amp; !n.getWeakReferences().hasNext() &amp;&amp;</span>
+<span class="pc bpc" id="L857" title="1 of 2 branches missed.">                                !n.getReferences().hasNext()) {</span>
+<span class="fc" id="L858">                            LOGGER.debug(&quot;Removing empty hash URI node: {}&quot;, n.getName());</span>
+<span class="fc" id="L859">                            n.remove();</span>
+                        }
+<span class="nc" id="L861">                    } catch (final RepositoryException ex) {</span>
+<span class="nc" id="L862">                        throw new RepositoryRuntimeException(&quot;Error removing empty fragments&quot;, ex);</span>
+<span class="fc" id="L863">                    }</span>
+<span class="fc" id="L864">                });</span>
+            }
+<span class="nc" id="L866">        } catch (final RepositoryException ex) {</span>
+<span class="nc" id="L867">            throw new RepositoryRuntimeException(&quot;Error removing empty fragments&quot;, ex);</span>
+<span class="fc" id="L868">        }</span>
+<span class="fc" id="L869">    }</span>
+
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraResource#getEtagValue()
+     */
+    @Override
+    public String getEtagValue() {
+<span class="fc" id="L876">        final Instant lastModifiedDate = getLastModifiedDate();</span>
+
+<span class="pc bpc" id="L878" title="1 of 2 branches missed.">        if (lastModifiedDate != null) {</span>
+<span class="fc" id="L879">            return sha1Hex(getPath() + lastModifiedDate.toEpochMilli());</span>
+        }
+<span class="nc" id="L881">        return &quot;&quot;;</span>
+    }
+
+    @Override
+    public void enableVersioning() {
+        try {
+<span class="fc" id="L887">            node.addMixin(&quot;mix:versionable&quot;);</span>
+<span class="nc" id="L888">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L889">            throw new RepositoryRuntimeException(e);</span>
+<span class="fc" id="L890">        }</span>
+<span class="fc" id="L891">    }</span>
+
+    @Override
+    public void disableVersioning() {
+        try {
+<span class="fc" id="L896">            node.removeMixin(&quot;mix:versionable&quot;);</span>
+<span class="fc" id="L897">        } catch (final RepositoryException e) {</span>
+<span class="fc" id="L898">            throw new RepositoryRuntimeException(e);</span>
+<span class="fc" id="L899">        }</span>
+
+<span class="fc" id="L901">    }</span>
+
+    @Override
+    public boolean isVersioned() {
+        try {
+<span class="fc" id="L906">            return node.isNodeType(&quot;mix:versionable&quot;);</span>
+<span class="nc" id="L907">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L908">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    @Override
+    public boolean isFrozenResource() {
+<span class="fc" id="L914">        return isFrozenNode.test(this);</span>
+    }
+
+    @Override
+    public FedoraResource getVersionedAncestor() {
+
+        try {
+<span class="pc bpc" id="L921" title="1 of 2 branches missed.">            if (!isFrozenResource()) {</span>
+<span class="nc" id="L922">                return null;</span>
+            }
+
+<span class="fc" id="L925">            Node versionableFrozenNode = getNode();</span>
+<span class="fc" id="L926">            FedoraResource unfrozenResource = getUnfrozenResource();</span>
+
+            // traverse the frozen tree looking for a node whose unfrozen equivalent is versioned
+<span class="fc bfc" id="L929" title="All 2 branches covered.">            while (!unfrozenResource.isVersioned()) {</span>
+
+<span class="pc bpc" id="L931" title="1 of 2 branches missed.">                if (versionableFrozenNode.getDepth() == 0) {</span>
+<span class="nc" id="L932">                    return null;</span>
+                }
+
+                // node in the frozen tree
+<span class="fc" id="L936">                versionableFrozenNode = versionableFrozenNode.getParent();</span>
+
+                // unfrozen equivalent
+<span class="fc" id="L939">                unfrozenResource = new FedoraResourceImpl(versionableFrozenNode).getUnfrozenResource();</span>
+            }
+
+<span class="fc" id="L942">            return new FedoraResourceImpl(versionableFrozenNode);</span>
+<span class="nc" id="L943">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L944">            throw new RepositoryRuntimeException(e);</span>
+        }
+
+    }
+
+    @Override
+    public FedoraResource getUnfrozenResource() {
+<span class="pc bpc" id="L951" title="1 of 2 branches missed.">        if (!isFrozenResource()) {</span>
+<span class="nc" id="L952">            return this;</span>
+        }
+
+        try {
+            // Either this resource is frozen
+<span class="fc bfc" id="L957" title="All 2 branches covered.">            if (hasProperty(JCR_FROZEN_UUID)) {</span>
+                try {
+<span class="fc" id="L959">                    return new FedoraResourceImpl(getNodeByProperty(getProperty(JCR_FROZEN_UUID)));</span>
+<span class="nc" id="L960">                } catch (final ItemNotFoundException e) {</span>
+                    // The unfrozen resource has been deleted, return the tombstone.
+<span class="nc" id="L962">                    return new TombstoneImpl(getNode());</span>
+                }
+
+                // ..Or it is a child-version-history on a frozen path
+<span class="pc bpc" id="L966" title="1 of 2 branches missed.">            } else if (hasProperty(JCR_CHILD_VERSION_HISTORY)) {</span>
+<span class="fc" id="L967">                final Node childVersionHistory = getNodeByProperty(getProperty(JCR_CHILD_VERSION_HISTORY));</span>
+                try {
+<span class="fc" id="L969">                    final Node childNode = getNodeByProperty(childVersionHistory.getProperty(JCR_VERSIONABLE_UUID));</span>
+<span class="fc" id="L970">                    return new FedoraResourceImpl(childNode);</span>
+<span class="nc" id="L971">                } catch (final ItemNotFoundException e) {</span>
+                    // The unfrozen resource has been deleted, return the tombstone.
+<span class="nc" id="L973">                    return new TombstoneImpl(childVersionHistory);</span>
+                }
+
+            } else {
+<span class="nc" id="L977">                throw new RepositoryRuntimeException(&quot;Resource must be frozen or a child-history!&quot;);</span>
+            }
+<span class="nc" id="L979">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L980">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    @Override
+    public FedoraResource getVersion(final String label) {
+        try {
+<span class="fc" id="L987">            final Node n = getFrozenNode(label);</span>
+
+<span class="pc bpc" id="L989" title="1 of 2 branches missed.">            if (n != null) {</span>
+<span class="nc" id="L990">                return new FedoraResourceImpl(n);</span>
+            }
+
+<span class="pc bpc" id="L993" title="1 of 2 branches missed.">            if (isVersioned()) {</span>
+<span class="nc" id="L994">                final VersionHistory hist = getVersionManager().getVersionHistory(getPath());</span>
+
+<span class="nc bnc" id="L996" title="All 2 branches missed.">                if (hist.hasVersionLabel(label)) {</span>
+<span class="nc" id="L997">                    LOGGER.debug(&quot;Found version for {} by label {}.&quot;, this, label);</span>
+<span class="nc" id="L998">                    return new FedoraResourceImpl(hist.getVersionByLabel(label).getFrozenNode());</span>
+                }
+            }
+
+<span class="fc" id="L1002">            LOGGER.warn(&quot;Unknown version {} with label {}!&quot;, getPath(), label);</span>
+<span class="fc" id="L1003">            return null;</span>
+<span class="nc" id="L1004">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L1005">            throw new RepositoryRuntimeException(e);</span>
+        }
+
+    }
+
+    @Override
+    public Stream&lt;FedoraVersion&gt; getVersions() {
+        try {
+<span class="fc" id="L1013">            final VersionHistory history = getVersionManager().getVersionHistory(getPath());</span>
+            @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L1015">            final Iterator&lt;Version&gt; versions = history.getAllVersions();</span>
+<span class="fc" id="L1016">            return iteratorToStream(versions)</span>
+                /* discard jcr:rootVersion */
+<span class="fc" id="L1018">                .filter(UncheckedPredicate.uncheck(version -&gt;</span>
+<span class="fc bfc" id="L1019" title="All 2 branches covered.">                            !version.getName().equals(history.getRootVersion().getName())))</span>
+                /* omit unlabelled versions */
+<span class="fc" id="L1021">                .filter(UncheckedPredicate.uncheck(version -&gt; {</span>
+<span class="fc" id="L1022">                    final String[] labels = history.getVersionLabels(version);</span>
+<span class="pc bpc" id="L1023" title="1 of 2 branches missed.">                    if (labels.length == 0) {</span>
+<span class="nc" id="L1024">                        LOGGER.warn(&quot;An unlabelled version for {} was found! Omitting from version listing!&quot;,</span>
+<span class="nc" id="L1025">                                getPath());</span>
+<span class="pc bpc" id="L1026" title="1 of 2 branches missed.">                    } else if (labels.length &gt; 1) {</span>
+<span class="nc" id="L1027">                        LOGGER.warn(&quot;Multiple version labels found for {}! Using first label, \&quot;{}\&quot;.&quot;, getPath(),</span>
+                                labels[0]);
+                    }
+<span class="pc bpc" id="L1030" title="1 of 2 branches missed.">                    return labels.length &gt; 0;</span>
+                }))
+<span class="fc" id="L1032">                .map(uncheck(version -&gt;</span>
+<span class="fc" id="L1033">                        new FedoraVersionImpl(history.getVersionLabels(version)[0], version.getCreated().toInstant())));</span>
+<span class="nc" id="L1034">        } catch (final RepositoryException ex) {</span>
+<span class="nc" id="L1035">            throw new RepositoryRuntimeException(ex);</span>
+        }
+    }
+
+    @Override
+    public String getVersionLabelOfFrozenResource() {
+<span class="nc bnc" id="L1041" title="All 2 branches missed.">        if (!isFrozenResource()) {</span>
+<span class="nc" id="L1042">            return null;</span>
+        }
+
+        // Frozen node is required to find associated version label
+        final Node frozenResource;
+        try {
+            // Version History associated with this resource
+<span class="nc" id="L1049">            final VersionHistory history = getVersionManager().getVersionHistory(getUnfrozenResource().getPath());</span>
+
+            // Possibly the frozen node is nested inside of current child-version-history
+<span class="nc bnc" id="L1052" title="All 2 branches missed.">            if (getNode().hasProperty(JCR_CHILD_VERSION_HISTORY)) {</span>
+<span class="nc" id="L1053">                final Node childVersionHistory = getNodeByProperty(getProperty(JCR_CHILD_VERSION_HISTORY));</span>
+<span class="nc" id="L1054">                final Node childNode = getNodeByProperty(childVersionHistory.getProperty(JCR_VERSIONABLE_UUID));</span>
+<span class="nc" id="L1055">                final Version childVersion = getVersionManager().getBaseVersion(childNode.getPath());</span>
+<span class="nc" id="L1056">                frozenResource = childVersion.getFrozenNode();</span>
+
+<span class="nc" id="L1058">            } else {</span>
+<span class="nc" id="L1059">                frozenResource = getNode();</span>
+            }
+
+            // Loop versions
+            @SuppressWarnings(&quot;unchecked&quot;)
+<span class="nc" id="L1064">            final Stream&lt;Version&gt; versions = iteratorToStream(history.getAllVersions());</span>
+<span class="nc" id="L1065">            return versions</span>
+<span class="nc" id="L1066">                .filter(UncheckedPredicate.uncheck(version -&gt; version.getFrozenNode().equals(frozenResource)))</span>
+<span class="nc" id="L1067">                .map(uncheck(history::getVersionLabels))</span>
+<span class="nc" id="L1068">                .flatMap(Arrays::stream)</span>
+<span class="nc" id="L1069">                .findFirst().orElse(null);</span>
+<span class="nc" id="L1070">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L1071">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    private Node getNodeByProperty(final Property property) throws RepositoryException {
+<span class="fc" id="L1076">        return getSession().getNodeByIdentifier(property.getString());</span>
+    }
+
+    protected VersionManager getVersionManager() {
+        try {
+<span class="fc" id="L1081">            return getSession().getWorkspace().getVersionManager();</span>
+<span class="nc" id="L1082">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L1083">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    private static Collection&lt;IllegalArgumentException&gt; validateUpdateRequest(final UpdateRequest request) {
+<span class="fc" id="L1088">        return request.getOperations().stream()</span>
+<span class="fc" id="L1089">                .flatMap(x -&gt; {</span>
+<span class="fc bfc" id="L1090" title="All 2 branches covered.">                    if (x instanceof UpdateModify) {</span>
+<span class="fc" id="L1091">                        final UpdateModify y = (UpdateModify) x;</span>
+<span class="fc" id="L1092">                        return concat(y.getInsertQuads().stream(), y.getDeleteQuads().stream());</span>
+<span class="fc bfc" id="L1093" title="All 2 branches covered.">                    } else if (x instanceof UpdateData) {</span>
+<span class="fc" id="L1094">                        return ((UpdateData) x).getQuads().stream();</span>
+<span class="pc bpc" id="L1095" title="1 of 2 branches missed.">                    } else if (x instanceof UpdateDeleteWhere) {</span>
+<span class="fc" id="L1096">                        return ((UpdateDeleteWhere) x).getQuads().stream();</span>
+                    } else {
+<span class="nc" id="L1098">                        return empty();</span>
+                    }
+                })
+<span class="fc" id="L1101">                .flatMap(FedoraResourceImpl::validateQuad)</span>
+<span class="fc bfc" id="L1102" title="All 2 branches covered.">                .filter(x -&gt; x != null)</span>
+<span class="fc" id="L1103">                .collect(Collectors.toList());</span>
+    }
+
+    private static Stream&lt;IllegalArgumentException&gt; validateQuad(final Quad quad) {
+<span class="fc" id="L1107">        return quadValidators.stream().map(x -&gt; x.apply(quad));</span>
+    }
+
+    private Node getFrozenNode(final String label) throws RepositoryException {
+        try {
+<span class="fc" id="L1112">            final Session session = getSession();</span>
+
+<span class="nc" id="L1114">            final Node frozenNode = session.getNodeByIdentifier(label);</span>
+
+<span class="nc" id="L1116">            final String baseUUID = getNode().getIdentifier();</span>
+
+            /*
+             * We found a node whose identifier is the &quot;label&quot; for the version.  Now
+             * we must do due dilligence to make sure it's a frozen node representing
+             * a version of the subject node.
+             */
+<span class="nc" id="L1123">            final Property p = frozenNode.getProperty(JCR_FROZEN_UUID);</span>
+<span class="nc bnc" id="L1124" title="All 2 branches missed.">            if (p != null) {</span>
+<span class="nc bnc" id="L1125" title="All 2 branches missed.">                if (p.getString().equals(baseUUID)) {</span>
+<span class="nc" id="L1126">                    return frozenNode;</span>
+                }
+            }
+            /*
+             * Though a node with an id of the label was found, it wasn't the
+             * node we were looking for, so fall through and look for a labeled
+             * node.
+             */
+<span class="fc" id="L1134">        } catch (final ItemNotFoundException ex) {</span>
+            /*
+             * the label wasn't a uuid of a frozen node but
+             * instead possibly a version label.
+             */
+<span class="nc" id="L1139">        }</span>
+<span class="fc" id="L1140">        return null;</span>
+    }
+
+    @Override
+    public boolean equals(final Object object) {
+<span class="pc bpc" id="L1145" title="1 of 2 branches missed.">        if (object instanceof FedoraResourceImpl) {</span>
+<span class="fc" id="L1146">            return ((FedoraResourceImpl) object).getNode().equals(this.getNode());</span>
+        }
+<span class="nc" id="L1148">        return false;</span>
+    }
+
+    @Override
+    public int hashCode() {
+<span class="fc" id="L1153">        return getNode().hashCode();</span>
+    }
+
+    protected Session getSession() {
+        try {
+<span class="fc" id="L1158">            return getNode().getSession();</span>
+<span class="nc" id="L1159">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L1160">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L1166">        return getNode().toString();</span>
+    }
+
+    protected Property getProperty(final String relPath) {
+        try {
+<span class="fc" id="L1171">            return getNode().getProperty(relPath);</span>
+<span class="nc" id="L1172">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L1173">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    /**
+     * A method that takes a Triple and returns a Triple that is the correct representation of
+     * that triple for the given resource.  The current implementation of this method is used by
+     * {@link PropertiesRdfContext} to replace the reported {@link org.fcrepo.kernel.api.RdfLexicon#LAST_MODIFIED_DATE}
+     * with the one produced by {@link #getLastModifiedDate}.
+     * @param r the Fedora resource
+     * @param translator a converter to get the external identifier from a jcr node
+     * @return a function to convert triples
+     */
+    public static Function&lt;Triple, Triple&gt; fixDatesIfNecessary(final FedoraResource r,
+                                                      final Converter&lt;Node, Resource&gt; translator) {
+<span class="fc" id="L1188">        return t -&gt; {</span>
+<span class="fc bfc" id="L1189" title="All 2 branches covered.">            if (t.getPredicate().toString().equals(LAST_MODIFIED_DATE.toString())</span>
+<span class="pc bpc" id="L1190" title="1 of 2 branches missed.">                    &amp;&amp; t.getSubject().equals(translator.convert(getJcrNode(r)).asNode())) {</span>
+<span class="fc" id="L1191">                final Calendar c = new Calendar.Builder().setInstant(r.getLastModifiedDate().toEpochMilli()).build();</span>
+<span class="fc" id="L1192">                return new Triple(t.getSubject(), t.getPredicate(), createTypedLiteral(c).asNode());</span>
+            }
+<span class="fc" id="L1194">            return t;</span>
+        };
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>

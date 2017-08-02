@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../.resources/report.css" type="text/css"/><link rel="shortcut icon" href="../.resources/report.gif" type="image/gif"/><title>BinaryServiceImpl.java</title><link rel="stylesheet" href="../.resources/prettify.css" type="text/css"/><script type="text/javascript" src="../.resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../.sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation (ModeShape)</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.services</a> &gt; <span class="el_source">BinaryServiceImpl.java</span></div><h1>BinaryServiceImpl.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.services;
+
+import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.ResourceTypeException;
+import org.fcrepo.kernel.api.models.FedoraBinary;
+import org.fcrepo.kernel.api.services.BinaryService;
+import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
+import org.slf4j.Logger;
+import org.springframework.stereotype.Component;
+
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getContainingNode;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.touch;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.touchLdpMembershipResource;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
+import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
+import static org.slf4j.LoggerFactory.getLogger;
+
+/**
+ * @author cabeer
+ * @author ajs6f
+ * @since 10/10/14
+ */
+@Component
+<span class="fc" id="L49">public class BinaryServiceImpl extends AbstractService implements BinaryService {</span>
+
+<span class="fc" id="L51">    private static final Logger LOGGER = getLogger(BinaryServiceImpl.class);</span>
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public FedoraBinary findOrCreate(final FedoraSession session, final String path) {
+        try {
+<span class="fc" id="L59">            final Node dsNode = findOrCreateNode(session, path, NT_FILE);</span>
+
+<span class="fc bfc" id="L61" title="All 2 branches covered.">            if (dsNode.isNew()) {</span>
+<span class="fc" id="L62">                initializeNewDatastreamProperties(dsNode);</span>
+
+<span class="fc" id="L64">                getContainingNode(dsNode).ifPresent(parent -&gt; {</span>
+<span class="fc" id="L65">                    touch(parent);</span>
+<span class="fc" id="L66">                    touchLdpMembershipResource(dsNode);</span>
+<span class="fc" id="L67">                });</span>
+            }
+
+<span class="fc" id="L70">            final FedoraBinaryImpl binary = new FedoraBinaryImpl(dsNode.getNode(JCR_CONTENT));</span>
+
+<span class="fc bfc" id="L72" title="All 2 branches covered.">            if (dsNode.isNew()) {</span>
+<span class="fc" id="L73">                touch(binary.getNode());</span>
+            }
+
+<span class="fc" id="L76">            return binary;</span>
+<span class="nc" id="L77">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L78">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    /**
+     * Retrieve a Datastream instance by pid and dsid
+     *
+     * @param path jcr path to the datastream
+     * @return datastream
+     */
+    @Override
+    public FedoraBinary find(final FedoraSession session, final String path) {
+        try {
+<span class="nc" id="L91">            final Node dsNode = findNode(session, path);</span>
+
+<span class="nc" id="L93">            return cast(dsNode.getNode(JCR_CONTENT));</span>
+<span class="nc" id="L94">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L95">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    private static void initializeNewDatastreamProperties(final Node node) {
+        try {
+
+<span class="pc bpc" id="L102" title="1 of 2 branches missed.">            if (node.canAddMixin(FEDORA_RESOURCE)) {</span>
+<span class="fc" id="L103">                node.addMixin(FEDORA_RESOURCE);</span>
+            }
+
+<span class="pc bpc" id="L106" title="1 of 2 branches missed.">            if (node.canAddMixin(FEDORA_NON_RDF_SOURCE_DESCRIPTION)) {</span>
+<span class="fc" id="L107">                node.addMixin(FEDORA_NON_RDF_SOURCE_DESCRIPTION);</span>
+            }
+
+<span class="fc" id="L110">            final Node contentNode = jcrTools.findOrCreateChild(node, JCR_CONTENT, NT_RESOURCE);</span>
+
+<span class="pc bpc" id="L112" title="1 of 2 branches missed.">            if (contentNode.canAddMixin(FEDORA_BINARY)) {</span>
+<span class="fc" id="L113">                contentNode.addMixin(FEDORA_BINARY);</span>
+            }
+<span class="nc" id="L115">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L116">            LOGGER.warn(&quot;Could not decorate {} with datastream properties: {}&quot;, node, e);</span>
+<span class="fc" id="L117">        }</span>
+
+<span class="fc" id="L119">    }</span>
+    /**
+     * Retrieve a Datastream instance by pid and dsid
+     *
+     * @param node datastream node
+     * @return node as datastream
+     */
+    private FedoraBinary cast(final Node node) {
+<span class="nc" id="L127">        assertIsType(node);</span>
+<span class="nc" id="L128">        return new FedoraBinaryImpl(node);</span>
+    }
+
+    private static void assertIsType(final Node node) {
+<span class="nc bnc" id="L132" title="All 2 branches missed.">        if (!FedoraBinaryImpl.hasMixin(node)) {</span>
+<span class="nc" id="L133">            throw new ResourceTypeException(node + &quot; can not be used as a binary&quot;);</span>
+        }
+<span class="nc" id="L135">    }</span>
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.5.201505241946</span></div></body></html>
