@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.net.URI;
 import java.util.stream.Stream;
 
 import javax.jcr.NamespaceRegistry;
@@ -112,6 +113,9 @@ public class StreamingBaseHtmlProviderTest {
 
         testData2 = new RdfNamespacedStream(stream2, getNamespaces(mockSession));
         final UriInfo info = Mockito.mock(UriInfo.class);
+        final URI baseUri = URI.create("http://localhost:8080/rest/");
+        when(info.getBaseUri()).thenReturn(baseUri);
+
         setField(testProvider, "uriInfo", info);
     }
 
