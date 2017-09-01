@@ -4,7 +4,7 @@
 
   <groupId>org.fcrepo</groupId>
   <artifactId>fcrepo-parent</artifactId>
-  <version>4.8.0-SNAPSHOT</version>
+  <version>5.0.0-SNAPSHOT</version>
   <name>Fedora Commons 4 :: Parent POM</name>
   <description>Parent POM for Fedora Commons Projects</description>
   <url>http://fedorarepository.org</url>
