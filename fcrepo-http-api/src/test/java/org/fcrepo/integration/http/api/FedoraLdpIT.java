@@ -2621,6 +2621,33 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
         }
     }
+
+    @Test
+    public void testPutWithNamespaces() throws Exception {
+        final String pid = getRandomUniqueId();
+        final String subjectURI = serverAddress + pid;
+
+        // create object with rdf that contains a namespace declaration
+        final HttpPut httpPut = putObjMethod(pid);
+        httpPut.addHeader(CONTENT_TYPE, "text/turtle");
+        httpPut.setEntity(new StringEntity("@prefix asdf: <http://asdf.org/> . <> asdf:foo 'bar' ."));
+        try (final CloseableHttpResponse response = execute(httpPut)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+        }
+
+        // that namespace should now be defined
+        final HttpGet httpGet = getObjMethod(pid);
+        httpGet.addHeader(ACCEPT, "text/turtle");
+        final Model model = createDefaultModel();
+        try (final CloseableHttpResponse getResponse = execute(httpGet)) {
+            final String response = EntityUtils.toString(getResponse.getEntity());
+            try (final StringReader r = new StringReader(response)) {
+                model.read(r, subjectURI, "TURTLE");
+                assertEquals("http://asdf.org/", model.getNsPrefixMap().get("asdf"));
+            }
+        }
+    }
+
     @Test
     public void testDeleteLargeLiteralStoredAsBinary() throws IOException {
 
