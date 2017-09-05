@@ -89,7 +89,9 @@ import static org.fcrepo.kernel.api.RdfLexicon.LDP_MEMBER;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.PAIR_TREE_RESOURCES;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -1692,6 +1694,33 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final Node resource = createURI(serverAddress + id);
             assertTrue("Didn't find member resources", graph.find(ANY, resource, LDP_MEMBER.asNode(), ANY).hasNext());
             assertFalse("Expected nothing contained", graph.find(ANY, resource, CONTAINS.asNode(), ANY).hasNext());
+        }
+    }
+
+    @Test
+    public void testGetObjectWithContainmentAndPairTrees() throws IOException {
+        // Confirms that only the first pairtree node is returned in the results when
+        // the prefer header pattern defined below is used.
+        final String objName = getLocation(postObjMethod());
+        final String pairtreeName = objName.substring(serverAddress.length(),
+                                                      objName.lastIndexOf('/')).substring(0,2);
+
+        final HttpGet getObjMethod = getObjMethod("");
+        getObjMethod
+                .addHeader("Prefer", "return=representation; include=\"http://www.w3.org/ns/ldp#PreferContainment " +
+                        PAIR_TREE_RESOURCES + "\"");
+        try (final CloseableDataset dataset = getDataset(getObjMethod)) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            final Node resource = createURI(objName);
+            final Node root = createURI(serverAddress);
+            final Node pairTreeResource = createURI(serverAddress + pairtreeName);
+            LOGGER.info("root: {}", root);
+            LOGGER.info("pairTreeResource: {}", pairTreeResource);
+            LOGGER.info("Graph:\n{}", graph);
+
+            assertFalse("Expected leaf node not present", graph.find(ANY, root, CONTAINS.asNode(), resource)
+                    .hasNext());
+            assertTrue("Expected contained", graph.find(ANY, root, CONTAINS.asNode(), pairTreeResource).hasNext());
         }
     }
 

@@ -51,6 +51,10 @@ public enum RequiredRdfContext implements TripleCategory {
     LDP_MEMBERSHIP,
 
     /* fedora:PreferContainment Context: ldp containment triples */
-    LDP_CONTAINMENT
+    LDP_CONTAINMENT,
+
+    /* fedora:PreferContainment Context: ldp containment triples, skip pair trees*/
+    LDP_CONTAINMENT_SKIP_PAIR_TREES
+
 }
 

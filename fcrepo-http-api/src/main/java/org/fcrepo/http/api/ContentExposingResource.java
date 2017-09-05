@@ -51,6 +51,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 import static org.fcrepo.kernel.api.RequiredRdfContext.EMBED_RESOURCES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_CONTAINMENT;
+import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_CONTAINMENT_SKIP_PAIR_TREES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_MEMBERSHIP;
 import static org.fcrepo.kernel.api.RequiredRdfContext.MINIMAL;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
@@ -263,13 +264,22 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             }
 
             // containment triples about this resource
-            if (ldpPreferences.prefersContainment()) {
+            if (ldpPreferences.prefersContainment() && ldpPreferences.prefersSkipPairTrees()) {
                 if (limit == -1) {
                     streams.add(getTriples(LDP_CONTAINMENT));
                 } else {
                     streams.add(getTriples(LDP_CONTAINMENT).limit(limit));
                 }
             }
+
+            if (ldpPreferences.prefersContainment() && !ldpPreferences.prefersSkipPairTrees()) {
+                if (limit == -1) {
+                    streams.add(getTriples(LDP_CONTAINMENT_SKIP_PAIR_TREES));
+                } else {
+                    streams.add(getTriples(LDP_CONTAINMENT_SKIP_PAIR_TREES).limit(limit));
+                }
+            }
+
 
             // LDP container membership triples for this resource
             if (ldpPreferences.prefersMembership()) {

@@ -48,7 +48,7 @@ public interface FedoraResource {
     String getPath();
 
     /**
-     * Get the children of this resource
+     * Get the children of this resource (non-recursively).
      * @return a stream of Fedora resources
      */
     default Stream<FedoraResource> getChildren() {
@@ -56,11 +56,23 @@ public interface FedoraResource {
     }
 
     /**
-     * Get the children of this resource, possibly recursively
+     * Get the children of this resource (skipping pair tree nodes by default).
+     * @param recursive
+     * @return
+     */
+    default Stream<FedoraResource> getChildren(boolean recursive) {
+        return getChildren(recursive,true);
+    }
+
+    /**
+     * Get the children of this resource, possibly recursively,
+     * and optionally skipping pair tree nodes.
+     * 
      * @param recursive whether to recursively fetch child resources
+     * @param skipPairTreeNodes whether to skip pair tree nodes on the way to retrieving child resources
      * @return a stream of Fedora resources
      */
-    Stream<FedoraResource> getChildren(Boolean recursive);
+    Stream<FedoraResource> getChildren(Boolean recursive, boolean skipPairTreeNodes);
 
     /**
      * Get the container of this resource

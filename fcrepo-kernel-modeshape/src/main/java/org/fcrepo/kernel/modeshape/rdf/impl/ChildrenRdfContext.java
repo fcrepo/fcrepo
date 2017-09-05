@@ -43,17 +43,20 @@ public class ChildrenRdfContext extends NodeRdfContext {
      *
      * @param resource the resource
      * @param idTranslator the idTranslator
+     * @param skipPairTrees flag indicating whether to skip pair trees when resolving children
      * @throws javax.jcr.RepositoryException if repository exception occurred
      */
     public ChildrenRdfContext(final FedoraResource resource,
-                              final IdentifierConverter<Resource, FedoraResource> idTranslator)
+                              final IdentifierConverter<Resource, FedoraResource> idTranslator,
+                              final boolean skipPairTrees)
             throws RepositoryException {
         super(resource, idTranslator);
 
         if (getJcrNode(resource).hasNodes()) {
             LOGGER.trace("Found children of this resource: {}", resource.getPath());
 
-            concat(resource().getChildren().peek(child -> LOGGER.trace("Creating triple for child node: {}", child))
+            concat(resource().getChildren(false, skipPairTrees).peek(child -> LOGGER.trace(
+                    "Creating triple for child node: {}", child))
                     .map(child -> create(subject(), CONTAINS.asNode(), uriFor(child.getDescribedResource()))));
         }
     }

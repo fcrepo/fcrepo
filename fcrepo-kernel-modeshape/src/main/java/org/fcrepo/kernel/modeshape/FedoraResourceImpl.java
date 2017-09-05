@@ -39,6 +39,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.isRelaxed;
 import static org.fcrepo.kernel.api.RequiredRdfContext.EMBED_RESOURCES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_CONTAINMENT;
+import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_CONTAINMENT_SKIP_PAIR_TREES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_MEMBERSHIP;
 import static org.fcrepo.kernel.api.RequiredRdfContext.MINIMAL;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
@@ -198,7 +199,11 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     });
 
     private static RdfGenerator getLdpContainsTriples = resource -> translator -> uncheck(_minimal -> {
-        return new ChildrenRdfContext(resource, translator);
+        return new ChildrenRdfContext(resource, translator, true);
+    });
+
+    private static RdfGenerator getLdpContainsTriplesSkipPairTrees = resource -> translator -> uncheck(_minimal -> {
+        return new ChildrenRdfContext(resource, translator, false);
     });
 
     private static RdfGenerator getVersioningTriples = resource -> translator -> uncheck(_minimal -> {
@@ -236,6 +241,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                     .put(SERVER_MANAGED, getServerManagedTriples)
                     .put(LDP_MEMBERSHIP, getLdpMembershipTriples)
                     .put(LDP_CONTAINMENT, getLdpContainsTriples)
+                    .put(LDP_CONTAINMENT_SKIP_PAIR_TREES, getLdpContainsTriplesSkipPairTrees)
                     .build();
 
     protected Node node;
@@ -304,15 +310,15 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     }
 
     /* (non-Javadoc)
-     * @see org.fcrepo.kernel.api.models.FedoraResource#getChildren(Boolean recursive)
+     * @see org.fcrepo.kernel.api.models.FedoraResource#getChildren(Boolean recursive, Boolean skipPairTreeNodes)
      */
     @Override
-    public Stream<FedoraResource> getChildren(final Boolean recursive) {
+    public Stream<FedoraResource> getChildren(final Boolean recursive, final boolean skipPairTreeNodes) {
         try {
             if (recursive) {
-                return nodeToGoodChildren(node).flatMap(FedoraResourceImpl::getAllChildren);
+                return nodeToGoodChildren(node, skipPairTreeNodes).flatMap(FedoraResourceImpl::getAllChildren);
             }
-            return nodeToGoodChildren(node);
+            return nodeToGoodChildren(node, skipPairTreeNodes);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -337,14 +343,17 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     /**
      * Get the "good" children for a node by skipping all pairtree nodes in the way.
      * @param input
+     * @param skipPairTreeNodes
      * @return
      * @throws RepositoryException
      */
     @SuppressWarnings("unchecked")
-    private Stream<FedoraResource> nodeToGoodChildren(final Node input) throws RepositoryException {
+    private Stream<FedoraResource> nodeToGoodChildren(final Node input, final boolean skipPairTreeNodes)
+            throws RepositoryException {
         return iteratorToStream(input.getNodes()).filter(nastyChildren.negate())
-            .flatMap(uncheck((final Node child) -> child.isNodeType(FEDORA_PAIRTREE) ? nodeToGoodChildren(child) :
-                        of(nodeToObjectBinaryConverter.convert(child))));
+                .flatMap(uncheck((final Node child) -> skipPairTreeNodes && child.isNodeType(FEDORA_PAIRTREE)
+                        ? nodeToGoodChildren(child, skipPairTreeNodes) : of(nodeToObjectBinaryConverter.convert(
+                                child))));
     }
 
     /**

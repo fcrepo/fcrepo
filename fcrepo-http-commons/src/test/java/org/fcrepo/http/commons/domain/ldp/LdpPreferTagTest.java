@@ -25,6 +25,8 @@ import java.text.ParseException;
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.PAIR_TREE_RESOURCES;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -45,6 +47,7 @@ public class LdpPreferTagTest {
         assertFalse(testObj.prefersMembership());
         assertFalse(testObj.prefersEmbed());
         assertFalse(testObj.prefersReferences());
+        assertTrue(testObj.prefersSkipPairTrees());
 
     }
 
@@ -59,6 +62,7 @@ public class LdpPreferTagTest {
         assertFalse(testObj.prefersContainment());
         assertFalse(testObj.prefersMembership());
         assertFalse(testObj.prefersEmbed());
+        assertTrue(testObj.prefersSkipPairTrees());
     }
 
     @Test
@@ -79,6 +83,7 @@ public class LdpPreferTagTest {
         testObj = new LdpPreferTag(prefer);
 
         assertTrue(testObj.prefersContainment());
+        assertTrue(testObj.prefersSkipPairTrees());
     }
 
     @Test
@@ -90,6 +95,7 @@ public class LdpPreferTagTest {
 
         assertTrue(testObj.prefersMembership());
         assertTrue(testObj.prefersContainment());
+        assertTrue(testObj.prefersSkipPairTrees());
     }
 
     @Test
@@ -101,6 +107,26 @@ public class LdpPreferTagTest {
 
         assertFalse(testObj.prefersMembership());
         assertFalse(testObj.prefersContainment());
+        assertTrue(testObj.prefersSkipPairTrees());
+    }
+
+    @Test
+    public void testPreferContainmentOmitPairTreesOverridesIncludePairTrees() throws ParseException {
+        final PreferTag prefer = new PreferTag("return=representation; include=\"" + LDP_NAMESPACE +
+                "PreferContainment\"; omit=\"" + PAIR_TREE_RESOURCES + "\"");
+        testObj = new LdpPreferTag(prefer);
+
+        assertTrue(testObj.prefersContainment());
+        assertTrue(testObj.prefersSkipPairTrees());
+    }
+
+    @Test
+    public void testPreferContainmentIncludePairTrees() throws ParseException {
+        final PreferTag prefer = new PreferTag("return=representation; include=\"" + LDP_NAMESPACE +
+                "PreferContainment " + PAIR_TREE_RESOURCES + "\"");
+        testObj = new LdpPreferTag(prefer);
+        assertTrue(testObj.prefersContainment());
+        assertFalse(testObj.prefersSkipPairTrees());
     }
 
     @Test

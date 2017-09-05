@@ -22,6 +22,7 @@ import static java.util.Optional.ofNullable;
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.PAIR_TREE_RESOURCES;
 import static org.fcrepo.kernel.api.RdfLexicon.SERVER_MANAGED;
 
 import java.util.List;
@@ -45,6 +46,8 @@ public class LdpPreferTag extends PreferTag {
     private final boolean embed;
 
     private final boolean managedProperties;
+
+    private final boolean skipPairTrees;
 
     /**
      * Standard constructor.
@@ -71,6 +74,13 @@ public class LdpPreferTag extends PreferTag {
         containment = (!preferMinimalContainer && !omits.contains(LDP_NAMESPACE + "PreferContainment")) ||
                 includes.contains(LDP_NAMESPACE + "PreferContainment");
 
+        final String pairtreeResources = PAIR_TREE_RESOURCES.getURI();
+        if (containment && (includes.contains(pairtreeResources) && !omits.contains(pairtreeResources))) {
+            skipPairTrees = false;
+        } else {
+            skipPairTrees = true;
+        }
+
         references = includes.contains(INBOUND_REFERENCES.toString());
 
         embed = includes.contains(EMBED_CONTAINS.toString());
@@ -91,6 +101,13 @@ public class LdpPreferTag extends PreferTag {
      */
     public boolean prefersContainment() {
         return containment;
+    }
+
+    /**
+     * @return Whether this prefer tag demands skipping pair tree resources.
+     */
+    public boolean prefersSkipPairTrees() {
+        return skipPairTrees;
     }
 
     /**

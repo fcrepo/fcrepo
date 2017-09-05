@@ -85,7 +85,7 @@ public class ChildrenRdfContextTest {
     public void testNoChildren() throws RepositoryException {
         when(mockResourceNode.hasNodes()).thenReturn(false);
 
-        try (final ChildrenRdfContext childrenRdfContext = new ChildrenRdfContext(mockResource, idTranslator)) {
+        try (final ChildrenRdfContext childrenRdfContext = new ChildrenRdfContext(mockResource, idTranslator,true)) {
             final Model results = childrenRdfContext.collect(toModel());
             final Resource subject = idTranslator.reverse().convert(mockResource);
 
@@ -96,6 +96,15 @@ public class ChildrenRdfContextTest {
 
     @Test
     public void testChildren() throws RepositoryException {
+        testChildren(true);
+    }
+
+    @Test
+    public void testChildrenDoNotSkipPairtrees() throws RepositoryException {
+        testChildren(false);
+    }
+
+    private void testChildren(final boolean skipPairTrees) throws RepositoryException {
         when(mockRes1.getPath()).thenReturn(RDF_PATH + "/res1");
         when(mockRes2.getPath()).thenReturn(RDF_PATH + "/res2");
         when(mockRes3.getPath()).thenReturn(RDF_PATH + "/res3");
@@ -105,9 +114,9 @@ public class ChildrenRdfContextTest {
         when(mockResourceNode.hasNodes()).thenReturn(true);
         final Stream<FedoraResource> first = of(mockRes1, mockRes2, mockRes3);
         final Stream<FedoraResource> second = of(mockRes1, mockRes2, mockRes3);
-        when(mockResource.getChildren()).thenReturn(first).thenReturn(second);
+        when(mockResource.getChildren(false, skipPairTrees)).thenReturn(first).thenReturn(second);
 
-        try (final ChildrenRdfContext context = new ChildrenRdfContext(mockResource, idTranslator)) {
+        try (final ChildrenRdfContext context = new ChildrenRdfContext(mockResource, idTranslator, skipPairTrees)) {
             final Model results = context.collect(toModel());
             final Resource subject = idTranslator.reverse().convert(mockResource);
 
@@ -125,4 +134,5 @@ public class ChildrenRdfContextTest {
             assertFalse("There should not have been a second statement!", stmts.hasNext());
         }
     }
+
 }

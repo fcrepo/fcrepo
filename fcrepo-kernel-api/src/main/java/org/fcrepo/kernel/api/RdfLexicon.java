@@ -232,6 +232,7 @@ public final class RdfLexicon {
     public static final Property INBOUND_REFERENCES = createProperty(REPOSITORY_NAMESPACE + "InboundReferences");
     public static final Property EMBED_CONTAINS = createProperty(REPOSITORY_NAMESPACE + "EmbedResources");
     public static final Property SERVER_MANAGED = createProperty(REPOSITORY_NAMESPACE + "ServerManaged");
+    public static final Property PAIR_TREE_RESOURCES = createProperty(REPOSITORY_NAMESPACE + "PairTreeResources");
 
     public static final Set<Property> managedProperties;
 
