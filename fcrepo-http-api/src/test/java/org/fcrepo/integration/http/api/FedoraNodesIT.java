@@ -23,13 +23,14 @@ import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.GONE;
 import static javax.ws.rs.core.Response.Status.OK;
 import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
+import static org.apache.http.annotation.ThreadingBehavior.UNSAFE;
 import static org.junit.Assert.assertEquals;
 import java.io.IOException;
 import java.net.URI;
 
 import javax.ws.rs.core.Link;
 
-import org.apache.http.annotation.NotThreadSafe;
+import org.apache.http.annotation.Contract;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -167,7 +168,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         assertEquals(GONE.getStatusCode(), getStatus(new HttpGet(oldLocation)));
     }
 
-    @NotThreadSafe // HttpRequestBase is @NotThreadSafe
+    @Contract(threading = UNSAFE) // HttpRequestBase is @NotThreadSafe
     private class HttpCopy extends HttpRequestBase {
 
         /**
@@ -184,7 +185,7 @@ public class FedoraNodesIT extends AbstractResourceIT {
         }
     }
 
-    @NotThreadSafe // HttpRequestBase is @NotThreadSafe
+    @Contract(threading = UNSAFE) // HttpRequestBase is @NotThreadSafe
     private class HttpMove extends HttpRequestBase {
 
         /**
