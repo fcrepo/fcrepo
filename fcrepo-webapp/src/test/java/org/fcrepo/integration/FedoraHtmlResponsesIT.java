@@ -17,7 +17,7 @@
  */
 package org.fcrepo.integration;
 
-import static com.gargoylesoftware.htmlunit.BrowserVersion.FIREFOX_24;
+import static com.gargoylesoftware.htmlunit.BrowserVersion.FIREFOX_45;
 import static com.google.common.collect.Lists.transform;
 import static java.util.UUID.randomUUID;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
@@ -83,8 +83,8 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
     @After
     public void cleanUp() {
-        webClient.closeAllWindows();
-        javascriptlessWebClient.closeAllWindows();
+        webClient.close();
+        javascriptlessWebClient.close();
     }
 
     @Test
@@ -359,7 +359,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
     private WebClient getDefaultWebClient() {
 
-        final WebClient webClient = new WebClient(FIREFOX_24);
+        final WebClient webClient = new WebClient(FIREFOX_45);
         webClient.addRequestHeader(ACCEPT, "text/html");
         webClient.setCredentialsProvider(getFedoraAdminCredentials());
         webClient.waitForBackgroundJavaScript(1000);
