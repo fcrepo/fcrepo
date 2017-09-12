@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="owl2html.xsl"?>
+
+<!DOCTYPE rdf:RDF [
+    <!ENTITY owl "http://www.w3.org/2002/07/owl#" >
+    <!ENTITY xsd "http://www.w3.org/2001/XMLSchema#" >
+    <!ENTITY rdfs "http://www.w3.org/2000/01/rdf-schema#" >
+    <!ENTITY rdf "http://www.w3.org/1999/02/22-rdf-syntax-ns#" >
+]>
+
+<rdf:RDF
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+    <owl:Ontology rdf:about="static/constraints/ContainerConstraints">
+        <rdfs:label xml:lang="en">Container Constraints</rdfs:label>
+        <rdfs:comment xml:lang="en">Fedora will create resources of the following types: 
+          &lt;http://www.w3.org/ns/ldp#BasicContainer&gt;,
+          &lt;http://www.w3.org/ns/ldp#DirectContainer&gt;,
+          &lt;http://www.w3.org/ns/ldp#IndirectContainer&gt;, and
+          &lt;http://www.w3.org/ns/ldp#NonRDFSource&gt;</rdfs:comment>
+        <rdfs:comment xml:lang="en">If no interaction model is supplied via a Link header, the
+          &lt;http://www.w3.org/ns/ldp#BasicContainer&gt; interaction model will be used.</rdfs:comment>
+        <rdfs:comment xml:lang="en">RDF in Fedora is always an expression of the properties of a Fedora
+          resource.</rdfs:comment>
+        <rdfs:comment xml:lang="en">Properties in the &lt;http://fedora.info/definitions/v4/repository#&gt;
+          namespace, and types in the &lt;http://fedora.info/definitions/v4/repository#&gt; and
+          &lt;http://www.w3.org/ns/ldp#&gt; namespace can only be modified by the repository.</rdfs:comment>
+    </owl:Ontology>
+</rdf:RDF>

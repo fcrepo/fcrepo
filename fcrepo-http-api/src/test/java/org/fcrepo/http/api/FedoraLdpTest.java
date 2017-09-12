@@ -46,6 +46,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
@@ -81,6 +82,7 @@ import java.util.List;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.ServletContext;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.core.EntityTag;
@@ -144,6 +146,7 @@ public class FedoraLdpTest {
     private final String path = "/some/path";
     private final String binaryPath = "/some/binary/path";
     private final String binaryDescriptionPath = "/some/other/path";
+    private final String constrDoc = "http://localhost/static/constraints/ContainerConstraints.rdf";
     private FedoraLdp testObj;
 
     @Mock
@@ -187,6 +190,9 @@ public class FedoraLdpTest {
     private SecurityContext mockSecurityContext;
 
     @Mock
+    private ServletContext mockServletContext;
+
+    @Mock
     private PathLockManager mockLockManager;
 
     @Mock
@@ -216,6 +222,7 @@ public class FedoraLdpTest {
         setField(testObj, "session", mockSession);
         setField(testObj, "securityContext", mockSecurityContext);
         setField(testObj, "lockManager", mockLockManager);
+        setField(testObj, "context", mockServletContext);
 
         when(mockHttpConfiguration.putRequiresIfMatch()).thenReturn(false);
 
@@ -239,6 +246,8 @@ public class FedoraLdpTest {
         when(mockLockManager.lockForDelete(any())).thenReturn(mockLock);
         when(mockSession.getId()).thenReturn("foo1234");
         when(mockSession.getFedoraSession()).thenReturn(mockFedoraSession);
+
+        when(mockServletContext.getContextPath()).thenReturn("/");
     }
 
     private FedoraResource setResource(final Class<? extends FedoraResource> klass) {
@@ -273,6 +282,13 @@ public class FedoraLdpTest {
         assertTrue("Should have an Allow header", mockResponse.containsHeader("Allow"));
         assertTrue("Should be an LDP Resource",
                 mockResponse.getHeaders(LINK).contains("<" + LDP_NAMESPACE + "Resource>;rel=\"type\""));
+        assertShouldHaveConstraintsLink();
+    }
+
+    private void assertShouldHaveConstraintsLink() {
+        assertTrue("Should have a constraints document",
+                mockResponse.getHeaders(LINK).contains("<" + containerConstraints + ">; rel=\"" +
+                CONSTRAINED_BY.toString() + "\""));
     }
 
     @Test
@@ -291,6 +307,7 @@ public class FedoraLdpTest {
         final Response actual = testObj.head();
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertShouldBeAnLDPBasicContainer();
+        assertShouldHaveConstraintsLink();
     }
 
     private void assertShouldBeAnLDPBasicContainer() {
@@ -305,6 +322,7 @@ public class FedoraLdpTest {
         final Response actual = testObj.head();
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertShouldBeAnLDPBasicContainer();
+        assertShouldHaveConstraintsLink();
     }
 
     @Test
@@ -314,6 +332,7 @@ public class FedoraLdpTest {
         final Response actual = testObj.head();
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertShouldBeAnLDPDirectContainer();
+        assertShouldHaveConstraintsLink();
     }
 
     private void assertShouldBeAnLDPDirectContainer() {
@@ -328,6 +347,7 @@ public class FedoraLdpTest {
         final Response actual = testObj.head();
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertShouldBeAnLDPIndirectContainer();
+        assertShouldHaveConstraintsLink();
     }
 
     private void assertShouldBeAnLDPIndirectContainer() {
@@ -470,6 +490,7 @@ public class FedoraLdpTest {
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertTrue("Should advertise Accept-Post flavors", mockResponse.containsHeader("Accept-Post"));
         assertShouldAdvertiseAcceptPatchFlavors();
+        assertShouldHaveConstraintsLink();
 
         try (final RdfNamespacedStream entity = (RdfNamespacedStream) actual.getEntity()) {
             final Model model = entity.stream.collect(toModel());
@@ -487,6 +508,7 @@ public class FedoraLdpTest {
         final Response actual = testObj.getResource(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertShouldBeAnLDPBasicContainer();
+        assertShouldHaveConstraintsLink();
     }
 
     @Test
@@ -496,6 +518,7 @@ public class FedoraLdpTest {
         final Response actual = testObj.getResource(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertShouldBeAnLDPDirectContainer();
+        assertShouldHaveConstraintsLink();
     }
 
     @Test
@@ -505,6 +528,7 @@ public class FedoraLdpTest {
         final Response actual = testObj.getResource(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertShouldBeAnLDPIndirectContainer();
+        assertShouldHaveConstraintsLink();
     }
 
     @Test
@@ -514,6 +538,7 @@ public class FedoraLdpTest {
         setField(testObj, "prefer", new MultiPrefer("return=minimal"));
         final Response actual = testObj.getResource(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
+        assertShouldHaveConstraintsLink();
 
         try (final RdfNamespacedStream entity = (RdfNamespacedStream) actual.getEntity()) {
             final Model model = entity.stream.collect(toModel());
