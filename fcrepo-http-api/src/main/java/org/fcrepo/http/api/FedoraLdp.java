@@ -62,7 +62,10 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_PAIRTREE;
-import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -106,6 +109,8 @@ import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
+import org.apache.jena.atlas.web.ContentType;
+import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
@@ -357,7 +362,7 @@ public class FedoraLdp extends ContentExposingResource {
             @HeaderParam("Digest") final String digest)
             throws InvalidChecksumException, MalformedRdfException, UnsupportedAlgorithmException {
 
-        checkLinkForLdpResourceCreation(link);
+        final String interactionModel = checkInteractionModel(link);
 
         final FedoraResource resource;
 
@@ -377,7 +382,7 @@ public class FedoraLdp extends ContentExposingResource {
             } else {
                 final MediaType effectiveContentType
                         = requestBodyStream == null || requestContentType == null ? null : contentType;
-                resource = createFedoraResource(path, effectiveContentType, contentDisposition);
+                resource = createFedoraResource(path, interactionModel);
             }
 
 
@@ -516,7 +521,7 @@ public class FedoraLdp extends ContentExposingResource {
                                  @HeaderParam("Digest") final String digest)
             throws InvalidChecksumException, IOException, MalformedRdfException, UnsupportedAlgorithmException {
 
-        checkLinkForLdpResourceCreation(link);
+        final String interactionModel = checkInteractionModel(link);
 
         if (!(resource() instanceof Container)) {
             throw new ClientErrorException("Object cannot have child nodes", CONFLICT);
@@ -540,7 +545,7 @@ public class FedoraLdp extends ContentExposingResource {
 
             final MediaType effectiveContentType
                     = requestBodyStream == null || requestContentType == null ? null : contentType;
-            resource = createFedoraResource(newObjectPath, effectiveContentType, contentDisposition);
+            resource = createFedoraResource(newObjectPath, interactionModel);
 
             try (final RdfStream resourceTriples =
                     resource.isNew() ? new DefaultRdfStream(asNode(resource())) : getResourceTriples()) {
@@ -738,17 +743,15 @@ public class FedoraLdp extends ContentExposingResource {
         return FEDORA_CONTAINER;
     }
 
-    private FedoraResource createFedoraResource(final String path,
-                                                final MediaType requestContentType,
-                                                final ContentDisposition contentDisposition) {
-        final String objectType = getRequestedObjectType(requestContentType, contentDisposition);
-
+    private FedoraResource createFedoraResource(final String path, final String interactionModel) {
         final FedoraResource result;
-
-        if (objectType.equals(FEDORA_BINARY)) {
+        if (interactionModel != null && interactionModel.equals("ldp:NonRDFSource")) {
             result = binaryService.findOrCreate(session.getFedoraSession(), path);
         } else {
             result = containerService.findOrCreate(session.getFedoraSession(), path);
+            if (interactionModel != null) {
+                result.addType(interactionModel);
+            }
         }
 
         return result;
@@ -804,20 +807,30 @@ public class FedoraLdp extends ContentExposingResource {
         return digestValue;
     }
 
-    private static void checkLinkForLdpResourceCreation(final String link) {
-        if (link != null) {
-            try {
-                final Link linq = Link.valueOf(link);
-                if ("type".equals(linq.getRel()) && (LDP_NAMESPACE + "Resource").equals(linq.getUri().toString())) {
-                    LOGGER.info("Unimplemented LDPR creation requested with header link: {}", link);
-                    throw new CannotCreateResourceException("LDPR creation not implemented");
-                }
-            } catch (final RuntimeException e) {
-                if (e instanceof IllegalArgumentException | e instanceof UriBuilderException) {
-                    throw new ClientErrorException("Invalid link specified: " + link, BAD_REQUEST);
-                }
-                throw e;
+    private static String checkInteractionModel(final String link) {
+        if (link == null) {
+            return null;
+        }
+
+        try {
+            final Link linq = Link.valueOf(link);
+            if (!"type".equals(linq.getRel())) {
+                return null;
             }
+
+            final Resource type = createResource(linq.getUri().toString());
+            if (type.equals(NON_RDF_SOURCE) || type.equals(BASIC_CONTAINER) ||
+                    type.equals(DIRECT_CONTAINER) || type.equals(INDIRECT_CONTAINER)) {
+                return "ldp:" + type.getLocalName();
+            } else {
+                LOGGER.info("Invalid interaction model: {}", type);
+                throw new CannotCreateResourceException("Invalid interaction model: " + type);
+            }
+        } catch (final RuntimeException e) {
+            if (e instanceof IllegalArgumentException | e instanceof UriBuilderException) {
+                throw new ClientErrorException("Invalid link specified: " + link, BAD_REQUEST);
+            }
+            throw e;
         }
     }
 

@@ -104,7 +104,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.text.ParseException;
 import java.time.Instant;
@@ -184,11 +183,10 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     private static final Node DCTITLE = title.asNode();
 
-    private static final String INDIRECT_CONTAINER_LINK_HEADER = "<" + INDIRECT_CONTAINER.getURI() + ">;rel=\"type\"";
-
     private static final String BASIC_CONTAINER_LINK_HEADER = "<" + BASIC_CONTAINER.getURI() + ">;rel=\"type\"";
-
-    private static final String DIRECT_CONTAINER_LINKHEADER = "<" + DIRECT_CONTAINER.getURI() + ">;rel=\"type\"";
+    private static final String DIRECT_CONTAINER_LINK_HEADER = "<" + DIRECT_CONTAINER.getURI() + ">;rel=\"type\"";
+    private static final String INDIRECT_CONTAINER_LINK_HEADER = "<" + INDIRECT_CONTAINER.getURI() + ">;rel=\"type\"";
+    private static final String NON_RDF_SOURCE_LINK_HEADER = "<" + NON_RDF_SOURCE.getURI() + ">;rel=\"type\"";
 
     private static final String TEST_ACTIVATION_PROPERTY = "RUN_TEST_CREATE_MANY";
 
@@ -292,7 +290,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpHead headObjMethod = headObjMethod(id);
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             final Collection<String> links = getLinkHeaders(response);
-            assertTrue("Didn't find LDP container link header!", links.contains(DIRECT_CONTAINER_LINKHEADER));
+            assertTrue("Didn't find LDP container link header!", links.contains(DIRECT_CONTAINER_LINK_HEADER));
         }
     }
 
@@ -370,6 +368,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id);
         put.addHeader(CONTENT_TYPE, externalContentType);
+        put.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
         assertEquals(CREATED.getStatusCode(), getStatus(put));
 
         // Configure HEAD request to NOT follow redirects
@@ -920,6 +919,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String location = serverAddress + id + "/x";
         final HttpPut method = new HttpPut(location);
         method.setEntity(new StringEntity("foo"));
+        method.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
         try (final CloseableHttpResponse response = execute(method)) {
             assertTrue("Didn't find Last-Modified header!", response.containsHeader("Last-Modified"));
             assertTrue("Didn't find ETag header!", response.containsHeader("ETag"));
@@ -942,8 +942,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
         final String location = serverAddress + id + "/binary";
-        final HttpPut method = new HttpPut(location);
-        method.setEntity(new StringEntity("foo"));
+        final HttpPut method = putDSMethod(id, "binary", "foo");
 
         final String binaryEtag1, binaryEtag2, binaryEtag3, descEtag1, descEtag2, descEtag3;
         final String binaryLastModed1, binaryLastModed2, binaryLastModed3;
@@ -1304,6 +1303,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testIngestWithBinary() throws IOException {
         final HttpPost method = postObjMethod();
         method.addHeader(CONTENT_TYPE, "application/octet-stream");
+        method.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
         method.setEntity(new StringEntity("xyz"));
 
         try (final CloseableHttpResponse response = execute(method)) {
@@ -1328,7 +1328,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testIngestOpaqueRdfAsBinary() throws IOException {
         final HttpPost method = postObjMethod();
         method.addHeader(CONTENT_TYPE, "application/n-triples");
-        method.addHeader(CONTENT_DISPOSITION, "attachment");
+        method.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
 
         final String rdf = "<test:/subject> <test:/predicate> <test:/object> .";
         method.setEntity(new StringEntity(rdf));
@@ -1357,6 +1357,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final File img = new File("src/test/resources/test-objects/img.png");
         method.addHeader(CONTENT_TYPE, "application/octet-stream");
         method.addHeader("Digest", "SHA1=f0b632679fab4f22e031010bd81a3b0544294730");
+        method.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
         method.setEntity(new FileEntity(img));
 
         assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(method));
@@ -1373,6 +1374,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final File img = new File("src/test/resources/test-objects/img.png");
         method.addHeader(CONTENT_TYPE, "application/octet-stream");
         method.addHeader("Digest", "SHA1=fedoraicon");
+        method.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
         method.setEntity(new FileEntity(img));
 
         assertEquals("Should be a 409 Conflict!", CONFLICT.getStatusCode(), getStatus(method));
@@ -1387,6 +1389,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final File img = new File("src/test/resources/test-objects/img.png");
         method.addHeader(CONTENT_TYPE, "application/octet-stream");
         method.addHeader("Digest", "md5=not a valid hash,SHA1:thisisbadtoo");
+        method.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
         method.setEntity(new FileEntity(img));
         assertEquals("Should be a 400 BAD REQUEST!", BAD_REQUEST.getStatusCode(), getStatus(method));
     }
@@ -1400,6 +1403,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final File img = new File("src/test/resources/test-objects/img.png");
         method.addHeader(CONTENT_TYPE, "application/octet-stream");
         method.addHeader("Digest", "md5=anything");
+        method.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
         method.setEntity(new FileEntity(img));
 
         assertEquals("Should be a 409 Conflict!", CONFLICT.getStatusCode(), getStatus(method));
@@ -1411,6 +1415,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final File img = new File("src/test/resources/test-objects/img.png");
         method.addHeader(CONTENT_TYPE, "application/octet-stream");
         method.addHeader("Digest", "md5=6668675a91f39ca1afe46c084e8406ba");
+        method.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
         method.setEntity(new FileEntity(img));
 
         assertEquals("Should be a 201 Created!", CREATED.getStatusCode(), getStatus(method));
@@ -1424,6 +1429,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         method.addHeader("Digest", "md5=6668675a91f39ca1afe46c084e8406ba," +
                 " sha256=7b115a72978fe138287c1a6dfe6cc1afce4720fb3610a81d32e4ad518700c923");
         method.setEntity(new FileEntity(img));
+        method.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
 
         assertEquals("Should be a 201 Created!", CREATED.getStatusCode(), getStatus(method));
     }
@@ -1436,6 +1442,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         method.addHeader("Digest", "md5=6668675a91f39ca1afe46c084e8406ba," +
                 " sha99=7b115a72978fe138287c1a6dfe6cc1afce4720fb3610a81d32e4ad518700c923");
         method.setEntity(new FileEntity(img));
+        method.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
 
         assertEquals("Should be a 400 Bad Request!", BAD_REQUEST.getStatusCode(), getStatus(method));
     }
@@ -1448,6 +1455,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         method.addHeader(CONTENT_TYPE, "application/png");
         method.addHeader(CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"");
         method.setEntity(new FileEntity(img));
+        method.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
 
         // Create a binary resource with content-disposition
         final String location;
@@ -2028,6 +2036,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpPut createMethod = new HttpPut(subjectURI);
         createMethod.addHeader(CONTENT_TYPE, "TEXT/PlAiN");
         createMethod.setEntity(new StringEntity("Some text here."));
+        createMethod.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
 
         try (final CloseableHttpResponse response = execute(createMethod)) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
@@ -2046,6 +2055,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String subjectURI = serverAddress + getRandomUniqueId();
         final HttpPut createMethod = new HttpPut(subjectURI);
         createMethod.addHeader(CONTENT_TYPE, "text/csv");
+        createMethod.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
         createMethod.setEntity(new StringEntity("Header 1, Header 2, Header 3\r1,2,3\r1,2,3"));
 
         try (final CloseableHttpResponse response = execute(createMethod)) {
@@ -2239,53 +2249,57 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testLdpContainerInteraction() throws IOException {
+    public void testNonRDFSourceInteraction() throws IOException {
+        final String id = getRandomUniqueId();
+        final HttpPut put = putObjMethod(id, "text/turtle", "<> a <http://example.com/Foo> .");
+        put.setHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        executeAndClose(put);
+        assertTrue(getLinkHeaders(getObjMethod(id)).contains(NON_RDF_SOURCE_LINK_HEADER));
+    }
 
+    @Test
+    public void testContainerInteraction() throws IOException {
         final String id = getRandomUniqueId();
         final String location;
-        try (final CloseableHttpResponse createResponse = createObject(id)) {
-            location = getLocation(createResponse);
+        final HttpPut put0 = putObjMethod(id);
+        put0.setHeader(LINK, BASIC_CONTAINER_LINK_HEADER);
+        try (final CloseableHttpResponse response = execute(put0)) {
+            location = getLocation(response);
         }
-        createObjectAndClose(id + "/t");
-        addMixin(id + "/t", DIRECT_CONTAINER.getURI());
-        final HttpPatch patch = patchObjMethod(id + "/t");
-        final String sparql = "INSERT DATA { "
-                + "<> <" + MEMBERSHIP_RESOURCE + "> <" + location + "> .\n"
-                + "<> <" + HAS_MEMBER_RELATION + "> <info:some/relation> .\n"
-                + " }";
-        patch.setEntity(new StringEntity(sparql));
-        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
-        assertEquals("Expected patch to succeed", NO_CONTENT.getStatusCode(), getStatus(patch));
+        assertTrue(getLinkHeaders(getObjMethod(id)).contains(BASIC_CONTAINER_LINK_HEADER));
 
-        createObjectAndClose(id + "/b");
-        addMixin(id + "/b", DIRECT_CONTAINER.getURI());
-        final HttpPatch bPatch = patchObjMethod(id + "/b");
-        bPatch.addHeader(CONTENT_TYPE, "application/sparql-update");
-        final String bSparql = "INSERT DATA { "
-                + "<> <" + MEMBERSHIP_RESOURCE + "> <" + location + "> .\n"
-                + "<> <" + HAS_MEMBER_RELATION + "> <info:some/another-relation> .\n"
-                + " }";
-        bPatch.setEntity(new StringEntity(bSparql));
-        assertEquals("Expected patch to succeed", NO_CONTENT.getStatusCode(), getStatus(bPatch));
+        final String ttl = "<> <" + MEMBERSHIP_RESOURCE + "> <" + location + ">; "
+                + "<" + HAS_MEMBER_RELATION + "> <info:some/relation> .\n";
+        final HttpPut put1 = putObjMethod(id + "/a", "text/turtle", ttl);
+        put1.setHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
+        executeAndClose(put1);
+        assertTrue(getLinkHeaders(getObjMethod(id + "/a")).contains(DIRECT_CONTAINER_LINK_HEADER));
+        createObject(id + "/a/1");
 
-        createObject(id + "/t/1");
+        final String ttl2 = "<> <" + MEMBERSHIP_RESOURCE + "> <" + location + ">; "
+                + "<" + HAS_MEMBER_RELATION + "> <info:some/another-relation> .\n";
+        final HttpPut put2 = putObjMethod(id + "/b", "text/turtle", ttl2);
+        put2.setHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
+        executeAndClose(put2);
+        assertTrue(getLinkHeaders(getObjMethod(id + "/b")).contains(DIRECT_CONTAINER_LINK_HEADER));
         createObject(id + "/b/1");
+
         try (final CloseableDataset dataset = getDataset(new HttpGet(location))) {
             final DatasetGraph graphStore = dataset.asDatasetGraph();
             final Node resource = createURI(location);
             assertTrue("Expected to have container t", graphStore.contains(ANY,
-                    resource, createURI(LDP_NAMESPACE + "contains"), createURI(location + "/t")));
+                    resource, createURI(LDP_NAMESPACE + "contains"), createURI(location + "/a")));
             assertTrue("Expected to have container b", graphStore.contains(ANY,
                     resource, createURI(LDP_NAMESPACE + "contains"), createURI(location + "/b")));
             assertTrue("Expected member relation", graphStore.contains(ANY,
-                    resource, createURI("info:some/relation"), createURI(location + "/t/1")));
+                    resource, createURI("info:some/relation"), createURI(location + "/a/1")));
             assertTrue("Expected other member relation", graphStore.contains(ANY,
                     resource, createURI("info:some/another-relation"), createURI(location + "/b/1")));
         }
     }
 
     @Test
-    public void testLdpIndirectContainerInteraction() throws IOException {
+    public void testIndirectContainerInteraction() throws IOException {
 
         // Create resource (object)
         final String resourceId = getRandomUniqueId();
@@ -2302,21 +2316,15 @@ public class FedoraLdpIT extends AbstractResourceIT {
         // Create indirect container (c0/members)
         final String indirectContainerId = containerId + "/t";
         final String indirectContainer;
-        try (final CloseableHttpResponse createResponse = createObject(indirectContainerId)) {
-            indirectContainer = getLocation(createResponse);
+        final String ttl = "<> <" + MEMBERSHIP_RESOURCE + "> <" + container + ">;\n"
+                + "<" + HAS_MEMBER_RELATION + "> <info:some/relation>;\n"
+                + "<" + LDP_NAMESPACE + "insertedContentRelation> <info:proxy/for> .\n";
+        final HttpPut put = putObjMethod(containerId + "/t", "text/turtle", ttl);
+        put.setHeader(LINK, INDIRECT_CONTAINER_LINK_HEADER);
+        try (final CloseableHttpResponse response = execute(put)) {
+            indirectContainer = getLocation(response);
         }
-        addMixin(indirectContainerId, INDIRECT_CONTAINER.getURI());
-
-        // Add LDP properties to indirect container
-        final HttpPatch patch = patchObjMethod(indirectContainerId);
-        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
-        final String sparql = "INSERT DATA { "
-                + "<> <" + MEMBERSHIP_RESOURCE + "> <" + container + "> .\n"
-                + "<> <" + HAS_MEMBER_RELATION + "> <info:some/relation> .\n"
-                + "<> <" + LDP_NAMESPACE + "insertedContentRelation> <info:proxy/for> .\n"
-                + " }";
-        patch.setEntity(new StringEntity(sparql));
-        assertEquals("Expected patch to succeed", NO_CONTENT.getStatusCode(), getStatus(patch));
+        assertTrue(getLinkHeaders(getObjMethod(containerId + "/t")).contains(INDIRECT_CONTAINER_LINK_HEADER));
 
         // Add indirect resource to indirect container
         final HttpPost postIndirectResource = postObjMethod(indirectContainerId);
@@ -2461,6 +2469,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
             final String id = getRandomUniqueId();
             final HttpPut httpPut = putObjMethod(id);
+            httpPut.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
             httpPut.addHeader(CONTENT_TYPE, "message/external-body; access-type=URL; " +
                     "URL=\"http://www.example.com/file\"");
 
@@ -2932,6 +2941,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final HttpPut method = new HttpPut(serverAddress + path);
         method.setHeader(CONTENT_TYPE, "text/plain");
+        method.setHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
         method.setEntity(new StringEntity("initial value"));
 
         final String binaryEtag;
@@ -2985,16 +2995,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
     }
 
-    private HttpPut putBinaryObjMethodIfMatch(final String location, final String etag, final String content) {
-         final HttpPut put = putObjMethod(location);
-         put.setHeader(CONTENT_TYPE, "text/plain");
-         put.setHeader("If-Match", etag);
-         try {
-            put.setEntity(new StringEntity(content));
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
-         return put;
+    private HttpPut putBinaryObjMethodIfMatch(final String location, final String etag, final String content)
+            throws IOException {
+        final HttpPut put = putObjMethod(location, "text/plain", content);
+        put.setHeader("If-Match", etag);
+        return put;
     }
 
     @Test

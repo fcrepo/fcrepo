@@ -77,6 +77,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.SERVER_MANAGED_PROPERTIES_MODE;
 import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
 import static org.junit.Assert.assertEquals;
@@ -429,6 +430,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         }
         post.setEntity(new StringEntity(content == null ? "" : content));
         post.setHeader(CONTENT_TYPE, TEXT_PLAIN);
+        post.setHeader(LINK, "<" + NON_RDF_SOURCE.toString() + ">; rel=\"type\"");
         return execute(post);
     }
 

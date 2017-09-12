@@ -36,6 +36,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
@@ -92,6 +93,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 public abstract class AbstractResourceIT {
 
     protected static Logger logger;
+    private static final String NON_RDF_SOURCE_LINK_HEADER = "<" + NON_RDF_SOURCE.getURI() + ">;rel=\"type\"";
 
     @Before
     public void setLogger() {
@@ -152,6 +154,15 @@ public abstract class AbstractResourceIT {
         final HttpPut put = new HttpPut(serverAddress + pid + "/" + ds);
         put.setEntity(new StringEntity(content == null ? "" : content));
         put.setHeader(CONTENT_TYPE, TEXT_PLAIN);
+        put.setHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        return put;
+    }
+
+    protected static HttpPut putObjMethod(final String pid, final String contentType, final String content)
+            throws UnsupportedEncodingException {
+        final HttpPut put = new HttpPut(serverAddress + pid);
+        put.setEntity(new StringEntity(content));
+        put.setHeader(CONTENT_TYPE, contentType);
         return put;
     }
 
@@ -289,6 +300,12 @@ public abstract class AbstractResourceIT {
 
     protected static Collection<String> getLinkHeaders(final HttpResponse response) {
         return getHeader(response, LINK);
+    }
+
+    protected Collection<String> getLinkHeaders(final HttpUriRequest method) throws IOException {
+        try (final CloseableHttpResponse response = execute(method)) {
+            return getLinkHeaders(response);
+        }
     }
 
     protected static Collection<String> getHeader(final HttpResponse response, final String header) {
