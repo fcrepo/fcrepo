@@ -70,7 +70,6 @@ import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_VARIANTS;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
-
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
@@ -123,9 +122,6 @@ import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.Variant;
 
-import org.fcrepo.http.commons.domain.RDFMediaType;
-import org.fcrepo.http.commons.test.util.CloseableDataset;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -156,6 +152,8 @@ import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.vocabulary.DC_11;
+import org.fcrepo.http.commons.domain.RDFMediaType;
+import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -1358,7 +1356,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 " sha99=7b115a72978fe138287c1a6dfe6cc1afce4720fb3610a81d32e4ad518700c923");
         method.setEntity(new FileEntity(img));
 
-        assertEquals("Should be a 409 Conflict!", CONFLICT.getStatusCode(), getStatus(method));
+        assertEquals("Should be a 400 Bad Request!", BAD_REQUEST.getStatusCode(), getStatus(method));
     }
 
     @Test

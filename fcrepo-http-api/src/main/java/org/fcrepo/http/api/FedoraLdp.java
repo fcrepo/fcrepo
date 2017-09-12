@@ -20,13 +20,13 @@ package org.fcrepo.http.api;
 
 import static com.google.common.base.Strings.nullToEmpty;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static javax.ws.rs.core.MediaType.TEXT_HTML;
-import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
-import static javax.ws.rs.core.MediaType.WILDCARD;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
+import static javax.ws.rs.core.MediaType.TEXT_HTML;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
+import static javax.ws.rs.core.MediaType.WILDCARD;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.notAcceptable;
@@ -39,22 +39,22 @@ import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static javax.ws.rs.core.Variant.mediaTypes;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
+import static org.apache.jena.atlas.web.ContentType.create;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
-import static org.apache.jena.atlas.web.ContentType.create;
-import static org.apache.jena.riot.WebContent.ctTextPlain;
-import static org.apache.jena.riot.WebContent.ctTextCSV;
 import static org.apache.jena.riot.WebContent.ctSPARQLUpdate;
+import static org.apache.jena.riot.WebContent.ctTextCSV;
+import static org.apache.jena.riot.WebContent.ctTextPlain;
 import static org.apache.jena.riot.WebContent.matchContentType;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
-import static org.fcrepo.http.commons.domain.RDFMediaType.N3_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
@@ -74,6 +74,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
@@ -98,12 +99,11 @@ import javax.ws.rs.core.Variant.VariantListBuilder;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-
+import org.apache.jena.atlas.web.ContentType;
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
-import org.apache.jena.atlas.web.ContentType;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
@@ -112,6 +112,7 @@ import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -177,7 +178,7 @@ public class FedoraLdp extends ContentExposingResource {
 
     /**
      * Retrieve the node headers
-     * 
+     *
      * @return response
      */
     @HEAD
@@ -323,6 +324,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @return 204
      * @throws InvalidChecksumException if invalid checksum exception occurred
      * @throws MalformedRdfException if malformed rdf exception occurred
+     * @throws UnsupportedAlgorithmException
      */
     @PUT
     @Consumes
@@ -334,7 +336,7 @@ public class FedoraLdp extends ContentExposingResource {
             @HeaderParam("If-Match") final String ifMatch,
             @HeaderParam(LINK) final String link,
             @HeaderParam("Digest") final String digest)
-            throws InvalidChecksumException, MalformedRdfException {
+            throws InvalidChecksumException, MalformedRdfException, UnsupportedAlgorithmException {
 
         checkLinkForLdpResourceCreation(link);
 
@@ -479,6 +481,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @throws InvalidChecksumException if invalid checksum exception occurred
      * @throws IOException if IO exception occurred
      * @throws MalformedRdfException if malformed rdf exception occurred
+     * @throws UnsupportedAlgorithmException
      */
     @POST
     @Consumes({MediaType.APPLICATION_OCTET_STREAM + ";qs=1.000", WILDCARD})
@@ -492,7 +495,7 @@ public class FedoraLdp extends ContentExposingResource {
                                  @ContentLocation final InputStream requestBodyStream,
                                  @HeaderParam(LINK) final String link,
                                  @HeaderParam("Digest") final String digest)
-            throws InvalidChecksumException, IOException, MalformedRdfException {
+            throws InvalidChecksumException, IOException, MalformedRdfException, UnsupportedAlgorithmException {
 
         checkLinkForLdpResourceCreation(link);
 
@@ -595,7 +598,6 @@ public class FedoraLdp extends ContentExposingResource {
      * @return 204 No Content (for updated resources), 201 Created (for created resources) including the resource
      *    URI or content depending on Prefer headers.
      */
-    @SuppressWarnings("resource")
     private Response createUpdateResponse(final FedoraResource resource, final boolean created) {
         addCacheControlHeaders(servletResponse, resource, session);
         addResourceLinkHeaders(resource, created);
@@ -790,9 +792,9 @@ public class FedoraLdp extends ContentExposingResource {
      * an empty string is returned.
      * @param digest The Digest header value
      * @return the sha1 checksum value
-     * @throws InvalidChecksumException if an unsupported digest is used
+     * @throws UnsupportedAlgorithmException if an unsupported digest is used
      */
-    private static Collection<String> parseDigestHeader(final String digest) throws InvalidChecksumException {
+    private static Collection<String> parseDigestHeader(final String digest) throws UnsupportedAlgorithmException {
         try {
             final Map<String,String> digestPairs = RFC3230_SPLITTER.split(nullToEmpty(digest));
             final boolean allSupportedAlgorithms = digestPairs.keySet().stream().allMatch(
@@ -805,7 +807,7 @@ public class FedoraLdp extends ContentExposingResource {
                     .map(entry -> ContentDigest.asURI(entry.getKey(), entry.getValue()).toString())
                     .collect(Collectors.toSet());
             } else {
-                throw new InvalidChecksumException(String.format("Unsupported Digest Algorithim: %1$s", digest));
+                throw new UnsupportedAlgorithmException(String.format("Unsupported Digest Algorithim: %1$s", digest));
             }
         } catch (final RuntimeException e) {
             if (e instanceof IllegalArgumentException) {
