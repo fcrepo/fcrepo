@@ -598,6 +598,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @return 204 No Content (for updated resources), 201 Created (for created resources) including the resource
      *    URI or content depending on Prefer headers.
      */
+    @SuppressWarnings("resource")
     private Response createUpdateResponse(final FedoraResource resource, final boolean created) {
         addCacheControlHeaders(servletResponse, resource, session);
         addResourceLinkHeaders(resource, created);

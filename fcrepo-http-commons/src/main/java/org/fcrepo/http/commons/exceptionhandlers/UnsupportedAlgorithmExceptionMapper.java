@@ -30,7 +30,7 @@ import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.slf4j.Logger;
 
 /**
- * Translate InvalidChecksumException errors into reasonable
+ * Translate UnsupportedAlgorithmException errors into reasonable
  * HTTP error codes
  *
  * @author harring
@@ -46,8 +46,6 @@ public class UnsupportedAlgorithmExceptionMapper implements
     @Override
     public Response toResponse(final UnsupportedAlgorithmException e) {
 
-        LOGGER.error("InvalidChecksumException intercepted by UnsupportedAlgorithmExceptionMapper: {}\n",
-                e.getMessage());
         debugException(this, e, LOGGER);
 
         return status(BAD_REQUEST).entity(e.getMessage()).type(TEXT_PLAIN_WITH_CHARSET).build();
