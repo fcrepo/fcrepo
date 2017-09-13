@@ -148,7 +148,8 @@ public class FedoraLdpTest {
     private final String binaryDescriptionPath = "/some/other/path";
     private FedoraLdp testObj;
 
-    private final String nonRDFSourceLink = Link.fromUri(NON_RDF_SOURCE.toString()).rel("type").build().toString();
+    private final List<String> nonRDFSourceLink = Arrays.asList(
+            Link.fromUri(NON_RDF_SOURCE.toString()).rel("type").build().toString());
 
     @Mock
     private Request mockRequest;
@@ -762,7 +763,7 @@ public class FedoraLdpTest {
     @Test(expected = CannotCreateResourceException.class)
     public void testPutNewObjectLdpr() throws Exception {
         testObj.createOrReplaceObjectRdf(null, null, null, null,
-                "<http://www.w3.org/ns/ldp#Resource>; rel=\"type\"", null);
+                asList("<http://www.w3.org/ns/ldp#Resource>; rel=\"type\""), null);
     }
 
     @Test
@@ -1031,15 +1032,19 @@ public class FedoraLdpTest {
     }
 
     @Test(expected = CannotCreateResourceException.class)
-    public void testLDPRNotImplemented() throws InvalidChecksumException,
-            IOException, MalformedRdfException, UnsupportedAlgorithmException {
-        testObj.createObject(null, null, null, null, "<http://www.w3.org/ns/ldp#Resource>; rel=\"type\"", null);
+    public void testLDPRNotImplemented() throws MalformedRdfException, InvalidChecksumException,
+            IOException, UnsupportedAlgorithmException {
+        setResource(Container.class);
+        when(mockContainerService.findOrCreate(mockFedoraSession, "/x")).thenReturn(mockContainer);
+        testObj.createObject(null, null, "x", null, asList("<http://www.w3.org/ns/ldp#Resource>; rel=\"type\""), null);
     }
 
     @Test(expected = ClientErrorException.class)
     public void testLDPRNotImplementedInvalidLink() throws MalformedRdfException, InvalidChecksumException,
-           IOException, UnsupportedAlgorithmException {
-        testObj.createObject(null, null, null, null, "Link: <http://www.w3.org/ns/ldp#Resource;rel=type", null);
+            IOException, UnsupportedAlgorithmException {
+        setResource(Container.class);
+        when(mockContainerService.findOrCreate(mockFedoraSession, "/x")).thenReturn(mockContainer);
+        testObj.createObject(null, null, "x", null, asList("<http://foo;rel=\"type\""), null);
     }
 
     @Test

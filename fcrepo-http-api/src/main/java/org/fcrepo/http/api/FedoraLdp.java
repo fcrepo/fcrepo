@@ -59,8 +59,6 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSE
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_PAIRTREE;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
@@ -105,12 +103,12 @@ import javax.ws.rs.core.Variant.VariantListBuilder;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.atlas.web.ContentType;
+import org.apache.jena.rdf.model.Resource;
+
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
-import org.apache.jena.atlas.web.ContentType;
-import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
@@ -126,6 +124,7 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.utils.ContentDigest;
+
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
@@ -343,7 +342,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @param requestBodyStream the request body stream
      * @param contentDisposition the content disposition value
      * @param ifMatch the if-match value
-     * @param link the link value
+     * @param links the link values
      * @param digest the digest header
      * @return 204
      * @throws InvalidChecksumException if invalid checksum exception occurred
@@ -358,11 +357,11 @@ public class FedoraLdp extends ContentExposingResource {
             @ContentLocation final InputStream requestBodyStream,
             @HeaderParam(CONTENT_DISPOSITION) final ContentDisposition contentDisposition,
             @HeaderParam("If-Match") final String ifMatch,
-            @HeaderParam(LINK) final String link,
+            @HeaderParam(LINK) final List<String> links,
             @HeaderParam("Digest") final String digest)
             throws InvalidChecksumException, MalformedRdfException, UnsupportedAlgorithmException {
 
-        final String interactionModel = checkInteractionModel(link);
+        final String interactionModel = checkInteractionModel(links);
 
         final FedoraResource resource;
 
@@ -376,15 +375,14 @@ public class FedoraLdp extends ContentExposingResource {
 
             final MediaType contentType = getSimpleContentType(requestContentType);
 
-
             if (nodeService.exists(session.getFedoraSession(), path)) {
                 resource = resource();
             } else {
                 final MediaType effectiveContentType
                         = requestBodyStream == null || requestContentType == null ? null : contentType;
-                resource = createFedoraResource(path, interactionModel);
+                resource = createFedoraResource(path, interactionModel, effectiveContentType,
+                        !(requestBodyStream == null || requestContentType == null));
             }
-
 
             if (httpConfiguration.putRequiresIfMatch() && StringUtils.isBlank(ifMatch) && !resource.isNew()) {
                 throw new ClientErrorException("An If-Match header is required", 428);
@@ -420,11 +418,28 @@ public class FedoraLdp extends ContentExposingResource {
                 checkForInsufficientStorageException(e, e);
             }
 
+            ensureInteractionType(resource, interactionModel,
+                    (requestBodyStream == null || requestContentType == null));
+
             session.commit();
             return createUpdateResponse(resource, created);
 
         } finally {
             lock.release();
+        }
+    }
+
+    /**
+     * Make sure the resource has the specified interaction model
+     */
+    private static void ensureInteractionType(final FedoraResource resource, final String interactionModel,
+            final boolean defaultContent) {
+        if (interactionModel != null) {
+            if (!interactionModel.equals("ldp:NonRDFSource") && !resource.hasType(interactionModel)) {
+                resource.addType(interactionModel);
+            }
+        } else if (defaultContent) {
+            resource.addType("ldp:BasicContainer");
         }
     }
 
@@ -499,7 +514,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @param requestContentType the request content type
      * @param slug the slug value
      * @param requestBodyStream the request body stream
-     * @param link the link value
+     * @param links the link values
      * @param digest the digest header
      * @return 201
      * @throws InvalidChecksumException if invalid checksum exception occurred
@@ -517,11 +532,11 @@ public class FedoraLdp extends ContentExposingResource {
                                  @HeaderParam(CONTENT_TYPE) final MediaType requestContentType,
                                  @HeaderParam("Slug") final String slug,
                                  @ContentLocation final InputStream requestBodyStream,
-                                 @HeaderParam(LINK) final String link,
+                                 @HeaderParam(LINK) final List<String> links,
                                  @HeaderParam("Digest") final String digest)
             throws InvalidChecksumException, IOException, MalformedRdfException, UnsupportedAlgorithmException {
 
-        final String interactionModel = checkInteractionModel(link);
+        final String interactionModel = checkInteractionModel(links);
 
         if (!(resource() instanceof Container)) {
             throw new ClientErrorException("Object cannot have child nodes", CONFLICT);
@@ -545,7 +560,8 @@ public class FedoraLdp extends ContentExposingResource {
 
             final MediaType effectiveContentType
                     = requestBodyStream == null || requestContentType == null ? null : contentType;
-            resource = createFedoraResource(newObjectPath, interactionModel);
+            resource = createFedoraResource(newObjectPath, interactionModel, effectiveContentType,
+                    !(requestBodyStream == null || requestContentType == null));
 
             try (final RdfStream resourceTriples =
                     resource.isNew() ? new DefaultRdfStream(asNode(resource())) : getResourceTriples()) {
@@ -573,6 +589,10 @@ public class FedoraLdp extends ContentExposingResource {
                         }
                     }
                 }
+
+                ensureInteractionType(resource, interactionModel,
+                        (requestBodyStream == null || requestContentType == null));
+
                 session.commit();
             } catch (final Exception e) {
                 checkForInsufficientStorageException(e, e);
@@ -722,34 +742,32 @@ public class FedoraLdp extends ContentExposingResource {
         servletResponse.addHeader("Allow", options);
     }
 
-    private static String getRequestedObjectType(final MediaType requestContentType,
-                                          final ContentDisposition contentDisposition) {
-
-        if (requestContentType != null) {
-          final ContentType ctRequest = create(requestContentType.toString());
-
-          // Text files and CSV files are not considered RDF to Fedora, though CSV is a valid
-          // RDF type to Jena (although deprecated).  SPARQL updates are done on containers.
-          if (matchContentType(ctRequest, ctTextPlain) || matchContentType(ctRequest, ctTextCSV) ||
-              !isRdfContentType(requestContentType.toString()) && !matchContentType(ctRequest, ctSPARQLUpdate)) {
-              return FEDORA_BINARY;
-          }
+    private static boolean isRDF(final MediaType requestContentType) {
+        if (requestContentType == null) {
+            return false;
         }
 
-        if (contentDisposition != null && contentDisposition.getType().equals("attachment")) {
-            return FEDORA_BINARY;
+        final ContentType ctRequest = create(requestContentType.toString());
+
+        // Text files and CSV files are not considered RDF to Fedora, though CSV is a valid
+        // RDF type to Jena (although deprecated).
+        if (matchContentType(ctRequest, ctTextPlain) || matchContentType(ctRequest, ctTextCSV)) {
+            return false;
         }
 
-        return FEDORA_CONTAINER;
+        // SPARQL updates are done on containers.
+        return isRdfContentType(requestContentType.toString()) || matchContentType(ctRequest, ctSPARQLUpdate);
     }
 
-    private FedoraResource createFedoraResource(final String path, final String interactionModel) {
+    private FedoraResource createFedoraResource(final String path, final String interactionModel,
+            final MediaType contentType, final boolean contentPresent) {
         final FedoraResource result;
-        if (interactionModel != null && interactionModel.equals("ldp:NonRDFSource")) {
+        if ("ldp:NonRDFSource".equals(interactionModel) ||
+                (contentPresent && interactionModel == null && !isRDF(contentType))) {
             result = binaryService.findOrCreate(session.getFedoraSession(), path);
         } else {
             result = containerService.findOrCreate(session.getFedoraSession(), path);
-            if (interactionModel != null) {
+            if (interactionModel != null && !interactionModel.equals("ldp:BasicContainer")) {
                 result.addType(interactionModel);
             }
         }
@@ -807,31 +825,33 @@ public class FedoraLdp extends ContentExposingResource {
         return digestValue;
     }
 
-    private static String checkInteractionModel(final String link) {
-        if (link == null) {
+    private static String checkInteractionModel(final List<String> links) {
+        if (links == null) {
             return null;
         }
 
         try {
-            final Link linq = Link.valueOf(link);
-            if (!"type".equals(linq.getRel())) {
-                return null;
-            }
-
-            final Resource type = createResource(linq.getUri().toString());
-            if (type.equals(NON_RDF_SOURCE) || type.equals(BASIC_CONTAINER) ||
-                    type.equals(DIRECT_CONTAINER) || type.equals(INDIRECT_CONTAINER)) {
-                return "ldp:" + type.getLocalName();
-            } else {
-                LOGGER.info("Invalid interaction model: {}", type);
-                throw new CannotCreateResourceException("Invalid interaction model: " + type);
+            for (String link : links) {
+                final Link linq = Link.valueOf(link);
+                if ("type".equals(linq.getRel())) {
+                    final Resource type = createResource(linq.getUri().toString());
+                    if (type.equals(NON_RDF_SOURCE) || type.equals(BASIC_CONTAINER) ||
+                            type.equals(DIRECT_CONTAINER) || type.equals(INDIRECT_CONTAINER)) {
+                        return "ldp:" + type.getLocalName();
+                    } else {
+                        LOGGER.info("Invalid interaction model: {}", type);
+                        throw new CannotCreateResourceException("Invalid interaction model: " + type);
+                    }
+                }
             }
         } catch (final RuntimeException e) {
             if (e instanceof IllegalArgumentException | e instanceof UriBuilderException) {
-                throw new ClientErrorException("Invalid link specified: " + link, BAD_REQUEST);
+                throw new ClientErrorException("Invalid link specified: " + String.join(", ", links), BAD_REQUEST);
             }
             throw e;
         }
+
+        return null;
     }
 
     /**

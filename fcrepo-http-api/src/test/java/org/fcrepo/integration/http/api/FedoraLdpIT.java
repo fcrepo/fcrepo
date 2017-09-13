@@ -282,10 +282,37 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testHeadDefaultRDF() throws IOException {
+        final String id = getRandomUniqueId();
+        final HttpPut put = putObjMethod(id, "text/turtle", "<> a <http://example.com/Foo> .");
+        executeAndClose(put);
+
+        final HttpHead headObjMethod = headObjMethod(id);
+        try (final CloseableHttpResponse response = execute(headObjMethod)) {
+            final Collection<String> links = getLinkHeaders(response);
+            assertTrue("Didn't find LDP BasicContainer link header!", links.contains(BASIC_CONTAINER_LINK_HEADER));
+        }
+    }
+
+    @Test
+    public void testHeadDefaultNonRDF() throws IOException {
+        final String id = getRandomUniqueId();
+        final HttpPut put = putObjMethod(id, "text/plain", "<> a <http://example.com/Foo> .");
+        executeAndClose(put);
+
+        final HttpHead headObjMethod = headObjMethod(id);
+        try (final CloseableHttpResponse response = execute(headObjMethod)) {
+            final Collection<String> links = getLinkHeaders(response);
+            assertTrue("Didn't find LDP NonRDFSource link header!", links.contains(NON_RDF_SOURCE_LINK_HEADER));
+        }
+    }
+
+    @Test
     public void testHeadDirectContainer() throws IOException {
         final String id = getRandomUniqueId();
-        createObjectAndClose(id);
-        addMixin(id, DIRECT_CONTAINER.getURI());
+        final HttpPut put = putObjMethod(id);
+        put.setHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
+        executeAndClose(put);
 
         final HttpHead headObjMethod = headObjMethod(id);
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
@@ -297,8 +324,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
     @Test
     public void testHeadIndirectContainer() throws IOException {
         final String id = getRandomUniqueId();
-        createObjectAndClose(id);
-        addMixin(id, INDIRECT_CONTAINER.getURI());
+        final HttpPut put = putObjMethod(id);
+        put.setHeader(LINK, INDIRECT_CONTAINER_LINK_HEADER);
+        executeAndClose(put);
 
         final HttpHead headObjMethod = headObjMethod(id);
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
