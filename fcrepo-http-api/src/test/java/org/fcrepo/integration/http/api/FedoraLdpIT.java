@@ -555,6 +555,41 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testGetRDFSourceWithPreferMinimal() throws IOException {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+
+        final HttpGet getMethod = new HttpGet(serverAddress + id);
+        final String preferHeader = "return=minimal";
+        getMethod.addHeader("Prefer", preferHeader);
+
+        try (final CloseableHttpResponse response = execute(getMethod)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final Collection<String> preferenceApplied = getHeader(response, "Preference-Applied");
+            assertTrue("Preference-Applied header doesn't matched", preferenceApplied.contains(preferHeader));
+        }
+    }
+
+    @Test
+    public void testGetRDFSourceWithPreferRepresentation() throws IOException {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+
+        final HttpGet getMethod = new HttpGet(serverAddress + id);
+        final String preferHeader = "return=representation;"
+                + " include=\"http://fedora.info/definitions/v4/repository#InboundReferences\";"
+                + " omit=\"http://www.w3.org/ns/ldp#PreferMembership http://www.w3.org/ns/ldp#PreferContainment\"";
+        getMethod.addHeader("Prefer", preferHeader);
+
+        try (final CloseableHttpResponse response = execute(getMethod)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final Collection<String> preferenceApplied = getHeader(response, "Preference-Applied");
+            System.out.println("Preference-Applied header: " + preferenceApplied.toArray()[0]);
+            assertTrue("Preference-Applied header doesn't matched", preferenceApplied.contains(preferHeader));
+        }
+    }
+
+    @Test
     public void testGetNonRDFSource() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", "some content");

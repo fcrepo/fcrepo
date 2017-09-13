@@ -17,11 +17,21 @@
  */
 package org.fcrepo.http.commons.domain;
 
+import static java.util.Arrays.asList;
+import static java.util.Optional.ofNullable;
+import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.SERVER_MANAGED;
+import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINS;
+import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
+
 import org.glassfish.jersey.message.internal.HttpHeaderReader;
 
 import javax.servlet.http.HttpServletResponse;
+
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -126,12 +136,47 @@ public class PreferTag implements Comparable<PreferTag> {
      * @param servletResponse the servlet response
      */
     public void addResponseHeaders(final HttpServletResponse servletResponse) {
-        if (!value.equals("minimal")) {
-            servletResponse.addHeader("Preference-Applied", "return=representation");
-        } else {
-            servletResponse.addHeader("Preference-Applied", "return=minimal");
+
+        final String receivedParam = ofNullable(params.get("received")).orElse("");
+        final List<String> includes = asList(ofNullable(params.get("include")).orElse(" ").split(" "));
+        final List<String> omits = asList(ofNullable(params.get("omit")).orElse(" ").split(" "));
+
+        final StringBuilder includeBuilder = new StringBuilder();
+        final StringBuilder omitBuilder = new StringBuilder();
+
+        if (!(value.equals("minimal") || receivedParam.equals("minimal"))) {
+            final String[] paramsApplied = { SERVER_MANAGED.toString(),
+                                             LDP_NAMESPACE + "PreferMinimalContainer",
+                                             LDP_NAMESPACE + "PreferMembership",
+                                             LDP_NAMESPACE + "PreferContainment" };
+            final List<String> paramsAppliedList = Arrays.asList(paramsApplied);
+            includes.stream().forEach(param -> includeBuilder.append(paramsAppliedList.contains(param)
+                    || param.equals(INBOUND_REFERENCES.toString())
+                    || param.equals(EMBED_CONTAINS.toString()) ? param + " " : ""));
+
+            // Note: include params prioritized over omits during implementation
+            omits.stream().forEach(param -> omitBuilder.append(
+                    paramsAppliedList.contains(param) && !includes.contains(param) ? param + " " : ""));
         }
+
+        // build the header for Preference Applied
+        final String appliedReturn = value.equals("minimal") ? "return=minimal" : "return=representation";
+        final String appliedReceived = receivedParam.equals("minimal") ? "received=minimal" : "";
+
+        final StringBuilder preferenceAppliedBuilder = new StringBuilder(appliedReturn);
+        preferenceAppliedBuilder.append(appliedReceived.length() > 0 ? "; " + appliedReceived : "");
+        appendHeaderParam(preferenceAppliedBuilder, "include", includeBuilder.toString().trim());
+        appendHeaderParam(preferenceAppliedBuilder, "omit", omitBuilder.toString().trim());
+
+        servletResponse.addHeader("Preference-Applied", preferenceAppliedBuilder.toString().trim());
+
         servletResponse.addHeader("Vary", "Prefer");
+    }
+
+    private void appendHeaderParam(final StringBuilder builder, final String paramName, final String paramValue) {
+        if (paramValue.length() > 0) {
+            builder.append("; " + paramName + "=\"" + paramValue.trim() + "\"");
+        }
     }
 
     /**
