@@ -18,6 +18,9 @@
 package org.fcrepo.kernel.api.exception;
 
 /**
+ * Thrown in circumstances where a client has used an unknown or unsupported hash algorithm
+ * in a request, e.g. with `Digest` or `Want-Digest`.
+ *
  * @author harring
  * @since 2017-09-12
  */
