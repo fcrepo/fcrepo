@@ -15,21 +15,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.event.serialization;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.time.Instant.ofEpochMilli;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
-import static org.apache.jena.vocabulary.DCTerms.identifier;
-import static org.apache.jena.vocabulary.DCTerms.isPartOf;
 import static org.apache.jena.vocabulary.RDF.type;
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.time.Instant.ofEpochMilli;
-import static org.fcrepo.kernel.api.RdfLexicon.EVENT_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.ACTIVITY_STREAMS_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.PROV_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.observer.OptionalValues.BASE_URL;
-import static org.fcrepo.kernel.api.observer.OptionalValues.USER_AGENT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
@@ -45,28 +43,31 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.fcrepo.kernel.api.observer.EventType;
+import org.fcrepo.kernel.api.observer.FedoraEvent;
+
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.SimpleSelector;
-import org.fcrepo.kernel.api.observer.EventType;
-import org.fcrepo.kernel.api.observer.FedoraEvent;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 /**
- * <p>FedoraEventTest class.</p>
+ * <p>
+ * JsonLdEventTest class.
+ * </p>
  *
  * @author acoburn
+ * @author dbernstein
  */
 @RunWith(MockitoJUnitRunner.class)
 public class JsonLdEventTest {
-
-    private static String FOAF_NAMESPACE = "http://xmlns.com/foaf/0.1/";
 
     @Mock
     private FedoraEvent mockEvent;
@@ -75,10 +76,17 @@ public class JsonLdEventTest {
 
     private String path = "/path/to/resource";
 
+    private String eventResourceId = "urn:uuid:some-event";
+
+    private String username = "fedoraadmin";
+
     private Instant timestamp = ofEpochMilli(1465919304000L);
+
+    private String userAgentBaseUri = "https://example.com/agents/";
 
     @Before
     public void setUp() {
+        System.setProperty(JsonLDEventMessage.USER_AGENT_BASE_URI_PROPERTY, userAgentBaseUri);
         final Set<EventType> typeSet = new HashSet<>();
         typeSet.add(EventType.RESOURCE_MODIFICATION);
         final Set<String> resourceTypeSet = new HashSet<>();
@@ -87,13 +95,12 @@ public class JsonLdEventTest {
         resourceTypeSet.add("http://example.com/SampleType");
         final Map<String, String> auxInfo = new HashMap<>();
         auxInfo.put(BASE_URL, baseUrl);
-        auxInfo.put(USER_AGENT, "fcrepo-client/1.0");
         when(mockEvent.getTypes()).thenReturn(typeSet);
         when(mockEvent.getResourceTypes()).thenReturn(resourceTypeSet);
         when(mockEvent.getPath()).thenReturn(path);
-        when(mockEvent.getUserID()).thenReturn("fedo raadmin");
+        when(mockEvent.getUserID()).thenReturn(username);
         when(mockEvent.getDate()).thenReturn(timestamp);
-        when(mockEvent.getEventID()).thenReturn("urn:uuid:some-event");
+        when(mockEvent.getEventID()).thenReturn(eventResourceId);
         when(mockEvent.getInfo()).thenReturn(auxInfo);
     }
 
@@ -104,43 +111,29 @@ public class JsonLdEventTest {
         final Model model = createDefaultModel();
         model.read(new ByteArrayInputStream(json.getBytes(UTF_8)), baseUrl + path, "JSON-LD");
 
-        final Resource subject = createResource(baseUrl + path);
+        final Resource resourceSubject = createResource(baseUrl + path);
+        final Resource eventSubject = createResource(eventResourceId);
+
         final Resource blankNode = null;
 
-        assertTrue(model.contains(subject, type, createResource(REPOSITORY_NAMESPACE + "Resource")));
-        assertTrue(model.contains(subject, type, createResource(REPOSITORY_NAMESPACE + "Container")));
-        assertTrue(model.contains(subject, type, createResource(PROV_NAMESPACE + "Entity")));
-        assertTrue(model.contains(subject, type, createResource("http://example.com/SampleType")));
-        assertTrue(model.contains(subject, isPartOf, createResource(baseUrl)));
-        assertTrue(model.contains(subject, createProperty(PROV_NAMESPACE + "wasGeneratedBy")));
-        assertTrue(model.contains(subject, createProperty(PROV_NAMESPACE + "wasAttributedTo")));
+        assertTrue(model.contains(resourceSubject, type, createResource(REPOSITORY_NAMESPACE + "Resource")));
+        assertTrue(model.contains(resourceSubject, type, createResource(REPOSITORY_NAMESPACE + "Container")));
+        assertTrue(model.contains(resourceSubject, type, createResource(PROV_NAMESPACE + "Entity")));
+        assertTrue(model.contains(resourceSubject, type, createResource("http://example.com/SampleType")));
+        assertTrue(model.contains(eventSubject, type, createResource(EventType.RESOURCE_MODIFICATION.getType())));
+        assertTrue(model.contains(eventSubject, createProperty(ACTIVITY_STREAMS_NAMESPACE + "actor"), createResource(
+                getAgentIRI())));
+        assertTrue(model.contains(eventSubject, createProperty(ACTIVITY_STREAMS_NAMESPACE + "object"),
+                resourceSubject));
 
-        final AtomicInteger activities = new AtomicInteger();
-        model.listStatements(new SimpleSelector(subject, createProperty(PROV_NAMESPACE + "wasGeneratedBy"), blankNode))
-            .forEachRemaining(statement -> {
-                final Resource r = statement.getResource();
-                assertTrue(r.hasProperty(type, createResource(EVENT_NAMESPACE + "ResourceModification")));
-                assertTrue(r.hasProperty(type, createResource(PROV_NAMESPACE + "Activity")));
-                assertTrue(r.hasProperty(identifier, createResource("urn:uuid:some-event")));
-                activities.incrementAndGet();
-            });
-        assertEquals(activities.get(), 1);
-
-        final AtomicInteger agents = new AtomicInteger();
-        model.listStatements(new SimpleSelector(subject, createProperty(PROV_NAMESPACE + "wasAttributedTo"), blankNode))
-            .forEachRemaining(statement -> {
-                final Resource r = statement.getResource();
-                if (r.hasProperty(type, createResource(PROV_NAMESPACE + "Person"))) {
-                    assertTrue(r.hasProperty(type, createResource(PROV_NAMESPACE + "Person")));
-                    assertTrue(r.hasProperty(createProperty(FOAF_NAMESPACE + "name"), "fedo raadmin"));
-                } else {
-                    assertTrue(r.hasProperty(type, createResource(PROV_NAMESPACE + "SoftwareAgent")));
-                    assertTrue(r.hasProperty(createProperty(FOAF_NAMESPACE + "name"), "fcrepo-client/1.0"));
-                }
-                agents.incrementAndGet();
-            });
-        assertEquals(agents.get(), 2);
-        assertEquals(1, 1);
+        final AtomicInteger name = new AtomicInteger();
+        model.listStatements(new SimpleSelector(null, createProperty(ACTIVITY_STREAMS_NAMESPACE + "name"), blankNode))
+                .forEachRemaining(statement -> {
+                    assertEquals(EventType.RESOURCE_MODIFICATION.getName(), statement.getString());
+                    assertEquals(eventSubject.toString(), statement.asTriple().getSubject().toString());
+                    name.incrementAndGet();
+                });
+        assertEquals(name.get(), 1);
     }
 
     @Test
@@ -152,9 +145,20 @@ public class JsonLdEventTest {
         final JsonNode node = mapper.readTree(json);
         assertTrue(node.has("@context"));
         assertTrue(node.has("id"));
-        assertEquals(node.get("id").textValue(), baseUrl + path);
+        assertTrue(node.has("name"));
+        assertTrue(node.has("type"));
+        assertTrue(node.has("object"));
+        assertTrue(node.has("actor"));
+
+        assertEquals(eventResourceId, node.get("id").textValue());
+        assertEquals(EventType.RESOURCE_MODIFICATION.getName(), node.get("name").textValue());
+        assertEquals(EventType.RESOURCE_MODIFICATION.getType(), node.get("type").get(0).asText());
+        assertEquals(getAgentIRI(), node.get("actor").asText());
+
         final List<String> types = new ArrayList<>();
-        node.get("type").elements().forEachRemaining(n -> {
+        final JsonNode objectNode = node.get("object");
+        assertEquals(baseUrl + path, objectNode.get("id").asText());
+        objectNode.get("type").elements().forEachRemaining(n -> {
             types.add(n.textValue());
         });
         assertEquals(types.size(), 4);
@@ -162,40 +166,9 @@ public class JsonLdEventTest {
         assertTrue(types.contains(REPOSITORY_NAMESPACE + "Container"));
         assertTrue(types.contains(PROV_NAMESPACE + "Entity"));
         assertTrue(types.contains("http://example.com/SampleType"));
-        assertTrue(node.has("isPartOf"));
-        assertEquals(node.get("isPartOf").textValue(), baseUrl);
+    }
 
-        // verify prov:Activity node
-        assertTrue(node.has("wasGeneratedBy"));
-        final JsonNode activity = node.get("wasGeneratedBy");
-        final List<String> activityTypes = new ArrayList<>();
-        assertTrue(activity.has("type"));
-        activity.get("type").elements().forEachRemaining(n -> {
-            activityTypes.add(n.textValue());
-        });
-        assertEquals(activityTypes.size(), 2);
-        assertTrue(activityTypes.contains(EVENT_NAMESPACE + "ResourceModification"));
-        assertTrue(activityTypes.contains(PROV_NAMESPACE + "Activity"));
-        assertTrue(activity.has("atTime"));
-        assertTrue(activity.has("identifier"));
-        assertEquals(activity.get("atTime").textValue(), timestamp.toString());
-        assertEquals(activity.get("identifier").textValue(), "urn:uuid:some-event");
-
-        // verify prov:Agent node
-        assertTrue(node.has("wasAttributedTo"));
-        final AtomicInteger agents = new AtomicInteger();
-        node.get("wasAttributedTo").elements().forEachRemaining(n -> {
-            assertTrue(n.has("type"));
-            assertTrue(n.has("name"));
-            if (n.get("type").textValue().equals(PROV_NAMESPACE + "Person")) {
-                assertEquals(n.get("type").textValue(), PROV_NAMESPACE + "Person");
-                assertEquals(n.get("name").textValue(), "fedo raadmin");
-            } else {
-                assertEquals(n.get("type").textValue(), PROV_NAMESPACE + "SoftwareAgent");
-                assertEquals(n.get("name").textValue(), "fcrepo-client/1.0");
-            }
-            agents.incrementAndGet();
-        });
-        assertEquals(agents.get(), 2);
+    private String getAgentIRI() {
+        return userAgentBaseUri + username;
     }
 }
