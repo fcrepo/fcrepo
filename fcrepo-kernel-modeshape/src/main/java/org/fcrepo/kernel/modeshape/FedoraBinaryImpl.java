@@ -380,6 +380,21 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
         }
     }
 
+    @Override
+    public Collection<URI> checkFixity(final IdentifierConverter<Resource, FedoraResource> idTranslator,
+                               final Collection<String> algorithms) {
+
+        fixityCheckCounter.inc();
+
+        try (final Timer.Context context = timer.time()) {
+
+            LOGGER.debug("Checking resource: " + getPath());
+            return CacheEntryFactory.forProperty(getProperty(JCR_DATA)).checkFixity(algorithms);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
     /**
      * When deleting the binary, we also need to clean up the description document.
      */

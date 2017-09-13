@@ -40,7 +40,12 @@ import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import javax.inject.Inject;
 import javax.jcr.Node;
@@ -379,6 +384,76 @@ public class FedoraBinaryImplIT extends AbstractIT {
                     fixityResults.contains(null,
                             HAS_MESSAGE_DIGEST,
                             createResource("urn:sha1:87acec17cd9dcd20a716cc2cf67417b71c8a7016")));
+        } finally {
+            session.expire();
+        }
+    }
+
+    @Test
+    public void testGetFixityWithWantDigest() throws RepositoryException, InvalidChecksumException, URISyntaxException {
+        final Collection<String> digestAlgs = Collections.singletonList("SHA-1");
+        final String pid = "testFixityWithWantDigest-" + randomUUID();
+        final FedoraSession session = repo.login();
+        try {
+
+            containerService.findOrCreate(session, pid);
+
+            binaryService.findOrCreate(session, pid + "/testRepositoryContent").setContent(
+                    new ByteArrayInputStream("01234567890123456789012345678901234567890123456789".getBytes()),
+                    "text/plain",
+                    null,
+                    "numbers.txt",
+                    null
+                    );
+
+            session.commit();
+
+            final FedoraBinary ds = binaryService.findOrCreate(session, pid + "/testRepositoryContent");
+
+            final Collection<URI> fixityResults1 = ds.checkFixity(idTranslator, digestAlgs);
+
+            assertNotEquals(0, fixityResults1.size());
+
+            final String checksum = fixityResults1.toArray()[0].toString();
+
+            assertTrue("Fixity Checksum doesn't match",
+                checksum.equals("urn:sha1:9578f951955d37f20b601c26591e260c1e5389bf"));
+        } finally {
+            session.expire();
+        }
+    }
+
+    @Test
+    public void testGetFixityWithWantDigestMultuple()
+            throws RepositoryException, InvalidChecksumException, URISyntaxException {
+        final String[] digestAlgValues = {"SHA-1", "md5"};
+        final Collection<String> digestAlgs = Arrays.asList(digestAlgValues);
+        final String pid = "testFixityWithWantDigestMultiple-" + randomUUID();
+        final FedoraSession session = repo.login();
+        try {
+
+            containerService.findOrCreate(session, pid);
+
+            binaryService.findOrCreate(session, pid + "/testRepositoryContent").setContent(
+                    new ByteArrayInputStream("01234567890123456789012345678901234567890123456789".getBytes()),
+                    "text/plain",
+                    null,
+                    "numbers.txt",
+                    null
+                    );
+
+            session.commit();
+
+            final FedoraBinary ds = binaryService.findOrCreate(session, pid + "/testRepositoryContent");
+
+            final Collection<URI> fixityResults = ds.checkFixity(idTranslator, digestAlgs);
+
+            assertEquals(2, fixityResults.size());
+
+            assertTrue("SHA-1 fixity checksum doesn't match",
+                    fixityResults.contains(new URI("urn:sha1:9578f951955d37f20b601c26591e260c1e5389bf")));
+            assertTrue("MD5 fixity checksum doesn't match",
+                    fixityResults.contains(new URI("urn:md5:baed005300234f3d1503c50a48ce8e6f")));
         } finally {
             session.expire();
         }

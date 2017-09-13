@@ -91,4 +91,14 @@ public interface FedoraBinary extends FedoraResource {
      */
     RdfStream getFixity(IdentifierConverter<Resource, FedoraResource> idTranslator,
                         URI contentDigest, long size);
+
+
+    /**
+     * Digest this datastream with the digest algorithms provided
+     * @param idTranslator the id translator
+     * @param algorithms the digest algorithms to be used
+     * @return the checksums of this datastream
+     */
+    Collection<URI> checkFixity(IdentifierConverter<Resource, FedoraResource> idTranslator,
+                              Collection<String> algorithms);
 }

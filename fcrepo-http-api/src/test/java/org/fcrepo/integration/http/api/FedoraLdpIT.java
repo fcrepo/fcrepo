@@ -192,6 +192,10 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     private static final String TEST_ACTIVATION_PROPERTY = "RUN_TEST_CREATE_MANY";
 
+    private static final String WANT_DIGEST = "Want-Digest";
+
+    private static final String DIGEST = "Digest";
+
     private static final Logger LOGGER = getLogger(FedoraLdpIT.class);
 
     private static DateTimeFormatter headerFormat =
@@ -319,6 +323,43 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final ContentDisposition disposition =
                     new ContentDisposition(response.getFirstHeader(CONTENT_DISPOSITION).getValue());
             assertEquals("attachment", disposition.getType());
+        }
+    }
+
+    @Test
+    public void testHeadDatastreamWithWantDigest() throws IOException, ParseException {
+        final String id = getRandomUniqueId();
+        createDatastream(id, "x", "01234567890123456789012345678901234567890123456789");
+
+        final HttpHead headObjMethod = headObjMethod(id + "/x");
+        headObjMethod.addHeader(WANT_DIGEST, "SHA-1");
+        try (final CloseableHttpResponse response = execute(headObjMethod)) {
+            assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
+            assertEquals(TEXT_PLAIN, response.getFirstHeader(CONTENT_TYPE).getValue());
+            assertTrue(response.getHeaders(DIGEST).length > 0);
+            final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
+            assertTrue("Fixity Checksum doesn't match",
+                    digesterHeaderValue.equals("sha1=9578f951955d37f20b601c26591e260c1e5389bf"));
+        }
+    }
+
+    @Test
+    public void testHeadDatastreamWithWantDigestMultiple() throws IOException, ParseException {
+        final String id = getRandomUniqueId();
+        createDatastream(id, "x", "01234567890123456789012345678901234567890123456789");
+
+        final HttpHead headObjMethod = headObjMethod(id + "/x");
+        headObjMethod.addHeader(WANT_DIGEST, "SHA-1, md5;q=0.3");
+        try (final CloseableHttpResponse response = execute(headObjMethod)) {
+            assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
+            assertEquals(TEXT_PLAIN, response.getFirstHeader(CONTENT_TYPE).getValue());
+            assertTrue(response.getHeaders(DIGEST).length > 0);
+
+            final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
+            assertTrue("SHA-1 Fixity Checksum doesn't match",
+                    digesterHeaderValue.indexOf("sha1=9578f951955d37f20b601c26591e260c1e5389bf") >= 0);
+            assertTrue("MD5 fixity checksum doesn't match",
+                    digesterHeaderValue.indexOf("md5=baed005300234f3d1503c50a48ce8e6f") >= 0);
         }
     }
 
@@ -486,6 +527,46 @@ public class FedoraLdpIT extends AbstractResourceIT {
             graph.find().forEachRemaining(quad -> {
                 assertEquals("Found a triple with incorrect subject!", correctDSSubject, quad.getSubject());
             });
+        }
+    }
+
+    @Test
+    public void testGetNonRDFSourceWithWantDigest() throws IOException {
+        final String id = getRandomUniqueId();
+        createDatastream(id, "x", "01234567890123456789012345678901234567890123456789");
+
+        final HttpGet getMethod = getDSMethod(id, "x");
+        getMethod.addHeader(WANT_DIGEST, "SHA-1");
+        try (final CloseableHttpResponse response = execute(getMethod)) {
+            final HttpEntity entity = response.getEntity();
+            final String content = EntityUtils.toString(entity);
+            assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
+            assertEquals("01234567890123456789012345678901234567890123456789", content);
+
+            final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
+            assertTrue("Fixity Checksum doesn't match",
+                    digesterHeaderValue.equals("sha1=9578f951955d37f20b601c26591e260c1e5389bf"));
+        }
+    }
+
+    @Test
+    public void testGetNonRDFSourceWithWantDigestMultiple() throws IOException {
+        final String id = getRandomUniqueId();
+        createDatastream(id, "x", "01234567890123456789012345678901234567890123456789");
+
+        final HttpGet getMethod = getDSMethod(id, "x");
+        getMethod.addHeader(WANT_DIGEST, "SHA-1,md5;q=0.3");
+        try (final CloseableHttpResponse response = execute(getMethod)) {
+            final HttpEntity entity = response.getEntity();
+            final String content = EntityUtils.toString(entity);
+            assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
+            assertEquals("01234567890123456789012345678901234567890123456789", content);
+
+            final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
+            assertTrue("SHA-1 Fixity Checksum doesn't match",
+                    digesterHeaderValue.indexOf("sha1=9578f951955d37f20b601c26591e260c1e5389bf") >= 0);
+            assertTrue("MD5 fixity checksum doesn't match",
+                    digesterHeaderValue.indexOf("md5=baed005300234f3d1503c50a48ce8e6f") >= 0);
         }
     }
 
