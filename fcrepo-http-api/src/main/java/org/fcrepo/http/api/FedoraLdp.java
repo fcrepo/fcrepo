@@ -32,7 +32,6 @@ import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.notAcceptable;
 import static javax.ws.rs.core.Response.ok;
-import static javax.ws.rs.core.Response.temporaryRedirect;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
@@ -205,7 +204,7 @@ public class FedoraLdp extends ContentExposingResource {
             final MediaType mediaType = MediaType.valueOf(((FedoraBinary) resource()).getMimeType());
 
             if (isExternalBody(mediaType)) {
-                builder = temporaryRedirect(URI.create(mediaType.getParameters().get("URL")));
+                builder = externalBodyRedirect(URI.create(mediaType.getParameters().get("URL")));
             }
 
             // we set the content-type explicitly to avoid content-negotiation from getting in the way

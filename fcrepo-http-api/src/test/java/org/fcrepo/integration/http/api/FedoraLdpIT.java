@@ -27,6 +27,7 @@ import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_LOCATION;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.Link.fromUri;
@@ -381,6 +382,33 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             assertEquals(TEMPORARY_REDIRECT.getStatusCode(), response.getStatusLine().getStatusCode());
             assertEquals(externalContentType, response.getFirstHeader(CONTENT_TYPE).getValue());
+            assertEquals("some:uri", response.getFirstHeader(CONTENT_LOCATION).getValue());
+            assertEquals("bytes", response.getFirstHeader("Accept-Ranges").getValue());
+            final ContentDisposition disposition =
+                    new ContentDisposition(response.getFirstHeader(CONTENT_DISPOSITION).getValue());
+            assertEquals("attachment", disposition.getType());
+        }
+    }
+
+    @Test
+    public void testGetExternalDatastream() throws IOException, ParseException {
+        final String externalContentType = "message/external-body;access-type=URL;url=\"some:uri\"";
+
+        final String id = getRandomUniqueId();
+        final HttpPut put = putObjMethod(id);
+        put.addHeader(CONTENT_TYPE, externalContentType);
+        assertEquals(CREATED.getStatusCode(), getStatus(put));
+
+        // Configure HEAD request to NOT follow redirects
+        final HttpGet getObjMethod = getObjMethod(id);
+        final RequestConfig.Builder requestConfig = RequestConfig.custom();
+        requestConfig.setRedirectsEnabled(false);
+        getObjMethod.setConfig(requestConfig.build());
+
+        try (final CloseableHttpResponse response = execute(getObjMethod)) {
+            assertEquals(TEMPORARY_REDIRECT.getStatusCode(), response.getStatusLine().getStatusCode());
+            assertEquals(externalContentType, response.getFirstHeader(CONTENT_TYPE).getValue());
+            assertEquals("some:uri", response.getFirstHeader(CONTENT_LOCATION).getValue());
             assertEquals("bytes", response.getFirstHeader("Accept-Ranges").getValue());
             final ContentDisposition disposition =
                     new ContentDisposition(response.getFirstHeader(CONTENT_DISPOSITION).getValue());
