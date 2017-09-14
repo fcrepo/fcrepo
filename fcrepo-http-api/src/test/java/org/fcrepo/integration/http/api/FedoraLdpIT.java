@@ -3173,4 +3173,42 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final Node mod = graph.find(ANY, ANY, LAST_MODIFIED_DATE.asNode(), ANY).next().getObject();
         assertEquals(cre.getLiteralValue(), mod.getLiteralValue());
     }
+
+    @Test
+    public void testDigestConsistency() throws IOException {
+        final String id = getRandomUniqueId();
+        executeAndClose(putDSMethod(id, "binary1", "some test content"));
+
+        final String headDigestValue;
+        final HttpHead headObjMethod = headObjMethod(id + "/binary1");
+        headObjMethod.addHeader(WANT_DIGEST, "sha1, md5");
+        try (final CloseableHttpResponse response = execute(headObjMethod)) {
+            assertTrue(response.getHeaders(DIGEST).length > 0);
+            headDigestValue = response.getHeaders(DIGEST)[0].getValue();
+        }
+
+        final HttpGet getObjMethod = getObjMethod(id + "/binary1");
+        getObjMethod.addHeader(WANT_DIGEST, "sha1, md5");
+        try (final CloseableHttpResponse response = execute(getObjMethod)) {
+            assertTrue(response.getHeaders(DIGEST).length > 0);
+            assertEquals(headDigestValue, response.getHeaders(DIGEST)[0].getValue());
+        }
+    }
+
+    @Test
+    public void testDigestAbsence() throws IOException {
+        final String id = getRandomUniqueId();
+        executeAndClose(putDSMethod(id, "binary1", "some test content"));
+
+        final String headDigestValue;
+        final HttpHead headObjMethod = headObjMethod(id + "/binary1");
+        try (final CloseableHttpResponse response = execute(headObjMethod)) {
+            assertTrue(response.getHeaders(DIGEST).length == 0);
+        }
+
+        final HttpGet getObjMethod = getObjMethod(id + "/binary1");
+        try (final CloseableHttpResponse response = execute(getObjMethod)) {
+            assertTrue(response.getHeaders(DIGEST).length == 0);
+        }
+    }
 }
