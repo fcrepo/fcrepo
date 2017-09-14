@@ -146,7 +146,7 @@ public class FedoraLdpTest {
     private final String path = "/some/path";
     private final String binaryPath = "/some/binary/path";
     private final String binaryDescriptionPath = "/some/other/path";
-    private final String constrDoc = "http://localhost/static/constraints/ContainerConstraints.rdf";
+    private final String containerConstraints = "http://localhost/static/constraints/ContainerConstraints.rdf";
     private FedoraLdp testObj;
 
     @Mock
