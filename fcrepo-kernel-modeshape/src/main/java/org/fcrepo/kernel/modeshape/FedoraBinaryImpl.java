@@ -20,10 +20,12 @@ package org.fcrepo.kernel.modeshape;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Timer;
+
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.FedoraBinary;
@@ -382,7 +384,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
 
     @Override
     public Collection<URI> checkFixity(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-                               final Collection<String> algorithms) {
+                               final Collection<String> algorithms) throws UnsupportedAlgorithmException {
 
         fixityCheckCounter.inc();
 

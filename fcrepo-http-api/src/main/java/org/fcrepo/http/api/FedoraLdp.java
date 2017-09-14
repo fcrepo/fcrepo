@@ -794,7 +794,6 @@ public class FedoraLdp extends ContentExposingResource {
         // handle the Want-Digest header with fixity check
         final Collection<String> preferredDigests = parseWantDigestHeader(wantDigest);
         if (preferredDigests.isEmpty()) {
-            LOGGER.warn("Unsupported digest algorithm provided in 'Want-Digest' header: {}", wantDigest);
             throw new UnsupportedAlgorithmException(
                     "Unsupported digest algorithm provided in 'Want-Digest' header: " + wantDigest);
         }

@@ -47,6 +47,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+
 import javax.inject.Inject;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -61,6 +62,7 @@ import org.apache.commons.io.IOUtils;
 import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
@@ -70,7 +72,9 @@ import org.fcrepo.kernel.api.services.ContainerService;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.springframework.test.context.ContextConfiguration;
 
 /**
@@ -90,6 +94,9 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
     @Inject
     ContainerService containerService;
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     private IdentifierConverter<Resource, FedoraResource> idTranslator;
 
@@ -390,7 +397,39 @@ public class FedoraBinaryImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetFixityWithWantDigest() throws RepositoryException, InvalidChecksumException, URISyntaxException {
+    public void testExceptionGetFixityWithWantDigest()
+            throws RepositoryException, InvalidChecksumException, UnsupportedAlgorithmException {
+        final Collection<String> digestAlgs = Collections.singletonList("sha256");
+        final String pid = "testFixityWithWantDigest-" + randomUUID();
+        final FedoraSession session = repo.login();
+        try {
+
+            containerService.findOrCreate(session, pid);
+
+            binaryService.findOrCreate(session, pid + "/testRepositoryContent").setContent(
+                    new ByteArrayInputStream("01234567890123456789012345678901234567890123456789".getBytes()),
+                    "text/plain",
+                    null,
+                    "numbers.txt",
+                    null
+                    );
+
+            session.commit();
+
+            final FedoraBinary ds = binaryService.findOrCreate(session, pid + "/testRepositoryContent");
+
+            // should thrown for unsupported digest algorithm sha256
+            thrown.expect(UnsupportedAlgorithmException.class);
+
+            ds.checkFixity(idTranslator, digestAlgs);
+        } finally {
+            session.expire();
+        }
+    }
+
+    @Test
+    public void testGetFixityWithWantDigest()
+            throws RepositoryException, InvalidChecksumException, URISyntaxException, UnsupportedAlgorithmException {
         final Collection<String> digestAlgs = Collections.singletonList("SHA-1");
         final String pid = "testFixityWithWantDigest-" + randomUUID();
         final FedoraSession session = repo.login();
@@ -425,7 +464,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
     @Test
     public void testGetFixityWithWantDigestMultuple()
-            throws RepositoryException, InvalidChecksumException, URISyntaxException {
+            throws RepositoryException, InvalidChecksumException, URISyntaxException, UnsupportedAlgorithmException {
         final String[] digestAlgValues = {"SHA-1", "md5"};
         final Collection<String> digestAlgs = Arrays.asList(digestAlgValues);
         final String pid = "testFixityWithWantDigestMultiple-" + randomUUID();

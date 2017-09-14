@@ -21,6 +21,8 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
 
+import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
+
 /**
  * A CacheEntry abstraction for the various possible types of entries
  * @author fasseg
@@ -40,7 +42,7 @@ public interface CacheEntry {
      * @param algorithms the given algorithms
      * @return a {@link FixityResult} containing the relevant data
      */
-    Collection<URI> checkFixity(final Collection<String> algorithms);
+    Collection<URI> checkFixity(final Collection<String> algorithms) throws UnsupportedAlgorithmException;
 
     /**
      * Get a raw input stream from the underlying store

@@ -17,8 +17,8 @@
  */
 package org.fcrepo.kernel.modeshape.utils;
 
-import org.apache.http.impl.auth.UnsupportedDigestAlgorithmException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.utils.CacheEntry;
 import org.fcrepo.kernel.api.utils.ContentDigest;
 import org.fcrepo.kernel.api.utils.FixityResult;
@@ -95,9 +95,10 @@ public abstract class BasicCacheEntry implements CacheEntry {
      *
      * @param algorithms the digest algorithms to be used
      * @return the checksums for the digest algorithms
+     * @throws UnsupportedAlgorithmException
      */
     @Override
-    public Collection<URI> checkFixity(final Collection<String> algorithms) {
+    public Collection<URI> checkFixity(final Collection<String> algorithms) throws UnsupportedAlgorithmException {
 
         try {
 
@@ -108,7 +109,7 @@ public abstract class BasicCacheEntry implements CacheEntry {
                     digestStream = new DigestInputStream(digestStream, MessageDigest.getInstance(digestAlg));
                     digestInputStreams.put(digestAlg, (DigestInputStream)digestStream);
                 } catch (NoSuchAlgorithmException e) {
-                    throw new UnsupportedDigestAlgorithmException("Unsupported digest algorithm: " + digestAlg);
+                    throw new UnsupportedAlgorithmException("Unsupported digest algorithm: " + digestAlg);
                 }
             }
 
