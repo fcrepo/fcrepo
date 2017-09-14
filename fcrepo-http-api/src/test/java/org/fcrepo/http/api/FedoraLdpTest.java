@@ -639,7 +639,8 @@ public class FedoraLdpTest {
     }
 
     @Test
-    public void testGetWithObjectIncludeReferences() throws ParseException, IOException {
+    public void testGetWithObjectIncludeReferences()
+            throws ParseException, IOException, UnsupportedAlgorithmException {
         setResource(Container.class);
         setField(testObj, "prefer", new MultiPrefer("return=representation; include=\"" + INBOUND_REFERENCES + "\""));
         final Response actual = testObj.getResource(null);
@@ -692,7 +693,7 @@ public class FedoraLdpTest {
 
     @Test
     @SuppressWarnings({"resource", "unchecked"})
-    public void testGetWithBinaryDescription() throws IOException {
+    public void testGetWithBinaryDescription() throws IOException, UnsupportedAlgorithmException {
 
         final NonRdfSourceDescription mockResource
                 = (NonRdfSourceDescription)setResource(NonRdfSourceDescription.class);

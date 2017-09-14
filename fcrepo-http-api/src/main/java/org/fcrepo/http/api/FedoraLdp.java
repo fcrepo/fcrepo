@@ -19,6 +19,7 @@ package org.fcrepo.http.api;
 
 
 import static com.google.common.base.Strings.nullToEmpty;
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
@@ -71,6 +72,7 @@ import java.net.URI;
 import java.net.URLDecoder;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -148,6 +150,10 @@ public class FedoraLdp extends ContentExposingResource {
 
     static final String HTTP_HEADER_ACCEPT_PATCH = "Accept-Patch";
 
+    static final String WANT_DIGEST = "Want-Digest";
+
+    static final String DIGEST = "Digest";
+
     @PathParam("path") protected String externalPath;
 
     @Inject private FedoraHttpConfiguration httpConfiguration;
@@ -186,7 +192,7 @@ public class FedoraLdp extends ContentExposingResource {
     @Produces({ TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
         N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
         TURTLE_X, TEXT_HTML_WITH_CHARSET })
-    public Response head() {
+    public Response head() throws UnsupportedAlgorithmException {
         LOGGER.info("HEAD for: {}", externalPath);
 
         checkCacheControlHeaders(request, servletResponse, resource(), session);
@@ -204,6 +210,12 @@ public class FedoraLdp extends ContentExposingResource {
 
             // we set the content-type explicitly to avoid content-negotiation from getting in the way
             builder.type(mediaType.toString());
+
+            // Respect the Want-Digest header with fixity check
+            final String wantDigest = headers.getHeaderString(WANT_DIGEST);
+            if (!isNullOrEmpty(wantDigest)) {
+                builder.header(DIGEST, handleWantDigestHeader((FedoraBinary)resource(), wantDigest));
+            }
         } else {
             final String accept = headers.getHeaderString(HttpHeaders.ACCEPT);
             if (accept == null || "*/*".equals(accept)) {
@@ -238,7 +250,8 @@ public class FedoraLdp extends ContentExposingResource {
     @Produces({TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
             N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
             TURTLE_X, TEXT_HTML_WITH_CHARSET})
-    public Response getResource(@HeaderParam("Range") final String rangeValue) throws IOException {
+    public Response getResource(@HeaderParam("Range") final String rangeValue)
+            throws IOException, UnsupportedAlgorithmException {
         checkCacheControlHeaders(request, servletResponse, resource(), session);
 
         LOGGER.info("GET resource '{}'", externalPath);
@@ -253,6 +266,12 @@ public class FedoraLdp extends ContentExposingResource {
 
             if (resource() instanceof FedoraBinary && acceptableMediaTypes.size() > 0) {
                 final MediaType mediaType = MediaType.valueOf(((FedoraBinary) resource()).getMimeType());
+
+                // Respect the Want-Digest header for fixity check
+                final String wantDigest = headers.getHeaderString(WANT_DIGEST);
+                if (!isNullOrEmpty(wantDigest)) {
+                    servletResponse.addHeader(DIGEST, handleWantDigestHeader((FedoraBinary)resource(), wantDigest));
+                }
 
                 if (!acceptableMediaTypes.stream().anyMatch(t -> t.isCompatible(mediaType))) {
                     return notAcceptable(VariantListBuilder.newInstance().mediaTypes(mediaType).build()).build();
@@ -770,6 +789,21 @@ public class FedoraLdp extends ContentExposingResource {
         return pid;
     }
 
+    private String handleWantDigestHeader(final FedoraBinary binary, final String wantDigest)
+            throws UnsupportedAlgorithmException {
+        // handle the Want-Digest header with fixity check
+        final Collection<String> preferredDigests = parseWantDigestHeader(wantDigest);
+        if (preferredDigests.isEmpty()) {
+            throw new UnsupportedAlgorithmException(
+                    "Unsupported digest algorithm provided in 'Want-Digest' header: " + wantDigest);
+        }
+
+        final Collection<URI> checksumResults = binary.checkFixity(idTranslator, preferredDigests);
+        final String digestValue = checksumResults.stream().map(uri -> uri.toString().replaceFirst("urn:", "")
+                .replaceFirst(":", "=")).collect(Collectors.joining(","));
+        return digestValue;
+    }
+
     private static void checkLinkForLdpResourceCreation(final String link) {
         if (link != null) {
             try {
@@ -813,6 +847,37 @@ public class FedoraLdp extends ContentExposingResource {
         } catch (final RuntimeException e) {
             if (e instanceof IllegalArgumentException) {
                 throw new ClientErrorException("Invalid Digest header: " + digest + "\n", BAD_REQUEST);
+            }
+            throw e;
+        }
+    }
+
+    /**
+     * Parse the RFC-3230 Want-Digest header value.
+     * @param wantDigest The Want-Digest header value with optional q value in format:
+     *    'md5', 'md5, sha', 'MD5;q=0.3, sha;q=1' etc.
+     * @return Digest algorithms that are supported
+     */
+    private static Collection<String> parseWantDigestHeader(final String wantDigest) {
+        final Map<String, Double> digestPairs = new HashMap<String,Double>();
+        try {
+            final List<String> algs = Splitter.on(',').omitEmptyStrings().trimResults().splitToList(wantDigest);
+            // Parse the optional q value with default 1.0, and 0 ignore. Format could be: SHA-1;qvalue=0.1
+            for (String alg : algs) {
+                final String[] tokens = alg.split(";", 2);
+                final double qValue = tokens.length == 1 || tokens[1].indexOf("=") < 0 ?
+                        1.0 : Double.parseDouble(tokens[1].split("=", 2)[1]);
+                digestPairs.put(tokens[0], qValue);
+            }
+
+            return digestPairs.entrySet().stream().filter(entry -> entry.getValue() > 0)
+                .filter(entry -> ContentDigest.DIGEST_ALGORITHM.isSupportedAlgorithm(entry.getKey()))
+                .map(entry -> entry.getKey()).collect(Collectors.toSet());
+        } catch (final NumberFormatException e) {
+            throw new ClientErrorException("Invalid 'Want-Digest' header value: " + wantDigest, SC_BAD_REQUEST, e);
+        } catch (final RuntimeException e) {
+            if (e instanceof IllegalArgumentException) {
+                throw new ClientErrorException("Invalid 'Want-Digest' header value: " + wantDigest + "\n", BAD_REQUEST);
             }
             throw e;
         }

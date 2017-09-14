@@ -18,6 +18,7 @@
 package org.fcrepo.kernel.modeshape.utils;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.utils.CacheEntry;
 import org.fcrepo.kernel.api.utils.ContentDigest;
 import org.fcrepo.kernel.api.utils.FixityResult;
@@ -25,10 +26,15 @@ import org.fcrepo.kernel.api.utils.FixityResult;
 import org.slf4j.Logger;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
+import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -80,6 +86,42 @@ public abstract class BasicCacheEntry implements CacheEntry {
             throw new RepositoryRuntimeException(e);
         } catch (final NoSuchAlgorithmException e1) {
             throw new RepositoryRuntimeException(e1);
+        }
+    }
+
+    /**
+     * Calculate fixity with list of digest algorithms of a CacheEntry by piping it through
+     * a simple fixity-calculating InputStream
+     *
+     * @param algorithms the digest algorithms to be used
+     * @return the checksums for the digest algorithms
+     * @throws UnsupportedAlgorithmException
+     */
+    @Override
+    public Collection<URI> checkFixity(final Collection<String> algorithms) throws UnsupportedAlgorithmException {
+
+        try {
+
+            final Map<String, DigestInputStream> digestInputStreams = new HashMap<>();
+            InputStream digestStream = this.getInputStream();
+            for (String digestAlg : algorithms) {
+                try {
+                    digestStream = new DigestInputStream(digestStream, MessageDigest.getInstance(digestAlg));
+                    digestInputStreams.put(digestAlg, (DigestInputStream)digestStream);
+                } catch (NoSuchAlgorithmException e) {
+                    throw new UnsupportedAlgorithmException("Unsupported digest algorithm: " + digestAlg);
+                }
+            }
+
+            // calculate the digest by consuming the stream
+            while (digestStream.read(devNull) != -1) { }
+
+            return digestInputStreams.entrySet().stream()
+                .map(entry -> ContentDigest.asURI(entry.getKey(), entry.getValue().getMessageDigest().digest()))
+                .collect(Collectors.toSet());
+        } catch (final IOException e) {
+            LOGGER.debug("Got error closing input stream: {}", e);
+            throw new RepositoryRuntimeException(e);
         }
     }
 }

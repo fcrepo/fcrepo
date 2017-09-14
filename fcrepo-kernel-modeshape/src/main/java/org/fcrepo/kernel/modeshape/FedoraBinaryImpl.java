@@ -20,10 +20,12 @@ package org.fcrepo.kernel.modeshape;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Timer;
+
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.FedoraBinary;
@@ -375,6 +377,21 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
                     = CacheEntryFactory.forProperty(getProperty(JCR_DATA)).checkFixity(algorithm);
 
             return new FixityRdfContext(this, idTranslator, fixityResults, digestUri, contentSize);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    @Override
+    public Collection<URI> checkFixity(final IdentifierConverter<Resource, FedoraResource> idTranslator,
+                               final Collection<String> algorithms) throws UnsupportedAlgorithmException {
+
+        fixityCheckCounter.inc();
+
+        try (final Timer.Context context = timer.time()) {
+
+            LOGGER.debug("Checking resource: " + getPath());
+            return CacheEntryFactory.forProperty(getProperty(JCR_DATA)).checkFixity(algorithms);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
