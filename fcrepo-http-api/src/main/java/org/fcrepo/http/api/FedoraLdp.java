@@ -115,6 +115,7 @@ import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
@@ -187,13 +188,15 @@ public class FedoraLdp extends ContentExposingResource {
      * Retrieve the node headers
      *
      * @return response
+     * @throws UnsupportedAlgorithmException if unsupported digest algorithm occurred
+     * @throws UnsupportedAccessTypeException if unsupported access-type occurred
      */
     @HEAD
     @Timed
     @Produces({ TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
         N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
         TURTLE_X, TEXT_HTML_WITH_CHARSET })
-    public Response head() throws UnsupportedAlgorithmException {
+    public Response head() throws UnsupportedAlgorithmException, UnsupportedAccessTypeException {
         LOGGER.info("HEAD for: {}", externalPath);
 
         checkCacheControlHeaders(request, servletResponse, resource(), session);
@@ -246,13 +249,15 @@ public class FedoraLdp extends ContentExposingResource {
      * @param rangeValue the range value
      * @return a binary or the triples for the specified node
      * @throws IOException if IO exception occurred
+     * @throws UnsupportedAlgorithmException if unsupported digest algorithm occurred
+     * @throws UnsupportedAccessTypeException if unsupported access-type occurred
      */
     @GET
     @Produces({TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
             N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
             TURTLE_X, TEXT_HTML_WITH_CHARSET})
     public Response getResource(@HeaderParam("Range") final String rangeValue)
-            throws IOException, UnsupportedAlgorithmException {
+            throws IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
         checkCacheControlHeaders(request, servletResponse, resource(), session);
 
         LOGGER.info("GET resource '{}'", externalPath);
@@ -817,7 +822,7 @@ public class FedoraLdp extends ContentExposingResource {
     }
 
     private String handleWantDigestHeader(final FedoraBinary binary, final String wantDigest)
-            throws UnsupportedAlgorithmException {
+            throws UnsupportedAlgorithmException, UnsupportedAccessTypeException {
         // handle the Want-Digest header with fixity check
         final Collection<String> preferredDigests = parseWantDigestHeader(wantDigest);
         if (preferredDigests.isEmpty()) {

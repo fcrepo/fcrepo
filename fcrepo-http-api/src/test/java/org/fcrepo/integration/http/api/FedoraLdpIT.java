@@ -444,6 +444,72 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testHeadExternalDatastreamWithWantDigest() throws IOException, ParseException {
+
+        final String dsId = getRandomUniqueId();
+        createDatastream(dsId, "x", "01234567890123456789012345678901234567890123456789");
+
+        final String dsUrl = serverAddress + dsId + "/x";
+        final String externalContentType = "message/external-body;access-type=URL;url=\"" + dsUrl + "\"";
+
+        final String id = getRandomUniqueId();
+        final HttpPut put = putObjMethod(id);
+        put.addHeader(CONTENT_TYPE, externalContentType);
+        assertEquals(CREATED.getStatusCode(), getStatus(put));
+
+        // Configure HEAD request to NOT follow redirects
+        final HttpHead headObjMethod = headObjMethod(id);
+        headObjMethod.addHeader(WANT_DIGEST, "sha1");
+        final RequestConfig.Builder requestConfig = RequestConfig.custom();
+        requestConfig.setRedirectsEnabled(false);
+        headObjMethod.setConfig(requestConfig.build());
+
+        try (final CloseableHttpResponse response = execute(headObjMethod)) {
+            assertEquals(TEMPORARY_REDIRECT.getStatusCode(), response.getStatusLine().getStatusCode());
+            assertEquals(externalContentType, response.getFirstHeader(CONTENT_TYPE).getValue());
+            assertTrue(response.getHeaders(DIGEST).length > 0);
+            final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
+            assertTrue("Fixity Checksum doesn't match",
+                    digesterHeaderValue.equals("sha1=9578f951955d37f20b601c26591e260c1e5389bf"));
+        }
+    }
+
+
+    @Test
+    public void testHeadExternalDatastreamWithWantDigestMultiple() throws IOException, ParseException {
+
+        final String dsId = getRandomUniqueId();
+        createDatastream(dsId, "x", "01234567890123456789012345678901234567890123456789");
+
+        final String dsUrl = serverAddress + dsId + "/x";
+        final String externalContentType = "message/external-body;access-type=URL;url=\"" + dsUrl + "\"";
+
+        final String id = getRandomUniqueId();
+        final HttpPut put = putObjMethod(id);
+        put.addHeader(CONTENT_TYPE, externalContentType);
+        assertEquals(CREATED.getStatusCode(), getStatus(put));
+
+        // Configure HEAD request to NOT follow redirects
+        final HttpHead headObjMethod = headObjMethod(id);
+        headObjMethod.addHeader(WANT_DIGEST, "sha1, md5;q=0.3");
+        final RequestConfig.Builder requestConfig = RequestConfig.custom();
+        requestConfig.setRedirectsEnabled(false);
+        headObjMethod.setConfig(requestConfig.build());
+
+        try (final CloseableHttpResponse response = execute(headObjMethod)) {
+            assertEquals(TEMPORARY_REDIRECT.getStatusCode(), response.getStatusLine().getStatusCode());
+            assertEquals(externalContentType, response.getFirstHeader(CONTENT_TYPE).getValue());
+            assertTrue(response.getHeaders(DIGEST).length > 0);
+
+            final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
+            assertTrue("SHA-1 Fixity Checksum doesn't match",
+                    digesterHeaderValue.indexOf("sha1=9578f951955d37f20b601c26591e260c1e5389bf") >= 0);
+            assertTrue("MD5 fixity checksum doesn't match",
+                    digesterHeaderValue.indexOf("md5=baed005300234f3d1503c50a48ce8e6f") >= 0);
+        }
+    }
+
+    @Test
     public void testOptions() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -650,6 +716,72 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final String content = EntityUtils.toString(entity);
             assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
             assertEquals("01234567890123456789012345678901234567890123456789", content);
+
+            final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
+            assertTrue("SHA-1 Fixity Checksum doesn't match",
+                    digesterHeaderValue.indexOf("sha1=9578f951955d37f20b601c26591e260c1e5389bf") >= 0);
+            assertTrue("MD5 fixity checksum doesn't match",
+                    digesterHeaderValue.indexOf("md5=baed005300234f3d1503c50a48ce8e6f") >= 0);
+        }
+    }
+
+    @Test
+    public void testGetExternalDatastreamWithWantDigest() throws IOException, ParseException {
+
+        final String dsId = getRandomUniqueId();
+        createDatastream(dsId, "x", "01234567890123456789012345678901234567890123456789");
+
+        final String dsUrl = serverAddress + dsId + "/x";
+        final String externalContentType = "message/external-body;access-type=URL;url=\"" + dsUrl + "\"";
+
+        final String id = getRandomUniqueId();
+        final HttpPut put = putObjMethod(id);
+        put.addHeader(CONTENT_TYPE, externalContentType);
+        assertEquals(CREATED.getStatusCode(), getStatus(put));
+
+        // Configure GET request to NOT follow redirects
+        final HttpGet getObjMethod = getObjMethod(id);
+        getObjMethod.addHeader(WANT_DIGEST, "sha1");
+        final RequestConfig.Builder requestConfig = RequestConfig.custom();
+        requestConfig.setRedirectsEnabled(false);
+        getObjMethod.setConfig(requestConfig.build());
+
+        try (final CloseableHttpResponse response = execute(getObjMethod)) {
+            assertEquals(TEMPORARY_REDIRECT.getStatusCode(), response.getStatusLine().getStatusCode());
+            assertEquals(externalContentType, response.getFirstHeader(CONTENT_TYPE).getValue());
+            assertTrue(response.getHeaders(DIGEST).length > 0);
+            final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
+            assertTrue("Fixity Checksum doesn't match",
+                    digesterHeaderValue.equals("sha1=9578f951955d37f20b601c26591e260c1e5389bf"));
+        }
+    }
+
+
+    @Test
+    public void testGetExternalDatastreamWithWantDigestMultiple() throws IOException, ParseException {
+
+        final String dsId = getRandomUniqueId();
+        createDatastream(dsId, "x", "01234567890123456789012345678901234567890123456789");
+
+        final String dsUrl = serverAddress + dsId + "/x";
+        final String externalContentType = "message/external-body;access-type=URL;url=\"" + dsUrl + "\"";
+
+        final String id = getRandomUniqueId();
+        final HttpPut put = putObjMethod(id);
+        put.addHeader(CONTENT_TYPE, externalContentType);
+        assertEquals(CREATED.getStatusCode(), getStatus(put));
+
+        // Configure Get request to NOT follow redirects
+        final HttpGet getObjMethod = getObjMethod(id);
+        getObjMethod.addHeader(WANT_DIGEST, "sha1, md5;q=0.3");
+        final RequestConfig.Builder requestConfig = RequestConfig.custom();
+        requestConfig.setRedirectsEnabled(false);
+        getObjMethod.setConfig(requestConfig.build());
+
+        try (final CloseableHttpResponse response = execute(getObjMethod)) {
+            assertEquals(TEMPORARY_REDIRECT.getStatusCode(), response.getStatusLine().getStatusCode());
+            assertEquals(externalContentType, response.getFirstHeader(CONTENT_TYPE).getValue());
+            assertTrue(response.getHeaders(DIGEST).length > 0);
 
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
             assertTrue("SHA-1 Fixity Checksum doesn't match",

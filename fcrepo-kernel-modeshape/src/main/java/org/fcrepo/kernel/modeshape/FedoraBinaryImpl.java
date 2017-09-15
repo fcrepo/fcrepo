@@ -25,6 +25,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
@@ -383,15 +384,33 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     }
 
     @Override
-    public Collection<URI> checkFixity(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-                               final Collection<String> algorithms) throws UnsupportedAlgorithmException {
+    public Collection<URI> checkFixity( final IdentifierConverter<Resource, FedoraResource> idTranslator,
+                                        final Collection<String> algorithms)
+                                            throws UnsupportedAlgorithmException, UnsupportedAccessTypeException {
 
         fixityCheckCounter.inc();
 
         try (final Timer.Context context = timer.time()) {
 
-            LOGGER.debug("Checking resource: " + getPath());
-            return CacheEntryFactory.forProperty(getProperty(JCR_DATA)).checkFixity(algorithms);
+            final String mimeType = getMimeType();
+            if (mimeType.indexOf(CacheEntryFactory.MESSAGE_EXTERNAL_BODY) >= 0) {
+                final Map<String, String> params = CacheEntryFactory.parseExternalBody(mimeType);
+                final String accessType = params.get("access-type");
+                final String resourceLocation = params.get(accessType.toLowerCase());
+
+                if (accessType != null && accessType.equals("URL")) {
+                    LOGGER.debug("Checking external resource: " + resourceLocation);
+
+                    return CacheEntryFactory.forProperty(getProperty(HAS_MIME_TYPE)).checkFixity(algorithms);
+                } else {
+                    throw new UnsupportedAccessTypeException("Unsupported access-type " + accessType
+                            + " with external resource " + resourceLocation + ".");
+                }
+            } else {
+
+                LOGGER.debug("Checking resource: " + getPath());
+                return CacheEntryFactory.forProperty(getProperty(JCR_DATA)).checkFixity(algorithms);
+            }
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
