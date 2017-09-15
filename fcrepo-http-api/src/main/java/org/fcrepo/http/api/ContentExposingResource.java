@@ -22,8 +22,8 @@ import static java.util.EnumSet.of;
 import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.empty;
 import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_LOCATION;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
@@ -45,9 +45,9 @@ import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 import static org.fcrepo.kernel.api.RequiredRdfContext.EMBED_RESOURCES;
@@ -70,6 +70,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -80,6 +81,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.ServletContext;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.BeanParam;
+import javax.ws.rs.NotSupportedException;
 import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.EntityTag;
@@ -136,6 +138,7 @@ import com.google.common.annotations.VisibleForTesting;
  */
 public abstract class ContentExposingResource extends FedoraBaseResource {
 
+    private static final String URL_ACCESS_TYPE = "URL";
     private static final Logger LOGGER = getLogger(ContentExposingResource.class);
     public static final MediaType MESSAGE_EXTERNAL_BODY = MediaType.valueOf("message/external-body");
 
@@ -196,7 +199,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             final MediaType mediaType = MediaType.valueOf(((FedoraBinary) resource()).getMimeType());
 
             if (isExternalBody(mediaType)) {
-                return externalBodyRedirect(URI.create(mediaType.getParameters().get("URL"))).build();
+                checkExternalBody(mediaType);
+                return externalBodyRedirect(getURLAccessType(mediaType)).build();
             }
 
             return getBinaryContent(rangeValue);
@@ -214,11 +218,56 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         return ok(outputStream).build();
     }
 
+
+    protected URI getURLAccessType(final MediaType mediaType) {
+        return URI.create(getAccessTypeValue(mediaType.getParameters(), URL_ACCESS_TYPE));
+    }
+
+    /**
+     * Throws a NotSupportedException if media type is an invalid message/external-body type. To be valid it must
+     * contain the access-type parameter that equals a valid access type and a URL parameter that contains a URL.
+     * 
+     * @param mediaType
+     * @throws NotSupportedException
+     */
+    protected void checkExternalBody(final MediaType mediaType) {
+        if (isExternalBody(mediaType)) {
+            final Map<String, String> params = mediaType.getParameters();
+            final String accessType = params.get("access-type");
+            if (accessType == null) {
+                throw new NotSupportedException("Unsupported media type:  access-type parameter is not specified: " +
+                        mediaType.toString());
+            }
+
+            if (!accessType.equalsIgnoreCase(URL_ACCESS_TYPE)) {
+                throw new NotSupportedException("Unsupported media type:  the " + accessType +
+                        " access type  is not supported: " + mediaType.toString());
+            }
+
+            if (getAccessTypeValue(params, accessType) == null) {
+                throw new NotSupportedException("Unsupported media type:  the " + accessType +
+                        " access type  must contain a " + URL_ACCESS_TYPE + " key/value pair: " + mediaType.toString());
+            }
+        }
+    }
+
+    protected String getAccessTypeValue(final Map<String, String> params, final String accessType) {
+        for (String key : params.keySet()) {
+            if (key.equalsIgnoreCase(accessType)) {
+                return params.get(key);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Checks if media type matches "message/external-body" does not perform a validity check
+     * @param mediaType
+     * @return true if matches
+     */
     protected boolean isExternalBody(final MediaType mediaType) {
-        return MESSAGE_EXTERNAL_BODY.isCompatible(mediaType) &&
-                mediaType.getParameters().containsKey("access-type") &&
-                mediaType.getParameters().get("access-type").equals("URL") &&
-                mediaType.getParameters().containsKey("URL");
+        return mediaType != null && MESSAGE_EXTERNAL_BODY.getType().equalsIgnoreCase(mediaType.getType())
+                && MESSAGE_EXTERNAL_BODY.getSubtype().equalsIgnoreCase(mediaType.getSubtype());
     }
 
     protected ResponseBuilder externalBodyRedirect(final URI resourceLocation) {

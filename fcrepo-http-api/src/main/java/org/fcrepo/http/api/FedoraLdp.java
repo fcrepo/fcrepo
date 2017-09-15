@@ -86,6 +86,7 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HEAD;
 import javax.ws.rs.HeaderParam;
+import javax.ws.rs.NotSupportedException;
 import javax.ws.rs.OPTIONS;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -209,7 +210,8 @@ public class FedoraLdp extends ContentExposingResource {
             final MediaType mediaType = MediaType.valueOf(((FedoraBinary) resource()).getMimeType());
 
             if (isExternalBody(mediaType)) {
-                builder = externalBodyRedirect(URI.create(mediaType.getParameters().get("URL")));
+                checkExternalBody(mediaType);
+                builder = externalBodyRedirect(getURLAccessType(mediaType));
             }
 
             // we set the content-type explicitly to avoid content-negotiation from getting in the way
@@ -374,6 +376,10 @@ public class FedoraLdp extends ContentExposingResource {
 
         final String interactionModel = checkInteractionModel(links);
 
+        if (isExternalBody(requestContentType)) {
+            checkExternalBody(requestContentType);
+        }
+
         final FedoraResource resource;
 
         final String path = toPath(translator(), externalPath);
@@ -422,8 +428,7 @@ public class FedoraLdp extends ContentExposingResource {
                     if (requestContentType == null && emptyRequest) {
                         throw new ClientErrorException("Resource Already Exists", CONFLICT);
                     }
-                    throw new ClientErrorException("Invalid Content Type " + requestContentType,
-                            UNSUPPORTED_MEDIA_TYPE);
+                    throw new NotSupportedException("Invalid Content Type " + requestContentType);
                 }
             } catch (final Exception e) {
                 checkForInsufficientStorageException(e, e);
