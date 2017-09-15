@@ -17,25 +17,19 @@
  */
 package org.fcrepo.event.serialization;
 
-import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDdateTime;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
-import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
-import static org.apache.jena.rdf.model.ResourceFactory.createResource;
-import static org.apache.jena.rdf.model.ResourceFactory.createTypedLiteral;
-import static org.apache.jena.vocabulary.RDF.type;
-import static org.apache.jena.vocabulary.DCTerms.identifier;
-import static org.apache.jena.vocabulary.DCTerms.isPartOf;
-import static org.fcrepo.kernel.api.RdfLexicon.PROV_NAMESPACE;
 import static org.fcrepo.kernel.api.observer.OptionalValues.BASE_URL;
-import static org.fcrepo.kernel.api.observer.OptionalValues.USER_AGENT;
+
+import java.io.ByteArrayInputStream;
 
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
 
 /**
  * A basic serialization API for Fedora events
  * @author acoburn
+ * @author dbernstein
  */
 public interface EventSerializer {
 
@@ -45,45 +39,11 @@ public interface EventSerializer {
      * @return an RDF model representing the event
      */
     public static Model toModel(final FedoraEvent evt) {
-        final String FOAF = "http://xmlns.com/foaf/0.1/";
-
+        final EventSerializer serializer = new JsonLDSerializer();
+        final String json = serializer.serialize(evt);
         final Model model = createDefaultModel();
         final String baseUrl = evt.getInfo().get(BASE_URL);
-        final String userAgent = evt.getInfo().get(USER_AGENT);
-        final Resource root = model.createResource((baseUrl != null ? baseUrl : "info:fedora" ) + evt.getPath());
-
-        evt.getResourceTypes().forEach(rdfType -> {
-            root.addProperty(type, createResource(rdfType));
-        });
-
-        if (baseUrl != null) {
-            root.addProperty(isPartOf, createResource(baseUrl));
-        }
-
-        final Resource activity = model.createResource()
-                .addProperty(type, createResource(PROV_NAMESPACE + "Activity"))
-                .addProperty(identifier, createResource(evt.getEventID()))
-                .addLiteral(createProperty(PROV_NAMESPACE, "atTime"),
-                        createTypedLiteral(evt.getDate().toString(), XSDdateTime));
-
-        evt.getTypes().stream().map(rdfType -> rdfType.getType()).forEach(rdfType -> {
-            activity.addProperty(type, createResource(rdfType));
-        });
-
-        root.addProperty(createProperty(PROV_NAMESPACE, "wasGeneratedBy"), activity);
-
-        root.addProperty(createProperty(PROV_NAMESPACE, "wasAttributedTo"),
-                model.createResource()
-                    .addProperty(type, createResource(PROV_NAMESPACE + "Person"))
-                    .addLiteral(createProperty(FOAF, "name"), evt.getUserID()));
-
-        if (userAgent != null) {
-            root.addProperty(createProperty(PROV_NAMESPACE, "wasAttributedTo"),
-                    model.createResource()
-                        .addProperty(type, createResource(PROV_NAMESPACE + "SoftwareAgent"))
-                        .addLiteral(createProperty(FOAF, "name"), userAgent));
-        }
-
+        model.read(new ByteArrayInputStream(json.getBytes(UTF_8)), baseUrl + evt.getPath(), "JSON-LD");
         return model;
     }
 
