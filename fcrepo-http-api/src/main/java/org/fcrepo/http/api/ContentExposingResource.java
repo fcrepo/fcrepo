@@ -24,6 +24,7 @@ import static java.util.stream.Stream.empty;
 import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_LOCATION;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
@@ -86,6 +87,7 @@ import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 
 import org.fcrepo.http.commons.api.HttpHeaderInjector;
 import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
@@ -194,7 +196,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             final MediaType mediaType = MediaType.valueOf(((FedoraBinary) resource()).getMimeType());
 
             if (isExternalBody(mediaType)) {
-                return temporaryRedirect(URI.create(mediaType.getParameters().get("URL"))).build();
+                return externalBodyRedirect(URI.create(mediaType.getParameters().get("URL"))).build();
             }
 
             return getBinaryContent(rangeValue);
@@ -217,6 +219,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 mediaType.getParameters().containsKey("access-type") &&
                 mediaType.getParameters().get("access-type").equals("URL") &&
                 mediaType.getParameters().containsKey("URL");
+    }
+
+    protected ResponseBuilder externalBodyRedirect(final URI resourceLocation) {
+        return temporaryRedirect(resourceLocation).header(CONTENT_LOCATION, resourceLocation);
     }
 
     protected RdfStream getResourceTriples() {
