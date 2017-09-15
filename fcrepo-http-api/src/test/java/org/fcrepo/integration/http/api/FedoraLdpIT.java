@@ -687,7 +687,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testDeleteContainerWithDepthHeaderSet() {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
-        HttpDelete httpDelete = deleteObjMethod(id);
+        final HttpDelete httpDelete = deleteObjMethod(id);
         httpDelete.addHeader("Depth", "infinity");
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(httpDelete));
         assertDeleted(id);
@@ -697,7 +697,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testDeleteContainerWithIncorrectDepthHeaderSet() {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
-        HttpDelete httpDelete = deleteObjMethod(id);
+        final HttpDelete httpDelete = deleteObjMethod(id);
         httpDelete.addHeader("Depth", "0");
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(httpDelete));
         assertNotDeleted(id);
