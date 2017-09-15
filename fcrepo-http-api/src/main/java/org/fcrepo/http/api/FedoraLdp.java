@@ -122,7 +122,6 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.utils.ContentDigest;
-import org.fcrepo.kernel.modeshape.ContainerImpl;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
@@ -318,24 +317,23 @@ public class FedoraLdp extends ContentExposingResource {
     @DELETE
     @Timed
     public Response deleteObject() {
-        final FedoraResource resource = resource();
-        if (resource instanceof ContainerImpl) {
+        if (resource() instanceof Container) {
             final String depth = headers.getHeaderString("Depth");
-            System.out.println(depth);
+            LOGGER.debug("Depth header value is: {}", depth);
             if (depth != null && !depth.equalsIgnoreCase("infinity")) {
                 throw new ClientErrorException("Depth header, if present, must be set to 'infinity' for containers",
                         SC_BAD_REQUEST);
             }
         }
 
-        evaluateRequestPreconditions(request, servletResponse, resource, session);
+        evaluateRequestPreconditions(request, servletResponse, resource(), session);
 
         LOGGER.info("Delete resource '{}'", externalPath);
 
-        final AcquiredLock lock = lockManager.lockForDelete(resource.getPath());
+        final AcquiredLock lock = lockManager.lockForDelete(resource().getPath());
 
         try {
-            resource.delete();
+            resource().delete();
             session.commit();
             return noContent().build();
         } finally {
