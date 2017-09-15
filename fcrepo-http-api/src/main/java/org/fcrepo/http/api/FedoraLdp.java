@@ -20,13 +20,13 @@ package org.fcrepo.http.api;
 
 import static com.google.common.base.Strings.nullToEmpty;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static javax.ws.rs.core.MediaType.TEXT_HTML;
-import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
-import static javax.ws.rs.core.MediaType.WILDCARD;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
+import static javax.ws.rs.core.MediaType.TEXT_HTML;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
+import static javax.ws.rs.core.MediaType.WILDCARD;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.notAcceptable;
@@ -39,22 +39,22 @@ import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static javax.ws.rs.core.Variant.mediaTypes;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
+import static org.apache.jena.atlas.web.ContentType.create;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
-import static org.apache.jena.atlas.web.ContentType.create;
-import static org.apache.jena.riot.WebContent.ctTextPlain;
-import static org.apache.jena.riot.WebContent.ctTextCSV;
 import static org.apache.jena.riot.WebContent.ctSPARQLUpdate;
+import static org.apache.jena.riot.WebContent.ctTextCSV;
+import static org.apache.jena.riot.WebContent.ctTextPlain;
 import static org.apache.jena.riot.WebContent.matchContentType;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
-import static org.fcrepo.http.commons.domain.RDFMediaType.N3_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
@@ -74,6 +74,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
@@ -98,12 +99,11 @@ import javax.ws.rs.core.Variant.VariantListBuilder;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-
+import org.apache.jena.atlas.web.ContentType;
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
-import org.apache.jena.atlas.web.ContentType;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
@@ -118,6 +118,7 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.utils.ContentDigest;
+import org.fcrepo.kernel.modeshape.ContainerImpl;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
@@ -177,7 +178,7 @@ public class FedoraLdp extends ContentExposingResource {
 
     /**
      * Retrieve the node headers
-     * 
+     *
      * @return response
      */
     @HEAD
@@ -296,14 +297,24 @@ public class FedoraLdp extends ContentExposingResource {
     @DELETE
     @Timed
     public Response deleteObject() {
-        evaluateRequestPreconditions(request, servletResponse, resource(), session);
+        FedoraResource resource = resource();
+        if (resource instanceof ContainerImpl) {
+            final String depth = headers.getHeaderString("Depth");
+            System.out.println(depth);
+            if (depth != null && !depth.equalsIgnoreCase("infinity")) {
+                throw new ClientErrorException("Depth header, if present, must be set to 'infinity' for containers",
+                        SC_BAD_REQUEST);
+            }
+        }
+
+        evaluateRequestPreconditions(request, servletResponse, resource, session);
 
         LOGGER.info("Delete resource '{}'", externalPath);
 
-        final AcquiredLock lock = lockManager.lockForDelete(resource().getPath());
+        final AcquiredLock lock = lockManager.lockForDelete(resource.getPath());
 
         try {
-            resource().delete();
+            resource.delete();
             session.commit();
             return noContent().build();
         } finally {
