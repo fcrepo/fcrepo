@@ -687,15 +687,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testDeleteContainerWithDepthHeaderSet() {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
-<<<<<<< HEAD
-<<<<<<< HEAD
         final HttpDelete httpDelete = deleteObjMethod(id);
-=======
-        HttpDelete httpDelete = deleteObjMethod(id);
->>>>>>> 406cd50... Adds support for depth header to DELETE action
-=======
-        final HttpDelete httpDelete = deleteObjMethod(id);
->>>>>>> d6882f6... corrects checkstyle errors
         httpDelete.addHeader("Depth", "infinity");
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(httpDelete));
         assertDeleted(id);
@@ -705,15 +697,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testDeleteContainerWithIncorrectDepthHeaderSet() {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
-<<<<<<< HEAD
-<<<<<<< HEAD
         final HttpDelete httpDelete = deleteObjMethod(id);
-=======
-        HttpDelete httpDelete = deleteObjMethod(id);
->>>>>>> 406cd50... Adds support for depth header to DELETE action
-=======
-        final HttpDelete httpDelete = deleteObjMethod(id);
->>>>>>> d6882f6... corrects checkstyle errors
         httpDelete.addHeader("Depth", "0");
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(httpDelete));
         assertNotDeleted(id);

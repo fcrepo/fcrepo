@@ -18,8 +18,8 @@
 package org.fcrepo.http.api;
 
 
-import static com.google.common.base.Strings.nullToEmpty;
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static com.google.common.base.Strings.nullToEmpty;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
@@ -102,11 +102,7 @@ import javax.ws.rs.core.Variant.VariantListBuilder;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.atlas.web.ContentType;
-<<<<<<< HEAD
 import org.apache.jena.rdf.model.Resource;
-
-=======
->>>>>>> b7a0011... Adds support for depth header to DELETE action
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
@@ -126,11 +122,7 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.utils.ContentDigest;
-<<<<<<< HEAD
-
-=======
 import org.fcrepo.kernel.modeshape.ContainerImpl;
->>>>>>> b7a0011... Adds support for depth header to DELETE action
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
@@ -326,15 +318,7 @@ public class FedoraLdp extends ContentExposingResource {
     @DELETE
     @Timed
     public Response deleteObject() {
-<<<<<<< HEAD
-<<<<<<< HEAD
         final FedoraResource resource = resource();
-=======
-        FedoraResource resource = resource();
->>>>>>> 406cd50... Adds support for depth header to DELETE action
-=======
-        final FedoraResource resource = resource();
->>>>>>> d6882f6... corrects checkstyle errors
         if (resource instanceof ContainerImpl) {
             final String depth = headers.getHeaderString("Depth");
             System.out.println(depth);
