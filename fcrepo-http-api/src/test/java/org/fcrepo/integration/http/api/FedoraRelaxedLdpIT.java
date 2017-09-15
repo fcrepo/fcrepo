@@ -73,10 +73,12 @@ import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ModelFactory.createModelForGraph;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
+import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.SERVER_MANAGED_PROPERTIES_MODE;
 import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
 import static org.junit.Assert.assertEquals;
@@ -429,6 +431,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         }
         post.setEntity(new StringEntity(content == null ? "" : content));
         post.setHeader(CONTENT_TYPE, TEXT_PLAIN);
+        post.setHeader(LINK, "<" + NON_RDF_SOURCE.toString() + ">; rel=\"type\"");
         return execute(post);
     }
 
@@ -440,6 +443,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         final HttpPost httpPost = new HttpPost(serverAddress);
         httpPost.addHeader("Slug", uri == null ? getRandomUniqueId() : uri.substring(serverAddress.length()));
         httpPost.addHeader(CONTENT_TYPE, "text/turtle");
+        httpPost.addHeader(LINK, "<" + BASIC_CONTAINER.toString() + ">; rel=\"type\"");
         httpPost.setEntity(new StringEntity(ttl));
         return execute(httpPost);
     }
@@ -449,6 +453,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         final HttpPut httpPut = new HttpPut(uri);
         httpPut.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
         httpPut.addHeader(CONTENT_TYPE, "text/turtle");
+        httpPut.addHeader(LINK, "<" + BASIC_CONTAINER.toString() + ">; rel=\"type\"");
         httpPut.setEntity(new StringEntity(ttl));
         return execute(httpPut);
     }

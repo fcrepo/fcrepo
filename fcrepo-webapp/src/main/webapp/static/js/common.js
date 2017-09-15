@@ -74,12 +74,14 @@
       const update_file = document.getElementById('binary_payload').files[0];
       const reader = new FileReader();
       headers.push(['Content-Disposition', 'attachment; filename=\"' + update_file.name + '\"']);
+      headers.push(['Link', '<http://www.w3.org/ns/ldp#NonRDFSource>; rel=\"type\"']);
       headers.push(['Content-Type', update_file.type || 'application/octet-stream']);
       reader.onload = function(e) {
           fn(method, url, headers, e.target.result);
       };
       reader.readAsArrayBuffer(update_file);
     } else {
+      headers.push(['Link', '<http://www.w3.org/ns/ldp#BasicContainer>; rel=\"type\"']);
       const turtle = document.getElementById('turtle_payload');
       if (turtle && turtle.value) {
         headers.push(['Content-Type', 'text/turtle']);

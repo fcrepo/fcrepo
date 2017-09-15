@@ -118,6 +118,17 @@ public interface FedoraResource {
     List<URI> getTypes();
 
     /**
+     * Add an RDF:type value to the resource
+     *
+     * <p>Note: the type parameter should be in prefixed short form, so ldp:Container or ex:Image
+     * are both acceptable types. This method does not assume any jcr to fedora prefix mappings are
+     * managed by the implementation, so hasType("jcr:frozenNode") is a valid use of this method.</p>
+     *
+     * @param type the type to add
+     */
+    void addType(final String type);
+
+    /**
      * Update the provided properties with a SPARQL Update query. The updated
      * properties may be serialized to the persistence layer.
      *

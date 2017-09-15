@@ -1166,6 +1166,17 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         return getNode().toString();
     }
 
+    @Override
+    public void addType(final String type) {
+        try {
+            if (node.canAddMixin(type)) {
+                node.addMixin(type);
+            }
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
     protected Property getProperty(final String relPath) {
         try {
             return getNode().getProperty(relPath);

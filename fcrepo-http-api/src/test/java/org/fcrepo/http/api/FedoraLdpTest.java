@@ -50,6 +50,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.observer.OptionalValues.BASE_URL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -85,6 +86,7 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
@@ -145,6 +147,9 @@ public class FedoraLdpTest {
     private final String binaryPath = "/some/binary/path";
     private final String binaryDescriptionPath = "/some/other/path";
     private FedoraLdp testObj;
+
+    private final List<String> nonRDFSourceLink = Arrays.asList(
+            Link.fromUri(NON_RDF_SOURCE.toString()).rel("type").build().toString());
 
     @Mock
     private Request mockRequest;
@@ -758,7 +763,7 @@ public class FedoraLdpTest {
     @Test(expected = CannotCreateResourceException.class)
     public void testPutNewObjectLdpr() throws Exception {
         testObj.createOrReplaceObjectRdf(null, null, null, null,
-                "<http://www.w3.org/ns/ldp#Resource>; rel=\"type\"", null);
+                asList("<http://www.w3.org/ns/ldp#Resource>; rel=\"type\""), null);
     }
 
     @Test
@@ -790,7 +795,7 @@ public class FedoraLdpTest {
         when(mockBinaryService.findOrCreate(mockFedoraSession, "/some/path")).thenReturn(mockBinary);
 
         final Response actual = testObj.createOrReplaceObjectRdf(TEXT_PLAIN_TYPE,
-                toInputStream("xyz", UTF_8), null, null, null, null);
+                toInputStream("xyz", UTF_8), null, null, nonRDFSourceLink, null);
 
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
     }
@@ -912,7 +917,8 @@ public class FedoraLdpTest {
         setResource(Container.class);
         when(mockBinaryService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockBinary);
         try (final InputStream content = toInputStream("x", UTF_8)) {
-            final Response actual = testObj.createObject(null, APPLICATION_OCTET_STREAM_TYPE, "b", content, null, null);
+            final Response actual = testObj.createObject(null, APPLICATION_OCTET_STREAM_TYPE, "b", content,
+                nonRDFSourceLink, null);
             assertEquals(CREATED.getStatusCode(), actual.getStatus());
             verify(mockBinary).setContent(content, APPLICATION_OCTET_STREAM, Collections.emptySet(), "", null);
         }
@@ -932,9 +938,10 @@ public class FedoraLdpTest {
             doThrow(ex).when(mockBinary).setContent(content, APPLICATION_OCTET_STREAM_TYPE.toString(),
                     Collections
                     .emptySet(),
-                    "", null);
+                    "",
+                    null);
 
-            testObj.createObject(null, APPLICATION_OCTET_STREAM_TYPE, "b", content, null, null);
+            testObj.createObject(null, APPLICATION_OCTET_STREAM_TYPE, "b", content, nonRDFSourceLink, null);
         }
     }
 
@@ -946,7 +953,8 @@ public class FedoraLdpTest {
         when(mockBinaryService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockBinary);
         try (final InputStream content = toInputStream("x", UTF_8)) {
             final MediaType requestContentType = MediaType.valueOf("some/mime-type; with=some; param=s");
-            final Response actual = testObj.createObject(null, requestContentType, "b", content, null, null);
+            final Response actual = testObj.createObject(null, requestContentType, "b", content, nonRDFSourceLink,
+                null);
             assertEquals(CREATED.getStatusCode(), actual.getStatus());
             verify(mockBinary).setContent(content, requestContentType.toString(), Collections.emptySet(), "", null);
         }
@@ -963,7 +971,8 @@ public class FedoraLdpTest {
             final String sha = "07a4d371f3b7b6283a8e1230b7ec6764f8287bf2";
             final String requestSHA = "sha1=" + sha;
             final Set<URI> shaURI = singleton(URI.create("urn:sha1:" + sha));
-            final Response actual = testObj.createObject(null, requestContentType, "b", content, null, requestSHA);
+            final Response actual = testObj.createObject(null, requestContentType, "b", content, nonRDFSourceLink,
+                requestSHA);
             assertEquals(CREATED.getStatusCode(), actual.getStatus());
             verify(mockBinary).setContent(content, requestContentType.toString(), shaURI, "", null);
         }
@@ -980,7 +989,8 @@ public class FedoraLdpTest {
             final String md5 = "HUXZLQLMuI/KZ5KDcJPcOA==";
             final String requestMD5 = "md5=" + md5;
             final Set<URI> md5URI = singleton(URI.create("urn:md5:" + md5));
-            final Response actual = testObj.createObject(null, requestContentType, "b", content, null, requestMD5);
+            final Response actual = testObj.createObject(null, requestContentType, "b", content, nonRDFSourceLink,
+                requestMD5);
             assertEquals(CREATED.getStatusCode(), actual.getStatus());
             verify(mockBinary).setContent(content, requestContentType.toString(), md5URI, "", null);
         }
@@ -1006,7 +1016,8 @@ public class FedoraLdpTest {
             final String requestChecksum = requestSHA + "," + requestMD5;
             final HashSet<URI> checksumURIs = new HashSet<>(asList(shaURI, md5URI));
 
-            final Response actual = testObj.createObject(null, requestContentType, "b", content, null, requestChecksum);
+            final Response actual = testObj.createObject(null, requestContentType, "b", content, nonRDFSourceLink,
+                requestChecksum);
             assertEquals(CREATED.getStatusCode(), actual.getStatus());
             verify(mockBinary).setContent(content, requestContentType.toString(), checksumURIs, "", null);
         }
@@ -1021,15 +1032,19 @@ public class FedoraLdpTest {
     }
 
     @Test(expected = CannotCreateResourceException.class)
-    public void testLDPRNotImplemented() throws InvalidChecksumException,
-            IOException, MalformedRdfException, UnsupportedAlgorithmException {
-        testObj.createObject(null, null, null, null, "<http://www.w3.org/ns/ldp#Resource>; rel=\"type\"", null);
+    public void testLDPRNotImplemented() throws MalformedRdfException, InvalidChecksumException,
+            IOException, UnsupportedAlgorithmException {
+        setResource(Container.class);
+        when(mockContainerService.findOrCreate(mockFedoraSession, "/x")).thenReturn(mockContainer);
+        testObj.createObject(null, null, "x", null, asList("<http://www.w3.org/ns/ldp#Resource>; rel=\"type\""), null);
     }
 
     @Test(expected = ClientErrorException.class)
     public void testLDPRNotImplementedInvalidLink() throws MalformedRdfException, InvalidChecksumException,
-           IOException, UnsupportedAlgorithmException {
-        testObj.createObject(null, null, null, null, "Link: <http://www.w3.org/ns/ldp#Resource;rel=type", null);
+            IOException, UnsupportedAlgorithmException {
+        setResource(Container.class);
+        when(mockContainerService.findOrCreate(mockFedoraSession, "/x")).thenReturn(mockContainer);
+        testObj.createObject(null, null, "x", null, asList("<http://foo;rel=\"type\""), null);
     }
 
     @Test
