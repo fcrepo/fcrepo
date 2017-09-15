@@ -50,8 +50,6 @@ import java.util.Collection;
 import javax.ws.rs.core.Response.Status;
 import javax.xml.bind.DatatypeConverter;
 
-import org.fcrepo.http.commons.test.util.CloseableDataset;
-
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -76,6 +74,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -459,6 +458,12 @@ public abstract class AbstractResourceIT {
         final String location = serverAddress + id;
         assertThat("Expected object to be deleted", getStatus(new HttpHead(location)), is(GONE.getStatusCode()));
         assertThat("Expected object to be deleted", getStatus(new HttpGet(location)), is(GONE.getStatusCode()));
+    }
+
+    protected static void assertNotDeleted(final String id) {
+        final String location = serverAddress + id;
+        assertThat("Expected object not to be deleted", getStatus(new HttpHead(location)), is(OK.getStatusCode()));
+        assertThat("Expected object not to be deleted", getStatus(new HttpGet(location)), is(OK.getStatusCode()));
     }
 
     protected static String getTTLThatUpdatesServerManagedTriples(final String createdBy, final Calendar created,
