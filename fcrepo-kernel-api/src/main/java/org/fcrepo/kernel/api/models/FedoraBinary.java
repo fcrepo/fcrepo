@@ -47,7 +47,7 @@ public interface FedoraBinary extends FedoraResource {
      * @param checksums Collection of checksum URIs of the content (optional)
      * @param originalFileName Original file name of the content (optional)
      * @param storagePolicyDecisionPoint Policy decision point for storing the content (optional)
-     * @throws org.fcrepo.kernel.api.exception.InvalidChecksumException if invalid checksum exception occurred
+     * @throws InvalidChecksumException if invalid checksum exception occurred
      */
     void setContent(InputStream content, String contentType, Collection<URI> checksums,
                     String originalFileName,
