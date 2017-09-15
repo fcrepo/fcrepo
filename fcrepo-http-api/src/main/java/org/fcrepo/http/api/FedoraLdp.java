@@ -327,10 +327,14 @@ public class FedoraLdp extends ContentExposingResource {
     @Timed
     public Response deleteObject() {
 <<<<<<< HEAD
+<<<<<<< HEAD
         final FedoraResource resource = resource();
 =======
         FedoraResource resource = resource();
 >>>>>>> 406cd50... Adds support for depth header to DELETE action
+=======
+        final FedoraResource resource = resource();
+>>>>>>> d6882f6... corrects checkstyle errors
         if (resource instanceof ContainerImpl) {
             final String depth = headers.getHeaderString("Depth");
             System.out.println(depth);
