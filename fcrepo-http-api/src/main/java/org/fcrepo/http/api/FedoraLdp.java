@@ -18,8 +18,8 @@
 package org.fcrepo.http.api;
 
 
-import static com.google.common.base.Strings.nullToEmpty;
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static com.google.common.base.Strings.nullToEmpty;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
@@ -103,7 +103,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.atlas.web.ContentType;
 import org.apache.jena.rdf.model.Resource;
-
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
@@ -123,7 +122,7 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.utils.ContentDigest;
-
+import org.fcrepo.kernel.modeshape.ContainerImpl;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
@@ -319,14 +318,24 @@ public class FedoraLdp extends ContentExposingResource {
     @DELETE
     @Timed
     public Response deleteObject() {
-        evaluateRequestPreconditions(request, servletResponse, resource(), session);
+        final FedoraResource resource = resource();
+        if (resource instanceof ContainerImpl) {
+            final String depth = headers.getHeaderString("Depth");
+            System.out.println(depth);
+            if (depth != null && !depth.equalsIgnoreCase("infinity")) {
+                throw new ClientErrorException("Depth header, if present, must be set to 'infinity' for containers",
+                        SC_BAD_REQUEST);
+            }
+        }
+
+        evaluateRequestPreconditions(request, servletResponse, resource, session);
 
         LOGGER.info("Delete resource '{}'", externalPath);
 
-        final AcquiredLock lock = lockManager.lockForDelete(resource().getPath());
+        final AcquiredLock lock = lockManager.lockForDelete(resource.getPath());
 
         try {
-            resource().delete();
+            resource.delete();
             session.commit();
             return noContent().build();
         } finally {

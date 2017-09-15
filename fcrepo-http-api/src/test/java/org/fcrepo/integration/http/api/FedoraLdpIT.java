@@ -684,6 +684,26 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testDeleteContainerWithDepthHeaderSet() {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+        final HttpDelete httpDelete = deleteObjMethod(id);
+        httpDelete.addHeader("Depth", "infinity");
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(httpDelete));
+        assertDeleted(id);
+    }
+
+    @Test
+    public void testDeleteContainerWithIncorrectDepthHeaderSet() {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+        final HttpDelete httpDelete = deleteObjMethod(id);
+        httpDelete.addHeader("Depth", "0");
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(httpDelete));
+        assertNotDeleted(id);
+    }
+
+    @Test
     public void testDeleteHierarchy() {
         final String id = getRandomUniqueId();
         createObjectAndClose(id + "/foo");
