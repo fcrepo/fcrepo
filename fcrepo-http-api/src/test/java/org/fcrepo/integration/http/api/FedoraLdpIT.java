@@ -584,7 +584,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(getMethod)) {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final Collection<String> preferenceApplied = getHeader(response, "Preference-Applied");
-            System.out.println("Preference-Applied header: " + preferenceApplied.toArray()[0]);
             assertTrue("Preference-Applied header doesn't matched", preferenceApplied.contains(preferHeader));
         }
     }
