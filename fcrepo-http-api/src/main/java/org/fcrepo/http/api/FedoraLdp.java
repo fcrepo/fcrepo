@@ -297,7 +297,7 @@ public class FedoraLdp extends ContentExposingResource {
     @DELETE
     @Timed
     public Response deleteObject() {
-        FedoraResource resource = resource();
+        final FedoraResource resource = resource();
         if (resource instanceof ContainerImpl) {
             final String depth = headers.getHeaderString("Depth");
             System.out.println(depth);
