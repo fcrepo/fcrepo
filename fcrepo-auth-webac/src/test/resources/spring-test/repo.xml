@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:context="http://www.springframework.org/schema/context"
+  xmlns:util="http://www.springframework.org/schema/util"
+  xsi:schemaLocation="
+    http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+    http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd
+    http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+
+  <!-- Context that supports the actual ModeShape JCR itself -->
+  <context:annotation-config />
+
+  <bean name="modeshapeRepofactory" class="org.fcrepo.kernel.modeshape.spring.ModeShapeRepositoryFactoryBean"
+    depends-on="authenticationProvider">
+    <property name="repositoryConfiguration" value="${fcrepo.modeshape.configuration:repository-test.json}" />
+  </bean>
+
+  <!-- Optional PrincipalProvider that will inspect the request header, "some-header", for user role values -->
+  <bean name="headerProvider" class="org.fcrepo.auth.common.HttpHeaderPrincipalProvider">
+    <property name="headerName" value="some-header"/>
+    <property name="separator" value=","/>
+  </bean>
+
+  <bean name="delegatedPrincipalProvider" class="org.fcrepo.auth.common.DelegateHeaderPrincipalProvider"/>
+
+  <util:set id="principalProviderSet">
+    <ref bean="headerProvider"/>
+    <ref bean="delegatedPrincipalProvider"/>
+  </util:set>
+
+  <bean name="authenticationProvider" class="org.fcrepo.auth.common.ServletContainerAuthenticationProvider">
+    <property name="fad" ref="fad"/>
+    <property name="principalProviders" ref="principalProviderSet"/>
+  </bean>
+
+  <bean name="fad" class="org.fcrepo.auth.webac.WebACAuthorizationDelegate"/>
+
+  <bean name="accessRolesProvider" class="org.fcrepo.auth.webac.WebACRolesProvider"/>
+
+  <bean class="org.modeshape.jcr.ModeShapeEngine" init-method="start"/>
+
+  <bean id="connectionManager" class="org.apache.http.impl.conn.PoolingHttpClientConnectionManager"/>
+
+</beans>

@@ -1,0 +1,10 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix acl: <http://www.w3.org/ns/auth/acl#> .
+@prefix fedora: <http://fedora.info/definitions/v4/repository#> .
+
+<> a acl:Authorization ;
+   rdfs:label "(Test) Root Authorization" ;
+   rdfs:comment "Provide read access to all resources to the testAdminUser agent." ;
+   acl:agent "testAdminUser" ;
+   acl:mode acl:Read ;
+   acl:accessToClass fedora:Resource .
