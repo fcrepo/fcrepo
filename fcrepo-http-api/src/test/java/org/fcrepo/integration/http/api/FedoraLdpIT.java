@@ -572,6 +572,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertTrue("POST should support application/rdf+xml", postTypes.contains(contentTypeRDFXML));
         assertTrue("POST should support application/n-triples", postTypes.contains(contentTypeNTriples));
         assertTrue("POST should support multipart/form-data", postTypes.contains("multipart/form-data"));
+        assertTrue("POST should support message/external-body; access-type=URL", postTypes.contains(
+                "message/external-body; access-type=URL"));
+
     }
 
     private static void assertRdfOptionsHeaders(final HttpResponse httpResponse) {
