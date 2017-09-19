@@ -51,12 +51,6 @@
 
     <dependency>
       <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-auth-roles-common</artifactId>
-      <version>5.0.0-SNAPSHOT</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-kernel-api</artifactId>
       <version>5.0.0-SNAPSHOT</version>
     </dependency>
@@ -188,14 +182,6 @@
     <dependency>
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-http-api</artifactId>
-      <version>5.0.0-SNAPSHOT</version>
-      <scope>test</scope>
-      <type>test-jar</type>
-    </dependency>
-
-    <dependency>
-      <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-auth-roles-common</artifactId>
       <version>5.0.0-SNAPSHOT</version>
       <scope>test</scope>
       <type>test-jar</type>
