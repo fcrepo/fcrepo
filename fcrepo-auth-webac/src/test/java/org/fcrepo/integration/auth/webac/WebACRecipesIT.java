@@ -759,15 +759,4 @@ public class WebACRecipesIT extends AbstractResourceIT {
         assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(patchReq));
     }
 
-    @Test
-    public void testNoAccessRolesResource() throws IOException {
-        final String objectPath = "/rest/test_accessroles";
-        ingestObj(objectPath);
-        final String accessRolesResource = objectPath + "/fcr:accessroles";
-        final HttpGet getReq = getObjMethod(accessRolesResource);
-        setAuth(getReq, "fedoraAdmin");
-        assertEquals(HttpStatus.SC_NOT_FOUND, getStatus(getReq));
-    }
-
-
 }
