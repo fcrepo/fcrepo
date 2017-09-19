@@ -38,7 +38,6 @@ import java.util.Set;
 
 import javax.jcr.Session;
 
-import org.fcrepo.auth.roles.common.AbstractRolesAuthorizationDelegate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
