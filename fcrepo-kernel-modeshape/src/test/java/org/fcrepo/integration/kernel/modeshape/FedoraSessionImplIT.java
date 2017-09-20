@@ -31,7 +31,6 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.http.auth.BasicUserPrincipal;
 import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.FedoraSession;
-import org.fcrepo.kernel.api.exception.RepositoryConfigurationException;
 import org.fcrepo.kernel.modeshape.FedoraSessionImpl;
 import org.junit.After;
 import org.junit.Before;
@@ -81,10 +80,9 @@ public class FedoraSessionImplIT extends AbstractIT {
         final ServletCredentials credentials = new ServletCredentials(request);
         final FedoraSession session = repo.login(credentials);
 
-        // should thrown for unsupported digest algorithm sha256
-        thrown.expect(RepositoryConfigurationException.class);
-
-        session.getUserAgent();
+        // should be the default local user agent URI
+        assertEquals("User agent URI invalid.",
+                URI.create(FedoraSessionImpl.DEFAULT_USER_AGENT_BASE_URI + FEDORA_USER), session.getUserAgent());
     }
 
     @Test

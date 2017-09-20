@@ -25,6 +25,7 @@ import static java.time.Instant.now;
 import static java.util.Collections.singleton;
 import static java.util.Optional.of;
 import static java.util.UUID.randomUUID;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
 import java.time.Duration;
@@ -44,15 +45,16 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.annotations.VisibleForTesting;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
-import org.fcrepo.kernel.api.exception.RepositoryConfigurationException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.modeshape.utils.NamespaceTools;
+import org.slf4j.Logger;
 
 /**
  * An implementation of the FedoraSession abstraction
  * @author acoburn
  */
 public class FedoraSessionImpl implements FedoraSession {
+    private static final Logger LOGGER = getLogger(FedoraSessionImpl.class);
 
     // The default timeout is 3 minutes
     @VisibleForTesting
@@ -63,6 +65,9 @@ public class FedoraSessionImpl implements FedoraSession {
 
     @VisibleForTesting
     public static final String USER_AGENT_BASE_URI_PROPERTY = "fcrepo.auth.webac.userAgent.baseUri";
+
+    @VisibleForTesting
+    public static final String DEFAULT_USER_AGENT_BASE_URI = "info:fedora/local-user#";
 
     private final Session jcrSession;
     private final String id;
@@ -236,11 +241,15 @@ public class FedoraSessionImpl implements FedoraSession {
      */
     private URI buildDefaultURI(final String userId) {
         // Construct the default URI for the user ID that is not a URI.
-        final String userAgentBaseUri = System.getProperty(USER_AGENT_BASE_URI_PROPERTY);
+        String userAgentBaseUri = System.getProperty(USER_AGENT_BASE_URI_PROPERTY);
         if (isNullOrEmpty(userAgentBaseUri)) {
-            throw new RepositoryConfigurationException("User agent base URI prioperty is missing."
-                + " Please configure it with variable fcrepo.auth.webac.userAgent.baseUri.");
+            // use the default local user agent base uri
+            userAgentBaseUri = DEFAULT_USER_AGENT_BASE_URI;
         }
-        return URI.create(userAgentBaseUri + userId);
+
+        final String userAgentUri = userAgentBaseUri + userId;
+
+        LOGGER.warn("Default URI is created for user {}: {}", userId, userAgentUri);
+        return URI.create(userAgentUri);
     }
 }
