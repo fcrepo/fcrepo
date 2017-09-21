@@ -61,7 +61,7 @@ public class FedoraEventImplTest {
 
     @Test
     public void testGetEventName() {
-        assertEquals("resource creation", valueOf(NODE_ADDED).getName());
+        assertEquals("create resource", valueOf(NODE_ADDED).getName());
     }
 
     @Test(expected = IllegalArgumentException.class)

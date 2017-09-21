@@ -42,6 +42,8 @@ public final class RdfLexicon {
 
     public static final String EVENT_NAMESPACE = "http://fedora.info/definitions/v4/event#";
 
+    public static final String ACTIVITY_STREAMS_NAMESPACE = "https://www.w3.org/ns/activitystreams#";
+
     public static final String EBUCORE_NAMESPACE = "http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#";
 
     public static final String OA_NAMESPACE = "http://www.w3.org/ns/oa#";

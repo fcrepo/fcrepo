@@ -17,7 +17,7 @@
  */
 package org.fcrepo.kernel.api.observer;
 
-import static org.fcrepo.kernel.api.RdfLexicon.EVENT_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.ACTIVITY_STREAMS_NAMESPACE;
 
 /**
  * A collection of repository event types
@@ -27,10 +27,10 @@ import static org.fcrepo.kernel.api.RdfLexicon.EVENT_NAMESPACE;
  */
 public enum EventType {
 
-    RESOURCE_CREATION("resource creation", "ResourceCreation"),
-    RESOURCE_DELETION("resource deletion", "ResourceDeletion"),
-    RESOURCE_MODIFICATION("resource modification", "ResourceModification"),
-    RESOURCE_RELOCATION("resource relocation", "ResourceRelocation");
+    RESOURCE_CREATION("create resource", "Create"),
+    RESOURCE_DELETION("delete resource", "Delete"),
+    RESOURCE_MODIFICATION("update resource", "Update"),
+    RESOURCE_RELOCATION("move resource", "Move");
 
     private final String eventName;
     private final String eventType;
@@ -48,9 +48,17 @@ public enum EventType {
     }
 
     /**
+     * @return  type for this event without the namespace.
+     */
+    public String getTypeAbbreviated() {
+        return eventType;
+    }
+
+    /**
      * @return an rdf type for this event
      */
     public String getType() {
-        return EVENT_NAMESPACE + eventType;
+        return ACTIVITY_STREAMS_NAMESPACE + eventType;
     }
+
 }
