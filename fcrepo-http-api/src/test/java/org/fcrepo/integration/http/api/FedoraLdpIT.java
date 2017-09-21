@@ -2572,6 +2572,35 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testEmbeddedContainedResources() throws IOException {
+        final String id = getRandomUniqueId();
+        final String binaryId = "binary0";
+        final String preferEmbed =
+                "return=representation; include=\"http://www.w3.org/ns/oa#PreferContainedDescriptions\"";
+
+        assertEquals(CREATED.getStatusCode(), getStatus(putObjMethod(id)));
+        assertEquals(CREATED.getStatusCode(), getStatus(putDSMethod(id, binaryId, "some test content")));
+
+        final HttpPatch httpPatch = patchObjMethod(id + "/" + binaryId + "/fcr:metadata");
+        httpPatch.addHeader(CONTENT_TYPE, "application/sparql-update");
+        httpPatch.setEntity(new StringEntity(
+                "INSERT { <> <http://purl.org/dc/elements/1.1/title> 'this is a title' } WHERE {}"));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(httpPatch));
+
+        final HttpGet httpGet = getObjMethod(id);
+        httpGet.setHeader("Prefer", preferEmbed);
+        try (final CloseableHttpResponse response = execute(httpGet)) {
+            final Collection<String> preferenceApplied = getHeader(response, "Preference-Applied");
+            assertTrue("Preference-Applied header doesn't match", preferenceApplied.contains(preferEmbed));
+
+            final DatasetGraph graphStore = getDataset(response).asDatasetGraph();
+            assertTrue("Property on child binary should be found!" + graphStore, graphStore.contains(ANY,
+                    createURI(serverAddress + id + "/" + binaryId),
+                    createURI("http://purl.org/dc/elements/1.1/title"), createLiteral("this is a title")));
+        }
+    }
+
+    @Test
     public void testExternalMessageBody() throws IOException {
 
         // we need a client that won't automatically follow redirects

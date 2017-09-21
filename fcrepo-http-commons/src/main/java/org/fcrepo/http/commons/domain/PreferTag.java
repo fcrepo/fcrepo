@@ -21,6 +21,7 @@ import static java.util.Arrays.asList;
 import static java.util.Optional.ofNullable;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.SERVER_MANAGED;
+import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
 
@@ -29,7 +30,6 @@ import org.glassfish.jersey.message.internal.HttpHeaderReader;
 import javax.servlet.http.HttpServletResponse;
 
 import java.text.ParseException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -145,18 +145,19 @@ public class PreferTag implements Comparable<PreferTag> {
         final StringBuilder omitBuilder = new StringBuilder();
 
         if (!(value.equals("minimal") || receivedParam.equals("minimal"))) {
-            final String[] paramsApplied = { SERVER_MANAGED.toString(),
-                                             LDP_NAMESPACE + "PreferMinimalContainer",
-                                             LDP_NAMESPACE + "PreferMembership",
-                                             LDP_NAMESPACE + "PreferContainment" };
-            final List<String> paramsAppliedList = Arrays.asList(paramsApplied);
-            includes.stream().forEach(param -> includeBuilder.append(paramsAppliedList.contains(param)
-                    || param.equals(INBOUND_REFERENCES.toString())
-                    || param.equals(EMBED_CONTAINS.toString()) ? param + " " : ""));
+            final List<String> appliedPrefs = asList(new String[] { SERVER_MANAGED.toString(),
+                                                                    LDP_NAMESPACE + "PreferMinimalContainer",
+                                                                    LDP_NAMESPACE + "PreferMembership",
+                                                                    LDP_NAMESPACE + "PreferContainment" });
+            final List<String> includePrefs = asList(new String[] { EMBED_CONTAINED.toString(),
+                                                                    EMBED_CONTAINS.toString(),
+                                                                    INBOUND_REFERENCES.toString() });
+            includes.stream().forEach(param -> includeBuilder.append(
+                    (appliedPrefs.contains(param) || includePrefs.contains(param)) ? param + " " : ""));
 
             // Note: include params prioritized over omits during implementation
             omits.stream().forEach(param -> omitBuilder.append(
-                    paramsAppliedList.contains(param) && !includes.contains(param) ? param + " " : ""));
+                    (appliedPrefs.contains(param) && !includes.contains(param)) ? param + " " : ""));
         }
 
         // build the header for Preference Applied

@@ -44,6 +44,8 @@ public final class RdfLexicon {
 
     public static final String EBUCORE_NAMESPACE = "http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#";
 
+    public static final String OA_NAMESPACE = "http://www.w3.org/ns/oa#";
+
     public static final String PROV_NAMESPACE = "http://www.w3.org/ns/prov#";
 
     public static final String PREMIS_NAMESPACE = "http://www.loc.gov/premis/rdf/v1#";
@@ -232,6 +234,8 @@ public final class RdfLexicon {
     public static final Property INBOUND_REFERENCES = createProperty(REPOSITORY_NAMESPACE + "InboundReferences");
     public static final Property EMBED_CONTAINS = createProperty(REPOSITORY_NAMESPACE + "EmbedResources");
     public static final Property SERVER_MANAGED = createProperty(REPOSITORY_NAMESPACE + "ServerManaged");
+
+    public static final Property EMBED_CONTAINED = createProperty(OA_NAMESPACE + "PreferContainedDescriptions");
 
     public static final Set<Property> managedProperties;
 
