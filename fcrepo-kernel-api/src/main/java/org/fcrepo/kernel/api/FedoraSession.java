@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.api;
 
+import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
@@ -64,6 +65,12 @@ public interface FedoraSession {
      * @return the session id
      */
     String getId();
+
+    /**
+     * Get the user agent
+     * @return URI
+     */
+    URI getUserAgent();
 
     /**
      * Get the user identifier associated with this session
