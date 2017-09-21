@@ -74,7 +74,6 @@ public class JsonLDSerializerTest extends FedoraEventSerializerTestBase {
         assertTrue(node.has("object"));
         assertTrue(node.has("actor"));
         assertTrue(node.has("published"));
-        assertTrue(node.has("isPartOf"));
 
         assertEquals(eventResourceId, node.get("id").textValue());
         assertEquals(EventType.RESOURCE_MODIFICATION.getName(), node.get("name").textValue());
@@ -83,11 +82,11 @@ public class JsonLDSerializerTest extends FedoraEventSerializerTestBase {
         assertEquals("Person", node.get("actor").get(0).get("type").get(0).asText());
         assertEquals(softwareAgent, node.get("actor").get(1).get("name").asText());
         assertEquals("Application", node.get("actor").get(1).get("type").get(0).asText());
-        assertEquals(node.get("isPartOf").textValue(), baseUrl);
         assertEquals(node.get("published").textValue(), timestamp.toString());
         final List<String> types = new ArrayList<>();
         final JsonNode objectNode = node.get("object");
         assertEquals(baseUrl + path, objectNode.get("id").asText());
+        assertEquals(objectNode.get("isPartOf").textValue(), baseUrl);
         objectNode.get("type").elements().forEachRemaining(n -> {
             types.add(n.textValue());
         });

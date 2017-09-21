@@ -92,9 +92,13 @@ class JsonLDEventMessage {
         @JsonProperty("id")
         public String id;
 
-        public Object(final String id, final List<String> type) {
+        @JsonProperty("isPartOf")
+        public String isPartOf;
+
+        public Object(final String id, final List<String> type, final String isPartOf) {
             this.type = type;
             this.id = id;
+            this.isPartOf = isPartOf;
         }
     }
 
@@ -142,8 +146,6 @@ class JsonLDEventMessage {
     @JsonProperty("published")
     public Instant published;
 
-    @JsonProperty("isPartOf")
-    public String isPartOf;
 
     @JsonProperty("actor")
     public List<Actor> actor;
@@ -196,13 +198,12 @@ class JsonLDEventMessage {
         final JsonLDEventMessage msg = new JsonLDEventMessage();
 
         msg.id = evt.getEventID();
-        msg.isPartOf = baseUrl;
         msg.context = Arrays.asList(ACTIVITYSTREAMS_NS, new Context());
         msg.actor = actor;
         msg.published = evt.getDate();
         msg.type = types;
         msg.name = name;
-        msg.object = new Object(objectId, resourceTypes);
+        msg.object = new Object(objectId, resourceTypes, baseUrl);
         return msg;
     }
 }
