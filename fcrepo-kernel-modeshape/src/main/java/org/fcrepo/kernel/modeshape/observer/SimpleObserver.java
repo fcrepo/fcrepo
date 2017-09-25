@@ -67,10 +67,12 @@ import javax.jcr.observation.Event;
 import javax.jcr.observation.EventListener;
 
 import org.fcrepo.kernel.api.FedoraRepository;
+import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
+import org.fcrepo.kernel.modeshape.FedoraSessionImpl;
 import org.fcrepo.kernel.modeshape.observer.eventmappings.InternalExternalEventMapper;
 
 import org.slf4j.Logger;
@@ -116,14 +118,16 @@ public class SimpleObserver implements EventListener {
                 final Map<String, String> movePath = evt.getInfo();
                 final String dest = movePath.get("destAbsPath");
                 final String src = movePath.get("srcAbsPath");
+                final FedoraSession fsession = new FedoraSessionImpl(session);
+
                 try {
                     final FedoraResource resource = new FedoraResourceImpl(session.getNode(evt.getPath()));
                     return concat(of(evt), resource.getChildren(true).map(FedoraResource::getPath)
                         .flatMap(path -> of(
                             new FedoraEventImpl(RESOURCE_RELOCATION, path, evt.getResourceTypes(), evt.getUserID(),
-                                evt.getDate(), evt.getInfo()),
+                                fsession.getUserAgent(), evt.getDate(), evt.getInfo()),
                             new FedoraEventImpl(RESOURCE_DELETION, path.replaceFirst(dest, src), evt.getResourceTypes(),
-                                evt.getUserID(), evt.getDate(), evt.getInfo()))));
+                                evt.getUserID(), fsession.getUserAgent(), evt.getDate(), evt.getInfo()))));
                 } catch (final RepositoryException ex) {
                     throw new RepositoryRuntimeException(ex);
                 }
@@ -151,13 +155,14 @@ public class SimpleObserver implements EventListener {
 
     private static Function<FedoraEvent, FedoraEvent> filterAndDerefResourceTypes(final Session session) {
         final NamespaceRegistry registry = getNamespaceRegistry(session);
+        final FedoraSession fsession = new FedoraSessionImpl(session);
         return evt -> {
             final Set<String> resourceTypes = evt.getResourceTypes().stream()
                 .flatMap(dynamicTypes).map(type -> type.split(":"))
                 .filter(pair -> pair.length == 2).map(uncheck(pair -> new String[]{registry.getURI(pair[0]), pair[1]}))
                 .filter(pair -> !filteredNamespaces.contains(pair[0])).map(pair -> pair[0] + pair[1]).collect(toSet());
             return new FedoraEventImpl(evt.getTypes(), evt.getPath(), resourceTypes, evt.getUserID(),
-                    evt.getDate(), evt.getInfo());
+                    fsession.getUserAgent(), evt.getDate(), evt.getInfo());
         };
     }
 

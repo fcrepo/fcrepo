@@ -31,7 +31,8 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.http.auth.BasicUserPrincipal;
 import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.FedoraSession;
-import org.fcrepo.kernel.modeshape.FedoraSessionImpl;
+import org.fcrepo.kernel.modeshape.FedoraSessionUserUtil;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -68,7 +69,7 @@ public class FedoraSessionImplIT extends AbstractIT {
 
     @After
     public void tearDown() throws RepositoryException {
-        System.setProperty(FedoraSessionImpl.USER_AGENT_BASE_URI_PROPERTY, "");
+        System.setProperty(FedoraSessionUserUtil.USER_AGENT_BASE_URI_PROPERTY, "");
     }
 
     @Test
@@ -82,13 +83,13 @@ public class FedoraSessionImplIT extends AbstractIT {
 
         // should be the default local user agent URI
         assertEquals("User agent URI invalid.",
-                URI.create(FedoraSessionImpl.DEFAULT_USER_AGENT_BASE_URI + FEDORA_USER), session.getUserAgent());
+                URI.create(FedoraSessionUserUtil.DEFAULT_USER_AGENT_BASE_URI + FEDORA_USER), session.getUserAgent());
     }
 
     @Test
     public void testGetIdWithUserIdNonURI() throws RepositoryException {
         // Set basic URI for user agent with environment variable: fcrepo.auth.webac.userAgent.baseUri
-        System.setProperty(FedoraSessionImpl.USER_AGENT_BASE_URI_PROPERTY, TEST_USER_AGENT_BASE_URI);
+        System.setProperty(FedoraSessionUserUtil.USER_AGENT_BASE_URI_PROPERTY, TEST_USER_AGENT_BASE_URI);
 
         when(request.getRemoteUser()).thenReturn(FEDORA_USER);
         when(request.getUserPrincipal()).thenReturn(new BasicUserPrincipal(FEDORA_USER));

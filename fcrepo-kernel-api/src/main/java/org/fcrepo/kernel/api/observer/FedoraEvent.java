@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.api.observer;
 
+import java.net.URI;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Set;
@@ -66,4 +67,10 @@ public interface FedoraEvent {
      * @return Event information as a Map
      */
     Map<String, String> getInfo();
+
+    /**
+     * Get the user agent associated with this event.
+     * @return
+     */
+    URI getUserAgent();
 }

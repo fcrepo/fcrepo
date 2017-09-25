@@ -31,6 +31,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
+import java.net.URI;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -79,8 +80,7 @@ public class FedoraEventSerializerTestBase {
     protected String softwareAgent = "fcrepo-java-client";
 
     @Before
-    public void setUp() {
-        System.setProperty(JsonLDEventMessage.USER_AGENT_BASE_URI_PROPERTY, userAgentBaseUri);
+    public void setUp() throws Exception {
         final Set<EventType> typeSet = new HashSet<>();
         typeSet.add(EventType.RESOURCE_MODIFICATION);
         final Set<String> resourceTypeSet = new HashSet<>();
@@ -95,6 +95,7 @@ public class FedoraEventSerializerTestBase {
         when(mockEvent.getResourceTypes()).thenReturn(resourceTypeSet);
         when(mockEvent.getPath()).thenReturn(path);
         when(mockEvent.getUserID()).thenReturn(username);
+        when(mockEvent.getUserAgent()).thenReturn(new URI(getAgentIRI()));
 
         when(mockEvent.getDate()).thenReturn(timestamp);
         when(mockEvent.getEventID()).thenReturn(eventResourceId);
