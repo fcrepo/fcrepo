@@ -138,6 +138,10 @@ import com.google.common.annotations.VisibleForTesting;
  */
 public abstract class ContentExposingResource extends FedoraBaseResource {
 
+    /**
+     * 
+     */
+    private static final String ACCESS_TYPE = "access-type";
     private static final String URL_ACCESS_TYPE = "URL";
     private static final Logger LOGGER = getLogger(ContentExposingResource.class);
     public static final MediaType MESSAGE_EXTERNAL_BODY = MediaType.valueOf("message/external-body");
@@ -233,9 +237,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected void checkExternalBody(final MediaType mediaType) {
         if (isExternalBody(mediaType)) {
             final Map<String, String> params = mediaType.getParameters();
-            final String accessType = params.get("access-type");
+            final String accessType = params.get(ACCESS_TYPE);
             if (accessType == null) {
-                throw new NotSupportedException("Unsupported media type:  access-type parameter is not specified: " +
+                throw new BadRequestException("You must specify the access-type param when using " +
+                        MESSAGE_EXTERNAL_BODY + " content type:" +
                         mediaType.toString());
             }
 
@@ -245,8 +250,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             }
 
             if (getAccessTypeValue(params, accessType) == null) {
-                throw new NotSupportedException("Unsupported media type:  the " + accessType +
-                        " access type  must contain a " + URL_ACCESS_TYPE + " key/value pair: " + mediaType.toString());
+                throw new BadRequestException("When specifying the  " + accessType +
+                        " access type you must include a " + URL_ACCESS_TYPE + " key/value pair: " + mediaType
+                                .toString());
             }
         }
     }
@@ -266,8 +272,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * @return true if matches
      */
     protected boolean isExternalBody(final MediaType mediaType) {
-        return mediaType != null && MESSAGE_EXTERNAL_BODY.getType().equalsIgnoreCase(mediaType.getType())
-                && MESSAGE_EXTERNAL_BODY.getSubtype().equalsIgnoreCase(mediaType.getSubtype());
+        return mediaType != null && mediaType.isCompatible(MESSAGE_EXTERNAL_BODY)
+                && mediaType.getParameters().containsKey(ACCESS_TYPE);
     }
 
     protected ResponseBuilder externalBodyRedirect(final URI resourceLocation) {

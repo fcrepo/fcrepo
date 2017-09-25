@@ -2783,18 +2783,18 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
             final String id = getRandomUniqueId();
             final HttpPut httpPut = putObjMethod(id);
-            httpPut.addHeader(CONTENT_TYPE, "message/external-body; " +
+            httpPut.addHeader(CONTENT_TYPE, "message/external-body; accept-type;" +
                     "URL=\"http://www.example.com/file\"");
 
             try (final CloseableHttpResponse response = execute(httpPut)) {
-                assertEquals("Didn't get an UNSUPPORTED_MEDIA_TYPE response!", UNSUPPORTED_MEDIA_TYPE.getStatusCode(),
+                assertEquals("Didn't get an BAD REQUEST response!", BAD_REQUEST.getStatusCode(),
                         getStatus(response));
             }
         }
     }
 
     @Test
-    public void testInvalidExternalMessageBodyMissingURL() throws IOException {
+    public void testInvalidExternalMessageBodyMissingURLParam() throws IOException {
 
         // we need a client that won't automatically follow redirects
         try (final CloseableHttpClient noFollowClient = HttpClientBuilder.create().disableRedirectHandling()
@@ -2805,7 +2805,42 @@ public class FedoraLdpIT extends AbstractResourceIT {
             httpPut.addHeader(CONTENT_TYPE, "message/external-body; access-type=URL; ");
 
             try (final CloseableHttpResponse response = execute(httpPut)) {
-                assertEquals("Didn't get a UNSUPPORTED_MEDIA_TYPE response!", UNSUPPORTED_MEDIA_TYPE.getStatusCode(),
+                assertEquals("Didn't get a BAD REQUEST response!", BAD_REQUEST.getStatusCode(),
+                        getStatus(response));
+            }
+        }
+    }
+
+    @Test
+    public void testInvalidExternalMessageBodyMissingURLValue() throws IOException {
+
+        // we need a client that won't automatically follow redirects
+        try (final CloseableHttpClient noFollowClient = HttpClientBuilder.create().disableRedirectHandling()
+                .build()) {
+
+            final String id = getRandomUniqueId();
+            final HttpPut httpPut = putObjMethod(id);
+            httpPut.addHeader(CONTENT_TYPE, "message/external-body; access-type=URL; URL");
+
+            try (final CloseableHttpResponse response = execute(httpPut)) {
+                assertEquals("Didn't get an UNSUPPORTED_MEDIA_TYPE response!", BAD_REQUEST.getStatusCode(),
+                        getStatus(response));
+            }
+        }
+    }
+
+    @Test
+    public void testWildcardExternalMessageBodyWithValidAccessType() throws IOException {
+        // we need a client that won't automatically follow redirects
+        try (final CloseableHttpClient noFollowClient = HttpClientBuilder.create().disableRedirectHandling()
+                .build()) {
+
+            final String id = getRandomUniqueId();
+            final HttpPut httpPut = putObjMethod(id);
+            httpPut.addHeader(CONTENT_TYPE, "*/*; access-type=url; url=\"some://url\"");
+
+            try (final CloseableHttpResponse response = execute(httpPut)) {
+                assertEquals("wasn't successful", CREATED.getStatusCode(),
                         getStatus(response));
             }
         }
