@@ -69,9 +69,9 @@ http://localhost:8080/fcrepo/rest.
 There are two convenient methods for *testing* the Fedora application by launching it directly from the command line.
 
 One option is to use the "one click" application, which comes with an embedded Jetty servlet. This can be started by
-either double-clicking on the jar file or by running the following command:
+by running the following command:
 
-    java -jar ./fcrepo-webapp/target/fcrepo-webapp-<version>-jetty-console.jar
+    java -jar ./fcrepo-webapp/target/fcrepo-webapp-<version>-jetty-console.jar --jettyXml ./fcrepo-webapp/target/test-classes/jetty-one-click.xml
 
 An alternative is use the maven command: `mvn jetty:run`
 
