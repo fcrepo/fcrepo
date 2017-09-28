@@ -45,6 +45,8 @@ public class WebACAuthorizationTest {
     private final String ACCESS_TO3 = "/baz";
     private final String ACCESS_TO_CLASS1 = "ex:Image";
     private final String ACCESS_TO_CLASS2 = "ex:Archive";
+    private final String ACCESS_GROUP1 = "/groupA";
+    private final String ACCESS_GROUP2 = "/groupB";
 
     @Test
     public void testLists() {
@@ -53,9 +55,10 @@ public class WebACAuthorizationTest {
         final List<URI> modes = Arrays.asList(WEBAC_MODE_READ, WEBAC_MODE_WRITE, WEBAC_MODE_READ);
         final List<String> accessTo = Arrays.asList(ACCESS_TO1, ACCESS_TO2, ACCESS_TO3);
         final List<String> accessToClass = Arrays.asList(ACCESS_TO_CLASS1, ACCESS_TO_CLASS2);
+        final List<String> accessGroups = Arrays.asList(ACCESS_GROUP1, ACCESS_GROUP2);
 
         final WebACAuthorization auth = new WebACAuthorization(agents, agentClasses,
-                modes, accessTo, accessToClass);
+                modes, accessTo, accessToClass, accessGroups);
 
         assertEquals(2, auth.getAgents().size());
         assertTrue(auth.getAgents().contains(AGENT1));
@@ -76,9 +79,10 @@ public class WebACAuthorizationTest {
         final Set<URI> modes = new HashSet<>(Arrays.asList(WEBAC_MODE_WRITE, WEBAC_MODE_READ));
         final Set<String> accessTo = new HashSet<>(Arrays.asList(ACCESS_TO1, ACCESS_TO2, ACCESS_TO3));
         final Set<String> accessToClass = new HashSet<>(Arrays.asList(ACCESS_TO_CLASS1, ACCESS_TO_CLASS2));
+        final Set<String> accessGroups = new HashSet<>(Arrays.asList(ACCESS_GROUP1, ACCESS_GROUP2));
 
         final WebACAuthorization auth = new WebACAuthorization(agents, agentClasses,
-                modes, accessTo, accessToClass);
+                modes, accessTo, accessToClass, accessGroups);
 
         assertEquals(2, auth.getAgents().size());
         assertTrue(auth.getAgents().contains(AGENT1));
