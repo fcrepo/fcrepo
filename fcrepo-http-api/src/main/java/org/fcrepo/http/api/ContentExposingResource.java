@@ -138,9 +138,6 @@ import com.google.common.annotations.VisibleForTesting;
  */
 public abstract class ContentExposingResource extends FedoraBaseResource {
 
-    /**
-     * 
-     */
     private static final String ACCESS_TYPE = "access-type";
     private static final String URL_ACCESS_TYPE = "URL";
     private static final Logger LOGGER = getLogger(ContentExposingResource.class);
@@ -231,7 +228,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * Throws a NotSupportedException if media type is an invalid message/external-body type. To be valid it must
      * contain the access-type parameter that equals a valid access type and a URL parameter that contains a URL.
      * 
-     * @param mediaType
+     * @param mediaType The media type to be validated
      * @throws NotSupportedException
      */
     protected void checkExternalBody(final MediaType mediaType) {
