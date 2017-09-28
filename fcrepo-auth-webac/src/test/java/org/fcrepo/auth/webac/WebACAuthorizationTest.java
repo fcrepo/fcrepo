@@ -70,6 +70,9 @@ public class WebACAuthorizationTest {
         assertTrue(auth.getAccessToURIs().contains(ACCESS_TO3));
         assertEquals(2, auth.getAccessToClassURIs().size());
         assertTrue(auth.getAccessToClassURIs().contains(ACCESS_TO_CLASS2));
+        assertEquals(2, auth.getAgentGroups().size());
+        assertTrue(auth.getAgentGroups().contains(ACCESS_GROUP1));
+        assertTrue(auth.getAgentGroups().contains(ACCESS_GROUP2));
     }
 
     @Test
@@ -94,6 +97,9 @@ public class WebACAuthorizationTest {
         assertTrue(auth.getAccessToURIs().contains(ACCESS_TO3));
         assertEquals(2, auth.getAccessToClassURIs().size());
         assertTrue(auth.getAccessToClassURIs().contains(ACCESS_TO_CLASS2));
+        assertEquals(2, auth.getAgentGroups().size());
+        assertTrue(auth.getAgentGroups().contains(ACCESS_GROUP1));
+        assertTrue(auth.getAgentGroups().contains(ACCESS_GROUP2));
     }
 
 
