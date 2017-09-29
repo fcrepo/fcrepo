@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<web-app xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
-  version="3.0">
+<web-app xmlns="http://java.sun.com/xml/ns/javaee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
+	version="3.0">
 
-  <display-name>Fedora Repository</display-name>
+	<display-name>Fedora Repository</display-name>
 
-  <context-param>
-    <param-name>contextConfigLocation</param-name>
-    <param-value>WEB-INF/classes/spring/repository.xml</param-value>
-  </context-param>
+	<context-param>
+		<param-name>contextConfigLocation</param-name>
+		<param-value>WEB-INF/classes/spring/repository.xml</param-value>
+	</context-param>
 
-  <listener>
-    <listener-class>org.fcrepo.http.commons.FedoraContextLoaderListener</listener-class>
-  </listener>
+	<listener>
+		<listener-class>org.fcrepo.http.commons.FedoraContextLoaderListener</listener-class>
+	</listener>
 
   <servlet>
     <servlet-name>jersey-servlet</servlet-name>
@@ -23,13 +24,15 @@
       <param-name>javax.ws.rs.Application</param-name>
       <param-value>org.fcrepo.http.commons.FedoraApplication</param-value>
     </init-param>
+
     <load-on-startup>1</load-on-startup>
   </servlet>
 
   <servlet-mapping>
-    <servlet-name>jersey-servlet</servlet-name>
-    <url-pattern>/rest/*</url-pattern>
-  </servlet-mapping>
+		<servlet-name>jersey-servlet</servlet-name>
+		<url-pattern>/rest/*</url-pattern>
+
+	</servlet-mapping>
 
   <filter>
     <filter-name>ETagFilter</filter-name>
@@ -41,7 +44,7 @@
     <url-pattern>/static/*</url-pattern>
   </filter-mapping>
 
-  <!--Comment section below to disable Basic-Authentication -->
+  <!--Uncomment section below to enable Basic-Authentication-->
   <security-constraint>
     <web-resource-collection>
       <web-resource-name>Fedora4</web-resource-name>
@@ -53,8 +56,6 @@
       <http-method>PATCH</http-method>
       <http-method>GET</http-method>
       <http-method>POST</http-method>
-      <http-method>MOVE</http-method>
-      <http-method>COPY</http-method>
     </web-resource-collection>
     <auth-constraint>
       <role-name>fedoraUser</role-name>
@@ -69,5 +70,6 @@
     <auth-method>BASIC</auth-method>
     <realm-name>fcrepo</realm-name>
   </login-config>
+
 
 </web-app>
