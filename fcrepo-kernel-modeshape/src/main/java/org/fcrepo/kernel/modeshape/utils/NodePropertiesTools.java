@@ -43,6 +43,7 @@ import javax.jcr.Value;
 
 import org.apache.jena.rdf.model.Resource;
 
+import org.apache.jena.vocabulary.RDF;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.exception.IdentifierConversionException;
 import org.fcrepo.kernel.api.exception.NoSuchPropertyDefinitionException;
@@ -208,13 +209,12 @@ public class NodePropertiesTools {
 
             final Property property = node.getProperty(propertyName);
             final String strValueToRemove = valueToRemove.getString();
-            final String strValueToRemoveWithoutStringType = strValueToRemove != null ?
-                        strValueToRemove.replace(FIELD_DELIMITER + XSDstring.getURI(), "") : strValueToRemove;
+            final String strValueToRemoveWithoutStringType = removeStringTypes(strValueToRemove);
 
             if (property.isMultiple()) {
                 final AtomicBoolean remove = new AtomicBoolean();
                 final Value[] newValues = stream(node.getProperty(propertyName).getValues()).filter(uncheck(v -> {
-                    final String strVal = v.getString().replace(FIELD_DELIMITER + XSDstring.getURI(), "");
+                    final String strVal = removeStringTypes(v.getString());
 
                     LOGGER.debug("v is '{}', valueToRemove is '{}'", v, strValueToRemove );
                     if (strVal.equals(strValueToRemoveWithoutStringType)) {
@@ -241,8 +241,7 @@ public class NodePropertiesTools {
             } else {
 
                 final String strPropVal = property.getValue().getString();
-                final String strPropValWithoutStringType =
-                    strPropVal != null ? strPropVal.replace(FIELD_DELIMITER + XSDstring.getURI(), "") : strPropVal;
+                final String strPropValWithoutStringType = removeStringTypes(strPropVal);
 
                 LOGGER.debug("Removing string '{}'", strValueToRemove);
                 if (StringUtils.equals(strPropValWithoutStringType, strValueToRemoveWithoutStringType)) {
@@ -256,5 +255,19 @@ public class NodePropertiesTools {
                 }
             }
         }
+    }
+
+    private String removeStringTypes(final String value) {
+        if (value != null) {
+            // Remove string datatype
+            String v = value.replace(FIELD_DELIMITER + XSDstring.getURI(), "");
+
+            // Remove lang datatype
+            v = v.replace(FIELD_DELIMITER + RDF.dtLangString.getURI(), FIELD_DELIMITER);
+
+            // Remove lang placeholder
+            return v.replace(FIELD_DELIMITER + FIELD_DELIMITER, "");
+        }
+        return null;
     }
 }
