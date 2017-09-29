@@ -37,7 +37,7 @@
         <Item>
           <New class="org.eclipse.jetty.server.ServerConnector">
             <Arg><Ref refid="Server"/></Arg>
-            <Set name="port" type="int"><SystemProperty name="fcrepo.dynamic.test.port" /></Set>
+            <Set name="port" type="int"><SystemProperty name="fcrepo.dynamic.test.port" default="8080"/></Set>
             <Set name="idleTimeout">60000</Set>
           </New>
         </Item>

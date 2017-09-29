@@ -72,7 +72,7 @@
     <dependency>
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-auth-webac</artifactId>
-      <version>5.0.0-SNAPSHOT</version>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
@@ -315,9 +315,6 @@
             <resource>
               <directory>src/main/webapp</directory>
               <filtering>true</filtering>
-              <includes>
-                <include>index.html</include>
-              </includes>
             </resource>
           </webResources>
             <archive>
@@ -519,6 +516,30 @@
 
         <plugins>
           <plugin>
+            <artifactId>maven-war-plugin</artifactId>
+            <configuration>
+              <attachClasses>true</attachClasses>
+              <webResources>
+                <resource>
+                  <directory>src/main/webapp</directory>
+                  <filtering>true</filtering>
+                </resource>
+                <resource>
+                  <directory>src/main/jetty-console</directory>
+                  <filtering>true</filtering>
+                </resource>
+              </webResources>
+                <archive>
+                  <index>true</index>
+                  <manifest>
+                    <addClasspath>true</addClasspath>
+                    <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                  </manifest>
+                </archive>
+            </configuration>
+          </plugin>
+
+          <plugin>
             <groupId>org.simplericity.jettyconsole</groupId>
             <artifactId>jetty-console-maven-plugin</artifactId>
             <version>1.56</version>
@@ -528,11 +549,13 @@
                   <goal>createconsole</goal>
                 </goals>
                 <configuration>
+                  <!-- 
                   <additionalDependencies>
                     <additionalDependency>
                       <artifactId>jetty-console-jettyxml-plugin</artifactId>
                     </additionalDependency>
-		  </additionalDependencies>
+        		  </additionalDependencies>
+                  -->
                   <backgroundImage>${basedir}/src/main/webapp/static/images/fedora_logo_10in.png</backgroundImage>
                   <destinationFile>
                     ${project.build.directory}${file.separator}${project.artifactId}-${project.version}-jetty-console.jar
