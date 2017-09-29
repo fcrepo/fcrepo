@@ -184,15 +184,12 @@ public final class RdfLexicon {
             HAS_NAMESPACE_PREFIX, HAS_NAMESPACE_URI);
 
     // OTHER SERVICES
-    public static final Property HAS_VERSION_HISTORY =
-            createProperty(REPOSITORY_NAMESPACE + "hasVersions");
     public static final Property HAS_FIXITY_SERVICE =
             createProperty(REPOSITORY_NAMESPACE + "hasFixityService");
     public static final Property HAS_SPARQL_ENDPOINT =
         createProperty(SPARQL_SD_NAMESPACE + "endpoint");
 
-    public static final Set<Property> otherServiceProperties = of(
-            HAS_VERSION_HISTORY, HAS_FIXITY_SERVICE);
+    public static final Set<Property> otherServiceProperties = of(HAS_FIXITY_SERVICE);
 
 
     // BINARY DESCRIPTIONS
@@ -220,16 +217,6 @@ public final class RdfLexicon {
     public static final Set<Property> contentProperties = of(HAS_CONTENT_LOCATION, HAS_CONTENT_LOCATION_VALUE,
             HAS_SIZE);
 
-
-    // VERSIONING
-    public static final Property HAS_VERSION =
-            createProperty(REPOSITORY_NAMESPACE + "hasVersion");
-    public static final Property HAS_VERSION_LABEL =
-            createProperty(REPOSITORY_NAMESPACE + "hasVersionLabel");
-
-    public static final Set<Property> versioningProperties = of(HAS_VERSION,
-            HAS_VERSION_LABEL);
-
     // RDF EXTRACTION
     public static final Property COULD_NOT_STORE_PROPERTY =
             createProperty(REPOSITORY_NAMESPACE + "couldNotStoreProperty");
@@ -245,8 +232,7 @@ public final class RdfLexicon {
         final ImmutableSet.Builder<Property> b = ImmutableSet.builder();
         b.addAll(membershipProperties).addAll(fixityProperties).addAll(ldpManagedProperties).addAll(
                 repositoryProperties).addAll(namespaceProperties).addAll(
-                otherServiceProperties).addAll(structProperties).addAll(contentProperties).addAll(
-                versioningProperties).addAll(serverManagedProperties);
+                otherServiceProperties).addAll(serverManagedProperties);
         managedProperties = b.build();
     }
 

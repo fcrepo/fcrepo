@@ -114,7 +114,6 @@ public class HttpResourceConverterTest {
         when(session.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getName()).thenReturn("default");
         when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
-        when(versionedNode.isNodeType("nt:frozenNode")).thenReturn(true);
     }
 
     @Test
@@ -207,53 +206,6 @@ public class HttpResourceConverterTest {
         when(node.getPath()).thenReturn(path + "/#/with-a-hash");
         final Resource converted = converter.reverse().convert(new FedoraResourceImpl(node));
         assertEquals(createResource("http://localhost:8080/some/" + path + "#with-a-hash"), converted);
-    }
-
-    @Test
-    public void testDoForwardWithImplicitVersionedDatastream() throws Exception {
-        when(session.getNodeByIdentifier("x")).thenReturn(versionedNode);
-        when(versionedNode.getProperty("jcr:frozenUuid")).thenReturn(mockProperty);
-        when(mockProperty.getString()).thenReturn("some-identifier");
-        when(node.getIdentifier()).thenReturn("some-identifier");
-        when(mockVersionManager.getVersionHistory("/" + path)).thenReturn(mockVersionHistory);
-        when(mockVersionHistory.hasVersionLabel("x")).thenReturn(true);
-        when(mockVersionHistory.getVersionByLabel("x")).thenReturn(mockVersion);
-        final FedoraResource converted = converter.convert(versionedResource);
-        assertEquals(versionedNode, getJcrNode(converted));
-    }
-
-    @Test
-    public void testDoForwardWithExplicitVersionedDatastream() throws Exception {
-        when(session.getNodeByIdentifier("x")).thenThrow(new ItemNotFoundException());
-        when(mockVersionManager.getVersionHistory("/" + path)).thenReturn(mockVersionHistory);
-        when(mockVersionHistory.hasVersionLabel("x")).thenReturn(true);
-        when(mockVersionHistory.getVersionByLabel("x")).thenReturn(mockVersion);
-        when(mockVersion.getFrozenNode()).thenReturn(versionedNode);
-        final FedoraResource converted = converter.convert(versionedResource);
-        assertEquals(versionedNode, getJcrNode(converted));
-    }
-
-    @Test(expected = RepositoryRuntimeException.class)
-    public void testDoForwardWithMissingVersionedDatastream() throws Exception {
-        when(session.getNodeByIdentifier("x")).thenThrow(new ItemNotFoundException());
-        when(mockVersionManager.getVersionHistory("/" + path)).thenReturn(mockVersionHistory);
-        when(mockVersionHistory.hasVersionLabel("x")).thenReturn(false);
-        converter.convert(versionedResource);
-    }
-
-    @Test
-    @Ignore
-    public void testDoBackwardWithVersionedNode() throws Exception {
-
-        when(versionedNode.getProperty("jcr:frozenUuid")).thenReturn(mockProperty);
-        when(versionedNode.getIdentifier()).thenReturn("x");
-        when(mockProperty.getString()).thenReturn("some-identifier");
-        when(node.getIdentifier()).thenReturn("some-identifier");
-        when(session.getNodeByIdentifier("some-identifier")).thenReturn(node);
-        when(node.isNodeType("mix:versionable")).thenReturn(true);
-
-        final Resource converted = converter.reverse().convert(new FedoraResourceImpl(versionedNode));
-        assertEquals(versionedResource, converted);
     }
 
     @Test

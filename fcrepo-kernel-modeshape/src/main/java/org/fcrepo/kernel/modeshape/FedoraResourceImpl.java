@@ -165,10 +165,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     private static final Logger LOGGER = getLogger(FedoraResourceImpl.class);
 
     private static final long NO_TIME = 0L;
-    private static final String JCR_CHILD_VERSION_HISTORY = "jcr:childVersionHistory";
-    private static final String JCR_VERSIONABLE_UUID = "jcr:versionableUuid";
-    private static final String JCR_FROZEN_UUID = "jcr:frozenUuid";
-    private static final String JCR_VERSION_STORAGE = "jcr:versionStorage";
 
     private static final PropertyConverter propertyConverter = new PropertyConverter();
 
@@ -201,10 +197,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         return new ChildrenRdfContext(resource, translator);
     });
 
-    private static RdfGenerator getVersioningTriples = resource -> translator -> uncheck(_minimal -> {
-        return new VersionsRdfContext(resource, translator);
-    });
-
     @SuppressWarnings("resource")
     private static RdfGenerator getServerManagedTriples = resource -> translator -> uncheck(minimal -> {
         if (minimal) {
@@ -230,7 +222,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     private static final Map<TripleCategory, RdfGenerator> contextMap =
             ImmutableMap.<TripleCategory, RdfGenerator>builder()
                     .put(PROPERTIES, getDefaultTriples)
-                    .put(VERSIONS, getVersioningTriples)
                     .put(EMBED_RESOURCES, getEmbeddedResourceTriples)
                     .put(INBOUND_REFERENCES, getInboundTriples)
                     .put(SERVER_MANAGED, getServerManagedTriples)
@@ -481,14 +472,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                     prop.setValue(newVals.toArray(new Value[newVals.size()]));
                 }
             } catch (final RepositoryException ex) {
-                // Ignore error from trying to update properties on versioned resources
-                if (ex instanceof javax.jcr.nodetype.ConstraintViolationException &&
-                        ex.getMessage().contains(JCR_VERSION_STORAGE)) {
-                    LOGGER.debug("Ignoring exception trying to remove property from versioned resource: {}",
-                            ex.getMessage());
-                } else {
-                    throw new RepositoryRuntimeException(ex);
-                }
+                throw new RepositoryRuntimeException(ex);
             }
         });
     }
@@ -612,10 +596,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                 .peek(x -> LOGGER.debug("node has rdf:type {}", x))
                 .collect(Collectors.toList());
 
-            if (isFrozenResource()) {
-                types.add(URI.create(REPOSITORY_NAMESPACE + "Version"));
-            }
-
             return types;
 
         } catch (final PathNotFoundException e) {
@@ -713,19 +693,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                 .filter(contextMap::containsKey)
                 .map(x -> contextMap.get(x).apply(this).apply(idTranslator).apply(contexts.contains(MINIMAL)))
                 .reduce(empty(), Stream::concat));
-    }
-
-    /*
-     * (non-Javadoc)
-     * @see org.fcrepo.kernel.api.models.FedoraResource#getBaseVersion()
-     */
-    @Override
-    public FedoraResource getBaseVersion() {
-        try {
-            return new FedoraResourceImpl(getVersionManager().getBaseVersion(getPath()).getFrozenNode());
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
     }
 
     /* (non-Javadoc)
@@ -881,209 +848,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         return "";
     }
 
-    @Override
-    public void enableVersioning() {
-        try {
-            node.addMixin("mix:versionable");
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-    }
-
-    @Override
-    public void disableVersioning() {
-        try {
-            node.removeMixin("mix:versionable");
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-
-    }
-
-    @Override
-    public boolean isVersioned() {
-        try {
-            return node.isNodeType("mix:versionable");
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-    }
-
-    @Override
-    public boolean isFrozenResource() {
-        return isFrozenNode.test(this);
-    }
-
-    @Override
-    public FedoraResource getVersionedAncestor() {
-
-        try {
-            if (!isFrozenResource()) {
-                return null;
-            }
-
-            Node versionableFrozenNode = getNode();
-            FedoraResource unfrozenResource = getUnfrozenResource();
-
-            // traverse the frozen tree looking for a node whose unfrozen equivalent is versioned
-            while (!unfrozenResource.isVersioned()) {
-
-                if (versionableFrozenNode.getDepth() == 0) {
-                    return null;
-                }
-
-                // node in the frozen tree
-                versionableFrozenNode = versionableFrozenNode.getParent();
-
-                // unfrozen equivalent
-                unfrozenResource = new FedoraResourceImpl(versionableFrozenNode).getUnfrozenResource();
-            }
-
-            return new FedoraResourceImpl(versionableFrozenNode);
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-
-    }
-
-    @Override
-    public FedoraResource getUnfrozenResource() {
-        if (!isFrozenResource()) {
-            return this;
-        }
-
-        try {
-            // Either this resource is frozen
-            if (hasProperty(JCR_FROZEN_UUID)) {
-                try {
-                    return new FedoraResourceImpl(getNodeByProperty(getProperty(JCR_FROZEN_UUID)));
-                } catch (final ItemNotFoundException e) {
-                    // The unfrozen resource has been deleted, return the tombstone.
-                    return new TombstoneImpl(getNode());
-                }
-
-                // ..Or it is a child-version-history on a frozen path
-            } else if (hasProperty(JCR_CHILD_VERSION_HISTORY)) {
-                final Node childVersionHistory = getNodeByProperty(getProperty(JCR_CHILD_VERSION_HISTORY));
-                try {
-                    final Node childNode = getNodeByProperty(childVersionHistory.getProperty(JCR_VERSIONABLE_UUID));
-                    return new FedoraResourceImpl(childNode);
-                } catch (final ItemNotFoundException e) {
-                    // The unfrozen resource has been deleted, return the tombstone.
-                    return new TombstoneImpl(childVersionHistory);
-                }
-
-            } else {
-                throw new RepositoryRuntimeException("Resource must be frozen or a child-history!");
-            }
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-    }
-
-    @Override
-    public FedoraResource getVersion(final String label) {
-        try {
-            final Node n = getFrozenNode(label);
-
-            if (n != null) {
-                return new FedoraResourceImpl(n);
-            }
-
-            if (isVersioned()) {
-                final VersionHistory hist = getVersionManager().getVersionHistory(getPath());
-
-                if (hist.hasVersionLabel(label)) {
-                    LOGGER.debug("Found version for {} by label {}.", this, label);
-                    return new FedoraResourceImpl(hist.getVersionByLabel(label).getFrozenNode());
-                }
-            }
-
-            LOGGER.warn("Unknown version {} with label {}!", getPath(), label);
-            return null;
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-
-    }
-
-    @Override
-    public Stream<FedoraVersion> getVersions() {
-        try {
-            final VersionHistory history = getVersionManager().getVersionHistory(getPath());
-            @SuppressWarnings("unchecked")
-            final Iterator<Version> versions = history.getAllVersions();
-            return iteratorToStream(versions)
-                /* discard jcr:rootVersion */
-                .filter(UncheckedPredicate.uncheck(version ->
-                            !version.getName().equals(history.getRootVersion().getName())))
-                /* omit unlabelled versions */
-                .filter(UncheckedPredicate.uncheck(version -> {
-                    final String[] labels = history.getVersionLabels(version);
-                    if (labels.length == 0) {
-                        LOGGER.warn("An unlabelled version for {} was found! Omitting from version listing!",
-                                getPath());
-                    } else if (labels.length > 1) {
-                        LOGGER.warn("Multiple version labels found for {}! Using first label, \"{}\".", getPath(),
-                                labels[0]);
-                    }
-                    return labels.length > 0;
-                }))
-                .map(uncheck(version ->
-                        new FedoraVersionImpl(history.getVersionLabels(version)[0], version.getCreated().toInstant())));
-        } catch (final RepositoryException ex) {
-            throw new RepositoryRuntimeException(ex);
-        }
-    }
-
-    @Override
-    public String getVersionLabelOfFrozenResource() {
-        if (!isFrozenResource()) {
-            return null;
-        }
-
-        // Frozen node is required to find associated version label
-        final Node frozenResource;
-        try {
-            // Version History associated with this resource
-            final VersionHistory history = getVersionManager().getVersionHistory(getUnfrozenResource().getPath());
-
-            // Possibly the frozen node is nested inside of current child-version-history
-            if (getNode().hasProperty(JCR_CHILD_VERSION_HISTORY)) {
-                final Node childVersionHistory = getNodeByProperty(getProperty(JCR_CHILD_VERSION_HISTORY));
-                final Node childNode = getNodeByProperty(childVersionHistory.getProperty(JCR_VERSIONABLE_UUID));
-                final Version childVersion = getVersionManager().getBaseVersion(childNode.getPath());
-                frozenResource = childVersion.getFrozenNode();
-
-            } else {
-                frozenResource = getNode();
-            }
-
-            // Loop versions
-            @SuppressWarnings("unchecked")
-            final Stream<Version> versions = iteratorToStream(history.getAllVersions());
-            return versions
-                .filter(UncheckedPredicate.uncheck(version -> version.getFrozenNode().equals(frozenResource)))
-                .map(uncheck(history::getVersionLabels))
-                .flatMap(Arrays::stream)
-                .findFirst().orElse(null);
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-    }
-
-    private Node getNodeByProperty(final Property property) throws RepositoryException {
-        return getSession().getNodeByIdentifier(property.getString());
-    }
-
-    protected VersionManager getVersionManager() {
-        try {
-            return getSession().getWorkspace().getVersionManager();
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-    }
-
     private static Collection<IllegalArgumentException> validateUpdateRequest(final UpdateRequest request) {
         return request.getOperations().stream()
                 .flatMap(x -> {
@@ -1105,39 +869,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
     private static Stream<IllegalArgumentException> validateQuad(final Quad quad) {
         return quadValidators.stream().map(x -> x.apply(quad));
-    }
-
-    private Node getFrozenNode(final String label) throws RepositoryException {
-        try {
-            final Session session = getSession();
-
-            final Node frozenNode = session.getNodeByIdentifier(label);
-
-            final String baseUUID = getNode().getIdentifier();
-
-            /*
-             * We found a node whose identifier is the "label" for the version.  Now
-             * we must do due dilligence to make sure it's a frozen node representing
-             * a version of the subject node.
-             */
-            final Property p = frozenNode.getProperty(JCR_FROZEN_UUID);
-            if (p != null) {
-                if (p.getString().equals(baseUUID)) {
-                    return frozenNode;
-                }
-            }
-            /*
-             * Though a node with an id of the label was found, it wasn't the
-             * node we were looking for, so fall through and look for a labeled
-             * node.
-             */
-        } catch (final ItemNotFoundException ex) {
-            /*
-             * the label wasn't a uuid of a frozen node but
-             * instead possibly a version label.
-             */
-        }
-        return null;
     }
 
     @Override
@@ -1205,5 +936,55 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             return t;
         };
     }
+
+	@Override
+	public FedoraResource getBaseVersion() {
+		return null;
+	}
+
+	@Override
+	public Stream<FedoraVersion> getVersions() {
+		return null;
+	}
+
+	@Override
+	public void enableVersioning() {
+		
+	}
+
+	@Override
+	public void disableVersioning() {
+		
+	}
+
+	@Override
+	public boolean isVersioned() {
+		return false;
+	}
+
+	@Override
+	public boolean isFrozenResource() {
+		return false;
+	}
+
+	@Override
+	public FedoraResource getVersionedAncestor() {
+		return null;
+	}
+
+	@Override
+	public FedoraResource getUnfrozenResource() {
+		return null;
+	}
+
+	@Override
+	public FedoraResource getVersion(String label) {
+		return null;
+	}
+
+	@Override
+	public String getVersionLabelOfFrozenResource() {
+		return null;
+	}
 
 }

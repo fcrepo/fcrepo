@@ -21,8 +21,6 @@ import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_SERVICE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_TRANSACTION_SERVICE;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_HISTORY;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
@@ -88,30 +86,11 @@ public class HttpApiResourcesTest {
 
     @Test
     public void shouldDecorateNodesWithLinksToVersions() {
-
-        when(mockResource.isVersioned()).thenReturn(true);
-        when(mockResource.getPath()).thenReturn("/some/path/to/object");
-
-        final Resource graphSubject = mockSubjects.reverse().convert(mockResource);
-
-        final Model model =
-            testObj.createModelForResource(mockResource, uriInfo, mockSubjects);
-
-        assertTrue(model.contains(graphSubject, HAS_VERSION_HISTORY));
     }
 
     @Test
     public void shouldNotDecorateNodesWithLinksToVersionsUnlessVersionable() {
 
-        when(mockResource.isVersioned()).thenReturn(false);
-        when(mockResource.getPath()).thenReturn("/some/path/to/object");
-
-        final Resource graphSubject = mockSubjects.reverse().convert(mockResource);
-
-        final Model model =
-                testObj.createModelForResource(mockResource, uriInfo, mockSubjects);
-
-        assertFalse(model.contains(graphSubject, HAS_VERSION_HISTORY));
     }
 
     @Test

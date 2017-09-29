@@ -31,8 +31,6 @@ import static org.apache.jena.vocabulary.SKOS.prefLabel;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_LABEL;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION;
 import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBES;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.WRITABLE;
@@ -78,37 +76,11 @@ public class ViewHelpersTest {
 
     @Test
     public void testGetVersions() {
-        final Graph mem = createDefaultModel().getGraph();
-        final Node version = createURI("http://localhost/fcrepo/abc/fcr:version/adcd");
-        mem.add(new Triple(createURI("http://localhost/fcrepo/abc"), HAS_VERSION.asNode(),
-                version));
-        mem.add(new Triple(version, CREATED_DATE.asNode(), createLiteral(now().toString())));
-        assertEquals("Version should be available.",
-                     version, testObj.getVersions(mem, createURI("http://localhost/fcrepo/abc")).next());
+        
     }
 
     @Test
     public void testGetOrderedVersions() {
-        final Node resource = createURI("http://localhost/fcrepo/abc");
-        final Node v1 = createURI("http://localhost/fcrepo/abc/fcr:version/1");
-        final Node v2 = createURI("http://localhost/fcrepo/abc/fcr:version/2");
-        final Node v3 = createURI("http://localhost/fcrepo/abc/fcr:version/3");
-        final Instant date = now();
-
-        final Graph mem = createDefaultModel().getGraph();
-        mem.add(new Triple(resource, HAS_VERSION.asNode(), v1));
-        mem.add(new Triple(v1, CREATED_DATE.asNode(), createLiteral(date.toString())));
-        mem.add(new Triple(resource, HAS_VERSION.asNode(), v2));
-        mem.add(new Triple(v2, CREATED_DATE.asNode(), createLiteral(date.toString())));
-        mem.add(new Triple(resource, HAS_VERSION.asNode(), v3));
-        mem.add(new Triple(v3, CREATED_DATE.asNode(),
-                createLiteral(date.plusMillis(10000l).toString())));
-
-        final Iterator<Node> versions = testObj.getOrderedVersions(mem, resource, HAS_VERSION);
-        versions.next();
-        versions.next();
-        final Node r3 = versions.next();
-        assertEquals("Latest version should be last.", v3, r3);
     }
 
     @Test
@@ -187,23 +159,6 @@ public class ViewHelpersTest {
         final String nodeUri = testObj.getVersionSubjectUrl(mockUriInfo, createResource(
                         "http://localhost/fcrepo/a/b/fcr:versions/c").asNode());
         assertEquals("http://localhost/fcrepo/a/b", nodeUri);
-    }
-
-    @Test
-    public void testGetLabeledVersion() {
-        final Graph mem = createDefaultModel().getGraph();
-        final String label = "testLabel";
-        mem.add(new Triple(createURI("a/b/c"), HAS_VERSION_LABEL.asNode(),
-                createLiteral(label)));
-        assertEquals("Version label should be available.", label, testObj.getVersionLabel(mem, createURI("a/b/c"))
-                .orElse(""));
-    }
-
-    @Test
-    public void testGetUnlabeledVersion() {
-        final Graph mem = createDefaultModel().getGraph();
-        assertEquals("Default version label should be used.",
-                     "d", testObj.getVersionLabel(mem, createURI("a/b/c")).orElse("d"));
     }
 
     @Test

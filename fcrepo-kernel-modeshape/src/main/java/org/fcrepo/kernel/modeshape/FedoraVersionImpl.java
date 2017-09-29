@@ -40,11 +40,11 @@ public class FedoraVersionImpl implements FedoraVersion {
 
     @Override
     public String getIdentifier() {
-        return identifier;
+        return null;
     }
 
     @Override
     public Instant getCreated() {
-        return created;
+        return null;
     }
 }

@@ -39,8 +39,6 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TOMBSTONE;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RequiredRdfContext.INBOUND_REFERENCES;
@@ -542,34 +540,6 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testGetObjectVersionGraph() throws RepositoryException {
 
-        final FedoraResource object =
-            containerService.findOrCreate(session, "/testObjectVersionGraph");
-
-        getJcrNode(object).addMixin("mix:versionable");
-        session.commit();
-
-        // create a version and make sure there are 2 versions (root + created)
-        versionService.createVersion(session, object.getPath(), "v0.0.1");
-        session.commit();
-
-        final Model graphStore = object.getTriples(subjects, VERSIONS).collect(toModel());
-
-        logger.debug(graphStore.toString());
-
-        // go querying for the version URI
-        Resource s = createResource(createGraphSubjectNode(object).getURI());
-        final ExtendedIterator<Statement> triples = graphStore.listStatements(s,HAS_VERSION, (RDFNode)null);
-
-        final List<Statement> list = triples.toList();
-        assertEquals(1, list.size());
-
-        // make sure the URI is derived from the label
-        s = list.get(0).getObject().asResource();
-        assertEquals("URI should be derived from label.", s.getURI(), createGraphSubjectNode(object).getURI()
-                + "/" + FCR_VERSIONS + "/v0.0.1");
-
-        // make sure the label is listed
-        assertTrue(graphStore.contains(s, HAS_VERSION_LABEL, createPlainLiteral("v0.0.1")));
     }
 
     @Test(expected = MalformedRdfException.class)

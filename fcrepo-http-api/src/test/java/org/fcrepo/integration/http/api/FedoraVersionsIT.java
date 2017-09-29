@@ -40,9 +40,6 @@ import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINS;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_HISTORY;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
@@ -97,26 +94,6 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
     @Test
     public void testGetObjectVersionProfile() throws IOException {
-        final String id = getRandomUniqueId();
-        final String label = "v0.0.1";
-
-        createObjectAndClose(id);
-        enableVersioning(id);
-        postObjectVersion(id, label);
-        logger.debug("Retrieved version profile:");
-        try (final CloseableDataset dataset = getDataset(new HttpGet(serverAddress + id + "/fcr:versions"))) {
-            final DatasetGraph graph = dataset.asDatasetGraph();
-            assertEquals("Expected exactly 3 triples!", 3, countTriples(graph));
-            final Resource subject = createResource(serverAddress + id);
-            final Iterator<Quad> hasVersionTriple = graph.find(ANY, subject.asNode(), HAS_VERSION.asNode(), ANY);
-            assertTrue("Didn't find a version triple!", hasVersionTriple.hasNext());
-            final Node versionURI = hasVersionTriple.next().getObject();
-            assertFalse("Found extra version triple!", hasVersionTriple.hasNext());
-            assertTrue("Version label wasn't presented!",
-                    graph.contains(ANY, versionURI, HAS_VERSION_LABEL.asNode(), createLiteral(label)));
-            assertTrue("Version creation date wasn't present!",
-                    graph.contains(ANY, versionURI, CREATED_DATE.asNode(), ANY));
-        }
     }
 
     private static int countTriples(final DatasetGraph g) {
@@ -178,25 +155,6 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
     @Test
     public void testVersioningANodeWithAVersionableChild() throws IOException {
-        final String id = getRandomUniqueId();
-        createObjectAndClose(id);
-        enableVersioning(id);
-        logger.debug("Adding a child");
-        createDatastream(id, "ds", "This DS will not be versioned");
-        logger.debug("Posting version");
-        postObjectVersion(id, "label");
-
-        logger.debug("Retrieved version profile:");
-        try (final CloseableDataset dataset = getDataset(new HttpGet(serverAddress + id + "/fcr:versions"))) {
-            final DatasetGraph results = dataset.asDatasetGraph();
-            final Node subject = createURI(serverAddress + id);
-            assertTrue("Didn't find a version triple!", results.contains(ANY, subject, HAS_VERSION.asNode(), ANY));
-            final Iterator<Quad> versionIt = results.find(ANY, subject, HAS_VERSION.asNode(), ANY);
-            while (versionIt.hasNext()) {
-                final String url = versionIt.next().getObject().getURI();
-                assertEquals("Version " + url + " isn't accessible!", OK.getStatusCode(), getStatus(new HttpGet(url)));
-            }
-        }
     }
 
     @Test
@@ -521,19 +479,6 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
     @Test
     public void testVersionOperationAddsVersionableMixin() throws IOException {
-        final String id = getRandomUniqueId();
-        createObjectAndClose(id);
-        final Node subject = createURI(serverAddress + id);
-        try (final CloseableDataset dataset = getContent(serverAddress + id)) {
-            assertFalse("Node must not have versionable mixin.", dataset.asDatasetGraph().contains(ANY,
-                    subject, HAS_VERSION_HISTORY.asNode(), ANY));
-        }
-        postObjectVersion(id, "label");
-        try (final CloseableDataset dataset = getContent(serverAddress + id)) {
-            final DatasetGraph updatedObjectProperties = dataset.asDatasetGraph();
-            assertTrue("Node is expected to contain hasVersions triple.", updatedObjectProperties.contains(ANY,
-                    subject, HAS_VERSION_HISTORY.asNode(), ANY));
-        }
     }
 
     @Test
@@ -550,13 +495,6 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         assertEquals(NOT_FOUND.getStatusCode(),
                 getStatus(new HttpGet(serverAddress + pid + "/" + dsid + "/fcr:versions")));
 
-        // datastream should not be versionable
-        try (final CloseableDataset dataset = getContent(serverAddress + pid + "/" + dsid + "/fcr:metadata")) {
-            final DatasetGraph originalObjectProperties = dataset.asDatasetGraph();
-            final Node subject = createURI(serverAddress + pid + "/" + dsid);
-            assertFalse("Node must not contain any hasVersions triples.", originalObjectProperties.contains(ANY,
-                    subject, HAS_VERSION_HISTORY.asNode(), ANY));
-        }
         // creating a version should succeed
         final HttpPost httpPost = new HttpPost(serverAddress + pid + "/" + dsid + "/fcr:versions");
         httpPost.setHeader("Slug", versionLabel);
@@ -575,11 +513,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
         }
         // datastream should then have versions endpoint
         assertEquals(OK.getStatusCode(), getStatus(new HttpGet(serverAddress + pid + "/" + dsid + "/fcr:versions")));
-        // datastream should then be versionable
-        try (final CloseableDataset dataset = getContent(serverAddress + pid + "/" + dsid + "/fcr:metadata")) {
-            assertTrue("Node is expected to contain hasVersions triple.", dataset.asDatasetGraph().contains(
-                    ANY, createURI(serverAddress + pid + "/" + dsid), HAS_VERSION_HISTORY.asNode(), ANY));
-        }
+
         // update the content
         final String updatedContent = "This is the updated content";
         executeAndClose(putDSMethod(pid, dsid, updatedContent));

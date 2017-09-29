@@ -260,46 +260,6 @@ public class FedoraResourceImplTest {
     }
 
     @Test
-    public void testGetBaseVersion() throws RepositoryException {
-
-        final Version mockVersion = mock(Version.class);
-        when(mockVersion.getName()).thenReturn("uuid");
-        final Workspace mockWorkspace = mock(Workspace.class);
-        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
-        final VersionManager mockVersionManager = mock(VersionManager.class);
-        when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
-
-        when(mockVersionManager.getBaseVersion(anyString())).thenReturn(
-                mockVersion);
-
-        testObj.getBaseVersion();
-
-        verify(mockVersionManager).getBaseVersion(anyString());
-    }
-
-    @Test
-    public void testGetVersionLabels() throws RepositoryException {
-        when(mockNode.isNodeType(FROZEN_NODE)).thenReturn(true);
-        final VersionHistory mockVersionHistory = mock(VersionHistory.class);
-        final Version mockVersion = mock(Version.class);
-        when(mockVersion.getName()).thenReturn("uuid");
-        final Workspace mockWorkspace = mock(Workspace.class);
-        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
-        final VersionManager mockVersionManager = mock(VersionManager.class);
-        when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
-        final VersionIterator mockVersionIterator = mock(VersionIterator.class);
-        when(mockVersionHistory.getAllVersions()).thenReturn(mockVersionIterator);
-        when(mockVersionIterator.hasNext()).thenReturn(false);
-
-        when(mockVersionManager.getVersionHistory(anyString())).thenReturn(
-                mockVersionHistory);
-
-        testObj.getVersions();
-
-        verify(mockVersionManager).getVersionHistory(anyString());
-    }
-
-    @Test
     public void testIsNew() {
         when(mockNode.isNew()).thenReturn(true);
         assertTrue("resource state should be the same as the node state",
@@ -494,70 +454,4 @@ public class FedoraResourceImplTest {
         verify(mockNode).remove();
         verify(mockContainer).addNode("a", FEDORA_TOMBSTONE);
     }
-
-    @Test
-    public void testGetUnfrozenResourceForFrozenNode() throws RepositoryException {
-        when(mockNode.isNodeType(FROZEN_NODE)).thenReturn(true);
-        when(mockNode.hasProperty("jcr:frozenUuid")).thenReturn(true);
-        when(mockNode.getProperty("jcr:frozenUuid")).thenReturn(mockProp);
-        when(mockProp.getString()).thenReturn("frozen-id");
-        when(mockSession.getNodeByIdentifier("frozen-id")).thenReturn(mockChild);
-        final FedoraResource actual = testObj.getUnfrozenResource();
-        assertEquals(mockChild, getJcrNode(actual));
-    }
-
-    @Test
-    public void testGetUnfrozenResourceForResource() throws RepositoryException {
-        when(mockNode.isNodeType(FROZEN_NODE)).thenReturn(false);
-        final FedoraResource actual = testObj.getUnfrozenResource();
-        assertEquals(testObj, actual);
-    }
-
-    @Test
-    public void testGetVersionedAncestorForResource() throws RepositoryException {
-        when(mockNode.isNodeType(FROZEN_NODE)).thenReturn(false);
-        final FedoraResource actual = testObj.getVersionedAncestor();
-        assertNull(actual);
-    }
-
-    @Test
-    public void testGetVersionedAncestorForVersionedResource() throws RepositoryException {
-        when(mockNode.isNodeType(FROZEN_NODE)).thenReturn(true);
-
-        when(mockNode.hasProperty("jcr:frozenUuid")).thenReturn(true);
-        when(mockNode.getProperty("jcr:frozenUuid")).thenReturn(mockProp);
-        when(mockNode.isNodeType("mix:versionable")).thenReturn(true);
-        when(mockProp.getString()).thenReturn("frozen-id");
-        when(mockSession.getNodeByIdentifier("frozen-id")).thenReturn(mockNode);
-        final FedoraResource actual = testObj.getVersionedAncestor();
-        assertEquals(mockNode, getJcrNode(actual));
-    }
-
-    @Test
-    public void testGetVersionedAncestorForVersionedResourceWithinTree() throws RepositoryException {
-        when(mockNode.isNodeType(FROZEN_NODE)).thenReturn(true);
-
-        when(mockNode.getDepth()).thenReturn(2);
-        when(mockNode.hasProperty("jcr:frozenUuid")).thenReturn(true);
-        when(mockNode.getProperty("jcr:frozenUuid")).thenReturn(mockProp);
-        when(mockNode.isNodeType("mix:versionable")).thenReturn(false);
-        when(mockProp.getString()).thenReturn("frozen-id");
-        when(mockSession.getNodeByIdentifier("frozen-id")).thenReturn(mockNode);
-
-        when(mockNode.getParent()).thenReturn(mockContainer);
-        when(mockContainer.getSession()).thenReturn(mockSession);
-        when(mockContainer.getDepth()).thenReturn(1);
-        when(mockContainer.isNodeType(FROZEN_NODE)).thenReturn(true);
-        when(mockContainer.hasProperty("jcr:frozenUuid")).thenReturn(true);
-        when(mockContainer.getProperty("jcr:frozenUuid")).thenReturn(mockContainerProperty);
-        when(mockContainerProperty.getString()).thenReturn("frozen-id-container");
-        when(mockSession.getNodeByIdentifier("frozen-id-container")).thenReturn(mockContainer);
-        when(mockContainer.isNodeType("mix:versionable")).thenReturn(true);
-
-        final FedoraResource actual = testObj.getVersionedAncestor();
-        assertEquals(mockContainer, getJcrNode(actual));
-    }
-
-
-
 }
