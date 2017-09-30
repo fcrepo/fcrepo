@@ -23,7 +23,6 @@
     <!-- for standalone operation -->
     <jetty.users.file>${project.build.directory}/test-classes/jetty-users.properties</jetty.users.file>
     <fcrepo.modeshape.configuration>classpath:/config/servlet-auth/repository.json</fcrepo.modeshape.configuration>
- 
   </properties>
 
   <dependencyManagement>
@@ -288,7 +287,7 @@
         <filtering>true</filtering>
         <directory>src/test/resources</directory>
       </testResource>
-    </testResources>   
+    </testResources>
     <plugins>
       <plugin>
         <artifactId>maven-remote-resources-plugin</artifactId>
@@ -549,13 +548,6 @@
                   <goal>createconsole</goal>
                 </goals>
                 <configuration>
-                  <!-- 
-                  <additionalDependencies>
-                    <additionalDependency>
-                      <artifactId>jetty-console-jettyxml-plugin</artifactId>
-                    </additionalDependency>
-        		  </additionalDependencies>
-                  -->
                   <backgroundImage>${basedir}/src/main/webapp/static/images/fedora_logo_10in.png</backgroundImage>
                   <destinationFile>
                     ${project.build.directory}${file.separator}${project.artifactId}-${project.version}-jetty-console.jar

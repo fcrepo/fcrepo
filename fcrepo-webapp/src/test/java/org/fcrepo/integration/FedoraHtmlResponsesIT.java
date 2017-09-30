@@ -76,10 +76,10 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
     @Before
     public void setUp() {
         webClient = getDefaultWebClient();
+
         javascriptlessWebClient = getDefaultWebClient();
         javascriptlessWebClient.getOptions().setJavaScriptEnabled(false);
     }
-
 
     @After
     public void cleanUp() {
@@ -351,13 +351,6 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         return pid;
     }
 
-
-
-    @SuppressWarnings("unchecked")
-    private static <T> List<T> castList(final List<?> l) {
-        return transform(l, x -> (T) x);
-    }
-
     private CredentialsProvider getFedoraAdminCredentials() {
         final CredentialsProvider credentials  = new DefaultCredentialsProvider();
         credentials.setCredentials(AuthScope.ANY, FEDORA_ADMIN_CREDENTIALS);
@@ -379,6 +372,11 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         webClient.setCssErrorHandler(new SilentCssErrorHandler());
         return webClient;
 
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> List<T> castList(final List<?> l) {
+        return transform(l, x -> (T) x);
     }
 
     private static class SuppressWarningIncorrectnessListener
