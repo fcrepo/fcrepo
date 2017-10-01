@@ -37,6 +37,12 @@
 <test = 'info:fedora/test/'>
 
 /*
+ * nt:folder node types: versioning with no child hierarchy.
+ */
+[nt:folder] > nt:hierarchyNode
+  + * (nt:hierarchyNode) ignore
+
+/*
  * Any Fedora resource.
  */
 [fedora:Resource] > mix:created, mix:lastModified, mix:referenceable mixin

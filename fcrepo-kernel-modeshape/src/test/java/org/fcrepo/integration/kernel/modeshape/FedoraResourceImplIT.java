@@ -18,7 +18,6 @@
 package org.fcrepo.integration.kernel.modeshape;
 
 import static java.net.URI.create;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptySet;
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDstring;
 import static org.apache.jena.graph.Node.ANY;
@@ -70,7 +69,6 @@ import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.URI;
 import java.nio.charset.Charset;
@@ -94,6 +92,7 @@ import javax.jcr.security.AccessControlList;
 import javax.jcr.security.AccessControlManager;
 import javax.jcr.security.Privilege;
 import javax.jcr.version.Version;
+import javax.jcr.PathNotFoundException;
 
 import com.google.common.collect.Iterators;
 import org.apache.jena.graph.Graph;
@@ -109,7 +108,6 @@ import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.InvalidPrefixException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.models.FedoraBinary;
-import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.BinaryService;
@@ -119,12 +117,13 @@ import org.fcrepo.kernel.api.services.VersionService;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
-import org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.modeshape.jcr.security.SimplePrincipal;
 import org.springframework.test.context.ContextConfiguration;
 
@@ -164,6 +163,9 @@ public class FedoraResourceImplIT extends AbstractIT {
     private FedoraSession session;
 
     private DefaultIdentifierTranslator subjects;
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     @Before
     public void setUp() throws RepositoryException {
@@ -1017,28 +1019,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetVersionedAncestor() throws RepositoryException {
-        final String pid = getRandomPid();
-        final Container object = containerService.findOrCreate(session, "/" + pid);
-        final Session jcrSession = getJcrSession(session);
-        object.enableVersioning();
-        session.commit();
-        containerService.findOrCreate(session, "/" + pid + "/a/b/c");
-        session.commit();
-        jcrSession.getWorkspace().getVersionManager().checkpoint(object.getPath());
-        addVersionLabel("some-label", object);
-        session.commit();
-
-        final javax.jcr.Node node = getJcrNode(object);
-        final Version version = node.getSession().getWorkspace().getVersionManager()
-                .getVersionHistory(node.getPath()).getVersionByLabel("some-label");
-        final FedoraResource frozenResource = new FedoraResourceImpl(version.getFrozenNode().getNode("a"));
-
-        assertEquals(object, frozenResource.getVersionedAncestor().getUnfrozenResource());
-    }
-
-    @Test
-    public void testVersionedChild() throws RepositoryException {
+    public void testExceptionGetVersionOfVersionableChild() throws RepositoryException {
         final String pid = getRandomPid();
         final Container object = containerService.findOrCreate(session, "/" + pid);
         final Session jcrSession = getJcrSession(session);
@@ -1060,9 +1041,10 @@ public class FedoraResourceImplIT extends AbstractIT {
         final javax.jcr.Node node = getJcrNode(object);
         final Version version = node.getSession().getWorkspace().getVersionManager()
                 .getVersionHistory(node.getPath()).getVersionByLabel("object-v0");
-        final FedoraResource frozenResource = new FedoraResourceImpl(version.getFrozenNode().getNode("child"));
 
-        assertEquals(child, frozenResource.getVersionedAncestor().getUnfrozenResource());
+        // Versioned child should not exist for versionable child nodes: PathNotFoundException Expected.
+        thrown.expect(PathNotFoundException.class);
+        version.getFrozenNode().getNode("child");
     }
 
     @Test
@@ -1093,11 +1075,9 @@ public class FedoraResourceImplIT extends AbstractIT {
         // Parent version is correct
         assertEquals(object, frozenResource.getVersionedAncestor().getUnfrozenResource());
 
-        // Versioned child still exists
-        final FedoraResourceImpl frozenChild = new FedoraResourceImpl(version.getFrozenNode().getNode("child"));
-        final javax.jcr.Property property = frozenChild.getNode().getProperty("dc:title");
-        assertNotNull(property);
-        assertEquals("this-is-some-title", property.getString());
+        // Versioned child should not exist for deleted child with versioning disabled: PathNotFoundException Expected.
+        thrown.expect(PathNotFoundException.class);
+        version.getFrozenNode().getNode("child");
     }
 
     @Test
@@ -1130,13 +1110,9 @@ public class FedoraResourceImplIT extends AbstractIT {
         // Parent version is correct
         assertEquals(object, frozenResource.getVersionedAncestor().getUnfrozenResource());
 
-        // Versioned child still exists
-        final NonRdfSourceDescription frozenChild =
-                new NonRdfSourceDescriptionImpl(version.getFrozenNode().getNode("child"));
-        try (final InputStream contentStream = ((FedoraBinary) frozenChild.getDescribedResource()).getContent()) {
-            assertNotNull(contentStream);
-            assertEquals(content, IOUtils.toString(contentStream, UTF_8));
-        }
+        // Versioned child should not exists for deleted binary resource: PathNotFoundException Expected.
+        thrown.expect(PathNotFoundException.class);
+        version.getFrozenNode().getNode("child");
     }
 
     @Test
@@ -1221,8 +1197,10 @@ public class FedoraResourceImplIT extends AbstractIT {
         final javax.jcr.Node node = getJcrNode(object);
         final Version version = node.getSession().getWorkspace().getVersionManager().getVersionHistory(node.getPath())
                 .getVersionByLabel("some-label");
-        final FedoraResource frozenResource = new FedoraResourceImpl(version.getFrozenNode().getNode("a"));
-        assertNull(frozenResource.getVersion("some-label"));
+
+        // Versioned child should not exist for versioning disabled child: PathNotFoundException Expected.
+        thrown.expect(PathNotFoundException.class);
+        version.getFrozenNode().getNode("a");
 
     }
 
