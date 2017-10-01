@@ -32,7 +32,6 @@ import static org.apache.jena.update.UpdateAction.execute;
 import static org.apache.jena.update.UpdateFactory.create;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
-import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 import static org.fcrepo.kernel.api.RdfLexicon.isRelaxed;
@@ -43,7 +42,6 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_MEMBERSHIP;
 import static org.fcrepo.kernel.api.RequiredRdfContext.MINIMAL;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
-import static org.fcrepo.kernel.api.RequiredRdfContext.VERSIONS;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_MIXIN_TYPES;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
@@ -56,7 +54,6 @@ import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunction
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getContainingNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.hasInternalNamespace;
-import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFrozenNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.ldpInsertedContentProperty;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.resourceToProperty;
@@ -84,7 +81,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.jcr.ItemNotFoundException;
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
@@ -93,9 +89,6 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.nodetype.NodeType;
-import javax.jcr.version.Version;
-import javax.jcr.version.VersionHistory;
-import javax.jcr.version.VersionManager;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.jena.rdf.model.Statement;
@@ -130,7 +123,6 @@ import org.fcrepo.kernel.modeshape.rdf.impl.ReferencesRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.RootRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.SkolemNodeRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.TypeRdfContext;
-import org.fcrepo.kernel.modeshape.rdf.impl.VersionsRdfContext;
 import org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.modeshape.utils.FilteringJcrPropertyStatementListener;
 import org.fcrepo.kernel.modeshape.utils.PropertyChangedListener;
@@ -937,54 +929,52 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         };
     }
 
-	@Override
-	public FedoraResource getBaseVersion() {
-		return null;
-	}
+  @Override
+  public FedoraResource getBaseVersion() {
+    return null;
+  }
 
-	@Override
-	public Stream<FedoraVersion> getVersions() {
-		return null;
-	}
+  @Override
+  public Stream<FedoraVersion> getVersions() {
+    return null;
+  }
 
-	@Override
-	public void enableVersioning() {
-		
-	}
+  @Override
+  public void enableVersioning() {
+  }
 
-	@Override
-	public void disableVersioning() {
-		
-	}
+  @Override
+  public void disableVersioning() {
+  }
 
-	@Override
-	public boolean isVersioned() {
-		return false;
-	}
+  @Override
+  public boolean isVersioned() {
+    return false;
+  }
 
-	@Override
-	public boolean isFrozenResource() {
-		return false;
-	}
+  @Override
+  public boolean isFrozenResource() {
+    return false;
+  }
 
-	@Override
-	public FedoraResource getVersionedAncestor() {
-		return null;
-	}
+  @Override
+  public FedoraResource getVersionedAncestor() {
+    return null;
+  }
 
-	@Override
-	public FedoraResource getUnfrozenResource() {
-		return null;
-	}
+  @Override
+  public FedoraResource getUnfrozenResource() {
+    return null;
+  }
 
-	@Override
-	public FedoraResource getVersion(String label) {
-		return null;
-	}
+  @Override
+  public FedoraResource getVersion(final String label) {
+    return null;
+  }
 
-	@Override
-	public String getVersionLabelOfFrozenResource() {
-		return null;
-	}
+  @Override
+  public String getVersionLabelOfFrozenResource() {
+    return null;
+  }
 
 }

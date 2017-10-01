@@ -26,8 +26,6 @@ import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-
-import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 
 import org.slf4j.Logger;
@@ -35,7 +33,7 @@ import org.slf4j.Logger;
 
 /**
  * {@link org.fcrepo.kernel.api.RdfStream} that supplies {@link Triple}s concerning
- * the versions of a selected {@link Node}.
+ * the versions of a selected Node.
  *
  * @author ajs6f
  * @since Oct 15, 2013

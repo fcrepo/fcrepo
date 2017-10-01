@@ -38,13 +38,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.jcr.ItemNotFoundException;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
-import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.version.VersionHistory;
 import javax.ws.rs.core.UriBuilder;
 
 import org.fcrepo.http.commons.session.HttpSession;

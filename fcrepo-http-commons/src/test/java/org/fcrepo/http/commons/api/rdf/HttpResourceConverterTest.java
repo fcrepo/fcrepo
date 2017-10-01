@@ -21,7 +21,6 @@ import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
@@ -30,13 +29,11 @@ import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.fcrepo.kernel.modeshape.FedoraSessionImpl;
 import org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import javax.jcr.ItemNotFoundException;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
@@ -49,7 +46,6 @@ import javax.ws.rs.core.UriBuilder;
 
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
-import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_NODE;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
@@ -108,7 +104,6 @@ public class HttpResourceConverterTest {
         when(session.getNode("/" + path)).thenReturn(node);
         when(session.getNode("/")).thenReturn(node);
         when(node.getPath()).thenReturn("/" + path);
-        when(node.isNodeType(FROZEN_NODE)).thenReturn(false);
         when(node.isNodeType(FEDORA_NON_RDF_SOURCE_DESCRIPTION)).thenReturn(false);
         when(contentNode.getPath()).thenReturn("/" + path + "/jcr:content");
         when(session.getWorkspace()).thenReturn(mockWorkspace);

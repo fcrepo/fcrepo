@@ -39,7 +39,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static java.time.Instant.now;
 
-import java.time.Instant;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -76,7 +75,6 @@ public class ViewHelpersTest {
 
     @Test
     public void testGetVersions() {
-        
     }
 
     @Test

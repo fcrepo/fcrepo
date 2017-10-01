@@ -19,7 +19,6 @@ package org.fcrepo.integration.http.api;
 
 import static com.google.common.io.Files.createTempDir;
 import static java.util.UUID.randomUUID;
-import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.junit.Assert.assertEquals;
@@ -57,11 +56,6 @@ public class FedoraBackupIT extends AbstractResourceIT {
         createDatastream(objName, "testDS", text);
         // Verify object exists
         assertEquals(OK.getStatusCode(), getStatus(new HttpGet(serverAddress + objName)));
-
-        // create a named version of it with spaces
-        final HttpPost httpPost = new HttpPost(serverAddress + objName + "/testDS/fcr:versions");
-        httpPost.setHeader("Slug", "version name with spaces");
-        assertEquals(CREATED.getStatusCode(), getStatus(httpPost));
 
         // back it up
         final File requestedDir = createTempDir();
