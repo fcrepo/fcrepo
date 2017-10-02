@@ -500,7 +500,8 @@
         <activeByDefault>false</activeByDefault>
       </activation>
       <properties>
-     </properties>
+        <fcrepo.modeshape.configuration>classpath:/config/file-simple/repository.json</fcrepo.modeshape.configuration>
+      </properties>
 
       <build>
         <resources>
