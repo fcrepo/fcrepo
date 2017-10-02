@@ -520,10 +520,6 @@
               <attachClasses>true</attachClasses>
               <webResources>
                 <resource>
-                  <directory>src/main/webapp</directory>
-                  <filtering>true</filtering>
-                </resource>
-                <resource>
                   <directory>src/main/jetty-console</directory>
                   <filtering>true</filtering>
                 </resource>
