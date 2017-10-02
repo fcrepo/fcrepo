@@ -110,8 +110,8 @@ public class LdpTestSuiteIT {
         request.setHeader(CONTENT_TYPE, "text/turtle");
         try (final CloseableHttpResponse response = executeWithBasicAuth(request)) {
             assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
-    
-    
+
+
             final HashMap<String, String> options = new HashMap<>();
             options.put("server", serverAddress + pid);
             options.put("output", "report-basic");
@@ -164,7 +164,7 @@ public class LdpTestSuiteIT {
         request.setHeader(CONTENT_TYPE, "text/turtle");
         try (final CloseableHttpResponse response = executeWithBasicAuth(request)) {
             assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
-    
+
             final HashMap<String, String> options = new HashMap<>();
             options.put("server", serverAddress + pid);
             options.put("output", "report-indirect");
