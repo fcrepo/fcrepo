@@ -19,11 +19,17 @@ package org.fcrepo.kernel.modeshape;
 
 import java.time.Instant;
 import org.fcrepo.kernel.api.FedoraVersion;
+import org.slf4j.Logger;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author acoburn
  */
 public class FedoraVersionImpl implements FedoraVersion {
+
+    private static final Logger LOGGER = getLogger(FedoraVersionImpl.class);
+
 
     private final String identifier;
     private final Instant created;
@@ -40,11 +46,14 @@ public class FedoraVersionImpl implements FedoraVersion {
 
     @Override
     public String getIdentifier() {
-        return null;
+        LOGGER.warn("Review if class can be removed after implementing Memento!");
+
+        return identifier;
     }
 
     @Override
     public Instant getCreated() {
-        return null;
+        LOGGER.warn("Review if class can be removed after implementing Memento!");
+        return created;
     }
 }

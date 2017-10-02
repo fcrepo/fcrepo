@@ -55,6 +55,7 @@ public class VersionsRdfContext extends DefaultRdfStream {
         super(idTranslator.reverse().convert(resource).asNode());
         this.resource = resource;
         concat(versionTriples());
+        LOGGER.warn("Review if this class can be removed after implementing Memento!");
     }
 
     @SuppressWarnings("unchecked")

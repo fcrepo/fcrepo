@@ -18,17 +18,26 @@
 package org.fcrepo.kernel.modeshape.services;
 
 import javax.jcr.Node;
+import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
+import javax.jcr.version.VersionException;
+import javax.jcr.version.VersionHistory;
+import javax.jcr.version.VersionIterator;
 import javax.jcr.version.VersionManager;
 
 import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.services.VersionService;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Mike Durbin
@@ -55,8 +64,20 @@ public class VersionServiceImplTest {
     @Mock
     private Node unversionedNode;
 
-    @Test
-    public void testDummy() {
+    @Test(expected = RepositoryRuntimeException.class)
+    @Ignore("Until implemented with Memento")
+    public void testRevertToUnknownVersion() throws RepositoryException {
+        final String versionUUID = "uuid";
+        final VersionManager mockVersionManager = mock(VersionManager.class);
+        final VersionHistory mockHistory = mock(VersionHistory.class);
 
+        when(mockHistory.getVersionByLabel(versionUUID)).thenThrow(new VersionException());
+        final VersionIterator mockVersionIterator = mock(VersionIterator.class);
+        when(mockHistory.getAllVersions()).thenReturn(mockVersionIterator);
+        when(mockVersionIterator.hasNext()).thenReturn(false);
+        when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
+        when(mockVersionManager.getVersionHistory(EXAMPLE_VERSIONED_PATH)).thenReturn(mockHistory);
+
+        testObj.revertToVersion(testSession, EXAMPLE_VERSIONED_PATH, versionUUID);
     }
 }

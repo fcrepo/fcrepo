@@ -83,7 +83,7 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
 
         // fcr:versions
         if (resource.isVersioned()) {
-           // Reimplement for memento
+           throw new RuntimeException("Must implement with Memento!");
         }
     }
 

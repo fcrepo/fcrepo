@@ -42,6 +42,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RequiredRdfContext.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
+import static org.fcrepo.kernel.api.RequiredRdfContext.VERSIONS;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FIELD_DELIMITER;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
@@ -100,6 +101,7 @@ import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.InvalidPrefixException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.BinaryService;
@@ -113,6 +115,7 @@ import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.modeshape.jcr.security.SimplePrincipal;
 import org.springframework.test.context.ContextConfiguration;
@@ -526,10 +529,38 @@ public class FedoraResourceImplIT extends AbstractIT {
             .anyMatch(x -> x.startsWith(JCR_NAMESPACE) || x.startsWith(MIX_NAMESPACE) ||
                     x.startsWith(MODE_NAMESPACE) || x.startsWith(JCR_NT_NAMESPACE)));
     }
-
     @Test
+    @Ignore("Until implemented with Memento")
     public void testGetObjectVersionGraph() throws RepositoryException {
 
+        final FedoraResource object =
+                containerService.findOrCreate(session, "/testObjectVersionGraph");
+
+        getJcrNode(object).addMixin("mix:versionable");
+        session.commit();
+
+        // create a version and make sure there are 2 versions (root + created)
+        versionService.createVersion(session, object.getPath(), "v0.0.1");
+        session.commit();
+
+        final Model graphStore = object.getTriples(subjects, VERSIONS).collect(toModel());
+
+        logger.debug(graphStore.toString());
+
+        // go querying for the version URI
+        final Resource s = createResource(createGraphSubjectNode(object).getURI());
+//        final ExtendedIterator<Statement> triples = graphStore.listStatements(s,HAS_VERSION, (RDFNode)null);
+
+//        final List<Statement> list = triples.toList();
+//        assertEquals(1, list.size());
+
+        // make sure the URI is derived from the label
+//        s = list.get(0).getObject().asResource();
+//        assertEquals("URI should be derived from label.", s.getURI(), createGraphSubjectNode(object).getURI()
+//                + "/" + FCR_VERSIONS + "/v0.0.1");
+
+        // make sure the label is listed
+//        assertTrue(graphStore.contains(s, HAS_VERSION_LABEL, createPlainLiteral("v0.0.1")));
     }
 
     @Test(expected = MalformedRdfException.class)
@@ -955,6 +986,76 @@ public class FedoraResourceImplIT extends AbstractIT {
         containerService.findOrCreate(session, "/" + pid + "/#/a");
 
         assertFalse(container.getChildren().findFirst().isPresent());
+    }
+
+    @Test
+    @Ignore ("Until implemented with Memento")
+    public void testDeleteLinkedVersionedResources() throws RepositoryException {
+        final Container object1 = containerService.findOrCreate(session, "/" + getRandomPid());
+        final Container object2 = containerService.findOrCreate(session, "/" + getRandomPid());
+
+        // Create a link between objects 1 and 2
+        object2.updateProperties(subjects, "PREFIX example: <http://example.org/>\n" +
+                        "INSERT { <> <example:link> " + "<" + createGraphSubjectNode(object1).getURI() + ">" +
+                        " } WHERE {} ",
+                object2.getTriples(subjects, emptySet()));
+
+        // Create version of object2
+        versionService.createVersion(session, object2.getPath(), "obj2-v0");
+
+        // Verify that the objects exist
+        assertTrue("object1 should exist!", exists(object1));
+        assertTrue("object2 should exist!", exists(object2));
+
+        // This is the test: verify successful deletion of the objects
+        object2.delete();
+        session.commit();
+
+        object1.delete();
+        session.commit();
+
+        // Double-verify that the objects are gone
+        assertFalse("/object2 should NOT exist!", exists(object2));
+        assertFalse("/object1 should NOT exist!", exists(object1));
+    }
+
+    private boolean exists(final Container resource) {
+        try {
+            resource.getPath();
+            return true;
+        } catch (RepositoryRuntimeException e) {
+            return false;
+        }
+    }
+
+    @Test
+    @Ignore ("Until implemented with Memento")
+    public void testDisableVersioning() throws RepositoryException {
+        final String pid = getRandomPid();
+        final Container object = containerService.findOrCreate(session, "/" + pid);
+        object.enableVersioning();
+        session.commit();
+        assertTrue(object.isVersioned());
+        object.disableVersioning();
+        assertFalse(object.isVersioned());
+    }
+
+    @Test (expected = RepositoryRuntimeException.class)
+    @Ignore ("Until implemented with Memento")
+    public void testDisableVersioningException() {
+        final String pid = getRandomPid();
+        final Container object = containerService.findOrCreate(session, "/" + pid);
+        object.disableVersioning();
+    }
+
+    @Test
+    public void testHash() throws RepositoryException {
+        final String pid = getRandomPid();
+        final Container object = containerService.findOrCreate(session, "/" + pid);
+        object.enableVersioning();
+        session.commit();
+        final FedoraResourceImpl frozenResource = new FedoraResourceImpl(getJcrNode(object));
+        assertFalse(frozenResource.hashCode() == 0);
     }
 
     @Test

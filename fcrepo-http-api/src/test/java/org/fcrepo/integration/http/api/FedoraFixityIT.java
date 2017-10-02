@@ -38,11 +38,13 @@ import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST_ALGORITHM;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.net.URI;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.ws.rs.core.Link;
@@ -51,10 +53,13 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPatch;
 
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
+import org.apache.jena.sparql.core.Quad;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import org.apache.jena.datatypes.RDFDatatype;
@@ -165,6 +170,39 @@ public class FedoraFixityIT extends AbstractResourceIT {
             final HttpGet method = new HttpGet(serverAddress + id + "/zxc/fcr:fixity");
             method.addHeader(ACCEPT, type);
             assertEquals(type, getContentType(method));
+        }
+    }
+
+    @Test
+    @Ignore("Until implemented with Memento")
+    public void testBinaryVersionFixity() throws IOException {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+        createDatastream(id, "dsid", "foo");
+
+        logger.debug("Creating binary content version v0 ...");
+        postVersion(id + "/dsid", "v0");
+
+        try (final CloseableDataset dataset =
+                     getDataset(new HttpGet(serverAddress + id + "/dsid/fcr%3aversions/v0/fcr:fixity"))) {
+            final DatasetGraph graphStore = dataset.asDatasetGraph();
+            logger.debug("Got binary content versioned fixity triples {}", graphStore);
+            final Iterator<Quad> stmtIt = graphStore.find(ANY, ANY, HAS_FIXITY_RESULT.asNode(), ANY);
+            assertTrue(stmtIt.hasNext());
+            assertTrue(graphStore.contains(ANY, ANY, HAS_FIXITY_STATE.asNode(), createLiteral("SUCCESS")));
+            assertTrue(graphStore.contains(ANY, ANY, HAS_MESSAGE_DIGEST.asNode(), ANY));
+            assertTrue(graphStore.contains(ANY, ANY, HAS_SIZE.asNode(), createLiteral("3", IntegerType)));
+        }
+    }
+
+    private static void postVersion(final String path, final String label) throws IOException {
+        logger.debug("Posting version");
+        final HttpPost postVersion = postObjMethod(path + "/fcr:versions");
+        postVersion.addHeader("Slug", label);
+        try (final CloseableHttpResponse response = execute(postVersion)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            final String locationHeader = getLocation(response);
+            assertNotNull("No version location header found", locationHeader);
         }
     }
 }
