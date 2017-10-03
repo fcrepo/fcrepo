@@ -32,6 +32,7 @@ import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -85,12 +86,13 @@ public class HttpApiResourcesTest {
     }
 
     @Test
+    @Ignore("Until implemented with Memento")
     public void shouldDecorateNodesWithLinksToVersions() {
     }
 
     @Test
+    @Ignore ("Until implemented with Memento")
     public void shouldNotDecorateNodesWithLinksToVersionsUnlessVersionable() {
-
     }
 
     @Test

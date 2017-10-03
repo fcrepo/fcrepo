@@ -503,7 +503,36 @@ public class WebACRecipesIT extends AbstractResourceIT {
     }
 
     @Test
+    @Ignore ("Until implemented with Memento")
     public void testAccessToVersionedResources() throws IOException {
+        final String idVersion = "/rest/versionResource";
+        ingestObj(idVersion);
+
+        final HttpPatch requestPatch1 = patchObjMethod(idVersion);
+        setAuth(requestPatch1, "fedoraAdmin");
+        requestPatch1.addHeader("Content-type", "application/sparql-update");
+        requestPatch1.setEntity(
+                new StringEntity("PREFIX pcdm: <http://pcdm.org/models#> INSERT { <> a pcdm:Object } WHERE {}"));
+        assertEquals(HttpStatus.SC_NO_CONTENT, getStatus(requestPatch1));
+
+        final String acl = ingestAcl("fedoraAdmin",
+                "/acls/10/acl.ttl",
+                "/acls/10/authorization.ttl");
+
+        linkToAcl(idVersion, acl);
+
+        final HttpGet requestGet1 = getObjMethod(idVersion);
+        setAuth(requestGet1, "user10");
+        assertEquals("user10 can't read object", HttpStatus.SC_OK, getStatus(requestGet1));
+
+        final HttpPost requestPost1 = postObjMethod(idVersion + "/fcr:versions");
+        requestPost1.addHeader("Slug", "v0");
+        setAuth(requestPost1, "fedoraAdmin");
+        assertEquals("Unable to create a new version", HttpStatus.SC_CREATED, getStatus(requestPost1));
+
+        final HttpGet requestGet2 = getObjMethod(idVersion);
+        setAuth(requestGet2, "user10");
+        assertEquals("user10 can't read versioned object", HttpStatus.SC_OK, getStatus(requestGet2));
     }
 
     @Test
@@ -561,7 +590,30 @@ public class WebACRecipesIT extends AbstractResourceIT {
     }
 
     @Test
+    @Ignore ("Until implemented with Memento")
+
     public void testAccessByUriToVersionedResources() throws IOException {
+        final String idVersion = "/rest/versionResourceUri";
+        ingestObj(idVersion);
+
+        final String acl = ingestAcl("fedoraAdmin",
+                "/acls/12/acl.ttl",
+                "/acls/12/authorization.ttl");
+
+        linkToAcl(idVersion, acl);
+
+        final HttpGet requestGet1 = getObjMethod(idVersion);
+        setAuth(requestGet1, "user12");
+        assertEquals("testuser can't read object", HttpStatus.SC_OK, getStatus(requestGet1));
+
+        final HttpPost requestPost1 = postObjMethod(idVersion + "/fcr:versions");
+        requestPost1.addHeader("Slug", "v0");
+        setAuth(requestPost1, "user12");
+        assertEquals("Unable to create a new version", HttpStatus.SC_CREATED, getStatus(requestPost1));
+
+        final HttpGet requestGet2 = getObjMethod(idVersion);
+        setAuth(requestGet2, "user12");
+        assertEquals("testuser can't read versioned object", HttpStatus.SC_OK, getStatus(requestGet2));
     }
 
     @Test

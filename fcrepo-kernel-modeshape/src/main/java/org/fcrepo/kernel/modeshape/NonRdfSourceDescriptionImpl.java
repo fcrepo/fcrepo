@@ -57,6 +57,7 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements N
 
     @Override
     public FedoraResource getBaseVersion() {
+        LOGGER.warn("Review if method (getBaseVersion) can be removed after implementing Memento!");
         return null;
     }
 

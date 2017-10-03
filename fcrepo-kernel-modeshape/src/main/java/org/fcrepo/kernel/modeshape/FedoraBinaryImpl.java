@@ -411,6 +411,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
 
     @Override
     public FedoraResource getBaseVersion() {
+        LOGGER.warn("Remove method 'getBaseVersion()' if not used after implementing Memento!");
         return null;
     }
 
@@ -445,15 +446,19 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
 
     @Override
     public boolean isVersioned() {
-        return false;
+        return getDescription().isVersioned();
     }
 
     @Override
     public void enableVersioning() {
+        super.enableVersioning();
+        getDescription().enableVersioning();
     }
 
     @Override
     public void disableVersioning() {
+        super.disableVersioning();
+        getDescription().disableVersioning();
     }
 
     /**

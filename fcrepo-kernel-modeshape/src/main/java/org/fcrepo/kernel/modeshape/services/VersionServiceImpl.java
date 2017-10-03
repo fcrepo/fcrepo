@@ -40,6 +40,7 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
 
     @Override
     public String createVersion(final FedoraSession session, final String absPath, final String label) {
+        LOGGER.warn("Review if this class can be removed after implementing Memento!");
         return null;
     }
 

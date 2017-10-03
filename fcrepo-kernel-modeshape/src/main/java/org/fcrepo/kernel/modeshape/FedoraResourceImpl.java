@@ -941,40 +941,48 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
   @Override
   public void enableVersioning() {
+      LOGGER.warn("Review if method (enableVersioning) can be removed after implementing Memento!");
   }
 
   @Override
   public void disableVersioning() {
+      LOGGER.warn("Review if method (disableVersioning) can be removed after implementing Memento!");
   }
 
   @Override
   public boolean isVersioned() {
+      LOGGER.warn("Review if method (isVersioned) can be removed after implementing Memento!");
     return false;
   }
 
   @Override
   public boolean isFrozenResource() {
-    return false;
+      LOGGER.warn("Review if method (isFrozenResource) can be removed after implementing Memento!");
+      return false;
   }
 
   @Override
   public FedoraResource getVersionedAncestor() {
-    return null;
+      LOGGER.warn("Review if method (getVersionedAncestor) can be removed after implementing Memento!");
+      return null;
   }
 
   @Override
   public FedoraResource getUnfrozenResource() {
-    return null;
+      LOGGER.warn("Review if method (getUnfrozenResource) can be removed after implementing Memento!");
+      return null;
   }
 
   @Override
   public FedoraResource getVersion(final String label) {
-    return null;
+      LOGGER.warn("Review if method (getVersion) can be removed after implementing Memento!");
+      return null;
   }
 
   @Override
   public String getVersionLabelOfFrozenResource() {
-    return null;
+      LOGGER.warn("Review if method (getVersionLabelOfFrozenResource) can be removed after implementing Memento!");
+      return null;
   }
 
 }
