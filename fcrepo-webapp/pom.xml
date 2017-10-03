@@ -22,6 +22,7 @@
     <maven.build.timestamp.format>yyyy-MM-dd</maven.build.timestamp.format>
     <!-- for standalone operation -->
     <jetty.users.file>${project.build.directory}/test-classes/jetty-users.properties</jetty.users.file>
+    <fcrepo.modeshape.configuration>classpath:/config/servlet-auth/repository.json</fcrepo.modeshape.configuration>
   </properties>
 
   <dependencyManagement>
@@ -65,6 +66,11 @@
     <dependency>
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-auth-common</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-auth-webac</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
@@ -276,6 +282,12 @@
         <directory>${project.build.directory}/maven-shared-archive-resources</directory>
       </resource>
     </resources>
+    <testResources>
+      <testResource>
+        <filtering>true</filtering>
+        <directory>src/test/resources</directory>
+      </testResource>
+    </testResources>
     <plugins>
       <plugin>
         <artifactId>maven-remote-resources-plugin</artifactId>
@@ -302,9 +314,6 @@
             <resource>
               <directory>src/main/webapp</directory>
               <filtering>true</filtering>
-              <includes>
-                <include>index.html</include>
-              </includes>
             </resource>
           </webResources>
             <archive>
@@ -383,10 +392,11 @@
           <webApp>
             <contextPath>${fcrepo.test.context.path}</contextPath>
           </webApp>
+          <jettyXml>${project.build.directory}/test-classes/jetty-test.xml</jettyXml>
           <systemProperties>
             <systemProperty>
               <name>fcrepo.modeshape.configuration</name>
-              <value>classpath:/config/file-simple/repository.json</value>
+              <value>classpath:/config/servlet-auth/repository.json</value>
             </systemProperty>
           </systemProperties>
 
@@ -400,7 +410,6 @@
               <goal>start</goal>
             </goals>
             <configuration>
-              <jettyXml>${project.basedir}/src/test/resources/jetty-test.xml</jettyXml>
               <stopPort>${jetty.dynamic.stop.port}</stopPort>
 
               <systemProperties>
@@ -506,6 +515,26 @@
         </resources>
 
         <plugins>
+          <plugin>
+            <artifactId>maven-war-plugin</artifactId>
+            <configuration>
+              <attachClasses>true</attachClasses>
+              <webResources>
+                <resource>
+                  <directory>src/main/jetty-console</directory>
+                  <filtering>true</filtering>
+                </resource>
+              </webResources>
+                <archive>
+                  <index>true</index>
+                  <manifest>
+                    <addClasspath>true</addClasspath>
+                    <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                  </manifest>
+                </archive>
+            </configuration>
+          </plugin>
+
           <plugin>
             <groupId>org.simplericity.jettyconsole</groupId>
             <artifactId>jetty-console-maven-plugin</artifactId>

@@ -19,12 +19,11 @@ package org.fcrepo.integration;
 
 import static java.lang.Integer.MAX_VALUE;
 import static java.lang.Integer.parseInt;
+import static javax.ws.rs.core.HttpHeaders.ACCEPT;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static javax.ws.rs.core.HttpHeaders.ACCEPT;
-
 import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
 import static org.junit.Assert.assertEquals;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -34,32 +33,31 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.UUID;
 
-import org.apache.jena.query.Dataset;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.AuthCache;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpPatch;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.auth.BasicScheme;
-
 import org.apache.http.impl.client.BasicAuthCache;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
-
 import org.apache.http.util.EntityUtils;
+import org.apache.jena.query.Dataset;
 import org.junit.Before;
 import org.slf4j.Logger;
 
@@ -71,6 +69,9 @@ import org.slf4j.Logger;
 public abstract class AbstractResourceIT {
 
     protected Logger logger;
+
+    public static Credentials FEDORA_ADMIN_CREDENTIALS = new UsernamePasswordCredentials("fedoraAdmin",
+            "fedoraAdmin");
 
     @Before
     public void setLogger() {
@@ -298,6 +299,4 @@ public abstract class AbstractResourceIT {
     protected static String getRandomPropertyValue() {
         return UUID.randomUUID().toString();
     }
-
-
 }

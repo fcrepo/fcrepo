@@ -16,6 +16,7 @@
     <junit.version>4.12</junit.version>
     <jetty-plugin.version>9.3.1.v20150714</jetty-plugin.version>
     <ldp-testsuite.version>0.1.1</ldp-testsuite.version>
+    <jetty.users.file>${project.build.directory}/test-classes/jetty-users.properties</jetty.users.file>
   </properties>
 
   <dependencies>
@@ -35,6 +36,12 @@
   </dependencies>
 
     <build>
+        <testResources>
+            <testResource>
+                <filtering>true</filtering>
+                <directory>src/test/resources</directory>
+            </testResource>
+        </testResources>
         <plugins>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -98,6 +105,10 @@
                     <value>${project.build.directory}/fcrepo-data</value>
                   </systemProperty>
                   <systemProperty>
+                    <name>fcrepo.dynamic.test.port</name>
+                    <value>${fcrepo.dynamic.test.port}</value>
+                  </systemProperty>
+                  <systemProperty>
                     <name>fcrepo.dynamic.jms.port</name>
                     <value>${fcrepo.dynamic.jms.port}</value>
                   </systemProperty>
@@ -140,9 +151,7 @@
                     <goal>start</goal>
                   </goals>
                   <configuration>
-                    <httpConnector>
-                      <port>${fcrepo.dynamic.test.port}</port>
-                    </httpConnector>
+                    <jettyXml>${project.build.directory}/test-classes/jetty-test.xml</jettyXml>
                     <scanIntervalSeconds>0</scanIntervalSeconds>
                     <daemon>true</daemon>
                     <contextHandlers>

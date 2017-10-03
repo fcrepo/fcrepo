@@ -17,12 +17,12 @@
  */
 package org.fcrepo.integration;
 
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static com.gargoylesoftware.htmlunit.BrowserVersion.FIREFOX_24;
 import static com.google.common.collect.Lists.transform;
 import static java.util.UUID.randomUUID;
+import static javax.ws.rs.core.HttpHeaders.ACCEPT;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONFIG_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
@@ -36,12 +36,16 @@ import java.io.IOException;
 import java.util.List;
 
 import org.apache.http.HttpResponse;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.entity.BasicHttpEntity;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+
+import com.gargoylesoftware.htmlunit.DefaultCredentialsProvider;
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.IncorrectnessListener;
 import com.gargoylesoftware.htmlunit.NicelyResynchronizingAjaxController;
@@ -347,12 +351,17 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         return pid;
     }
 
+    private CredentialsProvider getFedoraAdminCredentials() {
+        final CredentialsProvider credentials  = new DefaultCredentialsProvider();
+        credentials.setCredentials(AuthScope.ANY, FEDORA_ADMIN_CREDENTIALS);
+        return credentials;
+    }
 
     private WebClient getDefaultWebClient() {
 
         final WebClient webClient = new WebClient(FIREFOX_24);
         webClient.addRequestHeader(ACCEPT, "text/html");
-
+        webClient.setCredentialsProvider(getFedoraAdminCredentials());
         webClient.waitForBackgroundJavaScript(1000);
         webClient.waitForBackgroundJavaScriptStartingBefore(10000);
         webClient.setAjaxController(new NicelyResynchronizingAjaxController());
@@ -377,4 +386,5 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
         }
       }
+
 }
