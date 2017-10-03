@@ -18,7 +18,6 @@
 package org.fcrepo.integration.kernel.modeshape;
 
 import static java.net.URI.create;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptySet;
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDstring;
 import static org.apache.jena.graph.Node.ANY;
@@ -30,7 +29,6 @@ import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.apache.jena.vocabulary.DC.title;
 import static javax.jcr.PropertyType.BINARY;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CREATEDBY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIEDBY;
@@ -39,14 +37,11 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TOMBSTONE;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RequiredRdfContext.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
-import static org.fcrepo.kernel.api.RequiredRdfContext.VERSIONS;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FIELD_DELIMITER;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
@@ -64,13 +59,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.URI;
 import java.nio.charset.Charset;
@@ -104,12 +97,9 @@ import org.apache.commons.io.IOUtils;
 import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.InvalidPrefixException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
-import org.fcrepo.kernel.api.models.FedoraBinary;
-import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.BinaryService;
@@ -119,7 +109,6 @@ import org.fcrepo.kernel.api.services.VersionService;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
-import org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 
 import org.junit.After;
@@ -134,7 +123,6 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.apache.jena.vocabulary.RDF;
 
@@ -542,34 +530,6 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testGetObjectVersionGraph() throws RepositoryException {
 
-        final FedoraResource object =
-            containerService.findOrCreate(session, "/testObjectVersionGraph");
-
-        getJcrNode(object).addMixin("mix:versionable");
-        session.commit();
-
-        // create a version and make sure there are 2 versions (root + created)
-        versionService.createVersion(session, object.getPath(), "v0.0.1");
-        session.commit();
-
-        final Model graphStore = object.getTriples(subjects, VERSIONS).collect(toModel());
-
-        logger.debug(graphStore.toString());
-
-        // go querying for the version URI
-        Resource s = createResource(createGraphSubjectNode(object).getURI());
-        final ExtendedIterator<Statement> triples = graphStore.listStatements(s,HAS_VERSION, (RDFNode)null);
-
-        final List<Statement> list = triples.toList();
-        assertEquals(1, list.size());
-
-        // make sure the URI is derived from the label
-        s = list.get(0).getObject().asResource();
-        assertEquals("URI should be derived from label.", s.getURI(), createGraphSubjectNode(object).getURI()
-                + "/" + FCR_VERSIONS + "/v0.0.1");
-
-        // make sure the label is listed
-        assertTrue(graphStore.contains(s, HAS_VERSION_LABEL, createPlainLiteral("v0.0.1")));
     }
 
     @Test(expected = MalformedRdfException.class)
@@ -995,263 +955,6 @@ public class FedoraResourceImplIT extends AbstractIT {
         containerService.findOrCreate(session, "/" + pid + "/#/a");
 
         assertFalse(container.getChildren().findFirst().isPresent());
-    }
-
-    @Test
-    public void testGetUnfrozenResource() throws RepositoryException {
-        final String pid = getRandomPid();
-        final Container object = containerService.findOrCreate(session, "/" + pid);
-        object.enableVersioning();
-        session.commit();
-        addVersionLabel("some-label", object);
-        session.commit();
-
-        final javax.jcr.Node node = getJcrNode(object);
-        final Version version = node.getSession().getWorkspace().getVersionManager().getVersionHistory(node.getPath())
-                .getVersionByLabel("some-label");
-
-        final FedoraResource frozenResource = new FedoraResourceImpl(version.getFrozenNode());
-
-        assertEquals(object, frozenResource.getUnfrozenResource());
-
-    }
-
-    @Test
-    public void testGetVersionedAncestor() throws RepositoryException {
-        final String pid = getRandomPid();
-        final Container object = containerService.findOrCreate(session, "/" + pid);
-        final Session jcrSession = getJcrSession(session);
-        object.enableVersioning();
-        session.commit();
-        containerService.findOrCreate(session, "/" + pid + "/a/b/c");
-        session.commit();
-        jcrSession.getWorkspace().getVersionManager().checkpoint(object.getPath());
-        addVersionLabel("some-label", object);
-        session.commit();
-
-        final javax.jcr.Node node = getJcrNode(object);
-        final Version version = node.getSession().getWorkspace().getVersionManager()
-                .getVersionHistory(node.getPath()).getVersionByLabel("some-label");
-        final FedoraResource frozenResource = new FedoraResourceImpl(version.getFrozenNode().getNode("a"));
-
-        assertEquals(object, frozenResource.getVersionedAncestor().getUnfrozenResource());
-    }
-
-    @Test
-    public void testVersionedChild() throws RepositoryException {
-        final String pid = getRandomPid();
-        final Container object = containerService.findOrCreate(session, "/" + pid);
-        final Session jcrSession = getJcrSession(session);
-        object.enableVersioning();
-        session.commit();
-
-        final Container child = containerService.findOrCreate(session, "/" + pid + "/child");
-        child.enableVersioning();
-        session.commit();
-
-        jcrSession.getWorkspace().getVersionManager().checkpoint(object.getPath());
-        addVersionLabel("object-v0", object);
-        session.commit();
-
-        jcrSession.getWorkspace().getVersionManager().checkpoint(child.getPath());
-        addVersionLabel("child-v0", child);
-        session.commit();
-
-        final javax.jcr.Node node = getJcrNode(object);
-        final Version version = node.getSession().getWorkspace().getVersionManager()
-                .getVersionHistory(node.getPath()).getVersionByLabel("object-v0");
-        final FedoraResource frozenResource = new FedoraResourceImpl(version.getFrozenNode().getNode("child"));
-
-        assertEquals(child, frozenResource.getVersionedAncestor().getUnfrozenResource());
-    }
-
-    @Test
-    public void testVersionedChildDeleted() throws RepositoryException {
-        final String pid = getRandomPid();
-        final Container object = containerService.findOrCreate(session, "/" + pid);
-        final Session jcrSession = getJcrSession(session);
-        object.enableVersioning();
-        session.commit();
-
-        final Container child = containerService.findOrCreate(session, "/" + pid + "/child");
-        getJcrNode(child).setProperty("dc:title", "this-is-some-title");
-        session.commit();
-
-        jcrSession.getWorkspace().getVersionManager().checkpoint(object.getPath());
-        addVersionLabel("object-v0", object);
-        session.commit();
-
-        // Delete the child!
-        child.delete();
-        session.commit();
-
-        final javax.jcr.Node node = getJcrNode(object);
-        final Version version = node.getSession().getWorkspace().getVersionManager().getVersionHistory(node.getPath())
-                .getVersionByLabel("object-v0");
-        final FedoraResource frozenResource = new FedoraResourceImpl(version.getFrozenNode());
-
-        // Parent version is correct
-        assertEquals(object, frozenResource.getVersionedAncestor().getUnfrozenResource());
-
-        // Versioned child still exists
-        final FedoraResourceImpl frozenChild = new FedoraResourceImpl(version.getFrozenNode().getNode("child"));
-        final javax.jcr.Property property = frozenChild.getNode().getProperty("dc:title");
-        assertNotNull(property);
-        assertEquals("this-is-some-title", property.getString());
-    }
-
-    @Test
-    public void testVersionedChildBinaryDeleted() throws RepositoryException, InvalidChecksumException, IOException {
-        final String pid = getRandomPid();
-        final Container object = containerService.findOrCreate(session, "/" + pid);
-        object.enableVersioning();
-        session.commit();
-
-        final FedoraBinary child = binaryService.findOrCreate(session, "/" + pid + "/child");
-        final String content = "123456789test123456789";
-        final Session jcrSession = getJcrSession(session);
-        child.setContent(new ByteArrayInputStream(content.getBytes()), "text/plain", null, null, null);
-        session.commit();
-
-        jcrSession.getWorkspace().getVersionManager().checkpoint(object.getPath());
-        addVersionLabel("object-v0", object);
-        session.commit();
-
-        // Delete the child!
-        child.delete();
-        session.commit();
-
-        final javax.jcr.Node node = getJcrNode(object);
-        final Version version = node.getSession().getWorkspace().getVersionManager().getVersionHistory(node.getPath())
-                .getVersionByLabel("object-v0");
-
-        final FedoraResource frozenResource = new FedoraResourceImpl(version.getFrozenNode());
-
-        // Parent version is correct
-        assertEquals(object, frozenResource.getVersionedAncestor().getUnfrozenResource());
-
-        // Versioned child still exists
-        final NonRdfSourceDescription frozenChild =
-                new NonRdfSourceDescriptionImpl(version.getFrozenNode().getNode("child"));
-        try (final InputStream contentStream = ((FedoraBinary) frozenChild.getDescribedResource()).getContent()) {
-            assertNotNull(contentStream);
-            assertEquals(content, IOUtils.toString(contentStream, UTF_8));
-        }
-    }
-
-    @Test
-    public void testDeleteLinkedVersionedResources() throws RepositoryException {
-        final Container object1 = containerService.findOrCreate(session, "/" + getRandomPid());
-        final Container object2 = containerService.findOrCreate(session, "/" + getRandomPid());
-
-        // Create a link between objects 1 and 2
-        object2.updateProperties(subjects, "PREFIX example: <http://example.org/>\n" +
-                "INSERT { <> <example:link> " + "<" + createGraphSubjectNode(object1).getURI() + ">" +
-                " } WHERE {} ",
-                object2.getTriples(subjects, emptySet()));
-
-        // Create version of object2
-        versionService.createVersion(session, object2.getPath(), "obj2-v0");
-
-        // Verify that the objects exist
-        assertTrue("object1 should exist!", exists(object1));
-        assertTrue("object2 should exist!", exists(object2));
-
-        // This is the test: verify successful deletion of the objects
-        object2.delete();
-        session.commit();
-
-        object1.delete();
-        session.commit();
-
-        // Double-verify that the objects are gone
-        assertFalse("/object2 should NOT exist!", exists(object2));
-        assertFalse("/object1 should NOT exist!", exists(object1));
-    }
-
-    private boolean exists(final Container resource) {
-        try {
-            resource.getPath();
-            return true;
-        } catch (RepositoryRuntimeException e) {
-            return false;
-        }
-    }
-
-    @Test (expected = RepositoryRuntimeException.class)
-    public void testNullBaseVersion() throws RepositoryException {
-        final String pid = getRandomPid();
-        final Container object = containerService.findOrCreate(session, "/" + pid);
-        session.commit();
-        object.getBaseVersion();
-    }
-
-    @Test
-    public void testGetNodeVersion() throws RepositoryException {
-        final String pid = getRandomPid();
-        final Container object = containerService.findOrCreate(session, "/" + pid);
-        final Session jcrSession = getJcrSession(session);
-        object.enableVersioning();
-        session.commit();
-        containerService.findOrCreate(session, "/" + pid + "/a/b/c");
-        session.commit();
-        jcrSession.getWorkspace().getVersionManager().checkpoint(object.getPath());
-        addVersionLabel("some-label", object);
-        session.commit();
-        final javax.jcr.Node node = getJcrNode(object);
-        final Version version = node.getSession().getWorkspace().getVersionManager().getVersionHistory(node.getPath())
-                .getVersionByLabel("some-label");
-        final FedoraResource frozenResource = new FedoraResourceImpl(version.getFrozenNode());
-        assertNull(frozenResource.getVersion("some-label"));
-
-    }
-
-    @Test
-    public void testGetNullNodeVersion() throws RepositoryException {
-        final String pid = getRandomPid();
-        final Container object = containerService.findOrCreate(session, "/" + pid);
-        final Session jcrSession = getJcrSession(session);
-        object.enableVersioning();
-        session.commit();
-        containerService.findOrCreate(session, "/" + pid + "/a/b/c");
-        session.commit();
-        jcrSession.getWorkspace().getVersionManager().checkpoint(object.getPath());
-        addVersionLabel("some-label", object);
-        session.commit();
-        final javax.jcr.Node node = getJcrNode(object);
-        final Version version = node.getSession().getWorkspace().getVersionManager().getVersionHistory(node.getPath())
-                .getVersionByLabel("some-label");
-        final FedoraResource frozenResource = new FedoraResourceImpl(version.getFrozenNode().getNode("a"));
-        assertNull(frozenResource.getVersion("some-label"));
-
-    }
-
-    @Test
-    public void testDisableVersioning() throws RepositoryException {
-        final String pid = getRandomPid();
-        final Container object = containerService.findOrCreate(session, "/" + pid);
-        object.enableVersioning();
-        session.commit();
-        assertTrue(object.isVersioned());
-        object.disableVersioning();
-        assertFalse(object.isVersioned());
-    }
-
-    @Test (expected = RepositoryRuntimeException.class)
-    public void testDisableVersioningException() {
-        final String pid = getRandomPid();
-        final Container object = containerService.findOrCreate(session, "/" + pid);
-        object.disableVersioning();
-    }
-
-    @Test
-    public void testHash() throws RepositoryException {
-        final String pid = getRandomPid();
-        final Container object = containerService.findOrCreate(session, "/" + pid);
-        object.enableVersioning();
-        session.commit();
-        final FedoraResourceImpl frozenResource = new FedoraResourceImpl(getJcrNode(object));
-        assertFalse(frozenResource.hashCode() == 0);
     }
 
     @Test

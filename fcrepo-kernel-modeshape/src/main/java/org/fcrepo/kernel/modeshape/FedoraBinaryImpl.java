@@ -411,7 +411,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
 
     @Override
     public FedoraResource getBaseVersion() {
-        return getDescription().getBaseVersion();
+        return null;
     }
 
     private static void decorateContentNode(final Node contentNode, final Collection<URI> checksums)
@@ -445,19 +445,15 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
 
     @Override
     public boolean isVersioned() {
-        return getDescription().isVersioned();
+        return false;
     }
 
     @Override
     public void enableVersioning() {
-        super.enableVersioning();
-        getDescription().enableVersioning();
     }
 
     @Override
     public void disableVersioning() {
-        super.disableVersioning();
-        getDescription().disableVersioning();
     }
 
     /**

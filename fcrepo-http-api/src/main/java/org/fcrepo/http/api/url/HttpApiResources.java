@@ -23,12 +23,10 @@ import static java.util.Collections.singletonMap;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_SERVICE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_TRANSACTION_SERVICE;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_HISTORY;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 
-import org.fcrepo.http.api.FedoraVersioning;
 import org.fcrepo.http.api.repository.FedoraRepositoryTransactions;
 import org.fcrepo.http.commons.api.rdf.UriAwareResourceModelFactory;
 import org.fcrepo.kernel.api.models.FedoraBinary;
@@ -85,9 +83,7 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
 
         // fcr:versions
         if (resource.isVersioned()) {
-            model.add(s, HAS_VERSION_HISTORY, createResource(uriInfo
-                    .getBaseUriBuilder().path(FedoraVersioning.class).buildFromMap(
-                            pathMap, false).toASCIIString()));
+           // Reimplement for memento
         }
     }
 
