@@ -100,10 +100,10 @@ public abstract class BasicCacheEntry implements CacheEntry {
     @Override
     public Collection<URI> checkFixity(final Collection<String> algorithms) throws UnsupportedAlgorithmException {
 
-        try {
+        try (InputStream binaryStream = this.getInputStream()) {
 
             final Map<String, DigestInputStream> digestInputStreams = new HashMap<>();
-            InputStream digestStream = this.getInputStream();
+            InputStream digestStream = binaryStream;
             for (String digestAlg : algorithms) {
                 try {
                     digestStream = new DigestInputStream(digestStream, MessageDigest.getInstance(digestAlg));

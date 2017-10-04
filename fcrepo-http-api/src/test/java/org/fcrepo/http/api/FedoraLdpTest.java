@@ -114,6 +114,7 @@ import org.fcrepo.kernel.api.exception.InsufficientStorageException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PreconditionException;
+import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.Container;
@@ -670,7 +671,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testGetWithObjectIncludeReferences()
-            throws ParseException, IOException, UnsupportedAlgorithmException {
+            throws ParseException, IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
         setResource(Container.class);
         setField(testObj, "prefer", new MultiPrefer("return=representation; include=\"" + INBOUND_REFERENCES + "\""));
         final Response actual = testObj.getResource(null);
@@ -723,7 +724,8 @@ public class FedoraLdpTest {
 
     @Test
     @SuppressWarnings({"resource", "unchecked"})
-    public void testGetWithBinaryDescription() throws IOException, UnsupportedAlgorithmException {
+    public void testGetWithBinaryDescription()
+            throws IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
 
         final NonRdfSourceDescription mockResource
                 = (NonRdfSourceDescription)setResource(NonRdfSourceDescription.class);
