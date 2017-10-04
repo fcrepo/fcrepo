@@ -393,7 +393,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
         try (final Timer.Context context = timer.time()) {
 
             final String mimeType = getMimeType();
-            if (mimeType.indexOf(CacheEntryFactory.MESSAGE_EXTERNAL_BODY) >= 0) {
+            if (mimeType.contains(CacheEntryFactory.MESSAGE_EXTERNAL_BODY)) {
                 final Map<String, String> params = CacheEntryFactory.parseExternalBody(mimeType);
                 final String accessType = params.get("access-type");
                 final String resourceLocation = params.get(accessType.toLowerCase());

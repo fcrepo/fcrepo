@@ -68,13 +68,14 @@ public final class CacheEntryFactory {
     /**
      * Utility method to parse the external body content in format:
      *   message/external-body; access-type=URL; url="http://www.example.com/file"
-     * @param mimeType
+     * @param mimeType the MimeType value for external resource
      * @return Map with key mime-type for MimeType value.
      */
     public static Map<String, String> parseExternalBody(final String mimeType) {
         final Map<String, String> params = new HashMap<String, String>();
         Splitter.on(';').omitEmptyStrings().trimResults()
             .withKeyValueSeparator(Splitter.on('=').limit(2)).split("mime-type=" + mimeType.trim())
+             // use lower case for keys, unwrap the quoted values (double quotes at the beginning and the end)
             .forEach((k, v) -> params.put(k.toLowerCase(), v.replaceAll("^\"|\"$", "")));
         return params;
     }
