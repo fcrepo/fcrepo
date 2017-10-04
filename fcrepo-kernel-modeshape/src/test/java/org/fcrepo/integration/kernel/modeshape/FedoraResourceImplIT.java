@@ -1101,25 +1101,6 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetTimeMapLDPCv() throws RepositoryException {
-        final String pid = getRandomPid();
-        final Session jcrSession = getJcrSession(session);
-        final FedoraResource resource = containerService.findOrCreate(session, "/" + pid);
-        session.commit();
-
-        // Create TimeMap (LDPCv)
-        final FedoraResource ldpcvResource = resource.findOrCreateLDPCv();
-
-        assertNotNull(ldpcvResource);
-        assertEquals("/" + pid + "/" + LDPCV_TIME_MAP, ldpcvResource.getPath());
-
-        session.commit();
-
-        assertEquals(jcrSession.getNode("/" + pid).getNode(LDPCV_TIME_MAP),
-                ((FedoraResourceImpl)resource.getLDPCv()).getNode());
-    }
-
-    @Test
     public void testFindOrCreateTimeMapLDPCv() throws RepositoryException {
         final String pid = getRandomPid();
         final Session jcrSession = getJcrSession(session);
@@ -1127,7 +1108,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         session.commit();
 
         // Create TimeMap (LDPCv)
-        final FedoraResource ldpcvResource = resource.findOrCreateLDPCv();
+        final FedoraResource ldpcvResource = resource.findOrCreateTimeMap();
 
         assertNotNull(ldpcvResource);
         assertEquals("/" + pid + "/" + LDPCV_TIME_MAP, ldpcvResource.getPath());

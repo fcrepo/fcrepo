@@ -161,6 +161,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
     private static final PropertyConverter propertyConverter = new PropertyConverter();
 
+    @VisibleForTesting
     public static final String LDPCV_TIME_MAP = "TimeMap";
 
     // A curried type accepting resource, translator, and "minimality", returning triples.
@@ -345,17 +346,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
      */
     private static Predicate<Node> nastyChildren = isInternalNode
                     .or(TombstoneImpl::hasMixin)
-                    .or(FedoraResourceImpl::isTimeMap)
+                    .or(FedoraTimeMapImpl::hasMixin)
                     .or(UncheckedPredicate.uncheck(p -> p.getName().equals(JCR_CONTENT)))
                     .or(UncheckedPredicate.uncheck(p -> p.getName().equals("#")));
-
-    private static boolean isTimeMap(final Node node) {
-        try {
-            return node.isNodeType(FEDORA_TIME_MAP);
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-    }
 
     private static final Converter<FedoraResource, FedoraResource> datastreamToBinary
             = new Converter<FedoraResource, FedoraResource>() {
@@ -380,31 +373,20 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     }
 
     @Override
-    public FedoraResource getLDPCv() {
-        try {
-            return Optional.of(getNode().getNode(LDPCV_TIME_MAP)).map(nodeConverter::convert).orElse(null);
-        } catch (PathNotFoundException e) {
-            throw new PathNotFoundRuntimeException(e);
-        } catch (RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-    }
-
-    @Override
-    public FedoraResource findOrCreateLDPCv() {
+    public FedoraResource findOrCreateTimeMap() {
         final Node ldpcvNode;
         try {
             ldpcvNode = findOrCreateChild(getNode(), LDPCV_TIME_MAP, NT_FOLDER);
 
             if (ldpcvNode.isNew()) {
-                LOGGER.debug("Created TimeMap LDPCv {}", node.getPath() + "/" + LDPCV_TIME_MAP);
+                LOGGER.debug("Created TimeMap LDPCv {}", ldpcvNode.getPath());
 
-                // add minxin type fedora:Resource
+                // add mixin type fedora:Resource
                 if (node.canAddMixin(FEDORA_RESOURCE)) {
                     node.addMixin(FEDORA_RESOURCE);
                 }
 
-                // add minxin type fedora:TimeMap
+                // add mixin type fedora:TimeMap
                 if (ldpcvNode.canAddMixin(FEDORA_TIME_MAP)) {
                     ldpcvNode.addMixin(FEDORA_TIME_MAP);
                 }
