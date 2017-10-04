@@ -62,6 +62,7 @@ import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaceRegis
 import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
@@ -159,6 +160,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     private static final long NO_TIME = 0L;
 
     private static final PropertyConverter propertyConverter = new PropertyConverter();
+
+    public static final String LDPCV_TIME_MAP = "TimeMap";
 
     // A curried type accepting resource, translator, and "minimality", returning triples.
     private static interface RdfGenerator extends Function<FedoraResource,
@@ -342,8 +345,17 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
      */
     private static Predicate<Node> nastyChildren = isInternalNode
                     .or(TombstoneImpl::hasMixin)
+                    .or(FedoraResourceImpl::isTimeMap)
                     .or(UncheckedPredicate.uncheck(p -> p.getName().equals(JCR_CONTENT)))
                     .or(UncheckedPredicate.uncheck(p -> p.getName().equals("#")));
+
+    private static boolean isTimeMap(final Node node) {
+        try {
+            return node.isNodeType(FEDORA_TIME_MAP);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
 
     private static final Converter<FedoraResource, FedoraResource> datastreamToBinary
             = new Converter<FedoraResource, FedoraResource>() {
@@ -365,6 +377,42 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @Override
     public FedoraResource getContainer() {
         return getContainingNode(getNode()).map(nodeConverter::convert).orElse(null);
+    }
+
+    @Override
+    public FedoraResource getLDPCv() {
+        try {
+            return Optional.of(getNode().getNode(LDPCV_TIME_MAP)).map(nodeConverter::convert).orElse(null);
+        } catch (PathNotFoundException e) {
+            throw new PathNotFoundRuntimeException(e);
+        } catch (RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    @Override
+    public FedoraResource findOrCreateLDPCv() {
+        final Node ldpcvNode;
+        try {
+            ldpcvNode = findOrCreateChild(getNode(), LDPCV_TIME_MAP, NT_FOLDER);
+
+            if (ldpcvNode.isNew()) {
+                LOGGER.debug("Created TimeMap LDPCv {}", node.getPath() + "/" + LDPCV_TIME_MAP);
+
+                // add minxin type fedora:Resource
+                if (node.canAddMixin(FEDORA_RESOURCE)) {
+                    node.addMixin(FEDORA_RESOURCE);
+                }
+
+                // add minxin type fedora:TimeMap
+                if (ldpcvNode.canAddMixin(FEDORA_TIME_MAP)) {
+                    ldpcvNode.addMixin(FEDORA_TIME_MAP);
+                }
+            }
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+        return Optional.of(ldpcvNode).map(nodeConverter::convert).orElse(null);
     }
 
     @Override
@@ -984,5 +1032,4 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
       LOGGER.warn("Review if method (getVersionLabelOfFrozenResource) can be removed after implementing Memento!");
       return null;
   }
-
 }

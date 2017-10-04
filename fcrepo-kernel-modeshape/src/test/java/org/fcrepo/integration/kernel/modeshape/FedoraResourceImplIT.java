@@ -35,6 +35,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIEDBY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TIME_MAP;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TOMBSTONE;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
@@ -43,6 +44,7 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
 import static org.fcrepo.kernel.api.RequiredRdfContext.VERSIONS;
+import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.LDPCV_TIME_MAP;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FIELD_DELIMITER;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
@@ -1096,6 +1098,43 @@ public class FedoraResourceImplIT extends AbstractIT {
         assertFalse(model2.contains(subjects.reverse().convert(subject),
                 createProperty("info:fedora/test/fakeRel"),
                 createResource("info:fedora/" + pid + "/c")));
+    }
+
+    @Test
+    public void testGetTimeMapLDPCv() throws RepositoryException {
+        final String pid = getRandomPid();
+        final Session jcrSession = getJcrSession(session);
+        final FedoraResource resource = containerService.findOrCreate(session, "/" + pid);
+        session.commit();
+
+        // Create TimeMap (LDPCv)
+        final FedoraResource ldpcvResource = resource.findOrCreateLDPCv();
+
+        assertNotNull(ldpcvResource);
+        assertEquals("/" + pid + "/" + LDPCV_TIME_MAP, ldpcvResource.getPath());
+
+        session.commit();
+
+        assertEquals(jcrSession.getNode("/" + pid).getNode(LDPCV_TIME_MAP),
+                ((FedoraResourceImpl)resource.getLDPCv()).getNode());
+    }
+
+    @Test
+    public void testFindOrCreateTimeMapLDPCv() throws RepositoryException {
+        final String pid = getRandomPid();
+        final Session jcrSession = getJcrSession(session);
+        final FedoraResource resource = containerService.findOrCreate(session, "/" + pid);
+        session.commit();
+
+        // Create TimeMap (LDPCv)
+        final FedoraResource ldpcvResource = resource.findOrCreateLDPCv();
+
+        assertNotNull(ldpcvResource);
+        assertEquals("/" + pid + "/" + LDPCV_TIME_MAP, ldpcvResource.getPath());
+
+        session.commit();
+
+        assertTrue(jcrSession.getNode("/" + pid).getNode(LDPCV_TIME_MAP).isNodeType(FEDORA_TIME_MAP));
     }
 
     private void addVersionLabel(final String label, final FedoraResource r) throws RepositoryException {

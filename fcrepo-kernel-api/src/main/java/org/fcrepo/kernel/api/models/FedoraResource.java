@@ -69,6 +69,18 @@ public interface FedoraResource {
     FedoraResource getContainer();
 
     /**
+     * Get the TimeMap/LDPCv of this resource
+     * @return the container for TimeMap/LDPCv of this resource
+     */
+    FedoraResource getLDPCv();
+
+    /**
+     * Create the TimeMap/LDPCv of this resource if it doesn't exist
+     * @return the container for TimeMap/LDPCv of this resource
+     */
+    FedoraResource findOrCreateLDPCv();
+
+    /**
      * Get the child of this resource at the given path
      * @param relPath the given path
      * @return the child of this resource
