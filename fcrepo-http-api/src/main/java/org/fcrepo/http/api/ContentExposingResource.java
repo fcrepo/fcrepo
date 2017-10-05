@@ -210,9 +210,18 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 prefer.getReturn().addResponseHeaders(servletResponse);
             }
         }
-        servletResponse.addHeader("Vary", "Accept, Range, Accept-Encoding, Accept-Language");
 
+        addVaryHeader(resource());
         return ok(outputStream).build();
+    }
+
+
+    protected void addVaryHeader(final FedoraResource resource) {
+        final StringBuilder varyValues = new StringBuilder("Accept, Range, Accept-Encoding, Accept-Language");
+        if (resource.isVersioned()) {
+            varyValues.append(", Accept-Datetime");
+        }
+        servletResponse.addHeader("Vary", varyValues.toString());
     }
 
     protected boolean isExternalBody(final MediaType mediaType) {
@@ -436,8 +445,13 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
 
         if (resource.isVersioned()) {
-            final Link link = Link.fromUri(RdfLexicon.VERSIONED_RESOURCE.getURI()).rel("type").build();
-            servletResponse.addHeader(LINK, link.toString());
+            final Link versionedResource = Link.fromUri(RdfLexicon.VERSIONED_RESOURCE.getURI()).rel("type").build();
+            servletResponse.addHeader(LINK, versionedResource.toString());
+            final Link timegate = Link.fromUri(getUri(resource)).rel("timegate").build();
+            servletResponse.addHeader(LINK, timegate.toString());
+            final Link timemap = Link.fromUri(getUri(resource.findOrCreateTimeMap())).rel("timemap").build();
+            servletResponse.addHeader(LINK, timemap.toString());
+
         }
 
     }

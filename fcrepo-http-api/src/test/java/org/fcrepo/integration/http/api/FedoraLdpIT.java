@@ -106,6 +106,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.text.ParseException;
 import java.time.Instant;
@@ -979,9 +980,38 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
     }
 
-
     @Test
     public void testCreateVersionedRDFResource() throws IOException {
+        createVersionedRDFResource();
+    }
+
+    @Test
+    public void testGetVersionedResourceHeaders() throws IOException {
+        final String subjectURI = createVersionedRDFResource();
+        try (final CloseableHttpResponse response = execute(new HttpGet(subjectURI))) {
+            verifyVersionedResourceResponseHeaders(subjectURI, response);
+        }
+    }
+
+    @Test
+    public void testHeadVersionedResourceHeaders() throws IOException {
+        final String subjectURI = createVersionedRDFResource();
+        try (final CloseableHttpResponse response = execute(new HttpHead(subjectURI))) {
+            verifyVersionedResourceResponseHeaders(subjectURI, response);
+        }
+    }
+
+    private void verifyVersionedResourceResponseHeaders(final String subjectURI,
+            final CloseableHttpResponse response) {
+        assertEquals("Didn't get a CREATED response!", OK.getStatusCode(), getStatus(response));
+        checkForVersionedResourceLinkHeader(response);
+        checkForLinkHeader(response, subjectURI, "timegate");
+        checkForLinkHeader(response, subjectURI + "/TimeMap", "timemap");
+        assertEquals(1, Arrays.asList(response.getHeaders("Vary")).stream().filter(x -> x.getValue().contains(
+                "Accept-Datetime")).count());
+    }
+
+    private String createVersionedRDFResource() throws UnsupportedEncodingException, IOException {
         final String id = getRandomUniqueId();
         final String subjectURI = serverAddress + id;
         final HttpPost createMethod = postObjMethod();
@@ -994,11 +1024,19 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
             checkForVersionedResourceLinkHeader(response);
         }
+        return subjectURI;
     }
 
     private void checkForVersionedResourceLinkHeader(final CloseableHttpResponse response) {
-        assertEquals(1, Arrays.asList(response.getHeaders(LINK)).stream().filter(x -> x.getValue().equals(
-                VERSIONED_RESOURCE_LINK_HEADER)).count());
+        checkForLinkHeader(response,VERSIONED_RESOURCE.getURI(), "type");
+    }
+
+    private void checkForLinkHeader(final CloseableHttpResponse response, final String uri, final String rel) {
+        final int count = (int) Arrays.asList(response.getHeaders(LINK)).stream().filter(x -> {
+            final Link linq = Link.valueOf(x.getValue());
+            return linq.getRel().equals(rel) && linq.getUri().equals(URI.create(uri));
+        }).count();
+        assertEquals(1, count);
     }
 
     @Test

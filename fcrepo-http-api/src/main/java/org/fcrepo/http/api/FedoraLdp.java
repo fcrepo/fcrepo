@@ -203,6 +203,7 @@ public class FedoraLdp extends ContentExposingResource {
         checkCacheControlHeaders(request, servletResponse, resource(), session);
 
         addResourceHttpHeaders(resource());
+        addVaryHeader(resource());
 
         Response.ResponseBuilder builder = ok();
 
@@ -708,7 +709,7 @@ public class FedoraLdp extends ContentExposingResource {
         } else if (prefer.getReturn().getValue().equals("minimal")) {
             return builder.build();
         } else {
-            servletResponse.addHeader("Vary", "Accept, Range, Accept-Encoding, Accept-Language");
+            addVaryHeader(resource);
             if (prefer != null) {
                 prefer.getReturn().addResponseHeaders(servletResponse);
             }
