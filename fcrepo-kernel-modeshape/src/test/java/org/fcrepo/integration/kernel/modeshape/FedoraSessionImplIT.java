@@ -31,7 +31,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.http.auth.BasicUserPrincipal;
 import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.FedoraSession;
-import org.fcrepo.kernel.modeshape.FedoraSessionUserUtil;
+import org.fcrepo.kernel.modeshape.utils.FedoraSessionUserUtil;
 
 import org.junit.After;
 import org.junit.Before;

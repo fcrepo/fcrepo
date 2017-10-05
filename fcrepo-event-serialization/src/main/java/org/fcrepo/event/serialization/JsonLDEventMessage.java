@@ -163,7 +163,6 @@ class JsonLDEventMessage {
     public static JsonLDEventMessage from(final FedoraEvent evt) {
 
         final String baseUrl = evt.getInfo().get(BASE_URL);
-        final String userAgent = evt.getUserID();
 
         // build objectId
         final String objectId = baseUrl + evt.getPath();

@@ -36,7 +36,7 @@ import javax.jcr.observation.Event;
 
 import org.junit.Test;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
-import org.fcrepo.kernel.modeshape.FedoraSessionUserUtil;
+import org.fcrepo.kernel.modeshape.utils.FedoraSessionUserUtil;
 import org.fcrepo.kernel.api.observer.EventType;
 
 /**

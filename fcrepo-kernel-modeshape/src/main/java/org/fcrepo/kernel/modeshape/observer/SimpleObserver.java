@@ -74,6 +74,7 @@ import org.fcrepo.kernel.api.observer.FedoraEvent;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.fcrepo.kernel.modeshape.FedoraSessionImpl;
 import org.fcrepo.kernel.modeshape.observer.eventmappings.InternalExternalEventMapper;
+import org.fcrepo.kernel.modeshape.utils.FedoraSessionUserUtil;
 
 import org.slf4j.Logger;
 
@@ -155,14 +156,13 @@ public class SimpleObserver implements EventListener {
 
     private static Function<FedoraEvent, FedoraEvent> filterAndDerefResourceTypes(final Session session) {
         final NamespaceRegistry registry = getNamespaceRegistry(session);
-        final FedoraSession fsession = new FedoraSessionImpl(session);
         return evt -> {
             final Set<String> resourceTypes = evt.getResourceTypes().stream()
                 .flatMap(dynamicTypes).map(type -> type.split(":"))
                 .filter(pair -> pair.length == 2).map(uncheck(pair -> new String[]{registry.getURI(pair[0]), pair[1]}))
                 .filter(pair -> !filteredNamespaces.contains(pair[0])).map(pair -> pair[0] + pair[1]).collect(toSet());
             return new FedoraEventImpl(evt.getTypes(), evt.getPath(), resourceTypes, evt.getUserID(),
-                    fsession.getUserAgent(), evt.getDate(), evt.getInfo());
+                    FedoraSessionUserUtil.getUserAgent(evt.getUserID()), evt.getDate(), evt.getInfo());
         };
     }
 

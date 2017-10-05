@@ -44,6 +44,7 @@ import com.google.common.annotations.VisibleForTesting;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.modeshape.utils.FedoraSessionUserUtil;
 import org.fcrepo.kernel.modeshape.utils.NamespaceTools;
 
 /**

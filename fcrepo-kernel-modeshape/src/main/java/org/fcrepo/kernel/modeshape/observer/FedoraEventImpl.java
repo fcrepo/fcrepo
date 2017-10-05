@@ -61,8 +61,9 @@ import javax.jcr.observation.Event;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.observer.EventType;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
-import org.fcrepo.kernel.modeshape.FedoraSessionUserUtil;
 import org.fcrepo.kernel.modeshape.identifiers.HashConverter;
+import org.fcrepo.kernel.modeshape.utils.FedoraSessionUserUtil;
+
 import org.slf4j.Logger;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;

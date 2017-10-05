@@ -70,7 +70,7 @@ public interface FedoraEvent {
 
     /**
      * Get the user agent associated with this event.
-     * @return
+     * @return user agent
      */
     URI getUserAgent();
 }

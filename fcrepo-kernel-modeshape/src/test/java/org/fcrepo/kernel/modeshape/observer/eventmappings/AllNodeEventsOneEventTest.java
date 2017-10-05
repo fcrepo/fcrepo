@@ -96,7 +96,6 @@ public class AllNodeEventsOneEventTest {
         when(mockEvent3.getPath()).thenReturn(TEST_PATH3);
         when(mockEvent3.getType()).thenReturn(PROPERTY_CHANGED);
         when(mockEvent1.getDate()).thenReturn(3L);
-
         mockStream = of(mockEvent1, mockEvent2, mockEvent3);
 
         when(mockEvent4.getPath()).thenReturn(TEST_PATH4);
