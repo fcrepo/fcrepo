@@ -124,6 +124,8 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.utils.ContentDigest;
+import org.fcrepo.kernel.api.utils.MessageExternalBodyContentType;
+
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
@@ -210,8 +212,7 @@ public class FedoraLdp extends ContentExposingResource {
             final MediaType mediaType = MediaType.valueOf(((FedoraBinary) resource()).getMimeType());
 
             if (isExternalBody(mediaType)) {
-                checkExternalBody(mediaType);
-                builder = externalBodyRedirect(getURLAccessType(mediaType));
+                builder = externalBodyRedirect(getExternalResourceLocation(mediaType));
             }
 
             // we set the content-type explicitly to avoid content-negotiation from getting in the way
@@ -372,12 +373,13 @@ public class FedoraLdp extends ContentExposingResource {
             @HeaderParam("If-Match") final String ifMatch,
             @HeaderParam(LINK) final List<String> links,
             @HeaderParam("Digest") final String digest)
-            throws InvalidChecksumException, MalformedRdfException, UnsupportedAlgorithmException {
+            throws InvalidChecksumException, MalformedRdfException, UnsupportedAlgorithmException,
+            UnsupportedAccessTypeException {
 
         final String interactionModel = checkInteractionModel(links);
 
         if (isExternalBody(requestContentType)) {
-            checkExternalBody(requestContentType);
+            checkMessageExternalBody(requestContentType);
         }
 
         final FedoraResource resource;
@@ -443,6 +445,10 @@ public class FedoraLdp extends ContentExposingResource {
         } finally {
             lock.release();
         }
+    }
+
+    private void checkMessageExternalBody(final MediaType requestContentType) throws UnsupportedAccessTypeException {
+        MessageExternalBodyContentType.parse(requestContentType.toString());
     }
 
     /**

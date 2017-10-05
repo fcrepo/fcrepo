@@ -17,16 +17,11 @@
  */
 package org.fcrepo.kernel.modeshape.utils.impl;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.fcrepo.kernel.api.utils.CacheEntry;
 import org.fcrepo.kernel.modeshape.utils.BinaryCacheEntry;
 import org.fcrepo.kernel.modeshape.utils.ExternalResourceCacheEntry;
 import org.fcrepo.kernel.modeshape.utils.ProjectedCacheEntry;
 import org.modeshape.jcr.value.binary.ExternalBinaryValue;
-
-import com.google.common.base.Splitter;
 
 import javax.jcr.Binary;
 import javax.jcr.Property;
@@ -63,20 +58,5 @@ public final class CacheEntryFactory {
             }
             return new BinaryCacheEntry(property);
         }
-    }
-
-    /**
-     * Utility method to parse the external body content in format:
-     *   message/external-body; access-type=URL; url="http://www.example.com/file"
-     * @param mimeType the MimeType value for external resource
-     * @return Map with key mime-type for MimeType value.
-     */
-    public static Map<String, String> parseExternalBody(final String mimeType) {
-        final Map<String, String> params = new HashMap<String, String>();
-        Splitter.on(';').omitEmptyStrings().trimResults()
-            .withKeyValueSeparator(Splitter.on('=').limit(2)).split("mime-type=" + mimeType.trim())
-             // use lower case for keys, unwrap the quoted values (double quotes at the beginning and the end)
-            .forEach((k, v) -> params.put(k.toLowerCase(), v.replaceAll("^\"|\"$", "")));
-        return params;
     }
 }

@@ -46,6 +46,8 @@ import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
+
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
@@ -137,7 +139,8 @@ public class FedoraVersions extends ContentExposingResource {
     @Produces({TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8", N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET,
             RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET, TURTLE_X,
             TEXT_HTML_WITH_CHARSET, "*/*"})
-    public Response getVersion(@HeaderParam("Range") final String rangeValue) throws IOException {
+    public Response getVersion(@HeaderParam("Range") final String rangeValue) throws IOException,
+            UnsupportedAccessTypeException {
         LOGGER.trace("Getting version profile for: {} at version: {}", path,
                 label);
         checkCacheControlHeaders(request, servletResponse, resource(), session);

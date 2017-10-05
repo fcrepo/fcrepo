@@ -36,6 +36,7 @@ import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.utils.CacheEntry;
 import org.fcrepo.kernel.api.utils.ContentDigest;
 import org.fcrepo.kernel.api.utils.FixityResult;
+import org.fcrepo.kernel.api.utils.MessageExternalBodyContentType;
 import org.fcrepo.kernel.modeshape.rdf.impl.FixityRdfContext;
 import org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.modeshape.utils.impl.CacheEntryFactory;
@@ -394,18 +395,10 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
 
             final String mimeType = getMimeType();
             if (mimeType.contains(CacheEntryFactory.MESSAGE_EXTERNAL_BODY)) {
-                final Map<String, String> params = CacheEntryFactory.parseExternalBody(mimeType);
-                final String accessType = params.get("access-type");
-                final String resourceLocation = params.get(accessType.toLowerCase());
-
-                if (accessType != null && accessType.equals("URL")) {
-                    LOGGER.debug("Checking external resource: " + resourceLocation);
-
-                    return CacheEntryFactory.forProperty(getProperty(HAS_MIME_TYPE)).checkFixity(algorithms);
-                } else {
-                    throw new UnsupportedAccessTypeException("Unsupported access-type " + accessType
-                            + " with external resource " + resourceLocation + ".");
-                }
+                final MessageExternalBodyContentType externalBody = MessageExternalBodyContentType.parse(mimeType);
+                final String resourceLocation = externalBody.getResourceLocation();
+                LOGGER.debug("Checking external resource: " + resourceLocation);
+                return CacheEntryFactory.forProperty(getProperty(HAS_MIME_TYPE)).checkFixity(algorithms);
             } else {
 
                 LOGGER.debug("Checking resource: " + getPath());

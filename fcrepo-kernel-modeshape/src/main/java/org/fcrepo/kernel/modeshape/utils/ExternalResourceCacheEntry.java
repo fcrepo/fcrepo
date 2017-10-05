@@ -21,13 +21,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
-import java.util.Map;
 
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.modeshape.utils.impl.CacheEntryFactory;
+import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
+import org.fcrepo.kernel.api.utils.MessageExternalBodyContentType;
 
 /**
  * Cache entry that wraps a binary stream for External Resource
@@ -67,9 +67,8 @@ public class ExternalResourceCacheEntry extends BinaryCacheEntry {
     @Override
     public String getExternalIdentifier() {
         try {
-            final Map<String, String> params = CacheEntryFactory.parseExternalBody(property().getValue().getString());
-            return params.get(params.get("access-type").toLowerCase());
-        } catch (final RepositoryException e) {
+            return MessageExternalBodyContentType.parse(property().getValue().getString()).getResourceLocation();
+        } catch (final RepositoryException | UnsupportedAccessTypeException e) {
             throw new RepositoryRuntimeException(e);
         }
     }

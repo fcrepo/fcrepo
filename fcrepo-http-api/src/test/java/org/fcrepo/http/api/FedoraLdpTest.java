@@ -33,6 +33,7 @@ import static javax.ws.rs.core.Response.Status.NOT_MODIFIED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static javax.ws.rs.core.Response.Status.TEMPORARY_REDIRECT;
+import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static org.apache.commons.io.IOUtils.toInputStream;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
@@ -721,6 +722,15 @@ public class FedoraLdpTest {
         assertEquals(new URI("some:uri"), actual.getLocation());
     }
 
+    @Test(expected = UnsupportedAccessTypeException.class)
+    public void testGetWithExternalMessageMissingURLBinary() throws Exception {
+        final FedoraBinary mockResource = (FedoraBinary)setResource(FedoraBinary.class);
+        when(mockResource.getDescription()).thenReturn(mockNonRdfSourceDescription);
+        when(mockResource.getMimeType()).thenReturn("message/external-body; access-type=URL;");
+        when(mockResource.getContent()).thenReturn(toInputStream("xyz", UTF_8));
+        final Response actual = testObj.getResource(null);
+        assertEquals(UNSUPPORTED_MEDIA_TYPE.getStatusCode(), actual.getStatus());
+    }
 
     @Test
     @SuppressWarnings({"resource", "unchecked"})

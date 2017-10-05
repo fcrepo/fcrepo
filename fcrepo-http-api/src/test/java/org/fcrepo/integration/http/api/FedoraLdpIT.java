@@ -2787,7 +2787,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                     "URL=\"http://www.example.com/file\"");
 
             try (final CloseableHttpResponse response = execute(httpPut)) {
-                assertEquals("Didn't get an BAD REQUEST response!", BAD_REQUEST.getStatusCode(),
+                assertEquals("Didn't get a BAD_REQUEST response!", BAD_REQUEST.getStatusCode(),
                         getStatus(response));
             }
         }
@@ -2805,7 +2805,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             httpPut.addHeader(CONTENT_TYPE, "message/external-body; access-type=URL; ");
 
             try (final CloseableHttpResponse response = execute(httpPut)) {
-                assertEquals("Didn't get a BAD REQUEST response!", BAD_REQUEST.getStatusCode(),
+                assertEquals("Didn't get an UNSUPPORTED_MEDIA_TYPE response!", UNSUPPORTED_MEDIA_TYPE.getStatusCode(),
                         getStatus(response));
             }
         }

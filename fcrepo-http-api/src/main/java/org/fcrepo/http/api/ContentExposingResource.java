@@ -81,7 +81,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.ServletContext;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.BeanParam;
-import javax.ws.rs.NotSupportedException;
 import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.EntityTag;
@@ -107,12 +106,14 @@ import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PreconditionException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
+import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
+import org.fcrepo.kernel.api.utils.MessageExternalBodyContentType;
 
 import org.apache.jena.atlas.RuntimeIOException;
 import org.apache.jena.graph.Triple;
@@ -138,10 +139,7 @@ import com.google.common.annotations.VisibleForTesting;
  */
 public abstract class ContentExposingResource extends FedoraBaseResource {
 
-    private static final String ACCESS_TYPE = "access-type";
-    private static final String URL_ACCESS_TYPE = "URL";
     private static final Logger LOGGER = getLogger(ContentExposingResource.class);
-    public static final MediaType MESSAGE_EXTERNAL_BODY = MediaType.valueOf("message/external-body");
 
     @Context protected Request request;
     @Context protected HttpServletResponse servletResponse;
@@ -176,7 +174,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected abstract String externalPath();
 
     protected Response getContent(final String rangeValue,
-                                  final RdfStream rdfStream) throws IOException {
+            final RdfStream rdfStream) throws IOException, UnsupportedAccessTypeException {
         return getContent(rangeValue, -1, rdfStream);
     }
 
@@ -191,7 +189,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      */
     protected Response getContent(final String rangeValue,
                                   final int limit,
-                                  final RdfStream rdfStream) throws IOException {
+                                  final RdfStream rdfStream) throws IOException, UnsupportedAccessTypeException {
 
         final RdfNamespacedStream outputStream;
 
@@ -200,8 +198,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             final MediaType mediaType = MediaType.valueOf(((FedoraBinary) resource()).getMimeType());
 
             if (isExternalBody(mediaType)) {
-                checkExternalBody(mediaType);
-                return externalBodyRedirect(getURLAccessType(mediaType)).build();
+                return externalBodyRedirect(getExternalResourceLocation(mediaType)).build();
             }
 
             return getBinaryContent(rangeValue);
@@ -220,38 +217,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     }
 
 
-    protected URI getURLAccessType(final MediaType mediaType) {
-        return URI.create(getAccessTypeValue(mediaType.getParameters(), URL_ACCESS_TYPE));
-    }
-
-    /**
-     * Throws a NotSupportedException if media type is an invalid message/external-body type. To be valid it must
-     * contain the access-type parameter that equals a valid access type and a URL parameter that contains a URL.
-     * 
-     * @param mediaType The media type to be validated
-     * @throws NotSupportedException
-     */
-    protected void checkExternalBody(final MediaType mediaType) {
-        if (isExternalBody(mediaType)) {
-            final Map<String, String> params = mediaType.getParameters();
-            final String accessType = params.get(ACCESS_TYPE);
-            if (accessType == null) {
-                throw new BadRequestException("You must specify the access-type param when using " +
-                        MESSAGE_EXTERNAL_BODY + " content type:" +
-                        mediaType.toString());
-            }
-
-            if (!accessType.equalsIgnoreCase(URL_ACCESS_TYPE)) {
-                throw new NotSupportedException("Unsupported media type:  the " + accessType +
-                        " access type  is not supported: " + mediaType.toString());
-            }
-
-            if (getAccessTypeValue(params, accessType) == null) {
-                throw new BadRequestException("When specifying the  " + accessType +
-                        " access type you must include a " + URL_ACCESS_TYPE + " key/value pair: " + mediaType
-                                .toString());
-            }
-        }
+    protected URI getExternalResourceLocation(final MediaType mediaType) throws UnsupportedAccessTypeException {
+        return URI.create(MessageExternalBodyContentType.parse(mediaType.toString()).getResourceLocation());
     }
 
     protected String getAccessTypeValue(final Map<String, String> params, final String accessType) {
@@ -264,13 +231,13 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     }
 
     /**
-     * Checks if media type matches "message/external-body" does not perform a validity check
+     * Checks if media type matches "message/external-body"
      * @param mediaType
      * @return true if matches
      */
     protected boolean isExternalBody(final MediaType mediaType) {
-        return mediaType != null && mediaType.isCompatible(MESSAGE_EXTERNAL_BODY)
-                && mediaType.getParameters().containsKey(ACCESS_TYPE);
+        return mediaType == null ? false : (mediaType.getType() + "/" + mediaType.getSubtype()).equals(
+                MessageExternalBodyContentType.MEDIA_TYPE);
     }
 
     protected ResponseBuilder externalBodyRedirect(final URI resourceLocation) {
