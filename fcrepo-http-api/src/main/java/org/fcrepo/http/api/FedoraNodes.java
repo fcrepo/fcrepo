@@ -96,6 +96,7 @@ public class FedoraNodes extends ContentExposingResource {
     }
 
     /**
+     * @deprecated
      * Copies an object from one path to another
      * @param destinationUri the destination uri
      * @throws URISyntaxException if uri syntax exception occurred
@@ -103,6 +104,7 @@ public class FedoraNodes extends ContentExposingResource {
      */
     @COPY
     @Timed
+    @Deprecated
     public Response copyObject(@HeaderParam("Destination") final String destinationUri)
             throws URISyntaxException {
 
@@ -145,13 +147,15 @@ public class FedoraNodes extends ContentExposingResource {
     }
 
     /**
-     * Copies an object from one path to another
+     * @deprecated
+     * Moves an object from one path to another
      * @param destinationUri the destination uri
      * @throws URISyntaxException if uri syntax exception occurred
      * @return the response
      */
     @MOVE
     @Timed
+    @Deprecated
     public Response moveObject(@HeaderParam("Destination") final String destinationUri)
             throws URISyntaxException {
 
