@@ -39,6 +39,8 @@ public class WebACAuthorization {
 
     private final Set<String> accessToClass = new HashSet<>();
 
+    private final Set<String> agentGroups = new HashSet<>();
+
     /**
      * Constructor
      *
@@ -47,14 +49,17 @@ public class WebACAuthorization {
      * @param modes the acl:mode values
      * @param accessTo the acl:accessTo values
      * @param accessToClass the acl:accessToClass values
+     * @param agentGroups the acl:agentGroup values
      */
     public WebACAuthorization(final Collection<String> agents, final Collection<String> agentClasses,
-            final Collection<URI> modes, final Collection<String> accessTo, final Collection<String> accessToClass) {
+            final Collection<URI> modes, final Collection<String> accessTo, final Collection<String> accessToClass,
+            final Collection<String> agentGroups) {
         this.agents.addAll(agents);
         this.agentClasses.addAll(agentClasses);
         this.modes.addAll(modes);
         this.accessTo.addAll(accessTo);
         this.accessToClass.addAll(accessToClass);
+        this.agentGroups.addAll(agentGroups);
     }
 
     /**
@@ -100,5 +105,14 @@ public class WebACAuthorization {
      */
     public Set<String> getAccessToClassURIs() {
         return accessToClass;
+    }
+
+    /**
+     * Get the set of strings describing the agent groups for this ACL, empty set if none.
+     *
+     * @return set of Strings
+     */
+    public Set<String> getAgentGroups() {
+        return agentGroups;
     }
 }

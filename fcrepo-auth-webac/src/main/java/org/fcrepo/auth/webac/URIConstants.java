@@ -101,6 +101,12 @@ final public class URIConstants {
     public static final URI WEBAC_AGENT_CLASS = URI.create(WEBAC_AGENT_CLASS_VALUE);
 
     /**
+     * WebAC agentGroup
+     */
+    public static final String WEBAC_AGENT_GROUP_VALUE = WEBAC_NAMESPACE_VALUE + "agentGroup";
+    public static final URI WEBAC_AGENT_GROUP = URI.create(WEBAC_AGENT_CLASS_VALUE);
+
+    /**
      * WebAC accessTo
      */
     public static final String WEBAC_ACCESSTO_VALUE = WEBAC_NAMESPACE_VALUE + "accessTo";
@@ -148,6 +154,23 @@ final public class URIConstants {
     public static final String FOAF_GROUP_VALUE = FOAF_NAMESPACE_VALUE + "Group";
     public static final URI FOAF_GROUP = URI.create(FOAF_GROUP_VALUE);
 
+    /**
+     * vCard Namespace
+     */
+    public static final String VCARD_NAMESPACE_VALUE = "http://www.w3.org/2006/vcard/ns#";
+    public static final URI VCARD_NAMESPACE = URI.create(VCARD_NAMESPACE_VALUE);
+
+    /**
+     * vCard Group
+     */
+    public static final String VCARD_GROUP_VALUE = VCARD_NAMESPACE_VALUE + "Group";
+    public static final URI VCARD_GROUP = URI.create(VCARD_GROUP_VALUE);
+
+    /**
+     * vCard member
+     */
+    public static final String VCARD_MEMBER_VALUE = VCARD_NAMESPACE_VALUE + "hasMember";
+    public static final URI VCARD_MEMBER = URI.create(VCARD_MEMBER_VALUE);
 
     /**
      * Fedora WebAC Namespace
