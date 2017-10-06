@@ -70,7 +70,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -219,15 +218,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     protected URI getExternalResourceLocation(final MediaType mediaType) throws UnsupportedAccessTypeException {
         return URI.create(MessageExternalBodyContentType.parse(mediaType.toString()).getResourceLocation());
-    }
-
-    protected String getAccessTypeValue(final Map<String, String> params, final String accessType) {
-        for (String key : params.keySet()) {
-            if (key.equalsIgnoreCase(accessType)) {
-                return params.get(key);
-            }
-        }
-        return null;
     }
 
     /**

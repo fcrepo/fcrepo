@@ -2756,7 +2756,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testUnsupportedAccessTypeInExternalMessage() throws IOException {
+    public void testUnsupportedAccessTypeInExternalMessagePUT() throws IOException {
 
         // we need a client that won't automatically follow redirects
         try (final CloseableHttpClient noFollowClient = HttpClientBuilder.create().disableRedirectHandling()
@@ -2768,6 +2768,25 @@ public class FedoraLdpIT extends AbstractResourceIT {
                     "URL=\"ftp://www.example.com/file\"");
 
             try (final CloseableHttpResponse response = execute(httpPut)) {
+                assertEquals("Didn't get an UNSUPPORTED_MEDIA_TYPE response!", UNSUPPORTED_MEDIA_TYPE.getStatusCode(),
+                        getStatus(response));
+            }
+        }
+    }
+
+    @Test
+    public void testUnsupportedAccessTypeInExternalMessagePOST() throws IOException {
+
+        // we need a client that won't automatically follow redirects
+        try (final CloseableHttpClient noFollowClient = HttpClientBuilder.create().disableRedirectHandling()
+                .build()) {
+
+            final String id = getRandomUniqueId();
+            final HttpPost httpPost = postObjMethod(id);
+            httpPost.addHeader(CONTENT_TYPE, "message/external-body; access-type=ftp; " +
+                    "URL=\"ftp://www.example.com/file\"");
+
+            try (final CloseableHttpResponse response = execute(httpPost)) {
                 assertEquals("Didn't get an UNSUPPORTED_MEDIA_TYPE response!", UNSUPPORTED_MEDIA_TYPE.getStatusCode(),
                         getStatus(response));
             }

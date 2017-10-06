@@ -556,9 +556,14 @@ public class FedoraLdp extends ContentExposingResource {
                                  @ContentLocation final InputStream requestBodyStream,
                                  @HeaderParam(LINK) final List<String> links,
                                  @HeaderParam("Digest") final String digest)
-            throws InvalidChecksumException, IOException, MalformedRdfException, UnsupportedAlgorithmException {
+            throws InvalidChecksumException, IOException, MalformedRdfException, UnsupportedAlgorithmException,
+            UnsupportedAccessTypeException {
 
         final String interactionModel = checkInteractionModel(links);
+
+        if (isExternalBody(requestContentType)) {
+            checkMessageExternalBody(requestContentType);
+        }
 
         if (!(resource() instanceof Container)) {
             throw new ClientErrorException("Object cannot have child nodes", CONFLICT);

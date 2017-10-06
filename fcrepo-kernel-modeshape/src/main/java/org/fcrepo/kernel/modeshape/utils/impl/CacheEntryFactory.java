@@ -18,6 +18,7 @@
 package org.fcrepo.kernel.modeshape.utils.impl;
 
 import org.fcrepo.kernel.api.utils.CacheEntry;
+import org.fcrepo.kernel.api.utils.MessageExternalBodyContentType;
 import org.fcrepo.kernel.modeshape.utils.BinaryCacheEntry;
 import org.fcrepo.kernel.modeshape.utils.ExternalResourceCacheEntry;
 import org.fcrepo.kernel.modeshape.utils.ProjectedCacheEntry;
@@ -33,8 +34,6 @@ import javax.jcr.RepositoryException;
  */
 public final class CacheEntryFactory {
 
-    public static String MESSAGE_EXTERNAL_BODY = "message/external-body";
-
     /**
      * No public constructor on utility class
      */
@@ -48,7 +47,7 @@ public final class CacheEntryFactory {
      * @throws RepositoryException if repository exception occurred
      */
     public static CacheEntry forProperty(final Property property) throws RepositoryException {
-        if (property.getValue().getString().indexOf((MESSAGE_EXTERNAL_BODY)) >= 0) {
+        if (property.getValue().getString().indexOf((MessageExternalBodyContentType.MEDIA_TYPE)) >= 0) {
             return new ExternalResourceCacheEntry(property);
         } else {
             final Binary binary = property.getBinary();

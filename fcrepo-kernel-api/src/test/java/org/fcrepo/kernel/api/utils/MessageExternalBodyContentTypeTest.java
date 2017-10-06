@@ -30,10 +30,9 @@ import org.junit.Test;
  */
 public class MessageExternalBodyContentTypeTest {
 
-    public static String RESOURCE_URL = "http://www.example.com/file";
+    private static String RESOURCE_URL = "http://www.example.com/file";
 
-    private static String EXTERNAL_RESOURCE = "message/external-body;" + " access-type=URL; URL=\"" + RESOURCE_URL +
-            "\"";
+    private static String EXTERNAL_RESOURCE = "message/external-body; access-type=URL; URL=\"" + RESOURCE_URL + "\"";
 
     @Test
     public void testParseExternalBody() throws UnsupportedAccessTypeException {
@@ -45,25 +44,39 @@ public class MessageExternalBodyContentTypeTest {
     @Test(expected = UnsupportedAccessTypeException.class)
     public void testParseExternalBodyInvalidAccessType() throws UnsupportedAccessTypeException {
         MessageExternalBodyContentType.parse(
-                "message/external-body;" + " access-type=ftp; URL=\"" + RESOURCE_URL + "\"");
+                "message/external-body; access-type=ftp; URL=\"" + RESOURCE_URL + "\"");
     }
 
     @Test(expected = UnsupportedAccessTypeException.class)
     public void testParseExternalBodyInvalidAccessTypeBlankURL() throws UnsupportedAccessTypeException {
         MessageExternalBodyContentType.parse(
-                "message/external-body;" + " access-type=ftp; URL=\"\"");
+                "message/external-body; access-type=ftp; URL=\"\"");
+    }
+
+    public void testParseExternalBodyAccessTypeCaseInsensitive() throws UnsupportedAccessTypeException {
+        final MessageExternalBodyContentType contentType = MessageExternalBodyContentType.parse(
+                "invalid/mimetype; access-type=url; URL=\"" + RESOURCE_URL + "\"");
+        assertEquals("Access-type doesn't match.", "url", contentType.getAccessType());
+        assertEquals("URL doesn't match.", RESOURCE_URL, contentType.getResourceLocation());
+    }
+
+    public void testParseExternalBodyLocationKeyCaseInsensitive() throws UnsupportedAccessTypeException {
+        final MessageExternalBodyContentType contentType = MessageExternalBodyContentType.parse(
+                "invalid/mimetype; access-type=URL; url=\"" + RESOURCE_URL + "\"");
+        assertEquals("Access-type doesn't match.", "url", contentType.getAccessType());
+        assertEquals("URL doesn't match.", RESOURCE_URL, contentType.getResourceLocation());
     }
 
     @Test(expected = UnsupportedAccessTypeException.class)
     public void testParseExternalBodyInvalidMimeType() throws UnsupportedAccessTypeException {
         MessageExternalBodyContentType.parse(
-                "invalid/mimetype;" + " access-type=url; URL=\"\"");
+                "invalid/mimetype; access-type=url; URL=\"\"");
     }
 
     @Test(expected = UnsupportedAccessTypeException.class)
     public void testParseExternalBodyMissingURL() throws UnsupportedAccessTypeException {
         MessageExternalBodyContentType.parse(
-                "invalid/mimetype;" + " access-type=url;");
+                "message/mimetype; access-type=url;");
     }
 
 }
