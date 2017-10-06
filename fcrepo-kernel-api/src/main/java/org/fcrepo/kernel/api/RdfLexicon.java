@@ -257,6 +257,9 @@ public final class RdfLexicon {
     public static final Predicate<Property> isManagedPredicate =
         hasFedoraNamespace.or(p -> managedProperties.contains(p));
 
+    /**
+     * Fedora defined JCR node type with supertype of nt:file with a single nt:folder named fedora:timemap inside.
+     */
     public static final String NT_VERSION_FILE = "nt:versionFile";
 
     private RdfLexicon() {
