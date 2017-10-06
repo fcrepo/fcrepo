@@ -63,6 +63,8 @@ import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
+
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -99,10 +101,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilderException;
 import javax.ws.rs.core.Variant.VariantListBuilder;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.jena.atlas.web.ContentType;
-import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
@@ -122,6 +120,12 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.utils.ContentDigest;
+
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.jena.atlas.web.ContentType;
+import org.apache.jena.rdf.model.Resource;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
@@ -399,7 +403,6 @@ public class FedoraLdp extends ContentExposingResource {
 
             try (final RdfStream resourceTriples =
                     created ? new DefaultRdfStream(asNode(resource())) : getResourceTriples()) {
-
                 LOGGER.info("PUT resource '{}'", externalPath);
                 if (resource instanceof FedoraBinary) {
                     replaceResourceBinaryWithStream((FedoraBinary) resource,
@@ -422,6 +425,10 @@ public class FedoraLdp extends ContentExposingResource {
                 }
             } catch (final Exception e) {
                 checkForInsufficientStorageException(e, e);
+            }
+
+            if (hasVersionedResourceLink(links)) {
+                resource.enableVersioning();
             }
 
             ensureInteractionType(resource, interactionModel,
@@ -596,6 +603,10 @@ public class FedoraLdp extends ContentExposingResource {
                     }
                 }
 
+                if (hasVersionedResourceLink(links)) {
+                    resource.enableVersioning();
+                }
+
                 ensureInteractionType(resource, interactionModel,
                         (requestBodyStream == null || requestContentType == null));
 
@@ -611,6 +622,35 @@ public class FedoraLdp extends ContentExposingResource {
         }
     }
 
+
+    /**
+     * Returns true if there is a link with a VERSIONED_RESOURCE type.
+     * @param links a list of link header values.
+     * @return True if there is a matching link header.
+     */
+    private boolean hasVersionedResourceLink(final List<String> links) {
+        if (!CollectionUtils.isEmpty(links)) {
+            try {
+                for (String link : links) {
+                    final Link linq = Link.valueOf(link);
+                    if ("type".equals(linq.getRel())) {
+                        final Resource type = createResource(linq.getUri().toString());
+                        if (type.equals(VERSIONED_RESOURCE)) {
+                            return true;
+                        }
+                    }
+                }
+            } catch (final RuntimeException e) {
+                if (e instanceof IllegalArgumentException | e instanceof UriBuilderException) {
+                    throw new ClientErrorException("Invalid link specified: " + String.join(", ", links),
+                            BAD_REQUEST);
+                }
+                throw e;
+            }
+        }
+
+        return false;
+    }
     /**
      * @param rootThrowable The original throwable
      * @param throwable The throwable under direct scrutiny.
@@ -844,6 +884,12 @@ public class FedoraLdp extends ContentExposingResource {
                     if (type.equals(NON_RDF_SOURCE) || type.equals(BASIC_CONTAINER) ||
                             type.equals(DIRECT_CONTAINER) || type.equals(INDIRECT_CONTAINER)) {
                         return "ldp:" + type.getLocalName();
+                    } else if (type.equals(VERSIONED_RESOURCE)) {
+                        // skip if versioned resource link header
+                        // NB: the versioned resource header is used for enabling
+                        // versioning on a resource and is thus orthogonal to
+                        // issue of interaction models. Nevertheless, it is
+                        // a possible link header and, therefore, must be ignored.
                     } else {
                         LOGGER.info("Invalid interaction model: {}", type);
                         throw new CannotCreateResourceException("Invalid interaction model: " + type);

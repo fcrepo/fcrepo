@@ -91,9 +91,6 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.nodetype.NodeType;
 
-import com.google.common.annotations.VisibleForTesting;
-import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.rdf.model.StmtIterator;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.FedoraVersion;
 import org.fcrepo.kernel.api.RdfLexicon;
@@ -134,6 +131,8 @@ import org.fcrepo.kernel.modeshape.utils.iterators.RdfRemover;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.modify.request.UpdateData;
 import org.apache.jena.sparql.modify.request.UpdateDeleteWhere;
@@ -142,6 +141,7 @@ import org.apache.jena.update.UpdateRequest;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Converter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -971,7 +971,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
   @Override
   public void enableVersioning() {
-      LOGGER.warn("Review if method (enableVersioning) can be removed after implementing Memento!");
+        if (!isVersioned()) {
+           getDescription().findOrCreateTimeMap();
+        }
   }
 
   @Override
@@ -981,8 +983,13 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
   @Override
   public boolean isVersioned() {
-      LOGGER.warn("Review if method (isVersioned) can be removed after implementing Memento!");
-    return false;
+      try {
+          return ((FedoraResourceImpl)getDescription()).getNode(getNode(), LDPCV_TIME_MAP, false) != null;
+          //@TODO This line should be changed to "return getDescription().getChild(LDPCV_TIME_MAP);"
+          //once the issues around https://jira.duraspace.org/browse/FCREPO-2644 have been landed.
+      } catch (RepositoryException ex) {
+          throw new RepositoryRuntimeException(ex);
+      }
   }
 
   @Override

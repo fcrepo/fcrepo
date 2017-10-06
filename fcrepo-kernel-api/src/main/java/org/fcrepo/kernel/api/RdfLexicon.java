@@ -171,6 +171,9 @@ public final class RdfLexicon {
     public static final Property HAS_ACCESS_ROLES_SERVICE =
             createProperty(REPOSITORY_NAMESPACE + "hasAccessRoles");
 
+    public static final Property VERSIONED_RESOURCE =
+            createProperty("http://fedora.info/definitions/fcrepo#VersionedResource");
+
     public static final Set<Property> repositoryProperties = of(
             HAS_OBJECT_COUNT, HAS_OBJECT_SIZE, HAS_TRANSACTION_SERVICE);
 

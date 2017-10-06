@@ -90,6 +90,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -188,6 +189,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     private static final String DIRECT_CONTAINER_LINK_HEADER = "<" + DIRECT_CONTAINER.getURI() + ">;rel=\"type\"";
     private static final String INDIRECT_CONTAINER_LINK_HEADER = "<" + INDIRECT_CONTAINER.getURI() + ">;rel=\"type\"";
     private static final String NON_RDF_SOURCE_LINK_HEADER = "<" + NON_RDF_SOURCE.getURI() + ">;rel=\"type\"";
+    private static final String VERSIONED_RESOURCE_LINK_HEADER = "<" + VERSIONED_RESOURCE.getURI() + ">; rel=\"type\"";
 
     private static final String TEST_ACTIVATION_PROPERTY = "RUN_TEST_CREATE_MANY";
 
@@ -974,6 +976,44 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final DatasetGraph graph = dataset.asDatasetGraph();
             assertTrue("Didn't find a triple we tried to create!", graph.contains(ANY,
                     createURI(subjectURI), createURI("info:test#label"), createLiteral("foo")));
+        }
+    }
+
+
+    @Test
+    public void testCreateVersionedRDFResource() throws IOException {
+        final String id = getRandomUniqueId();
+        final String subjectURI = serverAddress + id;
+        final HttpPost createMethod = postObjMethod();
+        createMethod.addHeader("Slug", id);
+        createMethod.addHeader(CONTENT_TYPE, "text/n3");
+        createMethod.addHeader(LINK, VERSIONED_RESOURCE_LINK_HEADER);
+        createMethod.setEntity(new StringEntity("<" + subjectURI + "> <info:test#label> \"foo\""));
+
+        try (final CloseableHttpResponse response = execute(createMethod)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            checkForVersionedResourceLinkHeader(response);
+        }
+    }
+
+    private void checkForVersionedResourceLinkHeader(final CloseableHttpResponse response) {
+        assertEquals(1, Arrays.asList(response.getHeaders(LINK)).stream().filter(x -> x.getValue().equals(
+                VERSIONED_RESOURCE_LINK_HEADER)).count());
+    }
+
+    @Test
+    @Ignore
+    public void testCreateVersionedBinaryResource() throws IOException {
+        final HttpPost method = postObjMethod();
+        final String id = getRandomUniqueId();
+        method.addHeader("Slug", id);
+        method.addHeader(CONTENT_TYPE, "text/plain");
+        method.setEntity(new StringEntity("test content"));
+
+        method.addHeader(LINK, VERSIONED_RESOURCE_LINK_HEADER);
+        try (final CloseableHttpResponse response = execute(method)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            checkForVersionedResourceLinkHeader(response);
         }
     }
 

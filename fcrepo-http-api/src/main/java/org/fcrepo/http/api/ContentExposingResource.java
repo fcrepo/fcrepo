@@ -98,6 +98,7 @@ import org.fcrepo.http.commons.domain.ldp.LdpPreferTag;
 import org.fcrepo.http.commons.responses.RangeRequestInputStream;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.http.commons.session.HttpSession;
+import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
@@ -433,6 +434,12 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             servletResponse.addHeader(LINK,
                     Link.fromUri(constraintURI).rel(CONSTRAINED_BY.getURI()).build().toString());
         }
+
+        if (resource.isVersioned()) {
+            final Link link = Link.fromUri(RdfLexicon.VERSIONED_RESOURCE.getURI()).rel("type").build();
+            servletResponse.addHeader(LINK, link.toString());
+        }
+
     }
 
     /**

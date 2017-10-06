@@ -52,6 +52,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.observer.OptionalValues.BASE_URL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -910,6 +911,16 @@ public class FedoraLdpTest {
         setResource(Container.class);
         when(mockContainerService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockContainer);
         final Response actual = testObj.createObject(null, null, "b", null, null, null);
+        assertEquals(CREATED.getStatusCode(), actual.getStatus());
+    }
+
+    @Test
+    public void testCreateNewObjectWithVersionedResource() throws MalformedRdfException, InvalidChecksumException,
+           IOException, UnsupportedAlgorithmException {
+        setResource(Container.class);
+        when(mockContainerService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockContainer);
+        final String versionedResourceLink = "<" + VERSIONED_RESOURCE.getURI() + ">;rel=\"type\"";
+        final Response actual = testObj.createObject(null, null, "b", null, Arrays.asList(versionedResourceLink), null);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
     }
 
