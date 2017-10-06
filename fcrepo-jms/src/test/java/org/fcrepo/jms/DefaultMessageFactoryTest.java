@@ -79,7 +79,7 @@ public class DefaultMessageFactoryTest {
     @Test
     public void testBuildMessage() throws JMSException {
         final String testPath = "/path/to/resource";
-        final Message msg = doTestBuildMessage("base-url", "Test UserURI", testPath);
+        final Message msg = doTestBuildMessage("base-url", "Test UserAgent", testPath);
         assertEquals("Got wrong identifier in message!", testPath, msg.getStringProperty(IDENTIFIER_HEADER_NAME));
     }
 
@@ -90,15 +90,15 @@ public class DefaultMessageFactoryTest {
         assertEquals("Got wrong identifier in message!", testPath, msg.getStringProperty(IDENTIFIER_HEADER_NAME));
     }
 
-    private Message doTestBuildMessage(final String baseUrl, final String userURI, final String id)
+    private Message doTestBuildMessage(final String baseUrl, final String userAgent, final String id)
             throws JMSException {
         final Long testDate = 46647758568747L;
         final Map<String, String> info = new HashMap<>();
         if (baseUrl != null) {
             info.put(BASE_URL, baseUrl);
         }
-        if (userURI != null) {
-            info.put(USER_AGENT, userURI);
+        if (userAgent != null) {
+            info.put(USER_AGENT, userAgent);
         }
         when(mockEvent.getInfo()).thenReturn(info);
         when(mockEvent.getDate()).thenReturn(ofEpochMilli(testDate));
@@ -126,7 +126,7 @@ public class DefaultMessageFactoryTest {
         assertEquals("Got wrong base-url in message", trimmedBaseUrl, msg.getStringProperty(BASE_URL_HEADER_NAME));
         assertEquals("Got wrong resource type in message", prop, msg.getStringProperty(RESOURCE_TYPE_HEADER_NAME));
         assertEquals("Got wrong userID in message", testUser, msg.getStringProperty(USER_HEADER_NAME));
-        assertEquals("Got wrong userURI in message", userURI, msg.getStringProperty(USER_AGENT_HEADER_NAME));
+        assertEquals("Got wrong userAgent in message", userAgent, msg.getStringProperty(USER_AGENT_HEADER_NAME));
         assertEquals("Got wrong eventID in message", eventID, msg.getStringProperty(EVENT_ID_HEADER_NAME));
         return msg;
     }
