@@ -44,6 +44,7 @@ import static java.util.stream.Collectors.toSet;
 import static java.util.stream.Stream.empty;
 
 import java.io.IOException;
+import java.net.URI;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.HashMap;
@@ -61,6 +62,8 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.observer.EventType;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
 import org.fcrepo.kernel.modeshape.identifiers.HashConverter;
+import org.fcrepo.kernel.modeshape.utils.FedoraSessionUserUtil;
+
 import org.slf4j.Logger;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -81,6 +84,7 @@ public class FedoraEventImpl implements FedoraEvent {
 
     private final String path;
     private final String userID;
+    private final URI userAgent;
     private final Instant date;
     private final Map<String, String> info;
     private final String eventID;
@@ -101,8 +105,8 @@ public class FedoraEventImpl implements FedoraEvent {
      * @param info supplementary information
      */
     public FedoraEventImpl(final EventType type, final String path, final Set<String> resourceTypes,
-            final String userID, final Instant date, final Map<String, String> info) {
-        this(singleton(type), path, resourceTypes, userID, date, info);
+            final String userID, final URI userAgent, final Instant date, final Map<String, String> info) {
+        this(singleton(type), path, resourceTypes, userID, userAgent, date, info);
     }
 
    /**
@@ -115,7 +119,7 @@ public class FedoraEventImpl implements FedoraEvent {
      * @param info supplementary information
      */
     public FedoraEventImpl(final Collection<EventType> types, final String path, final Set<String> resourceTypes,
-            final String userID, final Instant date, final Map<String, String> info) {
+            final String userID, final URI userAgent, final Instant date, final Map<String, String> info) {
         requireNonNull(types, "FedoraEvent requires a non-null event type");
         requireNonNull(path, "FedoraEvent requires a non-null path");
 
@@ -123,6 +127,7 @@ public class FedoraEventImpl implements FedoraEvent {
         this.path = path;
         this.eventResourceTypes = resourceTypes;
         this.userID = userID;
+        this.userAgent = userAgent;
         this.date = date;
         this.info = isNull(info) ? emptyMap() : info;
         this.eventID = "urn:uuid:" + randomUUID().toString();
@@ -159,6 +164,14 @@ public class FedoraEventImpl implements FedoraEvent {
     @Override
     public String getUserID() {
         return userID;
+    }
+
+    /**
+     * @return the user agent of the underlying JCR {@link Event}s
+     */
+    @Override
+    public URI getUserAgent() {
+        return userAgent;
     }
 
     /**
@@ -258,7 +271,8 @@ public class FedoraEventImpl implements FedoraEvent {
             final Set<String> resourceTypes = getResourceTypes(event).collect(toSet());
 
             return new FedoraEventImpl(valueOf(event.getType()), cleanPath(event), resourceTypes,
-                    event.getUserID(), ofEpochMilli(event.getDate()), info);
+                    event.getUserID(), FedoraSessionUserUtil.getUserAgent(event.getUserID()), ofEpochMilli(event
+                            .getDate()), info);
 
         } catch (final RepositoryException ex) {
             throw new RepositoryRuntimeException("Error converting JCR Event to FedoraEvent", ex);

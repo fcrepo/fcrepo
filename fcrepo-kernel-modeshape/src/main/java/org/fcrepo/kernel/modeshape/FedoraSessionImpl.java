@@ -17,7 +17,6 @@
  */
 package org.fcrepo.kernel.modeshape;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.Long.parseLong;
 import static java.time.Duration.ofMillis;
 import static java.time.Duration.ofMinutes;
@@ -25,7 +24,6 @@ import static java.time.Instant.now;
 import static java.util.Collections.singleton;
 import static java.util.Optional.of;
 import static java.util.UUID.randomUUID;
-import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
 import java.time.Duration;
@@ -46,28 +44,20 @@ import com.google.common.annotations.VisibleForTesting;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.modeshape.utils.FedoraSessionUserUtil;
 import org.fcrepo.kernel.modeshape.utils.NamespaceTools;
-import org.slf4j.Logger;
 
 /**
  * An implementation of the FedoraSession abstraction
  * @author acoburn
  */
 public class FedoraSessionImpl implements FedoraSession {
-    private static final Logger LOGGER = getLogger(FedoraSessionImpl.class);
-
     // The default timeout is 3 minutes
     @VisibleForTesting
     public static final String DEFAULT_TIMEOUT = Long.toString(ofMinutes(3).toMillis());
 
     @VisibleForTesting
     public static final String TIMEOUT_SYSTEM_PROPERTY = "fcrepo.session.timeout";
-
-    @VisibleForTesting
-    public static final String USER_AGENT_BASE_URI_PROPERTY = "fcrepo.auth.webac.userAgent.baseUri";
-
-    @VisibleForTesting
-    public static final String DEFAULT_USER_AGENT_BASE_URI = "info:fedora/local-user#";
 
     private final Session jcrSession;
     private final String id;
@@ -150,19 +140,7 @@ public class FedoraSessionImpl implements FedoraSession {
 
     @Override
     public URI getUserAgent() {
-        // user id could be in format <anonymous>, remove < at the beginning and the > at the end in this case.
-        final String userId = getUserId().replaceAll("^<|>$", "");
-        try {
-            final URI uri = URI.create(userId);
-            // return useId if it's an absolute URI or an opaque URI
-            if (uri.isAbsolute() || uri.isOpaque()) {
-                return uri;
-            } else {
-                return buildDefaultURI(userId);
-            }
-        } catch (IllegalArgumentException e) {
-            return buildDefaultURI(userId);
-        }
+        return FedoraSessionUserUtil.getUserAgent(getUserId());
     }
 
     @Override
@@ -232,24 +210,5 @@ public class FedoraSessionImpl implements FedoraSession {
      */
     public static Duration operationTimeout() {
        return ofMillis(parseLong(System.getProperty(TIMEOUT_SYSTEM_PROPERTY, DEFAULT_TIMEOUT)));
-    }
-
-    /**
-     * Build default URI with the configured base uri for agent
-     * @param userId
-     * @return
-     */
-    private URI buildDefaultURI(final String userId) {
-        // Construct the default URI for the user ID that is not a URI.
-        String userAgentBaseUri = System.getProperty(USER_AGENT_BASE_URI_PROPERTY);
-        if (isNullOrEmpty(userAgentBaseUri)) {
-            // use the default local user agent base uri
-            userAgentBaseUri = DEFAULT_USER_AGENT_BASE_URI;
-        }
-
-        final String userAgentUri = userAgentBaseUri + userId;
-
-        LOGGER.warn("Default URI is created for user {}: {}", userId, userAgentUri);
-        return URI.create(userAgentUri);
     }
 }

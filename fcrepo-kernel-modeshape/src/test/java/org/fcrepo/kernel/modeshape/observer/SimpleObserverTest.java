@@ -97,6 +97,7 @@ public class SimpleObserverTest {
         when(mockEvents.next()).thenReturn(mockEvent);
         when(mockEvent.getType()).thenReturn(1);
         when(mockEvent.getPath()).thenReturn("/foo");
+        when(mockEvent.getUserID()).thenReturn("userId");
         when(mockEvent.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNodeType.getName()).thenReturn("nt:folder");
         when(mockEvent.getMixinNodeTypes()).thenReturn(new NodeType[] {fedoraContainer});
