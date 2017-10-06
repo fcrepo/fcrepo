@@ -73,12 +73,6 @@ public interface FedoraSession {
     URI getUserURI();
 
     /**
-     * Get the user identifier associated with this session
-     * @return the user id
-     */
-    String getUserId();
-
-    /**
      * Get a mapping of registered namespaces
      * @return the namespace mapping
      */
