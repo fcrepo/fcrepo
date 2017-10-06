@@ -1101,7 +1101,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testFindOrCreateTimeMapLDPCv() throws RepositoryException {
+    public void testFindOrCreateTimeMap() throws RepositoryException {
         final String pid = getRandomPid();
         final Session jcrSession = getJcrSession(session);
         final FedoraResource resource = containerService.findOrCreate(session, "/" + pid);
@@ -1115,7 +1115,9 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         session.commit();
 
-        assertTrue(jcrSession.getNode("/" + pid).getNode(LDPCV_TIME_MAP).isNodeType(FEDORA_TIME_MAP));
+        final javax.jcr.Node timeMapNode = jcrSession.getNode("/" + pid).getNode(LDPCV_TIME_MAP);
+        assertTrue(timeMapNode.isNodeType(FEDORA_TIME_MAP));
+        assertEquals(timeMapNode, ((FedoraResourceImpl)resource.getTimeMap()).getNode());
     }
 
     private void addVersionLabel(final String label, final FedoraResource r) throws RepositoryException {
