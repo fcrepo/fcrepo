@@ -104,7 +104,7 @@ public class DefaultMessageFactoryTest {
         when(mockEvent.getDate()).thenReturn(ofEpochMilli(testDate));
         final String testUser = "testUser";
         when(mockEvent.getUserID()).thenReturn(testUser);
-        when(mockEvent.getUserAgent()).thenReturn(URI.create("http://localhost:8080/fcrepo/" + testUser));
+        when(mockEvent.getUserURI()).thenReturn(URI.create("http://localhost:8080/fcrepo/" + testUser));
         when(mockEvent.getPath()).thenReturn(id);
         final Set<EventType> testTypes = singleton(EventType.RESOURCE_CREATION);
         final String testReturnType = EventType.RESOURCE_CREATION.getType();

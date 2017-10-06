@@ -139,13 +139,8 @@ public class FedoraSessionImpl implements FedoraSession {
     }
 
     @Override
-    public URI getUserAgent() {
-        return FedoraSessionUserUtil.getUserAgent(getUserId());
-    }
-
-    @Override
-    public String getUserId() {
-        return jcrSession.getUserID();
+    public URI getUserURI() {
+        return FedoraSessionUserUtil.getUserURI(jcrSession.getUserID());
     }
 
     @Override

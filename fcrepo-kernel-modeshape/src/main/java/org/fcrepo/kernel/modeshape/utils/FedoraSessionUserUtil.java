@@ -47,7 +47,7 @@ public class FedoraSessionUserUtil {
      * @param sessionUserId
      * @return
      */
-    public static URI getUserAgent(final String sessionUserId) {
+    public static URI getUserURI(final String sessionUserId) {
         // user id could be in format <anonymous>, remove < at the beginning and the > at the end in this case.
         final String userId = (sessionUserId == null ? "anonymous" : sessionUserId).replaceAll("^<|>$", "");
         try {

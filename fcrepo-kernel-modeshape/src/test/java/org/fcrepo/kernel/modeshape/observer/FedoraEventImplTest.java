@@ -57,7 +57,7 @@ public class FedoraEventImplTest {
         final String userID = null;
         final Map<String, String> info = null;
         final Set<String> resourceTypes = null;
-        new FedoraEventImpl(valueOf(1), path, resourceTypes, userID, FedoraSessionUserUtil.getUserAgent(userID),
+        new FedoraEventImpl(valueOf(1), path, resourceTypes, userID, FedoraSessionUserUtil.getUserURI(userID),
                 ofEpochMilli(0L), info);
     }
 
