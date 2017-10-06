@@ -67,10 +67,10 @@ public interface FedoraSession {
     String getId();
 
     /**
-     * Get the user agent
+     * Get the user URI
      * @return URI
      */
-    URI getUserAgent();
+    URI getUserURI();
 
     /**
      * Get the user identifier associated with this session

@@ -126,9 +126,9 @@ public class SimpleObserver implements EventListener {
                     return concat(of(evt), resource.getChildren(true).map(FedoraResource::getPath)
                         .flatMap(path -> of(
                             new FedoraEventImpl(RESOURCE_RELOCATION, path, evt.getResourceTypes(), evt.getUserID(),
-                                fsession.getUserAgent(), evt.getDate(), evt.getInfo()),
+                                fsession.getUserURI(), evt.getDate(), evt.getInfo()),
                             new FedoraEventImpl(RESOURCE_DELETION, path.replaceFirst(dest, src), evt.getResourceTypes(),
-                                evt.getUserID(), fsession.getUserAgent(), evt.getDate(), evt.getInfo()))));
+                                evt.getUserID(), fsession.getUserURI(), evt.getDate(), evt.getInfo()))));
                 } catch (final RepositoryException ex) {
                     throw new RepositoryRuntimeException(ex);
                 }
@@ -162,7 +162,7 @@ public class SimpleObserver implements EventListener {
                 .filter(pair -> pair.length == 2).map(uncheck(pair -> new String[]{registry.getURI(pair[0]), pair[1]}))
                 .filter(pair -> !filteredNamespaces.contains(pair[0])).map(pair -> pair[0] + pair[1]).collect(toSet());
             return new FedoraEventImpl(evt.getTypes(), evt.getPath(), resourceTypes, evt.getUserID(),
-                    FedoraSessionUserUtil.getUserAgent(evt.getUserID()), evt.getDate(), evt.getInfo());
+                    FedoraSessionUserUtil.getUserURI(evt.getUserID()), evt.getDate(), evt.getInfo());
         };
     }
 

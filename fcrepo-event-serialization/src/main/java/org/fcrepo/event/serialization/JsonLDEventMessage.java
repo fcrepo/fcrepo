@@ -185,7 +185,7 @@ class JsonLDEventMessage {
 
         // build actors list
         final List<Actor> actor = new ArrayList();
-        actor.add(new Person(evt.getUserAgent().toString(), Arrays.asList("Person")));
+        actor.add(new Person(evt.getUserURI().toString(), Arrays.asList("Person")));
         final String softwareAgent = evt.getInfo().get(USER_AGENT);
         if (softwareAgent != null) {
             actor.add(new Application(softwareAgent, Arrays.asList("Application")));

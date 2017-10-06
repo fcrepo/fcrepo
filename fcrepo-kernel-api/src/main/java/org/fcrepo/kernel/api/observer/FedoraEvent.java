@@ -69,8 +69,8 @@ public interface FedoraEvent {
     Map<String, String> getInfo();
 
     /**
-     * Get the user agent associated with this event.
-     * @return user agent
+     * Get the user URI associated with this event.
+     * @return user URI
      */
-    URI getUserAgent();
+    URI getUserURI();
 }

@@ -95,7 +95,7 @@ public class FedoraEventSerializerTestBase {
         when(mockEvent.getResourceTypes()).thenReturn(resourceTypeSet);
         when(mockEvent.getPath()).thenReturn(path);
         when(mockEvent.getUserID()).thenReturn(username);
-        when(mockEvent.getUserAgent()).thenReturn(URI.create(getAgentIRI()));
+        when(mockEvent.getUserURI()).thenReturn(URI.create(getAgentIRI()));
 
         when(mockEvent.getDate()).thenReturn(timestamp);
         when(mockEvent.getEventID()).thenReturn(eventResourceId);

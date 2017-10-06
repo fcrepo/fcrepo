@@ -84,7 +84,7 @@ public class FedoraEventImpl implements FedoraEvent {
 
     private final String path;
     private final String userID;
-    private final URI userAgent;
+    private final URI userURI;
     private final Instant date;
     private final Map<String, String> info;
     private final String eventID;
@@ -105,8 +105,8 @@ public class FedoraEventImpl implements FedoraEvent {
      * @param info supplementary information
      */
     public FedoraEventImpl(final EventType type, final String path, final Set<String> resourceTypes,
-            final String userID, final URI userAgent, final Instant date, final Map<String, String> info) {
-        this(singleton(type), path, resourceTypes, userID, userAgent, date, info);
+            final String userID, final URI userURI, final Instant date, final Map<String, String> info) {
+        this(singleton(type), path, resourceTypes, userID, userURI, date, info);
     }
 
    /**
@@ -119,7 +119,7 @@ public class FedoraEventImpl implements FedoraEvent {
      * @param info supplementary information
      */
     public FedoraEventImpl(final Collection<EventType> types, final String path, final Set<String> resourceTypes,
-            final String userID, final URI userAgent, final Instant date, final Map<String, String> info) {
+            final String userID, final URI userURI, final Instant date, final Map<String, String> info) {
         requireNonNull(types, "FedoraEvent requires a non-null event type");
         requireNonNull(path, "FedoraEvent requires a non-null path");
 
@@ -127,7 +127,7 @@ public class FedoraEventImpl implements FedoraEvent {
         this.path = path;
         this.eventResourceTypes = resourceTypes;
         this.userID = userID;
-        this.userAgent = userAgent;
+        this.userURI = userURI;
         this.date = date;
         this.info = isNull(info) ? emptyMap() : info;
         this.eventID = "urn:uuid:" + randomUUID().toString();
@@ -167,11 +167,11 @@ public class FedoraEventImpl implements FedoraEvent {
     }
 
     /**
-     * @return the user agent of the underlying JCR {@link Event}s
+     * @return the user URI of the underlying JCR {@link Event}s
      */
     @Override
-    public URI getUserAgent() {
-        return userAgent;
+    public URI getUserURI() {
+        return userURI;
     }
 
     /**
@@ -271,7 +271,7 @@ public class FedoraEventImpl implements FedoraEvent {
             final Set<String> resourceTypes = getResourceTypes(event).collect(toSet());
 
             return new FedoraEventImpl(valueOf(event.getType()), cleanPath(event), resourceTypes,
-                    event.getUserID(), FedoraSessionUserUtil.getUserAgent(event.getUserID()), ofEpochMilli(event
+                    event.getUserID(), FedoraSessionUserUtil.getUserURI(event.getUserID()), ofEpochMilli(event
                             .getDate()), info);
 
         } catch (final RepositoryException ex) {

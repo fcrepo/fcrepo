@@ -83,7 +83,7 @@ public class FedoraSessionImplIT extends AbstractIT {
 
         // should be the default local user agent URI
         assertEquals("User agent URI invalid.",
-                URI.create(FedoraSessionUserUtil.DEFAULT_USER_AGENT_BASE_URI + FEDORA_USER), session.getUserAgent());
+        URI.create(FedoraSessionUserUtil.DEFAULT_USER_AGENT_BASE_URI + FEDORA_USER), session.getUserURI());
     }
 
     @Test
@@ -99,7 +99,7 @@ public class FedoraSessionImplIT extends AbstractIT {
         final FedoraSession session = repo.login(credentials);
 
         assertEquals("User agent URI invalid.",
-                URI.create(TEST_USER_AGENT_BASE_URI + FEDORA_USER), session.getUserAgent());
+                URI.create(TEST_USER_AGENT_BASE_URI + FEDORA_USER), session.getUserURI());
     }
 
     @Test
@@ -114,7 +114,7 @@ public class FedoraSessionImplIT extends AbstractIT {
         ServletCredentials credentials = new ServletCredentials(request);
         FedoraSession session = repo.login(credentials);
 
-        assertEquals("User agent URI invalid.", URI.create(userUri), session.getUserAgent());
+        assertEquals("User agent URI invalid.", URI.create(userUri), session.getUserURI());
 
         // test with an Opaque user uri
         final String opaqueUserUri = "user:info:" + FEDORA_USER;
@@ -125,6 +125,6 @@ public class FedoraSessionImplIT extends AbstractIT {
         credentials = new ServletCredentials(request);
         session = repo.login(credentials);
 
-        assertEquals("User agent URI invalid.", URI.create(opaqueUserUri), session.getUserAgent());
+        assertEquals("User agent URI invalid.", URI.create(opaqueUserUri), session.getUserURI());
     }
 }
