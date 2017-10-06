@@ -44,6 +44,7 @@ import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isNonRdfSourceDescription;
+import static org.fcrepo.kernel.modeshape.utils.FedoraSessionUserUtil.USER_AGENT_BASE_URI_PROPERTY;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.File;
@@ -97,8 +98,6 @@ public class WebACRolesProvider implements AccessRolesProvider {
     public static final String ROOT_AUTHORIZATION_PROPERTY = "fcrepo.auth.webac.authorization";
 
     public static final String GROUP_AGENT_BASE_URI_PROPERTY = "fcrepo.auth.webac.groupAgent.baseUri";
-
-    public static final String USER_AGENT_BASE_URI_PROPERTY = "fcrepo.auth.webac.userAgent.baseUri";
 
     private static final Logger LOGGER = getLogger(WebACRolesProvider.class);
 
