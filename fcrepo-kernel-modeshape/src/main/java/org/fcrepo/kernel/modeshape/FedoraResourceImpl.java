@@ -985,6 +985,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
   public boolean isVersioned() {
       try {
           return ((FedoraResourceImpl)getDescription()).getNode(getNode(), LDPCV_TIME_MAP, false) != null;
+          //@TODO This line should be changed to "return getDescription().getChild(LDPCV_TIME_MAP);"
+          //once the issues around https://jira.duraspace.org/browse/FCREPO-2644 have been landed.
       } catch (RepositoryException ex) {
           throw new RepositoryRuntimeException(ex);
       }

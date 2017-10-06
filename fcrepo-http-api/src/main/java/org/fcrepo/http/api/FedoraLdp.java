@@ -884,11 +884,15 @@ public class FedoraLdp extends ContentExposingResource {
                     if (type.equals(NON_RDF_SOURCE) || type.equals(BASIC_CONTAINER) ||
                             type.equals(DIRECT_CONTAINER) || type.equals(INDIRECT_CONTAINER)) {
                         return "ldp:" + type.getLocalName();
+                    } else if (type.equals(VERSIONED_RESOURCE)) {
+                        // skip if versioned resource link header
+                        // NB: the versioned resource header is used for enabling
+                        // versioning on a resource and is thus orthogonal to
+                        // issue of interaction models. Nevertheless, it is
+                        // a possible link header and, therefore, must be ignored.
                     } else {
-                        if (!type.equals(VERSIONED_RESOURCE)) {
-                            LOGGER.info("Invalid interaction model: {}", type);
-                            throw new CannotCreateResourceException("Invalid interaction model: " + type);
-                        }
+                        LOGGER.info("Invalid interaction model: {}", type);
+                        throw new CannotCreateResourceException("Invalid interaction model: " + type);
                     }
                 }
             }
