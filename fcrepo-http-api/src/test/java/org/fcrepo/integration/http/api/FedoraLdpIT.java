@@ -1002,7 +1002,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    @Ignore
     public void testCreateVersionedBinaryResource() throws IOException {
         final HttpPost method = postObjMethod();
         final String id = getRandomUniqueId();

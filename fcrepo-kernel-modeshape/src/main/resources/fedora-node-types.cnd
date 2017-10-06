@@ -36,6 +36,9 @@
 
 <test = 'info:fedora/test/'>
 
+[nt:versionFile] > nt:file
++ fedora:timemap (nt:folder) =fedora:TimeMap
+
 /*
  * Any Fedora resource.
  */

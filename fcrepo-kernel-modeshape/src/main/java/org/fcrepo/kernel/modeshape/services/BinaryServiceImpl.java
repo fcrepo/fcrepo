@@ -32,11 +32,11 @@ import javax.jcr.RepositoryException;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.NT_VERSION_FILE;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getContainingNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.touch;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.touchLdpMembershipResource;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
-import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
 import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -56,7 +56,7 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
     @Override
     public FedoraBinary findOrCreate(final FedoraSession session, final String path) {
         try {
-            final Node dsNode = findOrCreateNode(session, path, NT_FILE);
+            final Node dsNode = findOrCreateNode(session, path, NT_VERSION_FILE);
 
             if (dsNode.isNew()) {
                 initializeNewDatastreamProperties(dsNode);

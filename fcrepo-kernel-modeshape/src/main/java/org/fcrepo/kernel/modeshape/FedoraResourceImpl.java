@@ -162,7 +162,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     private static final PropertyConverter propertyConverter = new PropertyConverter();
 
     @VisibleForTesting
-    public static final String LDPCV_TIME_MAP = "TimeMap";
+    public static final String LDPCV_TIME_MAP = "fedora:timemap";
 
     // A curried type accepting resource, translator, and "minimality", returning triples.
     private static interface RdfGenerator extends Function<FedoraResource,
@@ -229,7 +229,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
     /*
      * A terminating slash means ModeShape has trouble extracting the localName, e.g., for http://myurl.org/.
-     * 
+     *
      * @see <a href="https://jira.duraspace.org/browse/FCREPO-1409"> FCREPO-1409 </a> for details.
      */
     private static final Function<Quad, IllegalArgumentException> validatePredicateEndsWithSlash = uncheck(x -> {

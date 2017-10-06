@@ -257,6 +257,8 @@ public final class RdfLexicon {
     public static final Predicate<Property> isManagedPredicate =
         hasFedoraNamespace.or(p -> managedProperties.contains(p));
 
+    public static final String NT_VERSION_FILE = "nt:versionFile";
+
     private RdfLexicon() {
 
     }

@@ -23,6 +23,7 @@ import static java.util.UUID.randomUUID;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
+import static org.fcrepo.kernel.api.RdfLexicon.NT_VERSION_FILE;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM.SHA1;
@@ -35,7 +36,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
-import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
 import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 
 import java.io.ByteArrayInputStream;
@@ -372,7 +372,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
             final ValueFactory factory = jcrSession.getValueFactory();
             final Container object = containerService.findOrCreate(session, "/testLLObject");
 
-            final Node testRandomContentNode = getJcrNode(object).addNode("testRandomContent", NT_FILE);
+            final Node testRandomContentNode = getJcrNode(object).addNode("testRandomContent", NT_VERSION_FILE);
             testRandomContentNode.addMixin(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
             final Node testRandomContent = testRandomContentNode.addNode(JCR_CONTENT, NT_RESOURCE);
             testRandomContent.addMixin(FEDORA_BINARY);
