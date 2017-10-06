@@ -118,7 +118,9 @@ import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.modeshape.jcr.security.SimplePrincipal;
 import org.springframework.test.context.ContextConfiguration;
 
@@ -157,6 +159,9 @@ public class FedoraResourceImplIT extends AbstractIT {
     private FedoraSession session;
 
     private DefaultIdentifierTranslator subjects;
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     @Before
     public void setUp() throws RepositoryException {
@@ -1019,6 +1024,22 @@ public class FedoraResourceImplIT extends AbstractIT {
         // Double-verify that the objects are gone
         assertFalse("/object2 should NOT exist!", exists(object2));
         assertFalse("/object1 should NOT exist!", exists(object1));
+    }
+
+    @Test
+    public void testDeleteTimeMap() throws RepositoryException {
+        final String pid = getRandomPid();
+        final Container object = containerService.findOrCreate(session, "/" + pid);
+        final FedoraResource timeMap = object.findOrCreateTimeMap();
+        session.commit();
+        assertTrue(((FedoraResourceImpl)timeMap).getNode().isNodeType(FEDORA_TIME_MAP));
+        object.disableVersioning();
+        session.commit();
+        assertFalse(object.isVersioned());
+
+        // should throw RepositoryRuntimeException when retrieving the TimeMap after deletion.
+        thrown.expect(RepositoryRuntimeException.class);
+        object.getChild(LDPCV_TIME_MAP);
     }
 
     private boolean exists(final Container resource) {
