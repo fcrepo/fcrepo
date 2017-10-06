@@ -21,10 +21,10 @@ import static javax.jcr.query.Query.JCR_SQL2;
 import static org.fcrepo.kernel.api.FedoraTypes.CONTENT_SIZE;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.NT_VERSION_FILE;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.modeshape.jcr.api.JcrConstants.JCR_PATH;
-import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
@@ -54,7 +54,7 @@ public class ServiceHelpers {
 
     /**
      * Get the total size of a Node's properties
-     * 
+     *
      * @param node the node
      * @return size in bytes
      * @throws RepositoryException if repository exception occurred
@@ -94,7 +94,7 @@ public class ServiceHelpers {
         Long size = 0L;
         for (final NodeIterator i = obj.getNodes(); i.hasNext();) {
             final Node node = i.nextNode();
-            if (node.isNodeType(NT_FILE)) {
+            if (node.isNodeType(NT_VERSION_FILE)) {
                 size += getDatastreamSize(node);
             }
         }
@@ -104,7 +104,7 @@ public class ServiceHelpers {
     /**
      * Get the size of a datastream by calculating the size of the properties
      * and the binary properties
-     * 
+     *
      * @param ds the node
      * @return size of the datastream's properties and binary properties
      * @throws RepositoryException if repository exception occurred
@@ -116,7 +116,7 @@ public class ServiceHelpers {
 
     /**
      * Get the size of the JCR content binary property
-     * 
+     *
      * @param ds the given node
      * @return size of the binary content property
      */
