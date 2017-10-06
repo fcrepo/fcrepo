@@ -346,7 +346,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
      */
     private static Predicate<Node> nastyChildren = isInternalNode
                     .or(TombstoneImpl::hasMixin)
-                    .or(FedoraTimeMapImpl::hasMixin)
+                    .or(FedoraResourceImpl::hasMixinTimeMap)
                     .or(UncheckedPredicate.uncheck(p -> p.getName().equals(JCR_CONTENT)))
                     .or(UncheckedPredicate.uncheck(p -> p.getName().equals("#")));
 
@@ -373,6 +373,17 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     }
 
     @Override
+    public FedoraResource getTimeMap() {
+        try {
+            return Optional.of(getNode().getNode(LDPCV_TIME_MAP)).map(nodeConverter::convert).orElse(null);
+        } catch (PathNotFoundException e) {
+            throw new PathNotFoundRuntimeException(e);
+        } catch (RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    @Override
     public FedoraResource findOrCreateTimeMap() {
         final Node ldpcvNode;
         try {
@@ -380,21 +391,43 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
             if (ldpcvNode.isNew()) {
                 LOGGER.debug("Created TimeMap LDPCv {}", ldpcvNode.getPath());
-
-                // add mixin type fedora:Resource
-                if (node.canAddMixin(FEDORA_RESOURCE)) {
-                    node.addMixin(FEDORA_RESOURCE);
-                }
-
-                // add mixin type fedora:TimeMap
-                if (ldpcvNode.canAddMixin(FEDORA_TIME_MAP)) {
-                    ldpcvNode.addMixin(FEDORA_TIME_MAP);
-                }
+                initializeNewTimeMapProperties(ldpcvNode);
             }
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
         return Optional.of(ldpcvNode).map(nodeConverter::convert).orElse(null);
+    }
+
+    /**
+     * Check if the JCR node has a fedora:TimeMap mixin
+     * @param node the JCR node
+     * @return true if the JCR node has the fedora:TimeMap mixin
+     */
+    private static boolean hasMixinTimeMap(final Node node) {
+        try {
+            return node.isNodeType(FEDORA_TIME_MAP);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    /**
+     * Initialize properties for new TimeMap
+     * @param node the JCR node
+     * @throws RepositoryException if repository exception occurred
+     */
+    protected static void initializeNewTimeMapProperties(final Node node) throws RepositoryException {
+
+        // add mixin type fedora:Resource
+        if (node.canAddMixin(FEDORA_RESOURCE)) {
+            node.addMixin(FEDORA_RESOURCE);
+        }
+
+        // add mixin type fedora:TimeMap
+        if (node.canAddMixin(FEDORA_TIME_MAP)) {
+            node.addMixin(FEDORA_TIME_MAP);
+        }
     }
 
     @Override

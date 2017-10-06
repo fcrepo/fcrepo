@@ -61,10 +61,13 @@ import static com.codahale.metrics.MetricRegistry.name;
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDstring;
 import static org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM.SHA1;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FIELD_DELIMITER;
+import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.property2values;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFedoraBinary;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getContainingNode;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
+import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -442,6 +445,44 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
 
             LOGGER.debug("Decorated data property at path: {}", dataProperty.getPath());
         }
+    }
+
+    @Override
+    public FedoraResource getTimeMap() {
+        try {
+            final Node container = getContainingNode(getNode()).get();
+            return Optional.of(container.getNode(LDPCV_TIME_MAP + "/" + getNode().getParent().getName()))
+                .map(nodeConverter::convert).orElse(null);
+        } catch (PathNotFoundException e) {
+            throw new PathNotFoundRuntimeException(e);
+        } catch (RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    @Override
+    public FedoraResource findOrCreateTimeMap() {
+        final Node ldpcvParentNode;
+        final Node ldpcvNode;
+
+        try {
+            final Node container = getContainingNode(getNode()).get();
+            ldpcvParentNode = findOrCreateChild(container, LDPCV_TIME_MAP, NT_FOLDER);
+            ldpcvNode = findOrCreateChild(ldpcvParentNode, getNode().getParent().getName(), NT_FOLDER);
+
+            if (ldpcvParentNode.isNew()) {
+                LOGGER.debug("Created TimeMap {} for parent container {}", ldpcvParentNode.getPath(), container);
+                initializeNewTimeMapProperties(ldpcvParentNode);
+            }
+
+            if (ldpcvNode.isNew()) {
+                LOGGER.debug("Created TimeMap {} for binary resource {}", ldpcvNode.getPath(), getNode().getPath());
+                initializeNewTimeMapProperties(ldpcvNode);
+            }
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+        return Optional.of(ldpcvNode).map(nodeConverter::convert).orElse(null);
     }
 
     @Override

@@ -22,11 +22,13 @@ import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.UUID.randomUUID;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TIME_MAP;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM.SHA1;
 import static org.fcrepo.kernel.api.utils.ContentDigest.asURI;
+import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.LDPCV_TIME_MAP;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.junit.Assert.assertEquals;
@@ -69,6 +71,7 @@ import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.ContainerService;
+import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 
 import org.junit.Before;
@@ -150,6 +153,41 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
         assertEquals("asdf", contentString);
 
+    }
+
+    @Test
+    public void testFindOrCreateTimeMapForBinary() throws IOException,
+            RepositoryException,
+            InvalidChecksumException {
+        final String pid = getRandomPid();
+        final FedoraSession session = repo.login();
+        final Session jcrSession = getJcrSession(session);
+
+        containerService.findOrCreate(session, pid);
+
+        final String dsPath = "/" + pid + "/" + "ds1";
+        final FedoraBinary binaryResource = binaryService.findOrCreate(session, dsPath);
+
+        binaryResource.setContent(
+                new ByteArrayInputStream("asdf".getBytes()),
+                "application/octet-stream",
+                null,
+                null,
+                null
+        );
+
+        session.commit();
+
+        // Create TimeMap (LDPCv) for binary
+        final FedoraResource ldpcvBinary = binaryResource.findOrCreateTimeMap();
+        assertNotNull(ldpcvBinary);
+        assertEquals("/" + pid + "/" + LDPCV_TIME_MAP + "/ds1", ldpcvBinary.getPath());
+
+        session.commit();
+
+        final javax.jcr.Node timeMapNode = jcrSession.getNode("/" + pid).getNode(LDPCV_TIME_MAP).getNode("ds1");
+        assertTrue(timeMapNode.isNodeType(FEDORA_TIME_MAP));
+        assertEquals(timeMapNode, ((FedoraResourceImpl)binaryResource.getTimeMap()).getNode());
     }
 
     @Test
