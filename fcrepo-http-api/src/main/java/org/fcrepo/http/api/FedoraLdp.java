@@ -65,6 +65,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 
+
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -199,6 +200,7 @@ public class FedoraLdp extends ContentExposingResource {
         TURTLE_X, TEXT_HTML_WITH_CHARSET })
     public Response head() throws UnsupportedAlgorithmException {
         LOGGER.info("HEAD for: {}", externalPath);
+        hasRestrictedPath(externalPath);
 
         checkCacheControlHeaders(request, servletResponse, resource(), session);
 
@@ -239,6 +241,7 @@ public class FedoraLdp extends ContentExposingResource {
     @Timed
     public Response options() {
         LOGGER.info("OPTIONS for '{}'", externalPath);
+        hasRestrictedPath(externalPath);
         addLinkAndOptionsHttpHeaders();
         return ok().build();
     }
@@ -257,6 +260,7 @@ public class FedoraLdp extends ContentExposingResource {
             TURTLE_X, TEXT_HTML_WITH_CHARSET})
     public Response getResource(@HeaderParam("Range") final String rangeValue)
             throws IOException, UnsupportedAlgorithmException {
+        hasRestrictedPath(externalPath);
         checkCacheControlHeaders(request, servletResponse, resource(), session);
 
         LOGGER.info("GET resource '{}'", externalPath);
@@ -321,6 +325,7 @@ public class FedoraLdp extends ContentExposingResource {
     @DELETE
     @Timed
     public Response deleteObject() {
+        hasRestrictedPath(externalPath);
         if (resource() instanceof Container) {
             final String depth = headers.getHeaderString("Depth");
             LOGGER.debug("Depth header value is: {}", depth);
@@ -370,7 +375,7 @@ public class FedoraLdp extends ContentExposingResource {
             @HeaderParam(LINK) final List<String> links,
             @HeaderParam("Digest") final String digest)
             throws InvalidChecksumException, MalformedRdfException, UnsupportedAlgorithmException {
-
+        hasRestrictedPath(externalPath);
         final String interactionModel = checkInteractionModel(links);
 
         final FedoraResource resource;
@@ -468,7 +473,7 @@ public class FedoraLdp extends ContentExposingResource {
     @Timed
     public Response updateSparql(@ContentLocation final InputStream requestBodyStream)
             throws IOException {
-
+        hasRestrictedPath(externalPath);
         if (null == requestBodyStream) {
             throw new BadRequestException("SPARQL-UPDATE requests must have content!");
         }
@@ -562,6 +567,7 @@ public class FedoraLdp extends ContentExposingResource {
         final String contentTypeString = contentType.toString();
 
         final String newObjectPath = mintNewPid(slug);
+        hasRestrictedPath(newObjectPath);
 
         final AcquiredLock lock = lockManager.lockForWrite(newObjectPath, session.getFedoraSession(), nodeService);
 
@@ -631,7 +637,7 @@ public class FedoraLdp extends ContentExposingResource {
     private boolean hasVersionedResourceLink(final List<String> links) {
         if (!CollectionUtils.isEmpty(links)) {
             try {
-                for (String link : links) {
+                for (final String link : links) {
                     final Link linq = Link.valueOf(link);
                     if ("type".equals(linq.getRel())) {
                         final Resource type = createResource(linq.getUri().toString());
@@ -877,7 +883,7 @@ public class FedoraLdp extends ContentExposingResource {
         }
 
         try {
-            for (String link : links) {
+            for (final String link : links) {
                 final Link linq = Link.valueOf(link);
                 if ("type".equals(linq.getRel())) {
                     final Resource type = createResource(linq.getUri().toString());
@@ -944,11 +950,11 @@ public class FedoraLdp extends ContentExposingResource {
      * @return Digest algorithms that are supported
      */
     private static Collection<String> parseWantDigestHeader(final String wantDigest) {
-        final Map<String, Double> digestPairs = new HashMap<String,Double>();
+        final Map<String, Double> digestPairs = new HashMap<String, Double>();
         try {
             final List<String> algs = Splitter.on(',').omitEmptyStrings().trimResults().splitToList(wantDigest);
             // Parse the optional q value with default 1.0, and 0 ignore. Format could be: SHA-1;qvalue=0.1
-            for (String alg : algs) {
+            for (final String alg : algs) {
                 final String[] tokens = alg.split(";", 2);
                 final double qValue = tokens.length == 1 || tokens[1].indexOf("=") < 0 ?
                         1.0 : Double.parseDouble(tokens[1].split("=", 2)[1]);
