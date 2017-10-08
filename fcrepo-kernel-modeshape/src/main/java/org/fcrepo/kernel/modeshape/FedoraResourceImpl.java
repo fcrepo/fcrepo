@@ -127,7 +127,6 @@ import org.fcrepo.kernel.modeshape.utils.PropertyChangedListener;
 import org.fcrepo.kernel.modeshape.utils.UncheckedPredicate;
 import org.fcrepo.kernel.modeshape.utils.iterators.RdfAdder;
 import org.fcrepo.kernel.modeshape.utils.iterators.RdfRemover;
-
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
@@ -370,6 +369,17 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @Override
     public FedoraResource getContainer() {
         return getContainingNode(getNode()).map(nodeConverter::convert).orElse(null);
+    }
+
+    @Override
+    public FedoraResource getTimeMap() {
+        try {
+            return Optional.of(node.getNode(LDPCV_TIME_MAP)).map(nodeConverter::convert).orElse(null);
+        } catch (PathNotFoundException e) {
+            throw new PathNotFoundRuntimeException(e);
+        } catch (RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     @Override

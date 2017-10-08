@@ -17,18 +17,11 @@
  */
 package org.fcrepo.kernel.modeshape;
 
-import java.util.Optional;
-
 import javax.jcr.Node;
-import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 
-import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.FedoraTimeMap;
-
-import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
 
 /**
  * @author lsitu
@@ -43,18 +36,6 @@ public class FedoraTimeMapImpl extends FedoraResourceImpl implements FedoraTimeM
      */
     public FedoraTimeMapImpl(final Node node) {
         super(node);
-    }
-
-
-    @Override
-    public FedoraResource getTimeMap() {
-        try {
-            return Optional.of(node.getNode(LDPCV_TIME_MAP)).map(nodeConverter::convert).orElse(null);
-        } catch (PathNotFoundException e) {
-            throw new PathNotFoundRuntimeException(e);
-        } catch (RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
     }
 
     /**

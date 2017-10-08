@@ -106,6 +106,7 @@ import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.FedoraTimeMap;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.api.services.ContainerService;
@@ -1136,7 +1137,12 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         session.commit();
 
-        assertTrue(jcrSession.getNode("/" + pid).getNode(LDPCV_TIME_MAP).isNodeType(FEDORA_TIME_MAP));
+        final javax.jcr.Node timeMapNode = jcrSession.getNode("/" + pid).getNode(LDPCV_TIME_MAP);
+        assertTrue(timeMapNode.isNodeType(FEDORA_TIME_MAP));
+
+        final FedoraResource timeMap = resource.getTimeMap();
+        assertTrue(timeMap instanceof FedoraTimeMap);
+        assertEquals(timeMapNode, ((FedoraResourceImpl)timeMap).getNode());
     }
 
     private void addVersionLabel(final String label, final FedoraResource r) throws RepositoryException {

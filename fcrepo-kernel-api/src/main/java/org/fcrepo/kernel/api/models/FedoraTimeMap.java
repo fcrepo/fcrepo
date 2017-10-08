@@ -22,9 +22,5 @@ package org.fcrepo.kernel.api.models;
  * @since Oct. 04, 2017
  */
 public interface FedoraTimeMap {
-    /**
-     * Get the TimeMap/LDPCv of this resource
-     * @return the container for TimeMap/LDPCv of this resource
-     */
-    FedoraResource getTimeMap();
+
 }
