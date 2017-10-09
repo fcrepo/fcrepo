@@ -106,7 +106,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.text.ParseException;
 import java.time.Instant;
@@ -1011,7 +1010,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 "Accept-Datetime")).count());
     }
 
-    private String createVersionedRDFResource() throws UnsupportedEncodingException, IOException {
+    private String createVersionedRDFResource() throws IOException {
         final String id = getRandomUniqueId();
         final String subjectURI = serverAddress + id;
         final HttpPost createMethod = postObjMethod();
@@ -1032,9 +1031,10 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     private void checkForLinkHeader(final CloseableHttpResponse response, final String uri, final String rel) {
+        final Link linkA = Link.valueOf("<" + uri + ">; rel=" + rel);
         final int count = (int) Arrays.asList(response.getHeaders(LINK)).stream().filter(x -> {
-            final Link linq = Link.valueOf(x.getValue());
-            return linq.getRel().equals(rel) && linq.getUri().equals(URI.create(uri));
+            final Link linkB = Link.valueOf(x.getValue());
+            return linkB.equals(linkA);
         }).count();
         assertEquals(1, count);
     }

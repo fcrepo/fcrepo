@@ -66,6 +66,7 @@ import java.net.URISyntaxException;
 import java.text.MessageFormat;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -140,6 +141,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     private static final Logger LOGGER = getLogger(ContentExposingResource.class);
     public static final MediaType MESSAGE_EXTERNAL_BODY = MediaType.valueOf("message/external-body");
 
+    private static final List<String> VARY_HEADERS = Arrays.asList("Accept", "Range", "Accept-Encoding",
+            "Accept-Language");
+
     @Context protected Request request;
     @Context protected HttpServletResponse servletResponse;
     @Context protected ServletContext context;
@@ -211,18 +215,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             }
         }
 
-        addVaryHeader(resource());
         return ok(outputStream).build();
     }
 
 
-    protected void addVaryHeader(final FedoraResource resource) {
-        final StringBuilder varyValues = new StringBuilder("Accept, Range, Accept-Encoding, Accept-Language");
-        if (resource.isVersioned()) {
-            varyValues.append(", Accept-Datetime");
-        }
-        servletResponse.addHeader("Vary", varyValues.toString());
-    }
 
     protected boolean isExternalBody(final MediaType mediaType) {
         return MESSAGE_EXTERNAL_BODY.isCompatible(mediaType) &&
@@ -500,6 +496,14 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         if (httpHeaderInject != null) {
             httpHeaderInject.addHttpHeaderToResponseStream(servletResponse, uriInfo, resource());
         }
+
+        // add vary headers
+        final List<String> varyValues = new ArrayList<>(VARY_HEADERS);
+
+        if (resource.isVersioned()) {
+            varyValues.add("Accept-Datetime");
+        }
+        varyValues.stream().forEach(x -> servletResponse.addHeader("Vary", x));
 
     }
 
