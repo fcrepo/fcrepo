@@ -55,14 +55,14 @@ public class MessageExternalBodyContentTypeTest {
 
     public void testParseExternalBodyAccessTypeCaseInsensitive() throws UnsupportedAccessTypeException {
         final MessageExternalBodyContentType contentType = MessageExternalBodyContentType.parse(
-                "invalid/mimetype; access-type=url; URL=\"" + RESOURCE_URL + "\"");
+                "message/external-body; access-type=url; URL=\"" + RESOURCE_URL + "\"");
         assertEquals("Access-type doesn't match.", "url", contentType.getAccessType());
         assertEquals("URL doesn't match.", RESOURCE_URL, contentType.getResourceLocation());
     }
 
     public void testParseExternalBodyLocationKeyCaseInsensitive() throws UnsupportedAccessTypeException {
         final MessageExternalBodyContentType contentType = MessageExternalBodyContentType.parse(
-                "invalid/mimetype; access-type=URL; url=\"" + RESOURCE_URL + "\"");
+                "message/external-body; access-type=URL; url=\"" + RESOURCE_URL + "\"");
         assertEquals("Access-type doesn't match.", "url", contentType.getAccessType());
         assertEquals("URL doesn't match.", RESOURCE_URL, contentType.getResourceLocation());
     }
@@ -70,13 +70,13 @@ public class MessageExternalBodyContentTypeTest {
     @Test(expected = UnsupportedAccessTypeException.class)
     public void testParseExternalBodyInvalidMimeType() throws UnsupportedAccessTypeException {
         MessageExternalBodyContentType.parse(
-                "invalid/mimetype; access-type=url; URL=\"\"");
+                "invalid/mimetype; access-type=url; URL=\"" + RESOURCE_URL + "\"");
     }
 
     @Test(expected = UnsupportedAccessTypeException.class)
     public void testParseExternalBodyMissingURL() throws UnsupportedAccessTypeException {
         MessageExternalBodyContentType.parse(
-                "message/mimetype; access-type=url;");
+                "message/external-body; access-type=url;");
     }
 
 }
