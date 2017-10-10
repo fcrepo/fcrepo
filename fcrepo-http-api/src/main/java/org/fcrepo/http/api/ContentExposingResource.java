@@ -445,7 +445,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             servletResponse.addHeader(LINK, versionedResource.toString());
             final Link timegate = Link.fromUri(getUri(resource)).rel("timegate").build();
             servletResponse.addHeader(LINK, timegate.toString());
-            final Link timemap = Link.fromUri(getUri(resource.findOrCreateTimeMap())).rel("timemap").build();
+            final Link timemap = Link.fromUri(getUri(resource.getDescription().findOrCreateTimeMap())).rel("timemap")
+                    .build();
             servletResponse.addHeader(LINK, timemap.toString());
 
         }

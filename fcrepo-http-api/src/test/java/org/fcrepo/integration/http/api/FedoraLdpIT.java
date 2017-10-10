@@ -155,6 +155,8 @@ import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.vocabulary.DC_11;
 import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
+import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
+
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -1002,10 +1004,10 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     private void verifyVersionedResourceResponseHeaders(final String subjectURI,
             final CloseableHttpResponse response) {
-        assertEquals("Didn't get a CREATED response!", OK.getStatusCode(), getStatus(response));
+        assertEquals("Didn't get an OK (200) response!", OK.getStatusCode(), getStatus(response));
         checkForVersionedResourceLinkHeader(response);
         checkForLinkHeader(response, subjectURI, "timegate");
-        checkForLinkHeader(response, subjectURI + "/TimeMap", "timemap");
+        checkForLinkHeader(response, subjectURI + "/" + FedoraResourceImpl.LDPCV_TIME_MAP, "timemap");
         assertEquals(1, Arrays.asList(response.getHeaders("Vary")).stream().filter(x -> x.getValue().contains(
                 "Accept-Datetime")).count());
     }
