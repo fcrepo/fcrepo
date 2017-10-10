@@ -17,6 +17,8 @@
  */
 package org.fcrepo.kernel.api.services;
 
+import java.util.Calendar;
+
 import org.fcrepo.kernel.api.FedoraSession;
 
 /**
@@ -50,4 +52,13 @@ public interface Service<T> {
      * @return retrieved T
      */
     public T findOrCreate(final FedoraSession session, final String path);
+    /**
+     * Retrieve a T instance by session and path
+     *
+     * @param session the session
+     * @param path the path to the node
+     * @param mementoDatetime the memento datetime
+     * @return retrieved T
+     */
+    public T findOrCreate(final FedoraSession session, final String path, final Calendar mementoDatetime);
 }

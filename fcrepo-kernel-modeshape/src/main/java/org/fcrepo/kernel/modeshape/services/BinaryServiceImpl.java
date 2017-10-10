@@ -40,6 +40,8 @@ import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
 import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.util.Calendar;
+
 /**
  * @author cabeer
  * @author ajs6f
@@ -55,11 +57,23 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
      */
     @Override
     public FedoraBinary findOrCreate(final FedoraSession session, final String path) {
+        return findOrCreate(session, path, null);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public FedoraBinary findOrCreate(final FedoraSession session, final String path, final Calendar mementoDatetime) {
         try {
             final Node dsNode = findOrCreateNode(session, path, NT_FILE);
 
             if (dsNode.isNew()) {
                 initializeNewDatastreamProperties(dsNode);
+
+                if (mementoDatetime != null) {
+                  initializeMementoProperties(dsNode, mementoDatetime);
+                }
 
                 getContainingNode(dsNode).ifPresent(parent -> {
                     touch(parent);

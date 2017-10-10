@@ -74,6 +74,12 @@
 [fedora:TimeMap] > fedora:Resource mixin
 
 /*
+ * A Fedora LDPRm Memento.
+ */
+[fedora:Memento] > fedora:Resource mixin
+  - fedora:mementoDatetime (DATE)
+
+/*
  * Some content that can have a checksum
  */
 [fedora:Binary] > fedora:Resource mixin

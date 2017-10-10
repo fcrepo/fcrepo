@@ -70,10 +70,15 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLDecoder;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -146,6 +151,8 @@ public class FedoraLdp extends ContentExposingResource {
     private static final Splitter.MapSplitter RFC3230_SPLITTER =
         Splitter.on(',').omitEmptyStrings().trimResults().
         withKeyValueSeparator(Splitter.on('=').limit(2));
+
+    private static final String RFC_1123_DATE_TIME = "EEE, dd MMM yyyy HH:mm:ss z";
 
     static final String INSUFFICIENT_SPACE_IDENTIFYING_MESSAGE = "No space left on device";
 
@@ -387,7 +394,7 @@ public class FedoraLdp extends ContentExposingResource {
                 final MediaType effectiveContentType
                         = requestBodyStream == null || requestContentType == null ? null : contentType;
                 resource = createFedoraResource(path, interactionModel, effectiveContentType,
-                        !(requestBodyStream == null || requestContentType == null));
+                        !(requestBodyStream == null || requestContentType == null), null);
             }
 
             if (httpConfiguration.putRequiresIfMatch() && StringUtils.isBlank(ifMatch) && !resource.isNew()) {
@@ -539,8 +546,10 @@ public class FedoraLdp extends ContentExposingResource {
                                  @HeaderParam("Slug") final String slug,
                                  @ContentLocation final InputStream requestBodyStream,
                                  @HeaderParam(LINK) final List<String> links,
-                                 @HeaderParam("Digest") final String digest)
-            throws InvalidChecksumException, IOException, MalformedRdfException, UnsupportedAlgorithmException {
+                                 @HeaderParam("Digest") final String digest,
+                                 @HeaderParam("Memento-Datetime") final String mementoDatetimeString)
+            throws InvalidChecksumException, IOException, MalformedRdfException, UnsupportedAlgorithmException,
+                   ParseException {
 
         final String interactionModel = checkInteractionModel(links);
 
@@ -558,6 +567,14 @@ public class FedoraLdp extends ContentExposingResource {
 
         final AcquiredLock lock = lockManager.lockForWrite(newObjectPath, session.getFedoraSession(), nodeService);
 
+        final SimpleDateFormat sdf = new SimpleDateFormat(RFC_1123_DATE_TIME, Locale.ENGLISH);
+
+        Date mementoDatetime = null;
+
+        if (mementoDatetimeString != null && !"".equals(mementoDatetimeString)) {
+          mementoDatetime = sdf.parse(mementoDatetimeString);
+        }
+
         try {
 
             final Collection<String> checksum = parseDigestHeader(digest);
@@ -567,13 +584,16 @@ public class FedoraLdp extends ContentExposingResource {
             final MediaType effectiveContentType
                     = requestBodyStream == null || requestContentType == null ? null : contentType;
             resource = createFedoraResource(newObjectPath, interactionModel, effectiveContentType,
-                    !(requestBodyStream == null || requestContentType == null));
+                    !(requestBodyStream == null || requestContentType == null), mementoDatetime);
 
             try (final RdfStream resourceTriples =
                     resource.isNew() ? new DefaultRdfStream(asNode(resource())) : getResourceTriples()) {
 
                 if (requestBodyStream == null) {
                     LOGGER.trace("No request body detected");
+                    if (isTimeGateContainerUrl()) {
+                        // Copy from OriginalResource/LDPRv to Memento/LDPRm
+                    }
                 } else {
                     LOGGER.trace("Received createObject with a request body and content type \"{}\"",
                             contentTypeString);
@@ -766,13 +786,22 @@ public class FedoraLdp extends ContentExposingResource {
     }
 
     private FedoraResource createFedoraResource(final String path, final String interactionModel,
-            final MediaType contentType, final boolean contentPresent) {
+            final MediaType contentType, final boolean contentPresent, final Date mementoDatetime) {
         final FedoraResource result;
+
+        Calendar mementoDatetimeCal = null;
+
+        if (isTimeGateContainerUrl()) {
+          mementoDatetimeCal = Calendar.getInstance();
+          if (mementoDatetime != null) {
+            mementoDatetimeCal.setTime(mementoDatetime);
+          }
+        }
         if ("ldp:NonRDFSource".equals(interactionModel) ||
                 (contentPresent && interactionModel == null && !isRDF(contentType))) {
-            result = binaryService.findOrCreate(session.getFedoraSession(), path);
+            result = binaryService.findOrCreate(session.getFedoraSession(), path, mementoDatetimeCal);
         } else {
-            result = containerService.findOrCreate(session.getFedoraSession(), path);
+            result = containerService.findOrCreate(session.getFedoraSession(), path, mementoDatetimeCal);
             if (interactionModel != null && !interactionModel.equals("ldp:BasicContainer")) {
                 result.addType(interactionModel);
             }
@@ -920,5 +949,13 @@ public class FedoraLdp extends ContentExposingResource {
             }
             throw e;
         }
+    }
+
+    private boolean isTimeGateContainerUrl() {
+      boolean isTimeGate = false;
+      if (uriInfo != null && uriInfo.getPath() != null) {
+        isTimeGate = uriInfo.getPath().endsWith("fcr:versions");
+      }
+      return isTimeGate;
     }
 }
