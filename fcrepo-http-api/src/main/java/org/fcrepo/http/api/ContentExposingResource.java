@@ -66,6 +66,7 @@ import java.net.URISyntaxException;
 import java.text.MessageFormat;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -140,6 +141,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     private static final Logger LOGGER = getLogger(ContentExposingResource.class);
     public static final MediaType MESSAGE_EXTERNAL_BODY = MediaType.valueOf("message/external-body");
 
+    private static final List<String> VARY_HEADERS = Arrays.asList("Accept", "Range", "Accept-Encoding",
+            "Accept-Language");
+
     @Context protected Request request;
     @Context protected HttpServletResponse servletResponse;
     @Context protected ServletContext context;
@@ -210,10 +214,11 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 prefer.getReturn().addResponseHeaders(servletResponse);
             }
         }
-        servletResponse.addHeader("Vary", "Accept, Range, Accept-Encoding, Accept-Language");
 
         return ok(outputStream).build();
     }
+
+
 
     protected boolean isExternalBody(final MediaType mediaType) {
         return MESSAGE_EXTERNAL_BODY.isCompatible(mediaType) &&
@@ -436,8 +441,14 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
 
         if (resource.isVersioned()) {
-            final Link link = Link.fromUri(RdfLexicon.VERSIONED_RESOURCE.getURI()).rel("type").build();
-            servletResponse.addHeader(LINK, link.toString());
+            final Link versionedResource = Link.fromUri(RdfLexicon.VERSIONED_RESOURCE.getURI()).rel("type").build();
+            servletResponse.addHeader(LINK, versionedResource.toString());
+            final Link timegate = Link.fromUri(getUri(resource)).rel("timegate").build();
+            servletResponse.addHeader(LINK, timegate.toString());
+            final Link timemap = Link.fromUri(getUri(resource.getDescription().findOrCreateTimeMap())).rel("timemap")
+                    .build();
+            servletResponse.addHeader(LINK, timemap.toString());
+
         }
 
     }
@@ -486,6 +497,14 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         if (httpHeaderInject != null) {
             httpHeaderInject.addHttpHeaderToResponseStream(servletResponse, uriInfo, resource());
         }
+
+        // add vary headers
+        final List<String> varyValues = new ArrayList<>(VARY_HEADERS);
+
+        if (resource.isVersioned()) {
+            varyValues.add("Accept-Datetime");
+        }
+        varyValues.stream().forEach(x -> servletResponse.addHeader("Vary", x));
 
     }
 

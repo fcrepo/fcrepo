@@ -155,6 +155,8 @@ import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.vocabulary.DC_11;
 import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
+import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
+
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -979,9 +981,38 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
     }
 
-
     @Test
     public void testCreateVersionedRDFResource() throws IOException {
+        createVersionedRDFResource();
+    }
+
+    @Test
+    public void testGetVersionedResourceHeaders() throws IOException {
+        final String subjectURI = createVersionedRDFResource();
+        try (final CloseableHttpResponse response = execute(new HttpGet(subjectURI))) {
+            verifyVersionedResourceResponseHeaders(subjectURI, response);
+        }
+    }
+
+    @Test
+    public void testHeadVersionedResourceHeaders() throws IOException {
+        final String subjectURI = createVersionedRDFResource();
+        try (final CloseableHttpResponse response = execute(new HttpHead(subjectURI))) {
+            verifyVersionedResourceResponseHeaders(subjectURI, response);
+        }
+    }
+
+    private void verifyVersionedResourceResponseHeaders(final String subjectURI,
+            final CloseableHttpResponse response) {
+        assertEquals("Didn't get an OK (200) response!", OK.getStatusCode(), getStatus(response));
+        checkForVersionedResourceLinkHeader(response);
+        checkForLinkHeader(response, subjectURI, "timegate");
+        checkForLinkHeader(response, subjectURI + "/" + FedoraResourceImpl.LDPCV_TIME_MAP, "timemap");
+        assertEquals(1, Arrays.asList(response.getHeaders("Vary")).stream().filter(x -> x.getValue().contains(
+                "Accept-Datetime")).count());
+    }
+
+    private String createVersionedRDFResource() throws IOException {
         final String id = getRandomUniqueId();
         final String subjectURI = serverAddress + id;
         final HttpPost createMethod = postObjMethod();
@@ -994,11 +1025,20 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
             checkForVersionedResourceLinkHeader(response);
         }
+        return subjectURI;
     }
 
     private void checkForVersionedResourceLinkHeader(final CloseableHttpResponse response) {
-        assertEquals(1, Arrays.asList(response.getHeaders(LINK)).stream().filter(x -> x.getValue().equals(
-                VERSIONED_RESOURCE_LINK_HEADER)).count());
+        checkForLinkHeader(response,VERSIONED_RESOURCE.getURI(), "type");
+    }
+
+    private void checkForLinkHeader(final CloseableHttpResponse response, final String uri, final String rel) {
+        final Link linkA = Link.valueOf("<" + uri + ">; rel=" + rel);
+        final int count = (int) Arrays.asList(response.getHeaders(LINK)).stream().filter(x -> {
+            final Link linkB = Link.valueOf(x.getValue());
+            return linkB.equals(linkA);
+        }).count();
+        assertEquals(1, count);
     }
 
     @Test

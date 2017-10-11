@@ -708,7 +708,6 @@ public class FedoraLdp extends ContentExposingResource {
         } else if (prefer.getReturn().getValue().equals("minimal")) {
             return builder.build();
         } else {
-            servletResponse.addHeader("Vary", "Accept, Range, Accept-Encoding, Accept-Language");
             if (prefer != null) {
                 prefer.getReturn().addResponseHeaders(servletResponse);
             }
