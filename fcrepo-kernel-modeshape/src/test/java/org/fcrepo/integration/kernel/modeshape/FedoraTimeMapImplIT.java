@@ -19,24 +19,24 @@ package org.fcrepo.integration.kernel.modeshape;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TIME_MAP;
 import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.LDPCV_TIME_MAP;
-import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
-import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import javax.inject.Inject;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 
 import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.ContainerService;
-import org.fcrepo.kernel.modeshape.FedoraTimeMapImpl;
+import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.springframework.test.context.ContextConfiguration;
 
 /**
@@ -55,6 +55,9 @@ public class FedoraTimeMapImplIT extends AbstractIT {
 
     private FedoraSession session;
 
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
     @Before
     public void setUp() throws RepositoryException {
         session = repo.login();
@@ -66,24 +69,18 @@ public class FedoraTimeMapImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetTimeMapLDPCv() throws RepositoryException {
+    public void testDeleteTimeMap() throws RepositoryException {
         final String pid = getRandomPid();
-        final Session jcrSession = getJcrSession(session);
-        final FedoraResource resource = containerService.findOrCreate(session, "/" + pid);
+        final Container object = containerService.findOrCreate(session, "/" + pid);
+        final FedoraResource timeMap = object.findOrCreateTimeMap();
         session.commit();
-
-        // Create TimeMap (LDPCv)
-        final FedoraResource ldpcvResource = resource.findOrCreateTimeMap();
-
-        assertNotNull(ldpcvResource);
-        assertEquals("/" + pid + "/" + LDPCV_TIME_MAP, ldpcvResource.getPath());
-
+        assertTrue(((FedoraResourceImpl)timeMap).getNode().isNodeType(FEDORA_TIME_MAP));
+        object.disableVersioning();
         session.commit();
+        assertFalse(object.isVersioned());
 
-        final javax.jcr.Node timeMapNode = jcrSession.getNode("/" + pid).getNode(LDPCV_TIME_MAP);
-        assertTrue(timeMapNode.isNodeType(FEDORA_TIME_MAP));
-
-        final FedoraTimeMapImpl fedoraTimeMap = new FedoraTimeMapImpl(getJcrNode(ldpcvResource));
-        assertEquals(timeMapNode, fedoraTimeMap.getNode());
+        // should throw RepositoryRuntimeException when retrieving the TimeMap after deletion.
+        thrown.expect(RepositoryRuntimeException.class);
+        object.getChild(LDPCV_TIME_MAP);
     }
 }

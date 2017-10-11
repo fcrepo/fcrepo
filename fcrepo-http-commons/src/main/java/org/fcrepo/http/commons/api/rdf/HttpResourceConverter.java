@@ -53,7 +53,6 @@ import org.fcrepo.kernel.api.exception.TombstoneException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.modeshape.FedoraTimeMapImpl;
 import org.fcrepo.kernel.modeshape.TombstoneImpl;
 import org.fcrepo.kernel.modeshape.identifiers.HashConverter;
 import org.fcrepo.kernel.modeshape.identifiers.NamespaceConverter;
@@ -119,12 +118,6 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
 
                 final boolean metadata = values.containsKey("path")
                         && values.get("path").endsWith("/" + FCR_METADATA);
-
-                final boolean timeMap = values.containsKey("path")
-                        && values.get("path").endsWith("/" + FCR_VERSIONS);
-                if (timeMap) {
-                    return new FedoraTimeMapImpl(node);
-                }
 
                 final FedoraResource fedoraResource = nodeConverter.convert(node);
 

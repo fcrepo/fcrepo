@@ -21,6 +21,6 @@ package org.fcrepo.kernel.api.models;
  * @author lsitu
  * @since Oct. 04, 2017
  */
-public interface FedoraTimeMap {
+public interface FedoraTimeMap extends FedoraResource {
 
 }

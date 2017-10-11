@@ -428,8 +428,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @Override
     public void delete() {
         try {
-            final boolean isTimeMap = FedoraTimeMapImpl.hasMixin(node);
-
             // Remove inbound references to this resource and, recursively, any of its children
             removeReferences(node);
 
@@ -445,8 +443,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
             node.remove();
 
-            if (!isTimeMap && parent != null) {
-                    createTombstone(parent, name);
+            if (parent != null) {
+                createTombstone(parent, name);
 
                 // also update membershipResources for Direct/Indirect Containers
                 containingNode.filter(UncheckedPredicate.uncheck((final Node ancestor) ->
@@ -472,7 +470,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         }
     }
 
-    private void removeReferences(final Node n) {
+    protected void removeReferences(final Node n) {
         try {
             // Remove references to this resource
             doRemoveReferences(n);
@@ -990,7 +988,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
   @Override
   public void disableVersioning() {
-    getDescription().getChild(LDPCV_TIME_MAP).delete();
+      getDescription().getTimeMap().delete();
   }
 
   @Override

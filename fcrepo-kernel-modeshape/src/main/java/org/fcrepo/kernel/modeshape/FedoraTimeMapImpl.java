@@ -20,6 +20,7 @@ package org.fcrepo.kernel.modeshape;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
+import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraTimeMap;
 
@@ -36,6 +37,21 @@ public class FedoraTimeMapImpl extends FedoraResourceImpl implements FedoraTimeM
      */
     public FedoraTimeMapImpl(final Node node) {
         super(node);
+    }
+
+    @Override
+    public void delete() {
+        try {
+            // check to remove references to the TimeMap if it exists
+            removeReferences(node);
+
+            // delete the TimeMap node
+            node.remove();
+        } catch (final javax.jcr.AccessDeniedException e) {
+            throw new AccessDeniedException(e);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     /**
