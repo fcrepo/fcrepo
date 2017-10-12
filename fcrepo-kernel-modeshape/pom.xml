@@ -62,8 +62,8 @@
       <artifactId>modeshape-jcr</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.jboss.jbossts</groupId>
-      <artifactId>jbossjta</artifactId>
+      <groupId>org.jboss.narayana.jta</groupId>
+      <artifactId>narayana-jta</artifactId>
     </dependency>
     <dependency>
       <groupId>org.fcrepo</groupId>

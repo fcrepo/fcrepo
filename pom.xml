@@ -27,7 +27,7 @@
     <commons-codec.version>1.10</commons-codec.version>
     <commons-io.version>2.5</commons-io.version>
     <commons-lang.version>3.5</commons-lang.version>
-    <jbossjta.version>4.16.6.Final</jbossjta.version>
+    <narayana-jta.version>5.7.0.Final</narayana-jta.version>
     <jetty.version>9.3.1.v20150714</jetty.version>
     <guava.version>20.0</guava.version>
     <hk2.version>2.3.0</hk2.version>
