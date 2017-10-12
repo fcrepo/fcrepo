@@ -3397,18 +3397,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testFedoraUri() throws Exception {
-        final String id = "fedora:" + getRandomUniqueId();
-
-        final HttpPost httpPost = postObjMethod("/");
-        httpPost.addHeader("Slug", id);
-        try (final CloseableHttpResponse response = execute(httpPost)) {
-            assertEquals("Must not be able to POST to fedora: URI!", CONFLICT.getStatusCode(), getStatus(response));
-        }
-
-    }
-
-    @Test
     public void testPostFedoraSlug() throws IOException {
         final HttpPost httpPost = postObjMethod("/");
         httpPost.addHeader("Slug", "fedora:path");
@@ -3423,24 +3411,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpPut httpPut = putObjMethod("/fedora:path");
         try (final CloseableHttpResponse response = execute(httpPut)) {
             assertEquals("Must not be able to PUT with fedora namespaced path!", CONFLICT.getStatusCode(),
-                getStatus(response));
-        }
-    }
-
-    @Test
-    public void testGetFedoraPath() throws IOException {
-        final HttpGet httpGet = getObjMethod("/test/path/fedora:path");
-        try (final CloseableHttpResponse response = execute(httpGet)) {
-            assertEquals("Must not be able to GET with fedora namespaced path!", CONFLICT.getStatusCode(),
-                getStatus(response));
-        }
-    }
-
-    @Test
-    public void testOptionsFedoraPath() throws IOException {
-        final HttpOptions httpOptions = new HttpOptions(serverAddress + "/testing/fedora:path/test");
-        try (final CloseableHttpResponse response = execute(httpOptions)) {
-            assertEquals("Must not be able to OPTIONS with fedora namespaced path!", CONFLICT.getStatusCode(),
                 getStatus(response));
         }
     }

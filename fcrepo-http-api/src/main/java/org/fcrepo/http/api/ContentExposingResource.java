@@ -66,7 +66,6 @@ import java.net.URISyntaxException;
 import java.text.MessageFormat;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -107,7 +106,6 @@ import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PreconditionException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
-import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -721,17 +719,5 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             return URI.create(checksum);
         }
         return null;
-    }
-
-    /**
-     * Check if a path has a segment prefixed with fedora:
-     *
-     * @param externalPath the path.
-     */
-    public static void hasRestrictedPath(final String externalPath) {
-        final String[] pathSegments = externalPath.split("/");
-        if (Arrays.asList(pathSegments).stream().anyMatch(p -> p.startsWith("fedora:"))) {
-            throw new ServerManagedTypeException("Path cannot contain a fedora: prefixed segment.");
-        }
     }
 }

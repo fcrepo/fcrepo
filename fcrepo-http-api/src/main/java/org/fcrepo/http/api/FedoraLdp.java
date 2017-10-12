@@ -114,6 +114,7 @@ import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
@@ -200,7 +201,6 @@ public class FedoraLdp extends ContentExposingResource {
         TURTLE_X, TEXT_HTML_WITH_CHARSET })
     public Response head() throws UnsupportedAlgorithmException {
         LOGGER.info("HEAD for: {}", externalPath);
-        hasRestrictedPath(externalPath);
 
         checkCacheControlHeaders(request, servletResponse, resource(), session);
 
@@ -241,7 +241,6 @@ public class FedoraLdp extends ContentExposingResource {
     @Timed
     public Response options() {
         LOGGER.info("OPTIONS for '{}'", externalPath);
-        hasRestrictedPath(externalPath);
         addLinkAndOptionsHttpHeaders();
         return ok().build();
     }
@@ -260,7 +259,6 @@ public class FedoraLdp extends ContentExposingResource {
             TURTLE_X, TEXT_HTML_WITH_CHARSET})
     public Response getResource(@HeaderParam("Range") final String rangeValue)
             throws IOException, UnsupportedAlgorithmException {
-        hasRestrictedPath(externalPath);
         checkCacheControlHeaders(request, servletResponse, resource(), session);
 
         LOGGER.info("GET resource '{}'", externalPath);
@@ -971,6 +969,18 @@ public class FedoraLdp extends ContentExposingResource {
                 throw new ClientErrorException("Invalid 'Want-Digest' header value: " + wantDigest + "\n", BAD_REQUEST);
             }
             throw e;
+        }
+    }
+
+    /**
+     * Check if a path has a segment prefixed with fedora:
+     *
+     * @param externalPath the path.
+     */
+    private static void hasRestrictedPath(final String externalPath) {
+        final String[] pathSegments = externalPath.split("/");
+        if (Arrays.asList(pathSegments).stream().anyMatch(p -> p.startsWith("fedora:"))) {
+            throw new ServerManagedTypeException("Path cannot contain a fedora: prefixed segment.");
         }
     }
 }
