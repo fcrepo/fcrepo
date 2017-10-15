@@ -71,7 +71,7 @@ import com.google.common.annotations.VisibleForTesting;
  */
 @Scope("request")
 @Path("/{path: .*}/fcr:versions")
-public class FedoraVersioning extends FedoraBaseResource {
+public class FedoraVersioning extends ContentExposingResource {
 
     private static final Logger LOGGER = getLogger(FedoraVersioning.class);
 
@@ -168,17 +168,29 @@ public class FedoraVersioning extends FedoraBaseResource {
         final Link.Builder rdfSourceLink = Link.fromUri(LDP_NAMESPACE + "RDFSource").rel("type");
         servletResponse.addHeader(LINK, rdfSourceLink.build().toString());
 
+        servletResponse.addHeader("Vary-Post", "Memento-Datetime");
+        servletResponse.addHeader("Allow", "POST,HEAD,GET,OPTIONS");
+
+        final URI parentUri = getUri(resource());
+        servletResponse.addHeader(LINK, Link.fromUri(parentUri).rel("original").build().toString());
+        servletResponse.addHeader(LINK, Link.fromUri(parentUri).rel("timegate").build().toString());
+
         return new RdfNamespacedStream(new DefaultRdfStream(
                 asNode(resource()),
                 resource().getTriples(translator(), VERSIONS)),
                 session().getFedoraSession().getNamespaces());
     }
 
+    @Override
     protected FedoraResource resource() {
         if (resource == null) {
             resource = getResourceFromPath(externalPath);
         }
-
         return resource;
+    }
+
+    @Override
+    protected String externalPath() {
+        return externalPath;
     }
 }

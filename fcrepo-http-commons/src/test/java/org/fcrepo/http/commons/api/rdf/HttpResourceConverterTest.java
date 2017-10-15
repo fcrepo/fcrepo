@@ -23,12 +23,14 @@ import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.FedoraTimeMap;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.fcrepo.kernel.modeshape.FedoraSessionImpl;
 import org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -90,6 +92,12 @@ public class HttpResourceConverterTest {
 
     @Mock
     private Version mockVersion;
+
+    @Mock
+    private FedoraResource mockFedoraParentResource;
+
+    @Mock
+    private FedoraTimeMap mockTimeMap;
 
     @Before
     public void setUp() throws RepositoryException {
@@ -214,6 +222,26 @@ public class HttpResourceConverterTest {
         final Resource resource = createResource("http://localhost:8080/some/tx:xyz/" + path);
         final Resource converted = converter.reverse().convert(new FedoraResourceImpl(node));
         assertEquals(resource, converted);
+    }
+
+    @Ignore
+    @Test
+    public void testDoForwardWithTimemap() throws Exception {
+        final Resource resource = createResource("http://localhost:8080/some/" + path + "/fcr:versions");
+        when(txSession.getNode("/" + path)).thenReturn(node);
+        final FedoraResource converted = converter.convert(resource);
+        assertEquals(node, getJcrNode(converted));
+        assertTrue(converter.inDomain(resource));
+        assertTrue((converted instanceof FedoraTimeMap));
+    }
+
+    @Test
+    public void testDoBackwardWithTimemap() throws Exception {
+        when(mockTimeMap.getContainer()).thenReturn(mockFedoraParentResource);
+        when(mockFedoraParentResource.getPath()).thenReturn("/" + path);
+
+        final Resource converted = converter.reverse().convert(mockTimeMap);
+        assertEquals(createResource("http://localhost:8080/some/" + path + "/fcr:versions"), converted);
     }
 
     @Test

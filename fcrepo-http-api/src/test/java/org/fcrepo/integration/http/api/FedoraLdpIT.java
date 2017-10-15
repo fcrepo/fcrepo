@@ -71,6 +71,7 @@ import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_VARIANTS;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
@@ -155,7 +156,6 @@ import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.vocabulary.DC_11;
 import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
-import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.junit.Ignore;
@@ -1007,7 +1007,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals("Didn't get an OK (200) response!", OK.getStatusCode(), getStatus(response));
         checkForVersionedResourceLinkHeader(response);
         checkForLinkHeader(response, subjectURI, "timegate");
-        checkForLinkHeader(response, subjectURI + "/" + FedoraResourceImpl.LDPCV_TIME_MAP, "timemap");
+        checkForLinkHeader(response, subjectURI + "/" + FCR_VERSIONS, "timemap");
         assertEquals(1, Arrays.asList(response.getHeaders("Vary")).stream().filter(x -> x.getValue().contains(
                 "Accept-Datetime")).count());
     }
@@ -1039,6 +1039,26 @@ public class FedoraLdpIT extends AbstractResourceIT {
             return linkB.equals(linkA);
         }).count();
         assertEquals(1, count);
+    }
+
+    @Test
+    public void testCheckTimeMapResponseHeaders() throws IOException {
+        final String id = getRandomUniqueId();
+        final String subjectURI = serverAddress + id;
+        final HttpPut createMethod = putObjMethod(id);
+        createMethod.addHeader(CONTENT_TYPE, "text/n3");
+        createMethod.addHeader(LINK, VERSIONED_RESOURCE_LINK_HEADER);
+        createMethod.setEntity(new StringEntity("<" + subjectURI + "> <info:test#label> \"foo\""));
+
+        try (final CloseableHttpResponse response = execute(createMethod)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+        }
+        final HttpGet httpGet = getObjMethod(id + "/fcr:versions");
+        try (final CloseableHttpResponse response = execute(httpGet)) {
+            assertEquals("Didn't get a OK response!", OK.getStatusCode(), getStatus(response));
+            checkForLinkHeader(response, subjectURI, "original");
+            checkForLinkHeader(response, subjectURI, "timegate");
+        }
     }
 
     @Test
