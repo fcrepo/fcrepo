@@ -71,6 +71,7 @@ import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_VARIANTS;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
@@ -155,7 +156,6 @@ import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.vocabulary.DC_11;
 import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
-import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.junit.Ignore;
@@ -1007,7 +1007,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals("Didn't get an OK (200) response!", OK.getStatusCode(), getStatus(response));
         checkForVersionedResourceLinkHeader(response);
         checkForLinkHeader(response, subjectURI, "timegate");
-        checkForLinkHeader(response, subjectURI + "/" + FedoraResourceImpl.LDPCV_TIME_MAP, "timemap");
+        checkForLinkHeader(response, subjectURI + "/" + FCR_VERSIONS, "timemap");
         assertEquals(1, Arrays.asList(response.getHeaders("Vary")).stream().filter(x -> x.getValue().contains(
                 "Accept-Datetime")).count());
     }
@@ -1030,15 +1030,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     private void checkForVersionedResourceLinkHeader(final CloseableHttpResponse response) {
         checkForLinkHeader(response,VERSIONED_RESOURCE.getURI(), "type");
-    }
-
-    private void checkForLinkHeader(final CloseableHttpResponse response, final String uri, final String rel) {
-        final Link linkA = Link.valueOf("<" + uri + ">; rel=" + rel);
-        final int count = (int) Arrays.asList(response.getHeaders(LINK)).stream().filter(x -> {
-            final Link linkB = Link.valueOf(x.getValue());
-            return linkB.equals(linkA);
-        }).count();
-        assertEquals(1, count);
     }
 
     @Test

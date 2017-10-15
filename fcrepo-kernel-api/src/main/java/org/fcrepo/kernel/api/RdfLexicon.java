@@ -262,6 +262,9 @@ public final class RdfLexicon {
      */
     public static final String NT_VERSION_FILE = "nt:versionFile";
 
+    // VERSIONING
+    public static final String VERSIONING_TIMEMAP_TYPE = REPOSITORY_NAMESPACE + "TimeMap";
+
     private RdfLexicon() {
 
     }
