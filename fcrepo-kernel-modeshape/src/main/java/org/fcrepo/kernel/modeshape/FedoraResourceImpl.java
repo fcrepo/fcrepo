@@ -127,7 +127,6 @@ import org.fcrepo.kernel.modeshape.utils.PropertyChangedListener;
 import org.fcrepo.kernel.modeshape.utils.UncheckedPredicate;
 import org.fcrepo.kernel.modeshape.utils.iterators.RdfAdder;
 import org.fcrepo.kernel.modeshape.utils.iterators.RdfRemover;
-
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
@@ -373,6 +372,17 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     }
 
     @Override
+    public FedoraResource getTimeMap() {
+        try {
+            return Optional.of(node.getNode(LDPCV_TIME_MAP)).map(nodeConverter::convert).orElse(null);
+        } catch (PathNotFoundException e) {
+            throw new PathNotFoundRuntimeException(e);
+        } catch (RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    @Override
     public FedoraResource findOrCreateTimeMap() {
         final Node ldpcvNode;
         try {
@@ -460,7 +470,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         }
     }
 
-    private void removeReferences(final Node n) {
+    protected void removeReferences(final Node n) {
         try {
             // Remove references to this resource
             doRemoveReferences(n);
@@ -978,7 +988,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
   @Override
   public void disableVersioning() {
-      LOGGER.warn("Review if method (disableVersioning) can be removed after implementing Memento!");
+      getDescription().getTimeMap().delete();
   }
 
   @Override
