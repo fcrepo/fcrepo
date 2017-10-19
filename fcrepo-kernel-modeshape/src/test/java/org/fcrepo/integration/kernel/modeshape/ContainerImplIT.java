@@ -23,9 +23,12 @@ import static java.util.regex.Pattern.compile;
 import static org.apache.commons.io.IOUtils.toInputStream;
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDstring;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_MEMENTO;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_MEMENTO_DATETIME;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FIELD_DELIMITER;
+import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.LDPCV_TIME_MAP;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getReferencePropertyName;
@@ -33,6 +36,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+
+import java.util.Calendar;
 
 import javax.inject.Inject;
 import javax.jcr.RepositoryException;
@@ -46,6 +51,7 @@ import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.models.Container;
+import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.ContainerService;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 
@@ -88,6 +94,42 @@ public class ContainerImplIT extends AbstractIT {
         final Container obj =
             containerService.findOrCreate(session, "/testObject");
         assertNotNull("Couldn't find object!", obj);
+    }
+
+    @Test
+    public void testCreatedMementoObject() throws RepositoryException {
+        containerService.findOrCreate(session, "/testObject");
+        session.commit();
+        session.expire();
+        session = repo.login();
+        final Container obj =
+            containerService.findOrCreate(session, "/testObject");
+        assertNotNull("Couldn't find object!", obj);
+
+        final String pid = getRandomPid();
+        final String mementoPid = getRandomPid();
+        final Session jcrSession = getJcrSession(session);
+        final FedoraResource resource = containerService.findOrCreate(session, "/" + pid);
+        session.commit();
+
+        // Create TimeMap (LDPCv)
+        final FedoraResource ldpcvResource = resource.findOrCreateTimeMap();
+        assertNotNull(ldpcvResource);
+        session.commit();
+
+        // Create Memento (LDPRm)
+        final Calendar mementoDatetime = Calendar.getInstance();
+        final FedoraResource ldprmResource =
+            containerService.findOrCreate(session, "/" + pid + "/" + LDPCV_TIME_MAP + "/" + mementoPid,
+                                          mementoDatetime);
+        session.commit();
+
+        assertNotNull(ldprmResource);
+        final javax.jcr.Node mementoNode = jcrSession.getNode("/" + pid + "/" + LDPCV_TIME_MAP + "/" + mementoPid);
+        assertNotNull(mementoNode);
+        assertTrue(mementoNode.isNodeType(FEDORA_MEMENTO));
+
+        assertTrue(mementoDatetime.equals((Calendar) mementoNode.getProperty(FEDORA_MEMENTO_DATETIME)));
     }
 
     @Test

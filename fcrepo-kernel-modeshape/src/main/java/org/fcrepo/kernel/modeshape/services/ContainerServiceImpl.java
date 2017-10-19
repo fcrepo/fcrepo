@@ -27,6 +27,8 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.util.Calendar;
+
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
@@ -59,6 +61,16 @@ public class ContainerServiceImpl extends AbstractService implements ContainerSe
      */
     @Override
     public Container findOrCreate(final FedoraSession session, final String path) {
+        return findOrCreate(session, path, null);
+    }
+
+    /**
+     * @param path the path
+     * @param session the session
+     * @return A {@link org.fcrepo.kernel.api.models.Container} with the proffered PID
+     */
+    @Override
+    public Container findOrCreate(final FedoraSession session, final String path, final Calendar mementoDatetime) {
         LOGGER.trace("Executing findOrCreateObject() with path: {}", path);
 
         try {
@@ -66,6 +78,10 @@ public class ContainerServiceImpl extends AbstractService implements ContainerSe
 
             if (node.isNew()) {
                 initializeNewObjectProperties(node);
+
+                if (mementoDatetime != null) {
+                  initializeMementoProperties(node, mementoDatetime);
+                }
 
                 getContainingNode(node).ifPresent(parent -> {
                     touch(parent);

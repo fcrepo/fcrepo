@@ -24,6 +24,8 @@ import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.touchLdpMembers
 import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.validatePath;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.util.Calendar;
+
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -142,6 +144,15 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
      */
     @Override
     public FedoraResource findOrCreate(final FedoraSession session, final String path) {
+        return findOrCreate(session, path, null);
+    }
+
+    /**
+     * @param session the session
+     * @param path the path
+     */
+    @Override
+    public FedoraResource findOrCreate(final FedoraSession session, final String path, final Calendar mementoDatetime) {
         throw new RepositoryRuntimeException("unimplemented");
     }
 }

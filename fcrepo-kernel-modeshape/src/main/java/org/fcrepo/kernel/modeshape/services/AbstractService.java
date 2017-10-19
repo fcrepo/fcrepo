@@ -22,15 +22,21 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.TombstoneException;
 import org.fcrepo.kernel.modeshape.TombstoneImpl;
 import org.modeshape.jcr.api.JcrTools;
+import org.slf4j.Logger;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_PAIRTREE;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_MEMENTO;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_MEMENTO_DATETIME;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getClosestExistingAncestor;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.Calendar;
 
 
 /**
@@ -40,6 +46,8 @@ import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
  */
 public class AbstractService {
     protected final static JcrTools jcrTools = new JcrTools();
+
+    private static final Logger LOGGER = getLogger(AbstractService.class);
 
     protected Node findOrCreateNode(final FedoraSession session,
                                     final String path,
@@ -99,5 +107,20 @@ public class AbstractService {
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
+    }
+
+    protected static void initializeMementoProperties(final Node node, final Calendar mementoDatetime) {
+        try {
+
+            if (node.canAddMixin(FEDORA_MEMENTO)) {
+                node.addMixin(FEDORA_MEMENTO);
+            }
+
+            node.setProperty(FEDORA_MEMENTO_DATETIME, mementoDatetime);
+
+        } catch (final RepositoryException e) {
+            LOGGER.warn("Could not decorate {} with memento properties: {}", node, e);
+        }
+
     }
 }

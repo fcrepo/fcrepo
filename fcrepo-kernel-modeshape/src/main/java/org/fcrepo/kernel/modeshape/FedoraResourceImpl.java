@@ -163,6 +163,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @VisibleForTesting
     public static final String LDPCV_TIME_MAP = "fedora:timemap";
 
+    @VisibleForTesting
+    public static final String LDPRM_MEMENTO = "Memento";
+
     // A curried type accepting resource, translator, and "minimality", returning triples.
     private static interface RdfGenerator extends Function<FedoraResource,
     Function<IdentifierConverter<Resource, FedoraResource>, Function<Boolean, Stream<Triple>>>> {}
@@ -346,6 +349,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     private static Predicate<Node> nastyChildren = isInternalNode
                     .or(TombstoneImpl::hasMixin)
                     .or(FedoraTimeMapImpl::hasMixin)
+                    .or(FedoraMementoImpl::hasMixin)
                     .or(UncheckedPredicate.uncheck(p -> p.getName().equals(JCR_CONTENT)))
                     .or(UncheckedPredicate.uncheck(p -> p.getName().equals("#")));
 
