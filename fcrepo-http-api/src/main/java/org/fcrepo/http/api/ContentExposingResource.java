@@ -22,8 +22,8 @@ import static java.util.EnumSet.of;
 import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.empty;
 import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_LOCATION;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
@@ -45,9 +45,9 @@ import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 import static org.fcrepo.kernel.api.RequiredRdfContext.EMBED_RESOURCES;
@@ -105,12 +105,14 @@ import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PreconditionException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
+import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
+import org.fcrepo.kernel.api.utils.MessageExternalBodyContentType;
 
 import org.apache.jena.atlas.RuntimeIOException;
 import org.apache.jena.graph.Triple;
@@ -137,7 +139,6 @@ import com.google.common.annotations.VisibleForTesting;
 public abstract class ContentExposingResource extends FedoraBaseResource {
 
     private static final Logger LOGGER = getLogger(ContentExposingResource.class);
-    public static final MediaType MESSAGE_EXTERNAL_BODY = MediaType.valueOf("message/external-body");
 
     @Context protected Request request;
     @Context protected HttpServletResponse servletResponse;
@@ -172,7 +173,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected abstract String externalPath();
 
     protected Response getContent(final String rangeValue,
-                                  final RdfStream rdfStream) throws IOException {
+            final RdfStream rdfStream) throws IOException, UnsupportedAccessTypeException {
         return getContent(rangeValue, -1, rdfStream);
     }
 
@@ -187,7 +188,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      */
     protected Response getContent(final String rangeValue,
                                   final int limit,
-                                  final RdfStream rdfStream) throws IOException {
+                                  final RdfStream rdfStream) throws IOException, UnsupportedAccessTypeException {
 
         final RdfNamespacedStream outputStream;
 
@@ -196,7 +197,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             final MediaType mediaType = MediaType.valueOf(((FedoraBinary) resource()).getMimeType());
 
             if (isExternalBody(mediaType)) {
-                return externalBodyRedirect(URI.create(mediaType.getParameters().get("URL"))).build();
+                return externalBodyRedirect(getExternalResourceLocation(mediaType)).build();
             }
 
             return getBinaryContent(rangeValue);
@@ -214,11 +215,19 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         return ok(outputStream).build();
     }
 
+
+    protected URI getExternalResourceLocation(final MediaType mediaType) throws UnsupportedAccessTypeException {
+        return URI.create(MessageExternalBodyContentType.parse(mediaType.toString()).getResourceLocation());
+    }
+
+    /**
+     * Checks if media type matches "message/external-body"
+     * @param mediaType
+     * @return true if matches
+     */
     protected boolean isExternalBody(final MediaType mediaType) {
-        return MESSAGE_EXTERNAL_BODY.isCompatible(mediaType) &&
-                mediaType.getParameters().containsKey("access-type") &&
-                mediaType.getParameters().get("access-type").equals("URL") &&
-                mediaType.getParameters().containsKey("URL");
+        return mediaType == null ? false : (mediaType.getType() + "/" + mediaType.getSubtype()).equals(
+                MessageExternalBodyContentType.MEDIA_TYPE);
     }
 
     protected ResponseBuilder externalBodyRedirect(final URI resourceLocation) {

@@ -86,6 +86,7 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HEAD;
 import javax.ws.rs.HeaderParam;
+import javax.ws.rs.NotSupportedException;
 import javax.ws.rs.OPTIONS;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -123,6 +124,8 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.utils.ContentDigest;
+import org.fcrepo.kernel.api.utils.MessageExternalBodyContentType;
+
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
@@ -209,7 +212,7 @@ public class FedoraLdp extends ContentExposingResource {
             final MediaType mediaType = MediaType.valueOf(((FedoraBinary) resource()).getMimeType());
 
             if (isExternalBody(mediaType)) {
-                builder = externalBodyRedirect(URI.create(mediaType.getParameters().get("URL")));
+                builder = externalBodyRedirect(getExternalResourceLocation(mediaType));
             }
 
             // we set the content-type explicitly to avoid content-negotiation from getting in the way
@@ -370,9 +373,14 @@ public class FedoraLdp extends ContentExposingResource {
             @HeaderParam("If-Match") final String ifMatch,
             @HeaderParam(LINK) final List<String> links,
             @HeaderParam("Digest") final String digest)
-            throws InvalidChecksumException, MalformedRdfException, UnsupportedAlgorithmException {
+            throws InvalidChecksumException, MalformedRdfException, UnsupportedAlgorithmException,
+            UnsupportedAccessTypeException {
 
         final String interactionModel = checkInteractionModel(links);
+
+        if (isExternalBody(requestContentType)) {
+            checkMessageExternalBody(requestContentType);
+        }
 
         final FedoraResource resource;
 
@@ -422,8 +430,7 @@ public class FedoraLdp extends ContentExposingResource {
                     if (requestContentType == null && emptyRequest) {
                         throw new ClientErrorException("Resource Already Exists", CONFLICT);
                     }
-                    throw new ClientErrorException("Invalid Content Type " + requestContentType,
-                            UNSUPPORTED_MEDIA_TYPE);
+                    throw new NotSupportedException("Invalid Content Type " + requestContentType);
                 }
             } catch (final Exception e) {
                 checkForInsufficientStorageException(e, e);
@@ -438,6 +445,10 @@ public class FedoraLdp extends ContentExposingResource {
         } finally {
             lock.release();
         }
+    }
+
+    private void checkMessageExternalBody(final MediaType requestContentType) throws UnsupportedAccessTypeException {
+        MessageExternalBodyContentType.parse(requestContentType.toString());
     }
 
     /**
@@ -545,9 +556,14 @@ public class FedoraLdp extends ContentExposingResource {
                                  @ContentLocation final InputStream requestBodyStream,
                                  @HeaderParam(LINK) final List<String> links,
                                  @HeaderParam("Digest") final String digest)
-            throws InvalidChecksumException, IOException, MalformedRdfException, UnsupportedAlgorithmException {
+            throws InvalidChecksumException, IOException, MalformedRdfException, UnsupportedAlgorithmException,
+            UnsupportedAccessTypeException {
 
         final String interactionModel = checkInteractionModel(links);
+
+        if (isExternalBody(requestContentType)) {
+            checkMessageExternalBody(requestContentType);
+        }
 
         if (!(resource() instanceof Container)) {
             throw new ClientErrorException("Object cannot have child nodes", CONFLICT);

@@ -17,11 +17,8 @@
  */
 package org.fcrepo.kernel.modeshape.utils.impl;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
-
-import java.util.Map;
 
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
@@ -62,13 +59,5 @@ public class CacheEntryFactoryTest {
     public void testForProperty() throws RepositoryException {
         final CacheEntry instance = CacheEntryFactory.forProperty(mockProperty);
         assertTrue("CacheEntry class isn't correct", instance instanceof ExternalResourceCacheEntry);
-    }
-
-    @Test
-    public void testParseExternalBody() {
-        final Map<String, String> params = CacheEntryFactory.parseExternalBody(EXTERNAL_RESOURCE);
-        assertEquals("Mime-type doesn't match.", "message/external-body", params.get("mime-type"));
-        assertEquals("Access-type doesn't match.", "URL", params.get("access-type"));
-        assertEquals("URL doesn't match.", RESOURCE_URL, params.get("url"));
     }
 }

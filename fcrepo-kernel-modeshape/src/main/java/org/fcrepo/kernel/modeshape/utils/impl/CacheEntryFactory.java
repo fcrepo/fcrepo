@@ -17,16 +17,12 @@
  */
 package org.fcrepo.kernel.modeshape.utils.impl;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.fcrepo.kernel.api.utils.CacheEntry;
+import org.fcrepo.kernel.api.utils.MessageExternalBodyContentType;
 import org.fcrepo.kernel.modeshape.utils.BinaryCacheEntry;
 import org.fcrepo.kernel.modeshape.utils.ExternalResourceCacheEntry;
 import org.fcrepo.kernel.modeshape.utils.ProjectedCacheEntry;
 import org.modeshape.jcr.value.binary.ExternalBinaryValue;
-
-import com.google.common.base.Splitter;
 
 import javax.jcr.Binary;
 import javax.jcr.Property;
@@ -37,8 +33,6 @@ import javax.jcr.RepositoryException;
  * @author cabeer
  */
 public final class CacheEntryFactory {
-
-    public static String MESSAGE_EXTERNAL_BODY = "message/external-body";
 
     /**
      * No public constructor on utility class
@@ -53,7 +47,7 @@ public final class CacheEntryFactory {
      * @throws RepositoryException if repository exception occurred
      */
     public static CacheEntry forProperty(final Property property) throws RepositoryException {
-        if (property.getValue().getString().indexOf((MESSAGE_EXTERNAL_BODY)) >= 0) {
+        if (property.getValue().getString().indexOf((MessageExternalBodyContentType.MEDIA_TYPE)) >= 0) {
             return new ExternalResourceCacheEntry(property);
         } else {
             final Binary binary = property.getBinary();
@@ -63,20 +57,5 @@ public final class CacheEntryFactory {
             }
             return new BinaryCacheEntry(property);
         }
-    }
-
-    /**
-     * Utility method to parse the external body content in format:
-     *   message/external-body; access-type=URL; url="http://www.example.com/file"
-     * @param mimeType the MimeType value for external resource
-     * @return Map with key mime-type for MimeType value.
-     */
-    public static Map<String, String> parseExternalBody(final String mimeType) {
-        final Map<String, String> params = new HashMap<String, String>();
-        Splitter.on(';').omitEmptyStrings().trimResults()
-            .withKeyValueSeparator(Splitter.on('=').limit(2)).split("mime-type=" + mimeType.trim())
-             // use lower case for keys, unwrap the quoted values (double quotes at the beginning and the end)
-            .forEach((k, v) -> params.put(k.toLowerCase(), v.replaceAll("^\"|\"$", "")));
-        return params;
     }
 }
