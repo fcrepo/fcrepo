@@ -1032,35 +1032,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         checkForLinkHeader(response,VERSIONED_RESOURCE.getURI(), "type");
     }
 
-    private void checkForLinkHeader(final CloseableHttpResponse response, final String uri, final String rel) {
-        final Link linkA = Link.valueOf("<" + uri + ">; rel=" + rel);
-        final int count = (int) Arrays.asList(response.getHeaders(LINK)).stream().filter(x -> {
-            final Link linkB = Link.valueOf(x.getValue());
-            return linkB.equals(linkA);
-        }).count();
-        assertEquals(1, count);
-    }
-
-    @Test
-    public void testCheckTimeMapResponseHeaders() throws IOException {
-        final String id = getRandomUniqueId();
-        final String subjectURI = serverAddress + id;
-        final HttpPut createMethod = putObjMethod(id);
-        createMethod.addHeader(CONTENT_TYPE, "text/n3");
-        createMethod.addHeader(LINK, VERSIONED_RESOURCE_LINK_HEADER);
-        createMethod.setEntity(new StringEntity("<" + subjectURI + "> <info:test#label> \"foo\""));
-
-        try (final CloseableHttpResponse response = execute(createMethod)) {
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
-        }
-        final HttpGet httpGet = getObjMethod(id + "/fcr:versions");
-        try (final CloseableHttpResponse response = execute(httpGet)) {
-            assertEquals("Didn't get a OK response!", OK.getStatusCode(), getStatus(response));
-            checkForLinkHeader(response, subjectURI, "original");
-            checkForLinkHeader(response, subjectURI, "timegate");
-        }
-    }
-
     @Test
     public void testCreateVersionedBinaryResource() throws IOException {
         final HttpPost method = postObjMethod();

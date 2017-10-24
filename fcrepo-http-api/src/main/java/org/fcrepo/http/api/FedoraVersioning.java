@@ -33,6 +33,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
+import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEMAP_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -152,7 +153,6 @@ public class FedoraVersioning extends ContentExposingResource {
      *
      * @return List of versions for the object as RDF
      */
-    @SuppressWarnings("resource")
     @GET
     @HtmlTemplate(value = "fcr:versions")
     @Produces({TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8", N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET,
@@ -167,6 +167,7 @@ public class FedoraVersioning extends ContentExposingResource {
         servletResponse.addHeader(LINK, resourceLink.build().toString());
         final Link.Builder rdfSourceLink = Link.fromUri(LDP_NAMESPACE + "RDFSource").rel("type");
         servletResponse.addHeader(LINK, rdfSourceLink.build().toString());
+        servletResponse.addHeader(LINK, Link.fromUri(VERSIONING_TIMEMAP_TYPE).rel("type").build().toString());
 
         servletResponse.addHeader("Vary-Post", "Memento-Datetime");
         servletResponse.addHeader("Allow", "POST,HEAD,GET,OPTIONS");
