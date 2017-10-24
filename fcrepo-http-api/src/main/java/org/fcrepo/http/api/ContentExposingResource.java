@@ -38,6 +38,7 @@ import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.vocabulary.RDF.type;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;
@@ -445,12 +446,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             servletResponse.addHeader(LINK, versionedResource.toString());
             final Link timegate = Link.fromUri(getUri(resource)).rel("timegate").build();
             servletResponse.addHeader(LINK, timegate.toString());
-            final Link timemap = Link.fromUri(getUri(resource.getDescription().findOrCreateTimeMap())).rel("timemap")
-                    .build();
+            final Link timemap = Link.fromUri(getUri(resource) + "/" + FCR_VERSIONS).rel("timemap").build();
             servletResponse.addHeader(LINK, timemap.toString());
-
         }
-
     }
 
     /**
