@@ -65,6 +65,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 
+
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -113,6 +114,7 @@ import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
@@ -321,6 +323,7 @@ public class FedoraLdp extends ContentExposingResource {
     @DELETE
     @Timed
     public Response deleteObject() {
+        hasRestrictedPath(externalPath);
         if (resource() instanceof Container) {
             final String depth = headers.getHeaderString("Depth");
             LOGGER.debug("Depth header value is: {}", depth);
@@ -370,7 +373,7 @@ public class FedoraLdp extends ContentExposingResource {
             @HeaderParam(LINK) final List<String> links,
             @HeaderParam("Digest") final String digest)
             throws InvalidChecksumException, MalformedRdfException, UnsupportedAlgorithmException {
-
+        hasRestrictedPath(externalPath);
         final String interactionModel = checkInteractionModel(links);
 
         final FedoraResource resource;
@@ -468,7 +471,7 @@ public class FedoraLdp extends ContentExposingResource {
     @Timed
     public Response updateSparql(@ContentLocation final InputStream requestBodyStream)
             throws IOException {
-
+        hasRestrictedPath(externalPath);
         if (null == requestBodyStream) {
             throw new BadRequestException("SPARQL-UPDATE requests must have content!");
         }
@@ -562,6 +565,7 @@ public class FedoraLdp extends ContentExposingResource {
         final String contentTypeString = contentType.toString();
 
         final String newObjectPath = mintNewPid(slug);
+        hasRestrictedPath(newObjectPath);
 
         final AcquiredLock lock = lockManager.lockForWrite(newObjectPath, session.getFedoraSession(), nodeService);
 
@@ -631,7 +635,7 @@ public class FedoraLdp extends ContentExposingResource {
     private boolean hasVersionedResourceLink(final List<String> links) {
         if (!CollectionUtils.isEmpty(links)) {
             try {
-                for (String link : links) {
+                for (final String link : links) {
                     final Link linq = Link.valueOf(link);
                     if ("type".equals(linq.getRel())) {
                         final Resource type = createResource(linq.getUri().toString());
@@ -876,7 +880,7 @@ public class FedoraLdp extends ContentExposingResource {
         }
 
         try {
-            for (String link : links) {
+            for (final String link : links) {
                 final Link linq = Link.valueOf(link);
                 if ("type".equals(linq.getRel())) {
                     final Resource type = createResource(linq.getUri().toString());
@@ -943,11 +947,11 @@ public class FedoraLdp extends ContentExposingResource {
      * @return Digest algorithms that are supported
      */
     private static Collection<String> parseWantDigestHeader(final String wantDigest) {
-        final Map<String, Double> digestPairs = new HashMap<String,Double>();
+        final Map<String, Double> digestPairs = new HashMap<String, Double>();
         try {
             final List<String> algs = Splitter.on(',').omitEmptyStrings().trimResults().splitToList(wantDigest);
             // Parse the optional q value with default 1.0, and 0 ignore. Format could be: SHA-1;qvalue=0.1
-            for (String alg : algs) {
+            for (final String alg : algs) {
                 final String[] tokens = alg.split(";", 2);
                 final double qValue = tokens.length == 1 || tokens[1].indexOf("=") < 0 ?
                         1.0 : Double.parseDouble(tokens[1].split("=", 2)[1]);
@@ -964,6 +968,18 @@ public class FedoraLdp extends ContentExposingResource {
                 throw new ClientErrorException("Invalid 'Want-Digest' header value: " + wantDigest + "\n", BAD_REQUEST);
             }
             throw e;
+        }
+    }
+
+    /**
+     * Check if a path has a segment prefixed with fedora:
+     *
+     * @param externalPath the path.
+     */
+    private static void hasRestrictedPath(final String externalPath) {
+        final String[] pathSegments = externalPath.split("/");
+        if (Arrays.asList(pathSegments).stream().anyMatch(p -> p.startsWith("fedora:"))) {
+            throw new ServerManagedTypeException("Path cannot contain a fedora: prefixed segment.");
         }
     }
 }

@@ -3434,4 +3434,34 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertTrue(response.getHeaders(DIGEST).length == 0);
         }
     }
+
+    @Test
+    public void testPostFedoraSlug() throws IOException {
+        final HttpPost httpPost = postObjMethod("/");
+        httpPost.addHeader("Slug", "fedora:path");
+        try (final CloseableHttpResponse response = execute(httpPost)) {
+            assertEquals("Must not be able to POST with fedora namespaced Slug!", CONFLICT.getStatusCode(),
+                getStatus(response));
+        }
+    }
+
+    @Test
+    public void testPutFedoraPath() throws IOException {
+        final HttpPut httpPut = putObjMethod("/fedora:path");
+        try (final CloseableHttpResponse response = execute(httpPut)) {
+            assertEquals("Must not be able to PUT with fedora namespaced path!", CONFLICT.getStatusCode(),
+                getStatus(response));
+        }
+    }
+
+    @Test
+    public void testDeleteWithFedoraPath() throws IOException {
+        final String id = getRandomUniqueId() + "/fedora:delete";
+        final HttpDelete httpDelete = deleteObjMethod(id);
+        httpDelete.addHeader("Depth", "infinity");
+        try (final CloseableHttpResponse response = execute(httpDelete)) {
+            assertEquals("Must not be able to DELETE with fedora namespaced path!", CONFLICT.getStatusCode(),
+                getStatus(response));
+        }
+    }
 }
