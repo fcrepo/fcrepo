@@ -17,24 +17,30 @@
  */
 package org.fcrepo.integration.http.api;
 
-import static javax.ws.rs.core.Response.Status.NO_CONTENT;
-import static javax.ws.rs.core.Response.Status.OK;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
-import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
-import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEMAP_TYPE;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
+import static javax.ws.rs.core.Response.Status.OK;
+import static org.fcrepo.http.commons.domain.RDFMediaType.APPLICATION_LINK_FORMAT;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
+import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEMAP_TYPE;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
-
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import javax.ws.rs.core.Link;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.util.EntityUtils;
 import org.junit.Test;
 
 /**
@@ -64,10 +70,18 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testCheckTimeMapResponseHeaders() throws IOException {
+    public void testGetTimeMapResponse() throws IOException {
         final String id = getRandomUniqueId();
         final String subjectURI = serverAddress + id;
+        final List<Link> listLinks = new ArrayList<Link>();
+        listLinks.add(Link.fromUri(subjectURI).rel("original").build());
+        listLinks.add(Link.fromUri(subjectURI).rel("timegate").build());
+        listLinks
+            .add(Link.fromUri(subjectURI + "/" + FCR_VERSIONS).rel("self").type(APPLICATION_LINK_FORMAT).build());
+        final Link[] expectedLinks = listLinks.toArray(new Link[3]);
+
         final HttpPut createMethod = putObjMethod(id);
+
         createMethod.addHeader(CONTENT_TYPE, "text/n3");
         createMethod.addHeader(LINK, VERSIONED_RESOURCE_LINK_HEADER);
         createMethod.setEntity(new StringEntity("<" + subjectURI + "> <info:test#label> \"foo\""));
@@ -79,6 +93,10 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(httpGet)) {
             assertEquals("Didn't get a OK response!", OK.getStatusCode(), getStatus(response));
             checkForLinkHeader(response, VERSIONING_TIMEMAP_TYPE, "type");
+            final List<String> bodyList = Arrays.asList(EntityUtils.toString(response.getEntity()).split(","));
+            final Link[] bodyLinks = bodyList.stream().map(String::trim).filter(t -> !t.isEmpty())
+                .map(Link::valueOf).toArray(Link[]::new);
+            assertArrayEquals(expectedLinks, bodyLinks);
         }
     }
 }
