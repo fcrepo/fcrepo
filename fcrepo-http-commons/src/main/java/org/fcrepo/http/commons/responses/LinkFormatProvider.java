@@ -61,7 +61,7 @@ public class LinkFormatProvider implements MessageBodyWriter<LinkFormatStream> {
             throws IOException, WebApplicationException {
 
         final PrintWriter writer = new PrintWriter(entityStream);
-        links.stream.forEach(l -> {
+        links.getStream().forEach(l -> {
             writer.println(l.toString() + ",");
         });
         writer.close();

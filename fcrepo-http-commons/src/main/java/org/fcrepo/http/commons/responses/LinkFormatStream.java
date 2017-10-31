@@ -20,6 +20,7 @@ package org.fcrepo.http.commons.responses;
 import static java.util.Objects.requireNonNull;
 
 import java.util.stream.Stream;
+
 import javax.ws.rs.core.Link;
 
 /**
@@ -30,7 +31,7 @@ import javax.ws.rs.core.Link;
  */
 public class LinkFormatStream implements AutoCloseable {
 
-    public final Stream<Link> stream;
+    private final Stream<Link> stream;
 
     /**
      * Constructor
@@ -40,6 +41,15 @@ public class LinkFormatStream implements AutoCloseable {
     public LinkFormatStream(final Stream<Link> stream) {
         requireNonNull(stream);
         this.stream = stream;
+    }
+
+    /**
+     * Generic getter
+     * 
+     * @return the Stream of Links
+     */
+    public Stream<Link> getStream() {
+        return stream;
     }
 
     @Override

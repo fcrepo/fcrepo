@@ -90,6 +90,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
         }
         final HttpGet httpGet = getObjMethod(id + "/fcr:versions");
+        httpGet.setHeader("Accept", APPLICATION_LINK_FORMAT);
         try (final CloseableHttpResponse response = execute(httpGet)) {
             assertEquals("Didn't get a OK response!", OK.getStatusCode(), getStatus(response));
             checkForLinkHeader(response, VERSIONING_TIMEMAP_TYPE, "type");

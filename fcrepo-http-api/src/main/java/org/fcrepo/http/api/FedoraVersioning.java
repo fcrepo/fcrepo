@@ -17,19 +17,30 @@
  */
 package org.fcrepo.http.api;
 
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
+import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.apache.commons.lang3.StringUtils.isBlank;
-
 import static org.fcrepo.http.commons.domain.RDFMediaType.APPLICATION_LINK_FORMAT;
+import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
+import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
-import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEMAP_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEMAP_TYPE;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.google.common.annotations.VisibleForTesting;
+import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,16 +59,15 @@ import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-
+import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.responses.LinkFormatStream;
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.RepositoryVersionRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
-
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
-
-import com.google.common.annotations.VisibleForTesting;
 
 /**
  * @author cabeer
@@ -121,9 +131,7 @@ public class FedoraVersioning extends ContentExposingResource {
     }
 
     /**
-     * Create a new version checkpoint and tag it with the given label.  If
-     * that label already describes another version it will silently be
-     * reassigned to describe this version.
+     * Create a new version with possibly a provided date and body, or a
      *
      * @param slug the value of slug
      * @throws RepositoryException the exception
@@ -140,7 +148,6 @@ public class FedoraVersioning extends ContentExposingResource {
         return status(BAD_REQUEST).entity("Specify label for version").build();
     }
 
-
     /**
      * Get the list of versions for the object
      *
@@ -148,11 +155,18 @@ public class FedoraVersioning extends ContentExposingResource {
      */
     @GET
     @HtmlTemplate(value = "fcr:versions")
-    @Produces({ APPLICATION_LINK_FORMAT, "*/*" })
-    public LinkFormatStream getVersionList() {
+    @Produces({ TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
+        N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
+        TURTLE_X, TEXT_HTML_WITH_CHARSET, APPLICATION_LINK_FORMAT })
+    public Response getVersionList(@HeaderParam("Range") final String rangeValue,
+        @HeaderParam("Accept") final String acceptValue) throws IOException {
         if (!resource().isVersioned()) {
             throw new RepositoryVersionRuntimeException("This operation requires that the node be versionable");
         }
+        final FedoraResource theTimeMap = resource().findOrCreateTimeMap();
+        checkCacheControlHeaders(request, servletResponse, theTimeMap, session);
+
+        LOGGER.info("GET resource '{}'", externalPath);
 
         final Link.Builder resourceLink = Link.fromUri(LDP_NAMESPACE + "Resource").rel("type");
         servletResponse.addHeader(LINK, resourceLink.build().toString());
@@ -163,21 +177,31 @@ public class FedoraVersioning extends ContentExposingResource {
         servletResponse.addHeader("Vary-Post", "Memento-Datetime");
         servletResponse.addHeader("Allow", "POST,HEAD,GET,OPTIONS");
 
-        final URI parentUri = getUri(resource());
+        if (acceptValue != null && acceptValue.equalsIgnoreCase(APPLICATION_LINK_FORMAT)) {
+            final URI parentUri = getUri(resource());
+            final List<Link> versionLinks = new ArrayList<Link>();
+            versionLinks.add(Link.fromUri(parentUri).rel("original").build());
+            versionLinks.add(Link.fromUri(parentUri).rel("timegate").build());
 
-        final List<Link> versionLinks = new ArrayList<Link>();
-        versionLinks.add(Link.fromUri(parentUri).rel("original").build());
-        versionLinks.add(Link.fromUri(parentUri).rel("timegate").build());
-
-        resource().findOrCreateTimeMap().getChildren().forEach(t -> {
-            // Add mementos later.
-        });
-        // Based on the dates of the above mementos, add the range to the below link.
-        final Link timeMapLink =
-            Link.fromUri(parentUri + "/" + FCR_VERSIONS).rel("self").type(APPLICATION_LINK_FORMAT).build();
-        versionLinks.add(timeMapLink);
-
-        return new LinkFormatStream(versionLinks.stream());
+            theTimeMap.getChildren().forEach(t -> {
+                // Add mementos later.
+            });
+            // Based on the dates of the above mementos, add the range to the below link.
+            final Link timeMapLink =
+                Link.fromUri(parentUri + "/" + FCR_VERSIONS).rel("self").type(APPLICATION_LINK_FORMAT).build();
+            versionLinks.add(timeMapLink);
+            return ok(new LinkFormatStream(versionLinks.stream())).build();
+        } else {
+            final AcquiredLock readLock = lockManager.lockForRead(theTimeMap.getPath());
+            try (final RdfStream rdfStream = new DefaultRdfStream(asNode(theTimeMap))) {
+                addResourceHttpHeaders(theTimeMap);
+                // Need to set the timemap as the resource for the below function.
+                setResource(theTimeMap);
+                return getContent(rangeValue, getChildrenLimit(), rdfStream);
+            } finally {
+                readLock.release();
+            }
+        }
     }
 
     @Override
@@ -186,6 +210,15 @@ public class FedoraVersioning extends ContentExposingResource {
             resource = getResourceFromPath(externalPath);
         }
         return resource;
+    }
+
+    /**
+     * Set the resource to an alternate from that retrieved automatically.
+     * 
+     * @param resource
+     */
+    private void setResource(final FedoraResource resource) {
+        this.resource = resource;
     }
 
     @Override

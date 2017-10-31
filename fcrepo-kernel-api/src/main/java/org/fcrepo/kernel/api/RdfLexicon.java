@@ -24,9 +24,10 @@ import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import java.util.Set;
 import java.util.function.Predicate;
 
-import com.google.common.collect.ImmutableSet;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
+
+import com.google.common.collect.ImmutableSet;
 
 /**
  * A lexicon of the RDF properties that the fcrepo kernel (or close-to-core modules) use
@@ -171,9 +172,6 @@ public final class RdfLexicon {
     public static final Property HAS_ACCESS_ROLES_SERVICE =
             createProperty(REPOSITORY_NAMESPACE + "hasAccessRoles");
 
-    public static final Property VERSIONED_RESOURCE =
-            createProperty("http://fedora.info/definitions/fcrepo#VersionedResource");
-
     public static final Set<Property> repositoryProperties = of(
             HAS_OBJECT_COUNT, HAS_OBJECT_SIZE, HAS_TRANSACTION_SERVICE);
 
@@ -263,7 +261,16 @@ public final class RdfLexicon {
     public static final String NT_VERSION_FILE = "nt:versionFile";
 
     // VERSIONING
+    /**
+     * This is a holder for an eventually Memento TimeMap RDF type.
+     */
     public static final String VERSIONING_TIMEMAP_TYPE = REPOSITORY_NAMESPACE + "TimeMap";
+
+    /**
+     * This is an internal RDF type for versionable resources, this may be replaced by a Memento type.
+     */
+    public static final Property VERSIONED_RESOURCE =
+        createProperty(REPOSITORY_NAMESPACE + "VersionedResource");
 
     private RdfLexicon() {
 
