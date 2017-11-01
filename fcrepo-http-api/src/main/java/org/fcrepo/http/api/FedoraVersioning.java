@@ -86,8 +86,6 @@ public class FedoraVersioning extends ContentExposingResource {
 
     @PathParam("path") protected String externalPath;
 
-    protected FedoraResource resource;
-
 
     /**
      * Default JAX-RS entry point
@@ -131,7 +129,9 @@ public class FedoraVersioning extends ContentExposingResource {
     }
 
     /**
-     * Create a new version with possibly a provided date and body, or a
+     * Create a new version checkpoint and tag it with the given label. If
+     * that label already describes another version it will silently be
+     * reassigned to describe this version.
      *
      * @param slug the value of slug
      * @throws RepositoryException the exception
@@ -185,6 +185,7 @@ public class FedoraVersioning extends ContentExposingResource {
 
             theTimeMap.getChildren().forEach(t -> {
                 // Add mementos later.
+                // https://jira.duraspace.org/browse/FCREPO-2617
             });
             // Based on the dates of the above mementos, add the range to the below link.
             final Link timeMapLink =
@@ -204,18 +205,10 @@ public class FedoraVersioning extends ContentExposingResource {
         }
     }
 
-    @Override
-    protected FedoraResource resource() {
-        if (resource == null) {
-            resource = getResourceFromPath(externalPath);
-        }
-        return resource;
-    }
-
     /**
      * Set the resource to an alternate from that retrieved automatically.
-     * 
-     * @param resource
+     *
+     * @param resource a FedoraResource
      */
     private void setResource(final FedoraResource resource) {
         this.resource = resource;

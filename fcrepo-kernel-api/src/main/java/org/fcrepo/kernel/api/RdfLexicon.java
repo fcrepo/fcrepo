@@ -43,6 +43,8 @@ public final class RdfLexicon {
 
     public static final String EVENT_NAMESPACE = "http://fedora.info/definitions/v4/event#";
 
+    public static final String FCREPO_API_NAMESPACE = "http://fedora.info/definitions/fcrepo#";
+
     public static final String ACTIVITY_STREAMS_NAMESPACE = "https://www.w3.org/ns/activitystreams#";
 
     public static final String EBUCORE_NAMESPACE = "http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#";
@@ -270,7 +272,7 @@ public final class RdfLexicon {
      * This is an internal RDF type for versionable resources, this may be replaced by a Memento type.
      */
     public static final Property VERSIONED_RESOURCE =
-        createProperty(REPOSITORY_NAMESPACE + "VersionedResource");
+        createProperty(FCREPO_API_NAMESPACE + "VersionedResource");
 
     private RdfLexicon() {
 
