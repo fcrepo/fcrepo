@@ -428,7 +428,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
     @Test
     public void testGetFixityWithWantDigest() throws RepositoryException, InvalidChecksumException,
             URISyntaxException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
-        final Collection<String> digestAlgs = Collections.singletonList("SHA-1");
+        final Collection<String> digestAlgs = Collections.singletonList("SHA");
         final String pid = "testFixityWithWantDigest-" + randomUUID();
         final FedoraSession session = repo.login();
         try {
@@ -463,7 +463,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
     @Test
     public void testGetFixityWithWantDigestMultuple() throws RepositoryException, InvalidChecksumException,
             URISyntaxException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
-        final String[] digestAlgValues = {"SHA-1", "md5"};
+        final String[] digestAlgValues = {"SHA", "md5"};
         final Collection<String> digestAlgs = Arrays.asList(digestAlgValues);
         final String pid = "testFixityWithWantDigestMultiple-" + randomUUID();
         final FedoraSession session = repo.login();

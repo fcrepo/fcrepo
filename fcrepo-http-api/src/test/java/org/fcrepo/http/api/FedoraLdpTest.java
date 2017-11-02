@@ -71,6 +71,8 @@ import static org.mockito.Mockito.when;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -82,9 +84,8 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.core.EntityTag;
@@ -96,7 +97,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
@@ -136,9 +136,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 import org.springframework.mock.web.MockHttpServletResponse;
-
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 
 /**
  * @author cabeer
@@ -589,7 +586,7 @@ public class FedoraLdpTest {
             testObj.evaluateRequestPreconditions(mockRequest, mockResponse, testObj.resource(),
                     mockSession, true);
             fail("Expected " + PreconditionException.class.getName() + " to be thrown.");
-        } catch (PreconditionException e) {
+        } catch (final PreconditionException e) {
             // expected
         }
 
@@ -629,7 +626,7 @@ public class FedoraLdpTest {
             testObj.evaluateRequestPreconditions(mockRequest, mockResponse, testObj.resource(),
                     mockSession, true);
             fail("Expected " + PreconditionException.class.getName() + " to be thrown.");
-        } catch (PreconditionException e) {
+        } catch (final PreconditionException e) {
             // expected
         }
 
@@ -1006,7 +1003,7 @@ public class FedoraLdpTest {
         try (final InputStream content = toInputStream("x", UTF_8)) {
             final MediaType requestContentType = MediaType.valueOf("some/mime-type; with=some; param=s");
             final String sha = "07a4d371f3b7b6283a8e1230b7ec6764f8287bf2";
-            final String requestSHA = "sha1=" + sha;
+            final String requestSHA = "sha=" + sha;
             final Set<URI> shaURI = singleton(URI.create("urn:sha1:" + sha));
             final Response actual = testObj.createObject(null, requestContentType, "b", content, nonRDFSourceLink,
                 requestSHA);
@@ -1043,7 +1040,7 @@ public class FedoraLdpTest {
             final MediaType requestContentType = MediaType.valueOf("some/mime-type; with=some; param=s");
 
             final String sha = "07a4d371f3b7b6283a8e1230b7ec6764f8287bf2";
-            final String requestSHA = "sha1=" + sha;
+            final String requestSHA = "sha=" + sha;
             final URI shaURI = URI.create("urn:sha1:" + sha);
 
             final String md5 = "HUXZLQLMuI/KZ5KDcJPcOA==";
