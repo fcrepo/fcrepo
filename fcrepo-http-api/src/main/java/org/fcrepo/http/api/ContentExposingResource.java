@@ -21,23 +21,27 @@ package org.fcrepo.http.api;
 import static java.util.EnumSet.of;
 import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.empty;
+import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_LOCATION;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
+import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.temporaryRedirect;
 import static javax.ws.rs.core.Response.Status.PARTIAL_CONTENT;
 import static javax.ws.rs.core.Response.Status.REQUESTED_RANGE_NOT_SATISFIABLE;
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.vocabulary.RDF.type;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;
@@ -45,9 +49,9 @@ import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 import static org.fcrepo.kernel.api.RequiredRdfContext.EMBED_RESOURCES;
@@ -59,6 +63,8 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -75,12 +81,12 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import javax.inject.Inject;
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.BeanParam;
+import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.EntityTag;
@@ -89,7 +95,13 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
-
+import org.apache.jena.atlas.RuntimeIOException;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RiotException;
 import org.fcrepo.http.commons.api.HttpHeaderInjector;
 import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
 import org.fcrepo.http.commons.domain.MultiPrefer;
@@ -113,20 +125,9 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
-
-import org.apache.jena.atlas.RuntimeIOException;
-import org.apache.jena.graph.Triple;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.RiotException;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.jvnet.hk2.annotations.Optional;
 import org.slf4j.Logger;
-
-import com.fasterxml.jackson.core.JsonParseException;
-import com.google.common.annotations.VisibleForTesting;
 
 /**
  * An abstract class that sits between AbstractResource and any resource that
@@ -445,12 +446,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             servletResponse.addHeader(LINK, versionedResource.toString());
             final Link timegate = Link.fromUri(getUri(resource)).rel("timegate").build();
             servletResponse.addHeader(LINK, timegate.toString());
-            final Link timemap = Link.fromUri(getUri(resource.getDescription().findOrCreateTimeMap())).rel("timemap")
-                    .build();
+            final Link timemap = Link.fromUri(getUri(resource) + "/" + FCR_VERSIONS).rel("timemap").build();
             servletResponse.addHeader(LINK, timemap.toString());
-
         }
-
     }
 
     /**
@@ -738,5 +736,33 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             return URI.create(checksum);
         }
         return null;
+    }
+
+    /**
+     * Calculate the max number of children to display at once.
+     * 
+     * @return the limit of children to display.
+     */
+    protected int getChildrenLimit() {
+        final List<String> acceptHeaders = headers.getRequestHeader(ACCEPT);
+        if (acceptHeaders != null && acceptHeaders.size() > 0) {
+            final List<String> accept = Arrays.asList(acceptHeaders.get(0).split(","));
+            if (accept.contains(TEXT_HTML)) {
+                // Magic number '100' is tied to common-metadata.vsl display of ellipses
+                return 100;
+            }
+        }
+
+        final List<String> limits = headers.getRequestHeader("Limit");
+        if (null != limits && limits.size() > 0) {
+            try {
+                return Integer.parseInt(limits.get(0));
+
+            } catch (final NumberFormatException e) {
+                LOGGER.warn("Invalid 'Limit' header value: {}", limits.get(0));
+                throw new ClientErrorException("Invalid 'Limit' header value: " + limits.get(0), SC_BAD_REQUEST, e);
+            }
+        }
+        return -1;
     }
 }

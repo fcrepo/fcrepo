@@ -21,11 +21,9 @@ package org.fcrepo.http.api;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.google.common.base.Strings.nullToEmpty;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
-import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
 import static javax.ws.rs.core.MediaType.WILDCARD;
 import static javax.ws.rs.core.Response.created;
@@ -64,10 +62,12 @@ import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
-
-
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.codahale.metrics.annotation.Timed;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -79,7 +79,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
@@ -101,7 +100,11 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilderException;
 import javax.ws.rs.core.Variant.VariantListBuilder;
-
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.jena.atlas.web.ContentType;
+import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
@@ -122,20 +125,9 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.utils.ContentDigest;
-
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.jena.atlas.web.ContentType;
-import org.apache.jena.rdf.model.Resource;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
-
-import com.codahale.metrics.annotation.Timed;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
 
 /**
  * @author cabeer
@@ -290,29 +282,6 @@ public class FedoraLdp extends ContentExposingResource {
         } finally {
             readLock.release();
         }
-    }
-
-    private int getChildrenLimit() {
-        final List<String> acceptHeaders = headers.getRequestHeader(ACCEPT);
-        if (acceptHeaders != null && acceptHeaders.size() > 0) {
-            final List<String> accept = Arrays.asList(acceptHeaders.get(0).split(","));
-            if (accept.contains(TEXT_HTML)) {
-                // Magic number '100' is tied to common-metadata.vsl display of ellipses
-                return 100;
-            }
-        }
-
-        final List<String> limits = headers.getRequestHeader("Limit");
-        if (null != limits && limits.size() > 0) {
-            try {
-                return Integer.parseInt(limits.get(0));
-
-            } catch (final NumberFormatException e) {
-                LOGGER.warn("Invalid 'Limit' header value: {}", limits.get(0));
-                throw new ClientErrorException("Invalid 'Limit' header value: " + limits.get(0), SC_BAD_REQUEST, e);
-            }
-        }
-        return -1;
     }
 
     /**
