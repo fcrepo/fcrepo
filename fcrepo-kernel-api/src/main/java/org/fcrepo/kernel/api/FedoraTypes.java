@@ -43,6 +43,10 @@ public interface FedoraTypes {
 
     String FEDORA_TIME_MAP = "fedora:TimeMap";
 
+    String FEDORA_MEMENTO = "fedora:Memento";
+
+    String FEDORA_MEMENTO_DATETIME = "fedora:mementoDatetime";
+
     String LDP_BASIC_CONTAINER = "ldp:BasicContainer";
 
     String LDP_CONTAINER = "ldp:Container";
@@ -78,6 +82,8 @@ public interface FedoraTypes {
     String FCR_METADATA = "fcr:metadata";
 
     String FCR_VERSIONS = "fcr:versions";
+
+    String FCR_FIXITY = "fcr:fixity";
 
     String LDP_HAS_MEMBER_RELATION = "ldp:hasMemberRelation";
 
