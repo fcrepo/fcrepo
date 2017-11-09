@@ -139,6 +139,7 @@ import com.google.common.annotations.VisibleForTesting;
 public abstract class ContentExposingResource extends FedoraBaseResource {
 
     private static final Logger LOGGER = getLogger(ContentExposingResource.class);
+    public static final String URL_ACCESS_TYPE = "URL";
 
     @Context protected Request request;
     @Context protected HttpServletResponse servletResponse;

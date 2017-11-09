@@ -760,8 +760,9 @@ public class FedoraLdp extends ContentExposingResource {
 
             final String rdfTypes = TURTLE + "," + N3 + "," + N3_ALT2 + ","
                     + RDF_XML + "," + NTRIPLES + "," + JSON_LD;
-            servletResponse.addHeader("Accept-Post", rdfTypes + "," + MediaType.MULTIPART_FORM_DATA
-                    + "," + contentTypeSPARQLUpdate);
+            servletResponse.addHeader("Accept-Post", rdfTypes + "," + MediaType.MULTIPART_FORM_DATA + "," +
+                    contentTypeSPARQLUpdate + "," + MessageExternalBodyContentType.MEDIA_TYPE + "; access-type=" +
+                    URL_ACCESS_TYPE);
         } else {
             options = "";
         }
