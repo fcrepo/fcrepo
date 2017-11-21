@@ -104,6 +104,7 @@ import org.apache.commons.io.IOUtils;
 import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
+import org.fcrepo.kernel.api.exception.InvalidMediaTypeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.InvalidPrefixException;
@@ -403,7 +404,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testDatastreamGraph() throws RepositoryException, InvalidChecksumException {
+    public void testDatastreamGraph() throws RepositoryException, InvalidChecksumException, InvalidMediaTypeException {
 
         final Container parentObject = containerService.findOrCreate(session, "/testDatastreamGraphParent");
         final Session jcrSession = getJcrSession(session);
@@ -1101,7 +1102,9 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testVersionedChildBinaryDeleted() throws RepositoryException, InvalidChecksumException, IOException {
+    public void testVersionedChildBinaryDeleted()
+            throws RepositoryException, InvalidChecksumException, IOException, InvalidMediaTypeException {
+
         final String pid = getRandomPid();
         final Container object = containerService.findOrCreate(session, "/" + pid);
         object.enableVersioning();

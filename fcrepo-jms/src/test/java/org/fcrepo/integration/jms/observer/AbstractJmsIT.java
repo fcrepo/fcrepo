@@ -55,6 +55,7 @@ import org.apache.activemq.ActiveMQConnectionFactory;
 import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.InvalidMediaTypeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.observer.EventType;
 import org.fcrepo.kernel.api.models.Container;
@@ -138,7 +139,7 @@ abstract class AbstractJmsIT implements MessageListener {
     }
 
     @Test(timeout = TIMEOUT)
-    public void testFileEvents() throws InvalidChecksumException, RepositoryException {
+    public void testFileEvents() throws InvalidChecksumException, RepositoryException, InvalidMediaTypeException {
 
         final FedoraSession session = repository.login();
         session.addSessionData(BASE_URL, TEST_BASE_URL);

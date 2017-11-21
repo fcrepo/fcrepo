@@ -101,6 +101,7 @@ import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.InvalidMediaTypeException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PreconditionException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -641,7 +642,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                                                    final InputStream requestBodyStream,
                                                    final ContentDisposition contentDisposition,
                                                    final MediaType contentType,
-                                                   final Collection<String> checksums) throws InvalidChecksumException {
+                                                   final Collection<String> checksums)
+            throws InvalidChecksumException, InvalidMediaTypeException {
         final Collection<URI> checksumURIs = checksums == null ?
                 new HashSet<>() : checksums.stream().map(checksum -> checksumURI(checksum)).collect(Collectors.toSet());
         final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";

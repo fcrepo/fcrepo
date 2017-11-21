@@ -21,8 +21,10 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Timer;
 
+import com.google.common.net.MediaType;
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.InvalidMediaTypeException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
@@ -154,7 +156,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     public void setContent(final InputStream content, final String contentType,
                            final Collection<URI> checksums, final String originalFileName,
                            final StoragePolicyDecisionPoint storagePolicyDecisionPoint)
-            throws InvalidChecksumException {
+            throws InvalidChecksumException, InvalidMediaTypeException {
 
         try {
             final Node contentNode = getNode();
@@ -163,8 +165,13 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
                 contentNode.addMixin(FEDORA_BINARY);
             }
 
-            if (contentType != null) {
-                contentNode.setProperty(HAS_MIME_TYPE, contentType);
+            if (contentType != null && !contentType.isEmpty()) {
+                try {
+                    final MediaType mediaType = MediaType.parse(contentType);
+                    contentNode.setProperty(HAS_MIME_TYPE, mediaType.toString());
+                } catch (IllegalArgumentException i) {
+                    throw new InvalidMediaTypeException(contentType);
+                }
             }
 
             if (originalFileName != null) {

@@ -32,6 +32,7 @@ import org.fcrepo.integration.kernel.modeshape.AbstractIT;
 import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.InvalidMediaTypeException;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.RepositoryService;
 
@@ -57,7 +58,8 @@ public class RepositoryServiceImplIT extends AbstractIT {
     private BinaryService binaryService;
 
     @Test
-    public void testGetAllObjectsDatastreamSize() throws RepositoryException, InvalidChecksumException {
+    public void testGetAllObjectsDatastreamSize() throws RepositoryException, InvalidChecksumException,
+            InvalidMediaTypeException {
         final long originalSize;
         FedoraSession session = repository.login();
         try {

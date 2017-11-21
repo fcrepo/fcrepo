@@ -122,6 +122,7 @@ import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.Variant;
 
+import com.google.common.net.MediaType;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -419,11 +420,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     @Test
     public void testGetExternalDatastream() throws IOException, ParseException {
-        final String externalContentType = "message/external-body;access-type=URL;url=\"some:uri\"";
+        final MediaType expectedMediaType =
+                MediaType.parse("message/external-body;access-type=URL;url=\"some:uri\"");
 
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id);
-        put.addHeader(CONTENT_TYPE, externalContentType);
+        put.addHeader(CONTENT_TYPE, expectedMediaType.toString());
         assertEquals(CREATED.getStatusCode(), getStatus(put));
 
         // Configure HEAD request to NOT follow redirects
@@ -433,8 +435,10 @@ public class FedoraLdpIT extends AbstractResourceIT {
         getObjMethod.setConfig(requestConfig.build());
 
         try (final CloseableHttpResponse response = execute(getObjMethod)) {
+            final MediaType actualMediaType =
+                    MediaType.parse(response.getFirstHeader(CONTENT_TYPE).getValue());
             assertEquals(TEMPORARY_REDIRECT.getStatusCode(), response.getStatusLine().getStatusCode());
-            assertEquals(externalContentType, response.getFirstHeader(CONTENT_TYPE).getValue());
+            assertEquals(expectedMediaType, actualMediaType);
             assertEquals("some:uri", response.getFirstHeader(CONTENT_LOCATION).getValue());
             assertEquals("bytes", response.getFirstHeader("Accept-Ranges").getValue());
             final ContentDisposition disposition =
@@ -738,11 +742,13 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createDatastream(dsId, "x", "01234567890123456789012345678901234567890123456789");
 
         final String dsUrl = serverAddress + dsId + "/x";
-        final String externalContentType = "message/external-body;access-type=URL;url=\"" + dsUrl + "\"";
+
+        final MediaType expectedContentType =
+                MediaType.parse("message/external-body;access-type=URL;url=\"" + dsUrl + "\"");
 
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id);
-        put.addHeader(CONTENT_TYPE, externalContentType);
+        put.addHeader(CONTENT_TYPE, expectedContentType.toString());
         assertEquals(CREATED.getStatusCode(), getStatus(put));
 
         // Configure GET request to NOT follow redirects
@@ -753,8 +759,10 @@ public class FedoraLdpIT extends AbstractResourceIT {
         getObjMethod.setConfig(requestConfig.build());
 
         try (final CloseableHttpResponse response = execute(getObjMethod)) {
+            final MediaType actualContentType =
+                    MediaType.parse(response.getFirstHeader(CONTENT_TYPE).getValue());
             assertEquals(TEMPORARY_REDIRECT.getStatusCode(), response.getStatusLine().getStatusCode());
-            assertEquals(externalContentType, response.getFirstHeader(CONTENT_TYPE).getValue());
+            assertEquals(expectedContentType, actualContentType);
             assertTrue(response.getHeaders(DIGEST).length > 0);
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
             assertTrue("Fixity Checksum doesn't match",
@@ -770,11 +778,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createDatastream(dsId, "x", "01234567890123456789012345678901234567890123456789");
 
         final String dsUrl = serverAddress + dsId + "/x";
-        final String externalContentType = "message/external-body;access-type=URL;url=\"" + dsUrl + "\"";
+        final MediaType expectedContentType =
+                MediaType.parse("message/external-body;access-type=URL;url=\"" + dsUrl + "\"");
 
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id);
-        put.addHeader(CONTENT_TYPE, externalContentType);
+        put.addHeader(CONTENT_TYPE, expectedContentType.toString());
         assertEquals(CREATED.getStatusCode(), getStatus(put));
 
         // Configure Get request to NOT follow redirects
@@ -785,8 +794,10 @@ public class FedoraLdpIT extends AbstractResourceIT {
         getObjMethod.setConfig(requestConfig.build());
 
         try (final CloseableHttpResponse response = execute(getObjMethod)) {
+            final MediaType actualContentType =
+                    MediaType.parse(response.getFirstHeader(CONTENT_TYPE).getValue());
             assertEquals(TEMPORARY_REDIRECT.getStatusCode(), response.getStatusLine().getStatusCode());
-            assertEquals(externalContentType, response.getFirstHeader(CONTENT_TYPE).getValue());
+            assertEquals(expectedContentType, actualContentType);
             assertTrue(response.getHeaders(DIGEST).length > 0);
 
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
@@ -3602,5 +3613,19 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(getObjMethod)) {
             assertTrue(response.getHeaders(DIGEST).length == 0);
         }
+    }
+
+    /*
+     * @see https://jira.duraspace.org/browse/FCREPO-2520
+     * @see https://jira.duraspace.org/browse/FCREPO-2658
+     */
+    @Test
+    public void testIngestFailesWithInvalidMediatype() {
+        final String invalidMediaTypeLiteral = "==invalid media type==";
+        final String id = getRandomUniqueId();
+        final HttpPut httpPut = putObjMethod(id);
+
+        httpPut.addHeader(CONTENT_TYPE, invalidMediaTypeLiteral.toString());
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(httpPut));
     }
 }
