@@ -17,8 +17,8 @@
  */
 package org.fcrepo.http.commons.api.rdf;
 
-import static java.util.Collections.singleton;
 import static com.google.common.collect.ImmutableList.of;
+import static java.util.Collections.singleton;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.replaceOnce;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
@@ -51,19 +51,20 @@ import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.TombstoneException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.FedoraTimeMap;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.modeshape.TombstoneImpl;
 import org.fcrepo.kernel.modeshape.identifiers.HashConverter;
 import org.fcrepo.kernel.modeshape.identifiers.NamespaceConverter;
 
+import org.apache.jena.rdf.model.Resource;
 import org.glassfish.jersey.uri.UriTemplate;
 import org.slf4j.Logger;
 import org.springframework.context.ApplicationContext;
 
 import com.google.common.base.Converter;
 import com.google.common.collect.Lists;
-import org.apache.jena.rdf.model.Resource;
 
 /**
  * Convert between Jena Resources and JCR Nodes using a JAX-RS UriBuilder to mediate the
@@ -118,9 +119,13 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
 
                 final boolean metadata = values.containsKey("path")
                         && values.get("path").endsWith("/" + FCR_METADATA);
+                final boolean timemap = values.containsKey("path") && values.get("path").endsWith("/" + FCR_VERSIONS);
 
                 final FedoraResource fedoraResource = nodeConverter.convert(node);
 
+                if (timemap) {
+                    return fedoraResource.findOrCreateTimeMap();
+                }
                 if (!metadata && fedoraResource instanceof NonRdfSourceDescription) {
                     return fedoraResource.getDescribedResource();
                 }
@@ -204,9 +209,13 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
             String path = "/" + values.get("path");
 
             final boolean metadata = path.endsWith("/" + FCR_METADATA);
+            final boolean timemap = path.endsWith("/" + FCR_VERSIONS);
 
             if (metadata) {
                 path = replaceOnce(path, "/" + FCR_METADATA, EMPTY);
+            }
+            if (timemap) {
+                path = replaceOnce(path, "/" + FCR_VERSIONS, EMPTY);
             }
 
             path = forward.convert(path);
@@ -249,31 +258,11 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
     }
 
     private static String getPath(final FedoraResource resource) {
-        if (resource.isFrozenResource()) {
-            // the versioned resource we're in
-            final FedoraResource versionableFrozenResource = resource.getVersionedAncestor();
-
-            // the unfrozen equivalent for the versioned resource
-            final FedoraResource unfrozenVersionableResource = versionableFrozenResource.getUnfrozenResource();
-
-            // the label for this version
-            final String versionLabel = versionableFrozenResource.getVersionLabelOfFrozenResource();
-
-            // the path to this resource within the versioning tree
-            final String pathWithinVersionable;
-
-            if (!resource.equals(versionableFrozenResource)) {
-                pathWithinVersionable = getRelativePath(resource, versionableFrozenResource);
-            } else {
-                pathWithinVersionable = "";
-            }
-
-            // and, finally, the path we want to expose in the URI
-            final String path = unfrozenVersionableResource.getPath()
-                    + "/" + FCR_VERSIONS
-                    + (versionLabel != null ? "/" + versionLabel : "")
-                    + pathWithinVersionable;
-            return path.startsWith("/") ? path : "/" + path;
+        if (resource instanceof FedoraTimeMap) {
+            // the path is relative to the parent, and unique so fake it here.
+            final FedoraResource parent = resource.getContainer();
+            final String parentPath = parent.getPath();
+            return parentPath + "/" + FCR_VERSIONS;
         }
         return resource.getPath();
     }

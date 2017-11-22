@@ -22,12 +22,15 @@ import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
+import static org.apache.jena.graph.Node.ANY;
+import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.fcrepo.http.commons.domain.RDFMediaType.APPLICATION_LINK_FORMAT;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEMAP_TYPE;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -41,6 +44,9 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
+import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.core.DatasetGraph;
+import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.junit.Test;
 
 /**
@@ -89,7 +95,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(createMethod)) {
             assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
         }
-        final HttpGet httpGet = getObjMethod(id + "/fcr:versions");
+        final HttpGet httpGet = getObjMethod(id + "/" + FCR_VERSIONS);
         httpGet.setHeader("Accept", APPLICATION_LINK_FORMAT);
         try (final CloseableHttpResponse response = execute(httpGet)) {
             assertEquals("Didn't get a OK response!", OK.getStatusCode(), getStatus(response));
@@ -98,6 +104,29 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             final Link[] bodyLinks = bodyList.stream().map(String::trim).filter(t -> !t.isEmpty())
                 .map(Link::valueOf).toArray(Link[]::new);
             assertArrayEquals(expectedLinks, bodyLinks);
+        }
+    }
+
+    @Test
+    public void testGetTimeMapRDFSubject() throws IOException {
+        final String id = getRandomUniqueId();
+        final String subjectURI = serverAddress + id;
+
+        final HttpPut createMethod = putObjMethod(id);
+
+        createMethod.addHeader(CONTENT_TYPE, "text/n3");
+        createMethod.addHeader(LINK, VERSIONED_RESOURCE_LINK_HEADER);
+        createMethod.setEntity(new StringEntity("<" + subjectURI + "> <info:test#label> \"foo\""));
+
+        try (final CloseableHttpResponse response = execute(createMethod)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+        }
+        final HttpGet httpGet = getObjMethod(id + "/" + FCR_VERSIONS);
+
+        try (final CloseableDataset dataset = getDataset(httpGet)) {
+            final DatasetGraph results = dataset.asDatasetGraph();
+            final Node subject = createURI(subjectURI + "/" + FCR_VERSIONS);
+            assertTrue("Did not find correct subject", results.contains(ANY, subject, ANY, ANY));
         }
     }
 }
