@@ -18,9 +18,9 @@
 package org.fcrepo.kernel.api.utils;
 
 import static java.net.URI.create;
+import static org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM.SHA1;
 import static org.fcrepo.kernel.api.utils.ContentDigest.asURI;
 import static org.fcrepo.kernel.api.utils.ContentDigest.getAlgorithm;
-import static org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM.SHA1;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;

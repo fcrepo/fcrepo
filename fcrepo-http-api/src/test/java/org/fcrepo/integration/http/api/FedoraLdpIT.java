@@ -99,9 +99,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Iterators;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -120,11 +117,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.Variant;
-import nu.validator.htmlparser.sax.HtmlParser;
-import nu.validator.saxtree.TreeBuilder;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -165,6 +162,13 @@ import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Iterators;
+
+import nu.validator.htmlparser.sax.HtmlParser;
+import nu.validator.saxtree.TreeBuilder;
 
 /**
  * @author cabeer
