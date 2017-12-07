@@ -359,14 +359,14 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createDatastream(id, "x", "01234567890123456789012345678901234567890123456789");
 
         final HttpHead headObjMethod = headObjMethod(id + "/x");
-        headObjMethod.addHeader(WANT_DIGEST, "SHA-1");
+        headObjMethod.addHeader(WANT_DIGEST, "SHA");
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
             assertEquals(TEXT_PLAIN, response.getFirstHeader(CONTENT_TYPE).getValue());
             assertTrue(response.getHeaders(DIGEST).length > 0);
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
             assertTrue("Fixity Checksum doesn't match",
-                    digesterHeaderValue.equals("sha1=9578f951955d37f20b601c26591e260c1e5389bf"));
+                    digesterHeaderValue.equals("sha=9578f951955d37f20b601c26591e260c1e5389bf"));
         }
     }
 
@@ -376,7 +376,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createDatastream(id, "x", "01234567890123456789012345678901234567890123456789");
 
         final HttpHead headObjMethod = headObjMethod(id + "/x");
-        headObjMethod.addHeader(WANT_DIGEST, "SHA-1, md5;q=0.3");
+        headObjMethod.addHeader(WANT_DIGEST, "SHA, md5;q=0.3");
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
             assertEquals(TEXT_PLAIN, response.getFirstHeader(CONTENT_TYPE).getValue());
@@ -384,7 +384,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
             assertTrue("SHA-1 Fixity Checksum doesn't match",
-                    digesterHeaderValue.indexOf("sha1=9578f951955d37f20b601c26591e260c1e5389bf") >= 0);
+                    digesterHeaderValue.indexOf("sha=9578f951955d37f20b601c26591e260c1e5389bf") >= 0);
             assertTrue("MD5 fixity checksum doesn't match",
                     digesterHeaderValue.indexOf("md5=baed005300234f3d1503c50a48ce8e6f") >= 0);
         }
@@ -459,7 +459,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         // Configure HEAD request to NOT follow redirects
         final HttpHead headObjMethod = headObjMethod(id);
-        headObjMethod.addHeader(WANT_DIGEST, "sha1");
+        headObjMethod.addHeader(WANT_DIGEST, "sha");
         final RequestConfig.Builder requestConfig = RequestConfig.custom();
         requestConfig.setRedirectsEnabled(false);
         headObjMethod.setConfig(requestConfig.build());
@@ -470,7 +470,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertTrue(response.getHeaders(DIGEST).length > 0);
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
             assertTrue("Fixity Checksum doesn't match",
-                    digesterHeaderValue.equals("sha1=9578f951955d37f20b601c26591e260c1e5389bf"));
+                    digesterHeaderValue.equals("sha=9578f951955d37f20b601c26591e260c1e5389bf"));
         }
     }
 
@@ -491,7 +491,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         // Configure HEAD request to NOT follow redirects
         final HttpHead headObjMethod = headObjMethod(id);
-        headObjMethod.addHeader(WANT_DIGEST, "sha1, md5;q=0.3");
+        headObjMethod.addHeader(WANT_DIGEST, "sha, md5;q=0.3");
         final RequestConfig.Builder requestConfig = RequestConfig.custom();
         requestConfig.setRedirectsEnabled(false);
         headObjMethod.setConfig(requestConfig.build());
@@ -503,7 +503,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
             assertTrue("SHA-1 Fixity Checksum doesn't match",
-                    digesterHeaderValue.indexOf("sha1=9578f951955d37f20b601c26591e260c1e5389bf") >= 0);
+                    digesterHeaderValue.indexOf("sha=9578f951955d37f20b601c26591e260c1e5389bf") >= 0);
             assertTrue("MD5 fixity checksum doesn't match",
                     digesterHeaderValue.indexOf("md5=baed005300234f3d1503c50a48ce8e6f") >= 0);
         }
@@ -694,7 +694,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createDatastream(id, "x", "01234567890123456789012345678901234567890123456789");
 
         final HttpGet getMethod = getDSMethod(id, "x");
-        getMethod.addHeader(WANT_DIGEST, "SHA-1");
+        getMethod.addHeader(WANT_DIGEST, "SHA");
         try (final CloseableHttpResponse response = execute(getMethod)) {
             final HttpEntity entity = response.getEntity();
             final String content = EntityUtils.toString(entity);
@@ -703,7 +703,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
             assertTrue("Fixity Checksum doesn't match",
-                    digesterHeaderValue.equals("sha1=9578f951955d37f20b601c26591e260c1e5389bf"));
+                    digesterHeaderValue.equals("sha=9578f951955d37f20b601c26591e260c1e5389bf"));
         }
     }
 
@@ -713,7 +713,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createDatastream(id, "x", "01234567890123456789012345678901234567890123456789");
 
         final HttpGet getMethod = getDSMethod(id, "x");
-        getMethod.addHeader(WANT_DIGEST, "SHA-1,md5;q=0.3");
+        getMethod.addHeader(WANT_DIGEST, "SHA,md5;q=0.3,sha-256;q=0.2");
         try (final CloseableHttpResponse response = execute(getMethod)) {
             final HttpEntity entity = response.getEntity();
             final String content = EntityUtils.toString(entity);
@@ -722,9 +722,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
             assertTrue("SHA-1 Fixity Checksum doesn't match",
-                    digesterHeaderValue.indexOf("sha1=9578f951955d37f20b601c26591e260c1e5389bf") >= 0);
+                digesterHeaderValue.indexOf("sha=9578f951955d37f20b601c26591e260c1e5389bf") >= 0);
             assertTrue("MD5 fixity checksum doesn't match",
                     digesterHeaderValue.indexOf("md5=baed005300234f3d1503c50a48ce8e6f") >= 0);
+            assertTrue("SHA-256 fixity checksum doesn't match",
+                digesterHeaderValue
+                    .indexOf("sha256=fb871ff8cce8fea83dfaeab41784305a1461e008dc02a371ed26d856c766c903") >= 0);
         }
     }
 
@@ -744,7 +747,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         // Configure GET request to NOT follow redirects
         final HttpGet getObjMethod = getObjMethod(id);
-        getObjMethod.addHeader(WANT_DIGEST, "sha1");
+        getObjMethod.addHeader(WANT_DIGEST, "sha");
         final RequestConfig.Builder requestConfig = RequestConfig.custom();
         requestConfig.setRedirectsEnabled(false);
         getObjMethod.setConfig(requestConfig.build());
@@ -755,7 +758,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertTrue(response.getHeaders(DIGEST).length > 0);
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
             assertTrue("Fixity Checksum doesn't match",
-                    digesterHeaderValue.equals("sha1=9578f951955d37f20b601c26591e260c1e5389bf"));
+                    digesterHeaderValue.equals("sha=9578f951955d37f20b601c26591e260c1e5389bf"));
         }
     }
 
@@ -776,7 +779,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         // Configure Get request to NOT follow redirects
         final HttpGet getObjMethod = getObjMethod(id);
-        getObjMethod.addHeader(WANT_DIGEST, "sha1, md5;q=0.3");
+        getObjMethod.addHeader(WANT_DIGEST, "sha, md5;q=0.3");
         final RequestConfig.Builder requestConfig = RequestConfig.custom();
         requestConfig.setRedirectsEnabled(false);
         getObjMethod.setConfig(requestConfig.build());
@@ -788,7 +791,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
             assertTrue("SHA-1 Fixity Checksum doesn't match",
-                    digesterHeaderValue.indexOf("sha1=9578f951955d37f20b601c26591e260c1e5389bf") >= 0);
+                    digesterHeaderValue.indexOf("sha=9578f951955d37f20b601c26591e260c1e5389bf") >= 0);
             assertTrue("MD5 fixity checksum doesn't match",
                     digesterHeaderValue.indexOf("md5=baed005300234f3d1503c50a48ce8e6f") >= 0);
         }
@@ -948,7 +951,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertTrue("Didn't find a triple we expected!", graph.contains(ANY,
                     createURI(location), createURI("http://example.org/test/x"), createLiteral("x")));
             for (int i = 0; i < 4; ++i) {
-                for (String suffix : Arrays.asList("a", "b")) {
+                for (final String suffix : Arrays.asList("a", "b")) {
                     assertFalse("Found a triple we deleted!", graph.contains(ANY,
                             createURI(location), createURI("http://example.org/test/" + suffix), createLiteral(i +
                                     "")));
@@ -1601,7 +1604,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpPost method = postObjMethod();
         final File img = new File("src/test/resources/test-objects/img.png");
         method.addHeader(CONTENT_TYPE, "application/octet-stream");
-        method.addHeader("Digest", "SHA1=f0b632679fab4f22e031010bd81a3b0544294730");
+        method.addHeader("Digest", "SHA=f0b632679fab4f22e031010bd81a3b0544294730");
         method.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
         method.setEntity(new FileEntity(img));
 
@@ -1618,7 +1621,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpPost method = postObjMethod();
         final File img = new File("src/test/resources/test-objects/img.png");
         method.addHeader(CONTENT_TYPE, "application/octet-stream");
-        method.addHeader("Digest", "SHA1=fedoraicon");
+        method.addHeader("Digest", "SHA=fedoraicon");
         method.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
         method.setEntity(new FileEntity(img));
 
@@ -1633,7 +1636,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpPost method = postObjMethod();
         final File img = new File("src/test/resources/test-objects/img.png");
         method.addHeader(CONTENT_TYPE, "application/octet-stream");
-        method.addHeader("Digest", "md5=not a valid hash,SHA1:thisisbadtoo");
+        method.addHeader("Digest", "md5=not a valid hash,SHA:thisisbadtoo");
         method.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
         method.setEntity(new FileEntity(img));
         assertEquals("Should be a 400 BAD REQUEST!", BAD_REQUEST.getStatusCode(), getStatus(method));
@@ -3340,12 +3343,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 new PutThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 3")),
                 new PutThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 4"))  };
 
-        for (PutThread t : threads) {
+        for (final PutThread t : threads) {
             t.start();
         }
 
         final List<PutThread> successfulThreads = new ArrayList<>();
-        for (PutThread t : threads) {
+        for (final PutThread t : threads) {
             t.join(1000);
             assertFalse("Thread " + t.getId() + " could not perform its operation in time!", t.isAlive());
             final int status = t.response.getStatusLine().getStatusCode();
@@ -3360,7 +3363,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     private class PutThread extends Thread {
 
-        private HttpPut put;
+        private final HttpPut put;
 
         private HttpResponse response;
 
@@ -3372,7 +3375,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         public void run() {
             try {
                 response = execute(put);
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 LOGGER.error("Thread " + Thread.currentThread().getId() + ", failed to PUT resource!", e);
             }
 
@@ -3445,7 +3448,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final int code = r.getStatusLine().getStatusCode();
             r.close();
             return code;
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(e);
         }
     }
@@ -3570,14 +3573,14 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final String headDigestValue;
         final HttpHead headObjMethod = headObjMethod(id + "/binary1");
-        headObjMethod.addHeader(WANT_DIGEST, "sha1, md5");
+        headObjMethod.addHeader(WANT_DIGEST, "sha, md5");
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             assertTrue(response.getHeaders(DIGEST).length > 0);
             headDigestValue = response.getHeaders(DIGEST)[0].getValue();
         }
 
         final HttpGet getObjMethod = getObjMethod(id + "/binary1");
-        getObjMethod.addHeader(WANT_DIGEST, "sha1, md5");
+        getObjMethod.addHeader(WANT_DIGEST, "sha, md5");
         try (final CloseableHttpResponse response = execute(getObjMethod)) {
             assertTrue(response.getHeaders(DIGEST).length > 0);
             assertEquals(headDigestValue, response.getHeaders(DIGEST)[0].getValue());

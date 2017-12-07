@@ -849,7 +849,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         final Collection<URI> checksumResults = binary.checkFixity(idTranslator, preferredDigests);
         final String digestValue = checksumResults.stream().map(uri -> uri.toString().replaceFirst("urn:", "")
-                .replaceFirst(":", "=")).collect(Collectors.joining(","));
+                .replaceFirst(":", "=").replaceFirst("sha1=", "sha=")).collect(Collectors.joining(","));
         return digestValue;
     }
 

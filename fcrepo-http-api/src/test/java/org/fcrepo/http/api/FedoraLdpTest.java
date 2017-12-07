@@ -589,7 +589,7 @@ public class FedoraLdpTest {
             testObj.evaluateRequestPreconditions(mockRequest, mockResponse, testObj.resource(),
                     mockSession, true);
             fail("Expected " + PreconditionException.class.getName() + " to be thrown.");
-        } catch (PreconditionException e) {
+        } catch (final PreconditionException e) {
             // expected
         }
 
@@ -629,7 +629,7 @@ public class FedoraLdpTest {
             testObj.evaluateRequestPreconditions(mockRequest, mockResponse, testObj.resource(),
                     mockSession, true);
             fail("Expected " + PreconditionException.class.getName() + " to be thrown.");
-        } catch (PreconditionException e) {
+        } catch (final PreconditionException e) {
             // expected
         }
 
@@ -1006,8 +1006,26 @@ public class FedoraLdpTest {
         try (final InputStream content = toInputStream("x", UTF_8)) {
             final MediaType requestContentType = MediaType.valueOf("some/mime-type; with=some; param=s");
             final String sha = "07a4d371f3b7b6283a8e1230b7ec6764f8287bf2";
-            final String requestSHA = "sha1=" + sha;
+            final String requestSHA = "sha=" + sha;
             final Set<URI> shaURI = singleton(URI.create("urn:sha1:" + sha));
+            final Response actual = testObj.createObject(null, requestContentType, "b", content, nonRDFSourceLink,
+                requestSHA);
+            assertEquals(CREATED.getStatusCode(), actual.getStatus());
+            verify(mockBinary).setContent(content, requestContentType.toString(), shaURI, "", null);
+        }
+    }
+
+    @Test
+    public void testCreateNewBinaryWithChecksumSHA256() throws MalformedRdfException,
+        InvalidChecksumException, IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+
+        setResource(Container.class);
+        when(mockBinaryService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockBinary);
+        try (final InputStream content = toInputStream("x", UTF_8)) {
+            final MediaType requestContentType = MediaType.valueOf("some/mime-type; with=some; param=s");
+            final String sha = "73cb3858a687a8494ca3323053016282f3dad39d42cf62ca4e79dda2aac7d9ac";
+            final String requestSHA = "sha256=" + sha;
+            final Set<URI> shaURI = singleton(URI.create("urn:sha256:" + sha));
             final Response actual = testObj.createObject(null, requestContentType, "b", content, nonRDFSourceLink,
                 requestSHA);
             assertEquals(CREATED.getStatusCode(), actual.getStatus());
@@ -1043,7 +1061,7 @@ public class FedoraLdpTest {
             final MediaType requestContentType = MediaType.valueOf("some/mime-type; with=some; param=s");
 
             final String sha = "07a4d371f3b7b6283a8e1230b7ec6764f8287bf2";
-            final String requestSHA = "sha1=" + sha;
+            final String requestSHA = "sha=" + sha;
             final URI shaURI = URI.create("urn:sha1:" + sha);
 
             final String md5 = "HUXZLQLMuI/KZ5KDcJPcOA==";
