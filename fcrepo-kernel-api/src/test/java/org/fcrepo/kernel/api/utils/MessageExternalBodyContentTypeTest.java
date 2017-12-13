@@ -21,7 +21,6 @@ package org.fcrepo.kernel.api.utils;
 import static org.junit.Assert.assertEquals;
 
 import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
-
 import org.junit.Test;
 
 /**
@@ -32,11 +31,16 @@ public class MessageExternalBodyContentTypeTest {
 
     private static String RESOURCE_URL = "http://www.example.com/file";
 
-    private static String EXTERNAL_RESOURCE = "message/external-body; access-type=URL; URL=\"" + RESOURCE_URL + "\"";
+    private static String EXTERNAL_URL_RESOURCE = "message/external-body; access-type=URL; URL=\""
+            + RESOURCE_URL + "\"";
+
+    private static String RESOURCE_FILE = "file:///path/to/file";
+    private static String LOCAL_FILE_RESOURCE = "message/external-body; access-type=LOCAL-FILE; LOCAL-FILE=\""
+            + RESOURCE_FILE + "\"";
 
     @Test
     public void testParseExternalBody() throws UnsupportedAccessTypeException {
-        final MessageExternalBodyContentType contentType = MessageExternalBodyContentType.parse(EXTERNAL_RESOURCE);
+        final MessageExternalBodyContentType contentType = MessageExternalBodyContentType.parse(EXTERNAL_URL_RESOURCE);
         assertEquals("Access-type doesn't match.", "url", contentType.getAccessType());
         assertEquals("URL doesn't match.", RESOURCE_URL, contentType.getResourceLocation());
     }
@@ -79,4 +83,10 @@ public class MessageExternalBodyContentTypeTest {
                 "message/external-body; access-type=url;");
     }
 
+    @Test
+    public void testParseLocalFileExternalBody() throws UnsupportedAccessTypeException {
+        final MessageExternalBodyContentType contentType = MessageExternalBodyContentType.parse(LOCAL_FILE_RESOURCE);
+        assertEquals("Access-type doesn't match.", "local-file", contentType.getAccessType());
+        assertEquals("File URI doesn't match.", RESOURCE_FILE, contentType.getResourceLocation());
+    }
 }

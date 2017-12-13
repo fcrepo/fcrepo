@@ -21,9 +21,8 @@ package org.fcrepo.kernel.api.utils;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
-
 import org.apache.commons.lang3.StringUtils;
+import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 
 import com.google.common.base.Splitter;
 
@@ -37,37 +36,43 @@ public class MessageExternalBodyContentType {
 
     private final static String MIME_TYPE_FIELD = "mime-type";
 
+    private final static String ACCESS_TYPE_FIELD = "access-type";
+
     /**
      * Utility method to parse the external body content in format: message/external-body; access-type=URL;
      * url="http://www.example.com/file"
-     * 
+     *
      * @param mimeType the MimeType value for external resource
      * @return MessageExternalBodyContentType value
      * @throws UnsupportedAccessTypeException if mimeType param is not a valid message/external-body content type.
      */
     public static MessageExternalBodyContentType parse(final String mimeType) throws UnsupportedAccessTypeException {
-        final Map<String, String> map = new HashMap<String, String>();
+        final Map<String, String> map = new HashMap<>();
         Splitter.on(';').omitEmptyStrings().trimResults()
                 .withKeyValueSeparator(Splitter.on('=').limit(2)).split(MIME_TYPE_FIELD + "=" + mimeType.trim())
                 // use lower case for keys, unwrap the quoted values (double quotes at the beginning and the end)
                 .forEach((k, v) -> map.put(k.toLowerCase(), v.replaceAll("^\"|\"$", "")));
 
-        final String accessType = map.get("access-type").toLowerCase();
+        if (!MEDIA_TYPE.equals(map.get(MIME_TYPE_FIELD)) || !map.containsKey(ACCESS_TYPE_FIELD)) {
+            throw new UnsupportedAccessTypeException(
+                    "The specified mimetype is not a valid message/external body content type: value=" + mimeType);
+        }
+
+        final String accessType = map.get(ACCESS_TYPE_FIELD).toLowerCase();
         final String resourceLocation = map.get(accessType);
-        if (MEDIA_TYPE.equals(map.get(MIME_TYPE_FIELD)) &&
-                "url".equals(accessType) &&
+        if (("url".equals(accessType) || "local-file".equals(accessType)) &&
                 !StringUtils.isBlank(resourceLocation)) {
             return new MessageExternalBodyContentType(accessType, resourceLocation);
         }
 
         throw new UnsupportedAccessTypeException(
-                "The specified type is not a valid message/external body content type: value=" + mimeType);
+                "The specified access-type is not a valid message/external body content type: value=" + mimeType);
 
     }
 
-    private String accessType;
+    private final String accessType;
 
-    private String resourceLocation;
+    private final String resourceLocation;
 
     private MessageExternalBodyContentType(final String accessType, final String resourceLocation) {
         this.accessType = accessType;
