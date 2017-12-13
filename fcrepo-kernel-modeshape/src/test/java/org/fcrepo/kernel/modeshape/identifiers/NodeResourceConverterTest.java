@@ -23,6 +23,7 @@ import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.Tombstone;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
+import org.fcrepo.kernel.modeshape.LocalFileBinaryImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,14 +31,17 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import javax.jcr.Node;
+import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TOMBSTONE;
+import static org.fcrepo.kernel.api.FedoraTypes.HAS_MIME_TYPE;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
@@ -82,6 +86,22 @@ public class NodeResourceConverterTest {
         when(mockNode.isNodeType(FEDORA_BINARY)).thenReturn(true);
         final FedoraResource actual = testObj.convert(mockNode);
         assertTrue(actual instanceof FedoraBinary);
+        assertEquals(mockNode, getJcrNode(actual));
+    }
+
+    @Test
+    public void testForwardLocalFileExternalBinary() throws RepositoryException {
+        final String localFileResource = "message/external-body; access-type=LOCAL-FILE; LOCAL-FILE=\"" +
+                "file:///path/to/file\"";
+
+        when(mockNode.isNodeType(FEDORA_BINARY)).thenReturn(true);
+        when(mockNode.hasProperty(HAS_MIME_TYPE)).thenReturn(true);
+        final Property mimeTypeProperty = mock(Property.class);
+        when(mimeTypeProperty.getString()).thenReturn(localFileResource);
+        when(mockNode.getProperty(HAS_MIME_TYPE)).thenReturn(mimeTypeProperty);
+
+        final FedoraResource actual = testObj.convert(mockNode);
+        assertTrue(actual instanceof LocalFileBinaryImpl);
         assertEquals(mockNode, getJcrNode(actual));
     }
 
