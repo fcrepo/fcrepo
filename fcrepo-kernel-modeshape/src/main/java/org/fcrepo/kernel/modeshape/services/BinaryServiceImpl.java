@@ -24,7 +24,7 @@ import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
-import org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl;
+import org.fcrepo.kernel.modeshape.LocalFileBinaryImpl;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
@@ -90,7 +90,19 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
                 });
             }
 
-            return new FedoraBinaryImpl(dsNode);
+            final FedoraBinaryImpl binary;
+            if (LocalFileBinaryImpl.hasAccessType(dsNode)) {
+                LOGGER.debug("Instantiating local file FedoraBinary for {}", path);
+                binary = new LocalFileBinaryImpl(dsNode.getNode(JCR_CONTENT));
+            } else {
+                binary = new FedoraBinaryImpl(dsNode.getNode(JCR_CONTENT));
+            }
+
+            if (dsNode.isNew()) {
+                touch(binary.getNode());
+            }
+
+            return binary;
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
