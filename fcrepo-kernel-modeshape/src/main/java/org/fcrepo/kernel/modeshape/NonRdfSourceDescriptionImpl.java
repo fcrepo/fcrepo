@@ -36,6 +36,7 @@ import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.modeshape.services.FedoraBinaryFactory;
 import org.slf4j.Logger;
 
 import java.util.Calendar;
@@ -63,7 +64,7 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements N
 
     @Override
     public FedoraResource getDescribedResource() {
-        return new FedoraBinaryImpl(getContentNode());
+        return FedoraBinaryFactory.getBinary(getContentNode());
     }
 
     @Override
