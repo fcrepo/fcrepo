@@ -61,10 +61,7 @@ import com.codahale.metrics.Timer;
  * @since 11/29/2017
  */
 public class LocalFileBinaryImpl extends FedoraBinaryImpl {
-
     private static final Logger LOGGER = getLogger(LocalFileBinaryImpl.class);
-
-    private static final String LOCAL_FILE_ACCESS_TYPE = "local-file";
 
     /**
      * Constructs a LocalFileBinaryImpl
@@ -252,7 +249,8 @@ public class LocalFileBinaryImpl extends FedoraBinaryImpl {
 
     private String getResourceLocation() {
         try {
-            final MessageExternalBodyContentType externalBody = MessageExternalBodyContentType.parse(getMimeType());
+            final MessageExternalBodyContentType externalBody
+                    = MessageExternalBodyContentType.parse(super.getMimeType());
             return externalBody.getResourceLocation();
         } catch (final UnsupportedAccessTypeException e) {
             throw new RepositoryRuntimeException(e);
@@ -289,24 +287,22 @@ public class LocalFileBinaryImpl extends FedoraBinaryImpl {
     }
 
     /**
-     * Check if the given node is a local file external binary
-     *
-     * @param node the given node
-     * @return whether the given node is a local file external binary
+     * Returns the specified mimetype in place of the original external-body if provided
      */
-    public static boolean hasAccessType(final Node node) {
+    @Override
+    public String getMimeType() {
+        final String mimeType = super.getMimeType();
         try {
-            if (!node.hasProperty(HAS_MIME_TYPE)) {
-                return false;
+            final MessageExternalBodyContentType extBodyType = MessageExternalBodyContentType.parse(mimeType);
+            // Return the overridden mimetype if one is available, otherwise give the original content type
+            final String mimeTypeOverride = extBodyType.getMimeType();
+            if (mimeTypeOverride == null) {
+                return mimeType;
+            } else {
+                return mimeTypeOverride;
             }
-            final String mimeType = node.getProperty(HAS_MIME_TYPE).getString();
-            final MessageExternalBodyContentType externalBody = MessageExternalBodyContentType.parse(mimeType);
-            return externalBody.getAccessType().equals(LOCAL_FILE_ACCESS_TYPE);
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
         } catch (final UnsupportedAccessTypeException e) {
-            LOGGER.debug("Node did not have a valid mimetype for a local-file external binary");
+            throw new RepositoryRuntimeException(e);
         }
-        return false;
     }
 }

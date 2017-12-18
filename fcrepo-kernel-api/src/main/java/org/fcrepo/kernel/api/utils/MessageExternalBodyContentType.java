@@ -34,9 +34,11 @@ public class MessageExternalBodyContentType {
 
     public final static String MEDIA_TYPE = "message/external-body";
 
-    private final static String MIME_TYPE_FIELD = "mime-type";
+    public final static String TYPE_FIELD = "type";
 
-    private final static String ACCESS_TYPE_FIELD = "access-type";
+    public final static String ACCESS_TYPE_FIELD = "access-type";
+
+    public final static String MIME_TYPE_OVERRIDE_FIELD = "mime-type";
 
     /**
      * Utility method to parse the external body content in format: message/external-body; access-type=URL;
@@ -49,16 +51,17 @@ public class MessageExternalBodyContentType {
     public static MessageExternalBodyContentType parse(final String mimeType) throws UnsupportedAccessTypeException {
         final Map<String, String> map = getContentTypeComponents(mimeType);
 
-        if (!MEDIA_TYPE.equals(map.get(MIME_TYPE_FIELD)) || !map.containsKey(ACCESS_TYPE_FIELD)) {
+        if (!MEDIA_TYPE.equals(map.get(TYPE_FIELD)) || !map.containsKey(ACCESS_TYPE_FIELD)) {
             throw new UnsupportedAccessTypeException(
                     "The specified mimetype is not a valid message/external body content type: value=" + mimeType);
         }
 
-        final String accessType = map.get(ACCESS_TYPE_FIELD).toLowerCase();
+        final String accessType = map.get(ACCESS_TYPE_FIELD);
         final String resourceLocation = map.get(accessType);
         if (("url".equals(accessType) || "local-file".equals(accessType)) &&
                 !StringUtils.isBlank(resourceLocation)) {
-            return new MessageExternalBodyContentType(accessType, resourceLocation);
+            return new MessageExternalBodyContentType(accessType, resourceLocation, map.get(
+                    MIME_TYPE_OVERRIDE_FIELD));
         }
 
         throw new UnsupportedAccessTypeException(
@@ -66,16 +69,32 @@ public class MessageExternalBodyContentType {
 
     }
 
-    public static boolean isExternalBodyType(final String mimeType) {
-        return mimeType != null && mimeType.startsWith(MEDIA_TYPE);
+    /**
+     * Returns true if the contentType vale contains the message/external-body type
+     *
+     * @param contentType content type
+     * @return true if the contentType vale contains the message/external-body type
+     */
+    public static boolean isExternalBodyType(final String contentType) {
+        return contentType != null && contentType.startsWith(MEDIA_TYPE);
     }
 
-    public static Map<String, String> getContentTypeComponents(final String mimeType) {
+    /**
+     * Returns a map containing components of the given contentType value, including the type value and all of the
+     * parameters by name. Keys are named "type" or by the parameter name, respectively.
+     *
+     * @param contentType content-type header value to decompose
+     * @return map containing the type and parameters from the provided content-type.
+     */
+    private static Map<String, String> getContentTypeComponents(final String contentType) {
         final Map<String, String> map = new HashMap<>();
         Splitter.on(';').omitEmptyStrings().trimResults()
-                .withKeyValueSeparator(Splitter.on('=').limit(2)).split(MIME_TYPE_FIELD + "=" + mimeType.trim())
+                .withKeyValueSeparator(Splitter.on('=').limit(2)).split(TYPE_FIELD + "=" + contentType.trim())
                 // use lower case for keys, unwrap the quoted values (double quotes at the beginning and the end)
                 .forEach((k, v) -> map.put(k.toLowerCase(), v.replaceAll("^\"|\"$", "")));
+        if (map.containsKey(ACCESS_TYPE_FIELD)) {
+            map.put(ACCESS_TYPE_FIELD, map.get(ACCESS_TYPE_FIELD).toLowerCase());
+        }
         return map;
     }
 
@@ -83,9 +102,13 @@ public class MessageExternalBodyContentType {
 
     private final String resourceLocation;
 
-    private MessageExternalBodyContentType(final String accessType, final String resourceLocation) {
+    private final String mimeType;
+
+    private MessageExternalBodyContentType(final String accessType, final String resourceLocation,
+            final String mimeType) {
         this.accessType = accessType;
         this.resourceLocation = resourceLocation;
+        this.mimeType = mimeType;
     }
 
     /**
@@ -100,5 +123,12 @@ public class MessageExternalBodyContentType {
      */
     public String getAccessType() {
         return accessType;
+    }
+
+    /**
+     * @return The mimetype override parameter, if one was provided
+     */
+    public String getMimeType() {
+        return mimeType;
     }
 }

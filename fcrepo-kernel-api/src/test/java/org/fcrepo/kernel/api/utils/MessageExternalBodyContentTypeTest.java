@@ -89,4 +89,13 @@ public class MessageExternalBodyContentTypeTest {
         assertEquals("Access-type doesn't match.", "local-file", contentType.getAccessType());
         assertEquals("File URI doesn't match.", RESOURCE_FILE, contentType.getResourceLocation());
     }
+
+    @Test
+    public void testParseWithMimeTypeOverride() throws Exception {
+        final String contentTypeValue = LOCAL_FILE_RESOURCE + "; mime-type=\"text/plain\"";
+        final MessageExternalBodyContentType contentType = MessageExternalBodyContentType.parse(contentTypeValue);
+        assertEquals("Access-type doesn't match.", "local-file", contentType.getAccessType());
+        assertEquals("File URI doesn't match.", RESOURCE_FILE, contentType.getResourceLocation());
+        assertEquals("Override Mime type doesn't match", "text/plain", contentType.getMimeType());
+    }
 }

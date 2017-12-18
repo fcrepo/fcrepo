@@ -176,6 +176,18 @@ public class LocalFileBinaryImplTest {
     }
 
     @Test
+    public void testGetMimeTypeWithOverride() throws Exception {
+        getContentNodeMock(mockContent, EXPECTED_CONTENT);
+
+        final String fullMimeType = mimeType + "; mime-type=\"text/plain\"";
+
+        when(mimeTypeProperty.getString()).thenReturn(fullMimeType);
+        when(mockValue.getString()).thenReturn(fullMimeType);
+
+        assertEquals("text/plain", testObj.getMimeType());
+    }
+
+    @Test
     public void testHasMixin() throws Exception {
         assertTrue(LocalFileBinaryImpl.hasMixin(mockContent));
     }
@@ -186,33 +198,6 @@ public class LocalFileBinaryImplTest {
         when(mockContent.isNodeType(FEDORA_TOMBSTONE)).thenReturn(true);
 
         assertFalse(LocalFileBinaryImpl.hasMixin(mockContent));
-    }
-
-    @Test
-    public void testHasAccessType() throws Exception {
-        assertTrue(LocalFileBinaryImpl.hasAccessType(mockContent));
-    }
-
-    @Test
-    public void testHasAccessTypeNotExternal() throws Exception {
-        when(mimeTypeProperty.getString()).thenReturn("text/plain");
-
-        assertFalse(LocalFileBinaryImpl.hasAccessType(mockContent));
-    }
-
-    @Test
-    public void testHasAccessTypeNotLocalFile() throws Exception {
-        when(mimeTypeProperty.getString()).thenReturn(
-                "message/external-body; access-type=URL; URL=\"http://example.com/file\"");
-
-        assertFalse(LocalFileBinaryImpl.hasAccessType(mockContent));
-    }
-
-    @Test
-    public void testHasAccessTypeNoMimeType() throws Exception {
-        when(mockContent.hasProperty(HAS_MIME_TYPE)).thenReturn(false);
-
-        assertFalse(LocalFileBinaryImpl.hasAccessType(mockContent));
     }
 
     private String makeMimeType(final File file) {
