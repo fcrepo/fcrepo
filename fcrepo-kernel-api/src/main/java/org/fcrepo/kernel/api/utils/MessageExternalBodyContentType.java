@@ -47,11 +47,7 @@ public class MessageExternalBodyContentType {
      * @throws UnsupportedAccessTypeException if mimeType param is not a valid message/external-body content type.
      */
     public static MessageExternalBodyContentType parse(final String mimeType) throws UnsupportedAccessTypeException {
-        final Map<String, String> map = new HashMap<>();
-        Splitter.on(';').omitEmptyStrings().trimResults()
-                .withKeyValueSeparator(Splitter.on('=').limit(2)).split(MIME_TYPE_FIELD + "=" + mimeType.trim())
-                // use lower case for keys, unwrap the quoted values (double quotes at the beginning and the end)
-                .forEach((k, v) -> map.put(k.toLowerCase(), v.replaceAll("^\"|\"$", "")));
+        final Map<String, String> map = getContentTypeComponents(mimeType);
 
         if (!MEDIA_TYPE.equals(map.get(MIME_TYPE_FIELD)) || !map.containsKey(ACCESS_TYPE_FIELD)) {
             throw new UnsupportedAccessTypeException(
@@ -68,6 +64,19 @@ public class MessageExternalBodyContentType {
         throw new UnsupportedAccessTypeException(
                 "The specified access-type is not a valid message/external body content type: value=" + mimeType);
 
+    }
+
+    public static boolean isExternalBodyType(final String mimeType) {
+        return mimeType != null && mimeType.startsWith(MEDIA_TYPE);
+    }
+
+    public static Map<String, String> getContentTypeComponents(final String mimeType) {
+        final Map<String, String> map = new HashMap<>();
+        Splitter.on(';').omitEmptyStrings().trimResults()
+                .withKeyValueSeparator(Splitter.on('=').limit(2)).split(MIME_TYPE_FIELD + "=" + mimeType.trim())
+                // use lower case for keys, unwrap the quoted values (double quotes at the beginning and the end)
+                .forEach((k, v) -> map.put(k.toLowerCase(), v.replaceAll("^\"|\"$", "")));
+        return map;
     }
 
     private final String accessType;
