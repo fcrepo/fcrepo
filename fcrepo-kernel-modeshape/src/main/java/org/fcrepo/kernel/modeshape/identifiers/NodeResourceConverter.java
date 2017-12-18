@@ -24,9 +24,9 @@ import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl;
 import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
-import org.fcrepo.kernel.modeshape.LocalFileBinaryImpl;
 import org.fcrepo.kernel.modeshape.ContainerImpl;
 import org.fcrepo.kernel.modeshape.TombstoneImpl;
+import org.fcrepo.kernel.modeshape.services.FedoraBinaryFactory;
 
 import javax.jcr.Node;
 
@@ -54,11 +54,7 @@ public class NodeResourceConverter extends Converter<Node, FedoraResource> {
         if (NonRdfSourceDescriptionImpl.hasMixin(node)) {
             fedoraResource = new NonRdfSourceDescriptionImpl(node);
         } else if (FedoraBinaryImpl.hasMixin(node)) {
-            if (LocalFileBinaryImpl.hasAccessType(node)) {
-                fedoraResource = new LocalFileBinaryImpl(node);
-            } else {
-                fedoraResource = new FedoraBinaryImpl(node);
-            }
+            return FedoraBinaryFactory.getBinary(node);
         } else if (TombstoneImpl.hasMixin(node)) {
             fedoraResource = new TombstoneImpl(node);
         } else {
