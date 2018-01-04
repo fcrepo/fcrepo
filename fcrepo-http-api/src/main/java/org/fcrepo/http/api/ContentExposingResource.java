@@ -17,7 +17,7 @@
  */
 package org.fcrepo.http.api;
 
-import static com.google.common.base.Strings.nullToEmpty;
+import static org.fcrepo.kernel.api.utils.MessageExternalBodyContentType.isExternalBodyType;
 import static java.util.EnumSet.of;
 import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.empty;
@@ -228,13 +228,13 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         final RdfNamespacedStream outputStream;
 
         if (resource() instanceof FedoraBinary) {
-            final MediaType mediaType = getBinaryResourceMediaType();
+            final URI redirectResourceLocation = getExternalBodyRedirectLocation();
 
-            if (isExternalBody(mediaType)) {
-                return externalBodyRedirect(getExternalResourceLocation(mediaType)).build();
+            if (redirectResourceLocation != null) {
+                return externalBodyRedirect(redirectResourceLocation).build();
+            } else {
+                return getBinaryContent(rangeValue);
             }
-
-            return getBinaryContent(rangeValue);
         } else {
             outputStream = new RdfNamespacedStream(
                     new DefaultRdfStream(rdfStream.topic(), concat(rdfStream,
@@ -272,8 +272,17 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * @return true if matches
      */
     protected boolean isExternalBody(final MediaType mediaType) {
-        return mediaType == null ? false : (mediaType.getType() + "/" + mediaType.getSubtype()).equals(
-                MessageExternalBodyContentType.MEDIA_TYPE);
+        return mediaType == null ? false : MessageExternalBodyContentType.isExternalBodyType(mediaType.toString());
+    }
+
+    protected URI getExternalBodyRedirectLocation() throws UnsupportedAccessTypeException {
+        final String mimeType = ((FedoraBinary) resource()).getMimeType();
+        if (!isExternalBodyType(mimeType)) {
+            return null;
+        }
+
+        final MessageExternalBodyContentType externalType = MessageExternalBodyContentType.parse(mimeType);
+        return URI.create(externalType.getResourceLocation());
     }
 
     protected ResponseBuilder externalBodyRedirect(final URI resourceLocation) {
