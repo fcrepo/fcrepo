@@ -18,6 +18,7 @@
 package org.fcrepo.kernel.modeshape;
 
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.File;
@@ -70,14 +71,6 @@ public class LocalFileBinaryImpl extends FedoraBinaryImpl {
      */
     public LocalFileBinaryImpl(final Node node) {
         super(node);
-
-        if (node.isNew()) {
-            try {
-                decorateLocalFileNode(node, new HashSet<>());
-            } catch (final RepositoryException e) {
-                LOGGER.warn("Count not decorate {} with LocalFileBinaryImpl properties: {}", node, e);
-            }
-        }
     }
 
     /*
@@ -104,6 +97,11 @@ public class LocalFileBinaryImpl extends FedoraBinaryImpl {
                            final StoragePolicyDecisionPoint storagePolicyDecisionPoint)
             throws InvalidChecksumException {
 
+        if (contentType == null) {
+            throw new IllegalArgumentException(
+                    "ContentType must be non-null when setting content for local file binary");
+        }
+
         try {
             final Node contentNode = getNode();
 
@@ -111,13 +109,14 @@ public class LocalFileBinaryImpl extends FedoraBinaryImpl {
                 contentNode.addMixin(FEDORA_BINARY);
             }
 
-            if (contentType != null) {
-                contentNode.setProperty(HAS_MIME_TYPE, contentType);
-            }
+            contentNode.setProperty(HAS_MIME_TYPE, contentType);
 
             if (originalFileName != null) {
                 contentNode.setProperty(FILENAME, originalFileName);
             }
+
+            // Store the contentType in the required jcr:data property
+            contentNode.setProperty(JCR_DATA, contentType);
 
             LOGGER.debug("Created content node at path: {}", contentNode.getPath());
 
