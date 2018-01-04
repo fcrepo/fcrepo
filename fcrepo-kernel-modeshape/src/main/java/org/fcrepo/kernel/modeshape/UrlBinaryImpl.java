@@ -38,20 +38,20 @@ import org.slf4j.Logger;
 import com.codahale.metrics.Timer;
 
 /**
- * External binary from a uri
+ * External binary from a url
  *
  * @author bbpennel
  * @since 12/14/2017
  */
-public class UriBinaryImpl extends FedoraBinaryImpl {
-    private static final Logger LOGGER = getLogger(UriBinaryImpl.class);
+public class UrlBinaryImpl extends FedoraBinaryImpl {
+    private static final Logger LOGGER = getLogger(UrlBinaryImpl.class);
 
     /**
-     * Construct UriBinaryImpl
+     * Construct UrlBinaryImpl
      *
      * @param node node
      */
-    public UriBinaryImpl(final Node node) {
+    public UrlBinaryImpl(final Node node) {
         super(node);
     }
 
