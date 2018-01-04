@@ -47,6 +47,12 @@ public class FedoraBinaryFactory {
     private FedoraBinaryFactory() {
     }
 
+    /**
+     * Gets a FedoraBinary object for the given node
+     *
+     * @param node the node
+     * @return new FedoraBinary object for the node
+     */
     public static FedoraBinary getBinary(final Node node) {
         try {
             final String mimeType;
