@@ -282,7 +282,11 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
 
         final MessageExternalBodyContentType externalType = MessageExternalBodyContentType.parse(mimeType);
-        return URI.create(externalType.getResourceLocation());
+        if (externalType.getAccessType().equals("url")) {
+            return URI.create(externalType.getResourceLocation());
+        } else {
+            return null;
+        }
     }
 
     protected ResponseBuilder externalBodyRedirect(final URI resourceLocation) {
