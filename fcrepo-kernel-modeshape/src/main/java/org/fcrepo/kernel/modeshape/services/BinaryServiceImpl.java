@@ -23,6 +23,7 @@ import org.fcrepo.kernel.api.exception.ResourceTypeException;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
+import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
@@ -50,11 +51,16 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
 
     private static final Logger LOGGER = getLogger(BinaryServiceImpl.class);
 
+    @Override
+    public FedoraBinary findOrCreate(final FedoraSession session, final String path) {
+        return findOrCreate(session, path, null);
+    }
+
     /**
      * {@inheritDoc}
      */
     @Override
-    public FedoraBinary findOrCreate(final FedoraSession session, final String path) {
+    public FedoraBinary findOrCreate(final FedoraSession session, final String path, final String contentType) {
         try {
             final Node dsNode = findOrCreateNode(session, path, NT_FILE);
 
@@ -68,11 +74,14 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
             }
 
             final Node contentNode = dsNode.getNode(JCR_CONTENT);
-            final FedoraBinary binary = FedoraBinaryFactory.getBinary(contentNode);
 
+            final FedoraBinary binary;
             if (dsNode.isNew()) {
-                // Only FedoraBinaryImpls can be newly created via this method
-                touch(((FedoraBinaryImpl) binary).getNode());
+                binary = FedoraBinaryFactory.getBinary(contentNode, contentType);
+
+                touch(((FedoraResourceImpl) binary).getNode());
+            } else {
+                binary = FedoraBinaryFactory.getBinary(contentNode);
             }
 
             return binary;

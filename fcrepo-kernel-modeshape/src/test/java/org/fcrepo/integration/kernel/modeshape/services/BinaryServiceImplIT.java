@@ -17,6 +17,7 @@
  */
 package org.fcrepo.integration.kernel.modeshape.services;
 
+import static org.fcrepo.kernel.api.FedoraTypes.HAS_MIME_TYPE;
 import static org.fcrepo.kernel.api.FedoraTypes.FILENAME;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.junit.Assert.assertEquals;
@@ -26,6 +27,8 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import javax.inject.Inject;
 import javax.jcr.Session;
@@ -132,5 +135,39 @@ public class BinaryServiceImplIT extends AbstractIT {
         session.expire();
     }
 
+    @Test
+    public void testGetDatastreamContentLocalFile() throws Exception {
+        FedoraSession session = repository.login();
+        Session jcrSession = getJcrSession(session);
+        final Path contentFile = Files.createTempFile("content", ".txt");
+        Files.write(contentFile, "asdf".getBytes());
+
+        final String contentType = "message/external-body; access-type=LOCAL-FILE; LOCAL-FILE=\"file://"
+                + contentFile.toString() + "\"";
+
+        binaryService.findOrCreate(session, "/testLocalFileNode", contentType).setContent(
+                null,
+                contentType,
+                null,
+                null,
+                null
+        );
+
+        session.commit();
+        session.expire();
+
+        session = repository.login();
+        jcrSession = getJcrSession(session);
+
+        assertTrue(jcrSession.getRootNode().hasNode("testLocalFileNode"));
+        assertEquals(contentType, jcrSession.getNode("/testLocalFileNode").getNode(
+                JCR_CONTENT).getProperty(HAS_MIME_TYPE).getString());
+
+        final FedoraBinary binary =
+                binaryService.findOrCreate(session, "/testLocalFileNode");
+        assertEquals("asdf", IOUtils.toString(binary.getContent(), "UTF-8"));
+
+        session.expire();
+    }
 
 }

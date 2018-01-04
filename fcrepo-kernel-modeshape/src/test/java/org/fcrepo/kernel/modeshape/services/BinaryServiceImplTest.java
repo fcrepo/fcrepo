@@ -113,6 +113,7 @@ public class BinaryServiceImplTest {
         when(mockNode.isNodeType(FEDORA_BINARY)).thenReturn(true);
         when(mockNode.hasProperty(HAS_MIME_TYPE)).thenReturn(true);
         final Property mimeTypeProperty = mock(Property.class);
+        when(mimeTypeProperty.getString()).thenReturn(LOCAL_FILE_RESOURCE);
         when(mockNode.getProperty(HAS_MIME_TYPE)).thenReturn(mimeTypeProperty);
 
         when(mockSession.getNode("/")).thenReturn(mockRoot);
