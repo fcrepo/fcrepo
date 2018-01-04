@@ -23,15 +23,13 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
-import javax.jcr.Value;
-
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.utils.MessageExternalBodyContentType;
 import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
 import org.fcrepo.kernel.modeshape.LocalFileBinaryImpl;
-import org.fcrepo.kernel.modeshape.UriBinaryImpl;
+import org.fcrepo.kernel.modeshape.UrlBinaryImpl;
 import org.slf4j.Logger;
 
 /**
@@ -44,47 +42,54 @@ public class FedoraBinaryFactory {
 
     private static final String LOCAL_FILE_ACCESS_TYPE = "local-file";
 
-    private static final String URI_ACCESS_TYPE = "uri";
+    private static final String URL_ACCESS_TYPE = "url";
 
     private FedoraBinaryFactory() {
+    }
+
+    public static FedoraBinary getBinary(final Node node) {
+        try {
+            final String mimeType;
+            if (node.hasProperty(HAS_MIME_TYPE)) {
+                mimeType = node.getProperty(HAS_MIME_TYPE).getString();
+            } else {
+                mimeType = null;
+            }
+
+            return getBinary(node, mimeType);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     /**
      * Get a FedoraBinary object for the given node
      *
      * @param node node
+     * @param mimeType mimetype of datastream
      * @return new FedoraBinary object for node
      */
-    public static FedoraBinary getBinary(final Node node) {
-        final String accessType = getAccessType(node);
+    public static FedoraBinary getBinary(final Node node, final String mimeType) {
+        final String accessType = mimeType == null ? null : getAccessType(mimeType);
 
         if (accessType != null) {
             if (LOCAL_FILE_ACCESS_TYPE.equals(accessType)) {
                 LOGGER.debug("Instantiating local file FedoraBinary");
                 return new LocalFileBinaryImpl(node);
-            } else if (URI_ACCESS_TYPE.equals(accessType)) {
+            } else if (URL_ACCESS_TYPE.equals(accessType)) {
                 LOGGER.debug("Instantiating URI FedoraBinary");
-                return new UriBinaryImpl(node);
+                return new UrlBinaryImpl(node);
             }
         }
 
         return new FedoraBinaryImpl(node);
     }
 
-    private static String getAccessType(final Node node) {
+    private static String getAccessType(final String mimeType) {
         try {
-            if (!node.hasProperty(HAS_MIME_TYPE)) {
-                return null;
-            }
-            for (final Value value : node.getProperty(HAS_MIME_TYPE).getValues()) {
-                final String mimeType = value.getString();
-                if (!isExternalBodyType(mimeType)) {
-                    continue;
-                }
+            if (isExternalBodyType(mimeType)) {
                 return MessageExternalBodyContentType.parse(mimeType).getAccessType();
             }
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
         } catch (final UnsupportedAccessTypeException e) {
             LOGGER.debug("Node did not have a valid mimetype for an external binary");
         }
