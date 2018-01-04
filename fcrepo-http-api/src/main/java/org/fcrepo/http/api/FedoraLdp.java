@@ -435,7 +435,6 @@ public class FedoraLdp extends ContentExposingResource {
                                 + " to " + interactionModel + " is not allowed!");
                 }
             } else {
-
                 checkExistingAncestor(path);
 
                 final MediaType effectiveContentType
@@ -638,6 +637,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         final String interactionModel = checkInteractionModel(links);
 
+        // If request is an external binary, verify access-type before proceeding
         if (isExternalBody(requestContentType)) {
             checkMessageExternalBody(requestContentType);
         }
@@ -663,9 +663,7 @@ public class FedoraLdp extends ContentExposingResource {
 
             LOGGER.info("Ingest with path: {}", newObjectPath);
 
-            final MediaType effectiveContentType
-                    = requestBodyStream == null || requestContentType == null ? null : contentType;
-            resource = createFedoraResource(newObjectPath, interactionModel, effectiveContentType,
+            resource = createFedoraResource(newObjectPath, interactionModel, requestContentType,
                     !(requestBodyStream == null || requestContentType == null));
 
             try (final RdfStream resourceTriples =
@@ -859,10 +857,13 @@ public class FedoraLdp extends ContentExposingResource {
 
     private FedoraResource createFedoraResource(final String path, final String interactionModel,
             final MediaType contentType, final boolean contentPresent) {
+
+        final MediaType simpleContentType = contentPresent ? getSimpleContentType(contentType) : null;
+
         final FedoraResource result;
         if ("ldp:NonRDFSource".equals(interactionModel) ||
-                (contentPresent && interactionModel == null && !isRDF(contentType))) {
-            result = binaryService.findOrCreate(session.getFedoraSession(), path);
+                (contentPresent && interactionModel == null && !isRDF(simpleContentType))) {
+            result = binaryService.findOrCreate(session.getFedoraSession(), path, contentType.toString());
         } else {
             result = containerService.findOrCreate(session.getFedoraSession(), path);
         }
