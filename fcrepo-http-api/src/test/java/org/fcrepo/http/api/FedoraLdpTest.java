@@ -60,6 +60,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anySetOf;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -589,7 +590,7 @@ public class FedoraLdpTest {
             testObj.evaluateRequestPreconditions(mockRequest, mockResponse, testObj.resource(),
                     mockSession, true);
             fail("Expected " + PreconditionException.class.getName() + " to be thrown.");
-        } catch (PreconditionException e) {
+        } catch (final PreconditionException e) {
             // expected
         }
 
@@ -629,7 +630,7 @@ public class FedoraLdpTest {
             testObj.evaluateRequestPreconditions(mockRequest, mockResponse, testObj.resource(),
                     mockSession, true);
             fail("Expected " + PreconditionException.class.getName() + " to be thrown.");
-        } catch (PreconditionException e) {
+        } catch (final PreconditionException e) {
             // expected
         }
 
@@ -829,7 +830,8 @@ public class FedoraLdpTest {
         when(mockBinary.isNew()).thenReturn(true);
 
         when(mockNodeService.exists(mockFedoraSession, "/some/path")).thenReturn(false);
-        when(mockBinaryService.findOrCreate(mockFedoraSession, "/some/path")).thenReturn(mockBinary);
+        when(mockBinaryService.findOrCreate(eq(mockFedoraSession), eq("/some/path"), anyString()))
+                .thenReturn(mockBinary);
 
         final Response actual = testObj.createOrReplaceObjectRdf(TEXT_PLAIN_TYPE,
                 toInputStream("xyz", UTF_8), null, null, nonRDFSourceLink, null);
@@ -952,7 +954,8 @@ public class FedoraLdpTest {
     public void testCreateNewBinary() throws MalformedRdfException, InvalidChecksumException,
            IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
         setResource(Container.class);
-        when(mockBinaryService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockBinary);
+        when(mockBinaryService.findOrCreate(eq(mockFedoraSession), eq("/b"), anyString()))
+                .thenReturn(mockBinary);
         try (final InputStream content = toInputStream("x", UTF_8)) {
             final Response actual = testObj.createObject(null, APPLICATION_OCTET_STREAM_TYPE, "b", content,
                 nonRDFSourceLink, null);
@@ -965,7 +968,8 @@ public class FedoraLdpTest {
     public void testCreateNewBinaryWithInsufficientResources() throws MalformedRdfException,
            InvalidChecksumException, IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
         setResource(Container.class);
-        when(mockBinaryService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockBinary);
+        when(mockBinaryService.findOrCreate(eq(mockFedoraSession), eq("/b"), anyString()))
+                .thenReturn(mockBinary);
 
 
         try (final InputStream content = toInputStream("x", UTF_8)) {
@@ -987,7 +991,8 @@ public class FedoraLdpTest {
            InvalidChecksumException, IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
 
         setResource(Container.class);
-        when(mockBinaryService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockBinary);
+        when(mockBinaryService.findOrCreate(eq(mockFedoraSession), eq("/b"), anyString()))
+                .thenReturn(mockBinary);
         try (final InputStream content = toInputStream("x", UTF_8)) {
             final MediaType requestContentType = MediaType.valueOf("some/mime-type; with=some; param=s");
             final Response actual = testObj.createObject(null, requestContentType, "b", content, nonRDFSourceLink,
@@ -1002,7 +1007,8 @@ public class FedoraLdpTest {
            InvalidChecksumException, IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
 
         setResource(Container.class);
-        when(mockBinaryService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockBinary);
+        when(mockBinaryService.findOrCreate(eq(mockFedoraSession), eq("/b"), anyString()))
+                .thenReturn(mockBinary);
         try (final InputStream content = toInputStream("x", UTF_8)) {
             final MediaType requestContentType = MediaType.valueOf("some/mime-type; with=some; param=s");
             final String sha = "07a4d371f3b7b6283a8e1230b7ec6764f8287bf2";
@@ -1020,7 +1026,8 @@ public class FedoraLdpTest {
             InvalidChecksumException, IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
 
         setResource(Container.class);
-        when(mockBinaryService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockBinary);
+        when(mockBinaryService.findOrCreate(eq(mockFedoraSession), eq("/b"), anyString()))
+                .thenReturn(mockBinary);
         try (final InputStream content = toInputStream("x", UTF_8)) {
             final MediaType requestContentType = MediaType.valueOf("some/mime-type; with=some; param=s");
             final String md5 = "HUXZLQLMuI/KZ5KDcJPcOA==";
@@ -1038,7 +1045,8 @@ public class FedoraLdpTest {
            InvalidChecksumException, IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
 
         setResource(Container.class);
-        when(mockBinaryService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockBinary);
+        when(mockBinaryService.findOrCreate(eq(mockFedoraSession), eq("/b"), anyString()))
+                .thenReturn(mockBinary);
         try (final InputStream content = toInputStream("x", UTF_8)) {
             final MediaType requestContentType = MediaType.valueOf("some/mime-type; with=some; param=s");
 
