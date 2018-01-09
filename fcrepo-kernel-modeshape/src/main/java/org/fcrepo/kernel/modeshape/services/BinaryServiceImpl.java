@@ -53,16 +53,11 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
 
     private static final Logger LOGGER = getLogger(BinaryServiceImpl.class);
 
-    @Override
-    public FedoraBinary findOrCreate(final FedoraSession session, final String path) {
-        return findOrCreate(session, path, null);
-    }
-
     /**
      * {@inheritDoc}
      */
     @Override
-    public FedoraBinary findOrCreate(final FedoraSession session, final String path, final String contentType) {
+    public FedoraBinary findOrCreate(final FedoraSession session, final String path) {
         try {
             final FedoraBinary binary = findOrCreateBinary(session, path);
 
@@ -95,15 +90,10 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
                 });
             }
 
-            final Node contentNode = dsNode.getNode(JCR_CONTENT);
+            final FedoraBinaryImpl binary = new FedoraBinaryImpl(dsNode.getNode(JCR_CONTENT));
 
-            final FedoraBinary binary;
             if (dsNode.isNew()) {
-                binary = FedoraBinaryFactory.getBinary(contentNode, contentType);
-
-                touch(((FedoraResourceImpl) binary).getNode());
-            } else {
-                binary = FedoraBinaryFactory.getBinary(contentNode);
+                touch(binary.getNode());
             }
 
             return binary;

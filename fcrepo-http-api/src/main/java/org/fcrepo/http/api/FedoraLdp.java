@@ -863,7 +863,7 @@ public class FedoraLdp extends ContentExposingResource {
         final FedoraResource result;
         if ("ldp:NonRDFSource".equals(interactionModel) ||
                 (contentPresent && interactionModel == null && !isRDF(simpleContentType))) {
-            result = binaryService.findOrCreate(session.getFedoraSession(), path, contentType.toString());
+            result = binaryService.findOrCreate(session.getFedoraSession(), path);
         } else {
             result = containerService.findOrCreate(session.getFedoraSession(), path);
         }
