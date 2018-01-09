@@ -61,15 +61,15 @@ import com.codahale.metrics.Timer;
  * @author bbpennel
  * @since 11/29/2017
  */
-public class LocalFileBinaryImpl extends FedoraBinaryImpl {
-    private static final Logger LOGGER = getLogger(LocalFileBinaryImpl.class);
+public class LocalFileBinary extends AbstractFedoraBinary {
+    private static final Logger LOGGER = getLogger(LocalFileBinary.class);
 
     /**
      * Constructs a LocalFileBinaryImpl
      *
      * @param node
      */
-    public LocalFileBinaryImpl(final Node node) {
+    public LocalFileBinary(final Node node) {
         super(node);
     }
 
@@ -109,14 +109,14 @@ public class LocalFileBinaryImpl extends FedoraBinaryImpl {
                 contentNode.addMixin(FEDORA_BINARY);
             }
 
-            contentNode.setProperty(HAS_MIME_TYPE, contentType);
-
             if (originalFileName != null) {
                 contentNode.setProperty(FILENAME, originalFileName);
             }
 
-            // Store the contentType in the required jcr:data property
-            contentNode.setProperty(JCR_DATA, contentType);
+            contentNode.setProperty(HAS_MIME_TYPE, contentType);
+
+            // Store the required jcr:data property
+            contentNode.setProperty(JCR_DATA, "");
 
             LOGGER.debug("Created content node at path: {}", contentNode.getPath());
 
@@ -175,6 +175,10 @@ public class LocalFileBinaryImpl extends FedoraBinaryImpl {
      */
     @Override
     public long getContentSize() {
+        final long sizeValue = super.getContentSize();
+        if (sizeValue > -1L) {
+            return sizeValue;
+        }
         final File file = new File(getFileUri().getPath());
         return file.length();
     }
@@ -291,6 +295,10 @@ public class LocalFileBinaryImpl extends FedoraBinaryImpl {
     @Override
     public String getMimeType() {
         final String mimeType = super.getMimeType();
+        if (!MessageExternalBodyContentType.isExternalBodyType(mimeType)) {
+            // Non-external-body mimetype, return without further processing
+            return mimeType;
+        }
         try {
             final MessageExternalBodyContentType extBodyType = MessageExternalBodyContentType.parse(mimeType);
             // Return the overridden mimetype if one is available, otherwise give the original content type
