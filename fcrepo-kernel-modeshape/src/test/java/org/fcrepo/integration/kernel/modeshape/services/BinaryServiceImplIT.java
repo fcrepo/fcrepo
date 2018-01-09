@@ -145,7 +145,7 @@ public class BinaryServiceImplIT extends AbstractIT {
         final String contentType = "message/external-body; access-type=LOCAL-FILE; LOCAL-FILE=\"file://"
                 + contentFile.toString() + "\"";
 
-        binaryService.findOrCreate(session, "/testLocalFileNode", contentType).setContent(
+        binaryService.findOrCreate(session, "/testLocalFileNode").setContent(
                 null,
                 contentType,
                 null,

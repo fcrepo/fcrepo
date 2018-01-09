@@ -17,7 +17,6 @@
  */
 package org.fcrepo.kernel.api.services;
 
-import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 
 /**
@@ -26,13 +25,4 @@ import org.fcrepo.kernel.api.models.FedoraBinary;
  */
 public interface BinaryService extends Service<FedoraBinary> {
 
-    /**
-     * Retrieve a FedoraBinary instance by session, path and media type
-     *
-     * @param session the session
-     * @param path the path
-     * @param mediaType media type for the binary datastream
-     * @return created or retrieved FedoraBinary
-     */
-    public FedoraBinary findOrCreate(final FedoraSession session, final String path, final String mediaType);
 }
