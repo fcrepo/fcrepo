@@ -39,6 +39,8 @@ import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
 import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -47,6 +49,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
 import javax.inject.Inject;
 import javax.jcr.Node;
@@ -83,6 +87,10 @@ import org.springframework.test.context.ContextConfiguration;
  */
 @ContextConfiguration({"/spring-test/repo.xml"})
 public class FedoraBinaryImplIT extends AbstractIT {
+
+    private static final String EXPECTED_CONTENT = "test content";
+
+    private static final String CONTENT_SHA1 = "1eebdf4fdc9fc7bf283031b93f9aef3338de9052";
 
     @Inject
     FedoraRepository repo;
@@ -534,5 +542,67 @@ public class FedoraBinaryImplIT extends AbstractIT {
         }
     }
 
+    @Test
+    public void testDatastreamWithExpiration() throws Exception {
+        final FedoraSession session = repo.login();
+        final String dsId = "/ds_" + UUID.randomUUID().toString();
 
+        final String mimeType = makeLocalFileMimeType();
+        final String mimeTypeExpires = mimeType + "; expiration=\"Wed, 21 Oct 2020 00:00:00 GMT\"";;
+
+        binaryService.findOrCreate(session, dsId)
+                .setContent(null, mimeTypeExpires, null, null, null);
+
+        session.commit();
+
+        final FedoraBinary ds = binaryService.findOrCreate(session, dsId);
+
+        assertEquals(EXPECTED_CONTENT.length(), ds.getContentSize());
+        assertEquals(EXPECTED_CONTENT, IOUtils.toString(ds.getContent()));
+
+        assertEquals("application/octet-stream", ds.getMimeType());
+    }
+
+    @Test
+    public void testExpirationWithValidChecksum() throws Exception {
+        final FedoraSession session = repo.login();
+        final String dsId = "/ds_" + UUID.randomUUID().toString();
+
+        final String mimeType = makeLocalFileMimeType();
+        final String mimeTypeExpires = mimeType + "; expiration=\"Wed, 21 Oct 2020 00:00:00 GMT\"";;
+
+        binaryService.findOrCreate(session, dsId)
+                .setContent(null, mimeTypeExpires, sha1Set(CONTENT_SHA1), null, null);
+
+        session.commit();
+
+        final FedoraBinary ds = binaryService.findOrCreate(session, dsId);
+
+        assertEquals(EXPECTED_CONTENT, IOUtils.toString(ds.getContent(), "UTF-8"));
+
+        assertEquals("application/octet-stream", ds.getMimeType());
+    }
+
+    @Test(expected = InvalidChecksumException.class)
+    public void testExpirationWithInvalidChecksum() throws Exception {
+        final FedoraSession session = repo.login();
+        final String dsId = "/ds_" + UUID.randomUUID().toString();
+
+        final String mimeType = makeLocalFileMimeType();
+        final String mimeTypeExpires = mimeType + "; expiration=\"Wed, 21 Oct 2020 00:00:00 GMT\"";;
+
+        binaryService.findOrCreate(session, dsId)
+                .setContent(null, mimeTypeExpires, sha1Set("badsum"), null, null);
+    }
+
+    private String makeLocalFileMimeType() throws Exception {
+        final File contentFile = File.createTempFile("file", ".txt");
+        IOUtils.write(EXPECTED_CONTENT, new FileOutputStream(contentFile), "UTF-8");
+        return "message/external-body; access-type=LOCAL-FILE; LOCAL-FILE=\"" +
+                contentFile.toURI().toString() + "\"";
+    }
+
+    private Set<URI> sha1Set(final String checksum) {
+        return new HashSet<>(asList(asURI(SHA1.algorithm, checksum)));
+    }
 }

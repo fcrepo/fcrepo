@@ -27,6 +27,8 @@ import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 import com.google.common.base.Splitter;
 
 /**
+ * Utility class which parses and provides access to the components of a message/external-body content type.
+ *
  * @author lsitu
  * @author Daniel Bernstein
  */
@@ -39,6 +41,8 @@ public class MessageExternalBodyContentType {
     public final static String ACCESS_TYPE_FIELD = "access-type";
 
     public final static String MIME_TYPE_OVERRIDE_FIELD = "mime-type";
+
+    public final static String EXPIRATION_FIELD = "expiration";
 
     /**
      * Utility method to parse the external body content in format: message/external-body; access-type=URL;
@@ -61,7 +65,7 @@ public class MessageExternalBodyContentType {
         if (("url".equals(accessType) || "local-file".equals(accessType)) &&
                 !StringUtils.isBlank(resourceLocation)) {
             return new MessageExternalBodyContentType(accessType, resourceLocation, map.get(
-                    MIME_TYPE_OVERRIDE_FIELD));
+                    MIME_TYPE_OVERRIDE_FIELD), map.get(EXPIRATION_FIELD));
         }
 
         throw new UnsupportedAccessTypeException(
@@ -104,11 +108,14 @@ public class MessageExternalBodyContentType {
 
     private final String mimeType;
 
+    private final String expiration;
+
     private MessageExternalBodyContentType(final String accessType, final String resourceLocation,
-            final String mimeType) {
+            final String mimeType, final String expiration) {
         this.accessType = accessType;
         this.resourceLocation = resourceLocation;
         this.mimeType = mimeType;
+        this.expiration = expiration;
     }
 
     /**
@@ -130,5 +137,12 @@ public class MessageExternalBodyContentType {
      */
     public String getMimeType() {
         return mimeType;
+    }
+
+    /**
+     * @return the expiration subfield
+     */
+    public String getExpiration() {
+        return expiration;
     }
 }

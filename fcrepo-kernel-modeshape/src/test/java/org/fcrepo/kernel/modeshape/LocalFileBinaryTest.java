@@ -19,24 +19,23 @@ package org.fcrepo.kernel.modeshape;
 
 import static org.fcrepo.kernel.api.FedoraTypes.CONTENT_DIGEST;
 import static org.fcrepo.kernel.api.FedoraTypes.FILENAME;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TOMBSTONE;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.modeshape.utils.TestHelpers.checksumString;
 import static org.fcrepo.kernel.modeshape.utils.TestHelpers.getContentNodeMock;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.fcrepo.kernel.api.FedoraTypes.HAS_MIME_TYPE;
-import static org.slf4j.LoggerFactory.getLogger;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.URI;
+
+import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.Session;
@@ -49,10 +48,11 @@ import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.slf4j.Logger;
-
+import org.modeshape.jcr.api.ValueFactory;
 import static java.util.Collections.singleton;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 
@@ -60,9 +60,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
  * @author bbpennel
  */
 @RunWith(MockitoJUnitRunner.class)
-public class LocalFileBinaryImplTest {
-
-    private static final Logger LOGGER = getLogger(LocalFileBinaryImplTest.class);
+public class LocalFileBinaryTest {
 
     private static final String DS_ID = "testDs";
 
@@ -87,10 +85,22 @@ public class LocalFileBinaryImplTest {
     private Property mimeTypeProperty;
 
     @Mock
+    private Property mockProperty;
+
+    @Mock
     private Value mockValue;
 
     @Mock
+    private ValueFactory mockVF;
+
+    @Mock
     private InputStream mockStream;
+
+    @Mock
+    private org.modeshape.jcr.api.Binary mockBinary;
+
+    @Captor
+    private ArgumentCaptor<InputStream> inputStreamCaptor;
 
     @Before
     public void setUp() throws Exception {
@@ -108,10 +118,16 @@ public class LocalFileBinaryImplTest {
         when(mockDsNodeType.getName()).thenReturn(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
         when(mockDsNode.getMixinNodeTypes()).thenReturn(nodeTypes);
         when(mockDsNode.getName()).thenReturn(DS_ID);
+        when(mockContent.getSession()).thenReturn(mockSession);
         when(mockContent.isNodeType(FEDORA_BINARY)).thenReturn(true);
         when(mockContent.getParent()).thenReturn(mockParentNode);
+        when(mockContent.setProperty(anyString(), any(Binary.class))).thenReturn(mockProperty);
 
-        testObj = new LocalFileBinaryImpl(mockContent);
+        when(mockSession.getValueFactory()).thenReturn(mockVF);
+        when(mockVF.createBinary(any(InputStream.class), any(String.class)))
+                .thenReturn(mockBinary);
+
+        testObj = new LocalFileBinary(mockContent);
     }
 
     @Test
@@ -187,18 +203,6 @@ public class LocalFileBinaryImplTest {
         assertEquals("text/plain", testObj.getMimeType());
     }
 
-    @Test
-    public void testHasMixin() throws Exception {
-        assertTrue(LocalFileBinaryImpl.hasMixin(mockContent));
-    }
-
-    @Test
-    public void testHasMixinNotBinary() throws Exception {
-        when(mockContent.isNodeType(FEDORA_BINARY)).thenReturn(false);
-        when(mockContent.isNodeType(FEDORA_TOMBSTONE)).thenReturn(true);
-
-        assertFalse(LocalFileBinaryImpl.hasMixin(mockContent));
-    }
 
     private String makeMimeType(final File file) {
         return "message/external-body; access-type=LOCAL-FILE; LOCAL-FILE=\"" +

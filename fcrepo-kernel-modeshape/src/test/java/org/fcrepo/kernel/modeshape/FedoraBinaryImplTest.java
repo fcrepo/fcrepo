@@ -25,16 +25,21 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.modeshape.jcr.api.ValueFactory;
 
+import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.nodetype.NodeType;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -47,8 +52,12 @@ import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.TestHelpers.checksumString;
 import static org.fcrepo.kernel.modeshape.utils.TestHelpers.getContentNodeMock;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -64,6 +73,8 @@ import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class FedoraBinaryImplTest implements FedoraTypes {
+
+    private static final String EXPECTED_CONTENT = "test content";
 
     private static final String testDsId = "testDs";
 
@@ -84,6 +95,15 @@ public class FedoraBinaryImplTest implements FedoraTypes {
     @Mock
     private NodeType mockDsNodeType;
 
+    @Mock
+    private Property mockProperty;
+
+    @Mock
+    private org.modeshape.jcr.api.Binary mockBinary;
+
+    @Captor
+    private ArgumentCaptor<InputStream> inputStreamCaptor;
+
     @Before
     public void setUp() {
         final NodeType[] nodeTypes = new NodeType[] { mockDsNodeType };
@@ -92,11 +112,17 @@ public class FedoraBinaryImplTest implements FedoraTypes {
             when(mockDsNode.getMixinNodeTypes()).thenReturn(nodeTypes);
             when(mockDsNode.getName()).thenReturn(testDsId);
             when(mockContent.getSession()).thenReturn(mockSession);
+            when(mockContent.isNodeType(FEDORA_BINARY)).thenReturn(true);
             when(mockContent.getParent()).thenReturn(mockParentNode);
             final NodeType mockNodeType = mock(NodeType.class);
             when(mockNodeType.getName()).thenReturn("nt:file");
             when(mockDsNode.getPrimaryNodeType()).thenReturn(mockNodeType);
             testObj = new FedoraBinaryImpl(mockContent);
+
+            when(mockContent.setProperty(anyString(), any(Binary.class))).thenReturn(mockProperty);
+            when(mockSession.getValueFactory()).thenReturn(mockVF);
+            when(mockVF.createBinary(any(InputStream.class), any(String.class)))
+                    .thenReturn(mockBinary);
         } catch (final RepositoryException e) {
             e.printStackTrace();
             fail(e.getMessage());
@@ -255,4 +281,55 @@ public class FedoraBinaryImplTest implements FedoraTypes {
         assertEquals(cal.getTimeInMillis(), actual.toEpochMilli());
     }
 
+    @Test
+    public void testSetContentWithExpiration() throws Exception {
+        final String content = "content";
+        final File contentFile = File.createTempFile("file", ".txt");
+        IOUtils.write(content, new FileOutputStream(contentFile));
+
+        final String mimeTypeExpires = "message/external-body; access-type=LOCAL-FILE; LOCAL-FILE=\"" + contentFile
+                .toURI().toString() + "; expiration=\"Wed, 21 Oct 2020 00:00:00 GMT\"";
+        testObj.setContent(mockStream, mimeTypeExpires, null, contentFile.getName(), null);
+
+        verify(mockContent).setProperty(eq(JCR_DATA), any(Binary.class));
+
+        verify(mockVF).createBinary(inputStreamCaptor.capture(), anyString());
+        assertEquals(content, IOUtils.toString(inputStreamCaptor.getValue()));
+
+        verify(mockContent).setProperty(eq(HAS_MIME_TYPE), eq("application/octet-stream"));
+    }
+
+    @Test
+    public void testSetContentWithExpirationWithMimeType() throws Exception {
+        final String mimeTypeExpires = makeLocalFileMimeType() + "; expiration=\"Wed, 21 Oct 2020 00:00:00 GMT\"" +
+                "; mime-type=\"text/plain\"";
+        testObj.setContent(mockStream, mimeTypeExpires, null, null, null);
+
+        verify(mockContent).setProperty(eq(JCR_DATA), any(Binary.class));
+
+        verify(mockVF).createBinary(inputStreamCaptor.capture(), anyString());
+        assertEquals(EXPECTED_CONTENT, IOUtils.toString(inputStreamCaptor.getValue()));
+
+        verify(mockContent).setProperty(eq(HAS_MIME_TYPE), eq("text/plain"));
+    }
+
+    private String makeLocalFileMimeType() throws Exception {
+        final File contentFile = File.createTempFile("file", ".txt");
+        IOUtils.write(EXPECTED_CONTENT, new FileOutputStream(contentFile), "UTF-8");
+        return "message/external-body; access-type=LOCAL-FILE; LOCAL-FILE=\"" +
+                contentFile.toURI().toString() + "\"";
+    }
+
+    @Test
+    public void testHasMixin() throws Exception {
+        assertTrue(FedoraBinaryImpl.hasMixin(mockContent));
+    }
+
+    @Test
+    public void testHasMixinNotBinary() throws Exception {
+        when(mockContent.isNodeType(FEDORA_BINARY)).thenReturn(false);
+        when(mockContent.isNodeType(FEDORA_TOMBSTONE)).thenReturn(true);
+
+        assertFalse(FedoraBinaryImpl.hasMixin(mockContent));
+    }
 }
