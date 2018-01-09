@@ -119,7 +119,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
                 return new LocalFileBinary(getNode());
             } else if (URL_ACCESS_TYPE.equals(accessType)) {
                 LOGGER.debug("Instantiating URI FedoraBinary");
-                return new UrlBinaryImpl(getNode());
+                return new UrlBinary(getNode());
             }
         }
 
