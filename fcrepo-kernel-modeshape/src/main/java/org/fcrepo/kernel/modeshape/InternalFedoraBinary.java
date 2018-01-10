@@ -66,6 +66,11 @@ public class InternalFedoraBinary extends AbstractFedoraBinary {
 
     private static final Logger LOGGER = getLogger(InternalFedoraBinary.class);
 
+    /**
+     * Construct InternalFedoraBinary
+     *
+     * @param node node
+     */
     public InternalFedoraBinary(final Node node) {
         super(node);
 
@@ -174,6 +179,20 @@ public class InternalFedoraBinary extends AbstractFedoraBinary {
 
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraBinary#getMimeType()
+     */
+    @Override
+    public String getMimeType() {
+        final String mimeType = getMimeTypeValue();
+        if (mimeType == null) {
+            return "application/octet-stream";
+        } else {
+            return mimeType;
         }
     }
 

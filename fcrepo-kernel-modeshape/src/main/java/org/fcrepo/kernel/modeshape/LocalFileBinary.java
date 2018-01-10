@@ -30,7 +30,6 @@ import java.util.stream.Collectors;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import org.apache.jena.rdf.model.Resource;
-import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
@@ -38,6 +37,7 @@ import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
+import org.fcrepo.kernel.api.utils.MessageExternalBodyContentType;
 import org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.modeshape.utils.impl.CacheEntryFactory;
 import org.slf4j.Logger;
@@ -56,7 +56,7 @@ public class LocalFileBinary extends UrlBinary {
     /**
      * Constructs a LocalFileBinaryImpl
      *
-     * @param node
+     * @param node node
      */
     public LocalFileBinary(final Node node) {
         super(node);
@@ -120,7 +120,23 @@ public class LocalFileBinary extends UrlBinary {
         }
     }
 
+    @Override
+    public String getMimeType() {
+        final String mimeType = getMimeTypeValue();
 
+        try {
+            final MessageExternalBodyContentType extBodyType = MessageExternalBodyContentType.parse(mimeType);
+            // Return the overridden mimetype if one is available, otherwise give generic binary mimetype
+            final String mimeTypeOverride = extBodyType.getMimeType();
+            if (mimeTypeOverride == null) {
+                return "application/octet-stream";
+            } else {
+                return mimeTypeOverride;
+            }
+        } catch (final UnsupportedAccessTypeException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
 
     /*
      * (non-Javadoc)
@@ -134,16 +150,6 @@ public class LocalFileBinary extends UrlBinary {
         }
         final File file = new File(getResourceUri().getPath());
         return file.length();
-    }
-
-    /*
-     * (non-Javadoc)
-     * @see
-     * org.fcrepo.kernel.modeshape.FedoraBinaryImpl#getFixity(org.fcrepo.kernel.api.identifiers.IdentifierConverter)
-     */
-    @Override
-    public RdfStream getFixity(final IdentifierConverter<Resource, FedoraResource> idTranslator) {
-        return getFixity(idTranslator, getContentDigest(), getContentSize());
     }
 
     /*
