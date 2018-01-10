@@ -18,25 +18,29 @@
 package org.fcrepo.integration.kernel.modeshape;
 
 import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.fcrepo.kernel.api.RdfCollectors.toModel;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.fcrepo.kernel.api.utils.ContentDigest.asURI;
 import static org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM.SHA1;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
+import static java.util.Collections.singletonList;
 
-import java.io.File;
-import java.io.FileOutputStream;
+import java.io.ByteArrayInputStream;
 import java.net.URI;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import javax.inject.Inject;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.FedoraSession;
@@ -48,20 +52,30 @@ import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
+
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 
 /**
  * @author bbpennel
  */
 @ContextConfiguration({ "/spring-test/repo.xml" })
-public class LocalFileBinaryIT extends AbstractIT {
+public class UrlBinaryIT extends AbstractIT {
 
     private static final String EXPECTED_CONTENT = "test content";
 
     private static final String CONTENT_SHA1 = "1eebdf4fdc9fc7bf283031b93f9aef3338de9052";
 
-    private IdentifierConverter<Resource, FedoraResource> idTranslator;
+    @Rule
+    public WireMockRule wireMockRule = new WireMockRule(options().dynamicPort());
+
+    private String fileUrl;
 
     @Inject
     private FedoraRepository repo;
@@ -69,9 +83,9 @@ public class LocalFileBinaryIT extends AbstractIT {
     @Inject
     private BinaryService binaryService;
 
-    private FedoraSession session;
+    private IdentifierConverter<Resource, FedoraResource> idTranslator;
 
-    private File contentFile;
+    private FedoraSession session;
 
     private String mimeType;
 
@@ -81,11 +95,24 @@ public class LocalFileBinaryIT extends AbstractIT {
     public void setup() throws Exception {
         session = repo.login();
 
-        contentFile = File.createTempFile("file", ".txt");
-        IOUtils.write(EXPECTED_CONTENT, new FileOutputStream(contentFile), "UTF-8");
-        mimeType = makeMimeType(contentFile);
+        final FedoraBinary externalContent = binaryService.findOrCreate(session, "/externalContent");
+        externalContent.setContent(
+                new ByteArrayInputStream(EXPECTED_CONTENT.getBytes()),
+                "application/octet-stream",
+                null,
+                null,
+                null);
+        session.commit();
 
         dsId = makeDsId();
+
+        stubFor(get(urlEqualTo("/file.txt"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "text/plain")
+                        .withBody(EXPECTED_CONTENT)));
+        fileUrl = "http://localhost:" + wireMockRule.port() + "/file.txt";
+
+        mimeType = makeMimeType(fileUrl);
 
         idTranslator = new DefaultIdentifierTranslator(getJcrSession(repo.login()));
     }
@@ -104,10 +131,10 @@ public class LocalFileBinaryIT extends AbstractIT {
 
         final FedoraBinary ds = binaryService.findOrCreate(session, dsId);
 
-        assertEquals(EXPECTED_CONTENT.length(), ds.getContentSize());
+        assertEquals(-1L, ds.getContentSize());
         assertEquals(EXPECTED_CONTENT, contentString(ds));
 
-        assertEquals("application/octet-stream", ds.getMimeType());
+        assertEquals(mimeType, ds.getMimeType());
     }
 
     @Test
@@ -121,7 +148,6 @@ public class LocalFileBinaryIT extends AbstractIT {
 
         final FedoraBinary ds = binaryService.findOrCreate(session, dsId);
 
-        assertEquals(EXPECTED_CONTENT.length(), ds.getContentSize());
         assertEquals(EXPECTED_CONTENT, contentString(ds));
 
         assertEquals("text/plain", ds.getMimeType());
@@ -163,20 +189,37 @@ public class LocalFileBinaryIT extends AbstractIT {
                 checksum.equals("urn:sha1:" + CONTENT_SHA1));
     }
 
-    private String makeMimeType(final File file) {
-        return "message/external-body; access-type=LOCAL-FILE; LOCAL-FILE=\"" +
-                file.toURI().toString() + "\"";
+    @Test
+    public void testGetFixity() throws Exception {
+        binaryService.findOrCreate(session, dsId)
+                .setContent(null, mimeType, sha1Set(CONTENT_SHA1), null, null);
+
+        session.commit();
+
+        final FedoraBinary ds = binaryService.findOrCreate(session, dsId);
+        final Model fixityResults = ds.getFixity(idTranslator).collect(toModel());
+
+        assertNotEquals(0, fixityResults.size());
+
+        assertTrue("Expected to find checksum",
+                fixityResults.contains(null,
+                        HAS_MESSAGE_DIGEST,
+                        createResource("urn:sha1:" + CONTENT_SHA1)));
+    }
+
+    private String makeMimeType(final String url) {
+        return "message/external-body; access-type=url; url=\"" + url + "\"";
     }
 
     private String makeDsId() {
         return "/ds_" + UUID.randomUUID().toString();
     }
 
-    private Set<URI> sha1Set(final String checksum) {
-        return new HashSet<>(asList(asURI(SHA1.algorithm, checksum)));
-    }
-
     private String contentString(final FedoraBinary ds) throws Exception {
         return IOUtils.toString(ds.getContent(), "UTF-8");
+    }
+
+    private Set<URI> sha1Set(final String checksum) {
+        return new HashSet<>(asList(asURI(SHA1.algorithm, checksum)));
     }
 }

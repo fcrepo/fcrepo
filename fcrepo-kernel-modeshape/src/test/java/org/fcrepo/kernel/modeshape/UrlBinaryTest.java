@@ -17,46 +17,51 @@
  */
 package org.fcrepo.kernel.modeshape;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.fcrepo.kernel.api.FedoraTypes.CONTENT_DIGEST;
-import static org.fcrepo.kernel.api.FedoraTypes.FILENAME;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
-import static org.fcrepo.kernel.modeshape.utils.TestHelpers.checksumString;
+import static org.fcrepo.kernel.api.FedoraTypes.FILENAME;
+import static org.fcrepo.kernel.api.FedoraTypes.HAS_MIME_TYPE;
 import static org.fcrepo.kernel.modeshape.utils.TestHelpers.getContentNodeMock;
+import static org.fcrepo.kernel.modeshape.utils.TestHelpers.checksumString;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
-import static org.fcrepo.kernel.api.FedoraTypes.HAS_MIME_TYPE;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.URI;
+import static java.util.Collections.singleton;
 
+import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.nodetype.NodeType;
 
-import org.apache.tika.io.IOUtils;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import static java.util.Collections.singleton;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
+
+import com.github.tomakehurst.wiremock.junit.WireMockRule;
 
 /**
  * @author bbpennel
  */
 @RunWith(MockitoJUnitRunner.class)
-public class LocalFileBinaryTest {
+public class UrlBinaryTest {
 
     private static final String DS_ID = "testDs";
 
@@ -64,10 +69,24 @@ public class LocalFileBinaryTest {
 
     private FedoraBinary testObj;
 
-    private File contentFile;
+    private String mimeType;
+
+    @Rule
+    public WireMockRule wireMockRule = new WireMockRule(options().dynamicPort());
+
+    private String fileUrl;
 
     @Mock
     private Session mockSession;
+
+    @Mock
+    private Property mimeTypeProperty;
+
+    @Mock
+    private Property mockProperty;
+
+    @Mock
+    private Value mockValue;
 
     @Mock
     private Node mockDsNode, mockContent, mockParentNode;
@@ -75,25 +94,18 @@ public class LocalFileBinaryTest {
     @Mock
     private NodeType mockDsNodeType;
 
-    private String mimeType;
-
-    @Mock
-    private Property mimeTypeProperty;
-
-    @Mock
-    private Value mockValue;
-
     @Mock
     private InputStream mockStream;
 
-    @Captor
-    private ArgumentCaptor<InputStream> inputStreamCaptor;
-
     @Before
     public void setUp() throws Exception {
-        contentFile = File.createTempFile("file", ".txt");
-        IOUtils.write(EXPECTED_CONTENT, new FileOutputStream(contentFile));
-        mimeType = makeMimeType(contentFile);
+        stubFor(get(urlEqualTo("/file.txt"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "text/plain")
+                        .withBody(EXPECTED_CONTENT)));
+        fileUrl = "http://localhost:" + wireMockRule.port() + "/file.txt";
+
+        mimeType = makeMimeType(fileUrl);
 
         when(mimeTypeProperty.getString()).thenReturn(mimeType);
         when(mockValue.getString()).thenReturn(mimeType);
@@ -108,17 +120,9 @@ public class LocalFileBinaryTest {
         when(mockContent.getSession()).thenReturn(mockSession);
         when(mockContent.isNodeType(FEDORA_BINARY)).thenReturn(true);
         when(mockContent.getParent()).thenReturn(mockParentNode);
+        when(mockContent.setProperty(anyString(), any(Binary.class))).thenReturn(mockProperty);
 
-        testObj = new LocalFileBinary(mockContent);
-    }
-
-    @Test
-    public void testGetContent() throws Exception {
-        getContentNodeMock(mockContent, EXPECTED_CONTENT);
-        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
-
-        final String actual = IOUtils.toString(testObj.getContent());
-        assertEquals(EXPECTED_CONTENT, actual);
+        testObj = new UrlBinary(mockContent);
     }
 
     @Test
@@ -130,16 +134,19 @@ public class LocalFileBinaryTest {
 
     @Test
     public void testSetContentWithFilename() throws Exception {
-        testObj.setContent(mockStream, mimeType, null, contentFile.getName(), null);
+        final String fileName = "content.txt";
+        testObj.setContent(mockStream, mimeType, null, fileName, null);
 
-        verify(mockContent).setProperty(FILENAME, contentFile.getName());
+        verify(mockContent).setProperty(HAS_MIME_TYPE, mimeType);
+        verify(mockContent).setProperty(FILENAME, fileName);
     }
 
     @Test
     public void testSetContentWithChecksum() throws Exception {
         final String checksum = checksumString(EXPECTED_CONTENT);
+
         testObj.setContent(mockStream, mimeType, singleton(
-                new URI(checksum)), contentFile.getName(), null);
+                new URI(checksum)), null, null);
     }
 
     @Test(expected = InvalidChecksumException.class)
@@ -149,17 +156,19 @@ public class LocalFileBinaryTest {
 
     @Test
     public void getContentSize() throws Exception {
-        getContentNodeMock(mockContent, EXPECTED_CONTENT);
-        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+        testObj.setContent(mockStream, mimeType, null, null, null);
 
         final long contentSize = testObj.getContentSize();
-        assertEquals(12l, contentSize);
+        assertEquals(-1l, contentSize);
     }
 
     @Test
     public void testGetContentDigest() throws Exception {
         final String checksum = checksumString(EXPECTED_CONTENT);
         mockChecksumProperty(checksum);
+
+        testObj.setContent(mockStream, mimeType, singleton(
+                new URI(checksum)), null, null);
 
         final URI digestUri = testObj.getContentDigest();
         assertEquals(checksum, digestUri.toString());
@@ -170,7 +179,7 @@ public class LocalFileBinaryTest {
         getContentNodeMock(mockContent, EXPECTED_CONTENT);
 
         final String mimeType = testObj.getMimeType();
-        assertEquals("application/octet-stream", mimeType);
+        assertEquals(mimeType, mimeType);
     }
 
     @Test
@@ -185,10 +194,8 @@ public class LocalFileBinaryTest {
         assertEquals("text/plain", testObj.getMimeType());
     }
 
-
-    private String makeMimeType(final File file) {
-        return "message/external-body; access-type=LOCAL-FILE; LOCAL-FILE=\"" +
-                file.toURI().toString() + "\"";
+    private String makeMimeType(final String url) {
+        return "message/external-body; access-type=url; url=\"" + url + "\"";
     }
 
     private void mockChecksumProperty(final String checksum) throws Exception {

@@ -20,6 +20,7 @@ package org.fcrepo.integration.kernel.modeshape;
 import static java.util.Arrays.asList;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.UUID.randomUUID;
+import static org.fcrepo.kernel.api.FedoraTypes.HAS_MIME_TYPE;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
@@ -72,6 +73,7 @@ import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.ContainerService;
+import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 import org.junit.Before;
 import org.junit.Rule;
@@ -548,7 +550,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
         final String dsId = "/ds_" + UUID.randomUUID().toString();
 
         final String mimeType = makeLocalFileMimeType();
-        final String mimeTypeExpires = mimeType + "; expiration=\"Wed, 21 Oct 2020 00:00:00 GMT\"";;
+        final String mimeTypeExpires = mimeType + "; expiration=\"Wed, 21 Oct 2020 00:00:00 GMT\"";
 
         binaryService.findOrCreate(session, dsId)
                 .setContent(null, mimeTypeExpires, null, null, null);
@@ -558,7 +560,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
         final FedoraBinary ds = binaryService.findOrCreate(session, dsId);
 
         assertEquals(EXPECTED_CONTENT.length(), ds.getContentSize());
-        assertEquals(EXPECTED_CONTENT, IOUtils.toString(ds.getContent()));
+        assertEquals(EXPECTED_CONTENT, IOUtils.toString(ds.getContent(), "UTF-8"));
 
         assertEquals("application/octet-stream", ds.getMimeType());
     }
@@ -589,10 +591,45 @@ public class FedoraBinaryImplIT extends AbstractIT {
         final String dsId = "/ds_" + UUID.randomUUID().toString();
 
         final String mimeType = makeLocalFileMimeType();
-        final String mimeTypeExpires = mimeType + "; expiration=\"Wed, 21 Oct 2020 00:00:00 GMT\"";;
+        final String mimeTypeExpires = mimeType + "; expiration=\"Wed, 21 Oct 2020 00:00:00 GMT\"";
 
         binaryService.findOrCreate(session, dsId)
                 .setContent(null, mimeTypeExpires, sha1Set("badsum"), null, null);
+    }
+
+    @Test
+    public void testDatastreamIngestThenExpire() throws Exception {
+        final FedoraSession session = repo.login();
+        final String dsId = "/ds_" + UUID.randomUUID().toString();
+
+        final String mimeType = makeLocalFileMimeType();
+
+        binaryService.findOrCreate(session, dsId)
+                .setContent(null, mimeType, sha1Set(CONTENT_SHA1), null, null);
+
+        session.commit();
+
+        final FedoraBinary ds = binaryService.findOrCreate(session, dsId);
+
+        assertEquals(EXPECTED_CONTENT, IOUtils.toString(ds.getContent(), "UTF-8"));
+        assertEquals("application/octet-stream", ds.getMimeType());
+
+        final Node contentNode1 = ((FedoraResourceImpl) ds).getNode();
+        assertEquals("Mimetype property not equal to original message/external-body type",
+                mimeType, contentNode1.getProperty(HAS_MIME_TYPE).getString());
+
+        final String mimeTypeExpires = mimeType + "; expiration=\"Wed, 21 Oct 2020 00:00:00 GMT\"";
+
+        // Set the content again with an expiration time
+        ds.setContent(null, mimeTypeExpires, sha1Set(CONTENT_SHA1), null, null);
+        session.commit();
+
+        assertEquals(EXPECTED_CONTENT, IOUtils.toString(ds.getContent(), "UTF-8"));
+        assertEquals("application/octet-stream", ds.getMimeType());
+
+        final Node contentNode2 = ((FedoraResourceImpl) ds).getNode();
+        assertEquals("Mimetype property not equal to original message/external-body type",
+                "application/octet-stream", contentNode2.getProperty(HAS_MIME_TYPE).getString());
     }
 
     private String makeLocalFileMimeType() throws Exception {

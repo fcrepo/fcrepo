@@ -23,7 +23,6 @@ import org.fcrepo.kernel.api.exception.ResourceTypeException;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
-import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
