@@ -397,9 +397,8 @@ public class FedoraLdp extends ContentExposingResource {
             if (nodeService.exists(session.getFedoraSession(), path)) {
                 resource = resource();
             } else {
-                final MediaType effectiveContentType
-                        = requestBodyStream == null || requestContentType == null ? null : contentType;
-                resource = createFedoraResource(path, interactionModel, effectiveContentType,
+                // requestBodyStream never appears to be null, even when not providing a body
+                resource = createFedoraResource(path, interactionModel, requestContentType,
                         !(requestBodyStream == null || requestContentType == null));
             }
 
@@ -561,6 +560,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         final String interactionModel = checkInteractionModel(links);
 
+        // If request is an external binary, verify access-type before proceeding
         if (isExternalBody(requestContentType)) {
             checkMessageExternalBody(requestContentType);
         }
@@ -585,9 +585,7 @@ public class FedoraLdp extends ContentExposingResource {
 
             LOGGER.info("Ingest with path: {}", newObjectPath);
 
-            final MediaType effectiveContentType
-                    = requestBodyStream == null || requestContentType == null ? null : contentType;
-            resource = createFedoraResource(newObjectPath, interactionModel, effectiveContentType,
+            resource = createFedoraResource(newObjectPath, interactionModel, requestContentType,
                     !(requestBodyStream == null || requestContentType == null));
 
             try (final RdfStream resourceTriples =
@@ -789,9 +787,12 @@ public class FedoraLdp extends ContentExposingResource {
 
     private FedoraResource createFedoraResource(final String path, final String interactionModel,
             final MediaType contentType, final boolean contentPresent) {
+
+        final MediaType simpleContentType = contentPresent ? getSimpleContentType(contentType) : null;
+
         final FedoraResource result;
         if ("ldp:NonRDFSource".equals(interactionModel) ||
-                (contentPresent && interactionModel == null && !isRDF(contentType))) {
+                (contentPresent && interactionModel == null && !isRDF(simpleContentType))) {
             result = binaryService.findOrCreate(session.getFedoraSession(), path);
         } else {
             result = containerService.findOrCreate(session.getFedoraSession(), path);
@@ -859,7 +860,7 @@ public class FedoraLdp extends ContentExposingResource {
         }
 
         try {
-            for (String link : links) {
+            for (final String link : links) {
                 final Link linq = Link.valueOf(link);
                 if ("type".equals(linq.getRel())) {
                     final Resource type = createResource(linq.getUri().toString());
@@ -924,7 +925,7 @@ public class FedoraLdp extends ContentExposingResource {
         try {
             final List<String> algs = Splitter.on(',').omitEmptyStrings().trimResults().splitToList(wantDigest);
             // Parse the optional q value with default 1.0, and 0 ignore. Format could be: SHA-1;qvalue=0.1
-            for (String alg : algs) {
+            for (final String alg : algs) {
                 final String[] tokens = alg.split(";", 2);
                 final double qValue = tokens.length == 1 || tokens[1].indexOf("=") < 0 ?
                         1.0 : Double.parseDouble(tokens[1].split("=", 2)[1]);

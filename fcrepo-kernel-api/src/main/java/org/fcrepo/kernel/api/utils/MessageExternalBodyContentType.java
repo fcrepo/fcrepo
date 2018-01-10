@@ -21,13 +21,14 @@ package org.fcrepo.kernel.api.utils;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
-
 import org.apache.commons.lang3.StringUtils;
+import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 
 import com.google.common.base.Splitter;
 
 /**
+ * Utility class which parses and provides access to the components of a message/external-body content type.
+ *
  * @author lsitu
  * @author Daniel Bernstein
  */
@@ -35,43 +36,86 @@ public class MessageExternalBodyContentType {
 
     public final static String MEDIA_TYPE = "message/external-body";
 
-    private final static String MIME_TYPE_FIELD = "mime-type";
+    public final static String TYPE_FIELD = "type";
+
+    public final static String ACCESS_TYPE_FIELD = "access-type";
+
+    public final static String MIME_TYPE_OVERRIDE_FIELD = "mime-type";
+
+    public final static String EXPIRATION_FIELD = "expiration";
 
     /**
      * Utility method to parse the external body content in format: message/external-body; access-type=URL;
      * url="http://www.example.com/file"
-     * 
+     *
      * @param mimeType the MimeType value for external resource
      * @return MessageExternalBodyContentType value
      * @throws UnsupportedAccessTypeException if mimeType param is not a valid message/external-body content type.
      */
     public static MessageExternalBodyContentType parse(final String mimeType) throws UnsupportedAccessTypeException {
-        final Map<String, String> map = new HashMap<String, String>();
-        Splitter.on(';').omitEmptyStrings().trimResults()
-                .withKeyValueSeparator(Splitter.on('=').limit(2)).split(MIME_TYPE_FIELD + "=" + mimeType.trim())
-                // use lower case for keys, unwrap the quoted values (double quotes at the beginning and the end)
-                .forEach((k, v) -> map.put(k.toLowerCase(), v.replaceAll("^\"|\"$", "")));
+        final Map<String, String> map = getContentTypeComponents(mimeType);
 
-        final String accessType = map.get("access-type").toLowerCase();
+        if (!MEDIA_TYPE.equals(map.get(TYPE_FIELD)) || !map.containsKey(ACCESS_TYPE_FIELD)) {
+            throw new UnsupportedAccessTypeException(
+                    "The specified mimetype is not a valid message/external body content type: value=" + mimeType);
+        }
+
+        final String accessType = map.get(ACCESS_TYPE_FIELD);
         final String resourceLocation = map.get(accessType);
-        if (MEDIA_TYPE.equals(map.get(MIME_TYPE_FIELD)) &&
-                "url".equals(accessType) &&
+        if (("url".equals(accessType) || "local-file".equals(accessType)) &&
                 !StringUtils.isBlank(resourceLocation)) {
-            return new MessageExternalBodyContentType(accessType, resourceLocation);
+            return new MessageExternalBodyContentType(accessType, resourceLocation, map.get(
+                    MIME_TYPE_OVERRIDE_FIELD), map.get(EXPIRATION_FIELD));
         }
 
         throw new UnsupportedAccessTypeException(
-                "The specified type is not a valid message/external body content type: value=" + mimeType);
+                "The specified access-type is not a valid message/external body content type: value=" + mimeType);
 
     }
 
-    private String accessType;
+    /**
+     * Returns true if the contentType vale contains the message/external-body type
+     *
+     * @param contentType content type
+     * @return true if the contentType vale contains the message/external-body type
+     */
+    public static boolean isExternalBodyType(final String contentType) {
+        return contentType != null && contentType.startsWith(MEDIA_TYPE);
+    }
 
-    private String resourceLocation;
+    /**
+     * Returns a map containing components of the given contentType value, including the type value and all of the
+     * parameters by name. Keys are named "type" or by the parameter name, respectively.
+     *
+     * @param contentType content-type header value to decompose
+     * @return map containing the type and parameters from the provided content-type.
+     */
+    private static Map<String, String> getContentTypeComponents(final String contentType) {
+        final Map<String, String> map = new HashMap<>();
+        Splitter.on(';').omitEmptyStrings().trimResults()
+                .withKeyValueSeparator(Splitter.on('=').limit(2)).split(TYPE_FIELD + "=" + contentType.trim())
+                // use lower case for keys, unwrap the quoted values (double quotes at the beginning and the end)
+                .forEach((k, v) -> map.put(k.toLowerCase(), v.replaceAll("^\"|\"$", "")));
+        if (map.containsKey(ACCESS_TYPE_FIELD)) {
+            map.put(ACCESS_TYPE_FIELD, map.get(ACCESS_TYPE_FIELD).toLowerCase());
+        }
+        return map;
+    }
 
-    private MessageExternalBodyContentType(final String accessType, final String resourceLocation) {
+    private final String accessType;
+
+    private final String resourceLocation;
+
+    private final String mimeType;
+
+    private final String expiration;
+
+    private MessageExternalBodyContentType(final String accessType, final String resourceLocation,
+            final String mimeType, final String expiration) {
         this.accessType = accessType;
         this.resourceLocation = resourceLocation;
+        this.mimeType = mimeType;
+        this.expiration = expiration;
     }
 
     /**
@@ -86,5 +130,19 @@ public class MessageExternalBodyContentType {
      */
     public String getAccessType() {
         return accessType;
+    }
+
+    /**
+     * @return The mimetype override parameter, if one was provided
+     */
+    public String getMimeType() {
+        return mimeType;
+    }
+
+    /**
+     * @return the expiration subfield
+     */
+    public String getExpiration() {
+        return expiration;
     }
 }

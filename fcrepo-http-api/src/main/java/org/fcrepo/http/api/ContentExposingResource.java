@@ -17,7 +17,7 @@
  */
 package org.fcrepo.http.api;
 
-
+import static org.fcrepo.kernel.api.utils.MessageExternalBodyContentType.isExternalBodyType;
 import static java.util.EnumSet.of;
 import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.empty;
@@ -195,13 +195,13 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         if (resource() instanceof FedoraBinary) {
 
-            final MediaType mediaType = MediaType.valueOf(((FedoraBinary) resource()).getMimeType());
+            final URI redirectResourceLocation = getExternalBodyRedirectLocation();
 
-            if (isExternalBody(mediaType)) {
-                return externalBodyRedirect(getExternalResourceLocation(mediaType)).build();
+            if (redirectResourceLocation != null) {
+                return externalBodyRedirect(redirectResourceLocation).build();
+            } else {
+                return getBinaryContent(rangeValue);
             }
-
-            return getBinaryContent(rangeValue);
         } else {
             outputStream = new RdfNamespacedStream(
                     new DefaultRdfStream(rdfStream.topic(), concat(rdfStream,
@@ -227,8 +227,21 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * @return true if matches
      */
     protected boolean isExternalBody(final MediaType mediaType) {
-        return mediaType == null ? false : (mediaType.getType() + "/" + mediaType.getSubtype()).equals(
-                MessageExternalBodyContentType.MEDIA_TYPE);
+        return mediaType == null ? false : MessageExternalBodyContentType.isExternalBodyType(mediaType.toString());
+    }
+
+    protected URI getExternalBodyRedirectLocation() throws UnsupportedAccessTypeException {
+        final String mimeType = ((FedoraBinary) resource()).getMimeType();
+        if (!isExternalBodyType(mimeType)) {
+            return null;
+        }
+
+        final MessageExternalBodyContentType externalType = MessageExternalBodyContentType.parse(mimeType);
+        if (externalType.getAccessType().equals("url")) {
+            return URI.create(externalType.getResourceLocation());
+        } else {
+            return null;
+        }
     }
 
     protected ResponseBuilder externalBodyRedirect(final URI resourceLocation) {
@@ -687,7 +700,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      */
     private void ensureValidMemberRelation(final Model inputModel) throws BadRequestException {
         // check that ldp:hasMemberRelation value is not server managed predicate.
-        inputModel.listStatements().forEachRemaining((Statement s) -> {
+        inputModel.listStatements().forEachRemaining((final Statement s) -> {
             LOGGER.debug("statement: s={}, p={}, o={}", s.getSubject(), s.getPredicate(), s.getObject());
 
             if (s.getPredicate().equals(HAS_MEMBER_RELATION)) {
