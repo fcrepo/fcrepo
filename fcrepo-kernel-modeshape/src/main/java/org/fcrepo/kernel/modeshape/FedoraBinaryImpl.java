@@ -182,7 +182,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
                     final String storageLocation = parsedContentType.getResourceLocation();
                     final InputStream externalStream = new URL(storageLocation).openStream();
 
-                    getBinary().setContent(externalStream, dsMimeType, checksums, originalFileName,
+                    getBinary(dsMimeType).setContent(externalStream, dsMimeType, checksums, originalFileName,
                             storagePolicyDecisionPoint);
                     return;
                 }
