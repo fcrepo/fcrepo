@@ -185,8 +185,8 @@ public class UrlBinaryIT extends AbstractIT {
 
         final String checksum = fixityResults.iterator().next().toString();
 
-        assertTrue("Fixity Checksum doesn't match",
-                checksum.equals("urn:sha1:" + CONTENT_SHA1));
+        assertEquals("Fixity Checksum doesn't match",
+                "urn:sha1:" + CONTENT_SHA1, checksum);
     }
 
     @Test
