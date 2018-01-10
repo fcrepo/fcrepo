@@ -24,8 +24,6 @@ import static org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM.SHA1;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.net.URI;
@@ -159,8 +157,8 @@ public class LocalFileBinaryIT extends AbstractIT {
 
         final String checksum = fixityResults.iterator().next().toString();
 
-        assertTrue("Fixity Checksum doesn't match",
-                checksum.equals("urn:sha1:" + CONTENT_SHA1));
+        assertEquals("Fixity Checksum doesn't match",
+                "urn:sha1:" + CONTENT_SHA1, checksum);
     }
 
     private String makeMimeType(final File file) {
