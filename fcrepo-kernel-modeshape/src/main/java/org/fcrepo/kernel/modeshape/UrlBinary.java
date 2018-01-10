@@ -230,7 +230,7 @@ public class UrlBinary extends AbstractFedoraBinary {
      */
     @Override
     public String getMimeType() {
-        final String mimeType = super.getMimeType();
+        final String mimeType = getMimeTypeValue();
 
         try {
             final MessageExternalBodyContentType extBodyType = MessageExternalBodyContentType.parse(mimeType);
@@ -249,7 +249,7 @@ public class UrlBinary extends AbstractFedoraBinary {
     protected String getResourceLocation() {
         try {
             final MessageExternalBodyContentType externalBody = MessageExternalBodyContentType.parse(
-                    super.getMimeType());
+                    getMimeTypeValue());
             return externalBody.getResourceLocation();
         } catch (final UnsupportedAccessTypeException e) {
             throw new RepositoryRuntimeException(e);
