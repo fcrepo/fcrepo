@@ -17,7 +17,6 @@
  */
 package org.fcrepo.http.api;
 
-
 import static java.util.EnumSet.of;
 import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.empty;
@@ -194,8 +193,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         final RdfNamespacedStream outputStream;
 
         if (resource() instanceof FedoraBinary) {
-
-            final MediaType mediaType = MediaType.valueOf(((FedoraBinary) resource()).getMimeType());
+            final MediaType mediaType = getBinaryResourceMediaType();
 
             if (isExternalBody(mediaType)) {
                 return externalBodyRedirect(getExternalResourceLocation(mediaType)).build();
@@ -380,7 +378,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
 
             // we set the content-type explicitly to avoid content-negotiation from getting in the way
-            return builder.type(binary.getMimeType())
+            // getBinaryResourceMediaType will try to use the mime type on the resource, falling back on
+            // 'application/octet-stream' if the mime type is syntactically invalid
+            return builder.type(getBinaryResourceMediaType().toString())
                     .cacheControl(cc)
                     .build();
 
@@ -712,6 +712,21 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             final String requestBody,
             final RdfStream resourceTriples) {
         resource.getDescribedResource().updateProperties(translator(), requestBody, resourceTriples);
+    }
+
+    /**
+     * This method returns a MediaType for a binary resource.
+     * If the resource's media type is syntactically incorrect, it will
+     * return 'application/octet-stream' as the media type.
+     */
+    protected MediaType getBinaryResourceMediaType() {
+        try {
+            return MediaType.valueOf(((FedoraBinary) resource()).getMimeType());
+        } catch (IllegalArgumentException e) {
+            LOGGER.warn("Syntactically incorrect MediaType encountered on resource {}: '{}'",
+                    resource().getPath(), ((FedoraBinary)resource()).getMimeType());
+            return MediaType.APPLICATION_OCTET_STREAM_TYPE;
+        }
     }
 
     /**

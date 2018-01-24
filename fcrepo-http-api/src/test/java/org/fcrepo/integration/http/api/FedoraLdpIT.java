@@ -2298,6 +2298,46 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
     }
 
+    /* test case: create binary with fine mime type then change the mime type to something
+     * syntactically invalid and ensure one can still retrieve it.:w
+     */
+    @Test
+    public void testBinaryWithBadMimeType() throws IOException {
+        final String subjectURI = serverAddress + getRandomUniqueId();
+        final HttpPut createMethod = new HttpPut(subjectURI);
+        createMethod.addHeader(CONTENT_TYPE, "text/plain");
+        createMethod.setEntity(new StringEntity("Some text here."));
+        createMethod.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+
+        assertEquals(CREATED.getStatusCode(), getStatus(createMethod));
+
+        final HttpPatch patch = new HttpPatch(subjectURI + "/fcr:metadata");
+        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
+        patch.setEntity(new StringEntity("INSERT { <" + subjectURI + "> "
+                + "<http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#hasMimeType> \"-- invalid sytax! --\" "
+                + "} WHERE {}"));
+
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(patch));
+
+        // make sure it's still retrievable despite the bad mime type
+        final HttpGet getMethod = new HttpGet(subjectURI);
+        try (final CloseableHttpResponse response = execute(getMethod)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final Collection<String> contentTypes = getHeader(response, CONTENT_TYPE);
+            final String contentType = contentTypes.iterator().next();
+            assertTrue("GET: Expected 'application/octet-stream' instead got: '" + contentType + "'",
+                    contentType.contains("application/octet-stream"));
+        }
+
+        final HttpHead httpHead = new HttpHead(subjectURI);
+        try (final CloseableHttpResponse response = execute(httpHead)) {
+            final Collection<String> contentTypes = getHeader(response, CONTENT_TYPE);
+            final String contentType = contentTypes.iterator().next();
+            assertTrue("HEAD: Expected 'application/octet-stream' instead got: '" + contentType + "'",
+                    contentType.contains("application/octet-stream"));
+        }
+    }
+
     @Test
     public void testCreateBinaryCSV() throws IOException {
         final String subjectURI = serverAddress + getRandomUniqueId();
@@ -2662,8 +2702,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     @Test
     @Ignore("This test needs manual intervention to decide how \"good\" the graph looks")
     // TODO Do we have any way to proceed with this kind of aesthetic goal?
-            public
-            void testGraphShouldNotBeTooLumpy() throws IOException {
+    public void testGraphShouldNotBeTooLumpy() throws IOException {
 
         final HttpPut httpPut = putObjMethod(getRandomUniqueId());
         httpPut.addHeader(CONTENT_TYPE, "text/turtle");
