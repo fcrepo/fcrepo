@@ -209,7 +209,7 @@ public class FedoraLdp extends ContentExposingResource {
         Response.ResponseBuilder builder = ok();
 
         if (resource() instanceof FedoraBinary) {
-            final MediaType mediaType = MediaType.valueOf(((FedoraBinary) resource()).getMimeType());
+            final MediaType mediaType = getBinaryResourceMediaType();
 
             if (isExternalBody(mediaType)) {
                 builder = externalBodyRedirect(getExternalResourceLocation(mediaType));
@@ -274,7 +274,8 @@ public class FedoraLdp extends ContentExposingResource {
                     .getAcceptableMediaTypes());
 
             if (resource() instanceof FedoraBinary && acceptableMediaTypes.size() > 0) {
-                final MediaType mediaType = MediaType.valueOf(((FedoraBinary) resource()).getMimeType());
+
+                final MediaType mediaType = getBinaryResourceMediaType();
 
                 // Respect the Want-Digest header for fixity check
                 final String wantDigest = headers.getHeaderString(WANT_DIGEST);
