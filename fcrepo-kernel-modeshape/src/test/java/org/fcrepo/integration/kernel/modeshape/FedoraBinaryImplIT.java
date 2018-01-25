@@ -60,6 +60,7 @@ import org.apache.commons.io.IOUtils;
 import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.InvalidMediaTypeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
@@ -104,7 +105,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
     }
 
     @Test
-    public void testCreatedDate() throws RepositoryException, InvalidChecksumException {
+    public void testCreatedDate() throws RepositoryException, InvalidChecksumException, InvalidMediaTypeException {
         FedoraSession session = repo.login();
         containerService.findOrCreate(session, "/testDatastreamObject");
 
@@ -128,7 +129,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
     @Test
     public void testDatastreamContent() throws IOException,
             RepositoryException,
-            InvalidChecksumException {
+            InvalidChecksumException, InvalidMediaTypeException {
         final FedoraSession session = repo.login();
         containerService.findOrCreate(session, "/testDatastreamObject");
 
@@ -151,7 +152,8 @@ public class FedoraBinaryImplIT extends AbstractIT {
     }
 
     @Test
-    public void testDatastreamContentType() throws RepositoryException, InvalidChecksumException {
+    public void testDatastreamContentType() throws RepositoryException, InvalidChecksumException,
+            InvalidMediaTypeException {
         final FedoraSession session = repo.login();
         try {
             containerService.findOrCreate(session, "/testDatastreamObject");
@@ -178,7 +180,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
     @Test
     public void testDatastreamContentDigestAndLength() throws IOException, RepositoryException,
-    InvalidChecksumException {
+            InvalidChecksumException, InvalidMediaTypeException {
         final FedoraSession session = repo.login();
         try {
             containerService.findOrCreate(session, "/testDatastreamObject");
@@ -209,7 +211,8 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
     @Test
     public void
-    testModifyDatastreamContentDigestAndLength() throws IOException, RepositoryException, InvalidChecksumException {
+    testModifyDatastreamContentDigestAndLength() throws IOException, RepositoryException, InvalidChecksumException,
+            InvalidMediaTypeException {
         final FedoraSession session = repo.login();
         try {
             containerService.findOrCreate(session, "/testDatastreamObject");
@@ -238,7 +241,8 @@ public class FedoraBinaryImplIT extends AbstractIT {
     }
 
     @Test
-    public void testDatastreamContentWithChecksum() throws IOException, RepositoryException, InvalidChecksumException {
+    public void testDatastreamContentWithChecksum() throws IOException, RepositoryException, InvalidChecksumException,
+            InvalidMediaTypeException {
         final FedoraSession session = repo.login();
         try {
             containerService.findOrCreate(session, "/testDatastreamObject");
@@ -267,7 +271,8 @@ public class FedoraBinaryImplIT extends AbstractIT {
     }
 
     @Test
-    public void testDatastreamFileName() throws RepositoryException, InvalidChecksumException {
+    public void testDatastreamFileName() throws RepositoryException, InvalidChecksumException,
+            InvalidMediaTypeException {
         final FedoraSession session = repo.login();
         try {
             containerService.findOrCreate(session, "/testDatastreamObject");
@@ -293,7 +298,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
     }
 
     @Test
-    public void testChecksumBlobs() throws RepositoryException, InvalidChecksumException {
+    public void testChecksumBlobs() throws RepositoryException, InvalidChecksumException, InvalidMediaTypeException {
         final String pid = "testChecksumBlobs-" + randomUUID();
         final FedoraSession session = repo.login();
         try {
@@ -331,7 +336,8 @@ public class FedoraBinaryImplIT extends AbstractIT {
     }
 
     @Test
-    public void testChecksumBlobsForInMemoryValues() throws RepositoryException, InvalidChecksumException {
+    public void testChecksumBlobsForInMemoryValues() throws RepositoryException, InvalidChecksumException,
+            InvalidMediaTypeException {
 
         final FedoraSession session = repo.login();
         try {
@@ -396,7 +402,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
     @Test
     public void testExceptionGetFixityWithWantDigest() throws RepositoryException, InvalidChecksumException,
-            UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+            UnsupportedAlgorithmException, UnsupportedAccessTypeException, InvalidMediaTypeException {
         final Collection<String> digestAlgs = Collections.singletonList("sha256");
         final String pid = "testFixityWithWantDigest-" + randomUUID();
         final FedoraSession session = repo.login();
@@ -427,7 +433,8 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
     @Test
     public void testGetFixityWithWantDigest() throws RepositoryException, InvalidChecksumException,
-            URISyntaxException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+            URISyntaxException, UnsupportedAlgorithmException, UnsupportedAccessTypeException,
+            InvalidMediaTypeException {
         final Collection<String> digestAlgs = Collections.singletonList("SHA");
         final String pid = "testFixityWithWantDigest-" + randomUUID();
         final FedoraSession session = repo.login();
@@ -462,7 +469,8 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
     @Test
     public void testGetFixityWithWantDigestMultuple() throws RepositoryException, InvalidChecksumException,
-            URISyntaxException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+            URISyntaxException, UnsupportedAlgorithmException, UnsupportedAccessTypeException,
+            InvalidMediaTypeException {
         final String[] digestAlgValues = {"SHA", "md5"};
         final Collection<String> digestAlgs = Arrays.asList(digestAlgValues);
         final String pid = "testFixityWithWantDigestMultiple-" + randomUUID();
@@ -497,7 +505,8 @@ public class FedoraBinaryImplIT extends AbstractIT {
     }
 
     @Test
-    public void testModifyDatastreamDescriptionLastMod() throws RepositoryException, InvalidChecksumException {
+    public void testModifyDatastreamDescriptionLastMod() throws RepositoryException, InvalidChecksumException,
+            InvalidMediaTypeException {
         final FedoraSession session = repo.login();
         try {
             containerService.findOrCreate(session, "/testDatastreamObject");

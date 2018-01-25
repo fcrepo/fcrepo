@@ -53,6 +53,7 @@ import org.fcrepo.integration.kernel.modeshape.AbstractIT;
 import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.InvalidMediaTypeException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.observer.EventType;
@@ -117,7 +118,8 @@ public class SimpleObserverIT extends AbstractIT {
     }
 
     @Test
-    public void contentEventCollapsing() throws RepositoryException, InvalidChecksumException {
+    public void contentEventCollapsing() throws RepositoryException, InvalidChecksumException,
+            InvalidMediaTypeException {
 
         final FedoraSession session = repository.login();
         final Session se = getJcrSession(session);

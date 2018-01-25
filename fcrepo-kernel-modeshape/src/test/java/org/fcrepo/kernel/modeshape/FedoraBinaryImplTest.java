@@ -19,6 +19,7 @@ package org.fcrepo.kernel.modeshape;
 
 import org.apache.tika.io.IOUtils;
 import org.fcrepo.kernel.api.FedoraTypes;
+import org.fcrepo.kernel.api.exception.InvalidMediaTypeException;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.junit.After;
@@ -127,7 +128,7 @@ public class FedoraBinaryImplTest implements FedoraTypes {
 
     @Test
     public void testSetContent() throws RepositoryException,
-            InvalidChecksumException {
+            InvalidChecksumException, InvalidMediaTypeException {
         final org.modeshape.jcr.api.Binary mockBin =
                 mock(org.modeshape.jcr.api.Binary.class);
         getContentNodeMock(mockContent, 8);
@@ -146,7 +147,7 @@ public class FedoraBinaryImplTest implements FedoraTypes {
 
     @Test
     public void testSetContentWithFilename() throws RepositoryException,
-            InvalidChecksumException {
+            InvalidChecksumException, InvalidMediaTypeException {
         final org.modeshape.jcr.api.Binary mockBin =
                 mock(org.modeshape.jcr.api.Binary.class);
         getContentNodeMock(mockContent, 8);
@@ -167,7 +168,7 @@ public class FedoraBinaryImplTest implements FedoraTypes {
     @Test(expected = InvalidChecksumException.class)
     public void testSetContentWithChecksumMismatch()
             throws RepositoryException, InvalidChecksumException,
-            URISyntaxException {
+            URISyntaxException, InvalidMediaTypeException {
         final org.modeshape.jcr.api.Binary mockBin =
                 mock(org.modeshape.jcr.api.Binary.class);
         getContentNodeMock(mockContent, 8);

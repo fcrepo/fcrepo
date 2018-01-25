@@ -113,6 +113,7 @@ import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
 import org.fcrepo.kernel.api.exception.InsufficientStorageException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.InvalidMediaTypeException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PreconditionException;
 import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
@@ -950,7 +951,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testCreateNewBinary() throws MalformedRdfException, InvalidChecksumException,
-           IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+            IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException, InvalidMediaTypeException {
         setResource(Container.class);
         when(mockBinaryService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockBinary);
         try (final InputStream content = toInputStream("x", UTF_8)) {
@@ -963,7 +964,8 @@ public class FedoraLdpTest {
 
     @Test(expected = InsufficientStorageException.class)
     public void testCreateNewBinaryWithInsufficientResources() throws MalformedRdfException,
-           InvalidChecksumException, IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+            InvalidChecksumException, IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException,
+            InvalidMediaTypeException {
         setResource(Container.class);
         when(mockBinaryService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockBinary);
 
@@ -984,7 +986,8 @@ public class FedoraLdpTest {
 
     @Test
     public void testCreateNewBinaryWithContentTypeWithParams() throws MalformedRdfException,
-           InvalidChecksumException, IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+            InvalidChecksumException, IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException,
+            InvalidMediaTypeException {
 
         setResource(Container.class);
         when(mockBinaryService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockBinary);
@@ -999,7 +1002,8 @@ public class FedoraLdpTest {
 
     @Test
     public void testCreateNewBinaryWithChecksumSHA() throws MalformedRdfException,
-           InvalidChecksumException, IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+            InvalidChecksumException, IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException,
+            InvalidMediaTypeException {
 
         setResource(Container.class);
         when(mockBinaryService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockBinary);
@@ -1017,7 +1021,8 @@ public class FedoraLdpTest {
 
     @Test
     public void testCreateNewBinaryWithChecksumSHA256() throws MalformedRdfException,
-        InvalidChecksumException, IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+            InvalidChecksumException, IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException,
+            InvalidMediaTypeException {
 
         setResource(Container.class);
         when(mockBinaryService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockBinary);
@@ -1035,7 +1040,8 @@ public class FedoraLdpTest {
 
     @Test
     public void testCreateNewBinaryWithChecksumMD5() throws MalformedRdfException,
-            InvalidChecksumException, IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+            InvalidChecksumException, IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException,
+            InvalidMediaTypeException {
 
         setResource(Container.class);
         when(mockBinaryService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockBinary);
@@ -1053,7 +1059,8 @@ public class FedoraLdpTest {
 
     @Test
     public void testCreateNewBinaryWithChecksumSHAandMD5() throws MalformedRdfException,
-           InvalidChecksumException, IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+            InvalidChecksumException, IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException,
+            InvalidMediaTypeException {
 
         setResource(Container.class);
         when(mockBinaryService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockBinary);

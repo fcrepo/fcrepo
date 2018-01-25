@@ -19,6 +19,7 @@ package org.fcrepo.kernel.api.models;
 
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.InvalidMediaTypeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
@@ -49,11 +50,12 @@ public interface FedoraBinary extends FedoraResource {
      * @param originalFileName Original file name of the content (optional)
      * @param storagePolicyDecisionPoint Policy decision point for storing the content (optional)
      * @throws InvalidChecksumException if invalid checksum exception occurred
+     * @throws InvalidMediaTypeException if given content type is not a valid media type
      */
     void setContent(InputStream content, String contentType, Collection<URI> checksums,
                     String originalFileName,
                     StoragePolicyDecisionPoint storagePolicyDecisionPoint)
-            throws InvalidChecksumException;
+            throws InvalidChecksumException, InvalidMediaTypeException;
 
     /**
      * @return The size in bytes of content associated with this datastream.
