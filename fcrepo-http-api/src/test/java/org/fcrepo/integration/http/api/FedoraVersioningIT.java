@@ -24,6 +24,7 @@ import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.fcrepo.http.api.FedoraVersioning.MEMENTO_DATETIME_HEADER;
 import static org.fcrepo.http.commons.domain.RDFMediaType.APPLICATION_LINK_FORMAT;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
@@ -33,10 +34,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import javax.ws.rs.core.Link;
+import org.apache.http.Header;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -121,6 +126,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(createMethod)) {
             assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
         }
+
         final HttpGet httpGet = getObjMethod(id + "/" + FCR_VERSIONS);
 
         try (final CloseableDataset dataset = getDataset(httpGet)) {
@@ -128,5 +134,59 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             final Node subject = createURI(subjectURI + "/" + FCR_VERSIONS);
             assertTrue("Did not find correct subject", results.contains(ANY, subject, ANY, ANY));
         }
+    }
+
+    @Test
+    public void testCreateVersion() throws IOException {
+        final String id = getRandomUniqueId();
+        final String subjectURI = serverAddress + id;
+        final HttpPut putMethod = putObjMethod(id);
+
+        putMethod.addHeader(CONTENT_TYPE, "text/n3");
+        putMethod.setEntity(new StringEntity("<" + subjectURI + "> <info:test#label> \"versioned resource\""));
+        putMethod.addHeader(LINK, VERSIONED_RESOURCE_LINK_HEADER);
+
+        try (final CloseableHttpResponse response = execute(putMethod)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+        }
+        final HttpPost postMethod = postObjMethod(id + "/" + FCR_VERSIONS);
+        try (final CloseableHttpResponse response = execute(postMethod)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+
+        }
+    }
+
+    @Test
+    public void testCreateVersionWithDatetime() throws IOException {
+        final String id = getRandomUniqueId();
+        final String subjectURI = serverAddress + id;
+        final HttpPut putMethod = putObjMethod(id);
+        final String mementoDateTime =
+            DateTimeFormatter.RFC_1123_DATE_TIME.format(LocalDateTime.of(2000, 1, 1, 00, 00).atZone(ZoneOffset.UTC));
+
+        putMethod.addHeader(CONTENT_TYPE, "text/n3");
+        putMethod.setEntity(new StringEntity("<" + subjectURI + "> <info:test#label> \"versioned resource\""));
+        putMethod.addHeader(LINK, VERSIONED_RESOURCE_LINK_HEADER);
+
+        try (final CloseableHttpResponse response = execute(putMethod)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+        }
+        final HttpPost postMethod = postObjMethod(id + "/" + FCR_VERSIONS);
+        postMethod.addHeader(MEMENTO_DATETIME_HEADER, mementoDateTime);
+        try (final CloseableHttpResponse response = execute(postMethod)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            assertTrue("Didn't get the correct Memento Datetime",
+                mementoDateTimeHeaderMatches(response, mementoDateTime));
+        }
+    }
+
+    /**
+     * @param response
+     * @param expected
+     * @return
+     */
+    private static boolean mementoDateTimeHeaderMatches(final CloseableHttpResponse response, final String expected) {
+        return Arrays.asList(response.getHeaders(MEMENTO_DATETIME_HEADER)).stream().map(Header::getValue)
+            .anyMatch(t -> expected.contentEquals(t));
     }
 }

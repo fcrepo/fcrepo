@@ -19,14 +19,11 @@ package org.fcrepo.http.api;
 
 
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static com.google.common.base.Strings.nullToEmpty;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
-import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
 import static javax.ws.rs.core.MediaType.WILDCARD;
-import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.notAcceptable;
 import static javax.ws.rs.core.Response.ok;
@@ -34,7 +31,6 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
-import static javax.ws.rs.core.Variant.mediaTypes;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.jena.atlas.web.ContentType.create;
@@ -73,7 +69,6 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLDecoder;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -108,16 +103,12 @@ import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
-import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
-import org.fcrepo.kernel.api.exception.InsufficientStorageException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
@@ -140,12 +131,6 @@ import org.springframework.context.annotation.Scope;
 public class FedoraLdp extends ContentExposingResource {
 
     private static final Logger LOGGER = getLogger(FedoraLdp.class);
-
-    private static final Splitter.MapSplitter RFC3230_SPLITTER =
-        Splitter.on(',').omitEmptyStrings().trimResults().
-        withKeyValueSeparator(Splitter.on('=').limit(2));
-
-    static final String INSUFFICIENT_SPACE_IDENTIFYING_MESSAGE = "No space left on device";
 
     static final String HTTP_HEADER_ACCEPT_PATCH = "Accept-Patch";
 
@@ -185,6 +170,7 @@ public class FedoraLdp extends ContentExposingResource {
      * Retrieve the node headers
      *
      * @return response
+     * @throws UnsupportedAlgorithmException if an unsupported exception occurs
      */
     @HEAD
     @Timed
@@ -244,6 +230,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @param rangeValue the range value
      * @return a binary or the triples for the specified node
      * @throws IOException if IO exception occurred
+     * @throws UnsupportedAlgorithmException if an unsupported exception occurs
      */
     @GET
     @Produces({TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
@@ -329,7 +316,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @return 204
      * @throws InvalidChecksumException if invalid checksum exception occurred
      * @throws MalformedRdfException if malformed rdf exception occurred
-     * @throws UnsupportedAlgorithmException
+     * @throws UnsupportedAlgorithmException if an unsupported algorithm exception occurs
      */
     @PUT
     @Consumes
@@ -492,7 +479,7 @@ public class FedoraLdp extends ContentExposingResource {
      * This originally used application/octet-stream;qs=1001 as a workaround
      * for JERSEY-2636, to ensure requests without a Content-Type get routed here.
      * This qs value does not parse with newer versions of Jersey, as qs values
-     * must be between 0 and 1.  We use qs=1.000 to mark where this historical
+     * must be between 0 and 1. We use qs=1.000 to mark where this historical
      * anomaly had been.
      *
      * @param contentDisposition the content Disposition value
@@ -505,7 +492,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @throws InvalidChecksumException if invalid checksum exception occurred
      * @throws IOException if IO exception occurred
      * @throws MalformedRdfException if malformed rdf exception occurred
-     * @throws UnsupportedAlgorithmException
+     * @throws UnsupportedAlgorithmException if an unsupported algorithm exception occurs
      */
     @POST
     @Consumes({MediaType.APPLICATION_OCTET_STREAM + ";qs=1.000", WILDCARD})
@@ -623,90 +610,6 @@ public class FedoraLdp extends ContentExposingResource {
         }
 
         return false;
-    }
-    /**
-     * @param rootThrowable The original throwable
-     * @param throwable The throwable under direct scrutiny.
-     */
-    private void checkForInsufficientStorageException(final Throwable rootThrowable, final Throwable throwable)
-            throws InvalidChecksumException {
-        final String message = throwable.getMessage();
-        if (throwable instanceof IOException && message != null && message.contains(
-                INSUFFICIENT_SPACE_IDENTIFYING_MESSAGE)) {
-            throw new InsufficientStorageException(throwable.getMessage(), rootThrowable);
-        }
-
-        if (throwable.getCause() != null) {
-            checkForInsufficientStorageException(rootThrowable, throwable.getCause());
-        }
-
-        if (rootThrowable instanceof InvalidChecksumException) {
-            throw (InvalidChecksumException) rootThrowable;
-        } else if (rootThrowable instanceof RuntimeException) {
-            throw (RuntimeException) rootThrowable;
-        } else {
-            throw new RepositoryRuntimeException(rootThrowable);
-        }
-    }
-
-    /**
-     * Create the appropriate response after a create or update request is processed.  When a resource is created,
-     * examine the Prefer and Accept headers to determine whether to include a representation.  By default, the
-     * URI for the created resource is return as plain text.  If a minimal response is requested, then no body is
-     * returned.  If a non-minimal return is requested, return the RDF for the created resource in the appropriate
-     * RDF serialization.
-     *
-     * @param resource The created or updated Fedora resource.
-     * @param created True for a newly-created resource, false for an updated resource.
-     * @return 204 No Content (for updated resources), 201 Created (for created resources) including the resource
-     *    URI or content depending on Prefer headers.
-     */
-    @SuppressWarnings("resource")
-    private Response createUpdateResponse(final FedoraResource resource, final boolean created) {
-        addCacheControlHeaders(servletResponse, resource, session);
-        addResourceLinkHeaders(resource, created);
-        if (!created) {
-            return noContent().build();
-        }
-
-        final URI location = getUri(resource);
-        final Response.ResponseBuilder builder = created(location);
-
-        if (prefer == null || !prefer.hasReturn()) {
-            final MediaType acceptablePlainText = acceptabePlainTextMediaType();
-            if (acceptablePlainText != null) {
-                return builder.type(acceptablePlainText).entity(location.toString()).build();
-            }
-            return notAcceptable(mediaTypes(TEXT_PLAIN_TYPE).build()).build();
-        } else if (prefer.getReturn().getValue().equals("minimal")) {
-            return builder.build();
-        } else {
-            if (prefer != null) {
-                prefer.getReturn().addResponseHeaders(servletResponse);
-            }
-            final RdfNamespacedStream rdfStream = new RdfNamespacedStream(
-                new DefaultRdfStream(asNode(resource()), getResourceTriples()),
-                    session().getFedoraSession().getNamespaces());
-            return builder.entity(rdfStream).build();
-        }
-    }
-
-    /**
-     * Returns an acceptable plain text media type if possible, or null if not.
-     */
-    private MediaType acceptabePlainTextMediaType() {
-        final List<MediaType> acceptable = headers.getAcceptableMediaTypes();
-        if (acceptable == null || acceptable.size() == 0) {
-            return TEXT_PLAIN_TYPE;
-        }
-        for (final MediaType type : acceptable ) {
-            if (type.isWildcardType() || (type.isCompatible(TEXT_PLAIN_TYPE) && type.isWildcardSubtype())) {
-                return TEXT_PLAIN_TYPE;
-            } else if (type.isCompatible(TEXT_PLAIN_TYPE)) {
-                return type;
-            }
-        }
-        return null;
     }
 
     @Override
@@ -879,37 +782,6 @@ public class FedoraLdp extends ContentExposingResource {
     }
 
     /**
-     * Parse the RFC-3230 Digest response header value.  Look for a
-     * sha1 checksum and return it as a urn, if missing or malformed
-     * an empty string is returned.
-     * @param digest The Digest header value
-     * @return the sha1 checksum value
-     * @throws UnsupportedAlgorithmException if an unsupported digest is used
-     */
-    private static Collection<String> parseDigestHeader(final String digest) throws UnsupportedAlgorithmException {
-        try {
-            final Map<String,String> digestPairs = RFC3230_SPLITTER.split(nullToEmpty(digest));
-            final boolean allSupportedAlgorithms = digestPairs.keySet().stream().allMatch(
-                    ContentDigest.DIGEST_ALGORITHM::isSupportedAlgorithm);
-
-            // If you have one or more digests that are all valid or no digests.
-            if (digestPairs.isEmpty() || allSupportedAlgorithms) {
-                return digestPairs.entrySet().stream()
-                    .filter(entry -> ContentDigest.DIGEST_ALGORITHM.isSupportedAlgorithm(entry.getKey()))
-                    .map(entry -> ContentDigest.asURI(entry.getKey(), entry.getValue()).toString())
-                    .collect(Collectors.toSet());
-            } else {
-                throw new UnsupportedAlgorithmException(String.format("Unsupported Digest Algorithim: %1$s", digest));
-            }
-        } catch (final RuntimeException e) {
-            if (e instanceof IllegalArgumentException) {
-                throw new ClientErrorException("Invalid Digest header: " + digest + "\n", BAD_REQUEST);
-            }
-            throw e;
-        }
-    }
-
-    /**
      * Parse the RFC-3230 Want-Digest header value.
      * @param wantDigest The Want-Digest header value with optional q value in format:
      *    'md5', 'md5, sha', 'MD5;q=0.3, sha;q=1' etc.
@@ -937,18 +809,6 @@ public class FedoraLdp extends ContentExposingResource {
                 throw new ClientErrorException("Invalid 'Want-Digest' header value: " + wantDigest + "\n", BAD_REQUEST);
             }
             throw e;
-        }
-    }
-
-    /**
-     * Check if a path has a segment prefixed with fedora:
-     *
-     * @param externalPath the path.
-     */
-    private static void hasRestrictedPath(final String externalPath) {
-        final String[] pathSegments = externalPath.split("/");
-        if (Arrays.asList(pathSegments).stream().anyMatch(p -> p.startsWith("fedora:"))) {
-            throw new ServerManagedTypeException("Path cannot contain a fedora: prefixed segment.");
         }
     }
 }

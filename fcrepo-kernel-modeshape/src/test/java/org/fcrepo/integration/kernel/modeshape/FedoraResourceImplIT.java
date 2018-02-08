@@ -19,16 +19,74 @@ package org.fcrepo.integration.kernel.modeshape;
 
 import static java.net.URI.create;
 import static java.util.Collections.emptySet;
-import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDstring;
-import static org.apache.jena.graph.Node.ANY;
-import static org.apache.jena.graph.NodeFactory.createLiteral;
-import static org.apache.jena.graph.NodeFactory.createURI;
-import static org.apache.jena.rdf.model.ResourceFactory.createPlainLiteral;
-import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
-import static org.apache.jena.rdf.model.ResourceFactory.createResource;
-import static org.apache.jena.vocabulary.RDF.type;
-import static org.apache.jena.vocabulary.DC.title;
 import static javax.jcr.PropertyType.BINARY;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.net.URI;
+import java.nio.charset.Charset;
+import java.time.Instant;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.TimeZone;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+
+import javax.inject.Inject;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.Value;
+import javax.jcr.nodetype.NodeTypeDefinition;
+import javax.jcr.nodetype.NodeTypeManager;
+import javax.jcr.nodetype.NodeTypeTemplate;
+import javax.jcr.security.AccessControlList;
+import javax.jcr.security.AccessControlManager;
+import javax.jcr.security.Privilege;
+import javax.jcr.version.Version;
+
+import org.fcrepo.kernel.api.FedoraRepository;
+import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.exception.AccessDeniedException;
+import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.InvalidPrefixException;
+import org.fcrepo.kernel.api.exception.MalformedRdfException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.models.Container;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.FedoraTimeMap;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.services.BinaryService;
+import org.fcrepo.kernel.api.services.ContainerService;
+import org.fcrepo.kernel.api.services.NodeService;
+import org.fcrepo.kernel.api.services.VersionService;
+import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
+import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Literal;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.util.iterator.ExtendedIterator;
+import org.apache.jena.vocabulary.RDF;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.modeshape.jcr.security.SimplePrincipal;
+import org.springframework.test.context.ContextConfiguration;
+
+import com.google.common.collect.Iterators;
+
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CREATEDBY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIEDBY;
@@ -44,93 +102,36 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
 import static org.fcrepo.kernel.api.RequiredRdfContext.VERSIONS;
-import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.LDPCV_TIME_MAP;
-import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FIELD_DELIMITER;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
+import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.LDPCV_TIME_MAP;
+import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.HAS_MIXIN_TYPE;
 import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.HAS_NODE_TYPE;
-import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.HAS_PRIMARY_IDENTIFIER;
+import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.JCR_NAMESPACE;
 import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.JCR_NT_NAMESPACE;
 import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.MIX_NAMESPACE;
 import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.MODE_NAMESPACE;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedPredicate.uncheck;
+
+import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDstring;
+import static org.apache.jena.graph.Node.ANY;
+import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.rdf.model.ResourceFactory.createPlainLiteral;
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.vocabulary.DC_11.title;
+import static org.apache.jena.vocabulary.RDF.type;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.net.URI;
-import java.nio.charset.Charset;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.TimeZone;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.time.Instant;
-
-import javax.inject.Inject;
-import javax.jcr.Value;
-import javax.jcr.nodetype.NodeTypeDefinition;
-import javax.jcr.nodetype.NodeTypeTemplate;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.nodetype.NodeTypeManager;
-import javax.jcr.security.AccessControlList;
-import javax.jcr.security.AccessControlManager;
-import javax.jcr.security.Privilege;
-import javax.jcr.version.Version;
-
-import com.google.common.collect.Iterators;
-import org.apache.jena.graph.Graph;
-import org.apache.jena.graph.Triple;
-import org.apache.jena.rdf.model.ResourceFactory;
-
-import org.apache.commons.io.IOUtils;
-import org.fcrepo.kernel.api.FedoraRepository;
-import org.fcrepo.kernel.api.FedoraSession;
-import org.fcrepo.kernel.api.exception.AccessDeniedException;
-import org.fcrepo.kernel.api.exception.InvalidChecksumException;
-import org.fcrepo.kernel.api.exception.InvalidPrefixException;
-import org.fcrepo.kernel.api.exception.MalformedRdfException;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.models.Container;
-import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.models.FedoraTimeMap;
-import org.fcrepo.kernel.api.services.BinaryService;
-import org.fcrepo.kernel.api.services.NodeService;
-import org.fcrepo.kernel.api.services.ContainerService;
-import org.fcrepo.kernel.api.services.VersionService;
-import org.fcrepo.kernel.api.RdfStream;
-import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
-import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.modeshape.jcr.security.SimplePrincipal;
-import org.springframework.test.context.ContextConfiguration;
-
-import org.apache.jena.graph.Node;
-import org.apache.jena.rdf.model.Literal;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.util.iterator.ExtendedIterator;
-import org.apache.jena.vocabulary.RDF;
 
 /**
  * <p>FedoraResourceImplIT class.</p>
@@ -483,7 +484,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Function<String, String> read = i -> {
             try {
                 return IOUtils.toString(getClass().getResource(i), Charset.forName("UTF8"));
-            } catch (IOException ex) {
+            } catch (final IOException ex) {
                 throw new UncheckedIOException(ex);
             }
         };
@@ -542,8 +543,9 @@ public class FedoraResourceImplIT extends AbstractIT {
         getJcrNode(object).addMixin("mix:versionable");
         session.commit();
 
+        final Instant theDate = Instant.now();
         // create a version and make sure there are 2 versions (root + created)
-        versionService.createVersion(session, object.getPath(), "v0.0.1");
+        versionService.createVersion(session, object, theDate);
         session.commit();
 
         final Model graphStore = object.getTriples(subjects, VERSIONS).collect(toModel());
@@ -992,10 +994,12 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    @Ignore ("Until implemented with Memento")
+    // @Ignore ("Until implemented with Memento")
     public void testDeleteLinkedVersionedResources() throws RepositoryException {
         final Container object1 = containerService.findOrCreate(session, "/" + getRandomPid());
         final Container object2 = containerService.findOrCreate(session, "/" + getRandomPid());
+        object2.enableVersioning();
+        session.commit();
 
         // Create a link between objects 1 and 2
         object2.updateProperties(subjects, "PREFIX example: <http://example.org/>\n" +
@@ -1003,8 +1007,9 @@ public class FedoraResourceImplIT extends AbstractIT {
                         " } WHERE {} ",
                 object2.getTriples(subjects, emptySet()));
 
+        final Instant theDate = Instant.now();
         // Create version of object2
-        versionService.createVersion(session, object2.getPath(), "obj2-v0");
+        versionService.createVersion(session, object2, theDate);
 
         // Verify that the objects exist
         assertTrue("object1 should exist!", exists(object1));
@@ -1026,7 +1031,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         try {
             resource.getPath();
             return true;
-        } catch (RepositoryRuntimeException e) {
+        } catch (final RepositoryRuntimeException e) {
             return false;
         }
     }

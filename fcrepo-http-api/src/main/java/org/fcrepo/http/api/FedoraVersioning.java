@@ -17,12 +17,11 @@
  */
 package org.fcrepo.http.api;
 
+import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
-import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.ok;
-import static javax.ws.rs.core.Response.status;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.fcrepo.http.commons.domain.RDFMediaType.APPLICATION_LINK_FORMAT;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
@@ -41,31 +40,42 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import javax.jcr.RepositoryException;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Link;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
+import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.responses.LinkFormatStream;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.RepositoryVersionRuntimeException;
+import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
+import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
@@ -79,6 +89,8 @@ public class FedoraVersioning extends ContentExposingResource {
 
     private static final Logger LOGGER = getLogger(FedoraVersioning.class);
 
+    @VisibleForTesting
+    public static final String MEMENTO_DATETIME_HEADER = "Memento-Datetime";
 
     @Context protected Request request;
     @Context protected HttpServletResponse servletResponse;
@@ -105,18 +117,6 @@ public class FedoraVersioning extends ContentExposingResource {
 
 
     /**
-     * Enable versioning
-     * @return the response
-     */
-    @PUT
-    public Response enableVersioning() {
-        LOGGER.info("Enable versioning for '{}'", externalPath);
-        resource().enableVersioning();
-        session.commit();
-        return created(uriInfo.getRequestUri()).build();
-    }
-
-    /**
      * Disable versioning
      * @return the response
      */
@@ -129,23 +129,59 @@ public class FedoraVersioning extends ContentExposingResource {
     }
 
     /**
-     * Create a new version checkpoint and tag it with the given label. If
-     * that label already describes another version it will silently be
-     * reassigned to describe this version.
+     * Create a new version checkpoint and tag it with the given label. If that label already describes another version
+     * it will silently be reassigned to describe this version.
      *
-     * @param slug the value of slug
      * @throws RepositoryException the exception
      * @return response
+     * @throws UnsupportedAlgorithmException if an unsupported algorithm exception occurs
+     * @throws InvalidChecksumException if an invalid checksum exception occurs
      */
     @POST
-    public Response addVersion(@HeaderParam("Slug") final String slug) throws RepositoryException {
-        if (!isBlank(slug)) {
-            LOGGER.info("Request to add version '{}' for '{}'", slug, externalPath);
-            final String path = toPath(translator(), externalPath);
-            versionService.createVersion(session.getFedoraSession(), path, slug);
-            return created(URI.create(translator().reverse().convert(resource().getBaseVersion()).getURI())).build();
+    public Response addVersion(@HeaderParam(MEMENTO_DATETIME_HEADER) final String datetimeHeader,
+            @HeaderParam(CONTENT_TYPE) final MediaType requestContentType,
+            @HeaderParam(CONTENT_DISPOSITION) final ContentDisposition contentDisposition,
+            @HeaderParam("Digest") final String digest,
+        @ContentLocation final InputStream requestBodyStream)
+        throws RepositoryException, UnsupportedAlgorithmException, InvalidChecksumException {
+
+        final AcquiredLock lock = lockManager.lockForWrite(resource().findOrCreateTimeMap().getPath(),
+            session.getFedoraSession(), nodeService);
+
+        try {
+            final Collection<String> checksums = parseDigestHeader(digest);
+
+            final MediaType contentType = getSimpleContentType(requestContentType);
+
+            final Instant mementoInstant = (isBlank(datetimeHeader) ? Instant.now()
+                : Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(datetimeHeader)));
+
+            final FedoraResource memento =
+                versionService.createVersion(session.getFedoraSession(), resource(), mementoInstant);
+
+            LOGGER.info("Request to add version for date '{}' for '{}'", datetimeHeader, externalPath);
+            try {
+                try (final RdfStream resourceTriples = new DefaultRdfStream(asNode(memento))) {
+                    if (requestBodyStream != null) {
+                        if (memento instanceof FedoraBinary) {
+                            replaceResourceBinaryWithStream((FedoraBinary) memento,
+                                requestBodyStream, contentDisposition, requestContentType, checksums);
+                        } else if (isRdfContentType(contentType.toString())) {
+                            replaceResourceWithStream(memento, requestBodyStream, contentType, resourceTriples);
+                        }
+                    }
+                } catch (final DateTimeParseException e) {
+                    throw new BadRequestException(MEMENTO_DATETIME_HEADER +
+                        " header must be a RFC-1123 formatted date.");
+                }
+            } catch (final Exception e) {
+                checkForInsufficientStorageException(e, e);
+            }
+            return createUpdateResponse(memento, true);
+        } finally {
+            lock.release();
         }
-        return status(BAD_REQUEST).entity("Specify label for version").build();
+
     }
 
     /**
@@ -174,7 +210,7 @@ public class FedoraVersioning extends ContentExposingResource {
         servletResponse.addHeader(LINK, rdfSourceLink.build().toString());
         servletResponse.addHeader(LINK, Link.fromUri(VERSIONING_TIMEMAP_TYPE).rel("type").build().toString());
 
-        servletResponse.addHeader("Vary-Post", "Memento-Datetime");
+        servletResponse.addHeader("Vary-Post", MEMENTO_DATETIME_HEADER);
         servletResponse.addHeader("Allow", "POST,HEAD,GET,OPTIONS");
 
         if (acceptValue != null && acceptValue.equalsIgnoreCase(APPLICATION_LINK_FORMAT)) {
