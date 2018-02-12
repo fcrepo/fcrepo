@@ -2298,11 +2298,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
     }
 
-    /* test case: create binary with fine mime type then change the mime type to something
-     * syntactically invalid and ensure one can still retrieve it.:w
+    /* https://jira.duraspace.org/browse/FCREPO-2520: create binary with fine mime type then
+     * attempt to change the mime type to something syntactically invalid. Ensure one can still retrieve it.
      */
     @Test
-    public void testBinaryWithBadMimeType() throws IOException {
+    public void testBinarySetBadMimeType() throws IOException {
         final String subjectURI = serverAddress + getRandomUniqueId();
         final HttpPut createMethod = new HttpPut(subjectURI);
         createMethod.addHeader(CONTENT_TYPE, "text/plain");
@@ -2313,28 +2313,29 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final HttpPatch patch = new HttpPatch(subjectURI + "/fcr:metadata");
         patch.addHeader(CONTENT_TYPE, "application/sparql-update");
-        patch.setEntity(new StringEntity("INSERT { <" + subjectURI + "> "
-                + "<http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#hasMimeType> \"-- invalid sytax! --\" "
-                + "} WHERE {}"));
+        patch.setEntity(new StringEntity(
+                "PREFIX ebucore: <http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#> " +
+                "INSERT { <" + subjectURI + "> ebucore:hasMimeType> \"-- invalid syntax! --\" } WHERE {}")
+        );
 
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(patch));
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(patch));
 
-        // make sure it's still retrievable despite the bad mime type
+        // make sure it's still retrievable
         final HttpGet getMethod = new HttpGet(subjectURI);
         try (final CloseableHttpResponse response = execute(getMethod)) {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final Collection<String> contentTypes = getHeader(response, CONTENT_TYPE);
             final String contentType = contentTypes.iterator().next();
-            assertTrue("GET: Expected 'application/octet-stream' instead got: '" + contentType + "'",
-                    contentType.contains("application/octet-stream"));
+            assertTrue("GET: Expected 'text/plain' instead got: '" + contentType + "'",
+                    contentType.contains("text/plain"));
         }
 
         final HttpHead httpHead = new HttpHead(subjectURI);
         try (final CloseableHttpResponse response = execute(httpHead)) {
             final Collection<String> contentTypes = getHeader(response, CONTENT_TYPE);
             final String contentType = contentTypes.iterator().next();
-            assertTrue("HEAD: Expected 'application/octet-stream' instead got: '" + contentType + "'",
-                    contentType.contains("application/octet-stream"));
+            assertTrue("HEAD: Expected 'text/plain' instead got: '" + contentType + "'",
+                    contentType.contains("text/plain"));
         }
     }
 

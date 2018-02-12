@@ -1294,6 +1294,16 @@ public class FedoraResourceImplIT extends AbstractIT {
                 createResource("info:fedora/" + pid + "/c")));
     }
 
+    @Test (expected = IllegalArgumentException.class)
+    public void testMimeTypeValidation() {
+        final String pid = getRandomPid();
+        final FedoraResource object = containerService.findOrCreate(session, pid);
+        object.updateProperties(subjects,
+                "PREFIX ebucore: <http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#>\n" +
+                "INSERT { <> ebucore:hasMimeType \"-- Complete Junk --\"" + " . } WHERE { }",
+                object.getTriples(subjects, emptySet()));
+    }
+
     private void addVersionLabel(final String label, final FedoraResource r) throws RepositoryException {
         final Session jcrSession = getJcrSession(session);
         addVersionLabel(label, jcrSession.getWorkspace().getVersionManager().getBaseVersion(r.getPath()));
