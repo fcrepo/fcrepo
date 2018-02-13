@@ -1,0 +1,598 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Licensed to DuraSpace under one or more contributor license agreements.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * See the NOTICE file distributed with this work for additional information<a name="line.3"></a>
+<span class="sourceLineNo">004</span> * regarding copyright ownership.<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> * DuraSpace licenses this file to you under the Apache License,<a name="line.6"></a>
+<span class="sourceLineNo">007</span> * Version 2.0 (the "License"); you may not use this file except in<a name="line.7"></a>
+<span class="sourceLineNo">008</span> * compliance with the License.  You may obtain a copy of the License at<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *     http://www.apache.org/licenses/LICENSE-2.0<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> * Unless required by applicable law or agreed to in writing, software<a name="line.12"></a>
+<span class="sourceLineNo">013</span> * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.13"></a>
+<span class="sourceLineNo">014</span> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.14"></a>
+<span class="sourceLineNo">015</span> * See the License for the specific language governing permissions and<a name="line.15"></a>
+<span class="sourceLineNo">016</span> * limitations under the License.<a name="line.16"></a>
+<span class="sourceLineNo">017</span> */<a name="line.17"></a>
+<span class="sourceLineNo">018</span>package org.fcrepo.kernel.modeshape.utils;<a name="line.18"></a>
+<span class="sourceLineNo">019</span><a name="line.19"></a>
+<span class="sourceLineNo">020</span>import java.util.Arrays;<a name="line.20"></a>
+<span class="sourceLineNo">021</span>import java.util.Calendar;<a name="line.21"></a>
+<span class="sourceLineNo">022</span>import java.util.Optional;<a name="line.22"></a>
+<span class="sourceLineNo">023</span>import java.util.Set;<a name="line.23"></a>
+<span class="sourceLineNo">024</span>import java.util.function.Function;<a name="line.24"></a>
+<span class="sourceLineNo">025</span>import java.util.function.Predicate;<a name="line.25"></a>
+<span class="sourceLineNo">026</span><a name="line.26"></a>
+<span class="sourceLineNo">027</span>import org.apache.jena.rdf.model.Resource;<a name="line.27"></a>
+<span class="sourceLineNo">028</span>import org.fcrepo.kernel.api.FedoraTypes;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import org.fcrepo.kernel.api.exception.AccessDeniedException;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import org.fcrepo.kernel.api.models.FedoraResource;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import org.fcrepo.kernel.modeshape.FedoraResourceImpl;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import org.fcrepo.kernel.modeshape.services.functions.AnyTypesPredicate;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>import org.modeshape.jcr.JcrRepository;<a name="line.34"></a>
+<span class="sourceLineNo">035</span>import org.modeshape.jcr.cache.NodeKey;<a name="line.35"></a>
+<span class="sourceLineNo">036</span>import org.slf4j.Logger;<a name="line.36"></a>
+<span class="sourceLineNo">037</span><a name="line.37"></a>
+<span class="sourceLineNo">038</span>import javax.jcr.NamespaceRegistry;<a name="line.38"></a>
+<span class="sourceLineNo">039</span>import javax.jcr.Node;<a name="line.39"></a>
+<span class="sourceLineNo">040</span>import javax.jcr.Property;<a name="line.40"></a>
+<span class="sourceLineNo">041</span>import javax.jcr.RepositoryException;<a name="line.41"></a>
+<span class="sourceLineNo">042</span>import javax.jcr.Session;<a name="line.42"></a>
+<span class="sourceLineNo">043</span>import javax.jcr.nodetype.NodeType;<a name="line.43"></a>
+<span class="sourceLineNo">044</span>import javax.jcr.nodetype.PropertyDefinition;<a name="line.44"></a>
+<span class="sourceLineNo">045</span><a name="line.45"></a>
+<span class="sourceLineNo">046</span>import static java.util.Arrays.stream;<a name="line.46"></a>
+<span class="sourceLineNo">047</span>import static java.util.Calendar.getInstance;<a name="line.47"></a>
+<span class="sourceLineNo">048</span>import static java.util.Optional.empty;<a name="line.48"></a>
+<span class="sourceLineNo">049</span>import static java.util.TimeZone.getTimeZone;<a name="line.49"></a>
+<span class="sourceLineNo">050</span>import static javax.jcr.PropertyType.REFERENCE;<a name="line.50"></a>
+<span class="sourceLineNo">051</span>import static javax.jcr.PropertyType.WEAKREFERENCE;<a name="line.51"></a>
+<span class="sourceLineNo">052</span>import static com.google.common.collect.ImmutableSet.of;<a name="line.52"></a>
+<span class="sourceLineNo">053</span>import static org.apache.jena.rdf.model.ResourceFactory.createResource;<a name="line.53"></a>
+<span class="sourceLineNo">054</span>import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIED;<a name="line.54"></a>
+<span class="sourceLineNo">055</span>import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;<a name="line.55"></a>
+<span class="sourceLineNo">056</span>import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;<a name="line.56"></a>
+<span class="sourceLineNo">057</span>import static org.fcrepo.kernel.api.FedoraTypes.LDP_INSERTED_CONTENT_RELATION;<a name="line.57"></a>
+<span class="sourceLineNo">058</span>import static org.fcrepo.kernel.api.FedoraTypes.LDP_MEMBER_RESOURCE;<a name="line.58"></a>
+<span class="sourceLineNo">059</span>import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_MIXIN_TYPES;<a name="line.59"></a>
+<span class="sourceLineNo">060</span>import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_PRIMARY_TYPE;<a name="line.60"></a>
+<span class="sourceLineNo">061</span>import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_NODE;<a name="line.61"></a>
+<span class="sourceLineNo">062</span>import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;<a name="line.62"></a>
+<span class="sourceLineNo">063</span>import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATEDBY;<a name="line.63"></a>
+<span class="sourceLineNo">064</span>import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_FROZEN_NODE;<a name="line.64"></a>
+<span class="sourceLineNo">065</span>import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;<a name="line.65"></a>
+<span class="sourceLineNo">066</span>import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIEDBY;<a name="line.66"></a>
+<span class="sourceLineNo">067</span>import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;<a name="line.67"></a>
+<span class="sourceLineNo">068</span>import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.isBinaryContentProperty;<a name="line.68"></a>
+<span class="sourceLineNo">069</span>import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaceRegistry;<a name="line.69"></a>
+<span class="sourceLineNo">070</span>import static org.fcrepo.kernel.modeshape.utils.UncheckedPredicate.uncheck;<a name="line.70"></a>
+<span class="sourceLineNo">071</span>import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;<a name="line.71"></a>
+<span class="sourceLineNo">072</span>import static org.modeshape.jcr.api.JcrConstants.JCR_PRIMARY_TYPE;<a name="line.72"></a>
+<span class="sourceLineNo">073</span>import static org.modeshape.jcr.api.JcrConstants.JCR_MIXIN_TYPES;<a name="line.73"></a>
+<span class="sourceLineNo">074</span>import static org.slf4j.LoggerFactory.getLogger;<a name="line.74"></a>
+<span class="sourceLineNo">075</span><a name="line.75"></a>
+<span class="sourceLineNo">076</span>/**<a name="line.76"></a>
+<span class="sourceLineNo">077</span> * Convenience class with static methods for manipulating Fedora types in the<a name="line.77"></a>
+<span class="sourceLineNo">078</span> * JCR.<a name="line.78"></a>
+<span class="sourceLineNo">079</span> *<a name="line.79"></a>
+<span class="sourceLineNo">080</span> * @author ajs6f<a name="line.80"></a>
+<span class="sourceLineNo">081</span> * @since Feb 14, 2013<a name="line.81"></a>
+<span class="sourceLineNo">082</span> */<a name="line.82"></a>
+<span class="sourceLineNo">083</span>public abstract class FedoraTypesUtils implements FedoraTypes {<a name="line.83"></a>
+<span class="sourceLineNo">084</span><a name="line.84"></a>
+<span class="sourceLineNo">085</span>    public static final String REFERENCE_PROPERTY_SUFFIX = "_ref";<a name="line.85"></a>
+<span class="sourceLineNo">086</span><a name="line.86"></a>
+<span class="sourceLineNo">087</span>    private static final Logger LOGGER = getLogger(FedoraTypesUtils.class);<a name="line.87"></a>
+<span class="sourceLineNo">088</span><a name="line.88"></a>
+<span class="sourceLineNo">089</span>    private static Set&lt;String&gt; privateProperties = of(<a name="line.89"></a>
+<span class="sourceLineNo">090</span>            "jcr:mime",<a name="line.90"></a>
+<span class="sourceLineNo">091</span>            "jcr:mimeType",<a name="line.91"></a>
+<span class="sourceLineNo">092</span>            "jcr:frozenUuid",<a name="line.92"></a>
+<span class="sourceLineNo">093</span>            "jcr:uuid",<a name="line.93"></a>
+<span class="sourceLineNo">094</span>            JCR_CONTENT,<a name="line.94"></a>
+<span class="sourceLineNo">095</span>            JCR_PRIMARY_TYPE,<a name="line.95"></a>
+<span class="sourceLineNo">096</span>            JCR_LASTMODIFIED,<a name="line.96"></a>
+<span class="sourceLineNo">097</span>            JCR_LASTMODIFIEDBY,<a name="line.97"></a>
+<span class="sourceLineNo">098</span>            JCR_CREATED,<a name="line.98"></a>
+<span class="sourceLineNo">099</span>            JCR_CREATEDBY,<a name="line.99"></a>
+<span class="sourceLineNo">100</span>            JCR_MIXIN_TYPES,<a name="line.100"></a>
+<span class="sourceLineNo">101</span>            FROZEN_MIXIN_TYPES,<a name="line.101"></a>
+<span class="sourceLineNo">102</span>            FROZEN_PRIMARY_TYPE);<a name="line.102"></a>
+<span class="sourceLineNo">103</span><a name="line.103"></a>
+<span class="sourceLineNo">104</span>    private static Set&lt;String&gt; validJcrProperties = of(<a name="line.104"></a>
+<span class="sourceLineNo">105</span>            JCR_CREATED,<a name="line.105"></a>
+<span class="sourceLineNo">106</span>            JCR_CREATEDBY,<a name="line.106"></a>
+<span class="sourceLineNo">107</span>            JCR_LASTMODIFIED,<a name="line.107"></a>
+<span class="sourceLineNo">108</span>            JCR_LASTMODIFIEDBY);<a name="line.108"></a>
+<span class="sourceLineNo">109</span><a name="line.109"></a>
+<span class="sourceLineNo">110</span>    /**<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     * Predicate for determining whether this {@link Node} is a {@link org.fcrepo.kernel.api.models.Container}.<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     */<a name="line.112"></a>
+<span class="sourceLineNo">113</span>    public static Predicate&lt;Node&gt; isContainer = new AnyTypesPredicate(FEDORA_CONTAINER);<a name="line.113"></a>
+<span class="sourceLineNo">114</span><a name="line.114"></a>
+<span class="sourceLineNo">115</span>    /**<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     * Predicate for determining whether this {@link Node} is a<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     * {@link org.fcrepo.kernel.api.models.NonRdfSourceDescription}.<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     */<a name="line.118"></a>
+<span class="sourceLineNo">119</span>    public static Predicate&lt;Node&gt; isNonRdfSourceDescription = new AnyTypesPredicate(FEDORA_NON_RDF_SOURCE_DESCRIPTION);<a name="line.119"></a>
+<span class="sourceLineNo">120</span><a name="line.120"></a>
+<span class="sourceLineNo">121</span><a name="line.121"></a>
+<span class="sourceLineNo">122</span>    /**<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     * Predicate for determining whether this {@link Node} is a Fedora<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     * binary.<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     */<a name="line.125"></a>
+<span class="sourceLineNo">126</span>    public static Predicate&lt;Node&gt; isFedoraBinary = new AnyTypesPredicate(FEDORA_BINARY);<a name="line.126"></a>
+<span class="sourceLineNo">127</span><a name="line.127"></a>
+<span class="sourceLineNo">128</span>    /**<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     * Predicate for determining whether this {@link FedoraResource} has a frozen node<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     */<a name="line.130"></a>
+<span class="sourceLineNo">131</span>    public static Predicate&lt;FedoraResource&gt; isFrozenNode = f -&gt; f.hasType(FROZEN_NODE) ||<a name="line.131"></a>
+<span class="sourceLineNo">132</span>            f.getPath().contains(JCR_FROZEN_NODE);<a name="line.132"></a>
+<span class="sourceLineNo">133</span><a name="line.133"></a>
+<span class="sourceLineNo">134</span>    /**<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     * Predicate for determining whether this {@link Node} is a Fedora Skolem node.<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     */<a name="line.136"></a>
+<span class="sourceLineNo">137</span>    public static Predicate&lt;Node&gt; isSkolemNode = new AnyTypesPredicate(FEDORA_SKOLEM);<a name="line.137"></a>
+<span class="sourceLineNo">138</span><a name="line.138"></a>
+<span class="sourceLineNo">139</span>    /**<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * Check if a property is a reference property.<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     */<a name="line.141"></a>
+<span class="sourceLineNo">142</span>    public static Predicate&lt;Property&gt; isInternalReferenceProperty = uncheck(p -&gt; (p.getType() == REFERENCE ||<a name="line.142"></a>
+<span class="sourceLineNo">143</span>            p.getType() == WEAKREFERENCE) &amp;&amp;<a name="line.143"></a>
+<span class="sourceLineNo">144</span>            p.getName().endsWith(REFERENCE_PROPERTY_SUFFIX));<a name="line.144"></a>
+<span class="sourceLineNo">145</span><a name="line.145"></a>
+<span class="sourceLineNo">146</span>    /**<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     *  Check whether a type should be internal.<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     */<a name="line.148"></a>
+<span class="sourceLineNo">149</span>    public static Predicate&lt;String&gt; hasInternalNamespace = type -&gt;<a name="line.149"></a>
+<span class="sourceLineNo">150</span>        type.startsWith("jcr:") || type.startsWith("mode:") || type.startsWith("nt:") ||<a name="line.150"></a>
+<span class="sourceLineNo">151</span>            type.startsWith("mix:");<a name="line.151"></a>
+<span class="sourceLineNo">152</span><a name="line.152"></a>
+<span class="sourceLineNo">153</span>    /**<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     * Predicate for determining whether a JCR property should be converted to the fedora namespace.<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     */<a name="line.155"></a>
+<span class="sourceLineNo">156</span>    public static Predicate&lt;String&gt; isPublicJcrProperty = validJcrProperties::contains;<a name="line.156"></a>
+<span class="sourceLineNo">157</span><a name="line.157"></a>
+<span class="sourceLineNo">158</span>    /**<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     * Check whether a property is protected (ie, cannot be modified directly) but<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * is not one we've explicitly chosen to include.<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     */<a name="line.161"></a>
+<span class="sourceLineNo">162</span>    private static Predicate&lt;Property&gt; isProtectedAndShouldBeHidden = uncheck(p -&gt; {<a name="line.162"></a>
+<span class="sourceLineNo">163</span>        if (!p.getDefinition().isProtected()) {<a name="line.163"></a>
+<span class="sourceLineNo">164</span>            return false;<a name="line.164"></a>
+<span class="sourceLineNo">165</span>        } else if (p.getParent().isNodeType(FROZEN_NODE)) {<a name="line.165"></a>
+<span class="sourceLineNo">166</span>            // everything on a frozen node is protected<a name="line.166"></a>
+<span class="sourceLineNo">167</span>            // but we wish to display it anyway and there's<a name="line.167"></a>
+<span class="sourceLineNo">168</span>            // another mechanism in place to make clear that<a name="line.168"></a>
+<span class="sourceLineNo">169</span>            // things cannot be edited.<a name="line.169"></a>
+<span class="sourceLineNo">170</span>            return false;<a name="line.170"></a>
+<span class="sourceLineNo">171</span>        } else if (isPublicJcrProperty.test(p.getName())) {<a name="line.171"></a>
+<span class="sourceLineNo">172</span>            return false;<a name="line.172"></a>
+<span class="sourceLineNo">173</span>        }<a name="line.173"></a>
+<span class="sourceLineNo">174</span>        return hasInternalNamespace.test(p.getName());<a name="line.174"></a>
+<span class="sourceLineNo">175</span>    });<a name="line.175"></a>
+<span class="sourceLineNo">176</span><a name="line.176"></a>
+<span class="sourceLineNo">177</span>    /**<a name="line.177"></a>
+<span class="sourceLineNo">178</span>    * Check whether a property is an internal property that should be suppressed<a name="line.178"></a>
+<span class="sourceLineNo">179</span>    * from external output.<a name="line.179"></a>
+<span class="sourceLineNo">180</span>    */<a name="line.180"></a>
+<span class="sourceLineNo">181</span>    public static Predicate&lt;Property&gt; isInternalProperty = isBinaryContentProperty<a name="line.181"></a>
+<span class="sourceLineNo">182</span>                            .or(isProtectedAndShouldBeHidden::test)<a name="line.182"></a>
+<span class="sourceLineNo">183</span>                            .or(uncheck(p -&gt; privateProperties.contains(p.getName())));<a name="line.183"></a>
+<span class="sourceLineNo">184</span><a name="line.184"></a>
+<span class="sourceLineNo">185</span>    /**<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     * A functional predicate to check whether a property is a JCR property that should be exposed.<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     * Historically we exposed JCR properties when they seemed to match a fedora property we wanted to track,<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     * but when control over the property became a requirement, we introduced the direct storage<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     * of fedora properties that when present should overrule the JCR property.<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     */<a name="line.190"></a>
+<span class="sourceLineNo">191</span>    public static class IsExposedJCRPropertyPredicate implements Predicate&lt;Property&gt; {<a name="line.191"></a>
+<span class="sourceLineNo">192</span><a name="line.192"></a>
+<span class="sourceLineNo">193</span>        private final FedoraResource subject;<a name="line.193"></a>
+<span class="sourceLineNo">194</span><a name="line.194"></a>
+<span class="sourceLineNo">195</span>        /**<a name="line.195"></a>
+<span class="sourceLineNo">196</span>         * Constructs this functional predicate for testing properties on the given<a name="line.196"></a>
+<span class="sourceLineNo">197</span>         * resource.<a name="line.197"></a>
+<span class="sourceLineNo">198</span>         * @param resource the resource whose properties can be tested by this predicate<a name="line.198"></a>
+<span class="sourceLineNo">199</span>         */<a name="line.199"></a>
+<span class="sourceLineNo">200</span>        public IsExposedJCRPropertyPredicate(final FedoraResource resource) {<a name="line.200"></a>
+<span class="sourceLineNo">201</span>            subject = resource;<a name="line.201"></a>
+<span class="sourceLineNo">202</span>        }<a name="line.202"></a>
+<span class="sourceLineNo">203</span><a name="line.203"></a>
+<span class="sourceLineNo">204</span>        @Override<a name="line.204"></a>
+<span class="sourceLineNo">205</span>        public boolean test(final Property prop) {<a name="line.205"></a>
+<span class="sourceLineNo">206</span>            try {<a name="line.206"></a>
+<span class="sourceLineNo">207</span>                return (prop.getName().equals(JCR_LASTMODIFIED) &amp;&amp; !subject.hasProperty(FEDORA_LASTMODIFIED))<a name="line.207"></a>
+<span class="sourceLineNo">208</span>                        || (prop.getName().equals(JCR_LASTMODIFIEDBY) &amp;&amp; !subject.hasProperty(FEDORA_LASTMODIFIEDBY))<a name="line.208"></a>
+<span class="sourceLineNo">209</span>                        || (prop.getName().equals(JCR_CREATED) &amp;&amp; !subject.hasProperty(FEDORA_CREATED))<a name="line.209"></a>
+<span class="sourceLineNo">210</span>                        || (prop.getName().equals(JCR_CREATEDBY) &amp;&amp; !subject.hasProperty(FEDORA_CREATEDBY));<a name="line.210"></a>
+<span class="sourceLineNo">211</span>            } catch (RepositoryException e) {<a name="line.211"></a>
+<span class="sourceLineNo">212</span>                throw new RepositoryRuntimeException(e);<a name="line.212"></a>
+<span class="sourceLineNo">213</span>            }<a name="line.213"></a>
+<span class="sourceLineNo">214</span>        }<a name="line.214"></a>
+<span class="sourceLineNo">215</span>    }<a name="line.215"></a>
+<span class="sourceLineNo">216</span><a name="line.216"></a>
+<span class="sourceLineNo">217</span>    /**<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     * Check if a node is "internal" and should not be exposed e.g. via the REST<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     * API<a name="line.219"></a>
+<span class="sourceLineNo">220</span>     */<a name="line.220"></a>
+<span class="sourceLineNo">221</span>    public static Predicate&lt;Node&gt; isInternalNode = uncheck(n -&gt; n.isNodeType("mode:system"));<a name="line.221"></a>
+<span class="sourceLineNo">222</span><a name="line.222"></a>
+<span class="sourceLineNo">223</span>    /**<a name="line.223"></a>
+<span class="sourceLineNo">224</span>     * Check if a node is externally managed.<a name="line.224"></a>
+<span class="sourceLineNo">225</span>     *<a name="line.225"></a>
+<span class="sourceLineNo">226</span>     * Note: modeshape uses a source-workspace-identifier scheme<a name="line.226"></a>
+<span class="sourceLineNo">227</span>     * to identify whether a node is externally-managed.<a name="line.227"></a>
+<span class="sourceLineNo">228</span>     * Ordinary (non-external) nodes will have simple UUIDs<a name="line.228"></a>
+<span class="sourceLineNo">229</span>     * as an identifier. These are never external nodes.<a name="line.229"></a>
+<span class="sourceLineNo">230</span>     *<a name="line.230"></a>
+<span class="sourceLineNo">231</span>     * External nodes will have a 7-character hex code<a name="line.231"></a>
+<span class="sourceLineNo">232</span>     * identifying the "source", followed by another<a name="line.232"></a>
+<span class="sourceLineNo">233</span>     * 7-character hex code identifying the "workspace", followed<a name="line.233"></a>
+<span class="sourceLineNo">234</span>     * by a "/" and then the rest of the "identifier".<a name="line.234"></a>
+<span class="sourceLineNo">235</span>     *<a name="line.235"></a>
+<span class="sourceLineNo">236</span>     * Following that scheme, if a node's "source" key does not<a name="line.236"></a>
+<span class="sourceLineNo">237</span>     * match the repository's configured store name, then it is an<a name="line.237"></a>
+<span class="sourceLineNo">238</span>     * external node.<a name="line.238"></a>
+<span class="sourceLineNo">239</span>     */<a name="line.239"></a>
+<span class="sourceLineNo">240</span>    public static Predicate&lt;Node&gt; isExternalNode = uncheck(n -&gt;  {<a name="line.240"></a>
+<span class="sourceLineNo">241</span>        if (NodeKey.isValidRandomIdentifier(n.getIdentifier())) {<a name="line.241"></a>
+<span class="sourceLineNo">242</span>            return false;<a name="line.242"></a>
+<span class="sourceLineNo">243</span>        } else if (n.getPrimaryNodeType().getName().equals(ROOT)) {<a name="line.243"></a>
+<span class="sourceLineNo">244</span>            return false;<a name="line.244"></a>
+<span class="sourceLineNo">245</span>        } else {<a name="line.245"></a>
+<span class="sourceLineNo">246</span>            final NodeKey key = new NodeKey(n.getIdentifier());<a name="line.246"></a>
+<span class="sourceLineNo">247</span>            final String source = NodeKey.keyForSourceName(<a name="line.247"></a>
+<span class="sourceLineNo">248</span>                    ((JcrRepository)n.getSession().getRepository()).getConfiguration().getName());<a name="line.248"></a>
+<span class="sourceLineNo">249</span>            return !key.getSourceKey().equals(source);<a name="line.249"></a>
+<span class="sourceLineNo">250</span>        }<a name="line.250"></a>
+<span class="sourceLineNo">251</span>    });<a name="line.251"></a>
+<span class="sourceLineNo">252</span><a name="line.252"></a>
+<span class="sourceLineNo">253</span>    /**<a name="line.253"></a>
+<span class="sourceLineNo">254</span>     * Get the JCR property type ID for a given property name. If unsure, mark<a name="line.254"></a>
+<span class="sourceLineNo">255</span>     * it as UNDEFINED.<a name="line.255"></a>
+<span class="sourceLineNo">256</span>     *<a name="line.256"></a>
+<span class="sourceLineNo">257</span>     * @param node the JCR node to add the property on<a name="line.257"></a>
+<span class="sourceLineNo">258</span>     * @param propertyName the property name<a name="line.258"></a>
+<span class="sourceLineNo">259</span>     * @return a PropertyType value<a name="line.259"></a>
+<span class="sourceLineNo">260</span>     * @throws RepositoryException if repository exception occurred<a name="line.260"></a>
+<span class="sourceLineNo">261</span>     */<a name="line.261"></a>
+<span class="sourceLineNo">262</span>    public static Optional&lt;Integer&gt; getPropertyType(final Node node, final String propertyName)<a name="line.262"></a>
+<span class="sourceLineNo">263</span>            throws RepositoryException {<a name="line.263"></a>
+<span class="sourceLineNo">264</span>        LOGGER.debug("Getting type of property: {} from node: {}", propertyName, node);<a name="line.264"></a>
+<span class="sourceLineNo">265</span>        return getDefinitionForPropertyName(node, propertyName).map(PropertyDefinition::getRequiredType);<a name="line.265"></a>
+<span class="sourceLineNo">266</span>    }<a name="line.266"></a>
+<span class="sourceLineNo">267</span><a name="line.267"></a>
+<span class="sourceLineNo">268</span>    /**<a name="line.268"></a>
+<span class="sourceLineNo">269</span>     * Determine if a given JCR property name is single- or multi- valued.<a name="line.269"></a>
+<span class="sourceLineNo">270</span>     * If unsure, choose the least restrictive option (multivalued = true)<a name="line.270"></a>
+<span class="sourceLineNo">271</span>     *<a name="line.271"></a>
+<span class="sourceLineNo">272</span>     * @param node the JCR node to check<a name="line.272"></a>
+<span class="sourceLineNo">273</span>     * @param propertyName the property name (which may or may not already exist)<a name="line.273"></a>
+<span class="sourceLineNo">274</span>     * @return true if the property is multivalued<a name="line.274"></a>
+<span class="sourceLineNo">275</span>     * @throws RepositoryException if repository exception occurred<a name="line.275"></a>
+<span class="sourceLineNo">276</span>     */<a name="line.276"></a>
+<span class="sourceLineNo">277</span>    public static boolean isMultivaluedProperty(final Node node, final String propertyName)<a name="line.277"></a>
+<span class="sourceLineNo">278</span>            throws RepositoryException {<a name="line.278"></a>
+<span class="sourceLineNo">279</span>        return getDefinitionForPropertyName(node, propertyName).map(PropertyDefinition::isMultiple).orElse(true);<a name="line.279"></a>
+<span class="sourceLineNo">280</span>    }<a name="line.280"></a>
+<span class="sourceLineNo">281</span><a name="line.281"></a>
+<span class="sourceLineNo">282</span>    /**<a name="line.282"></a>
+<span class="sourceLineNo">283</span>     * Get the property definition information (containing type and multi-value<a name="line.283"></a>
+<span class="sourceLineNo">284</span>     * information)<a name="line.284"></a>
+<span class="sourceLineNo">285</span>     *<a name="line.285"></a>
+<span class="sourceLineNo">286</span>     * @param node the node to use for inferring the property definition<a name="line.286"></a>
+<span class="sourceLineNo">287</span>     * @param propertyName the property name to retrieve a definition for<a name="line.287"></a>
+<span class="sourceLineNo">288</span>     * @return a JCR PropertyDefinition, if available<a name="line.288"></a>
+<span class="sourceLineNo">289</span>     * @throws javax.jcr.RepositoryException if repository exception occurred<a name="line.289"></a>
+<span class="sourceLineNo">290</span>     */<a name="line.290"></a>
+<span class="sourceLineNo">291</span>    public static Optional&lt;PropertyDefinition&gt; getDefinitionForPropertyName(final Node node, final String propertyName)<a name="line.291"></a>
+<span class="sourceLineNo">292</span>            throws RepositoryException {<a name="line.292"></a>
+<span class="sourceLineNo">293</span>        LOGGER.debug("Looking for property name: {}", propertyName);<a name="line.293"></a>
+<span class="sourceLineNo">294</span>        final Predicate&lt;PropertyDefinition&gt; sameName = p -&gt; propertyName.equals(p.getName());<a name="line.294"></a>
+<span class="sourceLineNo">295</span><a name="line.295"></a>
+<span class="sourceLineNo">296</span>        final PropertyDefinition[] propDefs = node.getPrimaryNodeType().getPropertyDefinitions();<a name="line.296"></a>
+<span class="sourceLineNo">297</span>        final Optional&lt;PropertyDefinition&gt; primaryCandidate = stream(propDefs).filter(sameName).findFirst();<a name="line.297"></a>
+<span class="sourceLineNo">298</span>        return primaryCandidate.isPresent() ? primaryCandidate :<a name="line.298"></a>
+<span class="sourceLineNo">299</span>                stream(node.getMixinNodeTypes()).map(NodeType::getPropertyDefinitions).flatMap(Arrays::stream)<a name="line.299"></a>
+<span class="sourceLineNo">300</span>                        .filter(sameName).findFirst();<a name="line.300"></a>
+<span class="sourceLineNo">301</span>    }<a name="line.301"></a>
+<span class="sourceLineNo">302</span><a name="line.302"></a>
+<span class="sourceLineNo">303</span>    /**<a name="line.303"></a>
+<span class="sourceLineNo">304</span>     * When we add certain URI properties, we also want to leave a reference node<a name="line.304"></a>
+<span class="sourceLineNo">305</span>     * @param propertyName the property name<a name="line.305"></a>
+<span class="sourceLineNo">306</span>     * @return property name as a reference<a name="line.306"></a>
+<span class="sourceLineNo">307</span>     */<a name="line.307"></a>
+<span class="sourceLineNo">308</span>    public static String getReferencePropertyName(final String propertyName) {<a name="line.308"></a>
+<span class="sourceLineNo">309</span>        return propertyName + REFERENCE_PROPERTY_SUFFIX;<a name="line.309"></a>
+<span class="sourceLineNo">310</span>    }<a name="line.310"></a>
+<span class="sourceLineNo">311</span><a name="line.311"></a>
+<span class="sourceLineNo">312</span>    /**<a name="line.312"></a>
+<span class="sourceLineNo">313</span>     * Given an internal reference node property, get the original name<a name="line.313"></a>
+<span class="sourceLineNo">314</span>     * @param refPropertyName the reference node property name<a name="line.314"></a>
+<span class="sourceLineNo">315</span>     * @return original property name of the reference property<a name="line.315"></a>
+<span class="sourceLineNo">316</span>     */<a name="line.316"></a>
+<span class="sourceLineNo">317</span>    public static String getReferencePropertyOriginalName(final String refPropertyName) {<a name="line.317"></a>
+<span class="sourceLineNo">318</span>        final int i = refPropertyName.lastIndexOf(REFERENCE_PROPERTY_SUFFIX);<a name="line.318"></a>
+<span class="sourceLineNo">319</span>        return i &lt; 0 ? refPropertyName : refPropertyName.substring(0, i);<a name="line.319"></a>
+<span class="sourceLineNo">320</span>    }<a name="line.320"></a>
+<span class="sourceLineNo">321</span><a name="line.321"></a>
+<span class="sourceLineNo">322</span>    /**<a name="line.322"></a>
+<span class="sourceLineNo">323</span>     * Check if a property definition is a reference property<a name="line.323"></a>
+<span class="sourceLineNo">324</span>     * @param node the given node<a name="line.324"></a>
+<span class="sourceLineNo">325</span>     * @param propertyName the property name<a name="line.325"></a>
+<span class="sourceLineNo">326</span>     * @return whether a property definition is a reference property<a name="line.326"></a>
+<span class="sourceLineNo">327</span>     * @throws RepositoryException if repository exception occurred<a name="line.327"></a>
+<span class="sourceLineNo">328</span>     */<a name="line.328"></a>
+<span class="sourceLineNo">329</span>    public static boolean isReferenceProperty(final Node node, final String propertyName) throws RepositoryException {<a name="line.329"></a>
+<span class="sourceLineNo">330</span>        final Optional&lt;PropertyDefinition&gt; propertyDefinition = getDefinitionForPropertyName(node, propertyName);<a name="line.330"></a>
+<span class="sourceLineNo">331</span><a name="line.331"></a>
+<span class="sourceLineNo">332</span>        return propertyDefinition.isPresent() &amp;&amp;<a name="line.332"></a>
+<span class="sourceLineNo">333</span>                (propertyDefinition.get().getRequiredType() == REFERENCE<a name="line.333"></a>
+<span class="sourceLineNo">334</span>                        || propertyDefinition.get().getRequiredType() == WEAKREFERENCE);<a name="line.334"></a>
+<span class="sourceLineNo">335</span>    }<a name="line.335"></a>
+<span class="sourceLineNo">336</span><a name="line.336"></a>
+<span class="sourceLineNo">337</span><a name="line.337"></a>
+<span class="sourceLineNo">338</span>    /**<a name="line.338"></a>
+<span class="sourceLineNo">339</span>     * Get the closest ancestor that current exists<a name="line.339"></a>
+<span class="sourceLineNo">340</span>     *<a name="line.340"></a>
+<span class="sourceLineNo">341</span>     * @param session the given session<a name="line.341"></a>
+<span class="sourceLineNo">342</span>     * @param path the given path<a name="line.342"></a>
+<span class="sourceLineNo">343</span>     * @return the closest ancestor that current exists<a name="line.343"></a>
+<span class="sourceLineNo">344</span>     * @throws RepositoryException if repository exception occurred<a name="line.344"></a>
+<span class="sourceLineNo">345</span>     */<a name="line.345"></a>
+<span class="sourceLineNo">346</span>    public static Node getClosestExistingAncestor(final Session session, final String path)<a name="line.346"></a>
+<span class="sourceLineNo">347</span>            throws RepositoryException {<a name="line.347"></a>
+<span class="sourceLineNo">348</span><a name="line.348"></a>
+<span class="sourceLineNo">349</span>        String potentialPath = path.startsWith("/") ? path : "/" + path;<a name="line.349"></a>
+<span class="sourceLineNo">350</span>        while (!potentialPath.isEmpty()) {<a name="line.350"></a>
+<span class="sourceLineNo">351</span>            if (session.nodeExists(potentialPath)) {<a name="line.351"></a>
+<span class="sourceLineNo">352</span>                return session.getNode(potentialPath);<a name="line.352"></a>
+<span class="sourceLineNo">353</span>            }<a name="line.353"></a>
+<span class="sourceLineNo">354</span>            potentialPath = potentialPath.substring(0, potentialPath.lastIndexOf('/'));<a name="line.354"></a>
+<span class="sourceLineNo">355</span>        }<a name="line.355"></a>
+<span class="sourceLineNo">356</span>        return session.getRootNode();<a name="line.356"></a>
+<span class="sourceLineNo">357</span>    }<a name="line.357"></a>
+<span class="sourceLineNo">358</span><a name="line.358"></a>
+<span class="sourceLineNo">359</span>    /**<a name="line.359"></a>
+<span class="sourceLineNo">360</span>     * Retrieve the underlying JCR Node from the FedoraResource<a name="line.360"></a>
+<span class="sourceLineNo">361</span>     *<a name="line.361"></a>
+<span class="sourceLineNo">362</span>     * @param resource the Fedora resource<a name="line.362"></a>
+<span class="sourceLineNo">363</span>     * @return the JCR Node<a name="line.363"></a>
+<span class="sourceLineNo">364</span>     */<a name="line.364"></a>
+<span class="sourceLineNo">365</span>    public static Node getJcrNode(final FedoraResource resource) {<a name="line.365"></a>
+<span class="sourceLineNo">366</span>        if (resource instanceof FedoraResourceImpl) {<a name="line.366"></a>
+<span class="sourceLineNo">367</span>            return ((FedoraResourceImpl)resource).getNode();<a name="line.367"></a>
+<span class="sourceLineNo">368</span>        }<a name="line.368"></a>
+<span class="sourceLineNo">369</span>        throw new IllegalArgumentException("FedoraResource is of the wrong type");<a name="line.369"></a>
+<span class="sourceLineNo">370</span>    }<a name="line.370"></a>
+<span class="sourceLineNo">371</span><a name="line.371"></a>
+<span class="sourceLineNo">372</span>    /**<a name="line.372"></a>
+<span class="sourceLineNo">373</span>     * Given a JCR Node, fetch the parent's ldp:insertedContentRelation value, if<a name="line.373"></a>
+<span class="sourceLineNo">374</span>     * one exists.<a name="line.374"></a>
+<span class="sourceLineNo">375</span>     *<a name="line.375"></a>
+<span class="sourceLineNo">376</span>     * @param node the JCR Node<a name="line.376"></a>
+<span class="sourceLineNo">377</span>     * @return the ldp:insertedContentRelation Resource, if one exists.<a name="line.377"></a>
+<span class="sourceLineNo">378</span>     */<a name="line.378"></a>
+<span class="sourceLineNo">379</span>    public static Optional&lt;Resource&gt; ldpInsertedContentProperty(final Node node) {<a name="line.379"></a>
+<span class="sourceLineNo">380</span>        return getContainingNode(node).filter(uncheck(parent -&gt; parent.hasProperty(LDP_MEMBER_RESOURCE) &amp;&amp;<a name="line.380"></a>
+<span class="sourceLineNo">381</span>                parent.isNodeType(LDP_INDIRECT_CONTAINER) &amp;&amp; parent.hasProperty(LDP_INSERTED_CONTENT_RELATION)))<a name="line.381"></a>
+<span class="sourceLineNo">382</span>            .map(UncheckedFunction.uncheck(parent -&gt;<a name="line.382"></a>
+<span class="sourceLineNo">383</span>                        createResource(parent.getProperty(LDP_INSERTED_CONTENT_RELATION).getString())));<a name="line.383"></a>
+<span class="sourceLineNo">384</span>    }<a name="line.384"></a>
+<span class="sourceLineNo">385</span><a name="line.385"></a>
+<span class="sourceLineNo">386</span>    /**<a name="line.386"></a>
+<span class="sourceLineNo">387</span>     * Using a JCR session, return a function that maps an RDF Resource to a corresponding property name.<a name="line.387"></a>
+<span class="sourceLineNo">388</span>     *<a name="line.388"></a>
+<span class="sourceLineNo">389</span>     * @param session The JCR session<a name="line.389"></a>
+<span class="sourceLineNo">390</span>     * @return a Function that maps a Resource to an Optional-wrapped String<a name="line.390"></a>
+<span class="sourceLineNo">391</span>     */<a name="line.391"></a>
+<span class="sourceLineNo">392</span>    public static Function&lt;Resource, Optional&lt;String&gt;&gt; resourceToProperty(final Session session) {<a name="line.392"></a>
+<span class="sourceLineNo">393</span>        return resource -&gt; {<a name="line.393"></a>
+<span class="sourceLineNo">394</span>            try {<a name="line.394"></a>
+<span class="sourceLineNo">395</span>                final NamespaceRegistry registry = getNamespaceRegistry(session);<a name="line.395"></a>
+<span class="sourceLineNo">396</span>                return Optional.of(registry.getPrefix(resource.getNameSpace()) + ":" + resource.getLocalName());<a name="line.396"></a>
+<span class="sourceLineNo">397</span>            } catch (final RepositoryException ex) {<a name="line.397"></a>
+<span class="sourceLineNo">398</span>                LOGGER.debug("Could not resolve resource namespace ({}): {}", resource.toString(), ex.getMessage());<a name="line.398"></a>
+<span class="sourceLineNo">399</span>            }<a name="line.399"></a>
+<span class="sourceLineNo">400</span>            return empty();<a name="line.400"></a>
+<span class="sourceLineNo">401</span>        };<a name="line.401"></a>
+<span class="sourceLineNo">402</span>    }<a name="line.402"></a>
+<span class="sourceLineNo">403</span><a name="line.403"></a>
+<span class="sourceLineNo">404</span>    /**<a name="line.404"></a>
+<span class="sourceLineNo">405</span>     * Update the fedora:lastModified date and fedora:lastModifiedBy of the parent's ldp:membershipResource if that<a name="line.405"></a>
+<span class="sourceLineNo">406</span>     * node is a direct or indirect container, provided the LDP constraints are valid.<a name="line.406"></a>
+<span class="sourceLineNo">407</span>     *<a name="line.407"></a>
+<span class="sourceLineNo">408</span>     * @param node The JCR node<a name="line.408"></a>
+<span class="sourceLineNo">409</span>     */<a name="line.409"></a>
+<span class="sourceLineNo">410</span>    public static void touchLdpMembershipResource(final Node node) {<a name="line.410"></a>
+<span class="sourceLineNo">411</span>        touchLdpMembershipResource(node, null, null);<a name="line.411"></a>
+<span class="sourceLineNo">412</span>    }<a name="line.412"></a>
+<span class="sourceLineNo">413</span><a name="line.413"></a>
+<span class="sourceLineNo">414</span>    /**<a name="line.414"></a>
+<span class="sourceLineNo">415</span>     * Update the fedora:lastModified date and fedora:lastModifiedBy of the parent's ldp:membershipResource if that<a name="line.415"></a>
+<span class="sourceLineNo">416</span>     * node is a direct or indirect container, provided the LDP constraints are valid.<a name="line.416"></a>
+<span class="sourceLineNo">417</span>     *<a name="line.417"></a>
+<span class="sourceLineNo">418</span>     * @param node The JCR node<a name="line.418"></a>
+<span class="sourceLineNo">419</span>     * @param date the date the modification was supposed to have occurred or null to indicate now<a name="line.419"></a>
+<span class="sourceLineNo">420</span>     * @param user the user who performed the action or null to indicate the user associated with the current session<a name="line.420"></a>
+<span class="sourceLineNo">421</span>     */<a name="line.421"></a>
+<span class="sourceLineNo">422</span>    public static void touchLdpMembershipResource(final Node node, final Calendar date, final String user) {<a name="line.422"></a>
+<span class="sourceLineNo">423</span>        getContainingNode(node).filter(uncheck(parent -&gt; parent.hasProperty(LDP_MEMBER_RESOURCE))).ifPresent(parent -&gt; {<a name="line.423"></a>
+<span class="sourceLineNo">424</span>            try {<a name="line.424"></a>
+<span class="sourceLineNo">425</span>                final Optional&lt;String&gt; hasInsertedContentProperty = ldpInsertedContentProperty(node)<a name="line.425"></a>
+<span class="sourceLineNo">426</span>                        .flatMap(resourceToProperty(node.getSession())).filter(uncheck(node::hasProperty));<a name="line.426"></a>
+<span class="sourceLineNo">427</span>                if (parent.isNodeType(LDP_DIRECT_CONTAINER) ||<a name="line.427"></a>
+<span class="sourceLineNo">428</span>                        (parent.isNodeType(LDP_INDIRECT_CONTAINER) &amp;&amp; hasInsertedContentProperty.isPresent())) {<a name="line.428"></a>
+<span class="sourceLineNo">429</span>                    touch(parent.getProperty(LDP_MEMBER_RESOURCE).getNode(), date, user);<a name="line.429"></a>
+<span class="sourceLineNo">430</span>                }<a name="line.430"></a>
+<span class="sourceLineNo">431</span>            } catch (final javax.jcr.AccessDeniedException ex) {<a name="line.431"></a>
+<span class="sourceLineNo">432</span>                throw new AccessDeniedException(ex);<a name="line.432"></a>
+<span class="sourceLineNo">433</span>            } catch (final RepositoryException ex) {<a name="line.433"></a>
+<span class="sourceLineNo">434</span>                throw new RepositoryRuntimeException(ex);<a name="line.434"></a>
+<span class="sourceLineNo">435</span>            }<a name="line.435"></a>
+<span class="sourceLineNo">436</span>        });<a name="line.436"></a>
+<span class="sourceLineNo">437</span>    }<a name="line.437"></a>
+<span class="sourceLineNo">438</span><a name="line.438"></a>
+<span class="sourceLineNo">439</span>    /**<a name="line.439"></a>
+<span class="sourceLineNo">440</span>     * Updates the LAST_MODIFIED_DATE and LAST_MODIFIED_BY properties to now, and the current user<a name="line.440"></a>
+<span class="sourceLineNo">441</span>     * respectively.<a name="line.441"></a>
+<span class="sourceLineNo">442</span>     *<a name="line.442"></a>
+<span class="sourceLineNo">443</span>     * @param node The JCR node<a name="line.443"></a>
+<span class="sourceLineNo">444</span>     *<a name="line.444"></a>
+<span class="sourceLineNo">445</span>     */<a name="line.445"></a>
+<span class="sourceLineNo">446</span>    public static void touch(final Node node) {<a name="line.446"></a>
+<span class="sourceLineNo">447</span>        touch(node, null, null, null, null);<a name="line.447"></a>
+<span class="sourceLineNo">448</span>    }<a name="line.448"></a>
+<span class="sourceLineNo">449</span><a name="line.449"></a>
+<span class="sourceLineNo">450</span>    /**<a name="line.450"></a>
+<span class="sourceLineNo">451</span>     * Updates the LAST_MODIFIED_DATE and LAST_MODIFIED_BY properties to the provided values.<a name="line.451"></a>
+<span class="sourceLineNo">452</span>     *<a name="line.452"></a>
+<span class="sourceLineNo">453</span>     * @param node The JCR node<a name="line.453"></a>
+<span class="sourceLineNo">454</span>     * @param modified the modification date, or null if not explicitly set<a name="line.454"></a>
+<span class="sourceLineNo">455</span>     * @param modifyingUser the userID who modified this resource or null if not explicitly set<a name="line.455"></a>
+<span class="sourceLineNo">456</span>     *<a name="line.456"></a>
+<span class="sourceLineNo">457</span>     */<a name="line.457"></a>
+<span class="sourceLineNo">458</span>    public static void touch(final Node node, final Calendar modified, final String modifyingUser) {<a name="line.458"></a>
+<span class="sourceLineNo">459</span>        touch(node, null, null, modified, modifyingUser);<a name="line.459"></a>
+<span class="sourceLineNo">460</span>    }<a name="line.460"></a>
+<span class="sourceLineNo">461</span><a name="line.461"></a>
+<span class="sourceLineNo">462</span>    /**<a name="line.462"></a>
+<span class="sourceLineNo">463</span>     * Updates the LAST_MODIFIED_DATE, LAST_MODIFIED_BY, CREATED_DATE and CREATED_BY properties to the provided values.<a name="line.463"></a>
+<span class="sourceLineNo">464</span>     *<a name="line.464"></a>
+<span class="sourceLineNo">465</span>     * @param node The JCR node<a name="line.465"></a>
+<span class="sourceLineNo">466</span>     * @param created the date the resource was created, or null if not explicitly set<a name="line.466"></a>
+<span class="sourceLineNo">467</span>     * @param creatingUser the userID of created this resource or null if not explicitly set<a name="line.467"></a>
+<span class="sourceLineNo">468</span>     * @param modified the modification date, or null if not explicitly set<a name="line.468"></a>
+<span class="sourceLineNo">469</span>     * @param modifyingUser the userID who modified this resource or null if not explicitly set<a name="line.469"></a>
+<span class="sourceLineNo">470</span>     *<a name="line.470"></a>
+<span class="sourceLineNo">471</span>     */<a name="line.471"></a>
+<span class="sourceLineNo">472</span>    public static void touch(final Node node, final Calendar created, final String creatingUser,<a name="line.472"></a>
+<span class="sourceLineNo">473</span>                             final Calendar modified, final String modifyingUser) {<a name="line.473"></a>
+<span class="sourceLineNo">474</span>        try {<a name="line.474"></a>
+<span class="sourceLineNo">475</span>            if (created != null) {<a name="line.475"></a>
+<span class="sourceLineNo">476</span>                node.setProperty(FEDORA_CREATED, created);<a name="line.476"></a>
+<span class="sourceLineNo">477</span>            }<a name="line.477"></a>
+<span class="sourceLineNo">478</span><a name="line.478"></a>
+<span class="sourceLineNo">479</span>            if (creatingUser != null) {<a name="line.479"></a>
+<span class="sourceLineNo">480</span>                node.setProperty(FEDORA_CREATEDBY, creatingUser);<a name="line.480"></a>
+<span class="sourceLineNo">481</span>            }<a name="line.481"></a>
+<span class="sourceLineNo">482</span><a name="line.482"></a>
+<span class="sourceLineNo">483</span>            if (modified != null) {<a name="line.483"></a>
+<span class="sourceLineNo">484</span>                node.setProperty(FEDORA_LASTMODIFIED, modified);<a name="line.484"></a>
+<span class="sourceLineNo">485</span>            } else {<a name="line.485"></a>
+<span class="sourceLineNo">486</span>                node.setProperty(FEDORA_LASTMODIFIED, getInstance(getTimeZone("UTC")));<a name="line.486"></a>
+<span class="sourceLineNo">487</span>            }<a name="line.487"></a>
+<span class="sourceLineNo">488</span><a name="line.488"></a>
+<span class="sourceLineNo">489</span>            if (modifyingUser != null) {<a name="line.489"></a>
+<span class="sourceLineNo">490</span>                node.setProperty(FEDORA_LASTMODIFIEDBY, modifyingUser);<a name="line.490"></a>
+<span class="sourceLineNo">491</span>            } else {<a name="line.491"></a>
+<span class="sourceLineNo">492</span>                // revert to the modeshape-managed property<a name="line.492"></a>
+<span class="sourceLineNo">493</span>                if (node.hasProperty(FEDORA_LASTMODIFIEDBY)) {<a name="line.493"></a>
+<span class="sourceLineNo">494</span>                    node.getProperty(FEDORA_LASTMODIFIEDBY).remove();<a name="line.494"></a>
+<span class="sourceLineNo">495</span>                }<a name="line.495"></a>
+<span class="sourceLineNo">496</span>            }<a name="line.496"></a>
+<span class="sourceLineNo">497</span>        } catch (final javax.jcr.AccessDeniedException ex) {<a name="line.497"></a>
+<span class="sourceLineNo">498</span>            throw new AccessDeniedException(ex);<a name="line.498"></a>
+<span class="sourceLineNo">499</span>        } catch (final RepositoryException ex) {<a name="line.499"></a>
+<span class="sourceLineNo">500</span>            throw new RepositoryRuntimeException(ex);<a name="line.500"></a>
+<span class="sourceLineNo">501</span>        }<a name="line.501"></a>
+<span class="sourceLineNo">502</span>    }<a name="line.502"></a>
+<span class="sourceLineNo">503</span><a name="line.503"></a>
+<span class="sourceLineNo">504</span>    /**<a name="line.504"></a>
+<span class="sourceLineNo">505</span>     * Get the JCR Node that corresponds to the containing node in the repository.<a name="line.505"></a>
+<span class="sourceLineNo">506</span>     * This may be the direct parent node, but it may also be a more distant ancestor.<a name="line.506"></a>
+<span class="sourceLineNo">507</span>     *<a name="line.507"></a>
+<span class="sourceLineNo">508</span>     * @param node the JCR node<a name="line.508"></a>
+<span class="sourceLineNo">509</span>     * @return the containing node, if one is present<a name="line.509"></a>
+<span class="sourceLineNo">510</span>     */<a name="line.510"></a>
+<span class="sourceLineNo">511</span>    public static Optional&lt;Node&gt; getContainingNode(final Node node) {<a name="line.511"></a>
+<span class="sourceLineNo">512</span>        try {<a name="line.512"></a>
+<span class="sourceLineNo">513</span>            if (node.getDepth() == 0) {<a name="line.513"></a>
+<span class="sourceLineNo">514</span>                return empty();<a name="line.514"></a>
+<span class="sourceLineNo">515</span>            }<a name="line.515"></a>
+<span class="sourceLineNo">516</span><a name="line.516"></a>
+<span class="sourceLineNo">517</span>            final Node parent = node.getParent();<a name="line.517"></a>
+<span class="sourceLineNo">518</span>            if (parent.isNodeType(FEDORA_PAIRTREE) || parent.isNodeType(FEDORA_NON_RDF_SOURCE_DESCRIPTION)) {<a name="line.518"></a>
+<span class="sourceLineNo">519</span>                return getContainingNode(parent);<a name="line.519"></a>
+<span class="sourceLineNo">520</span>            }<a name="line.520"></a>
+<span class="sourceLineNo">521</span>            return Optional.of(parent);<a name="line.521"></a>
+<span class="sourceLineNo">522</span>        } catch (final RepositoryException ex) {<a name="line.522"></a>
+<span class="sourceLineNo">523</span>            throw new RepositoryRuntimeException(ex);<a name="line.523"></a>
+<span class="sourceLineNo">524</span>        }<a name="line.524"></a>
+<span class="sourceLineNo">525</span>    }<a name="line.525"></a>
+<span class="sourceLineNo">526</span>}<a name="line.526"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>
