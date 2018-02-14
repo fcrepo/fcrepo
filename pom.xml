@@ -4,13 +4,13 @@
   <parent>
     <groupId>org.fcrepo</groupId>
     <artifactId>fcrepo-parent</artifactId>
-    <version>4.7.5-SNAPSHOT</version>
+    <version>4.7.6-SNAPSHOT</version>
     <relativePath>./fcrepo-parent</relativePath>
   </parent>
 
   <groupId>org.fcrepo</groupId>
   <artifactId>fcrepo</artifactId>
-  <version>4.7.5-SNAPSHOT</version>
+  <version>4.7.6-SNAPSHOT</version>
   <name>Fedora Commons 4</name>
   <description>Parent project for Fedora Commons Repository</description>
   <url>http://fedorarepository.org</url>
