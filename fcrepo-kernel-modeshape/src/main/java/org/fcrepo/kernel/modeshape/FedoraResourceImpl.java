@@ -777,6 +777,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                 originalTriples.filter(triple -> !isRelaxed.test(createProperty(triple.getPredicate().getURI()))));
 
 
+
         try (final RdfStream replacementStream =
                 new DefaultRdfStream(idTranslator.reverse().convert(this).asNode())) {
 
@@ -794,8 +795,25 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                 exceptions.append("\n");
             }
 
-            try (final DefaultRdfStream notCommonStream =
-                    new DefaultRdfStream(replacementStream.topic(), differencer.notCommon())) {
+            try (
+                final DefaultRdfStream notCommonStream =
+                        new DefaultRdfStream(replacementStream.topic(), differencer.notCommon());
+                final DefaultRdfStream testStream =
+                        new DefaultRdfStream(replacementStream.topic(), differencer.notCommon())) {
+
+                // do some very basic validation to catch invalid RDF
+                // this uses the same checks that updateProperties() uses
+                final Collection<IllegalArgumentException> errors = testStream
+                        .map(x -> Quad.create(x.getSubject(), x))
+                        .flatMap(FedoraResourceImpl::validateQuad)
+                        .filter(x -> x != null)
+                        .collect(Collectors.toList());
+
+                if (!errors.isEmpty()) {
+                    throw new ConstraintViolationException(
+                            errors.stream().map(Exception::getMessage).collect(joining(", \n")));
+                }
+
                 new RdfAdder(idTranslator, getSession(), notCommonStream, inputModel.getNsPrefixMap()).consume();
             } catch (final ConstraintViolationException e) {
                 throw e;
