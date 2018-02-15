@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.modeshape;
 
+import static com.google.common.net.MediaType.parse;
 import static java.time.Instant.ofEpochMilli;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
@@ -267,10 +268,26 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         return null;
     });
 
+    private static final Function<Quad, IllegalArgumentException> validateMimeTypeTriple = uncheck(x -> {
+
+        /* only look at the mime type if it's not a sparql variable */
+        if (x.getPredicate().toString().equals(RdfLexicon.HAS_MIME_TYPE.toString()) &&
+                !x.getObject().toString(false).startsWith("?")) {
+            try {
+                parse(x.getObject().toString(false));
+            } catch (Exception ex) {
+                return new IllegalArgumentException("Invalid value for '" + RdfLexicon.HAS_MIME_TYPE +
+                        "' encountered : " + x.getObject().toString());
+            }
+        }
+        return null;
+    });
+
     private static final List<Function<Quad, IllegalArgumentException>> quadValidators =
             ImmutableList.<Function<Quad, IllegalArgumentException>>builder()
                     .add(validatePredicateEndsWithSlash)
-                    .add(validateObjectUrl).build();
+                    .add(validateObjectUrl)
+                    .add(validateMimeTypeTriple).build();
 
     /**
      * Construct a {@link org.fcrepo.kernel.api.models.FedoraResource} from an existing JCR Node
@@ -760,6 +777,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                 originalTriples.filter(triple -> !isRelaxed.test(createProperty(triple.getPredicate().getURI()))));
 
 
+
         try (final RdfStream replacementStream =
                 new DefaultRdfStream(idTranslator.reverse().convert(this).asNode())) {
 
@@ -777,8 +795,25 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                 exceptions.append("\n");
             }
 
-            try (final DefaultRdfStream notCommonStream =
-                    new DefaultRdfStream(replacementStream.topic(), differencer.notCommon())) {
+            try (
+                final DefaultRdfStream notCommonStream =
+                        new DefaultRdfStream(replacementStream.topic(), differencer.notCommon());
+                final DefaultRdfStream testStream =
+                        new DefaultRdfStream(replacementStream.topic(), differencer.notCommon())) {
+
+                // do some very basic validation to catch invalid RDF
+                // this uses the same checks that updateProperties() uses
+                final Collection<IllegalArgumentException> errors = testStream
+                        .map(x -> Quad.create(x.getSubject(), x))
+                        .flatMap(FedoraResourceImpl::validateQuad)
+                        .filter(x -> x != null)
+                        .collect(Collectors.toList());
+
+                if (!errors.isEmpty()) {
+                    throw new ConstraintViolationException(
+                            errors.stream().map(Exception::getMessage).collect(joining(", \n")));
+                }
+
                 new RdfAdder(idTranslator, getSession(), notCommonStream, inputModel.getNsPrefixMap()).consume();
             } catch (final ConstraintViolationException e) {
                 throw e;

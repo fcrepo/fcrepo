@@ -104,10 +104,11 @@ import org.apache.commons.io.IOUtils;
 import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.ConstraintViolationException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.InvalidPrefixException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.Container;
@@ -839,6 +840,34 @@ public class FedoraResourceImplIT extends AbstractIT {
         assertEquals(0, getJcrNode(object).getNode("#").getNodes().getSize());
     }
 
+    @Test (expected = ConstraintViolationException.class)
+    public void testReplacePropertyBadMimeType() {
+        final String pid = getRandomPid();
+        final Container object = containerService.findOrCreate(session, pid);
+
+        try (final RdfStream triples = object.getTriples(subjects, PROPERTIES)) {
+            final Model model = triples.collect(toModel());
+
+            final Resource resource = model.createResource();
+            final Resource subject = subjects.reverse().convert(object);
+            final Property predicate = model.createProperty(
+                    "http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#hasMimeType");
+            model.add(subject, predicate, "--Total Junk Mime Type--");
+            model.add(resource, model.createProperty("http://purl.org/dc/elements/1.1/title"), "xyz");
+
+            object.replaceProperties(subjects, model, object.getTriples(subjects, PROPERTIES));
+        }
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void testUpdatePropertyBadMimeType() {
+        final String pid = getRandomPid();
+        final FedoraResource object = containerService.findOrCreate(session, pid);
+        object.updateProperties(subjects,
+                "PREFIX ebucore: <http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#>\n" +
+                "INSERT { <> ebucore:hasMimeType \"-- Complete Junk --\"" + " . } WHERE { }",
+                object.getTriples(subjects, emptySet()));
+    }
     @Test
     public void testDeleteObject() throws RepositoryException {
         final String pid = getRandomPid();
@@ -1293,6 +1322,7 @@ public class FedoraResourceImplIT extends AbstractIT {
                 createProperty("info:fedora/test/fakeRel"),
                 createResource("info:fedora/" + pid + "/c")));
     }
+
 
     private void addVersionLabel(final String label, final FedoraResource r) throws RepositoryException {
         final Session jcrSession = getJcrSession(session);
