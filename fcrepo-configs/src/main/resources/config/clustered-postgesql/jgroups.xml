@@ -40,7 +40,7 @@
          thread_pool.enabled="false"
          oob_thread_pool.enabled="false"
          port_range="0"/>
-    <JDBC_PING connection_url="jdbc:postgresql://${fcrepo.postgresql.host:localhost}:${fcrepo.postgresql.port:5432}/${fcrepo.postgresql.database:fedora}"
+    <JDBC_PING connection_url="jdbc:postgresql://${fcrepo.postgresql.host:localhost}:${fcrepo.postgresql.port:5432}/${fcrepo.postgresql.database:fcrepo}"
                connection_username="${fcrepo.postgresql.username}"
                connection_password="${fcrepo.postgresql.password}"
                connection_driver="org.postgresql.Driver"
