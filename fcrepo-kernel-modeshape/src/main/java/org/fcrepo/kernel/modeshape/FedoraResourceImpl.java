@@ -103,6 +103,7 @@ import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.utils.GraphDifferencer;
@@ -246,7 +247,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             final String uri = x.getObject().toString();
             try {
                 new URI(uri);
-            } catch (Exception ex) {
+            } catch (final Exception ex) {
                 return new IllegalArgumentException("Invalid object URI (" + uri + " ) : " + ex.getMessage());
             }
         }
@@ -375,9 +376,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     public FedoraResource getTimeMap() {
         try {
             return Optional.of(node.getNode(LDPCV_TIME_MAP)).map(nodeConverter::convert).orElse(null);
-        } catch (PathNotFoundException e) {
+        } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
     }
@@ -386,7 +387,11 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     public FedoraResource findOrCreateTimeMap() {
         final Node ldpcvNode;
         try {
-            ldpcvNode = findOrCreateChild(getNode(), LDPCV_TIME_MAP, NT_FOLDER);
+            if (this instanceof FedoraBinary) {
+                ldpcvNode = findOrCreateChild(getNode().getParent(), LDPCV_TIME_MAP, NT_FOLDER);
+            } else {
+                ldpcvNode = findOrCreateChild(getNode(), LDPCV_TIME_MAP, NT_FOLDER);
+            }
 
             if (ldpcvNode.isNew()) {
                 LOGGER.debug("Created TimeMap LDPCv {}", ldpcvNode.getPath());
@@ -481,7 +486,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                 final Iterator<Node> nodes = n.getNodes();
                 nodes.forEachRemaining(this::removeReferences);
             }
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
     }
@@ -706,7 +711,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         try {
             touch(propertyChanged.get(), listener.getAddedCreatedDate(), listener.getAddedCreatedBy(),
                     listener.getAddedModifiedDate(), listener.getAddedModifiedBy());
-        } catch (RepositoryException e) {
+        } catch (final RepositoryException e) {
             throw new RuntimeException(e);
         }
     }
@@ -804,7 +809,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                         RelaxedPropertiesHelper.getCreatedBy(filteredStatements),
                         RelaxedPropertiesHelper.getModifiedDate(filteredStatements),
                         RelaxedPropertiesHelper.getModifiedBy(filteredStatements));
-            } catch (RepositoryException e) {
+            } catch (final RepositoryException e) {
                 throw new RuntimeException(e);
             }
         }
@@ -997,7 +1002,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
           return ((FedoraResourceImpl)getDescription()).getNode(getNode(), LDPCV_TIME_MAP, false) != null;
           //@TODO This line should be changed to "return getDescription().getChild(LDPCV_TIME_MAP);"
           //once the issues around https://jira.duraspace.org/browse/FCREPO-2644 have been landed.
-      } catch (RepositoryException ex) {
+      } catch (final RepositoryException ex) {
           throw new RepositoryRuntimeException(ex);
       }
   }
