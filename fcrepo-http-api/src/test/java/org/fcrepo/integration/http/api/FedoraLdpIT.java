@@ -646,7 +646,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final HttpGet getMethod = new HttpGet(serverAddress + id);
         final String preferHeader = "return=representation;"
-                + " include=\"http://fedora.info/definitions/v4/repository#InboundReferences\";"
+                + " include=\"http://fedora.info/definitions/fcrepo#PreferInboundReferences\";"
                 + " omit=\"http://www.w3.org/ns/ldp#PreferMembership http://www.w3.org/ns/ldp#PreferContainment\"";
         getMethod.addHeader("Prefer", preferHeader);
 
