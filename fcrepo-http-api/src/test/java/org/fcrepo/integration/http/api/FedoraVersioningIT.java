@@ -31,6 +31,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEMAP_TYPE;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -41,7 +42,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import javax.ws.rs.core.Link;
-import org.apache.http.Header;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -175,18 +175,15 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         postMethod.addHeader(MEMENTO_DATETIME_HEADER, mementoDateTime);
         try (final CloseableHttpResponse response = execute(postMethod)) {
             assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
-            assertTrue("Didn't get the correct Memento Datetime",
-                mementoDateTimeHeaderMatches(response, mementoDateTime));
+            assertMementoDatetimeHeaderMatches(response, mementoDateTime);
         }
     }
 
-    /**
-     * @param response
-     * @param expected
-     * @return
-     */
-    private static boolean mementoDateTimeHeaderMatches(final CloseableHttpResponse response, final String expected) {
-        return Arrays.asList(response.getHeaders(MEMENTO_DATETIME_HEADER)).stream().map(Header::getValue)
-            .anyMatch(t -> expected.contentEquals(t));
+    private static void assertMementoDatetimeHeaderMatches(final CloseableHttpResponse response,
+            final String expected) {
+        assertNotNull("No memento datetime header set in response",
+                response.getHeaders(MEMENTO_DATETIME_HEADER));
+        assertEquals("Response memento datetime did not match expected value",
+                expected, response.getFirstHeader(MEMENTO_DATETIME_HEADER).getValue());
     }
 }

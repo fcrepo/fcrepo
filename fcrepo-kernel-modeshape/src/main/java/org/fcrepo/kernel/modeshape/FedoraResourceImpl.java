@@ -35,6 +35,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 import static org.fcrepo.kernel.api.RdfLexicon.isRelaxed;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isMemento;
 import static org.fcrepo.kernel.api.RequiredRdfContext.EMBED_RESOURCES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_CONTAINMENT;
@@ -410,6 +411,25 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             throw new RepositoryRuntimeException(e);
         }
         return Optional.of(ldpcvNode).map(nodeConverter::convert).orElse(null);
+    }
+
+    @Override
+    public Instant getMementoDatetime() {
+        try {
+            if (!isMemento() || !getNode().hasProperty(FEDORA_MEMENTO_DATETIME)) {
+                return null;
+            }
+
+            final Calendar calDate = getNode().getProperty(FEDORA_MEMENTO_DATETIME).getDate();
+            return calDate.toInstant();
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    @Override
+    public boolean isMemento() {
+        return isMemento.test(node);
     }
 
     @Override

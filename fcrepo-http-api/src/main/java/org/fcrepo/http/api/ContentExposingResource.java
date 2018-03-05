@@ -69,6 +69,7 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_MEMBERSHIP;
 import static org.fcrepo.kernel.api.RequiredRdfContext.MINIMAL;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
+import static org.fcrepo.http.api.FedoraVersioning.MEMENTO_DATETIME_HEADER;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.fasterxml.jackson.core.JsonParseException;
@@ -80,6 +81,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.MessageFormat;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -434,6 +437,17 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         return resource;
     }
 
+    protected void addMementoDatetimeHeader(final FedoraResource resource) {
+        if (resource.isMemento()) {
+            final Instant mementoInstant = resource.getMementoDatetime();
+            if (mementoInstant != null) {
+                final String mementoDatetime = DateTimeFormatter.RFC_1123_DATE_TIME
+                        .format(mementoInstant.atZone(ZoneOffset.UTC));
+                servletResponse.addHeader(MEMENTO_DATETIME_HEADER, mementoDatetime);
+            }
+        }
+    }
+
     protected void addResourceLinkHeaders(final FedoraResource resource) {
         addResourceLinkHeaders(resource, false);
     }
@@ -701,6 +715,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected Response createUpdateResponse(final FedoraResource resource, final boolean created) {
         addCacheControlHeaders(servletResponse, resource, session);
         addResourceLinkHeaders(resource, created);
+        addMementoDatetimeHeader(resource);
+
         if (!created) {
             return noContent().build();
         }
