@@ -514,8 +514,15 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
                 return empty();
             }
 
+            //check ancestors recursively only either of the following two cases applies:
+            // 1. the PARENT is a FEDORA_PAIRTREE
+            // 2. the PARENT is FEDORA_NON_RDF_SOURCE_DESCRIPTION AND the the NODE itself NOT a FEDORA_TIME_MAP.
+            //Time maps of Fedora binaries must be handled slightly differently due to the fact that
+            //the TimeMap is a child of the resource description rather than the resource itself as is the
+            //case for RDF sources.
             final Node parent = node.getParent();
-            if (parent.isNodeType(FEDORA_PAIRTREE) || parent.isNodeType(FEDORA_NON_RDF_SOURCE_DESCRIPTION)) {
+            if (parent.isNodeType(FEDORA_PAIRTREE) ||
+                (parent.isNodeType(FEDORA_NON_RDF_SOURCE_DESCRIPTION) && !node.isNodeType(FEDORA_TIME_MAP))) {
                 return getContainingNode(parent);
             }
             return Optional.of(parent);
