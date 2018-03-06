@@ -281,13 +281,14 @@ public class FedoraLdpIT extends AbstractResourceIT {
                     "; expected result: " + mt, contentType.contains(mt));
         }
     }
-    
+
     private void testHeadVaryAndPreferHeaders(final CloseableHttpResponse response) {
-    	final Collection<String> preferenceApplied = getHeader(response, "Preference-Applied");
-    	final Collection<String> vary = getHeader(response, "Vary");
-    	assertTrue("Didn't find valid Preference-Applied header", preferenceApplied.contains("return=representation"));
-    	assertTrue("Didn't find valid Vary Prefer header", vary.contains("Prefer"));
-    	assertTrue("Didn't find valid Vary Accept headers", vary.contains("Accept, Range, Accept-Encoding, Accept-Language"));
+        final Collection<String> preferenceApplied = getHeader(response, "Preference-Applied");
+        final Collection<String> vary = getHeader(response, "Vary");
+        assertTrue("Didn't find valid Preference-Applied header", preferenceApplied.contains("return=representation"));
+        assertTrue("Didn't find valid Vary Prefer header", vary.contains("Prefer"));
+        assertTrue("Didn't find valid Vary Accept headers",
+                vary.contains("Accept, Range, Accept-Encoding, Accept-Language"));
     }
 
     @Test
