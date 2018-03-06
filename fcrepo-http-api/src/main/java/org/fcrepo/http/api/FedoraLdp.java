@@ -63,6 +63,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_NAMESPACE_VALUE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -111,6 +112,7 @@ import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
+import org.fcrepo.kernel.api.exception.ConstraintViolationException;
 import org.fcrepo.kernel.api.exception.InsufficientStorageException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
@@ -385,6 +387,8 @@ public class FedoraLdp extends ContentExposingResource {
             checkMessageExternalBody(requestContentType);
         }
 
+        final URI resourceAcl = checkForAclLink(links);
+
         final FedoraResource resource;
 
         final String path = toPath(translator(), externalPath);
@@ -441,6 +445,8 @@ public class FedoraLdp extends ContentExposingResource {
 
             ensureInteractionType(resource, interactionModel,
                     (requestBodyStream == null || requestContentType == null));
+
+            addResourceAcl(resourceAcl);
 
             session.commit();
             return createUpdateResponse(resource, created);
@@ -568,6 +574,8 @@ public class FedoraLdp extends ContentExposingResource {
             checkMessageExternalBody(requestContentType);
         }
 
+        final URI resourceAcl = checkForAclLink(links);
+
         if (!(resource() instanceof Container)) {
             throw new ClientErrorException("Object cannot have child nodes", CONFLICT);
         } else if (resource().hasType(FEDORA_PAIRTREE)) {
@@ -594,7 +602,7 @@ public class FedoraLdp extends ContentExposingResource {
                     !(requestBodyStream == null || requestContentType == null));
 
             try (final RdfStream resourceTriples =
-                    resource.isNew() ? new DefaultRdfStream(asNode(resource())) : getResourceTriples()) {
+                     resource.isNew() ? new DefaultRdfStream(asNode(resource())) : getResourceTriples()) {
 
                 if (requestBodyStream == null) {
                     LOGGER.trace("No request body detected");
@@ -623,6 +631,8 @@ public class FedoraLdp extends ContentExposingResource {
                 ensureInteractionType(resource, interactionModel,
                         (requestBodyStream == null || requestContentType == null));
 
+                addResourceAcl(resourceAcl);
+
                 session.commit();
             } catch (final Exception e) {
                 checkForInsufficientStorageException(e, e);
@@ -632,6 +642,49 @@ public class FedoraLdp extends ContentExposingResource {
             return createUpdateResponse(resource, true);
         } finally {
             lock.release();
+        }
+    }
+
+    private void addResourceAcl(final URI resourceAcl) {
+        if (resourceAcl != null) {
+            final String sparql =
+                    "PREFIX acl: <" + WEBAC_NAMESPACE_VALUE + ">\n" +
+                    "INSERT { \n" +
+                    "<> acl:accessControl <" + resourceAcl.toString() + "> \n" +
+                    "} WHERE {}";
+            patchResourcewithSparql(resource(), sparql, getResourceTriples());
+        }
+    }
+
+    /**
+     * Returns the URI of rel=acl link if there is one in the list.
+     *
+     * @param links the links to be checked.
+     * @return The URI portion of acl link header or null if no rel=acl links are present.
+     * @throws ConstraintViolationException if any of the links are syntactically invalid, if there is more than
+     *                                      one link where rel='acl', or if the acl link is cross domain.
+     */
+    private URI checkForAclLink(final List<String> links) throws ConstraintViolationException {
+        if (links == null) {
+            return null;
+        }
+
+        try {
+            Link aclLink = null;
+            for (String linkStr : links) {
+                final Link link = Link.valueOf(linkStr);
+                if (link.getRel().equals("acl")) {
+                    //throw constraint exception if there is a more than one rel='acl' link
+                    if (aclLink != null) {
+                        throw new ConstraintViolationException(
+                            "You may specify only one rel=acl Link header in your request.");
+                    }
+                    aclLink = link;
+                }
+            }
+            return (aclLink != null) ? aclLink.getUri() : null;
+        } catch (Exception ex) {
+            throw new ConstraintViolationException(ex.getMessage());
         }
     }
 
