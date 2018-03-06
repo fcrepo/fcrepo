@@ -33,25 +33,26 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 
-import java.io.IOException;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import javax.ws.rs.core.Link;
+
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -61,45 +62,33 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     private static final String VERSIONED_RESOURCE_LINK_HEADER = "<" + VERSIONED_RESOURCE.getURI() + ">; rel=\"type\"";
 
+    private String subjectUri;
+    private String id;
+
+    @Before
+    public void init() {
+        id = getRandomUniqueId();
+        subjectUri = serverAddress + id;
+    }
+
     @Test
-    public void testDeleteTimeMapForContainer() throws IOException {
-        final String id = getRandomUniqueId();
-
-        // POST to enable versioning
-        final String subjectURI = serverAddress + id;
-        final HttpPost createMethod = postObjMethod();
-        createMethod.addHeader("Slug", id);
-        createMethod.addHeader(CONTENT_TYPE, "text/n3");
-        createMethod.addHeader(LINK, VERSIONED_RESOURCE_LINK_HEADER);
-        createMethod.setEntity(new StringEntity("<" + subjectURI + "> <info:test#label> \"foo\""));
-
-        try (final CloseableHttpResponse response = execute(createMethod)) {
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
-        }
+    public void testDeleteTimeMapForContainer() throws Exception {
+        createVersionedContainer(id, subjectUri);
         // disabled versioning to delete TimeMap
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(serverAddress + id + "/" + FCR_VERSIONS)));
     }
 
     @Test
-    public void testGetTimeMapResponse() throws IOException {
-        final String id = getRandomUniqueId();
-        final String subjectURI = serverAddress + id;
+    public void testGetTimeMapResponse() throws Exception {
+        createVersionedContainer(id, subjectUri);
+
         final List<Link> listLinks = new ArrayList<Link>();
-        listLinks.add(Link.fromUri(subjectURI).rel("original").build());
-        listLinks.add(Link.fromUri(subjectURI).rel("timegate").build());
+        listLinks.add(Link.fromUri(subjectUri).rel("original").build());
+        listLinks.add(Link.fromUri(subjectUri).rel("timegate").build());
         listLinks
-            .add(Link.fromUri(subjectURI + "/" + FCR_VERSIONS).rel("self").type(APPLICATION_LINK_FORMAT).build());
+            .add(Link.fromUri(subjectUri + "/" + FCR_VERSIONS).rel("self").type(APPLICATION_LINK_FORMAT).build());
         final Link[] expectedLinks = listLinks.toArray(new Link[3]);
 
-        final HttpPut createMethod = putObjMethod(id);
-
-        createMethod.addHeader(CONTENT_TYPE, "text/n3");
-        createMethod.addHeader(LINK, VERSIONED_RESOURCE_LINK_HEADER);
-        createMethod.setEntity(new StringEntity("<" + subjectURI + "> <info:test#label> \"foo\""));
-
-        try (final CloseableHttpResponse response = execute(createMethod)) {
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
-        }
         final HttpGet httpGet = getObjMethod(id + "/" + FCR_VERSIONS);
         httpGet.setHeader("Accept", APPLICATION_LINK_FORMAT);
         try (final CloseableHttpResponse response = execute(httpGet)) {
@@ -113,69 +102,60 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testGetTimeMapRDFSubject() throws IOException {
-        final String id = getRandomUniqueId();
-        final String subjectURI = serverAddress + id;
-
-        final HttpPut createMethod = putObjMethod(id);
-
-        createMethod.addHeader(CONTENT_TYPE, "text/n3");
-        createMethod.addHeader(LINK, VERSIONED_RESOURCE_LINK_HEADER);
-        createMethod.setEntity(new StringEntity("<" + subjectURI + "> <info:test#label> \"foo\""));
-
-        try (final CloseableHttpResponse response = execute(createMethod)) {
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
-        }
+    public void testGetTimeMapRDFSubject() throws Exception {
+        createVersionedContainer(id, subjectUri);
 
         final HttpGet httpGet = getObjMethod(id + "/" + FCR_VERSIONS);
 
         try (final CloseableDataset dataset = getDataset(httpGet)) {
             final DatasetGraph results = dataset.asDatasetGraph();
-            final Node subject = createURI(subjectURI + "/" + FCR_VERSIONS);
+            final Node subject = createURI(subjectUri + "/" + FCR_VERSIONS);
             assertTrue("Did not find correct subject", results.contains(ANY, subject, ANY, ANY));
         }
     }
 
     @Test
-    public void testCreateVersion() throws IOException {
-        final String id = getRandomUniqueId();
-        final String subjectURI = serverAddress + id;
-        final HttpPut putMethod = putObjMethod(id);
+    public void testCreateVersion() throws Exception {
+        createVersionedContainer(id, subjectUri);
 
-        putMethod.addHeader(CONTENT_TYPE, "text/n3");
-        putMethod.setEntity(new StringEntity("<" + subjectURI + "> <info:test#label> \"versioned resource\""));
-        putMethod.addHeader(LINK, VERSIONED_RESOURCE_LINK_HEADER);
-
-        try (final CloseableHttpResponse response = execute(putMethod)) {
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
-        }
         final HttpPost postMethod = postObjMethod(id + "/" + FCR_VERSIONS);
         try (final CloseableHttpResponse response = execute(postMethod)) {
             assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
-
+            final String nowDateTime =
+                    RFC_1123_DATE_TIME.format(Instant.now().atZone(ZoneOffset.UTC));
+            assertMementoDatetimeHeaderMatches(response, nowDateTime);
         }
     }
 
     @Test
-    public void testCreateVersionWithDatetime() throws IOException {
-        final String id = getRandomUniqueId();
-        final String subjectURI = serverAddress + id;
-        final HttpPut putMethod = putObjMethod(id);
+    public void testCreateVersionWithDatetime() throws Exception {
+        createVersionedContainer(id, subjectUri);
+
         final String mementoDateTime =
-            DateTimeFormatter.RFC_1123_DATE_TIME.format(LocalDateTime.of(2000, 1, 1, 00, 00).atZone(ZoneOffset.UTC));
+                RFC_1123_DATE_TIME.format(LocalDateTime.of(2000, 1, 1, 00, 00).atZone(ZoneOffset.UTC));
 
-        putMethod.addHeader(CONTENT_TYPE, "text/n3");
-        putMethod.setEntity(new StringEntity("<" + subjectURI + "> <info:test#label> \"versioned resource\""));
-        putMethod.addHeader(LINK, VERSIONED_RESOURCE_LINK_HEADER);
-
-        try (final CloseableHttpResponse response = execute(putMethod)) {
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
-        }
         final HttpPost postMethod = postObjMethod(id + "/" + FCR_VERSIONS);
         postMethod.addHeader(MEMENTO_DATETIME_HEADER, mementoDateTime);
         try (final CloseableHttpResponse response = execute(postMethod)) {
             assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
             assertMementoDatetimeHeaderMatches(response, mementoDateTime);
+        }
+    }
+
+    @Test
+    public void testCreateVersionWithDatetimeAndBody() throws Exception {
+
+    }
+
+    private void createVersionedContainer(final String id, final String subjectUri) throws Exception {
+        final HttpPost createMethod = postObjMethod();
+        createMethod.addHeader("Slug", id);
+        createMethod.addHeader(CONTENT_TYPE, "text/n3");
+        createMethod.addHeader(LINK, VERSIONED_RESOURCE_LINK_HEADER);
+        createMethod.setEntity(new StringEntity("<" + subjectUri + "> <info:test#label> \"foo\""));
+
+        try (final CloseableHttpResponse response = execute(createMethod)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
         }
     }
 
