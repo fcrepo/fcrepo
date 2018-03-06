@@ -61,7 +61,6 @@ import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anySetOf;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -106,7 +105,6 @@ import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.http.commons.domain.MultiPrefer;
-import org.fcrepo.http.commons.domain.PreferTag;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.FedoraSession;
@@ -207,12 +205,6 @@ public class FedoraLdpTest {
     @Mock
     private AcquiredLock mockLock;
 
-    @Mock
-    private MultiPrefer prefer;
-
-    @Mock
-    private PreferTag preferTag;
-
     private static final Logger log = getLogger(FedoraLdpTest.class);
 
 
@@ -238,7 +230,6 @@ public class FedoraLdpTest {
         setField(testObj, "securityContext", mockSecurityContext);
         setField(testObj, "lockManager", mockLockManager);
         setField(testObj, "context", mockServletContext);
-        setField(testObj, "prefer", prefer);
 
         when(mockHttpConfiguration.putRequiresIfMatch()).thenReturn(false);
 
@@ -264,12 +255,7 @@ public class FedoraLdpTest {
         when(mockSession.getFedoraSession()).thenReturn(mockFedoraSession);
 
         when(mockServletContext.getContextPath()).thenReturn("/");
-
-        when(prefer.getReturn()).thenReturn(preferTag);
-        doAnswer((Answer<HttpServletResponse>) invocation -> {
-            mockResponse.addHeader("Preference-Applied", "return=representation");
-            return null;
-        }).when(preferTag).addResponseHeaders(mockResponse);    }
+    }
 
     private FedoraResource setResource(final Class<? extends FedoraResource> klass) {
         final FedoraResource mockResource = mock(klass);
