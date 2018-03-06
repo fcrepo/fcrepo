@@ -314,6 +314,10 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         return this;
     }
 
+    protected Node getDescriptionNode() {
+        return getNode();
+    }
+
     /* (non-Javadoc)
      * @see org.fcrepo.kernel.api.models.FedoraResource#getDescribedResource()
      */
@@ -416,11 +420,12 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @Override
     public Instant getMementoDatetime() {
         try {
-            if (!isMemento() || !getNode().hasProperty(FEDORA_MEMENTO_DATETIME)) {
+            final Node descriptNode = getDescriptionNode();
+            if (!isMemento() || !descriptNode.hasProperty(FEDORA_MEMENTO_DATETIME)) {
                 return null;
             }
 
-            final Calendar calDate = getNode().getProperty(FEDORA_MEMENTO_DATETIME).getDate();
+            final Calendar calDate = descriptNode.getProperty(FEDORA_MEMENTO_DATETIME).getDate();
             return calDate.toInstant();
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
@@ -429,7 +434,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
     @Override
     public boolean isMemento() {
-        return isMemento.test(node);
+        return isMemento.test(getDescriptionNode());
     }
 
     @Override
