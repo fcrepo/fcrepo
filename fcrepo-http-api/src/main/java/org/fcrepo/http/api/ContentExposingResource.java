@@ -49,7 +49,6 @@ import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_MEMENTO;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;
@@ -535,12 +534,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         if (resource.isVersioned()) {
             varyValues.add("Accept-Datetime");
-        } else if (resource.hasType(FEDORA_MEMENTO)) {
-            // Get the mementoDateTime from the resource and add it as a header
-            // final DateTimeFormatter isoDate = DateTimeFormatter.RFC_1123_DATE_TIME;
-            // final String mementoDatetime = isoDate.format(resource.getMementoDatetime());
-            // servletResponse.addHeader(MEMENTO_DATETIME_HEADER, mementoDateTime);
         }
+        addMementoDatetimeHeader(resource);
 
         varyValues.stream().forEach(x -> servletResponse.addHeader("Vary", x));
 
