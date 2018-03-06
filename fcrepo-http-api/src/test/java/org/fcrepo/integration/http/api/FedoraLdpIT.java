@@ -2740,7 +2740,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final HttpGet httpGet = getObjMethod(id);
         httpGet.setHeader("Prefer",
-                "return=representation; include=\"http://fedora.info/definitions/v4/repository#EmbedResources\"");
+                "return=representation; include=\"http://www.w3.org/ns/oa#PreferContainedDescriptions\"");
         try (final CloseableDataset dataset = getDataset(httpGet)) {
             final DatasetGraph graphStore = dataset.asDatasetGraph();
             assertTrue("Property on child binary should be found!" + graphStore, graphStore.contains(ANY,
