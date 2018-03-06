@@ -281,6 +281,14 @@ public class FedoraLdpIT extends AbstractResourceIT {
                     "; expected result: " + mt, contentType.contains(mt));
         }
     }
+    
+    private void testHeadVaryAndPreferHeaders(final CloseableHttpResponse response) {
+    	final Collection<String> preferenceApplied = getHeader(response, "Preference-Applied");
+    	final Collection<String> vary = getHeader(response, "Vary");
+    	assertTrue("Didn't find valid Preference-Applied header", preferenceApplied.contains("return=representation"));
+    	assertTrue("Didn't find valid Vary Prefer header", vary.contains("Prefer"));
+    	assertTrue("Didn't find valid Vary Accept headers", vary.contains("Accept, Range, Accept-Encoding, Accept-Language"));
+    }
 
     @Test
     public void testHeadDefaultRDF() throws IOException {
@@ -292,6 +300,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             final Collection<String> links = getLinkHeaders(response);
             assertTrue("Didn't find LDP BasicContainer link header!", links.contains(BASIC_CONTAINER_LINK_HEADER));
+            testHeadVaryAndPreferHeaders(response);
         }
     }
 
@@ -305,6 +314,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             final Collection<String> links = getLinkHeaders(response);
             assertTrue("Didn't find LDP NonRDFSource link header!", links.contains(NON_RDF_SOURCE_LINK_HEADER));
+            testHeadVaryAndPreferHeaders(response);
         }
     }
 
@@ -319,6 +329,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             final Collection<String> links = getLinkHeaders(response);
             assertTrue("Didn't find LDP container link header!", links.contains(DIRECT_CONTAINER_LINK_HEADER));
+            testHeadVaryAndPreferHeaders(response);
         }
     }
 
@@ -333,6 +344,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             final Collection<String> links = getLinkHeaders(response);
             assertTrue("Didn't find LDP container link header!", links.contains(INDIRECT_CONTAINER_LINK_HEADER));
+            testHeadVaryAndPreferHeaders(response);
         }
     }
 
@@ -350,6 +362,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final ContentDisposition disposition =
                     new ContentDisposition(response.getFirstHeader(CONTENT_DISPOSITION).getValue());
             assertEquals("attachment", disposition.getType());
+            testHeadVaryAndPreferHeaders(response);
         }
     }
 
@@ -367,6 +380,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
             assertTrue("Fixity Checksum doesn't match",
                     digesterHeaderValue.equals("sha=9578f951955d37f20b601c26591e260c1e5389bf"));
+            testHeadVaryAndPreferHeaders(response);
         }
     }
 
@@ -387,6 +401,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                     digesterHeaderValue.indexOf("sha=9578f951955d37f20b601c26591e260c1e5389bf") >= 0);
             assertTrue("MD5 fixity checksum doesn't match",
                     digesterHeaderValue.indexOf("md5=baed005300234f3d1503c50a48ce8e6f") >= 0);
+            testHeadVaryAndPreferHeaders(response);
         }
     }
 
@@ -414,6 +429,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final ContentDisposition disposition =
                     new ContentDisposition(response.getFirstHeader(CONTENT_DISPOSITION).getValue());
             assertEquals("attachment", disposition.getType());
+            testHeadVaryAndPreferHeaders(response);
         }
     }
 
@@ -471,6 +487,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
             assertTrue("Fixity Checksum doesn't match",
                     digesterHeaderValue.equals("sha=9578f951955d37f20b601c26591e260c1e5389bf"));
+            testHeadVaryAndPreferHeaders(response);
         }
     }
 
@@ -506,6 +523,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                     digesterHeaderValue.indexOf("sha=9578f951955d37f20b601c26591e260c1e5389bf") >= 0);
             assertTrue("MD5 fixity checksum doesn't match",
                     digesterHeaderValue.indexOf("md5=baed005300234f3d1503c50a48ce8e6f") >= 0);
+            testHeadVaryAndPreferHeaders(response);
         }
     }
 

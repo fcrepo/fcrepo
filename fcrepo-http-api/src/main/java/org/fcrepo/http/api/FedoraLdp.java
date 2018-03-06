@@ -229,6 +229,10 @@ public class FedoraLdp extends ContentExposingResource {
                 builder.type(TURTLE_WITH_CHARSET);
             }
         }
+        if (prefer != null) {
+            prefer.getReturn().addResponseHeaders(servletResponse);
+        }
+        servletResponse.addHeader("Vary", "Accept, Range, Accept-Encoding, Accept-Language");
 
         return builder.build();
     }

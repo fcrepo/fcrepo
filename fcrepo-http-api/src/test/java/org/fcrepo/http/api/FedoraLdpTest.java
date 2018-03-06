@@ -287,6 +287,8 @@ public class FedoraLdpTest {
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertTrue("Should have a Link header", mockResponse.containsHeader(LINK));
         assertTrue("Should have an Allow header", mockResponse.containsHeader("Allow"));
+        assertTrue("Should have a Preference-Applied header", mockResponse.containsHeader("Preference-Applied"));
+        assertTrue("Should have a Vary header", mockResponse.containsHeader("Vary"));
         assertTrue("Should be an LDP Resource",
                 mockResponse.getHeaders(LINK).contains("<" + LDP_NAMESPACE + "Resource>;rel=\"type\""));
         assertShouldHaveConstraintsLink();
