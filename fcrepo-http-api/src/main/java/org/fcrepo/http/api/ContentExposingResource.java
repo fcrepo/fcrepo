@@ -113,6 +113,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RiotException;
 import org.fcrepo.http.commons.api.HttpHeaderInjector;
 import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
@@ -139,6 +140,7 @@ import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.rdf.SubjectMappingStreamRdf;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.api.utils.ContentDigest;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
@@ -765,14 +767,31 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     }
 
     protected void replaceResourceWithStream(final FedoraResource resource,
+            final InputStream requestBodyStream,
+            final MediaType contentType,
+            final RdfStream resourceTriples) throws MalformedRdfException {
+        replaceResourceWithStream(resource, requestBodyStream, contentType, resourceTriples, null);
+    }
+
+    protected void replaceResourceWithStream(final FedoraResource resource,
                                              final InputStream requestBodyStream,
                                              final MediaType contentType,
-                                             final RdfStream resourceTriples) throws MalformedRdfException {
+                                             final RdfStream resourceTriples,
+                                             final URI destinationUri) throws MalformedRdfException {
         final Lang format = contentTypeToLang(contentType.toString());
 
-        final Model inputModel = createDefaultModel();
+        final Model inputModel;
         try {
-            inputModel.read(requestBodyStream, getUri(resource).toString(), format.getName().toUpperCase());
+            if (destinationUri != null) {
+                final URI resourceUri = getUri(resource());
+                final SubjectMappingStreamRdf mapper = new SubjectMappingStreamRdf(resourceUri,
+                        destinationUri);
+                RDFDataMgr.parse(mapper, requestBodyStream, destinationUri.toString(), format);
+                inputModel = mapper.getModel();
+            } else {
+                inputModel = createDefaultModel();
+                inputModel.read(requestBodyStream, getUri(resource).toString(), format.getName().toUpperCase());
+            }
         } catch (final RiotException e) {
             throw new BadRequestException("RDF was not parsable: " + e.getMessage(), e);
 

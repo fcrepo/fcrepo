@@ -165,7 +165,10 @@ public class FedoraVersioning extends ContentExposingResource {
                         replaceResourceBinaryWithStream((FedoraBinary) memento,
                                 requestBodyStream, contentDisposition, requestContentType, checksums);
                     } else if (isRdfContentType(contentType.toString())) {
-                        replaceResourceWithStream(memento, requestBodyStream, contentType, resourceTriples);
+                        // Get URI of memento to allow for remapping of subject to memento uri
+                        final URI mementoUri = getUri(memento);
+                        replaceResourceWithStream(memento, requestBodyStream, contentType,
+                                resourceTriples, mementoUri);
                     }
                 } catch (final Exception e) {
                     checkForInsufficientStorageException(e, e);

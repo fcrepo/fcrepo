@@ -236,8 +236,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     }
 
     private String createMementoWithBody(final String subjectUri, final String mementoDateTime) throws Exception {
-        // final String body = "<" + subjectUri + "> <info:test#label> \"bar\"";
-        final String body = "<> <info:test#label> \"bar\"";
+        final String body = "<" + subjectUri + "> <info:test#label> \"bar\"";
         return createMemento(subjectUri, mementoDateTime, body);
     }
 
