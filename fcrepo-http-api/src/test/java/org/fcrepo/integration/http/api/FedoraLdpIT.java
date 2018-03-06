@@ -90,6 +90,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_ACCESS_CONTROL_VALUE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -1113,6 +1114,89 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertTrue("Didn't find a triple we tried to create!", graph.contains(ANY,
                     createURI(subjectURI), createURI("info:test#label"), createLiteral("foo")));
         }
+    }
+
+    @Test
+    public void testPostCreateNonRDFSourceWithAcl() throws IOException {
+        final String aclURI = createAcl();
+        final String subjectPid = getRandomUniqueId();
+        final String subjectURI = serverAddress + subjectPid;
+        final HttpPost createMethod = new HttpPost(serverAddress);
+        createMethod.addHeader(CONTENT_TYPE, "text/plain");
+        createMethod.addHeader("Link", "<" + aclURI + ">; rel=\"acl\"");
+        createMethod.addHeader("Slug", subjectPid);
+        createMethod.setEntity(new StringEntity("test body"));
+        assertEquals(CREATED.getStatusCode(), getStatus(createMethod));
+        verifyAccessControlTripleIsPresent(aclURI, subjectURI, subjectURI + "/fcr:metadata");
+    }
+
+    @Test
+    public void testPutCreateNonRDFSourceWithAcl() throws IOException {
+        final String aclURI = createAcl();
+        final String subjectURI = serverAddress + getRandomUniqueId();
+        final HttpPut createMethod = new HttpPut(subjectURI);
+        createMethod.addHeader(CONTENT_TYPE, "text/plain");
+        createMethod.addHeader("Link", "<" + aclURI + ">; rel=\"acl\"");
+        createMethod.setEntity(new StringEntity("test body"));
+        assertEquals(CREATED.getStatusCode(), getStatus(createMethod));
+        verifyAccessControlTripleIsPresent(aclURI, subjectURI, subjectURI + "/fcr:metadata");
+    }
+
+    @Test
+    public void testPostCreateRDFSourceWithAcl() throws IOException {
+        final String aclURI = createAcl();
+        final String subjectPid = getRandomUniqueId();
+        final String subjectURI = serverAddress + subjectPid;
+        final HttpPost createMethod = new HttpPost(serverAddress);
+        createMethod.addHeader(CONTENT_TYPE, "text/n3");
+        createMethod.addHeader("Link", "<" + aclURI + ">; rel=\"acl\"");
+        createMethod.addHeader("Slug", subjectPid);
+        createMethod.setEntity(new StringEntity("<> <info:test#label> \"foo\""));
+        assertEquals(CREATED.getStatusCode(), getStatus(createMethod));
+        verifyAccessControlTripleIsPresent(aclURI, subjectURI);
+    }
+
+    @Test
+    public void testPutCreateRDFSourceWithAcl() throws IOException {
+        final String aclURI = createAcl();
+        final String subjectURI = serverAddress + getRandomUniqueId();
+        final HttpPut createMethod = new HttpPut(subjectURI);
+        createMethod.addHeader(CONTENT_TYPE, "text/n3");
+        createMethod.addHeader("Link", "<" + aclURI + ">; rel=\"acl\"");
+        createMethod.setEntity(new StringEntity("<" + subjectURI + "> <info:test#label> \"foo\""));
+        assertEquals(CREATED.getStatusCode(), getStatus(createMethod));
+        verifyAccessControlTripleIsPresent(aclURI, subjectURI);
+    }
+
+    @Test
+    public void testPutCreateRDFSourceWithNonExistentAcl() throws IOException {
+        final String aclURI = serverAddress + "non-existent-acl";
+        final String subjectURI = serverAddress + getRandomUniqueId();
+        final HttpPut createMethod = new HttpPut(subjectURI);
+        createMethod.addHeader(CONTENT_TYPE, "text/n3");
+        createMethod.addHeader("Link", "<" + aclURI + ">; rel=\"acl\"");
+        createMethod.setEntity(new StringEntity("<" + subjectURI + "> <info:test#label> \"foo\""));
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(createMethod));
+    }
+
+    private void verifyAccessControlTripleIsPresent(final String aclURI, final String subjectURI) throws IOException {
+        verifyAccessControlTripleIsPresent(aclURI, subjectURI, subjectURI);
+    }
+
+    private void verifyAccessControlTripleIsPresent(final String aclURI, final String subjectURI,
+                                                    final String resourceURI) throws IOException {
+        try (final CloseableDataset dataset = getDataset(new HttpGet(resourceURI))) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertTrue("Didn't find an acl:accessControl triple!", graph.contains(ANY,
+                createURI(subjectURI), createURI(WEBAC_ACCESS_CONTROL_VALUE), createURI(aclURI)));
+        }
+    }
+
+    private String createAcl() {
+        final String aclPid = "acl";
+        final String aclURI = serverAddress + aclPid;
+        createObjectAndClose(aclPid);
+        return aclURI;
     }
 
     @Test

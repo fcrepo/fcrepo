@@ -21,6 +21,7 @@ import static com.google.common.collect.ImmutableSet.of;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 
+import java.net.URI;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -51,6 +52,11 @@ public final class RdfLexicon {
     public static final String PROV_NAMESPACE = "http://www.w3.org/ns/prov#";
 
     public static final String PREMIS_NAMESPACE = "http://www.loc.gov/premis/rdf/v1#";
+
+    /**
+     * Namespace for the W3C WebAC vocabulary.
+     */
+    public static final String WEBAC_NAMESPACE_VALUE = "http://www.w3.org/ns/auth/acl#";
 
     /**
      * Fedora configuration namespace "fedora-config", used for user-settable
@@ -238,6 +244,12 @@ public final class RdfLexicon {
     public static final Property SERVER_MANAGED = createProperty(REPOSITORY_NAMESPACE + "ServerManaged");
 
     public static final Property EMBED_CONTAINED = createProperty(OA_NAMESPACE + "PreferContainedDescriptions");
+
+
+    // WEBAC
+    public static final String WEBAC_ACCESS_CONTROL_VALUE = WEBAC_NAMESPACE_VALUE + "accessControl";
+    public static final URI WEBAC_ACCESS_CONTROL = URI.create(WEBAC_ACCESS_CONTROL_VALUE);
+
 
     public static final Set<Property> managedProperties;
 
