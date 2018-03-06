@@ -215,7 +215,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         if (prefer != null) {
             prefer.getReturn().addResponseHeaders(servletResponse);
         }
-    servletResponse.addHeader("Vary", "Accept, Range, Accept-Encoding, Accept-Language");
+        servletResponse.addHeader("Vary", "Accept, Range, Accept-Encoding, Accept-Language");
 
     }
 
