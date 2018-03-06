@@ -44,13 +44,11 @@ import java.io.InputStream;
 import java.net.URI;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import javax.jcr.RepositoryException;
 import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.BadRequestException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -142,7 +140,7 @@ public class FedoraVersioning extends ContentExposingResource {
             @HeaderParam(CONTENT_TYPE) final MediaType requestContentType,
             @HeaderParam(CONTENT_DISPOSITION) final ContentDisposition contentDisposition,
             @HeaderParam("Digest") final String digest,
-        @ContentLocation final InputStream requestBodyStream)
+            @ContentLocation final InputStream requestBodyStream)
         throws RepositoryException, UnsupportedAlgorithmException, InvalidChecksumException {
 
         final AcquiredLock lock = lockManager.lockForWrite(resource().findOrCreateTimeMap().getPath(),
@@ -160,23 +158,20 @@ public class FedoraVersioning extends ContentExposingResource {
                 versionService.createVersion(session.getFedoraSession(), resource(), mementoInstant);
 
             LOGGER.info("Request to add version for date '{}' for '{}'", datetimeHeader, externalPath);
-            try {
+            // Ignore body unless a datetime header was provided
+            if (datetimeHeader != null && requestBodyStream != null) {
                 try (final RdfStream resourceTriples = new DefaultRdfStream(asNode(memento))) {
-                    if (requestBodyStream != null) {
-                        if (memento instanceof FedoraBinary) {
-                            replaceResourceBinaryWithStream((FedoraBinary) memento,
+                    if (memento instanceof FedoraBinary) {
+                        replaceResourceBinaryWithStream((FedoraBinary) memento,
                                 requestBodyStream, contentDisposition, requestContentType, checksums);
-                        } else if (isRdfContentType(contentType.toString())) {
-                            replaceResourceWithStream(memento, requestBodyStream, contentType, resourceTriples);
-                        }
+                    } else if (isRdfContentType(contentType.toString())) {
+                        replaceResourceWithStream(memento, requestBodyStream, contentType, resourceTriples);
                     }
-                } catch (final DateTimeParseException e) {
-                    throw new BadRequestException(MEMENTO_DATETIME_HEADER +
-                        " header must be a RFC-1123 formatted date.");
+                } catch (final Exception e) {
+                    checkForInsufficientStorageException(e, e);
                 }
-            } catch (final Exception e) {
-                checkForInsufficientStorageException(e, e);
             }
+
             return createUpdateResponse(memento, true);
         } finally {
             session.commit();

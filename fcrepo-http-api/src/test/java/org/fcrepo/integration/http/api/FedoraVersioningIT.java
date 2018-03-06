@@ -167,13 +167,13 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         try (final CloseableDataset dataset = getDataset(httpGet)) {
             final DatasetGraph results = dataset.asDatasetGraph();
 
-            final Node subject = createURI(subjectUri);
+            final Node mementoSubject = createURI(mementoUri);
             final Node property = createURI("info:test#label");
 
             assertTrue("Memento created without must retain original state",
-                    results.contains(ANY, subject, property, createLiteral("foo")));
+                    results.contains(ANY, mementoSubject, property, createLiteral("foo")));
             assertFalse("Memento created without datetime must ignore updates",
-                    results.contains(ANY, subject, property, createLiteral("bar")));
+                    results.contains(ANY, mementoSubject, property, createLiteral("bar")));
         }
     }
 
