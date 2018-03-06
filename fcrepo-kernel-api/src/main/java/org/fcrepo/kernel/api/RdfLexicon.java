@@ -52,6 +52,8 @@ public final class RdfLexicon {
 
     public static final String PREMIS_NAMESPACE = "http://www.loc.gov/premis/rdf/v1#";
 
+    public static final String FCREPO_API_NAMESPACE = "http://fedora.info/definitions/fcrepo#";
+
     /**
      * Fedora configuration namespace "fedora-config", used for user-settable
      * configuration properties.
@@ -233,7 +235,7 @@ public final class RdfLexicon {
     // RDF EXTRACTION
     public static final Property COULD_NOT_STORE_PROPERTY =
             createProperty(REPOSITORY_NAMESPACE + "couldNotStoreProperty");
-    public static final Property INBOUND_REFERENCES = createProperty(REPOSITORY_NAMESPACE + "InboundReferences");
+    public static final Property INBOUND_REFERENCES = createProperty(FCREPO_API_NAMESPACE + "PreferInboundReferences");
     public static final Property EMBED_CONTAINS = createProperty(REPOSITORY_NAMESPACE + "EmbedResources");
     public static final Property SERVER_MANAGED = createProperty(REPOSITORY_NAMESPACE + "ServerManaged");
 
