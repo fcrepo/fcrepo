@@ -179,6 +179,7 @@ public class FedoraVersioning extends ContentExposingResource {
             }
             return createUpdateResponse(memento, true);
         } finally {
+            session.commit();
             lock.release();
         }
 
