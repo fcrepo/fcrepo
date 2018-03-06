@@ -42,6 +42,7 @@ import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.apache.jena.graph.Node;
@@ -128,5 +129,41 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             final Node subject = createURI(subjectURI + "/" + FCR_VERSIONS);
             assertTrue("Did not find correct subject", results.contains(ANY, subject, ANY, ANY));
         }
+    }
+
+    @Test
+    public void testPutOnTimeMapContainer() throws IOException {
+        final String id = getRandomUniqueId();
+
+        final String subjectURI = serverAddress + id;
+        final HttpPut createMethod = putObjMethod(id);
+        createMethod.addHeader(CONTENT_TYPE, "text/n3");
+        createMethod.addHeader(LINK, VERSIONED_RESOURCE_LINK_HEADER);
+        createMethod.setEntity(new StringEntity("<" + subjectURI + "> <info:test#label> \"foo\""));
+
+        try (final CloseableHttpResponse response = execute(createMethod)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+        }
+
+        // status 405: PUT On LPDCv is disallowed.
+        assertEquals(405, getStatus(new HttpPut(serverAddress + id + "/" + FCR_VERSIONS)));
+    }
+
+    @Test
+    public void testPatchOnTimeMapContainer() throws IOException {
+        final String id = getRandomUniqueId();
+
+        final String subjectURI = serverAddress + id;
+        final HttpPut createMethod = putObjMethod(id);
+        createMethod.addHeader(CONTENT_TYPE, "text/n3");
+        createMethod.addHeader(LINK, VERSIONED_RESOURCE_LINK_HEADER);
+        createMethod.setEntity(new StringEntity("<" + subjectURI + "> <info:test#label> \"foo\""));
+
+        try (final CloseableHttpResponse response = execute(createMethod)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+        }
+
+        // status 405: PATCH On LPDCv is disallowed.
+        assertEquals(405, getStatus(new HttpPatch(serverAddress + id + "/" + FCR_VERSIONS)));
     }
 }
