@@ -444,9 +444,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         if (resource.isVersioned()) {
             final Link versionedResource = Link.fromUri(RdfLexicon.VERSIONED_RESOURCE.getURI()).rel("type").build();
             servletResponse.addHeader(LINK, versionedResource.toString());
-            final Link timegate = Link.fromUri(getUri(resource)).rel("timegate").build();
+            final Link timegate = Link.fromUri(getUri(resource.getDescribedResource())).rel("timegate").build();
             servletResponse.addHeader(LINK, timegate.toString());
-            final Link timemap = Link.fromUri(getUri(resource) + "/" + FCR_VERSIONS).rel("timemap").build();
+            final Link timemap =
+                Link.fromUri(getUri(resource.getDescribedResource()) + "/" + FCR_VERSIONS).rel("timemap").build();
             servletResponse.addHeader(LINK, timemap.toString());
         }
     }
@@ -701,7 +702,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      */
     private void ensureValidMemberRelation(final Model inputModel) throws BadRequestException {
         // check that ldp:hasMemberRelation value is not server managed predicate.
-        inputModel.listStatements().forEachRemaining((Statement s) -> {
+        inputModel.listStatements().forEachRemaining((final Statement s) -> {
             LOGGER.debug("statement: s={}, p={}, o={}", s.getSubject(), s.getPredicate(), s.getObject());
 
             if (s.getPredicate().equals(HAS_MEMBER_RELATION)) {
@@ -740,7 +741,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     /**
      * Calculate the max number of children to display at once.
-     * 
+     *
      * @return the limit of children to display.
      */
     protected int getChildrenLimit() {
