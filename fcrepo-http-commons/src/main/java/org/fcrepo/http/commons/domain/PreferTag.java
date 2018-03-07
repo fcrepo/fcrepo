@@ -22,7 +22,6 @@ import static java.util.Optional.ofNullable;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.SERVER_MANAGED;
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
-import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
 
 import org.glassfish.jersey.message.internal.HttpHeaderReader;
@@ -150,7 +149,6 @@ public class PreferTag implements Comparable<PreferTag> {
                                                                     LDP_NAMESPACE + "PreferMembership",
                                                                     LDP_NAMESPACE + "PreferContainment" });
             final List<String> includePrefs = asList(new String[] { EMBED_CONTAINED.toString(),
-                                                                    EMBED_CONTAINS.toString(),
                                                                     INBOUND_REFERENCES.toString() });
             includes.stream().forEach(param -> includeBuilder.append(
                     (appliedPrefs.contains(param) || includePrefs.contains(param)) ? param + " " : ""));

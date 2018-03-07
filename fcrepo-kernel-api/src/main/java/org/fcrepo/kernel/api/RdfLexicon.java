@@ -236,7 +236,6 @@ public final class RdfLexicon {
     public static final Property COULD_NOT_STORE_PROPERTY =
             createProperty(REPOSITORY_NAMESPACE + "couldNotStoreProperty");
     public static final Property INBOUND_REFERENCES = createProperty(FCREPO_API_NAMESPACE + "PreferInboundReferences");
-    public static final Property EMBED_CONTAINS = createProperty(OA_NAMESPACE + "PreferContainedDescriptions");
     public static final Property SERVER_MANAGED = createProperty(REPOSITORY_NAMESPACE + "ServerManaged");
 
     public static final Property EMBED_CONTAINED = createProperty(OA_NAMESPACE + "PreferContainedDescriptions");
