@@ -279,6 +279,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final String contentType = contentTypes.iterator().next();
             assertTrue("Didn't find LDP valid content-type header: " + contentType +
                     "; expected result: " + mt, contentType.contains(mt));
+            testHeadVaryAndPreferHeaders(response);
         }
     }
 
@@ -315,7 +316,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             final Collection<String> links = getLinkHeaders(response);
             assertTrue("Didn't find LDP NonRDFSource link header!", links.contains(NON_RDF_SOURCE_LINK_HEADER));
-            testHeadVaryAndPreferHeaders(response);
         }
     }
 
@@ -363,7 +363,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final ContentDisposition disposition =
                     new ContentDisposition(response.getFirstHeader(CONTENT_DISPOSITION).getValue());
             assertEquals("attachment", disposition.getType());
-            testHeadVaryAndPreferHeaders(response);
         }
     }
 
@@ -381,7 +380,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
             assertTrue("Fixity Checksum doesn't match",
                     digesterHeaderValue.equals("sha=9578f951955d37f20b601c26591e260c1e5389bf"));
-            testHeadVaryAndPreferHeaders(response);
         }
     }
 
@@ -402,7 +400,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
                     digesterHeaderValue.indexOf("sha=9578f951955d37f20b601c26591e260c1e5389bf") >= 0);
             assertTrue("MD5 fixity checksum doesn't match",
                     digesterHeaderValue.indexOf("md5=baed005300234f3d1503c50a48ce8e6f") >= 0);
-            testHeadVaryAndPreferHeaders(response);
         }
     }
 
@@ -430,7 +427,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final ContentDisposition disposition =
                     new ContentDisposition(response.getFirstHeader(CONTENT_DISPOSITION).getValue());
             assertEquals("attachment", disposition.getType());
-            testHeadVaryAndPreferHeaders(response);
         }
     }
 
@@ -488,7 +484,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
             assertTrue("Fixity Checksum doesn't match",
                     digesterHeaderValue.equals("sha=9578f951955d37f20b601c26591e260c1e5389bf"));
-            testHeadVaryAndPreferHeaders(response);
         }
     }
 
@@ -524,7 +519,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
                     digesterHeaderValue.indexOf("sha=9578f951955d37f20b601c26591e260c1e5389bf") >= 0);
             assertTrue("MD5 fixity checksum doesn't match",
                     digesterHeaderValue.indexOf("md5=baed005300234f3d1503c50a48ce8e6f") >= 0);
-            testHeadVaryAndPreferHeaders(response);
         }
     }
 
