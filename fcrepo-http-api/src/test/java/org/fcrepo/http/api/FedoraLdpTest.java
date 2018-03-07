@@ -151,6 +151,7 @@ public class FedoraLdpTest {
     private final String binaryPath = "/some/binary/path";
     private final String binaryDescriptionPath = "/some/other/path";
     private final String containerConstraints = "http://localhost/static/constraints/ContainerConstraints.rdf";
+    private final String nonRDFSourceConstraints = "http://localhost/static/constraints/NonRDFSourceConstraints.rdf";
     private FedoraLdp testObj;
 
     private final List<String> nonRDFSourceLink = Arrays.asList(
@@ -384,6 +385,12 @@ public class FedoraLdpTest {
                 mockResponse.getHeaders(LINK)
                         .contains("<" + idTranslator.toDomain(binaryDescriptionPath + "/fcr:metadata")
                                 + ">; rel=\"describedby\""));
+    }
+
+    private void assertShouldHaveNonRDFSourceConstraintsLink() {
+        assertTrue("Should have a constraints document",
+                mockResponse.getHeaders(LINK).contains("<" + nonRDFSourceConstraints + ">; rel=\"" +
+                        NON_RDF_SOURCE.toString() + "\""));
     }
 
     private void assertShouldNotAdvertiseAcceptPatchFlavors() {
