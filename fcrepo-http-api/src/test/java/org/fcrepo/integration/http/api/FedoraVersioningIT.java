@@ -20,6 +20,7 @@ package org.fcrepo.integration.http.api;
 import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
+import static javax.ws.rs.core.HttpHeaders.LOCATION;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -48,6 +49,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import javax.ws.rs.core.Link;
+
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -370,7 +372,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
             assertMementoDatetimeHeaderPresent(response);
 
-            return EntityUtils.toString(response.getEntity());
+            return response.getFirstHeader(LOCATION).getValue();
         }
     }
 
