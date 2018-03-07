@@ -22,6 +22,7 @@ import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.ok;
+import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.fcrepo.http.commons.domain.RDFMediaType.APPLICATION_LINK_FORMAT;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
@@ -49,6 +50,7 @@ import java.util.Collection;
 import java.util.List;
 import javax.jcr.RepositoryException;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -160,15 +162,21 @@ public class FedoraVersioning extends ContentExposingResource {
             LOGGER.info("Request to add version for date '{}' for '{}'", datetimeHeader, externalPath);
             // Ignore body unless a datetime header was provided
             if (datetimeHeader != null && requestBodyStream != null) {
-                try (final RdfStream resourceTriples = new DefaultRdfStream(asNode(memento))) {
+                try {
                     if (memento instanceof FedoraBinary) {
+                        if (requestContentType == null) {
+                            throw new ClientErrorException("Content Type is required for creating a binary memento",
+                                    UNSUPPORTED_MEDIA_TYPE);
+                        }
                         replaceResourceBinaryWithStream((FedoraBinary) memento,
                                 requestBodyStream, contentDisposition, requestContentType, checksums);
-                    } else if (isRdfContentType(contentType.toString())) {
-                        // Get URI of memento to allow for remapping of subject to memento uri
-                        final URI mementoUri = getUri(memento);
-                        replaceResourceWithStream(memento, requestBodyStream, contentType,
-                                resourceTriples, mementoUri);
+                    } else {
+                        try (final RdfStream resourceTriples = new DefaultRdfStream(asNode(memento))) {
+                            // Get URI of memento to allow for remapping of subject to memento uri
+                            final URI mementoUri = getUri(memento);
+                            replaceResourceWithStream(memento, requestBodyStream, contentType,
+                                    resourceTriples, mementoUri);
+                        }
                     }
                 } catch (final Exception e) {
                     checkForInsufficientStorageException(e, e);
