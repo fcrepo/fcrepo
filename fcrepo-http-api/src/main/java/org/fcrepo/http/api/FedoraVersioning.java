@@ -203,6 +203,7 @@ public class FedoraVersioning extends ContentExposingResource {
                     }
                 }
 
+                session.commit();
                 return createUpdateResponse(memento, true);
             } catch (final Exception e) {
                 checkForInsufficientStorageException(e, e);
@@ -216,7 +217,6 @@ public class FedoraVersioning extends ContentExposingResource {
                 throw e;
             }
         } finally {
-            session.commit();
             lock.release();
         }
     }
