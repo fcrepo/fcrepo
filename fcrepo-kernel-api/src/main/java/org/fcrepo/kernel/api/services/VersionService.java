@@ -44,8 +44,11 @@ public interface VersionService {
      * @param session the session in which the resource resides
      * @param resource the resource to version
      * @param dateTime the date/time of the version
+     * @param fromExisting if true, version is created from existing resource. If false, version is created as a new
+     *        resource.
      * @return the version
      */
-    FedoraResource createVersion(FedoraSession session, FedoraResource resource, Instant dateTime);
+    FedoraResource createVersion(FedoraSession session, FedoraResource resource, Instant dateTime,
+            boolean fromExisting);
 
 }

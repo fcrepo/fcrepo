@@ -202,7 +202,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             final CloseableDataset dataset = getDataset(response);
             final DatasetGraph results = dataset.asDatasetGraph();
 
-            assertTrue("Memento must have original property",
+            assertFalse("Memento must not have original property",
                     results.contains(ANY, mementoSubject, property, createLiteral("foo")));
             assertTrue("Memento must have updated property",
                     results.contains(ANY, mementoSubject, property, createLiteral("bar")));

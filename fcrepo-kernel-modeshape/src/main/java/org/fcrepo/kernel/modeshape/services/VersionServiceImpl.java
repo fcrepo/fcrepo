@@ -25,6 +25,7 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 
 import javax.inject.Inject;
+import javax.jcr.ItemExistsException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
@@ -59,6 +60,9 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
 
     private static final Logger LOGGER = getLogger(VersionService.class);
 
+    private static final DateTimeFormatter MEMENTO_DATETIME_ID_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyyMMddHHmmss").withZone(ZoneId.of("GMT"));
+
     /**
      * The repository object service
      */
@@ -71,22 +75,37 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
     @Inject
     protected BinaryService binaryService;
 
+    @Inject
+    protected NodeService nodeService;
+
     @Override
     public FedoraResource createVersion(final FedoraSession session, final FedoraResource resource) {
-        return createVersion(session, resource, Instant.now());
+        return createVersion(session, resource, Instant.now(), true);
     }
 
     @Override
     public FedoraResource createVersion(final FedoraSession session, final FedoraResource resource,
-        final Instant dateTime) {
-        final DateTimeFormatter formatter =
-            DateTimeFormatter.ofPattern("yyyyMMddHHmmss").withZone(ZoneId.of("GMT"));
+            final Instant dateTime, final boolean fromExisting) {
+
+        final String mementoPath = makeMementoPath(resource, dateTime);
         final Calendar mementoDatetime = GregorianCalendar.from(ZonedDateTime.ofInstant(dateTime, ZoneId.of("UTC")));
-        final String newPath = resource.getPath() + "/" + LDPCV_TIME_MAP + "/" + formatter.format(dateTime);
-        final NodeService nodeService = new NodeServiceImpl();
-        nodeService.copyObject(session, resource.getPath(), newPath);
+
+        if (exists(session, mementoPath)) {
+            throw new RepositoryRuntimeException(new ItemExistsException(
+                    "Memento " + mementoPath + " already exists for resource " + resource.getPath()));
+        }
+
+        if (fromExisting) {
+            LOGGER.debug("Creating memento {} for resource {} using existing state", mementoPath, resource.getPath());
+            nodeService.copyObject(session, resource.getPath(), mementoPath);
+        } else {
+            LOGGER.debug("Creating memento {} for resource {}", mementoPath, resource.getPath());
+        }
+
+        final FedoraResource mementoResource = getMementoResource(session, resource, mementoPath);
+
         try {
-            final Node mementoNode = findNode(session, newPath);
+            final Node mementoNode = findNode(session, mementoPath);
             if (mementoNode.canAddMixin(FEDORA_MEMENTO)) {
                 mementoNode.addMixin(FEDORA_MEMENTO);
             }
@@ -94,10 +113,20 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
+
+        return mementoResource;
+    }
+
+    private FedoraResource getMementoResource(final FedoraSession session, final FedoraResource resource,
+            final String mementoPath) {
         if (resource instanceof FedoraBinary) {
-            return binaryService.find(session, newPath);
+            return binaryService.findOrCreate(session, mementoPath);
         } else {
-            return containerService.find(session, newPath);
+            return containerService.findOrCreate(session, mementoPath);
         }
+    }
+
+    private String makeMementoPath(final FedoraResource resource, final Instant datetime) {
+        return resource.getPath() + "/" + LDPCV_TIME_MAP + "/" + MEMENTO_DATETIME_ID_FORMATTER.format(datetime);
     }
 }

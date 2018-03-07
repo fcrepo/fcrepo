@@ -45,13 +45,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 import javax.jcr.ItemExistsException;
-import javax.jcr.RepositoryException;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.DELETE;
@@ -75,7 +75,6 @@ import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryVersionRuntimeException;
-import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
@@ -132,6 +131,9 @@ public class FedoraVersioning extends ContentExposingResource {
         return noContent().build();
     }
 
+    private static final DateTimeFormatter MEMENTO_DATETIME_ID_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyyMMddHHmmss").withZone(ZoneId.of("GMT"));
+
     /**
      * Create a new version checkpoint and tag it with the given label. If that label already describes another version
      * it will silently be reassigned to describe this version.
@@ -141,37 +143,54 @@ public class FedoraVersioning extends ContentExposingResource {
      * @throws UnsupportedAlgorithmException if an unsupported algorithm exception occurs
      * @throws InvalidChecksumException if an invalid checksum exception occurs
      */
+
+    /**
+     * Create a new version of a resource. If a memento-datetime header is provided, then the new version will be
+     * based off the provided body using that datetime. If one was not provided, then a version is created based off
+     * the current version of the resource.
+     *
+     * @param datetimeHeader memento-datetime header
+     * @param requestContentType Content-Type of the request body
+     * @param contentDisposition Content-Disposition
+     * @param digest digests of the request body
+     * @param requestBodyStream request body stream
+     * @return response
+     * @throws InvalidChecksumException thrown if one of the provided digests does not match the content
+     */
     @POST
     public Response addVersion(@HeaderParam(MEMENTO_DATETIME_HEADER) final String datetimeHeader,
             @HeaderParam(CONTENT_TYPE) final MediaType requestContentType,
             @HeaderParam(CONTENT_DISPOSITION) final ContentDisposition contentDisposition,
             @HeaderParam("Digest") final String digest,
             @ContentLocation final InputStream requestBodyStream)
-        throws RepositoryException, UnsupportedAlgorithmException, InvalidChecksumException {
+            throws InvalidChecksumException {
 
         final AcquiredLock lock = lockManager.lockForWrite(resource().findOrCreateTimeMap().getPath(),
             session.getFedoraSession(), nodeService);
 
         try {
-            final Collection<String> checksums = parseDigestHeader(digest);
-
             final MediaType contentType = getSimpleContentType(requestContentType);
 
             final Instant mementoInstant = (isBlank(datetimeHeader) ? Instant.now()
-                : Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(datetimeHeader)));
+                    : Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(datetimeHeader)));
+            final boolean createFromExisting = isBlank(datetimeHeader);
 
-            final FedoraResource memento =
-                versionService.createVersion(session.getFedoraSession(), resource(), mementoInstant);
+            if (requestContentType == null && !createFromExisting) {
+                throw new ClientErrorException("Content Type is required for creating a binary memento",
+                        UNSUPPORTED_MEDIA_TYPE);
+            }
 
-            LOGGER.info("Request to add version for date '{}' for '{}'", datetimeHeader, externalPath);
-            // Ignore body unless a datetime header was provided
-            if (datetimeHeader != null && requestBodyStream != null) {
-                try {
+            try {
+                LOGGER.info("Request to add version for date '{}' for '{}'", datetimeHeader, externalPath);
+
+                final FedoraResource memento = versionService.createVersion(
+                        session.getFedoraSession(), resource(), mementoInstant, createFromExisting);
+
+                // If not creating from existing object, then use provided body for the new memento's content
+                if (!createFromExisting) {
                     if (memento instanceof FedoraBinary) {
-                        if (requestContentType == null) {
-                            throw new ClientErrorException("Content Type is required for creating a binary memento",
-                                    UNSUPPORTED_MEDIA_TYPE);
-                        }
+                        final Collection<String> checksums = parseDigestHeader(digest);
+
                         replaceResourceBinaryWithStream((FedoraBinary) memento,
                                 requestBodyStream, contentDisposition, requestContentType, checksums);
                     } else {
@@ -182,12 +201,13 @@ public class FedoraVersioning extends ContentExposingResource {
                                     resourceTriples, mementoUri);
                         }
                     }
-                } catch (final Exception e) {
-                    checkForInsufficientStorageException(e, e);
                 }
-            }
 
-            return createUpdateResponse(memento, true);
+                return createUpdateResponse(memento, true);
+            } catch (final Exception e) {
+                checkForInsufficientStorageException(e, e);
+                return null; // not reachable
+            }
         } catch (final RepositoryRuntimeException e) {
             if (e.getCause() instanceof ItemExistsException) {
                 throw new ClientErrorException("Memento with provided datetime already exists",
@@ -199,7 +219,6 @@ public class FedoraVersioning extends ContentExposingResource {
             session.commit();
             lock.release();
         }
-
     }
 
     /**
