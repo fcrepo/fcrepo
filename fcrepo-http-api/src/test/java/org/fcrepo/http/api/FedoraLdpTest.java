@@ -374,6 +374,7 @@ public class FedoraLdpTest {
         assertShouldBeAnLDPNonRDFSource();
         assertShouldNotAdvertiseAcceptPatchFlavors();
         assertShouldContainLinkToBinaryDescription();
+        assertShouldHaveNonRDFSourceConstraintsLink();
     }
 
     private void assertContentLengthGreaterThan0(final String contentLength) {
@@ -390,7 +391,7 @@ public class FedoraLdpTest {
     private void assertShouldHaveNonRDFSourceConstraintsLink() {
         assertTrue("Should have a constraints document",
                 mockResponse.getHeaders(LINK).contains("<" + nonRDFSourceConstraints + ">; rel=\"" +
-                        NON_RDF_SOURCE.toString() + "\""));
+                        CONSTRAINED_BY.toString() + "\""));
     }
 
     private void assertShouldNotAdvertiseAcceptPatchFlavors() {

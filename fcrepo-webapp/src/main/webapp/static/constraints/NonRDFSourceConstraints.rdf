@@ -19,10 +19,10 @@
           &lt;http://www.w3.org/ns/ldp#NonRDFSource&gt;</rdfs:comment>
         <rdfs:comment xml:lang="en">Non-RDF content-types will default to 
           &lt;http://www.w3.org/ns/ldp#NonRDFSource&gt;.</rdfs:comment>
-        <rdfs:comment xml:lang="en">RDF in Fedora is always an expression of the properties of a Fedora
-          resource.</rdfs:comment>
-        <rdfs:comment xml:lang="en">Properties in the &lt;http://fedora.info/definitions/v4/repository#&gt;
-          namespace, and types in the &lt;http://fedora.info/definitions/v4/repository#&gt; and
-          &lt;http://www.w3.org/ns/ldp#&gt; namespace can only be modified by the repository.</rdfs:comment>
+        <rdfs:comment xml:lang="en">A binary in a Fedora repository is a NonRdfSource resource.
+        In other contexts, binaries would sometimes be described as bit-streams or files.
+        Binaries are always accompanied by a NonRdfSourceDescription.
+        The NonRdfSourceDescription of a Binary can be discovered by inspecting the `Link` header with `rel=describedby`.
+        </rdfs:comment>
     </owl:Ontology>
 </rdf:RDF>
