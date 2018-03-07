@@ -205,13 +205,18 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                     new DefaultRdfStream(rdfStream.topic(), concat(rdfStream,
                         getResourceTriples(limit))),
                     session.getFedoraSession().getNamespaces());
-            if (prefer != null) {
-                prefer.getReturn().addResponseHeaders(servletResponse);
-            }
+        }
+        setVaryAndPreferenceAppliedHeaders(servletResponse, prefer);
+        return ok(outputStream).build();
+    }
+
+    protected void setVaryAndPreferenceAppliedHeaders(final HttpServletResponse servletResponse,
+            final MultiPrefer prefer) {
+        if (prefer != null) {
+            prefer.getReturn().addResponseHeaders(servletResponse);
         }
         servletResponse.addHeader("Vary", "Accept, Range, Accept-Encoding, Accept-Language");
 
-        return ok(outputStream).build();
     }
 
 
