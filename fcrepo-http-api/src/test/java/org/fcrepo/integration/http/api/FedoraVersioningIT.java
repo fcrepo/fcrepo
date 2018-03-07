@@ -23,6 +23,7 @@ import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
+import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
@@ -213,6 +214,38 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                     results.contains(ANY, subject, property, createLiteral("foo")));
             assertFalse("Original must not have updated property",
                     results.contains(ANY, subject, property, createLiteral("bar")));
+        }
+    }
+
+    @Test
+    public void testCreateVersionDuplicateMementoDatetime() throws Exception {
+        createVersionedContainer(id, subjectUri);
+
+        // Create first memento
+        final String mementoUri = createContainerMementoWithBody(subjectUri, MEMENTO_DATETIME);
+
+        // Attempt to create second memento with same datetime, which should fail
+        final HttpPost createVersionMethod = postObjMethod(id + "/" + FCR_VERSIONS);
+        createVersionMethod.addHeader(CONTENT_TYPE, "text/n3");
+        final String body = "<" + subjectUri + "> <info:test#label> \"far\"";
+        createVersionMethod.setEntity(new StringEntity(body));
+        createVersionMethod.addHeader(MEMENTO_DATETIME_HEADER, MEMENTO_DATETIME);
+
+        try (final CloseableHttpResponse response = execute(createVersionMethod)) {
+            assertEquals("Duplicate memento datetime should return 412 status",
+                    PRECONDITION_FAILED.getStatusCode(), getStatus(response));
+        }
+
+        final Node mementoSubject = createURI(mementoUri);
+        final Node property = createURI("info:test#label");
+        // Verify first memento content persists
+        try (final CloseableDataset dataset = getDataset(new HttpGet(mementoUri))) {
+            final DatasetGraph results = dataset.asDatasetGraph();
+
+            assertTrue("Memento must have first updated property",
+                    results.contains(ANY, mementoSubject, property, createLiteral("bar")));
+            assertFalse("Memento must not have second updated property",
+                    results.contains(ANY, mementoSubject, property, createLiteral("far")));
         }
     }
 

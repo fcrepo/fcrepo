@@ -23,6 +23,7 @@ import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
+import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.fcrepo.http.commons.domain.RDFMediaType.APPLICATION_LINK_FORMAT;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
@@ -48,6 +49,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import javax.jcr.ItemExistsException;
 import javax.jcr.RepositoryException;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.ClientErrorException;
@@ -70,6 +73,7 @@ import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.responses.LinkFormatStream;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryVersionRuntimeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.models.FedoraBinary;
@@ -184,6 +188,13 @@ public class FedoraVersioning extends ContentExposingResource {
             }
 
             return createUpdateResponse(memento, true);
+        } catch (final RepositoryRuntimeException e) {
+            if (e.getCause() instanceof ItemExistsException) {
+                throw new ClientErrorException("Memento with provided datetime already exists",
+                        PRECONDITION_FAILED);
+            } else {
+                throw e;
+            }
         } finally {
             session.commit();
             lock.release();
