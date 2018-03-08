@@ -266,9 +266,14 @@ public final class RdfLexicon {
 
     // VERSIONING
     /**
-     * This is a holder for an eventually Memento TimeMap RDF type.
+     * Memento TimeMap type.
      */
-    public static final String VERSIONING_TIMEMAP_TYPE = REPOSITORY_NAMESPACE + "TimeMap";
+    public static final String VERSIONING_TIMEMAP_TYPE = MEMENTO_NAMESPACE + "TimeMap";
+
+    /**
+     * Memento TimeGate type.
+     */
+    public static final String VERSIONING_TIMEGATE_TYPE = MEMENTO_NAMESPACE + "TimeGate";
 
     /**
      * This is an internal RDF type for versionable resources, this may be replaced by a Memento type.

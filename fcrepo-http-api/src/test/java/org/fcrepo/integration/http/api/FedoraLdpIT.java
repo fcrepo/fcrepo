@@ -92,6 +92,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEGATE_TYPE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -1006,6 +1007,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final CloseableHttpResponse response) {
         assertEquals("Didn't get an OK (200) response!", OK.getStatusCode(), getStatus(response));
         checkForVersionedResourceLinkHeader(response);
+        checkForMementoTimeGateLinkHeader(response);
         checkForLinkHeader(response, subjectURI, "timegate");
         checkForLinkHeader(response, subjectURI + "/" + FCR_VERSIONS, "timemap");
         assertEquals(1, Arrays.asList(response.getHeaders("Vary")).stream().filter(x -> x.getValue().contains(
@@ -1030,6 +1032,10 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     private void checkForVersionedResourceLinkHeader(final CloseableHttpResponse response) {
         checkForLinkHeader(response,VERSIONED_RESOURCE.getURI(), "type");
+    }
+
+    private void checkForMementoTimeGateLinkHeader(final CloseableHttpResponse response) {
+        checkForLinkHeader(response,VERSIONING_TIMEGATE_TYPE, "type");
     }
 
     @Test
