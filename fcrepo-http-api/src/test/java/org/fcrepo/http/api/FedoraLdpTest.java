@@ -61,6 +61,7 @@ import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anySetOf;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -105,6 +106,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.http.commons.domain.MultiPrefer;
+import org.fcrepo.http.commons.domain.PreferTag;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.FedoraSession;
@@ -151,6 +153,7 @@ public class FedoraLdpTest {
     private final String binaryPath = "/some/binary/path";
     private final String binaryDescriptionPath = "/some/other/path";
     private final String containerConstraints = "http://localhost/static/constraints/ContainerConstraints.rdf";
+    private final String nonRDFSourceConstraints = "http://localhost/static/constraints/NonRDFSourceConstraints.rdf";
     private FedoraLdp testObj;
 
     private final List<String> nonRDFSourceLink = Arrays.asList(
@@ -205,6 +208,12 @@ public class FedoraLdpTest {
     @Mock
     private AcquiredLock mockLock;
 
+    @Mock
+    private MultiPrefer prefer;
+
+    @Mock
+    private PreferTag preferTag;
+
     private static final Logger log = getLogger(FedoraLdpTest.class);
 
 
@@ -230,6 +239,7 @@ public class FedoraLdpTest {
         setField(testObj, "securityContext", mockSecurityContext);
         setField(testObj, "lockManager", mockLockManager);
         setField(testObj, "context", mockServletContext);
+        setField(testObj, "prefer", prefer);
 
         when(mockHttpConfiguration.putRequiresIfMatch()).thenReturn(false);
 
@@ -255,6 +265,12 @@ public class FedoraLdpTest {
         when(mockSession.getFedoraSession()).thenReturn(mockFedoraSession);
 
         when(mockServletContext.getContextPath()).thenReturn("/");
+
+        when(prefer.getReturn()).thenReturn(preferTag);
+                doAnswer((Answer<HttpServletResponse>) invocation -> {
+                    mockResponse.addHeader("Preference-Applied", "return=representation");
+                    return null;
+                }).when(preferTag).addResponseHeaders(mockResponse);
     }
 
     private FedoraResource setResource(final Class<? extends FedoraResource> klass) {
@@ -287,6 +303,8 @@ public class FedoraLdpTest {
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertTrue("Should have a Link header", mockResponse.containsHeader(LINK));
         assertTrue("Should have an Allow header", mockResponse.containsHeader("Allow"));
+        assertTrue("Should have a Preference-Applied header", mockResponse.containsHeader("Preference-Applied"));
+        assertTrue("Should have a Vary header", mockResponse.containsHeader("Vary"));
         assertTrue("Should be an LDP Resource",
                 mockResponse.getHeaders(LINK).contains("<" + LDP_NAMESPACE + "Resource>;rel=\"type\""));
         assertShouldHaveConstraintsLink();
@@ -373,6 +391,7 @@ public class FedoraLdpTest {
         assertShouldBeAnLDPNonRDFSource();
         assertShouldNotAdvertiseAcceptPatchFlavors();
         assertShouldContainLinkToBinaryDescription();
+        assertShouldHaveNonRDFSourceConstraintsLink();
     }
 
     private void assertContentLengthGreaterThan0(final String contentLength) {
@@ -384,6 +403,12 @@ public class FedoraLdpTest {
                 mockResponse.getHeaders(LINK)
                         .contains("<" + idTranslator.toDomain(binaryDescriptionPath + "/fcr:metadata")
                                 + ">; rel=\"describedby\""));
+    }
+
+    private void assertShouldHaveNonRDFSourceConstraintsLink() {
+        assertTrue("Should have a constraints document",
+                mockResponse.getHeaders(LINK).contains("<" + nonRDFSourceConstraints + ">; rel=\"" +
+                        CONSTRAINED_BY.toString() + "\""));
     }
 
     private void assertShouldNotAdvertiseAcceptPatchFlavors() {

@@ -279,7 +279,17 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final String contentType = contentTypes.iterator().next();
             assertTrue("Didn't find LDP valid content-type header: " + contentType +
                     "; expected result: " + mt, contentType.contains(mt));
+            testHeadVaryAndPreferHeaders(response);
         }
+    }
+
+    private void testHeadVaryAndPreferHeaders(final CloseableHttpResponse response) {
+        final Collection<String> preferenceApplied = getHeader(response, "Preference-Applied");
+        final Collection<String> vary = getHeader(response, "Vary");
+        assertTrue("Didn't find valid Preference-Applied header", preferenceApplied.contains("return=representation"));
+        assertTrue("Didn't find valid Vary Prefer header", vary.contains("Prefer"));
+        assertTrue("Didn't find valid Vary Accept headers",
+                vary.contains("Accept, Range, Accept-Encoding, Accept-Language"));
     }
 
     @Test
@@ -292,6 +302,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             final Collection<String> links = getLinkHeaders(response);
             assertTrue("Didn't find LDP BasicContainer link header!", links.contains(BASIC_CONTAINER_LINK_HEADER));
+            testHeadVaryAndPreferHeaders(response);
         }
     }
 
@@ -319,6 +330,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             final Collection<String> links = getLinkHeaders(response);
             assertTrue("Didn't find LDP container link header!", links.contains(DIRECT_CONTAINER_LINK_HEADER));
+            testHeadVaryAndPreferHeaders(response);
         }
     }
 
@@ -333,6 +345,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             final Collection<String> links = getLinkHeaders(response);
             assertTrue("Didn't find LDP container link header!", links.contains(INDIRECT_CONTAINER_LINK_HEADER));
+            testHeadVaryAndPreferHeaders(response);
         }
     }
 
@@ -2722,31 +2735,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
          * = EntityUtils.toString(getResponse.getEntity());
          */
 
-    }
-
-    @Test
-    public void testEmbeddedChildResources() throws IOException {
-        final String id = getRandomUniqueId();
-        final String binaryId = "binary0";
-
-        assertEquals(CREATED.getStatusCode(), getStatus(putObjMethod(id)));
-        assertEquals(CREATED.getStatusCode(), getStatus(putDSMethod(id, binaryId, "some test content")));
-
-        final HttpPatch httpPatch = patchObjMethod(id + "/" + binaryId + "/fcr:metadata");
-        httpPatch.addHeader(CONTENT_TYPE, "application/sparql-update");
-        httpPatch.setEntity(new StringEntity(
-                "INSERT { <> <http://purl.org/dc/elements/1.1/title> 'this is a title' } WHERE {}"));
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(httpPatch));
-
-        final HttpGet httpGet = getObjMethod(id);
-        httpGet.setHeader("Prefer",
-                "return=representation; include=\"http://fedora.info/definitions/v4/repository#EmbedResources\"");
-        try (final CloseableDataset dataset = getDataset(httpGet)) {
-            final DatasetGraph graphStore = dataset.asDatasetGraph();
-            assertTrue("Property on child binary should be found!" + graphStore, graphStore.contains(ANY,
-                    createURI(serverAddress + id + "/" + binaryId),
-                    createURI("http://purl.org/dc/elements/1.1/title"), createLiteral("this is a title")));
-        }
     }
 
     @Test
