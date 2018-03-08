@@ -41,7 +41,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -54,6 +53,8 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.apache.jena.graph.Node;
@@ -136,9 +137,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final HttpPost postMethod = postObjMethod(id + "/" + FCR_VERSIONS);
         try (final CloseableHttpResponse response = execute(postMethod)) {
             assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
-            final String nowDateTime =
-                    RFC_1123_DATE_TIME.format(Instant.now().atZone(ZoneOffset.UTC));
-            assertMementoDatetimeHeaderMatches(response, nowDateTime);
+            assertMementoDatetimeHeaderPresent(response);
         }
     }
 
@@ -252,6 +251,22 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testPutOnTimeMapContainer() throws Exception {
+        createVersionedContainer(id, subjectUri);
+
+        // status 405: PUT On LPDCv is disallowed.
+        assertEquals(405, getStatus(new HttpPut(serverAddress + id + "/" + FCR_VERSIONS)));
+    }
+
+    @Test
+    public void testPatchOnTimeMapContainer() throws Exception {
+        createVersionedContainer(id, subjectUri);
+
+        // status 405: PATCH On LPDCv is disallowed.
+        assertEquals(405, getStatus(new HttpPatch(serverAddress + id + "/" + FCR_VERSIONS)));
+    }
+
+    @Test
     public void testGetTimeMapResponseForBinary() throws Exception {
         createVersionedBinary(id);
 
@@ -280,13 +295,9 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         final String mementoUri = createMemento(subjectUri, null, null, null);
 
-        final String nowDateTime =
-                RFC_1123_DATE_TIME.format(Instant.now().atZone(ZoneOffset.UTC));
-
         final HttpGet httpGet = new HttpGet(mementoUri);
         try (final CloseableHttpResponse response = execute(httpGet)) {
-            assertMementoDatetimeHeaderMatches(response, nowDateTime);
-
+            assertMementoDatetimeHeaderPresent(response);
             assertEquals("Binary content of memento must match original content",
                     BINARY_CONTENT, EntityUtils.toString(response.getEntity()));
         }

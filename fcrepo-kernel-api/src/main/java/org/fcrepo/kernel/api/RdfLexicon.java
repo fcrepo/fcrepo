@@ -55,6 +55,8 @@ public final class RdfLexicon {
 
     public static final String PREMIS_NAMESPACE = "http://www.loc.gov/premis/rdf/v1#";
 
+    public static final String MEMENTO_NAMESPACE = "http://mementoweb.org/ns#";
+
     /**
      * Fedora configuration namespace "fedora-config", used for user-settable
      * configuration properties.
@@ -272,7 +274,7 @@ public final class RdfLexicon {
      * This is an internal RDF type for versionable resources, this may be replaced by a Memento type.
      */
     public static final Property VERSIONED_RESOURCE =
-        createProperty(FCREPO_API_NAMESPACE + "VersionedResource");
+        createProperty(MEMENTO_NAMESPACE + "OriginalResource");
 
     private RdfLexicon() {
 

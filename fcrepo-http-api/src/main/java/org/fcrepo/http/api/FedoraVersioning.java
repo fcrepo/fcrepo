@@ -45,7 +45,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.time.Instant;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -118,7 +117,6 @@ public class FedoraVersioning extends ContentExposingResource {
         this.externalPath = externalPath;
     }
 
-
     /**
      * Disable versioning
      * @return the response
@@ -130,19 +128,6 @@ public class FedoraVersioning extends ContentExposingResource {
         session.commit();
         return noContent().build();
     }
-
-    private static final DateTimeFormatter MEMENTO_DATETIME_ID_FORMATTER =
-            DateTimeFormatter.ofPattern("yyyyMMddHHmmss").withZone(ZoneId.of("GMT"));
-
-    /**
-     * Create a new version checkpoint and tag it with the given label. If that label already describes another version
-     * it will silently be reassigned to describe this version.
-     *
-     * @throws RepositoryException the exception
-     * @return response
-     * @throws UnsupportedAlgorithmException if an unsupported algorithm exception occurs
-     * @throws InvalidChecksumException if an invalid checksum exception occurs
-     */
 
     /**
      * Create a new version of a resource. If a memento-datetime header is provided, then the new version will be
