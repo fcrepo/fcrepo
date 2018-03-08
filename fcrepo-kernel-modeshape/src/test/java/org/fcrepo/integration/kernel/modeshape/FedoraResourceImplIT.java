@@ -545,7 +545,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         final Instant theDate = Instant.now();
         // create a version and make sure there are 2 versions (root + created)
-        versionService.createVersion(session, object, theDate);
+        versionService.createVersion(session, object, theDate, true);
         session.commit();
 
         final Model graphStore = object.getTriples(subjects, VERSIONS).collect(toModel());
@@ -1009,7 +1009,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         final Instant theDate = Instant.now();
         // Create version of object2
-        versionService.createVersion(session, object2, theDate);
+        versionService.createVersion(session, object2, theDate, true);
 
         // Verify that the objects exist
         assertTrue("object1 should exist!", exists(object1));

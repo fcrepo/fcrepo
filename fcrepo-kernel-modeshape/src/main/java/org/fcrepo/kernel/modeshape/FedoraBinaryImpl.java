@@ -301,7 +301,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
 
             if (hasProperty(CONTENT_DIGEST)) {
                 // Select the stored digest that matches the digest algorithm
-                final Optional<Value> digestValue = property2values.apply(getProperty(CONTENT_DIGEST)).filter(digest -> {
+                Optional<Value> digestValue = property2values.apply(getProperty(CONTENT_DIGEST)).filter(digest -> {
                     try {
                         final URI digestUri = URI.create(digest.getString());
                         return algorithmWithoutStringType.equalsIgnoreCase(ContentDigest.getAlgorithm(digestUri));

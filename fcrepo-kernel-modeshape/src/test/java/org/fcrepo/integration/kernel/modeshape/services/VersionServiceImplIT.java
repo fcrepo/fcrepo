@@ -72,7 +72,7 @@ public class VersionServiceImplIT extends AbstractIT {
         session.commit();
 
         // create a version and make sure there are 2 versions (root + created)
-        versionService.createVersion(session, resource, mementoDate1);
+        versionService.createVersion(session, resource, mementoDate1, true);
         session.commit();
         assertEquals(1L, countVersions(session, resource));
     }
@@ -85,12 +85,12 @@ public class VersionServiceImplIT extends AbstractIT {
         session.commit();
 
         // create a version and make sure there are 2 versions (root + created)
-        versionService.createVersion(session, resource, mementoDate1);
+        versionService.createVersion(session, resource, mementoDate1, true);
         session.commit();
         assertEquals(1L, countVersions(session, resource));
 
         // create another version
-        versionService.createVersion(session, resource, mementoDate2);
+        versionService.createVersion(session, resource, mementoDate2, true);
         session.commit();
         assertEquals(2L, countVersions(session, resource));
     }
