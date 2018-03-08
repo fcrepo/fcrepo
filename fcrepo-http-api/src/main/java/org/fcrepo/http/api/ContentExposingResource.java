@@ -18,6 +18,7 @@
 package org.fcrepo.http.api;
 
 
+import static com.google.common.base.Strings.nullToEmpty;
 import static java.util.EnumSet.of;
 import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.empty;
@@ -30,11 +31,17 @@ import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
+import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.noContent;
+import static javax.ws.rs.core.Response.notAcceptable;
 import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.temporaryRedirect;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.PARTIAL_CONTENT;
 import static javax.ws.rs.core.Response.Status.REQUESTED_RANGE_NOT_SATISFIABLE;
+import static javax.ws.rs.core.Variant.mediaTypes;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
@@ -61,22 +68,27 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_MEMBERSHIP;
 import static org.fcrepo.kernel.api.RequiredRdfContext.MINIMAL;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
+import static org.fcrepo.http.api.FedoraVersioning.MEMENTO_DATETIME_HEADER;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.MessageFormat;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -101,6 +113,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RiotException;
 import org.fcrepo.http.commons.api.HttpHeaderInjector;
 import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
@@ -114,17 +127,22 @@ import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.TripleCategory;
+import org.fcrepo.kernel.api.exception.InsufficientStorageException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PreconditionException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
+import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
+import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.rdf.SubjectMappingStreamRdf;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
+import org.fcrepo.kernel.api.utils.ContentDigest;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.jvnet.hk2.annotations.Optional;
 import org.slf4j.Logger;
@@ -144,6 +162,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     private static final List<String> VARY_HEADERS = Arrays.asList("Accept", "Range", "Accept-Encoding",
             "Accept-Language");
+
+    static final String INSUFFICIENT_SPACE_IDENTIFYING_MESSAGE = "No space left on device";
 
     @Context protected Request request;
     @Context protected HttpServletResponse servletResponse;
@@ -176,6 +196,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         .or(t -> isManagedPredicate.test(createProperty(t.getPredicate().getURI())));
 
     protected abstract String externalPath();
+
+    protected static final Splitter.MapSplitter RFC3230_SPLITTER =
+        Splitter.on(',').omitEmptyStrings().trimResults().withKeyValueSeparator(Splitter.on('=').limit(2));
 
     protected Response getContent(final String rangeValue,
                                   final RdfStream rdfStream) throws IOException {
@@ -415,6 +438,17 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         return resource;
     }
 
+    protected void addMementoDatetimeHeader(final FedoraResource resource) {
+        if (resource.isMemento()) {
+            final Instant mementoInstant = resource.getMementoDatetime();
+            if (mementoInstant != null) {
+                final String mementoDatetime = DateTimeFormatter.RFC_1123_DATE_TIME
+                        .format(mementoInstant.atZone(ZoneOffset.UTC));
+                servletResponse.addHeader(MEMENTO_DATETIME_HEADER, mementoDatetime);
+            }
+        }
+    }
+
     protected void addResourceLinkHeaders(final FedoraResource resource) {
         addResourceLinkHeaders(resource, false);
     }
@@ -505,6 +539,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         if (resource.isVersioned()) {
             varyValues.add("Accept-Datetime");
         }
+        addMementoDatetimeHeader(resource);
+
         varyValues.stream().forEach(x -> servletResponse.addHeader("Vary", x));
 
     }
@@ -645,6 +681,67 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
     }
 
+    /**
+     * Returns an acceptable plain text media type if possible, or null if not.
+     */
+    protected MediaType acceptabePlainTextMediaType() {
+        final List<MediaType> acceptable = headers.getAcceptableMediaTypes();
+        if (acceptable == null || acceptable.size() == 0) {
+            return TEXT_PLAIN_TYPE;
+        }
+        for (final MediaType type : acceptable) {
+            if (type.isWildcardType() || (type.isCompatible(TEXT_PLAIN_TYPE) && type.isWildcardSubtype())) {
+                return TEXT_PLAIN_TYPE;
+            } else if (type.isCompatible(TEXT_PLAIN_TYPE)) {
+                return type;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Create the appropriate response after a create or update request is processed. When a resource is created,
+     * examine the Prefer and Accept headers to determine whether to include a representation. By default, the URI for
+     * the created resource is return as plain text. If a minimal response is requested, then no body is returned. If a
+     * non-minimal return is requested, return the RDF for the created resource in the appropriate RDF serialization.
+     *
+     * @param resource The created or updated Fedora resource.
+     * @param created True for a newly-created resource, false for an updated resource.
+     * @return 204 No Content (for updated resources), 201 Created (for created resources) including the resource URI or
+     *         content depending on Prefer headers.
+     */
+    @SuppressWarnings("resource")
+    protected Response createUpdateResponse(final FedoraResource resource, final boolean created) {
+        addCacheControlHeaders(servletResponse, resource, session);
+        addResourceLinkHeaders(resource, created);
+        addMementoDatetimeHeader(resource);
+
+        if (!created) {
+            return noContent().build();
+        }
+
+        final URI location = getUri(resource);
+        final Response.ResponseBuilder builder = created(location);
+
+        if (prefer == null || !prefer.hasReturn()) {
+            final MediaType acceptablePlainText = acceptabePlainTextMediaType();
+            if (acceptablePlainText != null) {
+                return builder.type(acceptablePlainText).entity(location.toString()).build();
+            }
+            return notAcceptable(mediaTypes(TEXT_PLAIN_TYPE).build()).build();
+        } else if (prefer.getReturn().getValue().equals("minimal")) {
+            return builder.build();
+        } else {
+            if (prefer != null) {
+                prefer.getReturn().addResponseHeaders(servletResponse);
+            }
+            final RdfNamespacedStream rdfStream = new RdfNamespacedStream(
+                new DefaultRdfStream(asNode(resource()), getResourceTriples()),
+                session().getFedoraSession().getNamespaces());
+            return builder.entity(rdfStream).build();
+        }
+    }
+
     protected static MediaType getSimpleContentType(final MediaType requestContentType) {
         return requestContentType != null ? new MediaType(requestContentType.getType(), requestContentType.getSubtype())
                 : APPLICATION_OCTET_STREAM_TYPE;
@@ -672,14 +769,31 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     }
 
     protected void replaceResourceWithStream(final FedoraResource resource,
+            final InputStream requestBodyStream,
+            final MediaType contentType,
+            final RdfStream resourceTriples) throws MalformedRdfException {
+        replaceResourceWithStream(resource, requestBodyStream, contentType, resourceTriples, null);
+    }
+
+    protected void replaceResourceWithStream(final FedoraResource resource,
                                              final InputStream requestBodyStream,
                                              final MediaType contentType,
-                                             final RdfStream resourceTriples) throws MalformedRdfException {
+                                             final RdfStream resourceTriples,
+                                             final URI destinationUri) throws MalformedRdfException {
         final Lang format = contentTypeToLang(contentType.toString());
 
-        final Model inputModel = createDefaultModel();
+        final Model inputModel;
         try {
-            inputModel.read(requestBodyStream, getUri(resource).toString(), format.getName().toUpperCase());
+            if (destinationUri != null) {
+                final URI resourceUri = getUri(resource());
+                final SubjectMappingStreamRdf mapper = new SubjectMappingStreamRdf(resourceUri,
+                        destinationUri);
+                RDFDataMgr.parse(mapper, requestBodyStream, destinationUri.toString(), format);
+                inputModel = mapper.getModel();
+            } else {
+                inputModel = createDefaultModel();
+                inputModel.read(requestBodyStream, getUri(resource).toString(), format.getName().toUpperCase());
+            }
         } catch (final RiotException e) {
             throw new BadRequestException("RDF was not parsable: " + e.getMessage(), e);
 
@@ -767,5 +881,74 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             }
         }
         return -1;
+    }
+
+    /**
+     * Check if a path has a segment prefixed with fedora:
+     *
+     * @param externalPath the path.
+     */
+    protected static void hasRestrictedPath(final String externalPath) {
+        final String[] pathSegments = externalPath.split("/");
+        if (Arrays.asList(pathSegments).stream().anyMatch(p -> p.startsWith("fedora:"))) {
+            throw new ServerManagedTypeException("Path cannot contain a fedora: prefixed segment.");
+        }
+    }
+
+    /**
+     * Parse the RFC-3230 Digest response header value. Look for a sha1 checksum and return it as a urn, if missing or
+     * malformed an empty string is returned.
+     *
+     * @param digest The Digest header value
+     * @return the sha1 checksum value
+     * @throws UnsupportedAlgorithmException if an unsupported digest is used
+     */
+    protected static Collection<String> parseDigestHeader(final String digest) throws UnsupportedAlgorithmException {
+        try {
+            final Map<String, String> digestPairs = RFC3230_SPLITTER.split(nullToEmpty(digest));
+            final boolean allSupportedAlgorithms = digestPairs.keySet().stream().allMatch(
+                ContentDigest.DIGEST_ALGORITHM::isSupportedAlgorithm);
+
+            // If you have one or more digests that are all valid or no digests.
+            if (digestPairs.isEmpty() || allSupportedAlgorithms) {
+                return digestPairs.entrySet().stream()
+                    .filter(entry -> ContentDigest.DIGEST_ALGORITHM.isSupportedAlgorithm(entry.getKey()))
+                    .map(entry -> ContentDigest.asURI(entry.getKey(), entry.getValue()).toString())
+                    .collect(Collectors.toSet());
+            } else {
+                throw new UnsupportedAlgorithmException(String.format("Unsupported Digest Algorithim: %1$s", digest));
+            }
+        } catch (final RuntimeException e) {
+            if (e instanceof IllegalArgumentException) {
+                throw new ClientErrorException("Invalid Digest header: " + digest + "\n", BAD_REQUEST);
+            }
+            throw e;
+        }
+    }
+
+    /**
+     * @param rootThrowable The original throwable
+     * @param throwable The throwable under direct scrutiny.
+     * @throws InvalidChecksumException
+     */
+    protected void checkForInsufficientStorageException(final Throwable rootThrowable, final Throwable throwable)
+        throws InvalidChecksumException {
+        final String message = throwable.getMessage();
+        if (throwable instanceof IOException && message != null && message.contains(
+            INSUFFICIENT_SPACE_IDENTIFYING_MESSAGE)) {
+            throw new InsufficientStorageException(throwable.getMessage(), rootThrowable);
+        }
+
+        if (throwable.getCause() != null) {
+            checkForInsufficientStorageException(rootThrowable, throwable.getCause());
+        }
+
+        if (rootThrowable instanceof InvalidChecksumException) {
+            throw (InvalidChecksumException) rootThrowable;
+        } else if (rootThrowable instanceof RuntimeException) {
+            throw (RuntimeException) rootThrowable;
+        } else {
+            throw new RepositoryRuntimeException(rootThrowable);
+        }
     }
 }

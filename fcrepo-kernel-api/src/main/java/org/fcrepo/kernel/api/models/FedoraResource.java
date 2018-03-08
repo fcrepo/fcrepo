@@ -81,7 +81,22 @@ public interface FedoraResource {
     FedoraResource findOrCreateTimeMap();
 
     /**
+     * Retrieve the mementoDatetime property and return it as an Instant
+     *
+     * @return the Instant for this resource
+     */
+    Instant getMementoDatetime();
+
+    /**
+     * Returns true if this resource is a Memento.
+     *
+     * @return true if the resource is a Memento.
+     */
+    boolean isMemento();
+
+    /**
      * Get the child of this resource at the given path
+     *
      * @param relPath the given path
      * @return the child of this resource
      */
