@@ -22,7 +22,6 @@ import org.junit.Test;
 
 import java.text.ParseException;
 
-import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
 import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
@@ -105,15 +104,6 @@ public class LdpPreferTagTest {
     }
 
     @Test
-    public void testPreferEmbed() throws ParseException {
-        final PreferTag prefer
-                = new PreferTag("return=representation; include=\"" + EMBED_CONTAINS + "\"");
-        testObj = new LdpPreferTag(prefer);
-
-        assertTrue(testObj.prefersEmbed());
-    }
-
-    @Test
     public void testPreferReference() throws ParseException {
         final PreferTag prefer
                 = new PreferTag("return=representation; include=\"" + INBOUND_REFERENCES + "\"");
@@ -131,12 +121,6 @@ public class LdpPreferTagTest {
     @Test
     public void testEmbedContained() throws ParseException {
         testObj = new LdpPreferTag(new PreferTag("return=representation; include=\"" + EMBED_CONTAINED + "\""));
-        assertTrue(testObj.prefersEmbed());
-    }
-
-    @Test
-    public void testEmbedContains() throws ParseException {
-        testObj = new LdpPreferTag(new PreferTag("return=representation; include=\"" + EMBED_CONTAINS + "\""));
         assertTrue(testObj.prefersEmbed());
     }
 }

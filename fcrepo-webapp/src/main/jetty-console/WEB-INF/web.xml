@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<web-app xmlns="http://java.sun.com/xml/ns/javaee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
+	version="3.0">
+
+	<display-name>Fedora Repository</display-name>
+
+	<context-param>
+		<param-name>contextConfigLocation</param-name>
+		<param-value>WEB-INF/classes/spring/repository.xml</param-value>
+	</context-param>
+
+	<listener>
+		<listener-class>org.fcrepo.http.commons.FedoraContextLoaderListener</listener-class>
+	</listener>
+
+  <servlet>
+    <servlet-name>jersey-servlet</servlet-name>
+    <servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
+
+    <init-param>
+      <param-name>javax.ws.rs.Application</param-name>
+      <param-value>org.fcrepo.http.commons.FedoraApplication</param-value>
+    </init-param>
+
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+
+  <servlet-mapping>
+		<servlet-name>jersey-servlet</servlet-name>
+		<url-pattern>/rest/*</url-pattern>
+
+	</servlet-mapping>
+
+  <filter>
+    <filter-name>ETagFilter</filter-name>
+    <filter-class>org.springframework.web.filter.ShallowEtagHeaderFilter</filter-class>
+  </filter>
+
+  <filter-mapping>
+    <filter-name>ETagFilter</filter-name>
+    <url-pattern>/static/*</url-pattern>
+  </filter-mapping>
+
+  <!--Uncomment section below to enable Basic-Authentication-->
+  <!-- 
+  <security-constraint>
+    <web-resource-collection>
+      <web-resource-name>Fedora4</web-resource-name>
+      <url-pattern>/*</url-pattern>
+      <http-method>DELETE</http-method>
+      <http-method>PUT</http-method>
+      <http-method>HEAD</http-method>
+      <http-method>OPTIONS</http-method>
+      <http-method>PATCH</http-method>
+      <http-method>GET</http-method>
+      <http-method>POST</http-method>
+    </web-resource-collection>
+    <auth-constraint>
+      <role-name>fedoraUser</role-name>
+      <role-name>fedoraAdmin</role-name>
+    </auth-constraint>
+    <user-data-constraint>
+      <transport-guarantee>NONE</transport-guarantee>
+    </user-data-constraint>
+  </security-constraint>
+
+  <login-config>
+    <auth-method>BASIC</auth-method>
+    <realm-name>fcrepo</realm-name>
+  </login-config>
+  -->
+  
+
+</web-app>

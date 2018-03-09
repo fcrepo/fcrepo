@@ -18,7 +18,9 @@
 package org.fcrepo.kernel.modeshape.utils.impl;
 
 import org.fcrepo.kernel.api.utils.CacheEntry;
+import org.fcrepo.kernel.api.utils.MessageExternalBodyContentType;
 import org.fcrepo.kernel.modeshape.utils.BinaryCacheEntry;
+import org.fcrepo.kernel.modeshape.utils.ExternalResourceCacheEntry;
 import org.fcrepo.kernel.modeshape.utils.ProjectedCacheEntry;
 import org.modeshape.jcr.value.binary.ExternalBinaryValue;
 
@@ -27,6 +29,7 @@ import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 
 /**
+ * @author lsitu
  * @author cabeer
  */
 public final class CacheEntryFactory {
@@ -44,11 +47,15 @@ public final class CacheEntryFactory {
      * @throws RepositoryException if repository exception occurred
      */
     public static CacheEntry forProperty(final Property property) throws RepositoryException {
-        final Binary binary = property.getBinary();
+        if (property.getValue().getString().indexOf((MessageExternalBodyContentType.MEDIA_TYPE)) >= 0) {
+            return new ExternalResourceCacheEntry(property);
+        } else {
+            final Binary binary = property.getBinary();
 
-        if (binary instanceof ExternalBinaryValue) {
-            return new ProjectedCacheEntry(property);
+            if (binary instanceof ExternalBinaryValue) {
+               return new ProjectedCacheEntry(property);
+            }
+            return new BinaryCacheEntry(property);
         }
-        return new BinaryCacheEntry(property);
     }
 }

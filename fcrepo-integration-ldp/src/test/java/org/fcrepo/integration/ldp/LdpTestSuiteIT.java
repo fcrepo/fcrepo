@@ -17,26 +17,35 @@
  */
 package org.fcrepo.integration.ldp;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.entity.BasicHttpEntity;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.junit.Test;
-import org.w3.ldp.testsuite.LdpTestSuite;
+import static java.lang.Integer.MAX_VALUE;
+import static java.lang.Integer.parseInt;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.Response.Status.CREATED;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.UUID;
 
-import static java.lang.Integer.MAX_VALUE;
-import static java.lang.Integer.parseInt;
-import static javax.ws.rs.core.Response.Status.CREATED;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpHost;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.AuthCache;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.entity.BasicHttpEntity;
+import org.apache.http.impl.auth.BasicScheme;
+import org.apache.http.impl.client.BasicAuthCache;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.junit.Test;
+import org.w3.ldp.testsuite.LdpTestSuite;
 
 /**
  * @author cabeer
@@ -61,11 +70,31 @@ public class LdpTestSuiteIT {
     protected static final String serverAddress = PROTOCOL + "://" + HOSTNAME + ":" +
             SERVER_PORT + "/fcrepo/rest/";
 
-    protected static HttpClient client = createClient();
 
-    protected static HttpClient createClient() {
-        return HttpClientBuilder.create().setMaxConnPerRoute(MAX_VALUE)
-                .setMaxConnTotal(MAX_VALUE).build();
+    /**
+     * Execute an HTTP request with preemptive basic authentication.
+     *
+     * @param request the request to execute
+     * @return the open responses
+     * @throws IOException in case of IOException
+     */
+    protected CloseableHttpResponse executeWithBasicAuth(final HttpUriRequest request) throws IOException {
+        final HttpHost target = new HttpHost(HOSTNAME, SERVER_PORT, PROTOCOL);
+        final CredentialsProvider credsProvider = new BasicCredentialsProvider();
+        credsProvider.setCredentials(
+                new AuthScope(target.getHostName(), target.getPort()),
+                new UsernamePasswordCredentials("fedoraAdmin", "fedoraAdmin"));
+        final CloseableHttpClient httpclient =
+                HttpClients.custom().setDefaultCredentialsProvider(credsProvider)
+                                    .setMaxConnPerRoute(MAX_VALUE)
+                                    .setMaxConnTotal(MAX_VALUE).build();
+        final AuthCache authCache = new BasicAuthCache();
+        final BasicScheme basicAuth = new BasicScheme();
+        authCache.put(target, basicAuth);
+
+        final HttpClientContext localContext = HttpClientContext.create();
+        localContext.setAuthCache(authCache);
+        return httpclient.execute(request, localContext);
     }
 
 
@@ -78,19 +107,20 @@ public class LdpTestSuiteIT {
         entity.setContent(IOUtils.toInputStream("<> a <" + BASIC_CONTAINER + "> ."));
         request.setEntity(entity);
         request.setHeader(CONTENT_TYPE, "text/turtle");
-        final HttpResponse response = client.execute(request);
-        assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
+        try (final CloseableHttpResponse response = executeWithBasicAuth(request)) {
+            assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
 
 
-        final HashMap<String, String> options = new HashMap<>();
-        options.put("server", serverAddress + pid);
-        options.put("output", "report-basic");
-        options.put("basic", "true");
-        options.put("non-rdf", "true");
-        options.put("read-only-prop", "http://fedora.info/definitions/v4/repository#uuid");
-        final LdpTestSuite testSuite = new LdpTestSuite(options);
-        testSuite.run();
-        assertTrue("The LDP test suite is only informational", true);
+            final HashMap<String, String> options = new HashMap<>();
+            options.put("server", serverAddress + pid);
+            options.put("output", "report-basic");
+            options.put("basic", "true");
+            options.put("non-rdf", "true");
+            options.put("read-only-prop", "http://fedora.info/definitions/v4/repository#uuid");
+            final LdpTestSuite testSuite = new LdpTestSuite(options);
+            testSuite.run();
+            assertTrue("The LDP test suite is only informational", true);
+        }
     }
 
     @Test
@@ -104,18 +134,19 @@ public class LdpTestSuiteIT {
                 "    <" + LDP_NAMESPACE + "hasMemberRelation> <" + LDP_NAMESPACE + "member> ."));
         request.setEntity(entity);
         request.setHeader(CONTENT_TYPE, "text/turtle");
-        final HttpResponse response = client.execute(request);
-        assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
+        try (final CloseableHttpResponse response = executeWithBasicAuth(request)) {
+            assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
 
-        final HashMap<String, String> options = new HashMap<>();
-        options.put("server", serverAddress + pid);
-        options.put("output", "report-direct");
-        options.put("direct", "true");
-        options.put("non-rdf", "true");
-        options.put("read-only-prop", "http://fedora.info/definitions/v4/repository#uuid");
-        final LdpTestSuite testSuite = new LdpTestSuite(options);
-        testSuite.run();
-        assertTrue("The LDP test suite is only informational", true);
+            final HashMap<String, String> options = new HashMap<>();
+            options.put("server", serverAddress + pid);
+            options.put("output", "report-direct");
+            options.put("direct", "true");
+            options.put("non-rdf", "true");
+            options.put("read-only-prop", "http://fedora.info/definitions/v4/repository#uuid");
+            final LdpTestSuite testSuite = new LdpTestSuite(options);
+            testSuite.run();
+            assertTrue("The LDP test suite is only informational", true);
+        }
     }
 
     @Test
@@ -130,17 +161,18 @@ public class LdpTestSuiteIT {
                 "    <" + LDP_NAMESPACE + "hasMemberRelation> <" + LDP_NAMESPACE + "member> ."));
         request.setEntity(entity);
         request.setHeader(CONTENT_TYPE, "text/turtle");
-        final HttpResponse response = client.execute(request);
-        assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
+        try (final CloseableHttpResponse response = executeWithBasicAuth(request)) {
+            assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
 
-        final HashMap<String, String> options = new HashMap<>();
-        options.put("server", serverAddress + pid);
-        options.put("output", "report-indirect");
-        options.put("indirect", "true");
-        options.put("non-rdf", "true");
-        options.put("read-only-prop", "http://fedora.info/definitions/v4/repository#uuid");
-        final LdpTestSuite testSuite = new LdpTestSuite(options);
-        testSuite.run();
-        assertTrue("The LDP test suite is only informational", true);
+            final HashMap<String, String> options = new HashMap<>();
+            options.put("server", serverAddress + pid);
+            options.put("output", "report-indirect");
+            options.put("indirect", "true");
+            options.put("non-rdf", "true");
+            options.put("read-only-prop", "http://fedora.info/definitions/v4/repository#uuid");
+            final LdpTestSuite testSuite = new LdpTestSuite(options);
+            testSuite.run();
+            assertTrue("The LDP test suite is only informational", true);
+        }
     }
 }

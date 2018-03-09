@@ -22,7 +22,7 @@ import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.graph.Triple.create;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.riot.Lang.TTL;
-import static org.fcrepo.auth.webac.URIConstants.FOAF_GROUP;
+import static org.fcrepo.auth.webac.URIConstants.VCARD_GROUP;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_ACCESS_CONTROL_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_AUTHORIZATION;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ_VALUE;
@@ -442,8 +442,8 @@ public class WebACRolesProviderTest {
     }
 
     /* (non-Javadoc)
-     * Test that an in-repository resource used as a target for acl:agentClass has
-     * the rdf:type of foaf:Group. This test mocks a foaf:Group resource and should
+     * Test that an in-repository resource used as a target for acl:agentGroup has
+     * the rdf:type of vcard:Group. This test mocks a vcard:Group resource and should
      * therefore retrieve two agents.
      */
     @Test
@@ -469,9 +469,9 @@ public class WebACRolesProviderTest {
         when(mockAuthorizationResource1.getTypes()).thenReturn(Arrays.asList(WEBAC_AUTHORIZATION));
         when(mockAuthorizationResource1.getPath()).thenReturn(auth);
         when(mockAuthorizationResource1.getTriples(anyObject(), eq(PROPERTIES)))
-                .thenReturn(getRdfStreamFromResource(auth, TTL));
+        .thenReturn(getRdfStreamFromResource(auth, TTL));
 
-        when(mockAgentClassResource.getTypes()).thenReturn(Arrays.asList(FOAF_GROUP));
+        when(mockAgentClassResource.getTypes()).thenReturn(Arrays.asList(VCARD_GROUP));
         when(mockAgentClassResource.getPath()).thenReturn(groupResource);
         when(mockAgentClassResource.getTriples(anyObject(), eq(PROPERTIES)))
                 .thenReturn(getRdfStreamFromResource(group, TTL));

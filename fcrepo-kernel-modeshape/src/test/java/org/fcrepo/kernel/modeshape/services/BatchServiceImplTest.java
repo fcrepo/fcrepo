@@ -78,7 +78,7 @@ public class BatchServiceImplTest {
         fedoraSession = new FedoraSessionImpl(mockSession);
         service = new BatchServiceImpl();
         when(mockTx.getId()).thenReturn(IS_A_TX);
-        when(mockTx.getUserId()).thenReturn(null);
+        when(mockTx.getUserURI()).thenReturn(null);
         final Field txsField =
                 BatchServiceImpl.class.getDeclaredField("sessions");
         txsField.setAccessible(true);

@@ -49,8 +49,6 @@ class JsonLDEventMessage {
 
     public static final String ACTIVITYSTREAMS_NS = "https://www.w3.org/ns/activitystreams";
 
-    public static final String USER_AGENT_BASE_URI_PROPERTY = "fcrepo.auth.webac.userAgent.baseUri";
-
     static class ContextElement {
 
         @JsonProperty("@id")
@@ -165,8 +163,6 @@ class JsonLDEventMessage {
     public static JsonLDEventMessage from(final FedoraEvent evt) {
 
         final String baseUrl = evt.getInfo().get(BASE_URL);
-        final String userAgent = evt.getUserID();
-        final String userAgentBaseUri = System.getProperty(USER_AGENT_BASE_URI_PROPERTY, "#");
 
         // build objectId
         final String objectId = baseUrl + evt.getPath();
@@ -189,7 +185,7 @@ class JsonLDEventMessage {
 
         // build actors list
         final List<Actor> actor = new ArrayList();
-        actor.add(new Person(userAgentBaseUri + userAgent, Arrays.asList("Person")));
+        actor.add(new Person(evt.getUserURI().toString(), Arrays.asList("Person")));
         final String softwareAgent = evt.getInfo().get(USER_AGENT);
         if (softwareAgent != null) {
             actor.add(new Application(softwareAgent, Arrays.asList("Application")));

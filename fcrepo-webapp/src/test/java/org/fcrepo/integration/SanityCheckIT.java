@@ -32,6 +32,8 @@ import java.io.IOException;
 import java.net.URI;
 
 import org.apache.http.HttpResponse;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -44,6 +46,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.gargoylesoftware.htmlunit.DefaultCredentialsProvider;
 
 import javax.ws.rs.core.Link;
 
@@ -82,9 +86,11 @@ public class SanityCheckIT {
     protected static HttpClient client;
 
     static {
+        final CredentialsProvider creds = new DefaultCredentialsProvider();
+        creds.setCredentials(AuthScope.ANY, AbstractResourceIT.FEDORA_ADMIN_CREDENTIALS);
         client =
                 HttpClientBuilder.create().setMaxConnPerRoute(MAX_VALUE)
-                        .setMaxConnTotal(MAX_VALUE).build();
+                        .setMaxConnTotal(MAX_VALUE).setDefaultCredentialsProvider(creds).build();
     }
 
     @Test

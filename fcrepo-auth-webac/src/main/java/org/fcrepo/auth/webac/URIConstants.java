@@ -17,6 +17,8 @@
  */
 package org.fcrepo.auth.webac;
 
+import org.fcrepo.kernel.api.RdfLexicon;
+
 import java.net.URI;
 
 /**
@@ -35,7 +37,7 @@ final public class URIConstants {
     /**
      * Namespace for the W3C WebAC vocabulary.
      */
-    public static final String WEBAC_NAMESPACE_VALUE = "http://www.w3.org/ns/auth/acl#";
+    public static final String WEBAC_NAMESPACE_VALUE = RdfLexicon.WEBAC_NAMESPACE_VALUE;
 
     /**
      * Namespace for the W3C WebAC vocabulary.
@@ -101,6 +103,12 @@ final public class URIConstants {
     public static final URI WEBAC_AGENT_CLASS = URI.create(WEBAC_AGENT_CLASS_VALUE);
 
     /**
+     * WebAC agentGroup
+     */
+    public static final String WEBAC_AGENT_GROUP_VALUE = WEBAC_NAMESPACE_VALUE + "agentGroup";
+    public static final URI WEBAC_AGENT_GROUP = URI.create(WEBAC_AGENT_CLASS_VALUE);
+
+    /**
      * WebAC accessTo
      */
     public static final String WEBAC_ACCESSTO_VALUE = WEBAC_NAMESPACE_VALUE + "accessTo";
@@ -115,8 +123,8 @@ final public class URIConstants {
     /**
      * WebAC accessControl
      */
-    public static final String WEBAC_ACCESS_CONTROL_VALUE = WEBAC_NAMESPACE_VALUE + "accessControl";
-    public static final URI WEBAC_ACCESS_CONTROL = URI.create(WEBAC_ACCESS_CONTROL_VALUE);
+    public static final String WEBAC_ACCESS_CONTROL_VALUE = RdfLexicon.WEBAC_ACCESS_CONTROL_VALUE;
+    public static final URI WEBAC_ACCESS_CONTROL = RdfLexicon.WEBAC_ACCESS_CONTROL;
 
     /**
      * WebAC mode
@@ -148,6 +156,23 @@ final public class URIConstants {
     public static final String FOAF_GROUP_VALUE = FOAF_NAMESPACE_VALUE + "Group";
     public static final URI FOAF_GROUP = URI.create(FOAF_GROUP_VALUE);
 
+    /**
+     * vCard Namespace
+     */
+    public static final String VCARD_NAMESPACE_VALUE = "http://www.w3.org/2006/vcard/ns#";
+    public static final URI VCARD_NAMESPACE = URI.create(VCARD_NAMESPACE_VALUE);
+
+    /**
+     * vCard Group
+     */
+    public static final String VCARD_GROUP_VALUE = VCARD_NAMESPACE_VALUE + "Group";
+    public static final URI VCARD_GROUP = URI.create(VCARD_GROUP_VALUE);
+
+    /**
+     * vCard member
+     */
+    public static final String VCARD_MEMBER_VALUE = VCARD_NAMESPACE_VALUE + "hasMember";
+    public static final URI VCARD_MEMBER = URI.create(VCARD_MEMBER_VALUE);
 
     /**
      * Fedora WebAC Namespace

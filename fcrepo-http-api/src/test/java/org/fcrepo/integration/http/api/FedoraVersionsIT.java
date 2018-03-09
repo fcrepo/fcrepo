@@ -42,7 +42,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.FCR_FIXITY;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBED_BY;
-import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINS;
+import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
@@ -658,7 +658,7 @@ public class FedoraVersionsIT extends AbstractResourceIT {
 
     private CloseableDataset getContent(final String url) throws IOException {
         final HttpGet getVersion = new HttpGet(url);
-        getVersion.addHeader("Prefer", "return=representation; include=\"" + EMBED_CONTAINS.toString() + "\"");
+        getVersion.addHeader("Prefer", "return=representation; include=\"" + EMBED_CONTAINED.toString() + "\"");
         return getDataset(getVersion);
     }
 

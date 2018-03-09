@@ -34,6 +34,7 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
 
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -103,6 +104,7 @@ public class DefaultMessageFactoryTest {
         when(mockEvent.getDate()).thenReturn(ofEpochMilli(testDate));
         final String testUser = "testUser";
         when(mockEvent.getUserID()).thenReturn(testUser);
+        when(mockEvent.getUserURI()).thenReturn(URI.create("http://localhost:8080/fcrepo/" + testUser));
         when(mockEvent.getPath()).thenReturn(id);
         final Set<EventType> testTypes = singleton(EventType.RESOURCE_CREATION);
         final String testReturnType = EventType.RESOURCE_CREATION.getType();

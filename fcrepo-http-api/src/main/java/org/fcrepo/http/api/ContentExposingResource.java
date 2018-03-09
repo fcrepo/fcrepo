@@ -17,7 +17,6 @@
  */
 package org.fcrepo.http.api;
 
-
 import static com.google.common.base.Strings.nullToEmpty;
 import static java.util.EnumSet.of;
 import static java.util.stream.Stream.concat;
@@ -133,8 +132,9 @@ import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PreconditionException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
-import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
+zimport org.fcrepo.kernel.api.exception.ServerManagedTypeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
+import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -143,6 +143,8 @@ import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.rdf.SubjectMappingStreamRdf;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.api.utils.ContentDigest;
+import org.fcrepo.kernel.api.utils.MessageExternalBodyContentType;
+
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.jvnet.hk2.annotations.Optional;
 import org.slf4j.Logger;
@@ -158,7 +160,7 @@ import org.slf4j.Logger;
 public abstract class ContentExposingResource extends FedoraBaseResource {
 
     private static final Logger LOGGER = getLogger(ContentExposingResource.class);
-    public static final MediaType MESSAGE_EXTERNAL_BODY = MediaType.valueOf("message/external-body");
+    public static final String URL_ACCESS_TYPE = "URL";
 
     private static final List<String> VARY_HEADERS = Arrays.asList("Accept", "Range", "Accept-Encoding",
             "Accept-Language");
@@ -201,7 +203,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         Splitter.on(',').omitEmptyStrings().trimResults().withKeyValueSeparator(Splitter.on('=').limit(2));
 
     protected Response getContent(final String rangeValue,
-                                  final RdfStream rdfStream) throws IOException {
+            final RdfStream rdfStream) throws IOException, UnsupportedAccessTypeException {
         return getContent(rangeValue, -1, rdfStream);
     }
 
@@ -216,16 +218,15 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      */
     protected Response getContent(final String rangeValue,
                                   final int limit,
-                                  final RdfStream rdfStream) throws IOException {
+                                  final RdfStream rdfStream) throws IOException, UnsupportedAccessTypeException {
 
         final RdfNamespacedStream outputStream;
 
         if (resource() instanceof FedoraBinary) {
-
-            final MediaType mediaType = MediaType.valueOf(((FedoraBinary) resource()).getMimeType());
+            final MediaType mediaType = getBinaryResourceMediaType();
 
             if (isExternalBody(mediaType)) {
-                return externalBodyRedirect(URI.create(mediaType.getParameters().get("URL"))).build();
+                return externalBodyRedirect(getExternalResourceLocation(mediaType)).build();
             }
 
             return getBinaryContent(rangeValue);
@@ -234,21 +235,32 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                     new DefaultRdfStream(rdfStream.topic(), concat(rdfStream,
                         getResourceTriples(limit))),
                     session.getFedoraSession().getNamespaces());
-            if (prefer != null) {
-                prefer.getReturn().addResponseHeaders(servletResponse);
-            }
         }
-
+        setVaryAndPreferenceAppliedHeaders(servletResponse, prefer);
         return ok(outputStream).build();
     }
 
+    protected void setVaryAndPreferenceAppliedHeaders(final HttpServletResponse servletResponse,
+            final MultiPrefer prefer) {
+        if (prefer != null) {
+            prefer.getReturn().addResponseHeaders(servletResponse);
+        }
+
+    }
 
 
+    protected URI getExternalResourceLocation(final MediaType mediaType) throws UnsupportedAccessTypeException {
+        return URI.create(MessageExternalBodyContentType.parse(mediaType.toString()).getResourceLocation());
+    }
+
+    /**
+     * Checks if media type matches "message/external-body"
+     * @param mediaType
+     * @return true if matches
+     */
     protected boolean isExternalBody(final MediaType mediaType) {
-        return MESSAGE_EXTERNAL_BODY.isCompatible(mediaType) &&
-                mediaType.getParameters().containsKey("access-type") &&
-                mediaType.getParameters().get("access-type").equals("URL") &&
-                mediaType.getParameters().containsKey("URL");
+        return mediaType == null ? false : (mediaType.getType() + "/" + mediaType.getSubtype()).equals(
+                MessageExternalBodyContentType.MEDIA_TYPE);
     }
 
     protected ResponseBuilder externalBodyRedirect(final URI resourceLocation) {
@@ -400,7 +412,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
 
             // we set the content-type explicitly to avoid content-negotiation from getting in the way
-            return builder.type(binary.getMimeType())
+            // getBinaryResourceMediaType will try to use the mime type on the resource, falling back on
+            // 'application/octet-stream' if the mime type is syntactically invalid
+            return builder.type(getBinaryResourceMediaType().toString())
                     .cacheControl(cc)
                     .build();
 
@@ -466,6 +480,13 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 builder.param("anchor", getUri(resource).toString());
             }
             servletResponse.addHeader(LINK, builder.build().toString());
+
+            final String path = context.getContextPath().equals("/") ? "" : context.getContextPath();
+            final String constraintURI = uriInfo.getBaseUri().getScheme() + "://" +
+                    uriInfo.getBaseUri().getAuthority() + path +
+                    "/static/constraints/NonRDFSourceConstraints.rdf";
+            servletResponse.addHeader(LINK,
+                    Link.fromUri(constraintURI).rel(CONSTRAINED_BY.getURI()).build().toString());
         } else {
             final String path = context.getContextPath().equals("/") ? "" : context.getContextPath();
             final String constraintURI = uriInfo.getBaseUri().getScheme() + "://" +
@@ -843,6 +864,21 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             final String requestBody,
             final RdfStream resourceTriples) {
         resource.getDescribedResource().updateProperties(translator(), requestBody, resourceTriples);
+    }
+
+    /**
+     * This method returns a MediaType for a binary resource.
+     * If the resource's media type is syntactically incorrect, it will
+     * return 'application/octet-stream' as the media type.
+     */
+    protected MediaType getBinaryResourceMediaType() {
+        try {
+            return MediaType.valueOf(((FedoraBinary) resource()).getMimeType());
+        } catch (IllegalArgumentException e) {
+            LOGGER.warn("Syntactically incorrect MediaType encountered on resource {}: '{}'",
+                    resource().getPath(), ((FedoraBinary)resource()).getMimeType());
+            return MediaType.APPLICATION_OCTET_STREAM_TYPE;
+        }
     }
 
     /**

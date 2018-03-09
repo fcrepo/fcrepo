@@ -93,6 +93,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEGATE_TYPE;
+import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_ACCESS_CONTROL_VALUE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -284,7 +285,17 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final String contentType = contentTypes.iterator().next();
             assertTrue("Didn't find LDP valid content-type header: " + contentType +
                     "; expected result: " + mt, contentType.contains(mt));
+            testHeadVaryAndPreferHeaders(response);
         }
+    }
+
+    private void testHeadVaryAndPreferHeaders(final CloseableHttpResponse response) {
+        final Collection<String> preferenceApplied = getHeader(response, "Preference-Applied");
+        final Collection<String> vary = getHeader(response, "Vary");
+        assertTrue("Didn't find valid Preference-Applied header", preferenceApplied.contains("return=representation"));
+        assertTrue("Didn't find valid Vary Prefer header", vary.contains("Prefer"));
+        assertTrue("Didn't find valid Vary Accept headers",
+                vary.contains("Accept, Range, Accept-Encoding, Accept-Language"));
     }
 
     @Test
@@ -297,6 +308,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             final Collection<String> links = getLinkHeaders(response);
             assertTrue("Didn't find LDP BasicContainer link header!", links.contains(BASIC_CONTAINER_LINK_HEADER));
+            testHeadVaryAndPreferHeaders(response);
         }
     }
 
@@ -324,6 +336,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             final Collection<String> links = getLinkHeaders(response);
             assertTrue("Didn't find LDP container link header!", links.contains(DIRECT_CONTAINER_LINK_HEADER));
+            testHeadVaryAndPreferHeaders(response);
         }
     }
 
@@ -338,6 +351,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             final Collection<String> links = getLinkHeaders(response);
             assertTrue("Didn't find LDP container link header!", links.contains(INDIRECT_CONTAINER_LINK_HEADER));
+            testHeadVaryAndPreferHeaders(response);
         }
     }
 
@@ -364,14 +378,14 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createDatastream(id, "x", "01234567890123456789012345678901234567890123456789");
 
         final HttpHead headObjMethod = headObjMethod(id + "/x");
-        headObjMethod.addHeader(WANT_DIGEST, "SHA-1");
+        headObjMethod.addHeader(WANT_DIGEST, "SHA");
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
             assertEquals(TEXT_PLAIN, response.getFirstHeader(CONTENT_TYPE).getValue());
             assertTrue(response.getHeaders(DIGEST).length > 0);
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
             assertTrue("Fixity Checksum doesn't match",
-                    digesterHeaderValue.equals("sha1=9578f951955d37f20b601c26591e260c1e5389bf"));
+                    digesterHeaderValue.equals("sha=9578f951955d37f20b601c26591e260c1e5389bf"));
         }
     }
 
@@ -381,7 +395,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createDatastream(id, "x", "01234567890123456789012345678901234567890123456789");
 
         final HttpHead headObjMethod = headObjMethod(id + "/x");
-        headObjMethod.addHeader(WANT_DIGEST, "SHA-1, md5;q=0.3");
+        headObjMethod.addHeader(WANT_DIGEST, "SHA, md5;q=0.3");
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
             assertEquals(TEXT_PLAIN, response.getFirstHeader(CONTENT_TYPE).getValue());
@@ -389,7 +403,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
             assertTrue("SHA-1 Fixity Checksum doesn't match",
-                    digesterHeaderValue.indexOf("sha1=9578f951955d37f20b601c26591e260c1e5389bf") >= 0);
+                    digesterHeaderValue.indexOf("sha=9578f951955d37f20b601c26591e260c1e5389bf") >= 0);
             assertTrue("MD5 fixity checksum doesn't match",
                     digesterHeaderValue.indexOf("md5=baed005300234f3d1503c50a48ce8e6f") >= 0);
         }
@@ -445,6 +459,72 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final ContentDisposition disposition =
                     new ContentDisposition(response.getFirstHeader(CONTENT_DISPOSITION).getValue());
             assertEquals("attachment", disposition.getType());
+        }
+    }
+
+    @Test
+    public void testHeadExternalDatastreamWithWantDigest() throws IOException, ParseException {
+
+        final String dsId = getRandomUniqueId();
+        createDatastream(dsId, "x", "01234567890123456789012345678901234567890123456789");
+
+        final String dsUrl = serverAddress + dsId + "/x";
+        final String externalContentType = "message/external-body;access-type=URL;url=\"" + dsUrl + "\"";
+
+        final String id = getRandomUniqueId();
+        final HttpPut put = putObjMethod(id);
+        put.addHeader(CONTENT_TYPE, externalContentType);
+        assertEquals(CREATED.getStatusCode(), getStatus(put));
+
+        // Configure HEAD request to NOT follow redirects
+        final HttpHead headObjMethod = headObjMethod(id);
+        headObjMethod.addHeader(WANT_DIGEST, "sha");
+        final RequestConfig.Builder requestConfig = RequestConfig.custom();
+        requestConfig.setRedirectsEnabled(false);
+        headObjMethod.setConfig(requestConfig.build());
+
+        try (final CloseableHttpResponse response = execute(headObjMethod)) {
+            assertEquals(TEMPORARY_REDIRECT.getStatusCode(), response.getStatusLine().getStatusCode());
+            assertEquals(externalContentType, response.getFirstHeader(CONTENT_TYPE).getValue());
+            assertTrue(response.getHeaders(DIGEST).length > 0);
+            final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
+            assertTrue("Fixity Checksum doesn't match",
+                    digesterHeaderValue.equals("sha=9578f951955d37f20b601c26591e260c1e5389bf"));
+        }
+    }
+
+
+    @Test
+    public void testHeadExternalDatastreamWithWantDigestMultiple() throws IOException, ParseException {
+
+        final String dsId = getRandomUniqueId();
+        createDatastream(dsId, "x", "01234567890123456789012345678901234567890123456789");
+
+        final String dsUrl = serverAddress + dsId + "/x";
+        final String externalContentType = "message/external-body;access-type=URL;url=\"" + dsUrl + "\"";
+
+        final String id = getRandomUniqueId();
+        final HttpPut put = putObjMethod(id);
+        put.addHeader(CONTENT_TYPE, externalContentType);
+        assertEquals(CREATED.getStatusCode(), getStatus(put));
+
+        // Configure HEAD request to NOT follow redirects
+        final HttpHead headObjMethod = headObjMethod(id);
+        headObjMethod.addHeader(WANT_DIGEST, "sha, md5;q=0.3");
+        final RequestConfig.Builder requestConfig = RequestConfig.custom();
+        requestConfig.setRedirectsEnabled(false);
+        headObjMethod.setConfig(requestConfig.build());
+
+        try (final CloseableHttpResponse response = execute(headObjMethod)) {
+            assertEquals(TEMPORARY_REDIRECT.getStatusCode(), response.getStatusLine().getStatusCode());
+            assertEquals(externalContentType, response.getFirstHeader(CONTENT_TYPE).getValue());
+            assertTrue(response.getHeaders(DIGEST).length > 0);
+
+            final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
+            assertTrue("SHA-1 Fixity Checksum doesn't match",
+                    digesterHeaderValue.indexOf("sha=9578f951955d37f20b601c26591e260c1e5389bf") >= 0);
+            assertTrue("MD5 fixity checksum doesn't match",
+                    digesterHeaderValue.indexOf("md5=baed005300234f3d1503c50a48ce8e6f") >= 0);
         }
     }
 
@@ -511,6 +591,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertTrue("POST should support application/rdf+xml", postTypes.contains(contentTypeRDFXML));
         assertTrue("POST should support application/n-triples", postTypes.contains(contentTypeNTriples));
         assertTrue("POST should support multipart/form-data", postTypes.contains("multipart/form-data"));
+        assertTrue("POST should support message/external-body; access-type=URL", postTypes.contains(
+                "message/external-body; access-type=URL"));
+
     }
 
     private static void assertRdfOptionsHeaders(final HttpResponse httpResponse) {
@@ -582,7 +665,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final HttpGet getMethod = new HttpGet(serverAddress + id);
         final String preferHeader = "return=representation;"
-                + " include=\"http://fedora.info/definitions/v4/repository#InboundReferences\";"
+                + " include=\"http://fedora.info/definitions/fcrepo#PreferInboundReferences\";"
                 + " omit=\"http://www.w3.org/ns/ldp#PreferMembership http://www.w3.org/ns/ldp#PreferContainment\"";
         getMethod.addHeader("Prefer", preferHeader);
 
@@ -630,7 +713,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createDatastream(id, "x", "01234567890123456789012345678901234567890123456789");
 
         final HttpGet getMethod = getDSMethod(id, "x");
-        getMethod.addHeader(WANT_DIGEST, "SHA-1");
+        getMethod.addHeader(WANT_DIGEST, "SHA");
         try (final CloseableHttpResponse response = execute(getMethod)) {
             final HttpEntity entity = response.getEntity();
             final String content = EntityUtils.toString(entity);
@@ -639,7 +722,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
             assertTrue("Fixity Checksum doesn't match",
-                    digesterHeaderValue.equals("sha1=9578f951955d37f20b601c26591e260c1e5389bf"));
+                    digesterHeaderValue.equals("sha=9578f951955d37f20b601c26591e260c1e5389bf"));
         }
     }
 
@@ -649,7 +732,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createDatastream(id, "x", "01234567890123456789012345678901234567890123456789");
 
         final HttpGet getMethod = getDSMethod(id, "x");
-        getMethod.addHeader(WANT_DIGEST, "SHA-1,md5;q=0.3");
+        getMethod.addHeader(WANT_DIGEST, "SHA,md5;q=0.3,sha-256;q=0.2");
         try (final CloseableHttpResponse response = execute(getMethod)) {
             final HttpEntity entity = response.getEntity();
             final String content = EntityUtils.toString(entity);
@@ -658,7 +741,76 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
             assertTrue("SHA-1 Fixity Checksum doesn't match",
-                    digesterHeaderValue.indexOf("sha1=9578f951955d37f20b601c26591e260c1e5389bf") >= 0);
+                digesterHeaderValue.indexOf("sha=9578f951955d37f20b601c26591e260c1e5389bf") >= 0);
+            assertTrue("MD5 fixity checksum doesn't match",
+                    digesterHeaderValue.indexOf("md5=baed005300234f3d1503c50a48ce8e6f") >= 0);
+            assertTrue("SHA-256 fixity checksum doesn't match",
+                digesterHeaderValue
+                    .indexOf("sha256=fb871ff8cce8fea83dfaeab41784305a1461e008dc02a371ed26d856c766c903") >= 0);
+        }
+    }
+
+    @Test
+    public void testGetExternalDatastreamWithWantDigest() throws IOException, ParseException {
+
+        final String dsId = getRandomUniqueId();
+        createDatastream(dsId, "x", "01234567890123456789012345678901234567890123456789");
+
+        final String dsUrl = serverAddress + dsId + "/x";
+        final String externalContentType = "message/external-body;access-type=URL;url=\"" + dsUrl + "\"";
+
+        final String id = getRandomUniqueId();
+        final HttpPut put = putObjMethod(id);
+        put.addHeader(CONTENT_TYPE, externalContentType);
+        assertEquals(CREATED.getStatusCode(), getStatus(put));
+
+        // Configure GET request to NOT follow redirects
+        final HttpGet getObjMethod = getObjMethod(id);
+        getObjMethod.addHeader(WANT_DIGEST, "sha");
+        final RequestConfig.Builder requestConfig = RequestConfig.custom();
+        requestConfig.setRedirectsEnabled(false);
+        getObjMethod.setConfig(requestConfig.build());
+
+        try (final CloseableHttpResponse response = execute(getObjMethod)) {
+            assertEquals(TEMPORARY_REDIRECT.getStatusCode(), response.getStatusLine().getStatusCode());
+            assertEquals(externalContentType, response.getFirstHeader(CONTENT_TYPE).getValue());
+            assertTrue(response.getHeaders(DIGEST).length > 0);
+            final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
+            assertTrue("Fixity Checksum doesn't match",
+                    digesterHeaderValue.equals("sha=9578f951955d37f20b601c26591e260c1e5389bf"));
+        }
+    }
+
+
+    @Test
+    public void testGetExternalDatastreamWithWantDigestMultiple() throws IOException, ParseException {
+
+        final String dsId = getRandomUniqueId();
+        createDatastream(dsId, "x", "01234567890123456789012345678901234567890123456789");
+
+        final String dsUrl = serverAddress + dsId + "/x";
+        final String externalContentType = "message/external-body;access-type=URL;url=\"" + dsUrl + "\"";
+
+        final String id = getRandomUniqueId();
+        final HttpPut put = putObjMethod(id);
+        put.addHeader(CONTENT_TYPE, externalContentType);
+        assertEquals(CREATED.getStatusCode(), getStatus(put));
+
+        // Configure Get request to NOT follow redirects
+        final HttpGet getObjMethod = getObjMethod(id);
+        getObjMethod.addHeader(WANT_DIGEST, "sha, md5;q=0.3");
+        final RequestConfig.Builder requestConfig = RequestConfig.custom();
+        requestConfig.setRedirectsEnabled(false);
+        getObjMethod.setConfig(requestConfig.build());
+
+        try (final CloseableHttpResponse response = execute(getObjMethod)) {
+            assertEquals(TEMPORARY_REDIRECT.getStatusCode(), response.getStatusLine().getStatusCode());
+            assertEquals(externalContentType, response.getFirstHeader(CONTENT_TYPE).getValue());
+            assertTrue(response.getHeaders(DIGEST).length > 0);
+
+            final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
+            assertTrue("SHA-1 Fixity Checksum doesn't match",
+                    digesterHeaderValue.indexOf("sha=9578f951955d37f20b601c26591e260c1e5389bf") >= 0);
             assertTrue("MD5 fixity checksum doesn't match",
                     digesterHeaderValue.indexOf("md5=baed005300234f3d1503c50a48ce8e6f") >= 0);
         }
@@ -818,7 +970,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertTrue("Didn't find a triple we expected!", graph.contains(ANY,
                     createURI(location), createURI("http://example.org/test/x"), createLiteral("x")));
             for (int i = 0; i < 4; ++i) {
-                for (String suffix : Arrays.asList("a", "b")) {
+                for (final String suffix : Arrays.asList("a", "b")) {
                     assertFalse("Found a triple we deleted!", graph.contains(ANY,
                             createURI(location), createURI("http://example.org/test/" + suffix), createLiteral(i +
                                     "")));
@@ -1051,6 +1203,88 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
             checkForVersionedResourceLinkHeader(response);
         }
+    }
+    @Test
+    public void testPostCreateNonRDFSourceWithAcl() throws IOException {
+        final String aclURI = createAcl();
+        final String subjectPid = getRandomUniqueId();
+        final String subjectURI = serverAddress + subjectPid;
+        final HttpPost createMethod = new HttpPost(serverAddress);
+        createMethod.addHeader(CONTENT_TYPE, "text/plain");
+        createMethod.addHeader("Link", "<" + aclURI + ">; rel=\"acl\"");
+        createMethod.addHeader("Slug", subjectPid);
+        createMethod.setEntity(new StringEntity("test body"));
+        assertEquals(CREATED.getStatusCode(), getStatus(createMethod));
+        verifyAccessControlTripleIsPresent(aclURI, subjectURI, subjectURI + "/fcr:metadata");
+    }
+
+    @Test
+    public void testPutCreateNonRDFSourceWithAcl() throws IOException {
+        final String aclURI = createAcl();
+        final String subjectURI = serverAddress + getRandomUniqueId();
+        final HttpPut createMethod = new HttpPut(subjectURI);
+        createMethod.addHeader(CONTENT_TYPE, "text/plain");
+        createMethod.addHeader("Link", "<" + aclURI + ">; rel=\"acl\"");
+        createMethod.setEntity(new StringEntity("test body"));
+        assertEquals(CREATED.getStatusCode(), getStatus(createMethod));
+        verifyAccessControlTripleIsPresent(aclURI, subjectURI, subjectURI + "/fcr:metadata");
+    }
+
+    @Test
+    public void testPostCreateRDFSourceWithAcl() throws IOException {
+        final String aclURI = createAcl();
+        final String subjectPid = getRandomUniqueId();
+        final String subjectURI = serverAddress + subjectPid;
+        final HttpPost createMethod = new HttpPost(serverAddress);
+        createMethod.addHeader(CONTENT_TYPE, "text/n3");
+        createMethod.addHeader("Link", "<" + aclURI + ">; rel=\"acl\"");
+        createMethod.addHeader("Slug", subjectPid);
+        createMethod.setEntity(new StringEntity("<> <info:test#label> \"foo\""));
+        assertEquals(CREATED.getStatusCode(), getStatus(createMethod));
+        verifyAccessControlTripleIsPresent(aclURI, subjectURI);
+    }
+
+    @Test
+    public void testPutCreateRDFSourceWithAcl() throws IOException {
+        final String aclURI = createAcl();
+        final String subjectURI = serverAddress + getRandomUniqueId();
+        final HttpPut createMethod = new HttpPut(subjectURI);
+        createMethod.addHeader(CONTENT_TYPE, "text/n3");
+        createMethod.addHeader("Link", "<" + aclURI + ">; rel=\"acl\"");
+        createMethod.setEntity(new StringEntity("<" + subjectURI + "> <info:test#label> \"foo\""));
+        assertEquals(CREATED.getStatusCode(), getStatus(createMethod));
+        verifyAccessControlTripleIsPresent(aclURI, subjectURI);
+    }
+
+    @Test
+    public void testPutCreateRDFSourceWithNonExistentAcl() throws IOException {
+        final String aclURI = serverAddress + "non-existent-acl";
+        final String subjectURI = serverAddress + getRandomUniqueId();
+        final HttpPut createMethod = new HttpPut(subjectURI);
+        createMethod.addHeader(CONTENT_TYPE, "text/n3");
+        createMethod.addHeader("Link", "<" + aclURI + ">; rel=\"acl\"");
+        createMethod.setEntity(new StringEntity("<" + subjectURI + "> <info:test#label> \"foo\""));
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(createMethod));
+    }
+
+    private void verifyAccessControlTripleIsPresent(final String aclURI, final String subjectURI) throws IOException {
+        verifyAccessControlTripleIsPresent(aclURI, subjectURI, subjectURI);
+    }
+
+    private void verifyAccessControlTripleIsPresent(final String aclURI, final String subjectURI,
+                                                    final String resourceURI) throws IOException {
+        try (final CloseableDataset dataset = getDataset(new HttpGet(resourceURI))) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertTrue("Didn't find an acl:accessControl triple!", graph.contains(ANY,
+                createURI(subjectURI), createURI(WEBAC_ACCESS_CONTROL_VALUE), createURI(aclURI)));
+        }
+    }
+
+    private String createAcl() {
+        final String aclPid = "acl";
+        final String aclURI = serverAddress + aclPid;
+        createObjectAndClose(aclPid);
+        return aclURI;
     }
 
     @Test
@@ -1542,7 +1776,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpPost method = postObjMethod();
         final File img = new File("src/test/resources/test-objects/img.png");
         method.addHeader(CONTENT_TYPE, "application/octet-stream");
-        method.addHeader("Digest", "SHA1=f0b632679fab4f22e031010bd81a3b0544294730");
+        method.addHeader("Digest", "SHA=f0b632679fab4f22e031010bd81a3b0544294730");
         method.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
         method.setEntity(new FileEntity(img));
 
@@ -1559,7 +1793,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpPost method = postObjMethod();
         final File img = new File("src/test/resources/test-objects/img.png");
         method.addHeader(CONTENT_TYPE, "application/octet-stream");
-        method.addHeader("Digest", "SHA1=fedoraicon");
+        method.addHeader("Digest", "SHA=fedoraicon");
         method.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
         method.setEntity(new FileEntity(img));
 
@@ -1574,7 +1808,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpPost method = postObjMethod();
         final File img = new File("src/test/resources/test-objects/img.png");
         method.addHeader(CONTENT_TYPE, "application/octet-stream");
-        method.addHeader("Digest", "md5=not a valid hash,SHA1:thisisbadtoo");
+        method.addHeader("Digest", "md5=not a valid hash,SHA:thisisbadtoo");
         method.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
         method.setEntity(new FileEntity(img));
         assertEquals("Should be a 400 BAD REQUEST!", BAD_REQUEST.getStatusCode(), getStatus(method));
@@ -2236,6 +2470,47 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
     }
 
+    /* https://jira.duraspace.org/browse/FCREPO-2520: create binary with fine mime type then
+     * attempt to change the mime type to something syntactically invalid. Ensure one can still retrieve it.
+     */
+    @Test
+    public void testBinarySetBadMimeType() throws IOException {
+        final String subjectURI = serverAddress + getRandomUniqueId();
+        final HttpPut createMethod = new HttpPut(subjectURI);
+        createMethod.addHeader(CONTENT_TYPE, "text/plain");
+        createMethod.setEntity(new StringEntity("Some text here."));
+        createMethod.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+
+        assertEquals(CREATED.getStatusCode(), getStatus(createMethod));
+
+        final HttpPatch patch = new HttpPatch(subjectURI + "/fcr:metadata");
+        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
+        patch.setEntity(new StringEntity(
+                "PREFIX ebucore: <http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#> " +
+                "INSERT { <" + subjectURI + "> ebucore:hasMimeType> \"-- invalid syntax! --\" } WHERE {}")
+        );
+
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(patch));
+
+        // make sure it's still retrievable
+        final HttpGet getMethod = new HttpGet(subjectURI);
+        try (final CloseableHttpResponse response = execute(getMethod)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final Collection<String> contentTypes = getHeader(response, CONTENT_TYPE);
+            final String contentType = contentTypes.iterator().next();
+            assertTrue("GET: Expected 'text/plain' instead got: '" + contentType + "'",
+                    contentType.contains("text/plain"));
+        }
+
+        final HttpHead httpHead = new HttpHead(subjectURI);
+        try (final CloseableHttpResponse response = execute(httpHead)) {
+            final Collection<String> contentTypes = getHeader(response, CONTENT_TYPE);
+            final String contentType = contentTypes.iterator().next();
+            assertTrue("HEAD: Expected 'text/plain' instead got: '" + contentType + "'",
+                    contentType.contains("text/plain"));
+        }
+    }
+
     @Test
     public void testCreateBinaryCSV() throws IOException {
         final String subjectURI = serverAddress + getRandomUniqueId();
@@ -2600,8 +2875,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     @Test
     @Ignore("This test needs manual intervention to decide how \"good\" the graph looks")
     // TODO Do we have any way to proceed with this kind of aesthetic goal?
-            public
-            void testGraphShouldNotBeTooLumpy() throws IOException {
+    public void testGraphShouldNotBeTooLumpy() throws IOException {
 
         final HttpPut httpPut = putObjMethod(getRandomUniqueId());
         httpPut.addHeader(CONTENT_TYPE, "text/turtle");
@@ -2620,31 +2894,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
          * = EntityUtils.toString(getResponse.getEntity());
          */
 
-    }
-
-    @Test
-    public void testEmbeddedChildResources() throws IOException {
-        final String id = getRandomUniqueId();
-        final String binaryId = "binary0";
-
-        assertEquals(CREATED.getStatusCode(), getStatus(putObjMethod(id)));
-        assertEquals(CREATED.getStatusCode(), getStatus(putDSMethod(id, binaryId, "some test content")));
-
-        final HttpPatch httpPatch = patchObjMethod(id + "/" + binaryId + "/fcr:metadata");
-        httpPatch.addHeader(CONTENT_TYPE, "application/sparql-update");
-        httpPatch.setEntity(new StringEntity(
-                "INSERT { <> <http://purl.org/dc/elements/1.1/title> 'this is a title' } WHERE {}"));
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(httpPatch));
-
-        final HttpGet httpGet = getObjMethod(id);
-        httpGet.setHeader("Prefer",
-                "return=representation; include=\"http://fedora.info/definitions/v4/repository#EmbedResources\"");
-        try (final CloseableDataset dataset = getDataset(httpGet)) {
-            final DatasetGraph graphStore = dataset.asDatasetGraph();
-            assertTrue("Property on child binary should be found!" + graphStore, graphStore.contains(ANY,
-                    createURI(serverAddress + id + "/" + binaryId),
-                    createURI("http://purl.org/dc/elements/1.1/title"), createLiteral("this is a title")));
-        }
     }
 
     @Test
@@ -2695,6 +2944,116 @@ public class FedoraLdpIT extends AbstractResourceIT {
                     assertEquals(TEMPORARY_REDIRECT.getStatusCode(), getStatus(getResponse));
                     assertEquals("http://www.example.com/file", getLocation(getResponse));
                 }
+            }
+        }
+    }
+
+    @Test
+    public void testUnsupportedAccessTypeInExternalMessagePUT() throws IOException {
+
+        // we need a client that won't automatically follow redirects
+        try (final CloseableHttpClient noFollowClient = HttpClientBuilder.create().disableRedirectHandling()
+                .build()) {
+
+            final String id = getRandomUniqueId();
+            final HttpPut httpPut = putObjMethod(id);
+            httpPut.addHeader(CONTENT_TYPE, "message/external-body; access-type=ftp; " +
+                    "URL=\"ftp://www.example.com/file\"");
+
+            try (final CloseableHttpResponse response = execute(httpPut)) {
+                assertEquals("Didn't get an UNSUPPORTED_MEDIA_TYPE response!", UNSUPPORTED_MEDIA_TYPE.getStatusCode(),
+                        getStatus(response));
+            }
+        }
+    }
+
+    @Test
+    public void testUnsupportedAccessTypeInExternalMessagePOST() throws IOException {
+
+        // we need a client that won't automatically follow redirects
+        try (final CloseableHttpClient noFollowClient = HttpClientBuilder.create().disableRedirectHandling()
+                .build()) {
+
+            final String id = getRandomUniqueId();
+            final HttpPost httpPost = postObjMethod(id);
+            httpPost.addHeader(CONTENT_TYPE, "message/external-body; access-type=ftp; " +
+                    "URL=\"ftp://www.example.com/file\"");
+
+            try (final CloseableHttpResponse response = execute(httpPost)) {
+                assertEquals("Didn't get an UNSUPPORTED_MEDIA_TYPE response!", UNSUPPORTED_MEDIA_TYPE.getStatusCode(),
+                        getStatus(response));
+            }
+        }
+    }
+
+    @Test
+    public void testMissingAccessTypeInExternalMessage() throws IOException {
+
+        // we need a client that won't automatically follow redirects
+        try (final CloseableHttpClient noFollowClient = HttpClientBuilder.create().disableRedirectHandling()
+                .build()) {
+
+            final String id = getRandomUniqueId();
+            final HttpPut httpPut = putObjMethod(id);
+            httpPut.addHeader(CONTENT_TYPE, "message/external-body; accept-type;" +
+                    "URL=\"http://www.example.com/file\"");
+
+            try (final CloseableHttpResponse response = execute(httpPut)) {
+                assertEquals("Didn't get a BAD_REQUEST response!", BAD_REQUEST.getStatusCode(),
+                        getStatus(response));
+            }
+        }
+    }
+
+    @Test
+    public void testInvalidExternalMessageBodyMissingURLParam() throws IOException {
+
+        // we need a client that won't automatically follow redirects
+        try (final CloseableHttpClient noFollowClient = HttpClientBuilder.create().disableRedirectHandling()
+                .build()) {
+
+            final String id = getRandomUniqueId();
+            final HttpPut httpPut = putObjMethod(id);
+            httpPut.addHeader(CONTENT_TYPE, "message/external-body; access-type=URL; ");
+
+            try (final CloseableHttpResponse response = execute(httpPut)) {
+                assertEquals("Didn't get an UNSUPPORTED_MEDIA_TYPE response!", UNSUPPORTED_MEDIA_TYPE.getStatusCode(),
+                        getStatus(response));
+            }
+        }
+    }
+
+    @Test
+    public void testInvalidExternalMessageBodyMissingURLValue() throws IOException {
+
+        // we need a client that won't automatically follow redirects
+        try (final CloseableHttpClient noFollowClient = HttpClientBuilder.create().disableRedirectHandling()
+                .build()) {
+
+            final String id = getRandomUniqueId();
+            final HttpPut httpPut = putObjMethod(id);
+            httpPut.addHeader(CONTENT_TYPE, "message/external-body; access-type=URL; URL");
+
+            try (final CloseableHttpResponse response = execute(httpPut)) {
+                assertEquals("Didn't get an UNSUPPORTED_MEDIA_TYPE response!", BAD_REQUEST.getStatusCode(),
+                        getStatus(response));
+            }
+        }
+    }
+
+    @Test
+    public void testWildcardExternalMessageBodyWithValidAccessType() throws IOException {
+        // we need a client that won't automatically follow redirects
+        try (final CloseableHttpClient noFollowClient = HttpClientBuilder.create().disableRedirectHandling()
+                .build()) {
+
+            final String id = getRandomUniqueId();
+            final HttpPut httpPut = putObjMethod(id);
+            httpPut.addHeader(CONTENT_TYPE, "*/*; access-type=url; url=\"some://url\"");
+
+            try (final CloseableHttpResponse response = execute(httpPut)) {
+                assertEquals("wasn't successful", CREATED.getStatusCode(),
+                        getStatus(response));
             }
         }
     }
@@ -3171,12 +3530,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 new PutThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 3")),
                 new PutThread(putBinaryObjMethodIfMatch(path, binaryEtag, "thread 4"))  };
 
-        for (PutThread t : threads) {
+        for (final PutThread t : threads) {
             t.start();
         }
 
         final List<PutThread> successfulThreads = new ArrayList<>();
-        for (PutThread t : threads) {
+        for (final PutThread t : threads) {
             t.join(1000);
             assertFalse("Thread " + t.getId() + " could not perform its operation in time!", t.isAlive());
             final int status = t.response.getStatusLine().getStatusCode();
@@ -3191,7 +3550,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     private class PutThread extends Thread {
 
-        private HttpPut put;
+        private final HttpPut put;
 
         private HttpResponse response;
 
@@ -3203,7 +3562,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         public void run() {
             try {
                 response = execute(put);
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 LOGGER.error("Thread " + Thread.currentThread().getId() + ", failed to PUT resource!", e);
             }
 
@@ -3276,7 +3635,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final int code = r.getStatusLine().getStatusCode();
             r.close();
             return code;
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(e);
         }
     }
@@ -3401,14 +3760,14 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final String headDigestValue;
         final HttpHead headObjMethod = headObjMethod(id + "/binary1");
-        headObjMethod.addHeader(WANT_DIGEST, "sha1, md5");
+        headObjMethod.addHeader(WANT_DIGEST, "sha, md5");
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             assertTrue(response.getHeaders(DIGEST).length > 0);
             headDigestValue = response.getHeaders(DIGEST)[0].getValue();
         }
 
         final HttpGet getObjMethod = getObjMethod(id + "/binary1");
-        getObjMethod.addHeader(WANT_DIGEST, "sha1, md5");
+        getObjMethod.addHeader(WANT_DIGEST, "sha, md5");
         try (final CloseableHttpResponse response = execute(getObjMethod)) {
             assertTrue(response.getHeaders(DIGEST).length > 0);
             assertEquals(headDigestValue, response.getHeaders(DIGEST)[0].getValue());

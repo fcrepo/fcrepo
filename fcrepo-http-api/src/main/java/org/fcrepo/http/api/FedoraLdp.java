@@ -58,6 +58,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_NAMESPACE_VALUE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.codahale.metrics.annotation.Timed;
@@ -83,6 +84,7 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HEAD;
 import javax.ws.rs.HeaderParam;
+import javax.ws.rs.NotSupportedException;
 import javax.ws.rs.OPTIONS;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -109,6 +111,13 @@ import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
+import org.fcrepo.kernel.api.exception.ConstraintViolationException;
+import org.fcrepo.kernel.api.exception.InsufficientStorageException;
+import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.MalformedRdfException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
@@ -116,6 +125,8 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.utils.ContentDigest;
+import org.fcrepo.kernel.api.utils.MessageExternalBodyContentType;
+
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
@@ -170,14 +181,15 @@ public class FedoraLdp extends ContentExposingResource {
      * Retrieve the node headers
      *
      * @return response
-     * @throws UnsupportedAlgorithmException if an unsupported exception occurs
+     * @throws UnsupportedAlgorithmException if unsupported digest algorithm occurred
+     * @throws UnsupportedAccessTypeException if unsupported access-type occurred
      */
     @HEAD
     @Timed
     @Produces({ TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
         N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
         TURTLE_X, TEXT_HTML_WITH_CHARSET })
-    public Response head() throws UnsupportedAlgorithmException {
+    public Response head() throws UnsupportedAlgorithmException, UnsupportedAccessTypeException {
         LOGGER.info("HEAD for: {}", externalPath);
 
         checkCacheControlHeaders(request, servletResponse, resource(), session);
@@ -187,10 +199,10 @@ public class FedoraLdp extends ContentExposingResource {
         Response.ResponseBuilder builder = ok();
 
         if (resource() instanceof FedoraBinary) {
-            final MediaType mediaType = MediaType.valueOf(((FedoraBinary) resource()).getMimeType());
+            final MediaType mediaType = getBinaryResourceMediaType();
 
             if (isExternalBody(mediaType)) {
-                builder = externalBodyRedirect(URI.create(mediaType.getParameters().get("URL")));
+                builder = externalBodyRedirect(getExternalResourceLocation(mediaType));
             }
 
             // we set the content-type explicitly to avoid content-negotiation from getting in the way
@@ -206,7 +218,9 @@ public class FedoraLdp extends ContentExposingResource {
             if (accept == null || "*/*".equals(accept)) {
                 builder.type(TURTLE_WITH_CHARSET);
             }
+            setVaryAndPreferenceAppliedHeaders(servletResponse, prefer);
         }
+
 
         return builder.build();
     }
@@ -230,14 +244,15 @@ public class FedoraLdp extends ContentExposingResource {
      * @param rangeValue the range value
      * @return a binary or the triples for the specified node
      * @throws IOException if IO exception occurred
-     * @throws UnsupportedAlgorithmException if an unsupported exception occurs
+     * @throws UnsupportedAlgorithmException if unsupported digest algorithm occurred
+     * @throws UnsupportedAccessTypeException if unsupported access-type occurred
      */
     @GET
     @Produces({TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
             N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
             TURTLE_X, TEXT_HTML_WITH_CHARSET})
     public Response getResource(@HeaderParam("Range") final String rangeValue)
-            throws IOException, UnsupportedAlgorithmException {
+            throws IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
         checkCacheControlHeaders(request, servletResponse, resource(), session);
 
         LOGGER.info("GET resource '{}'", externalPath);
@@ -251,7 +266,8 @@ public class FedoraLdp extends ContentExposingResource {
                     .getAcceptableMediaTypes());
 
             if (resource() instanceof FedoraBinary && acceptableMediaTypes.size() > 0) {
-                final MediaType mediaType = MediaType.valueOf(((FedoraBinary) resource()).getMimeType());
+
+                final MediaType mediaType = getBinaryResourceMediaType();
 
                 // Respect the Want-Digest header for fixity check
                 final String wantDigest = headers.getHeaderString(WANT_DIGEST);
@@ -328,9 +344,18 @@ public class FedoraLdp extends ContentExposingResource {
             @HeaderParam("If-Match") final String ifMatch,
             @HeaderParam(LINK) final List<String> links,
             @HeaderParam("Digest") final String digest)
-            throws InvalidChecksumException, MalformedRdfException, UnsupportedAlgorithmException {
+            throws InvalidChecksumException, MalformedRdfException, UnsupportedAlgorithmException,
+            UnsupportedAccessTypeException {
+
         hasRestrictedPath(externalPath);
+
         final String interactionModel = checkInteractionModel(links);
+
+        if (isExternalBody(requestContentType)) {
+            checkMessageExternalBody(requestContentType);
+        }
+
+        final URI resourceAcl = checkForAclLink(links);
 
         final FedoraResource resource;
 
@@ -379,8 +404,7 @@ public class FedoraLdp extends ContentExposingResource {
                     if (requestContentType == null && emptyRequest) {
                         throw new ClientErrorException("Resource Already Exists", CONFLICT);
                     }
-                    throw new ClientErrorException("Invalid Content Type " + requestContentType,
-                            UNSUPPORTED_MEDIA_TYPE);
+                    throw new NotSupportedException("Invalid Content Type " + requestContentType);
                 }
             } catch (final Exception e) {
                 checkForInsufficientStorageException(e, e);
@@ -393,12 +417,18 @@ public class FedoraLdp extends ContentExposingResource {
             ensureInteractionType(resource, interactionModel,
                     (requestBodyStream == null || requestContentType == null));
 
+            addResourceAcl(resourceAcl);
+
             session.commit();
             return createUpdateResponse(resource, created);
 
         } finally {
             lock.release();
         }
+    }
+
+    private void checkMessageExternalBody(final MediaType requestContentType) throws UnsupportedAccessTypeException {
+        MessageExternalBodyContentType.parse(requestContentType.toString());
     }
 
     /**
@@ -506,9 +536,16 @@ public class FedoraLdp extends ContentExposingResource {
                                  @ContentLocation final InputStream requestBodyStream,
                                  @HeaderParam(LINK) final List<String> links,
                                  @HeaderParam("Digest") final String digest)
-            throws InvalidChecksumException, IOException, MalformedRdfException, UnsupportedAlgorithmException {
+            throws InvalidChecksumException, IOException, MalformedRdfException, UnsupportedAlgorithmException,
+            UnsupportedAccessTypeException {
 
         final String interactionModel = checkInteractionModel(links);
+
+        if (isExternalBody(requestContentType)) {
+            checkMessageExternalBody(requestContentType);
+        }
+
+        final URI resourceAcl = checkForAclLink(links);
 
         if (!(resource() instanceof Container)) {
             throw new ClientErrorException("Object cannot have child nodes", CONFLICT);
@@ -537,7 +574,7 @@ public class FedoraLdp extends ContentExposingResource {
                     !(requestBodyStream == null || requestContentType == null));
 
             try (final RdfStream resourceTriples =
-                    resource.isNew() ? new DefaultRdfStream(asNode(resource())) : getResourceTriples()) {
+                     resource.isNew() ? new DefaultRdfStream(asNode(resource())) : getResourceTriples()) {
 
                 if (requestBodyStream == null) {
                     LOGGER.trace("No request body detected");
@@ -570,6 +607,8 @@ public class FedoraLdp extends ContentExposingResource {
                 ensureInteractionType(resource, interactionModel,
                         (requestBodyStream == null || requestContentType == null));
 
+                addResourceAcl(resourceAcl);
+
                 session.commit();
             } catch (final Exception e) {
                 checkForInsufficientStorageException(e, e);
@@ -582,6 +621,73 @@ public class FedoraLdp extends ContentExposingResource {
         }
     }
 
+    private void addResourceAcl(final URI resourceAcl) {
+        if (resourceAcl != null) {
+            final String sparql =
+                    "PREFIX acl: <" + WEBAC_NAMESPACE_VALUE + ">\n" +
+                    "INSERT { \n" +
+                    "<> acl:accessControl <" + resourceAcl.toString() + "> \n" +
+                    "} WHERE {}";
+            patchResourcewithSparql(resource(), sparql, getResourceTriples());
+        }
+    }
+
+    /**
+     * Returns the URI of rel=acl link if there is one in the list.
+     *
+     * @param links the links to be checked.
+     * @return The URI portion of acl link header or null if no rel=acl links are present.
+     * @throws ConstraintViolationException if any of the links are syntactically invalid, if there is more than
+     *                                      one link where rel='acl', or if the acl link is cross domain.
+     */
+    private URI checkForAclLink(final List<String> links) throws ConstraintViolationException {
+        if (links == null) {
+            return null;
+        }
+
+        try {
+            Link aclLink = null;
+            for (String linkStr : links) {
+                final Link link = Link.valueOf(linkStr);
+                if (link.getRel().equals("acl")) {
+                    //throw constraint exception if there is a more than one rel='acl' link
+                    if (aclLink != null) {
+                        throw new ConstraintViolationException(
+                            "You may specify only one rel=acl Link header in your request.");
+                    }
+                    aclLink = link;
+                }
+            }
+            return (aclLink != null) ? aclLink.getUri() : null;
+        } catch (Exception ex) {
+            throw new ConstraintViolationException(ex.getMessage());
+        }
+    }
+
+    /**
+     * @param rootThrowable The original throwable
+     * @param throwable The throwable under direct scrutiny.
+     */
+    private void checkForInsufficientStorageException(final Throwable rootThrowable, final Throwable throwable)
+            throws InvalidChecksumException {
+        final String message = throwable.getMessage();
+        if (throwable instanceof IOException && message != null && message.contains(
+                INSUFFICIENT_SPACE_IDENTIFYING_MESSAGE)) {
+            throw new InsufficientStorageException(throwable.getMessage(), rootThrowable);
+        }
+
+        if (throwable.getCause() != null) {
+            checkForInsufficientStorageException(rootThrowable, throwable.getCause());
+        }
+
+        if (rootThrowable instanceof InvalidChecksumException) {
+            throw (InvalidChecksumException) rootThrowable;
+        } else if (rootThrowable instanceof RuntimeException) {
+            throw (RuntimeException) rootThrowable;
+        } else {
+            throw new RepositoryRuntimeException(rootThrowable);
+        }
+    }
 
     /**
      * Returns true if there is a link with a VERSIONED_RESOURCE type.
@@ -654,8 +760,9 @@ public class FedoraLdp extends ContentExposingResource {
 
             final String rdfTypes = TURTLE + "," + N3 + "," + N3_ALT2 + ","
                     + RDF_XML + "," + NTRIPLES + "," + JSON_LD;
-            servletResponse.addHeader("Accept-Post", rdfTypes + "," + MediaType.MULTIPART_FORM_DATA
-                    + "," + contentTypeSPARQLUpdate);
+            servletResponse.addHeader("Accept-Post", rdfTypes + "," + MediaType.MULTIPART_FORM_DATA + "," +
+                    contentTypeSPARQLUpdate + "," + MessageExternalBodyContentType.MEDIA_TYPE + "; access-type=" +
+                    URL_ACCESS_TYPE);
         } else {
             options = "";
         }
@@ -732,7 +839,7 @@ public class FedoraLdp extends ContentExposingResource {
     }
 
     private String handleWantDigestHeader(final FedoraBinary binary, final String wantDigest)
-            throws UnsupportedAlgorithmException {
+            throws UnsupportedAlgorithmException, UnsupportedAccessTypeException {
         // handle the Want-Digest header with fixity check
         final Collection<String> preferredDigests = parseWantDigestHeader(wantDigest);
         if (preferredDigests.isEmpty()) {
@@ -742,7 +849,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         final Collection<URI> checksumResults = binary.checkFixity(idTranslator, preferredDigests);
         final String digestValue = checksumResults.stream().map(uri -> uri.toString().replaceFirst("urn:", "")
-                .replaceFirst(":", "=")).collect(Collectors.joining(","));
+                .replaceFirst(":", "=").replaceFirst("sha1=", "sha=")).collect(Collectors.joining(","));
         return digestValue;
     }
 
@@ -779,6 +886,37 @@ public class FedoraLdp extends ContentExposingResource {
         }
 
         return null;
+    }
+
+    /**
+     * Parse the RFC-3230 Digest response header value.  Look for a
+     * sha1 checksum and return it as a urn, if missing or malformed
+     * an empty string is returned.
+     * @param digest The Digest header value
+     * @return the sha1 checksum value
+     * @throws UnsupportedAlgorithmException if an unsupported digest is used
+     */
+    private static Collection<String> parseDigestHeader(final String digest) throws UnsupportedAlgorithmException {
+        try {
+            final Map<String,String> digestPairs = RFC3230_SPLITTER.split(nullToEmpty(digest));
+            final boolean allSupportedAlgorithms = digestPairs.keySet().stream().allMatch(
+                    ContentDigest.DIGEST_ALGORITHM::isSupportedAlgorithm);
+
+            // If you have one or more digests that are all valid or no digests.
+            if (digestPairs.isEmpty() || allSupportedAlgorithms) {
+                return digestPairs.entrySet().stream()
+                    .filter(entry -> ContentDigest.DIGEST_ALGORITHM.isSupportedAlgorithm(entry.getKey()))
+                    .map(entry -> ContentDigest.asURI(entry.getKey(), entry.getValue()).toString())
+                    .collect(Collectors.toSet());
+            } else {
+                throw new UnsupportedAlgorithmException(String.format("Unsupported Digest Algorithm: %1$s", digest));
+            }
+        } catch (final RuntimeException e) {
+            if (e instanceof IllegalArgumentException) {
+                throw new ClientErrorException("Invalid Digest header: " + digest + "\n", BAD_REQUEST);
+            }
+            throw e;
+        }
     }
 
     /**

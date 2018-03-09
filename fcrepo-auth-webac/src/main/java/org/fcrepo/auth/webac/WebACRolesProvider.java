@@ -29,12 +29,13 @@ import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.riot.Lang.TTL;
 import static org.fcrepo.auth.webac.URIConstants.FOAF_AGENT_VALUE;
-import static org.fcrepo.auth.webac.URIConstants.FOAF_GROUP;
-import static org.fcrepo.auth.webac.URIConstants.FOAF_MEMBER_VALUE;
+import static org.fcrepo.auth.webac.URIConstants.VCARD_GROUP;
+import static org.fcrepo.auth.webac.URIConstants.VCARD_MEMBER_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_ACCESSTO_CLASS_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_ACCESSTO_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_ACCESS_CONTROL_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_AGENT_CLASS_VALUE;
+import static org.fcrepo.auth.webac.URIConstants.WEBAC_AGENT_GROUP_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_AGENT_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_AUTHORIZATION;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_VALUE;
@@ -44,6 +45,7 @@ import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isNonRdfSourceDescription;
+import static org.fcrepo.kernel.modeshape.utils.FedoraSessionUserUtil.USER_AGENT_BASE_URI_PROPERTY;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.File;
@@ -97,8 +99,6 @@ public class WebACRolesProvider implements AccessRolesProvider {
     public static final String ROOT_AUTHORIZATION_PROPERTY = "fcrepo.auth.webac.authorization";
 
     public static final String GROUP_AGENT_BASE_URI_PROPERTY = "fcrepo.auth.webac.groupAgent.baseUri";
-
-    public static final String USER_AGENT_BASE_URI_PROPERTY = "fcrepo.auth.webac.userAgent.baseUri";
 
     private static final Logger LOGGER = getLogger(WebACRolesProvider.class);
 
@@ -243,7 +243,7 @@ public class WebACRolesProvider implements AccessRolesProvider {
         authorizations.stream()
             .filter(checkAccessTo.or(checkAccessToClass))
             .forEach(auth -> {
-                concat(auth.getAgents().stream(), dereferenceAgentClasses(auth.getAgentClasses()).stream())
+                concat(auth.getAgents().stream(), dereferenceAgentGroups(auth.getAgentGroups()).stream())
                     .forEach(agent -> {
                         effectiveRoles.computeIfAbsent(agent, key -> new HashSet<>())
                             .addAll(auth.getModes().stream().map(URI::toString).collect(toSet()));
@@ -283,29 +283,29 @@ public class WebACRolesProvider implements AccessRolesProvider {
         uris.stream().anyMatch(uri -> auth.getAccessToURIs().contains(uri));
 
     /**
-     *  This maps a Collection of acl:agentClass values to a List of agents.
+     *  This maps a Collection of acl:agentGroup values to a List of agents.
      *  Any out-of-domain URIs are silently ignored.
      */
-    private List<String> dereferenceAgentClasses(final Collection<String> agentClasses) {
+    private List<String> dereferenceAgentGroups(final Collection<String> agentGroups) {
         final FedoraSession internalSession = sessionFactory.getInternalSession();
         final IdentifierConverter<Resource, FedoraResource> translator =
                 new DefaultIdentifierTranslator(getJcrSession(internalSession));
 
-        final List<String> members = agentClasses.stream().flatMap(agentClass -> {
-            if (agentClass.startsWith(FEDORA_INTERNAL_PREFIX)) {
+        final List<String> members = agentGroups.stream().flatMap(agentGroup -> {
+            if (agentGroup.startsWith(FEDORA_INTERNAL_PREFIX)) {
                 final FedoraResource resource = nodeService.find(
-                    internalSession, agentClass.substring(FEDORA_INTERNAL_PREFIX.length()));
+                    internalSession, agentGroup.substring(FEDORA_INTERNAL_PREFIX.length()));
                 return getAgentMembers(translator, resource);
-            } else if (agentClass.equals(FOAF_AGENT_VALUE)) {
-                return of(agentClass);
+            } else if (agentGroup.equals(FOAF_AGENT_VALUE)) {
+                return of(agentGroup);
             } else {
-                LOGGER.info("Ignoring agentClass: {}", agentClass);
+                LOGGER.info("Ignoring agentGroup: {}", agentGroup);
                 return empty();
             }
         }).collect(toList());
 
-        if (LOGGER.isDebugEnabled() && !agentClasses.isEmpty()) {
-            LOGGER.debug("Found {} members in {} agentClass resources", members.size(), agentClasses.size());
+        if (LOGGER.isDebugEnabled() && !agentGroups.isEmpty()) {
+            LOGGER.debug("Found {} members in {} agentGroups resources", members.size(), agentGroups.size());
         }
 
         return members;
@@ -335,10 +335,10 @@ public class WebACRolesProvider implements AccessRolesProvider {
     }
 
     /**
-     *  A simple predicate for filtering out any non-foaf:member properties
+     * A simple predicate for filtering out any non-vcard:hasMember properties
      */
-    private static final Function<List<URI>, Predicate<Triple>> memberTestFromTypes = types -> triple ->
-        types.contains(FOAF_GROUP) && triple.predicateMatches(createURI(FOAF_MEMBER_VALUE));
+    private static final Function<List<URI>, Predicate<Triple>> memberTestFromTypes = types -> triple -> types
+            .contains(VCARD_GROUP) && triple.predicateMatches(createURI(VCARD_MEMBER_VALUE));
 
     /**
      *  A simple predicate for filtering out any non-acl triples.
@@ -395,12 +395,13 @@ public class WebACRolesProvider implements AccessRolesProvider {
 
     private static WebACAuthorization createAuthorizationFromMap(final Map<String, List<String>> data) {
         return new WebACAuthorization(
-                    data.getOrDefault(WEBAC_AGENT_VALUE, emptyList()),
-                    data.getOrDefault(WEBAC_AGENT_CLASS_VALUE, emptyList()),
-                    data.getOrDefault(WEBAC_MODE_VALUE, emptyList()).stream()
-                                .map(URI::create).collect(toList()),
-                    data.getOrDefault(WEBAC_ACCESSTO_VALUE, emptyList()),
-                    data.getOrDefault(WEBAC_ACCESSTO_CLASS_VALUE, emptyList()));
+                data.getOrDefault(WEBAC_AGENT_VALUE, emptyList()),
+                data.getOrDefault(WEBAC_AGENT_CLASS_VALUE, emptyList()),
+                data.getOrDefault(WEBAC_MODE_VALUE, emptyList()).stream()
+                .map(URI::create).collect(toList()),
+                data.getOrDefault(WEBAC_ACCESSTO_VALUE, emptyList()),
+                data.getOrDefault(WEBAC_ACCESSTO_CLASS_VALUE, emptyList()),
+                data.getOrDefault(WEBAC_AGENT_GROUP_VALUE, emptyList()));
     }
 
     /**

@@ -36,6 +36,7 @@ import javax.jcr.observation.Event;
 
 import org.junit.Test;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
+import org.fcrepo.kernel.modeshape.utils.FedoraSessionUserUtil;
 import org.fcrepo.kernel.api.observer.EventType;
 
 /**
@@ -56,7 +57,8 @@ public class FedoraEventImplTest {
         final String userID = null;
         final Map<String, String> info = null;
         final Set<String> resourceTypes = null;
-        new FedoraEventImpl(valueOf(1), path, resourceTypes, userID, ofEpochMilli(0L), info);
+        new FedoraEventImpl(valueOf(1), path, resourceTypes, userID, FedoraSessionUserUtil.getUserURI(userID),
+                ofEpochMilli(0L), info);
     }
 
     @Test
