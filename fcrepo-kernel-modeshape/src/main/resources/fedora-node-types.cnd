@@ -38,6 +38,9 @@
 
 <test = 'info:fedora/test/'>
 
+[nt:versionFile] > nt:file
++ fedora:timemap (nt:folder) =fedora:TimeMap
+
 /*
  * Any Fedora resource.
  */
@@ -69,6 +72,17 @@
  * A Fedora datastream.
  */
 [fedora:NonRdfSourceDescription] > fedora:Resource mixin
+
+/*
+ * A Fedora LDPCv TimeMap.
+ */
+[fedora:TimeMap] > fedora:Resource mixin
+
+/*
+ * A Fedora LDPRm Memento.
+ */
+[fedora:Memento] > fedora:Resource mixin
+  - fedora:mementoDatetime (DATE)
 
 /*
  * Some content that can have a checksum

@@ -95,7 +95,7 @@ public abstract class BasicCacheEntry implements CacheEntry {
      *
      * @param algorithms the digest algorithms to be used
      * @return the checksums for the digest algorithms
-     * @throws UnsupportedAlgorithmException
+     * @throws UnsupportedAlgorithmException exception
      */
     @Override
     public Collection<URI> checkFixity(final Collection<String> algorithms) throws UnsupportedAlgorithmException {

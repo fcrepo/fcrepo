@@ -19,16 +19,13 @@ package org.fcrepo.http.api.url;
 
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
-import static java.util.Collections.singletonMap;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_SERVICE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_TRANSACTION_SERVICE;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_HISTORY;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 
-import org.fcrepo.http.api.FedoraVersioning;
 import org.fcrepo.http.api.repository.FedoraRepositoryTransactions;
 import org.fcrepo.http.commons.api.rdf.UriAwareResourceModelFactory;
 import org.fcrepo.kernel.api.models.FedoraBinary;
@@ -38,8 +35,6 @@ import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.core.UriInfo;
-
-import java.util.Map;
 
 /**
  * Inject our HTTP API methods into the object graphs
@@ -59,8 +54,6 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
 
         if (resource.hasType(FEDORA_REPOSITORY_ROOT)) {
             addRepositoryStatements(uriInfo, model, s);
-        } else {
-            addNodeStatements(resource, uriInfo, model, s);
         }
 
         if (resource.getDescribedResource() instanceof FedoraBinary) {
@@ -78,18 +71,6 @@ public class HttpApiResources implements UriAwareResourceModelFactory {
                 "/fcr:fixity"));
     }
 
-    private void addNodeStatements(final FedoraResource resource, final UriInfo uriInfo,
-        final Model model, final Resource s) {
-
-        final Map<String, String> pathMap = singletonMap("path", resource.getPath().substring(1));
-
-        // fcr:versions
-        if (resource.isVersioned()) {
-            model.add(s, HAS_VERSION_HISTORY, createResource(uriInfo
-                    .getBaseUriBuilder().path(FedoraVersioning.class).buildFromMap(
-                            pathMap, false).toASCIIString()));
-        }
-    }
 
     private void addRepositoryStatements(final UriInfo uriInfo, final Model model,
         final Resource s) {

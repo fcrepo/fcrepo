@@ -21,14 +21,10 @@ package org.fcrepo.http.api;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.google.common.base.Strings.nullToEmpty;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
-import static javax.ws.rs.core.MediaType.TEXT_HTML;
-import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
 import static javax.ws.rs.core.MediaType.WILDCARD;
-import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.notAcceptable;
 import static javax.ws.rs.core.Response.ok;
@@ -36,7 +32,6 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
-import static javax.ws.rs.core.Variant.mediaTypes;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.jena.atlas.web.ContentType.create;
@@ -63,21 +58,24 @@ import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_NAMESPACE_VALUE;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.codahale.metrics.annotation.Timed;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLDecoder;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
@@ -100,7 +98,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilderException;
 import javax.ws.rs.core.Variant.VariantListBuilder;
-
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.atlas.web.ContentType;
@@ -108,15 +106,14 @@ import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
-import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
-import org.fcrepo.kernel.api.exception.ConstraintViolationException;
-import org.fcrepo.kernel.api.exception.InsufficientStorageException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
+import org.fcrepo.kernel.api.exception.ConstraintViolationException;
+import org.fcrepo.kernel.api.exception.InsufficientStorageException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
@@ -132,11 +129,6 @@ import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
-import com.codahale.metrics.annotation.Timed;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
-
 /**
  * @author cabeer
  * @author ajs6f
@@ -148,12 +140,6 @@ import com.google.common.collect.ImmutableList;
 public class FedoraLdp extends ContentExposingResource {
 
     private static final Logger LOGGER = getLogger(FedoraLdp.class);
-
-    private static final Splitter.MapSplitter RFC3230_SPLITTER =
-        Splitter.on(',').omitEmptyStrings().trimResults().
-        withKeyValueSeparator(Splitter.on('=').limit(2));
-
-    static final String INSUFFICIENT_SPACE_IDENTIFYING_MESSAGE = "No space left on device";
 
     static final String HTTP_HEADER_ACCEPT_PATCH = "Accept-Patch";
 
@@ -299,29 +285,6 @@ public class FedoraLdp extends ContentExposingResource {
         }
     }
 
-    private int getChildrenLimit() {
-        final List<String> acceptHeaders = headers.getRequestHeader(ACCEPT);
-        if (acceptHeaders != null && acceptHeaders.size() > 0) {
-            final List<String> accept = Arrays.asList(acceptHeaders.get(0).split(","));
-            if (accept.contains(TEXT_HTML)) {
-                // Magic number '100' is tied to common-metadata.vsl display of ellipses
-                return 100;
-            }
-        }
-
-        final List<String> limits = headers.getRequestHeader("Limit");
-        if (null != limits && limits.size() > 0) {
-            try {
-                return Integer.parseInt(limits.get(0));
-
-            } catch (final NumberFormatException e) {
-                LOGGER.warn("Invalid 'Limit' header value: {}", limits.get(0));
-                throw new ClientErrorException("Invalid 'Limit' header value: " + limits.get(0), SC_BAD_REQUEST, e);
-            }
-        }
-        return -1;
-    }
-
     /**
      * Deletes an object.
      *
@@ -330,6 +293,7 @@ public class FedoraLdp extends ContentExposingResource {
     @DELETE
     @Timed
     public Response deleteObject() {
+        hasRestrictedPath(externalPath);
         if (resource() instanceof Container) {
             final String depth = headers.getHeaderString("Depth");
             LOGGER.debug("Depth header value is: {}", depth);
@@ -366,7 +330,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @return 204
      * @throws InvalidChecksumException if invalid checksum exception occurred
      * @throws MalformedRdfException if malformed rdf exception occurred
-     * @throws UnsupportedAlgorithmException
+     * @throws UnsupportedAlgorithmException if an unsupported algorithm exception occurs
      */
     @PUT
     @Consumes
@@ -380,6 +344,8 @@ public class FedoraLdp extends ContentExposingResource {
             @HeaderParam("Digest") final String digest)
             throws InvalidChecksumException, MalformedRdfException, UnsupportedAlgorithmException,
             UnsupportedAccessTypeException {
+
+        hasRestrictedPath(externalPath);
 
         final String interactionModel = checkInteractionModel(links);
 
@@ -419,7 +385,6 @@ public class FedoraLdp extends ContentExposingResource {
 
             try (final RdfStream resourceTriples =
                     created ? new DefaultRdfStream(asNode(resource())) : getResourceTriples()) {
-
                 LOGGER.info("PUT resource '{}'", externalPath);
                 if (resource instanceof FedoraBinary) {
                     replaceResourceBinaryWithStream((FedoraBinary) resource,
@@ -441,6 +406,10 @@ public class FedoraLdp extends ContentExposingResource {
                 }
             } catch (final Exception e) {
                 checkForInsufficientStorageException(e, e);
+            }
+
+            if (hasVersionedResourceLink(links)) {
+                resource.enableVersioning();
             }
 
             ensureInteractionType(resource, interactionModel,
@@ -486,7 +455,7 @@ public class FedoraLdp extends ContentExposingResource {
     @Timed
     public Response updateSparql(@ContentLocation final InputStream requestBodyStream)
             throws IOException {
-
+        hasRestrictedPath(externalPath);
         if (null == requestBodyStream) {
             throw new BadRequestException("SPARQL-UPDATE requests must have content!");
         }
@@ -538,7 +507,7 @@ public class FedoraLdp extends ContentExposingResource {
      * This originally used application/octet-stream;qs=1001 as a workaround
      * for JERSEY-2636, to ensure requests without a Content-Type get routed here.
      * This qs value does not parse with newer versions of Jersey, as qs values
-     * must be between 0 and 1.  We use qs=1.000 to mark where this historical
+     * must be between 0 and 1. We use qs=1.000 to mark where this historical
      * anomaly had been.
      *
      * @param contentDisposition the content Disposition value
@@ -551,7 +520,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @throws InvalidChecksumException if invalid checksum exception occurred
      * @throws IOException if IO exception occurred
      * @throws MalformedRdfException if malformed rdf exception occurred
-     * @throws UnsupportedAlgorithmException
+     * @throws UnsupportedAlgorithmException if an unsupported algorithm exception occurs
      */
     @POST
     @Consumes({MediaType.APPLICATION_OCTET_STREAM + ";qs=1.000", WILDCARD})
@@ -587,6 +556,7 @@ public class FedoraLdp extends ContentExposingResource {
         final String contentTypeString = contentType.toString();
 
         final String newObjectPath = mintNewPid(slug);
+        hasRestrictedPath(newObjectPath);
 
         final AcquiredLock lock = lockManager.lockForWrite(newObjectPath, session.getFedoraSession(), nodeService);
 
@@ -626,6 +596,10 @@ public class FedoraLdp extends ContentExposingResource {
                                     UNSUPPORTED_MEDIA_TYPE);
                         }
                     }
+                }
+
+                if (hasVersionedResourceLink(links)) {
+                    resource.enableVersioning();
                 }
 
                 ensureInteractionType(resource, interactionModel,
@@ -692,7 +666,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @param rootThrowable The original throwable
      * @param throwable The throwable under direct scrutiny.
      */
-    private void checkForInsufficientStorageException(final Throwable rootThrowable, final Throwable throwable)
+    protected void checkForInsufficientStorageException(final Throwable rootThrowable, final Throwable throwable)
             throws InvalidChecksumException {
         final String message = throwable.getMessage();
         if (throwable instanceof IOException && message != null && message.contains(
@@ -714,64 +688,32 @@ public class FedoraLdp extends ContentExposingResource {
     }
 
     /**
-     * Create the appropriate response after a create or update request is processed.  When a resource is created,
-     * examine the Prefer and Accept headers to determine whether to include a representation.  By default, the
-     * URI for the created resource is return as plain text.  If a minimal response is requested, then no body is
-     * returned.  If a non-minimal return is requested, return the RDF for the created resource in the appropriate
-     * RDF serialization.
-     *
-     * @param resource The created or updated Fedora resource.
-     * @param created True for a newly-created resource, false for an updated resource.
-     * @return 204 No Content (for updated resources), 201 Created (for created resources) including the resource
-     *    URI or content depending on Prefer headers.
+     * Returns true if there is a link with a VERSIONED_RESOURCE type.
+     * @param links a list of link header values.
+     * @return True if there is a matching link header.
      */
-    @SuppressWarnings("resource")
-    private Response createUpdateResponse(final FedoraResource resource, final boolean created) {
-        addCacheControlHeaders(servletResponse, resource, session);
-        addResourceLinkHeaders(resource, created);
-        if (!created) {
-            return noContent().build();
-        }
-
-        final URI location = getUri(resource);
-        final Response.ResponseBuilder builder = created(location);
-
-        if (prefer == null || !prefer.hasReturn()) {
-            final MediaType acceptablePlainText = acceptabePlainTextMediaType();
-            if (acceptablePlainText != null) {
-                return builder.type(acceptablePlainText).entity(location.toString()).build();
-            }
-            return notAcceptable(mediaTypes(TEXT_PLAIN_TYPE).build()).build();
-        } else if (prefer.getReturn().getValue().equals("minimal")) {
-            return builder.build();
-        } else {
-            servletResponse.addHeader("Vary", "Accept, Range, Accept-Encoding, Accept-Language");
-            if (prefer != null) {
-                prefer.getReturn().addResponseHeaders(servletResponse);
-            }
-            final RdfNamespacedStream rdfStream = new RdfNamespacedStream(
-                new DefaultRdfStream(asNode(resource()), getResourceTriples()),
-                    session().getFedoraSession().getNamespaces());
-            return builder.entity(rdfStream).build();
-        }
-    }
-
-    /**
-     * Returns an acceptable plain text media type if possible, or null if not.
-     */
-    private MediaType acceptabePlainTextMediaType() {
-        final List<MediaType> acceptable = headers.getAcceptableMediaTypes();
-        if (acceptable == null || acceptable.size() == 0) {
-            return TEXT_PLAIN_TYPE;
-        }
-        for (final MediaType type : acceptable ) {
-            if (type.isWildcardType() || (type.isCompatible(TEXT_PLAIN_TYPE) && type.isWildcardSubtype())) {
-                return TEXT_PLAIN_TYPE;
-            } else if (type.isCompatible(TEXT_PLAIN_TYPE)) {
-                return type;
+    private boolean hasVersionedResourceLink(final List<String> links) {
+        if (!CollectionUtils.isEmpty(links)) {
+            try {
+                for (final String link : links) {
+                    final Link linq = Link.valueOf(link);
+                    if ("type".equals(linq.getRel())) {
+                        final Resource type = createResource(linq.getUri().toString());
+                        if (type.equals(VERSIONED_RESOURCE)) {
+                            return true;
+                        }
+                    }
+                }
+            } catch (final RuntimeException e) {
+                if (e instanceof IllegalArgumentException | e instanceof UriBuilderException) {
+                    throw new ClientErrorException("Invalid link specified: " + String.join(", ", links),
+                            BAD_REQUEST);
+                }
+                throw e;
             }
         }
-        return null;
+
+        return false;
     }
 
     @Override
@@ -915,13 +857,19 @@ public class FedoraLdp extends ContentExposingResource {
         }
 
         try {
-            for (String link : links) {
+            for (final String link : links) {
                 final Link linq = Link.valueOf(link);
                 if ("type".equals(linq.getRel())) {
                     final Resource type = createResource(linq.getUri().toString());
                     if (type.equals(NON_RDF_SOURCE) || type.equals(BASIC_CONTAINER) ||
                             type.equals(DIRECT_CONTAINER) || type.equals(INDIRECT_CONTAINER)) {
                         return "ldp:" + type.getLocalName();
+                    } else if (type.equals(VERSIONED_RESOURCE)) {
+                        // skip if versioned resource link header
+                        // NB: the versioned resource header is used for enabling
+                        // versioning on a resource and is thus orthogonal to
+                        // issue of interaction models. Nevertheless, it is
+                        // a possible link header and, therefore, must be ignored.
                     } else {
                         LOGGER.info("Invalid interaction model: {}", type);
                         throw new CannotCreateResourceException("Invalid interaction model: " + type);
@@ -946,7 +894,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @return the sha1 checksum value
      * @throws UnsupportedAlgorithmException if an unsupported digest is used
      */
-    private static Collection<String> parseDigestHeader(final String digest) throws UnsupportedAlgorithmException {
+    protected static Collection<String> parseDigestHeader(final String digest) throws UnsupportedAlgorithmException {
         try {
             final Map<String,String> digestPairs = RFC3230_SPLITTER.split(nullToEmpty(digest));
             final boolean allSupportedAlgorithms = digestPairs.keySet().stream().allMatch(
@@ -976,11 +924,11 @@ public class FedoraLdp extends ContentExposingResource {
      * @return Digest algorithms that are supported
      */
     private static Collection<String> parseWantDigestHeader(final String wantDigest) {
-        final Map<String, Double> digestPairs = new HashMap<String,Double>();
+        final Map<String, Double> digestPairs = new HashMap<String, Double>();
         try {
             final List<String> algs = Splitter.on(',').omitEmptyStrings().trimResults().splitToList(wantDigest);
             // Parse the optional q value with default 1.0, and 0 ignore. Format could be: SHA-1;qvalue=0.1
-            for (String alg : algs) {
+            for (final String alg : algs) {
                 final String[] tokens = alg.split(";", 2);
                 final double qValue = tokens.length == 1 || tokens[1].indexOf("=") < 0 ?
                         1.0 : Double.parseDouble(tokens[1].split("=", 2)[1]);

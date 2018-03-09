@@ -18,9 +18,10 @@
 package org.fcrepo.http.api;
 
 import static javax.ws.rs.core.Response.noContent;
+import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
-import static org.fcrepo.http.commons.domain.RDFMediaType.N3_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
@@ -30,9 +31,10 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
-
 import javax.annotation.PostConstruct;
+import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -40,18 +42,16 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
-
-import org.fcrepo.http.commons.domain.PATCH;
+import org.fcrepo.http.api.PathLockManager.AcquiredLock;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
-
-import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Endpoint for managing versions of nodes
@@ -102,27 +102,34 @@ public class FedoraVersions extends ContentExposingResource {
     }
 
     /**
-     * Reverts the resource at the given path to the version specified by
-     * the label.
-     * @return response
-     */
-    @PATCH
-    public Response revertToVersion() {
-        LOGGER.info("Reverting {} to version {}.", path,
-                label);
-        versionService.revertToVersion(session.getFedoraSession(), unversionedResourcePath(), label);
-        return noContent().build();
-    }
-
-    /**
      * Removes the version specified by the label.
      * @return 204 No Content
     **/
     @DELETE
     public Response removeVersion() {
         LOGGER.info("Removing {} version {}.", path, label);
-        versionService.removeVersion(session.getFedoraSession(), unversionedResourcePath(), label);
-        return noContent().build();
+        hasRestrictedPath(externalPath);
+        if (resource() instanceof Container) {
+            final String depth = headers.getHeaderString("Depth");
+            LOGGER.debug("Depth header value is: {}", depth);
+            if (depth != null && !depth.equalsIgnoreCase("infinity")) {
+                throw new ClientErrorException("Depth header, if present, must be set to 'infinity' for containers",
+                    SC_BAD_REQUEST);
+            }
+        }
+
+        evaluateRequestPreconditions(request, servletResponse, resource(), session);
+
+        LOGGER.info("Delete resource '{}'", externalPath);
+
+        final AcquiredLock lock = lockManager.lockForDelete(resource().getPath());
+        try {
+            resource().delete();
+            session.commit();
+            return noContent().build();
+        } finally {
+            lock.release();
+        }
     }
 
     /**
