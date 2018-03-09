@@ -953,7 +953,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testCreateNewObjectWithVersionedResource() throws MalformedRdfException, InvalidChecksumException,
-           IOException, UnsupportedAlgorithmException {
+           IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
         setResource(Container.class);
         when(mockContainerService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockContainer);
         final String versionedResourceLink = "<" + VERSIONED_RESOURCE.getURI() + ">;rel=\"type\"";

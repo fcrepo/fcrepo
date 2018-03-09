@@ -132,7 +132,7 @@ import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PreconditionException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
-zimport org.fcrepo.kernel.api.exception.ServerManagedTypeException;
+import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 import org.fcrepo.kernel.api.models.Container;
@@ -246,6 +246,14 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             prefer.getReturn().addResponseHeaders(servletResponse);
         }
 
+        // add vary headers
+        final List<String> varyValues = new ArrayList<>(VARY_HEADERS);
+
+        if (resource().isVersioned()) {
+            varyValues.add("Accept-Datetime");
+        }
+
+        varyValues.stream().forEach(x -> servletResponse.addHeader("Vary", x));
     }
 
 
@@ -369,7 +377,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             final CacheControl cc = new CacheControl();
             cc.setMaxAge(0);
             cc.setMustRevalidate(true);
-            Response.ResponseBuilder builder;
+            final Response.ResponseBuilder builder;
 
             if (rangeValue != null && rangeValue.startsWith("bytes")) {
 
@@ -554,16 +562,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             httpHeaderInject.addHttpHeaderToResponseStream(servletResponse, uriInfo, resource());
         }
 
-        // add vary headers
-        final List<String> varyValues = new ArrayList<>(VARY_HEADERS);
-
-        if (resource.isVersioned()) {
-            varyValues.add("Accept-Datetime");
-        }
         addMementoDatetimeHeader(resource);
-
-        varyValues.stream().forEach(x -> servletResponse.addHeader("Vary", x));
-
     }
 
     /**

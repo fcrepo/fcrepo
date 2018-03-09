@@ -294,8 +294,15 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final Collection<String> vary = getHeader(response, "Vary");
         assertTrue("Didn't find valid Preference-Applied header", preferenceApplied.contains("return=representation"));
         assertTrue("Didn't find valid Vary Prefer header", vary.contains("Prefer"));
-        assertTrue("Didn't find valid Vary Accept headers",
-                vary.contains("Accept, Range, Accept-Encoding, Accept-Language"));
+        assertTrue("Didn't find valid Vary header",
+                vary.contains("Accept"));
+        assertTrue("Didn't find valid Vary header",
+            vary.contains("Range"));
+        assertTrue("Didn't find valid Vary header",
+            vary.contains("Accept-Encoding"));
+        assertTrue("Didn't find valid Vary header",
+            vary.contains("Accept-Language"));
+
     }
 
     @Test
@@ -3199,7 +3206,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         executeAndClose(putObjMethod(id));
 
         // Get the resource's etag
-        String etag;
+        final String etag;
         final HttpHead httpHead = headObjMethod(id);
         try (final CloseableHttpResponse response = execute(httpHead)) {
             etag = response.getFirstHeader("ETag").getValue();
@@ -3436,7 +3443,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String parent = getRandomUniqueId();
         executeAndClose(putObjMethod(parent));
         final String newResource = parent + "/test";
-        final Runnable updateRunnable = () -> { executeAndClose(putObjMethod(newResource)); };
+        final Runnable updateRunnable = () -> {
+            executeAndClose(putObjMethod(newResource));
+        };
         final Thread t1 = new Thread(updateRunnable);
         final Thread t2 = new Thread(updateRunnable);
         final Thread t3 = new Thread(updateRunnable);
@@ -3470,10 +3479,18 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String second = parent + "/00/2";
         final String third = parent + "/00/3";
         final String fourth = parent + "/00/4";
-        final Thread t1 = new Thread(() -> { executeAndClose(putObjMethod(first));});
-        final Thread t2 = new Thread(() -> { executeAndClose(putObjMethod(second)); });
-        final Thread t3 = new Thread(() -> { executeAndClose(putObjMethod(third)); });
-        final Thread t4 = new Thread(() -> { executeAndClose(putObjMethod(fourth)); });
+        final Thread t1 = new Thread(() -> {
+            executeAndClose(putObjMethod(first));
+        });
+        final Thread t2 = new Thread(() -> {
+            executeAndClose(putObjMethod(second));
+        });
+        final Thread t3 = new Thread(() -> {
+            executeAndClose(putObjMethod(third));
+        });
+        final Thread t4 = new Thread(() -> {
+            executeAndClose(putObjMethod(fourth));
+        });
         t1.start();
         t2.start();
         t3.start();
@@ -3582,14 +3599,22 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String path = getRandomUniqueId();
         executeAndClose(putObjMethod(path));
         final int[] responseCodes = new int[4];
-        final Thread t1 = new Thread(() -> { responseCodes[0] = patchWithSparql(path,
-                "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'one' . }");});
-        final Thread t2 = new Thread(() -> { responseCodes[1] = patchWithSparql(path,
-                "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'two' . }");});
-        final Thread t3 = new Thread(() -> { responseCodes[2] = patchWithSparql(path,
-                "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'three' . }");});
-        final Thread t4 = new Thread(() -> { responseCodes[3] = patchWithSparql(path,
-                "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'four' . }");});
+        final Thread t1 = new Thread(() -> {
+            responseCodes[0] = patchWithSparql(path,
+                "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'one' . }");
+        });
+        final Thread t2 = new Thread(() -> {
+            responseCodes[1] = patchWithSparql(path,
+                "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'two' . }");
+        });
+        final Thread t3 = new Thread(() -> {
+            responseCodes[2] = patchWithSparql(path,
+                "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'three' . }");
+        });
+        final Thread t4 = new Thread(() -> {
+            responseCodes[3] = patchWithSparql(path,
+                "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'four' . }");
+        });
         t1.start();
         t2.start();
         t3.start();

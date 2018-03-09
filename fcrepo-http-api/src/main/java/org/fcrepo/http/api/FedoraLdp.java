@@ -19,6 +19,7 @@ package org.fcrepo.http.api;
 
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static com.google.common.base.Strings.nullToEmpty;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
@@ -113,9 +114,6 @@ import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.ConstraintViolationException;
 import org.fcrepo.kernel.api.exception.InsufficientStorageException;
-import org.fcrepo.kernel.api.exception.InvalidChecksumException;
-import org.fcrepo.kernel.api.exception.MalformedRdfException;
-import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
@@ -668,7 +666,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @param rootThrowable The original throwable
      * @param throwable The throwable under direct scrutiny.
      */
-    private void checkForInsufficientStorageException(final Throwable rootThrowable, final Throwable throwable)
+    protected void checkForInsufficientStorageException(final Throwable rootThrowable, final Throwable throwable)
             throws InvalidChecksumException {
         final String message = throwable.getMessage();
         if (throwable instanceof IOException && message != null && message.contains(
@@ -896,7 +894,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @return the sha1 checksum value
      * @throws UnsupportedAlgorithmException if an unsupported digest is used
      */
-    private static Collection<String> parseDigestHeader(final String digest) throws UnsupportedAlgorithmException {
+    protected static Collection<String> parseDigestHeader(final String digest) throws UnsupportedAlgorithmException {
         try {
             final Map<String,String> digestPairs = RFC3230_SPLITTER.split(nullToEmpty(digest));
             final boolean allSupportedAlgorithms = digestPairs.keySet().stream().allMatch(
