@@ -2253,6 +2253,54 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testPutToChangeInteractionModelWithRdf() throws IOException {
+        final String pid = getRandomUniqueId();
+        final String resource = serverAddress + pid;
+        final String container = serverAddress + pid + "/c";
+
+        createObjectAndClose(pid);
+        createObjectAndClose(pid + "/a");
+        createObjectAndClose(pid + "/c");
+
+        // attempt to change basic container to NonRdfSource
+        final String ttl1 = "<> a <" + NON_RDF_SOURCE.getURI() + "> .";
+        final HttpPut put1 = putObjMethod(pid + "/a", "text/turtle", ttl1);
+        assertEquals("Changed the basic container ixn to NonRdfSource through PUT with RDF content!",
+                CONFLICT.getStatusCode(), getStatus(put1));
+
+        // attempt to change basic container to direct container
+        final String ttl2 = "<> a <" + DIRECT_CONTAINER.getURI() + "> ; <" + MEMBERSHIP_RESOURCE.getURI() +
+                "> <" + resource + "> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_NAMESPACE + "member> .";
+        final HttpPut put2 = putObjMethod(pid + "/a", "text/turtle", ttl2);
+        assertEquals("Changed the basic container ixn to Direct Container through PUT with RDF content!",
+                CONFLICT.getStatusCode(), getStatus(put2));
+
+        // create direct container
+        final String ttl = "<> <" + MEMBERSHIP_RESOURCE.getURI() +
+                "> <" + resource + "> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_NAMESPACE + "member> .";
+        final HttpPut put = putObjMethod(pid + "/b", "text/turtle", ttl);
+        put.setHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
+        assertEquals(CREATED.getStatusCode(), getStatus(put));
+        assertTrue(getLinkHeaders(getObjMethod(pid + "/b")).contains(DIRECT_CONTAINER_LINK_HEADER));
+
+        // attempt to change direct container to basic container
+        final String ttl3 = "<> a <" + BASIC_CONTAINER.getURI() +
+                "> ; <http://purl.org/dc/elements/1.1/title> \"this is a title\".";
+        final HttpPut put3 = putObjMethod(pid + "/b", "text/turtle", ttl3);
+        assertEquals("Changed the direct container ixn to basic container through PUT with RDF content!",
+                CONFLICT.getStatusCode(), getStatus(put3));
+
+        // attempt to change direct container to indirect container
+        final String ttl4 = "<> a <" + DIRECT_CONTAINER.getURI()
+                + "> ; <" + MEMBERSHIP_RESOURCE + "> <" + container + ">;\n"
+                + "<" + HAS_MEMBER_RELATION + "> <info:some/relation>;\n"
+                + "<" + LDP_NAMESPACE + "insertedContentRelation> <info:proxy/for> .\n";
+        final HttpPut put4 = putObjMethod(pid + "/b", "text/turtle", ttl4);
+        assertEquals("Changed the direct container ixn to indirect container through PUT with RDF content!",
+                CONFLICT.getStatusCode(), getStatus(put4));
+    }
+
+    @Test
     public void testChangeInteractionModelWithPut() throws IOException {
         final String pid = getRandomUniqueId();
         final String resource = serverAddress + pid;

@@ -791,7 +791,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             final Optional<String> resIxn = INTERACTION_MODELS.stream().filter(x -> hasType(x)).findFirst();
             if (resIxn.isPresent()) {
                 updateQuads.stream().forEach(e -> {
-                    final String ixn = getInteractionModelFromQuad.apply(e);
+                    final String ixn = getInteractionModel.apply(e.asTriple());
                     if (StringUtils.isNotBlank(ixn) && !ixn.equals(resIxn.get())) {
                         throw new InteractionModelViolationException("Changing the interaction model "
                             + resIxn.get() + " to " + ixn + " is not allowed!");
@@ -800,7 +800,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             }
 
             deleteQuads.stream().forEach(e -> {
-                final String ixn = getInteractionModelFromQuad.apply(e);
+                final String ixn = getInteractionModel.apply(e.asTriple());
                 if (StringUtils.isNotBlank(ixn)) {
                     throw new InteractionModelViolationException("Delete the interaction model "
                             + ixn + " is not allowed!");
@@ -810,11 +810,11 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     }
 
     /*
-     * Dynamic function to extract the interaction model from Quad.
+     * Dynamic function to extract the interaction model from Triple.
      */
-    private static final Function<Quad, String> getInteractionModelFromQuad =
+    private static final Function<Triple, String> getInteractionModel =
             uncheck( x -> {
-                if (x.getPredicate().hasURI(RDF_NAMESPACE + "type")
+                if (x.getPredicate().hasURI(RDF_NAMESPACE + "type") && x.getObject().isURI()
                         && INTERACTION_MODELS.contains((x.getObject().getURI().replace(LDP_NAMESPACE, "ldp:")))) {
                 return x.getObject().getURI().replace(LDP_NAMESPACE, "ldp:");
             }
@@ -853,6 +853,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @Override
     public void replaceProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
         final Model inputModel, final RdfStream originalTriples) throws MalformedRdfException {
+        final Optional<String> resIxn = INTERACTION_MODELS.stream().filter(x -> hasType(x)).findFirst();
 
         // remove any statements that update "relaxed" server-managed triples so they can be updated separately
         final List<Statement> filteredStatements = new ArrayList<>();
@@ -862,6 +863,13 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             if (RdfLexicon.isRelaxed.test(next.getPredicate())) {
                 filteredStatements.add(next);
                 it.remove();
+            } else {
+                // check for interaction model change violation
+                final String ixn = getInteractionModel.apply(next.asTriple());
+                if (StringUtils.isNotBlank(ixn) && resIxn.isPresent() && !ixn.equals(resIxn.get())) {
+                    throw new InteractionModelViolationException("Changing the interaction model "
+                        + resIxn.get() + " to " + ixn + " is not allowed!");
+                }
             }
         }
         // remove any "relaxed" server-managed triples from the existing triples
