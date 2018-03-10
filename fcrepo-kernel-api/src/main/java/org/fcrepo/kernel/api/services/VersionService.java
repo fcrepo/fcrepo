@@ -17,12 +17,20 @@
  */
 package org.fcrepo.kernel.api.services;
 
+import java.io.InputStream;
+import java.net.URI;
 import java.time.Instant;
+import java.util.Collection;
 
+import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 
 /**
+ * Service for creating versions of resources
+ *
  * @author bbpennel
  * @author whikloj
  * @since Feb 19, 2014
@@ -30,25 +38,33 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 public interface VersionService {
 
     /**
-     * Explicitly creates a version for the resource at the path provided for now.
-     *
-     * @param session the session in which the resource resides
-     * @param resource the resource to version
-     * @return the version
-     */
-    FedoraResource createVersion(FedoraSession session, FedoraResource resource);
-
-    /**
      * Explicitly creates a version for the resource at the path provided for the date/time provided.
      *
      * @param session the session in which the resource resides
      * @param resource the resource to version
+     * @param idTranslator translator for producing URI of resources
      * @param dateTime the date/time of the version
-     * @param fromExisting if true, version is created from existing resource. If false, version is created as a new
-     *        resource.
+     * @param rdfStream if provided, this RdfStream will provide the properties of the new memento. If null, then the
+     *        state of the current resource will be used.
      * @return the version
      */
-    FedoraResource createVersion(FedoraSession session, FedoraResource resource, Instant dateTime,
-            boolean fromExisting);
+    FedoraResource createVersion(FedoraSession session, FedoraResource resource,
+            IdentifierConverter<Resource, FedoraResource> idTranslator, Instant dateTime, RdfStream rdfStream);
+
+    /**
+     * Explicitly creates a version of a binary resource. If no contentStream is provided, then
+     *
+     * @param session the session in which the resource resides
+     * @param resource the resource to version
+     * @param dateTime the date/time of the version
+     * @param contentStream if provided, the content in this stream will be used as the content of the new binary
+     *        memento. If null, then the current state of the binary will be used.
+     * @param filename filename of the binary
+     * @param mimetype mimetype of the binary
+     * @param Collection of checksum URIs of the content (optional)
+     * @return the version
+     */
+    FedoraResource createBinaryVersion(FedoraSession session, FedoraResource resource, Instant dateTime,
+            InputStream contentStream, String filename, String mimetype, Collection<URI> checksums);
 
 }

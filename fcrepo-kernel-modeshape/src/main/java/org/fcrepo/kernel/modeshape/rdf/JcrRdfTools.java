@@ -254,6 +254,13 @@ public class JcrRdfTools {
         }
     }
 
+    public void addProperty(final FedoraResource resource,
+            final org.apache.jena.rdf.model.Property predicate,
+            final RDFNode value,
+            final Map<String, String> namespaces) throws RepositoryException {
+        addProperty(resource, predicate, value, namespaces, false);
+    }
+
     /**
      * Add property to a node
      * @param resource the fedora resource
@@ -265,11 +272,12 @@ public class JcrRdfTools {
     public void addProperty(final FedoraResource resource,
                             final org.apache.jena.rdf.model.Property predicate,
                             final RDFNode value,
-                            final Map<String,String> namespaces) throws RepositoryException {
+            final Map<String, String> namespaces,
+            final boolean allowRelaxedProperties) throws RepositoryException {
 
         final Node node = getJcrNode(resource);
 
-        if (isManagedPredicate.test(predicate) || jcrProperties.contains(predicate)) {
+        if ((!allowRelaxedProperties && isManagedPredicate.test(predicate)) || jcrProperties.contains(predicate)) {
 
             throw new ServerManagedPropertyException("Could not persist triple containing predicate "
                     + predicate.toString()

@@ -47,7 +47,6 @@ import java.net.URI;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import javax.jcr.ItemExistsException;
@@ -66,6 +65,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
@@ -169,24 +169,17 @@ public class FedoraVersioning extends ContentExposingResource {
             try {
                 LOGGER.info("Request to add version for date '{}' for '{}'", datetimeHeader, externalPath);
 
-                final FedoraResource memento = versionService.createVersion(
-                        session.getFedoraSession(), resource(), mementoInstant, createFromExisting);
+                // Create memento
+                final FedoraResource memento;
+                if (resource instanceof FedoraBinary) {
+                    memento = versionService.createBinaryVersion(session.getFedoraSession(), resource(),
+                            mementoInstant, null, null, null, null);
+                } else {
+                    final RdfStream bodyRdf = createFromExisting ?
+                            null : bodyToRdfStream(requestBodyStream, contentType);
 
-                // If not creating from existing object, then use provided body for the new memento's content
-                if (!createFromExisting) {
-                    if (memento instanceof FedoraBinary) {
-                        final Collection<String> checksums = parseDigestHeader(digest);
-
-                        replaceResourceBinaryWithStream((FedoraBinary) memento,
-                                requestBodyStream, contentDisposition, requestContentType, checksums);
-                    } else {
-                        try (final RdfStream resourceTriples = new DefaultRdfStream(asNode(memento))) {
-                            // Get URI of memento to allow for remapping of subject to memento uri
-                            final URI mementoUri = getUri(memento);
-                            replaceResourceWithStream(memento, requestBodyStream, contentType,
-                                    resourceTriples, mementoUri);
-                        }
-                    }
+                    memento = versionService.createVersion(
+                            session.getFedoraSession(), resource(), idTranslator, mementoInstant, bodyRdf);
                 }
 
                 session.commit();
