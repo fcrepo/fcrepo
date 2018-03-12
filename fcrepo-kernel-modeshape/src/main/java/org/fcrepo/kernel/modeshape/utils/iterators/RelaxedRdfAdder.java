@@ -64,11 +64,10 @@ public class RelaxedRdfAdder extends RdfAdder {
                 final Resource mixinResource = t.getObject().asResource();
 
                 LOGGER.debug("Operating on node: {} with mixin: {}.",
-                        subjectNode, mixinResource);
+                        subjectNode.getPath(), mixinResource);
                 operateOnMixin(mixinResource, subjectNode);
             } else {
-                LOGGER.debug("Operating on node: {} from triple: {}.", subjectNode,
-                        t);
+                LOGGER.debug("Operating on node: {} from triple: {}.", subjectNode.getPath(), t);
                 operateOnProperty(t, subjectNode);
             }
         } catch (final RepositoryException | RepositoryRuntimeException e) {

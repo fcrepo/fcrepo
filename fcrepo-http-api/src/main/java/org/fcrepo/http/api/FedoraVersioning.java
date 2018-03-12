@@ -66,6 +66,8 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
+import org.apache.jena.riot.Lang;
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
@@ -175,11 +177,15 @@ public class FedoraVersioning extends ContentExposingResource {
                     memento = versionService.createBinaryVersion(session.getFedoraSession(), resource(),
                             mementoInstant, null, null, null, null);
                 } else {
-                    final RdfStream bodyRdf = createFromExisting ?
-                            null : bodyToRdfStream(requestBodyStream, contentType);
+                    final InputStream bodyStream = createFromExisting ? null : requestBodyStream;
+                    final Lang format = createFromExisting ? null : contentTypeToLang(contentType.toString());
+                    if (!createFromExisting && format == null) {
+                        throw new ClientErrorException("Invalid Content Type " + contentType.toString(),
+                                UNSUPPORTED_MEDIA_TYPE);
+                    }
 
-                    memento = versionService.createVersion(
-                            session.getFedoraSession(), resource(), idTranslator, mementoInstant, bodyRdf);
+                    memento = versionService.createVersion(session.getFedoraSession(), resource(),
+                            idTranslator, mementoInstant, bodyStream, format);
                 }
 
                 session.commit();

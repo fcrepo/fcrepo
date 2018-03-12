@@ -17,6 +17,20 @@
  */
 package org.fcrepo.kernel.modeshape.services;
 
+import static java.util.Arrays.asList;
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_MEMENTO;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_MEMENTO_DATETIME;
+import static org.fcrepo.kernel.api.RequiredRdfContext.EMBED_RESOURCES;
+import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_CONTAINMENT;
+import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_MEMBERSHIP;
+import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
+import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
+import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.LDPCV_TIME_MAP;
+import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
+import static org.fcrepo.kernel.modeshape.rdf.impl.RdfStreamRequiredPropertiesUtil.assertContainsRequiredContainerTriples;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import java.io.InputStream;
 import java.net.URI;
 import java.time.Instant;
@@ -37,7 +51,10 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.riot.Lang;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.TripleCategory;
@@ -52,20 +69,7 @@ import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.api.services.VersionService;
 import org.fcrepo.kernel.modeshape.utils.iterators.RelaxedRdfAdder;
 import org.slf4j.Logger;
-import org.springframework.stereotype.Component;
-
-import static org.apache.jena.graph.NodeFactory.createURI;
-import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_MEMENTO;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_MEMENTO_DATETIME;
-import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.LDPCV_TIME_MAP;
-import static org.fcrepo.kernel.api.RequiredRdfContext.EMBED_RESOURCES;
-import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_CONTAINMENT;
-import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_MEMBERSHIP;
-import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
-import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
-import static java.util.Arrays.asList;
-import static org.slf4j.LoggerFactory.getLogger;
+import org.springframework.stereotype.Component;;
 
 /**
  * This service exposes management of node versioning for resources and binaries.
@@ -101,11 +105,18 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
     protected NodeService nodeService;
 
     @Override
+    public FedoraResource createVersion(final FedoraSession session, final FedoraResource resource,
+            final IdentifierConverter<Resource, FedoraResource> idTranslator, final Instant dateTime) {
+        return createVersion(session, resource, idTranslator, dateTime, null, null);
+    }
+
+    @Override
     public FedoraResource createVersion(final FedoraSession session,
             final FedoraResource resource,
             final IdentifierConverter<Resource, FedoraResource> idTranslator,
             final Instant dateTime,
-            final RdfStream rdfStream) {
+            final InputStream rdfInputStream,
+            final Lang rdfFormat) {
 
         final String mementoPath = makeMementoPath(resource, dateTime);
 
@@ -114,20 +125,28 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
         final FedoraResource mementoResource = containerService.findOrCreate(session, mementoPath);
         final String mementoUri = getUri(mementoResource, idTranslator);
 
-        decorateWithMementoProperties(session, mementoPath, dateTime);
+        final String resourceUri = getUri(resource, idTranslator);
 
         final RdfStream mementoRdfStream;
-        if (rdfStream == null) {
+        if (rdfInputStream == null) {
             // With no rdf body provided, create version from current resource state.
             mementoRdfStream = resource.getTriples(idTranslator, VERSION_TRIPLES);
         } else {
-            // Replace original subject in incoming RDF with memento subject
-            final String resourceUri = getUri(resource, idTranslator);
-            mementoRdfStream = remapRdfSubjects(mementoUri, resourceUri, rdfStream);
+            final Model inputModel = ModelFactory.createDefaultModel();
+            inputModel.read(rdfInputStream, mementoUri, rdfFormat.getName());
+
+            // Validate server managed triples are provided
+            assertContainsRequiredContainerTriples(inputModel);
+
+            mementoRdfStream = DefaultRdfStream.fromModel(createURI(mementoUri), inputModel);
         }
 
+        final RdfStream mappedStream = remapRdfSubjects(mementoUri, resourceUri, mementoRdfStream);
+
         final Session jcrSession = getJcrSession(session);
-        new RelaxedRdfAdder(idTranslator, jcrSession, mementoRdfStream, session.getNamespaces()).consume();
+        new RelaxedRdfAdder(idTranslator, jcrSession, mappedStream, session.getNamespaces()).consume();
+
+        decorateWithMementoProperties(session, mementoPath, dateTime);
 
         return mementoResource;
     }

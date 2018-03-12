@@ -34,7 +34,6 @@ import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.fcrepo.http.api.FedoraVersioning.MEMENTO_DATETIME_HEADER;
 import static org.fcrepo.http.commons.domain.RDFMediaType.APPLICATION_LINK_FORMAT;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_MEMENTO_DATETIME;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEMAP_TYPE;
 import static org.junit.Assert.assertArrayEquals;
@@ -42,14 +41,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 
 import java.io.StringWriter;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
-
 import javax.ws.rs.core.Link;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -71,6 +71,7 @@ import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 
 /**
  * @author lsitu
@@ -158,26 +159,40 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     public void testCreateVersionWithDatetime() throws Exception {
         createVersionedContainer(id, subjectUri);
 
-        final String mementoUri = createMemento(subjectUri, MEMENTO_DATETIME, "text/n3", null);
+        final HttpPost createVersionMethod = postObjMethod(id + "/" + FCR_VERSIONS);
+        createVersionMethod.addHeader(CONTENT_TYPE, "text/n3");
+        createVersionMethod.addHeader(MEMENTO_DATETIME_HEADER, MEMENTO_DATETIME);
 
-        final HttpGet httpGet = new HttpGet(mementoUri);
-        try (final CloseableHttpResponse response = execute(httpGet)) {
-            assertMementoDatetimeHeaderMatches(response, MEMENTO_DATETIME);
+        // Attempt to create memento with no body
+        try (final CloseableHttpResponse response = execute(createVersionMethod)) {
+            assertEquals("Didn't get a BAD_REQUEST response!", BAD_REQUEST.getStatusCode(), getStatus(response));
 
-            final CloseableDataset dataset = getDataset(response);
-            final DatasetGraph results = dataset.asDatasetGraph();
-            final Node subject = createURI(mementoUri);
-            final Node property = createURI(FEDORA_MEMENTO_DATETIME);
-            assertTrue("Did not find correct subject", results.contains(ANY, subject, ANY, ANY));
-            assertFalse("Memento response must not include memento datetime",
-                    results.contains(ANY, subject, property, ANY));
+            // Request must fail with constrained exception due to empty body
+            assertConstrainedByPresent(response);
+        }
+    }
+
+    @Test
+    public void testCreateContainerWithoutServerManagedTriples() throws Exception {
+        createVersionedContainer(id, subjectUri);
+
+        final HttpPost createMethod = postObjMethod(id + "/" + FCR_VERSIONS);
+        createMethod.addHeader(CONTENT_TYPE, "text/n3");
+        createMethod.setEntity(new StringEntity("<" + subjectUri + "> <info:test#label> \"part\""));
+        createMethod.addHeader(MEMENTO_DATETIME_HEADER, MEMENTO_DATETIME);
+
+        // Attempt to create memento with partial record
+        try (final CloseableHttpResponse response = execute(createMethod)) {
+            assertEquals("Didn't get a BAD_REQUEST response!", BAD_REQUEST.getStatusCode(), getStatus(response));
+
+            // Request must fail with constrained exception due to empty body
+            assertConstrainedByPresent(response);
         }
     }
 
     /**
      * POST to create LDPCv without memento-datetime must ignore body
      */
-    @Ignore("Disable until binary version creation from body implemented")
     @Test
     public void testCreateVersionWithBody() throws Exception {
         createVersionedContainer(id, subjectUri);
@@ -456,5 +471,12 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         assertMementoDatetimeHeaderPresent(response);
         assertEquals("Response memento datetime did not match expected value",
                 expected, response.getFirstHeader(MEMENTO_DATETIME_HEADER).getValue());
+    }
+
+    private static void assertConstrainedByPresent(final CloseableHttpResponse response) {
+        final Collection<String> linkHeaders = getLinkHeaders(response);
+        assertTrue("Constrained by link header no present",
+                linkHeaders.stream().map(Link::valueOf)
+                        .anyMatch(l -> l.getRel().equals(CONSTRAINED_BY.getURI())));
     }
 }

@@ -826,20 +826,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     }
 
     /**
-     * Produces an RdfStream containing the triples in the provided input stream
-     *
-     * @param requestBodyStream rdf request body
-     * @param contentType content type of request body
-     * @return RdfStream produced from requestBodyStream
-     * @throws MalformedRdfException
-     */
-    protected RdfStream bodyToRdfStream(final InputStream requestBodyStream,
-            final MediaType contentType) throws MalformedRdfException {
-        final Model inputModel = parseBodyAsModel(requestBodyStream, contentType);
-        return DefaultRdfStream.fromModel(asNode(resource()), inputModel);
-    }
-
-    /**
      * This method throws an exception if the arg model contains a triple with 'ldp:hasMemberRelation' as a predicate
      *   and a server-managed property as the object.
      *
@@ -883,7 +869,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected MediaType getBinaryResourceMediaType() {
         try {
             return MediaType.valueOf(((FedoraBinary) resource()).getMimeType());
-        } catch (IllegalArgumentException e) {
+        } catch (final IllegalArgumentException e) {
             LOGGER.warn("Syntactically incorrect MediaType encountered on resource {}: '{}'",
                     resource().getPath(), ((FedoraBinary)resource()).getMimeType());
             return MediaType.APPLICATION_OCTET_STREAM_TYPE;

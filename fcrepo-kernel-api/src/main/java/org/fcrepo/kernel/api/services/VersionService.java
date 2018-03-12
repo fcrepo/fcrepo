@@ -23,8 +23,8 @@ import java.time.Instant;
 import java.util.Collection;
 
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.riot.Lang;
 import org.fcrepo.kernel.api.FedoraSession;
-import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 
@@ -38,18 +38,32 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 public interface VersionService {
 
     /**
+     * Explicitly creates a version for the resource at the path provided.
+     *
+     * @param session the session in which the resource resides
+     * @param resource the resource to version
+     * @param idTranslator translator for producing URI of resources
+     * @param dateTime the date/time of the version
+     * @return the version
+     */
+    FedoraResource createVersion(FedoraSession session, FedoraResource resource,
+            IdentifierConverter<Resource, FedoraResource> idTranslator, Instant dateTime);
+
+    /**
      * Explicitly creates a version for the resource at the path provided for the date/time provided.
      *
      * @param session the session in which the resource resides
      * @param resource the resource to version
      * @param idTranslator translator for producing URI of resources
      * @param dateTime the date/time of the version
-     * @param rdfStream if provided, this RdfStream will provide the properties of the new memento. If null, then the
-     *        state of the current resource will be used.
+     * @param rdfInputStream if provided, this stream will provide the properties of the new memento. If null, then
+     *        the state of the current resource will be used.
+     * @param rdfFormat RDF language format name
      * @return the version
      */
     FedoraResource createVersion(FedoraSession session, FedoraResource resource,
-            IdentifierConverter<Resource, FedoraResource> idTranslator, Instant dateTime, RdfStream rdfStream);
+            IdentifierConverter<Resource, FedoraResource> idTranslator, Instant dateTime, InputStream rdfInputStream,
+            Lang rdfFormat);
 
     /**
      * Explicitly creates a version of a binary resource. If no contentStream is provided, then
@@ -66,5 +80,6 @@ public interface VersionService {
      */
     FedoraResource createBinaryVersion(FedoraSession session, FedoraResource resource, Instant dateTime,
             InputStream contentStream, String filename, String mimetype, Collection<URI> checksums);
+
 
 }
