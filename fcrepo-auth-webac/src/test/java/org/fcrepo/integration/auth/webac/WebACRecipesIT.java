@@ -503,6 +503,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
     }
 
     @Test
+    @Ignore ("Until implemented with Memento")
     public void testAccessToVersionedResources() throws IOException {
         final String idVersion = "/rest/versionResource";
         ingestObj(idVersion);
@@ -589,6 +590,8 @@ public class WebACRecipesIT extends AbstractResourceIT {
     }
 
     @Test
+    @Ignore ("Until implemented with Memento")
+
     public void testAccessByUriToVersionedResources() throws IOException {
         final String idVersion = "/rest/versionResourceUri";
         ingestObj(idVersion);

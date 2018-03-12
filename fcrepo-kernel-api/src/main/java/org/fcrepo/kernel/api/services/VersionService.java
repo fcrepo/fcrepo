@@ -17,43 +17,38 @@
  */
 package org.fcrepo.kernel.api.services;
 
+import java.time.Instant;
+
 import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.models.FedoraResource;
 
 /**
  * @author bbpennel
+ * @author whikloj
  * @since Feb 19, 2014
  */
 public interface VersionService {
 
     /**
-     * Explicitly creates a version for the nodes at each path provided.
+     * Explicitly creates a version for the resource at the path provided for now.
      *
-     * @param session the session in which the node resides
-     * @param absPath absolute paths to the node
-     * @param label a label to be applied to the new version
-     * @return the identifier
+     * @param session the session in which the resource resides
+     * @param resource the resource to version
+     * @return the version
      */
-    String createVersion(FedoraSession session, String absPath, String label);
+    FedoraResource createVersion(FedoraSession session, FedoraResource resource);
 
     /**
-     * Reverts the node to the version identified by the label.  This method
-     * will throw a PathNotFoundException if no version with the given label is
-     * found.
+     * Explicitly creates a version for the resource at the path provided for the date/time provided.
      *
-     * @param session the session in which the node resides
-     * @param absPath the path to the node whose version is to be reverted
-     * @param label identifies the historic version
+     * @param session the session in which the resource resides
+     * @param resource the resource to version
+     * @param dateTime the date/time of the version
+     * @param fromExisting if true, version is created from existing resource. If false, version is created as a new
+     *        resource.
+     * @return the version
      */
-    void revertToVersion(FedoraSession session, String absPath, String label);
-
-    /**
-     * Remove a version of a node.  This method will throw a PathNotFoundException
-     * if no version with the given label is found.
-     *
-     * @param session the session in which the node resides
-     * @param absPath the path to the node whose version is to be removed
-     * @param label identifies the historic version by label or id
-     */
-    void removeVersion(FedoraSession session, String absPath, String label);
+    FedoraResource createVersion(FedoraSession session, FedoraResource resource, Instant dateTime,
+            boolean fromExisting);
 
 }

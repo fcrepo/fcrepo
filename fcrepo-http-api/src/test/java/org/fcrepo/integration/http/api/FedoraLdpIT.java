@@ -71,6 +71,7 @@ import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_VARIANTS;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
@@ -90,6 +91,9 @@ import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEGATE_TYPE;
+import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_ACCESS_CONTROL_VALUE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -154,6 +158,7 @@ import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.vocabulary.DC_11;
 import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
+
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -188,6 +193,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     private static final String DIRECT_CONTAINER_LINK_HEADER = "<" + DIRECT_CONTAINER.getURI() + ">;rel=\"type\"";
     private static final String INDIRECT_CONTAINER_LINK_HEADER = "<" + INDIRECT_CONTAINER.getURI() + ">;rel=\"type\"";
     private static final String NON_RDF_SOURCE_LINK_HEADER = "<" + NON_RDF_SOURCE.getURI() + ">;rel=\"type\"";
+    private static final String VERSIONED_RESOURCE_LINK_HEADER = "<" + VERSIONED_RESOURCE.getURI() + ">; rel=\"type\"";
 
     private static final String TEST_ACTIVATION_PROPERTY = "RUN_TEST_CREATE_MANY";
 
@@ -288,8 +294,15 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final Collection<String> vary = getHeader(response, "Vary");
         assertTrue("Didn't find valid Preference-Applied header", preferenceApplied.contains("return=representation"));
         assertTrue("Didn't find valid Vary Prefer header", vary.contains("Prefer"));
-        assertTrue("Didn't find valid Vary Accept headers",
-                vary.contains("Accept, Range, Accept-Encoding, Accept-Language"));
+        assertTrue("Didn't find valid Vary header",
+                vary.contains("Accept"));
+        assertTrue("Didn't find valid Vary header",
+            vary.contains("Range"));
+        assertTrue("Didn't find valid Vary header",
+            vary.contains("Accept-Encoding"));
+        assertTrue("Didn't find valid Vary header",
+            vary.contains("Accept-Language"));
+
     }
 
     @Test
@@ -1126,6 +1139,159 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertTrue("Didn't find a triple we tried to create!", graph.contains(ANY,
                     createURI(subjectURI), createURI("info:test#label"), createLiteral("foo")));
         }
+    }
+
+    @Test
+    public void testCreateVersionedRDFResource() throws IOException {
+        createVersionedRDFResource();
+    }
+
+    @Test
+    public void testGetVersionedResourceHeaders() throws IOException {
+        final String subjectURI = createVersionedRDFResource();
+        try (final CloseableHttpResponse response = execute(new HttpGet(subjectURI))) {
+            verifyVersionedResourceResponseHeaders(subjectURI, response);
+        }
+    }
+
+    @Test
+    public void testHeadVersionedResourceHeaders() throws IOException {
+        final String subjectURI = createVersionedRDFResource();
+        try (final CloseableHttpResponse response = execute(new HttpHead(subjectURI))) {
+            verifyVersionedResourceResponseHeaders(subjectURI, response);
+        }
+    }
+
+    private void verifyVersionedResourceResponseHeaders(final String subjectURI,
+            final CloseableHttpResponse response) {
+        assertEquals("Didn't get an OK (200) response!", OK.getStatusCode(), getStatus(response));
+        checkForVersionedResourceLinkHeader(response);
+        checkForMementoTimeGateLinkHeader(response);
+        checkForLinkHeader(response, subjectURI, "timegate");
+        checkForLinkHeader(response, subjectURI + "/" + FCR_VERSIONS, "timemap");
+        assertEquals(1, Arrays.asList(response.getHeaders("Vary")).stream().filter(x -> x.getValue().contains(
+                "Accept-Datetime")).count());
+    }
+
+    private String createVersionedRDFResource() throws IOException {
+        final String id = getRandomUniqueId();
+        final String subjectURI = serverAddress + id;
+        final HttpPost createMethod = postObjMethod();
+        createMethod.addHeader("Slug", id);
+        createMethod.addHeader(CONTENT_TYPE, "text/n3");
+        createMethod.addHeader(LINK, VERSIONED_RESOURCE_LINK_HEADER);
+        createMethod.setEntity(new StringEntity("<" + subjectURI + "> <info:test#label> \"foo\""));
+
+        try (final CloseableHttpResponse response = execute(createMethod)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            checkForVersionedResourceLinkHeader(response);
+        }
+        return subjectURI;
+    }
+
+    private void checkForVersionedResourceLinkHeader(final CloseableHttpResponse response) {
+        checkForLinkHeader(response,VERSIONED_RESOURCE.getURI(), "type");
+    }
+
+    private void checkForMementoTimeGateLinkHeader(final CloseableHttpResponse response) {
+        checkForLinkHeader(response,VERSIONING_TIMEGATE_TYPE, "type");
+    }
+
+    @Test
+    public void testCreateVersionedBinaryResource() throws IOException {
+        final HttpPost method = postObjMethod();
+        final String id = getRandomUniqueId();
+        method.addHeader("Slug", id);
+        method.addHeader(CONTENT_TYPE, "text/plain");
+        method.setEntity(new StringEntity("test content"));
+
+        method.addHeader(LINK, VERSIONED_RESOURCE_LINK_HEADER);
+        try (final CloseableHttpResponse response = execute(method)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            checkForVersionedResourceLinkHeader(response);
+        }
+    }
+    @Test
+    public void testPostCreateNonRDFSourceWithAcl() throws IOException {
+        final String aclURI = createAcl();
+        final String subjectPid = getRandomUniqueId();
+        final String subjectURI = serverAddress + subjectPid;
+        final HttpPost createMethod = new HttpPost(serverAddress);
+        createMethod.addHeader(CONTENT_TYPE, "text/plain");
+        createMethod.addHeader("Link", "<" + aclURI + ">; rel=\"acl\"");
+        createMethod.addHeader("Slug", subjectPid);
+        createMethod.setEntity(new StringEntity("test body"));
+        assertEquals(CREATED.getStatusCode(), getStatus(createMethod));
+        verifyAccessControlTripleIsPresent(aclURI, subjectURI, subjectURI + "/fcr:metadata");
+    }
+
+    @Test
+    public void testPutCreateNonRDFSourceWithAcl() throws IOException {
+        final String aclURI = createAcl();
+        final String subjectURI = serverAddress + getRandomUniqueId();
+        final HttpPut createMethod = new HttpPut(subjectURI);
+        createMethod.addHeader(CONTENT_TYPE, "text/plain");
+        createMethod.addHeader("Link", "<" + aclURI + ">; rel=\"acl\"");
+        createMethod.setEntity(new StringEntity("test body"));
+        assertEquals(CREATED.getStatusCode(), getStatus(createMethod));
+        verifyAccessControlTripleIsPresent(aclURI, subjectURI, subjectURI + "/fcr:metadata");
+    }
+
+    @Test
+    public void testPostCreateRDFSourceWithAcl() throws IOException {
+        final String aclURI = createAcl();
+        final String subjectPid = getRandomUniqueId();
+        final String subjectURI = serverAddress + subjectPid;
+        final HttpPost createMethod = new HttpPost(serverAddress);
+        createMethod.addHeader(CONTENT_TYPE, "text/n3");
+        createMethod.addHeader("Link", "<" + aclURI + ">; rel=\"acl\"");
+        createMethod.addHeader("Slug", subjectPid);
+        createMethod.setEntity(new StringEntity("<> <info:test#label> \"foo\""));
+        assertEquals(CREATED.getStatusCode(), getStatus(createMethod));
+        verifyAccessControlTripleIsPresent(aclURI, subjectURI);
+    }
+
+    @Test
+    public void testPutCreateRDFSourceWithAcl() throws IOException {
+        final String aclURI = createAcl();
+        final String subjectURI = serverAddress + getRandomUniqueId();
+        final HttpPut createMethod = new HttpPut(subjectURI);
+        createMethod.addHeader(CONTENT_TYPE, "text/n3");
+        createMethod.addHeader("Link", "<" + aclURI + ">; rel=\"acl\"");
+        createMethod.setEntity(new StringEntity("<" + subjectURI + "> <info:test#label> \"foo\""));
+        assertEquals(CREATED.getStatusCode(), getStatus(createMethod));
+        verifyAccessControlTripleIsPresent(aclURI, subjectURI);
+    }
+
+    @Test
+    public void testPutCreateRDFSourceWithNonExistentAcl() throws IOException {
+        final String aclURI = serverAddress + "non-existent-acl";
+        final String subjectURI = serverAddress + getRandomUniqueId();
+        final HttpPut createMethod = new HttpPut(subjectURI);
+        createMethod.addHeader(CONTENT_TYPE, "text/n3");
+        createMethod.addHeader("Link", "<" + aclURI + ">; rel=\"acl\"");
+        createMethod.setEntity(new StringEntity("<" + subjectURI + "> <info:test#label> \"foo\""));
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(createMethod));
+    }
+
+    private void verifyAccessControlTripleIsPresent(final String aclURI, final String subjectURI) throws IOException {
+        verifyAccessControlTripleIsPresent(aclURI, subjectURI, subjectURI);
+    }
+
+    private void verifyAccessControlTripleIsPresent(final String aclURI, final String subjectURI,
+                                                    final String resourceURI) throws IOException {
+        try (final CloseableDataset dataset = getDataset(new HttpGet(resourceURI))) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertTrue("Didn't find an acl:accessControl triple!", graph.contains(ANY,
+                createURI(subjectURI), createURI(WEBAC_ACCESS_CONTROL_VALUE), createURI(aclURI)));
+        }
+    }
+
+    private String createAcl() {
+        final String aclPid = "acl";
+        final String aclURI = serverAddress + aclPid;
+        createObjectAndClose(aclPid);
+        return aclURI;
     }
 
     @Test
@@ -3040,7 +3206,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         executeAndClose(putObjMethod(id));
 
         // Get the resource's etag
-        String etag;
+        final String etag;
         final HttpHead httpHead = headObjMethod(id);
         try (final CloseableHttpResponse response = execute(httpHead)) {
             etag = response.getFirstHeader("ETag").getValue();
@@ -3277,7 +3443,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String parent = getRandomUniqueId();
         executeAndClose(putObjMethod(parent));
         final String newResource = parent + "/test";
-        final Runnable updateRunnable = () -> { executeAndClose(putObjMethod(newResource)); };
+        final Runnable updateRunnable = () -> {
+            executeAndClose(putObjMethod(newResource));
+        };
         final Thread t1 = new Thread(updateRunnable);
         final Thread t2 = new Thread(updateRunnable);
         final Thread t3 = new Thread(updateRunnable);
@@ -3311,10 +3479,18 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String second = parent + "/00/2";
         final String third = parent + "/00/3";
         final String fourth = parent + "/00/4";
-        final Thread t1 = new Thread(() -> { executeAndClose(putObjMethod(first));});
-        final Thread t2 = new Thread(() -> { executeAndClose(putObjMethod(second)); });
-        final Thread t3 = new Thread(() -> { executeAndClose(putObjMethod(third)); });
-        final Thread t4 = new Thread(() -> { executeAndClose(putObjMethod(fourth)); });
+        final Thread t1 = new Thread(() -> {
+            executeAndClose(putObjMethod(first));
+        });
+        final Thread t2 = new Thread(() -> {
+            executeAndClose(putObjMethod(second));
+        });
+        final Thread t3 = new Thread(() -> {
+            executeAndClose(putObjMethod(third));
+        });
+        final Thread t4 = new Thread(() -> {
+            executeAndClose(putObjMethod(fourth));
+        });
         t1.start();
         t2.start();
         t3.start();
@@ -3423,14 +3599,22 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String path = getRandomUniqueId();
         executeAndClose(putObjMethod(path));
         final int[] responseCodes = new int[4];
-        final Thread t1 = new Thread(() -> { responseCodes[0] = patchWithSparql(path,
-                "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'one' . }");});
-        final Thread t2 = new Thread(() -> { responseCodes[1] = patchWithSparql(path,
-                "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'two' . }");});
-        final Thread t3 = new Thread(() -> { responseCodes[2] = patchWithSparql(path,
-                "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'three' . }");});
-        final Thread t4 = new Thread(() -> { responseCodes[3] = patchWithSparql(path,
-                "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'four' . }");});
+        final Thread t1 = new Thread(() -> {
+            responseCodes[0] = patchWithSparql(path,
+                "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'one' . }");
+        });
+        final Thread t2 = new Thread(() -> {
+            responseCodes[1] = patchWithSparql(path,
+                "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'two' . }");
+        });
+        final Thread t3 = new Thread(() -> {
+            responseCodes[2] = patchWithSparql(path,
+                "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'three' . }");
+        });
+        final Thread t4 = new Thread(() -> {
+            responseCodes[3] = patchWithSparql(path,
+                "PREFIX dc: <http://purl.org/dc/elements/1.1/>\nINSERT DATA { <> dc:identifier 'four' . }");
+        });
         t1.start();
         t2.start();
         t3.start();
@@ -3629,6 +3813,36 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpGet getObjMethod = getObjMethod(id + "/binary1");
         try (final CloseableHttpResponse response = execute(getObjMethod)) {
             assertTrue(response.getHeaders(DIGEST).length == 0);
+        }
+    }
+
+    @Test
+    public void testPostFedoraSlug() throws IOException {
+        final HttpPost httpPost = postObjMethod("/");
+        httpPost.addHeader("Slug", "fedora:path");
+        try (final CloseableHttpResponse response = execute(httpPost)) {
+            assertEquals("Must not be able to POST with fedora namespaced Slug!", CONFLICT.getStatusCode(),
+                getStatus(response));
+        }
+    }
+
+    @Test
+    public void testPutFedoraPath() throws IOException {
+        final HttpPut httpPut = putObjMethod("/fedora:path");
+        try (final CloseableHttpResponse response = execute(httpPut)) {
+            assertEquals("Must not be able to PUT with fedora namespaced path!", CONFLICT.getStatusCode(),
+                getStatus(response));
+        }
+    }
+
+    @Test
+    public void testDeleteWithFedoraPath() throws IOException {
+        final String id = getRandomUniqueId() + "/fedora:delete";
+        final HttpDelete httpDelete = deleteObjMethod(id);
+        httpDelete.addHeader("Depth", "infinity");
+        try (final CloseableHttpResponse response = execute(httpDelete)) {
+            assertEquals("Must not be able to DELETE with fedora namespaced path!", CONFLICT.getStatusCode(),
+                getStatus(response));
         }
     }
 }

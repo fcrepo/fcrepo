@@ -51,11 +51,6 @@ import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static com.google.common.collect.ImmutableSet.of;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIED;
-import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.FedoraTypes.LDP_INSERTED_CONTENT_RELATION;
-import static org.fcrepo.kernel.api.FedoraTypes.LDP_MEMBER_RESOURCE;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_MIXIN_TYPES;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_PRIMARY_TYPE;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_NODE;
@@ -137,6 +132,11 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
     public static Predicate<Node> isSkolemNode = new AnyTypesPredicate(FEDORA_SKOLEM);
 
     /**
+     * Predicate for determining whether this {@link Node} is a Memento.
+     */
+    public static Predicate<Node> isMemento = new AnyTypesPredicate(FEDORA_MEMENTO);
+
+    /**
      * Check if a property is a reference property.
      */
     public static Predicate<Property> isInternalReferenceProperty = uncheck(p -> (p.getType() == REFERENCE ||
@@ -208,7 +208,7 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
                         || (prop.getName().equals(JCR_LASTMODIFIEDBY) && !subject.hasProperty(FEDORA_LASTMODIFIEDBY))
                         || (prop.getName().equals(JCR_CREATED) && !subject.hasProperty(FEDORA_CREATED))
                         || (prop.getName().equals(JCR_CREATEDBY) && !subject.hasProperty(FEDORA_CREATEDBY));
-            } catch (RepositoryException e) {
+            } catch (final RepositoryException e) {
                 throw new RepositoryRuntimeException(e);
             }
         }
@@ -514,8 +514,15 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
                 return empty();
             }
 
+            //check ancestors recursively only either of the following two cases applies:
+            // 1. the PARENT is a FEDORA_PAIRTREE
+            // 2. the PARENT is FEDORA_NON_RDF_SOURCE_DESCRIPTION AND the the NODE itself NOT a FEDORA_TIME_MAP.
+            //Time maps of Fedora binaries must be handled slightly differently due to the fact that
+            //the TimeMap is a child of the resource description rather than the resource itself as is the
+            //case for RDF sources.
             final Node parent = node.getParent();
-            if (parent.isNodeType(FEDORA_PAIRTREE) || parent.isNodeType(FEDORA_NON_RDF_SOURCE_DESCRIPTION)) {
+            if (parent.isNodeType(FEDORA_PAIRTREE) ||
+                (parent.isNodeType(FEDORA_NON_RDF_SOURCE_DESCRIPTION) && !node.isNodeType(FEDORA_TIME_MAP))) {
                 return getContainingNode(parent);
             }
             return Optional.of(parent);

@@ -110,8 +110,12 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
 
     @Override
     public FedoraResource getDescription() {
+        return new NonRdfSourceDescriptionImpl(getDescriptionNode());
+    }
+
+    protected Node getDescriptionNode() {
         try {
-            return new NonRdfSourceDescriptionImpl(getNode().getParent());
+            return getNode().getParent();
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -252,7 +256,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
                             }
                     );
                 }
-            } catch (RepositoryException e) {
+            } catch (final RepositoryException e) {
                 throw new RepositoryRuntimeException(e);
             }
         });
@@ -304,7 +308,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
                         final URI digestUri = URI.create(digest.getString());
                         return algorithmWithoutStringType.equalsIgnoreCase(ContentDigest.getAlgorithm(digestUri));
 
-                    } catch (RepositoryException e) {
+                    } catch (final RepositoryException e) {
                         LOGGER.warn("Exception thrown when getting digest property {}, {}", digest, e.getMessage());
                         return false;
                     }
@@ -423,7 +427,8 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
 
     @Override
     public FedoraResource getBaseVersion() {
-        return getDescription().getBaseVersion();
+        LOGGER.warn("Remove method 'getBaseVersion()' if not used after implementing Memento!");
+        return null;
     }
 
     private static void decorateContentNode(final Node contentNode, final Collection<URI> checksums)

@@ -36,8 +36,6 @@ import static java.util.stream.Collectors.toMap;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_LABEL;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.WRITABLE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
@@ -108,7 +106,8 @@ public class ViewHelpers {
      */
     public Iterator<Node> getVersions(final Graph graph,
         final Node subject) {
-        return getOrderedVersions(graph, subject, HAS_VERSION);
+        LOGGER.warn("May Need Update with Mementos!");
+        return null;
     }
 
     /**
@@ -146,17 +145,6 @@ public class ViewHelpers {
         }
         return null;
      }
-
-    /**
-     * Gets a version label of a subject from the graph
-     *
-     * @param graph the graph
-     * @param subject the subject
-     * @return the label of the version if one has been provided
-     */
-    public Optional<String> getVersionLabel(final Graph graph, final Node subject) {
-        return getValue(graph, subject, HAS_VERSION_LABEL.asNode());
-    }
 
     /**
      * Gets a modification date of a subject from the graph

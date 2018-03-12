@@ -57,11 +57,8 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements N
 
     @Override
     public FedoraResource getBaseVersion() {
-        try {
-            return new NonRdfSourceDescriptionImpl(getVersionManager().getBaseVersion(getPath()).getFrozenNode());
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
+        LOGGER.warn("Review if method (getBaseVersion) can be removed after implementing Memento!");
+        return null;
     }
 
     private Node getContentNode() {

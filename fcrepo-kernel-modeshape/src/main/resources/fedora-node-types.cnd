@@ -26,6 +26,8 @@
 <rdfs = 'http://www.w3.org/2000/01/rdf-schema#'>
 <premis = 'http://www.loc.gov/premis/rdf/v1#'>
 <ldp = 'http://www.w3.org/ns/ldp#'>
+<acl = 'http://www.w3.org/ns/auth/acl#'>
+
 <ebucore = 'http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#'>
 
 /*
@@ -35,6 +37,9 @@
 <fedoraconfig = 'http://fedora.info/definitions/v4/config#'>
 
 <test = 'info:fedora/test/'>
+
+[nt:versionFile] > nt:file
++ fedora:timemap (nt:folder) =fedora:TimeMap
 
 /*
  * Any Fedora resource.
@@ -67,6 +72,17 @@
  * A Fedora datastream.
  */
 [fedora:NonRdfSourceDescription] > fedora:Resource mixin
+
+/*
+ * A Fedora LDPCv TimeMap.
+ */
+[fedora:TimeMap] > fedora:Resource mixin
+
+/*
+ * A Fedora LDPRm Memento.
+ */
+[fedora:Memento] > fedora:Resource mixin
+  - fedora:mementoDatetime (DATE)
 
 /*
  * Some content that can have a checksum

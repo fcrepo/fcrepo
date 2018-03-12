@@ -52,18 +52,19 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPatch;
-import org.apache.http.client.methods.HttpPost;
 
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
+import org.apache.jena.sparql.core.Quad;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.sparql.core.DatasetGraph;
-import org.apache.jena.sparql.core.Quad;
 
 /**
  * <p>FedoraFixityIT class.</p>
@@ -173,6 +174,7 @@ public class FedoraFixityIT extends AbstractResourceIT {
     }
 
     @Test
+    @Ignore("Until implemented with Memento")
     public void testBinaryVersionFixity() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
@@ -182,7 +184,7 @@ public class FedoraFixityIT extends AbstractResourceIT {
         postVersion(id + "/dsid", "v0");
 
         try (final CloseableDataset dataset =
-                getDataset(new HttpGet(serverAddress + id + "/dsid/fcr%3aversions/v0/fcr:fixity"))) {
+                     getDataset(new HttpGet(serverAddress + id + "/dsid/fcr%3aversions/v0/fcr:fixity"))) {
             final DatasetGraph graphStore = dataset.asDatasetGraph();
             logger.debug("Got binary content versioned fixity triples {}", graphStore);
             final Iterator<Quad> stmtIt = graphStore.find(ANY, ANY, HAS_FIXITY_RESULT.asNode(), ANY);

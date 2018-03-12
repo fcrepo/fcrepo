@@ -21,12 +21,14 @@ import static com.google.common.collect.ImmutableSet.of;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 
+import java.net.URI;
 import java.util.Set;
 import java.util.function.Predicate;
 
-import com.google.common.collect.ImmutableSet;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
+
+import com.google.common.collect.ImmutableSet;
 
 /**
  * A lexicon of the RDF properties that the fcrepo kernel (or close-to-core modules) use
@@ -42,6 +44,8 @@ public final class RdfLexicon {
 
     public static final String EVENT_NAMESPACE = "http://fedora.info/definitions/v4/event#";
 
+    public static final String FCREPO_API_NAMESPACE = "http://fedora.info/definitions/fcrepo#";
+
     public static final String ACTIVITY_STREAMS_NAMESPACE = "https://www.w3.org/ns/activitystreams#";
 
     public static final String EBUCORE_NAMESPACE = "http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#";
@@ -52,7 +56,12 @@ public final class RdfLexicon {
 
     public static final String PREMIS_NAMESPACE = "http://www.loc.gov/premis/rdf/v1#";
 
-    public static final String FCREPO_API_NAMESPACE = "http://fedora.info/definitions/fcrepo#";
+    public static final String MEMENTO_NAMESPACE = "http://mementoweb.org/ns#";
+
+    /**
+     * Namespace for the W3C WebAC vocabulary.
+     */
+    public static final String WEBAC_NAMESPACE_VALUE = "http://www.w3.org/ns/auth/acl#";
 
     /**
      * Fedora configuration namespace "fedora-config", used for user-settable
@@ -186,15 +195,12 @@ public final class RdfLexicon {
             HAS_NAMESPACE_PREFIX, HAS_NAMESPACE_URI);
 
     // OTHER SERVICES
-    public static final Property HAS_VERSION_HISTORY =
-            createProperty(REPOSITORY_NAMESPACE + "hasVersions");
     public static final Property HAS_FIXITY_SERVICE =
             createProperty(REPOSITORY_NAMESPACE + "hasFixityService");
     public static final Property HAS_SPARQL_ENDPOINT =
         createProperty(SPARQL_SD_NAMESPACE + "endpoint");
 
-    public static final Set<Property> otherServiceProperties = of(
-            HAS_VERSION_HISTORY, HAS_FIXITY_SERVICE);
+    public static final Set<Property> otherServiceProperties = of(HAS_FIXITY_SERVICE);
 
 
     // BINARY DESCRIPTIONS
@@ -222,16 +228,6 @@ public final class RdfLexicon {
     public static final Set<Property> contentProperties = of(HAS_CONTENT_LOCATION, HAS_CONTENT_LOCATION_VALUE,
             HAS_SIZE);
 
-
-    // VERSIONING
-    public static final Property HAS_VERSION =
-            createProperty(REPOSITORY_NAMESPACE + "hasVersion");
-    public static final Property HAS_VERSION_LABEL =
-            createProperty(REPOSITORY_NAMESPACE + "hasVersionLabel");
-
-    public static final Set<Property> versioningProperties = of(HAS_VERSION,
-            HAS_VERSION_LABEL);
-
     // RDF EXTRACTION
     public static final Property COULD_NOT_STORE_PROPERTY =
             createProperty(REPOSITORY_NAMESPACE + "couldNotStoreProperty");
@@ -240,14 +236,19 @@ public final class RdfLexicon {
 
     public static final Property EMBED_CONTAINED = createProperty(OA_NAMESPACE + "PreferContainedDescriptions");
 
+
+    // WEBAC
+    public static final String WEBAC_ACCESS_CONTROL_VALUE = WEBAC_NAMESPACE_VALUE + "accessControl";
+    public static final URI WEBAC_ACCESS_CONTROL = URI.create(WEBAC_ACCESS_CONTROL_VALUE);
+
+
     public static final Set<Property> managedProperties;
 
     static {
         final ImmutableSet.Builder<Property> b = ImmutableSet.builder();
         b.addAll(membershipProperties).addAll(fixityProperties).addAll(ldpManagedProperties).addAll(
                 repositoryProperties).addAll(namespaceProperties).addAll(
-                otherServiceProperties).addAll(structProperties).addAll(contentProperties).addAll(
-                versioningProperties).addAll(serverManagedProperties);
+                otherServiceProperties).addAll(serverManagedProperties);
         managedProperties = b.build();
     }
 
@@ -268,6 +269,28 @@ public final class RdfLexicon {
      */
     public static final Predicate<Property> isManagedPredicate =
         hasFedoraNamespace.or(p -> managedProperties.contains(p));
+
+    /**
+     * Fedora defined JCR node type with supertype of nt:file with a single nt:folder named fedora:timemap inside.
+     */
+    public static final String NT_VERSION_FILE = "nt:versionFile";
+
+    // VERSIONING
+    /**
+     * Memento TimeMap type.
+     */
+    public static final String VERSIONING_TIMEMAP_TYPE = MEMENTO_NAMESPACE + "TimeMap";
+
+    /**
+     * Memento TimeGate type.
+     */
+    public static final String VERSIONING_TIMEGATE_TYPE = MEMENTO_NAMESPACE + "TimeGate";
+
+    /**
+     * This is an internal RDF type for versionable resources, this may be replaced by a Memento type.
+     */
+    public static final Property VERSIONED_RESOURCE =
+        createProperty(MEMENTO_NAMESPACE + "OriginalResource");
 
     private RdfLexicon() {
 

@@ -17,8 +17,8 @@
  */
 package org.fcrepo.http.commons.api.rdf;
 
-import static java.util.Collections.singleton;
 import static com.google.common.collect.ImmutableList.of;
+import static java.util.Collections.singleton;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.replaceOnce;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
@@ -38,13 +38,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.jcr.ItemNotFoundException;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
-import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.version.VersionHistory;
 import javax.ws.rs.core.UriBuilder;
 
 import org.fcrepo.http.commons.session.HttpSession;
@@ -54,19 +51,20 @@ import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.TombstoneException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.FedoraTimeMap;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.modeshape.TombstoneImpl;
 import org.fcrepo.kernel.modeshape.identifiers.HashConverter;
 import org.fcrepo.kernel.modeshape.identifiers.NamespaceConverter;
 
+import org.apache.jena.rdf.model.Resource;
 import org.glassfish.jersey.uri.UriTemplate;
 import org.slf4j.Logger;
 import org.springframework.context.ApplicationContext;
 
 import com.google.common.base.Converter;
 import com.google.common.collect.Lists;
-import org.apache.jena.rdf.model.Resource;
 
 /**
  * Convert between Jena Resources and JCR Nodes using a JAX-RS UriBuilder to mediate the
@@ -121,9 +119,13 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
 
                 final boolean metadata = values.containsKey("path")
                         && values.get("path").endsWith("/" + FCR_METADATA);
+                final boolean timemap = values.containsKey("path") && values.get("path").endsWith("/" + FCR_VERSIONS);
 
                 final FedoraResource fedoraResource = nodeConverter.convert(node);
 
+                if (timemap) {
+                    return fedoraResource.findOrCreateTimeMap();
+                }
                 if (!metadata && fedoraResource instanceof NonRdfSourceDescription) {
                     return fedoraResource.getDescribedResource();
                 }
@@ -207,9 +209,13 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
             String path = "/" + values.get("path");
 
             final boolean metadata = path.endsWith("/" + FCR_METADATA);
+            final boolean timemap = path.endsWith("/" + FCR_VERSIONS);
 
             if (metadata) {
                 path = replaceOnce(path, "/" + FCR_METADATA, EMPTY);
+            }
+            if (timemap) {
+                path = replaceOnce(path, "/" + FCR_VERSIONS, EMPTY);
             }
 
             path = forward.convert(path);
@@ -244,30 +250,6 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
 
 
     private Node getNode(final String path) throws RepositoryException {
-        if (path.contains(FCR_VERSIONS)) {
-            final String[] split = path.split("/" + FCR_VERSIONS + "/", 2);
-            final String versionedPath = split[0];
-            final String versionAndPathIntoVersioned = split[1];
-            final String[] split1 = versionAndPathIntoVersioned.split("/", 2);
-            final String version = split1[0];
-
-            final String pathIntoVersioned;
-            if (split1.length > 1) {
-                pathIntoVersioned = split1[1];
-            } else {
-                pathIntoVersioned = "";
-            }
-
-            final Node node = getFrozenNodeByLabel(versionedPath, version);
-
-            if (pathIntoVersioned.isEmpty()) {
-                return node;
-            } else if (node != null) {
-                return node.getNode(pathIntoVersioned);
-            } else {
-                throw new PathNotFoundException("Unable to find versioned resource at " + path);
-            }
-        }
         try {
             return getJcrSession(session).getNode(path);
         } catch (IllegalArgumentException ex) {
@@ -275,92 +257,12 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
         }
     }
 
-    /**
-     * A private helper method that tries to look up frozen node for the given subject
-     * by a label.  That label may either be one that was assigned at creation time
-     * (and is a version label in the JCR sense) or a system assigned identifier that
-     * was used for versions created without a label.  The current implementation
-     * uses the JCR UUID for the frozen node as the system-assigned label.
-     */
-    private Node getFrozenNodeByLabel(final String baseResourcePath, final String label) {
-        try {
-            final Node n = getNode(baseResourcePath, label);
-
-            if (n != null) {
-                return n;
-            }
-
-             /*
-             * Though a node with an id of the label was found, it wasn't the
-             * node we were looking for, so fall through and look for a labeled
-             * node.
-             */
-            final VersionHistory hist =
-                    getJcrSession(session).getWorkspace().getVersionManager().getVersionHistory(baseResourcePath);
-            if (hist.hasVersionLabel(label)) {
-                LOGGER.debug("Found version for {} by label {}.", baseResourcePath, label);
-                return hist.getVersionByLabel(label).getFrozenNode();
-            }
-            LOGGER.warn("Unknown version {} with label or uuid {}!", baseResourcePath, label);
-            throw new PathNotFoundException("Unknown version " + baseResourcePath
-                    + " with label or uuid " + label);
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-    }
-
-    private Node getNode(final String baseResourcePath, final String label) throws RepositoryException {
-        try {
-            final Node frozenNode = getJcrSession(session).getNodeByIdentifier(label);
-
-            /*
-             * We found a node whose identifier is the "label" for the version.  Now
-             * we must do due diligence to make sure it's a frozen node representing
-             * a version of the subject node.
-             */
-            final Property p = frozenNode.getProperty("jcr:frozenUuid");
-            if (p != null) {
-                final Node subjectNode = getJcrSession(session).getNode(baseResourcePath);
-                if (p.getString().equals(subjectNode.getIdentifier())) {
-                    return frozenNode;
-                }
-            }
-
-        } catch (final ItemNotFoundException ex) {
-            /*
-             * the label wasn't a uuid of a frozen node but
-             * instead possibly a version label.
-             */
-        }
-        return null;
-    }
-
     private static String getPath(final FedoraResource resource) {
-        if (resource.isFrozenResource()) {
-            // the versioned resource we're in
-            final FedoraResource versionableFrozenResource = resource.getVersionedAncestor();
-
-            // the unfrozen equivalent for the versioned resource
-            final FedoraResource unfrozenVersionableResource = versionableFrozenResource.getUnfrozenResource();
-
-            // the label for this version
-            final String versionLabel = versionableFrozenResource.getVersionLabelOfFrozenResource();
-
-            // the path to this resource within the versioning tree
-            final String pathWithinVersionable;
-
-            if (!resource.equals(versionableFrozenResource)) {
-                pathWithinVersionable = getRelativePath(resource, versionableFrozenResource);
-            } else {
-                pathWithinVersionable = "";
-            }
-
-            // and, finally, the path we want to expose in the URI
-            final String path = unfrozenVersionableResource.getPath()
-                    + "/" + FCR_VERSIONS
-                    + (versionLabel != null ? "/" + versionLabel : "")
-                    + pathWithinVersionable;
-            return path.startsWith("/") ? path : "/" + path;
+        if (resource instanceof FedoraTimeMap) {
+            // the path is relative to the parent, and unique so fake it here.
+            final FedoraResource parent = resource.getContainer();
+            final String parentPath = parent.getPath();
+            return parentPath + "/" + FCR_VERSIONS;
         }
         return resource.getPath();
     }

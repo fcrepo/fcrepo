@@ -44,12 +44,12 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
-
+import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response.Status;
 import javax.xml.bind.DatatypeConverter;
-
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -500,4 +500,43 @@ public abstract class AbstractResourceIT {
         ttl.append(literal);
     }
 
+    /**
+     * Test a response for a specific LINK header
+     *
+     * @param response the HTTP response
+     * @param uri the URI expected in the LINK header
+     * @param rel the rel argument to check for
+     */
+    protected void checkForLinkHeader(final CloseableHttpResponse response, final String uri, final String rel) {
+        assertEquals(1, countLinkHeader(response, uri, rel));
+    }
+
+    /**
+     * Test a response for N instances of a specific LINK header
+     *
+     * @param response the HTTP response
+     * @param uri the URI expected in the LINK header
+     * @param rel the rel argument to check for
+     * @param count how many LINK headers should exist
+     */
+    protected void checkForNLinkHeaders(final CloseableHttpResponse response, final String uri, final String rel,
+        final int count) {
+        assertEquals(count, countLinkHeader(response, uri, rel));
+    }
+
+    /**
+     * Utility for counting LINK headers
+     *
+     * @param response the HTTP response
+     * @param uri the URI expected in the LINK header
+     * @param rel the rel argument to check for
+     * @return the count of LINK headers.
+     */
+    private int countLinkHeader(final CloseableHttpResponse response, final String uri, final String rel) {
+        final Link linkA = Link.valueOf("<" + uri + ">; rel=" + rel);
+        return (int) Arrays.asList(response.getHeaders(LINK)).stream().filter(x -> {
+            final Link linkB = Link.valueOf(x.getValue());
+            return linkB.equals(linkA);
+        }).count();
+    }
 }
