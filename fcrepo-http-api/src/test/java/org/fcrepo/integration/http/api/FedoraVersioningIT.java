@@ -90,8 +90,20 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     @Test
     public void testDeleteTimeMapForContainer() throws Exception {
         createVersionedContainer(id, subjectUri);
+
+        final String mementoUri = createMemento(subjectUri, null, null, null);
+        assertEquals(200, getStatus(new HttpGet(mementoUri)));
+
+        final String timeMapUri = subjectUri + "/" + FCR_VERSIONS;
+        assertEquals(200, getStatus(new HttpGet(timeMapUri)));
+
         // disabled versioning to delete TimeMap
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(serverAddress + id + "/" + FCR_VERSIONS)));
+
+        // validate that the memento version is gone
+        assertEquals(404, getStatus(new HttpGet(mementoUri)));
+        // validate that the LDPCv is gone
+        assertEquals(404, getStatus(new HttpGet(timeMapUri)));
     }
 
     @Test
