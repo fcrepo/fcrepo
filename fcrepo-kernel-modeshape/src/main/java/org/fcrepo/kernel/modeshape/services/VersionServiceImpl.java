@@ -19,6 +19,7 @@ package org.fcrepo.kernel.modeshape.services;
 
 import static java.util.Arrays.asList;
 import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.FedoraTypes.MEMENTO;
 import static org.fcrepo.kernel.api.FedoraTypes.MEMENTO_DATETIME;
 import static org.fcrepo.kernel.api.RequiredRdfContext.EMBED_RESOURCES;
@@ -29,6 +30,7 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
 import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.LDPCV_TIME_MAP;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.fcrepo.kernel.modeshape.rdf.impl.RequiredPropertiesUtil.assertRequiredContainerTriples;
+import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.InputStream;
@@ -60,13 +62,14 @@ import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.BinaryService;
-import org.fcrepo.kernel.api.services.ContainerService;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.api.services.VersionService;
+import org.fcrepo.kernel.modeshape.ContainerImpl;
 import org.fcrepo.kernel.modeshape.utils.iterators.RelaxedRdfAdder;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;;
@@ -88,12 +91,6 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
 
     private static final Set<TripleCategory> VERSION_TRIPLES = new HashSet<>(asList(
             PROPERTIES, EMBED_RESOURCES, SERVER_MANAGED, LDP_MEMBERSHIP, LDP_CONTAINMENT));
-
-    /**
-     * The repository object service
-     */
-    @Inject
-    protected ContainerService containerService;
 
     /**
      * The bitstream service
@@ -122,7 +119,7 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
 
         assertMementoDoesNotExist(session, mementoPath);
 
-        final FedoraResource mementoResource = containerService.findOrCreate(session, mementoPath);
+        final FedoraResource mementoResource = createContainer(session, mementoPath);
         final String mementoUri = getUri(mementoResource, idTranslator);
 
         final String resourceUri = getUri(resource, idTranslator);
@@ -149,6 +146,20 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
         decorateWithMementoProperties(session, mementoPath, dateTime);
 
         return mementoResource;
+    }
+
+    private Container createContainer(final FedoraSession session, final String path) {
+        try {
+            final Node node = findOrCreateNode(session, path, NT_FOLDER);
+
+            if (node.canAddMixin(FEDORA_RESOURCE)) {
+                node.addMixin(FEDORA_RESOURCE);
+            }
+
+            return new ContainerImpl(node);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     private RdfStream remapRdfSubjects(final String mementoUri, final String resourceUri, final RdfStream rdfStream) {
