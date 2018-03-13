@@ -62,10 +62,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_NAMESPACE_VALUE;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.codahale.metrics.annotation.Timed;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -76,6 +72,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
@@ -98,6 +95,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilderException;
 import javax.ws.rs.core.Variant.VariantListBuilder;
+
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -109,11 +107,12 @@ import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
+import org.fcrepo.kernel.api.exception.ConstraintViolationException;
+import org.fcrepo.kernel.api.exception.InsufficientStorageException;
+import org.fcrepo.kernel.api.exception.InvalidACLException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
-import org.fcrepo.kernel.api.exception.ConstraintViolationException;
-import org.fcrepo.kernel.api.exception.InsufficientStorageException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
@@ -124,10 +123,14 @@ import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.utils.ContentDigest;
 import org.fcrepo.kernel.api.utils.MessageExternalBodyContentType;
-
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
+
+import com.codahale.metrics.annotation.Timed;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
 
 /**
  * @author cabeer
@@ -354,6 +357,9 @@ public class FedoraLdp extends ContentExposingResource {
         }
 
         final URI resourceAcl = checkForAclLink(links);
+        if (resourceAcl != null) {
+            checkAclUriExists(resourceAcl);
+        }
 
         final FedoraResource resource;
 
@@ -544,6 +550,9 @@ public class FedoraLdp extends ContentExposingResource {
         }
 
         final URI resourceAcl = checkForAclLink(links);
+        if (resourceAcl != null) {
+            checkAclUriExists(resourceAcl);
+        }
 
         if (!(resource() instanceof Container)) {
             throw new ClientErrorException("Object cannot have child nodes", CONFLICT);
@@ -619,6 +628,13 @@ public class FedoraLdp extends ContentExposingResource {
         }
     }
 
+    private void checkAclUriExists(final URI resourceAcl) {
+        final FedoraResource aclResource = getResourceFromPath(resourceAcl.getPath());
+        if (aclResource == null) {
+            throw new InvalidACLException("The ACL URI in the link header does not exist");
+        }
+    }
+
     private void addResourceAcl(final URI resourceAcl) {
         if (resourceAcl != null) {
             final String sparql =
@@ -666,6 +682,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @param rootThrowable The original throwable
      * @param throwable The throwable under direct scrutiny.
      */
+    @Override
     protected void checkForInsufficientStorageException(final Throwable rootThrowable, final Throwable throwable)
             throws InvalidChecksumException {
         final String message = throwable.getMessage();
