@@ -2265,6 +2265,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         // attempt to change basic container to NonRdfSource
         final String ttl1 = "<> a <" + NON_RDF_SOURCE.getURI() + "> .";
         final HttpPut put1 = putObjMethod(pid + "/a", "text/turtle", ttl1);
+        put1.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
         assertEquals("Changed the basic container ixn to NonRdfSource through PUT with RDF content!",
                 CONFLICT.getStatusCode(), getStatus(put1));
 
@@ -2272,6 +2273,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String ttl2 = "<> a <" + DIRECT_CONTAINER.getURI() + "> ; <" + MEMBERSHIP_RESOURCE.getURI() +
                 "> <" + resource + "> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_NAMESPACE + "member> .";
         final HttpPut put2 = putObjMethod(pid + "/a", "text/turtle", ttl2);
+        put2.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
         assertEquals("Changed the basic container ixn to Direct Container through PUT with RDF content!",
                 CONFLICT.getStatusCode(), getStatus(put2));
 
@@ -2283,19 +2285,29 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals(CREATED.getStatusCode(), getStatus(put));
         assertTrue(getLinkHeaders(getObjMethod(pid + "/b")).contains(DIRECT_CONTAINER_LINK_HEADER));
 
+        // successful update the properties with the interaction mode
+        final String ttla = "<> a <" + DIRECT_CONTAINER.getURI()
+                + "> ; <" + MEMBERSHIP_RESOURCE + "> <" + container + ">;\n"
+                + "<" + HAS_MEMBER_RELATION + "> <info:some/relation> .\n";
+        final HttpPut puta = putObjMethod(pid + "/b", "text/turtle", ttla);
+        puta.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(puta));
+
         // attempt to change direct container to basic container
         final String ttl3 = "<> a <" + BASIC_CONTAINER.getURI() +
                 "> ; <http://purl.org/dc/elements/1.1/title> \"this is a title\".";
         final HttpPut put3 = putObjMethod(pid + "/b", "text/turtle", ttl3);
+        put3.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
         assertEquals("Changed the direct container ixn to basic container through PUT with RDF content!",
                 CONFLICT.getStatusCode(), getStatus(put3));
 
         // attempt to change direct container to indirect container
-        final String ttl4 = "<> a <" + DIRECT_CONTAINER.getURI()
+        final String ttl4 = "<> a <" + INDIRECT_CONTAINER.getURI()
                 + "> ; <" + MEMBERSHIP_RESOURCE + "> <" + container + ">;\n"
                 + "<" + HAS_MEMBER_RELATION + "> <info:some/relation>;\n"
                 + "<" + LDP_NAMESPACE + "insertedContentRelation> <info:proxy/for> .\n";
         final HttpPut put4 = putObjMethod(pid + "/b", "text/turtle", ttl4);
+        put4.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
         assertEquals("Changed the direct container ixn to indirect container through PUT with RDF content!",
                 CONFLICT.getStatusCode(), getStatus(put4));
     }
@@ -2314,6 +2326,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 "> <" + resource + "> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_NAMESPACE + "member> .";
         final HttpPut put1 = putObjMethod(pid + "/a", "text/turtle", ttl1);
         put1.setHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
+        put1.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
         assertEquals("Changed the basic container ixn to direct container!",
                 CONFLICT.getStatusCode(), getStatus(put1));
 
@@ -2328,6 +2341,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String ttl2 = "<> <http://purl.org/dc/elements/1.1/title> \"this is a title\"";
         final HttpPut put2 = putObjMethod(pid + "/b", "text/turtle", ttl2);
         put2.setHeader(LINK, INDIRECT_CONTAINER_LINK_HEADER);
+        put2.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
         assertEquals("Changed the direct container ixn to basic container",
                 CONFLICT.getStatusCode(), getStatus(put2));
 
@@ -2336,6 +2350,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 + "<" + LDP_NAMESPACE + "insertedContentRelation> <info:proxy/for> .\n";
         final HttpPut put3 = putObjMethod(pid + "/b", "text/turtle", ttl3);
         put3.setHeader(LINK, INDIRECT_CONTAINER_LINK_HEADER);
+        put3.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
         assertEquals("Changed the direct container ixn to indirect container!",
                 CONFLICT.getStatusCode(), getStatus(put3));
     }
