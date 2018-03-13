@@ -52,6 +52,7 @@ import java.util.List;
 
 import javax.jcr.ItemExistsException;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -161,6 +162,12 @@ public class FedoraVersioning extends ContentExposingResource {
 
         try {
             final MediaType contentType = getSimpleContentType(requestContentType);
+
+            final String slug = headers.getHeaderString("Slug");
+            if (slug != null) {
+                throw new BadRequestException("Slug header is no longer supported for versioning label. "
+                        + "Please use " + MEMENTO_DATETIME_HEADER + " header with RFC-1123 date-time.");
+            }
 
             final Instant mementoInstant;
             try {

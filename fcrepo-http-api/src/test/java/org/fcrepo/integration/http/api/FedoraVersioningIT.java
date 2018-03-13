@@ -177,6 +177,24 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testCreateVersionWithSlugHeader() throws Exception {
+        createVersionedContainer(id, subjectUri);
+
+        // Bad request with Slug header to create memento
+        final String mementoDateTime = "Tue, 3 Jun 2008 11:05:30 GMT";
+        final String body = "<" + subjectUri + "> <info:test#label> \"bar\"";
+        final HttpPost post = postObjMethod(id + "/" + FCR_VERSIONS);
+
+        post.addHeader("Slug", "version_label");
+        post.addHeader(MEMENTO_DATETIME_HEADER, mementoDateTime);
+        post.addHeader(CONTENT_TYPE, "text/n3");
+        post.setEntity(new StringEntity(body));
+
+        assertEquals("Created memento with Slug!",
+                BAD_REQUEST.getStatusCode(), getStatus(post));
+    }
+
+    @Test
     public void testCreateVersionWithMementoDatetimeFromat() throws Exception {
         createVersionedContainer(id, subjectUri);
 
