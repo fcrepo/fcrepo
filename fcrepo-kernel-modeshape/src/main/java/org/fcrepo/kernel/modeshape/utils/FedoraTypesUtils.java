@@ -134,7 +134,7 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
     /**
      * Predicate for determining whether this {@link Node} is a Memento.
      */
-    public static Predicate<Node> isMemento = new AnyTypesPredicate(FEDORA_MEMENTO);
+    public static Predicate<Node> isMemento = new AnyTypesPredicate(MEMENTO);
 
     /**
      * Check if a property is a reference property.
@@ -181,7 +181,7 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
     public static Predicate<Property> isInternalProperty = isBinaryContentProperty
                             .or(isProtectedAndShouldBeHidden::test)
                             .or(uncheck(p -> privateProperties.contains(p.getName())));
-
+    
     /**
      * A functional predicate to check whether a property is a JCR property that should be exposed.
      * Historically we exposed JCR properties when they seemed to match a fedora property we wanted to track,

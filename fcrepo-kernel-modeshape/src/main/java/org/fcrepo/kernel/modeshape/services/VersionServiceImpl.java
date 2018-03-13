@@ -19,8 +19,8 @@ package org.fcrepo.kernel.modeshape.services;
 
 import static java.util.Arrays.asList;
 import static org.apache.jena.graph.NodeFactory.createURI;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_MEMENTO;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_MEMENTO_DATETIME;
+import static org.fcrepo.kernel.api.FedoraTypes.MEMENTO;
+import static org.fcrepo.kernel.api.FedoraTypes.MEMENTO_DATETIME;
 import static org.fcrepo.kernel.api.RequiredRdfContext.EMBED_RESOURCES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_CONTAINMENT;
 import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_MEMBERSHIP;
@@ -204,12 +204,12 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
             final Instant dateTime) {
         try {
             final Node mementoNode = findNode(session, mementoPath);
-            if (mementoNode.canAddMixin(FEDORA_MEMENTO)) {
-                mementoNode.addMixin(FEDORA_MEMENTO);
+            if (mementoNode.canAddMixin(MEMENTO)) {
+                mementoNode.addMixin(MEMENTO);
             }
             final Calendar mementoDatetime = GregorianCalendar.from(
                     ZonedDateTime.ofInstant(dateTime, ZoneId.of("UTC")));
-            mementoNode.setProperty(FEDORA_MEMENTO_DATETIME, mementoDatetime);
+            mementoNode.setProperty(MEMENTO_DATETIME, mementoDatetime);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }

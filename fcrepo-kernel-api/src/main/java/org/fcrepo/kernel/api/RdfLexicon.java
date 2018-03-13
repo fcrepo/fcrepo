@@ -141,7 +141,7 @@ public final class RdfLexicon {
             createProperty(REPOSITORY_NAMESPACE + "lastModifiedBy");
     public static final Set<Property> serverManagedProperties = of(
             CREATED_DATE, CREATED_BY, LAST_MODIFIED_DATE, LAST_MODIFIED_BY);
-    
+
     public static final Resource FEDORA_CONTAINER =
             createResource(REPOSITORY_NAMESPACE + "Container");
     public static final Resource FEDORA_BINARY =
@@ -292,6 +292,11 @@ public final class RdfLexicon {
      * Memento TimeGate type.
      */
     public static final String VERSIONING_TIMEGATE_TYPE = MEMENTO_NAMESPACE + "TimeGate";
+
+    /**
+     * Type for memento objects.
+     */
+    public static final String MEMENTO_TYPE = MEMENTO_NAMESPACE + "Memento";
 
     /**
      * This is an internal RDF type for versionable resources, this may be replaced by a Memento type.

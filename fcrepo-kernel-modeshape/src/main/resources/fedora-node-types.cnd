@@ -27,6 +27,7 @@
 <premis = 'http://www.loc.gov/premis/rdf/v1#'>
 <ldp = 'http://www.w3.org/ns/ldp#'>
 <acl = 'http://www.w3.org/ns/auth/acl#'>
+<memento = 'http://mementoweb.org/ns#'>
 
 <ebucore = 'http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#'>
 
@@ -81,8 +82,8 @@
 /*
  * A Fedora LDPRm Memento.
  */
-[fedora:Memento] > fedora:Resource mixin
-  - fedora:mementoDatetime (DATE)
+[memento:Memento] > fedora:Resource mixin
+  - memento:mementoDatetime (DATE)
 
 /*
  * Some content that can have a checksum
