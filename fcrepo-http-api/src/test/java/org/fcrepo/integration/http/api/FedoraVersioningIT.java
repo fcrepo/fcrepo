@@ -21,6 +21,7 @@ import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.HttpHeaders.LOCATION;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -173,6 +174,43 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             assertFalse("Memento type should not be visible",
                     results.contains(ANY, mementoSubject, RDF.type.asNode(), MEMENTO_TYPE_NODE));
         }
+    }
+
+    @Test
+    public void testCreateVersionWithMementoDatetimeFromat() throws Exception {
+        createVersionedContainer(id, subjectUri);
+
+        // Create memento with RFC-1123 date-time format
+        final String mementoDateTime = "Tue, 3 Jun 2008 11:05:30 GMT";
+        final String body = "<" + subjectUri + "> <info:test#label> \"bar\"";
+        final HttpPost post = postObjMethod(id + "/" + FCR_VERSIONS);
+
+        post.addHeader(MEMENTO_DATETIME_HEADER, mementoDateTime);
+        post.addHeader(CONTENT_TYPE, "text/n3");
+        post.setEntity(new StringEntity(body));
+
+        assertEquals("Unable to create memento with RFC-1123 date-time format!",
+                CREATED.getStatusCode(), getStatus(post));
+
+        // Create memento with RFC-1123 date-time format in wrong value
+        final String dateTime1 = "Tue, 13 Jun 2008 11:05:30 ANYTIZONE";
+        final HttpPost post1 = postObjMethod(id + "/" + FCR_VERSIONS);
+
+        post1.addHeader(CONTENT_TYPE, "text/n3");
+        post1.setEntity(new StringEntity(body));
+        post1.addHeader(MEMENTO_DATETIME_HEADER, dateTime1);
+
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(post1));
+
+        // Create memento in date-time format other than RFC-1123
+        final String dateTime2 = "2000-01-01T01:01:01.11Z";
+        final HttpPost post2 = postObjMethod(id + "/" + FCR_VERSIONS);
+
+        post2.addHeader(CONTENT_TYPE, "text/n3");
+        post2.setEntity(new StringEntity(body));
+        post2.addHeader(MEMENTO_DATETIME_HEADER, dateTime2);
+
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(post2));
     }
 
     @Test
