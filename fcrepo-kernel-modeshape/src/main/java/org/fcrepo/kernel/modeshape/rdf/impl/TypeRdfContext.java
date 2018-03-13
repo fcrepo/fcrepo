@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.graph.Triple.create;
 import static org.apache.jena.vocabulary.RDF.type;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalType;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -47,6 +48,7 @@ public class TypeRdfContext extends NodeRdfContext {
                           final IdentifierConverter<Resource, FedoraResource> idTranslator) {
         super(resource, idTranslator);
 
-        concat(resource.getTypes().stream().map(uri -> create(subject(), type.asNode(), createURI(uri.toString()))));
+        concat(resource.getTypes().stream().filter(isInternalType.negate())
+                .map(uri -> create(subject(), type.asNode(), createURI(uri.toString()))));
     }
 }

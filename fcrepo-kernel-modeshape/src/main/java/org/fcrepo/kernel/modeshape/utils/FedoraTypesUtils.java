@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.modeshape.utils;
 
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Optional;
@@ -51,6 +52,7 @@ import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static com.google.common.collect.ImmutableSet.of;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_MIXIN_TYPES;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_PRIMARY_TYPE;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_NODE;
@@ -94,7 +96,8 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
             JCR_CREATEDBY,
             JCR_MIXIN_TYPES,
             FROZEN_MIXIN_TYPES,
-            FROZEN_PRIMARY_TYPE);
+            FROZEN_PRIMARY_TYPE,
+            MEMENTO_DATETIME);
 
     private static Set<String> validJcrProperties = of(
             JCR_CREATED,
@@ -181,7 +184,12 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
     public static Predicate<Property> isInternalProperty = isBinaryContentProperty
                             .or(isProtectedAndShouldBeHidden::test)
                             .or(uncheck(p -> privateProperties.contains(p.getName())));
-    
+
+    /**
+     * Check whether a type is an internal type that should be suppressed from external output.
+     */
+    public static Predicate<URI> isInternalType = t -> t.toString().equals(MEMENTO_TYPE);
+
     /**
      * A functional predicate to check whether a property is a JCR property that should be exposed.
      * Historically we exposed JCR properties when they seemed to match a fedora property we wanted to track,

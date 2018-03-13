@@ -67,11 +67,13 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.vocabulary.RDF;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
+import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
 
 /**
  * @author lsitu
@@ -85,6 +87,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     private static final String OCTET_STREAM_TYPE = "application/octet-stream";
 
+    private static final Node MEMENTO_TYPE_NODE = createURI(MEMENTO_TYPE);
     private static final Node TEST_PROPERTY_NODE = createURI("info:test#label");
 
     private static final Property TEST_PROPERTY = createProperty("info:test#label");
@@ -148,10 +151,15 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     public void testCreateVersion() throws Exception {
         createVersionedContainer(id, subjectUri);
 
-        final HttpPost postMethod = postObjMethod(id + "/" + FCR_VERSIONS);
-        try (final CloseableHttpResponse response = execute(postMethod)) {
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
-            assertMementoDatetimeHeaderPresent(response);
+        final String mementoUri = createContainerMementoWithBody(subjectUri, null);
+
+        try (final CloseableDataset dataset = getDataset(new HttpGet(mementoUri))) {
+            final DatasetGraph results = dataset.asDatasetGraph();
+
+            final Node mementoSubject = createURI(mementoUri);
+
+            assertFalse("Memento type should not be visible",
+                    results.contains(ANY, mementoSubject, RDF.type.asNode(), MEMENTO_TYPE_NODE));
         }
     }
 
