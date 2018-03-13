@@ -28,7 +28,7 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
 import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.LDPCV_TIME_MAP;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
-import static org.fcrepo.kernel.modeshape.rdf.impl.RdfStreamRequiredPropertiesUtil.assertContainsRequiredContainerTriples;
+import static org.fcrepo.kernel.modeshape.rdf.impl.RequiredPropertiesUtil.assertRequiredContainerTriples;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.InputStream;
@@ -136,7 +136,7 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
             inputModel.read(rdfInputStream, mementoUri, rdfFormat.getName());
 
             // Validate server managed triples are provided
-            assertContainsRequiredContainerTriples(inputModel);
+            assertRequiredContainerTriples(inputModel);
 
             mementoRdfStream = DefaultRdfStream.fromModel(createURI(mementoUri), inputModel);
         }

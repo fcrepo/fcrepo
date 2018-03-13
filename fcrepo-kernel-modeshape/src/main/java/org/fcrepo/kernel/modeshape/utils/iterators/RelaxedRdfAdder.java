@@ -45,6 +45,14 @@ public class RelaxedRdfAdder extends RdfAdder {
 
     private static final Logger LOGGER = getLogger(RelaxedRdfAdder.class);
 
+    /**
+     * Default constructor
+     *
+     * @param idTranslator translator
+     * @param session session
+     * @param stream rdf stream
+     * @param userNamespaces namespaces
+     */
     public RelaxedRdfAdder(final IdentifierConverter<Resource, FedoraResource> idTranslator, final Session session,
             final RdfStream stream, final Map<String, String> userNamespaces) {
         super(idTranslator, session, stream, userNamespaces);

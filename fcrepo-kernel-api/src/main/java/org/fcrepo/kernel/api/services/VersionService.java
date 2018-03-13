@@ -75,7 +75,7 @@ public interface VersionService {
      *        memento. If null, then the current state of the binary will be used.
      * @param filename filename of the binary
      * @param mimetype mimetype of the binary
-     * @param Collection of checksum URIs of the content (optional)
+     * @param checksums Collection of checksum URIs of the content (optional)
      * @return the version
      */
     FedoraResource createBinaryVersion(FedoraSession session, FedoraResource resource, Instant dateTime,
