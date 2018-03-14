@@ -58,6 +58,8 @@ public final class RdfLexicon {
 
     public static final String MEMENTO_NAMESPACE = "http://mementoweb.org/ns#";
 
+    public static final String RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
+
     /**
      * Namespace for the W3C WebAC vocabulary.
      */
@@ -142,6 +144,13 @@ public final class RdfLexicon {
     public static final Set<Property> serverManagedProperties = of(
             CREATED_DATE, CREATED_BY, LAST_MODIFIED_DATE, LAST_MODIFIED_BY);
 
+    public static final Resource FEDORA_CONTAINER =
+            createResource(REPOSITORY_NAMESPACE + "Container");
+    public static final Resource FEDORA_BINARY =
+            createResource(REPOSITORY_NAMESPACE + "Binary");
+    public static final Resource FEDORA_RESOURCE =
+            createResource(REPOSITORY_NAMESPACE + "Resource");
+
     // Linked Data Platform
     public static final Property PAGE =
         createProperty(LDP_NAMESPACE + "Page");
@@ -161,10 +170,10 @@ public final class RdfLexicon {
         createProperty(LDP_NAMESPACE + "contains");
     public static final Property LDP_MEMBER =
             createProperty(LDP_NAMESPACE + "member");
-    public static final Property RDF_SOURCE =
-            createProperty(LDP_NAMESPACE + "RDFSource");
-    public static final Property NON_RDF_SOURCE =
-        createProperty(LDP_NAMESPACE + "NonRDFSource");
+    public static final Resource RDF_SOURCE =
+            createResource(LDP_NAMESPACE + "RDFSource");
+    public static final Resource NON_RDF_SOURCE =
+        createResource(LDP_NAMESPACE + "NonRDFSource");
     public static final Property CONSTRAINED_BY =
             createProperty(LDP_NAMESPACE + "constrainedBy");
     public static final Property MEMBER_SUBJECT =
@@ -271,7 +280,8 @@ public final class RdfLexicon {
         hasFedoraNamespace.or(p -> managedProperties.contains(p));
 
     /**
-     * Fedora defined JCR node type with supertype of nt:file with a single nt:folder named fedora:timemap inside.
+     * Fedora defined JCR node type with supertype of nt:file with two nt:folder named fedora:timemap and
+     * fedora:binaryTimemap inside.
      */
     public static final String NT_VERSION_FILE = "nt:versionFile";
 
@@ -287,10 +297,24 @@ public final class RdfLexicon {
     public static final String VERSIONING_TIMEGATE_TYPE = MEMENTO_NAMESPACE + "TimeGate";
 
     /**
+     * Type for memento objects.
+     */
+    public static final String MEMENTO_TYPE = MEMENTO_NAMESPACE + "Memento";
+
+    /**
      * This is an internal RDF type for versionable resources, this may be replaced by a Memento type.
      */
     public static final Property VERSIONED_RESOURCE =
         createProperty(MEMENTO_NAMESPACE + "OriginalResource");
+
+    /*
+     * Interaction Models.
+     */
+    public static final Set<String>  INTERACTION_MODELS = of(
+            NON_RDF_SOURCE.getURI().replace(LDP_NAMESPACE, "ldp:"),
+            BASIC_CONTAINER.getURI().replace(LDP_NAMESPACE, "ldp:"),
+            DIRECT_CONTAINER.getURI().replace(LDP_NAMESPACE, "ldp:"),
+            INDIRECT_CONTAINER.getURI().replace(LDP_NAMESPACE, "ldp:"));
 
     private RdfLexicon() {
 
