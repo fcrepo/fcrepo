@@ -208,14 +208,14 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
         if (uriTemplate.match(resource.getURI(), values) && values.containsKey("path")) {
             String path = "/" + values.get("path");
 
-            final boolean metadata = path.endsWith("/" + FCR_METADATA);
             final boolean timemap = path.endsWith("/" + FCR_VERSIONS);
-
-            if (metadata) {
-                path = replaceOnce(path, "/" + FCR_METADATA, EMPTY);
-            }
             if (timemap) {
                 path = replaceOnce(path, "/" + FCR_VERSIONS, EMPTY);
+            }
+
+            final boolean metadata = path.endsWith("/" + FCR_METADATA);
+            if (metadata) {
+                path = replaceOnce(path, "/" + FCR_METADATA, EMPTY);
             }
 
             path = forward.convert(path);
@@ -252,7 +252,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
     private Node getNode(final String path) throws RepositoryException {
         try {
             return getJcrSession(session).getNode(path);
-        } catch (IllegalArgumentException ex) {
+        } catch (final IllegalArgumentException ex) {
             throw new InvalidResourceIdentifierException("Illegal path: " + path);
         }
     }

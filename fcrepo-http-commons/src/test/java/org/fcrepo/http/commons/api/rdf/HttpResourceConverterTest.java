@@ -23,6 +23,7 @@ import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.FedoraTimeMap;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
@@ -45,11 +46,14 @@ import javax.jcr.version.VersionManager;
 import javax.ws.rs.core.UriBuilder;
 
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TIME_MAP;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
@@ -224,5 +228,61 @@ public class HttpResourceConverterTest {
     @Test (expected = InvalidResourceIdentifierException.class)
     public void testToStringWithEmptPathSegment() {
         converter.asString(createResource("http://localhost:8080/some/test/a//b/c/d"));
+    }
+
+    @Test
+    public void testDoForwardWithTimemap() throws Exception {
+        final Resource resource = createResource("http://localhost:8080/some/container/fcr:versions");
+        when(session.getNode("/container")).thenReturn(node);
+
+        final Node ldpcvNode = mock(Node.class);
+        when(ldpcvNode.isNodeType(FEDORA_TIME_MAP)).thenReturn(true);
+        when(node.getNode("fedora:timemap")).thenReturn(ldpcvNode);
+
+        final FedoraResource converted = converter.convert(resource);
+        assertTrue("Converted resource must be a timemap", converted instanceof FedoraTimeMap);
+
+        final Node resultNode = getJcrNode(converted);
+        assertEquals(ldpcvNode, resultNode);
+    }
+
+    @Test
+    public void testDoForwardWithBinaryTimemap() throws Exception {
+        final Resource resource = createResource("http://localhost:8080/some/binary/fcr:versions");
+        when(session.getNode("/binary")).thenReturn(node);
+        when(node.isNodeType(FEDORA_BINARY)).thenReturn(true);
+
+        final Node binaryDescription = mock(Node.class);
+        when(binaryDescription.isNodeType(FEDORA_NON_RDF_SOURCE_DESCRIPTION)).thenReturn(true);
+        when(binaryDescription.getNode(JCR_CONTENT)).thenReturn(contentNode);
+        when(node.getParent()).thenReturn(binaryDescription);
+
+        final Node ldpcvNode = mock(Node.class);
+        when(ldpcvNode.isNodeType(FEDORA_TIME_MAP)).thenReturn(true);
+        when(binaryDescription.getNode("fedora:binaryTimemap")).thenReturn(ldpcvNode);
+
+        final FedoraResource converted = converter.convert(resource);
+        assertTrue("Converted resource must be a timemap", converted instanceof FedoraTimeMap);
+
+        final Node resultNode = getJcrNode(converted);
+        assertEquals(ldpcvNode, resultNode);
+    }
+
+    @Test
+    public void testDoForwardWithBinaryDescriptionTimemap() throws Exception {
+        final Resource resource = createResource("http://localhost:8080/some/binary/fcr:metadata/fcr:versions");
+        when(node.isNodeType(FEDORA_NON_RDF_SOURCE_DESCRIPTION)).thenReturn(true);
+        when(node.getNode(JCR_CONTENT)).thenReturn(contentNode);
+        when(session.getNode("/binary")).thenReturn(node);
+
+        final Node ldpcvNode = mock(Node.class);
+        when(ldpcvNode.isNodeType(FEDORA_TIME_MAP)).thenReturn(true);
+        when(node.getNode("fedora:timemap")).thenReturn(ldpcvNode);
+
+        final FedoraResource converted = converter.convert(resource);
+        assertTrue("Converted resource must be a timemap", converted instanceof FedoraTimeMap);
+
+        final Node resultNode = getJcrNode(converted);
+        assertEquals(ldpcvNode, resultNode);
     }
 }
