@@ -46,11 +46,13 @@ import java.io.InputStream;
 import java.net.URI;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.jcr.ItemExistsException;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -74,6 +76,7 @@ import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.responses.LinkFormatStream;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.MementoDatetimeFormatException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryVersionRuntimeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
@@ -144,6 +147,7 @@ public class FedoraVersioning extends ContentExposingResource {
      * @param requestBodyStream request body stream
      * @return response
      * @throws InvalidChecksumException thrown if one of the provided digests does not match the content
+     * @throws MementoDatetimeFormatException if the header value of memento-datetime is not RFC-1123 format
      */
     @POST
     public Response addVersion(@HeaderParam(MEMENTO_DATETIME_HEADER) final String datetimeHeader,
@@ -151,7 +155,7 @@ public class FedoraVersioning extends ContentExposingResource {
             @HeaderParam(CONTENT_DISPOSITION) final ContentDisposition contentDisposition,
             @HeaderParam("Digest") final String digest,
             @ContentLocation final InputStream requestBodyStream)
-            throws InvalidChecksumException {
+            throws InvalidChecksumException, MementoDatetimeFormatException {
 
         final AcquiredLock lock = lockManager.lockForWrite(resource().findOrCreateTimeMap().getPath(),
             session.getFedoraSession(), nodeService);
@@ -159,8 +163,21 @@ public class FedoraVersioning extends ContentExposingResource {
         try {
             final MediaType contentType = getSimpleContentType(requestContentType);
 
-            final Instant mementoInstant = (isBlank(datetimeHeader) ? Instant.now()
+            final String slug = headers.getHeaderString("Slug");
+            if (slug != null) {
+                throw new BadRequestException("Slug header is no longer supported for versioning label. "
+                        + "Please use " + MEMENTO_DATETIME_HEADER + " header with RFC-1123 date-time.");
+            }
+
+            final Instant mementoInstant;
+            try {
+                mementoInstant = (isBlank(datetimeHeader) ? Instant.now()
                     : Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(datetimeHeader)));
+            } catch (DateTimeParseException e) {
+                throw new MementoDatetimeFormatException("Invalid memento date-time value. "
+                        + "Please use RFC-1123 date-time format, such as 'Tue, 3 Jun 2008 11:05:30 GMT'", e);
+            }
+
             final boolean createFromExisting = isBlank(datetimeHeader);
 
             if (requestContentType == null && !createFromExisting) {
