@@ -27,6 +27,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.ext.Provider;
 
 import org.fcrepo.kernel.api.exception.InvalidACLException;
 import org.slf4j.Logger;
@@ -37,6 +38,7 @@ import org.slf4j.Logger;
  * @author harring
  * @since 2018-03-13
  */
+@Provider
 public class InvalidACLExceptionMapper extends ConstraintExceptionMapper<InvalidACLException>
         implements ExceptionDebugLogging {
 

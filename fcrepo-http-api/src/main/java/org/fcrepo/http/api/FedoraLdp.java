@@ -75,6 +75,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
+import javax.jcr.PathNotFoundException;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.Consumes;
@@ -629,10 +630,19 @@ public class FedoraLdp extends ContentExposingResource {
     }
 
     private void checkAclUriExists(final URI resourceAcl) {
-        final FedoraResource aclResource = getResourceFromPath(resourceAcl.getPath());
-        if (aclResource == null) {
-            throw new InvalidACLException("The ACL URI in the link header does not exist");
+        try {
+            final FedoraResource aclResource = getResourceFromPath(resourceAcl.getPath());
+            if (aclResource == null) {
+                throw new InvalidACLException("The ACL URI in the link header does not exist");
+            }
+        } catch (RepositoryRuntimeException e) {
+            if (e.getCause() instanceof PathNotFoundException) {
+                throw new InvalidACLException("The external path of the link header's ACL URI was not found");
+            } else {
+                throw e;
+            }
         }
+
     }
 
     private void addResourceAcl(final URI resourceAcl) {
