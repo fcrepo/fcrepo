@@ -57,6 +57,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_PAIRTREE;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODELS;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_NAMESPACE_VALUE;
@@ -75,6 +76,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -109,11 +111,12 @@ import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
+import org.fcrepo.kernel.api.exception.ConstraintViolationException;
+import org.fcrepo.kernel.api.exception.InsufficientStorageException;
+import org.fcrepo.kernel.api.exception.InteractionModelViolationException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
-import org.fcrepo.kernel.api.exception.ConstraintViolationException;
-import org.fcrepo.kernel.api.exception.InsufficientStorageException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
@@ -369,6 +372,13 @@ public class FedoraLdp extends ContentExposingResource {
 
             if (nodeService.exists(session.getFedoraSession(), path)) {
                 resource = resource();
+
+                final String resInteractionModel = getInteractionModel(resource);
+                if (StringUtils.isNoneBlank(interactionModel) && StringUtils.isNoneBlank(resInteractionModel)
+                        && !resInteractionModel.equals(interactionModel)) {
+                    throw new InteractionModelViolationException("Changing the interaction model " + resInteractionModel
+                                + " to " + interactionModel + " is not allowed!");
+                }
             } else {
                 final MediaType effectiveContentType
                         = requestBodyStream == null || requestContentType == null ? null : contentType;
@@ -793,12 +803,26 @@ public class FedoraLdp extends ContentExposingResource {
             result = binaryService.findOrCreate(session.getFedoraSession(), path);
         } else {
             result = containerService.findOrCreate(session.getFedoraSession(), path);
-            if (interactionModel != null && !interactionModel.equals("ldp:BasicContainer")) {
-                result.addType(interactionModel);
-            }
+        }
+
+        final String resInteractionModel = getInteractionModel(result);
+        if (StringUtils.isNoneBlank(interactionModel) && StringUtils.isNoneBlank(resInteractionModel)
+                && !resInteractionModel.equals(interactionModel)) {
+            throw new InteractionModelViolationException("Changing the interaction model " + resInteractionModel
+                        + " to " + interactionModel + " is not allowed!");
         }
 
         return result;
+    }
+
+    /*
+     * Get the interaction model from the Fedora Resource
+     * @param resource Fedora Resource
+     * @return String the Interaction Model
+     */
+    private String getInteractionModel(final FedoraResource resource) {
+        final Optional<String> result = INTERACTION_MODELS.stream().filter(x -> resource.hasType(x)).findFirst();
+        return result.isPresent() ? result.get() : null;
     }
 
     private String mintNewPid(final String slug) {

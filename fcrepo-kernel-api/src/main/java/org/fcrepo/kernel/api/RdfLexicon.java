@@ -58,6 +58,8 @@ public final class RdfLexicon {
 
     public static final String MEMENTO_NAMESPACE = "http://mementoweb.org/ns#";
 
+    public static final String RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
+
     /**
      * Namespace for the W3C WebAC vocabulary.
      */
@@ -303,6 +305,15 @@ public final class RdfLexicon {
      */
     public static final Property VERSIONED_RESOURCE =
         createProperty(MEMENTO_NAMESPACE + "OriginalResource");
+
+    /*
+     * Interaction Models.
+     */
+    public static final Set<String>  INTERACTION_MODELS = of(
+            NON_RDF_SOURCE.getURI().replace(LDP_NAMESPACE, "ldp:"),
+            BASIC_CONTAINER.getURI().replace(LDP_NAMESPACE, "ldp:"),
+            DIRECT_CONTAINER.getURI().replace(LDP_NAMESPACE, "ldp:"),
+            INDIRECT_CONTAINER.getURI().replace(LDP_NAMESPACE, "ldp:"));
 
     private RdfLexicon() {
 

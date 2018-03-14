@@ -32,7 +32,10 @@ import static org.apache.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static org.apache.jena.update.UpdateAction.execute;
 import static org.apache.jena.update.UpdateFactory.create;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
+import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODELS;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
+import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 import static org.fcrepo.kernel.api.RdfLexicon.isRelaxed;
@@ -93,6 +96,10 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.nodetype.NodeType;
 
+import com.google.common.annotations.VisibleForTesting;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.FedoraVersion;
 import org.fcrepo.kernel.api.RdfLexicon;
@@ -104,6 +111,7 @@ import org.fcrepo.kernel.api.exception.InvalidPrefixException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.InteractionModelViolationException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -133,17 +141,15 @@ import org.fcrepo.kernel.modeshape.utils.iterators.RdfRemover;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.modify.request.UpdateData;
 import org.apache.jena.sparql.modify.request.UpdateDeleteWhere;
 import org.apache.jena.sparql.modify.request.UpdateModify;
+import org.apache.jena.update.Update;
 import org.apache.jena.update.UpdateRequest;
 import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Converter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -730,6 +736,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             throw new IllegalArgumentException(errors.stream().map(Exception::getMessage).collect(joining(",\n")));
         }
 
+        checkInteractionModel(request);
+
         final FilteringJcrPropertyStatementListener listener = new FilteringJcrPropertyStatementListener(
                 idTranslator, getSession(), idTranslator.reverse().convert(this).asNode());
 
@@ -757,6 +765,61 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             throw new RuntimeException(e);
         }
     }
+
+    /*
+     * Check the SPARQLUpdate statements for the violation of changing interaction model
+     * @param request the UpdateRequest
+     * @throws InteractionModelViolationException when attempting to change the interaction model
+     */
+    private void checkInteractionModel(final UpdateRequest request) {
+        final List<Quad> deleteQuads = new ArrayList<Quad>();
+        final List<Quad> updateQuads = new ArrayList<Quad>();
+
+        for (Update operation : request.getOperations()) {
+            if (operation instanceof UpdateModify) {
+                final UpdateModify op = (UpdateModify) operation;
+                deleteQuads.addAll(op.getDeleteQuads());
+                updateQuads.addAll(op.getInsertQuads());
+            } else if (operation instanceof UpdateData) {
+                final UpdateData op = (UpdateData) operation;
+                updateQuads.addAll(op.getQuads());
+            } else if (operation instanceof UpdateDeleteWhere) {
+                final UpdateDeleteWhere op = (UpdateDeleteWhere) operation;
+                deleteQuads.addAll(op.getQuads());
+            }
+
+            final Optional<String> resIxn = INTERACTION_MODELS.stream().filter(x -> hasType(x)).findFirst();
+            if (resIxn.isPresent()) {
+                updateQuads.stream().forEach(e -> {
+                    final String ixn = getInteractionModel.apply(e.asTriple());
+                    if (StringUtils.isNotBlank(ixn) && !ixn.equals(resIxn.get())) {
+                        throw new InteractionModelViolationException("Changing the interaction model "
+                            + resIxn.get() + " to " + ixn + " is not allowed!");
+                    }
+                });
+            }
+
+            deleteQuads.stream().forEach(e -> {
+                final String ixn = getInteractionModel.apply(e.asTriple());
+                if (StringUtils.isNotBlank(ixn)) {
+                    throw new InteractionModelViolationException("Delete the interaction model "
+                            + ixn + " is not allowed!");
+                }
+            });
+        }
+    }
+
+    /*
+     * Dynamic function to extract the interaction model from Triple.
+     */
+    private static final Function<Triple, String> getInteractionModel =
+            uncheck( x -> {
+                if (x.getPredicate().hasURI(RDF_NAMESPACE + "type") && x.getObject().isURI()
+                        && INTERACTION_MODELS.contains((x.getObject().getURI().replace(LDP_NAMESPACE, "ldp:")))) {
+                return x.getObject().getURI().replace(LDP_NAMESPACE, "ldp:");
+            }
+            return null;
+    });
 
     @Override
     public RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> idTranslator,
@@ -790,6 +853,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @Override
     public void replaceProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
         final Model inputModel, final RdfStream originalTriples) throws MalformedRdfException {
+        final Optional<String> resIxn = INTERACTION_MODELS.stream().filter(x -> hasType(x)).findFirst();
 
         // remove any statements that update "relaxed" server-managed triples so they can be updated separately
         final List<Statement> filteredStatements = new ArrayList<>();
@@ -799,6 +863,13 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             if (RdfLexicon.isRelaxed.test(next.getPredicate())) {
                 filteredStatements.add(next);
                 it.remove();
+            } else {
+                // check for interaction model change violation
+                final String ixn = getInteractionModel.apply(next.asTriple());
+                if (StringUtils.isNotBlank(ixn) && resIxn.isPresent() && !ixn.equals(resIxn.get())) {
+                    throw new InteractionModelViolationException("Changing the interaction model "
+                        + resIxn.get() + " to " + ixn + " is not allowed!");
+                }
             }
         }
         // remove any "relaxed" server-managed triples from the existing triples

@@ -2189,15 +2189,15 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testGetObjectOmitContainment() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
-        final HttpPatch patch = patchObjMethod(id);
-        patch.setHeader(CONTENT_TYPE, "application/sparql-update");
-        final String updateString =
-                "INSERT DATA { <> a <" + DIRECT_CONTAINER.getURI() + "> ; <" + MEMBERSHIP_RESOURCE.getURI() +
-                        "> <> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_NAMESPACE + "member> .}";
-        patch.setEntity(new StringEntity(updateString));
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(patch));
+        final String location = serverAddress + id;
+        final String updateString = "<> <" + MEMBERSHIP_RESOURCE.getURI() +
+                "> <" + location + "> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_NAMESPACE + "member> .";
+        final HttpPut put = putObjMethod(id + "/a", "text/turtle", updateString);
+        put.setHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
+        assertEquals(CREATED.getStatusCode(), getStatus(put));
+        assertTrue(getLinkHeaders(getObjMethod(id + "/a")).contains(DIRECT_CONTAINER_LINK_HEADER));
+        createObject(id + "/a/1");
 
-        createObjectAndClose(id + "/a");
         final HttpGet getObjMethod = getObjMethod(id);
         getObjMethod
                 .addHeader("Prefer", "return=representation; omit=\"http://www.w3.org/ns/ldp#PreferContainment\"");
@@ -2207,6 +2207,152 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertTrue("Didn't find member resources", graph.find(ANY, resource, LDP_MEMBER.asNode(), ANY).hasNext());
             assertFalse("Expected nothing contained", graph.find(ANY, resource, CONTAINS.asNode(), ANY).hasNext());
         }
+    }
+
+    @Test
+    public void testPatchToCreateDirectContainerInSparqlUpdate() throws IOException {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+        final HttpPatch patch = patchObjMethod(id);
+        patch.setHeader(CONTENT_TYPE, "application/sparql-update");
+        final String updateString =
+                "INSERT DATA { <> a <" + DIRECT_CONTAINER.getURI() + "> ; <" + MEMBERSHIP_RESOURCE.getURI() +
+                        "> <> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_NAMESPACE + "member> .}";
+        patch.setEntity(new StringEntity(updateString));
+        assertEquals("Patch with sparql update created direct container from basic container!",
+                CONFLICT.getStatusCode(), getStatus(patch));
+    }
+
+    @Test
+    public void testPatchToDeleteNonRdfSourceInteractionModel() throws IOException {
+        final String pid = getRandomUniqueId();
+
+        createDatastream(pid, "x", "some content");
+
+        final String location = serverAddress + pid + "/x/fcr:metadata";
+        final HttpPatch patchDeleteMethod = new HttpPatch(location);
+        patchDeleteMethod.addHeader(CONTENT_TYPE, "application/sparql-update");
+        patchDeleteMethod.setEntity(new StringEntity("PREFIX ldp: <http://www.w3.org/ns/ldp#> " +
+                "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> DELETE { " +
+                "<> rdf:type  ldp:NonRDFSource .} WHERE {}"));
+        assertEquals("Delete interaction model got status 409!\n",
+                CONFLICT.getStatusCode(), getStatus(patchDeleteMethod));
+    }
+
+    @Test
+    public void testPutToChangeNonRdfSourceToRdfSource() throws IOException {
+        final String pid = getRandomUniqueId();
+
+        createDatastream(pid, "x", "some content");
+
+        final String ttl = "<> <http://purl.org/dc/elements/1.1/title> \"this is a title\" .";
+        final HttpPut put = putObjMethod(pid + "/x/fcr:metadata", "text/turtle", ttl);
+        put.setHeader(LINK, BASIC_CONTAINER_LINK_HEADER);
+        assertEquals("Changed the NonRdfSource ixn to basic container",
+                CONFLICT.getStatusCode(), getStatus(put));
+    }
+
+    @Test
+    public void testPutToChangeInteractionModelWithRdf() throws IOException {
+        final String pid = getRandomUniqueId();
+        final String resource = serverAddress + pid;
+        final String container = serverAddress + pid + "/c";
+
+        createObjectAndClose(pid);
+        createObjectAndClose(pid + "/a");
+        createObjectAndClose(pid + "/c");
+
+        // attempt to change basic container to NonRdfSource
+        final String ttl1 = "<> a <" + NON_RDF_SOURCE.getURI() + "> .";
+        final HttpPut put1 = putObjMethod(pid + "/a", "text/turtle", ttl1);
+        put1.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
+        assertEquals("Changed the basic container ixn to NonRdfSource through PUT with RDF content!",
+                CONFLICT.getStatusCode(), getStatus(put1));
+
+        // attempt to change basic container to direct container
+        final String ttl2 = "<> a <" + DIRECT_CONTAINER.getURI() + "> ; <" + MEMBERSHIP_RESOURCE.getURI() +
+                "> <" + resource + "> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_NAMESPACE + "member> .";
+        final HttpPut put2 = putObjMethod(pid + "/a", "text/turtle", ttl2);
+        put2.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
+        assertEquals("Changed the basic container ixn to Direct Container through PUT with RDF content!",
+                CONFLICT.getStatusCode(), getStatus(put2));
+
+        // create direct container
+        final String ttl = "<> <" + MEMBERSHIP_RESOURCE.getURI() +
+                "> <" + resource + "> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_NAMESPACE + "member> .";
+        final HttpPut put = putObjMethod(pid + "/b", "text/turtle", ttl);
+        put.setHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
+        assertEquals(CREATED.getStatusCode(), getStatus(put));
+        assertTrue(getLinkHeaders(getObjMethod(pid + "/b")).contains(DIRECT_CONTAINER_LINK_HEADER));
+
+        // successful update the properties with the interaction mode
+        final String ttla = "<> a <" + DIRECT_CONTAINER.getURI()
+                + "> ; <" + MEMBERSHIP_RESOURCE + "> <" + container + ">;\n"
+                + "<" + HAS_MEMBER_RELATION + "> <info:some/relation> .\n";
+        final HttpPut puta = putObjMethod(pid + "/b", "text/turtle", ttla);
+        puta.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(puta));
+
+        // attempt to change direct container to basic container
+        final String ttl3 = "<> a <" + BASIC_CONTAINER.getURI() +
+                "> ; <http://purl.org/dc/elements/1.1/title> \"this is a title\".";
+        final HttpPut put3 = putObjMethod(pid + "/b", "text/turtle", ttl3);
+        put3.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
+        assertEquals("Changed the direct container ixn to basic container through PUT with RDF content!",
+                CONFLICT.getStatusCode(), getStatus(put3));
+
+        // attempt to change direct container to indirect container
+        final String ttl4 = "<> a <" + INDIRECT_CONTAINER.getURI()
+                + "> ; <" + MEMBERSHIP_RESOURCE + "> <" + container + ">;\n"
+                + "<" + HAS_MEMBER_RELATION + "> <info:some/relation>;\n"
+                + "<" + LDP_NAMESPACE + "insertedContentRelation> <info:proxy/for> .\n";
+        final HttpPut put4 = putObjMethod(pid + "/b", "text/turtle", ttl4);
+        put4.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
+        assertEquals("Changed the direct container ixn to indirect container through PUT with RDF content!",
+                CONFLICT.getStatusCode(), getStatus(put4));
+    }
+
+    @Test
+    public void testChangeInteractionModelWithPut() throws IOException {
+        final String pid = getRandomUniqueId();
+        final String resource = serverAddress + pid;
+        final String container = serverAddress + pid + "/c";
+
+        createObjectAndClose(pid);
+        createObjectAndClose(pid + "/a");
+        createObjectAndClose(pid + "/c");
+
+        final String ttl1 = "<> <" + MEMBERSHIP_RESOURCE.getURI() +
+                "> <" + resource + "> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_NAMESPACE + "member> .";
+        final HttpPut put1 = putObjMethod(pid + "/a", "text/turtle", ttl1);
+        put1.setHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
+        put1.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
+        assertEquals("Changed the basic container ixn to direct container!",
+                CONFLICT.getStatusCode(), getStatus(put1));
+
+        // create direct container
+        final String ttl = "<> <" + MEMBERSHIP_RESOURCE.getURI() +
+                "> <" + resource + "> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_NAMESPACE + "member> .";
+        final HttpPut put = putObjMethod(pid + "/b", "text/turtle", ttl);
+        put.setHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
+        assertEquals(CREATED.getStatusCode(), getStatus(put));
+        assertTrue(getLinkHeaders(getObjMethod(pid + "/b")).contains(DIRECT_CONTAINER_LINK_HEADER));
+
+        final String ttl2 = "<> <http://purl.org/dc/elements/1.1/title> \"this is a title\"";
+        final HttpPut put2 = putObjMethod(pid + "/b", "text/turtle", ttl2);
+        put2.setHeader(LINK, INDIRECT_CONTAINER_LINK_HEADER);
+        put2.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
+        assertEquals("Changed the direct container ixn to basic container",
+                CONFLICT.getStatusCode(), getStatus(put2));
+
+        final String ttl3 = "<> <" + MEMBERSHIP_RESOURCE + "> <" + container + ">;\n"
+                + "<" + HAS_MEMBER_RELATION + "> <info:some/relation>;\n"
+                + "<" + LDP_NAMESPACE + "insertedContentRelation> <info:proxy/for> .\n";
+        final HttpPut put3 = putObjMethod(pid + "/b", "text/turtle", ttl3);
+        put3.setHeader(LINK, INDIRECT_CONTAINER_LINK_HEADER);
+        put3.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
+        assertEquals("Changed the direct container ixn to indirect container!",
+                CONFLICT.getStatusCode(), getStatus(put3));
     }
 
     @Test
