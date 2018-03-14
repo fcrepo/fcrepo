@@ -61,7 +61,7 @@ public class RdfAdder extends PersistingRdfStreamConsumer {
         this.userNamespaces = userNamespaces;
     }
 
-    private Map<String, String> getNamespaces(final Session session) {
+    protected Map<String, String> getNamespaces(final Session session) {
         final Map<String, String> namespaces = NamespaceTools.getNamespaces(session);
         if (userNamespaces != null) {
             for (final Iterator<String> it = userNamespaces.keySet().iterator(); it.hasNext(); ) {

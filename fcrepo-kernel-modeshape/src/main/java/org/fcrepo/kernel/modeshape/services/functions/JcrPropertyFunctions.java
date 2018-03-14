@@ -46,8 +46,8 @@ public final class JcrPropertyFunctions {
      * Constructs an {@link java.util.stream.Stream} of {@link javax.jcr.Value}s from any {@link javax.jcr.Property},
      * multi- or single-valued.
      */
-    public static Function<Property, Stream<Value>> property2values = UncheckedFunction.uncheck(
-            (final Property p) -> p.isMultiple() ? of(p.getValues()) : of(p.getValue()));
+    public static Function<Property, Stream<Value>> property2values = (Function<Property, Stream<Value>>)
+            UncheckedFunction.uncheck((final Property p) -> p.isMultiple() ? of(p.getValues()) : of(p.getValue()));
 
     /**
      * Check if a JCR property is a binary jcr:data property

@@ -43,9 +43,9 @@ public interface FedoraTypes {
 
     String FEDORA_TIME_MAP = "fedora:TimeMap";
 
-    String FEDORA_MEMENTO = "fedora:Memento";
+    String MEMENTO = "memento:Memento";
 
-    String FEDORA_MEMENTO_DATETIME = "fedora:mementoDatetime";
+    String MEMENTO_DATETIME = "memento:mementoDatetime";
 
     String LDP_BASIC_CONTAINER = "ldp:BasicContainer";
 
