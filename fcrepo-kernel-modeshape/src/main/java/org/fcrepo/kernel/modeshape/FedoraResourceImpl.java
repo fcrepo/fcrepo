@@ -172,6 +172,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @VisibleForTesting
     public static final String LDPCV_TIME_MAP = "fedora:timemap";
 
+    public static final String LDPCV_BINARY_TIME_MAP = "fedora:binaryTimemap";
+
     // A curried type accepting resource, translator, and "minimality", returning triples.
     private static interface RdfGenerator extends Function<FedoraResource,
     Function<IdentifierConverter<Resource, FedoraResource>, Function<Boolean, Stream<Triple>>>> {}
@@ -269,7 +271,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                 !x.getObject().toString(false).startsWith("?")) {
             try {
                 parse(x.getObject().toString(false));
-            } catch (Exception ex) {
+            } catch (final Exception ex) {
                 return new IllegalArgumentException("Invalid value for '" + RdfLexicon.HAS_MIME_TYPE +
                         "' encountered : " + x.getObject().toString());
             }
@@ -403,7 +405,13 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @Override
     public FedoraResource getTimeMap() {
         try {
-            return Optional.of(node.getNode(LDPCV_TIME_MAP)).map(nodeConverter::convert).orElse(null);
+            final Node timeMapNode;
+            if (this instanceof FedoraBinary) {
+                timeMapNode = getNode().getParent().getNode(LDPCV_BINARY_TIME_MAP);
+            } else {
+                timeMapNode = node.getNode(LDPCV_TIME_MAP);
+            }
+            return Optional.of(timeMapNode).map(nodeConverter::convert).orElse(null);
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
         } catch (final RepositoryException e) {
@@ -416,7 +424,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         final Node ldpcvNode;
         try {
             if (this instanceof FedoraBinary) {
-                ldpcvNode = findOrCreateChild(getNode().getParent(), LDPCV_TIME_MAP, NT_FOLDER);
+                ldpcvNode = findOrCreateChild(getNode().getParent(), LDPCV_BINARY_TIME_MAP, NT_FOLDER);
             } else {
                 ldpcvNode = findOrCreateChild(getNode(), LDPCV_TIME_MAP, NT_FOLDER);
             }
