@@ -29,10 +29,11 @@ import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.fcrepo.http.api.FedoraVersioning.MEMENTO_DATETIME_HEADER;
 import static org.fcrepo.http.commons.domain.RDFMediaType.APPLICATION_LINK_FORMAT;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_MEMENTO_DATETIME;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEMAP_TYPE;
 import static org.junit.Assert.assertArrayEquals;
@@ -40,28 +41,39 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 
+import java.io.StringWriter;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
-
 import javax.ws.rs.core.Link;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.apache.jena.graph.Node;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.vocabulary.RDF;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
+import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
+import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
 
 /**
  * @author lsitu
@@ -74,6 +86,11 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     private static final String BINARY_UPDATED = "updated content";
 
     private static final String OCTET_STREAM_TYPE = "application/octet-stream";
+
+    private static final Node MEMENTO_TYPE_NODE = createURI(MEMENTO_TYPE);
+    private static final Node TEST_PROPERTY_NODE = createURI("info:test#label");
+
+    private static final Property TEST_PROPERTY = createProperty("info:test#label");
 
     final String MEMENTO_DATETIME =
             RFC_1123_DATE_TIME.format(LocalDateTime.of(2000, 1, 1, 00, 00).atZone(ZoneOffset.UTC));
@@ -110,23 +127,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     public void testGetTimeMapResponse() throws Exception {
         createVersionedContainer(id, subjectUri);
 
-        final List<Link> listLinks = new ArrayList<Link>();
-        listLinks.add(Link.fromUri(subjectUri).rel("original").build());
-        listLinks.add(Link.fromUri(subjectUri).rel("timegate").build());
-        listLinks
-            .add(Link.fromUri(subjectUri + "/" + FCR_VERSIONS).rel("self").type(APPLICATION_LINK_FORMAT).build());
-        final Link[] expectedLinks = listLinks.toArray(new Link[3]);
-
-        final HttpGet httpGet = getObjMethod(id + "/" + FCR_VERSIONS);
-        httpGet.setHeader("Accept", APPLICATION_LINK_FORMAT);
-        try (final CloseableHttpResponse response = execute(httpGet)) {
-            assertEquals("Didn't get a OK response!", OK.getStatusCode(), getStatus(response));
-            checkForLinkHeader(response, VERSIONING_TIMEMAP_TYPE, "type");
-            final List<String> bodyList = Arrays.asList(EntityUtils.toString(response.getEntity()).split(","));
-            final Link[] bodyLinks = bodyList.stream().map(String::trim).filter(t -> !t.isEmpty())
-                .map(Link::valueOf).toArray(Link[]::new);
-            assertArrayEquals(expectedLinks, bodyLinks);
-        }
+        verifyTimemapResponse(subjectUri, id);
     }
 
     @Test
@@ -146,10 +147,15 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     public void testCreateVersion() throws Exception {
         createVersionedContainer(id, subjectUri);
 
-        final HttpPost postMethod = postObjMethod(id + "/" + FCR_VERSIONS);
-        try (final CloseableHttpResponse response = execute(postMethod)) {
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
-            assertMementoDatetimeHeaderPresent(response);
+        final String mementoUri = createContainerMementoWithBody(subjectUri, null);
+
+        try (final CloseableDataset dataset = getDataset(new HttpGet(mementoUri))) {
+            final DatasetGraph results = dataset.asDatasetGraph();
+
+            final Node mementoSubject = createURI(mementoUri);
+
+            assertFalse("Memento type should not be visible",
+                    results.contains(ANY, mementoSubject, RDF.type.asNode(), MEMENTO_TYPE_NODE));
         }
     }
 
@@ -157,19 +163,34 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     public void testCreateVersionWithDatetime() throws Exception {
         createVersionedContainer(id, subjectUri);
 
-        final String mementoUri = createMemento(subjectUri, MEMENTO_DATETIME, "text/n3", null);
+        final HttpPost createVersionMethod = postObjMethod(id + "/" + FCR_VERSIONS);
+        createVersionMethod.addHeader(CONTENT_TYPE, "text/n3");
+        createVersionMethod.addHeader(MEMENTO_DATETIME_HEADER, MEMENTO_DATETIME);
 
-        final HttpGet httpGet = new HttpGet(mementoUri);
-        try (final CloseableHttpResponse response = execute(httpGet)) {
-            assertMementoDatetimeHeaderMatches(response, MEMENTO_DATETIME);
+        // Attempt to create memento with no body
+        try (final CloseableHttpResponse response = execute(createVersionMethod)) {
+            assertEquals("Didn't get a BAD_REQUEST response!", BAD_REQUEST.getStatusCode(), getStatus(response));
 
-            final CloseableDataset dataset = getDataset(response);
-            final DatasetGraph results = dataset.asDatasetGraph();
-            final Node subject = createURI(mementoUri);
-            final Node property = createURI(FEDORA_MEMENTO_DATETIME);
-            assertTrue("Did not find correct subject", results.contains(ANY, subject, ANY, ANY));
-            assertFalse("Memento response must not include memento datetime",
-                    results.contains(ANY, subject, property, ANY));
+            // Request must fail with constrained exception due to empty body
+            assertConstrainedByPresent(response);
+        }
+    }
+
+    @Test
+    public void testCreateContainerWithoutServerManagedTriples() throws Exception {
+        createVersionedContainer(id, subjectUri);
+
+        final HttpPost createMethod = postObjMethod(id + "/" + FCR_VERSIONS);
+        createMethod.addHeader(CONTENT_TYPE, "text/n3");
+        createMethod.setEntity(new StringEntity("<" + subjectUri + "> <info:test#label> \"part\""));
+        createMethod.addHeader(MEMENTO_DATETIME_HEADER, MEMENTO_DATETIME);
+
+        // Attempt to create memento with partial record
+        try (final CloseableHttpResponse response = execute(createMethod)) {
+            assertEquals("Didn't get a BAD_REQUEST response!", BAD_REQUEST.getStatusCode(), getStatus(response));
+
+            // Request must fail with constrained exception due to empty body
+            assertConstrainedByPresent(response);
         }
     }
 
@@ -187,12 +208,11 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             final DatasetGraph results = dataset.asDatasetGraph();
 
             final Node mementoSubject = createURI(mementoUri);
-            final Node property = createURI("info:test#label");
 
-            assertTrue("Memento created without must retain original state",
-                    results.contains(ANY, mementoSubject, property, createLiteral("foo")));
+            assertTrue("Memento created without datetime must retain original state",
+                    results.contains(ANY, mementoSubject, TEST_PROPERTY_NODE, createLiteral("foo")));
             assertFalse("Memento created without datetime must ignore updates",
-                    results.contains(ANY, mementoSubject, property, createLiteral("bar")));
+                    results.contains(ANY, mementoSubject, TEST_PROPERTY_NODE, createLiteral("bar")));
         }
     }
 
@@ -203,7 +223,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final String mementoUri = createContainerMementoWithBody(subjectUri, MEMENTO_DATETIME);
         final Node mementoSubject = createURI(mementoUri);
         final Node subject = createURI(subjectUri);
-        final Node property = createURI("info:test#label");
 
         // Verify that the memento has the new property added to it
         try (final CloseableHttpResponse response = execute(new HttpGet(mementoUri))) {
@@ -214,9 +233,9 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             final DatasetGraph results = dataset.asDatasetGraph();
 
             assertFalse("Memento must not have original property",
-                    results.contains(ANY, mementoSubject, property, createLiteral("foo")));
+                    results.contains(ANY, mementoSubject, TEST_PROPERTY_NODE, createLiteral("foo")));
             assertTrue("Memento must have updated property",
-                    results.contains(ANY, mementoSubject, property, createLiteral("bar")));
+                    results.contains(ANY, mementoSubject, TEST_PROPERTY_NODE, createLiteral("bar")));
         }
 
         // Verify that the original is unchanged
@@ -224,9 +243,9 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             final DatasetGraph results = dataset.asDatasetGraph();
 
             assertTrue("Original must have original property",
-                    results.contains(ANY, subject, property, createLiteral("foo")));
+                    results.contains(ANY, subject, TEST_PROPERTY_NODE, createLiteral("foo")));
             assertFalse("Original must not have updated property",
-                    results.contains(ANY, subject, property, createLiteral("bar")));
+                    results.contains(ANY, subject, TEST_PROPERTY_NODE, createLiteral("bar")));
         }
     }
 
@@ -250,15 +269,14 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
 
         final Node mementoSubject = createURI(mementoUri);
-        final Node property = createURI("info:test#label");
         // Verify first memento content persists
         try (final CloseableDataset dataset = getDataset(new HttpGet(mementoUri))) {
             final DatasetGraph results = dataset.asDatasetGraph();
 
             assertTrue("Memento must have first updated property",
-                    results.contains(ANY, mementoSubject, property, createLiteral("bar")));
+                    results.contains(ANY, mementoSubject, TEST_PROPERTY_NODE, createLiteral("bar")));
             assertFalse("Memento must not have second updated property",
-                    results.contains(ANY, mementoSubject, property, createLiteral("far")));
+                    results.contains(ANY, mementoSubject, TEST_PROPERTY_NODE, createLiteral("far")));
         }
     }
 
@@ -282,11 +300,26 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     public void testGetTimeMapResponseForBinary() throws Exception {
         createVersionedBinary(id);
 
+        verifyTimemapResponse(subjectUri, id);
+    }
+
+    @Test
+    public void testGetTimeMapResponseForBinaryDescription() throws Exception {
+        createVersionedBinary(id);
+
+        final String descriptionUri = subjectUri + "/fcr:metadata";
+        final String descriptionId = id + "/fcr:metadata";
+
+        verifyTimemapResponse(descriptionUri, descriptionId);
+    }
+
+    private void verifyTimemapResponse(final String uri, final String id) throws Exception {
         final List<Link> listLinks = new ArrayList<Link>();
-        listLinks.add(Link.fromUri(subjectUri).rel("original").build());
-        listLinks.add(Link.fromUri(subjectUri).rel("timegate").build());
+        listLinks.add(Link.fromUri(uri).rel("original").build());
+        listLinks.add(Link.fromUri(uri).rel("timegate").build());
         listLinks
-                .add(Link.fromUri(subjectUri + "/" + FCR_VERSIONS).rel("self").type(APPLICATION_LINK_FORMAT).build());
+                .add(Link.fromUri(uri + "/" + FCR_VERSIONS).rel("self").type(APPLICATION_LINK_FORMAT)
+                        .build());
         final Link[] expectedLinks = listLinks.toArray(new Link[3]);
 
         final HttpGet httpGet = getObjMethod(id + "/" + FCR_VERSIONS);
@@ -328,6 +361,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore("Disable until binary version creation from body implemented")
     @Test
     public void testCreateVersionOfBinaryWithDatetimeAndContentType() throws Exception {
         createVersionedBinary(id);
@@ -361,6 +395,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Ignore("Disable until binary version creation from body implemented")
     @Test
     public void testCreateVersionOfBinaryWithDatetimeAndBody() throws Exception {
         createVersionedBinary(id);
@@ -401,7 +436,23 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     private String createContainerMementoWithBody(final String subjectUri, final String mementoDateTime)
             throws Exception {
-        final String body = "<" + subjectUri + "> <info:test#label> \"bar\"";
+
+        // Produce new body from current body with changed triple
+        final String body;
+        final HttpGet httpGet = new HttpGet(subjectUri);
+        final Model model = createDefaultModel();
+        try (final CloseableHttpResponse response = execute(httpGet)) {
+            model.read(response.getEntity().getContent(), "", "N3");
+        }
+        final Resource subjectResc = model.getResource(subjectUri);
+        subjectResc.removeAll(TEST_PROPERTY);
+        subjectResc.addLiteral(TEST_PROPERTY, "bar");
+
+        try (StringWriter stringOut = new StringWriter()) {
+            RDFDataMgr.write(stringOut, model, RDFFormat.NTRIPLES);
+            body = stringOut.toString();
+        }
+
         return createMemento(subjectUri, mementoDateTime, "text/n3", body);
     }
 
@@ -439,5 +490,12 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         assertMementoDatetimeHeaderPresent(response);
         assertEquals("Response memento datetime did not match expected value",
                 expected, response.getFirstHeader(MEMENTO_DATETIME_HEADER).getValue());
+    }
+
+    private static void assertConstrainedByPresent(final CloseableHttpResponse response) {
+        final Collection<String> linkHeaders = getLinkHeaders(response);
+        assertTrue("Constrained by link header no present",
+                linkHeaders.stream().map(Link::valueOf)
+                        .anyMatch(l -> l.getRel().equals(CONSTRAINED_BY.getURI())));
     }
 }

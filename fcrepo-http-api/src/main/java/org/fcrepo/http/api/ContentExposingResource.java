@@ -112,7 +112,6 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RiotException;
 import org.fcrepo.http.commons.api.HttpHeaderInjector;
 import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
@@ -140,7 +139,6 @@ import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-import org.fcrepo.kernel.api.rdf.SubjectMappingStreamRdf;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.api.utils.ContentDigest;
 import org.fcrepo.kernel.api.utils.MessageExternalBodyContentType;
@@ -789,31 +787,33 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     }
 
     protected void replaceResourceWithStream(final FedoraResource resource,
-            final InputStream requestBodyStream,
-            final MediaType contentType,
-            final RdfStream resourceTriples) throws MalformedRdfException {
-        replaceResourceWithStream(resource, requestBodyStream, contentType, resourceTriples, null);
-    }
-
-    protected void replaceResourceWithStream(final FedoraResource resource,
                                              final InputStream requestBodyStream,
                                              final MediaType contentType,
-                                             final RdfStream resourceTriples,
-                                             final URI destinationUri) throws MalformedRdfException {
+                                             final RdfStream resourceTriples) throws MalformedRdfException {
+        final Model inputModel = parseBodyAsModel(requestBodyStream, contentType);
+
+        ensureValidMemberRelation(inputModel);
+
+        resource.replaceProperties(translator(), inputModel, resourceTriples);
+    }
+
+    /**
+     * Parse the request body as a Model.
+     *
+     * @param requestBodyStream rdf request body
+     * @param contentType content type of body
+     * @return Model containing triples from request body
+     * @throws MalformedRdfException
+     */
+    protected Model parseBodyAsModel(final InputStream requestBodyStream,
+            final MediaType contentType) throws MalformedRdfException {
         final Lang format = contentTypeToLang(contentType.toString());
 
         final Model inputModel;
         try {
-            if (destinationUri != null) {
-                final URI resourceUri = getUri(resource());
-                final SubjectMappingStreamRdf mapper = new SubjectMappingStreamRdf(resourceUri,
-                        destinationUri);
-                RDFDataMgr.parse(mapper, requestBodyStream, destinationUri.toString(), format);
-                inputModel = mapper.getModel();
-            } else {
-                inputModel = createDefaultModel();
-                inputModel.read(requestBodyStream, getUri(resource).toString(), format.getName().toUpperCase());
-            }
+            inputModel = createDefaultModel();
+            inputModel.read(requestBodyStream, getUri(resource()).toString(), format.getName().toUpperCase());
+            return inputModel;
         } catch (final RiotException e) {
             throw new BadRequestException("RDF was not parsable: " + e.getMessage(), e);
 
@@ -823,10 +823,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             }
             throw new RepositoryRuntimeException(e);
         }
-
-        ensureValidMemberRelation(inputModel);
-
-        resource.replaceProperties(translator(), inputModel, resourceTriples);
     }
 
     /**
@@ -873,7 +869,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected MediaType getBinaryResourceMediaType() {
         try {
             return MediaType.valueOf(((FedoraBinary) resource()).getMimeType());
-        } catch (IllegalArgumentException e) {
+        } catch (final IllegalArgumentException e) {
             LOGGER.warn("Syntactically incorrect MediaType encountered on resource {}: '{}'",
                     resource().getPath(), ((FedoraBinary)resource()).getMimeType());
             return MediaType.APPLICATION_OCTET_STREAM_TYPE;

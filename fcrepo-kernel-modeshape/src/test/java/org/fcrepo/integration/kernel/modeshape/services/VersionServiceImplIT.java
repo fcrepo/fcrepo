@@ -30,11 +30,14 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.ContainerService;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.api.services.VersionService;
-
+import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
+import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -58,13 +61,27 @@ public class VersionServiceImplIT extends AbstractIT {
     @Inject
     VersionService versionService;
 
+    private DefaultIdentifierTranslator subjects;
+
+    private FedoraSession session;
+
     private static final Instant mementoDate1 = Instant.now();
 
     private static final Instant mementoDate2 = Instant.from(LocalDateTime.of(2000, 5, 10, 18, 30));
 
+    @Before
+    public void setUp() throws RepositoryException {
+        session = repository.login();
+        subjects = new DefaultIdentifierTranslator(getJcrSession(session));
+    }
+
+    @After
+    public void tearDown() {
+        session.expire();
+    }
+
     @Test
     public void testCreateVersion() throws RepositoryException {
-        final FedoraSession session = repository.login();
         final String pid = getRandomPid();
         final FedoraResource resource = containerService.findOrCreate(session, "/" + pid);
         session.commit();
@@ -72,25 +89,24 @@ public class VersionServiceImplIT extends AbstractIT {
         session.commit();
 
         // create a version and make sure there are 2 versions (root + created)
-        versionService.createVersion(session, resource, mementoDate1, true);
+        versionService.createVersion(session, resource, subjects, mementoDate1);
         session.commit();
         assertEquals(1L, countVersions(session, resource));
     }
 
     @Test
     public void testRemoveVersion() throws RepositoryException {
-        final FedoraSession session = repository.login();
         final String pid = getRandomPid();
         final FedoraResource resource = containerService.findOrCreate(session, "/" + pid);
         session.commit();
 
         // create a version and make sure there are 2 versions (root + created)
-        versionService.createVersion(session, resource, mementoDate1, true);
+        versionService.createVersion(session, resource, subjects, mementoDate1);
         session.commit();
         assertEquals(1L, countVersions(session, resource));
 
         // create another version
-        versionService.createVersion(session, resource, mementoDate2, true);
+        versionService.createVersion(session, resource, subjects, mementoDate2);
         session.commit();
         assertEquals(2L, countVersions(session, resource));
     }
