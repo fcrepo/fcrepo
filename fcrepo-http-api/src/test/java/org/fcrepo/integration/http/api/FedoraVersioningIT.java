@@ -127,23 +127,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     public void testGetTimeMapResponse() throws Exception {
         createVersionedContainer(id, subjectUri);
 
-        final List<Link> listLinks = new ArrayList<Link>();
-        listLinks.add(Link.fromUri(subjectUri).rel("original").build());
-        listLinks.add(Link.fromUri(subjectUri).rel("timegate").build());
-        listLinks
-            .add(Link.fromUri(subjectUri + "/" + FCR_VERSIONS).rel("self").type(APPLICATION_LINK_FORMAT).build());
-        final Link[] expectedLinks = listLinks.toArray(new Link[3]);
-
-        final HttpGet httpGet = getObjMethod(id + "/" + FCR_VERSIONS);
-        httpGet.setHeader("Accept", APPLICATION_LINK_FORMAT);
-        try (final CloseableHttpResponse response = execute(httpGet)) {
-            assertEquals("Didn't get a OK response!", OK.getStatusCode(), getStatus(response));
-            checkForLinkHeader(response, VERSIONING_TIMEMAP_TYPE, "type");
-            final List<String> bodyList = Arrays.asList(EntityUtils.toString(response.getEntity()).split(","));
-            final Link[] bodyLinks = bodyList.stream().map(String::trim).filter(t -> !t.isEmpty())
-                .map(Link::valueOf).toArray(Link[]::new);
-            assertArrayEquals(expectedLinks, bodyLinks);
-        }
+        verifyTimemapResponse(subjectUri, id);
     }
 
     @Test
@@ -316,11 +300,26 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     public void testGetTimeMapResponseForBinary() throws Exception {
         createVersionedBinary(id);
 
+        verifyTimemapResponse(subjectUri, id);
+    }
+
+    @Test
+    public void testGetTimeMapResponseForBinaryDescription() throws Exception {
+        createVersionedBinary(id);
+
+        final String descriptionUri = subjectUri + "/fcr:metadata";
+        final String descriptionId = id + "/fcr:metadata";
+
+        verifyTimemapResponse(descriptionUri, descriptionId);
+    }
+
+    private void verifyTimemapResponse(final String uri, final String id) throws Exception {
         final List<Link> listLinks = new ArrayList<Link>();
-        listLinks.add(Link.fromUri(subjectUri).rel("original").build());
-        listLinks.add(Link.fromUri(subjectUri).rel("timegate").build());
+        listLinks.add(Link.fromUri(uri).rel("original").build());
+        listLinks.add(Link.fromUri(uri).rel("timegate").build());
         listLinks
-                .add(Link.fromUri(subjectUri + "/" + FCR_VERSIONS).rel("self").type(APPLICATION_LINK_FORMAT).build());
+                .add(Link.fromUri(uri + "/" + FCR_VERSIONS).rel("self").type(APPLICATION_LINK_FORMAT)
+                        .build());
         final Link[] expectedLinks = listLinks.toArray(new Link[3]);
 
         final HttpGet httpGet = getObjMethod(id + "/" + FCR_VERSIONS);
