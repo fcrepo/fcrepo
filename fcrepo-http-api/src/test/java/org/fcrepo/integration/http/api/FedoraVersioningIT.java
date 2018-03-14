@@ -42,7 +42,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 
 import java.io.StringWriter;
 import java.time.LocalDateTime;
@@ -65,8 +64,10 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.riot.RDFLanguages;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.vocabulary.RDF;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
@@ -182,7 +183,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         // Bad request with Slug header to create memento
         final String mementoDateTime = "Tue, 3 Jun 2008 11:05:30 GMT";
-        final String body = "<" + subjectUri + "> <info:test#label> \"bar\"";
+        final String body = createContainerMementoBodyContent(subjectUri, "text/n3");
         final HttpPost post = postObjMethod(id + "/" + FCR_VERSIONS);
 
         post.addHeader("Slug", "version_label");
@@ -195,12 +196,13 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testCreateVersionWithMementoDatetimeFromat() throws Exception {
+    public void testCreateVersionWithMementoDatetimeFormat() throws Exception {
         createVersionedContainer(id, subjectUri);
 
         // Create memento with RFC-1123 date-time format
         final String mementoDateTime = "Tue, 3 Jun 2008 11:05:30 GMT";
-        final String body = "<" + subjectUri + "> <info:test#label> \"bar\"";
+        final String body = createContainerMementoBodyContent(subjectUri, "text/n3");
+
         final HttpPost post = postObjMethod(id + "/" + FCR_VERSIONS);
 
         post.addHeader(MEMENTO_DATETIME_HEADER, mementoDateTime);
@@ -211,7 +213,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                 CREATED.getStatusCode(), getStatus(post));
 
         // Create memento with RFC-1123 date-time format in wrong value
-        final String dateTime1 = "Tue, 13 Jun 2008 11:05:30 ANYTIZONE";
+        final String dateTime1 = "Tue, 13 Jun 2008 11:05:35 ANYTIMEZONE";
         final HttpPost post1 = postObjMethod(id + "/" + FCR_VERSIONS);
 
         post1.addHeader(CONTENT_TYPE, "text/n3");
@@ -494,12 +496,19 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     private String createContainerMementoWithBody(final String subjectUri, final String mementoDateTime)
             throws Exception {
 
+        final String body = createContainerMementoBodyContent(subjectUri, "text/n3");
+        return createMemento(subjectUri, mementoDateTime, "text/n3", body);
+    }
+
+    private String createContainerMementoBodyContent(final String subjectUri, final String contentType)
+        throws Exception {
         // Produce new body from current body with changed triple
         final String body;
         final HttpGet httpGet = new HttpGet(subjectUri);
         final Model model = createDefaultModel();
+        final Lang rdfLang = RDFLanguages.contentTypeToLang(contentType);
         try (final CloseableHttpResponse response = execute(httpGet)) {
-            model.read(response.getEntity().getContent(), "", "N3");
+            model.read(response.getEntity().getContent(), "", rdfLang.getName());
         }
         final Resource subjectResc = model.getResource(subjectUri);
         subjectResc.removeAll(TEST_PROPERTY);
@@ -510,7 +519,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             body = stringOut.toString();
         }
 
-        return createMemento(subjectUri, mementoDateTime, "text/n3", body);
+        return body;
     }
 
     private void createVersionedContainer(final String id, final String subjectUri) throws Exception {
