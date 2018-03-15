@@ -257,31 +257,29 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
         }
     }
 
-    private static String getPath(final FedoraResource resource) {
-        if (resource instanceof FedoraTimeMap) {
-            // the path is relative to the parent, and unique so fake it here.
-            final FedoraResource parent = resource.getContainer();
-            final String parentPath = parent.getPath();
-            return parentPath + "/" + FCR_VERSIONS;
-        }
-        return resource.getPath();
-    }
-
-    private static String getRelativePath(final FedoraResource child, final FedoraResource ancestor) {
-        return child.getPath().substring(ancestor.getPath().length());
-    }
-
     /**
      * Get only the resource path to this resource, before embedding it in a full URI
      * @param resource
      * @return
      */
     private String doBackwardPathOnly(final FedoraResource resource) {
-        final String path = reverse.convert(getPath(resource));
+        final FedoraResource pathResource;
+        if (resource instanceof FedoraTimeMap) {
+            final FedoraTimeMap timemap = (FedoraTimeMap) resource;
+            pathResource = timemap.getOriginalResource();
+        } else {
+            pathResource = resource;
+        }
+
+        String path = reverse.convert(pathResource.getPath());
+
         if (path != null) {
 
-            if (resource instanceof NonRdfSourceDescription) {
-                return path + "/" + FCR_METADATA;
+            if (pathResource instanceof NonRdfSourceDescription) {
+                path += "/" + FCR_METADATA;
+            }
+            if (resource instanceof FedoraTimeMap) {
+                path += "/" + FCR_VERSIONS;
             }
 
             return path;

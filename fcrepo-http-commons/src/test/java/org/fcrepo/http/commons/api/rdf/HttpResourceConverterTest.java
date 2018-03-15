@@ -28,6 +28,7 @@ import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.fcrepo.kernel.modeshape.FedoraSessionImpl;
+import org.fcrepo.kernel.modeshape.FedoraTimeMapImpl;
 import org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,6 +50,7 @@ import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TIME_MAP;
+import static org.fcrepo.kernel.api.FedoraTypes.MEMENTO_ORIGINAL;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
@@ -67,10 +69,10 @@ public class HttpResourceConverterTest {
     private Session session, txSession;
 
     @Mock
-    private Node node, versionedNode, contentNode;
+    private Node node, versionedNode, contentNode, timeMapNode;
 
     @Mock
-    private Property mockProperty;
+    private Property mockOriginal;
 
     private FedoraSession testSession, testTxSession;
 
@@ -113,6 +115,9 @@ public class HttpResourceConverterTest {
         when(session.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getName()).thenReturn("default");
         when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
+
+        when(mockOriginal.getNode()).thenReturn(node);
+        when(timeMapNode.getProperty(MEMENTO_ORIGINAL)).thenReturn(mockOriginal);
     }
 
     @Test
@@ -284,5 +289,38 @@ public class HttpResourceConverterTest {
 
         final Node resultNode = getJcrNode(converted);
         assertEquals(ldpcvNode, resultNode);
+    }
+
+    @Test
+    public void testDoBackWithTimemap() throws Exception {
+        final FedoraTimeMap timemap = new FedoraTimeMapImpl(timeMapNode);
+
+        final Resource converted = converter.reverse().convert(timemap);
+        final Resource expectedResource = createResource("http://localhost:8080/some/" + path + "/fcr:versions");
+        assertEquals(expectedResource, converted);
+    }
+
+    @Test
+    public void testDoBackWithBinaryTimemap() throws Exception {
+        final FedoraTimeMap timemap = new FedoraTimeMapImpl(timeMapNode);
+
+        when(node.isNodeType(FEDORA_BINARY)).thenReturn(true);
+
+        final Resource converted = converter.reverse().convert(timemap);
+        final Resource expectedResource = createResource(
+                "http://localhost:8080/some/" + path + "/fcr:versions");
+        assertEquals(expectedResource, converted);
+    }
+
+    @Test
+    public void testDoBackWithBinaryDescriptionTimemap() throws Exception {
+        final FedoraTimeMap timemap = new FedoraTimeMapImpl(timeMapNode);
+
+        when(node.isNodeType(FEDORA_NON_RDF_SOURCE_DESCRIPTION)).thenReturn(true);
+
+        final Resource converted = converter.reverse().convert(timemap);
+        final Resource expectedResource = createResource(
+                "http://localhost:8080/some/" + path + "/fcr:metadata/fcr:versions");
+        assertEquals(expectedResource, converted);
     }
 }
