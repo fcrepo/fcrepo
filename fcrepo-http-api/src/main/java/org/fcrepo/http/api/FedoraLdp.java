@@ -641,7 +641,14 @@ public class FedoraLdp extends ContentExposingResource {
 
     private void checkAclUriExists(final URI resourceAcl) {
         try {
-            final FedoraResource aclResource = getResourceFromPath(resourceAcl.getPath());
+            //extract external path
+            final String contextPath = this.uriInfo.getBaseUri().getPath();
+
+            final String path = !resourceAcl.getPath().startsWith(contextPath) ?
+                                    resourceAcl.getPath() :
+                                    resourceAcl.getPath().substring(contextPath.length());
+
+            final FedoraResource aclResource = getResourceFromPath(path);
             if (aclResource == null) {
                 throw new InvalidACLException("The ACL URI in the link header does not exist");
             }
@@ -652,7 +659,6 @@ public class FedoraLdp extends ContentExposingResource {
                 throw e;
             }
         }
-
     }
 
     private void addResourceAcl(final URI resourceAcl) {
