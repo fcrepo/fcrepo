@@ -755,7 +755,10 @@ public class FedoraLdp extends ContentExposingResource {
 
         // Add Options headers
         final String options;
-        if (resource() instanceof FedoraBinary) {
+        if (resource().isMemento()) {
+            options = "GET,HEAD,OPTIONS,DELETE";
+
+        } else if (resource() instanceof FedoraBinary) {
             options = "DELETE,HEAD,GET,PUT,OPTIONS";
 
         } else if (resource() instanceof NonRdfSourceDescription) {
