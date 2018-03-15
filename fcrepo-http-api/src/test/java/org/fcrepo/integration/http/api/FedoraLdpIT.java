@@ -71,8 +71,8 @@ import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_VARIANTS;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
@@ -158,7 +158,6 @@ import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.vocabulary.DC_11;
 import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
-
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -1252,6 +1251,17 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testPostCreateRDFSourceWithNonExistentAcl() throws IOException {
+        final String aclURI = serverAddress + "non-existent-acl";
+        final String subjectURI = serverAddress + getRandomUniqueId();
+        final HttpPost createMethod = new HttpPost(subjectURI);
+        createMethod.addHeader(CONTENT_TYPE, "text/n3");
+        createMethod.addHeader("Link", "<" + aclURI + ">; rel=\"acl\"");
+        createMethod.setEntity(new StringEntity("<" + subjectURI + "> <info:test#label> \"foo\""));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(createMethod));
+    }
+
+    @Test
     public void testPutCreateRDFSourceWithAcl() throws IOException {
         final String aclURI = createAcl();
         final String subjectURI = serverAddress + getRandomUniqueId();
@@ -1271,7 +1281,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createMethod.addHeader(CONTENT_TYPE, "text/n3");
         createMethod.addHeader("Link", "<" + aclURI + ">; rel=\"acl\"");
         createMethod.setEntity(new StringEntity("<" + subjectURI + "> <info:test#label> \"foo\""));
-        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(createMethod));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(createMethod));
     }
 
     private void verifyAccessControlTripleIsPresent(final String aclURI, final String subjectURI) throws IOException {
