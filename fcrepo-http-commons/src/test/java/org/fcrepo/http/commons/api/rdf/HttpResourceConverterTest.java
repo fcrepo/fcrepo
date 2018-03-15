@@ -26,6 +26,7 @@ import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.FedoraTimeMap;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.modeshape.ContainerImpl;
 import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.fcrepo.kernel.modeshape.FedoraSessionImpl;
@@ -71,7 +72,7 @@ public class HttpResourceConverterTest {
     private Session session, txSession;
 
     @Mock
-    private Node node, mementoNode, contentNode, timeMapNode;
+    private Node node, mementoNode, contentNode, timeMapNode, descriptionNode;
 
     @Mock
     private Property mockOriginal;
@@ -83,8 +84,10 @@ public class HttpResourceConverterTest {
     private HttpResourceConverter converter;
     private final String uriTemplate = "http://localhost:8080/some/{path: .*}";
     private final String path = "arbitrary/path";
-    private final Resource resource = createResource("http://localhost:8080/some/" + path);
-    private final Resource versionedResource = createResource("http://localhost:8080/some/" + path + "/fcr:versions/x");
+
+    private final String resourceUri = "http://localhost:8080/some/" + path;
+
+    private final Resource resource = createResource(resourceUri);
     private final Resource metadataResource = createResource(resource.toString() + "/fcr:metadata");
 
     @Mock
@@ -114,6 +117,7 @@ public class HttpResourceConverterTest {
         when(node.getPath()).thenReturn("/" + path);
         when(node.isNodeType(FEDORA_NON_RDF_SOURCE_DESCRIPTION)).thenReturn(false);
         when(contentNode.getPath()).thenReturn("/" + path + "/jcr:content");
+        when(contentNode.getParent()).thenReturn(descriptionNode);
         when(session.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getName()).thenReturn("default");
         when(mockWorkspace.getVersionManager()).thenReturn(mockVersionManager);
@@ -197,7 +201,7 @@ public class HttpResourceConverterTest {
     }
 
     @Test
-    public void testDoBackwardWithDatastreamContent() {
+    public void testDoBackwardWithDatastreamContent() throws Exception {
         final Resource converted = converter.reverse().convert(new FedoraBinaryImpl(contentNode));
         assertEquals(resource, converted);
     }
@@ -291,6 +295,7 @@ public class HttpResourceConverterTest {
     @Test
     public void testDoBackWithTimemap() throws Exception {
         final FedoraTimeMap timemap = new FedoraTimeMapImpl(timeMapNode);
+        when(timeMapNode.getPath()).thenReturn(path + "/fedora:timemap");
 
         final Resource converted = converter.reverse().convert(timemap);
         final Resource expectedResource = createResource("http://localhost:8080/some/" + path + "/fcr:versions");
@@ -300,6 +305,7 @@ public class HttpResourceConverterTest {
     @Test
     public void testDoBackWithBinaryTimemap() throws Exception {
         final FedoraTimeMap timemap = new FedoraTimeMapImpl(timeMapNode);
+        when(timeMapNode.getPath()).thenReturn(path + "/fedora:binaryTimemap");
 
         when(node.isNodeType(FEDORA_BINARY)).thenReturn(true);
 
@@ -312,6 +318,7 @@ public class HttpResourceConverterTest {
     @Test
     public void testDoBackWithBinaryDescriptionTimemap() throws Exception {
         final FedoraTimeMap timemap = new FedoraTimeMapImpl(timeMapNode);
+        when(timeMapNode.getPath()).thenReturn(path + "/fedora:timemap");
 
         when(node.isNodeType(FEDORA_NON_RDF_SOURCE_DESCRIPTION)).thenReturn(true);
 
@@ -371,5 +378,44 @@ public class HttpResourceConverterTest {
 
         final Node resultNode = getJcrNode(converted);
         assertEquals(mementoNode, resultNode);
+    }
+
+    @Test
+    public void testDoBackWithMemento() throws Exception {
+        when(node.getPath()).thenReturn("/" + path + "/fedora:timemap/20180315180915");
+        when(node.isNodeType(MEMENTO)).thenReturn(true);
+
+        final Container memento = new ContainerImpl(node);
+
+        final Resource converted = converter.reverse().convert(memento);
+        final Resource expectedResource = createResource(resourceUri + "/fcr:versions/20180315180915");
+        assertEquals(expectedResource, converted);
+    }
+
+    @Test
+    public void testDoBackWithBinaryMemento() throws Exception {
+        when(node.getPath()).thenReturn("/" + path + "/fedora:binaryTimemap/20180315180915");
+        when(node.isNodeType(FEDORA_BINARY)).thenReturn(true);
+
+        when(descriptionNode.isNodeType(MEMENTO)).thenReturn(true);
+        when(node.getParent()).thenReturn(descriptionNode);
+
+        final FedoraBinary memento = new FedoraBinaryImpl(node);
+
+        final Resource converted = converter.reverse().convert(memento);
+        final Resource expectedResource = createResource(resourceUri + "/fcr:versions/20180315180915");
+        assertEquals(expectedResource, converted);
+    }
+
+    @Test
+    public void testDoBackWithBinaryDescriptionMemento() throws Exception {
+        when(descriptionNode.getPath()).thenReturn("/" + path + "/fedora:timemap/20180315180915");
+        when(descriptionNode.isNodeType(MEMENTO)).thenReturn(true);
+
+        final NonRdfSourceDescription memento = new NonRdfSourceDescriptionImpl(descriptionNode);
+
+        final Resource converted = converter.reverse().convert(memento);
+        final Resource expectedResource = createResource(resourceUri + "/fcr:metadata/fcr:versions/20180315180915");
+        assertEquals(expectedResource, converted);
     }
 }

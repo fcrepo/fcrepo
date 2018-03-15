@@ -55,6 +55,7 @@ import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.TombstoneException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.FedoraTimeMap;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
@@ -292,28 +293,39 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
      * @return
      */
     private String doBackwardPathOnly(final FedoraResource resource) {
-        final FedoraResource pathResource;
-        if (resource instanceof FedoraTimeMap) {
-            final FedoraTimeMap timemap = (FedoraTimeMap) resource;
-            pathResource = timemap.getOriginalResource();
-        } else {
-            pathResource = resource;
+
+        String path = reverse.convert(resource.getPath());
+        if (path == null) {
+            throw new RepositoryRuntimeException("Unable to process reverse chain for resource " + resource);
         }
 
-        String path = reverse.convert(pathResource.getPath());
+        final boolean versioning = resource instanceof FedoraTimeMap || resource.isMemento();
 
-        if (path != null) {
-
-            if (pathResource instanceof NonRdfSourceDescription) {
-                path += "/" + FCR_METADATA;
-            }
+        if (versioning) {
+            final FedoraResource originalOrMemento;
             if (resource instanceof FedoraTimeMap) {
-                path += "/" + FCR_VERSIONS;
+                final FedoraTimeMap timemap = (FedoraTimeMap) resource;
+                originalOrMemento = timemap.getOriginalResource();
+            } else {
+                originalOrMemento = resource;
             }
 
-            return path;
+            // For binary description memento, follows id/fcr:metadata/fcr:versions/memento format
+            if (originalOrMemento instanceof FedoraBinary) {
+                path = replaceOnce(path, "/" + LDPCV_BINARY_TIME_MAP, "/" + FCR_VERSIONS);
+            } else if (originalOrMemento instanceof NonRdfSourceDescription) {
+                path = replaceOnce(path, "/" + LDPCV_TIME_MAP, "/" + FCR_METADATA + "/" + FCR_VERSIONS);
+            } else {
+                // For regular container, replace timemap name with versions path
+                path = replaceOnce(path, "/" + LDPCV_TIME_MAP, "/" + FCR_VERSIONS);
+            }
+
+        } else if (resource instanceof NonRdfSourceDescription) {
+            // binary description, non-memento
+            path += "/" + FCR_METADATA;
         }
-        throw new RepositoryRuntimeException("Unable to process reverse chain for resource " + resource);
+
+        return path;
     }
 
 
