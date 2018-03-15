@@ -441,6 +441,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                 if (ldpcvNode.canAddMixin(FEDORA_TIME_MAP)) {
                     ldpcvNode.addMixin(FEDORA_TIME_MAP);
                 }
+
+                // Set reference from timegate/map to original resource
+                ldpcvNode.setProperty(MEMENTO_ORIGINAL, getNode());
             }
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
@@ -780,10 +783,10 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
      * @throws InteractionModelViolationException when attempting to change the interaction model
      */
     private void checkInteractionModel(final UpdateRequest request) {
-        final List<Quad> deleteQuads = new ArrayList<Quad>();
-        final List<Quad> updateQuads = new ArrayList<Quad>();
+        final List<Quad> deleteQuads = new ArrayList<>();
+        final List<Quad> updateQuads = new ArrayList<>();
 
-        for (Update operation : request.getOperations()) {
+        for (final Update operation : request.getOperations()) {
             if (operation instanceof UpdateModify) {
                 final UpdateModify op = (UpdateModify) operation;
                 deleteQuads.addAll(op.getDeleteQuads());

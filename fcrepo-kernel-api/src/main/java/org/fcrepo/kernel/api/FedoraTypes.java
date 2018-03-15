@@ -47,6 +47,8 @@ public interface FedoraTypes {
 
     String MEMENTO_DATETIME = "memento:mementoDatetime";
 
+    String MEMENTO_ORIGINAL = "memento:original";
+
     String LDP_BASIC_CONTAINER = "ldp:BasicContainer";
 
     String LDP_CONTAINER = "ldp:Container";
