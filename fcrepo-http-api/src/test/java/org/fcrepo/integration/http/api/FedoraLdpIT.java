@@ -178,7 +178,7 @@ import nu.validator.saxtree.TreeBuilder;
  * @author cabeer
  * @author ajs6f
  */
-public class FedoraLdpIT extends AbstractResourceIT {
+public class FedoraLdpIT extends AbstractVersioningIT {
 
     private static final Node DC_IDENTIFIER = DC_11.identifier.asNode();
 
@@ -584,6 +584,18 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
     }
 
+    @Test
+    public void testOptionsMemento() throws Exception {
+        createVersionedContainer(id, subjectUri);
+        final String mementoUri = createContainerMementoWithBody(subjectUri, null);
+
+        final HttpOptions optionsRequest = new HttpOptions(mementoUri);
+        try (final CloseableHttpResponse optionsResponse = execute(optionsRequest)) {
+            assertEquals(OK.getStatusCode(), optionsResponse.getStatusLine().getStatusCode());
+            assertMementoOptionsHeaders(optionsResponse);
+        }
+    }
+
     private static void assertContainerOptionsHeaders(final HttpResponse httpResponse) {
         assertRdfOptionsHeaders(httpResponse);
         final List<String> methods = headerValues(httpResponse, "Allow");
@@ -628,6 +640,14 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertTrue("Should allow PUT", methods.contains(HttpPut.METHOD_NAME));
         assertTrue("Should allow DELETE", methods.contains(HttpDelete.METHOD_NAME));
         assertTrue("Should allow OPTIONS", methods.contains(HttpOptions.METHOD_NAME));
+    }
+
+    private static void assertMementoOptionsHeaders(final HttpResponse httpResponse) {
+        final List<String> methods = headerValues(httpResponse, "Allow");
+        assertTrue("Should allow GET", methods.contains(HttpGet.METHOD_NAME));
+        assertTrue("Should allow HEAD", methods.contains(HttpHead.METHOD_NAME));
+        assertTrue("Should allow OPTIONS", methods.contains(HttpOptions.METHOD_NAME));
+        assertTrue("Should allow DELETE", methods.contains(HttpDelete.METHOD_NAME));
     }
 
     private static List<String> headerValues(final HttpResponse response, final String headerName) {
