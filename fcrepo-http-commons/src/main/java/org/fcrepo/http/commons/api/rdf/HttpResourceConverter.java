@@ -22,6 +22,8 @@ import static java.util.Collections.singleton;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.replaceOnce;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.LDPCV_TIME_MAP;
+import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.LDPCV_BINARY_TIME_MAP;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
@@ -37,6 +39,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
@@ -54,6 +58,7 @@ import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.FedoraTimeMap;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
 import org.fcrepo.kernel.modeshape.TombstoneImpl;
 import org.fcrepo.kernel.modeshape.identifiers.HashConverter;
 import org.fcrepo.kernel.modeshape.identifiers.NamespaceConverter;
@@ -76,6 +81,10 @@ import com.google.common.collect.Lists;
 public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraResource> {
 
     private static final Logger LOGGER = getLogger(HttpResourceConverter.class);
+
+    // Regex pattern which decomposes a http resource uri into fcr components
+    final static Pattern FORWARD_COMPONENT_PATTERN = Pattern.compile(
+            "(.*?)(/" + FCR_METADATA + ")?(/" + FCR_VERSIONS + "(/\\d+)?)?$");
 
     protected List<Converter<String, String>> translationChain;
 
@@ -119,13 +128,9 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
 
                 final boolean metadata = values.containsKey("path")
                         && values.get("path").endsWith("/" + FCR_METADATA);
-                final boolean timemap = values.containsKey("path") && values.get("path").endsWith("/" + FCR_VERSIONS);
 
                 final FedoraResource fedoraResource = nodeConverter.convert(node);
 
-                if (timemap) {
-                    return fedoraResource.findOrCreateTimeMap();
-                }
                 if (!metadata && fedoraResource instanceof NonRdfSourceDescription) {
                     return fedoraResource.getDescribedResource();
                 }
@@ -208,14 +213,38 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
         if (uriTemplate.match(resource.getURI(), values) && values.containsKey("path")) {
             String path = "/" + values.get("path");
 
-            final boolean timemap = path.endsWith("/" + FCR_VERSIONS);
-            if (timemap) {
-                path = replaceOnce(path, "/" + FCR_VERSIONS, EMPTY);
-            }
+            final Matcher matcher = FORWARD_COMPONENT_PATTERN.matcher(path);
 
-            final boolean metadata = path.endsWith("/" + FCR_METADATA);
-            if (metadata) {
-                path = replaceOnce(path, "/" + FCR_METADATA, EMPTY);
+            if (matcher.matches()) {
+                final boolean metadata = matcher.group(2) != null;
+                final boolean versioning = matcher.group(3) != null;
+                final String basePath = matcher.group(1);
+
+                if (versioning) {
+                    // Disambiguate between a binary or non-binary timemap, as they can have overlapping external uris
+                    final boolean binary;
+                    if (metadata) {
+                        binary = false;
+                    } else {
+                        try {
+                            final Node originalNode = getNode(basePath);
+                            binary = FedoraBinaryImpl.hasMixin(originalNode);
+                        } catch (final RepositoryException e) {
+                            throw new RepositoryRuntimeException(e);
+                        }
+                    }
+
+                    // Convert to correct timemap node name
+                    if (binary) {
+                        path = replaceOnce(path, "/" + FCR_VERSIONS, "/" + LDPCV_BINARY_TIME_MAP);
+                    } else {
+                        path = replaceOnce(path, "/" + FCR_VERSIONS, "/" + LDPCV_TIME_MAP);
+                    }
+                }
+
+                if (metadata) {
+                    path = replaceOnce(path, "/" + FCR_METADATA, EMPTY);
+                }
             }
 
             path = forward.convert(path);
