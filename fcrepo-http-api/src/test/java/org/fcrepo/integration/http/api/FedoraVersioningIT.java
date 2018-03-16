@@ -32,7 +32,6 @@ import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
-import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
@@ -68,7 +67,6 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -359,7 +357,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         try (final CloseableHttpResponse response = execute(createVersionMethod)) {
             assertEquals("Duplicate memento datetime should return 412 status",
-                    PRECONDITION_FAILED.getStatusCode(), getStatus(response));
+                    CONFLICT.getStatusCode(), getStatus(response));
         }
 
         final Node mementoSubject = createURI(mementoUri);
@@ -636,77 +634,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore("Disable until version creation from existing resource implemented")
-    @Test
-    public void testCreateTwoVersionsWithSameLabel() throws IOException {
-        final Instant date1 = LocalDateTime.of(2000, 10, 15, 11, 35, 23).atZone(ZoneId.of("UTC")).toInstant();
-        final String date1format = DateTimeFormatter.RFC_1123_DATE_TIME.format(date1);
-        final Instant date2 = LocalDateTime.of(2011, 4, 1, 18, 35, 23).atZone(ZoneId.of("UTC")).toInstant();
-        final String date2format = DateTimeFormatter.RFC_1123_DATE_TIME.format(date2);
-
-        logger.debug("creating an object");
-        final String objId = getRandomUniqueId();
-        createObjectAndClose(objId);
-        enableVersioning(objId);
-
-        logger.debug("Setting a title");
-        patchLiteralProperty(serverAddress + objId, title.getURI(), "First title");
-        logger.debug("Posting a version with a date \"" + date1format + "\"");
-        final String version1id = postVersion(objId, date1);
-
-        logger.debug("Resetting the title");
-        patchLiteralProperty(serverAddress + objId, title.getURI(), "Second title");
-
-        logger.debug("Posting a version with a date \"" + date1format + "\"");
-        final HttpPost postVersion = postObjMethod(objId + "/" + FCR_VERSIONS);
-        postVersion.addHeader(MEMENTO_DATETIME_HEADER, date1format);
-        assertEquals("Must not be allowed to create a version with a duplicate label!",
-                CONFLICT.getStatusCode(), getStatus(postVersion));
-
-        final HttpGet getVersions = new HttpGet(serverAddress + objId + "/" + FCR_VERSIONS);
-        logger.debug("Retrieved versions");
-        try (final CloseableDataset dataset = getDataset(getVersions)) {
-            final DatasetGraph results = dataset.asDatasetGraph();
-            assertEquals("Expected exactly 3 triples!", 3, countTriples(results));
-            logger.debug("Posting a version with date \"" + date2format + "\"");
-            postVersion(objId, date2);
-
-            logger.debug("Deleting first dated version \"" + date1format + "\"");
-            final HttpDelete remove = new HttpDelete(version1id);
-            assertEquals(NO_CONTENT.getStatusCode(), getStatus(remove));
-
-            logger.debug("Reusing a date new version with date \"" + date1format + "\"");
-            postVersion(objId, date1);
-        }
-    }
-
-    /**
-     * This test just makes sure that while an object may not have two versions with the same label, two different
-     * objects may have versions with the same label.
-     * @throws Exception
-     */
-    @Ignore("Disable until ticket https://jira.duraspace.org/browse/FCREPO-2735 is fixed."
-            + " AssertionError: Didn't get a CREATED response! expected:<201> but was:<412>")
-    @Test
-    // TODO this test requires some kind of assertion or negative assertion to make its intent more clear
-    public void testCreateTwoObjectsWithVersionsWithTheSameLabel() throws Exception {
-        final ZonedDateTime date1 = LocalDateTime.of(2000, 10, 15, 11, 35, 23).atZone(ZoneId.of("UTC"));
-        final String date1format = DateTimeFormatter.RFC_1123_DATE_TIME.format(date1);
-
-        logger.debug("creating an object");
-        createVersionedContainer(id, subjectUri);
-
-        logger.debug("Posting a version with date \"" + date1format + "\"");
-        createContainerMementoWithBody(subjectUri, date1format);
-
-        logger.debug("creating another object");
-        final String objId2 = getRandomUniqueId();
-        final String subjectUri2 = serverAddress + objId2;
-        createVersionedContainer(objId2, subjectUri2);
-
-        logger.debug("Posting a version with date \"" + date1format + "\"");
-        createContainerMementoWithBody(subjectUri2, date1format);
-    }
 
     @Test
     public void testInvalidVersionDatetime() throws Exception {
