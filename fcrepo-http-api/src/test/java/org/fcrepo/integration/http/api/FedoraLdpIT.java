@@ -21,9 +21,7 @@ import static java.lang.Thread.sleep;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.ZoneId.of;
 import static java.util.Arrays.asList;
-import static java.util.Arrays.stream;
 import static java.util.regex.Pattern.compile;
-import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
@@ -178,7 +176,7 @@ import nu.validator.saxtree.TreeBuilder;
  * @author cabeer
  * @author ajs6f
  */
-public class FedoraLdpIT extends AbstractVersioningIT {
+public class FedoraLdpIT extends AbstractResourceIT {
 
     private static final Node DC_IDENTIFIER = DC_11.identifier.asNode();
 
@@ -584,18 +582,6 @@ public class FedoraLdpIT extends AbstractVersioningIT {
         }
     }
 
-    @Test
-    public void testOptionsMemento() throws Exception {
-        createVersionedContainer(id, subjectUri);
-        final String mementoUri = createContainerMementoWithBody(subjectUri, null);
-
-        final HttpOptions optionsRequest = new HttpOptions(mementoUri);
-        try (final CloseableHttpResponse optionsResponse = execute(optionsRequest)) {
-            assertEquals(OK.getStatusCode(), optionsResponse.getStatusLine().getStatusCode());
-            assertMementoOptionsHeaders(optionsResponse);
-        }
-    }
-
     private static void assertContainerOptionsHeaders(final HttpResponse httpResponse) {
         assertRdfOptionsHeaders(httpResponse);
         final List<String> methods = headerValues(httpResponse, "Allow");
@@ -640,19 +626,6 @@ public class FedoraLdpIT extends AbstractVersioningIT {
         assertTrue("Should allow PUT", methods.contains(HttpPut.METHOD_NAME));
         assertTrue("Should allow DELETE", methods.contains(HttpDelete.METHOD_NAME));
         assertTrue("Should allow OPTIONS", methods.contains(HttpOptions.METHOD_NAME));
-    }
-
-    private static void assertMementoOptionsHeaders(final HttpResponse httpResponse) {
-        final List<String> methods = headerValues(httpResponse, "Allow");
-        assertTrue("Should allow GET", methods.contains(HttpGet.METHOD_NAME));
-        assertTrue("Should allow HEAD", methods.contains(HttpHead.METHOD_NAME));
-        assertTrue("Should allow OPTIONS", methods.contains(HttpOptions.METHOD_NAME));
-        assertTrue("Should allow DELETE", methods.contains(HttpDelete.METHOD_NAME));
-    }
-
-    private static List<String> headerValues(final HttpResponse response, final String headerName) {
-        return stream(response.getHeaders(headerName)).map(Header::getValue).map(s -> s.split(",")).flatMap(
-                Arrays::stream).map(String::trim).collect(toList());
     }
 
     @Test
