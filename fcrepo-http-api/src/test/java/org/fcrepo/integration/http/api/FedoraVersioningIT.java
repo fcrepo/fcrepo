@@ -603,7 +603,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore("AssertionError: Didn't find RdfSource link header! <http://www.w3.org/ns/ldp#RDFSource>; rel=\"type\"")
+    @Ignore("Disable until ticket https://jira.duraspace.org/browse/FCREPO-2736 is fixed."
+            + " AssertionError: Didn't find RdfSource link header! <http://www.w3.org/ns/ldp#RDFSource>; rel=\"type\"")
     @Test
     public void testVersionListHeaders() throws Exception {
         createVersionedContainer(id, subjectUri);
@@ -684,7 +685,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
      * objects may have versions with the same label.
      * @throws Exception
      */
-    @Ignore("Line #699 AssertionError: Didn't get a CREATED response! expected:<201> but was:<412>")
+    @Ignore("Disable until ticket https://jira.duraspace.org/browse/FCREPO-2735 is fixed."
+            + " AssertionError: Didn't get a CREATED response! expected:<201> but was:<412>")
     @Test
     // TODO this test requires some kind of assertion or negative assertion to make its intent more clear
     public void testCreateTwoObjectsWithVersionsWithTheSameLabel() throws Exception {
@@ -814,14 +816,13 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore("AssertionError: expected:<200> but was:<406>")
     @Test
     public void testGetVersionResponseContentTypes() throws Exception {
         createVersionedContainer(id, subjectUri);
         final String versionUri = createContainerMementoWithBody(subjectUri, MEMENTO_DATETIME);
 
-        final String[] timeMapResponseTypes = getTimeMapResponseTypes();
-        for (final String type : timeMapResponseTypes) {
+        final String[] rdfResponseTypes = rdfTypes.toArray(new String[rdfTypes.size()]);;
+        for (final String type : rdfResponseTypes) {
             final HttpGet method = new HttpGet(versionUri);
             method.addHeader(ACCEPT, type);
             assertEquals(type, getContentType(method));
