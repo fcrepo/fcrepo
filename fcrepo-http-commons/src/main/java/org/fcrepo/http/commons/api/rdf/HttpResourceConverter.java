@@ -83,8 +83,12 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
 
     private static final Logger LOGGER = getLogger(HttpResourceConverter.class);
 
-    // Regex pattern which decomposes a http resource uri into fcr components
-    final static Pattern FORWARD_COMPONENT_PATTERN = Pattern.compile(
+    // Regex pattern which decomposes a http resource uri into components
+    // First group is the path of the resource or original resource,
+    // second group determines if it is an fcr:metadata non-rdf source,
+    // third group determines if the path is for a memento or timemap,
+    // and the fourth group allows for a memento identifier
+    private final static Pattern FORWARD_COMPONENT_PATTERN = Pattern.compile(
             "(.*?)(/" + FCR_METADATA + ")?(/" + FCR_VERSIONS + "(/\\d+)?)?$");
 
     protected List<Converter<String, String>> translationChain;
