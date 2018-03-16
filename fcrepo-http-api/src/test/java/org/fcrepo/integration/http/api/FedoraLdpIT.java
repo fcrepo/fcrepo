@@ -109,6 +109,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.text.ParseException;
 import java.time.Instant;
@@ -150,12 +151,15 @@ import org.apache.http.util.EntityUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelCon;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.vocabulary.DC_11;
+import org.apache.jena.vocabulary.RDF;
 import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
@@ -1274,7 +1278,7 @@ public class FedoraLdpIT extends AbstractVersioningIT {
     public void testPostCreateRDFSourceWithNonExistentAcl() throws IOException {
         final String aclURI = serverAddress + "non-existent-acl";
         final String subjectURI = serverAddress + getRandomUniqueId();
-        final HttpPost createMethod = new HttpPost(subjectURI);
+        final HttpPost createMethod = new HttpPost(serverAddress);
         createMethod.addHeader(CONTENT_TYPE, "text/n3");
         createMethod.addHeader("Link", "<" + aclURI + ">; rel=\"acl\"");
         createMethod.setEntity(new StringEntity("<" + subjectURI + "> <info:test#label> \"foo\""));
@@ -1304,6 +1308,17 @@ public class FedoraLdpIT extends AbstractVersioningIT {
         assertEquals(CONFLICT.getStatusCode(), getStatus(createMethod));
     }
 
+    @Test
+    public void testPutCreateRDFSourceWithAclNoWebacType() throws IOException {
+        final String aclURI = createAclWithoutWebacType();
+        final String subjectURI = serverAddress + getRandomUniqueId();
+        final HttpPut createMethod = new HttpPut(subjectURI);
+        createMethod.addHeader(CONTENT_TYPE, "text/n3");
+        createMethod.addHeader("Link", "<" + aclURI + ">; rel=\"acl\"");
+        createMethod.setEntity(new StringEntity("<> <info:test#label> \"foo\""));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(createMethod));
+    }
+
     private void verifyAccessControlTripleIsPresent(final String aclURI, final String subjectURI) throws IOException {
         verifyAccessControlTripleIsPresent(aclURI, subjectURI, subjectURI);
     }
@@ -1317,10 +1332,24 @@ public class FedoraLdpIT extends AbstractVersioningIT {
         }
     }
 
-    private String createAcl() {
+    private String createAcl() throws UnsupportedEncodingException {
         final String aclPid = "acl";
         final String aclURI = serverAddress + aclPid;
         createObjectAndClose(aclPid);
+        final HttpPatch patch = patchObjMethod(aclPid);
+        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
+        // add webac:Acl type to aclURI
+        patch.setEntity(new StringEntity(
+                "INSERT { <> a <http://fedora.info/definitions/v4/webac#Acl> } WHERE {}"));
+        assertEquals("Couldn't add webac:Acl type", NO_CONTENT.getStatusCode(), getStatus(patch));
+        return aclURI;
+    }
+
+    private String createAclWithoutWebacType() {
+        final String aclPid = "acl";
+        final String aclURI = serverAddress + aclPid;
+        createObjectAndClose(aclPid);
+
         return aclURI;
     }
 

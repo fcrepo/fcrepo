@@ -61,6 +61,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODELS;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_NAMESPACE_VALUE;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_WEBAC_ACL_VALUE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -362,7 +363,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         final URI resourceAcl = checkForAclLink(links);
         if (resourceAcl != null) {
-            checkAclUriExists(resourceAcl);
+            checkAclUriExistsAndHasCorrectType(resourceAcl);
         }
 
         final FedoraResource resource;
@@ -562,7 +563,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         final URI resourceAcl = checkForAclLink(links);
         if (resourceAcl != null) {
-            checkAclUriExists(resourceAcl);
+            checkAclUriExistsAndHasCorrectType(resourceAcl);
         }
 
         if (!(resource() instanceof Container)) {
@@ -639,7 +640,8 @@ public class FedoraLdp extends ContentExposingResource {
         }
     }
 
-    private void checkAclUriExists(final URI resourceAcl) {
+    private void checkAclUriExistsAndHasCorrectType(final URI resourceAcl) {
+        FedoraResource aclResource = null;
         try {
             //extract external path
             final String contextPath = this.uriInfo.getBaseUri().getPath();
@@ -648,17 +650,21 @@ public class FedoraLdp extends ContentExposingResource {
                                     resourceAcl.getPath() :
                                     resourceAcl.getPath().substring(contextPath.length());
 
-            final FedoraResource aclResource = getResourceFromPath(path);
+            aclResource = getResourceFromPath(path);
             if (aclResource == null) {
-                throw new InvalidACLException("The ACL URI in the link header does not exist");
+                throw new InvalidACLException("The ACL URI in the link header does not exist\n");
             }
         } catch (RepositoryRuntimeException e) {
             if (e.getCause() instanceof PathNotFoundException) {
-                throw new InvalidACLException("The external path of the link header's ACL URI was not found");
+                throw new InvalidACLException("The external path of the link header's ACL URI was not found\n");
             } else {
                 throw e;
             }
         }
+       if (!aclResource.getTypes().contains(URI.create(FEDORA_WEBAC_ACL_VALUE))) {
+            throw new InvalidACLException(
+                    "The ACL URI in link header does not have the correct type, must have rdf:type of webac:Acl\n");
+       }
     }
 
     private void addResourceAcl(final URI resourceAcl) {
