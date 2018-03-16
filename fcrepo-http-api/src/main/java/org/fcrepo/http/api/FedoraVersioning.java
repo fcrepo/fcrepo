@@ -157,8 +157,15 @@ public class FedoraVersioning extends ContentExposingResource {
             @ContentLocation final InputStream requestBodyStream)
             throws InvalidChecksumException, MementoDatetimeFormatException {
 
-        final AcquiredLock lock = lockManager.lockForWrite(resource().findOrCreateTimeMap().getPath(),
+        final FedoraResource timeMap = resource().findOrCreateTimeMap();
+        // If the timemap was created in this request, commit it.
+        if (timeMap.isNew()) {
+            session.commit();
+        }
+
+        final AcquiredLock lock = lockManager.lockForWrite(timeMap.getPath(),
             session.getFedoraSession(), nodeService);
+
 
         try {
             final MediaType contentType = getSimpleContentType(requestContentType);

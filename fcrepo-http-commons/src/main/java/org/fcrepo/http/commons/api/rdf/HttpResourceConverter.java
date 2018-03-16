@@ -59,7 +59,7 @@ import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.FedoraTimeMap;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
-import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
+import org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl;
 import org.fcrepo.kernel.modeshape.TombstoneImpl;
 import org.fcrepo.kernel.modeshape.identifiers.HashConverter;
 import org.fcrepo.kernel.modeshape.identifiers.NamespaceConverter;
@@ -229,7 +229,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
                     } else {
                         try {
                             final Node originalNode = getNode(basePath);
-                            binary = FedoraBinaryImpl.hasMixin(originalNode);
+                            binary = NonRdfSourceDescriptionImpl.hasMixin(originalNode);
                         } catch (final RepositoryException e) {
                             throw new RepositoryRuntimeException(e);
                         }

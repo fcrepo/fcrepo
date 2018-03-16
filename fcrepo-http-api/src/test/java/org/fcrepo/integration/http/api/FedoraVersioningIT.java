@@ -97,6 +97,7 @@ public class FedoraVersioningIT extends AbstractVersioningIT {
         createVersionedContainer(id, subjectUri);
 
         final String mementoUri = createContainerMementoWithBody(subjectUri, null);
+        assertMementoUri(mementoUri, subjectUri);
 
         try (final CloseableDataset dataset = getDataset(new HttpGet(mementoUri))) {
             final DatasetGraph results = dataset.asDatasetGraph();
@@ -207,6 +208,7 @@ public class FedoraVersioningIT extends AbstractVersioningIT {
         createVersionedContainer(id, subjectUri);
 
         final String mementoUri = createContainerMementoWithBody(subjectUri, null);
+        assertMementoUri(mementoUri, subjectUri);
 
         final HttpGet httpGet = new HttpGet(mementoUri);
         try (final CloseableDataset dataset = getDataset(httpGet)) {
@@ -226,6 +228,7 @@ public class FedoraVersioningIT extends AbstractVersioningIT {
         createVersionedContainer(id, subjectUri);
 
         final String mementoUri = createContainerMementoWithBody(subjectUri, MEMENTO_DATETIME);
+        assertMementoUri(mementoUri, subjectUri);
         final Node mementoSubject = createURI(mementoUri);
         final Node subject = createURI(subjectUri);
 
@@ -323,6 +326,7 @@ public class FedoraVersioningIT extends AbstractVersioningIT {
         createVersionedBinary(id);
 
         final String mementoUri = createMemento(subjectUri, null, null, null);
+        assertMementoUri(mementoUri, subjectUri);
 
         final HttpGet httpGet = new HttpGet(mementoUri);
         try (final CloseableHttpResponse response = execute(httpGet)) {
@@ -352,6 +356,7 @@ public class FedoraVersioningIT extends AbstractVersioningIT {
 
         final String mementoUri = createMemento(subjectUri, MEMENTO_DATETIME,
                 OCTET_STREAM_TYPE, null);
+        assertMementoUri(mementoUri, subjectUri);
 
         // Verify that the memento has the updated binary
         try (final CloseableHttpResponse response = execute(new HttpGet(mementoUri))) {
@@ -369,6 +374,7 @@ public class FedoraVersioningIT extends AbstractVersioningIT {
 
         final String mementoUri = createMemento(subjectUri, null,
                 OCTET_STREAM_TYPE, BINARY_UPDATED);
+        assertMementoUri(mementoUri, subjectUri);
 
         final HttpGet httpGet = new HttpGet(mementoUri);
         try (final CloseableHttpResponse response = execute(httpGet)) {
@@ -386,6 +392,7 @@ public class FedoraVersioningIT extends AbstractVersioningIT {
 
         final String mementoUri = createMemento(subjectUri, MEMENTO_DATETIME,
                 OCTET_STREAM_TYPE, BINARY_UPDATED);
+        assertMementoUri(mementoUri, subjectUri);
 
         // Verify that the memento has the updated binary
         try (final CloseableHttpResponse response = execute(new HttpGet(mementoUri))) {

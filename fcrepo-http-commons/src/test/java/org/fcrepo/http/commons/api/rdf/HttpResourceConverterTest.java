@@ -58,7 +58,6 @@ import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
@@ -260,12 +259,7 @@ public class HttpResourceConverterTest {
     public void testDoForwardWithBinaryTimemap() throws Exception {
         final Resource resource = createResource("http://localhost:8080/some/binary/fcr:versions");
         when(session.getNode("/binary")).thenReturn(node);
-        when(node.isNodeType(FEDORA_BINARY)).thenReturn(true);
-
-        final Node binaryDescription = mock(Node.class);
-        when(binaryDescription.isNodeType(FEDORA_NON_RDF_SOURCE_DESCRIPTION)).thenReturn(true);
-        when(binaryDescription.getNode(JCR_CONTENT)).thenReturn(contentNode);
-        when(node.getParent()).thenReturn(binaryDescription);
+        when(node.isNodeType(FEDORA_NON_RDF_SOURCE_DESCRIPTION)).thenReturn(true);
 
         when(session.getNode("/binary/fedora:binaryTimemap")).thenReturn(timeMapNode);
 
@@ -354,7 +348,7 @@ public class HttpResourceConverterTest {
         when(session.getNode("/binary/fedora:binaryTimemap/20180315180915")).thenReturn(mementoNode);
 
         when(session.getNode("/binary")).thenReturn(node);
-        when(node.isNodeType(FEDORA_BINARY)).thenReturn(true);
+        when(node.isNodeType(FEDORA_NON_RDF_SOURCE_DESCRIPTION)).thenReturn(true);
 
         final FedoraResource converted = converter.convert(resource);
         assertTrue("Converted resource must be a binary", converted instanceof FedoraBinary);
