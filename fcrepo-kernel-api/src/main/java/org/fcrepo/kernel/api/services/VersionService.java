@@ -25,7 +25,9 @@ import java.util.Collection;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.riot.Lang;
 import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 
 /**
@@ -69,17 +71,30 @@ public interface VersionService {
      * Explicitly creates a version of a binary resource. If no contentStream is provided, then
      *
      * @param session the session in which the resource resides
-     * @param resource the resource to version
+     * @param resource the binary resource to version
      * @param dateTime the date/time of the version
      * @param contentStream if provided, the content in this stream will be used as the content of the new binary
      *        memento. If null, then the current state of the binary will be used.
      * @param filename filename of the binary
      * @param mimetype mimetype of the binary
      * @param checksums Collection of checksum URIs of the content (optional)
+     * @throws InvalidChecksumException if there are errors applying checksums
      * @return the version
      */
-    FedoraResource createBinaryVersion(FedoraSession session, FedoraResource resource, Instant dateTime,
-            InputStream contentStream, String filename, String mimetype, Collection<URI> checksums);
+    FedoraBinary createBinaryVersion(FedoraSession session, FedoraBinary resource, Instant dateTime,
+            InputStream contentStream, String filename, String mimetype, Collection<URI> checksums)
+            throws InvalidChecksumException;
 
+    /**
+     * Explicitly creates a version of a binary resource. If no contentStream is provided, then
+     *
+     * @param session the session in which the resource resides
+     * @param resource the binary resource to version
+     * @param dateTime the date/time of the version
+     * @return the version
+     * @throws InvalidChecksumException
+     */
+    FedoraBinary createBinaryVersion(FedoraSession session, FedoraBinary resource, Instant dateTime)
+            throws InvalidChecksumException;
 
 }
