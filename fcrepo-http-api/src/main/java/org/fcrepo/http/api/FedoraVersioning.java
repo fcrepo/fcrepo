@@ -166,7 +166,6 @@ public class FedoraVersioning extends ContentExposingResource {
         final AcquiredLock lock = lockManager.lockForWrite(timeMap.getPath(),
             session.getFedoraSession(), nodeService);
 
-
         try {
             final MediaType contentType = getSimpleContentType(requestContentType);
 
@@ -180,7 +179,7 @@ public class FedoraVersioning extends ContentExposingResource {
             try {
                 mementoInstant = (isBlank(datetimeHeader) ? Instant.now()
                     : Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(datetimeHeader)));
-            } catch (DateTimeParseException e) {
+            } catch (final DateTimeParseException e) {
                 throw new MementoDatetimeFormatException("Invalid memento date-time value. "
                         + "Please use RFC-1123 date-time format, such as 'Tue, 3 Jun 2008 11:05:30 GMT'", e);
             }
