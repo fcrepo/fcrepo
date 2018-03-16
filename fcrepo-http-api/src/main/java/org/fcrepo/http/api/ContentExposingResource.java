@@ -479,13 +479,15 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             final Link link = Link.fromUri(uri).rel("describes").build();
             servletResponse.addHeader(LINK, link.toString());
         } else if (resource instanceof FedoraBinary) {
-            final URI uri = getUri(resource.getDescription());
-            final Link.Builder builder = Link.fromUri(uri).rel("describedby");
+            if (!resource.isMemento()) {
+                final URI uri = getUri(resource.getDescription());
+                final Link.Builder builder = Link.fromUri(uri).rel("describedby");
 
-            if (includeAnchor) {
-                builder.param("anchor", getUri(resource).toString());
+                if (includeAnchor) {
+                    builder.param("anchor", getUri(resource).toString());
+                }
+                servletResponse.addHeader(LINK, builder.build().toString());
             }
-            servletResponse.addHeader(LINK, builder.build().toString());
 
             final String path = context.getContextPath().equals("/") ? "" : context.getContextPath();
             final String constraintURI = uriInfo.getBaseUri().getScheme() + "://" +

@@ -208,4 +208,8 @@ public abstract class AbstractVersioningIT extends AbstractResourceIT {
                 linkHeaders.stream().map(Link::valueOf)
                         .anyMatch(l -> l.getRel().equals(CONSTRAINED_BY.getURI())));
     }
+
+    protected static void assertMementoUri(final String mementoUri, final String subjectUri) {
+        assertTrue(mementoUri.matches(subjectUri + "/fcr:versions/\\d+"));
+    }
 }
