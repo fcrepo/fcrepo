@@ -1304,6 +1304,17 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals(CONFLICT.getStatusCode(), getStatus(createMethod));
     }
 
+    @Test
+    public void testPostCreateRDFSourceWithOutsideAcl() throws IOException {
+        final String aclURI = "http://outside.fedora.com";
+        final String subjectURI = serverAddress + getRandomUniqueId();
+        final HttpPut createMethod = new HttpPut(subjectURI);
+        createMethod.addHeader(CONTENT_TYPE, "text/n3");
+        createMethod.addHeader("Link", "<" + aclURI + ">; rel=\"acl\"");
+        createMethod.setEntity(new StringEntity("<" + subjectURI + "> <info:test#label> \"foo\""));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(createMethod));
+    }
+
     private void verifyAccessControlTripleIsPresent(final String aclURI, final String subjectURI) throws IOException {
         verifyAccessControlTripleIsPresent(aclURI, subjectURI, subjectURI);
     }

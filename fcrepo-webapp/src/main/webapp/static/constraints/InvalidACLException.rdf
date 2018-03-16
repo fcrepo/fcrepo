@@ -20,5 +20,7 @@
         the ACL URI in the link header does not exist or exists but does not contain a triple indicating rdf:type of
         http://fedora.info/definitions/v4/webac#Acl
         </rdfs:comment>
+        <rdfs:comment xml:lang="en">Fedora does not allow cross domain ACLs.
+        </rdfs:comment>
     </owl:Ontology>
 </rdf:RDF>
