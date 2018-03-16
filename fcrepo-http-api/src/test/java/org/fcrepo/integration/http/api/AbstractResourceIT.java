@@ -47,6 +47,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.List;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response.Status;
 import javax.xml.bind.DatatypeConverter;
@@ -305,6 +306,11 @@ public abstract class AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(method)) {
             return getLinkHeaders(response);
         }
+    }
+
+    protected static List<String> headerValues(final HttpResponse response, final String headerName) {
+        return stream(response.getHeaders(headerName)).map(Header::getValue).map(s -> s.split(",")).flatMap(
+                Arrays::stream).map(String::trim).collect(toList());
     }
 
     protected static Collection<String> getHeader(final HttpResponse response, final String header) {
