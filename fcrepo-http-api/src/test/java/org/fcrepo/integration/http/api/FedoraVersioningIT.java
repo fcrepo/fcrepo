@@ -456,7 +456,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore("Disable until binary version creation from body implemented")
     @Test
     public void testCreateVersionOfBinaryWithDatetimeAndContentType() throws Exception {
         createVersionedBinary(id);
@@ -492,7 +491,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore("Disable until binary version creation from body implemented")
     @Test
     public void testCreateVersionOfBinaryWithDatetimeAndBody() throws Exception {
         createVersionedBinary(id);

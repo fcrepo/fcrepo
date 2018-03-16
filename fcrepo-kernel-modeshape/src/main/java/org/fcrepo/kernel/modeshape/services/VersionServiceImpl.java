@@ -81,6 +81,7 @@ import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.api.services.VersionService;
+import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.modeshape.ContainerImpl;
 import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
 import org.fcrepo.kernel.modeshape.utils.iterators.RelaxedRdfAdder;
@@ -192,8 +193,9 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
     @Override
     public FedoraBinary createBinaryVersion(final FedoraSession session,
             final FedoraBinary resource,
-            final Instant dateTime) throws InvalidChecksumException {
-        return createBinaryVersion(session, resource, dateTime, null, null, null, null);
+            final Instant dateTime,
+            final StoragePolicyDecisionPoint storagePolicyDecisionPoint) throws InvalidChecksumException {
+        return createBinaryVersion(session, resource, dateTime, null, null, null, null, storagePolicyDecisionPoint);
     }
 
     @Override
@@ -203,7 +205,8 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
             final InputStream contentStream,
             final String filename,
             final String mimetype,
-            final Collection<URI> checksums) throws InvalidChecksumException {
+            final Collection<URI> checksums,
+            final StoragePolicyDecisionPoint storagePolicyDecisionPoint) throws InvalidChecksumException {
 
         final String mementoPath = makeMementoPath(resource, dateTime);
 
@@ -217,7 +220,7 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
             // Creating memento from existing resource
             populateBinaryMementoFromExisting(resource, memento);
         } else {
-            // memento.setContent(content, contentType, checksums, originalFileName, storagePolicyDecisionPoint);
+            memento.setContent(contentStream, mimetype, checksums, filename, null);
         }
 
         decorateWithMementoProperties(session, mementoPath, dateTime);

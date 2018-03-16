@@ -203,8 +203,8 @@ public class FedoraVersioning extends ContentExposingResource {
                 if (resource instanceof FedoraBinary) {
                     final FedoraBinary binaryResource = (FedoraBinary) resource;
                     if (createFromExisting) {
-                        memento = versionService.createBinaryVersion(
-                                session.getFedoraSession(), binaryResource, mementoInstant);
+                        memento = versionService.createBinaryVersion(session.getFedoraSession(),
+                                binaryResource, mementoInstant, storagePolicyDecisionPoint);
                     } else {
                         memento = createBinaryMementoFromRequest(binaryResource, mementoInstant,
                                 requestBodyStream, digest, contentDisposition, contentType);
@@ -253,7 +253,8 @@ public class FedoraVersioning extends ContentExposingResource {
         final String originalContentType = contentType != null ? contentType.toString() : "";
 
         return versionService.createBinaryVersion(session.getFedoraSession(), binaryResource,
-                mementoInstant, requestBodyStream, originalFileName, originalContentType, checksumURIs);
+                mementoInstant, requestBodyStream, originalFileName, originalContentType,
+                checksumURIs, storagePolicyDecisionPoint);
     }
 
     /**

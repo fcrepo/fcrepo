@@ -29,6 +29,7 @@ import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 
 /**
  * Service for creating versions of resources
@@ -78,11 +79,13 @@ public interface VersionService {
      * @param filename filename of the binary
      * @param mimetype mimetype of the binary
      * @param checksums Collection of checksum URIs of the content (optional)
+     * @param storagePolicyDecisionPoint optional storage policy
      * @throws InvalidChecksumException if there are errors applying checksums
      * @return the version
      */
     FedoraBinary createBinaryVersion(FedoraSession session, FedoraBinary resource, Instant dateTime,
-            InputStream contentStream, String filename, String mimetype, Collection<URI> checksums)
+            InputStream contentStream, String filename, String mimetype, Collection<URI> checksums,
+            StoragePolicyDecisionPoint storagePolicyDecisionPoint)
             throws InvalidChecksumException;
 
     /**
@@ -91,10 +94,12 @@ public interface VersionService {
      * @param session the session in which the resource resides
      * @param resource the binary resource to version
      * @param dateTime the date/time of the version
+     * @param storagePolicyDecisionPoint optional storage policy
      * @return the version
      * @throws InvalidChecksumException
      */
-    FedoraBinary createBinaryVersion(FedoraSession session, FedoraBinary resource, Instant dateTime)
+    FedoraBinary createBinaryVersion(FedoraSession session, FedoraBinary resource, Instant dateTime,
+            StoragePolicyDecisionPoint storagePolicyDecisionPoint)
             throws InvalidChecksumException;
 
 }
