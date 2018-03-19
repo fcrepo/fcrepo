@@ -17,14 +17,11 @@
  */
 package org.fcrepo.kernel.modeshape.utils;
 
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_SKOLEM;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TIME_MAP;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
 import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.isBinaryContentProperty;
 import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.property2values;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getClosestExistingAncestor;
-import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getContainingNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getReferencePropertyName;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isSkolemNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isReferenceProperty;
@@ -386,14 +383,5 @@ public class FedoraTypesUtilsTest {
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockNodeType.getName()).thenReturn(ROOT);
         assertFalse(isExternalNode.test(mockNode));
-    }
-
-    @Test
-    public void testGetBinaryTimeMapShouldReturnDirectParent() throws RepositoryException {
-        when(mockNode.getDepth()).thenReturn(1);
-        when(mockNode.isNodeType(FEDORA_TIME_MAP)).thenReturn(true);
-        when(mockParent.isNodeType(FEDORA_NON_RDF_SOURCE_DESCRIPTION)).thenReturn(true);
-        when(mockNode.getParent()).thenReturn(mockParent);
-        assertEquals(mockParent, getContainingNode(mockNode).get());
     }
 }

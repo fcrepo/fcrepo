@@ -22,6 +22,8 @@ import static java.util.Collections.singleton;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.replaceOnce;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.LDPCV_TIME_MAP;
+import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.LDPCV_BINARY_TIME_MAP;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
@@ -37,6 +39,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
@@ -51,9 +55,11 @@ import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.TombstoneException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.FedoraTimeMap;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl;
 import org.fcrepo.kernel.modeshape.TombstoneImpl;
 import org.fcrepo.kernel.modeshape.identifiers.HashConverter;
 import org.fcrepo.kernel.modeshape.identifiers.NamespaceConverter;
@@ -76,6 +82,14 @@ import com.google.common.collect.Lists;
 public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraResource> {
 
     private static final Logger LOGGER = getLogger(HttpResourceConverter.class);
+
+    // Regex pattern which decomposes a http resource uri into components
+    // First group is the path of the resource or original resource,
+    // second group determines if it is an fcr:metadata non-rdf source,
+    // third group determines if the path is for a memento or timemap,
+    // and the fourth group allows for a memento identifier
+    private final static Pattern FORWARD_COMPONENT_PATTERN = Pattern.compile(
+            "(.*?)(/" + FCR_METADATA + ")?(/" + FCR_VERSIONS + "(/\\d+)?)?$");
 
     protected List<Converter<String, String>> translationChain;
 
@@ -119,13 +133,9 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
 
                 final boolean metadata = values.containsKey("path")
                         && values.get("path").endsWith("/" + FCR_METADATA);
-                final boolean timemap = values.containsKey("path") && values.get("path").endsWith("/" + FCR_VERSIONS);
 
                 final FedoraResource fedoraResource = nodeConverter.convert(node);
 
-                if (timemap) {
-                    return fedoraResource.findOrCreateTimeMap();
-                }
                 if (!metadata && fedoraResource instanceof NonRdfSourceDescription) {
                     return fedoraResource.getDescribedResource();
                 }
@@ -208,14 +218,38 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
         if (uriTemplate.match(resource.getURI(), values) && values.containsKey("path")) {
             String path = "/" + values.get("path");
 
-            final boolean metadata = path.endsWith("/" + FCR_METADATA);
-            final boolean timemap = path.endsWith("/" + FCR_VERSIONS);
+            final Matcher matcher = FORWARD_COMPONENT_PATTERN.matcher(path);
 
-            if (metadata) {
-                path = replaceOnce(path, "/" + FCR_METADATA, EMPTY);
-            }
-            if (timemap) {
-                path = replaceOnce(path, "/" + FCR_VERSIONS, EMPTY);
+            if (matcher.matches()) {
+                final boolean metadata = matcher.group(2) != null;
+                final boolean versioning = matcher.group(3) != null;
+                final String basePath = matcher.group(1);
+
+                if (versioning) {
+                    // Disambiguate between a binary or non-binary timemap, as they can have overlapping external uris
+                    final boolean binary;
+                    if (metadata) {
+                        binary = false;
+                    } else {
+                        try {
+                            final Node originalNode = getNode(basePath);
+                            binary = NonRdfSourceDescriptionImpl.hasMixin(originalNode);
+                        } catch (final RepositoryException e) {
+                            throw new RepositoryRuntimeException(e);
+                        }
+                    }
+
+                    // Convert to correct timemap node name
+                    if (binary) {
+                        path = replaceOnce(path, "/" + FCR_VERSIONS, "/" + LDPCV_BINARY_TIME_MAP);
+                    } else {
+                        path = replaceOnce(path, "/" + FCR_VERSIONS, "/" + LDPCV_TIME_MAP);
+                    }
+                }
+
+                if (metadata) {
+                    path = replaceOnce(path, "/" + FCR_METADATA, EMPTY);
+                }
             }
 
             path = forward.convert(path);
@@ -252,23 +286,9 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
     private Node getNode(final String path) throws RepositoryException {
         try {
             return getJcrSession(session).getNode(path);
-        } catch (IllegalArgumentException ex) {
+        } catch (final IllegalArgumentException ex) {
             throw new InvalidResourceIdentifierException("Illegal path: " + path);
         }
-    }
-
-    private static String getPath(final FedoraResource resource) {
-        if (resource instanceof FedoraTimeMap) {
-            // the path is relative to the parent, and unique so fake it here.
-            final FedoraResource parent = resource.getContainer();
-            final String parentPath = parent.getPath();
-            return parentPath + "/" + FCR_VERSIONS;
-        }
-        return resource.getPath();
-    }
-
-    private static String getRelativePath(final FedoraResource child, final FedoraResource ancestor) {
-        return child.getPath().substring(ancestor.getPath().length());
     }
 
     /**
@@ -277,16 +297,39 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
      * @return
      */
     private String doBackwardPathOnly(final FedoraResource resource) {
-        final String path = reverse.convert(getPath(resource));
-        if (path != null) {
 
-            if (resource instanceof NonRdfSourceDescription) {
-                return path + "/" + FCR_METADATA;
+        String path = reverse.convert(resource.getPath());
+        if (path == null) {
+            throw new RepositoryRuntimeException("Unable to process reverse chain for resource " + resource);
+        }
+
+        final boolean versioning = resource instanceof FedoraTimeMap || resource.isMemento();
+
+        if (versioning) {
+            final FedoraResource originalOrMemento;
+            if (resource instanceof FedoraTimeMap) {
+                final FedoraTimeMap timemap = (FedoraTimeMap) resource;
+                originalOrMemento = timemap.getOriginalResource();
+            } else {
+                originalOrMemento = resource;
             }
 
-            return path;
+            // For binary description memento, follows id/fcr:metadata/fcr:versions/memento format
+            if (originalOrMemento instanceof FedoraBinary) {
+                path = replaceOnce(path, "/" + LDPCV_BINARY_TIME_MAP, "/" + FCR_VERSIONS);
+            } else if (originalOrMemento instanceof NonRdfSourceDescription) {
+                path = replaceOnce(path, "/" + LDPCV_TIME_MAP, "/" + FCR_METADATA + "/" + FCR_VERSIONS);
+            } else {
+                // For regular container, replace timemap name with versions path
+                path = replaceOnce(path, "/" + LDPCV_TIME_MAP, "/" + FCR_VERSIONS);
+            }
+
+        } else if (resource instanceof NonRdfSourceDescription) {
+            // binary description, non-memento
+            path += "/" + FCR_METADATA;
         }
-        throw new RepositoryRuntimeException("Unable to process reverse chain for resource " + resource);
+
+        return path;
     }
 
 

@@ -79,6 +79,7 @@
  * A Fedora LDPCv TimeMap.
  */
 [fedora:TimeMap] > fedora:Resource mixin
+  - memento:original (REFERENCE)
 
 /*
  * A Fedora LDPRm Memento.

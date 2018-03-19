@@ -23,4 +23,10 @@ package org.fcrepo.kernel.api.models;
  */
 public interface FedoraTimeMap extends FedoraResource {
 
+    /**
+     * Get the Original Resource to which this TimeMap/TimeGate applies.
+     *
+     * @return the original resource for this
+     */
+    FedoraResource getOriginalResource();
 }
