@@ -239,7 +239,7 @@ public class FedoraVersioning extends ContentExposingResource {
         }
     }
 
-    protected FedoraBinary createBinaryMementoFromRequest(final FedoraBinary binaryResource,
+    private FedoraBinary createBinaryMementoFromRequest(final FedoraBinary binaryResource,
             final Instant mementoInstant,
             final InputStream requestBodyStream,
             final String digest,
