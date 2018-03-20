@@ -649,7 +649,7 @@ public class FedoraLdp extends ContentExposingResource {
                     .getBaseUri().getHost() : headers.getHeaderString("X-Forwarded-Host");
 
             if (!serverHost.equals(aclHost)) {
-                throw new InvalidACLException("Cross Domain ACLs is not allowed");
+                throw new InvalidACLException("Cross Domain ACLs are not allowed");
             }
 
             //extract external path
