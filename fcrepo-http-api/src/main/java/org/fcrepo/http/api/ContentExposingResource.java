@@ -366,12 +366,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected Response getBinaryContent(final String rangeValue)
             throws IOException {
             final FedoraBinary binary = (FedoraBinary)resource();
-
-            // we include an explicit etag, because the default behavior is to use the JCR node's etag, not
-            // the jcr:content node digest. The etag is only included if we are not within a transaction.
-            if (!session().isBatchSession()) {
-                checkCacheControlHeaders(request, servletResponse, binary, session());
-            }
             final CacheControl cc = new CacheControl();
             cc.setMaxAge(0);
             cc.setMustRevalidate(true);
