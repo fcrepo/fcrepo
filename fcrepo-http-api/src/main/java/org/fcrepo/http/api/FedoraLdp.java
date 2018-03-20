@@ -643,6 +643,15 @@ public class FedoraLdp extends ContentExposingResource {
     private void checkAclUriExistsAndHasCorrectType(final URI resourceAcl) {
         FedoraResource aclResource = null;
         try {
+
+            final String aclHost = resourceAcl.getHost();
+            final String serverHost = (headers.getHeaderString("X-Forwarded-Host") == null) ? this.uriInfo
+                    .getBaseUri().getHost() : headers.getHeaderString("X-Forwarded-Host");
+
+            if (!serverHost.equals(aclHost)) {
+                throw new InvalidACLException("Cross Domain ACLs is not allowed");
+            }
+
             //extract external path
             final String contextPath = this.uriInfo.getBaseUri().getPath();
 
@@ -669,13 +678,6 @@ public class FedoraLdp extends ContentExposingResource {
 
     private void addResourceAcl(final URI resourceAcl) {
         if (resourceAcl != null) {
-            final String aclHost = resourceAcl.getHost();
-            final String serverHost = this.uriInfo.getBaseUri().getHost();
-
-            if (!serverHost.equals(aclHost)) {
-                throw new InvalidACLException("Cross Domain ACLs is not allowed");
-            }
-
             final String sparql =
                     "PREFIX acl: <" + WEBAC_NAMESPACE_VALUE + ">\n" +
                     "INSERT { \n" +
