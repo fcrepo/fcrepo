@@ -356,7 +356,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         createVersionMethod.addHeader(MEMENTO_DATETIME_HEADER, MEMENTO_DATETIME);
 
         try (final CloseableHttpResponse response = execute(createVersionMethod)) {
-            assertEquals("Duplicate memento datetime should return 412 status",
+            assertEquals("Duplicate memento datetime should return 409 status",
                     CONFLICT.getStatusCode(), getStatus(response));
         }
 
