@@ -643,6 +643,15 @@ public class FedoraLdp extends ContentExposingResource {
     private void checkAclUriExistsAndHasCorrectType(final URI resourceAcl) {
         FedoraResource aclResource = null;
         try {
+
+            final String aclHost = resourceAcl.getHost();
+            final String serverHost = (headers.getHeaderString("X-Forwarded-Host") == null) ? this.uriInfo
+                    .getBaseUri().getHost() : headers.getHeaderString("X-Forwarded-Host");
+
+            if (!serverHost.equals(aclHost)) {
+                throw new InvalidACLException("Cross Domain ACLs are not allowed");
+            }
+
             //extract external path
             final String contextPath = this.uriInfo.getBaseUri().getPath();
 

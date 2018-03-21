@@ -16,9 +16,8 @@
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
     <owl:Ontology rdf:about="static/constraints/InvalidACLException">
         <rdfs:label xml:lang="en">Invalid ACL Exception</rdfs:label>
-        <rdfs:comment xml:lang="en">Fedora wasn't able to create the LDPR with the specified LDP-RS as the ACL. Either
-        the ACL URI in the link header does not exist or exists but does not contain a triple indicating rdf:type of
-        http://fedora.info/definitions/v4/webac#Acl
+        <rdfs:comment xml:lang="en">Fedora wasn't able to create the LDPR with the specified LDP-RS as the ACL for one of the following reasons:
+        the ACL URI in the link header does not exist, the ACL URI exists but does not contain a triple indicating rdf:type of http://fedora.info/definitions/v4/webac#Acl, or the ACL URI does not have the same domain as the LDPR.
         </rdfs:comment>
     </owl:Ontology>
 </rdf:RDF>

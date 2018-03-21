@@ -1219,6 +1219,31 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testPostCreateNonRDFSourceWithOtherDomainAcl() throws IOException {
+        final String aclURI = createOtherDomainAcl();
+        final String subjectPid = getRandomUniqueId();
+        final HttpPost createMethod = new HttpPost(serverAddress);
+        createMethod.addHeader(CONTENT_TYPE, "text/plain");
+        createMethod.addHeader("Link", "<" + aclURI + ">; rel=\"acl\"");
+        createMethod.addHeader("Slug", subjectPid);
+        createMethod.setEntity(new StringEntity("test body"));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(createMethod));
+    }
+
+    @Test
+    public void testPostCreateNonRDFSourceWithOtherForwardedHostAcl() throws IOException {
+        final String aclURI = createAcl();
+        final String subjectPid = getRandomUniqueId();
+        final HttpPost createMethod = new HttpPost(serverAddress);
+        createMethod.addHeader(CONTENT_TYPE, "text/plain");
+        createMethod.addHeader("Link", "<" + aclURI + ">; rel=\"acl\"");
+        createMethod.addHeader("Slug", subjectPid);
+        createMethod.addHeader("X-Forwarded-Host", "otherdomain.com");
+        createMethod.setEntity(new StringEntity("test body"));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(createMethod));
+    }
+
+    @Test
     public void testPutCreateNonRDFSourceWithAcl() throws IOException {
         final String aclURI = createAcl();
         final String subjectURI = serverAddress + getRandomUniqueId();
@@ -1228,6 +1253,29 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createMethod.setEntity(new StringEntity("test body"));
         assertEquals(CREATED.getStatusCode(), getStatus(createMethod));
         verifyAccessControlTripleIsPresent(aclURI, subjectURI, subjectURI + "/fcr:metadata");
+    }
+
+    @Test
+    public void testPutCreateNonRDFSourceWithOtherDomainAcl() throws IOException {
+        final String aclURI = createOtherDomainAcl();
+        final String subjectURI = serverAddress + getRandomUniqueId();
+        final HttpPut createMethod = new HttpPut(subjectURI);
+        createMethod.addHeader(CONTENT_TYPE, "text/plain");
+        createMethod.addHeader("Link", "<" + aclURI + ">; rel=\"acl\"");
+        createMethod.setEntity(new StringEntity("test body"));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(createMethod));
+    }
+
+    @Test
+    public void testPutCreateNonRDFSourceWithOtherForwardedHostAcl() throws IOException {
+        final String aclURI = createAcl();
+        final String subjectURI = serverAddress + getRandomUniqueId();
+        final HttpPut createMethod = new HttpPut(subjectURI);
+        createMethod.addHeader(CONTENT_TYPE, "text/plain");
+        createMethod.addHeader("Link", "<" + aclURI + ">; rel=\"acl\"");
+        createMethod.addHeader("X-Forwarded-Host", "otherdomain.com");
+        createMethod.setEntity(new StringEntity("test body"));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(createMethod));
     }
 
     @Test
@@ -1271,6 +1319,31 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testPostCreateRDFSourceWithOtherDomainAcl() throws IOException {
+        final String aclURI = createOtherDomainAcl();
+        final String subjectPid = getRandomUniqueId();
+        final HttpPost createMethod = new HttpPost(serverAddress);
+        createMethod.addHeader(CONTENT_TYPE, "text/n3");
+        createMethod.addHeader("Link", "<" + aclURI + ">; rel=\"acl\"");
+        createMethod.addHeader("Slug", subjectPid);
+        createMethod.setEntity(new StringEntity("<> <info:test#label> \"foo\""));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(createMethod));
+    }
+
+    @Test
+    public void testPostCreateRDFSourceWithOtherForwardedHostAcl() throws IOException {
+        final String aclURI = createAcl();
+        final String subjectPid = getRandomUniqueId();
+        final HttpPost createMethod = new HttpPost(serverAddress);
+        createMethod.addHeader(CONTENT_TYPE, "text/n3");
+        createMethod.addHeader("Link", "<" + aclURI + ">; rel=\"acl\"");
+        createMethod.addHeader("Slug", subjectPid);
+        createMethod.addHeader("X-Forwarded-Host", "otherdomain.com");
+        createMethod.setEntity(new StringEntity("<> <info:test#label> \"foo\""));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(createMethod));
+    }
+
+    @Test
     public void testPutCreateRDFSourceWithAcl() throws IOException {
         final String aclURI = createAcl();
         final String subjectURI = serverAddress + getRandomUniqueId();
@@ -1304,6 +1377,29 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals(CONFLICT.getStatusCode(), getStatus(createMethod));
     }
 
+    @Test
+    public void testPutCreateRDFSourceWithOtherDomainAcl() throws IOException {
+        final String aclURI = createOtherDomainAcl();
+        final String subjectURI = serverAddress + getRandomUniqueId();
+        final HttpPut createMethod = new HttpPut(subjectURI);
+        createMethod.addHeader(CONTENT_TYPE, "text/n3");
+        createMethod.addHeader("Link", "<" + aclURI + ">; rel=\"acl\"");
+        createMethod.setEntity(new StringEntity("<" + subjectURI + "> <info:test#label> \"foo\""));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(createMethod));
+    }
+
+    @Test
+    public void testPutCreateRDFSourceWithOtherForwardedHostAcl() throws IOException {
+        final String aclURI = createAcl();
+        final String subjectURI = serverAddress + getRandomUniqueId();
+        final HttpPut createMethod = new HttpPut(subjectURI);
+        createMethod.addHeader(CONTENT_TYPE, "text/n3");
+        createMethod.addHeader("Link", "<" + aclURI + ">; rel=\"acl\"");
+        createMethod.addHeader("X-Forwarded-Host", "otherdomain.com");
+        createMethod.setEntity(new StringEntity("<" + subjectURI + "> <info:test#label> \"foo\""));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(createMethod));
+    }
+
     private void verifyAccessControlTripleIsPresent(final String aclURI, final String subjectURI) throws IOException {
         verifyAccessControlTripleIsPresent(aclURI, subjectURI, subjectURI);
     }
@@ -1320,6 +1416,19 @@ public class FedoraLdpIT extends AbstractResourceIT {
     private String createAcl() throws UnsupportedEncodingException {
         final String aclPid = "acl" + getRandomUniqueId();
         final String aclURI = serverAddress + aclPid;
+        createObjectAndClose(aclPid);
+        final HttpPatch patch = patchObjMethod(aclPid);
+        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
+        // add webac:Acl type to aclURI
+        patch.setEntity(new StringEntity(
+                "INSERT { <> a <http://fedora.info/definitions/v4/webac#Acl> } WHERE {}"));
+        assertEquals("Couldn't add webac:Acl type", NO_CONTENT.getStatusCode(), getStatus(patch));
+        return aclURI;
+    }
+
+    private String createOtherDomainAcl() throws UnsupportedEncodingException {
+        final String aclPid = "acl" + getRandomUniqueId();
+        final String aclURI = "http://otherdomain.com:8080/" + aclPid;
         createObjectAndClose(aclPid);
         final HttpPatch patch = patchObjMethod(aclPid);
         patch.addHeader(CONTENT_TYPE, "application/sparql-update");
