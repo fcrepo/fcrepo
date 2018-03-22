@@ -20,10 +20,10 @@ package org.fcrepo.http.api;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
-import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.fcrepo.http.commons.domain.RDFMediaType.APPLICATION_LINK_FORMAT;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
@@ -220,7 +220,7 @@ public class FedoraVersioning extends ContentExposingResource {
         } catch (final RepositoryRuntimeException e) {
             if (e.getCause() instanceof ItemExistsException) {
                 throw new ClientErrorException("Memento with provided datetime already exists",
-                        PRECONDITION_FAILED);
+                        CONFLICT);
             } else {
                 throw e;
             }
