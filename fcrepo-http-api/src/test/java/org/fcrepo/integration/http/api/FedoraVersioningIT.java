@@ -784,6 +784,48 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Test
+    public void testPatchOnMemento() throws Exception {
+        createVersionedContainer(id, subjectUri);
+
+        final String mementoUri = createContainerMementoWithBody(subjectUri, MEMENTO_DATETIME);
+        final HttpPatch patch = new HttpPatch(mementoUri);
+        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
+        patch.setEntity(new StringEntity(
+                "INSERT DATA { <> <" + title.getURI() + "> \"Memento title\" } "));
+
+        // status 405: PATCH on memento is not allowed.
+        assertEquals(405, getStatus(patch));
+    }
+
+    @Test
+    public void testPostOnMemento() throws Exception {
+        createVersionedContainer(id, subjectUri);
+
+        final String mementoUri = createContainerMementoWithBody(subjectUri, MEMENTO_DATETIME);
+        final String body = createContainerMementoBodyContent(subjectUri, "text/n3");
+        final HttpPost post = new HttpPost(mementoUri);
+        post.addHeader(CONTENT_TYPE, "text/n3");
+        post.setEntity(new StringEntity(body));
+
+        // status 405: POST on memento is not allowed.
+        assertEquals(405, getStatus(post));
+    }
+
+    @Test
+    public void testPutOnMemento() throws Exception {
+        createVersionedContainer(id, subjectUri);
+
+        final String mementoUri = createContainerMementoWithBody(subjectUri, MEMENTO_DATETIME);
+        final String body = createContainerMementoBodyContent(subjectUri, "text/n3");
+        final HttpPut put = new HttpPut(mementoUri);
+        put.addHeader(CONTENT_TYPE, "text/n3");
+        put.setEntity(new StringEntity(body));
+
+        // status 405: PUT on memento is not allowed.
+        assertEquals(405, getStatus(put));
+    }
+
     private static void assertMementoOptionsHeaders(final HttpResponse httpResponse) {
         final List<String> methods = headerValues(httpResponse, "Allow");
         assertTrue("Should allow GET", methods.contains(HttpGet.METHOD_NAME));

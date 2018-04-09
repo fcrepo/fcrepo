@@ -28,9 +28,11 @@ import static javax.ws.rs.core.MediaType.WILDCARD;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.notAcceptable;
 import static javax.ws.rs.core.Response.ok;
+import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
+import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
 import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
@@ -108,6 +110,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
+import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
@@ -355,6 +358,12 @@ public class FedoraLdp extends ContentExposingResource {
 
         hasRestrictedPath(externalPath);
 
+        if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
+            addLinkAndOptionsHttpHeaders();
+
+            return status(METHOD_NOT_ALLOWED).build();
+        }
+
         final String interactionModel = checkInteractionModel(links);
 
         if (isExternalBody(requestContentType)) {
@@ -474,6 +483,13 @@ public class FedoraLdp extends ContentExposingResource {
     public Response updateSparql(@ContentLocation final InputStream requestBodyStream)
             throws IOException {
         hasRestrictedPath(externalPath);
+
+        if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
+            addLinkAndOptionsHttpHeaders();
+
+            return status(METHOD_NOT_ALLOWED).build();
+        }
+
         if (null == requestBodyStream) {
             throw new BadRequestException("SPARQL-UPDATE requests must have content!");
         }
@@ -554,6 +570,12 @@ public class FedoraLdp extends ContentExposingResource {
                                  @HeaderParam("Digest") final String digest)
             throws InvalidChecksumException, IOException, MalformedRdfException, UnsupportedAlgorithmException,
             UnsupportedAccessTypeException {
+
+        if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
+            addLinkAndOptionsHttpHeaders();
+
+            return status(METHOD_NOT_ALLOWED).build();
+        }
 
         final String interactionModel = checkInteractionModel(links);
 
