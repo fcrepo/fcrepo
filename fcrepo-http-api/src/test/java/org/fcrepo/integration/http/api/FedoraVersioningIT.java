@@ -418,6 +418,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         httpGet.setHeader("Accept", APPLICATION_LINK_FORMAT);
         try (final CloseableHttpResponse response = execute(httpGet)) {
             assertEquals("Didn't get a OK response!", OK.getStatusCode(), getStatus(response));
+            checkForLinkHeader(response, uri, "original");
             checkForLinkHeader(response, VERSIONING_TIMEMAP_TYPE, "type");
             final List<String> bodyList = Arrays.asList(EntityUtils.toString(response.getEntity()).split(","));
             final Link[] bodyLinks = bodyList.stream().map(String::trim).filter(t -> !t.isEmpty())
