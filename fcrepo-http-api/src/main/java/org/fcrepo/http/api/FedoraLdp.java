@@ -28,9 +28,11 @@ import static javax.ws.rs.core.MediaType.WILDCARD;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.notAcceptable;
 import static javax.ws.rs.core.Response.ok;
+import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
+import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
 import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
@@ -61,6 +63,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODELS;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_NAMESPACE_VALUE;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_WEBAC_ACL_VALUE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -107,6 +110,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
+import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
@@ -354,6 +358,12 @@ public class FedoraLdp extends ContentExposingResource {
 
         hasRestrictedPath(externalPath);
 
+        if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
+            addLinkAndOptionsHttpHeaders();
+
+            return status(METHOD_NOT_ALLOWED).build();
+        }
+
         final String interactionModel = checkInteractionModel(links);
 
         if (isExternalBody(requestContentType)) {
@@ -362,7 +372,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         final URI resourceAcl = checkForAclLink(links);
         if (resourceAcl != null) {
-            checkAclUriExists(resourceAcl);
+            checkAclUriExistsAndHasCorrectType(resourceAcl);
         }
 
         final FedoraResource resource;
@@ -473,6 +483,13 @@ public class FedoraLdp extends ContentExposingResource {
     public Response updateSparql(@ContentLocation final InputStream requestBodyStream)
             throws IOException {
         hasRestrictedPath(externalPath);
+
+        if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
+            addLinkAndOptionsHttpHeaders();
+
+            return status(METHOD_NOT_ALLOWED).build();
+        }
+
         if (null == requestBodyStream) {
             throw new BadRequestException("SPARQL-UPDATE requests must have content!");
         }
@@ -554,6 +571,12 @@ public class FedoraLdp extends ContentExposingResource {
             throws InvalidChecksumException, IOException, MalformedRdfException, UnsupportedAlgorithmException,
             UnsupportedAccessTypeException {
 
+        if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
+            addLinkAndOptionsHttpHeaders();
+
+            return status(METHOD_NOT_ALLOWED).build();
+        }
+
         final String interactionModel = checkInteractionModel(links);
 
         if (isExternalBody(requestContentType)) {
@@ -562,7 +585,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         final URI resourceAcl = checkForAclLink(links);
         if (resourceAcl != null) {
-            checkAclUriExists(resourceAcl);
+            checkAclUriExistsAndHasCorrectType(resourceAcl);
         }
 
         if (!(resource() instanceof Container)) {
@@ -639,8 +662,18 @@ public class FedoraLdp extends ContentExposingResource {
         }
     }
 
-    private void checkAclUriExists(final URI resourceAcl) {
+    private void checkAclUriExistsAndHasCorrectType(final URI resourceAcl) {
+        FedoraResource aclResource = null;
         try {
+
+            final String aclHost = resourceAcl.getHost();
+            final String serverHost = (headers.getHeaderString("X-Forwarded-Host") == null) ? this.uriInfo
+                    .getBaseUri().getHost() : headers.getHeaderString("X-Forwarded-Host");
+
+            if (!serverHost.equals(aclHost)) {
+                throw new InvalidACLException("Cross Domain ACLs are not allowed");
+            }
+
             //extract external path
             final String contextPath = this.uriInfo.getBaseUri().getPath();
 
@@ -648,17 +681,21 @@ public class FedoraLdp extends ContentExposingResource {
                                     resourceAcl.getPath() :
                                     resourceAcl.getPath().substring(contextPath.length());
 
-            final FedoraResource aclResource = getResourceFromPath(path);
+            aclResource = getResourceFromPath(path);
             if (aclResource == null) {
-                throw new InvalidACLException("The ACL URI in the link header does not exist");
+                throw new InvalidACLException("The ACL URI in the link header does not exist\n");
             }
         } catch (RepositoryRuntimeException e) {
             if (e.getCause() instanceof PathNotFoundException) {
-                throw new InvalidACLException("The external path of the link header's ACL URI was not found");
+                throw new InvalidACLException("The external path of the link header's ACL URI was not found\n");
             } else {
                 throw e;
             }
         }
+       if (!aclResource.getTypes().contains(URI.create(FEDORA_WEBAC_ACL_VALUE))) {
+            throw new InvalidACLException(
+                    "The ACL URI in link header does not have the correct type, must have rdf:type of webac:Acl\n");
+       }
     }
 
     private void addResourceAcl(final URI resourceAcl) {

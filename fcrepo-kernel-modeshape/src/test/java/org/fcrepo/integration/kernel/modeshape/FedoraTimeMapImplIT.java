@@ -19,8 +19,12 @@ package org.fcrepo.integration.kernel.modeshape;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TIME_MAP;
 import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.LDPCV_TIME_MAP;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 
 import javax.inject.Inject;
 import javax.jcr.RepositoryException;
@@ -29,7 +33,10 @@ import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.Container;
+import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.FedoraTimeMap;
+import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.ContainerService;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.junit.After;
@@ -52,6 +59,9 @@ public class FedoraTimeMapImplIT extends AbstractIT {
 
     @Inject
     ContainerService containerService;
+
+    @Inject
+    BinaryService binaryService;
 
     private FedoraSession session;
 
@@ -82,5 +92,54 @@ public class FedoraTimeMapImplIT extends AbstractIT {
         // should throw RepositoryRuntimeException when retrieving the TimeMap after deletion.
         thrown.expect(RepositoryRuntimeException.class);
         object.getChild(LDPCV_TIME_MAP);
+    }
+
+    @Test
+    public void testGetOriginalResource() throws Exception {
+        final String pid = getRandomPid();
+        final Container object = containerService.findOrCreate(session, "/" + pid);
+        session.commit();
+
+        final FedoraTimeMap timeMap = (FedoraTimeMap) object.findOrCreateTimeMap();
+
+        final FedoraResource originalResource = timeMap.getOriginalResource();
+        assertTrue(originalResource instanceof Container);
+        assertEquals("Original resource must reference original container",
+                object.getPath(), originalResource.getPath());
+    }
+
+    @Test
+    public void testGetOriginalBinaryResource() throws Exception {
+        final String pid = getRandomPid();
+        final FedoraBinary object = binaryService.findOrCreate(session, "/" + pid);
+        try (InputStream contentStream = new ByteArrayInputStream("content".getBytes())) {
+            object.setContent(contentStream, "text/plain", null, null, null);
+        }
+
+        final FedoraTimeMap timeMap = (FedoraTimeMap) object.findOrCreateTimeMap();
+        session.commit();
+
+        final FedoraResource originalResource = timeMap.getOriginalResource();
+        assertTrue(originalResource instanceof FedoraBinary);
+        assertEquals("Original resource must reference original container",
+                object.getPath(), originalResource.getPath());
+    }
+
+    @Test
+    public void testGetOriginalBinaryDescriptionResource() throws Exception {
+        final String pid = getRandomPid();
+        final FedoraBinary binary = binaryService.findOrCreate(session, "/" + pid);
+        try (InputStream contentStream = new ByteArrayInputStream("content".getBytes())) {
+            binary.setContent(contentStream, "text/plain", null, null, null);
+        }
+        session.commit();
+
+        final FedoraResource description = binary.getDescribedResource();
+        final FedoraTimeMap timeMap = (FedoraTimeMap) description.findOrCreateTimeMap();
+
+        final FedoraResource originalResource = timeMap.getOriginalResource();
+        assertTrue(originalResource instanceof FedoraBinary);
+        assertEquals("Original resource must reference original container",
+                description.getPath(), originalResource.getPath());
     }
 }

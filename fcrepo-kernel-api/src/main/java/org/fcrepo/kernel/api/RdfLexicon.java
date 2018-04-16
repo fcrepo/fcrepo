@@ -64,6 +64,8 @@ public final class RdfLexicon {
      * Namespace for the W3C WebAC vocabulary.
      */
     public static final String WEBAC_NAMESPACE_VALUE = "http://www.w3.org/ns/auth/acl#";
+    public static final String FEDORA_WEBAC_NAMESPACE_VALUE = "http://fedora.info/definitions/v4/webac#";
+    public static final String FEDORA_WEBAC_ACL_VALUE = FEDORA_WEBAC_NAMESPACE_VALUE + "Acl";
 
     /**
      * Fedora configuration namespace "fedora-config", used for user-settable

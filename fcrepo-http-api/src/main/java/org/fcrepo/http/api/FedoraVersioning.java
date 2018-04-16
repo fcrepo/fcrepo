@@ -20,10 +20,10 @@ package org.fcrepo.http.api;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
-import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.fcrepo.http.commons.domain.RDFMediaType.APPLICATION_LINK_FORMAT;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
@@ -157,7 +157,13 @@ public class FedoraVersioning extends ContentExposingResource {
             @ContentLocation final InputStream requestBodyStream)
             throws InvalidChecksumException, MementoDatetimeFormatException {
 
-        final AcquiredLock lock = lockManager.lockForWrite(resource().findOrCreateTimeMap().getPath(),
+        final FedoraResource timeMap = resource().findOrCreateTimeMap();
+        // If the timemap was created in this request, commit it.
+        if (timeMap.isNew()) {
+            session.commit();
+        }
+
+        final AcquiredLock lock = lockManager.lockForWrite(timeMap.getPath(),
             session.getFedoraSession(), nodeService);
 
         try {
@@ -173,7 +179,7 @@ public class FedoraVersioning extends ContentExposingResource {
             try {
                 mementoInstant = (isBlank(datetimeHeader) ? Instant.now()
                     : Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(datetimeHeader)));
-            } catch (DateTimeParseException e) {
+            } catch (final DateTimeParseException e) {
                 throw new MementoDatetimeFormatException("Invalid memento date-time value. "
                         + "Please use RFC-1123 date-time format, such as 'Tue, 3 Jun 2008 11:05:30 GMT'", e);
             }
@@ -214,7 +220,7 @@ public class FedoraVersioning extends ContentExposingResource {
         } catch (final RepositoryRuntimeException e) {
             if (e.getCause() instanceof ItemExistsException) {
                 throw new ClientErrorException("Memento with provided datetime already exists",
-                        PRECONDITION_FAILED);
+                        CONFLICT);
             } else {
                 throw e;
             }
