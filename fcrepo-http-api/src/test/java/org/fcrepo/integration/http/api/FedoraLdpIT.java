@@ -3923,7 +3923,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String id = getRandomUniqueId();
         executeAndClose(putDSMethod(id, "binary1", "some test content"));
 
-        final String headDigestValue;
         final HttpHead headObjMethod = headObjMethod(id + "/binary1");
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             assertTrue(response.getHeaders(DIGEST).length == 0);
