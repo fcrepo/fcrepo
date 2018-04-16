@@ -158,6 +158,8 @@ public class FedoraLdp extends ContentExposingResource {
 
     static final String DIGEST = "Digest";
 
+    static final String ACCEPT_EXTERNAL_CONTENT = "Accept-External-Content-Handling";
+
     @PathParam("path") protected String externalPath;
 
     @Inject private FedoraHttpConfiguration httpConfiguration;
@@ -830,6 +832,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         } else if (resource() instanceof FedoraBinary) {
             options = "DELETE,HEAD,GET,PUT,OPTIONS";
+            servletResponse.addHeader(ACCEPT_EXTERNAL_CONTENT, "copy,redirect");
 
         } else if (resource() instanceof NonRdfSourceDescription) {
             options = "HEAD,GET,DELETE,PUT,PATCH,OPTIONS";
