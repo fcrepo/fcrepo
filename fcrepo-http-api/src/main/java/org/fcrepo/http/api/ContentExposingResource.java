@@ -503,6 +503,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             servletResponse.addHeader(LINK, versionedResource.toString());
             final Link mementoTimeGate = Link.fromUri(RdfLexicon.VERSIONING_TIMEGATE_TYPE).rel("type").build();
             servletResponse.addHeader(LINK, mementoTimeGate.toString());
+            final Link original = Link.fromUri(getUri(resource.getDescribedResource())).rel("original").build();
+            servletResponse.addHeader(LINK, original.toString());
             final Link timegate = Link.fromUri(getUri(resource.getDescribedResource())).rel("timegate").build();
             servletResponse.addHeader(LINK, timegate.toString());
             final Link timemap =
