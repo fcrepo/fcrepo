@@ -1160,6 +1160,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals("Didn't get an OK (200) response!", OK.getStatusCode(), getStatus(response));
         checkForVersionedResourceLinkHeader(response);
         checkForMementoTimeGateLinkHeader(response);
+        checkForLinkHeader(response, subjectURI, "original");
         checkForLinkHeader(response, subjectURI, "timegate");
         checkForLinkHeader(response, subjectURI + "/" + FCR_VERSIONS, "timemap");
         assertEquals(1, Arrays.asList(response.getHeaders("Vary")).stream().filter(x -> x.getValue().contains(
