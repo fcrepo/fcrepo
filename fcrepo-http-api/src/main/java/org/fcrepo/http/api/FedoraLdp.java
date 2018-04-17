@@ -832,7 +832,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         } else if (resource() instanceof FedoraBinary) {
             options = "DELETE,HEAD,GET,PUT,OPTIONS";
-            servletResponse.addHeader(ACCEPT_EXTERNAL_CONTENT, "copy,redirect");
+            servletResponse.addHeader(ACCEPT_EXTERNAL_CONTENT, "copy,redirect,proxy");
 
         } else if (resource() instanceof NonRdfSourceDescription) {
             options = "HEAD,GET,DELETE,PUT,PATCH,OPTIONS";
