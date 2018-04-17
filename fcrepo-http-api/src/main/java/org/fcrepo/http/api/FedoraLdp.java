@@ -34,6 +34,7 @@ import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static javax.ws.rs.core.Response.Status.FOUND;
 import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
@@ -207,10 +208,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         final String datetimeHeader = headers.getHeaderString(ACCEPT_DATETIME);
         if (!isBlank(datetimeHeader) && resource().isVersioned()) {
-            final Response mementoResponse = getMemento(datetimeHeader);
-            if (mementoResponse != null) {
-                return mementoResponse;
-            }
+            return getMemento(datetimeHeader);
         }
 
         checkCacheControlHeaders(request, servletResponse, resource(), session);
@@ -277,10 +275,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         final String datetimeHeader = headers.getHeaderString(ACCEPT_DATETIME);
         if (!isBlank(datetimeHeader) && resource().isVersioned()) {
-            final Response mementoResponse = getMemento(datetimeHeader);
-            if (mementoResponse != null) {
-                return mementoResponse;
-            }
+            return getMemento(datetimeHeader);
         }
 
         checkCacheControlHeaders(request, servletResponse, resource(), session);
@@ -321,24 +316,27 @@ public class FedoraLdp extends ContentExposingResource {
      * Return the location of a requested Memento.
      *
      * @param datetimeHeader The RFC datetime for the Memento.
-     * @return A 302 Found response or null to just return the original resource.
+     * @return A 302 Found response or 404 if no mementos.
      */
     public Response getMemento(final String datetimeHeader) {
         try {
             final Instant mementoDatetime = Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(datetimeHeader));
             final FedoraResource memento = resource().findMementoByDatetime(mementoDatetime);
+            final Response builder;
             if (memento != null) {
-                final Response builder =
+                builder =
                     status(FOUND).header("Location", translator().reverse().convert(memento).toString()).build();
-                addResourceHttpHeaders(resource());
-                setVaryAndPreferenceAppliedHeaders(servletResponse, prefer);
-                return builder;
+
+            } else {
+                builder = status(NOT_FOUND).build();
             }
+            addResourceHttpHeaders(resource());
+            setVaryAndPreferenceAppliedHeaders(servletResponse, prefer);
+            return builder;
         } catch (final DateTimeParseException e) {
             throw new MementoDatetimeFormatException("Invalid Accept-Datetime value. "
                 + "Please use RFC-1123 date-time format, such as 'Tue, 3 Jun 2008 11:05:30 GMT'", e);
         }
-        return null;
     }
 
     /**
