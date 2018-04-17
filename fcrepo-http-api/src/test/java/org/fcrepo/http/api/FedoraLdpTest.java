@@ -420,6 +420,18 @@ public class FedoraLdpTest {
         assertFalse("Should not advertise Accept-Post flavors", mockResponse.containsHeader("Accept-Post"));
     }
 
+    private void assertShouldHaveAcceptExternalContentHandlingHeader() {
+        assertTrue("Should have Accept-External-Content-Handling header",
+                mockResponse.containsHeader(FedoraLdp.ACCEPT_EXTERNAL_CONTENT));
+        assertEquals("Should support copy, redirect, and proxy", "copy,redirect,proxy",
+                mockResponse.getHeader(FedoraLdp.ACCEPT_EXTERNAL_CONTENT));
+    }
+
+    private void assertShouldNotHaveAcceptExternalContentHandlingHeader() {
+        assertFalse("Should not have Accept-External-Content-Handling header",
+                mockResponse.containsHeader(FedoraLdp.ACCEPT_EXTERNAL_CONTENT));
+    }
+
     @Test
     public void testHeadWithExternalBinary() throws Exception {
         final FedoraBinary mockResource = (FedoraBinary)setResource(FedoraBinary.class);
@@ -463,6 +475,7 @@ public class FedoraLdpTest {
         final Response actual = testObj.options();
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertTrue("Should have an Allow header", mockResponse.containsHeader("Allow"));
+        assertShouldNotHaveAcceptExternalContentHandlingHeader();
     }
 
     @Test
@@ -472,6 +485,7 @@ public class FedoraLdpTest {
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertTrue("Should advertise Accept-Post flavors", mockResponse.containsHeader("Accept-Post"));
         assertShouldAdvertiseAcceptPatchFlavors();
+        assertShouldNotHaveAcceptExternalContentHandlingHeader();
     }
 
     @Test
@@ -483,6 +497,7 @@ public class FedoraLdpTest {
         assertShouldNotAdvertiseAcceptPostFlavors();
         assertShouldNotAdvertiseAcceptPatchFlavors();
         assertShouldContainLinkToBinaryDescription();
+        assertShouldHaveAcceptExternalContentHandlingHeader();
     }
 
     @Test
@@ -495,6 +510,7 @@ public class FedoraLdpTest {
         assertShouldNotAdvertiseAcceptPostFlavors();
         assertShouldAdvertiseAcceptPatchFlavors();
         assertShouldContainLinkToTheBinary();
+        assertShouldNotHaveAcceptExternalContentHandlingHeader();
     }
 
 
