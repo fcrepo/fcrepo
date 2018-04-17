@@ -43,6 +43,8 @@ public interface FedoraTypes {
 
     String FEDORA_TIME_MAP = "fedora:TimeMap";
 
+    String FEDORAWEBAC_ACL = "fedorawebac:Acl";
+
     String MEMENTO = "memento:Memento";
 
     String MEMENTO_DATETIME = "memento:mementoDatetime";
@@ -80,6 +82,8 @@ public interface FedoraTypes {
     String CONTENT_DIGEST = "premis:hasMessageDigest";
 
     String DEFAULT_DIGEST_ALGORITHM = "fedoraconfig:defaultDigestAlgorithm";
+
+    String FCR_ACL = "fcr:acl";
 
     String FCR_METADATA = "fcr:metadata";
 
