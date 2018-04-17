@@ -98,7 +98,7 @@ public interface FedoraResource {
      * Retrieve the Memento with the closest datetime to the request.
      *
      * @param mementoDatetime The requested date time.
-     * @return The closest Memento or the original resource.
+     * @return The closest Memento or null.
      */
     FedoraResource findMementoByDatetime(Instant mementoDatetime);
 

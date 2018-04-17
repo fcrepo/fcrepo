@@ -22,6 +22,7 @@ import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 import static java.util.stream.Stream.empty;
 import static java.util.stream.Stream.of;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.HttpHeaders.LOCATION;
@@ -30,6 +31,7 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
+import static javax.ws.rs.core.Response.Status.FOUND;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -42,8 +44,10 @@ import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.vocabulary.DC_11.title;
 import static org.apache.jena.vocabulary.RDF.type;
+import static org.fcrepo.http.api.FedoraLdp.ACCEPT_DATETIME;
 import static org.fcrepo.http.api.FedoraVersioning.MEMENTO_DATETIME_HEADER;
 import static org.fcrepo.http.commons.domain.RDFMediaType.APPLICATION_LINK_FORMAT;
+import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_FIXITY;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
@@ -58,7 +62,9 @@ import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEMAP_TYPE;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -88,6 +94,7 @@ import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
@@ -771,6 +778,62 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Test
+    public void testDatetimeNegotiationLDPRv() throws Exception {
+        final CloseableHttpClient customClient = createClient(true);
+        final DateTimeFormatter FMT = DateTimeFormatter.RFC_1123_DATE_TIME.withZone(ZoneId.of("UTC"));
+
+        createVersionedContainer(id, subjectUri);
+        final String memento1 =
+            FMT.format(DateTimeFormatter.ISO_INSTANT.parse("2017-06-10T11:41:00Z", Instant::from));
+        final String version1Uri = createMementWithExistingBody(memento1);
+        final String memento2 =
+            FMT.format(DateTimeFormatter.ISO_INSTANT.parse("2016-06-17T11:41:00Z", Instant::from));
+        final String version2Uri = createMementWithExistingBody(memento2);
+
+        final String request1Datetime =
+            FMT.format(DateTimeFormatter.ISO_INSTANT.parse("2017-01-12T00:00:00Z", Instant::from));
+        final HttpGet getMemento = getObjMethod(id);
+        getMemento.addHeader(ACCEPT_DATETIME, request1Datetime);
+
+        try (final CloseableHttpResponse response = customClient.execute(getMemento)) {
+            assertEquals("Did not get FOUND response", FOUND.getStatusCode(), getStatus(response));
+            assertNoMementoDatetimeHeaderPresent(response);
+            assertEquals("Did not get Location header", version2Uri, response.getFirstHeader(LOCATION).getValue());
+            assertEquals("Did not get Content-Length == 0", "0", response.getFirstHeader(CONTENT_LENGTH).getValue());
+        }
+
+        final String request2Datetime =
+            FMT.format(DateTimeFormatter.ISO_INSTANT.parse("2018-01-10T00:00:00Z", Instant::from));
+        final HttpGet getMemento2 = getObjMethod(id);
+        getMemento2.addHeader(ACCEPT_DATETIME, request2Datetime);
+
+        try (final CloseableHttpResponse response = customClient.execute(getMemento2)) {
+            assertEquals("Did not get FOUND response", FOUND.getStatusCode(), getStatus(response));
+            assertNoMementoDatetimeHeaderPresent(response);
+            assertEquals("Did not get Location header", version1Uri, response.getFirstHeader(LOCATION).getValue());
+            assertEquals("Did not get Content-Length == 0", "0", response.getFirstHeader(CONTENT_LENGTH).getValue());
+        }
+    }
+
+    @Test
+    public void testDatetimeNegotiationNoMementos() throws Exception {
+        final CloseableHttpClient customClient = createClient(true);
+        final DateTimeFormatter FMT = DateTimeFormatter.RFC_1123_DATE_TIME.withZone(ZoneId.of("UTC"));
+
+        createVersionedContainer(id, subjectUri);
+        final String requestDatetime =
+            FMT.format(DateTimeFormatter.ISO_INSTANT.parse("2017-01-12T00:00:00Z", Instant::from));
+        final HttpGet getMemento = getObjMethod(id);
+        getMemento.addHeader(ACCEPT_DATETIME, requestDatetime);
+
+        try (final CloseableHttpResponse response = customClient.execute(getMemento)) {
+            assertEquals("Did not get OK response", OK.getStatusCode(), getStatus(response));
+            assertNull("Did not expect a Location header", response.getFirstHeader(LOCATION));
+            assertNotEquals("Did not get Content-Length > 0", 0, response.getFirstHeader(CONTENT_LENGTH).getValue());
+        }
+    }
+
     @Ignore("Disable until Fixity check implemented for versioned resource")
     @Test
     public void testFixityOnVersionedResource() throws IOException {
@@ -849,6 +912,23 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         assertTrue("Should allow DELETE", methods.contains(HttpDelete.METHOD_NAME));
     }
 
+    private String createMementWithExistingBody(final String mementoDateTime) throws Exception {
+        return createMementWithExistingBody(id, mementoDateTime);
+    }
+
+    private String createMementWithExistingBody(final String id, final String mementoDateTime) throws Exception {
+        final HttpGet getRequest = getObjMethod(id);
+        getRequest.setHeader(ACCEPT, NTRIPLES);
+        try (final CloseableHttpResponse response = execute(getRequest)) {
+            if (getStatus(response) == OK.getStatusCode()) {
+                // Resource exists so get the body to put back with header
+                final String body = EntityUtils.toString(response.getEntity());
+                return createMemento(subjectUri, mementoDateTime, NTRIPLES, body);
+            }
+        }
+        return null;
+    }
+
     private String createMemento(final String subjectUri, final String mementoDateTime, final String contentType,
             final String body) throws Exception {
         final HttpPost createVersionMethod = postObjMethod(id + "/" + FCR_VERSIONS);
@@ -922,6 +1002,11 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(createMethod)) {
             assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
         }
+    }
+
+    private static void assertNoMementoDatetimeHeaderPresent(final CloseableHttpResponse response) {
+        assertNull("No memento datetime header set in response",
+            response.getFirstHeader(MEMENTO_DATETIME_HEADER));
     }
 
     private static void assertMementoDatetimeHeaderPresent(final CloseableHttpResponse response) {

@@ -1167,12 +1167,12 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                     // Return the closest version older than the requested date.
                     return closest.get();
                 } else {
-                    // Otherwise you requested before the first version, so return the first version if is exists
-                    // Otherwise there are no Mementos so return the resource itself.
+                    // Otherwise you requested before the first version, so return the first version if is exists.
+                    // If there are no Mementos return null.
                     final Optional<FedoraResource> earliest = timemap.getChildren()
                         .sorted((a, b) -> a.getMementoDatetime().compareTo(b.getMementoDatetime()))
                         .findFirst();
-                    return earliest.orElse(this);
+                    return earliest.orElse(null);
                 }
             }
       }

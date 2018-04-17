@@ -32,6 +32,7 @@ import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
+import static javax.ws.rs.core.Response.Status.FOUND;
 import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
 import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static org.apache.commons.lang3.StringUtils.isBlank;
@@ -69,6 +70,9 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLDecoder;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -115,6 +119,7 @@ import org.fcrepo.kernel.api.exception.InsufficientStorageException;
 import org.fcrepo.kernel.api.exception.InteractionModelViolationException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
+import org.fcrepo.kernel.api.exception.MementoDatetimeFormatException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
@@ -154,6 +159,8 @@ public class FedoraLdp extends ContentExposingResource {
     static final String DIGEST = "Digest";
 
     static final String ACCEPT_EXTERNAL_CONTENT = "Accept-External-Content-Handling";
+
+    public static final String ACCEPT_DATETIME = "Accept-Datetime";
 
     @PathParam("path") protected String externalPath;
 
@@ -197,6 +204,14 @@ public class FedoraLdp extends ContentExposingResource {
         TURTLE_X, TEXT_HTML_WITH_CHARSET })
     public Response head() throws UnsupportedAlgorithmException, UnsupportedAccessTypeException {
         LOGGER.info("HEAD for: {}", externalPath);
+
+        final String datetimeHeader = headers.getHeaderString(ACCEPT_DATETIME);
+        if (!isBlank(datetimeHeader) && resource().isVersioned()) {
+            final Response mementoResponse = getMemento(datetimeHeader);
+            if (mementoResponse != null) {
+                return mementoResponse;
+            }
+        }
 
         checkCacheControlHeaders(request, servletResponse, resource(), session);
 
@@ -259,6 +274,15 @@ public class FedoraLdp extends ContentExposingResource {
             TURTLE_X, TEXT_HTML_WITH_CHARSET})
     public Response getResource(@HeaderParam("Range") final String rangeValue)
             throws IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+
+        final String datetimeHeader = headers.getHeaderString(ACCEPT_DATETIME);
+        if (!isBlank(datetimeHeader) && resource().isVersioned()) {
+            final Response mementoResponse = getMemento(datetimeHeader);
+            if (mementoResponse != null) {
+                return mementoResponse;
+            }
+        }
+
         checkCacheControlHeaders(request, servletResponse, resource(), session);
 
         LOGGER.info("GET resource '{}'", externalPath);
@@ -291,6 +315,30 @@ public class FedoraLdp extends ContentExposingResource {
         } finally {
             readLock.release();
         }
+    }
+
+    /**
+     * Return the location of a requested Memento.
+     *
+     * @param datetimeHeader The RFC datetime for the Memento.
+     * @return A 302 Found response or null to just return the original resource.
+     */
+    public Response getMemento(final String datetimeHeader) {
+        try {
+            final Instant mementoDatetime = Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(datetimeHeader));
+            final FedoraResource memento = resource().findMementoByDatetime(mementoDatetime);
+            if (memento != null) {
+                final Response builder =
+                    status(FOUND).header("Location", translator().reverse().convert(memento).toString()).build();
+                addResourceHttpHeaders(resource());
+                setVaryAndPreferenceAppliedHeaders(servletResponse, prefer);
+                return builder;
+            }
+        } catch (final DateTimeParseException e) {
+            throw new MementoDatetimeFormatException("Invalid Accept-Datetime value. "
+                + "Please use RFC-1123 date-time format, such as 'Tue, 3 Jun 2008 11:05:30 GMT'", e);
+        }
+        return null;
     }
 
     /**

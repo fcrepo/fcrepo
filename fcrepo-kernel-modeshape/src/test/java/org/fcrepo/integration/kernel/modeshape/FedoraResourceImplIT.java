@@ -133,6 +133,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -1221,7 +1222,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         final Instant time = Instant.from(FMT.parse("2016-04-21T09:43:00"));
 
-        assertEquals("Expected the resource back because 0 Mementos.", object1,
+        assertNull("Expected the null back because 0 Mementos.",
             object1.findMementoByDatetime(time));
     }
 
