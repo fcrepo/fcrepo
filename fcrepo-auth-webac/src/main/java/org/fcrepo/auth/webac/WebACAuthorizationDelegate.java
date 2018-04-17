@@ -19,7 +19,6 @@ package org.fcrepo.auth.webac;
 
 import static java.util.Arrays.stream;
 import static java.util.Collections.unmodifiableMap;
-import static org.fcrepo.auth.webac.URIConstants.FOAF_AGENT_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_CONTROL_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE_VALUE;
@@ -71,24 +70,6 @@ public class WebACAuthorizationDelegate extends AbstractRolesAuthorizationDelega
         map.put(READ_ACCESS_CONTROL, WEBAC_MODE_CONTROL_VALUE);
         actionMap = unmodifiableMap(map);
     }
-
-    /**
-     * The security principal for every request, that represents the foaf:Agent agent class that is used to designate
-     * "everyone".
-     */
-    private static final Principal EVERYONE = new Principal() {
-
-        @Override
-        public String getName() {
-            return FOAF_AGENT_VALUE;
-        }
-
-        @Override
-        public String toString() {
-            return getName();
-        }
-
-    };
 
     @Override
     public boolean rolesHavePermission(final Session userSession, final String absPath,

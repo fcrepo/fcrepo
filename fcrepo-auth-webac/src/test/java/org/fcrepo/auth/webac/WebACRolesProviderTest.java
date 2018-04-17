@@ -22,6 +22,7 @@ import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.graph.Triple.create;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.riot.Lang.TTL;
+import static org.fcrepo.auth.webac.URIConstants.AGENT_CLASS_SUFFIX;
 import static org.fcrepo.auth.webac.URIConstants.VCARD_GROUP;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_ACCESS_CONTROL_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_AUTHORIZATION;
@@ -265,7 +266,8 @@ public class WebACRolesProviderTest {
 
     @Test
     public void acl03Test1() throws RepositoryException {
-        final String agent = "http://xmlns.com/foaf/0.1/Agent";
+        final String foafAgent = "http://xmlns.com/foaf/0.1/Agent";
+        final String foafAgentRoleClass = foafAgent + AGENT_CLASS_SUFFIX;
         final String accessTo = "/dark/archive/sunshine";
         final String acl = "/acls/03";
         final String auth1 = acl + "/auth_restricted.ttl";
@@ -293,8 +295,8 @@ public class WebACRolesProviderTest {
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockNode, true);
 
         assertEquals("There should be exactly one agent in the roles map", 1, roles.size());
-        assertEquals("The agent should have exactly one mode", 1, roles.get(agent).size());
-        assertTrue("The agent should be able to read", roles.get(agent).contains(WEBAC_MODE_READ_VALUE));
+        assertEquals("The agent should have exactly one mode", 1, roles.get(foafAgentRoleClass).size());
+        assertTrue("The agent should be able to read", roles.get(foafAgentRoleClass).contains(WEBAC_MODE_READ_VALUE));
     }
 
     @Test
@@ -333,7 +335,8 @@ public class WebACRolesProviderTest {
 
     @Test
     public void acl04Test() throws RepositoryException {
-        final String agent1 = "http://xmlns.com/foaf/0.1/Agent";
+        final String foafAgent = "http://xmlns.com/foaf/0.1/Agent";
+        final String foafAgentRoleClass = foafAgent + AGENT_CLASS_SUFFIX;
         final String agent2 = "Editors";
         final String accessTo = "/public_collection";
         final String acl = "/acls/04";
@@ -362,15 +365,16 @@ public class WebACRolesProviderTest {
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockNode, true);
 
         assertEquals("There should be exactly two agents", 2, roles.size());
-        assertEquals("The agent should have one mode", 1, roles.get(agent1).size());
-        assertTrue("The agent should be able to read", roles.get(agent1).contains(WEBAC_MODE_READ_VALUE));
+        assertEquals("The agent should have one mode", 1, roles.get(foafAgentRoleClass).size());
+        assertTrue("The agent should be able to read", roles.get(foafAgentRoleClass).contains(WEBAC_MODE_READ_VALUE));
         assertEquals("The agent should have two modes", 2, roles.get(agent2).size());
         assertTrue("The agent should be able to read", roles.get(agent2).contains(WEBAC_MODE_READ_VALUE));
         assertTrue("The agent should be able to write", roles.get(agent2).contains(WEBAC_MODE_READ_VALUE));
     }
 
     public void acl05Test() throws RepositoryException {
-        final String agent1 = "http://xmlns.com/foaf/0.1/Agent";
+        final String foafAgent = "http://xmlns.com/foaf/0.1/Agent";
+        final String foafAgentRoleClass = foafAgent + AGENT_CLASS_SUFFIX;
         final String agent2 = "Admins";
         final String accessTo = "/mixedCollection";
         final String acl = "/acls/05";
@@ -400,15 +404,16 @@ public class WebACRolesProviderTest {
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockNode, true);
 
         assertEquals("There should be exactly two agents", 2, roles.size());
-        assertEquals("The agent should have one mode", 1, roles.get(agent1).size());
-        assertTrue("The agent should be able to read", roles.get(agent1).contains(WEBAC_MODE_READ_VALUE));
+        assertEquals("The agent should have one mode", 1, roles.get(foafAgentRoleClass).size());
+        assertTrue("The agent should be able to read", roles.get(foafAgentRoleClass).contains(WEBAC_MODE_READ_VALUE));
         assertEquals("The agent should have one mode", 1, roles.get(agent2).size());
         assertTrue("The agent should be able to read", roles.get(agent2).contains(WEBAC_MODE_READ_VALUE));
     }
 
     @Test
     public void acl05Test2() throws RepositoryException {
-        final String agent1 = "http://xmlns.com/foaf/0.1/Agent";
+        final String foafAgent = "http://xmlns.com/foaf/0.1/Agent";
+        final String foafAgentRoleClass = foafAgent + AGENT_CLASS_SUFFIX;
         final String accessTo = "/someOtherCollection";
         final String acl = "/acls/05";
         final String auth1 = acl + "/auth_restricted.ttl";
@@ -437,8 +442,8 @@ public class WebACRolesProviderTest {
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockNode, true);
 
         assertEquals("There should be exactly agent", 1, roles.size());
-        assertEquals("The agent should have one mode", 1, roles.get(agent1).size());
-        assertTrue("The agent should be able to read", roles.get(agent1).contains(WEBAC_MODE_READ_VALUE));
+        assertEquals("The agent should have one mode", 1, roles.get(foafAgentRoleClass).size());
+        assertTrue("The agent should be able to read", roles.get(foafAgentRoleClass).contains(WEBAC_MODE_READ_VALUE));
     }
 
     /* (non-Javadoc)
@@ -530,7 +535,8 @@ public class WebACRolesProviderTest {
 
     @Test
     public void noAclTest1() throws RepositoryException {
-        final String agent1 = "http://xmlns.com/foaf/0.1/Agent";
+        final String foafAgent = "http://xmlns.com/foaf/0.1/Agent";
+        final String foafAgentRoleClass = foafAgent + AGENT_CLASS_SUFFIX;
 
         when(mockResource.getTriples(anyObject(), eq(PROPERTIES)))
             .thenReturn(new DefaultRdfStream(createURI("subject")));
@@ -540,12 +546,13 @@ public class WebACRolesProviderTest {
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockNode, true);
 
         assertEquals("There should be exactly one agent", 1, roles.size());
-        assertEquals("The agent should have zero modes", 0, roles.get(agent1).size());
+        assertEquals("The agent should have zero modes", 0, roles.get(foafAgentRoleClass).size());
     }
 
     @Test
     public void noAclTestMalformedRdf2() throws RepositoryException {
-        final String agent1 = "http://xmlns.com/foaf/0.1/Agent";
+        final String foafAgent = "http://xmlns.com/foaf/0.1/Agent";
+        final String foafAgentRoleClass = foafAgent + AGENT_CLASS_SUFFIX;
 
         when(mockResource.getTriples(anyObject(), eq(PROPERTIES)))
             .thenReturn(new DefaultRdfStream(createURI("subject")));
@@ -560,7 +567,7 @@ public class WebACRolesProviderTest {
         System.clearProperty(ROOT_AUTHORIZATION_PROPERTY);
 
         assertEquals("There should be exactly one agent", 1, roles.size());
-        assertEquals("The agent should have zero modes", 0, roles.get(agent1).size());
+        assertEquals("The agent should have zero modes", 0, roles.get(foafAgentRoleClass).size());
     }
 
     @Test
