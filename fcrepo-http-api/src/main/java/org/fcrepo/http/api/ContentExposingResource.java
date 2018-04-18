@@ -61,6 +61,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
+import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEMAP_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 import static org.fcrepo.kernel.api.RequiredRdfContext.EMBED_RESOURCES;
@@ -140,6 +141,7 @@ import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.FedoraTimeMap;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
@@ -457,6 +459,17 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         return resource;
     }
 
+    protected void addTimeMapHeader(final FedoraResource resource) {
+        if (resource instanceof FedoraTimeMap) {
+            final URI parentUri = getUri(resource());
+            servletResponse.addHeader(LINK, Link.fromUri(VERSIONING_TIMEMAP_TYPE).rel("type").build().toString());
+            servletResponse.addHeader(LINK, Link.fromUri(parentUri).rel("original").build().toString());
+
+            servletResponse.addHeader("Vary-Post", MEMENTO_DATETIME_HEADER);
+            servletResponse.addHeader("Allow", "POST,HEAD,GET,OPTIONS");
+        }
+    }
+
     protected void addMementoHeaders(final FedoraResource resource) {
         if (resource.isMemento()) {
             final Instant mementoInstant = resource.getMementoDatetime();
@@ -591,6 +604,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             httpHeaderInject.addHttpHeaderToResponseStream(servletResponse, uriInfo, resource());
         }
 
+        addTimeMapHeader(resource);
         addMementoHeaders(resource);
     }
 

@@ -172,7 +172,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         createVersionedContainer(id, subjectUri);
 
         createContainerMementoWithBody(subjectUri, MEMENTO_DATETIME);
-        verifyTimeMapHeaders(subjectUri, id);
         verifyTimemapResponse(subjectUri, id, MEMENTO_DATETIME);
     }
 
@@ -405,7 +404,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     public void testGetTimeMapResponseForBinary() throws Exception {
         createVersionedBinary(id);
 
-        verifyTimeMapHeaders(subjectUri, id);
         verifyTimemapResponse(subjectUri, id);
     }
 
@@ -429,19 +427,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final String descriptionUri = subjectUri + "/fcr:metadata";
         final String descriptionId = id + "/fcr:metadata";
 
-        verifyTimeMapHeaders(descriptionUri, descriptionId);
         verifyTimemapResponse(descriptionUri, descriptionId);
-    }
-
-    private void verifyTimeMapHeaders(final String uri, final String id) throws IOException {
-        final HttpGet httpGet = getObjMethod(id + "/" + FCR_VERSIONS);
-        try (final CloseableHttpResponse response = execute(httpGet)) {
-            assertEquals("Didn't get a OK response!", OK.getStatusCode(), getStatus(response));
-            checkForLinkHeader(response, RESOURCE.toString(), "type");
-            checkForLinkHeader(response, RDF_SOURCE.toString(), "type");
-            checkForLinkHeader(response, uri, "original");
-            checkForLinkHeader(response, VERSIONING_TIMEMAP_TYPE, "type");
-        }
     }
 
     private void verifyTimemapResponse(final String uri, final String id) throws Exception {
