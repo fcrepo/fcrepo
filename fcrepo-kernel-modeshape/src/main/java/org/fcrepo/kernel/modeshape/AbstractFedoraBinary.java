@@ -21,9 +21,11 @@ import static com.codahale.metrics.MetricRegistry.name;
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDstring;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FIELD_DELIMITER;
 import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.property2values;
+
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Optional;
 
 import javax.jcr.Node;
@@ -111,15 +113,15 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
                 // Select the stored digest that matches the digest algorithm
                 final Optional<Value> digestValue = property2values.apply(getProperty(CONTENT_DIGEST))
                         .filter(digest -> {
-                    try {
-                        final URI digestUri = URI.create(digest.getString());
-                        return algorithmWithoutStringType.equalsIgnoreCase(ContentDigest.getAlgorithm(digestUri));
+                            try {
+                                final URI digestUri = URI.create(digest.getString());
+                                return algorithmWithoutStringType.equalsIgnoreCase(ContentDigest.getAlgorithm(digestUri));
 
-                    } catch (final RepositoryException e) {
-                        LOGGER.warn("Exception thrown when getting digest property {}, {}", digest, e.getMessage());
-                        return false;
-                    }
-                }).findFirst();
+                            } catch (final RepositoryException e) {
+                                LOGGER.warn("Exception thrown when getting digest property {}, {}", digest, e.getMessage());
+                                return false;
+                            }
+                        }).findFirst();
 
                 // Success, return the digest value
                 if (digestValue.isPresent()) {
@@ -132,6 +134,63 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
         }
 
         return ContentDigest.missingChecksum();
+    }
+
+    @Override
+    public Boolean isProxy() {
+        if (hasProperty(PROXY_FOR)) {
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public Boolean isRedirect() {
+        if (hasProperty(REDIRECTS_TO)) {
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public URI getProxyURI() {
+        try {
+            if (hasProperty(PROXY_FOR)) {
+                return new URI(getProperty(PROXY_FOR).getString());
+            }
+            return null;
+
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        } catch (final URISyntaxException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    @Override
+    public void setProxyURI(URI uri) {
+        // todo
+    }
+
+
+    @Override
+    public URI getRedirectURI() {
+        try {
+            if (hasProperty(REDIRECTS_TO)) {
+                return new URI(getProperty(REDIRECTS_TO).getString());
+            }
+            return null;
+
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        } catch (final URISyntaxException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    @Override
+    public void setRedirectURI(URI uri) {
+        // todo
     }
 
     protected String getMimeTypeValue() {

@@ -17,8 +17,9 @@
  */
 package org.fcrepo.http.api;
 
-import static org.fcrepo.kernel.api.utils.MessageExternalBodyContentType.isExternalBodyType;
-import static java.util.EnumSet.of;
+import static org.fcrepo.kernel.api.RdfLexicon.*;
+
+
 import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.empty;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
@@ -36,7 +37,6 @@ import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.notAcceptable;
 import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
-import static javax.ws.rs.core.Response.temporaryRedirect;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.PARTIAL_CONTENT;
 import static javax.ws.rs.core.Response.Status.REQUESTED_RANGE_NOT_SATISFIABLE;
@@ -75,22 +75,25 @@ import static org.slf4j.LoggerFactory.getLogger;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
+import java.io.FileNotFoundException;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URL;
 import java.net.URISyntaxException;
 import java.text.MessageFormat;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -107,7 +110,6 @@ import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.ResponseBuilder;
 import org.apache.jena.atlas.RuntimeIOException;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
@@ -124,6 +126,7 @@ import org.fcrepo.http.commons.domain.ldp.LdpPreferTag;
 import org.fcrepo.http.commons.responses.RangeRequestInputStream;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.http.commons.session.HttpSession;
+import org.fcrepo.kernel.api.exception.ExternalMessageBodyException;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.TripleCategory;
@@ -145,7 +148,6 @@ import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.api.utils.ContentDigest;
-import org.fcrepo.kernel.api.utils.MessageExternalBodyContentType;
 
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.jvnet.hk2.annotations.Optional;
@@ -174,7 +176,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     @Context protected Request request;
     @Context protected HttpServletResponse servletResponse;
     @Context protected ServletContext context;
-
 
     @Inject
     @Optional
@@ -228,13 +229,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         final RdfNamespacedStream outputStream;
 
         if (resource() instanceof FedoraBinary) {
-            final URI redirectResourceLocation = getExternalBodyRedirectLocation();
-
-            if (redirectResourceLocation != null) {
-                return externalBodyRedirect(redirectResourceLocation).build();
-            } else {
-                return getBinaryContent(rangeValue);
-            }
+            return getBinaryContent(rangeValue);
         } else {
             outputStream = new RdfNamespacedStream(
                     new DefaultRdfStream(rdfStream.topic(), concat(rdfStream,
@@ -262,35 +257,127 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     }
 
 
-    protected URI getExternalResourceLocation(final MediaType mediaType) throws UnsupportedAccessTypeException {
-        return URI.create(MessageExternalBodyContentType.parse(mediaType.toString()).getResourceLocation());
-    }
 
-    /**
-     * Checks if media type matches "message/external-body"
-     * @param mediaType media-type to check
-     * @return true if matches
-     */
-    protected boolean isExternalBody(final MediaType mediaType) {
-        return mediaType == null ? false : MessageExternalBodyContentType.isExternalBodyType(mediaType.toString());
-    }
+    static protected class ExternalContent {
 
-    protected URI getExternalBodyRedirectLocation() throws UnsupportedAccessTypeException {
-        final String mimeType = ((FedoraBinary) resource()).getMimeType();
-        if (!isExternalBodyType(mimeType)) {
+        public final static String PROXY = "proxy";
+        public final static String HANDLING = "handling";
+        public final static String COPY = "copy";
+        public final static String REDIRECT = "redirect";
+        public final static String CONTENT_TYPE = "type";
+
+        /**
+         * Loosk for ExternalContent link header
+         *
+         * @param links - links from the request header
+         * @return External Content link header if found, else null
+         */
+        static String findExternalLink(final List<String> links) {
+
+            final List<String> externalContentLinks = links.stream()
+                    .filter(x -> x.contains(EXTERNAL_CONTENT.toString()))
+                    .collect(Collectors.toList());
+
+            if (externalContentLinks.size() > 1) {
+                // got a problem, you can only have one ExternalContent links
+                // todo - throw error with constrained by info
+            } else if (externalContentLinks.size() == 1) {
+                return externalContentLinks.get(0);
+            }
+
             return null;
         }
 
-        final MessageExternalBodyContentType externalType = MessageExternalBodyContentType.parse(mimeType);
-        if (externalType.getAccessType().equals("url")) {
-            return URI.create(externalType.getResourceLocation());
-        } else {
-            return null;
-        }
-    }
+        static InputStream fetchExternalContent(final String extLink) throws FileNotFoundException,
+                MalformedURLException, IOException {
 
-    protected ResponseBuilder externalBodyRedirect(final URI resourceLocation) {
-        return temporaryRedirect(resourceLocation).header(CONTENT_LOCATION, resourceLocation);
+            Map <String, String> map = parseLinkHeader(extLink);
+            if (map.get(HANDLING) == COPY) {
+                final String url = map.get("url");
+                if (url.startsWith("file://")) {
+                    return new FileInputStream(url);
+                } else if (url.startsWith("http")) {
+                    return new URL(url).openStream();
+                }
+            } else {
+                return null;
+            }
+
+        }
+
+        /**
+         * Examines a link header for ExternalContent to verify that it's legit
+         * @param extLink
+         * @throws ExternalMessageBodyException
+         */
+        static void verifyRequestForExternalBody(final String extLink) throws ExternalMessageBodyException {
+            /* link should look like this:
+             Link: <http://example.org/some/content>;
+             rel="http://fedora.info/definitions/fcrepo#ExternalContent";
+             handling="proxy";
+             type="image/tiff"
+           */
+
+            Map<String, String> map = this.parseLinkHeader(extLink);
+
+            // must have rel= as above
+            if (EXTERNAL_CONTENT.toString().toLowerCase() != map.get("rel")) {
+                // error
+                throw new ExternalMessageBodyException("Link header formatted incorrectly: no 'rel' information");
+            }
+
+            // if no 'handling' key, error with constrainedBy
+            // if 'handling' key, but it's not {copy, proxy, redirect} throw error with constrainedBy
+            final String handling = map.get("handling");
+            if (handling == null || !handling.matches("(?i)" + PROXY + "|" + COPY + "|" + REDIRECT)) {
+                // error
+                throw new ExternalMessageBodyException(
+                        "Link header formatted incorrectly: 'handling' parameter incorrect");
+            }
+
+            // if we get this far, things are good
+        }
+
+        private static Map<String, String> parseLinkHeader(final String link) throws ExternalMessageBodyException {
+            List<String> list = Splitter.on(';').trimResults().omitEmptyStrings().splitToList(link);
+
+            final String uri = list.get(0).trim();
+            if (uri.isEmpty() || !uri.startsWith("http") || !uri.startsWith("https") || !uri.startsWith("file")) {
+                throw new ExternalMessageBodyException("Link header formatted incorrectly: URI incorrectly formatted");
+            }
+
+            list.set(0, "uri=" + uri);
+
+            return list.stream().map(x -> x.split("="))
+                    .collect(Collectors.toMap(
+                            x -> x[0].trim().toLowerCase(),
+                            x -> x.length > 1 ? x[1].trim().toLowerCase() : "")
+                    );
+        }
+
+        private static MediaType getContentType(final String link) {
+            final Map<String,String> map = parseLinkHeader(link);
+            final String contentType = map.get(CONTENT_TYPE);
+            if (contentType != null) {
+                final MediaType mt = MediaType.valueOf(link);
+                // create simplified MediaType
+                return new MediaType(mt.getType(), mt.getSubtype());
+            }
+
+            // for now this uses the default media type if not specified.  Per the spec, this is okay
+            // However, we could also do a HEAD on the url if schema is 'http', and use that content type if specified.
+            // todo - fetch the content type from binary itself.
+
+            return APPLICATION_OCTET_STREAM_TYPE;
+        }
+
+        public static Boolean isCopy(final String link) {
+            Map<String, String> map = parseLinkHeader(link);
+            if (map.get("handling") == COPY) {
+                return true;
+            }
+            return false;
+        }
     }
 
     protected RdfStream getResourceTriples() {
@@ -823,9 +910,15 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
     }
 
-    protected static MediaType getSimpleContentType(final MediaType requestContentType) {
-        return requestContentType != null ? new MediaType(requestContentType.getType(), requestContentType.getSubtype())
-                : APPLICATION_OCTET_STREAM_TYPE;
+    protected static MediaType getSimpleContentType(final MediaType requestContentType, final String extLinkHeader) {
+
+        if (extLinkHeader != null) {
+            return ExternalContent.getContentType(extLinkHeader);
+        } else {
+            return requestContentType != null ?
+                    new MediaType(requestContentType.getType(), requestContentType.getSubtype())
+                    : APPLICATION_OCTET_STREAM_TYPE;
+        }
     }
 
     protected static boolean isRdfContentType(final String contentTypeString) {
@@ -841,6 +934,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 new HashSet<>() : checksums.stream().map(checksum -> checksumURI(checksum)).collect(Collectors.toSet());
         final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
         final String originalContentType = contentType != null ? contentType.toString() : "";
+
+        // if this is a copy from external body, do that here, and then pass down
 
         result.setContent(requestBodyStream,
                 originalContentType,
