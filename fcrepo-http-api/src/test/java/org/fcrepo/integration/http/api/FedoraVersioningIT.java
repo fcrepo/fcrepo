@@ -59,6 +59,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEMAP_TYPE;
@@ -171,6 +172,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         createVersionedContainer(id, subjectUri);
 
         createContainerMementoWithBody(subjectUri, MEMENTO_DATETIME);
+        verifyTimeMapHeaders(subjectUri, id);
         verifyTimemapResponse(subjectUri, id, MEMENTO_DATETIME);
     }
 
@@ -402,6 +404,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     @Test
     public void testGetTimeMapResponseForBinary() throws Exception {
         createVersionedBinary(id);
+
+        verifyTimeMapHeaders(subjectUri, id);
         verifyTimemapResponse(subjectUri, id);
     }
 
@@ -425,7 +429,19 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final String descriptionUri = subjectUri + "/fcr:metadata";
         final String descriptionId = id + "/fcr:metadata";
 
+        verifyTimeMapHeaders(descriptionUri, descriptionId);
         verifyTimemapResponse(descriptionUri, descriptionId);
+    }
+
+    private void verifyTimeMapHeaders(final String uri, final String id) throws IOException {
+        final HttpGet httpGet = getObjMethod(id + "/" + FCR_VERSIONS);
+        try (final CloseableHttpResponse response = execute(httpGet)) {
+            assertEquals("Didn't get a OK response!", OK.getStatusCode(), getStatus(response));
+            checkForLinkHeader(response, RESOURCE.toString(), "type");
+            checkForLinkHeader(response, RDF_SOURCE.toString(), "type");
+            checkForLinkHeader(response, uri, "original");
+            checkForLinkHeader(response, VERSIONING_TIMEMAP_TYPE, "type");
+        }
     }
 
     private void verifyTimemapResponse(final String uri, final String id) throws Exception {
@@ -457,6 +473,9 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         httpGet.setHeader("Accept", APPLICATION_LINK_FORMAT);
         try (final CloseableHttpResponse response = execute(httpGet)) {
             assertEquals("Didn't get a OK response!", OK.getStatusCode(), getStatus(response));
+            // verify headers in link format.
+            checkForLinkHeader(response, RESOURCE.toString(), "type");
+            checkForLinkHeader(response, RDF_SOURCE.toString(), "type");
             checkForLinkHeader(response, uri, "original");
             checkForLinkHeader(response, VERSIONING_TIMEMAP_TYPE, "type");
             final List<String> bodyList = Arrays.asList(EntityUtils.toString(response.getEntity()).split(",\n"));

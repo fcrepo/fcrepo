@@ -250,10 +250,6 @@ public class FedoraVersioning extends ContentExposingResource {
         LOGGER.info("GET resource '{}'", externalPath);
 
         final URI parentUri = getUri(resource());
-        final Link.Builder resourceLink = Link.fromUri(LDP_NAMESPACE + "Resource").rel("type");
-        servletResponse.addHeader(LINK, resourceLink.build().toString());
-        final Link.Builder rdfSourceLink = Link.fromUri(LDP_NAMESPACE + "RDFSource").rel("type");
-        servletResponse.addHeader(LINK, rdfSourceLink.build().toString());
         servletResponse.addHeader(LINK, Link.fromUri(VERSIONING_TIMEMAP_TYPE).rel("type").build().toString());
         servletResponse.addHeader(LINK, Link.fromUri(parentUri).rel("original").build().toString());
 
@@ -261,6 +257,11 @@ public class FedoraVersioning extends ContentExposingResource {
         servletResponse.addHeader("Allow", "POST,HEAD,GET,OPTIONS");
 
         if (acceptValue != null && acceptValue.equalsIgnoreCase(APPLICATION_LINK_FORMAT)) {
+            final Link.Builder resourceLink = Link.fromUri(LDP_NAMESPACE + "Resource").rel("type");
+            servletResponse.addHeader(LINK, resourceLink.build().toString());
+            final Link.Builder rdfSourceLink = Link.fromUri(LDP_NAMESPACE + "RDFSource").rel("type");
+            servletResponse.addHeader(LINK, rdfSourceLink.build().toString());
+
             final List<Link> versionLinks = new ArrayList<>();
             versionLinks.add(Link.fromUri(parentUri).rel("original").build());
             versionLinks.add(Link.fromUri(parentUri).rel("timegate").build());

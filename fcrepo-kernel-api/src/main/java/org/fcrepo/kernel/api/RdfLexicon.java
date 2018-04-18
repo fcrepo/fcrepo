@@ -172,6 +172,8 @@ public final class RdfLexicon {
         createProperty(LDP_NAMESPACE + "contains");
     public static final Property LDP_MEMBER =
             createProperty(LDP_NAMESPACE + "member");
+    public static final Resource RESOURCE =
+            createResource(LDP_NAMESPACE + "Resource");
     public static final Resource RDF_SOURCE =
             createResource(LDP_NAMESPACE + "RDFSource");
     public static final Resource NON_RDF_SOURCE =
