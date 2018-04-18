@@ -29,6 +29,7 @@ import static javax.ws.rs.core.Link.fromUri;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -393,6 +394,19 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         createVersionedBinary(id);
 
         verifyTimemapResponse(subjectUri, id);
+    }
+
+    @Test
+    public void testGetTimeMapResponseWithBadAcceptHeader() throws Exception {
+        createVersionedContainer(id, subjectUri);
+
+        final HttpGet httpGet = getObjMethod(id + "/" + FCR_VERSIONS);
+        httpGet.setHeader("Accept", "application/arbitrary");
+        try (final CloseableHttpResponse response = execute(httpGet)) {
+            assertEquals("Should get a 'Not Acceptable' response!", NOT_ACCEPTABLE.getStatusCode(), getStatus(
+                    response));
+        }
+
     }
 
     @Test
