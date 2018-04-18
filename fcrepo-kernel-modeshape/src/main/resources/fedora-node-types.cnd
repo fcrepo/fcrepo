@@ -37,6 +37,11 @@
  */
 <fedoraconfig = 'http://fedora.info/definitions/v4/config#'>
 
+/*
+ * A fedora namespace for webac.
+ */
+<fedorawebac = 'http://fedora.info/definitions/v4/webac#'>
+
 <test = 'info:fedora/test/'>
 
 [nt:versionFile] > nt:file

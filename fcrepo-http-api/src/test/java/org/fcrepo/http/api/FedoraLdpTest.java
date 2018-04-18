@@ -256,6 +256,7 @@ public class FedoraLdpTest {
         when(mockBinary.getEtagValue()).thenReturn("");
         when(mockBinary.getPath()).thenReturn(binaryPath);
         when(mockBinary.getDescription()).thenReturn(mockNonRdfSourceDescription);
+        when(mockBinary.getDescribedResource()).thenReturn(mockBinary);
 
         when(mockHeaders.getHeaderString("user-agent")).thenReturn("Test UserAgent");
 

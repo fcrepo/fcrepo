@@ -47,7 +47,9 @@ import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.vocabulary.RDF.type;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORAWEBAC_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;
@@ -496,6 +498,11 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                     "/static/constraints/ContainerConstraints.rdf";
             servletResponse.addHeader(LINK,
                     Link.fromUri(constraintURI).rel(CONSTRAINED_BY.getURI()).build().toString());
+        }
+
+        if (!resource.hasType(FEDORAWEBAC_ACL)) {
+           final Link acl = Link.fromUri(getUri(resource.getDescribedResource()) + "/" + FCR_ACL).rel("acl").build();
+            servletResponse.addHeader(LINK, acl.toString());
         }
 
         if (resource.isVersioned()) {
