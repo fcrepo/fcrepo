@@ -25,10 +25,6 @@ import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.MediaType.WILDCARD;
-import static javax.ws.rs.core.Response.noContent;
-import static javax.ws.rs.core.Response.notAcceptable;
-import static javax.ws.rs.core.Response.ok;
-import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
@@ -36,6 +32,10 @@ import static javax.ws.rs.core.Response.Status.FOUND;
 import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
+import static javax.ws.rs.core.Response.noContent;
+import static javax.ws.rs.core.Response.notAcceptable;
+import static javax.ws.rs.core.Response.ok;
+import static javax.ws.rs.core.Response.status;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.jena.atlas.web.ContentType.create;
@@ -74,13 +74,13 @@ import java.net.URLDecoder;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
@@ -104,6 +104,10 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilderException;
 import javax.ws.rs.core.Variant.VariantListBuilder;
 
+import com.codahale.metrics.annotation.Timed;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -135,11 +139,6 @@ import org.fcrepo.kernel.api.utils.MessageExternalBodyContentType;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
-
-import com.codahale.metrics.annotation.Timed;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
 
 /**
  * @author cabeer
@@ -376,7 +375,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @param requestBodyStream the request body stream
      * @param contentDisposition the content disposition value
      * @param ifMatch the if-match value
-     * @param links the link values
+     * @param rawLinks the raw link values
      * @param digest the digest header
      * @return 204
      * @throws InvalidChecksumException if invalid checksum exception occurred
@@ -391,12 +390,15 @@ public class FedoraLdp extends ContentExposingResource {
             @ContentLocation final InputStream requestBodyStream,
             @HeaderParam(CONTENT_DISPOSITION) final ContentDisposition contentDisposition,
             @HeaderParam("If-Match") final String ifMatch,
-            @HeaderParam(LINK) final List<String> links,
+            @HeaderParam(LINK) final List<String> rawLinks,
             @HeaderParam("Digest") final String digest)
             throws InvalidChecksumException, MalformedRdfException, UnsupportedAlgorithmException,
             UnsupportedAccessTypeException {
 
         hasRestrictedPath(externalPath);
+
+        final List<String> links = unpackLinks(rawLinks);
+
 
         if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
             addLinkAndOptionsHttpHeaders();
@@ -487,6 +489,23 @@ public class FedoraLdp extends ContentExposingResource {
 
     private void checkMessageExternalBody(final MediaType requestContentType) throws UnsupportedAccessTypeException {
         MessageExternalBodyContentType.parse(requestContentType.toString());
+    }
+
+    /**
+     * Multi-value Link header values parsed by the javax.ws.rs.core are not split out by the framework
+     * Therefore we must do this ourselves.
+     *
+     * @param rawLinks the list of unprocessed links
+     * @return List of strings containing one link value per string.
+     */
+    private List<String> unpackLinks(final List<String> rawLinks) {
+        if (rawLinks == null) {
+            return null;
+        }
+
+        return rawLinks.stream()
+                       .flatMap(x -> Arrays.asList(x.split(",")).stream())
+                       .collect(Collectors.toList());
     }
 
     /**
@@ -581,7 +600,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @param requestContentType the request content type
      * @param slug the slug value
      * @param requestBodyStream the request body stream
-     * @param links the link values
+     * @param rawLinks the link values
      * @param digest the digest header
      * @return 201
      * @throws InvalidChecksumException if invalid checksum exception occurred
@@ -599,10 +618,12 @@ public class FedoraLdp extends ContentExposingResource {
                                  @HeaderParam(CONTENT_TYPE) final MediaType requestContentType,
                                  @HeaderParam("Slug") final String slug,
                                  @ContentLocation final InputStream requestBodyStream,
-                                 @HeaderParam(LINK) final List<String> links,
+                                 @HeaderParam(LINK) final List<String> rawLinks,
                                  @HeaderParam("Digest") final String digest)
             throws InvalidChecksumException, IOException, MalformedRdfException, UnsupportedAlgorithmException,
             UnsupportedAccessTypeException {
+
+        final List<String> links = unpackLinks(rawLinks);
 
         if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
             addLinkAndOptionsHttpHeaders();
