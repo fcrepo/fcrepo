@@ -48,8 +48,10 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_FIXITY;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
+import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
+import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
@@ -69,13 +71,13 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import javax.ws.rs.core.Link;
 
 import org.apache.http.HttpResponse;
@@ -104,14 +106,14 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
-import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
-
 /**
  * @author lsitu
  * @author bbpennel
  */
 public class FedoraVersioningIT extends AbstractResourceIT {
+
+    public static final DateTimeFormatter MEMENTO_DATETIME_ID_FORMATTER =
+        DateTimeFormatter.ofPattern("yyyyMMddHHmmss").withZone(ZoneId.of("GMT"));
 
     private static final String VERSIONED_RESOURCE_LINK_HEADER = "<" + VERSIONED_RESOURCE.getURI() + ">; rel=\"type\"";
     private static final String BINARY_CONTENT = "binary content";
@@ -124,9 +126,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     private static final Property TEST_PROPERTY = createProperty("info:test#label");
 
-    final String MEMENTO_DATETIME =
+    private final String MEMENTO_DATETIME =
             RFC_1123_DATE_TIME.format(LocalDateTime.of(2000, 1, 1, 00, 00).atZone(ZoneOffset.UTC));
-
     private final List<String> rdfTypes = new ArrayList<>(Arrays.asList(POSSIBLE_RDF_RESPONSE_VARIANTS_STRING));
 
     private String subjectUri;
@@ -161,7 +162,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     public void testGetTimeMapResponse() throws Exception {
         createVersionedContainer(id, subjectUri);
 
-        verifyTimemapResponse(subjectUri, id);
+        createContainerMementoWithBody(subjectUri, MEMENTO_DATETIME);
+        verifyTimemapResponse(subjectUri, id, MEMENTO_DATETIME);
     }
 
     @Test
@@ -392,7 +394,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     @Test
     public void testGetTimeMapResponseForBinary() throws Exception {
         createVersionedBinary(id);
-
         verifyTimemapResponse(subjectUri, id);
     }
 
@@ -420,13 +421,29 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     }
 
     private void verifyTimemapResponse(final String uri, final String id) throws Exception {
-        final List<Link> listLinks = new ArrayList<Link>();
+        verifyTimemapResponse(uri, id, null);
+    }
+
+    private void verifyTimemapResponse(final String uri, final String id, final String mementoDateTime)
+        throws Exception {
+        final String ldpcvUri = uri + "/" + FCR_VERSIONS;
+        final List<Link> listLinks = new ArrayList<>();
         listLinks.add(Link.fromUri(uri).rel("original").build());
         listLinks.add(Link.fromUri(uri).rel("timegate").build());
         listLinks
-                .add(Link.fromUri(uri + "/" + FCR_VERSIONS).rel("self").type(APPLICATION_LINK_FORMAT)
+                .add(Link.fromUri(ldpcvUri).rel("self").type(APPLICATION_LINK_FORMAT)
                         .build());
-        final Link[] expectedLinks = listLinks.toArray(new Link[3]);
+        if (mementoDateTime != null) {
+            final TemporalAccessor instant = RFC_1123_DATE_TIME.parse(mementoDateTime);
+            listLinks.add(Link.fromUri(ldpcvUri + "/" + MEMENTO_DATETIME_ID_FORMATTER.format(instant))
+                              .rel("memento")
+                              .param("datetime", mementoDateTime)
+                              .build());
+        }
+
+        final Link[] expectedLinks = listLinks.stream()
+                                              .sorted((a,b) ->a.toString().compareTo(b.toString()))
+                                              .toArray(Link[]::new);
 
         final HttpGet httpGet = getObjMethod(id + "/" + FCR_VERSIONS);
         httpGet.setHeader("Accept", APPLICATION_LINK_FORMAT);
@@ -434,9 +451,12 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             assertEquals("Didn't get a OK response!", OK.getStatusCode(), getStatus(response));
             checkForLinkHeader(response, uri, "original");
             checkForLinkHeader(response, VERSIONING_TIMEMAP_TYPE, "type");
-            final List<String> bodyList = Arrays.asList(EntityUtils.toString(response.getEntity()).split(","));
+            final List<String> bodyList = Arrays.asList(EntityUtils.toString(response.getEntity()).split(",\n"));
+            //the links from the body are not
+
             final Link[] bodyLinks = bodyList.stream().map(String::trim).filter(t -> !t.isEmpty())
-                    .map(Link::valueOf).toArray(Link[]::new);
+                                                      .sorted((a,b) ->a.toString().compareTo(b.toString()))
+                                                      .map(Link::valueOf).toArray(Link[]::new);
             assertArrayEquals(expectedLinks, bodyLinks);
         }
     }
