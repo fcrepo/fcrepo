@@ -60,6 +60,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 import static org.fcrepo.kernel.api.RequiredRdfContext.EMBED_RESOURCES;
@@ -456,7 +457,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         return resource;
     }
 
-    protected void addMementoDatetimeHeader(final FedoraResource resource) {
+    protected void addMementoHeaders(final FedoraResource resource) {
         if (resource.isMemento()) {
             final Instant mementoInstant = resource.getMementoDatetime();
             if (mementoInstant != null) {
@@ -464,6 +465,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                         .format(mementoInstant.atZone(ZoneOffset.UTC));
                 servletResponse.addHeader(MEMENTO_DATETIME_HEADER, mementoDatetime);
             }
+            servletResponse.addHeader(LINK, buildLink(MEMENTO_TYPE, "type"));
         }
     }
 
@@ -492,34 +494,56 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                     uriInfo.getBaseUri().getAuthority() + path +
                     "/static/constraints/NonRDFSourceConstraints.rdf";
             servletResponse.addHeader(LINK,
-                    Link.fromUri(constraintURI).rel(CONSTRAINED_BY.getURI()).build().toString());
+                buildLink(constraintURI, CONSTRAINED_BY.getURI()));
         } else {
             final String path = context.getContextPath().equals("/") ? "" : context.getContextPath();
             final String constraintURI = uriInfo.getBaseUri().getScheme() + "://" +
                     uriInfo.getBaseUri().getAuthority() + path +
                     "/static/constraints/ContainerConstraints.rdf";
             servletResponse.addHeader(LINK,
-                    Link.fromUri(constraintURI).rel(CONSTRAINED_BY.getURI()).build().toString());
+                buildLink(constraintURI, CONSTRAINED_BY.getURI()));
         }
 
         if (!resource.hasType(FEDORAWEBAC_ACL)) {
-           final Link acl = Link.fromUri(getUri(resource.getDescribedResource()) + "/" + FCR_ACL).rel("acl").build();
-            servletResponse.addHeader(LINK, acl.toString());
+            servletResponse.addHeader(LINK, buildLink(getUri(resource.getDescribedResource()) + "/" + FCR_ACL, "acl"));
         }
 
         if (resource.isVersioned()) {
-            final Link versionedResource = Link.fromUri(RdfLexicon.VERSIONED_RESOURCE.getURI()).rel("type").build();
-            servletResponse.addHeader(LINK, versionedResource.toString());
-            final Link mementoTimeGate = Link.fromUri(RdfLexicon.VERSIONING_TIMEGATE_TYPE).rel("type").build();
-            servletResponse.addHeader(LINK, mementoTimeGate.toString());
-            final Link original = Link.fromUri(getUri(resource.getDescribedResource())).rel("original").build();
-            servletResponse.addHeader(LINK, original.toString());
-            final Link timegate = Link.fromUri(getUri(resource.getDescribedResource())).rel("timegate").build();
-            servletResponse.addHeader(LINK, timegate.toString());
-            final Link timemap =
-                Link.fromUri(getUri(resource.getDescribedResource()) + "/" + FCR_VERSIONS).rel("timemap").build();
-            servletResponse.addHeader(LINK, timemap.toString());
+            servletResponse.addHeader(LINK, buildLink(RdfLexicon.VERSIONED_RESOURCE.getURI(), "type"));
+            servletResponse.addHeader(LINK, buildLink(RdfLexicon.VERSIONING_TIMEGATE_TYPE, "type"));
+            servletResponse.addHeader(LINK, buildLink(getUri(resource.getDescribedResource()), "original"));
+            servletResponse.addHeader(LINK, buildLink(getUri(resource.getDescribedResource()), "timegate"));
+            final String timemapUri = getUri(resource.getDescribedResource()) + "/" + FCR_VERSIONS;
+            servletResponse.addHeader(LINK, buildLink(timemapUri, "timemap"));
+        } else if (resource.isMemento()) {
+            final URI originalUri = getUri(resource.getDescribedResource().getContainer().getContainer());
+            final URI timemapUri = getUri(resource.getDescribedResource().getContainer());
+            servletResponse.addHeader(LINK, buildLink(originalUri, "timegate"));
+            servletResponse.addHeader(LINK, buildLink(originalUri, "original"));
+            servletResponse.addHeader(LINK, buildLink(timemapUri, "timemap"));
         }
+    }
+
+    /**
+     * Utility function for building a Link.
+     *
+     * @param linkUri String of URI for the link.
+     * @param relation the relation string.
+     * @return the string version of the link.
+     */
+    private static String buildLink(final String linkUri, final String relation) {
+        return buildLink(URI.create(linkUri), relation);
+    }
+
+    /**
+     * Utility function for building a Link.
+     *
+     * @param linkUri The URI for the link.
+     * @param relation the relation string.
+     * @return the string version of the link.
+     */
+    private static String buildLink(final URI linkUri, final String relation) {
+        return Link.fromUri(linkUri).rel(relation).build().toString();
     }
 
     /**
@@ -567,7 +591,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             httpHeaderInject.addHttpHeaderToResponseStream(servletResponse, uriInfo, resource());
         }
 
-        addMementoDatetimeHeader(resource);
+        addMementoHeaders(resource);
     }
 
     /**
@@ -739,7 +763,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected Response createUpdateResponse(final FedoraResource resource, final boolean created) {
         addCacheControlHeaders(servletResponse, resource, session);
         addResourceLinkHeaders(resource, created);
-        addMementoDatetimeHeader(resource);
+        addMementoHeaders(resource);
 
         if (!created) {
             return noContent().build();

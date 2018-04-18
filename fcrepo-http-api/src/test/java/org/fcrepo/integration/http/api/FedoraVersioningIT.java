@@ -18,6 +18,7 @@
 package org.fcrepo.integration.http.api;
 
 import static com.google.common.collect.Iterators.size;
+import static java.time.format.DateTimeFormatter.ISO_INSTANT;
 import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 import static java.util.stream.Stream.empty;
 import static java.util.stream.Stream.of;
@@ -801,18 +802,18 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     @Test
     public void testDatetimeNegotiationLDPRv() throws Exception {
         final CloseableHttpClient customClient = createClient(true);
-        final DateTimeFormatter FMT = DateTimeFormatter.RFC_1123_DATE_TIME.withZone(ZoneId.of("UTC"));
+        final DateTimeFormatter FMT = RFC_1123_DATE_TIME.withZone(ZoneId.of("UTC"));
 
         createVersionedContainer(id, subjectUri);
         final String memento1 =
-            FMT.format(DateTimeFormatter.ISO_INSTANT.parse("2017-06-10T11:41:00Z", Instant::from));
+            FMT.format(ISO_INSTANT.parse("2017-06-10T11:41:00Z", Instant::from));
         final String version1Uri = createMementWithExistingBody(memento1);
         final String memento2 =
-            FMT.format(DateTimeFormatter.ISO_INSTANT.parse("2016-06-17T11:41:00Z", Instant::from));
+            FMT.format(ISO_INSTANT.parse("2016-06-17T11:41:00Z", Instant::from));
         final String version2Uri = createMementWithExistingBody(memento2);
 
         final String request1Datetime =
-            FMT.format(DateTimeFormatter.ISO_INSTANT.parse("2017-01-12T00:00:00Z", Instant::from));
+            FMT.format(ISO_INSTANT.parse("2017-01-12T00:00:00Z", Instant::from));
         final HttpGet getMemento = getObjMethod(id);
         getMemento.addHeader(ACCEPT_DATETIME, request1Datetime);
 
@@ -824,7 +825,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
 
         final String request2Datetime =
-            FMT.format(DateTimeFormatter.ISO_INSTANT.parse("2018-01-10T00:00:00Z", Instant::from));
+            FMT.format(ISO_INSTANT.parse("2018-01-10T00:00:00Z", Instant::from));
         final HttpGet getMemento2 = getObjMethod(id);
         getMemento2.addHeader(ACCEPT_DATETIME, request2Datetime);
 
@@ -839,11 +840,11 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     @Test
     public void testDatetimeNegotiationNoMementos() throws Exception {
         final CloseableHttpClient customClient = createClient(true);
-        final DateTimeFormatter FMT = DateTimeFormatter.RFC_1123_DATE_TIME.withZone(ZoneId.of("UTC"));
+        final DateTimeFormatter FMT = RFC_1123_DATE_TIME.withZone(ZoneId.of("UTC"));
 
         createVersionedContainer(id, subjectUri);
         final String requestDatetime =
-            FMT.format(DateTimeFormatter.ISO_INSTANT.parse("2017-01-12T00:00:00Z", Instant::from));
+            FMT.format(ISO_INSTANT.parse("2017-01-12T00:00:00Z", Instant::from));
         final HttpGet getMemento = getObjMethod(id);
         getMemento.addHeader(ACCEPT_DATETIME, requestDatetime);
 
@@ -922,6 +923,27 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         // status 405: PUT on memento is not allowed.
         assertEquals(405, getStatus(put));
+    }
+
+    @Test
+    public void testGetMementoHeaders() throws Exception {
+        final DateTimeFormatter FMT = RFC_1123_DATE_TIME.withZone(ZoneId.of("UTC"));
+        createVersionedContainer(id, subjectUri);
+
+        final String memento1 =
+            FMT.format(ISO_INSTANT.parse("2001-06-10T16:41:00Z", Instant::from));
+        final String version1Uri = createMementWithExistingBody(memento1);
+        final HttpGet getRequest = new HttpGet(version1Uri);
+
+        try (final CloseableHttpResponse response = execute(getRequest)) {
+            assertMementoDatetimeHeaderMatches(response, memento1);
+            checkForLinkHeader(response, MEMENTO_TYPE, "type");
+            checkForLinkHeader(response, subjectUri, "original");
+            checkForLinkHeader(response, subjectUri, "timegate");
+            checkForLinkHeader(response, subjectUri + "/" + FCR_VERSIONS, "timemap");
+            assertNoLinkHeader(response, VERSIONED_RESOURCE.toString(), "type");
+            assertNoLinkHeader(response, VERSIONING_TIMEMAP_TYPE.toString(), "type");
+        }
     }
 
     private static void assertMementoOptionsHeaders(final HttpResponse httpResponse) {
@@ -1031,7 +1053,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     private static void assertMementoDatetimeHeaderPresent(final CloseableHttpResponse response) {
         assertNotNull("No memento datetime header set in response",
-                response.getHeaders(MEMENTO_DATETIME_HEADER));
+            response.getFirstHeader(MEMENTO_DATETIME_HEADER));
     }
 
     private static void assertMementoDatetimeHeaderMatches(final CloseableHttpResponse response,
