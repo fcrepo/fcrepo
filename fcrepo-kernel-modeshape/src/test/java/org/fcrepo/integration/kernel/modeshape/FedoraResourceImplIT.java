@@ -27,6 +27,9 @@ import java.io.UncheckedIOException;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
@@ -34,7 +37,6 @@ import java.util.List;
 import java.util.TimeZone;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-
 import javax.inject.Inject;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -131,6 +133,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -1156,6 +1159,71 @@ public class FedoraResourceImplIT extends AbstractIT {
         final FedoraResource timeMap = resource.getTimeMap();
         assertTrue(timeMap instanceof FedoraTimeMap);
         assertEquals(timeMapNode, ((FedoraResourceImpl)timeMap).getNode());
+    }
+
+    @Test
+    public void testGetMementoByDatetime() throws RepositoryException {
+        final FedoraResource object1 = containerService.findOrCreate(session, "/" + getRandomPid());
+        object1.enableVersioning();
+
+        final DateTimeFormatter FMT = new DateTimeFormatterBuilder()
+            .appendPattern("yyyy-MM-dd'T'HH:mm:ss")
+            .toFormatter()
+            .withZone(ZoneId.systemDefault());
+
+        final Instant time1 = Instant.from(FMT.parse("2018-01-01T20:15:00"));
+        final FedoraResource memento1 = versionService.createVersion(session, object1, subjects, time1);
+
+        final Instant time2 = Instant.from(FMT.parse("2018-01-01T10:15:00"));
+        final FedoraResource memento2 = versionService.createVersion(session, object1, subjects, time2);
+
+        final Instant time3 = Instant.from(FMT.parse("2017-12-31T08:00:00"));
+        final FedoraResource memento3 = versionService.createVersion(session, object1, subjects, time3);
+        session.commit();
+
+        final Instant afterLast = Instant.from(FMT.parse("2018-02-01T10:00:00"));
+        assertEquals("Did not get expected Memento for Datetime", memento1,
+            object1.findMementoByDatetime(afterLast));
+
+        final Instant betweenLastAndMiddle =
+            Instant.from(FMT.parse("2018-01-01T15:00:00"));
+
+        assertEquals("Did not get expected Memento for Datetime", memento2,
+            object1.findMementoByDatetime(betweenLastAndMiddle));
+
+        final Instant betweenMiddleAndFirst =
+            Instant.from(FMT.parse("2018-01-01T08:00:00"));
+        assertEquals("Did not get expected Memento for Datetime", memento3,
+            object1.findMementoByDatetime(betweenMiddleAndFirst));
+
+        // Assert exact matches
+        assertEquals("Did not get expected Memento for Datetime", memento1,
+            object1.findMementoByDatetime(time1));
+        assertEquals("Did not get expected Memento for Datetime", memento2,
+            object1.findMementoByDatetime(time2));
+        assertEquals("Did not get expected Memento for Datetime", memento3,
+            object1.findMementoByDatetime(time3));
+
+        final Instant beforeFirst = Instant.from(FMT.parse("2016-01-01T00:00:00"));
+        assertEquals("Did not get expected Memento for Datetime", memento3,
+            object1.findMementoByDatetime(beforeFirst));
+
+    }
+
+    @Test
+    public void testGetMementoByDatetimeEmpty() {
+        final FedoraResource object1 = containerService.findOrCreate(session, "/" + getRandomPid());
+        object1.enableVersioning();
+
+        final DateTimeFormatter FMT = new DateTimeFormatterBuilder()
+            .appendPattern("yyyy-MM-dd'T'HH:mm:ss")
+            .toFormatter()
+            .withZone(ZoneId.systemDefault());
+
+        final Instant time = Instant.from(FMT.parse("2016-04-21T09:43:00"));
+
+        assertNull("Expected the null back because 0 Mementos.",
+            object1.findMementoByDatetime(time));
     }
 
     private void addVersionLabel(final String label, final FedoraResource r) throws RepositoryException {

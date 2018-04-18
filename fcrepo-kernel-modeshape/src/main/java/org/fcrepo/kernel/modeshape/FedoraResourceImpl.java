@@ -72,6 +72,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.Temporal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -1147,6 +1149,46 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
       } catch (final RepositoryException ex) {
           throw new RepositoryRuntimeException(ex);
       }
+  }
+
+  @Override
+  public FedoraResource findMementoByDatetime(final Instant mementoDatetime) {
+      if (isVersioned()) {
+            final FedoraResource timemap = this.getTimeMap();
+            if (timemap != null) {
+                final Stream<FedoraResource> mementos = timemap.getChildren();
+                final Optional<FedoraResource> closest =
+                    mementos.filter(t -> t.getMementoDatetime().compareTo(mementoDatetime) <= 0)
+                        .reduce((a,
+                            b) -> dateTimeDifference(a.getMementoDatetime(), mementoDatetime,
+                                ChronoUnit.SECONDS) <= dateTimeDifference(b.getMementoDatetime(), mementoDatetime,
+                                    ChronoUnit.SECONDS) ? a : b);
+                if (closest.isPresent()) {
+                    // Return the closest version older than the requested date.
+                    return closest.get();
+                } else {
+                    // Otherwise you requested before the first version, so return the first version if is exists.
+                    // If there are no Mementos return null.
+                    final Optional<FedoraResource> earliest = timemap.getChildren()
+                        .sorted((a, b) -> a.getMementoDatetime().compareTo(b.getMementoDatetime()))
+                        .findFirst();
+                    return earliest.orElse(null);
+                }
+            }
+      }
+      return null;
+  }
+
+    /**
+     * Calculate the difference between two datetime to the unit.
+     *
+     * @param d1 first datetime
+     * @param d2 second datetime
+     * @param unit unit to compare down to
+     * @return the difference
+     */
+  static long dateTimeDifference(final Temporal d1, final Temporal d2, final ChronoUnit unit) {
+      return unit.between(d1, d2);
   }
 
   @Override
