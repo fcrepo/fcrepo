@@ -74,7 +74,6 @@ import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -428,7 +427,10 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                               .build());
         }
 
-        final Link[] expectedLinks = listLinks.toArray(new Link[0]);
+        final Link[] expectedLinks = listLinks.stream()
+                                              .sorted((a,b) ->a.toString().compareTo(b.toString()))
+                                              .toArray(Link[]::new);
+
         final HttpGet httpGet = getObjMethod(id + "/" + FCR_VERSIONS);
         httpGet.setHeader("Accept", APPLICATION_LINK_FORMAT);
         try (final CloseableHttpResponse response = execute(httpGet)) {
@@ -437,20 +439,11 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             checkForLinkHeader(response, VERSIONING_TIMEMAP_TYPE, "type");
             final List<String> bodyList = Arrays.asList(EntityUtils.toString(response.getEntity()).split(",\n"));
             //the links from the body are not
+
             final Link[] bodyLinks = bodyList.stream().map(String::trim).filter(t -> !t.isEmpty())
+                                                      .sorted((a,b) ->a.toString().compareTo(b.toString()))
                                                       .map(Link::valueOf).toArray(Link[]::new);
-
-            final Comparator<Link> linkComparator = new Comparator<Link>() {
-                @Override
-                public int compare(final Link o1, final Link o2) {
-                    return o1.toString().compareTo(o2.toString());
-                }
-            };
-
-            Arrays.sort(expectedLinks, linkComparator);
-            Arrays.sort(bodyLinks, linkComparator);
             assertArrayEquals(expectedLinks, bodyLinks);
-
         }
     }
 
