@@ -161,8 +161,6 @@ public class FedoraLdp extends ContentExposingResource {
 
     static final String ACCEPT_EXTERNAL_CONTENT = "Accept-External-Content-Handling";
 
-    public static final String ACCEPT_DATETIME = "Accept-Datetime";
-
     @PathParam("path") protected String externalPath;
 
     @Inject private FedoraHttpConfiguration httpConfiguration;
@@ -326,7 +324,6 @@ public class FedoraLdp extends ContentExposingResource {
             if (memento != null) {
                 builder =
                     status(FOUND).header("Location", translator().reverse().convert(memento).toString()).build();
-
             } else {
                 builder = status(NOT_FOUND).build();
             }

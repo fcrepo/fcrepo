@@ -167,6 +167,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     static final String INSUFFICIENT_SPACE_IDENTIFYING_MESSAGE = "No space left on device";
 
+    public static final String ACCEPT_DATETIME = "Accept-Datetime";
+
     @Context protected Request request;
     @Context protected HttpServletResponse servletResponse;
     @Context protected ServletContext context;
@@ -250,7 +252,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         final List<String> varyValues = new ArrayList<>(VARY_HEADERS);
 
         if (resource().isVersioned()) {
-            varyValues.add("Accept-Datetime");
+            varyValues.add(ACCEPT_DATETIME);
         }
 
         varyValues.stream().forEach(x -> servletResponse.addHeader("Vary", x));

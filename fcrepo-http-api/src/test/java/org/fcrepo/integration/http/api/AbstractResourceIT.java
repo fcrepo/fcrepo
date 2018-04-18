@@ -115,12 +115,12 @@ public abstract class AbstractResourceIT {
     }
 
     protected static CloseableHttpClient createClient(final boolean disableRedirects) {
+        final HttpClientBuilder client =
+            HttpClientBuilder.create().setMaxConnPerRoute(MAX_VALUE).setMaxConnTotal(MAX_VALUE);
         if (disableRedirects) {
-            return HttpClientBuilder.create().setMaxConnPerRoute(MAX_VALUE).setMaxConnTotal(MAX_VALUE)
-                .disableRedirectHandling().build();
-        } else {
-            return HttpClientBuilder.create().setMaxConnPerRoute(MAX_VALUE).setMaxConnTotal(MAX_VALUE).build();
+            client.disableRedirectHandling();
         }
+        return client.build();
     }
 
     protected static HttpPost postObjMethod() {
