@@ -48,7 +48,10 @@ import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.jcr.ItemExistsException;
 import javax.servlet.http.HttpServletResponse;
@@ -80,6 +83,7 @@ import org.fcrepo.kernel.api.exception.MementoDatetimeFormatException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryVersionRuntimeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
+import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
@@ -197,8 +201,14 @@ public class FedoraVersioning extends ContentExposingResource {
                 // Create memento
                 final FedoraResource memento;
                 if (resource instanceof FedoraBinary) {
-                    memento = versionService.createBinaryVersion(session.getFedoraSession(), resource(),
-                            mementoInstant, null, null, null, null);
+                    final FedoraBinary binaryResource = (FedoraBinary) resource;
+                    if (createFromExisting) {
+                        memento = versionService.createBinaryVersion(session.getFedoraSession(),
+                                binaryResource, mementoInstant, storagePolicyDecisionPoint);
+                    } else {
+                        memento = createBinaryMementoFromRequest(binaryResource, mementoInstant,
+                                requestBodyStream, digest, contentDisposition, contentType);
+                    }
                 } else {
                     final InputStream bodyStream = createFromExisting ? null : requestBodyStream;
                     final Lang format = createFromExisting ? null : contentTypeToLang(contentType.toString());
@@ -227,6 +237,24 @@ public class FedoraVersioning extends ContentExposingResource {
         } finally {
             lock.release();
         }
+    }
+
+    private FedoraBinary createBinaryMementoFromRequest(final FedoraBinary binaryResource,
+            final Instant mementoInstant,
+            final InputStream requestBodyStream,
+            final String digest,
+            final ContentDisposition contentDisposition,
+            final MediaType contentType) throws InvalidChecksumException, UnsupportedAlgorithmException {
+
+        final Collection<String> checksums = parseDigestHeader(digest);
+        final Collection<URI> checksumURIs = checksums == null ? new HashSet<>() :
+                checksums.stream().map(checksum -> checksumURI(checksum)).collect(Collectors.toSet());
+        final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
+        final String originalContentType = contentType != null ? contentType.toString() : "";
+
+        return versionService.createBinaryVersion(session.getFedoraSession(), binaryResource,
+                mementoInstant, requestBodyStream, originalFileName, originalContentType,
+                checksumURIs, storagePolicyDecisionPoint);
     }
 
     /**

@@ -18,10 +18,15 @@
 package org.fcrepo.kernel.modeshape.services;
 
 import static java.util.Arrays.asList;
+import static java.util.Arrays.stream;
 import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.fcrepo.kernel.api.FedoraTypes.CONTENT_DIGEST;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.FedoraTypes.MEMENTO;
 import static org.fcrepo.kernel.api.FedoraTypes.MEMENTO_DATETIME;
+import static org.fcrepo.kernel.api.RdfLexicon.NT_VERSION_FILE;
 import static org.fcrepo.kernel.api.RequiredRdfContext.EMBED_RESOURCES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_CONTAINMENT;
 import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_MEMBERSHIP;
@@ -31,7 +36,10 @@ import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.LDPCV_BINARY_TIME_M
 import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.LDPCV_TIME_MAP;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.fcrepo.kernel.modeshape.rdf.impl.RequiredPropertiesUtil.assertRequiredContainerTriples;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
+import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.InputStream;
@@ -44,15 +52,17 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.jcr.ItemExistsException;
 import javax.jcr.Node;
+import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -61,6 +71,7 @@ import org.apache.jena.riot.Lang;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.TripleCategory;
+import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.Container;
@@ -70,7 +81,9 @@ import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.api.services.VersionService;
+import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.modeshape.ContainerImpl;
+import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
 import org.fcrepo.kernel.modeshape.utils.iterators.RelaxedRdfAdder;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;;
@@ -178,26 +191,91 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
     }
 
     @Override
-    public FedoraResource createBinaryVersion(final FedoraSession session,
-            final FedoraResource resource,
+    public FedoraBinary createBinaryVersion(final FedoraSession session,
+            final FedoraBinary resource,
+            final Instant dateTime,
+            final StoragePolicyDecisionPoint storagePolicyDecisionPoint) throws InvalidChecksumException {
+        return createBinaryVersion(session, resource, dateTime, null, null, null, null, storagePolicyDecisionPoint);
+    }
+
+    @Override
+    public FedoraBinary createBinaryVersion(final FedoraSession session,
+            final FedoraBinary resource,
             final Instant dateTime,
             final InputStream contentStream,
             final String filename,
             final String mimetype,
-            final Collection<URI> checksums) {
+            final Collection<URI> checksums,
+            final StoragePolicyDecisionPoint storagePolicyDecisionPoint) throws InvalidChecksumException {
 
         final String mementoPath = makeMementoPath(resource, dateTime);
 
         assertMementoDoesNotExist(session, mementoPath);
 
         LOGGER.debug("Creating memento {} for resource {} using existing state", mementoPath, resource.getPath());
-        nodeService.copyObject(session, resource.getPath(), mementoPath);
 
-        final FedoraBinary memento = binaryService.findOrCreate(session, mementoPath);
+        final FedoraBinary memento = createBinary(session, mementoPath);
+
+        if (contentStream == null || mimetype == null) {
+            // Creating memento from existing resource
+            populateBinaryMementoFromExisting(resource, memento);
+        } else {
+            memento.setContent(contentStream, mimetype, checksums, filename, null);
+        }
 
         decorateWithMementoProperties(session, mementoPath, dateTime);
 
         return memento;
+    }
+
+    private void populateBinaryMementoFromExisting(final FedoraBinary resource, final FedoraBinary memento)
+            throws InvalidChecksumException {
+
+        final Node contentNode = getJcrNode(resource);
+        List<URI> checksums = null;
+        // Retrieve all existing digests from the original
+        try {
+            if (contentNode.hasProperty(CONTENT_DIGEST)) {
+                final Property digestProperty = contentNode.getProperty(CONTENT_DIGEST);
+                checksums = stream(digestProperty.getValues())
+                        .map(d -> {
+                            try {
+                                return URI.create(d.getString());
+                            } catch (final RepositoryException e) {
+                                throw new RepositoryRuntimeException(e);
+                            }
+                        }).collect(Collectors.toList());
+            }
+
+            memento.setContent(resource.getContent(), resource.getMimeType(), checksums,
+                    resource.getFilename(), null);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    private FedoraBinary createBinary(final FedoraSession session, final String path) {
+        try {
+            final Node dsNode = findOrCreateNode(session, path, NT_VERSION_FILE);
+
+            if (dsNode.canAddMixin(FEDORA_RESOURCE)) {
+                dsNode.addMixin(FEDORA_RESOURCE);
+            }
+
+            if (dsNode.canAddMixin(FEDORA_NON_RDF_SOURCE_DESCRIPTION)) {
+                dsNode.addMixin(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
+            }
+
+            final Node contentNode = jcrTools.findOrCreateChild(dsNode, JCR_CONTENT, NT_RESOURCE);
+
+            if (contentNode.canAddMixin(FEDORA_BINARY)) {
+                contentNode.addMixin(FEDORA_BINARY);
+            }
+
+            return new FedoraBinaryImpl(contentNode);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     private String makeMementoPath(final FedoraResource resource, final Instant datetime) {
