@@ -516,6 +516,17 @@ public abstract class AbstractResourceIT {
     }
 
     /**
+     * Test a response for the absence of a specific LINK header
+     *
+     * @param response the HTTP response
+     * @param uri the URI not to exist in the LINK header
+     * @param rel the rel argument to check for
+     */
+    protected void assertNoLinkHeader(final CloseableHttpResponse response, final String uri, final String rel) {
+        assertEquals(0, countLinkHeader(response, uri, rel));
+    }
+
+    /**
      * Test a response for a specific LINK header
      *
      * @param response the HTTP response
