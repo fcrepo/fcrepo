@@ -70,6 +70,9 @@
       });
     }
 
+    //both ldp-rs and ldp-nr resources should be created as versionable resources.
+    headers.push(['Link', '<http://mementoweb.org/ns#OriginalResource>; rel=\"type\"']);
+
     if (mixin == 'binary') {
       const update_file = document.getElementById('binary_payload').files[0];
       const reader = new FileReader();
