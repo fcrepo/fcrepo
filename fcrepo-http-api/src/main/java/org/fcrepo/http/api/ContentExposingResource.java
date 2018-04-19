@@ -464,9 +464,11 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             final URI parentUri = getUri(resource());
             servletResponse.addHeader(LINK, Link.fromUri(VERSIONING_TIMEMAP_TYPE).rel("type").build().toString());
             servletResponse.addHeader(LINK, Link.fromUri(parentUri).rel("original").build().toString());
+            servletResponse.addHeader(LINK, Link.fromUri(parentUri).rel("timegate").build().toString());
+            servletResponse.addHeader(LINK, Link.fromUri(getUri(resource)).rel("timemap").build().toString());
 
             servletResponse.addHeader("Vary-Post", MEMENTO_DATETIME_HEADER);
-            servletResponse.addHeader("Allow", "POST,HEAD,GET,OPTIONS");
+            servletResponse.addHeader("Allow", "POST,HEAD,GET,OPTIONS,DELETE");
         }
     }
 

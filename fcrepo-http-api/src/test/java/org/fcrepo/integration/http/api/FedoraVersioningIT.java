@@ -463,6 +463,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             checkForLinkHeader(response, RESOURCE.toString(), "type");
             checkForLinkHeader(response, RDF_SOURCE.toString(), "type");
             checkForLinkHeader(response, uri, "original");
+            checkForLinkHeader(response, uri, "timegate");
+            checkForLinkHeader(response, uri + "/" + FCR_VERSIONS, "timemap");
             checkForLinkHeader(response, VERSIONING_TIMEMAP_TYPE, "type");
             final List<String> bodyList = Arrays.asList(EntityUtils.toString(response.getEntity()).split(",\n"));
             //the links from the body are not
