@@ -53,6 +53,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_FIXITY;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
@@ -505,6 +506,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             checkForLinkHeader(response, uri, "timegate");
             checkForLinkHeader(response, uri + "/" + FCR_VERSIONS, "timemap");
             checkForLinkHeader(response, VERSIONING_TIMEMAP_TYPE, "type");
+            checkForLinkHeader(response, ldpcvUri + "/" + FCR_ACL , "acl");
             final List<String> bodyList = Arrays.asList(EntityUtils.toString(response.getEntity()).split(",\n"));
             //the links from the body are not
 
@@ -989,6 +991,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             checkForLinkHeader(response, subjectUri + "/" + FCR_VERSIONS, "timemap");
             assertNoLinkHeader(response, VERSIONED_RESOURCE.toString(), "type");
             assertNoLinkHeader(response, VERSIONING_TIMEMAP_TYPE.toString(), "type");
+            assertNoLinkHeader(response, version1Uri + "/" + FCR_ACL, "acl");
         }
     }
 
