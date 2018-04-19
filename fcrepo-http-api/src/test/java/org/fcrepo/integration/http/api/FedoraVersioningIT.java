@@ -174,6 +174,22 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testGetTimeMapResponseMultipleMementos() throws Exception {
+        createVersionedContainer(id, subjectUri);
+        final String memento1 =
+            RFC_1123_DATE_TIME.format(LocalDateTime.of(2000, 1, 1, 00, 00, 00).atOffset(ZoneOffset.UTC));
+        final String memento2 =
+            RFC_1123_DATE_TIME.format(LocalDateTime.of(2015, 8, 13, 18, 30, 0).atOffset(ZoneOffset.UTC));
+        final String memento3 =
+            RFC_1123_DATE_TIME.format(LocalDateTime.of(1980, 5, 31, 9, 15, 30).atOffset(ZoneOffset.UTC));
+        createContainerMementoWithBody(subjectUri, memento1);
+        createContainerMementoWithBody(subjectUri, memento2);
+        createContainerMementoWithBody(subjectUri, memento3);
+        final String[] mementos = { memento1, memento2, memento3 };
+        verifyTimemapResponse(subjectUri, id, mementos, memento3, memento2);
+    }
+
+    @Test
     public void testGetTimeMapRDFSubject() throws Exception {
         createVersionedContainer(id, subjectUri);
 
@@ -428,24 +444,37 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     }
 
     private void verifyTimemapResponse(final String uri, final String id) throws Exception {
-        verifyTimemapResponse(uri, id, null);
+        verifyTimemapResponse(uri, id, null, null, null);
     }
 
     private void verifyTimemapResponse(final String uri, final String id, final String mementoDateTime)
+        throws Exception {
+        final String[] mementoDateTimes = { mementoDateTime };
+        verifyTimemapResponse(uri, id, mementoDateTimes, null, null);
+    }
+
+    private void verifyTimemapResponse(final String uri, final String id, final String[] mementoDateTime,
+        final String rangeStart, final String rangeEnd)
         throws Exception {
         final String ldpcvUri = uri + "/" + FCR_VERSIONS;
         final List<Link> listLinks = new ArrayList<>();
         listLinks.add(Link.fromUri(uri).rel("original").build());
         listLinks.add(Link.fromUri(uri).rel("timegate").build());
-        listLinks
-                .add(Link.fromUri(ldpcvUri).rel("self").type(APPLICATION_LINK_FORMAT)
-                        .build());
+
+        final javax.ws.rs.core.Link.Builder selfLink = Link.fromUri(ldpcvUri).rel("self").type(APPLICATION_LINK_FORMAT);
+        if (rangeStart != null && rangeEnd != null) {
+            selfLink.param("from", rangeStart).param("until",
+                rangeEnd);
+        }
+        listLinks.add(selfLink.build());
         if (mementoDateTime != null) {
-            final TemporalAccessor instant = RFC_1123_DATE_TIME.parse(mementoDateTime);
-            listLinks.add(Link.fromUri(ldpcvUri + "/" + MEMENTO_DATETIME_ID_FORMATTER.format(instant))
+            for (final String memento : mementoDateTime) {
+                final TemporalAccessor instant = RFC_1123_DATE_TIME.parse(memento);
+                listLinks.add(Link.fromUri(ldpcvUri + "/" + MEMENTO_DATETIME_ID_FORMATTER.format(instant))
                               .rel("memento")
-                              .param("datetime", mementoDateTime)
+                    .param("datetime", memento)
                               .build());
+            }
         }
 
         final Link[] expectedLinks = listLinks.stream()
