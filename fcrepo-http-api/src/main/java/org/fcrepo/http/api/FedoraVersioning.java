@@ -49,6 +49,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import javax.jcr.ItemExistsException;
 import javax.servlet.http.HttpServletResponse;
@@ -63,6 +64,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Link;
+import javax.ws.rs.core.Link.Builder;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
@@ -264,8 +266,10 @@ public class FedoraVersioning extends ContentExposingResource {
             final List<Link> versionLinks = new ArrayList<>();
             versionLinks.add(Link.fromUri(parentUri).rel("original").build());
             versionLinks.add(Link.fromUri(parentUri).rel("timegate").build());
+            // So we don't collect the children twice, store them in an array.
+            final FedoraResource[] children = theTimeMap.getChildren().toArray(FedoraResource[]::new);
 
-            theTimeMap.getChildren().forEach(t -> {
+            Arrays.stream(children).forEach(t -> {
                 final URI childUri = getUri(t);
                 versionLinks.add(Link.fromUri(childUri).rel("memento")
                                      .param("datetime",
@@ -274,9 +278,18 @@ public class FedoraVersioning extends ContentExposingResource {
                                      .build());
             });
             // Based on the dates of the above mementos, add the range to the below link.
-            final Link timeMapLink =
-                Link.fromUri(parentUri + "/" + FCR_VERSIONS).rel("self").type(APPLICATION_LINK_FORMAT).build();
-            versionLinks.add(timeMapLink);
+            final Instant[] Mementos = Arrays.stream(children).map(FedoraResource::getMementoDatetime)
+                .sorted((a, b) -> a.compareTo(b))
+                .toArray(Instant[]::new);
+            final Builder linkBuilder =
+                Link.fromUri(parentUri + "/" + FCR_VERSIONS).rel("self").type(APPLICATION_LINK_FORMAT);
+            if (Mementos.length >= 2) {
+                // There are 2 or more Mementos so make a range.
+                linkBuilder.param("from", RFC_1123_DATE_TIME.format(Mementos[0].atOffset(ZoneOffset.UTC)));
+                linkBuilder.param("until",
+                    RFC_1123_DATE_TIME.format(Mementos[Mementos.length - 1].atOffset(ZoneOffset.UTC)));
+            }
+            versionLinks.add(linkBuilder.build());
             return ok(new LinkFormatStream(versionLinks.stream())).build();
         } else {
             final AcquiredLock readLock = lockManager.lockForRead(theTimeMap.getPath());
