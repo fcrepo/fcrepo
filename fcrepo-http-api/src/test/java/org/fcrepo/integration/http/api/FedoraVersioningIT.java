@@ -453,6 +453,16 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         verifyTimemapResponse(uri, id, mementoDateTimes, null, null);
     }
 
+    /**
+     * Verify an application/link-format TimeMap response.
+     *
+     * @param uri The full URI of the Original Resource.
+     * @param id The path of the Original Resource.
+     * @param mementoDateTime Array of all the RFC-1123 datetimes for all the mementos.
+     * @param rangeStart RFC-1123 datetime of the first memento.
+     * @param rangeEnd RFC-1123 datetime of the last memento.
+     * @throws Exception
+     */
     private void verifyTimemapResponse(final String uri, final String id, final String[] mementoDateTime,
         final String rangeStart, final String rangeEnd)
         throws Exception {
