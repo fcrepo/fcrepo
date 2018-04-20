@@ -519,10 +519,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 buildLink(constraintURI, CONSTRAINED_BY.getURI()));
         }
 
-        if (!resource.hasType(FEDORAWEBAC_ACL)) {
-            servletResponse.addHeader(LINK, buildLink(getUri(resource.getDescribedResource()) + "/" + FCR_ACL, "acl"));
-        }
-
         if (resource.isVersioned()) {
             servletResponse.addHeader(LINK, buildLink(RdfLexicon.VERSIONED_RESOURCE.getURI(), "type"));
             servletResponse.addHeader(LINK, buildLink(RdfLexicon.VERSIONING_TIMEGATE_TYPE, "type"));
@@ -604,6 +600,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
         if (httpHeaderInject != null) {
             httpHeaderInject.addHttpHeaderToResponseStream(servletResponse, uriInfo, resource());
+        }
+
+        if (!resource.hasType(FEDORAWEBAC_ACL) && !resource.isMemento()) {
+            servletResponse.addHeader(LINK, buildLink(getUri(resource.getDescribedResource()) + "/" + FCR_ACL, "acl"));
         }
 
         addTimeMapHeader(resource);
