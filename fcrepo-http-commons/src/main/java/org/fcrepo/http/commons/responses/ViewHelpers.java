@@ -26,6 +26,7 @@ import static org.apache.jena.vocabulary.DC.title;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.apache.jena.vocabulary.RDFS.label;
 import static org.apache.jena.vocabulary.SKOS.prefLabel;
+import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 import static java.time.Instant.now;
 import static java.time.ZoneId.of;
 import static java.util.Arrays.asList;
@@ -36,11 +37,13 @@ import static java.util.stream.Collectors.toMap;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
-import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.WRITABLE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.time.Instant;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -48,6 +51,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
+
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.jena.graph.Graph;
@@ -106,8 +110,9 @@ public class ViewHelpers {
      */
     public Iterator<Node> getVersions(final Graph graph,
         final Node subject) {
-        LOGGER.warn("May Need Update with Mementos!");
-        return null;
+        final List<Node> vs = listObjects(graph, subject, CONTAINS.asNode()).toList();
+        // LOGGER.warn("May Need Update with Mementos!");
+        return vs.iterator();
     }
 
     /**
@@ -145,6 +150,20 @@ public class ViewHelpers {
         }
         return null;
      }
+
+    /**
+     * Get the date time as the version label.
+     *
+     * @param graph the graph
+     * @param subject the subject
+     * @return the datetime in RFC 1123 format.
+     */
+    public String getVersionLabel(final Graph graph, final Node subject) {
+        final String[] pathParts = subject.getURI().split("/");
+        final Instant datetime = DateTimeFormatter.ofPattern("yyyyMMddHHmmss").withZone(ZoneId.of("UTC"))
+            .parse(pathParts[pathParts.length - 1], Instant::from);
+        return RFC_1123_DATE_TIME.withZone(ZoneId.of("UTC")).format(datetime);
+    }
 
     /**
      * Gets a modification date of a subject from the graph
@@ -191,16 +210,29 @@ public class ViewHelpers {
     }
 
     /**
-     * Determines whether the subject is of type fedora:Version.
-     * true if node has type fedora:Version
+     * Determines whether the subject is of type memento:Memento.
+     *
      * @param graph the graph
      * @param subject the subject
      * @return whether the subject is a versioned node
      */
     public boolean isVersionedNode(final Graph graph, final Node subject) {
         return listObjects(graph, subject, RDF.type.asNode()).toList().stream().map(Node::getURI)
-            .anyMatch((REPOSITORY_NAMESPACE + "Version")::equals);
+            .anyMatch((MEMENTO_TYPE.toString())::equals);
     }
+
+    /**
+     * Determines whether the subject is of type memento:OriginalResource.
+     *
+     * @param graph the graph
+     * @param subject the subject
+     * @return whether the subject is a versioned node
+     */
+    // We don't identify a versionable resource in its RDF, so this might be unusable now.
+    // public boolean isVersionableNode(final List<Object> graph, final Node subject) {
+    // final String link = Link.fromUri(VERSIONED_RESOURCE.toString()).rel("type").build().toString();
+    // return graph.stream().anyMatch(link::equals);
+    // }
 
     /**
      * Get the string version of the object that matches the given subject and

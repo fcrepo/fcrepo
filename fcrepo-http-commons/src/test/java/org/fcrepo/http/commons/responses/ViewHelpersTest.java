@@ -32,7 +32,8 @@ import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBES;
-import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
+import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.WRITABLE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -160,11 +161,20 @@ public class ViewHelpersTest {
     }
 
     @Test
+    @Ignore("This function is probably useless now.")
+    public void testIsVersionableNode() {
+        final Graph mem = createDefaultModel().getGraph();
+        mem.add(new Triple(createURI("a/b/c"), type.asNode(), createURI(VERSIONED_RESOURCE.toString())));
+        // assertTrue("Node is a versionable node.", testObj.isVersionableNode(mem, createURI("a/b/c")));
+    }
+
+    @Test
     public void testIsVersionedNode() {
         final Graph mem = createDefaultModel().getGraph();
-        mem.add(new Triple(createURI("a/b/c"), type.asNode(), createURI(REPOSITORY_NAMESPACE + "Version")));
+        mem.add(new Triple(createURI("a/b/c"), type.asNode(), createURI(MEMENTO_TYPE.toString())));
         assertTrue("Node is a versioned node.", testObj.isVersionedNode(mem, createURI("a/b/c")));
     }
+
 
     @Test
     public void testRdfResource() {

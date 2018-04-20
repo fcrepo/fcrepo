@@ -1,15 +1,11 @@
 #set ($content = $helpers.getContentNode($topic))
 #set ($writable = $helpers.isWritable($rdf, $topic))
-#set ($frozen = $helpers.isVersionedNode($rdf, $topic))
 
-#if ($frozen == true)
+#if ($isVersion == true)
 <div class="alert alert-warning">
     <span class="glyphicon glyphicon-warning-sign"></span>
     This is a <strong>historic version</strong> and cannot be modified.
 </div>
-<form id="action_revert" method="PATCH" action="$uriInfo.getAbsolutePath().toString()" data-redirect-after-submit="$helpers.getVersionSubjectUrl($uriInfo, $topic)/fcr:versions" >
-    <button type="submit" class="btn btn-primary standalone">Revert to this Version</button>
-</form>
 <form id="action_remove_version" method="DELETE" action="$uriInfo.getAbsolutePath().toString()" data-redirect-after-submit="$helpers.getVersionSubjectUrl($uriInfo, $topic)/fcr:versions" >
     <button type="submit" class="btn btn-danger standalone">Delete this Version</button>
 </form>
@@ -86,6 +82,7 @@ WHERE { }
     <hr />
 </form>
 
+#if ($isVersionable == true)
 <form id="action_create_version" name="action_create_version" method="POST">
     <h3>Create Version Snapshot</h3>
     <div class="form-group">
@@ -94,6 +91,7 @@ WHERE { }
     <button id="create-version-button" type="submit" class="btn btn-primary">Create Version</button>
     <hr />
 </form>
+#end
 
 <form id="action_delete" name="action_delete">
     <h3>Delete Resource</h3>
