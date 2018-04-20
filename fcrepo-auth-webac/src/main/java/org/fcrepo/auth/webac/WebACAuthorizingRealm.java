@@ -17,6 +17,8 @@
  */
 package org.fcrepo.auth.webac;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
@@ -24,6 +26,8 @@ import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
+import org.fcrepo.auth.common.ContainerRolesPrincipalProvider.ContainerRolesPrincipal;
+import org.slf4j.Logger;
 
 /**
  * Authorization-only realm that performs authorization checks using WebAC ACLs stored in a Fedora repository. It
@@ -34,12 +38,21 @@ import org.apache.shiro.subject.PrincipalCollection;
  */
 public class WebACAuthorizingRealm extends AuthorizingRealm {
 
-    /* (non-Javadoc)
-     * @see org.apache.shiro.realm.AuthorizingRealm#doGetAuthorizationInfo(org.apache.shiro.subject.PrincipalCollection)
-     */
+    private static final Logger log = getLogger(WebACAuthorizingRealm.class);
+
+    private static final ContainerRolesPrincipal adminPrincipal = new ContainerRolesPrincipal("fedoraAdmin");
+
     @Override
     protected AuthorizationInfo doGetAuthorizationInfo(final PrincipalCollection principals) {
         final SimpleAuthorizationInfo authzInfo = new SimpleAuthorizationInfo();
+
+        // if the user was assigned the "fedoraAdmin" container role, they get the
+        // "fedoraAdmin" application role
+        final ContainerRolesPrincipal containerRole = principals.oneByType(ContainerRolesPrincipal.class);
+        if (containerRole != null && containerRole.equals(adminPrincipal)) {
+            authzInfo.addRole("fedoraAdmin");
+        }
+
         return authzInfo;
     }
 

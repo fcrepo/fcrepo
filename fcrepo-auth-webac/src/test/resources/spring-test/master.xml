@@ -8,8 +8,8 @@
   <context:property-placeholder location="classpath:application.properties"/>
 
   <!-- Master context for fcrepo4. -->
-
   <import resource="${fcrepo.spring.repo.configuration:classpath:/spring-test/repo.xml}"/>
   <import resource="${fcrepo.spring.rest.configuration:classpath:/spring-test/rest.xml}"/>
+  <import resource="${fcrepo.spring.rest.configuration:classpath:/spring-test/security.xml}"/>
 
 </beans>
