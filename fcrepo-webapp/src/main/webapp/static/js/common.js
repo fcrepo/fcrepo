@@ -192,13 +192,8 @@
 
   function createVersionSnapshot(e) {
       const uri = document.getElementById('main').getAttribute('resource');
-      var name = document.getElementById('version_id').value.trim();
-      if (!name) {
-          const d = new Date();
-          name = 'version.' + d.getFullYear().toString() + (d.getMonth()+1).toString() + d.getDate().toString() + d.getHours() + d.getMinutes() + d.getSeconds();
-      }
 
-      http('POST', uri + '/fcr:versions', [['Slug', name]], function(res) {
+      http('POST', uri + '/fcr:versions', function(res) {
         if (res.status == 201) {
           window.location = uri + '/fcr:versions';
         } else {
