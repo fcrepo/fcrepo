@@ -520,8 +520,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                 }
 
                 // add mixin type webac:Acl
-                if (aclNode.canAddMixin(FEDORAWEBAC_ACL)) {
-                    aclNode.addMixin(FEDORAWEBAC_ACL);
+                if (aclNode.canAddMixin(FEDORA_WEBAC_ACL)) {
+                    aclNode.addMixin(FEDORA_WEBAC_ACL);
                 }
             }
         } catch (final RepositoryException e) {

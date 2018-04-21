@@ -99,7 +99,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TIME_MAP;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TOMBSTONE;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORAWEBAC_ACL;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_WEBAC_ACL;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
@@ -1263,7 +1263,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         session.commit();
 
         final javax.jcr.Node aclNode = jcrSession.getNode("/" + pid).getNode(CONTAINER_WEBAC_ACL);
-        assertTrue(aclNode.isNodeType(FEDORAWEBAC_ACL));
+        assertTrue(aclNode.isNodeType(FEDORA_WEBAC_ACL));
     }
 
     @Test
@@ -1289,7 +1289,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         session.commit();
 
         final javax.jcr.Node aclNode = jcrSession.getNode("/" + pid).getNode(CONTAINER_WEBAC_ACL);
-        assertTrue(aclNode.isNodeType(FEDORAWEBAC_ACL));
+        assertTrue(aclNode.isNodeType(FEDORA_WEBAC_ACL));
     }
 
     private void addVersionLabel(final String label, final FedoraResource r) throws RepositoryException {

@@ -44,7 +44,7 @@ public class FedoraWebacAclImpl extends ContainerImpl implements FedoraWebacAcl 
      */
     public static boolean hasMixin(final Node node) {
         try {
-            return node.isNodeType(FEDORAWEBAC_ACL);
+            return node.isNodeType(FEDORA_WEBAC_ACL);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
