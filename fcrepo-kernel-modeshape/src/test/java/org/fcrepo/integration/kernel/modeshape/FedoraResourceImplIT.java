@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.TimeZone;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+
 import javax.inject.Inject;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -61,6 +62,7 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.FedoraTimeMap;
+import org.fcrepo.kernel.api.models.FedoraWebacAcl;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.ContainerService;
@@ -68,7 +70,6 @@ import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.api.services.VersionService;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
@@ -98,6 +99,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TIME_MAP;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TOMBSTONE;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORAWEBAC_ACL;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
@@ -108,6 +110,7 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.VERSIONS;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FIELD_DELIMITER;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
 import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.LDPCV_TIME_MAP;
+import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.CONTAINER_WEBAC_ACL;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.HAS_MIXIN_TYPE;
 import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.HAS_NODE_TYPE;
@@ -119,7 +122,6 @@ import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.MIX_NAMESPACE;
 import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.MODE_NAMESPACE;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedPredicate.uncheck;
-
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDstring;
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
@@ -1224,6 +1226,70 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         assertNull("Expected the null back because 0 Mementos.",
             object1.findMementoByDatetime(time));
+    }
+
+    @Test
+    public void testGetAcl() throws RepositoryException {
+        final String pid = getRandomPid();
+        final FedoraResource resource = containerService.findOrCreate(session, "/" + pid);
+        session.commit();
+
+        // Retrieve ACL for the resource created
+        final FedoraResource nullAclResource = resource.getAcl();
+        assertNull(nullAclResource);
+
+        // Create ACL for the resource
+        final FedoraResource aclResource = resource.findOrCreateAcl();
+        session.commit();
+
+        final FedoraResource aclResourceFound = resource.getAcl();
+        assertNotNull(aclResourceFound);
+        assertTrue(aclResourceFound instanceof FedoraWebacAcl);
+        assertEquals(aclResource, aclResourceFound);
+    }
+
+    @Test
+    public void testFindOrCreateAcl() throws RepositoryException {
+        final String pid = getRandomPid();
+        final Session jcrSession = getJcrSession(session);
+        final FedoraResource resource = containerService.findOrCreate(session, "/" + pid);
+        session.commit();
+
+        // Create ACL for the resource
+        final FedoraResource aclResource = resource.findOrCreateAcl();
+        assertNotNull(aclResource);
+        assertTrue(aclResource instanceof FedoraWebacAcl);
+        assertEquals("/" + pid + "/" + CONTAINER_WEBAC_ACL, aclResource.getPath());
+        session.commit();
+
+        final javax.jcr.Node aclNode = jcrSession.getNode("/" + pid).getNode(CONTAINER_WEBAC_ACL);
+        assertTrue(aclNode.isNodeType(FEDORAWEBAC_ACL));
+    }
+
+    @Test
+    public void testFindOrCreateBinaryAcl() throws RepositoryException, InvalidChecksumException {
+        final String pid = getRandomPid();
+        final Session jcrSession = getJcrSession(session);
+
+        binaryService.findOrCreate(session, "/" + pid).setContent(
+                new ByteArrayInputStream("binary content".getBytes()),
+                "text/plain",
+                null,
+                null,
+                null
+        );
+
+        // Retrieve the binary resource and create ACL
+        final FedoraResource binary = binaryService.findOrCreate(session, "/" + pid);
+        final FedoraResource binaryAclResource = binary.findOrCreateAcl();
+
+        assertNotNull(binaryAclResource);
+        assertTrue(binaryAclResource instanceof FedoraWebacAcl);
+        assertEquals("/" + pid + "/" + CONTAINER_WEBAC_ACL, binaryAclResource.getPath());
+        session.commit();
+
+        final javax.jcr.Node aclNode = jcrSession.getNode("/" + pid).getNode(CONTAINER_WEBAC_ACL);
+        assertTrue(aclNode.isNodeType(FEDORAWEBAC_ACL));
     }
 
     private void addVersionLabel(final String label, final FedoraResource r) throws RepositoryException {

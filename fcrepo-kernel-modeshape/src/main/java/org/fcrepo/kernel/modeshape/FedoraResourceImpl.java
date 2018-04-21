@@ -176,6 +176,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
     public static final String LDPCV_BINARY_TIME_MAP = "fedora:binaryTimemap";
 
+    @VisibleForTesting
+    public static final String CONTAINER_WEBAC_ACL = "fedora:acl";
+
     // A curried type accepting resource, translator, and "minimality", returning triples.
     private static interface RdfGenerator extends Function<FedoraResource,
     Function<IdentifierConverter<Resource, FedoraResource>, Function<Boolean, Stream<Triple>>>> {}
@@ -379,6 +382,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     private static Predicate<Node> nastyChildren = isInternalNode
                     .or(TombstoneImpl::hasMixin)
                     .or(FedoraTimeMapImpl::hasMixin)
+                    .or(FedoraWebacAclImpl::hasMixin)
                     .or(UncheckedPredicate.uncheck(p -> p.getName().equals(JCR_CONTENT)))
                     .or(UncheckedPredicate.uncheck(p -> p.getName().equals("#")));
 
@@ -471,6 +475,59 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @Override
     public boolean isMemento() {
         return isMemento.test(getDescriptionNode());
+    }
+
+    @Override
+    public FedoraResource getAcl() {
+        final Node parentNode;
+
+        try {
+            if (this instanceof FedoraBinary) {
+                parentNode = getNode().getParent();
+            } else {
+                parentNode = getNode();
+            }
+
+            if (!parentNode.hasNode(CONTAINER_WEBAC_ACL)) {
+                return null;
+            }
+
+            final Node aclNode = parentNode.getNode(CONTAINER_WEBAC_ACL);
+            return Optional.of(aclNode).map(nodeConverter::convert).orElse(null);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    @Override
+    public FedoraResource findOrCreateAcl() {
+        final Node aclNode;
+        try {
+            final Node parentNode;
+            if (this instanceof FedoraBinary) {
+                parentNode = getNode().getParent();
+            } else {
+                parentNode = getNode();
+            }
+
+            aclNode = findOrCreateChild(parentNode, CONTAINER_WEBAC_ACL, NT_FOLDER);
+            if (aclNode.isNew()) {
+                LOGGER.debug("Created Webac ACL {}", aclNode.getPath());
+
+                // add mixin type fedora:Resource
+                if (node.canAddMixin(FEDORA_RESOURCE)) {
+                    node.addMixin(FEDORA_RESOURCE);
+                }
+
+                // add mixin type webac:Acl
+                if (aclNode.canAddMixin(FEDORAWEBAC_ACL)) {
+                    aclNode.addMixin(FEDORAWEBAC_ACL);
+                }
+            }
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+        return Optional.of(aclNode).map(nodeConverter::convert).orElse(null);
     }
 
     @Override

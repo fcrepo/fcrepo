@@ -47,6 +47,7 @@
 [nt:versionFile] > nt:file
 + fedora:timemap (nt:folder) =fedora:TimeMap
 + fedora:binaryTimemap (nt:folder) =fedora:TimeMap
++ fedora:acl (nt:folder) =fedorawebac:Acl
 
 /*
  * Any Fedora resource.
@@ -91,6 +92,11 @@
  */
 [memento:Memento] > fedora:Resource mixin
   - memento:mementoDatetime (DATE)
+
+/*
+ * A Fedora webac:Acl mixin.
+ */
+[fedorawebac:Acl] > fedora:Resource mixin
 
 /*
  * Some content that can have a checksum
