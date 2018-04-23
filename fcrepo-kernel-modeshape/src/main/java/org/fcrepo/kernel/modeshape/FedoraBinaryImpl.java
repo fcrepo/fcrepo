@@ -61,6 +61,7 @@ import java.util.stream.Collectors;
 
 import static com.codahale.metrics.MetricRegistry.name;
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDstring;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_DESCRIPTION;
 import static org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM.SHA1;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FIELD_DELIMITER;
 import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.property2values;
@@ -95,17 +96,17 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     public FedoraBinaryImpl(final Node node) {
         super(node);
 
-        if (node.isNew()) {
-            initializeNewBinaryProperties();
-        }
+        // if (node.isNew()) {
+        // initializeNewBinaryProperties();
+        // }
     }
 
     private void initializeNewBinaryProperties() {
-        try {
-            decorateContentNode(node, new HashSet<>());
-        } catch (final RepositoryException e) {
-            LOGGER.warn("Count not decorate {} with FedoraBinary properties: {}", node, e);
-        }
+        // try {
+        // decorateContentNode(node, new HashSet<>());
+        // } catch (final RepositoryException e) {
+        // LOGGER.warn("Count not decorate {} with FedoraBinary properties: {}", node, e);
+        // }
     }
 
     @Override
@@ -113,9 +114,10 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
         return new NonRdfSourceDescriptionImpl(getDescriptionNode());
     }
 
+    @Override
     protected Node getDescriptionNode() {
         try {
-            return getNode().getParent();
+            return getNode().getNode(FEDORA_DESCRIPTION);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -161,21 +163,18 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
             throws InvalidChecksumException {
 
         try {
-            final Node contentNode = getNode();
+            final Node descNode = getDescriptionNode();
+            final Node dsNode = getNode();
 
-            if (contentNode.canAddMixin(FEDORA_BINARY)) {
-                contentNode.addMixin(FEDORA_BINARY);
-            }
-
-            if (contentType != null) {
-                contentNode.setProperty(HAS_MIME_TYPE, contentType);
+            if (descNode != null) {
+                descNode.setProperty(HAS_MIME_TYPE, contentType);
             }
 
             if (originalFileName != null) {
-                contentNode.setProperty(FILENAME, originalFileName);
+                descNode.setProperty(FILENAME, originalFileName);
             }
 
-            LOGGER.debug("Created content node at path: {}", contentNode.getPath());
+            LOGGER.debug("Created content node at path: {}", dsNode.getPath());
 
             String hint = null;
 
@@ -199,15 +198,15 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
          * may still be useful to us for an asynchronous method that we develop
          * later.
          */
-            final Property dataProperty = contentNode.setProperty(JCR_DATA, binary);
+            final Property dataProperty = dsNode.setProperty(JCR_DATA, binary);
 
             // Ensure provided checksums are valid
             final Collection<URI> nonNullChecksums = (null == checksums) ? new HashSet<>() : checksums;
             verifyChecksums(nonNullChecksums, dataProperty);
 
-            decorateContentNode(contentNode, nonNullChecksums);
-            FedoraTypesUtils.touch(getNode());
-            FedoraTypesUtils.touch(((FedoraResourceImpl) getDescription()).getNode());
+            decorateContentNode(dsNode, descNode, nonNullChecksums);
+            FedoraTypesUtils.touch(dsNode);
+            FedoraTypesUtils.touch(descNode);
 
             LOGGER.debug("Created data property at path: {}", dataProperty.getPath());
 
@@ -278,8 +277,8 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     @Override
     public long getContentSize() {
         try {
-            if (hasProperty(CONTENT_SIZE)) {
-                return getProperty(CONTENT_SIZE).getLong();
+            if (hasDescriptionProperty(CONTENT_SIZE)) {
+                return getDescriptionProperty(CONTENT_SIZE).getLong();
             }
         } catch (final RepositoryException e) {
             LOGGER.info("Could not get contentSize(): {}", e.getMessage());
@@ -296,14 +295,15 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     public URI getContentDigest() {
         try {
             // Determine which digest algorithm to use
-            final String algorithm = hasProperty(DEFAULT_DIGEST_ALGORITHM) ?
-                    property2values.apply(getProperty(DEFAULT_DIGEST_ALGORITHM)).findFirst().get().getString() :
+            final String algorithm = hasDescriptionProperty(DEFAULT_DIGEST_ALGORITHM) ? property2values.apply(
+                    getDescriptionProperty(DEFAULT_DIGEST_ALGORITHM)).findFirst().get().getString() :
                     ContentDigest.DEFAULT_ALGORITHM;
             final String algorithmWithoutStringType = algorithm.replace(FIELD_DELIMITER + XSDstring.getURI(), "");
 
-            if (hasProperty(CONTENT_DIGEST)) {
+            if (hasDescriptionProperty(CONTENT_DIGEST)) {
                 // Select the stored digest that matches the digest algorithm
-                Optional<Value> digestValue = property2values.apply(getProperty(CONTENT_DIGEST)).filter(digest -> {
+                final Optional<Value> digestValue = property2values.apply(getDescriptionProperty(CONTENT_DIGEST))
+                        .filter(digest -> {
                     try {
                         final URI digestUri = URI.create(digest.getString());
                         return algorithmWithoutStringType.equalsIgnoreCase(ContentDigest.getAlgorithm(digestUri));
@@ -334,8 +334,9 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     @Override
     public String getMimeType() {
         try {
-            if (hasProperty(HAS_MIME_TYPE)) {
-                return getProperty(HAS_MIME_TYPE).getString().replace(FIELD_DELIMITER + XSDstring.getURI(), "");
+            if (hasDescriptionProperty(HAS_MIME_TYPE)) {
+                return getDescriptionProperty(HAS_MIME_TYPE).getString()
+                        .replace(FIELD_DELIMITER + XSDstring.getURI(), "");
             }
             return "application/octet-stream";
         } catch (final RepositoryException e) {
@@ -350,8 +351,9 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     @Override
     public String getFilename() {
         try {
-            if (hasProperty(FILENAME)) {
-                return getProperty(FILENAME).getString().replace(FIELD_DELIMITER + XSDstring.getURI(), "");
+            if (hasDescriptionProperty(FILENAME)) {
+                return getDescriptionProperty(FILENAME).getString()
+                        .replace(FIELD_DELIMITER + XSDstring.getURI(), "");
             }
             return node.getParent().getName();
         } catch (final RepositoryException e) {
@@ -402,7 +404,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
                 final MessageExternalBodyContentType externalBody = MessageExternalBodyContentType.parse(mimeType);
                 final String resourceLocation = externalBody.getResourceLocation();
                 LOGGER.debug("Checking external resource: " + resourceLocation);
-                return CacheEntryFactory.forProperty(getProperty(HAS_MIME_TYPE)).checkFixity(algorithms);
+                return CacheEntryFactory.forProperty(getDescriptionProperty(HAS_MIME_TYPE)).checkFixity(algorithms);
             } else {
 
                 LOGGER.debug("Checking resource: " + getPath());
@@ -420,9 +422,9 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     public void delete() {
         final FedoraResource description = getDescription();
 
-        super.delete();
-
         description.delete();
+
+        super.delete();
     }
 
     @Override
@@ -431,18 +433,15 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
         return null;
     }
 
-    private static void decorateContentNode(final Node contentNode, final Collection<URI> checksums)
+    private static void decorateContentNode(final Node dsNode, final Node descNode, final Collection<URI> checksums)
             throws RepositoryException {
-        if (contentNode == null) {
+        if (dsNode == null) {
             LOGGER.warn("{} node appears to be null!", JCR_CONTENT);
             return;
         }
-        if (contentNode.canAddMixin(FEDORA_BINARY)) {
-            contentNode.addMixin(FEDORA_BINARY);
-        }
 
-        if (contentNode.hasProperty(JCR_DATA)) {
-            final Property dataProperty = contentNode.getProperty(JCR_DATA);
+        if (dsNode.hasProperty(JCR_DATA)) {
+            final Property dataProperty = dsNode.getProperty(JCR_DATA);
             final Binary binary = (Binary) dataProperty.getBinary();
             final String dsChecksum = binary.getHexHash();
 
@@ -453,16 +452,27 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
             final String[] checksumArray = new String[checksums.size()];
             checksums.stream().map(Object::toString).collect(Collectors.toSet()).toArray(checksumArray);
 
-            contentNode.setProperty(CONTENT_DIGEST, checksumArray);
-            contentNode.setProperty(CONTENT_SIZE, dataProperty.getLength());
+            descNode.setProperty(CONTENT_DIGEST, checksumArray);
+            descNode.setProperty(CONTENT_SIZE, dataProperty.getLength());
 
             LOGGER.debug("Decorated data property at path: {}", dataProperty.getPath());
         }
     }
 
-    @Override
-    public boolean isVersioned() {
-        return getDescription().isVersioned();
+    public boolean hasDescriptionProperty(final String relPath) {
+        try {
+            return getDescriptionNode().hasProperty(relPath);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    protected Property getDescriptionProperty(final String relPath) {
+        try {
+            return getDescriptionNode().getProperty(relPath);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     @Override

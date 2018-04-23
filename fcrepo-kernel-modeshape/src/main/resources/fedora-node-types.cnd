@@ -44,10 +44,14 @@
 
 <test = 'info:fedora/test/'>
 
-[nt:versionFile] > nt:file
+[nt:versionFile] > nt:hierarchyNode
 + fedora:timemap (nt:folder) =fedora:TimeMap
-+ fedora:binaryTimemap (nt:folder) =fedora:TimeMap
++ fedora:description (nt:hierarchyNode) =fedora:NonRdfSourceDescription
++ jcr:content (nt:base)
 + fedora:acl (nt:folder) =webac:Acl
+
+[nt:leafNode] > nt:hierarchyNode
++ fedora:timemap (nt:folder) =fedora:TimeMap
 
 /*
  * Any Fedora resource.
@@ -77,9 +81,13 @@
 [ldp:IndirectContainer] > fedora:Container  mixin
 
 /*
- * A Fedora datastream.
+ * A Fedora binary description.
  */
 [fedora:NonRdfSourceDescription] > fedora:Resource mixin
+  - ebucore:filename (STRING)
+  - ebucore:hasMimeType (STRING)
+  - premis:hasSize (LONG) COPY
+  - premis:hasMessageDigest (URI) COPY multiple
 
 /*
  * A Fedora LDPCv TimeMap.
@@ -102,10 +110,6 @@
  * Some content that can have a checksum
  */
 [fedora:Binary] > fedora:Resource mixin
-  - ebucore:filename (STRING)
-  - ebucore:hasMimeType (STRING)
-  - premis:hasSize (LONG) COPY
-  - premis:hasMessageDigest (URI) COPY multiple
 
 [fedora:Skolem] > mix:referenceable mixin
   - fedora:lastModified (DATE)
