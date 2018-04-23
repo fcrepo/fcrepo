@@ -55,8 +55,7 @@
       <groupId>org.springframework</groupId>
       <artifactId>spring-context</artifactId>
     </dependency>
-    
-    	<dependency>
+    <dependency>
       <groupId>org.apache.shiro</groupId>
       <artifactId>shiro-core</artifactId>
       <version>${shiro.version}</version>
@@ -64,9 +63,10 @@
         <exclusion>
           <groupId>commons-collections</groupId>
           <artifactId>commons-collections</artifactId>
-		</exclusion>
-	  </exclusions>
-	</dependency>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
     <!-- test gear -->
     <dependency>
       <groupId>junit</groupId>
