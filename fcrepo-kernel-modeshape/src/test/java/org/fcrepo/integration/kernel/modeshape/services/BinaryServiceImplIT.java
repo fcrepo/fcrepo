@@ -21,7 +21,6 @@ import static org.fcrepo.kernel.api.FedoraTypes.FILENAME;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 
 import java.io.ByteArrayInputStream;
@@ -77,8 +76,8 @@ public class BinaryServiceImplIT extends AbstractIT {
         jcrSession = getJcrSession(session);
 
         assertTrue(jcrSession.getRootNode().hasNode("testDatastreamNode"));
-        assertEquals("asdf", jcrSession.getNode("/testDatastreamNode").getNode(
-                JCR_CONTENT).getProperty(JCR_DATA).getString());
+        assertEquals("asdf", jcrSession.getNode("/testDatastreamNode")
+                .getProperty(JCR_DATA).getString());
         session.expire();
     }
 
@@ -102,7 +101,7 @@ public class BinaryServiceImplIT extends AbstractIT {
         jcrSession = getJcrSession(session);
 
         assertTrue(jcrSession.getRootNode().hasNode("testDatastreamNode"));
-        assertEquals("xyz.jpg", jcrSession.getNode("/testDatastreamNode").getNode(JCR_CONTENT)
+        assertEquals("xyz.jpg", jcrSession.getNode("/testDatastreamNode/fedora:description")
                 .getProperty(FILENAME).getString());
         session.expire();
     }

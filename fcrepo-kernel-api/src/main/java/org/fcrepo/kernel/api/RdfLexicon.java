@@ -289,6 +289,16 @@ public final class RdfLexicon {
      */
     public static final String NT_VERSION_FILE = "nt:versionFile";
 
+    /**
+     * Fedora defined JCR node type which can have no children except optionally a timemap
+     */
+    public static final String NT_LEAF_NODE = "nt:leafNode";
+
+    /**
+     * Fedora defined node path for a binary description.
+     */
+    public static final String FEDORA_DESCRIPTION = "fedora:description";
+
     // VERSIONING
     /**
      * Memento TimeMap type.
