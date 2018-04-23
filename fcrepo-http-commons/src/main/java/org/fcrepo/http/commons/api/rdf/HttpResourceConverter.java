@@ -24,10 +24,10 @@ import static org.apache.commons.lang3.StringUtils.replaceOnce;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.CONTAINER_WEBAC_ACL;
 import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.LDPCV_TIME_MAP;
-import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.LDPCV_BINARY_TIME_MAP;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_DESCRIPTION;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getClosestExistingAncestor;
@@ -57,12 +57,9 @@ import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.TombstoneException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.models.FedoraTimeMap;
 import org.fcrepo.kernel.api.models.FedoraWebacAcl;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
-import org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl;
 import org.fcrepo.kernel.modeshape.TombstoneImpl;
 import org.fcrepo.kernel.modeshape.identifiers.HashConverter;
 import org.fcrepo.kernel.modeshape.identifiers.NamespaceConverter;
@@ -230,29 +227,11 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
                 final String basePath = matcher.group(1);
 
                 if (versioning) {
-                    // Disambiguate between a binary or non-binary timemap, as they can have overlapping external uris
-                    final boolean binary;
-                    if (metadata) {
-                        binary = false;
-                    } else {
-                        try {
-                            final Node originalNode = getNode(basePath);
-                            binary = NonRdfSourceDescriptionImpl.hasMixin(originalNode);
-                        } catch (final RepositoryException e) {
-                            throw new RepositoryRuntimeException(e);
-                        }
-                    }
-
-                    // Convert to correct timemap node name
-                    if (binary) {
-                        path = replaceOnce(path, "/" + FCR_VERSIONS, "/" + LDPCV_BINARY_TIME_MAP);
-                    } else {
-                        path = replaceOnce(path, "/" + FCR_VERSIONS, "/" + LDPCV_TIME_MAP);
-                    }
+                    path = replaceOnce(path, "/" + FCR_VERSIONS, "/" + LDPCV_TIME_MAP);
                 }
 
                 if (metadata) {
-                    path = replaceOnce(path, "/" + FCR_METADATA, EMPTY);
+                    path = replaceOnce(path, "/" + FCR_METADATA, "/" + FEDORA_DESCRIPTION);
                 }
 
                 if (webacAcl) {
@@ -316,31 +295,9 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
             path = replaceOnce(path, "/" + CONTAINER_WEBAC_ACL, "/" + FCR_ACL);
         }
 
-        final boolean versioning = resource instanceof FedoraTimeMap || resource.isMemento();
+        path = replaceOnce(path, "/" + LDPCV_TIME_MAP, "/" + FCR_VERSIONS);
 
-        if (versioning) {
-            final FedoraResource originalOrMemento;
-            if (resource instanceof FedoraTimeMap) {
-                final FedoraTimeMap timemap = (FedoraTimeMap) resource;
-                originalOrMemento = timemap.getOriginalResource();
-            } else {
-                originalOrMemento = resource;
-            }
-
-            // For binary description memento, follows id/fcr:metadata/fcr:versions/memento format
-            if (originalOrMemento instanceof FedoraBinary) {
-                path = replaceOnce(path, "/" + LDPCV_BINARY_TIME_MAP, "/" + FCR_VERSIONS);
-            } else if (originalOrMemento instanceof NonRdfSourceDescription) {
-                path = replaceOnce(path, "/" + LDPCV_TIME_MAP, "/" + FCR_METADATA + "/" + FCR_VERSIONS);
-            } else {
-                // For regular container, replace timemap name with versions path
-                path = replaceOnce(path, "/" + LDPCV_TIME_MAP, "/" + FCR_VERSIONS);
-            }
-
-        } else if (resource instanceof NonRdfSourceDescription) {
-            // binary description, non-memento
-            path += "/" + FCR_METADATA;
-        }
+        path = replaceOnce(path, "/" + FEDORA_DESCRIPTION, "/" + FCR_METADATA);
 
         return path;
     }
