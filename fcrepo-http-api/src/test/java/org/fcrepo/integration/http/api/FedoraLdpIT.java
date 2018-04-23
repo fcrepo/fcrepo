@@ -916,14 +916,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testDeleteBinary() throws IOException {
-        final String id = getRandomUniqueId();
-        createDatastream(id, "x", "some content");
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteObjMethod(id + "/x")));
-        assertDeleted(id + "/x");
-    }
-
-    @Test
     public void testDeleteObjectAndTombstone() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);

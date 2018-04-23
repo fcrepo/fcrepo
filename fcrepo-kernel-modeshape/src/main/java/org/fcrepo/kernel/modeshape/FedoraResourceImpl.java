@@ -774,7 +774,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
         final FedoraResource described = getDescribedResource();
 
-        // TODO the <> is being resolved to fcr:metadata, model does not contain that
         final UpdateRequest request = create(sparqlUpdateStatement,
                 idTranslator.reverse().convert(described).toString());
 

@@ -568,7 +568,7 @@ public class FedoraLdp extends ContentExposingResource {
             }
             session.commit();
 
-            addCacheControlHeaders(servletResponse, resource().getDescription(), session);
+            addCacheControlHeaders(servletResponse, resource(), session);
 
             return noContent().build();
         } catch (final IllegalArgumentException iae) {
@@ -706,6 +706,85 @@ public class FedoraLdp extends ContentExposingResource {
             return createUpdateResponse(resource, true);
         } finally {
             lock.release();
+        }
+    }
+
+    private void checkAclUriExistsAndHasCorrectType(final URI resourceAcl) {
+        FedoraResource aclResource = null;
+        try {
+
+            final String aclHost = resourceAcl.getHost();
+            final String serverHost = (headers.getHeaderString("X-Forwarded-Host") == null) ? this.uriInfo
+                    .getBaseUri().getHost() : headers.getHeaderString("X-Forwarded-Host");
+
+            if (!serverHost.equals(aclHost)) {
+                throw new InvalidACLException("Cross Domain ACLs are not allowed");
+            }
+
+            //extract external path
+            final String contextPath = this.uriInfo.getBaseUri().getPath();
+
+            final String path = !resourceAcl.getPath().startsWith(contextPath) ?
+                                    resourceAcl.getPath() :
+                                    resourceAcl.getPath().substring(contextPath.length());
+
+            aclResource = getResourceFromPath(path);
+            if (aclResource == null) {
+                throw new InvalidACLException("The ACL URI in the link header does not exist\n");
+            }
+        } catch (final RepositoryRuntimeException e) {
+            if (e.getCause() instanceof PathNotFoundException) {
+                throw new InvalidACLException("The external path of the link header's ACL URI was not found\n");
+            } else {
+                throw e;
+            }
+        }
+       if (!aclResource.getTypes().contains(URI.create(FEDORA_WEBAC_ACL_VALUE))) {
+            throw new InvalidACLException(
+                    "The ACL URI in link header does not have the correct type, must have rdf:type of webac:Acl\n");
+       }
+    }
+
+    private void addResourceAcl(final URI resourceAcl) {
+        if (resourceAcl != null) {
+            final String sparql =
+                    "PREFIX acl: <" + WEBAC_NAMESPACE_VALUE + ">\n" +
+                    "INSERT { \n" +
+                    "<> acl:accessControl <" + resourceAcl.toString() + "> \n" +
+                    "} WHERE {}";
+            patchResourcewithSparql(resource(), sparql, getResourceTriples());
+        }
+    }
+
+    /**
+     * Returns the URI of rel=acl link if there is one in the list.
+     *
+     * @param links the links to be checked.
+     * @return The URI portion of acl link header or null if no rel=acl links are present.
+     * @throws ConstraintViolationException if any of the links are syntactically invalid, if there is more than
+     *                                      one link where rel='acl', or if the acl link is cross domain.
+     */
+    private URI checkForAclLink(final List<String> links) throws ConstraintViolationException {
+        if (links == null) {
+            return null;
+        }
+
+        try {
+            Link aclLink = null;
+            for (final String linkStr : links) {
+                final Link link = Link.valueOf(linkStr);
+                if (link.getRel().equals("acl")) {
+                    //throw constraint exception if there is a more than one rel='acl' link
+                    if (aclLink != null) {
+                        throw new ConstraintViolationException(
+                            "You may specify only one rel=acl Link header in your request.");
+                    }
+                    aclLink = link;
+                }
+            }
+            return (aclLink != null) ? aclLink.getUri() : null;
+        } catch (final Exception ex) {
+            throw new ConstraintViolationException(ex.getMessage());
         }
     }
 

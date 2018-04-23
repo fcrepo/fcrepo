@@ -33,6 +33,7 @@ import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.utils.CacheEntry;
 import org.fcrepo.kernel.api.utils.ContentDigest;
 import org.fcrepo.kernel.api.utils.FixityResult;
@@ -57,6 +58,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.codahale.metrics.MetricRegistry.name;
@@ -473,6 +475,12 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
+    }
+
+    @Override
+    public RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> idTranslator,
+            final Set<? extends TripleCategory> contexts) {
+        return getDescription().getTriples(idTranslator, contexts);
     }
 
     @Override
