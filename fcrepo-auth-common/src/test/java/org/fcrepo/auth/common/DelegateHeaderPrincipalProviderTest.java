@@ -22,7 +22,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.modeshape.jcr.api.ServletCredentials;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -42,27 +41,23 @@ public class DelegateHeaderPrincipalProviderTest {
     private final DelegateHeaderPrincipalProvider provider = new DelegateHeaderPrincipalProvider();
 
     @Mock
-    private ServletCredentials credentials;
-
-    @Mock
     private HttpServletRequest request;
 
     @Before
     public void setUp() {
-        when(credentials.getRequest()).thenReturn(request);
     }
 
     @Test
     public void testGetDelegate0() {
         when(request.getHeader(DELEGATE_HEADER)).thenReturn(null);
-        assertNull("No delegates should return null", provider.getDelegate(credentials));
+        assertNull("No delegates should return null", provider.getDelegate(request));
     }
 
     @Test
     public void testGetDelegate1() {
         final String user = "user1";
         when(request.getHeader(DELEGATE_HEADER)).thenReturn(user);
-        assertNotNull("Should be a delegate!", provider.getDelegate(credentials));
-        assertEquals(user, provider.getDelegate(credentials).getName());
+        assertNotNull("Should be a delegate!", provider.getDelegate(request));
+        assertEquals(user, provider.getDelegate(request).getName());
     }
 }
