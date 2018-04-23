@@ -18,6 +18,8 @@
 package org.fcrepo.auth.webac;
 
 import static java.util.stream.Collectors.toSet;
+import static org.fcrepo.auth.webac.URIConstants.AGENT_CLASS_SUFFIX;
+import static org.fcrepo.auth.webac.URIConstants.FOAF_AGENT_VALUE;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 
 import java.security.Principal;
@@ -62,6 +64,24 @@ public abstract class AbstractRolesAuthorizationDelegate implements FedoraAuthor
     private SessionFactory sessionFactory = null;
 
     /**
+     * The security principal for every request, that represents the foaf:Agent agent class that is used to designate
+     * "everyone".
+     */
+    protected static final Principal EVERYONE = new Principal() {
+
+        @Override
+        public String getName() {
+            return FOAF_AGENT_VALUE;
+        }
+
+        @Override
+        public String toString() {
+            return getName();
+        }
+
+    };
+
+    /**
      * Gather effectives roles
      *
      * @param acl access control list
@@ -70,7 +90,10 @@ public abstract class AbstractRolesAuthorizationDelegate implements FedoraAuthor
      */
     public static Set<String> resolveUserRoles(final Map<String, Collection<String>> acl,
                     final Collection<Principal> principals) {
-        return principals.stream().map(Principal::getName).filter(acl::containsKey)
+
+        return principals.stream().map(Principal::getName)
+            .map(name -> { return EVERYONE.getName().equals(name) ? name + AGENT_CLASS_SUFFIX : name; })
+            .filter(acl::containsKey)
             .peek(principal -> LOGGER.debug("request principal matched role assignment: {}", principal))
             .map(acl::get)
             .flatMap(Collection::stream)

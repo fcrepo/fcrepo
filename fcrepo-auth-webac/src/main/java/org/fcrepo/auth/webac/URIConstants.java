@@ -186,6 +186,11 @@ final public class URIConstants {
     public static final String FEDORA_WEBAC_ACL_VALUE = FEDORA_WEBAC_NAMESPACE_VALUE + "Acl";
     public static final URI FEDORA_WEBAC_ACL = URI.create(FEDORA_WEBAC_ACL_VALUE);
 
+    /** 
+     * Suffix to distinguish Agent Class roles from Agent roles.
+     */
+    public static final String AGENT_CLASS_SUFFIX = "__agent_class";
+
     private URIConstants() {
     }
 

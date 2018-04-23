@@ -28,6 +28,7 @@ import static java.util.stream.Stream.of;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.riot.Lang.TTL;
+import static org.fcrepo.auth.webac.URIConstants.AGENT_CLASS_SUFFIX;
 import static org.fcrepo.auth.webac.URIConstants.FOAF_AGENT_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.VCARD_GROUP;
 import static org.fcrepo.auth.webac.URIConstants.VCARD_MEMBER_VALUE;
@@ -246,6 +247,12 @@ public class WebACRolesProvider implements AccessRolesProvider {
                 concat(auth.getAgents().stream(), dereferenceAgentGroups(auth.getAgentGroups()).stream())
                     .forEach(agent -> {
                         effectiveRoles.computeIfAbsent(agent, key -> new HashSet<>())
+                            .addAll(auth.getModes().stream().map(URI::toString).collect(toSet()));
+                    });
+                auth.getAgentClasses().stream()
+                    .forEach(agentClass -> {
+                        // Use the AGENT_CLASS_SUFFIX to distinguish from agent roles
+                        effectiveRoles.computeIfAbsent(agentClass + AGENT_CLASS_SUFFIX, key -> new HashSet<>())
                             .addAll(auth.getModes().stream().map(URI::toString).collect(toSet()));
                     });
             });
