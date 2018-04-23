@@ -22,8 +22,10 @@ import static java.util.Collections.singleton;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.replaceOnce;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.CONTAINER_WEBAC_ACL;
 import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.LDPCV_TIME_MAP;
 import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.LDPCV_BINARY_TIME_MAP;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
@@ -58,6 +60,7 @@ import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.FedoraTimeMap;
+import org.fcrepo.kernel.api.models.FedoraWebacAcl;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl;
 import org.fcrepo.kernel.modeshape.TombstoneImpl;
@@ -87,9 +90,9 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
     // First group is the path of the resource or original resource,
     // second group determines if it is an fcr:metadata non-rdf source,
     // third group determines if the path is for a memento or timemap,
-    // and the fourth group allows for a memento identifier
+    // the fourth group allows for a memento identifier, and the fifth group for ACL
     private final static Pattern FORWARD_COMPONENT_PATTERN = Pattern.compile(
-            "(.*?)(/" + FCR_METADATA + ")?(/" + FCR_VERSIONS + "(/\\d+)?)?$");
+            "(.*?)(/" + FCR_METADATA + ")?(/" + FCR_VERSIONS + "(/\\d+)?)?(/" + FCR_ACL + ")?$");
 
     protected List<Converter<String, String>> translationChain;
 
@@ -223,6 +226,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
             if (matcher.matches()) {
                 final boolean metadata = matcher.group(2) != null;
                 final boolean versioning = matcher.group(3) != null;
+                final boolean webacAcl = matcher.group(5) != null;
                 final String basePath = matcher.group(1);
 
                 if (versioning) {
@@ -249,6 +253,10 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
 
                 if (metadata) {
                     path = replaceOnce(path, "/" + FCR_METADATA, EMPTY);
+                }
+
+                if (webacAcl) {
+                    path = replaceOnce(path, "/" + FCR_ACL, "/" + CONTAINER_WEBAC_ACL);
                 }
             }
 
@@ -301,6 +309,11 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
         String path = reverse.convert(resource.getPath());
         if (path == null) {
             throw new RepositoryRuntimeException("Unable to process reverse chain for resource " + resource);
+        }
+
+        if (resource instanceof FedoraWebacAcl) {
+            // For ACL container, replace the name with fcr:acl path
+            path = replaceOnce(path, "/" + CONTAINER_WEBAC_ACL, "/" + FCR_ACL);
         }
 
         final boolean versioning = resource instanceof FedoraTimeMap || resource.isMemento();
