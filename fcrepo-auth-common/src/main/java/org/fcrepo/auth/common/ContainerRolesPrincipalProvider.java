@@ -42,11 +42,17 @@ public class ContainerRolesPrincipalProvider implements PrincipalProvider {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ContainerRolesPrincipalProvider.class);
 
-    protected static class ContainerRolesPrincipal implements Principal {
+    /**
+     * @author Kevin S. Clarke
+     */
+    public static class ContainerRolesPrincipal implements Principal {
 
         private final String name;
 
-        ContainerRolesPrincipal(final String name) {
+        /**
+         * @param name principal name
+         */
+        public ContainerRolesPrincipal(final String name) {
             this.name = name;
         }
 
