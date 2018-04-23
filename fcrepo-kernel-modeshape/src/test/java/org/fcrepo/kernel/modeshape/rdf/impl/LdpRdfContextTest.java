@@ -32,9 +32,10 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.modeshape.ContainerImpl;
-import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
+import org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -52,7 +53,7 @@ public class LdpRdfContextTest {
     private FedoraResourceImpl mockResource;
 
     @Mock
-    private FedoraBinaryImpl mockBinary;
+    private NonRdfSourceDescriptionImpl mockDescription;
 
     @Mock
     private ContainerImpl mockContainer;
@@ -72,10 +73,10 @@ public class LdpRdfContextTest {
     public void setUp() throws RepositoryException {
         initMocks(this);
         when(mockResource.getPath()).thenReturn("/a");
-        when(mockBinary.getPath()).thenReturn("/a");
+        when(mockDescription.getPath()).thenReturn("/a/fcr:metadata");
         when(mockContainer.getPath()).thenReturn("/a");
         when(mockResource.getNode()).thenReturn(mockNode);
-        when(mockBinary.getNode()).thenReturn(mockNode);
+        when(mockDescription.getNode()).thenReturn(mockNode);
         when(mockContainer.getNode()).thenReturn(mockNode);
         when(mockNode.getSession()).thenReturn(mockSession);
 
@@ -91,11 +92,11 @@ public class LdpRdfContextTest {
     }
 
     @Test
-    public void shouldIncludeBinaryTypeAssertions() {
-        testObj = new LdpRdfContext(mockBinary, subjects);
+    public void shouldIncludeDescriptionTypeAssertions() {
+        testObj = new LdpRdfContext(mockDescription, subjects);
         final Model model = testObj.collect(toModel());
 
-        assertTrue(model.contains(subject(), RDF.type, NON_RDF_SOURCE));
+        assertTrue(model.contains(subject(mockDescription), RDF.type, NON_RDF_SOURCE));
     }
 
     @Test
@@ -125,7 +126,11 @@ public class LdpRdfContextTest {
     }
 
     private Resource subject() {
-        return subjects.reverse().convert(mockResource);
+        return subject(mockResource);
+    }
+
+    private Resource subject(final FedoraResource resource) {
+        return subjects.reverse().convert(resource);
     }
 
 }

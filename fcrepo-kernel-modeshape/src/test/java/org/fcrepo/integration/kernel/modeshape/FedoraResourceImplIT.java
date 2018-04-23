@@ -425,7 +425,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Graph graph = object.getTriples(subjects, PROPERTIES).collect(toModel()).getGraph();
 
         // multivalued property
-        final Node s = createGraphSubjectNode(object);
+        final Node s = createGraphSubjectNode(object.getDescribedResource());
         Node p = HAS_MIXIN_TYPE.asNode();
         Node o = createLiteral(FEDORA_RESOURCE);
         assertFalse(graph.contains(s, p, o));

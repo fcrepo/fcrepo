@@ -454,12 +454,12 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @Override
     public Instant getMementoDatetime() {
         try {
-            final Node descriptNode = getDescriptionNode();
-            if (!isMemento() || !descriptNode.hasProperty(MEMENTO_DATETIME)) {
+            final Node node = getNode();
+            if (!isMemento() || !node.hasProperty(MEMENTO_DATETIME)) {
                 return null;
             }
 
-            final Calendar calDate = descriptNode.getProperty(MEMENTO_DATETIME).getDate();
+            final Calendar calDate = node.getProperty(MEMENTO_DATETIME).getDate();
             return calDate.toInstant();
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
