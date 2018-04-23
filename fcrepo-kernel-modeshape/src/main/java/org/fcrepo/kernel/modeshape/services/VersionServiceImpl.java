@@ -27,7 +27,6 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_CONTAINMENT;
 import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_MEMBERSHIP;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
-import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.LDPCV_BINARY_TIME_MAP;
 import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.LDPCV_TIME_MAP;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.fcrepo.kernel.modeshape.rdf.impl.RequiredPropertiesUtil.assertRequiredContainerTriples;
@@ -191,8 +190,7 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
     }
 
     private String makeMementoPath(final FedoraResource resource, final Instant datetime) {
-        final String ldpcvName = resource instanceof FedoraBinary ? LDPCV_BINARY_TIME_MAP : LDPCV_TIME_MAP;
-        return resource.getPath() + "/" + ldpcvName + "/" + MEMENTO_DATETIME_ID_FORMATTER.format(datetime);
+        return resource.getPath() + "/" + LDPCV_TIME_MAP + "/" + MEMENTO_DATETIME_ID_FORMATTER.format(datetime);
     }
 
     protected String getUri(final FedoraResource resource,

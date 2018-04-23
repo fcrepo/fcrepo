@@ -80,7 +80,6 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
 
     private static final Logger LOGGER = getLogger(FedoraBinaryImpl.class);
 
-
     static final RegistryService registryService = RegistryService.getInstance();
     static final Counter fixityCheckCounter
             = registryService.getMetrics().counter(name(FedoraBinary.class, "fixity-check-counter"));
@@ -97,18 +96,6 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
      */
     public FedoraBinaryImpl(final Node node) {
         super(node);
-
-        // if (node.isNew()) {
-        // initializeNewBinaryProperties();
-        // }
-    }
-
-    private void initializeNewBinaryProperties() {
-        // try {
-        // decorateContentNode(node, new HashSet<>());
-        // } catch (final RepositoryException e) {
-        // LOGGER.warn("Count not decorate {} with FedoraBinary properties: {}", node, e);
-        // }
     }
 
     @Override
@@ -461,7 +448,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
         }
     }
 
-    public boolean hasDescriptionProperty(final String relPath) {
+    private boolean hasDescriptionProperty(final String relPath) {
         try {
             return getDescriptionNode().hasProperty(relPath);
         } catch (final RepositoryException e) {
@@ -469,7 +456,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
         }
     }
 
-    protected Property getDescriptionProperty(final String relPath) {
+    private Property getDescriptionProperty(final String relPath) {
         try {
             return getDescriptionNode().getProperty(relPath);
         } catch (final RepositoryException e) {
