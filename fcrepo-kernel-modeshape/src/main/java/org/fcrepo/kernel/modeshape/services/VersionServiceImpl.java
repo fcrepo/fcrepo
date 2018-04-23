@@ -33,6 +33,7 @@ import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.fcrepo.kernel.modeshape.rdf.impl.RequiredPropertiesUtil.assertRequiredContainerTriples;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
+import static org.fcrepo.kernel.api.utils.SubjectMappingUtil.mapSubject;
 
 import java.io.InputStream;
 import java.net.URI;
@@ -45,15 +46,12 @@ import java.util.Collection;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Stream;
-
 import javax.inject.Inject;
 import javax.jcr.ItemExistsException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
-import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
@@ -165,16 +163,8 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
 
     private RdfStream remapRdfSubjects(final String mementoUri, final String resourceUri, final RdfStream rdfStream) {
         final org.apache.jena.graph.Node mementoNode = createURI(mementoUri);
-        final Stream<Triple> updatedSubjectStream = rdfStream.map(t -> {
-            final org.apache.jena.graph.Node subject;
-            if (t.getSubject().getURI().equals(resourceUri)) {
-                subject = mementoNode;
-            } else {
-                subject = t.getSubject();
-            }
-            return new Triple(subject, t.getPredicate(), t.getObject());
-        });
-        return new DefaultRdfStream(mementoNode, updatedSubjectStream);
+
+        return new DefaultRdfStream(mementoNode, rdfStream.map(t -> mapSubject(t, resourceUri, mementoUri)));
     }
 
     @Override
