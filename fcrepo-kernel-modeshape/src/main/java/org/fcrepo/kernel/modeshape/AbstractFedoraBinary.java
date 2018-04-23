@@ -25,7 +25,6 @@ import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunction
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Optional;
 
 import javax.jcr.Node;
@@ -136,6 +135,11 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
         return ContentDigest.missingChecksum();
     }
 
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraBinary#isProxy()
+     */
     @Override
     public Boolean isProxy() {
         if (hasProperty(PROXY_FOR)) {
@@ -144,6 +148,10 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
         return false;
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraBinary#isRedirect()
+     */
     @Override
     public Boolean isRedirect() {
         if (hasProperty(REDIRECTS_TO)) {
@@ -152,45 +160,62 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
         return false;
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraBinary#getProxyURL()
+     */
     @Override
-    public URI getProxyURI() {
+    public String getProxyURL() {
         try {
             if (hasProperty(PROXY_FOR)) {
-                return new URI(getProperty(PROXY_FOR).getString());
+                return getProperty(PROXY_FOR).getString();
             }
             return null;
-
         } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        } catch (final URISyntaxException e) {
             throw new RepositoryRuntimeException(e);
         }
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraBinary#setProxyURL()
+     */
     @Override
-    public void setProxyURI(URI uri) {
-        // todo
+    public void setProxyURL(String url) throws RepositoryRuntimeException {
+        try {
+            getNode().setProperty(PROXY_FOR, url);
+        } catch (Exception e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
-
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraBinary#getRedirectURL()
+     */
     @Override
-    public URI getRedirectURI() {
+    public String getRedirectURL() {
         try {
             if (hasProperty(REDIRECTS_TO)) {
-                return new URI(getProperty(REDIRECTS_TO).getString());
+                return getProperty(REDIRECTS_TO).getString();
             }
             return null;
-
         } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        } catch (final URISyntaxException e) {
             throw new RepositoryRuntimeException(e);
         }
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraBinary#setRedirectURL()
+     */
     @Override
-    public void setRedirectURI(URI uri) {
-        // todo
+    public void setRedirectURL(String url) throws RepositoryRuntimeException {
+        try {
+            getNode().setProperty(REDIRECTS_TO, url);
+        } catch (Exception e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     protected String getMimeTypeValue() {

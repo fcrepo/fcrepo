@@ -258,127 +258,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
 
 
-    static protected class ExternalContent {
 
-        public final static String PROXY = "proxy";
-        public final static String HANDLING = "handling";
-        public final static String COPY = "copy";
-        public final static String REDIRECT = "redirect";
-        public final static String CONTENT_TYPE = "type";
-
-        /**
-         * Loosk for ExternalContent link header
-         *
-         * @param links - links from the request header
-         * @return External Content link header if found, else null
-         */
-        static String findExternalLink(final List<String> links) {
-
-            final List<String> externalContentLinks = links.stream()
-                    .filter(x -> x.contains(EXTERNAL_CONTENT.toString()))
-                    .collect(Collectors.toList());
-
-            if (externalContentLinks.size() > 1) {
-                // got a problem, you can only have one ExternalContent links
-                // todo - throw error with constrained by info
-            } else if (externalContentLinks.size() == 1) {
-                return externalContentLinks.get(0);
-            }
-
-            return null;
-        }
-
-        static InputStream fetchExternalContent(final String extLink) throws FileNotFoundException,
-                MalformedURLException, IOException {
-
-            Map <String, String> map = parseLinkHeader(extLink);
-            if (map.get(HANDLING) == COPY) {
-                final String url = map.get("url");
-                if (url.startsWith("file://")) {
-                    return new FileInputStream(url);
-                } else if (url.startsWith("http")) {
-                    return new URL(url).openStream();
-                }
-            } else {
-                return null;
-            }
-
-        }
-
-        /**
-         * Examines a link header for ExternalContent to verify that it's legit
-         * @param extLink
-         * @throws ExternalMessageBodyException
-         */
-        static void verifyRequestForExternalBody(final String extLink) throws ExternalMessageBodyException {
-            /* link should look like this:
-             Link: <http://example.org/some/content>;
-             rel="http://fedora.info/definitions/fcrepo#ExternalContent";
-             handling="proxy";
-             type="image/tiff"
-           */
-
-            Map<String, String> map = this.parseLinkHeader(extLink);
-
-            // must have rel= as above
-            if (EXTERNAL_CONTENT.toString().toLowerCase() != map.get("rel")) {
-                // error
-                throw new ExternalMessageBodyException("Link header formatted incorrectly: no 'rel' information");
-            }
-
-            // if no 'handling' key, error with constrainedBy
-            // if 'handling' key, but it's not {copy, proxy, redirect} throw error with constrainedBy
-            final String handling = map.get("handling");
-            if (handling == null || !handling.matches("(?i)" + PROXY + "|" + COPY + "|" + REDIRECT)) {
-                // error
-                throw new ExternalMessageBodyException(
-                        "Link header formatted incorrectly: 'handling' parameter incorrect");
-            }
-
-            // if we get this far, things are good
-        }
-
-        private static Map<String, String> parseLinkHeader(final String link) throws ExternalMessageBodyException {
-            List<String> list = Splitter.on(';').trimResults().omitEmptyStrings().splitToList(link);
-
-            final String uri = list.get(0).trim();
-            if (uri.isEmpty() || !uri.startsWith("http") || !uri.startsWith("https") || !uri.startsWith("file")) {
-                throw new ExternalMessageBodyException("Link header formatted incorrectly: URI incorrectly formatted");
-            }
-
-            list.set(0, "uri=" + uri);
-
-            return list.stream().map(x -> x.split("="))
-                    .collect(Collectors.toMap(
-                            x -> x[0].trim().toLowerCase(),
-                            x -> x.length > 1 ? x[1].trim().toLowerCase() : "")
-                    );
-        }
-
-        private static MediaType getContentType(final String link) {
-            final Map<String,String> map = parseLinkHeader(link);
-            final String contentType = map.get(CONTENT_TYPE);
-            if (contentType != null) {
-                final MediaType mt = MediaType.valueOf(link);
-                // create simplified MediaType
-                return new MediaType(mt.getType(), mt.getSubtype());
-            }
-
-            // for now this uses the default media type if not specified.  Per the spec, this is okay
-            // However, we could also do a HEAD on the url if schema is 'http', and use that content type if specified.
-            // todo - fetch the content type from binary itself.
-
-            return APPLICATION_OCTET_STREAM_TYPE;
-        }
-
-        public static Boolean isCopy(final String link) {
-            Map<String, String> map = parseLinkHeader(link);
-            if (map.get("handling") == COPY) {
-                return true;
-            }
-            return false;
-        }
-    }
 
     protected RdfStream getResourceTriples() {
         return getResourceTriples(-1);
@@ -910,15 +790,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
     }
 
-    protected static MediaType getSimpleContentType(final MediaType requestContentType, final String extLinkHeader) {
-
-        if (extLinkHeader != null) {
-            return ExternalContent.getContentType(extLinkHeader);
-        } else {
-            return requestContentType != null ?
-                    new MediaType(requestContentType.getType(), requestContentType.getSubtype())
-                    : APPLICATION_OCTET_STREAM_TYPE;
-        }
+    protected static MediaType getSimpleContentType(final MediaType requestContentType) {
+        return requestContentType != null ?
+                new MediaType(requestContentType.getType(), requestContentType.getSubtype())
+                : APPLICATION_OCTET_STREAM_TYPE;
     }
 
     protected static boolean isRdfContentType(final String contentTypeString) {
@@ -934,8 +809,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 new HashSet<>() : checksums.stream().map(checksum -> checksumURI(checksum)).collect(Collectors.toSet());
         final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
         final String originalContentType = contentType != null ? contentType.toString() : "";
-
-        // if this is a copy from external body, do that here, and then pass down
 
         result.setContent(requestBodyStream,
                 originalContentType,

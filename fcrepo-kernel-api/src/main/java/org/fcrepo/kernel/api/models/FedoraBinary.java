@@ -77,26 +77,28 @@ public interface FedoraBinary extends FedoraResource {
     Boolean isRedirect();
 
     /**
-     * Get the URI that this resource is a Proxy for
-     * @return URI of object to proxy
+     * Get the URL that this resource is a Proxy for
+     * @return String containing URL of object to proxy
      */
-    URI getProxyURI();
+    String getProxyURL();
 
     /**
-     * Set the URI that this resource is a proxy for
+     * Set the URL that this resource is a proxy for
+     * @param url - the url of the resource this is a proxy for
      */
-    void setProxyURI(URI uri);
+    void setProxyURL(String url);
 
     /**
-     * Get the URI this resource should redirect to
-     * @return URI of object to redirect to
+     * Get the URL this resource should redirect to
+     * @return String containing URL of object to redirect to
      */
-    URI getRedirectURI();
+    String getRedirectURL();
 
     /**
-     * Set the URI that this is a redirect to
+     * Set the URL that this is a redirect to
+     * @param url - the url of the resource this redirects to
      */
-    void setRedirectURI(URI uri);
+    void setRedirectURL(String url);
 
     /**
      * @return The MimeType of content associated with this datastream.

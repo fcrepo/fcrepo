@@ -37,7 +37,6 @@ import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
-import org.fcrepo.kernel.api.utils.MessageExternalBodyContentType;
 import org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.modeshape.utils.impl.CacheEntryFactory;
 import org.slf4j.Logger;
@@ -79,6 +78,8 @@ public class LocalFileBinary extends UrlBinary {
         }
 
         try {
+            /* that this is a proxy or redirect has already been set before we get here
+             */
             final Node contentNode = getNode();
 
             if (contentNode.canAddMixin(FEDORA_BINARY)) {
@@ -122,20 +123,7 @@ public class LocalFileBinary extends UrlBinary {
 
     @Override
     public String getMimeType() {
-        final String mimeType = getMimeTypeValue();
-
-        try {
-            final MessageExternalBodyContentType extBodyType = MessageExternalBodyContentType.parse(mimeType);
-            // Return the overridden mimetype if one is available, otherwise give generic binary mimetype
-            final String mimeTypeOverride = extBodyType.getMimeType();
-            if (mimeTypeOverride == null) {
-                return "application/octet-stream";
-            } else {
-                return mimeTypeOverride;
-            }
-        } catch (final UnsupportedAccessTypeException e) {
-            throw new RepositoryRuntimeException(e);
-        }
+        return getMimeTypeValue();
     }
 
     /*
@@ -173,10 +161,15 @@ public class LocalFileBinary extends UrlBinary {
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Checking external resource: {}", getResourceLocation());
             }
-
-            return CacheEntryFactory.forProperty(getProperty(HAS_MIME_TYPE)).checkFixity(algorithms);
+            if (isProxy()) {
+                return CacheEntryFactory.forProperty(getProperty(PROXY_FOR)).checkFixity(algorithms);
+            } else if (isRedirect()) {
+                return CacheEntryFactory.forProperty(getProperty(REDIRECTS_TO)).checkFixity(algorithms);
+            }
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
+
+        return null;
     }
 }

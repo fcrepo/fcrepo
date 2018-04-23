@@ -27,7 +27,6 @@ import javax.jcr.RepositoryException;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
-import org.fcrepo.kernel.api.utils.MessageExternalBodyContentType;
 
 /**
  * Cache entry that wraps a binary stream for External Resource
@@ -67,8 +66,8 @@ public class ExternalResourceCacheEntry extends BinaryCacheEntry {
     @Override
     public String getExternalIdentifier() {
         try {
-            return MessageExternalBodyContentType.parse(property().getValue().getString()).getResourceLocation();
-        } catch (final RepositoryException | UnsupportedAccessTypeException e) {
+            return property().getValue().toString();
+        } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
     }

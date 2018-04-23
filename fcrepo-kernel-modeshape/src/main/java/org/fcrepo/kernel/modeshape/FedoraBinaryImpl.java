@@ -43,10 +43,8 @@ import org.slf4j.Logger;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URL;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -71,13 +69,9 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
 
     private static final Logger LOGGER = getLogger(FedoraBinaryImpl.class);
 
-    static final RegistryService registryService = RegistryService.getInstance();
-    static final Counter fixityCheckCounter
-            = registryService.getMetrics().counter(name(FedoraBinary.class, "fixity-check-counter"));
+    private static final String LOCAL_FILE_ACCESS_TYPE = "file";
 
-    private static final String LOCAL_FILE_ACCESS_TYPE = "local-file";
-
-    private static final String URL_ACCESS_TYPE = "url";
+    private static final String URL_ACCESS_TYPE = "http";
 
     private FedoraBinary wrappedBinary;
 
@@ -107,15 +101,12 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
      */
     private FedoraBinary getBinary(final String contentType) {
         if (wrappedBinary == null) {
-            // Determine the mimetype which should apply to this binary
-            final String effectiveType = getEffectiveMimeType(contentType);
-
-            wrappedBinary = getBinaryImplementation(effectiveType);
+            wrappedBinary = getBinaryImplementation();
             LOGGER.debug("Wrapping binary content of type {}", wrappedBinary.getClass().getName());
         }
         return wrappedBinary;
     }
-
+/*
     private String getEffectiveMimeType(final String contentType) {
         try {
 
@@ -132,15 +123,15 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
             throw new RepositoryRuntimeException(e);
         }
     }
+*/
+    private FedoraBinary getBinaryImplementation() {
+        final String url = getURLInfo();
 
-    private FedoraBinary getBinaryImplementation(final String contentType) {
-        final String accessType = contentType == null ? null : getAccessType(contentType);
-
-        if (accessType != null) {
-            if (LOCAL_FILE_ACCESS_TYPE.equals(accessType)) {
+        if (url != null) {
+            if (url.toLowerCase().startsWith(LOCAL_FILE_ACCESS_TYPE)) {
                 LOGGER.debug("Instantiating local file FedoraBinary");
                 return new LocalFileBinary(getNode());
-            } else if (URL_ACCESS_TYPE.equals(accessType)) {
+            } else if (url.toLowerCase().startsWith(URL_ACCESS_TYPE)) {
                 LOGGER.debug("Instantiating URI FedoraBinary");
                 return new UrlBinary(getNode());
             }
@@ -149,23 +140,13 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
         return new InternalFedoraBinary(getNode());
     }
 
-    @Override
-    protected Node getDescriptionNode() {
-        try {
-            return getNode().getNode(FEDORA_DESCRIPTION);
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
+    private String getURLInfo() {
+        if (isProxy()) {
+            return getProxyURL();
+        } else if (isRedirect()) {
+            return getRedirectURL();
         }
-    }
 
-    private static String getAccessType(final String contentType) {
-        try {
-            if (isExternalBodyType(contentType)) {
-                return MessageExternalBodyContentType.parse(contentType).getAccessType();
-            }
-        } catch (final UnsupportedAccessTypeException e) {
-            LOGGER.debug("Node did not have a valid mimetype for an external binary");
-        }
         return null;
     }
 
@@ -246,6 +227,89 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     @Override
     public URI getContentDigest() {
         return getBinary().getContentDigest();
+    }
+
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraBinary#isProxy()
+     */
+    @Override
+    public Boolean isProxy() {
+        if (hasProperty(PROXY_FOR)) {
+            return true;
+        }
+        return false;
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraBinary#isRedirect()
+     */
+    @Override
+    public Boolean isRedirect() {
+        if (hasProperty(REDIRECTS_TO)) {
+            return true;
+        }
+        return false;
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraBinary#getProxyURL()
+     */
+    @Override
+    public String getProxyURL() {
+        try {
+            if (hasProperty(PROXY_FOR)) {
+                return getProperty(PROXY_FOR).getString();
+            }
+            return null;
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraBinary#setProxyURL()
+     */
+    @Override
+    public void setProxyURL(String url) throws RepositoryRuntimeException {
+        try {
+            getNode().setProperty(PROXY_FOR, url);
+        } catch (Exception e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraBinary#getRedirectURL()
+     */
+    @Override
+    public String getRedirectURL() {
+        try {
+            if (hasProperty(REDIRECTS_TO)) {
+                return getProperty(REDIRECTS_TO).getString();
+            }
+            return null;
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraBinary#setRedirectURL()
+     */
+    @Override
+    public void setRedirectURL(String url) throws RepositoryRuntimeException {
+        try {
+            getNode().setProperty(REDIRECTS_TO, url);
+        } catch (Exception e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 
     /*

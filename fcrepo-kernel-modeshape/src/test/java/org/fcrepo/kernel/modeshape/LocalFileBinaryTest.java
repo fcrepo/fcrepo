@@ -93,7 +93,7 @@ public class LocalFileBinaryTest {
     public void setUp() throws Exception {
         contentFile = File.createTempFile("file", ".txt");
         IOUtils.write(EXPECTED_CONTENT, new FileOutputStream(contentFile));
-        mimeType = makeMimeType(contentFile);
+        mimeType = "image/jpeg";//makeMimeType(contentFile);
 
         when(mimeTypeProperty.getString()).thenReturn(mimeType);
         when(mockValue.getString()).thenReturn(mimeType);

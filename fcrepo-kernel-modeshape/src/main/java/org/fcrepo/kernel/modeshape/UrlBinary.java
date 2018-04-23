@@ -46,7 +46,6 @@ import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.api.utils.CacheEntry;
 import org.fcrepo.kernel.api.utils.ContentDigest;
 import org.fcrepo.kernel.api.utils.FixityResult;
-import org.fcrepo.kernel.api.utils.MessageExternalBodyContentType;
 import org.fcrepo.kernel.modeshape.rdf.impl.FixityRdfContext;
 import org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.modeshape.utils.impl.CacheEntryFactory;
@@ -102,6 +101,9 @@ public class UrlBinary extends AbstractFedoraBinary {
         }
 
         try {
+            /* that this is a PROXY or REDIRECT has already been set on this resource before
+               we enter this setContent() method
+             */
             final Node contentNode = getNode();
 
             if (contentNode.canAddMixin(FEDORA_BINARY)) {
@@ -197,9 +199,12 @@ public class UrlBinary extends AbstractFedoraBinary {
 
             final long contentSize = size < 0 ? getContentSize() : size;
 
-            final Collection<FixityResult> fixityResults = CacheEntryFactory.forProperty(getProperty(HAS_MIME_TYPE))
-                    .checkFixity(algorithm);
-
+            Collection<FixityResult> fixityResults = null;
+            if (isProxy()) {
+                fixityResults = CacheEntryFactory.forProperty(getProperty(PROXY_FOR)).checkFixity(algorithm);
+            } else if (isRedirect()) {
+                fixityResults = CacheEntryFactory.forProperty(getProperty(REDIRECTS_TO)).checkFixity(algorithm);
+            }
             return new FixityRdfContext(this, idTranslator, fixityResults, digestUri, contentSize);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
@@ -215,45 +220,30 @@ public class UrlBinary extends AbstractFedoraBinary {
 
         try (final Timer.Context context = timer.time()) {
 
-            final String mimeType = getMimeType();
-            final MessageExternalBodyContentType externalBody = MessageExternalBodyContentType.parse(mimeType);
-            final String resourceLocation = externalBody.getResourceLocation();
+            final String resourceLocation = getResourceLocation();
             LOGGER.debug("Checking external resource: " + resourceLocation);
-            return CacheEntryFactory.forProperty(getProperty(HAS_MIME_TYPE)).checkFixity(algorithms);
+            if (isProxy()) {
+                return CacheEntryFactory.forProperty(getProperty(PROXY_FOR)).checkFixity(algorithms);
+            } else if (isRedirect()) {
+                return CacheEntryFactory.forProperty(getProperty(REDIRECTS_TO)).checkFixity(algorithms);
+            }
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
+
+        return null;
     }
 
     /**
      * Returns the specified mimetype in place of the original external-body if provided
      */
+
     @Override
     public String getMimeType() {
-        final String mimeType = getMimeTypeValue();
-
-        try {
-            final MessageExternalBodyContentType extBodyType = MessageExternalBodyContentType.parse(mimeType);
-            // Return the overridden mimetype if one is available, otherwise give the original content type
-            final String mimeTypeOverride = extBodyType.getMimeType();
-            if (mimeTypeOverride == null) {
-                return mimeType;
-            } else {
-                return mimeTypeOverride;
-            }
-        } catch (final UnsupportedAccessTypeException e) {
-            throw new RepositoryRuntimeException(e);
-        }
+        return getMimeTypeValue();
     }
-
     protected String getResourceLocation() {
-        try {
-            final MessageExternalBodyContentType externalBody = MessageExternalBodyContentType.parse(
-                    getMimeTypeValue());
-            return externalBody.getResourceLocation();
-        } catch (final UnsupportedAccessTypeException e) {
-            throw new RepositoryRuntimeException(e);
-        }
+        return getProxyURL();
     }
 
     protected URI getResourceUri() {
