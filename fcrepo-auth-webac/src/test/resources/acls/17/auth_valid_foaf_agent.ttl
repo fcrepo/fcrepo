@@ -3,5 +3,5 @@
 
 <> a acl:Authorization ;
    acl:agentClass foaf:Agent ;
-   acl:mode acl:Read ;
-   acl:accessTo </rest/public_collection> .
+   acl:mode acl:Write ;
+   acl:accessTo </rest/dark/archive/sunshine> .

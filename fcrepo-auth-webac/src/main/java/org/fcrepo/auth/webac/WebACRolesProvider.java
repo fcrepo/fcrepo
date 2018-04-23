@@ -184,7 +184,8 @@ public class WebACRolesProvider implements AccessRolesProvider {
     }
 
     /**
-     *  For a given FedoraResource, get a mapping of acl:agent values to acl:mode values.
+     *  For a given FedoraResource, get a mapping of acl:agent values to acl:mode values and
+     *  for foaf:Agent include the acl:agentClass value to acl:mode.
      */
     private Map<String, Collection<String>> getAgentRoles(final FedoraResource resource) {
         LOGGER.debug("Getting agent roles for: {}", resource.getPath());
@@ -244,8 +245,14 @@ public class WebACRolesProvider implements AccessRolesProvider {
             .filter(checkAccessTo.or(checkAccessToClass))
             .forEach(auth -> {
                 concat(auth.getAgents().stream(), dereferenceAgentGroups(auth.getAgentGroups()).stream())
+                    .filter(agent -> !agent.equals(FOAF_AGENT_VALUE))
                     .forEach(agent -> {
                         effectiveRoles.computeIfAbsent(agent, key -> new HashSet<>())
+                            .addAll(auth.getModes().stream().map(URI::toString).collect(toSet()));
+                    });
+                auth.getAgentClasses().stream().filter(agentClass -> agentClass.equals(FOAF_AGENT_VALUE))
+                    .forEach(agentClass -> {
+                        effectiveRoles.computeIfAbsent(agentClass, key -> new HashSet<>())
                             .addAll(auth.getModes().stream().map(URI::toString).collect(toSet()));
                     });
             });
