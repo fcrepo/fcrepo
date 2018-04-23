@@ -171,12 +171,10 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
     private static final PropertyConverter propertyConverter = new PropertyConverter();
 
-    @VisibleForTesting
     public static final String LDPCV_TIME_MAP = "fedora:timemap";
 
     public static final String LDPCV_BINARY_TIME_MAP = "fedora:binaryTimemap";
 
-    @VisibleForTesting
     public static final String CONTAINER_WEBAC_ACL = "fedora:acl";
 
     // A curried type accepting resource, translator, and "minimality", returning triples.

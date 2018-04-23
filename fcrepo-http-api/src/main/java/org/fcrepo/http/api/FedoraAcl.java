@@ -17,8 +17,12 @@
  */
 package org.fcrepo.http.api;
 
+import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.noContent;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_WEBAC_ACL;
 import static org.slf4j.LoggerFactory.getLogger;
+
+import java.net.URI;
 
 import javax.jcr.nodetype.ConstraintViolationException;
 import javax.servlet.http.HttpServletResponse;
@@ -35,8 +39,6 @@ import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
-
-import com.google.common.annotations.VisibleForTesting;
 
 /**
  * @author lsitu
@@ -59,15 +61,6 @@ public class FedoraAcl extends ContentExposingResource {
      */
     public FedoraAcl() {
         super();
-    }
-
-    /**
-     * Create a new FedoraNodes instance for a given path
-     * @param externalPath the external path
-     */
-    @VisibleForTesting
-    public FedoraAcl(final String externalPath) {
-        this.externalPath = externalPath;
     }
 
     /**
@@ -94,7 +87,13 @@ public class FedoraAcl extends ContentExposingResource {
             lock.release();
         }
 
-        return createUpdateResponse(aclResource, created);
+        addCacheControlHeaders(servletResponse, resource, session);
+        final URI location = getUri(aclResource);
+        if (created) {
+            return created(location).build();
+        } else {
+            return noContent().location(location).build();
+        }
     }
 
     @Override
