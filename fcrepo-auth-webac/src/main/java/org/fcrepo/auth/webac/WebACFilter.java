@@ -45,6 +45,7 @@ public class WebACFilter implements Filter {
 
     @Override
     public void init(final FilterConfig filterConfig) throws ServletException {
+        // this method intentionally left empty
     }
 
     @Override
@@ -57,23 +58,22 @@ public class WebACFilter implements Filter {
         final URI requestURI = URI.create(httpRequest.getRequestURL().toString());
         userSession.setAttribute("requestURI", requestURI);
         if (currentUser.isAuthenticated()) {
-            log.info("user is authenticated");
+            log.debug("User is authenticated");
             if (currentUser.hasRole("fedoraAdmin")) {
-                log.info("user IS fedoraAdmin");
+                log.debug("User has fedoraAdmin role");
             } else {
-                log.info("user is not fedoraAdmin");
+                log.debug("User does NOT have fedoraAdmin role");
                 // non-admins are subject to permission checks
 
-                // TODO: permission checks based on the request
+                // TODO: permission checks based on the request: https://jira.duraspace.org/browse/FCREPO-2762
                 // e.g. currentUser.isPermitted(new WebACPermission(WEBAC_MODE_READ, requestURI))
 
                 // otherwise, set response to forbidden
                 ((HttpServletResponse) response).sendError(403);
             }
         } else {
-            log.info("user is NOT authenticated");
+            log.debug("User is NOT authenticated");
         }
-
 
         // proceed to the next filter
         chain.doFilter(request, response);
@@ -81,6 +81,7 @@ public class WebACFilter implements Filter {
 
     @Override
     public void destroy() {
+        // this method intentionally left empty
     }
 
 }

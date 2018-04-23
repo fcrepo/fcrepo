@@ -43,11 +43,12 @@ public class ServletContainerAuthFilter implements Filter {
 
     private static final Logger log = getLogger(ServletContainerAuthFilter.class);
 
-    // TODO: configurable set of role names
+    // TODO: configurable set of role names: https://jira.duraspace.org/browse/FCREPO-2770
     private static final String[] ROLE_NAMES = { "fedoraAdmin", "fedoraUser" };
 
     @Override
     public void init(final FilterConfig filterConfig) throws ServletException {
+        // this method intentionally left empty
     }
 
     @Override
@@ -56,27 +57,28 @@ public class ServletContainerAuthFilter implements Filter {
         final HttpServletRequest httpRequest = (HttpServletRequest) request;
         final Principal servletUser = httpRequest.getUserPrincipal();
         if (servletUser != null) {
-            log.info("there is a servlet user: " + servletUser.getName());
-            final Set<String> roles = new HashSet<String>();
+            log.debug("There is a servlet user: {}", servletUser.getName());
+            final Set<String> roles = new HashSet<>();
             for (String roleName : ROLE_NAMES) {
-                log.info("testing role " + roleName);
+                log.debug("Testing role {}", roleName);
                 if (httpRequest.isUserInRole(roleName)) {
-                    log.info("servlet user has servlet role: " + roleName);
+                    log.debug("Servlet user {} has servlet role: {}", servletUser.getName(), roleName);
                     roles.add(roleName);
                 }
             }
             final ContainerAuthToken token = new ContainerAuthToken(servletUser.getName(), roles);
-            log.info("credentials for servletUser = " + token.getCredentials().toString());
+            log.debug("Credentials for servletUser = {}", token.getCredentials());
             final Subject currentUser = SecurityUtils.getSubject();
             currentUser.login(token);
         } else {
-            log.info("anonymous request");
+            log.debug("Anonymous request");
         }
         chain.doFilter(request, response);
     }
 
     @Override
     public void destroy() {
+        // this method intentionally left empty
     }
 
 }

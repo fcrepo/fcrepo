@@ -40,15 +40,15 @@ public class ContainerAuthToken implements AuthenticationToken {
     private Set<ContainerRolesPrincipal> servletRoles;
 
     /**
-     * @param servletUsername
-     * @param servletRoleNames
+     * @param servletUsername username returned from servlet container authentication
+     * @param servletRoleNames roles returned from servlet container authentication
      */
     public ContainerAuthToken(final String servletUsername, final Set<String> servletRoleNames) {
         this.servletUsername = servletUsername;
-        log.info("setting servlet username " + servletUsername);
-        this.servletRoles = new HashSet<ContainerRolesPrincipal>();
+        log.debug("Setting servlet username {}", servletUsername);
+        this.servletRoles = new HashSet<>();
         for (String roleName : servletRoleNames) {
-            log.info("Adding servlet role " + roleName);
+            log.debug("Adding servlet role {} to {}", roleName, servletUsername);
             this.servletRoles.add(new ContainerRolesPrincipal(roleName));
         }
     }

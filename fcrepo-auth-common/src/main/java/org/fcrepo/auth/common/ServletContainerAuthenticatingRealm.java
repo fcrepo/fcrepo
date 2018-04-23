@@ -36,7 +36,7 @@ public class ServletContainerAuthenticatingRealm extends AuthenticatingRealm {
 
     @Override
     public String getName() {
-        return "container";
+        return "servlet container authentication";
     }
 
     @Override
@@ -44,7 +44,7 @@ public class ServletContainerAuthenticatingRealm extends AuthenticatingRealm {
             throws AuthenticationException {
         final ContainerAuthToken authToken = (ContainerAuthToken) token;
         final SimplePrincipalCollection principals = new SimplePrincipalCollection();
-        log.info("creating principals from servlet container principal and roles");
+        log.debug("Creating principals from servlet container principal and roles");
         // container-managed auth username
         principals.add(authToken.getPrincipal(), getName());
         // container-managed auth roles

@@ -50,7 +50,7 @@ public class ContainerRolesPrincipalProvider implements PrincipalProvider {
         private final String name;
 
         /**
-         * @param name
+         * @param name principal name
          */
         public ContainerRolesPrincipal(final String name) {
             this.name = name;
