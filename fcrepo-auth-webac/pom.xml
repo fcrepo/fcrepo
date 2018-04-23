@@ -129,7 +129,6 @@
       <groupId>org.glassfish.jersey.core</groupId>
       <artifactId>jersey-common</artifactId>
       <version>${jersey.version}</version>
-      <scope>test</scope>
     </dependency>
 
     <dependency>
@@ -147,7 +146,6 @@
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
-      <scope>test</scope>
     </dependency>
 
     <dependency>
@@ -177,7 +175,6 @@
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-http-api</artifactId>
       <version>5.0.0-SNAPSHOT</version>
-      <scope>test</scope>
     </dependency>
 
     <dependency>

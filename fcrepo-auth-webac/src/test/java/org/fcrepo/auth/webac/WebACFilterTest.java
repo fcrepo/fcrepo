@@ -88,6 +88,12 @@ public class WebACFilterTest {
         request = new MockHttpServletRequest();
         response = new MockHttpServletResponse();
         filterChain = new MockFilterChain();
+
+        // set default request URI and path info
+        // for the purposes of this test, there is no context path
+        // so the request URI and path info are the same
+        request.setPathInfo(testPath);
+        request.setRequestURI(testPath);
     }
 
     private void setupAdminUser() {
@@ -127,7 +133,6 @@ public class WebACFilterTest {
     public void testAdminUserGet() throws ServletException, IOException {
         setupAdminUser();
         // GET => 200
-        request.setRequestURI(testPath);
         request.setMethod("GET");
         webacFilter.doFilter(request, response, filterChain);
         assertEquals(SC_OK, response.getStatus());
@@ -137,7 +142,6 @@ public class WebACFilterTest {
     public void testAdminUserPost() throws ServletException, IOException {
         setupAdminUser();
         // GET => 200
-        request.setRequestURI(testPath);
         request.setMethod("POST");
         webacFilter.doFilter(request, response, filterChain);
         assertEquals(SC_OK, response.getStatus());
@@ -147,7 +151,6 @@ public class WebACFilterTest {
     public void testAdminUserPut() throws ServletException, IOException {
         setupAdminUser();
         // GET => 200
-        request.setRequestURI(testPath);
         request.setMethod("PUT");
         webacFilter.doFilter(request, response, filterChain);
         assertEquals(SC_OK, response.getStatus());
@@ -157,7 +160,6 @@ public class WebACFilterTest {
     public void testAdminUserPatch() throws ServletException, IOException {
         setupAdminUser();
         // GET => 200
-        request.setRequestURI(testPath);
         request.setMethod("PATCH");
         webacFilter.doFilter(request, response, filterChain);
         assertEquals(SC_OK, response.getStatus());
@@ -167,7 +169,6 @@ public class WebACFilterTest {
     public void testAdminUserDelete() throws ServletException, IOException {
         setupAdminUser();
         // GET => 200
-        request.setRequestURI(testPath);
         request.setMethod("DELETE");
         webacFilter.doFilter(request, response, filterChain);
         assertEquals(SC_OK, response.getStatus());
@@ -177,7 +178,6 @@ public class WebACFilterTest {
     public void testAuthUserNoPermsGet() throws ServletException, IOException {
         setupAuthUserNoPerms();
         // GET => 403
-        request.setRequestURI(testPath);
         request.setMethod("GET");
         webacFilter.doFilter(request, response, filterChain);
         assertEquals(SC_FORBIDDEN, response.getStatus());
@@ -187,7 +187,6 @@ public class WebACFilterTest {
     public void testAuthUserNoPermsPost() throws ServletException, IOException {
         setupAuthUserNoPerms();
         // POST => 403
-        request.setRequestURI(testPath);
         request.setMethod("POST");
         webacFilter.doFilter(request, response, filterChain);
         assertEquals(SC_FORBIDDEN, response.getStatus());
@@ -197,7 +196,6 @@ public class WebACFilterTest {
     public void testAuthUserNoPermsPut() throws ServletException, IOException {
         setupAuthUserNoPerms();
         // PUT => 403
-        request.setRequestURI(testPath);
         request.setMethod("PUT");
         webacFilter.doFilter(request, response, filterChain);
         assertEquals(SC_FORBIDDEN, response.getStatus());
@@ -207,7 +205,6 @@ public class WebACFilterTest {
     public void testAuthUserNoPermsPatch() throws ServletException, IOException {
         setupAuthUserNoPerms();
         // PATCH => 403
-        request.setRequestURI(testPath);
         request.setMethod("PATCH");
         webacFilter.doFilter(request, response, filterChain);
         assertEquals(SC_FORBIDDEN, response.getStatus());
@@ -217,7 +214,6 @@ public class WebACFilterTest {
     public void testAuthUserNoPermsDelete() throws ServletException, IOException {
         setupAuthUserNoPerms();
         // DELETE => 403
-        request.setRequestURI(testPath);
         request.setMethod("DELETE");
         webacFilter.doFilter(request, response, filterChain);
         assertEquals(SC_FORBIDDEN, response.getStatus());
@@ -227,7 +223,6 @@ public class WebACFilterTest {
     public void testAuthUserReadOnlyGet() throws ServletException, IOException {
         setupAuthUserReadOnly();
         // GET => 200
-        request.setRequestURI(testPath);
         request.setMethod("GET");
         webacFilter.doFilter(request, response, filterChain);
         assertEquals(SC_OK, response.getStatus());
@@ -237,7 +232,6 @@ public class WebACFilterTest {
     public void testAuthUserReadOnlyPost() throws ServletException, IOException {
         setupAuthUserReadOnly();
         // POST => 403
-        request.setRequestURI(testPath);
         request.setMethod("POST");
         webacFilter.doFilter(request, response, filterChain);
         assertEquals(SC_FORBIDDEN, response.getStatus());
@@ -247,7 +241,6 @@ public class WebACFilterTest {
     public void testAuthUserReadOnlyPut() throws ServletException, IOException {
         setupAuthUserReadOnly();
         // PUT => 403
-        request.setRequestURI(testPath);
         request.setMethod("PUT");
         webacFilter.doFilter(request, response, filterChain);
         assertEquals(SC_FORBIDDEN, response.getStatus());
@@ -257,7 +250,6 @@ public class WebACFilterTest {
     public void testAuthUserReadOnlyPatch() throws ServletException, IOException {
         setupAuthUserReadOnly();
         // PATCH => 403
-        request.setRequestURI(testPath);
         request.setMethod("PATCH");
         webacFilter.doFilter(request, response, filterChain);
         assertEquals(SC_FORBIDDEN, response.getStatus());
@@ -267,7 +259,6 @@ public class WebACFilterTest {
     public void testAuthUserReadOnlyDelete() throws ServletException, IOException {
         setupAuthUserReadOnly();
         // DELETE => 403
-        request.setRequestURI(testPath);
         request.setMethod("DELETE");
         webacFilter.doFilter(request, response, filterChain);
         assertEquals(SC_FORBIDDEN, response.getStatus());
@@ -277,7 +268,6 @@ public class WebACFilterTest {
     public void testAuthUserReadWriteGet() throws ServletException, IOException {
         setupAuthUserReadWrite();
         // GET => 200
-        request.setRequestURI(testPath);
         request.setMethod("GET");
         webacFilter.doFilter(request, response, filterChain);
         assertEquals(SC_OK, response.getStatus());
@@ -287,7 +277,6 @@ public class WebACFilterTest {
     public void testAuthUserReadWritePost() throws ServletException, IOException {
         setupAuthUserReadWrite();
         // POST => 200
-        request.setRequestURI(testPath);
         request.setMethod("POST");
         webacFilter.doFilter(request, response, filterChain);
         assertEquals(SC_OK, response.getStatus());
@@ -297,7 +286,6 @@ public class WebACFilterTest {
     public void testAuthUserReadWritePut() throws ServletException, IOException {
         setupAuthUserReadWrite();
         // PUT => 200
-        request.setRequestURI(testPath);
         request.setMethod("PUT");
         webacFilter.doFilter(request, response, filterChain);
         assertEquals(SC_OK, response.getStatus());
@@ -307,7 +295,6 @@ public class WebACFilterTest {
     public void testAuthUserReadWritePatch() throws ServletException, IOException {
         setupAuthUserReadWrite();
         // PATCH => 200
-        request.setRequestURI(testPath);
         request.setMethod("PATCH");
         webacFilter.doFilter(request, response, filterChain);
         assertEquals(SC_OK, response.getStatus());
@@ -317,7 +304,6 @@ public class WebACFilterTest {
     public void testAuthUserReadWriteDelete() throws ServletException, IOException {
         setupAuthUserReadWrite();
         // DELETE => 200
-        request.setRequestURI(testPath);
         request.setMethod("DELETE");
         webacFilter.doFilter(request, response, filterChain);
         assertEquals(SC_OK, response.getStatus());

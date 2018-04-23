@@ -82,4 +82,9 @@ public class WebACPermission implements Permission {
         return resource;
     }
 
+    @Override
+    public String toString() {
+        return "[" + mode.toString() + " " + resource.toString() + "]";
+    }
+
 }
