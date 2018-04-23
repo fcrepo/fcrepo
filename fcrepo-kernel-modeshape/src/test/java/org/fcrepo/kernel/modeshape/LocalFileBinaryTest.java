@@ -17,9 +17,7 @@
  */
 package org.fcrepo.kernel.modeshape;
 
-import static org.fcrepo.kernel.api.FedoraTypes.CONTENT_DIGEST;
-import static org.fcrepo.kernel.api.FedoraTypes.FILENAME;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
+import static org.fcrepo.kernel.api.FedoraTypes.*;
 import static org.fcrepo.kernel.modeshape.utils.TestHelpers.checksumString;
 import static org.fcrepo.kernel.modeshape.utils.TestHelpers.getContentNodeMock;
 import static org.junit.Assert.assertEquals;
@@ -27,7 +25,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
-import static org.fcrepo.kernel.api.FedoraTypes.HAS_MIME_TYPE;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -50,7 +48,6 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import static java.util.Collections.singleton;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 
 /**
  * @author bbpennel
@@ -78,7 +75,13 @@ public class LocalFileBinaryTest {
     private String mimeType;
 
     @Mock
+    private Property proxyURIProperty;
+
+    @Mock
     private Property mimeTypeProperty;
+
+    @Mock
+    private Value mockURIValue;
 
     @Mock
     private Value mockValue;
@@ -93,13 +96,27 @@ public class LocalFileBinaryTest {
     public void setUp() throws Exception {
         contentFile = File.createTempFile("file", ".txt");
         IOUtils.write(EXPECTED_CONTENT, new FileOutputStream(contentFile));
-        mimeType = "image/jpeg";//makeMimeType(contentFile);
+        mimeType = "text/plain";
+
 
         when(mimeTypeProperty.getString()).thenReturn(mimeType);
-        when(mockValue.getString()).thenReturn(mimeType);
         when(mimeTypeProperty.getValue()).thenReturn(mockValue);
+        when(mockValue.getString()).thenReturn(mimeType);
+
         when(mockContent.hasProperty(HAS_MIME_TYPE)).thenReturn(true);
         when(mockContent.getProperty(HAS_MIME_TYPE)).thenReturn(mimeTypeProperty);
+
+        when(proxyURIProperty.toString()).thenReturn(contentFile.toURI().toString());
+        when(proxyURIProperty.getString()).thenReturn(contentFile.toURI().toString());
+        when(proxyURIProperty.getValue()).thenReturn(mockURIValue);
+        when(proxyURIProperty.getName()).thenReturn(PROXY_FOR.toString());
+
+        when(mockURIValue.toString()).thenReturn(contentFile.toURI().toString());
+        when(mockURIValue.getString()).thenReturn(contentFile.toURI().toString());
+
+        when(mockContent.hasProperty(PROXY_FOR)).thenReturn(true);
+        when(mockContent.getProperty(PROXY_FOR)).thenReturn(proxyURIProperty);
+        //when(mockContent.setProperty(PROXY_FOR, mockURIValue)).thenReturn(proxyURIProperty);
 
         final NodeType[] nodeTypes = new NodeType[] { mockDsNodeType };
         when(mockDsNodeType.getName()).thenReturn(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
@@ -122,9 +139,22 @@ public class LocalFileBinaryTest {
     }
 
     @Test
-    public void testSetContent() throws Exception {
-        testObj.setContent(mockStream, mimeType, null, null, null);
+    public void setProxyInfo() throws Exception {
+        getContentNodeMock(mockContent, EXPECTED_CONTENT);
+        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
 
+        testObj.setProxyURL(contentFile.toURI().toString());
+        verify(mockContent).setProperty(PROXY_FOR, contentFile.toURI().toString());
+
+        assertEquals(contentFile.toURI().toString(), testObj.getProxyURL());
+    }
+
+    @Test
+    public void testSetContent() throws Exception {
+        testObj.setProxyURL(contentFile.toURI().toString());
+        verify(mockContent).setProperty(PROXY_FOR, contentFile.toURI().toString());
+
+        testObj.setContent(mockStream, mimeType, null, null, null);
         verify(mockContent).setProperty(HAS_MIME_TYPE, mimeType);
     }
 
@@ -157,6 +187,15 @@ public class LocalFileBinaryTest {
     }
 
     @Test
+    public void getProxyInfo() throws Exception {
+        getContentNodeMock(mockContent, EXPECTED_CONTENT);
+        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+
+        final String url = testObj.getProxyURL();
+        assertEquals(contentFile.toURI().toString(), url);
+    }
+
+    @Test
     public void testGetContentDigest() throws Exception {
         final String checksum = checksumString(EXPECTED_CONTENT);
         mockChecksumProperty(checksum);
@@ -170,25 +209,7 @@ public class LocalFileBinaryTest {
         getContentNodeMock(mockContent, EXPECTED_CONTENT);
 
         final String mimeType = testObj.getMimeType();
-        assertEquals("application/octet-stream", mimeType);
-    }
-
-    @Test
-    public void testGetMimeTypeWithOverride() throws Exception {
-        getContentNodeMock(mockContent, EXPECTED_CONTENT);
-
-        final String fullMimeType = mimeType + "; mime-type=\"text/plain\"";
-
-        when(mimeTypeProperty.getString()).thenReturn(fullMimeType);
-        when(mockValue.getString()).thenReturn(fullMimeType);
-
-        assertEquals("text/plain", testObj.getMimeType());
-    }
-
-
-    private String makeMimeType(final File file) {
-        return "message/external-body; access-type=LOCAL-FILE; LOCAL-FILE=\"" +
-                file.toURI().toString() + "\"";
+        assertEquals("text/plain", mimeType);
     }
 
     private void mockChecksumProperty(final String checksum) throws Exception {

@@ -24,6 +24,7 @@ import static org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM.SHA1;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.net.URI;
@@ -81,7 +82,8 @@ public class LocalFileBinaryIT extends AbstractIT {
 
         contentFile = File.createTempFile("file", ".txt");
         IOUtils.write(EXPECTED_CONTENT, new FileOutputStream(contentFile), "UTF-8");
-        mimeType = makeMimeType(contentFile);
+
+        mimeType = "text/plain";
 
         dsId = makeDsId();
 
@@ -94,26 +96,46 @@ public class LocalFileBinaryIT extends AbstractIT {
     }
 
     @Test
-    public void testDatastream() throws Exception {
-        binaryService.findOrCreate(session, dsId)
-                .setContent(null, mimeType, null, null, null);
+    public void testProxyDatastreamWithMimeType() throws Exception {
+        mimeType = "text/plain";
+        final FedoraBinary binary = binaryService.findOrCreate(session, dsId);
+        binary.setProxyURL(contentFile.getAbsolutePath());
+        binary.setContent(null, mimeType, null, null, null);
+
+        session.commit();
+
+        // can you get it back?
+        final FedoraBinary ds = binaryService.findOrCreate(session, dsId);
+
+        assertEquals(EXPECTED_CONTENT.length(), ds.getContentSize());
+        assertEquals(EXPECTED_CONTENT, contentString(ds));
+
+        assertEquals("text/plain", ds.getMimeType());
+    }
+
+    @Test
+    public void testProxyDatastreamWithOutMimeType() throws Exception {
+        mimeType = "";
+        final FedoraBinary binary = binaryService.findOrCreate(session, dsId);
+        binary.setProxyURL(contentFile.getAbsolutePath());
+        binary.setContent(null, mimeType, null, null, null);
 
         session.commit();
 
         final FedoraBinary ds = binaryService.findOrCreate(session, dsId);
+        ds.setProxyURL(contentFile.getAbsolutePath());
 
         assertEquals(EXPECTED_CONTENT.length(), ds.getContentSize());
         assertEquals(EXPECTED_CONTENT, contentString(ds));
 
         assertEquals("application/octet-stream", ds.getMimeType());
     }
-
     @Test
-    public void testDatastreamWithMimeType() throws Exception {
-        final String mimeTypeWithDsType = mimeType + ";  mime-type=\"text/plain\"";
-
-        binaryService.findOrCreate(session, dsId)
-                .setContent(null, mimeTypeWithDsType, null, null, null);
+        public void testRedirectDatastreamWithMimeType() throws Exception {
+        mimeType = "text/plain";
+        final FedoraBinary binary =binaryService.findOrCreate(session, dsId);
+        binary.setRedirectURL(contentFile.getAbsolutePath());
+        binary.setContent(null, mimeType, null, null, null);
 
         session.commit();
 
@@ -126,9 +148,27 @@ public class LocalFileBinaryIT extends AbstractIT {
     }
 
     @Test
+    public void testRedirectDatastreamWithOutMimeType() throws Exception {
+        mimeType = "";
+        final FedoraBinary binary =binaryService.findOrCreate(session, dsId);
+        binary.setRedirectURL(contentFile.getAbsolutePath());
+        binary.setContent(null, mimeType, null, null, null);
+
+        session.commit();
+
+        final FedoraBinary ds = binaryService.findOrCreate(session, dsId);
+
+        assertEquals(EXPECTED_CONTENT.length(), ds.getContentSize());
+        assertEquals(EXPECTED_CONTENT, contentString(ds));
+
+        assertEquals("application/octet-stream", ds.getMimeType());
+    }
+
+    @Test
     public void testWithValidChecksum() throws Exception {
-        binaryService.findOrCreate(session, dsId)
-                .setContent(null, mimeType, sha1Set(CONTENT_SHA1), null, null);
+        final FedoraBinary binary = binaryService.findOrCreate(session, dsId);
+        binary.setProxyURL(contentFile.getAbsolutePath());
+        binary.setContent(null, mimeType, sha1Set(CONTENT_SHA1), null, null);
 
         session.commit();
 
@@ -138,15 +178,17 @@ public class LocalFileBinaryIT extends AbstractIT {
     }
 
     @Test(expected = InvalidChecksumException.class)
-    public void testWithInvalidChecksum() throws Exception {
-        binaryService.findOrCreate(session, dsId)
-                .setContent(null, mimeType, sha1Set("badsum"), null, null);
+    public void testProxyWithInvalidChecksum() throws Exception {
+        final FedoraBinary binary = binaryService.findOrCreate(session, dsId);
+        binary.setProxyURL(contentFile.getAbsolutePath());
+        binary.setContent(null, mimeType, sha1Set("badsum"), null, null);
     }
 
     @Test
     public void testCheckFixity() throws Exception {
-        binaryService.findOrCreate(session, dsId)
-                .setContent(null, mimeType, sha1Set(CONTENT_SHA1), null, null);
+        final FedoraBinary binary = binaryService.findOrCreate(session, dsId);
+        binary.setProxyURL(contentFile.getAbsolutePath());
+        binary.setContent(null, mimeType, sha1Set(CONTENT_SHA1), null, null);
 
         session.commit();
 
@@ -159,11 +201,6 @@ public class LocalFileBinaryIT extends AbstractIT {
 
         assertEquals("Fixity Checksum doesn't match",
                 "urn:sha1:" + CONTENT_SHA1, checksum);
-    }
-
-    private String makeMimeType(final File file) {
-        return "message/external-body; access-type=LOCAL-FILE; LOCAL-FILE=\"" +
-                file.toURI().toString() + "\"";
     }
 
     private String makeDsId() {

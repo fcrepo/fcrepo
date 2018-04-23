@@ -22,11 +22,8 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
-import static org.fcrepo.kernel.api.FedoraTypes.CONTENT_DIGEST;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
-import static org.fcrepo.kernel.api.FedoraTypes.FILENAME;
-import static org.fcrepo.kernel.api.FedoraTypes.HAS_MIME_TYPE;
+import static org.fcrepo.kernel.api.FedoraTypes.*;
+import static org.fcrepo.kernel.api.FedoraTypes.PROXY_FOR;
 import static org.fcrepo.kernel.modeshape.utils.TestHelpers.getContentNodeMock;
 import static org.fcrepo.kernel.modeshape.utils.TestHelpers.checksumString;
 import static org.junit.Assert.assertEquals;
@@ -83,6 +80,12 @@ public class UrlBinaryTest {
     private Property mimeTypeProperty;
 
     @Mock
+    private Property proxyURLProperty;
+
+    @Mock
+    private Property redirectURLProperty;
+
+    @Mock
     private Property mockProperty;
 
     @Mock
@@ -105,13 +108,23 @@ public class UrlBinaryTest {
                         .withBody(EXPECTED_CONTENT)));
         fileUrl = "http://localhost:" + wireMockRule.port() + "/file.txt";
 
-        mimeType = makeMimeType(fileUrl);
+        mimeType = "text/plain";
 
         when(mimeTypeProperty.getString()).thenReturn(mimeType);
         when(mockValue.getString()).thenReturn(mimeType);
         when(mimeTypeProperty.getValue()).thenReturn(mockValue);
         when(mockContent.hasProperty(HAS_MIME_TYPE)).thenReturn(true);
         when(mockContent.getProperty(HAS_MIME_TYPE)).thenReturn(mimeTypeProperty);
+
+        when(proxyURLProperty.getString()).thenReturn(fileUrl);
+        when(proxyURLProperty.getValue()).thenReturn(mockValue);
+        when(mockContent.hasProperty(PROXY_FOR)).thenReturn(true);
+        when(mockContent.getProperty(PROXY_FOR)).thenReturn(proxyURLProperty);
+
+        when(redirectURLProperty.getString()).thenReturn(fileUrl);
+        when(redirectURLProperty.getValue()).thenReturn(mockValue);
+        when(mockContent.hasProperty(REDIRECTS_TO)).thenReturn(true);
+        when(mockContent.getProperty(REDIRECTS_TO)).thenReturn(redirectURLProperty);
 
         final NodeType[] nodeTypes = new NodeType[] { mockDsNodeType };
         when(mockDsNodeType.getName()).thenReturn(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
@@ -163,6 +176,33 @@ public class UrlBinaryTest {
     }
 
     @Test
+    public void testGetProxyURL() throws Exception {
+        final String url = testObj.getProxyURL();
+        assertEquals(fileUrl, url);
+    }
+    @Test
+    public void testSetProxyURL() throws Exception {
+        final String testURL = "http://localhost/fcrepo/rest/foo.txt";
+        testObj.setProxyURL(testURL);
+
+        verify(mockContent).setProperty(PROXY_FOR, testURL);
+    }
+
+    @Test
+    public void testGetRedirectURL() throws Exception {
+        final String url = testObj.getRedirectURL();
+        assertEquals(fileUrl, url);
+    }
+
+    @Test
+    public void testSetRedirectURL() throws Exception {
+        final String testURL = "http://localhost/fcrepo/rest/foo.txt";
+        testObj.setRedirectURL(testURL);
+
+        verify(mockContent).setProperty(REDIRECTS_TO, testURL);
+    }
+
+    @Test
     public void testGetContentDigest() throws Exception {
         final String checksum = checksumString(EXPECTED_CONTENT);
         mockChecksumProperty(checksum);
@@ -180,22 +220,6 @@ public class UrlBinaryTest {
 
         final String mimeType = testObj.getMimeType();
         assertEquals(mimeType, mimeType);
-    }
-
-    @Test
-    public void testGetMimeTypeWithOverride() throws Exception {
-        getContentNodeMock(mockContent, EXPECTED_CONTENT);
-
-        final String fullMimeType = mimeType + "; mime-type=\"text/plain\"";
-
-        when(mimeTypeProperty.getString()).thenReturn(fullMimeType);
-        when(mockValue.getString()).thenReturn(fullMimeType);
-
-        assertEquals("text/plain", testObj.getMimeType());
-    }
-
-    private String makeMimeType(final String url) {
-        return "message/external-body; access-type=url; url=\"" + url + "\"";
     }
 
     private void mockChecksumProperty(final String checksum) throws Exception {

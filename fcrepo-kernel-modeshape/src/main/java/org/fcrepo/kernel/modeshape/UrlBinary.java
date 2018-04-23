@@ -243,6 +243,7 @@ public class UrlBinary extends AbstractFedoraBinary {
         return getMimeTypeValue();
     }
     protected String getResourceLocation() {
+        LOGGER.info("Getting resource location {}", getProxyURL());
         return getProxyURL();
     }
 

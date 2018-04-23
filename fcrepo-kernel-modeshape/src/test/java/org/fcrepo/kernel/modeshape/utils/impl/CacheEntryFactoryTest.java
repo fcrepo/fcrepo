@@ -46,13 +46,11 @@ public class CacheEntryFactoryTest {
     private Value mockValue;
 
     public static String RESOURCE_URL = "http://www.example.com/file";
-    private static String EXTERNAL_RESOURCE = "message/external-body;"
-        + " access-type=URL; URL=\"" + RESOURCE_URL + "\"";
 
     @Before
     public void setUp() throws RepositoryException {
         when(mockProperty.getValue()).thenReturn(mockValue);
-        when(mockValue.getString()).thenReturn(EXTERNAL_RESOURCE);
+        when(mockValue.getString()).thenReturn(RESOURCE_URL);
     }
 
     @Test

@@ -281,45 +281,6 @@ public class FedoraBinaryImplTest implements FedoraTypes {
     }
 
     @Test
-    public void testSetContentWithExpiration() throws Exception {
-        final String content = "content";
-        final File contentFile = File.createTempFile("file", ".txt");
-        IOUtils.write(content, new FileOutputStream(contentFile));
-
-        final String mimeTypeExpires = "message/external-body; access-type=LOCAL-FILE; LOCAL-FILE=\"" + contentFile
-                .toURI().toString() + "; expiration=\"Wed, 21 Oct 2020 00:00:00 GMT\"";
-        testObj.setContent(mockStream, mimeTypeExpires, null, contentFile.getName(), null);
-
-        verify(mockContent).setProperty(eq(JCR_DATA), any(Binary.class));
-
-        verify(mockVF).createBinary(inputStreamCaptor.capture(), anyString());
-        assertEquals(content, IOUtils.toString(inputStreamCaptor.getValue()));
-
-        verify(mockContent).setProperty(eq(HAS_MIME_TYPE), eq("application/octet-stream"));
-    }
-
-    @Test
-    public void testSetContentWithExpirationWithMimeType() throws Exception {
-        final String mimeTypeExpires = makeLocalFileMimeType() + "; expiration=\"Wed, 21 Oct 2020 00:00:00 GMT\"" +
-                "; mime-type=\"text/plain\"";
-        testObj.setContent(mockStream, mimeTypeExpires, null, null, null);
-
-        verify(mockContent).setProperty(eq(JCR_DATA), any(Binary.class));
-
-        verify(mockVF).createBinary(inputStreamCaptor.capture(), anyString());
-        assertEquals(EXPECTED_CONTENT, IOUtils.toString(inputStreamCaptor.getValue()));
-
-        verify(mockContent).setProperty(eq(HAS_MIME_TYPE), eq("text/plain"));
-    }
-
-    private String makeLocalFileMimeType() throws Exception {
-        final File contentFile = File.createTempFile("file", ".txt");
-        IOUtils.write(EXPECTED_CONTENT, new FileOutputStream(contentFile), "UTF-8");
-        return "message/external-body; access-type=LOCAL-FILE; LOCAL-FILE=\"" +
-                contentFile.toURI().toString() + "\"";
-    }
-
-    @Test
     public void testHasMixin() throws Exception {
         assertTrue(FedoraBinaryImpl.hasMixin(mockContent));
     }

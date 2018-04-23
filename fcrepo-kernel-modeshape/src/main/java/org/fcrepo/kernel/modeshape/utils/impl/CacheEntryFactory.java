@@ -19,12 +19,14 @@ package org.fcrepo.kernel.modeshape.utils.impl;
 
 import static org.fcrepo.kernel.api.RdfLexicon.PROXY_FOR;
 import static org.fcrepo.kernel.api.RdfLexicon.REDIRECTS_TO;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import org.fcrepo.kernel.api.utils.CacheEntry;
 import org.fcrepo.kernel.modeshape.utils.BinaryCacheEntry;
 import org.fcrepo.kernel.modeshape.utils.ExternalResourceCacheEntry;
 import org.fcrepo.kernel.modeshape.utils.ProjectedCacheEntry;
 import org.modeshape.jcr.value.binary.ExternalBinaryValue;
+import org.slf4j.Logger;
 
 import javax.jcr.Binary;
 import javax.jcr.Property;
@@ -35,6 +37,8 @@ import javax.jcr.RepositoryException;
  * @author cabeer
  */
 public final class CacheEntryFactory {
+
+    private static final Logger LOGGER = getLogger(CacheEntryFactory.class);
 
     /**
      * No public constructor on utility class
@@ -50,7 +54,10 @@ public final class CacheEntryFactory {
      */
     public static CacheEntry forProperty(final Property property) throws RepositoryException {
         // if it's an external binary, catch that here and treat it differently.
-        if (property.getName() == PROXY_FOR.toString() || property.getName() == REDIRECTS_TO.toString()){
+        LOGGER.info("Bethany -did you know that property.getName() is: '{}' and Proxy: {} ", property.getName(),
+                PROXY_FOR.toString());
+        if (property.getName().equals(PROXY_FOR.toString()) || property.getName().equals(REDIRECTS_TO.toString())){
+            LOGGER.info("Creating ExternalResourceCacheEntry for property: ", property.getName());
             return new ExternalResourceCacheEntry(property);
         }
 
