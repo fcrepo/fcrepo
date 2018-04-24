@@ -35,8 +35,8 @@ public class WebACPermission implements Permission {
     private URI mode;
 
     /**
-     * @param mode
-     * @param resource
+     * @param mode ACL access mode
+     * @param resource resource to be accessed
      */
     public WebACPermission(final URI mode, final URI resource) {
         this.mode = mode;
@@ -44,12 +44,28 @@ public class WebACPermission implements Permission {
     }
 
     /**
+     * One WebACPermission implies another if they are equal (i.e., have the same mode and resource URIs).
+     *
      * @param p permission to compare to
      */
     @Override
     public boolean implies(final Permission p) {
-        final WebACPermission perm = (WebACPermission) p;
-        return perm.getResource().equals(resource) && perm.getMode().equals(mode);
+        return equals(p);
+    }
+
+    /**
+     * One WebACPermission equals another if they have the same mode and resource URIs.
+     *
+     * @param o object to compare to
+     */
+    @Override
+    public boolean equals(final Object o) {
+        if (o instanceof WebACPermission) {
+            final WebACPermission perm = (WebACPermission) o;
+            return perm.getResource().equals(resource) && perm.getMode().equals(mode);
+        } else {
+            return false;
+        }
     }
 
     /**

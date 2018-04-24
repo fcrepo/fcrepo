@@ -43,8 +43,18 @@ public class ServletContainerAuthFilter implements Filter {
 
     private static final Logger log = getLogger(ServletContainerAuthFilter.class);
 
+    /**
+     * User role for Fedora's admin users
+     */
+    public static final String FEDORA_ADMIN_ROLE = "fedoraAdmin";
+
+    /**
+     * User role for Fedora's ordinary users
+     */
+    public static final String FEDORA_USER_ROLE = "fedoraUser";
+
     // TODO: configurable set of role names: https://jira.duraspace.org/browse/FCREPO-2770
-    private static final String[] ROLE_NAMES = { "fedoraAdmin", "fedoraUser" };
+    private static final String[] ROLE_NAMES = { FEDORA_ADMIN_ROLE, FEDORA_USER_ROLE };
 
     @Override
     public void init(final FilterConfig filterConfig) throws ServletException {

@@ -17,6 +17,11 @@
  */
 package org.fcrepo.auth.webac;
 
+import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
+import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_ADMIN_ROLE;
+import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_USER_ROLE;
+import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ;
+import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -32,7 +37,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.session.Session;
 import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
 
@@ -52,24 +56,23 @@ public class WebACFilter implements Filter {
     public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain chain)
             throws IOException, ServletException {
         final Subject currentUser = SecurityUtils.getSubject();
-        final Session userSession = currentUser.getSession();
 
-        final HttpServletRequest httpRequest = (HttpServletRequest) request;
-        final URI requestURI = URI.create(httpRequest.getRequestURL().toString());
-        userSession.setAttribute("requestURI", requestURI);
         if (currentUser.isAuthenticated()) {
             log.debug("User is authenticated");
-            if (currentUser.hasRole("fedoraAdmin")) {
+            if (currentUser.hasRole(FEDORA_ADMIN_ROLE)) {
                 log.debug("User has fedoraAdmin role");
-            } else {
-                log.debug("User does NOT have fedoraAdmin role");
+            } else if (currentUser.hasRole(FEDORA_USER_ROLE)) {
+                log.debug("User has fedoraUser role");
                 // non-admins are subject to permission checks
-
-                // TODO: permission checks based on the request: https://jira.duraspace.org/browse/FCREPO-2762
-                // e.g. currentUser.isPermitted(new WebACPermission(WEBAC_MODE_READ, requestURI))
-
-                // otherwise, set response to forbidden
-                ((HttpServletResponse) response).sendError(403);
+                final HttpServletRequest httpRequest = (HttpServletRequest) request;
+                if (!isAuthorized(currentUser, httpRequest)) {
+                    // if the user is not authorized, set response to forbidden
+                    ((HttpServletResponse) response).sendError(SC_FORBIDDEN);
+                }
+            } else {
+                log.debug("User has no recognized servlet container role");
+                // missing a container role, return forbidden
+                ((HttpServletResponse) response).sendError(SC_FORBIDDEN);
             }
         } else {
             log.debug("User is NOT authenticated");
@@ -82,6 +85,21 @@ public class WebACFilter implements Filter {
     @Override
     public void destroy() {
         // this method intentionally left empty
+    }
+
+    private boolean isAuthorized(final Subject currentUser, final HttpServletRequest httpRequest) {
+        final URI requestURI = URI.create(httpRequest.getRequestURL().toString());
+        switch (httpRequest.getMethod()) {
+        case "GET":
+            return currentUser.isPermitted(new WebACPermission(WEBAC_MODE_READ, requestURI));
+        case "PUT":
+        case "POST":
+        case "DELETE":
+        case "PATCH":
+            return currentUser.isPermitted(new WebACPermission(WEBAC_MODE_WRITE, requestURI));
+        default:
+            return false;
+        }
     }
 
 }
