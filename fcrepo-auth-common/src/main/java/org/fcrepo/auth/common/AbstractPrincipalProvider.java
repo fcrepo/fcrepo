@@ -30,6 +30,7 @@ import javax.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.security.Principal;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.shiro.subject.PrincipalCollection;
@@ -63,12 +64,24 @@ abstract class AbstractPrincipalProvider implements PrincipalProvider {
         final HttpServletRequest hsRequest = (HttpServletRequest) request;
         final HttpSession session = hsRequest.getSession();
         PrincipalCollection principals = (PrincipalCollection) session.getAttribute(PRINCIPALS_SESSION_KEY);
-        final Set<Principal> currentPrincipals = (Set<Principal>) principals.asSet();
-        log.debug("Number of Principals already in session object: {}", currentPrincipals.size());
-        currentPrincipals.addAll(getPrincipals(hsRequest));
-        log.debug("Number of Principals after processing current request: {}", currentPrincipals.size());
-        principals = new SimplePrincipalCollection(currentPrincipals, REALM_NAME);
-        hsRequest.getSession().setAttribute(PRINCIPALS_SESSION_KEY, principals);
+        final Set<Principal> newPrincipals = getPrincipals(hsRequest);
+        if (newPrincipals.size() > 0) {
+            final Set<Principal> currentPrincipals;
+            if (principals == null) {
+                log.debug("Shiro Principal object is not found in session!");
+                currentPrincipals = newPrincipals;
+              } else {
+                currentPrincipals = new HashSet<Principal>((Set<Principal>) principals.asSet());
+                log.debug("Number of Principals already in session object: {}", currentPrincipals.size());
+                currentPrincipals.addAll(newPrincipals);
+            }
+            log.debug("Number of Principals after processing the current request: {}", currentPrincipals.size());
+            principals = new SimplePrincipalCollection(currentPrincipals, REALM_NAME);
+            hsRequest.getSession().setAttribute(PRINCIPALS_SESSION_KEY, principals);
+        } else {
+            log.debug("New Principals not found in the request!");
+        }
+        chain.doFilter(request, response);
     }
 
     @Override
