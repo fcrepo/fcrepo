@@ -55,6 +55,8 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
 
     private static final Logger LOGGER = getLogger(AbstractFedoraBinary.class);
 
+    protected static final String DEFAULT_MIME_TYPE = "application/octet-stream";
+
     static final RegistryService registryService = RegistryService.getInstance();
 
     static final Counter fixityCheckCounter = registryService.getMetrics().counter(name(FedoraBinary.class,
@@ -114,10 +116,12 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
                         .filter(digest -> {
                             try {
                                 final URI digestUri = URI.create(digest.getString());
-                                return algorithmWithoutStringType.equalsIgnoreCase(ContentDigest.getAlgorithm(digestUri));
+                                return algorithmWithoutStringType.equalsIgnoreCase(
+                                        ContentDigest.getAlgorithm(digestUri));
 
                             } catch (final RepositoryException e) {
-                                LOGGER.warn("Exception thrown when getting digest property {}, {}", digest, e.getMessage());
+                                LOGGER.warn(
+                                        "Exception thrown when getting digest property {}, {}", digest, e.getMessage());
                                 return false;
                             }
                         }).findFirst();
@@ -142,10 +146,7 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
      */
     @Override
     public Boolean isProxy() {
-        if (hasProperty(PROXY_FOR)) {
-            return true;
-        }
-        return false;
+        return hasProperty(PROXY_FOR);
     }
 
     /*
@@ -154,10 +155,7 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
      */
     @Override
     public Boolean isRedirect() {
-        if (hasProperty(REDIRECTS_TO)) {
-            return true;
-        }
-        return false;
+        return hasProperty(REDIRECTS_TO);
     }
 
     /*
@@ -169,7 +167,7 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
         try {
             LOGGER.info("getproxy info asking first: {} ", hasProperty(PROXY_FOR));
             if (hasProperty(PROXY_FOR)) {
-                LOGGER.info("get proxy info fetching: PROXY_FOR: ", getProperty(PROXY_FOR).toString());
+                LOGGER.info("get proxy info fetching: PROXY_FOR: {} ", getProperty(PROXY_FOR).getString());
                 return getProperty(PROXY_FOR).getString();
             }
             return null;
@@ -183,14 +181,11 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
      * @see org.fcrepo.kernel.api.models.FedoraBinary#setProxyURL()
      */
     @Override
-    public void setProxyURL(String url) throws RepositoryRuntimeException {
+    public void setProxyURL(final String url) throws RepositoryRuntimeException {
         try {
             LOGGER.info("Setting Property PROXY_FOR!");
             getNode().setProperty(PROXY_FOR, url);
-
-            if (url != null) {
-                getNode().setProperty(REDIRECTS_TO, (Value)null);
-            }
+            getNode().setProperty(REDIRECTS_TO, (Value)null);
         } catch (Exception e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -220,14 +215,11 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
      * @see org.fcrepo.kernel.api.models.FedoraBinary#setRedirectURL()
      */
     @Override
-    public void setRedirectURL(String url) throws RepositoryRuntimeException {
+    public void setRedirectURL(final String url) throws RepositoryRuntimeException {
         try {
             LOGGER.info("Setting Property REDIRECTS_TO!");
             getNode().setProperty(REDIRECTS_TO, url);
-
-            if (url != null) {
-                getNode().setProperty(PROXY_FOR, (Value)null);
-            }
+            getNode().setProperty(PROXY_FOR, (Value)null);
         } catch (Exception e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -238,7 +230,7 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
             if (hasProperty(HAS_MIME_TYPE)) {
                 return getProperty(HAS_MIME_TYPE).getString().replace(FIELD_DELIMITER + XSDstring.getURI(), "");
             }
-            return null;
+            return DEFAULT_MIME_TYPE;
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }

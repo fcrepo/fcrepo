@@ -57,8 +57,9 @@ public final class CacheEntryFactory {
         LOGGER.info("Did you know that property.getName() is: '{}' and Proxy: {} ", property.getName(),
                 PROXY_FOR.getNameSpace() + ":" + PROXY_FOR.getLocalName());
         if (property.getName().endsWith(PROXY_FOR.getLocalName()) ||
-                property.getName().endsWith(REDIRECTS_TO.getLocalName())){
-            LOGGER.info("Creating ExternalResourceCacheEntry for property: {}", property.getName());
+                property.getName().endsWith(REDIRECTS_TO.getLocalName())) {
+            LOGGER.info("Creating ExternalResourceCacheEntry for property: {} {}", property.getName(),
+                    property.getValue().toString());
             return new ExternalResourceCacheEntry(property);
         }
 

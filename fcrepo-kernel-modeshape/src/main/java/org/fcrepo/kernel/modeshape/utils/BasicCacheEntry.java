@@ -106,6 +106,7 @@ public abstract class BasicCacheEntry implements CacheEntry {
             InputStream digestStream = binaryStream;
             for (String digestAlg : algorithms) {
                 try {
+                    LOGGER.debug("FIXITY Check: digestAlg: {}", digestAlg);
                     digestStream = new DigestInputStream(digestStream, MessageDigest.getInstance(digestAlg));
                     digestInputStreams.put(digestAlg, (DigestInputStream)digestStream);
                 } catch (NoSuchAlgorithmException e) {
@@ -117,6 +118,7 @@ public abstract class BasicCacheEntry implements CacheEntry {
             while (digestStream.read(devNull) != -1) { }
 
             return digestInputStreams.entrySet().stream()
+                .peek(e->LOGGER.debug("TEST HERE key: {} value: {}", e.getKey(), e.getValue()))
                 .map(entry -> ContentDigest.asURI(entry.getKey(), entry.getValue().getMessageDigest().digest()))
                 .collect(Collectors.toSet());
         } catch (final IOException e) {

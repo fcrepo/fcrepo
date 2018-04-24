@@ -24,6 +24,8 @@ import static org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM.SHA1;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.slf4j.LoggerFactory.getLogger;
+
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -49,12 +51,14 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
-
+import org.slf4j.Logger;
 /**
  * @author bbpennel
  */
 @ContextConfiguration({ "/spring-test/repo.xml" })
 public class LocalFileBinaryIT extends AbstractIT {
+
+    private static final Logger LOGGER = getLogger(LocalFileBinaryIT.class);
 
     private static final String EXPECTED_CONTENT = "test content";
 
@@ -99,7 +103,7 @@ public class LocalFileBinaryIT extends AbstractIT {
     public void testProxyDatastreamWithMimeType() throws Exception {
         mimeType = "text/plain";
         final FedoraBinary binary = binaryService.findOrCreate(session, dsId);
-        binary.setProxyURL(contentFile.toURI().toString());
+        binary.setProxyURL(contentFile.toURI().toURL().toString());
         binary.setContent(null, mimeType, null, null, null);
 
         session.commit();
@@ -115,15 +119,14 @@ public class LocalFileBinaryIT extends AbstractIT {
 
     @Test
     public void testProxyDatastreamWithOutMimeType() throws Exception {
-        mimeType = "";
         final FedoraBinary binary = binaryService.findOrCreate(session, dsId);
-        binary.setProxyURL(contentFile.toURI().toString());
-        binary.setContent(null, mimeType, null, null, null);
+        binary.setProxyURL(contentFile.toURI().toURL().toString());
+        binary.setContent(null, null, null, null, null);
 
         session.commit();
 
         final FedoraBinary ds = binaryService.findOrCreate(session, dsId);
-        ds.setProxyURL(contentFile.toURI().toString());
+        //ds.setProxyURL(contentFile.toURI().toURL().toString());
 
         assertEquals(EXPECTED_CONTENT.length(), ds.getContentSize());
         assertEquals(EXPECTED_CONTENT, contentString(ds));
@@ -133,8 +136,8 @@ public class LocalFileBinaryIT extends AbstractIT {
     @Test
         public void testRedirectDatastreamWithMimeType() throws Exception {
         mimeType = "text/plain";
-        final FedoraBinary binary =binaryService.findOrCreate(session, dsId);
-        binary.setRedirectURL(contentFile.toURI().toString());
+        final FedoraBinary binary = binaryService.findOrCreate(session, dsId);
+        binary.setRedirectURL(contentFile.toURI().toURL().toString());
         binary.setContent(null, mimeType, null, null, null);
 
         session.commit();
@@ -149,10 +152,9 @@ public class LocalFileBinaryIT extends AbstractIT {
 
     @Test
     public void testRedirectDatastreamWithOutMimeType() throws Exception {
-        mimeType = "";
-        final FedoraBinary binary =binaryService.findOrCreate(session, dsId);
-        binary.setRedirectURL(contentFile.toURI().toString());
-        binary.setContent(null, mimeType, null, null, null);
+        final FedoraBinary binary = binaryService.findOrCreate(session, dsId);
+        binary.setRedirectURL(contentFile.toURI().toURL().toString());
+        binary.setContent(null, null, null, null, null);
 
         session.commit();
 
@@ -167,7 +169,7 @@ public class LocalFileBinaryIT extends AbstractIT {
     @Test
     public void testWithValidChecksum() throws Exception {
         final FedoraBinary binary = binaryService.findOrCreate(session, dsId);
-        binary.setProxyURL(contentFile.toURI().toString());
+        binary.setProxyURL(contentFile.toURI().toURL().toString());
         binary.setContent(null, mimeType, sha1Set(CONTENT_SHA1), null, null);
 
         session.commit();
@@ -180,14 +182,14 @@ public class LocalFileBinaryIT extends AbstractIT {
     @Test(expected = InvalidChecksumException.class)
     public void testProxyWithInvalidChecksum() throws Exception {
         final FedoraBinary binary = binaryService.findOrCreate(session, dsId);
-        binary.setProxyURL(contentFile.toURI().toString());
+        binary.setProxyURL(contentFile.toURI().toURL().toString());
         binary.setContent(null, mimeType, sha1Set("badsum"), null, null);
     }
 
     @Test
     public void testCheckFixity() throws Exception {
         final FedoraBinary binary = binaryService.findOrCreate(session, dsId);
-        binary.setProxyURL(contentFile.toURI().toString());
+        binary.setProxyURL(contentFile.toURI().toURL().toString());
         binary.setContent(null, mimeType, sha1Set(CONTENT_SHA1), null, null);
 
         session.commit();
@@ -198,7 +200,7 @@ public class LocalFileBinaryIT extends AbstractIT {
         assertNotEquals(0, fixityResults.size());
 
         final String checksum = fixityResults.iterator().next().toString();
-
+        LOGGER.info("testCheckFixity() checksum is {}", checksum);
         assertEquals("Fixity Checksum doesn't match",
                 "urn:sha1:" + CONTENT_SHA1, checksum);
     }

@@ -141,10 +141,11 @@ public class BinaryServiceImplIT extends AbstractIT {
         final Path contentFile = Files.createTempFile("content", ".txt");
         Files.write(contentFile, "asdf".getBytes());
 
-        final String contentType = "message/external-body; access-type=LOCAL-FILE; LOCAL-FILE=\"file://"
-                + contentFile.toString() + "\"";
+        final String contentType = "application/octet-stream";
 
-        binaryService.findOrCreate(session, "/testLocalFileNode").setContent(
+        final FedoraBinary binary1 = binaryService.findOrCreate(session, "/testLocalFileNode");
+        binary1.setProxyURL(contentFile.toUri().toURL().toString());
+        binary1.setContent(
                 null,
                 contentType,
                 null,

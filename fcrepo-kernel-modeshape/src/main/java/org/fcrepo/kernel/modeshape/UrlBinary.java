@@ -231,16 +231,20 @@ public class UrlBinary extends AbstractFedoraBinary {
 
             final String resourceLocation = getResourceLocation();
             LOGGER.debug("Checking external resource: " + resourceLocation);
+            Collection<URI> list = null;
             if (isProxy()) {
-                return CacheEntryFactory.forProperty(getProperty(PROXY_FOR)).checkFixity(algorithms);
+                 list = CacheEntryFactory.forProperty(getProperty(PROXY_FOR)).checkFixity(algorithms);
+
             } else if (isRedirect()) {
-                return CacheEntryFactory.forProperty(getProperty(REDIRECTS_TO)).checkFixity(algorithms);
+                list = CacheEntryFactory.forProperty(getProperty(REDIRECTS_TO)).checkFixity(algorithms);
             }
+            LOGGER.debug("FIXITY INFO: {} ", list.iterator().next().toString());
+            LOGGER.debug("FIXITY INFO size: {} ", list.size());
+            return list;
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
 
-        return null;
     }
 
     /**

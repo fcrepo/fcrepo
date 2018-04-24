@@ -29,13 +29,14 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 import static java.util.Collections.singletonList;
+import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.ByteArrayInputStream;
 import java.net.URI;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import org.slf4j.Logger;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import javax.inject.Inject;
@@ -68,6 +69,7 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options
  */
 @ContextConfiguration({ "/spring-test/repo.xml" })
 public class UrlBinaryIT extends AbstractIT {
+    private static final Logger LOGGER = getLogger(UrlBinaryIT.class);
 
     private static final String EXPECTED_CONTENT = "test content";
 
@@ -96,12 +98,16 @@ public class UrlBinaryIT extends AbstractIT {
     public void setup() throws Exception {
         session = repo.login();
 
+        fileUrl = "http://localhost:" + wireMockRule.port() + "/file.txt";
+
+        mimeType = "application/octet-stream";
+
         final FedoraBinary externalContent = binaryService.findOrCreate(session, "/externalContent");
         externalContent.setProxyURL(fileUrl);
         externalContent.setContent(
                 null,
                 //new ByteArrayInputStream(EXPECTED_CONTENT.getBytes()),
-                "application/octet-stream",
+                mimeType,
                 null,
                 null,
                 null);
@@ -113,9 +119,7 @@ public class UrlBinaryIT extends AbstractIT {
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "text/plain")
                         .withBody(EXPECTED_CONTENT)));
-        fileUrl = "http://localhost:" + wireMockRule.port() + "/file.txt";
 
-        mimeType = "text/plain";
 
         idTranslator = new DefaultIdentifierTranslator(getJcrSession(repo.login()));
     }
@@ -148,11 +152,11 @@ public class UrlBinaryIT extends AbstractIT {
 
     @Test
     public void testDatastreamWithMimeType() throws Exception {
-        final String mimeTypeWithDsType = mimeType + ";  mime-type=\"text/plain\"";
 
+        final String mt = "text/plain";
         final FedoraBinary binary = binaryService.findOrCreate(session, dsId);
         binary.setProxyURL(fileUrl);
-        binary.setContent(null, mimeTypeWithDsType, null, null, null);
+        binary.setContent(null, mt, null, null, null);
 
         session.commit();
 
@@ -160,7 +164,7 @@ public class UrlBinaryIT extends AbstractIT {
 
         assertEquals(EXPECTED_CONTENT, contentString(ds));
 
-        assertEquals("text/plain", ds.getMimeType());
+        assertEquals(mt, ds.getMimeType());
     }
 
     @Test
@@ -197,7 +201,8 @@ public class UrlBinaryIT extends AbstractIT {
         assertNotEquals(0, fixityResults.size());
 
         final String checksum = fixityResults.iterator().next().toString();
-
+        LOGGER.debug("GOT IT GOT IT GOT IT: checksum returned is: {}", checksum);
+        LOGGER.debug("GOT IT GOT IT GOT IT: comparing to: {}", "urn:sha1:" + CONTENT_SHA1);
         assertEquals("Fixity Checksum doesn't match",
                 "urn:sha1:" + CONTENT_SHA1, checksum);
     }

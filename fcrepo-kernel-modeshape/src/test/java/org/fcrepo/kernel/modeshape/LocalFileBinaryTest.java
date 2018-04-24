@@ -17,7 +17,12 @@
  */
 package org.fcrepo.kernel.modeshape;
 
-import static org.fcrepo.kernel.api.FedoraTypes.*;
+import static org.fcrepo.kernel.api.FedoraTypes.CONTENT_DIGEST;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
+import static org.fcrepo.kernel.api.FedoraTypes.FILENAME;
+import static org.fcrepo.kernel.api.FedoraTypes.HAS_MIME_TYPE;
+import static org.fcrepo.kernel.api.FedoraTypes.PROXY_FOR;
 import static org.fcrepo.kernel.modeshape.utils.TestHelpers.checksumString;
 import static org.fcrepo.kernel.modeshape.utils.TestHelpers.getContentNodeMock;
 import static org.junit.Assert.assertEquals;
@@ -116,7 +121,6 @@ public class LocalFileBinaryTest {
 
         when(mockContent.hasProperty(PROXY_FOR)).thenReturn(true);
         when(mockContent.getProperty(PROXY_FOR)).thenReturn(proxyURIProperty);
-        //when(mockContent.setProperty(PROXY_FOR, mockURIValue)).thenReturn(proxyURIProperty);
 
         final NodeType[] nodeTypes = new NodeType[] { mockDsNodeType };
         when(mockDsNodeType.getName()).thenReturn(FEDORA_NON_RDF_SOURCE_DESCRIPTION);

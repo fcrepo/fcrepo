@@ -17,13 +17,15 @@
  */
 package org.fcrepo.kernel.modeshape.utils;
 
-import java.io.IOException;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
+import org.slf4j.Logger;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 
@@ -34,7 +36,7 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
  * @since 2017-09-18
  */
 public class ExternalResourceCacheEntry extends BinaryCacheEntry {
-
+    private static final Logger LOGGER = getLogger(ExternalResourceCacheEntry.class);
     /**
      * Create a new ExternalResourceCacheEntry
      * @param property the given property
@@ -50,10 +52,11 @@ public class ExternalResourceCacheEntry extends BinaryCacheEntry {
     @Override
     public InputStream getInputStream() {
         try {
+            LOGGER.info("getInputStream getExternalIdentifier: {} {} ", property().getName(), getExternalIdentifier());
             return URI.create(getExternalIdentifier()).toURL().openStream();
         } catch (MalformedURLException e) {
             throw new RepositoryRuntimeException("Malformed URL: " + getExternalIdentifier(), e);
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new RepositoryRuntimeException(e);
         }
     }
@@ -65,6 +68,7 @@ public class ExternalResourceCacheEntry extends BinaryCacheEntry {
     @Override
     public String getExternalIdentifier() {
         try {
+            LOGGER.info("getExternalIdentifier for property {} ", property().getName());
             return property().getValue().toString();
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);

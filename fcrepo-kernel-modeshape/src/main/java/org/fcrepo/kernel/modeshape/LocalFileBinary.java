@@ -72,16 +72,12 @@ public class LocalFileBinary extends UrlBinary {
                            final StoragePolicyDecisionPoint storagePolicyDecisionPoint)
             throws InvalidChecksumException {
 
-        if (contentType == null) {
-            throw new IllegalArgumentException(
-                    "ContentType must be non-null when setting content for local file binary");
-        }
-
         try {
             /* that this is a proxy or redirect has already been set before we get here
              */
             final Node contentNode = getNode();
 
+            LOGGER.debug("HERE HERE HERE HERE HERE");
             if (contentNode.canAddMixin(FEDORA_BINARY)) {
                 contentNode.addMixin(FEDORA_BINARY);
             }
@@ -90,7 +86,11 @@ public class LocalFileBinary extends UrlBinary {
                 contentNode.setProperty(FILENAME, originalFileName);
             }
 
-            contentNode.setProperty(HAS_MIME_TYPE, contentType);
+            if (contentType == null) {
+                contentNode.setProperty(HAS_MIME_TYPE, DEFAULT_MIME_TYPE);
+            } else {
+                contentNode.setProperty(HAS_MIME_TYPE, contentType);
+            }
 
             // Store the required jcr:data property
             contentNode.setProperty(JCR_DATA, "");
@@ -162,10 +162,13 @@ public class LocalFileBinary extends UrlBinary {
                 LOGGER.debug("Checking external resource: {}", getResourceLocation());
             }
             if (isProxy()) {
+                LOGGER.debug("CHECK Fixity for PROXY: {}", getProperty(PROXY_FOR).getString());
                 return CacheEntryFactory.forProperty(getProperty(PROXY_FOR)).checkFixity(algorithms);
             } else if (isRedirect()) {
+                LOGGER.debug("CHECK Fixity for REDIRECT: {}", getProperty(REDIRECTS_TO).getString());
                 return CacheEntryFactory.forProperty(getProperty(REDIRECTS_TO)).checkFixity(algorithms);
             }
+            LOGGER.debug("NEITHER PROXY OR REDIRECT");
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
