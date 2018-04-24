@@ -2999,6 +2999,30 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testAclHeaderWithPost() throws IOException {
+        final String pid = getRandomUniqueId();
+        final HttpPost httpPost = postObjMethod("/");
+        httpPost.addHeader("Slug", pid);
+        final String location = serverAddress + pid;
+        try (final CloseableHttpResponse response = execute(httpPost)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            checkForLinkHeader(response, location + "/" + FCR_ACL, "acl");
+        }
+    }
+
+    @Test
+    public void testAclHeaderWithPut() throws IOException {
+        final String pid = getRandomUniqueId();
+        final String location = serverAddress + pid;
+
+        final HttpPut httpPut = new HttpPut(location);
+        try (final CloseableHttpResponse response = execute(httpPut)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            checkForLinkHeader(response, location + "/" + FCR_ACL, "acl");
+        }
+    }
+
+    @Test
     @Ignore("This test needs manual intervention to decide how \"good\" the graph looks")
     // TODO Do we have any way to proceed with this kind of aesthetic goal?
     public void testGraphShouldNotBeTooLumpy() throws IOException {

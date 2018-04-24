@@ -49,7 +49,6 @@ import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORAWEBAC_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;
@@ -142,6 +141,7 @@ import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.FedoraTimeMap;
+import org.fcrepo.kernel.api.models.FedoraWebacAcl;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
@@ -484,6 +484,12 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
     }
 
+    protected void addAclHeader(final FedoraResource resource) {
+        if (!(resource instanceof FedoraWebacAcl) && !resource.isMemento()) {
+            servletResponse.addHeader(LINK, buildLink(getUri(resource.getDescribedResource()) + "/" + FCR_ACL, "acl"));
+        }
+    }
+
     protected void addResourceLinkHeaders(final FedoraResource resource) {
         addResourceLinkHeaders(resource, false);
     }
@@ -602,9 +608,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             httpHeaderInject.addHttpHeaderToResponseStream(servletResponse, uriInfo, resource());
         }
 
-        if (!resource.hasType(FEDORAWEBAC_ACL) && !resource.isMemento()) {
-            servletResponse.addHeader(LINK, buildLink(getUri(resource.getDescribedResource()) + "/" + FCR_ACL, "acl"));
-        }
+        addAclHeader(resource);
 
         addTimeMapHeader(resource);
         addMementoHeaders(resource);
@@ -779,6 +783,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected Response createUpdateResponse(final FedoraResource resource, final boolean created) {
         addCacheControlHeaders(servletResponse, resource, session);
         addResourceLinkHeaders(resource, created);
+        addAclHeader(resource);
         addMementoHeaders(resource);
 
         if (!created) {

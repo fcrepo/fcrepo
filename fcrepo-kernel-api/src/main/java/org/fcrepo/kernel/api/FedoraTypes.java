@@ -43,7 +43,7 @@ public interface FedoraTypes {
 
     String FEDORA_TIME_MAP = "fedora:TimeMap";
 
-    String FEDORAWEBAC_ACL = "fedorawebac:Acl";
+    String FEDORA_WEBAC_ACL = "webac:Acl";
 
     String MEMENTO = "memento:Memento";
 

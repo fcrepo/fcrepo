@@ -40,13 +40,14 @@
 /*
  * A fedora namespace for webac.
  */
-<fedorawebac = 'http://fedora.info/definitions/v4/webac#'>
+<webac = 'http://fedora.info/definitions/v4/webac#'>
 
 <test = 'info:fedora/test/'>
 
 [nt:versionFile] > nt:file
 + fedora:timemap (nt:folder) =fedora:TimeMap
 + fedora:binaryTimemap (nt:folder) =fedora:TimeMap
++ fedora:acl (nt:folder) =webac:Acl
 
 /*
  * Any Fedora resource.
@@ -91,6 +92,11 @@
  */
 [memento:Memento] > fedora:Resource mixin
   - memento:mementoDatetime (DATE)
+
+/*
+ * A Fedora webac:Acl mixin.
+ */
+[webac:Acl] > fedora:Resource mixin
 
 /*
  * Some content that can have a checksum

@@ -25,12 +25,14 @@ import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.FedoraTimeMap;
+import org.fcrepo.kernel.api.models.FedoraWebacAcl;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.modeshape.ContainerImpl;
 import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.fcrepo.kernel.modeshape.FedoraSessionImpl;
 import org.fcrepo.kernel.modeshape.FedoraTimeMapImpl;
+import org.fcrepo.kernel.modeshape.FedoraWebacAclImpl;
 import org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl;
 import org.junit.Before;
 import org.junit.Test;
@@ -54,6 +56,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTIO
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TIME_MAP;
 import static org.fcrepo.kernel.api.FedoraTypes.MEMENTO;
 import static org.fcrepo.kernel.api.FedoraTypes.MEMENTO_ORIGINAL;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_WEBAC_ACL;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
@@ -71,7 +74,7 @@ public class HttpResourceConverterTest {
     private Session session, txSession;
 
     @Mock
-    private Node node, mementoNode, contentNode, timeMapNode, descriptionNode;
+    private Node node, mementoNode, contentNode, timeMapNode, descriptionNode, webacAclNode;
 
     @Mock
     private Property mockOriginal;
@@ -124,6 +127,7 @@ public class HttpResourceConverterTest {
         when(mockOriginal.getNode()).thenReturn(node);
         when(timeMapNode.getProperty(MEMENTO_ORIGINAL)).thenReturn(mockOriginal);
         when(timeMapNode.isNodeType(FEDORA_TIME_MAP)).thenReturn(true);
+        when(webacAclNode.isNodeType(FEDORA_WEBAC_ACL)).thenReturn(true);
     }
 
     @Test
@@ -410,6 +414,30 @@ public class HttpResourceConverterTest {
 
         final Resource converted = converter.reverse().convert(memento);
         final Resource expectedResource = createResource(resourceUri + "/fcr:metadata/fcr:versions/20180315180915");
+        assertEquals(expectedResource, converted);
+    }
+
+    @Test
+    public void testDoForwardWithWebacAcl() throws Exception {
+        final Resource resource = createResource("http://localhost:8080/some/container/fcr:acl");
+        when(session.getNode("/container")).thenReturn(node);
+
+        when(session.getNode("/container/fedora:acl")).thenReturn(webacAclNode);
+
+        final FedoraResource converted = converter.convert(resource);
+        assertTrue("Converted resource must be a FedoraWebacAcl", converted instanceof FedoraWebacAcl);
+
+        final Node resultNode = getJcrNode(converted);
+        assertEquals(webacAclNode, resultNode);
+    }
+
+    @Test
+    public void testDoBackWithWebacAcl() throws Exception {
+        final FedoraWebacAcl webacAcl = new FedoraWebacAclImpl(webacAclNode);
+        when(webacAclNode.getPath()).thenReturn(path + "/fedora:acl");
+
+        final Resource converted = converter.reverse().convert(webacAcl);
+        final Resource expectedResource = createResource("http://localhost:8080/some/" + path + "/fcr:acl");
         assertEquals(expectedResource, converted);
     }
 }
