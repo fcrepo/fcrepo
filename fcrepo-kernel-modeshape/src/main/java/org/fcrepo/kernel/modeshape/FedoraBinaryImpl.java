@@ -42,6 +42,7 @@ import org.slf4j.Logger;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
+import javax.jcr.Value;
 
 import java.io.InputStream;
 import java.net.URI;
@@ -278,6 +279,10 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     public void setProxyURL(String url) throws RepositoryRuntimeException {
         try {
             getNode().setProperty(PROXY_FOR, url);
+
+            if (url != null) {
+                getNode().setProperty(REDIRECTS_TO, (Value)null);
+            }
         } catch (Exception e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -307,6 +312,10 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     public void setRedirectURL(String url) throws RepositoryRuntimeException {
         try {
             getNode().setProperty(REDIRECTS_TO, url);
+
+            if (url != null) {
+                getNode().setProperty(PROXY_FOR, (Value)null);
+            }
         } catch (Exception e) {
             throw new RepositoryRuntimeException(e);
         }

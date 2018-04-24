@@ -85,10 +85,6 @@ import org.springframework.test.context.ContextConfiguration;
 @ContextConfiguration({"/spring-test/repo.xml"})
 public class FedoraBinaryImplIT extends AbstractIT {
 
-    private static final String EXPECTED_CONTENT = "test content";
-
-    private static final String CONTENT_SHA1 = "1eebdf4fdc9fc7bf283031b93f9aef3338de9052";
-
     @Inject
     FedoraRepository repo;
 
@@ -535,104 +531,5 @@ public class FedoraBinaryImplIT extends AbstractIT {
         } finally {
             session.expire();
         }
-    }
-
-    @Test
-    public void testDatastreamWithExpiration() throws Exception {
-        final FedoraSession session = repo.login();
-        final String dsId = "/ds_" + UUID.randomUUID().toString();
-
-        final String mimeType = makeLocalFileMimeType();
-        final String mimeTypeExpires = mimeType + "; expiration=\"Wed, 21 Oct 2020 00:00:00 GMT\"";
-
-        binaryService.findOrCreate(session, dsId)
-                .setContent(null, mimeTypeExpires, null, null, null);
-
-        session.commit();
-
-        final FedoraBinary ds = binaryService.findOrCreate(session, dsId);
-
-        assertEquals(EXPECTED_CONTENT.length(), ds.getContentSize());
-        assertEquals(EXPECTED_CONTENT, IOUtils.toString(ds.getContent(), "UTF-8"));
-
-        assertEquals("application/octet-stream", ds.getMimeType());
-    }
-
-    @Test
-    public void testExpirationWithValidChecksum() throws Exception {
-        final FedoraSession session = repo.login();
-        final String dsId = "/ds_" + UUID.randomUUID().toString();
-
-        final String mimeType = makeLocalFileMimeType();
-        final String mimeTypeExpires = mimeType + "; expiration=\"Wed, 21 Oct 2020 00:00:00 GMT\"";;
-
-        binaryService.findOrCreate(session, dsId)
-                .setContent(null, mimeTypeExpires, sha1Set(CONTENT_SHA1), null, null);
-
-        session.commit();
-
-        final FedoraBinary ds = binaryService.findOrCreate(session, dsId);
-
-        assertEquals(EXPECTED_CONTENT, IOUtils.toString(ds.getContent(), "UTF-8"));
-
-        assertEquals("application/octet-stream", ds.getMimeType());
-    }
-
-    @Test(expected = InvalidChecksumException.class)
-    public void testExpirationWithInvalidChecksum() throws Exception {
-        final FedoraSession session = repo.login();
-        final String dsId = "/ds_" + UUID.randomUUID().toString();
-
-        final String mimeType = makeLocalFileMimeType();
-        final String mimeTypeExpires = mimeType + "; expiration=\"Wed, 21 Oct 2020 00:00:00 GMT\"";
-
-        binaryService.findOrCreate(session, dsId)
-                .setContent(null, mimeTypeExpires, sha1Set("badsum"), null, null);
-    }
-
-    @Test
-    public void testDatastreamIngestThenExpire() throws Exception {
-        final FedoraSession session = repo.login();
-        final String dsId = "/ds_" + UUID.randomUUID().toString();
-
-        final String mimeType = makeLocalFileMimeType();
-
-        binaryService.findOrCreate(session, dsId)
-                .setContent(null, mimeType, sha1Set(CONTENT_SHA1), null, null);
-
-        session.commit();
-
-        final FedoraBinary ds = binaryService.findOrCreate(session, dsId);
-
-        assertEquals(EXPECTED_CONTENT, IOUtils.toString(ds.getContent(), "UTF-8"));
-        assertEquals("application/octet-stream", ds.getMimeType());
-
-        final Node contentNode1 = ((FedoraResourceImpl) ds).getNode();
-        assertEquals("Mimetype property not equal to original message/external-body type",
-                mimeType, contentNode1.getProperty(HAS_MIME_TYPE).getString());
-
-        final String mimeTypeExpires = mimeType + "; expiration=\"Wed, 21 Oct 2020 00:00:00 GMT\"";
-
-        // Set the content again with an expiration time
-        ds.setContent(null, mimeTypeExpires, sha1Set(CONTENT_SHA1), null, null);
-        session.commit();
-
-        assertEquals(EXPECTED_CONTENT, IOUtils.toString(ds.getContent(), "UTF-8"));
-        assertEquals("application/octet-stream", ds.getMimeType());
-
-        final Node contentNode2 = ((FedoraResourceImpl) ds).getNode();
-        assertEquals("Mimetype property not equal to original message/external-body type",
-                "application/octet-stream", contentNode2.getProperty(HAS_MIME_TYPE).getString());
-    }
-
-    private String makeLocalFileMimeType() throws Exception {
-        final File contentFile = File.createTempFile("file", ".txt");
-        IOUtils.write(EXPECTED_CONTENT, new FileOutputStream(contentFile), "UTF-8");
-        return "message/external-body; access-type=LOCAL-FILE; LOCAL-FILE=\"" +
-                contentFile.toURI().toString() + "\"";
-    }
-
-    private Set<URI> sha1Set(final String checksum) {
-        return new HashSet<>(asList(asURI(SHA1.algorithm, checksum)));
     }
 }

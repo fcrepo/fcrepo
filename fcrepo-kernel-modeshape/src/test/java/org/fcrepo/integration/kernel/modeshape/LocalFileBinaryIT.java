@@ -99,7 +99,7 @@ public class LocalFileBinaryIT extends AbstractIT {
     public void testProxyDatastreamWithMimeType() throws Exception {
         mimeType = "text/plain";
         final FedoraBinary binary = binaryService.findOrCreate(session, dsId);
-        binary.setProxyURL(contentFile.getAbsolutePath());
+        binary.setProxyURL(contentFile.toURI().toString());
         binary.setContent(null, mimeType, null, null, null);
 
         session.commit();
@@ -117,13 +117,13 @@ public class LocalFileBinaryIT extends AbstractIT {
     public void testProxyDatastreamWithOutMimeType() throws Exception {
         mimeType = "";
         final FedoraBinary binary = binaryService.findOrCreate(session, dsId);
-        binary.setProxyURL(contentFile.getAbsolutePath());
+        binary.setProxyURL(contentFile.toURI().toString());
         binary.setContent(null, mimeType, null, null, null);
 
         session.commit();
 
         final FedoraBinary ds = binaryService.findOrCreate(session, dsId);
-        ds.setProxyURL(contentFile.getAbsolutePath());
+        ds.setProxyURL(contentFile.toURI().toString());
 
         assertEquals(EXPECTED_CONTENT.length(), ds.getContentSize());
         assertEquals(EXPECTED_CONTENT, contentString(ds));
@@ -134,7 +134,7 @@ public class LocalFileBinaryIT extends AbstractIT {
         public void testRedirectDatastreamWithMimeType() throws Exception {
         mimeType = "text/plain";
         final FedoraBinary binary =binaryService.findOrCreate(session, dsId);
-        binary.setRedirectURL(contentFile.getAbsolutePath());
+        binary.setRedirectURL(contentFile.toURI().toString());
         binary.setContent(null, mimeType, null, null, null);
 
         session.commit();
@@ -151,7 +151,7 @@ public class LocalFileBinaryIT extends AbstractIT {
     public void testRedirectDatastreamWithOutMimeType() throws Exception {
         mimeType = "";
         final FedoraBinary binary =binaryService.findOrCreate(session, dsId);
-        binary.setRedirectURL(contentFile.getAbsolutePath());
+        binary.setRedirectURL(contentFile.toURI().toString());
         binary.setContent(null, mimeType, null, null, null);
 
         session.commit();
@@ -167,7 +167,7 @@ public class LocalFileBinaryIT extends AbstractIT {
     @Test
     public void testWithValidChecksum() throws Exception {
         final FedoraBinary binary = binaryService.findOrCreate(session, dsId);
-        binary.setProxyURL(contentFile.getAbsolutePath());
+        binary.setProxyURL(contentFile.toURI().toString());
         binary.setContent(null, mimeType, sha1Set(CONTENT_SHA1), null, null);
 
         session.commit();
@@ -180,14 +180,14 @@ public class LocalFileBinaryIT extends AbstractIT {
     @Test(expected = InvalidChecksumException.class)
     public void testProxyWithInvalidChecksum() throws Exception {
         final FedoraBinary binary = binaryService.findOrCreate(session, dsId);
-        binary.setProxyURL(contentFile.getAbsolutePath());
+        binary.setProxyURL(contentFile.toURI().toString());
         binary.setContent(null, mimeType, sha1Set("badsum"), null, null);
     }
 
     @Test
     public void testCheckFixity() throws Exception {
         final FedoraBinary binary = binaryService.findOrCreate(session, dsId);
-        binary.setProxyURL(contentFile.getAbsolutePath());
+        binary.setProxyURL(contentFile.toURI().toString());
         binary.setContent(null, mimeType, sha1Set(CONTENT_SHA1), null, null);
 
         session.commit();

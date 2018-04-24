@@ -185,7 +185,12 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
     @Override
     public void setProxyURL(String url) throws RepositoryRuntimeException {
         try {
+            LOGGER.info("Setting Property PROXY_FOR!");
             getNode().setProperty(PROXY_FOR, url);
+
+            if (url != null) {
+                getNode().setProperty(REDIRECTS_TO, (Value)null);
+            }
         } catch (Exception e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -198,9 +203,12 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
     @Override
     public String getRedirectURL() {
         try {
+
+            LOGGER.info("get redirecgt info asking first: {} ", hasProperty(REDIRECTS_TO));
             if (hasProperty(REDIRECTS_TO)) {
                 return getProperty(REDIRECTS_TO).getString();
             }
+
             return null;
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
@@ -214,7 +222,12 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
     @Override
     public void setRedirectURL(String url) throws RepositoryRuntimeException {
         try {
+            LOGGER.info("Setting Property REDIRECTS_TO!");
             getNode().setProperty(REDIRECTS_TO, url);
+
+            if (url != null) {
+                getNode().setProperty(PROXY_FOR, (Value)null);
+            }
         } catch (Exception e) {
             throw new RepositoryRuntimeException(e);
         }

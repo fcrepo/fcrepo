@@ -26,7 +26,6 @@ import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 
 /**
  * Cache entry that wraps a binary stream for External Resource

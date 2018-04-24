@@ -50,6 +50,7 @@ public class CacheEntryFactoryTest {
     @Before
     public void setUp() throws RepositoryException {
         when(mockProperty.getValue()).thenReturn(mockValue);
+        when(mockProperty.getName()).thenReturn("fedora:proxyFor");
         when(mockValue.getString()).thenReturn(RESOURCE_URL);
     }
 

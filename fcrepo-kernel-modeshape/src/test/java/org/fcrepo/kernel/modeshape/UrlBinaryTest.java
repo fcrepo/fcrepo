@@ -24,6 +24,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.fcrepo.kernel.api.FedoraTypes.*;
 import static org.fcrepo.kernel.api.FedoraTypes.PROXY_FOR;
+import static org.fcrepo.kernel.api.FedoraTypes.REDIRECTS_TO;
 import static org.fcrepo.kernel.modeshape.utils.TestHelpers.getContentNodeMock;
 import static org.fcrepo.kernel.modeshape.utils.TestHelpers.checksumString;
 import static org.junit.Assert.assertEquals;
@@ -32,10 +33,11 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static java.util.Collections.singleton;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+
 import java.io.InputStream;
 import java.net.URI;
-import static java.util.Collections.singleton;
-
 import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -92,6 +94,9 @@ public class UrlBinaryTest {
     private Value mockValue;
 
     @Mock
+    private Value mockURIValue;
+
+    @Mock
     private Node mockDsNode, mockContent, mockParentNode;
 
     @Mock
@@ -117,14 +122,19 @@ public class UrlBinaryTest {
         when(mockContent.getProperty(HAS_MIME_TYPE)).thenReturn(mimeTypeProperty);
 
         when(proxyURLProperty.getString()).thenReturn(fileUrl);
-        when(proxyURLProperty.getValue()).thenReturn(mockValue);
+        when(proxyURLProperty.getValue()).thenReturn(mockURIValue);
+        when(proxyURLProperty.getName()).thenReturn(PROXY_FOR.toString());
+        when(mockURIValue.toString()).thenReturn(fileUrl);
+
         when(mockContent.hasProperty(PROXY_FOR)).thenReturn(true);
         when(mockContent.getProperty(PROXY_FOR)).thenReturn(proxyURLProperty);
 
         when(redirectURLProperty.getString()).thenReturn(fileUrl);
-        when(redirectURLProperty.getValue()).thenReturn(mockValue);
+        when(redirectURLProperty.getValue()).thenReturn(mockURIValue);
+        when(redirectURLProperty.getName()).thenReturn(PROXY_FOR.toString());
         when(mockContent.hasProperty(REDIRECTS_TO)).thenReturn(true);
         when(mockContent.getProperty(REDIRECTS_TO)).thenReturn(redirectURLProperty);
+
 
         final NodeType[] nodeTypes = new NodeType[] { mockDsNodeType };
         when(mockDsNodeType.getName()).thenReturn(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
@@ -177,29 +187,42 @@ public class UrlBinaryTest {
 
     @Test
     public void testGetProxyURL() throws Exception {
+        getContentNodeMock(mockContent, EXPECTED_CONTENT);
+        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+
         final String url = testObj.getProxyURL();
         assertEquals(fileUrl, url);
     }
+
     @Test
     public void testSetProxyURL() throws Exception {
-        final String testURL = "http://localhost/fcrepo/rest/foo.txt";
-        testObj.setProxyURL(testURL);
+        getContentNodeMock(mockContent, EXPECTED_CONTENT);
+        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
 
-        verify(mockContent).setProperty(PROXY_FOR, testURL);
+        testObj.setProxyURL(fileUrl);
+        verify(mockContent).setProperty(PROXY_FOR, fileUrl);
+
+        assertEquals(fileUrl, testObj.getProxyURL());
     }
 
     @Test
     public void testGetRedirectURL() throws Exception {
+        getContentNodeMock(mockContent, EXPECTED_CONTENT);
+        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+
         final String url = testObj.getRedirectURL();
         assertEquals(fileUrl, url);
     }
 
     @Test
     public void testSetRedirectURL() throws Exception {
-        final String testURL = "http://localhost/fcrepo/rest/foo.txt";
-        testObj.setRedirectURL(testURL);
+        getContentNodeMock(mockContent, EXPECTED_CONTENT);
+        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
 
-        verify(mockContent).setProperty(REDIRECTS_TO, testURL);
+        testObj.setRedirectURL(fileUrl);
+        verify(mockContent).setProperty(REDIRECTS_TO, fileUrl);
+
+        assertEquals(fileUrl, testObj.getRedirectURL());
     }
 
     @Test

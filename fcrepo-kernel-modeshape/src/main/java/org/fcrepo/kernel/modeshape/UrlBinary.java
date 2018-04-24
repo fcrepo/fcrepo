@@ -143,10 +143,19 @@ public class UrlBinary extends AbstractFedoraBinary {
     protected void verifyChecksums(final Collection<URI> checksums)
             throws InvalidChecksumException, RepositoryException {
 
-        final Property mimeTypeProperty = getProperty(HAS_MIME_TYPE);
+        Property property = null;
+        if (isProxy()) {
+            property = getProperty(PROXY_FOR);
+        } else if (isRedirect()) {
+            property = getProperty(REDIRECTS_TO);
+        } // what else could it be?
+
+        LOGGER.info("Property is: {}", property.getName());
+        LOGGER.info("IsProxy? {} isRedirect? {}", isProxy(), isRedirect());
+
         final Map<URI, URI> checksumErrors = new HashMap<>();
 
-        final CacheEntry cacheEntry = CacheEntryFactory.forProperty(mimeTypeProperty);
+        final CacheEntry cacheEntry = CacheEntryFactory.forProperty(property);
         // Loop through provided checksums validating against computed values
         checksums.forEach(checksum -> {
             final String algorithm = ContentDigest.getAlgorithm(checksum);
@@ -244,7 +253,11 @@ public class UrlBinary extends AbstractFedoraBinary {
     }
     protected String getResourceLocation() {
         LOGGER.info("Getting resource location {}", getProxyURL());
-        return getProxyURL();
+        if (isProxy()) {
+            return getProxyURL();
+        } else {
+            return getRedirectURL();
+        }
     }
 
     protected URI getResourceUri() {
