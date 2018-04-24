@@ -40,7 +40,7 @@ import org.slf4j.Logger;
  * This abstract class implements the Filter interface to add principals
  * to the session so that Shiro can evaluate the principals.
  * 
- * The getPrincipals methods is left as the responsibility of the classes
+ * The getPrincipals method is left as the responsibility of the classes
  * that will be extending this abstract class.
  *
  * @author Mohamed Abdul Rasheed
@@ -50,7 +50,7 @@ abstract class AbstractPrincipalProvider implements PrincipalProvider {
 
     private static final Logger log = getLogger(AbstractPrincipalProvider.class);
 
-    public static final String REALM_NAME = "org.fcrepo.auth.webac.WebACAuthorizingRealm";
+    private static final String REALM_NAME = "org.fcrepo.auth.webac.WebACAuthorizingRealm";
 
     @Override
     public void init(final FilterConfig filterConfig) throws ServletException {

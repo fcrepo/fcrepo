@@ -40,7 +40,7 @@ import java.util.Set;
 public interface PrincipalProvider extends Filter {
 
     /**
-     * Extract principals from the provided credentials.
+     * Extract principals from the provided HttpServletRequest.
      * <p>
      * If no principals can be extracted, implementations of this method
      * should return the empty set rather than null.
