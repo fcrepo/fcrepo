@@ -17,7 +17,8 @@
  */
 package org.fcrepo.auth.common;
 
-import javax.jcr.Credentials;
+import javax.servlet.Filter;
+import javax.servlet.http.HttpServletRequest;
 
 import java.security.Principal;
 import java.util.Set;
@@ -36,19 +37,18 @@ import java.util.Set;
  * @author Gregory Jansen
  * @see HttpHeaderPrincipalProvider
  */
-public interface PrincipalProvider {
+public interface PrincipalProvider extends Filter {
 
     /**
-     * Extract principals from the provided credentials.
+     * Extract principals from the provided HttpServletRequest.
      * <p>
-     * If no principals can be extracted, for example because the credentials
-     * are of a different type than expected, implementations of this method
+     * If no principals can be extracted, implementations of this method
      * should return the empty set rather than null.
      * </p>
      *
-     * @param credentials the credentials
+     * @param request the request
      * @return a set of security principals
      */
-    Set<Principal> getPrincipals(Credentials credentials);
+    Set<Principal> getPrincipals(HttpServletRequest request);
 
 }

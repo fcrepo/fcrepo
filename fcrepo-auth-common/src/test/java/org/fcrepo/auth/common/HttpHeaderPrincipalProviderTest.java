@@ -28,9 +28,7 @@ import org.fcrepo.auth.common.HttpHeaderPrincipalProvider.HttpHeaderPrincipal;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.modeshape.jcr.api.ServletCredentials;
 
-import javax.jcr.Credentials;
 import javax.servlet.http.HttpServletRequest;
 
 import java.security.Principal;
@@ -44,9 +42,6 @@ import java.util.Set;
 public class HttpHeaderPrincipalProviderTest {
 
     @Mock
-    private ServletCredentials credentials;
-
-    @Mock
     private HttpServletRequest request;
 
     private HttpHeaderPrincipalProvider provider;
@@ -54,7 +49,6 @@ public class HttpHeaderPrincipalProviderTest {
     @Before
     public void setUp() {
         initMocks(this);
-        when(credentials.getRequest()).thenReturn(request);
 
         provider = new HttpHeaderPrincipalProvider();
     }
@@ -67,7 +61,7 @@ public class HttpHeaderPrincipalProviderTest {
         provider.setHeaderName("Groups");
         provider.setSeparator(",");
 
-        final Set<Principal> principals = provider.getPrincipals(credentials);
+        final Set<Principal> principals = provider.getPrincipals(request);
 
         assertEquals(2, principals.size());
         assertTrue("The principals should contain 'a'", principals
@@ -85,7 +79,7 @@ public class HttpHeaderPrincipalProviderTest {
         provider.setHeaderName("Groups");
         provider.setSeparator(",");
 
-        final Set<Principal> principals = provider.getPrincipals(credentials);
+        final Set<Principal> principals = provider.getPrincipals(request);
 
         assertEquals(2, principals.size());
         assertTrue("The principals should contain 'a'", principals
@@ -98,7 +92,7 @@ public class HttpHeaderPrincipalProviderTest {
     @Test
     public void testNoHeaderName() {
 
-        final Set<Principal> principals = provider.getPrincipals(credentials);
+        final Set<Principal> principals = provider.getPrincipals(request);
 
         assertTrue("Empty set expected when no header name configured", principals.isEmpty());
 
@@ -109,21 +103,9 @@ public class HttpHeaderPrincipalProviderTest {
 
         provider.setHeaderName("Groups");
 
-        final Set<Principal> principals = provider.getPrincipals(credentials);
+        final Set<Principal> principals = provider.getPrincipals(request);
 
         assertTrue("Empty set expected when no separator name configured", principals.isEmpty());
-
-    }
-
-    @Test
-    public void testInvalidCredentials() {
-
-        provider.setHeaderName("Groups");
-        provider.setSeparator(",");
-
-        final Set<Principal> principals = provider.getPrincipals(mock(Credentials.class));
-
-        assertTrue("Empty set expected when incorrect type of credentials supplied", principals.isEmpty());
 
     }
 
@@ -133,9 +115,7 @@ public class HttpHeaderPrincipalProviderTest {
         provider.setHeaderName("Groups");
         provider.setSeparator(",");
 
-        when(credentials.getRequest()).thenReturn(null);
-
-        final Set<Principal> principals = provider.getPrincipals(credentials);
+        final Set<Principal> principals = provider.getPrincipals(null);
 
         assertTrue("Empty set expected when no request supplied", principals.isEmpty());
 
@@ -149,7 +129,7 @@ public class HttpHeaderPrincipalProviderTest {
         provider.setHeaderName("Groups");
         provider.setSeparator(",");
 
-        final Set<Principal> principals = provider.getPrincipals(credentials);
+        final Set<Principal> principals = provider.getPrincipals(request);
 
         final Principal principal = principals.iterator().next();
 

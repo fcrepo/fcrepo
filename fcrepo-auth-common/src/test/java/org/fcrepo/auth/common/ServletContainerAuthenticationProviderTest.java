@@ -156,7 +156,7 @@ public class ServletContainerAuthenticationProviderTest {
 
         when(principal.getName()).thenReturn("adminName");
 
-        when(delegateProvider.getDelegate(creds)).thenReturn(delegatePrincipal);
+        when(delegateProvider.getDelegate(request)).thenReturn(delegatePrincipal);
         when(delegatePrincipal.getName()).thenReturn("delegatedUserName");
 
         final ExecutionContext result =
@@ -177,11 +177,11 @@ public class ServletContainerAuthenticationProviderTest {
 
         when(principal.getName()).thenReturn("userName");
 
-        when(delegateProvider.getDelegate(creds)).thenReturn(delegatePrincipal);
+        when(delegateProvider.getDelegate(request)).thenReturn(delegatePrincipal);
         when(delegatePrincipal.getName()).thenReturn("delegatedUserName");
 
         // delegateProvider being HeaderProvider returns the header content in getPrincipals regardless of logged user
-        when(delegateProvider.getPrincipals(creds)).thenReturn(Sets.newHashSet(delegatePrincipal));
+        when(delegateProvider.getPrincipals(request)).thenReturn(Sets.newHashSet(delegatePrincipal));
 
 
         final ExecutionContext result =
@@ -265,7 +265,7 @@ public class ServletContainerAuthenticationProviderTest {
         final Principal groupPrincipal = mock(Principal.class);
         groupPrincipals.add(groupPrincipal);
         final HttpHeaderPrincipalProvider principalProvider = mock(HttpHeaderPrincipalProvider.class);
-        when(principalProvider.getPrincipals(any(Credentials.class))).thenReturn(groupPrincipals);
+        when(principalProvider.getPrincipals(any(HttpServletRequest.class))).thenReturn(groupPrincipals);
 
         final Set<PrincipalProvider> providers = new HashSet<>();
         providers.add(principalProvider);
