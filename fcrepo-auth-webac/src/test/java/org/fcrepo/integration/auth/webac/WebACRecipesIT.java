@@ -540,7 +540,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
     }
 
     @Test
-    @Ignore("Until WebACAuthorizingRealm is complete: https://jira.duraspace.org/browse/FCREPO-2760")
+    @Ignore("needs principal providers config: https://jira.duraspace.org/browse/FCREPO-2778")
     public void testDelegatedUserAccess() throws IOException {
         logger.debug("testing delegated authentication");
         final String targetPath = "/rest/foo";
@@ -622,7 +622,6 @@ public class WebACRecipesIT extends AbstractResourceIT {
     }
 
     @Test
-    @Ignore("Until WebACAuthorizingRealm is complete: https://jira.duraspace.org/browse/FCREPO-2760")
     public void testAgentAsUri() throws IOException {
         final String id = "/rest/" + getRandomUniqueId();
         final String testObj = ingestObj(id);
@@ -683,7 +682,6 @@ public class WebACRecipesIT extends AbstractResourceIT {
     }
 
     @Test
-    @Ignore("Until WebACAuthorizingRealm is complete: https://jira.duraspace.org/browse/FCREPO-2760")
     public void testInvalidAccessControlLink() throws IOException {
         final String id = "/rest/" + getRandomUniqueId();
         ingestObj(id);
@@ -702,7 +700,6 @@ public class WebACRecipesIT extends AbstractResourceIT {
     }
 
     @Test
-    @Ignore("Until WebACAuthorizingRealm is complete: https://jira.duraspace.org/browse/FCREPO-2760")
     public void testRegisterNamespace() throws IOException {
         final String testObj = ingestObj("/rest/test_namespace");
         final String acl1 = ingestAcl("fedoraAdmin", "/acls/13/acl.ttl", "/acls/13/authorization.ttl");
@@ -720,7 +717,6 @@ public class WebACRecipesIT extends AbstractResourceIT {
     }
 
     @Test
-    @Ignore("Until WebACAuthorizingRealm is complete: https://jira.duraspace.org/browse/FCREPO-2760")
     public void testRegisterNodeType() throws IOException {
         final String testObj = ingestObj("/rest/test_nodetype");
         final String acl1 = ingestAcl("fedoraAdmin", "/acls/14/acl.ttl", "/acls/14/authorization.ttl");
@@ -740,7 +736,6 @@ public class WebACRecipesIT extends AbstractResourceIT {
 
 
     @Test
-    @Ignore("Until WebACAuthorizingRealm is complete: https://jira.duraspace.org/browse/FCREPO-2760")
     public void testDeletePropertyAsUser() throws IOException {
         final String testObj = ingestObj("/rest/test_delete");
         final String acl1 = ingestAcl("fedoraAdmin", "/acls/15/acl.ttl", "/acls/15/authorization.ttl");
