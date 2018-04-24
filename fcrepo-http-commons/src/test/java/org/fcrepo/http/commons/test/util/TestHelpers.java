@@ -66,7 +66,7 @@ import org.apache.jena.riot.Lang;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.FedoraBinary;
-import org.fcrepo.kernel.api.services.functions.HierarchicalIdentifierSupplier;
+import org.fcrepo.kernel.api.services.functions.ConfigurableHierarchicalSupplier;
 
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -212,7 +212,7 @@ public abstract class TestHelpers {
         when(mockWorkspace.getName()).thenReturn("default");
 
         setField(testObj, "uriInfo", getUriInfoImpl());
-        setField(testObj, "pidMinter", new PathMinterImpl());
+        setField(testObj, "pidMinter", new ConfigurableHierarchicalSupplier());
         return mockSession;
 
     }
@@ -323,6 +323,4 @@ public abstract class TestHelpers {
         }
         return findField(clazz.getSuperclass(), name);
     }
-
-    private static class PathMinterImpl implements HierarchicalIdentifierSupplier { }
 }
