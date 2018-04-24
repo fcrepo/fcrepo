@@ -196,7 +196,7 @@ public class UrlBinaryIT extends AbstractIT {
         session.commit();
 
         final FedoraBinary ds = binaryService.findOrCreate(session, dsId);
-        final Collection<URI> fixityResults = ds.checkFixity(idTranslator, singletonList("SHA-1"));
+        final Collection<URI> fixityResults = ds.checkFixity(idTranslator, singletonList("SHA"));
 
         assertNotEquals(0, fixityResults.size());
 
