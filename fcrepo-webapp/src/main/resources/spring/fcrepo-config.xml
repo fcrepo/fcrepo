@@ -96,6 +96,60 @@
       <property name="principalProviders" ref="principalProviderSet"/>
     </bean>
 
+    <!-- Shiro Auth Confiuration -->
+    <!-- Define the Shiro Realm implementation you want to use to connect to your back-end -->
+    <!-- WebAC Authorization Realm -->
+    <bean id="webACAuthorizingRealm" class="org.fcrepo.auth.webac.WebACAuthorizingRealm" />
+
+    <!-- Servlet Container Authentication Realm -->
+    <bean id="servletContainerAuthenticatingRealm" class="org.fcrepo.auth.common.ServletContainerAuthenticatingRealm" />
+
+    <!-- Secutiry Manager  -->
+    <bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+      <!-- Single realm app.  If you have multiple realms, use the 'realms' property instead. -->
+      <property name="realms">
+        <util:set set-class="java.util.HashSet">
+          <ref bean="webACAuthorizingRealm"/>
+          <ref bean="servletContainerAuthenticatingRealm"/>
+        </util:set>
+      </property>
+      <!-- By default the servlet container sessions will be used.  Uncomment this line
+          to use shiro's native sessions (see the JavaDoc for more): -->
+      <!-- <property name="sessionMode" value="native"/> -->
+    </bean>
+
+    <!-- Post processor that automatically invokes init() and destroy() methods -->
+    <bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor"/>
+
+    <!-- Authentication Filter -->
+    <bean id="servletContainerAuthFilter" class="org.fcrepo.auth.common.ServletContainerAuthFilter"/>
+
+    <!-- Principal Provider Filters -->
+    <bean id="httpHeaderPrincipalProvider" class="org.fcrepo.auth.common.HttpHeaderPrincipalProvider"/>
+    <bean id="delegateHeaderPrincipalProvider" class="org.fcrepo.auth.common.DelegateHeaderPrincipalProvider"/>
+    <bean id="containerRolesPrincipalProvider" class="org.fcrepo.auth.common.ContainerRolesPrincipalProvider"/>
+
+    <!-- Authorization Filter -->
+    <bean id="webACFilter" class="org.fcrepo.auth.webac.WebACFilter"/>
+
+    <bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+      <property name="securityManager" ref="securityManager"/>
+      <property name="filters">
+        <util:map>
+          <entry key="containerAuthn" value-ref="servletContainerAuthFilter"/>
+          <entry key="headerPrincipal" value-ref="httpHeaderPrincipalProvider"/>
+          <entry key="delegatePrincipal" value-ref="delegateHeaderPrincipalProvider"/>
+          <entry key="rolePrincipal" value-ref="containerRolesPrincipalProvider"/>
+          <entry key="webac" value-ref="webACFilter"/>
+        </util:map>
+      </property>
+      <property name="filterChainDefinitions">
+        <value>
+          /** = containerAuthn,headerPrincipal,delegatePrincipal,rolePrincipal,webac
+        </value>
+      </property>
+    </bean>
+
     <!-- **************************
             END Authentication
          ************************** -->
