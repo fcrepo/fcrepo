@@ -279,7 +279,6 @@ public class HttpResourceConverterTest {
     public void testDoForwardWithBinaryDescriptionTimemap() throws Exception {
         final Resource resource = createResource("http://localhost:8080/some/binary/fcr:metadata/fcr:versions");
         when(node.isNodeType(FEDORA_NON_RDF_SOURCE_DESCRIPTION)).thenReturn(true);
-        // when(node.getNode(JCR_CONTENT)).thenReturn(contentNode);
         when(session.getNode("/binary/fedora:description")).thenReturn(node);
 
         when(session.getNode("/binary/fedora:description/fedora:timemap")).thenReturn(timeMapNode);

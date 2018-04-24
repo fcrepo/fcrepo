@@ -30,7 +30,7 @@ import org.apache.jena.graph.Triple;
 public class SubjectMappingUtil {
 
     private SubjectMappingUtil() {
-
+        // Empty constructor for static utility class
     }
 
     /**
