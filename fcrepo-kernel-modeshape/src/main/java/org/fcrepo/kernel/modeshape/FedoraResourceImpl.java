@@ -117,6 +117,7 @@ import org.fcrepo.kernel.api.exception.InteractionModelViolationException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.utils.GraphDifferencer;
 import org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper;
@@ -498,7 +499,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         final Node aclNode;
         try {
             final Node parentNode;
-            if (this instanceof FedoraBinary) {
+            if (this instanceof NonRdfSourceDescription) {
                 parentNode = getNode().getParent();
             } else {
                 parentNode = getNode();
