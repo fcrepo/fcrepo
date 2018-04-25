@@ -37,10 +37,10 @@ import org.fcrepo.kernel.modeshape.utils.impl.CacheEntryFactory;
 import org.fcrepo.metrics.RegistryService;
 import org.modeshape.jcr.api.Binary;
 import org.modeshape.jcr.api.ValueFactory;
-import org.fcrepo.kernel.api.utils.MessageExternalBodyContentType;
 import org.slf4j.Logger;
 
 import javax.jcr.Node;
+import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
 
@@ -57,7 +57,6 @@ import java.util.stream.Collectors;
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDstring;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_DESCRIPTION;
 import static org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM.SHA1;
-import static org.fcrepo.kernel.api.utils.MessageExternalBodyContentType.isExternalBodyType;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FIELD_DELIMITER;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFedoraBinary;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -264,7 +263,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
         try {
             getNode().setProperty(PROXY_FOR, url);
             getNode().setProperty(REDIRECTS_TO, (Value)null);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RepositoryRuntimeException(e);
         }
     }
@@ -294,7 +293,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
         try {
             getNode().setProperty(REDIRECTS_TO, url);
             getNode().setProperty(PROXY_FOR, (Value)null);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RepositoryRuntimeException(e);
         }
     }

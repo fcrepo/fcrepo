@@ -73,18 +73,6 @@ public class InternalFedoraBinary extends AbstractFedoraBinary {
      */
     public InternalFedoraBinary(final Node node) {
         super(node);
-
-        if (node.isNew()) {
-            initializeNewBinaryProperties();
-        }
-    }
-
-    private void initializeNewBinaryProperties() {
-        try {
-            decorateContentNode(node, new HashSet<>());
-        } catch (final RepositoryException e) {
-            LOGGER.warn("Count not decorate {} with FedoraBinary properties: {}", node, e);
-        }
     }
 
     /*
@@ -127,21 +115,18 @@ public class InternalFedoraBinary extends AbstractFedoraBinary {
             throws InvalidChecksumException {
 
         try {
-            final Node contentNode = getNode();
+            final Node descNode = getDescriptionNode();
+            final Node dsNode = getNode();
 
-            if (contentNode.canAddMixin(FEDORA_BINARY)) {
-                contentNode.addMixin(FEDORA_BINARY);
-            }
-
-            if (contentType != null) {
-                contentNode.setProperty(HAS_MIME_TYPE, contentType);
+            if (descNode != null) {
+                descNode.setProperty(HAS_MIME_TYPE, contentType);
             }
 
             if (originalFileName != null) {
-                contentNode.setProperty(FILENAME, originalFileName);
+                descNode.setProperty(FILENAME, originalFileName);
             }
 
-            LOGGER.debug("Created content node at path: {}", contentNode.getPath());
+            LOGGER.debug("Created content node at path: {}", dsNode.getPath());
 
             String hint = null;
 
@@ -153,30 +138,25 @@ public class InternalFedoraBinary extends AbstractFedoraBinary {
             final Binary binary = modevf.createBinary(content, hint);
 
             /*
-             * This next line of code deserves explanation. If we chose for the
-             * simpler line: Property dataProperty =
-             * contentNode.setProperty(JCR_DATA, requestBodyStream); then the JCR
-             * would not block on the stream's completion, and we would return to
-             * the requester before the mutation to the repo had actually completed.
-             * So instead we use createBinary(requestBodyStream), because its
-             * contract specifies: "The passed InputStream is closed before this
-             * method returns either normally or because of an exception." which
-             * lets us block and not return until the job is done! The simpler code
-             * may still be useful to us for an asynchronous method that we develop
-             * later.
+             * This next line of code deserves explanation. If we chose for the simpler line: Property dataProperty =
+             * contentNode.setProperty(JCR_DATA, requestBodyStream); then the JCR would not block on the stream's
+             * completion, and we would return to the requester before the mutation to the repo had actually completed.
+             * So instead we use createBinary(requestBodyStream), because its contract specifies: "The passed
+             * InputStream is closed before this method returns either normally or because of an exception." which lets
+             * us block and not return until the job is done! The simpler code may still be useful to us for an
+             * asynchronous method that we develop later.
              */
-            final Property dataProperty = contentNode.setProperty(JCR_DATA, binary);
+            final Property dataProperty = dsNode.setProperty(JCR_DATA, binary);
 
             // Ensure provided checksums are valid
             final Collection<URI> nonNullChecksums = (null == checksums) ? new HashSet<>() : checksums;
             verifyChecksums(nonNullChecksums, dataProperty);
 
-            decorateContentNode(contentNode, nonNullChecksums);
-            FedoraTypesUtils.touch(getNode());
-            FedoraTypesUtils.touch(((FedoraResourceImpl) getDescription()).getNode());
+            decorateContentNode(dsNode, descNode, nonNullChecksums);
+            FedoraTypesUtils.touch(dsNode);
+            FedoraTypesUtils.touch(descNode);
 
             LOGGER.debug("Created data property at path: {}", dataProperty.getPath());
-
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -290,18 +270,15 @@ public class InternalFedoraBinary extends AbstractFedoraBinary {
         }
     }
 
-    private static void decorateContentNode(final Node contentNode, final Collection<URI> checksums)
-            throws RepositoryException {
-        if (contentNode == null) {
+    private static void decorateContentNode(final Node dsNode, final Node descNode, final Collection<URI> checksums)
+        throws RepositoryException {
+        if (dsNode == null) {
             LOGGER.warn("{} node appears to be null!", JCR_CONTENT);
             return;
         }
-        if (contentNode.canAddMixin(FEDORA_BINARY)) {
-            contentNode.addMixin(FEDORA_BINARY);
-        }
 
-        if (contentNode.hasProperty(JCR_DATA)) {
-            final Property dataProperty = contentNode.getProperty(JCR_DATA);
+        if (dsNode.hasProperty(JCR_DATA)) {
+            final Property dataProperty = dsNode.getProperty(JCR_DATA);
             final Binary binary = (Binary) dataProperty.getBinary();
             final String dsChecksum = binary.getHexHash();
 
@@ -312,10 +289,11 @@ public class InternalFedoraBinary extends AbstractFedoraBinary {
             final String[] checksumArray = new String[checksums.size()];
             checksums.stream().map(Object::toString).collect(Collectors.toSet()).toArray(checksumArray);
 
-            contentNode.setProperty(CONTENT_DIGEST, checksumArray);
-            contentNode.setProperty(CONTENT_SIZE, dataProperty.getLength());
+            descNode.setProperty(CONTENT_DIGEST, checksumArray);
+            descNode.setProperty(CONTENT_SIZE, dataProperty.getLength());
 
             LOGGER.debug("Decorated data property at path: {}", dataProperty.getPath());
-        }
     }
+}
+
 }

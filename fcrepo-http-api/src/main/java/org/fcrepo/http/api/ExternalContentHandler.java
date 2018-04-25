@@ -39,11 +39,11 @@ public class ExternalContentHandler {
     public final static String REDIRECT = "redirect";
     public final static String CONTENT_TYPE = "type";
 
-    private String originalLinkHeader;
-    private String url;
-    private String handling;
-    private String type;
-    private MediaType contentType;
+    private final String originalLinkHeader;
+    private final String url;
+    private final String handling;
+    private final String type;
+    private final MediaType contentType;
 
     /* link should look like this:
           Link: <http://example.org/some/content>;
@@ -53,7 +53,7 @@ public class ExternalContentHandler {
     */
 
     public ExternalContentHandler(final String linkHeader) {
-        Map<String, String> map = parseLinkHeader(linkHeader)
+        final Map<String, String> map = parseLinkHeader(linkHeader);
 
         // if it gets past that, good, parse it
         verifyRequestForExternalBody(map);
@@ -64,18 +64,20 @@ public class ExternalContentHandler {
         contentType = type != null ? MediaType.valueOf(type) : findContentType(url);
     }
 
-    private MediaType findContentType(String url) {
-        if (url == null) return null;
+    private MediaType findContentType(final String url) {
+        if (url == null) {
+            return null;
+        }
 
         if (url.startsWith("file")) {
             return APPLICATION_OCTET_STREAM_TYPE;
         } else if (url.startsWith("http")) {
             try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-                HttpHead httpHead = new HttpHead(url);
+                final HttpHead httpHead = new HttpHead(url);
                 try (CloseableHttpResponse response = httpClient.execute(httpHead)) {
                     if (response.getStatusLine().getStatusCode() == SC_OK) {
                         LOGGER.debug("findContentType got {} status", response.getStatusLine().getStatusCode());
-                        String contentType = response.getFirstHeader("Content-Type").getValue();
+                        final String contentType = response.getFirstHeader("Content-Type").getValue();
                         if (contentType != null) {
                             LOGGER.debug("findContentType got {} mediaType", contentType);
                             return MediaType.valueOf(contentType);
@@ -83,7 +85,7 @@ public class ExternalContentHandler {
                     }
 
                 }
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 throw new ExternalMessageBodyException("Failed to get remote content type for external message");
             }
         }
@@ -145,10 +147,8 @@ public class ExternalContentHandler {
             } else if (url.startsWith("http")) {
                 return new URL(url).openStream();
             }
-        } else {
-            return null;
         }
-
+        return null;
     }
 
     /**
@@ -156,11 +156,11 @@ public class ExternalContentHandler {
      * @param parsedHeader
      * @throws ExternalMessageBodyException
      */
-    private void verifyRequestForExternalBody(Map<String,String> parsedHeader) throws ExternalMessageBodyException {
+    private void verifyRequestForExternalBody(final Map<String,String> parsedHeader) throws ExternalMessageBodyException {
 
         try {
-            URL url = new URL(parsedHeader.get("url"));
-        } catch (MalformedURLException e) {
+            final URL url = new URL(parsedHeader.get("url"));
+        } catch (final MalformedURLException e) {
             throw new ExternalMessageBodyException("External content link header url is malformed");
         }
 
@@ -183,7 +183,7 @@ public class ExternalContentHandler {
     }
 
     private Map<String, String> parseLinkHeader(final String link) throws ExternalMessageBodyException {
-        List<String> list = Splitter.on(';').trimResults().omitEmptyStrings().splitToList(link);
+        final List<String> list = Splitter.on(';').trimResults().omitEmptyStrings().splitToList(link);
 
         final String url = list.get(0).trim().toLowerCase();
         if (url.isEmpty() || !url.startsWith("http") || !url.startsWith("file")) {

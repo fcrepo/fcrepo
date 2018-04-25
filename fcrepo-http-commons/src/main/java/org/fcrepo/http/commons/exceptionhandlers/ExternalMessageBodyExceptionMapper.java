@@ -28,14 +28,15 @@ import javax.servlet.ServletContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
 /**
  * Created by bseeger on 4/18/18.
  */
 @Provider
-public class ExternalMessageBodyExceptionMapper extends
-        ConstraintExceptionMapper<ExternalMessageBodyException> implements ExceptionDebugLogging {
+public class ExternalMessageBodyExceptionMapper implements
+    ExceptionMapper<ExternalMessageBodyException>, ExceptionDebugLogging {
 
     private static final Logger LOGGER = getLogger(ExternalMessageBodyExceptionMapper.class);
 

@@ -37,10 +37,6 @@ import static javax.ws.rs.core.Response.Status.FOUND;
 import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
-import static javax.ws.rs.core.Response.noContent;
-import static javax.ws.rs.core.Response.notAcceptable;
-import static javax.ws.rs.core.Response.ok;
-import static javax.ws.rs.core.Response.status;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.jena.atlas.web.ContentType.create;
@@ -125,6 +121,7 @@ import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
+import org.fcrepo.kernel.api.exception.ExternalMessageBodyException;
 import org.fcrepo.kernel.api.exception.InsufficientStorageException;
 import org.fcrepo.kernel.api.exception.InteractionModelViolationException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
@@ -224,7 +221,7 @@ public class FedoraLdp extends ContentExposingResource {
             if (((FedoraBinary)resource()).isRedirect()) {
                 try {
                     builder = temporaryRedirect(new URI(((FedoraBinary) resource()).getRedirectURL()));
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     throw new ExternalMessageBodyException("Redirect URL Failed for " + externalPath  + " : " +
                             ((FedoraBinary)resource).getRedirectURL());
                 }
@@ -425,16 +422,6 @@ public class FedoraLdp extends ContentExposingResource {
         }
 
         final String interactionModel = checkInteractionModel(links);
-
-        final String extContentLinkHeader = ExternalContent.findExternalLink(links);
-        if (extContentLinkHeader != null) {
-            ExternalContent.verifyRequestForExternalBody(extContentLinkHeader);
-        }
-
-        final URI resourceAcl = checkForAclLink(links);
-        if (resourceAcl != null) {
-            checkAclUriExistsAndHasCorrectType(resourceAcl);
-        }
 
         final FedoraResource resource;
 
@@ -750,8 +737,7 @@ public class FedoraLdp extends ContentExposingResource {
                         }
 
                         replaceResourceBinaryWithStream((FedoraBinary) resource,
-                                stream, contentDisposition, requestContentType, checksum,
-                                extContent.isProxy(), extContent.isRedirect());
+                            stream, contentDisposition, requestContentType, checksum);
 
                     } else if (contentTypeString.equals(contentTypeSPARQLUpdate)) {
                         LOGGER.trace("Found SPARQL-Update content, applying..");
@@ -926,7 +912,7 @@ public class FedoraLdp extends ContentExposingResource {
     }
 
     private FedoraResource createFedoraResource(final String path, final String interactionModel,
-            final MediaType contentType, final boolean contentPresent, ExternalContentHandler extContent) {
+            final MediaType contentType, final boolean contentPresent, final ExternalContentHandler extContent) {
 
         final MediaType simpleContentType = contentPresent ? getSimpleContentType(contentType) : null;
 

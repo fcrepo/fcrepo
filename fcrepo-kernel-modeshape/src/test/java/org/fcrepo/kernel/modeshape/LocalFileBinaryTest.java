@@ -23,6 +23,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTIO
 import static org.fcrepo.kernel.api.FedoraTypes.FILENAME;
 import static org.fcrepo.kernel.api.FedoraTypes.HAS_MIME_TYPE;
 import static org.fcrepo.kernel.api.FedoraTypes.PROXY_FOR;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_DESCRIPTION;
 import static org.fcrepo.kernel.modeshape.utils.TestHelpers.checksumString;
 import static org.fcrepo.kernel.modeshape.utils.TestHelpers.getContentNodeMock;
 import static org.junit.Assert.assertEquals;
@@ -72,7 +73,7 @@ public class LocalFileBinaryTest {
     private Session mockSession;
 
     @Mock
-    private Node mockDsNode, mockContent, mockParentNode;
+    private Node mockDescNode, mockContent, mockParentNode;
 
     @Mock
     private NodeType mockDsNodeType;
@@ -124,19 +125,24 @@ public class LocalFileBinaryTest {
 
         final NodeType[] nodeTypes = new NodeType[] { mockDsNodeType };
         when(mockDsNodeType.getName()).thenReturn(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
-        when(mockDsNode.getMixinNodeTypes()).thenReturn(nodeTypes);
-        when(mockDsNode.getName()).thenReturn(DS_ID);
+        when(mockDescNode.getMixinNodeTypes()).thenReturn(nodeTypes);
+        when(mockDescNode.getParent()).thenReturn(mockContent);
         when(mockContent.getSession()).thenReturn(mockSession);
         when(mockContent.isNodeType(FEDORA_BINARY)).thenReturn(true);
         when(mockContent.getParent()).thenReturn(mockParentNode);
+        when(mockContent.getNode(FEDORA_DESCRIPTION)).thenReturn(mockDescNode);
+
+        final NodeType mockNodeType = mock(NodeType.class);
+        when(mockNodeType.getName()).thenReturn("nt:versionedFile");
+        when(mockContent.getPrimaryNodeType()).thenReturn(mockNodeType);
 
         testObj = new LocalFileBinary(mockContent);
     }
 
     @Test
     public void testGetContent() throws Exception {
-        getContentNodeMock(mockContent, EXPECTED_CONTENT);
-        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+        getContentNodeMock(mockContent, mockDescNode, EXPECTED_CONTENT);
+        when(mockDescNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
 
         final String actual = IOUtils.toString(testObj.getContent());
         assertEquals(EXPECTED_CONTENT, actual);
@@ -144,8 +150,8 @@ public class LocalFileBinaryTest {
 
     @Test
     public void setProxyInfo() throws Exception {
-        getContentNodeMock(mockContent, EXPECTED_CONTENT);
-        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+        getContentNodeMock(mockContent, mockDescNode, EXPECTED_CONTENT);
+        when(mockDescNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
 
         testObj.setProxyURL(contentFile.toURI().toString());
         verify(mockContent).setProperty(PROXY_FOR, contentFile.toURI().toString());
@@ -183,8 +189,8 @@ public class LocalFileBinaryTest {
 
     @Test
     public void getContentSize() throws Exception {
-        getContentNodeMock(mockContent, EXPECTED_CONTENT);
-        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+        getContentNodeMock(mockContent, mockDescNode, EXPECTED_CONTENT);
+        when(mockDescNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
 
         final long contentSize = testObj.getContentSize();
         assertEquals(12l, contentSize);
@@ -192,8 +198,8 @@ public class LocalFileBinaryTest {
 
     @Test
     public void getProxyInfo() throws Exception {
-        getContentNodeMock(mockContent, EXPECTED_CONTENT);
-        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+        getContentNodeMock(mockContent, mockDescNode, EXPECTED_CONTENT);
+        when(mockDescNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
 
         final String url = testObj.getProxyURL();
         assertEquals(contentFile.toURI().toString(), url);
@@ -210,7 +216,7 @@ public class LocalFileBinaryTest {
 
     @Test
     public void testGetMimeType() throws Exception {
-        getContentNodeMock(mockContent, EXPECTED_CONTENT);
+        getContentNodeMock(mockContent, mockDescNode, EXPECTED_CONTENT);
 
         final String mimeType = testObj.getMimeType();
         assertEquals("text/plain", mimeType);

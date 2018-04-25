@@ -23,6 +23,7 @@ import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;

@@ -95,7 +95,17 @@ public interface FedoraBinary extends FedoraResource {
     String getRedirectURL();
 
     /**
+     * Get URL as a URI
+     * 
+     * @return URI containung the object to redirect to.
+     */
+    default URI getRedirectURI() {
+        return URI.create(getRedirectURL());
+    }
+
+    /**
      * Set the URL that this is a redirect to
+     * 
      * @param url - the url of the resource this redirects to
      */
     void setRedirectURL(String url);

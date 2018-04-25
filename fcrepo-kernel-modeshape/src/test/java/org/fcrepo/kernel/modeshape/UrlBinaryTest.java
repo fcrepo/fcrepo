@@ -29,6 +29,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.FILENAME;
 import static org.fcrepo.kernel.api.FedoraTypes.HAS_MIME_TYPE;
 import static org.fcrepo.kernel.api.FedoraTypes.PROXY_FOR;
 import static org.fcrepo.kernel.api.FedoraTypes.REDIRECTS_TO;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_DESCRIPTION;
 import static org.fcrepo.kernel.modeshape.utils.TestHelpers.getContentNodeMock;
 import static org.fcrepo.kernel.modeshape.utils.TestHelpers.checksumString;
 import static org.junit.Assert.assertEquals;
@@ -101,16 +102,18 @@ public class UrlBinaryTest {
     private Value mockURIValue;
 
     @Mock
-    private Node mockDsNode, mockContent, mockParentNode;
+    private Node mockDescNode, mockContent, mockParentNode;
 
     @Mock
-    private NodeType mockDsNodeType;
+    private NodeType mockDescNodeType;
 
     @Mock
     private InputStream mockStream;
 
     @Before
     public void setUp() throws Exception {
+        final NodeType[] nodeTypes = new NodeType[] { mockDescNodeType };
+
         stubFor(get(urlEqualTo("/file.txt"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "text/plain")
@@ -119,11 +122,18 @@ public class UrlBinaryTest {
 
         mimeType = "text/plain";
 
-        when(mimeTypeProperty.getString()).thenReturn(mimeType);
-        when(mockValue.getString()).thenReturn(mimeType);
-        when(mimeTypeProperty.getValue()).thenReturn(mockValue);
-        when(mockContent.hasProperty(HAS_MIME_TYPE)).thenReturn(true);
-        when(mockContent.getProperty(HAS_MIME_TYPE)).thenReturn(mimeTypeProperty);
+        when(mockDescNodeType.getName()).thenReturn(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
+        when(mockDescNode.getMixinNodeTypes()).thenReturn(nodeTypes);
+        when(mockDescNode.getParent()).thenReturn(mockContent);
+        when(mockContent.getSession()).thenReturn(mockSession);
+        when(mockContent.isNodeType(FEDORA_BINARY)).thenReturn(true);
+        when(mockContent.getParent()).thenReturn(mockParentNode);
+        when(mockContent.getNode(FEDORA_DESCRIPTION)).thenReturn(mockDescNode);
+        when(mockDescNode.setProperty(anyString(), any(Binary.class))).thenReturn(mockProperty);
+
+        final NodeType mockNodeType = mock(NodeType.class);
+        when(mockNodeType.getName()).thenReturn("nt:versionedFile");
+        when(mockContent.getPrimaryNodeType()).thenReturn(mockNodeType);
 
         when(proxyURLProperty.getString()).thenReturn(fileUrl);
         when(proxyURLProperty.getValue()).thenReturn(mockURIValue);
@@ -138,16 +148,6 @@ public class UrlBinaryTest {
         when(redirectURLProperty.getName()).thenReturn(PROXY_FOR.toString());
         when(mockContent.hasProperty(REDIRECTS_TO)).thenReturn(true);
         when(mockContent.getProperty(REDIRECTS_TO)).thenReturn(redirectURLProperty);
-
-
-        final NodeType[] nodeTypes = new NodeType[] { mockDsNodeType };
-        when(mockDsNodeType.getName()).thenReturn(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
-        when(mockDsNode.getMixinNodeTypes()).thenReturn(nodeTypes);
-        when(mockDsNode.getName()).thenReturn(DS_ID);
-        when(mockContent.getSession()).thenReturn(mockSession);
-        when(mockContent.isNodeType(FEDORA_BINARY)).thenReturn(true);
-        when(mockContent.getParent()).thenReturn(mockParentNode);
-        when(mockContent.setProperty(anyString(), any(Binary.class))).thenReturn(mockProperty);
 
         testObj = new UrlBinary(mockContent);
     }
@@ -191,8 +191,8 @@ public class UrlBinaryTest {
 
     @Test
     public void testGetProxyURL() throws Exception {
-        getContentNodeMock(mockContent, EXPECTED_CONTENT);
-        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+        getContentNodeMock(mockContent, mockDescNode, EXPECTED_CONTENT);
+        when(mockDescNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
 
         final String url = testObj.getProxyURL();
         assertEquals(fileUrl, url);
@@ -200,8 +200,8 @@ public class UrlBinaryTest {
 
     @Test
     public void testSetProxyURL() throws Exception {
-        getContentNodeMock(mockContent, EXPECTED_CONTENT);
-        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+        getContentNodeMock(mockContent, mockDescNode, EXPECTED_CONTENT);
+        when(mockDescNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
 
         testObj.setProxyURL(fileUrl);
         verify(mockContent).setProperty(PROXY_FOR, fileUrl);
@@ -211,8 +211,8 @@ public class UrlBinaryTest {
 
     @Test
     public void testGetRedirectURL() throws Exception {
-        getContentNodeMock(mockContent, EXPECTED_CONTENT);
-        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+        getContentNodeMock(mockContent, mockDescNode, EXPECTED_CONTENT);
+        when(mockDescNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
 
         final String url = testObj.getRedirectURL();
         assertEquals(fileUrl, url);
@@ -220,8 +220,8 @@ public class UrlBinaryTest {
 
     @Test
     public void testSetRedirectURL() throws Exception {
-        getContentNodeMock(mockContent, EXPECTED_CONTENT);
-        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+        getContentNodeMock(mockContent, mockDescNode, EXPECTED_CONTENT);
+        when(mockDescNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
 
         testObj.setRedirectURL(fileUrl);
         verify(mockContent).setProperty(REDIRECTS_TO, fileUrl);
@@ -243,7 +243,7 @@ public class UrlBinaryTest {
 
     @Test
     public void testGetMimeType() throws Exception {
-        getContentNodeMock(mockContent, EXPECTED_CONTENT);
+        getContentNodeMock(mockContent, mockDescNode, EXPECTED_CONTENT);
 
         final String mimeType = testObj.getMimeType();
         assertEquals(mimeType, mimeType);

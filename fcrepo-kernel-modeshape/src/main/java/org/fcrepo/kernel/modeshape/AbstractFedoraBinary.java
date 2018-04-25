@@ -19,6 +19,7 @@ package org.fcrepo.kernel.modeshape;
 
 import static com.codahale.metrics.MetricRegistry.name;
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDstring;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_DESCRIPTION;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FIELD_DELIMITER;
 import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.property2values;
 
@@ -28,6 +29,7 @@ import java.net.URI;
 import java.util.Optional;
 
 import javax.jcr.Node;
+import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
 
@@ -74,8 +76,13 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
 
     @Override
     public FedoraResource getDescription() {
+        return new NonRdfSourceDescriptionImpl(getDescriptionNode());
+    }
+
+    @Override
+    protected Node getDescriptionNode() {
         try {
-            return new NonRdfSourceDescriptionImpl(getNode().getParent());
+            return getNode().getNode(FEDORA_DESCRIPTION);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -106,25 +113,24 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
     public URI getContentDigest() {
         try {
             // Determine which digest algorithm to use
-            final String algorithm = hasProperty(DEFAULT_DIGEST_ALGORITHM) ? property2values.apply(getProperty(
-                    DEFAULT_DIGEST_ALGORITHM)).findFirst().get().getString() : ContentDigest.DEFAULT_ALGORITHM;
+            final String algorithm = hasDescriptionProperty(DEFAULT_DIGEST_ALGORITHM) ? property2values.apply(
+                getDescriptionProperty(DEFAULT_DIGEST_ALGORITHM)).findFirst().get().getString()
+                : ContentDigest.DEFAULT_ALGORITHM;
             final String algorithmWithoutStringType = algorithm.replace(FIELD_DELIMITER + XSDstring.getURI(), "");
 
-            if (hasProperty(CONTENT_DIGEST)) {
+            if (hasDescriptionProperty(CONTENT_DIGEST)) {
                 // Select the stored digest that matches the digest algorithm
-                final Optional<Value> digestValue = property2values.apply(getProperty(CONTENT_DIGEST))
+                final Optional<Value> digestValue = property2values.apply(getDescriptionProperty(CONTENT_DIGEST))
                         .filter(digest -> {
-                            try {
-                                final URI digestUri = URI.create(digest.getString());
-                                return algorithmWithoutStringType.equalsIgnoreCase(
-                                        ContentDigest.getAlgorithm(digestUri));
+                        try {
+                            final URI digestUri = URI.create(digest.getString());
+                            return algorithmWithoutStringType.equalsIgnoreCase(ContentDigest.getAlgorithm(digestUri));
 
-                            } catch (final RepositoryException e) {
-                                LOGGER.warn(
-                                        "Exception thrown when getting digest property {}, {}", digest, e.getMessage());
-                                return false;
-                            }
-                        }).findFirst();
+                        } catch (final RepositoryException e) {
+                            LOGGER.warn("Exception thrown when getting digest property {}, {}", digest, e.getMessage());
+                            return false;
+                        }
+                    }).findFirst();
 
                 // Success, return the digest value
                 if (digestValue.isPresent()) {
@@ -186,7 +192,7 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
             LOGGER.info("Setting Property PROXY_FOR!");
             getNode().setProperty(PROXY_FOR, url);
             getNode().setProperty(REDIRECTS_TO, (Value)null);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RepositoryRuntimeException(e);
         }
     }
@@ -220,7 +226,7 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
             LOGGER.info("Setting Property REDIRECTS_TO!");
             getNode().setProperty(REDIRECTS_TO, url);
             getNode().setProperty(PROXY_FOR, (Value)null);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RepositoryRuntimeException(e);
         }
     }
@@ -289,5 +295,33 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
     public void disableVersioning() {
         super.disableVersioning();
         getDescription().disableVersioning();
+    }
+
+    /**
+     * Check of the property exists on the description of this binary.
+     *
+     * @param relPath - path to the property
+     * @return true if property exists.
+     */
+    protected boolean hasDescriptionProperty(final String relPath) {
+        try {
+            return getDescriptionNode().hasProperty(relPath);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    /**
+     * Return the description property for this binary.
+     *
+     * @param relPath - path to the property
+     * @return Property object
+     */
+    protected Property getDescriptionProperty(final String relPath) {
+        try {
+            return getDescriptionNode().getProperty(relPath);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
     }
 }

@@ -211,7 +211,7 @@ public class FedoraBinaryImplTest implements FedoraTypes {
     @Test
     public void getContentSize() throws RepositoryException {
         final int expectedContentLength = 2;
-        getContentNodeMock(mockContent, mockDescNode, expectedContentLength);
+        getContentNodeMock(mockContent, mockDescNode, "aa");
         when(mockDescNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         final long actual = testObj.getContentSize();
         verify(mockDescNode).getProperty(CONTENT_SIZE);

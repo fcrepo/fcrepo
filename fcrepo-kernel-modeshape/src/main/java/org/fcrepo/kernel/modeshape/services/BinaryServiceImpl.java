@@ -40,6 +40,7 @@ import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getContainingNo
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.touch;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.touchLdpMembershipResource;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**

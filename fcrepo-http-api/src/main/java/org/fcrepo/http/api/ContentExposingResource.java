@@ -17,16 +17,14 @@
  */
 package org.fcrepo.http.api;
 
-import static org.fcrepo.kernel.api.RdfLexicon.*;
-
-
+import static com.google.common.base.Strings.nullToEmpty;
+import static java.util.EnumSet.of;
 import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.empty;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_LOCATION;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
@@ -75,13 +73,9 @@ import static org.slf4j.LoggerFactory.getLogger;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
-import java.io.FileNotFoundException;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URL;
 import java.net.URISyntaxException;
 import java.text.MessageFormat;
 import java.time.Instant;
@@ -94,6 +88,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -126,7 +121,6 @@ import org.fcrepo.http.commons.domain.ldp.LdpPreferTag;
 import org.fcrepo.http.commons.responses.RangeRequestInputStream;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.http.commons.session.HttpSession;
-import org.fcrepo.kernel.api.exception.ExternalMessageBodyException;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.TripleCategory;
