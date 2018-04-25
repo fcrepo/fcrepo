@@ -17,14 +17,15 @@
  */
 package org.fcrepo.http.api;
 
+import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.ok;
-import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.fcrepo.http.commons.domain.RDFMediaType.APPLICATION_LINK_FORMAT;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2_WITH_CHARSET;
@@ -36,20 +37,17 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSE
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
-import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
-import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEMAP_TYPE;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.time.Instant;
-import java.time.format.DateTimeFormatter;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-
 import javax.jcr.ItemExistsException;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
@@ -63,12 +61,13 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Link;
+import javax.ws.rs.core.Link.Builder;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.jena.riot.Lang;
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.domain.ContentLocation;
@@ -178,7 +177,7 @@ public class FedoraVersioning extends ContentExposingResource {
             final Instant mementoInstant;
             try {
                 mementoInstant = (isBlank(datetimeHeader) ? Instant.now()
-                    : Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(datetimeHeader)));
+                    : Instant.from(RFC_1123_DATE_TIME.parse(datetimeHeader)));
             } catch (final DateTimeParseException e) {
                 throw new MementoDatetimeFormatException("Invalid memento date-time value. "
                         + "Please use RFC-1123 date-time format, such as 'Tue, 3 Jun 2008 11:05:30 GMT'", e);
@@ -238,7 +237,7 @@ public class FedoraVersioning extends ContentExposingResource {
     @HtmlTemplate(value = "fcr:versions")
     @Produces({ TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
         N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
-        TURTLE_X, TEXT_HTML_WITH_CHARSET, APPLICATION_LINK_FORMAT, "*/*" })
+        TURTLE_X, TEXT_HTML_WITH_CHARSET, APPLICATION_LINK_FORMAT })
     public Response getVersionList(@HeaderParam("Range") final String rangeValue,
         @HeaderParam("Accept") final String acceptValue) throws IOException, UnsupportedAccessTypeException {
         if (!resource().isVersioned()) {
@@ -249,34 +248,41 @@ public class FedoraVersioning extends ContentExposingResource {
 
         LOGGER.info("GET resource '{}'", externalPath);
 
-        final Link.Builder resourceLink = Link.fromUri(LDP_NAMESPACE + "Resource").rel("type");
-        servletResponse.addHeader(LINK, resourceLink.build().toString());
-        final Link.Builder rdfSourceLink = Link.fromUri(LDP_NAMESPACE + "RDFSource").rel("type");
-        servletResponse.addHeader(LINK, rdfSourceLink.build().toString());
-        servletResponse.addHeader(LINK, Link.fromUri(VERSIONING_TIMEMAP_TYPE).rel("type").build().toString());
-
-        servletResponse.addHeader("Vary-Post", MEMENTO_DATETIME_HEADER);
-        servletResponse.addHeader("Allow", "POST,HEAD,GET,OPTIONS");
+        addResourceHttpHeaders(theTimeMap);
 
         if (acceptValue != null && acceptValue.equalsIgnoreCase(APPLICATION_LINK_FORMAT)) {
             final URI parentUri = getUri(resource());
-            final List<Link> versionLinks = new ArrayList<Link>();
+            final List<Link> versionLinks = new ArrayList<>();
             versionLinks.add(Link.fromUri(parentUri).rel("original").build());
             versionLinks.add(Link.fromUri(parentUri).rel("timegate").build());
+            // So we don't collect the children twice, store them in an array.
+            final FedoraResource[] children = theTimeMap.getChildren().toArray(FedoraResource[]::new);
 
-            theTimeMap.getChildren().forEach(t -> {
-                // Add mementos later.
-                // https://jira.duraspace.org/browse/FCREPO-2617
+            Arrays.stream(children).forEach(t -> {
+                final URI childUri = getUri(t);
+                versionLinks.add(Link.fromUri(childUri).rel("memento")
+                                     .param("datetime",
+                                            RFC_1123_DATE_TIME.format(t.getMementoDatetime()
+                                                                       .atZone(ZoneOffset.UTC)))
+                                     .build());
             });
             // Based on the dates of the above mementos, add the range to the below link.
-            final Link timeMapLink =
-                Link.fromUri(parentUri + "/" + FCR_VERSIONS).rel("self").type(APPLICATION_LINK_FORMAT).build();
-            versionLinks.add(timeMapLink);
+            final Instant[] Mementos = Arrays.stream(children).map(FedoraResource::getMementoDatetime)
+                .sorted((a, b) -> a.compareTo(b))
+                .toArray(Instant[]::new);
+            final Builder linkBuilder =
+                Link.fromUri(parentUri + "/" + FCR_VERSIONS).rel("self").type(APPLICATION_LINK_FORMAT);
+            if (Mementos.length >= 2) {
+                // There are 2 or more Mementos so make a range.
+                linkBuilder.param("from", RFC_1123_DATE_TIME.format(Mementos[0].atOffset(ZoneOffset.UTC)));
+                linkBuilder.param("until",
+                    RFC_1123_DATE_TIME.format(Mementos[Mementos.length - 1].atOffset(ZoneOffset.UTC)));
+            }
+            versionLinks.add(linkBuilder.build());
             return ok(new LinkFormatStream(versionLinks.stream())).build();
         } else {
             final AcquiredLock readLock = lockManager.lockForRead(theTimeMap.getPath());
             try (final RdfStream rdfStream = new DefaultRdfStream(asNode(theTimeMap))) {
-                addResourceHttpHeaders(theTimeMap);
                 // Need to set the timemap as the resource for the below function.
                 setResource(theTimeMap);
                 return getContent(rangeValue, getChildrenLimit(), rdfStream);

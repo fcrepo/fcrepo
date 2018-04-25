@@ -23,8 +23,11 @@ import static com.jayway.awaitility.Awaitility.await;
 import static com.jayway.awaitility.Duration.ONE_HUNDRED_MILLISECONDS;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_DESCRIPTION;
+import static org.fcrepo.kernel.api.RdfLexicon.NT_LEAF_NODE;
 import static org.fcrepo.kernel.api.RdfLexicon.NT_VERSION_FILE;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_CREATION;
@@ -35,10 +38,7 @@ import static org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM.SHA1;
 import static org.fcrepo.kernel.api.utils.ContentDigest.asURI;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.junit.Assert.assertEquals;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
-import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
-
 import java.io.ByteArrayInputStream;
 import java.util.HashSet;
 import java.util.List;
@@ -57,6 +57,7 @@ import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.observer.EventType;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
+import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.ContainerService;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
@@ -96,6 +97,9 @@ public class SimpleObserverIT extends AbstractIT {
     @Inject
     private ContainerService containerService;
 
+    @Inject
+    private BinaryService binaryService;
+
     @Test
     public void testEventBusPublishing() throws RepositoryException {
 
@@ -125,14 +129,16 @@ public class SimpleObserverIT extends AbstractIT {
 
         final Node n = jcrTools.findOrCreateNode(se.getRootNode(), "/object3", NT_FOLDER, NT_VERSION_FILE);
         n.addMixin(FEDORA_RESOURCE);
+        n.addMixin(FEDORA_BINARY);
 
         final String content = "test content";
         final String checksum = "1eebdf4fdc9fc7bf283031b93f9aef3338de9052";
         ((ValueFactory) se.getValueFactory()).createBinary(new ByteArrayInputStream(content.getBytes()), null);
 
-        final Node contentNode = jcrTools.findOrCreateChild(n, JCR_CONTENT, NT_RESOURCE);
-        contentNode.addMixin(FEDORA_BINARY);
-        final FedoraBinary binary = new FedoraBinaryImpl(contentNode);
+        final Node descNode = jcrTools.findOrCreateChild(n, FEDORA_DESCRIPTION, NT_LEAF_NODE);
+        descNode.addMixin(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
+
+        final FedoraBinary binary = new FedoraBinaryImpl(n);
         binary.setContent( new ByteArrayInputStream(content.getBytes()), "text/plain",
                 new HashSet<>(asList(asURI(SHA1.algorithm, checksum))), "text.txt", null);
 

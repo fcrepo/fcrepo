@@ -152,7 +152,8 @@ public class FedoraLdpTest {
 
     private final String path = "/some/path";
     private final String binaryPath = "/some/binary/path";
-    private final String binaryDescriptionPath = "/some/other/path";
+
+    private final String binaryDescriptionPath = binaryPath + "/fedora:description";
     private final String containerConstraints = "http://localhost/static/constraints/ContainerConstraints.rdf";
     private final String nonRDFSourceConstraints = "http://localhost/static/constraints/NonRDFSourceConstraints.rdf";
     private FedoraLdp testObj;
@@ -256,6 +257,7 @@ public class FedoraLdpTest {
         when(mockBinary.getEtagValue()).thenReturn("");
         when(mockBinary.getPath()).thenReturn(binaryPath);
         when(mockBinary.getDescription()).thenReturn(mockNonRdfSourceDescription);
+        when(mockBinary.getDescribedResource()).thenReturn(mockBinary);
 
         when(mockHeaders.getHeaderString("user-agent")).thenReturn("Test UserAgent");
 
@@ -402,7 +404,7 @@ public class FedoraLdpTest {
     private void assertShouldContainLinkToBinaryDescription() {
         assertTrue("Should contain a link to the binary description",
                 mockResponse.getHeaders(LINK)
-                        .contains("<" + idTranslator.toDomain(binaryDescriptionPath + "/fcr:metadata")
+                        .contains("<" + idTranslator.toDomain(binaryPath + "/fcr:metadata")
                                 + ">; rel=\"describedby\""));
     }
 
@@ -423,7 +425,8 @@ public class FedoraLdpTest {
     private void assertShouldHaveAcceptExternalContentHandlingHeader() {
         assertTrue("Should have Accept-External-Content-Handling header",
                 mockResponse.containsHeader(FedoraLdp.ACCEPT_EXTERNAL_CONTENT));
-        assertEquals("Should support copy and redirect", "copy,redirect",
+
+        assertEquals("Should support copy, redirect, and proxy", "copy,redirect,proxy",
                 mockResponse.getHeader(FedoraLdp.ACCEPT_EXTERNAL_CONTENT));
     }
 

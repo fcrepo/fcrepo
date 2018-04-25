@@ -28,9 +28,8 @@ import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import java.util.stream.Stream;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.Container;
-import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
-
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Resource;
 
@@ -53,7 +52,7 @@ public class LdpRdfContext extends NodeRdfContext {
 
         final Stream.Builder<Triple> builder = Stream.builder();
 
-        if (resource instanceof FedoraBinary) {
+        if (resource instanceof NonRdfSourceDescription) {
             builder.accept(nonRdfSourceContext());
         } else {
             builder.accept(typeContext());

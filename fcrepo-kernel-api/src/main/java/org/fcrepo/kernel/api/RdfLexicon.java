@@ -172,6 +172,8 @@ public final class RdfLexicon {
         createProperty(LDP_NAMESPACE + "contains");
     public static final Property LDP_MEMBER =
             createProperty(LDP_NAMESPACE + "member");
+    public static final Resource RESOURCE =
+            createResource(LDP_NAMESPACE + "Resource");
     public static final Resource RDF_SOURCE =
             createResource(LDP_NAMESPACE + "RDFSource");
     public static final Resource NON_RDF_SOURCE =
@@ -286,6 +288,16 @@ public final class RdfLexicon {
      * fedora:binaryTimemap inside.
      */
     public static final String NT_VERSION_FILE = "nt:versionFile";
+
+    /**
+     * Fedora defined JCR node type which can have no children except optionally a timemap
+     */
+    public static final String NT_LEAF_NODE = "nt:leafNode";
+
+    /**
+     * Fedora defined node path for a binary description.
+     */
+    public static final String FEDORA_DESCRIPTION = "fedora:description";
 
     // VERSIONING
     /**

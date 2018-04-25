@@ -25,15 +25,17 @@ import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.MediaType.WILDCARD;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static javax.ws.rs.core.Response.Status.FORBIDDEN;
+import static javax.ws.rs.core.Response.Status.FOUND;
+import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.notAcceptable;
 import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.CONFLICT;
-import static javax.ws.rs.core.Response.Status.FORBIDDEN;
-import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
-import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.jena.atlas.web.ContentType.create;
@@ -62,8 +64,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODELS;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
-import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_NAMESPACE_VALUE;
-import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_WEBAC_ACL_VALUE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -71,16 +71,18 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLDecoder;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
-import javax.jcr.PathNotFoundException;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.Consumes;
@@ -102,6 +104,10 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilderException;
 import javax.ws.rs.core.Variant.VariantListBuilder;
 
+import com.codahale.metrics.annotation.Timed;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -114,12 +120,11 @@ import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
-import org.fcrepo.kernel.api.exception.ConstraintViolationException;
 import org.fcrepo.kernel.api.exception.InsufficientStorageException;
-import org.fcrepo.kernel.api.exception.InvalidACLException;
 import org.fcrepo.kernel.api.exception.InteractionModelViolationException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
+import org.fcrepo.kernel.api.exception.MementoDatetimeFormatException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
@@ -134,11 +139,6 @@ import org.fcrepo.kernel.api.utils.MessageExternalBodyContentType;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
-
-import com.codahale.metrics.annotation.Timed;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
 
 /**
  * @author cabeer
@@ -203,6 +203,11 @@ public class FedoraLdp extends ContentExposingResource {
     public Response head() throws UnsupportedAlgorithmException, UnsupportedAccessTypeException {
         LOGGER.info("HEAD for: {}", externalPath);
 
+        final String datetimeHeader = headers.getHeaderString(ACCEPT_DATETIME);
+        if (!isBlank(datetimeHeader) && resource().isVersioned()) {
+            return getMemento(datetimeHeader);
+        }
+
         checkCacheControlHeaders(request, servletResponse, resource(), session);
 
         addResourceHttpHeaders(resource());
@@ -264,6 +269,12 @@ public class FedoraLdp extends ContentExposingResource {
             TURTLE_X, TEXT_HTML_WITH_CHARSET})
     public Response getResource(@HeaderParam("Range") final String rangeValue)
             throws IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+
+        final String datetimeHeader = headers.getHeaderString(ACCEPT_DATETIME);
+        if (!isBlank(datetimeHeader) && resource().isVersioned()) {
+            return getMemento(datetimeHeader);
+        }
+
         checkCacheControlHeaders(request, servletResponse, resource(), session);
 
         LOGGER.info("GET resource '{}'", externalPath);
@@ -295,6 +306,32 @@ public class FedoraLdp extends ContentExposingResource {
             return getContent(rangeValue, getChildrenLimit(), rdfStream);
         } finally {
             readLock.release();
+        }
+    }
+
+    /**
+     * Return the location of a requested Memento.
+     *
+     * @param datetimeHeader The RFC datetime for the Memento.
+     * @return A 302 Found response or 404 if no mementos.
+     */
+    public Response getMemento(final String datetimeHeader) {
+        try {
+            final Instant mementoDatetime = Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(datetimeHeader));
+            final FedoraResource memento = resource().findMementoByDatetime(mementoDatetime);
+            final Response builder;
+            if (memento != null) {
+                builder =
+                    status(FOUND).header("Location", translator().reverse().convert(memento).toString()).build();
+            } else {
+                builder = status(NOT_FOUND).build();
+            }
+            addResourceHttpHeaders(resource());
+            setVaryAndPreferenceAppliedHeaders(servletResponse, prefer);
+            return builder;
+        } catch (final DateTimeParseException e) {
+            throw new MementoDatetimeFormatException("Invalid Accept-Datetime value. "
+                + "Please use RFC-1123 date-time format, such as 'Tue, 3 Jun 2008 11:05:30 GMT'", e);
         }
     }
 
@@ -338,7 +375,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @param requestBodyStream the request body stream
      * @param contentDisposition the content disposition value
      * @param ifMatch the if-match value
-     * @param links the link values
+     * @param rawLinks the raw link values
      * @param digest the digest header
      * @return 204
      * @throws InvalidChecksumException if invalid checksum exception occurred
@@ -353,12 +390,15 @@ public class FedoraLdp extends ContentExposingResource {
             @ContentLocation final InputStream requestBodyStream,
             @HeaderParam(CONTENT_DISPOSITION) final ContentDisposition contentDisposition,
             @HeaderParam("If-Match") final String ifMatch,
-            @HeaderParam(LINK) final List<String> links,
+            @HeaderParam(LINK) final List<String> rawLinks,
             @HeaderParam("Digest") final String digest)
             throws InvalidChecksumException, MalformedRdfException, UnsupportedAlgorithmException,
             UnsupportedAccessTypeException {
 
         hasRestrictedPath(externalPath);
+
+        final List<String> links = unpackLinks(rawLinks);
+
 
         if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
             addLinkAndOptionsHttpHeaders();
@@ -370,11 +410,6 @@ public class FedoraLdp extends ContentExposingResource {
 
         if (isExternalBody(requestContentType)) {
             checkMessageExternalBody(requestContentType);
-        }
-
-        final URI resourceAcl = checkForAclLink(links);
-        if (resourceAcl != null) {
-            checkAclUriExistsAndHasCorrectType(resourceAcl);
         }
 
         final FedoraResource resource;
@@ -444,8 +479,6 @@ public class FedoraLdp extends ContentExposingResource {
             ensureInteractionType(resource, interactionModel,
                     (requestBodyStream == null || requestContentType == null));
 
-            addResourceAcl(resourceAcl);
-
             session.commit();
             return createUpdateResponse(resource, created);
 
@@ -456,6 +489,23 @@ public class FedoraLdp extends ContentExposingResource {
 
     private void checkMessageExternalBody(final MediaType requestContentType) throws UnsupportedAccessTypeException {
         MessageExternalBodyContentType.parse(requestContentType.toString());
+    }
+
+    /**
+     * Multi-value Link header values parsed by the javax.ws.rs.core are not split out by the framework
+     * Therefore we must do this ourselves.
+     *
+     * @param rawLinks the list of unprocessed links
+     * @return List of strings containing one link value per string.
+     */
+    private List<String> unpackLinks(final List<String> rawLinks) {
+        if (rawLinks == null) {
+            return null;
+        }
+
+        return rawLinks.stream()
+                       .flatMap(x -> Arrays.asList(x.split(",")).stream())
+                       .collect(Collectors.toList());
     }
 
     /**
@@ -518,7 +568,7 @@ public class FedoraLdp extends ContentExposingResource {
             }
             session.commit();
 
-            addCacheControlHeaders(servletResponse, resource().getDescription(), session);
+            addCacheControlHeaders(servletResponse, resource(), session);
 
             return noContent().build();
         } catch (final IllegalArgumentException iae) {
@@ -550,7 +600,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @param requestContentType the request content type
      * @param slug the slug value
      * @param requestBodyStream the request body stream
-     * @param links the link values
+     * @param rawLinks the link values
      * @param digest the digest header
      * @return 201
      * @throws InvalidChecksumException if invalid checksum exception occurred
@@ -568,10 +618,12 @@ public class FedoraLdp extends ContentExposingResource {
                                  @HeaderParam(CONTENT_TYPE) final MediaType requestContentType,
                                  @HeaderParam("Slug") final String slug,
                                  @ContentLocation final InputStream requestBodyStream,
-                                 @HeaderParam(LINK) final List<String> links,
+                                 @HeaderParam(LINK) final List<String> rawLinks,
                                  @HeaderParam("Digest") final String digest)
             throws InvalidChecksumException, IOException, MalformedRdfException, UnsupportedAlgorithmException,
             UnsupportedAccessTypeException {
+
+        final List<String> links = unpackLinks(rawLinks);
 
         if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
             addLinkAndOptionsHttpHeaders();
@@ -583,11 +635,6 @@ public class FedoraLdp extends ContentExposingResource {
 
         if (isExternalBody(requestContentType)) {
             checkMessageExternalBody(requestContentType);
-        }
-
-        final URI resourceAcl = checkForAclLink(links);
-        if (resourceAcl != null) {
-            checkAclUriExistsAndHasCorrectType(resourceAcl);
         }
 
         if (!(resource() instanceof Container)) {
@@ -650,8 +697,6 @@ public class FedoraLdp extends ContentExposingResource {
                 ensureInteractionType(resource, interactionModel,
                         (requestBodyStream == null || requestContentType == null));
 
-                addResourceAcl(resourceAcl);
-
                 session.commit();
             } catch (final Exception e) {
                 checkForInsufficientStorageException(e, e);
@@ -661,85 +706,6 @@ public class FedoraLdp extends ContentExposingResource {
             return createUpdateResponse(resource, true);
         } finally {
             lock.release();
-        }
-    }
-
-    private void checkAclUriExistsAndHasCorrectType(final URI resourceAcl) {
-        FedoraResource aclResource = null;
-        try {
-
-            final String aclHost = resourceAcl.getHost();
-            final String serverHost = (headers.getHeaderString("X-Forwarded-Host") == null) ? this.uriInfo
-                    .getBaseUri().getHost() : headers.getHeaderString("X-Forwarded-Host");
-
-            if (!serverHost.equals(aclHost)) {
-                throw new InvalidACLException("Cross Domain ACLs are not allowed");
-            }
-
-            //extract external path
-            final String contextPath = this.uriInfo.getBaseUri().getPath();
-
-            final String path = !resourceAcl.getPath().startsWith(contextPath) ?
-                                    resourceAcl.getPath() :
-                                    resourceAcl.getPath().substring(contextPath.length());
-
-            aclResource = getResourceFromPath(path);
-            if (aclResource == null) {
-                throw new InvalidACLException("The ACL URI in the link header does not exist\n");
-            }
-        } catch (RepositoryRuntimeException e) {
-            if (e.getCause() instanceof PathNotFoundException) {
-                throw new InvalidACLException("The external path of the link header's ACL URI was not found\n");
-            } else {
-                throw e;
-            }
-        }
-       if (!aclResource.getTypes().contains(URI.create(FEDORA_WEBAC_ACL_VALUE))) {
-            throw new InvalidACLException(
-                    "The ACL URI in link header does not have the correct type, must have rdf:type of webac:Acl\n");
-       }
-    }
-
-    private void addResourceAcl(final URI resourceAcl) {
-        if (resourceAcl != null) {
-            final String sparql =
-                    "PREFIX acl: <" + WEBAC_NAMESPACE_VALUE + ">\n" +
-                    "INSERT { \n" +
-                    "<> acl:accessControl <" + resourceAcl.toString() + "> \n" +
-                    "} WHERE {}";
-            patchResourcewithSparql(resource(), sparql, getResourceTriples());
-        }
-    }
-
-    /**
-     * Returns the URI of rel=acl link if there is one in the list.
-     *
-     * @param links the links to be checked.
-     * @return The URI portion of acl link header or null if no rel=acl links are present.
-     * @throws ConstraintViolationException if any of the links are syntactically invalid, if there is more than
-     *                                      one link where rel='acl', or if the acl link is cross domain.
-     */
-    private URI checkForAclLink(final List<String> links) throws ConstraintViolationException {
-        if (links == null) {
-            return null;
-        }
-
-        try {
-            Link aclLink = null;
-            for (String linkStr : links) {
-                final Link link = Link.valueOf(linkStr);
-                if (link.getRel().equals("acl")) {
-                    //throw constraint exception if there is a more than one rel='acl' link
-                    if (aclLink != null) {
-                        throw new ConstraintViolationException(
-                            "You may specify only one rel=acl Link header in your request.");
-                    }
-                    aclLink = link;
-                }
-            }
-            return (aclLink != null) ? aclLink.getUri() : null;
-        } catch (Exception ex) {
-            throw new ConstraintViolationException(ex.getMessage());
         }
     }
 
@@ -832,7 +798,8 @@ public class FedoraLdp extends ContentExposingResource {
 
         } else if (resource() instanceof FedoraBinary) {
             options = "DELETE,HEAD,GET,PUT,OPTIONS";
-            servletResponse.addHeader(ACCEPT_EXTERNAL_CONTENT, "copy,redirect");
+
+            servletResponse.addHeader(ACCEPT_EXTERNAL_CONTENT, "copy,redirect,proxy");
 
         } else if (resource() instanceof NonRdfSourceDescription) {
             options = "HEAD,GET,DELETE,PUT,PATCH,OPTIONS";

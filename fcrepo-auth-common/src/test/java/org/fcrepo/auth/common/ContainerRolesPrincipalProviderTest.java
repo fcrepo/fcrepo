@@ -34,7 +34,6 @@ import org.fcrepo.auth.common.ContainerRolesPrincipalProvider.ContainerRolesPrin
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.modeshape.jcr.api.ServletCredentials;
 
 /**
  * Tests for {@link ContainerRolesPrincipalProvider}.
@@ -42,9 +41,6 @@ import org.modeshape.jcr.api.ServletCredentials;
  * @author Kevin S. Clarke
  */
 public class ContainerRolesPrincipalProviderTest {
-
-    @Mock
-    private ServletCredentials credentials;
 
     @Mock
     private HttpServletRequest request;
@@ -57,7 +53,6 @@ public class ContainerRolesPrincipalProviderTest {
     @Before
     public void setUp() {
         initMocks(this);
-        when(credentials.getRequest()).thenReturn(request);
         provider = new ContainerRolesPrincipalProvider();
     }
 
@@ -69,7 +64,7 @@ public class ContainerRolesPrincipalProviderTest {
         when(request.isUserInRole("a")).thenReturn(true);
         provider.setRoleNames(newHashSet("a"));
 
-        final Set<Principal> principals = provider.getPrincipals(credentials);
+        final Set<Principal> principals = provider.getPrincipals(request);
 
         assertEquals(1, principals.size());
         assertTrue("The principals should contain 'a'", principals.contains(new ContainerRolesPrincipal("a")));
@@ -84,7 +79,7 @@ public class ContainerRolesPrincipalProviderTest {
         when(request.isUserInRole("b")).thenReturn(true);
         provider.setRoleNames(newHashSet("a", "b"));
 
-        final Set<Principal> principals = provider.getPrincipals(credentials);
+        final Set<Principal> principals = provider.getPrincipals(request);
 
         assertEquals(2, principals.size());
         assertTrue("The principals should contain 'a'", principals.contains(new ContainerRolesPrincipal("a")));
@@ -100,7 +95,7 @@ public class ContainerRolesPrincipalProviderTest {
         when(request.isUserInRole("b")).thenReturn(true);
         provider.setRoleNames(newHashSet(" a", "b "));
 
-        final Set<Principal> principals = provider.getPrincipals(credentials);
+        final Set<Principal> principals = provider.getPrincipals(request);
 
         assertEquals(2, principals.size());
         assertTrue("The principals should contain 'a'", principals.contains(new ContainerRolesPrincipal("a")));
@@ -112,32 +107,31 @@ public class ContainerRolesPrincipalProviderTest {
      */
     @Test
     public void testNoConfigedRoleNames() {
-        final Set<Principal> principals = provider.getPrincipals(credentials);
+        final Set<Principal> principals = provider.getPrincipals(request);
         assertTrue("Empty set expected when no role names configured", principals.isEmpty());
     }
 
     /**
-     * Test for {@link ContainerRolesPrincipalProvider#getPrincipals(javax.jcr.Credentials)}.
+     * Test for {@link ContainerRolesPrincipalProvider#getPrincipals(javax.servlet.http.HttpServletRequest)}.
      */
     @Test
     public void testNoRequest() {
-        when(credentials.getRequest()).thenReturn(null);
         provider.setRoleNames(newHashSet("a"));
 
-        final Set<Principal> principals = provider.getPrincipals(credentials);
+        final Set<Principal> principals = provider.getPrincipals(null);
         assertTrue("Empty set expected when no request supplied", principals.isEmpty());
 
     }
 
     /**
-     * Test for {@link ContainerRolesPrincipalProvider#getPrincipals(javax.jcr.Credentials)}.
+     * Test for {@link ContainerRolesPrincipalProvider#getPrincipals(javax.servlet.http.HttpServletRequest)}.
      */
     @Test
     public void testPrincipalEqualsDifferentClass() {
         when(request.isUserInRole("a")).thenReturn(true);
         provider.setRoleNames(newHashSet("a"));
 
-        final Set<Principal> principals = provider.getPrincipals(credentials);
+        final Set<Principal> principals = provider.getPrincipals(request);
         final Principal principal = principals.iterator().next();
 
         assertNotEquals("Principals should not be equal if not the same class", principal, mock(Principal.class));

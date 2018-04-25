@@ -529,6 +529,40 @@ public class WebACRolesProviderTest {
     }
 
     @Test
+    public void acl17Test1() throws RepositoryException {
+        final String foafAgent = "http://xmlns.com/foaf/0.1/Agent";
+        final String accessTo = "/dark/archive/sunshine";
+        final String acl = "/acls/17";
+        final String auth1 = acl + "/auth_valid_foaf_agent.ttl";
+        final String auth2 = acl + "/auth_invalid_foaf_agent.ttl";
+
+        when(mockNodeService.find(mockSession, acl)).thenReturn(mockAclResource);
+        when(mockProperty.getString()).thenReturn(acl);
+        when(mockAclResource.getPath()).thenReturn(acl);
+        when(mockResource.getPath()).thenReturn(accessTo);
+        when(mockResource.getTriples(anyObject(), eq(PROPERTIES)))
+                .thenReturn(getResourceRdfStream(accessTo, acl));
+
+        when(mockAuthorizationResource1.getTypes()).thenReturn(Arrays.asList(WEBAC_AUTHORIZATION));
+        when(mockAuthorizationResource1.getPath()).thenReturn(auth1);
+        when(mockAuthorizationResource1.getTriples(anyObject(), eq(PROPERTIES)))
+                .thenReturn(getRdfStreamFromResource(auth1, TTL));
+
+        when(mockAuthorizationResource2.getTypes()).thenReturn(Arrays.asList(WEBAC_AUTHORIZATION));
+        when(mockAuthorizationResource2.getPath()).thenReturn(auth2);
+        when(mockAuthorizationResource2.getTriples(anyObject(), eq(PROPERTIES)))
+                .thenReturn(getRdfStreamFromResource(auth2, TTL));
+
+        when(mockAclResource.getChildren()).thenReturn(of(mockAuthorizationResource1, mockAuthorizationResource2));
+
+        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockNode, true);
+
+        assertEquals("There should be only one valid role", 1, roles.size());
+        assertEquals("The foafAgent should have exactly one valid mode", 1, roles.get(foafAgent).size());
+        assertTrue("The foafAgent should be able to write", roles.get(foafAgent).contains(WEBAC_MODE_WRITE_VALUE));
+    }
+
+    @Test
     public void noAclTest1() throws RepositoryException {
         final String agent1 = "http://xmlns.com/foaf/0.1/Agent";
 

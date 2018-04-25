@@ -47,6 +47,7 @@ import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.vocabulary.RDF.type;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
@@ -58,6 +59,8 @@ import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
+import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEMAP_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 import static org.fcrepo.kernel.api.RequiredRdfContext.EMBED_RESOURCES;
@@ -137,6 +140,8 @@ import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.FedoraTimeMap;
+import org.fcrepo.kernel.api.models.FedoraWebacAcl;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
@@ -164,6 +169,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             "Accept-Language");
 
     static final String INSUFFICIENT_SPACE_IDENTIFYING_MESSAGE = "No space left on device";
+
+    public static final String ACCEPT_DATETIME = "Accept-Datetime";
 
     @Context protected Request request;
     @Context protected HttpServletResponse servletResponse;
@@ -248,7 +255,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         final List<String> varyValues = new ArrayList<>(VARY_HEADERS);
 
         if (resource().isVersioned()) {
-            varyValues.add("Accept-Datetime");
+            varyValues.add(ACCEPT_DATETIME);
         }
 
         varyValues.stream().forEach(x -> servletResponse.addHeader("Vary", x));
@@ -284,10 +291,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * @return {@link RdfStream}
      */
     protected RdfStream getResourceTriples(final int limit) {
-        // use the thing described, not the description, for the subject of descriptive triples
-        if (resource() instanceof NonRdfSourceDescription) {
-            resource = resource().getDescribedResource();
-        }
         final PreferTag returnPreference;
 
         if (prefer != null && prefer.hasReturn()) {
@@ -304,7 +307,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             IS_MANAGED_TRIPLE.negate();
 
         final List<Stream<Triple>> streams = new ArrayList<>();
-
 
         if (returnPreference.getValue().equals("minimal")) {
             streams.add(getTriples(of(PROPERTIES, MINIMAL)).filter(tripleFilter));
@@ -452,7 +454,20 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         return resource;
     }
 
-    protected void addMementoDatetimeHeader(final FedoraResource resource) {
+    protected void addTimeMapHeader(final FedoraResource resource) {
+        if (resource instanceof FedoraTimeMap) {
+            final URI parentUri = getUri(resource());
+            servletResponse.addHeader(LINK, Link.fromUri(VERSIONING_TIMEMAP_TYPE).rel("type").build().toString());
+            servletResponse.addHeader(LINK, Link.fromUri(parentUri).rel("original").build().toString());
+            servletResponse.addHeader(LINK, Link.fromUri(parentUri).rel("timegate").build().toString());
+            servletResponse.addHeader(LINK, Link.fromUri(getUri(resource)).rel("timemap").build().toString());
+
+            servletResponse.addHeader("Vary-Post", MEMENTO_DATETIME_HEADER);
+            servletResponse.addHeader("Allow", "POST,HEAD,GET,OPTIONS,DELETE");
+        }
+    }
+
+    protected void addMementoHeaders(final FedoraResource resource) {
         if (resource.isMemento()) {
             final Instant mementoInstant = resource.getMementoDatetime();
             if (mementoInstant != null) {
@@ -460,6 +475,13 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                         .format(mementoInstant.atZone(ZoneOffset.UTC));
                 servletResponse.addHeader(MEMENTO_DATETIME_HEADER, mementoDatetime);
             }
+            servletResponse.addHeader(LINK, buildLink(MEMENTO_TYPE, "type"));
+        }
+    }
+
+    protected void addAclHeader(final FedoraResource resource) {
+        if (!(resource instanceof FedoraWebacAcl) && !resource.isMemento()) {
+            servletResponse.addHeader(LINK, buildLink(getUri(resource.getDescribedResource()) + "/" + FCR_ACL, "acl"));
         }
     }
 
@@ -473,42 +495,65 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             final Link link = Link.fromUri(uri).rel("describes").build();
             servletResponse.addHeader(LINK, link.toString());
         } else if (resource instanceof FedoraBinary) {
-            if (!resource.isMemento()) {
-                final URI uri = getUri(resource.getDescription());
-                final Link.Builder builder = Link.fromUri(uri).rel("describedby");
+            final URI uri = getUri(resource.getDescription());
+            final Link.Builder builder = Link.fromUri(uri).rel("describedby");
 
-                if (includeAnchor) {
-                    builder.param("anchor", getUri(resource).toString());
-                }
-                servletResponse.addHeader(LINK, builder.build().toString());
+            if (includeAnchor) {
+                builder.param("anchor", getUri(resource).toString());
             }
+            servletResponse.addHeader(LINK, builder.build().toString());
 
             final String path = context.getContextPath().equals("/") ? "" : context.getContextPath();
             final String constraintURI = uriInfo.getBaseUri().getScheme() + "://" +
                     uriInfo.getBaseUri().getAuthority() + path +
                     "/static/constraints/NonRDFSourceConstraints.rdf";
             servletResponse.addHeader(LINK,
-                    Link.fromUri(constraintURI).rel(CONSTRAINED_BY.getURI()).build().toString());
+                buildLink(constraintURI, CONSTRAINED_BY.getURI()));
         } else {
             final String path = context.getContextPath().equals("/") ? "" : context.getContextPath();
             final String constraintURI = uriInfo.getBaseUri().getScheme() + "://" +
                     uriInfo.getBaseUri().getAuthority() + path +
                     "/static/constraints/ContainerConstraints.rdf";
             servletResponse.addHeader(LINK,
-                    Link.fromUri(constraintURI).rel(CONSTRAINED_BY.getURI()).build().toString());
+                buildLink(constraintURI, CONSTRAINED_BY.getURI()));
         }
 
         if (resource.isVersioned()) {
-            final Link versionedResource = Link.fromUri(RdfLexicon.VERSIONED_RESOURCE.getURI()).rel("type").build();
-            servletResponse.addHeader(LINK, versionedResource.toString());
-            final Link mementoTimeGate = Link.fromUri(RdfLexicon.VERSIONING_TIMEGATE_TYPE).rel("type").build();
-            servletResponse.addHeader(LINK, mementoTimeGate.toString());
-            final Link timegate = Link.fromUri(getUri(resource.getDescribedResource())).rel("timegate").build();
-            servletResponse.addHeader(LINK, timegate.toString());
-            final Link timemap =
-                Link.fromUri(getUri(resource.getDescribedResource()) + "/" + FCR_VERSIONS).rel("timemap").build();
-            servletResponse.addHeader(LINK, timemap.toString());
+            servletResponse.addHeader(LINK, buildLink(RdfLexicon.VERSIONED_RESOURCE.getURI(), "type"));
+            servletResponse.addHeader(LINK, buildLink(RdfLexicon.VERSIONING_TIMEGATE_TYPE, "type"));
+            servletResponse.addHeader(LINK, buildLink(getUri(resource.getDescribedResource()), "original"));
+            servletResponse.addHeader(LINK, buildLink(getUri(resource.getDescribedResource()), "timegate"));
+            final String timemapUri = getUri(resource.getDescribedResource()) + "/" + FCR_VERSIONS;
+            servletResponse.addHeader(LINK, buildLink(timemapUri, "timemap"));
+        } else if (resource.isMemento()) {
+            final URI originalUri = getUri(resource.getDescribedResource().getContainer().getContainer());
+            final URI timemapUri = getUri(resource.getDescribedResource().getContainer());
+            servletResponse.addHeader(LINK, buildLink(originalUri, "timegate"));
+            servletResponse.addHeader(LINK, buildLink(originalUri, "original"));
+            servletResponse.addHeader(LINK, buildLink(timemapUri, "timemap"));
         }
+    }
+
+    /**
+     * Utility function for building a Link.
+     *
+     * @param linkUri String of URI for the link.
+     * @param relation the relation string.
+     * @return the string version of the link.
+     */
+    private static String buildLink(final String linkUri, final String relation) {
+        return buildLink(URI.create(linkUri), relation);
+    }
+
+    /**
+     * Utility function for building a Link.
+     *
+     * @param linkUri The URI for the link.
+     * @param relation the relation string.
+     * @return the string version of the link.
+     */
+    private static String buildLink(final URI linkUri, final String relation) {
+        return Link.fromUri(linkUri).rel(relation).build().toString();
     }
 
     /**
@@ -556,7 +601,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             httpHeaderInject.addHttpHeaderToResponseStream(servletResponse, uriInfo, resource());
         }
 
-        addMementoDatetimeHeader(resource);
+        addAclHeader(resource);
+
+        addTimeMapHeader(resource);
+        addMementoHeaders(resource);
     }
 
     /**
@@ -607,12 +655,12 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         // See note about this code in the javadoc above.
         if (resource instanceof FedoraBinary) {
             // Use a strong ETag for LDP-NR
-            etag = new EntityTag(resource.getDescription().getEtagValue());
-            date = resource.getDescription().getLastModifiedDate();
+            etag = new EntityTag(resource.getEtagValue());
+            date = resource.getLastModifiedDate();
         } else {
             // Use a weak ETag for the LDP-RS
-            etag = new EntityTag(resource.getDescribedResource().getEtagValue(), true);
-            date = resource.getDescribedResource().getLastModifiedDate();
+            etag = new EntityTag(resource.getEtagValue(), true);
+            date = resource.getLastModifiedDate();
         }
 
         if (!etag.getValue().isEmpty()) {
@@ -660,12 +708,12 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         // ContentExposingResource::addCacheControlHeaders method
         if (resource instanceof FedoraBinary) {
             // Use a strong ETag for the LDP-NR
-            etag = new EntityTag(resource.getDescription().getEtagValue());
-            date = resource.getDescription().getLastModifiedDate();
+            etag = new EntityTag(resource.getEtagValue());
+            date = resource.getLastModifiedDate();
         } else {
             // Use a strong ETag for the LDP-RS when validating If-(None)-Match headers
-            etag = new EntityTag(resource.getDescribedResource().getEtagValue());
-            date = resource.getDescribedResource().getLastModifiedDate();
+            etag = new EntityTag(resource.getEtagValue());
+            date = resource.getLastModifiedDate();
         }
 
         if (date != null) {
@@ -728,7 +776,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected Response createUpdateResponse(final FedoraResource resource, final boolean created) {
         addCacheControlHeaders(servletResponse, resource, session);
         addResourceLinkHeaders(resource, created);
-        addMementoDatetimeHeader(resource);
+        addAclHeader(resource);
+        addMementoHeaders(resource);
 
         if (!created) {
             return noContent().build();
@@ -854,7 +903,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected void patchResourcewithSparql(final FedoraResource resource,
             final String requestBody,
             final RdfStream resourceTriples) {
-        resource.getDescribedResource().updateProperties(translator(), requestBody, resourceTriples);
+        resource.updateProperties(translator(), requestBody, resourceTriples);
     }
 
     /**

@@ -111,7 +111,16 @@ public abstract class AbstractResourceIT {
     protected static CloseableHttpClient client = createClient();
 
     protected static CloseableHttpClient createClient() {
-        return HttpClientBuilder.create().setMaxConnPerRoute(MAX_VALUE).setMaxConnTotal(MAX_VALUE).build();
+        return createClient(false);
+    }
+
+    protected static CloseableHttpClient createClient(final boolean disableRedirects) {
+        final HttpClientBuilder client =
+            HttpClientBuilder.create().setMaxConnPerRoute(MAX_VALUE).setMaxConnTotal(MAX_VALUE);
+        if (disableRedirects) {
+            client.disableRedirectHandling();
+        }
+        return client.build();
     }
 
     protected static HttpPost postObjMethod() {
@@ -504,6 +513,17 @@ public abstract class AbstractResourceIT {
         }
         ttl.append(" <" + predicateUri + "> ");
         ttl.append(literal);
+    }
+
+    /**
+     * Test a response for the absence of a specific LINK header
+     *
+     * @param response the HTTP response
+     * @param uri the URI not to exist in the LINK header
+     * @param rel the rel argument to check for
+     */
+    protected void assertNoLinkHeader(final CloseableHttpResponse response, final String uri, final String rel) {
+        assertEquals(0, countLinkHeader(response, uri, rel));
     }
 
     /**

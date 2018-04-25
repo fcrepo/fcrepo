@@ -19,15 +19,13 @@ package org.fcrepo.auth.common;
 
 import static java.util.Collections.emptySet;
 
+import javax.servlet.http.HttpServletRequest;
+
 import java.security.Principal;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import javax.jcr.Credentials;
-import javax.servlet.http.HttpServletRequest;
-
-import org.modeshape.jcr.api.ServletCredentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,15 +36,21 @@ import org.slf4j.LoggerFactory;
  * @author Kevin S. Clarke
  * @see PrincipalProvider
  */
-public class ContainerRolesPrincipalProvider implements PrincipalProvider {
+public class ContainerRolesPrincipalProvider extends AbstractPrincipalProvider {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ContainerRolesPrincipalProvider.class);
 
-    protected static class ContainerRolesPrincipal implements Principal {
+    /**
+     * @author Kevin S. Clarke
+     */
+    public static class ContainerRolesPrincipal implements Principal {
 
         private final String name;
 
-        ContainerRolesPrincipal(final String name) {
+        /**
+         * @param name principal name
+         */
+        public ContainerRolesPrincipal(final String name) {
             this.name = name;
         }
 
@@ -95,23 +99,14 @@ public class ContainerRolesPrincipalProvider implements PrincipalProvider {
     /*
      * (non-Javadoc)
      * @see
-     * org.fcrepo.auth.PrincipalProvider#getPrincipals(javax.jcr.Credentials)
+     * org.fcrepo.auth.PrincipalProvider#getPrincipals(javax.servlet.http.HttpServletRequest)
      */
     @Override
-    public Set<Principal> getPrincipals(final Credentials credentials) {
+    public Set<Principal> getPrincipals(final HttpServletRequest request) {
         LOGGER.debug("Checking for principals using {}", ContainerRolesPrincipalProvider.class.getSimpleName());
 
-        if (!(credentials instanceof ServletCredentials)) {
-            LOGGER.debug("Credentials is not an instanceof ServletCredentials");
-
-            return emptySet();
-        }
-
-        final ServletCredentials servletCredentials = (ServletCredentials) credentials;
-        final HttpServletRequest request = servletCredentials.getRequest();
-
         if (request == null) {
-            LOGGER.debug("Servlet request from servletCredentials was null");
+            LOGGER.debug("Servlet request was null");
 
             return emptySet();
         }

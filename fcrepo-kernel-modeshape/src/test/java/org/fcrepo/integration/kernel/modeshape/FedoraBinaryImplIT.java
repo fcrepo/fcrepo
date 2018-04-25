@@ -20,10 +20,7 @@ package org.fcrepo.integration.kernel.modeshape;
 import static java.util.Arrays.asList;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.UUID.randomUUID;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
-import static org.fcrepo.kernel.api.RdfLexicon.NT_VERSION_FILE;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM.SHA1;
@@ -34,10 +31,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
-import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -63,7 +57,6 @@ import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.BinaryService;
@@ -311,6 +304,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
             session.commit();
 
             final FedoraBinary ds = binaryService.findOrCreate(session, pid + "/testRepositoryContent");
+            final FedoraResource description = ds.getDescription();
 
             final Model fixityResults = ds.getFixity(idTranslator).collect(toModel());
 
@@ -322,9 +316,9 @@ public class FedoraBinaryImplIT extends AbstractIT {
                             createResource("urn:sha1:9578f951955d37f20b601c26591e260c1e5389bf")));
 
             assertEquals("Expected to find mime type",
-                    getJcrNode(ds).getProperty("ebucore:hasMimeType").getString(), "text/plain");
+                    getJcrNode(description).getProperty("ebucore:hasMimeType").getString(), "text/plain");
             assertEquals("Expected to find file name",
-                    getJcrNode(ds).getProperty("ebucore:filename").getString(), "numbers.txt");
+                    getJcrNode(description).getProperty("ebucore:filename").getString(), "numbers.txt");
         } finally {
             session.expire();
         }
@@ -368,18 +362,15 @@ public class FedoraBinaryImplIT extends AbstractIT {
         final Session jcrSession = getJcrSession(session);
         try {
             final ValueFactory factory = jcrSession.getValueFactory();
-            final Container object = containerService.findOrCreate(session, "/testLLObject");
-
-            final Node testRandomContentNode = getJcrNode(object).addNode("testRandomContent", NT_VERSION_FILE);
-            testRandomContentNode.addMixin(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
-            final Node testRandomContent = testRandomContentNode.addNode(JCR_CONTENT, NT_RESOURCE);
-            testRandomContent.addMixin(FEDORA_BINARY);
-            testRandomContent.setProperty(JCR_DATA,
-                    factory.createBinary(new ByteArrayInputStream("0123456789".getBytes())));
+            containerService.findOrCreate(session, "/testLLObject");
 
             session.commit();
 
             final FedoraBinary ds = binaryService.findOrCreate(session, "/testLLObject/testRandomContent");
+
+            final Node contentNode = getJcrNode(ds);
+            contentNode.setProperty(JCR_DATA,
+                    factory.createBinary(new ByteArrayInputStream("0123456789".getBytes())));
 
             final Model fixityResults = ds.getFixity(idTranslator).collect(toModel());
 

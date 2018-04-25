@@ -23,7 +23,7 @@ package org.fcrepo.kernel.api.exception;
  * @author lsitu
  * @since 2018-03-12
  */
-public class MementoDatetimeFormatException extends Exception {
+public class MementoDatetimeFormatException extends RepositoryRuntimeException {
 
     private static final long serialVersionUID = 1L;
 

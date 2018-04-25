@@ -27,6 +27,9 @@ import java.io.UncheckedIOException;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
@@ -59,6 +62,7 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.FedoraTimeMap;
+import org.fcrepo.kernel.api.models.FedoraWebacAcl;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.ContainerService;
@@ -66,7 +70,6 @@ import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.api.services.VersionService;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
@@ -96,6 +99,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TIME_MAP;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TOMBSTONE;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_WEBAC_ACL;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
@@ -106,6 +110,7 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.VERSIONS;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FIELD_DELIMITER;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
 import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.LDPCV_TIME_MAP;
+import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.CONTAINER_WEBAC_ACL;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.HAS_MIXIN_TYPE;
 import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.HAS_NODE_TYPE;
@@ -117,7 +122,6 @@ import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.MIX_NAMESPACE;
 import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.MODE_NAMESPACE;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedPredicate.uncheck;
-
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDstring;
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
@@ -131,6 +135,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -420,7 +425,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         final Graph graph = object.getTriples(subjects, PROPERTIES).collect(toModel()).getGraph();
 
         // multivalued property
-        final Node s = createGraphSubjectNode(object);
+        final Node s = createGraphSubjectNode(object.getDescribedResource());
         Node p = HAS_MIXIN_TYPE.asNode();
         Node o = createLiteral(FEDORA_RESOURCE);
         assertFalse(graph.contains(s, p, o));
@@ -1156,6 +1161,135 @@ public class FedoraResourceImplIT extends AbstractIT {
         final FedoraResource timeMap = resource.getTimeMap();
         assertTrue(timeMap instanceof FedoraTimeMap);
         assertEquals(timeMapNode, ((FedoraResourceImpl)timeMap).getNode());
+    }
+
+    @Test
+    public void testGetMementoByDatetime() throws RepositoryException {
+        final FedoraResource object1 = containerService.findOrCreate(session, "/" + getRandomPid());
+        object1.enableVersioning();
+
+        final DateTimeFormatter FMT = new DateTimeFormatterBuilder()
+            .appendPattern("yyyy-MM-dd'T'HH:mm:ss")
+            .toFormatter()
+            .withZone(ZoneId.systemDefault());
+
+        final Instant time1 = Instant.from(FMT.parse("2018-01-01T20:15:00"));
+        final FedoraResource memento1 = versionService.createVersion(session, object1, subjects, time1);
+
+        final Instant time2 = Instant.from(FMT.parse("2018-01-01T10:15:00"));
+        final FedoraResource memento2 = versionService.createVersion(session, object1, subjects, time2);
+
+        final Instant time3 = Instant.from(FMT.parse("2017-12-31T08:00:00"));
+        final FedoraResource memento3 = versionService.createVersion(session, object1, subjects, time3);
+        session.commit();
+
+        final Instant afterLast = Instant.from(FMT.parse("2018-02-01T10:00:00"));
+        assertEquals("Did not get expected Memento for Datetime", memento1,
+            object1.findMementoByDatetime(afterLast));
+
+        final Instant betweenLastAndMiddle =
+            Instant.from(FMT.parse("2018-01-01T15:00:00"));
+
+        assertEquals("Did not get expected Memento for Datetime", memento2,
+            object1.findMementoByDatetime(betweenLastAndMiddle));
+
+        final Instant betweenMiddleAndFirst =
+            Instant.from(FMT.parse("2018-01-01T08:00:00"));
+        assertEquals("Did not get expected Memento for Datetime", memento3,
+            object1.findMementoByDatetime(betweenMiddleAndFirst));
+
+        // Assert exact matches
+        assertEquals("Did not get expected Memento for Datetime", memento1,
+            object1.findMementoByDatetime(time1));
+        assertEquals("Did not get expected Memento for Datetime", memento2,
+            object1.findMementoByDatetime(time2));
+        assertEquals("Did not get expected Memento for Datetime", memento3,
+            object1.findMementoByDatetime(time3));
+
+        final Instant beforeFirst = Instant.from(FMT.parse("2016-01-01T00:00:00"));
+        assertEquals("Did not get expected Memento for Datetime", memento3,
+            object1.findMementoByDatetime(beforeFirst));
+
+    }
+
+    @Test
+    public void testGetMementoByDatetimeEmpty() {
+        final FedoraResource object1 = containerService.findOrCreate(session, "/" + getRandomPid());
+        object1.enableVersioning();
+
+        final DateTimeFormatter FMT = new DateTimeFormatterBuilder()
+            .appendPattern("yyyy-MM-dd'T'HH:mm:ss")
+            .toFormatter()
+            .withZone(ZoneId.systemDefault());
+
+        final Instant time = Instant.from(FMT.parse("2016-04-21T09:43:00"));
+
+        assertNull("Expected the null back because 0 Mementos.",
+            object1.findMementoByDatetime(time));
+    }
+
+    @Test
+    public void testGetAcl() throws RepositoryException {
+        final String pid = getRandomPid();
+        final FedoraResource resource = containerService.findOrCreate(session, "/" + pid);
+        session.commit();
+
+        // Retrieve ACL for the resource created
+        final FedoraResource nullAclResource = resource.getAcl();
+        assertNull(nullAclResource);
+
+        // Create ACL for the resource
+        final FedoraResource aclResource = resource.findOrCreateAcl();
+        session.commit();
+
+        final FedoraResource aclResourceFound = resource.getAcl();
+        assertNotNull(aclResourceFound);
+        assertTrue(aclResourceFound instanceof FedoraWebacAcl);
+        assertEquals(aclResource, aclResourceFound);
+    }
+
+    @Test
+    public void testFindOrCreateAcl() throws RepositoryException {
+        final String pid = getRandomPid();
+        final Session jcrSession = getJcrSession(session);
+        final FedoraResource resource = containerService.findOrCreate(session, "/" + pid);
+        session.commit();
+
+        // Create ACL for the resource
+        final FedoraResource aclResource = resource.findOrCreateAcl();
+        assertNotNull(aclResource);
+        assertTrue(aclResource instanceof FedoraWebacAcl);
+        assertEquals("/" + pid + "/" + CONTAINER_WEBAC_ACL, aclResource.getPath());
+        session.commit();
+
+        final javax.jcr.Node aclNode = jcrSession.getNode("/" + pid).getNode(CONTAINER_WEBAC_ACL);
+        assertTrue(aclNode.isNodeType(FEDORA_WEBAC_ACL));
+    }
+
+    @Test
+    public void testFindOrCreateBinaryAcl() throws RepositoryException, InvalidChecksumException {
+        final String pid = getRandomPid();
+        final Session jcrSession = getJcrSession(session);
+
+        binaryService.findOrCreate(session, "/" + pid).setContent(
+                new ByteArrayInputStream("binary content".getBytes()),
+                "text/plain",
+                null,
+                null,
+                null
+        );
+
+        // Retrieve the binary resource and create ACL
+        final FedoraResource binary = binaryService.findOrCreate(session, "/" + pid);
+        final FedoraResource binaryAclResource = binary.findOrCreateAcl();
+
+        assertNotNull(binaryAclResource);
+        assertTrue(binaryAclResource instanceof FedoraWebacAcl);
+        assertEquals("/" + pid + "/" + CONTAINER_WEBAC_ACL, binaryAclResource.getPath());
+        session.commit();
+
+        final javax.jcr.Node aclNode = jcrSession.getNode("/" + pid).getNode(CONTAINER_WEBAC_ACL);
+        assertTrue(aclNode.isNodeType(FEDORA_WEBAC_ACL));
     }
 
     private void addVersionLabel(final String label, final FedoraResource r) throws RepositoryException {

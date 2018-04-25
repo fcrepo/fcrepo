@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:context="http://www.springframework.org/schema/context"
+  xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+    http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+ 
+  <context:property-placeholder/>
+    <!-- Shiro config -->
+  
+  <bean id="testAuthFilter" class="org.fcrepo.http.commons.test.util.TestAuthenticationRequestFilter"/>
+  <bean id="webACFilter" class="org.fcrepo.auth.webac.WebACFilter"/>
+  <bean id="servletAuthFilter" class="org.fcrepo.auth.common.ServletContainerAuthFilter"/>
+  
+  <bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+    <property name="securityManager" ref="securityManager"/>
+    <property name="filterChainDefinitions">
+      <value>
+        /** = testAuthFilter, servletAuthFilter, webACFilter
+      </value>
+    </property>
+  </bean>
+  
+  <bean id="servletRealm" class="org.fcrepo.auth.common.ServletContainerAuthenticatingRealm"/>
+  <bean id="webacRealm" class="org.fcrepo.auth.webac.WebACAuthorizingRealm"/>
+  
+  <bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+    <property name="realms">
+      <list>
+        <ref bean="servletRealm"/>
+        <ref bean="webacRealm"/>
+      </list>
+    </property>
+    <!-- By default the servlet container sessions will be used.  Uncomment this line
+         to use shiro's native sessions (see the JavaDoc for more): -->
+    <!-- <property name="sessionMode" value="native"/> -->
+  </bean>
+  
+  <bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor"/>
+  
+</beans>
