@@ -34,10 +34,13 @@ public class SubjectMappingUtil {
     }
 
     /**
-     * @param t
-     * @param resourceUri
-     * @param destinationUri
-     * @return
+     * Maps the subject of t from resourceUri to destinationUri to produce a new Triple.
+     * If the triple does not have the subject resourceUri, then the triple is unchanged.
+     *
+     * @param t triple to be remapped.
+     * @param resourceUri resource subject uri to be remapped.
+     * @param destinationUri subject uri for the resultant triple.
+     * @return triple with subject remapped to destinationUri or the original subject.
      */
     public static Triple mapSubject(final Triple t, final String resourceUri, final String destinationUri) {
         final Node destinationNode = createURI(destinationUri);
@@ -45,10 +48,13 @@ public class SubjectMappingUtil {
     }
 
     /**
-     * @param t
-     * @param resourceUri
-     * @param destinationNode
-     * @return
+     * Maps the subject of t from resourceUri to destinationNode to produce a new Triple.
+     * If the triple does not have the subject resourceUri, then the triple is unchanged.
+     *
+     * @param t triple to be remapped.
+     * @param resourceUri resource subject uri to be remapped.
+     * @param destinationNode subject node for the resultant triple.
+     * @return triple with subject remapped to destinationNode or the original subject.
      */
     public static Triple mapSubject(final Triple t, final String resourceUri, final Node destinationNode) {
         final Node subject;
