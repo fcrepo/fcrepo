@@ -152,7 +152,8 @@ public class FedoraLdpTest {
 
     private final String path = "/some/path";
     private final String binaryPath = "/some/binary/path";
-    private final String binaryDescriptionPath = "/some/other/path";
+
+    private final String binaryDescriptionPath = binaryPath + "/fedora:description";
     private final String containerConstraints = "http://localhost/static/constraints/ContainerConstraints.rdf";
     private final String nonRDFSourceConstraints = "http://localhost/static/constraints/NonRDFSourceConstraints.rdf";
     private FedoraLdp testObj;
@@ -403,7 +404,7 @@ public class FedoraLdpTest {
     private void assertShouldContainLinkToBinaryDescription() {
         assertTrue("Should contain a link to the binary description",
                 mockResponse.getHeaders(LINK)
-                        .contains("<" + idTranslator.toDomain(binaryDescriptionPath + "/fcr:metadata")
+                        .contains("<" + idTranslator.toDomain(binaryPath + "/fcr:metadata")
                                 + ">; rel=\"describedby\""));
     }
 

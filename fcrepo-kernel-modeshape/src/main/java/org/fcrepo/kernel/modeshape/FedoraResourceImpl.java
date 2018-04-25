@@ -117,6 +117,7 @@ import org.fcrepo.kernel.api.exception.InteractionModelViolationException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.utils.GraphDifferencer;
 import org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper;
@@ -178,7 +179,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     public static final String CONTAINER_WEBAC_ACL = "fedora:acl";
 
     // A curried type accepting resource, translator, and "minimality", returning triples.
-    private static interface RdfGenerator extends Function<FedoraResource,
+    protected static interface RdfGenerator extends Function<FedoraResource,
     Function<IdentifierConverter<Resource, FedoraResource>, Function<Boolean, Stream<Triple>>>> {}
 
     @SuppressWarnings("resource")
@@ -228,7 +229,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         return streams.reduce(empty(), Stream::concat);
     });
 
-    private static final Map<TripleCategory, RdfGenerator> contextMap =
+    protected static final Map<TripleCategory, RdfGenerator> contextMap =
             ImmutableMap.<TripleCategory, RdfGenerator>builder()
                     .put(PROPERTIES, getDefaultTriples)
                     .put(EMBED_RESOURCES, getEmbeddedResourceTriples)
@@ -427,11 +428,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     public FedoraResource findOrCreateTimeMap() {
         final Node ldpcvNode;
         try {
-            if (this instanceof FedoraBinary) {
-                ldpcvNode = findOrCreateChild(getNode().getParent(), LDPCV_BINARY_TIME_MAP, NT_FOLDER);
-            } else {
-                ldpcvNode = findOrCreateChild(getNode(), LDPCV_TIME_MAP, NT_FOLDER);
-            }
+            ldpcvNode = findOrCreateChild(getNode(), LDPCV_TIME_MAP, NT_FOLDER);
 
             if (ldpcvNode.isNew()) {
                 LOGGER.debug("Created TimeMap LDPCv {}", ldpcvNode.getPath());
@@ -458,12 +455,12 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @Override
     public Instant getMementoDatetime() {
         try {
-            final Node descriptNode = getDescriptionNode();
-            if (!isMemento() || !descriptNode.hasProperty(MEMENTO_DATETIME)) {
+            final Node node = getNode();
+            if (!isMemento() || !node.hasProperty(MEMENTO_DATETIME)) {
                 return null;
             }
 
-            final Calendar calDate = descriptNode.getProperty(MEMENTO_DATETIME).getDate();
+            final Calendar calDate = node.getProperty(MEMENTO_DATETIME).getDate();
             return calDate.toInstant();
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
@@ -472,7 +469,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
     @Override
     public boolean isMemento() {
-        return isMemento.test(getDescriptionNode());
+        return isMemento.test(getNode());
     }
 
     @Override
@@ -502,7 +499,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         final Node aclNode;
         try {
             final Node parentNode;
-            if (this instanceof FedoraBinary) {
+            if (this instanceof NonRdfSourceDescription) {
                 parentNode = getNode().getParent();
             } else {
                 parentNode = getNode();
@@ -776,8 +773,10 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
         final Model model = originalTriples.collect(toModel());
 
+        final FedoraResource described = getDescribedResource();
+
         final UpdateRequest request = create(sparqlUpdateStatement,
-                idTranslator.reverse().convert(this).toString());
+                idTranslator.reverse().convert(described).toString());
 
         final Collection<IllegalArgumentException> errors = validateUpdateRequest(request);
 
@@ -807,7 +806,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         checkInteractionModel(request);
 
         final FilteringJcrPropertyStatementListener listener = new FilteringJcrPropertyStatementListener(
-                idTranslator, getSession(), idTranslator.reverse().convert(this).asNode());
+                idTranslator, getSession(), idTranslator.reverse().convert(described).asNode());
 
         model.register(listener);
 
@@ -1186,25 +1185,23 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
   @Override
   public void enableVersioning() {
         if (!isVersioned()) {
-           getDescription().findOrCreateTimeMap();
+            findOrCreateTimeMap();
         }
   }
 
   @Override
   public void disableVersioning() {
-      getDescription().getTimeMap().delete();
+        getTimeMap().delete();
   }
 
-  @Override
-  public boolean isVersioned() {
-      try {
-          return ((FedoraResourceImpl)getDescription()).getNode(getNode(), LDPCV_TIME_MAP, false) != null;
-          //@TODO This line should be changed to "return getDescription().getChild(LDPCV_TIME_MAP);"
-          //once the issues around https://jira.duraspace.org/browse/FCREPO-2644 have been landed.
-      } catch (final RepositoryException ex) {
-          throw new RepositoryRuntimeException(ex);
-      }
-  }
+    @Override
+    public boolean isVersioned() {
+        try {
+            return getNode(getNode(), LDPCV_TIME_MAP, false) != null;
+        } catch (final RepositoryException ex) {
+            throw new RepositoryRuntimeException(ex);
+        }
+    }
 
   @Override
   public FedoraResource findMementoByDatetime(final Instant mementoDatetime) {

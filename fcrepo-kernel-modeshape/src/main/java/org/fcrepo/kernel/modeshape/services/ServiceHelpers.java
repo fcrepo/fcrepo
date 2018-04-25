@@ -19,8 +19,8 @@ package org.fcrepo.kernel.modeshape.services;
 
 import static javax.jcr.query.Query.JCR_SQL2;
 import static org.fcrepo.kernel.api.FedoraTypes.CONTENT_SIZE;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.api.RdfLexicon.NT_VERSION_FILE;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
@@ -180,7 +180,7 @@ public class ServiceHelpers {
 
             final String querystring =
                     "SELECT [" + CONTENT_SIZE + "] FROM [" +
-                            FEDORA_BINARY + "]";
+                            FEDORA_NON_RDF_SOURCE_DESCRIPTION + "]";
 
             final QueryResult queryResults =
                     queryManager.createQuery(querystring, JCR_SQL2).execute();

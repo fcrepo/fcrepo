@@ -291,10 +291,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * @return {@link RdfStream}
      */
     protected RdfStream getResourceTriples(final int limit) {
-        // use the thing described, not the description, for the subject of descriptive triples
-        if (resource() instanceof NonRdfSourceDescription) {
-            resource = resource().getDescribedResource();
-        }
         final PreferTag returnPreference;
 
         if (prefer != null && prefer.hasReturn()) {
@@ -311,7 +307,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             IS_MANAGED_TRIPLE.negate();
 
         final List<Stream<Triple>> streams = new ArrayList<>();
-
 
         if (returnPreference.getValue().equals("minimal")) {
             streams.add(getTriples(of(PROPERTIES, MINIMAL)).filter(tripleFilter));
@@ -500,15 +495,13 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             final Link link = Link.fromUri(uri).rel("describes").build();
             servletResponse.addHeader(LINK, link.toString());
         } else if (resource instanceof FedoraBinary) {
-            if (!resource.isMemento()) {
-                final URI uri = getUri(resource.getDescription());
-                final Link.Builder builder = Link.fromUri(uri).rel("describedby");
+            final URI uri = getUri(resource.getDescription());
+            final Link.Builder builder = Link.fromUri(uri).rel("describedby");
 
-                if (includeAnchor) {
-                    builder.param("anchor", getUri(resource).toString());
-                }
-                servletResponse.addHeader(LINK, builder.build().toString());
+            if (includeAnchor) {
+                builder.param("anchor", getUri(resource).toString());
             }
+            servletResponse.addHeader(LINK, builder.build().toString());
 
             final String path = context.getContextPath().equals("/") ? "" : context.getContextPath();
             final String constraintURI = uriInfo.getBaseUri().getScheme() + "://" +
@@ -662,12 +655,12 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         // See note about this code in the javadoc above.
         if (resource instanceof FedoraBinary) {
             // Use a strong ETag for LDP-NR
-            etag = new EntityTag(resource.getDescription().getEtagValue());
-            date = resource.getDescription().getLastModifiedDate();
+            etag = new EntityTag(resource.getEtagValue());
+            date = resource.getLastModifiedDate();
         } else {
             // Use a weak ETag for the LDP-RS
-            etag = new EntityTag(resource.getDescribedResource().getEtagValue(), true);
-            date = resource.getDescribedResource().getLastModifiedDate();
+            etag = new EntityTag(resource.getEtagValue(), true);
+            date = resource.getLastModifiedDate();
         }
 
         if (!etag.getValue().isEmpty()) {
@@ -715,12 +708,12 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         // ContentExposingResource::addCacheControlHeaders method
         if (resource instanceof FedoraBinary) {
             // Use a strong ETag for the LDP-NR
-            etag = new EntityTag(resource.getDescription().getEtagValue());
-            date = resource.getDescription().getLastModifiedDate();
+            etag = new EntityTag(resource.getEtagValue());
+            date = resource.getLastModifiedDate();
         } else {
             // Use a strong ETag for the LDP-RS when validating If-(None)-Match headers
-            etag = new EntityTag(resource.getDescribedResource().getEtagValue());
-            date = resource.getDescribedResource().getLastModifiedDate();
+            etag = new EntityTag(resource.getEtagValue());
+            date = resource.getLastModifiedDate();
         }
 
         if (date != null) {
@@ -910,7 +903,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected void patchResourcewithSparql(final FedoraResource resource,
             final String requestBody,
             final RdfStream resourceTriples) {
-        resource.getDescribedResource().updateProperties(translator(), requestBody, resourceTriples);
+        resource.updateProperties(translator(), requestBody, resourceTriples);
     }
 
     /**

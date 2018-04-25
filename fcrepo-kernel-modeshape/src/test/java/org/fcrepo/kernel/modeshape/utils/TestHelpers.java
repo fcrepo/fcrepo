@@ -54,15 +54,15 @@ public abstract class TestHelpers {
     private static final SecureRandom GARBAGE_GENERATOR = new SecureRandom(
             "G4RbAG3".getBytes());
 
-    public static Node getContentNodeMock(final Node mock, final int size) {
-        return getContentNodeMock(mock, randomData(size));
+    public static Node getContentNodeMock(final Node mock, final Node mockDesc, final int size) {
+        return getContentNodeMock(mock, mockDesc, randomData(size));
     }
 
-    public static Node getContentNodeMock(final Node mock, final String content) {
-        return getContentNodeMock(mock, content.getBytes());
+    public static Node getContentNodeMock(final Node mock, final Node mockDesc, final String content) {
+        return getContentNodeMock(mock, mockDesc, content.getBytes());
     }
 
-    public static Node getContentNodeMock(final Node mock, final byte[] content) {
+    public static Node getContentNodeMock(final Node mock, final Node mockDesc, final byte[] content) {
         final long size = content.length;
         final String digest = checksumString(content);
         final Value digestValue = mock(Value.class);
@@ -88,12 +88,12 @@ public abstract class TestHelpers {
             when(mockDigest.getValues()).thenReturn(digestArray);
             when(mockDigestType.getString()).thenReturn(digestType);
             when(mock.hasProperty(JCR_DATA)).thenReturn(true);
-            when(mock.hasProperty(CONTENT_SIZE)).thenReturn(true);
-            when(mock.hasProperty(CONTENT_DIGEST)).thenReturn(true);
-            when(mock.hasProperty(JCR_CREATEDBY)).thenReturn(true);
+            when(mockDesc.hasProperty(CONTENT_SIZE)).thenReturn(true);
+            when(mockDesc.hasProperty(CONTENT_DIGEST)).thenReturn(true);
+            when(mockDesc.hasProperty(JCR_CREATEDBY)).thenReturn(true);
             when(mock.getProperty(JCR_DATA)).thenReturn(mockProp);
-            when(mock.getProperty(CONTENT_SIZE)).thenReturn(mockFedoraSize);
-            when(mock.getProperty(CONTENT_DIGEST)).thenReturn(mockDigest);
+            when(mockDesc.getProperty(CONTENT_SIZE)).thenReturn(mockFedoraSize);
+            when(mockDesc.getProperty(CONTENT_DIGEST)).thenReturn(mockDigest);
             when(mockDigest.isMultiple()).thenReturn(true);
             when(digestValue.getString()).thenReturn(digest);
             when(mock.getProperty(JCR_CREATEDBY)).thenReturn(mockCreated);

@@ -125,6 +125,7 @@ public class JcrPropertyStatementListener extends StatementListener {
             final Statement s = jcrRdfTools.skolemize(idTranslator, input, topic.toString());
 
             final FedoraResource resource = idTranslator.convert(s.getSubject());
+            final FedoraResource description = resource.getDescription();
 
             // special logic for handling rdf:type updates.
             // if the object is an already-existing mixin, update
@@ -138,7 +139,7 @@ public class JcrPropertyStatementListener extends StatementListener {
                 return;
             }
 
-            jcrRdfTools.addProperty(resource, property, objectNode, input.getModel().getNsPrefixMap());
+            jcrRdfTools.addProperty(description, property, objectNode, input.getModel().getNsPrefixMap());
             statements.put(input, Operation.ADD);
         } catch (final ConstraintViolationException e) {
             throw e;
@@ -167,6 +168,7 @@ public class JcrPropertyStatementListener extends StatementListener {
             LOGGER.trace(">> removing statement {}", s);
 
             final FedoraResource resource = idTranslator.convert(subject);
+            final FedoraResource description = resource.getDescription();
 
             // special logic for handling rdf:type updates.
             // if the object is an already-existing mixin, update
@@ -181,7 +183,7 @@ public class JcrPropertyStatementListener extends StatementListener {
                 return;
             }
 
-            jcrRdfTools.removeProperty(resource, property, objectNode, s.getModel().getNsPrefixMap());
+            jcrRdfTools.removeProperty(description, property, objectNode, s.getModel().getNsPrefixMap());
             statements.put(s, Operation.REMOVE);
         } catch (final ConstraintViolationException e) {
             throw e;

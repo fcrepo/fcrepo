@@ -568,7 +568,7 @@ public class FedoraLdp extends ContentExposingResource {
             }
             session.commit();
 
-            addCacheControlHeaders(servletResponse, resource().getDescription(), session);
+            addCacheControlHeaders(servletResponse, resource(), session);
 
             return noContent().build();
         } catch (final IllegalArgumentException iae) {

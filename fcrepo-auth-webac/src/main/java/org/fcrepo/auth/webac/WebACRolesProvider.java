@@ -86,6 +86,7 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.modeshape.FedoraSessionImpl;
+import org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 import org.modeshape.jcr.value.Path;
 import org.slf4j.Logger;
@@ -111,6 +112,8 @@ public class WebACRolesProvider implements AccessRolesProvider {
     @Inject
     private NodeService nodeService;
 
+    private static final NodeResourceConverter nodeResourceConverter = new NodeResourceConverter();
+
     @Inject
     private SessionFactory sessionFactory;
 
@@ -134,7 +137,8 @@ public class WebACRolesProvider implements AccessRolesProvider {
         try {
             if (getJcrSession(session).nodeExists(path.toString()) || path.isRoot()) {
                 LOGGER.debug("findRolesForPath: {}", path.getString());
-                final FedoraResource resource = nodeService.find(session, path.toString());
+                final FedoraResource resource = nodeResourceConverter.convert(
+                        getJcrSession(session).getNode(path.toString()));
 
                 if (resource.hasType("nt:version")) {
                     LOGGER.debug("{} is a version, getting the baseVersion", resource);
