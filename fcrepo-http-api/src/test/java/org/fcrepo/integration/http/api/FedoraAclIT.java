@@ -17,13 +17,17 @@
  */
 package org.fcrepo.integration.http.api;
 
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.junit.Assert.assertEquals;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.StringEntity;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -84,4 +88,17 @@ public class FedoraAclIT extends AbstractResourceIT {
             assertEquals(subjectUri + "/x/" + FCR_ACL, aclLocation);
         }
     }
+
+    @Test
+    public void testPatchAclOnAclResource() throws Exception {
+        createObjectAndClose(id);
+
+        final HttpPatch patch = new HttpPatch(subjectUri + "/" + FCR_ACL);
+        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
+        patch.setEntity(new StringEntity("PREFIX acl: <http://www.w3.org/ns/auth/acl#> " +
+                "INSERT DATA { <#readAccess> acl:mode acl:write . }"));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(patch));
+
+    }
+
 }
