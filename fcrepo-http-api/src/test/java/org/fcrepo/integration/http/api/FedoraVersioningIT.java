@@ -55,6 +55,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
@@ -105,6 +106,7 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.RDFLanguages;
 import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.vocabulary.DC;
 import org.apache.jena.vocabulary.RDF;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.junit.Before;
@@ -118,7 +120,7 @@ import org.junit.Test;
 public class FedoraVersioningIT extends AbstractResourceIT {
 
     public static final DateTimeFormatter MEMENTO_DATETIME_ID_FORMATTER =
-        DateTimeFormatter.ofPattern("yyyyMMddHHmmss").withZone(ZoneId.of("GMT"));
+            DateTimeFormatter.ofPattern("yyyyMMddHHmmss").withZone(ZoneId.of("GMT"));
 
     private static final String VERSIONED_RESOURCE_LINK_HEADER = "<" + VERSIONED_RESOURCE.getURI() + ">; rel=\"type\"";
     private static final String BINARY_CONTENT = "binary content";
@@ -175,11 +177,11 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     public void testGetTimeMapResponseMultipleMementos() throws Exception {
         createVersionedContainer(id);
         final String memento1 =
-            RFC_1123_DATE_TIME.format(LocalDateTime.of(2000, 1, 1, 00, 00, 00).atOffset(ZoneOffset.UTC));
+                RFC_1123_DATE_TIME.format(LocalDateTime.of(2000, 1, 1, 00, 00, 00).atOffset(ZoneOffset.UTC));
         final String memento2 =
-            RFC_1123_DATE_TIME.format(LocalDateTime.of(2015, 8, 13, 18, 30, 0).atOffset(ZoneOffset.UTC));
+                RFC_1123_DATE_TIME.format(LocalDateTime.of(2015, 8, 13, 18, 30, 0).atOffset(ZoneOffset.UTC));
         final String memento3 =
-            RFC_1123_DATE_TIME.format(LocalDateTime.of(1980, 5, 31, 9, 15, 30).atOffset(ZoneOffset.UTC));
+                RFC_1123_DATE_TIME.format(LocalDateTime.of(1980, 5, 31, 9, 15, 30).atOffset(ZoneOffset.UTC));
         createContainerMementoWithBody(subjectUri, memento1);
         createContainerMementoWithBody(subjectUri, memento2);
         createContainerMementoWithBody(subjectUri, memento3);
@@ -519,7 +521,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     }
 
     private void verifyTimemapResponse(final String uri, final String id, final String mementoDateTime)
-        throws Exception {
+            throws Exception {
         final String[] mementoDateTimes = { mementoDateTime };
         verifyTimemapResponse(uri, id, mementoDateTimes, null, null);
     }
@@ -535,32 +537,33 @@ public class FedoraVersioningIT extends AbstractResourceIT {
      * @throws Exception
      */
     private void verifyTimemapResponse(final String uri, final String id, final String[] mementoDateTime,
-        final String rangeStart, final String rangeEnd)
-        throws Exception {
+            final String rangeStart, final String rangeEnd)
+            throws Exception {
         final String ldpcvUri = uri + "/" + FCR_VERSIONS;
         final List<Link> listLinks = new ArrayList<>();
         listLinks.add(Link.fromUri(uri).rel("original").build());
         listLinks.add(Link.fromUri(uri).rel("timegate").build());
 
-        final javax.ws.rs.core.Link.Builder selfLink = Link.fromUri(ldpcvUri).rel("self").type(APPLICATION_LINK_FORMAT);
+        final javax.ws.rs.core.Link.Builder selfLink = Link.fromUri(ldpcvUri).rel("self").type(
+                APPLICATION_LINK_FORMAT);
         if (rangeStart != null && rangeEnd != null) {
             selfLink.param("from", rangeStart).param("until",
-                rangeEnd);
+                    rangeEnd);
         }
         listLinks.add(selfLink.build());
         if (mementoDateTime != null) {
             for (final String memento : mementoDateTime) {
                 final TemporalAccessor instant = RFC_1123_DATE_TIME.parse(memento);
                 listLinks.add(Link.fromUri(ldpcvUri + "/" + MEMENTO_DATETIME_ID_FORMATTER.format(instant))
-                              .rel("memento")
-                    .param("datetime", memento)
-                              .build());
+                        .rel("memento")
+                        .param("datetime", memento)
+                        .build());
             }
         }
 
         final Link[] expectedLinks = listLinks.stream()
-                                              .sorted((a,b) ->a.toString().compareTo(b.toString()))
-                                              .toArray(Link[]::new);
+                .sorted((a, b) -> a.toString().compareTo(b.toString()))
+                .toArray(Link[]::new);
 
         final HttpGet httpGet = getObjMethod(id + "/" + FCR_VERSIONS);
         httpGet.setHeader("Accept", APPLICATION_LINK_FORMAT);
@@ -573,13 +576,13 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             checkForLinkHeader(response, uri, "timegate");
             checkForLinkHeader(response, uri + "/" + FCR_VERSIONS, "timemap");
             checkForLinkHeader(response, VERSIONING_TIMEMAP_TYPE, "type");
-            checkForLinkHeader(response, ldpcvUri + "/" + FCR_ACL , "acl");
+            checkForLinkHeader(response, ldpcvUri + "/" + FCR_ACL, "acl");
             final List<String> bodyList = Arrays.asList(EntityUtils.toString(response.getEntity()).split(",\n"));
-            //the links from the body are not
+            // the links from the body are not
 
             final Link[] bodyLinks = bodyList.stream().map(String::trim).filter(t -> !t.isEmpty())
-                                                      .sorted((a,b) ->a.toString().compareTo(b.toString()))
-                                                      .map(Link::valueOf).toArray(Link[]::new);
+                    .sorted((a, b) -> a.toString().compareTo(b.toString()))
+                    .map(Link::valueOf).toArray(Link[]::new);
             assertArrayEquals(expectedLinks, bodyLinks);
         }
     }
@@ -597,6 +600,15 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             assertEquals("Binary content of memento must match original content",
                     BINARY_CONTENT, EntityUtils.toString(response.getEntity()));
         }
+
+        // Verifying that the associated description memento was created
+        final String descriptionMementoUri = mementoUri.replace("fcr:versions", "fcr:metadata/fcr:versions");
+
+        final HttpGet descGet = new HttpGet(descriptionMementoUri);
+        try (final CloseableHttpResponse response = execute(descGet)) {
+            assertMementoDatetimeHeaderPresent(response);
+            assertHasLink(response, type, RDF_SOURCE.getURI());
+        }
     }
 
     @Test
@@ -612,7 +624,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore("Disable until binary version creation from body implemented")
     @Test
     public void testCreateVersionOfBinaryWithDatetimeAndContentType() throws Exception {
         createVersionedBinary(id);
@@ -648,13 +659,12 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore("Disable until binary version creation from body implemented")
     @Test
     public void testCreateVersionOfBinaryWithDatetimeAndBody() throws Exception {
         createVersionedBinary(id);
 
         final String mementoUri = createMemento(subjectUri, MEMENTO_DATETIME,
-                OCTET_STREAM_TYPE, BINARY_UPDATED);
+                "text/plain", BINARY_UPDATED);
         assertMementoUri(mementoUri, subjectUri);
 
         // Verify that the memento has the updated binary
@@ -663,6 +673,112 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
             assertEquals("Binary content of memento must match updated content",
                     BINARY_UPDATED, EntityUtils.toString(response.getEntity()));
+        }
+    }
+
+    @Test
+    public void testCreateVersionOfBinaryDescription() throws Exception {
+        createVersionedBinary(id);
+
+        final String descriptionUri = subjectUri + "/fcr:metadata";
+
+        final String mementoUri = createContainerMementoWithBody(descriptionUri, null);
+        assertMementoUri(mementoUri, descriptionUri);
+
+        setDescriptionProperty(id, null, DC.title.getURI(), "Updated");
+
+        try (final CloseableDataset dataset = getDataset(new HttpGet(mementoUri))) {
+            final DatasetGraph results = dataset.asDatasetGraph();
+
+            final Node mementoSubject = createURI(subjectUri);
+
+            assertFalse("Property added to original must not appear in memento",
+                    results.contains(ANY, mementoSubject, DC.title.asNode(), ANY));
+            assertFalse("Memento type should not be visible",
+                    results.contains(ANY, mementoSubject, RDF.type.asNode(), MEMENTO_TYPE_NODE));
+            assertFalse("Property added to original must not appear in memento",
+                    results.contains(ANY, mementoSubject, RDF.type.asNode(), FEDORA_BINARY.asNode()));
+        }
+
+        // No binary memento should be created when specifically creating a description memento.
+        final String hypotheticalBinaryUri = mementoUri.replaceAll("fcr:metadata/fcr:versions", "fcr:versions");
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(new HttpGet(hypotheticalBinaryUri)));
+    }
+
+    /*
+     * Attempt to create binary description with container triples
+     */
+    @Test
+    public void testCreateVersionOfBinaryDescriptionInvalidTriples() throws Exception {
+        final String containerId = getRandomUniqueId();
+        final String containerSubjectUri = serverAddress + containerId;
+        createObjectAndClose(containerId);
+
+        createVersionedBinary(id);
+
+        final String descriptionUri = subjectUri + "/fcr:metadata";
+
+        final String containerBody = createContainerMementoBodyContent(containerSubjectUri, "text/n3");
+        final HttpPost createMethod = postObjMethod(descriptionUri);
+        createMethod.addHeader(CONTENT_TYPE, "text/n3");
+        createMethod.setEntity(new StringEntity(containerBody));
+
+        // Attempt to create memento with partial record
+        try (final CloseableHttpResponse response = execute(createMethod)) {
+            assertEquals("Didn't get a BAD_REQUEST response!", BAD_REQUEST.getStatusCode(), getStatus(response));
+        }
+    }
+
+    @Test
+    public void testCreateVersionBinaryDescriptionWithBodyAndDatetime() throws Exception {
+        createVersionedBinary(id);
+
+        final String descriptionUri = subjectUri + "/fcr:metadata";
+
+        final String mementoUri = createContainerMementoWithBody(descriptionUri, MEMENTO_DATETIME);
+        assertMementoUri(mementoUri, descriptionUri);
+
+        try (final CloseableDataset dataset = getDataset(new HttpGet(mementoUri))) {
+            final DatasetGraph results = dataset.asDatasetGraph();
+
+            final Node mementoSubject = createURI(mementoUri);
+
+            assertFalse("Memento type should not be visible",
+                    results.contains(ANY, mementoSubject, RDF.type.asNode(), MEMENTO_TYPE_NODE));
+        }
+    }
+
+    @Test
+    public void testCreateVersionHistoricBinaryAndDescription() throws Exception {
+        createVersionedBinary(id);
+
+        final String descriptionUri = subjectUri + "/fcr:metadata";
+
+        final String binaryMementoUri = createMemento(subjectUri, MEMENTO_DATETIME,
+                "text/plain", "content");
+        assertMementoUri(binaryMementoUri, subjectUri);
+
+        final String mementoUri = createContainerMementoWithBody(descriptionUri, MEMENTO_DATETIME);
+        assertMementoUri(mementoUri, descriptionUri);
+
+        try (final CloseableDataset dataset = getDataset(new HttpGet(mementoUri))) {
+            final DatasetGraph results = dataset.asDatasetGraph();
+
+            final Node mementoSubject = createURI(mementoUri);
+
+            assertTrue("Type must be a fedora:Binary",
+                    results.contains(ANY, mementoSubject, RDF.type.asNode(), FEDORA_BINARY.asNode()));
+            assertTrue("Memento must have first updated property",
+                    results.contains(ANY, mementoSubject, TEST_PROPERTY_NODE, createLiteral("bar")));
+        }
+
+        // Verify that the memento has the updated binary
+        try (final CloseableHttpResponse response = execute(new HttpGet(binaryMementoUri))) {
+            assertMementoDatetimeHeaderMatches(response, MEMENTO_DATETIME);
+
+            assertEquals("Binary content of memento must reflect historic version",
+                    "content", EntityUtils.toString(response.getEntity()));
+            assertEquals("text/plain", response.getFirstHeader(CONTENT_TYPE).getValue());
         }
     }
 
@@ -839,14 +955,14 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         createVersionedContainer(id);
         final String memento1 =
-            FMT.format(ISO_INSTANT.parse("2017-06-10T11:41:00Z", Instant::from));
+                FMT.format(ISO_INSTANT.parse("2017-06-10T11:41:00Z", Instant::from));
         final String version1Uri = createLDPRSMementoWithExistingBody(memento1);
         final String memento2 =
-            FMT.format(ISO_INSTANT.parse("2016-06-17T11:41:00Z", Instant::from));
+                FMT.format(ISO_INSTANT.parse("2016-06-17T11:41:00Z", Instant::from));
         final String version2Uri = createLDPRSMementoWithExistingBody(memento2);
 
         final String request1Datetime =
-            FMT.format(ISO_INSTANT.parse("2017-01-12T00:00:00Z", Instant::from));
+                FMT.format(ISO_INSTANT.parse("2017-01-12T00:00:00Z", Instant::from));
         final HttpGet getMemento = getObjMethod(id);
         getMemento.addHeader(ACCEPT_DATETIME, request1Datetime);
 
@@ -858,7 +974,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
 
         final String request2Datetime =
-            FMT.format(ISO_INSTANT.parse("2018-01-10T00:00:00Z", Instant::from));
+                FMT.format(ISO_INSTANT.parse("2018-01-10T00:00:00Z", Instant::from));
         final HttpGet getMemento2 = getObjMethod(id);
         getMemento2.addHeader(ACCEPT_DATETIME, request2Datetime);
 
@@ -877,7 +993,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         createVersionedContainer(id);
         final String requestDatetime =
-            FMT.format(ISO_INSTANT.parse("2017-01-12T00:00:00Z", Instant::from));
+                FMT.format(ISO_INSTANT.parse("2017-01-12T00:00:00Z", Instant::from));
         final HttpGet getMemento = getObjMethod(id);
         getMemento.addHeader(ACCEPT_DATETIME, requestDatetime);
 
@@ -964,7 +1080,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         createVersionedContainer(id);
 
         final String memento1 =
-            FMT.format(ISO_INSTANT.parse("2001-06-10T16:41:00Z", Instant::from));
+                FMT.format(ISO_INSTANT.parse("2001-06-10T16:41:00Z", Instant::from));
         final String version1Uri = createLDPRSMementoWithExistingBody(memento1);
         final HttpGet getRequest = new HttpGet(version1Uri);
 
@@ -988,7 +1104,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         createVersionedBinary(id, "text/plain", "This is some versioned content");
 
         final String memento1 =
-            FMT.format(ISO_INSTANT.parse("2001-06-10T16:41:00Z", Instant::from));
+                FMT.format(ISO_INSTANT.parse("2001-06-10T16:41:00Z", Instant::from));
         final String version1Uri = createLDPNRMementoWithExistingBody(memento1);
         final HttpGet getRequest = new HttpGet(version1Uri);
 
@@ -1022,7 +1138,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     }
 
     private String createMementoWithExistingBody(final String id, final String mementoDateTime, final boolean isLDPNR)
-        throws Exception {
+            throws Exception {
         final HttpGet getRequest = getObjMethod(id);
         if (!isLDPNR) {
             getRequest.setHeader(ACCEPT, NTRIPLES);
@@ -1032,7 +1148,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                 // Resource exists so get the body to put back with header
                 final String body = EntityUtils.toString(response.getEntity());
                 final String mimeType =
-                    response.getFirstHeader(CONTENT_TYPE).getValue();
+                        response.getFirstHeader(CONTENT_TYPE).getValue();
                 return createMemento(serverAddress + id, mementoDateTime, mimeType, body);
             }
         }
@@ -1041,7 +1157,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     private String createMemento(final String subjectUri, final String mementoDateTime, final String contentType,
             final String body) throws Exception {
-        final HttpPost createVersionMethod = postObjMethod(id + "/" + FCR_VERSIONS);
+        final HttpPost createVersionMethod = new HttpPost(subjectUri + "/" + FCR_VERSIONS);
         if (contentType != null) {
             createVersionMethod.addHeader(CONTENT_TYPE, contentType);
         }
@@ -1078,7 +1194,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(httpGet)) {
             model.read(response.getEntity().getContent(), "", rdfLang.getName());
         }
-        final Resource subjectResc = model.getResource(subjectUri);
+        final String resourceUri = subjectUri.replace("/fcr:metadata", "");
+        final Resource subjectResc = model.getResource(resourceUri);
         subjectResc.removeAll(TEST_PROPERTY);
         subjectResc.addLiteral(TEST_PROPERTY, "bar");
 
@@ -1120,7 +1237,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
      * @throws Exception
      */
     private String createVersionedBinary(final String id, final String mimeType, final String content)
-        throws Exception {
+            throws Exception {
         final HttpPost createMethod = postObjMethod();
         createMethod.addHeader("Slug", id);
         if (mimeType == null && content == null) {
@@ -1151,12 +1268,12 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     private static void assertNoMementoDatetimeHeaderPresent(final CloseableHttpResponse response) {
         assertNull("No memento datetime header set in response",
-            response.getFirstHeader(MEMENTO_DATETIME_HEADER));
+                response.getFirstHeader(MEMENTO_DATETIME_HEADER));
     }
 
     private static void assertMementoDatetimeHeaderPresent(final CloseableHttpResponse response) {
         assertNotNull("No memento datetime header set in response",
-            response.getFirstHeader(MEMENTO_DATETIME_HEADER));
+                response.getFirstHeader(MEMENTO_DATETIME_HEADER));
     }
 
     private static void assertMementoDatetimeHeaderMatches(final CloseableHttpResponse response,
@@ -1235,5 +1352,17 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     protected static void assertMementoUri(final String mementoUri, final String subjectUri) {
         assertTrue(mementoUri.matches(subjectUri + "/fcr:versions/\\d+"));
+    }
+
+    private static void assertNonRdfSourceMementoUri(final String mementoUri, final String subjectUri) {
+        assertTrue(mementoUri.matches(subjectUri + "/fcr:metadata/fcr:versions/\\d+"));
+    }
+
+    private static void assertHasLink(final CloseableHttpResponse response, final Property relation,
+            final String uri) {
+        final String relName = relation.getLocalName();
+        assertTrue("Missing link " + relName + " with value " + uri, getLinkHeaders(response)
+                .stream().map(Link::valueOf)
+                .anyMatch(l -> relName.equals(l.getRel()) && uri.equals(l.getUri().toString())));
     }
 }
