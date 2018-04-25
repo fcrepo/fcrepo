@@ -22,6 +22,7 @@ import static javax.servlet.http.HttpServletResponse.SC_OK;
 import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_ADMIN_ROLE;
 import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_USER_ROLE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ;
+import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_APPEND;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
@@ -65,6 +66,8 @@ public class WebACFilterTest {
 
     private static final WebACPermission readPermission = new WebACPermission(WEBAC_MODE_READ, testURI);
 
+    private static final WebACPermission appendPermission = new WebACPermission(WEBAC_MODE_APPEND, testURI);
+
     private static final WebACPermission writePermission = new WebACPermission(WEBAC_MODE_WRITE, testURI);
 
     private MockHttpServletRequest request;
@@ -102,6 +105,7 @@ public class WebACFilterTest {
         when(mockSubject.hasRole(FEDORA_ADMIN_ROLE)).thenReturn(false);
         when(mockSubject.hasRole(FEDORA_USER_ROLE)).thenReturn(true);
         when(mockSubject.isPermitted(readPermission)).thenReturn(false);
+        when(mockSubject.isPermitted(appendPermission)).thenReturn(false);
         when(mockSubject.isPermitted(writePermission)).thenReturn(false);
     }
 
@@ -111,6 +115,17 @@ public class WebACFilterTest {
         when(mockSubject.hasRole(FEDORA_ADMIN_ROLE)).thenReturn(false);
         when(mockSubject.hasRole(FEDORA_USER_ROLE)).thenReturn(true);
         when(mockSubject.isPermitted(readPermission)).thenReturn(true);
+        when(mockSubject.isPermitted(appendPermission)).thenReturn(false);
+        when(mockSubject.isPermitted(writePermission)).thenReturn(false);
+    }
+
+    private void setupAuthUserReadAppend() {
+        // authenticated user with only read permissions
+        when(mockSubject.isAuthenticated()).thenReturn(true);
+        when(mockSubject.hasRole(FEDORA_ADMIN_ROLE)).thenReturn(false);
+        when(mockSubject.hasRole(FEDORA_USER_ROLE)).thenReturn(true);
+        when(mockSubject.isPermitted(readPermission)).thenReturn(true);
+        when(mockSubject.isPermitted(appendPermission)).thenReturn(true);
         when(mockSubject.isPermitted(writePermission)).thenReturn(false);
     }
 
@@ -120,6 +135,7 @@ public class WebACFilterTest {
         when(mockSubject.hasRole(FEDORA_ADMIN_ROLE)).thenReturn(false);
         when(mockSubject.hasRole(FEDORA_USER_ROLE)).thenReturn(true);
         when(mockSubject.isPermitted(readPermission)).thenReturn(true);
+        when(mockSubject.isPermitted(appendPermission)).thenReturn(false);
         when(mockSubject.isPermitted(writePermission)).thenReturn(true);
     }
 
@@ -266,6 +282,16 @@ public class WebACFilterTest {
     @Test
     public void testAuthUserReadOnlyDelete() throws ServletException, IOException {
         setupAuthUserReadOnly();
+        // DELETE => 403
+        request.setRequestURI(testPath);
+        request.setMethod("DELETE");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_FORBIDDEN, response.getStatus());
+    }
+
+    @Test
+    public void testAuthUserReadAppendDelete() throws ServletException, IOException {
+        setupAuthUserReadAppend();
         // DELETE => 403
         request.setRequestURI(testPath);
         request.setMethod("DELETE");
