@@ -65,7 +65,7 @@ public abstract class AbstractRolesAuthorizationDelegate implements FedoraAuthor
      * Gather effectives roles
      *
      * @param acl access control list
-     * @param principals effective principals
+     * @param principals effective principals of agents and foaf agentClass
      * @return set of effective content roles
      */
     public static Set<String> resolveUserRoles(final Map<String, Collection<String>> acl,

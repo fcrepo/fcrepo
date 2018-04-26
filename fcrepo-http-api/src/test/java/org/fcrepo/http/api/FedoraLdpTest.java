@@ -53,6 +53,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.observer.OptionalValues.BASE_URL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -61,6 +62,7 @@ import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anySetOf;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -105,6 +107,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.http.commons.domain.MultiPrefer;
+import org.fcrepo.http.commons.domain.PreferTag;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.FedoraSession;
@@ -149,8 +152,10 @@ public class FedoraLdpTest {
 
     private final String path = "/some/path";
     private final String binaryPath = "/some/binary/path";
-    private final String binaryDescriptionPath = "/some/other/path";
+
+    private final String binaryDescriptionPath = binaryPath + "/fedora:description";
     private final String containerConstraints = "http://localhost/static/constraints/ContainerConstraints.rdf";
+    private final String nonRDFSourceConstraints = "http://localhost/static/constraints/NonRDFSourceConstraints.rdf";
     private FedoraLdp testObj;
 
     private final List<String> nonRDFSourceLink = Arrays.asList(
@@ -205,6 +210,12 @@ public class FedoraLdpTest {
     @Mock
     private AcquiredLock mockLock;
 
+    @Mock
+    private MultiPrefer prefer;
+
+    @Mock
+    private PreferTag preferTag;
+
     private static final Logger log = getLogger(FedoraLdpTest.class);
 
 
@@ -230,6 +241,7 @@ public class FedoraLdpTest {
         setField(testObj, "securityContext", mockSecurityContext);
         setField(testObj, "lockManager", mockLockManager);
         setField(testObj, "context", mockServletContext);
+        setField(testObj, "prefer", prefer);
 
         when(mockHttpConfiguration.putRequiresIfMatch()).thenReturn(false);
 
@@ -245,6 +257,7 @@ public class FedoraLdpTest {
         when(mockBinary.getEtagValue()).thenReturn("");
         when(mockBinary.getPath()).thenReturn(binaryPath);
         when(mockBinary.getDescription()).thenReturn(mockNonRdfSourceDescription);
+        when(mockBinary.getDescribedResource()).thenReturn(mockBinary);
 
         when(mockHeaders.getHeaderString("user-agent")).thenReturn("Test UserAgent");
 
@@ -255,6 +268,12 @@ public class FedoraLdpTest {
         when(mockSession.getFedoraSession()).thenReturn(mockFedoraSession);
 
         when(mockServletContext.getContextPath()).thenReturn("/");
+
+        when(prefer.getReturn()).thenReturn(preferTag);
+                doAnswer((Answer<HttpServletResponse>) invocation -> {
+                    mockResponse.addHeader("Preference-Applied", "return=representation");
+                    return null;
+                }).when(preferTag).addResponseHeaders(mockResponse);
     }
 
     private FedoraResource setResource(final Class<? extends FedoraResource> klass) {
@@ -287,6 +306,8 @@ public class FedoraLdpTest {
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertTrue("Should have a Link header", mockResponse.containsHeader(LINK));
         assertTrue("Should have an Allow header", mockResponse.containsHeader("Allow"));
+        assertTrue("Should have a Preference-Applied header", mockResponse.containsHeader("Preference-Applied"));
+        assertTrue("Should have a Vary header", mockResponse.containsHeader("Vary"));
         assertTrue("Should be an LDP Resource",
                 mockResponse.getHeaders(LINK).contains("<" + LDP_NAMESPACE + "Resource>;rel=\"type\""));
         assertShouldHaveConstraintsLink();
@@ -373,6 +394,7 @@ public class FedoraLdpTest {
         assertShouldBeAnLDPNonRDFSource();
         assertShouldNotAdvertiseAcceptPatchFlavors();
         assertShouldContainLinkToBinaryDescription();
+        assertShouldHaveNonRDFSourceConstraintsLink();
     }
 
     private void assertContentLengthGreaterThan0(final String contentLength) {
@@ -382,8 +404,14 @@ public class FedoraLdpTest {
     private void assertShouldContainLinkToBinaryDescription() {
         assertTrue("Should contain a link to the binary description",
                 mockResponse.getHeaders(LINK)
-                        .contains("<" + idTranslator.toDomain(binaryDescriptionPath + "/fcr:metadata")
+                        .contains("<" + idTranslator.toDomain(binaryPath + "/fcr:metadata")
                                 + ">; rel=\"describedby\""));
+    }
+
+    private void assertShouldHaveNonRDFSourceConstraintsLink() {
+        assertTrue("Should have a constraints document",
+                mockResponse.getHeaders(LINK).contains("<" + nonRDFSourceConstraints + ">; rel=\"" +
+                        CONSTRAINED_BY.toString() + "\""));
     }
 
     private void assertShouldNotAdvertiseAcceptPatchFlavors() {
@@ -392,6 +420,19 @@ public class FedoraLdpTest {
 
     private void assertShouldNotAdvertiseAcceptPostFlavors() {
         assertFalse("Should not advertise Accept-Post flavors", mockResponse.containsHeader("Accept-Post"));
+    }
+
+    private void assertShouldHaveAcceptExternalContentHandlingHeader() {
+        assertTrue("Should have Accept-External-Content-Handling header",
+                mockResponse.containsHeader(FedoraLdp.ACCEPT_EXTERNAL_CONTENT));
+
+        assertEquals("Should support copy, redirect, and proxy", "copy,redirect,proxy",
+                mockResponse.getHeader(FedoraLdp.ACCEPT_EXTERNAL_CONTENT));
+    }
+
+    private void assertShouldNotHaveAcceptExternalContentHandlingHeader() {
+        assertFalse("Should not have Accept-External-Content-Handling header",
+                mockResponse.containsHeader(FedoraLdp.ACCEPT_EXTERNAL_CONTENT));
     }
 
     @Test
@@ -437,6 +478,7 @@ public class FedoraLdpTest {
         final Response actual = testObj.options();
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertTrue("Should have an Allow header", mockResponse.containsHeader("Allow"));
+        assertShouldNotHaveAcceptExternalContentHandlingHeader();
     }
 
     @Test
@@ -446,6 +488,7 @@ public class FedoraLdpTest {
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertTrue("Should advertise Accept-Post flavors", mockResponse.containsHeader("Accept-Post"));
         assertShouldAdvertiseAcceptPatchFlavors();
+        assertShouldNotHaveAcceptExternalContentHandlingHeader();
     }
 
     @Test
@@ -457,6 +500,7 @@ public class FedoraLdpTest {
         assertShouldNotAdvertiseAcceptPostFlavors();
         assertShouldNotAdvertiseAcceptPatchFlavors();
         assertShouldContainLinkToBinaryDescription();
+        assertShouldHaveAcceptExternalContentHandlingHeader();
     }
 
     @Test
@@ -469,6 +513,7 @@ public class FedoraLdpTest {
         assertShouldNotAdvertiseAcceptPostFlavors();
         assertShouldAdvertiseAcceptPatchFlavors();
         assertShouldContainLinkToTheBinary();
+        assertShouldNotHaveAcceptExternalContentHandlingHeader();
     }
 
 
@@ -922,6 +967,16 @@ public class FedoraLdpTest {
         setResource(Container.class);
         when(mockContainerService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockContainer);
         final Response actual = testObj.createObject(null, null, "b", null, null, null);
+        assertEquals(CREATED.getStatusCode(), actual.getStatus());
+    }
+
+    @Test
+    public void testCreateNewObjectWithVersionedResource() throws MalformedRdfException, InvalidChecksumException,
+           IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+        setResource(Container.class);
+        when(mockContainerService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockContainer);
+        final String versionedResourceLink = "<" + VERSIONED_RESOURCE.getURI() + ">;rel=\"type\"";
+        final Response actual = testObj.createObject(null, null, "b", null, Arrays.asList(versionedResourceLink), null);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
     }
 

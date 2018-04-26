@@ -26,6 +26,9 @@
 <rdfs = 'http://www.w3.org/2000/01/rdf-schema#'>
 <premis = 'http://www.loc.gov/premis/rdf/v1#'>
 <ldp = 'http://www.w3.org/ns/ldp#'>
+<acl = 'http://www.w3.org/ns/auth/acl#'>
+<memento = 'http://mementoweb.org/ns#'>
+
 <ebucore = 'http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#'>
 
 /*
@@ -34,7 +37,21 @@
  */
 <fedoraconfig = 'http://fedora.info/definitions/v4/config#'>
 
+/*
+ * A fedora namespace for webac.
+ */
+<webac = 'http://fedora.info/definitions/v4/webac#'>
+
 <test = 'info:fedora/test/'>
+
+[nt:versionFile] > nt:hierarchyNode
++ fedora:timemap (nt:folder) =fedora:TimeMap
++ fedora:description (nt:hierarchyNode) =fedora:NonRdfSourceDescription
++ jcr:content (nt:base)
++ fedora:acl (nt:folder) =webac:Acl
+
+[nt:leafNode] > nt:hierarchyNode
++ fedora:timemap (nt:folder) =fedora:TimeMap
 
 /*
  * Any Fedora resource.
@@ -64,18 +81,35 @@
 [ldp:IndirectContainer] > fedora:Container  mixin
 
 /*
- * A Fedora datastream.
+ * A Fedora binary description.
  */
 [fedora:NonRdfSourceDescription] > fedora:Resource mixin
+  - ebucore:filename (STRING)
+  - ebucore:hasMimeType (STRING)
+  - premis:hasSize (LONG) COPY
+  - premis:hasMessageDigest (URI) COPY multiple
+
+/*
+ * A Fedora LDPCv TimeMap.
+ */
+[fedora:TimeMap] > fedora:Resource mixin
+  - memento:original (REFERENCE)
+
+/*
+ * A Fedora LDPRm Memento.
+ */
+[memento:Memento] > fedora:Resource mixin
+  - memento:mementoDatetime (DATE)
+
+/*
+ * A Fedora webac:Acl mixin.
+ */
+[webac:Acl] > fedora:Resource mixin
 
 /*
  * Some content that can have a checksum
  */
 [fedora:Binary] > fedora:Resource mixin
-  - ebucore:filename (STRING)
-  - ebucore:hasMimeType (STRING)
-  - premis:hasSize (LONG) COPY
-  - premis:hasMessageDigest (URI) COPY multiple
 
 [fedora:Skolem] > mix:referenceable mixin
   - fedora:lastModified (DATE)

@@ -22,6 +22,8 @@ import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import com.google.common.base.Converter;
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.modeshape.FedoraTimeMapImpl;
+import org.fcrepo.kernel.modeshape.FedoraWebacAclImpl;
 import org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl;
 import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
 import org.fcrepo.kernel.modeshape.ContainerImpl;
@@ -56,6 +58,10 @@ public class NodeResourceConverter extends Converter<Node, FedoraResource> {
             fedoraResource = new FedoraBinaryImpl(node);
         } else if (TombstoneImpl.hasMixin(node)) {
             fedoraResource = new TombstoneImpl(node);
+        } else if (FedoraTimeMapImpl.hasMixin(node)) {
+            fedoraResource = new FedoraTimeMapImpl(node);
+        } else if (FedoraWebacAclImpl.hasMixin(node)) {
+            fedoraResource = new FedoraWebacAclImpl(node);
         } else {
             fedoraResource = new ContainerImpl(node);
         }

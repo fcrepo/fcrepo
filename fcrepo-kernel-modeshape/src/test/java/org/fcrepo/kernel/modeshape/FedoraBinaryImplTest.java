@@ -42,6 +42,7 @@ import java.net.URISyntaxException;
 import java.util.Calendar;
 import java.time.Instant;
 
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_DESCRIPTION;
 import static java.util.Collections.singleton;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.TestHelpers.checksumString;
@@ -73,7 +74,7 @@ public class FedoraBinaryImplTest implements FedoraTypes {
     private Session mockSession;
 
     @Mock
-    private Node mockRootNode, mockDsNode, mockContent, mockParentNode;
+    private Node mockRootNode, mockDescNode, mockContent, mockParentNode;
 
     @Mock
     private InputStream mockStream;
@@ -82,20 +83,21 @@ public class FedoraBinaryImplTest implements FedoraTypes {
     private ValueFactory mockVF;
 
     @Mock
-    private NodeType mockDsNodeType;
+    private NodeType mockDescNodeType;
 
     @Before
     public void setUp() {
-        final NodeType[] nodeTypes = new NodeType[] { mockDsNodeType };
+        final NodeType[] nodeTypes = new NodeType[] { mockDescNodeType };
         try {
-            when(mockDsNodeType.getName()).thenReturn(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
-            when(mockDsNode.getMixinNodeTypes()).thenReturn(nodeTypes);
-            when(mockDsNode.getName()).thenReturn(testDsId);
+            when(mockDescNodeType.getName()).thenReturn(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
+            when(mockDescNode.getMixinNodeTypes()).thenReturn(nodeTypes);
+            when(mockDescNode.getParent()).thenReturn(mockContent);
             when(mockContent.getSession()).thenReturn(mockSession);
             when(mockContent.getParent()).thenReturn(mockParentNode);
+            when(mockContent.getNode(FEDORA_DESCRIPTION)).thenReturn(mockDescNode);
             final NodeType mockNodeType = mock(NodeType.class);
-            when(mockNodeType.getName()).thenReturn("nt:file");
-            when(mockDsNode.getPrimaryNodeType()).thenReturn(mockNodeType);
+            when(mockNodeType.getName()).thenReturn("nt:versionedFile");
+            when(mockContent.getPrimaryNodeType()).thenReturn(mockNodeType);
             testObj = new FedoraBinaryImpl(mockContent);
         } catch (final RepositoryException e) {
             e.printStackTrace();
@@ -107,7 +109,7 @@ public class FedoraBinaryImplTest implements FedoraTypes {
     public void tearDown() {
         mockSession = null;
         mockRootNode = null;
-        mockDsNode = null;
+        mockDescNode = null;
     }
 
     @Test
@@ -118,8 +120,8 @@ public class FedoraBinaryImplTest implements FedoraTypes {
     @Test
     public void testGetContent() throws RepositoryException, IOException {
         final String expected = "asdf";
-        getContentNodeMock(mockContent, expected);
-        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+        getContentNodeMock(mockContent, mockDescNode, expected);
+        when(mockDescNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         final String actual = IOUtils.toString(testObj.getContent());
         assertEquals(expected, actual);
         verify(mockContent).getProperty(JCR_DATA);
@@ -130,9 +132,9 @@ public class FedoraBinaryImplTest implements FedoraTypes {
             InvalidChecksumException {
         final org.modeshape.jcr.api.Binary mockBin =
                 mock(org.modeshape.jcr.api.Binary.class);
-        getContentNodeMock(mockContent, 8);
-        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
-        when(mockDsNode.getSession()).thenReturn(mockSession);
+        getContentNodeMock(mockContent, mockDescNode, 8);
+        when(mockDescNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+        when(mockDescNode.getSession()).thenReturn(mockSession);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
         when(mockVF.createBinary(any(InputStream.class), any(String.class)))
                 .thenReturn(mockBin);
@@ -149,9 +151,8 @@ public class FedoraBinaryImplTest implements FedoraTypes {
             InvalidChecksumException {
         final org.modeshape.jcr.api.Binary mockBin =
                 mock(org.modeshape.jcr.api.Binary.class);
-        getContentNodeMock(mockContent, 8);
-        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
-        when(mockDsNode.getSession()).thenReturn(mockSession);
+        getContentNodeMock(mockContent, mockDescNode, 8);
+        when(mockDescNode.getSession()).thenReturn(mockSession);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
         when(mockVF.createBinary(any(InputStream.class), any(String.class)))
                 .thenReturn(mockBin);
@@ -161,7 +162,7 @@ public class FedoraBinaryImplTest implements FedoraTypes {
         when(mockContent.getProperty(JCR_DATA)).thenReturn(mockData);
         when(mockData.getBinary()).thenReturn(mockBin);
         testObj.setContent(mockStream, null, null, "xyz", null);
-        verify(mockContent).setProperty(FILENAME, "xyz");
+        verify(mockDescNode).setProperty(FILENAME, "xyz");
     }
 
     @Test(expected = InvalidChecksumException.class)
@@ -170,9 +171,9 @@ public class FedoraBinaryImplTest implements FedoraTypes {
             URISyntaxException {
         final org.modeshape.jcr.api.Binary mockBin =
                 mock(org.modeshape.jcr.api.Binary.class);
-        getContentNodeMock(mockContent, 8);
-        when(mockDsNode.getSession()).thenReturn(mockSession);
-        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+        getContentNodeMock(mockContent, mockDescNode, 8);
+        when(mockDescNode.getSession()).thenReturn(mockSession);
+        when(mockDescNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
         when(mockVF.createBinary(any(InputStream.class), any(String.class)))
                 .thenReturn(mockBin);
@@ -187,10 +188,10 @@ public class FedoraBinaryImplTest implements FedoraTypes {
     @Test
     public void getContentSize() throws RepositoryException {
         final int expectedContentLength = 2;
-        getContentNodeMock(mockContent, expectedContentLength);
-        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+        getContentNodeMock(mockContent, mockDescNode, expectedContentLength);
+        when(mockDescNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         final long actual = testObj.getContentSize();
-        verify(mockContent).getProperty(CONTENT_SIZE);
+        verify(mockDescNode).getProperty(CONTENT_SIZE);
         assertEquals(expectedContentLength, actual);
     }
 
@@ -198,36 +199,34 @@ public class FedoraBinaryImplTest implements FedoraTypes {
     public void getContentDigest() throws RepositoryException {
         final String content = "asdf";
         final URI expected = URI.create(checksumString(content));
-        getContentNodeMock(mockContent, content);
+        getContentNodeMock(mockContent, mockDescNode, content);
         final URI actual = testObj.getContentDigest();
         assertEquals(expected, actual);
-        verify(mockContent).getProperty(CONTENT_DIGEST);
+        verify(mockDescNode).getProperty(CONTENT_DIGEST);
     }
 
     @Test
     public void testGetMimeType() throws RepositoryException {
-        getContentNodeMock(mockContent, 8);
-        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
-        when(mockDsNode.hasNode(JCR_CONTENT)).thenReturn(true);
-        when(mockContent.hasProperty(HAS_MIME_TYPE)).thenReturn(true);
+        getContentNodeMock(mockContent, mockDescNode, 8);
+        when(mockDescNode.hasProperty(HAS_MIME_TYPE)).thenReturn(true);
 
         final Property mockProperty = mock(Property.class);
-        when(mockContent.getProperty(HAS_MIME_TYPE)).thenReturn(mockProperty);
+        when(mockDescNode.getProperty(HAS_MIME_TYPE)).thenReturn(mockProperty);
         when(mockProperty.getString()).thenReturn("application/x-mime-type");
         assertEquals("application/x-mime-type", testObj.getMimeType());
     }
 
     @Test
     public void testGetMimeTypeWithNoContent() throws RepositoryException {
-        when(mockDsNode.hasNode(JCR_CONTENT)).thenReturn(false);
+        when(mockDescNode.hasNode(JCR_CONTENT)).thenReturn(false);
         assertEquals("application/octet-stream", testObj.getMimeType());
     }
 
     @Test
     public void testGetMimeTypeWithDefault() throws RepositoryException {
-        getContentNodeMock(mockContent, 8);
-        when(mockDsNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
-        when(mockDsNode.hasNode(JCR_CONTENT)).thenReturn(true);
+        getContentNodeMock(mockContent, mockDescNode, 8);
+        when(mockDescNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+        when(mockDescNode.hasNode(JCR_CONTENT)).thenReturn(true);
         when(mockContent.hasProperty(HAS_MIME_TYPE)).thenReturn(false);
 
         assertEquals("application/octet-stream", testObj.getMimeType());

@@ -153,6 +153,9 @@ public class FedoraTypesUtilsTest {
     private Node mockContainer;
 
     @Mock
+    private Node mockParent;
+
+    @Mock
     private JcrRepository mockJcrRepository;
 
     @Mock
@@ -381,5 +384,4 @@ public class FedoraTypesUtilsTest {
         when(mockNodeType.getName()).thenReturn(ROOT);
         assertFalse(isExternalNode.test(mockNode));
     }
-
 }

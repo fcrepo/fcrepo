@@ -20,7 +20,6 @@ package org.fcrepo.http.commons.domain.ldp;
 import static java.util.Arrays.asList;
 import static java.util.Optional.ofNullable;
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
-import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.SERVER_MANAGED;
@@ -74,7 +73,7 @@ public class LdpPreferTag extends PreferTag {
 
         references = includes.contains(INBOUND_REFERENCES.toString());
 
-        embed = includes.contains(EMBED_CONTAINS.toString()) || includes.contains(EMBED_CONTAINED.toString());
+        embed = includes.contains(EMBED_CONTAINED.toString());
 
         managedProperties = includes.contains(SERVER_MANAGED.toString())
                 || (!omits.contains(SERVER_MANAGED.toString()) && !minimal);

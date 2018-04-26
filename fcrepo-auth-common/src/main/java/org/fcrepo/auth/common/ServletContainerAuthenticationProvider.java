@@ -185,7 +185,8 @@ public final class ServletContainerAuthenticationProvider implements
     private Principal getDelegatedPrincipal(final Credentials credentials) {
         for (final PrincipalProvider provider : this.getPrincipalProviders()) {
             if (provider instanceof DelegateHeaderPrincipalProvider) {
-                return ((DelegateHeaderPrincipalProvider) provider).getDelegate(credentials);
+                final HttpServletRequest request = ((ServletCredentials) credentials).getRequest();
+                return ((DelegateHeaderPrincipalProvider) provider).getDelegate(request);
             }
         }
         return null;
@@ -213,10 +214,10 @@ public final class ServletContainerAuthenticationProvider implements
             // if the provider is DelegateHeader, it is either already processed (if logged user has fedora admin role)
             // or should be ignored completely (the user was not in admin role, so on-behalf-of header must be ignored)
             if (!(p instanceof DelegateHeaderPrincipalProvider)) {
-                final Set<Principal> ps = p.getPrincipals(credentials);
+                final Set<Principal> ps = p.getPrincipals(((ServletCredentials) credentials).getRequest());
 
                 if (ps != null) {
-                    principals.addAll(p.getPrincipals(credentials));
+                    principals.addAll(p.getPrincipals(((ServletCredentials) credentials).getRequest()));
                 }
             }
         }

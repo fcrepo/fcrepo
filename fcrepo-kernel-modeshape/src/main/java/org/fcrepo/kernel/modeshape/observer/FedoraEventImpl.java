@@ -101,6 +101,7 @@ public class FedoraEventImpl implements FedoraEvent {
      * @param path the node path corresponding to this event
      * @param resourceTypes the rdf types of the corresponding resource
      * @param userID the acting user for this event
+     * @param userURI the uri of the acting user for this event
      * @param date the timestamp for this event
      * @param info supplementary information
      */
@@ -115,6 +116,7 @@ public class FedoraEventImpl implements FedoraEvent {
      * @param path the node path corresponding to this event
      * @param resourceTypes the rdf types of the corresponding resource
      * @param userID the acting user for this event
+     * @param userURI the uri of the acting user for this event
      * @param date the timestamp for this event
      * @param info supplementary information
      */

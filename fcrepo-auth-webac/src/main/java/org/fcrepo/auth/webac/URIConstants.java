@@ -17,6 +17,8 @@
  */
 package org.fcrepo.auth.webac;
 
+import org.fcrepo.kernel.api.RdfLexicon;
+
 import java.net.URI;
 
 /**
@@ -35,7 +37,7 @@ final public class URIConstants {
     /**
      * Namespace for the W3C WebAC vocabulary.
      */
-    public static final String WEBAC_NAMESPACE_VALUE = "http://www.w3.org/ns/auth/acl#";
+    public static final String WEBAC_NAMESPACE_VALUE = RdfLexicon.WEBAC_NAMESPACE_VALUE;
 
     /**
      * Namespace for the W3C WebAC vocabulary.
@@ -121,8 +123,8 @@ final public class URIConstants {
     /**
      * WebAC accessControl
      */
-    public static final String WEBAC_ACCESS_CONTROL_VALUE = WEBAC_NAMESPACE_VALUE + "accessControl";
-    public static final URI WEBAC_ACCESS_CONTROL = URI.create(WEBAC_ACCESS_CONTROL_VALUE);
+    public static final String WEBAC_ACCESS_CONTROL_VALUE = RdfLexicon.WEBAC_ACCESS_CONTROL_VALUE;
+    public static final URI WEBAC_ACCESS_CONTROL = RdfLexicon.WEBAC_ACCESS_CONTROL;
 
     /**
      * WebAC mode

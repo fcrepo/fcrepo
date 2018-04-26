@@ -44,12 +44,13 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
-
+import java.util.List;
+import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response.Status;
 import javax.xml.bind.DatatypeConverter;
-
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -110,7 +111,16 @@ public abstract class AbstractResourceIT {
     protected static CloseableHttpClient client = createClient();
 
     protected static CloseableHttpClient createClient() {
-        return HttpClientBuilder.create().setMaxConnPerRoute(MAX_VALUE).setMaxConnTotal(MAX_VALUE).build();
+        return createClient(false);
+    }
+
+    protected static CloseableHttpClient createClient(final boolean disableRedirects) {
+        final HttpClientBuilder client =
+            HttpClientBuilder.create().setMaxConnPerRoute(MAX_VALUE).setMaxConnTotal(MAX_VALUE);
+        if (disableRedirects) {
+            client.disableRedirectHandling();
+        }
+        return client.build();
     }
 
     protected static HttpPost postObjMethod() {
@@ -307,6 +317,11 @@ public abstract class AbstractResourceIT {
         }
     }
 
+    protected static List<String> headerValues(final HttpResponse response, final String headerName) {
+        return stream(response.getHeaders(headerName)).map(Header::getValue).map(s -> s.split(",")).flatMap(
+                Arrays::stream).map(String::trim).collect(toList());
+    }
+
     protected static Collection<String> getHeader(final HttpResponse response, final String header) {
         return stream(response.getHeaders(header)).map(Header::getValue).collect(toList());
     }
@@ -500,4 +515,54 @@ public abstract class AbstractResourceIT {
         ttl.append(literal);
     }
 
+    /**
+     * Test a response for the absence of a specific LINK header
+     *
+     * @param response the HTTP response
+     * @param uri the URI not to exist in the LINK header
+     * @param rel the rel argument to check for
+     */
+    protected void assertNoLinkHeader(final CloseableHttpResponse response, final String uri, final String rel) {
+        assertEquals(0, countLinkHeader(response, uri, rel));
+    }
+
+    /**
+     * Test a response for a specific LINK header
+     *
+     * @param response the HTTP response
+     * @param uri the URI expected in the LINK header
+     * @param rel the rel argument to check for
+     */
+    protected void checkForLinkHeader(final CloseableHttpResponse response, final String uri, final String rel) {
+        assertEquals(1, countLinkHeader(response, uri, rel));
+    }
+
+    /**
+     * Test a response for N instances of a specific LINK header
+     *
+     * @param response the HTTP response
+     * @param uri the URI expected in the LINK header
+     * @param rel the rel argument to check for
+     * @param count how many LINK headers should exist
+     */
+    protected void checkForNLinkHeaders(final CloseableHttpResponse response, final String uri, final String rel,
+        final int count) {
+        assertEquals(count, countLinkHeader(response, uri, rel));
+    }
+
+    /**
+     * Utility for counting LINK headers
+     *
+     * @param response the HTTP response
+     * @param uri the URI expected in the LINK header
+     * @param rel the rel argument to check for
+     * @return the count of LINK headers.
+     */
+    private int countLinkHeader(final CloseableHttpResponse response, final String uri, final String rel) {
+        final Link linkA = Link.valueOf("<" + uri + ">; rel=" + rel);
+        return (int) Arrays.asList(response.getHeaders(LINK)).stream().filter(x -> {
+            final Link linkB = Link.valueOf(x.getValue());
+            return linkB.equals(linkA);
+        }).count();
+    }
 }

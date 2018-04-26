@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="owl2html.xsl"?>
+
+<!DOCTYPE rdf:RDF [
+    <!ENTITY owl "http://www.w3.org/2002/07/owl#" >
+    <!ENTITY xsd "http://www.w3.org/2001/XMLSchema#" >
+    <!ENTITY rdfs "http://www.w3.org/2000/01/rdf-schema#" >
+    <!ENTITY rdf "http://www.w3.org/1999/02/22-rdf-syntax-ns#" >
+]>
+
+<rdf:RDF
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+    <owl:Ontology rdf:about="static/constraints/NonRDFSourceConstraints">
+        <rdfs:label xml:lang="en">NonRDFSource Constraints</rdfs:label>
+        <rdfs:comment xml:lang="en">Fedora will create resources of the following type: 
+          &lt;http://www.w3.org/ns/ldp#NonRDFSource&gt;</rdfs:comment>
+        <rdfs:comment xml:lang="en">Non-RDF content-types will default to 
+          &lt;http://www.w3.org/ns/ldp#NonRDFSource&gt;.</rdfs:comment>
+        <rdfs:comment xml:lang="en">A binary in a Fedora repository is a NonRdfSource resource.
+        In other contexts, binaries would sometimes be described as bit-streams or files.
+        Binaries are always accompanied by a NonRdfSourceDescription.
+        The NonRdfSourceDescription of a Binary can be discovered by inspecting the `Link` header with `rel=describedby`.
+        </rdfs:comment>
+    </owl:Ontology>
+</rdf:RDF>

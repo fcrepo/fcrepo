@@ -80,6 +80,8 @@ public abstract class RDFMediaType extends MediaType {
 
     public final static String TEXT_HTML_WITH_CHARSET = TEXT_HTML + CHARSET_UTF8;
 
+    public static final String APPLICATION_LINK_FORMAT = "application/link-format";
+
     public static final List<Variant> POSSIBLE_RDF_VARIANTS = mediaTypes(
             RDF_XML_TYPE, TURTLE_TYPE, N3_TYPE, N3_ALT2_TYPE, NTRIPLES_TYPE,
             TEXT_PLAIN_TYPE, TURTLE_X_TYPE, JSON_LD_TYPE).add().build();

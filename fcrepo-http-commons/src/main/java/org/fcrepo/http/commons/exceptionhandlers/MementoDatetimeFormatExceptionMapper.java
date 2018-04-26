@@ -17,37 +17,34 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
+import org.fcrepo.kernel.api.exception.MementoDatetimeFormatException;
 import org.slf4j.Logger;
 
-import javax.jcr.version.LabelExistsVersionException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
-import static javax.ws.rs.core.Response.Status.CONFLICT;
-import static javax.ws.rs.core.Response.status;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.slf4j.LoggerFactory.getLogger;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+import static javax.ws.rs.core.Response.status;
 
 /**
- *  Translate LabelExistsVersionException errors into reasonable
- *  HTTP error codes
+ * Handle MementoDatetimeFormatException with HTTP 400 Bad Request.
  *
- * @author md5wz
- * @since 11/21/14
+ * @author lsitu
+ * @since 2018-03-12
  */
 @Provider
-public class LabelExistsVersionExceptionMapper implements
-        ExceptionMapper<LabelExistsVersionException>, ExceptionDebugLogging {
+public class MementoDatetimeFormatExceptionMapper implements
+        ExceptionMapper<MementoDatetimeFormatException>, ExceptionDebugLogging {
 
-    private static final Logger LOGGER =
-        getLogger(LabelExistsVersionExceptionMapper.class);
+    private static final Logger LOGGER = getLogger(MementoDatetimeFormatExceptionMapper.class);
 
     @Override
-    public Response toResponse(final LabelExistsVersionException e) {
-        LOGGER.error("LabelExistsVersionException intercepted by LabelExistsVersionExceptionMapper: {}\n",
-                    e.getMessage());
+    public Response toResponse(final MementoDatetimeFormatException e) {
         debugException(this, e, LOGGER);
-        return status(CONFLICT).entity(e.getMessage()).type(TEXT_PLAIN_WITH_CHARSET).build();
+        return status(BAD_REQUEST).entity(e.getMessage()).type(TEXT_PLAIN_WITH_CHARSET)
+                .build();
     }
 }

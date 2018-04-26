@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="owl2html.xsl"?>
+
+<!DOCTYPE rdf:RDF [
+    <!ENTITY owl "http://www.w3.org/2002/07/owl#" >
+    <!ENTITY xsd "http://www.w3.org/2001/XMLSchema#" >
+    <!ENTITY rdfs "http://www.w3.org/2000/01/rdf-schema#" >
+    <!ENTITY rdf "http://www.w3.org/1999/02/22-rdf-syntax-ns#" >
+]>
+
+
+<rdf:RDF
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+    <owl:Ontology rdf:about="static/constraints/InvalidACLException">
+        <rdfs:label xml:lang="en">Invalid ACL Exception</rdfs:label>
+        <rdfs:comment xml:lang="en">Fedora wasn't able to create the LDPR with the specified LDP-RS as the ACL for one of the following reasons:
+        the ACL URI in the link header does not exist, the ACL URI exists but does not contain a triple indicating rdf:type of http://fedora.info/definitions/v4/webac#Acl, or the ACL URI does not have the same domain as the LDPR.
+        </rdfs:comment>
+    </owl:Ontology>
+</rdf:RDF>

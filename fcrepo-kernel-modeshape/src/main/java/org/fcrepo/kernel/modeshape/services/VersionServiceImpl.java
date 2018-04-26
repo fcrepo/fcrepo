@@ -17,38 +17,66 @@
  */
 package org.fcrepo.kernel.modeshape.services;
 
-import org.fcrepo.kernel.api.FedoraSession;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.services.VersionService;
-import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
+import static java.util.Arrays.asList;
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.api.FedoraTypes.MEMENTO;
+import static org.fcrepo.kernel.api.FedoraTypes.MEMENTO_DATETIME;
+import static org.fcrepo.kernel.api.RequiredRdfContext.EMBED_RESOURCES;
+import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_CONTAINMENT;
+import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_MEMBERSHIP;
+import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
+import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
+import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.LDPCV_TIME_MAP;
+import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
+import static org.fcrepo.kernel.modeshape.rdf.impl.RequiredPropertiesUtil.assertRequiredContainerTriples;
+import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.fcrepo.kernel.api.utils.SubjectMappingUtil.mapSubject;
 
-import org.slf4j.Logger;
-import org.springframework.stereotype.Component;
-
+import java.io.InputStream;
+import java.net.URI;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.GregorianCalendar;
+import java.util.HashSet;
+import java.util.Set;
+import javax.inject.Inject;
+import javax.jcr.ItemExistsException;
 import javax.jcr.Node;
-import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.Workspace;
-import javax.jcr.version.LabelExistsVersionException;
-import javax.jcr.version.Version;
-import javax.jcr.version.VersionException;
-import javax.jcr.version.VersionHistory;
-import javax.jcr.version.VersionManager;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.VERSIONABLE;
-import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
-import static org.slf4j.LoggerFactory.getLogger;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.riot.Lang;
+import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.TripleCategory;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.Container;
+import org.fcrepo.kernel.api.models.FedoraBinary;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.services.BinaryService;
+import org.fcrepo.kernel.api.services.NodeService;
+import org.fcrepo.kernel.api.services.VersionService;
+import org.fcrepo.kernel.modeshape.ContainerImpl;
+import org.fcrepo.kernel.modeshape.utils.iterators.RelaxedRdfAdder;
+import org.slf4j.Logger;
+import org.springframework.stereotype.Component;;
 
 /**
- * This service exposes management of node versioning.  Instead of invoking
- * the JCR VersionManager methods, this provides a level of indirection that
- * allows for special handling of features built on top of JCR such as user
- * transactions.
+ * This service exposes management of node versioning for resources and binaries.
+ *
  * @author Mike Durbin
+ * @author bbpennel
  */
 
 @Component
@@ -56,149 +84,142 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
 
     private static final Logger LOGGER = getLogger(VersionService.class);
 
-    private static final Pattern invalidLabelPattern = Pattern.compile("[~#@*+%{}<>\\[\\]|\"^]");
+    private static final DateTimeFormatter MEMENTO_DATETIME_ID_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyyMMddHHmmss").withZone(ZoneId.of("GMT"));
 
-    private static final Pattern invalidLabelEndsWithANumberPattern = Pattern.compile("^(.*[\\s]+)?[\\d]*$");
-
-    @Override
-    public String createVersion(final FedoraSession session, final String absPath, final String label) {
-        final Session jcrSession = getJcrSession(session);
-        try {
-            final Node node = jcrSession.getNode(absPath);
-            if (!isVersioningEnabled(node)) {
-                enableVersioning(node);
-            }
-            return checkpoint(jcrSession, absPath, label);
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-    }
-
-    @Override
-    public void revertToVersion(final FedoraSession session, final String absPath, final String label) {
-        final Session jcrSession = getJcrSession(session);
-        final Workspace workspace = jcrSession.getWorkspace();
-        try {
-            final Version v = getVersionForLabel(workspace, absPath, label);
-            if (v == null) {
-                throw new PathNotFoundException("Unknown version \"" + label + "\"!");
-            }
-            final VersionManager versionManager = workspace.getVersionManager();
-            final Version preRevertVersion = versionManager.checkin(absPath);
-
-            try {
-                preRevertVersion.getContainingHistory().addVersionLabel(preRevertVersion.getName(),
-                        getPreRevertVersionLabel(label, preRevertVersion.getContainingHistory()), false);
-            } catch (final LabelExistsVersionException e) {
-                // fall-back behavior is to leave an unlabeled version
-            }
-            versionManager.restore(v, true);
-            versionManager.checkout(absPath);
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-    }
+    private static final Set<TripleCategory> VERSION_TRIPLES = new HashSet<>(asList(
+            PROPERTIES, EMBED_RESOURCES, SERVER_MANAGED, LDP_MEMBERSHIP, LDP_CONTAINMENT));
 
     /**
-     * When we revert to a version, we snapshot first so that the "revert" action can be undone,
-     * this method generates a label suitable for that snapshot version to make it clear why
-     * it shows up in user's version history.
-     * @param targetLabel
-     * @param history
-     * @return
-     * @throws RepositoryException
+     * The bitstream service
      */
-    private static String getPreRevertVersionLabel(final String targetLabel, final VersionHistory history)
-            throws RepositoryException {
-        final String baseLabel = "auto-snapshot-before-" + targetLabel;
-        for (int i = 0; i < Integer.MAX_VALUE; i ++) {
-            final String label = baseLabel + (i == 0 ? "" : "-" + i);
-            if (!history.hasVersionLabel(label)) {
-                return label;
-            }
-        }
-        return baseLabel;
+    @Inject
+    protected BinaryService binaryService;
+
+    @Inject
+    protected NodeService nodeService;
+
+    @Override
+    public FedoraResource createVersion(final FedoraSession session, final FedoraResource resource,
+            final IdentifierConverter<Resource, FedoraResource> idTranslator, final Instant dateTime) {
+        return createVersion(session, resource, idTranslator, dateTime, null, null);
     }
 
     @Override
-    public void removeVersion(final FedoraSession session, final String absPath, final String label) {
+    public FedoraResource createVersion(final FedoraSession session,
+            final FedoraResource resource,
+            final IdentifierConverter<Resource, FedoraResource> idTranslator,
+            final Instant dateTime,
+            final InputStream rdfInputStream,
+            final Lang rdfFormat) {
+
+        final String mementoPath = makeMementoPath(resource, dateTime);
+
+        assertMementoDoesNotExist(session, mementoPath);
+
+        final FedoraResource mementoResource = createContainer(session, mementoPath);
+        final String mementoUri = getUri(mementoResource, idTranslator);
+
+        final String resourceUri = getUri(resource, idTranslator);
+
+        final RdfStream mementoRdfStream;
+        if (rdfInputStream == null) {
+            // With no rdf body provided, create version from current resource state.
+            mementoRdfStream = resource.getTriples(idTranslator, VERSION_TRIPLES);
+        } else {
+            final Model inputModel = ModelFactory.createDefaultModel();
+            inputModel.read(rdfInputStream, mementoUri, rdfFormat.getName());
+
+            // Validate server managed triples are provided
+            assertRequiredContainerTriples(inputModel);
+
+            mementoRdfStream = DefaultRdfStream.fromModel(createURI(mementoUri), inputModel);
+        }
+
+        final RdfStream mappedStream = remapRdfSubjects(mementoUri, resourceUri, mementoRdfStream);
+
         final Session jcrSession = getJcrSession(session);
-        final Workspace workspace = jcrSession.getWorkspace();
+        new RelaxedRdfAdder(idTranslator, jcrSession, mappedStream, session.getNamespaces()).consume();
+
+        decorateWithMementoProperties(session, mementoPath, dateTime);
+
+        return mementoResource;
+    }
+
+    private Container createContainer(final FedoraSession session, final String path) {
         try {
-            final Version v = getVersionForLabel(workspace, absPath, label);
-            if (v == null) {
-                throw new PathNotFoundException("Unknown version \"" + label + "\"!");
-            } else if (workspace.getVersionManager().getBaseVersion(absPath).equals(v) ) {
-                throw new VersionException("Cannot remove most recent version snapshot.");
-            } else {
-                // remove labels
-                final VersionHistory history = v.getContainingHistory();
-                final String[] versionLabels = history.getVersionLabels(v);
-                for ( final String versionLabel : versionLabels ) {
-                    LOGGER.debug("Removing label: {}", versionLabel);
-                    history.removeVersionLabel( versionLabel );
-                }
-                history.removeVersion( v.getName() );
+            final Node node = findOrCreateNode(session, path, NT_FOLDER);
+
+            if (node.canAddMixin(FEDORA_RESOURCE)) {
+                node.addMixin(FEDORA_RESOURCE);
             }
+
+            return new ContainerImpl(node);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
     }
 
+    private RdfStream remapRdfSubjects(final String mementoUri, final String resourceUri, final RdfStream rdfStream) {
+        final org.apache.jena.graph.Node mementoNode = createURI(mementoUri);
 
-    private static Version getVersionForLabel(final Workspace workspace, final String absPath,
-                                       final String label) throws RepositoryException {
-        // first see if there's a version label
-        final VersionHistory history = workspace.getVersionManager().getVersionHistory(absPath);
-
-        if (history.hasVersionLabel(label)) {
-            return history.getVersionByLabel(label);
-        }
-        return null;
+        return new DefaultRdfStream(mementoNode, rdfStream.map(t -> mapSubject(t, resourceUri, mementoUri)));
     }
 
-    private static boolean isVersioningEnabled(final Node n) throws RepositoryException {
-        return n.isNodeType(VERSIONABLE) || (FedoraBinaryImpl.hasMixin(n) && isVersioningEnabled(n.getParent()));
+    @Override
+    public FedoraResource createBinaryVersion(final FedoraSession session,
+            final FedoraResource resource,
+            final Instant dateTime,
+            final InputStream contentStream,
+            final String filename,
+            final String mimetype,
+            final Collection<URI> checksums) {
+
+        final String mementoPath = makeMementoPath(resource, dateTime);
+
+        assertMementoDoesNotExist(session, mementoPath);
+
+        LOGGER.debug("Creating memento {} for resource {} using existing state", mementoPath, resource.getPath());
+        nodeService.copyObject(session, resource.getPath(), mementoPath);
+
+        final FedoraBinary memento = binaryService.findOrCreate(session, mementoPath);
+
+        decorateWithMementoProperties(session, mementoPath, dateTime);
+
+        return memento;
     }
 
-    private static void enableVersioning(final Node node) throws RepositoryException {
-        node.addMixin(VERSIONABLE);
-
-        if (FedoraBinaryImpl.hasMixin(node)) {
-            node.getParent().addMixin(VERSIONABLE);
-        }
-        node.getSession().save();
+    private String makeMementoPath(final FedoraResource resource, final Instant datetime) {
+        return resource.getPath() + "/" + LDPCV_TIME_MAP + "/" + MEMENTO_DATETIME_ID_FORMATTER.format(datetime);
     }
 
-    private static String checkpoint(final Session session, final String absPath, final String label)
-            throws RepositoryException {
-        if (!validLabel(label)) {
-            throw new VersionException("Invalid label: " + label);
+    protected String getUri(final FedoraResource resource,
+            final IdentifierConverter<Resource, FedoraResource> idTranslator) {
+        if (idTranslator == null) {
+            return resource.getPath();
         }
-
-        LOGGER.trace("Setting version checkpoint for {}", absPath);
-        final Workspace workspace = session.getWorkspace();
-        final VersionManager versionManager = workspace.getVersionManager();
-        final VersionHistory versionHistory = versionManager.getVersionHistory(absPath);
-        if (versionHistory.hasVersionLabel(label)) {
-            throw new LabelExistsVersionException("The specified label \"" + label
-                    + "\" is already assigned to another version of this resource!");
-        }
-        final Version v = versionManager.checkpoint(absPath);
-        if (v == null) {
-            return null;
-        }
-        versionHistory.addVersionLabel(v.getName(), label, false);
-        return v.getFrozenNode().getIdentifier();
+        return idTranslator.reverse().convert(resource).getURI();
     }
 
-    private static boolean validLabel(final String label) {
-        final Matcher matcher = invalidLabelPattern.matcher(label);
-        if (matcher.find()) {
-            return false;
+    protected void decorateWithMementoProperties(final FedoraSession session, final String mementoPath,
+            final Instant dateTime) {
+        try {
+            final Node mementoNode = findNode(session, mementoPath);
+            if (mementoNode.canAddMixin(MEMENTO)) {
+                mementoNode.addMixin(MEMENTO);
+            }
+            final Calendar mementoDatetime = GregorianCalendar.from(
+                    ZonedDateTime.ofInstant(dateTime, ZoneId.of("UTC")));
+            mementoNode.setProperty(MEMENTO_DATETIME, mementoDatetime);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
-
-        return !invalidLabelEndsWithANumberPattern.matcher(label).find();
     }
 
+    protected void assertMementoDoesNotExist(final FedoraSession session, final String mementoPath) {
+        if (exists(session, mementoPath)) {
+            throw new RepositoryRuntimeException(new ItemExistsException(
+                    "Memento " + mementoPath + " already exists"));
+        }
+    }
 }

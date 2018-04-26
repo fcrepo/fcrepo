@@ -17,19 +17,28 @@
  */
 package org.fcrepo.kernel.modeshape;
 
+import static org.fcrepo.kernel.api.utils.SubjectMappingUtil.mapSubject;
+import static java.util.stream.Stream.empty;
+import static org.fcrepo.kernel.api.RequiredRdfContext.MINIMAL;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isNonRdfSourceDescription;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
+import org.apache.jena.rdf.model.Resource;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.slf4j.Logger;
 
 import java.util.Calendar;
+import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * Abstraction for a Fedora datastream backed by a JCR node.
@@ -57,20 +66,31 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements N
 
     @Override
     public FedoraResource getBaseVersion() {
-        try {
-            return new NonRdfSourceDescriptionImpl(getVersionManager().getBaseVersion(getPath()).getFrozenNode());
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
+        LOGGER.warn("Review if method (getBaseVersion) can be removed after implementing Memento!");
+        return null;
     }
 
     private Node getContentNode() {
         LOGGER.trace("Retrieved datastream content node.");
         try {
-            return node.getNode(JCR_CONTENT);
+            return node.getParent();
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
+    }
+
+    @Override
+    public RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> idTranslator,
+                                final Set<? extends TripleCategory> contexts) {
+        final FedoraResource described = getDescribedResource();
+        final org.apache.jena.graph.Node describedNode = idTranslator.reverse().convert(described).asNode();
+        final String resourceUri = idTranslator.reverse().convert(this).getURI();
+
+        return new DefaultRdfStream(idTranslator.reverse().convert(described).asNode(), contexts.stream()
+                .filter(contextMap::containsKey)
+                .map(x -> contextMap.get(x).apply(this).apply(idTranslator).apply(contexts.contains(MINIMAL)))
+                .reduce(empty(), Stream::concat)
+                .map(t -> mapSubject(t, resourceUri, describedNode)));
     }
 
     /**
@@ -86,6 +106,7 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements N
     /**
      * Overrides the superclass to propagate updates to certain properties to the binary if explicitly set.
      */
+    @Override
     public void touch(final boolean includeMembershipResource, final Calendar createdDate, final String createdUser,
                       final Calendar modifiedDate, final String modifyingUser) throws RepositoryException {
         super.touch(includeMembershipResource, createdDate, createdUser, modifiedDate, modifyingUser);

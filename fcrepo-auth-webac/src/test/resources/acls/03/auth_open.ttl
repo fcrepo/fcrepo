@@ -2,6 +2,6 @@
 @prefix foaf: <http://xmlns.com/foaf/0.1/> .
 
 <> a acl:Authorization ;
-   acl:agent foaf:Agent ;
+   acl:agentClass foaf:Agent ;
    acl:mode acl:Read ;
    acl:accessTo </rest/dark/archive/sunshine> .

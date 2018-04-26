@@ -17,43 +17,69 @@
  */
 package org.fcrepo.kernel.api.services;
 
+import java.io.InputStream;
+import java.net.URI;
+import java.time.Instant;
+import java.util.Collection;
+
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.riot.Lang;
 import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.FedoraResource;
 
 /**
+ * Service for creating versions of resources
+ *
  * @author bbpennel
+ * @author whikloj
  * @since Feb 19, 2014
  */
 public interface VersionService {
 
     /**
-     * Explicitly creates a version for the nodes at each path provided.
+     * Explicitly creates a version for the resource at the path provided.
      *
-     * @param session the session in which the node resides
-     * @param absPath absolute paths to the node
-     * @param label a label to be applied to the new version
-     * @return the identifier
+     * @param session the session in which the resource resides
+     * @param resource the resource to version
+     * @param idTranslator translator for producing URI of resources
+     * @param dateTime the date/time of the version
+     * @return the version
      */
-    String createVersion(FedoraSession session, String absPath, String label);
+    FedoraResource createVersion(FedoraSession session, FedoraResource resource,
+            IdentifierConverter<Resource, FedoraResource> idTranslator, Instant dateTime);
 
     /**
-     * Reverts the node to the version identified by the label.  This method
-     * will throw a PathNotFoundException if no version with the given label is
-     * found.
+     * Explicitly creates a version for the resource at the path provided for the date/time provided.
      *
-     * @param session the session in which the node resides
-     * @param absPath the path to the node whose version is to be reverted
-     * @param label identifies the historic version
+     * @param session the session in which the resource resides
+     * @param resource the resource to version
+     * @param idTranslator translator for producing URI of resources
+     * @param dateTime the date/time of the version
+     * @param rdfInputStream if provided, this stream will provide the properties of the new memento. If null, then
+     *        the state of the current resource will be used.
+     * @param rdfFormat RDF language format name
+     * @return the version
      */
-    void revertToVersion(FedoraSession session, String absPath, String label);
+    FedoraResource createVersion(FedoraSession session, FedoraResource resource,
+            IdentifierConverter<Resource, FedoraResource> idTranslator, Instant dateTime, InputStream rdfInputStream,
+            Lang rdfFormat);
 
     /**
-     * Remove a version of a node.  This method will throw a PathNotFoundException
-     * if no version with the given label is found.
+     * Explicitly creates a version of a binary resource. If no contentStream is provided, then
      *
-     * @param session the session in which the node resides
-     * @param absPath the path to the node whose version is to be removed
-     * @param label identifies the historic version by label or id
+     * @param session the session in which the resource resides
+     * @param resource the resource to version
+     * @param dateTime the date/time of the version
+     * @param contentStream if provided, the content in this stream will be used as the content of the new binary
+     *        memento. If null, then the current state of the binary will be used.
+     * @param filename filename of the binary
+     * @param mimetype mimetype of the binary
+     * @param checksums Collection of checksum URIs of the content (optional)
+     * @return the version
      */
-    void removeVersion(FedoraSession session, String absPath, String label);
+    FedoraResource createBinaryVersion(FedoraSession session, FedoraResource resource, Instant dateTime,
+            InputStream contentStream, String filename, String mimetype, Collection<URI> checksums);
+
 
 }

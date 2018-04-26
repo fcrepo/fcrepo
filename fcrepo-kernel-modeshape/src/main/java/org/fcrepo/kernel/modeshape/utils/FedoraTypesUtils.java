@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.modeshape.utils;
 
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Optional;
@@ -51,11 +52,7 @@ import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static com.google.common.collect.ImmutableSet.of;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIED;
-import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.FedoraTypes.LDP_INSERTED_CONTENT_RELATION;
-import static org.fcrepo.kernel.api.FedoraTypes.LDP_MEMBER_RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_MIXIN_TYPES;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_PRIMARY_TYPE;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_NODE;
@@ -99,7 +96,8 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
             JCR_CREATEDBY,
             JCR_MIXIN_TYPES,
             FROZEN_MIXIN_TYPES,
-            FROZEN_PRIMARY_TYPE);
+            FROZEN_PRIMARY_TYPE,
+            MEMENTO_DATETIME);
 
     private static Set<String> validJcrProperties = of(
             JCR_CREATED,
@@ -135,6 +133,11 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
      * Predicate for determining whether this {@link Node} is a Fedora Skolem node.
      */
     public static Predicate<Node> isSkolemNode = new AnyTypesPredicate(FEDORA_SKOLEM);
+
+    /**
+     * Predicate for determining whether this {@link Node} is a Memento.
+     */
+    public static Predicate<Node> isMemento = new AnyTypesPredicate(MEMENTO);
 
     /**
      * Check if a property is a reference property.
@@ -183,6 +186,11 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
                             .or(uncheck(p -> privateProperties.contains(p.getName())));
 
     /**
+     * Check whether a type is an internal type that should be suppressed from external output.
+     */
+    public static Predicate<URI> isInternalType = t -> t.toString().equals(MEMENTO_TYPE);
+
+    /**
      * A functional predicate to check whether a property is a JCR property that should be exposed.
      * Historically we exposed JCR properties when they seemed to match a fedora property we wanted to track,
      * but when control over the property became a requirement, we introduced the direct storage
@@ -208,7 +216,7 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
                         || (prop.getName().equals(JCR_LASTMODIFIEDBY) && !subject.hasProperty(FEDORA_LASTMODIFIEDBY))
                         || (prop.getName().equals(JCR_CREATED) && !subject.hasProperty(FEDORA_CREATED))
                         || (prop.getName().equals(JCR_CREATEDBY) && !subject.hasProperty(FEDORA_CREATEDBY));
-            } catch (RepositoryException e) {
+            } catch (final RepositoryException e) {
                 throw new RepositoryRuntimeException(e);
             }
         }
@@ -514,6 +522,9 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
                 return empty();
             }
 
+            // check ancestors recursively only either of the following two cases applies:
+            // 1. the PARENT is a FEDORA_PAIRTREE
+            // 2. the PARENT is FEDORA_NON_RDF_SOURCE_DESCRIPTION
             final Node parent = node.getParent();
             if (parent.isNodeType(FEDORA_PAIRTREE) || parent.isNodeType(FEDORA_NON_RDF_SOURCE_DESCRIPTION)) {
                 return getContainingNode(parent);

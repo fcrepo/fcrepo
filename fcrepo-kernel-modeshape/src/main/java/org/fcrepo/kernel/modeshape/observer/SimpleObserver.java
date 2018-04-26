@@ -30,6 +30,7 @@ import static javax.jcr.observation.Event.PROPERTY_CHANGED;
 import static javax.jcr.observation.Event.PROPERTY_REMOVED;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
@@ -148,6 +149,8 @@ public class SimpleObserver implements EventListener {
         } else if (type.equals(FEDORA_CONTAINER)) {
             return of(FEDORA_CONTAINER, LDP_CONTAINER, LDP_RDF_SOURCE);
         } else if (type.equals(FEDORA_BINARY)) {
+            return of(FEDORA_BINARY, LDP_NON_RDF_SOURCE);
+        } else if (type.equals(FEDORA_NON_RDF_SOURCE_DESCRIPTION)) {
             return of(FEDORA_BINARY, LDP_NON_RDF_SOURCE);
         } else {
             return of(type);

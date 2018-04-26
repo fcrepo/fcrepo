@@ -35,6 +35,7 @@ public @interface HtmlTemplate {
 
     /**
      * The name of the HTML template to render for this method
+     * @return the name of the HTML template to render for this method
      */
     String value();
 }

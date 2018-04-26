@@ -17,28 +17,15 @@
  */
 package org.fcrepo.kernel.modeshape.rdf.impl;
 
-import static java.util.stream.Stream.of;
-import static org.apache.jena.graph.NodeFactory.createLiteral;
-import static org.apache.jena.graph.Triple.create;
-import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
-import static org.apache.jena.rdf.model.ResourceFactory.createTypedLiteral;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
-import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_VERSION_LABEL;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.Calendar;
 import java.util.stream.Stream;
 
 import org.apache.jena.rdf.model.Resource;
-import org.modeshape.common.text.UrlEncoder;
 
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-
-import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 
 import org.slf4j.Logger;
@@ -46,7 +33,7 @@ import org.slf4j.Logger;
 
 /**
  * {@link org.fcrepo.kernel.api.RdfStream} that supplies {@link Triple}s concerning
- * the versions of a selected {@link Node}.
+ * the versions of a selected Node.
  *
  * @author ajs6f
  * @since Oct 15, 2013
@@ -56,8 +43,6 @@ public class VersionsRdfContext extends DefaultRdfStream {
     private final FedoraResource resource;
 
     private static final Logger LOGGER = getLogger(VersionsRdfContext.class);
-
-    private static final UrlEncoder URL_ENCODER = new UrlEncoder();
 
     /**
      * Ordinary constructor.
@@ -70,24 +55,11 @@ public class VersionsRdfContext extends DefaultRdfStream {
         super(idTranslator.reverse().convert(resource).asNode());
         this.resource = resource;
         concat(versionTriples());
+        LOGGER.warn("Review if this class can be removed after implementing Memento!");
     }
 
     @SuppressWarnings("unchecked")
     private Stream<Triple> versionTriples() {
-        return resource.getVersions()
-            .flatMap(version -> {
-                final Node versionSubject = createProperty(topic() + "/" + FCR_VERSIONS + "/" +
-                        urlEncode(version.getIdentifier())).asNode();
-
-                final Calendar cal = new Calendar.Builder().setInstant(version.getCreated().toEpochMilli()).build();
-                return of(
-                        create(topic(), HAS_VERSION.asNode(), versionSubject),
-                        create(versionSubject, HAS_VERSION_LABEL.asNode(), createLiteral(version.getIdentifier())),
-                        create(versionSubject, CREATED_DATE.asNode(), createTypedLiteral(cal).asNode()));
-            });
-    }
-
-    private String urlEncode(final String string) {
-        return URL_ENCODER.encode(string).replaceAll("[+]", "%20");
+        return null;
     }
 }

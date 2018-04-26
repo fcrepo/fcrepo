@@ -41,6 +41,16 @@ public interface FedoraTypes {
 
     String FEDORA_TOMBSTONE = "fedora:Tombstone";
 
+    String FEDORA_TIME_MAP = "fedora:TimeMap";
+
+    String FEDORA_WEBAC_ACL = "webac:Acl";
+
+    String MEMENTO = "memento:Memento";
+
+    String MEMENTO_DATETIME = "memento:mementoDatetime";
+
+    String MEMENTO_ORIGINAL = "memento:original";
+
     String LDP_BASIC_CONTAINER = "ldp:BasicContainer";
 
     String LDP_CONTAINER = "ldp:Container";
@@ -73,14 +83,17 @@ public interface FedoraTypes {
 
     String DEFAULT_DIGEST_ALGORITHM = "fedoraconfig:defaultDigestAlgorithm";
 
+    String FCR_ACL = "fcr:acl";
+
     String FCR_METADATA = "fcr:metadata";
 
     String FCR_VERSIONS = "fcr:versions";
+
+    String FCR_FIXITY = "fcr:fixity";
 
     String LDP_HAS_MEMBER_RELATION = "ldp:hasMemberRelation";
 
     String LDP_IS_MEMBER_OF_RELATION = "ldp:isMemberOfRelation";
 
     String LDP_MEMBER_RESOURCE = "ldp:membershipResource";
-
 }

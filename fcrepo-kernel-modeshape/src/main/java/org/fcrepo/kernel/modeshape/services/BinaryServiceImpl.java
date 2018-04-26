@@ -32,12 +32,12 @@ import javax.jcr.RepositoryException;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_DESCRIPTION;
+import static org.fcrepo.kernel.api.RdfLexicon.NT_LEAF_NODE;
+import static org.fcrepo.kernel.api.RdfLexicon.NT_VERSION_FILE;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getContainingNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.touch;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.touchLdpMembershipResource;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
-import static org.modeshape.jcr.api.JcrConstants.NT_FILE;
-import static org.modeshape.jcr.api.JcrConstants.NT_RESOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -56,7 +56,7 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
     @Override
     public FedoraBinary findOrCreate(final FedoraSession session, final String path) {
         try {
-            final Node dsNode = findOrCreateNode(session, path, NT_FILE);
+            final Node dsNode = findOrCreateNode(session, path, NT_VERSION_FILE);
 
             if (dsNode.isNew()) {
                 initializeNewDatastreamProperties(dsNode);
@@ -67,13 +67,7 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
                 });
             }
 
-            final FedoraBinaryImpl binary = new FedoraBinaryImpl(dsNode.getNode(JCR_CONTENT));
-
-            if (dsNode.isNew()) {
-                touch(binary.getNode());
-            }
-
-            return binary;
+            return new FedoraBinaryImpl(dsNode);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -87,13 +81,7 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
      */
     @Override
     public FedoraBinary find(final FedoraSession session, final String path) {
-        try {
-            final Node dsNode = findNode(session, path);
-
-            return cast(dsNode.getNode(JCR_CONTENT));
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
+        return cast(findNode(session, path));
     }
 
     private static void initializeNewDatastreamProperties(final Node node) {
@@ -102,15 +90,18 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
             if (node.canAddMixin(FEDORA_RESOURCE)) {
                 node.addMixin(FEDORA_RESOURCE);
             }
-
-            if (node.canAddMixin(FEDORA_NON_RDF_SOURCE_DESCRIPTION)) {
-                node.addMixin(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
+            if (node.canAddMixin(FEDORA_BINARY)) {
+                node.addMixin(FEDORA_BINARY);
             }
 
-            final Node contentNode = jcrTools.findOrCreateChild(node, JCR_CONTENT, NT_RESOURCE);
+            final Node descNode = jcrTools.findOrCreateChild(node, FEDORA_DESCRIPTION, NT_LEAF_NODE);
 
-            if (contentNode.canAddMixin(FEDORA_BINARY)) {
-                contentNode.addMixin(FEDORA_BINARY);
+            if (descNode.canAddMixin(FEDORA_NON_RDF_SOURCE_DESCRIPTION)) {
+                descNode.addMixin(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
+            }
+
+            if (descNode.canAddMixin(FEDORA_BINARY)) {
+                descNode.addMixin(FEDORA_BINARY);
             }
         } catch (final RepositoryException e) {
             LOGGER.warn("Could not decorate {} with datastream properties: {}", node, e);
