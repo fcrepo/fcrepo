@@ -65,6 +65,9 @@ public class FedoraAcl extends ContentExposingResource {
 
     /**
      * PUT to create FedoraWebacACL resource.
+     *
+     * @return the response for a request to create a Fedora WebAc acl
+     * @throws ConstraintViolationException in case this action would violate a constraint on repository structure
      */
     @PUT
     public Response createFedoraWebacAcl() throws ConstraintViolationException {
@@ -96,6 +99,7 @@ public class FedoraAcl extends ContentExposingResource {
         }
     }
 
+    @Override
     @Override
     protected String externalPath() {
         return externalPath;

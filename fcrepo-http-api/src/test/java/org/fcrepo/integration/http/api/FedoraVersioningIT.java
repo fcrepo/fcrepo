@@ -309,6 +309,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     /**
      * POST to create LDPCv without memento-datetime must ignore body
+     *
+     * @throws Exception in case of error with test
      */
     @Test
     public void testCreateVersionWithBody() throws Exception {

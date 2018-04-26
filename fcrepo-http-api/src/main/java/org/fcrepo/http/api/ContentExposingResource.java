@@ -220,6 +220,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * @param rdfStream to which response RDF will be concatenated
      * @return HTTP response
      * @throws IOException in case of error extracting content
+     * @throws UnsupportedAccessTypeException if mimeType not a valid message/external-body content type
      */
     protected Response getContent(final String rangeValue,
                                   final int limit,
@@ -268,7 +269,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     /**
      * Checks if media type matches "message/external-body"
-     * @param mediaType
+     * @param mediaType media-type to check
      * @return true if matches
      */
     protected boolean isExternalBody(final MediaType mediaType) {
@@ -745,6 +746,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     /**
      * Returns an acceptable plain text media type if possible, or null if not.
+     * @return an acceptable plain-text media type, or null
      */
     protected MediaType acceptabePlainTextMediaType() {
         final List<MediaType> acceptable = headers.getAcceptableMediaTypes();
@@ -848,7 +850,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * @param requestBodyStream rdf request body
      * @param contentType content type of body
      * @return Model containing triples from request body
-     * @throws MalformedRdfException
+     * @throws MalformedRdfException in case rdf json cannot be parsed
      */
     protected Model parseBodyAsModel(final InputStream requestBodyStream,
             final MediaType contentType) throws MalformedRdfException {
@@ -910,6 +912,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * This method returns a MediaType for a binary resource.
      * If the resource's media type is syntactically incorrect, it will
      * return 'application/octet-stream' as the media type.
+     *
+     * @return the media type of of a binary resource
      */
     protected MediaType getBinaryResourceMediaType() {
         try {
@@ -1005,7 +1009,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     /**
      * @param rootThrowable The original throwable
      * @param throwable The throwable under direct scrutiny.
-     * @throws InvalidChecksumException
+     * @throws InvalidChecksumException in case there was a checksum mismatch
      */
     protected void checkForInsufficientStorageException(final Throwable rootThrowable, final Throwable throwable)
         throws InvalidChecksumException {
