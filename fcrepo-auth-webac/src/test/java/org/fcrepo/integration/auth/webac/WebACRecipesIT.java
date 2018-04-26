@@ -462,7 +462,6 @@ public class WebACRecipesIT extends AbstractResourceIT {
     }
 
     @Test
-    @Ignore("FAILING")
     public void testAccessToBinary() throws IOException {
         // Block access to "book"
         final String idBook = "/rest/book";
