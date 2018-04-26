@@ -19,6 +19,7 @@ package org.fcrepo.integration.kernel.modeshape.services;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 import javax.inject.Inject;
 import javax.jcr.RepositoryException;
@@ -33,12 +34,15 @@ import org.fcrepo.kernel.api.services.VersionService;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
+import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
+import static org.fcrepo.kernel.modeshape.services.VersionServiceImpl.VERSION_TRIPLES;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author escowles
@@ -46,7 +50,6 @@ import static org.junit.Assert.assertEquals;
  */
 
 @ContextConfiguration({"/spring-test/repo.xml"})
-@Ignore("Until implemented with Memento")
 public class VersionServiceImplIT extends AbstractIT {
 
     @Inject
@@ -67,7 +70,8 @@ public class VersionServiceImplIT extends AbstractIT {
 
     private static final Instant mementoDate1 = Instant.now();
 
-    private static final Instant mementoDate2 = Instant.from(LocalDateTime.of(2000, 5, 10, 18, 30));
+    private static final Instant mementoDate2 = LocalDateTime.of(2000, 5, 10, 18, 30)
+            .atZone(ZoneOffset.UTC).toInstant();
 
     @Before
     public void setUp() throws RepositoryException {
@@ -92,6 +96,44 @@ public class VersionServiceImplIT extends AbstractIT {
         versionService.createVersion(session, resource, subjects, mementoDate1);
         session.commit();
         assertEquals(1L, countVersions(session, resource));
+    }
+
+    @Test
+    public void testCreateMementoWithChildReference() throws RepositoryException {
+        final String pid = getRandomPid();
+        final FedoraResource resource = containerService.findOrCreate(session, "/" + pid);
+        session.commit();
+        resource.findOrCreateTimeMap();
+        session.commit();
+
+        final String childPath = "/" + pid + "/x";
+        final String childLocation = "info:fedora" + childPath;
+        final FedoraResource childResource = containerService.findOrCreate(session, childPath);
+        session.commit();
+
+        // create a memento
+        versionService.createVersion(session, resource, subjects, mementoDate2);
+        session.commit();
+
+        // verify the child node containment triple
+        final FedoraResource mementoBeforeDeletion = resource.getTimeMap().getChild("20000510183000");
+        assertTrue(mementoBeforeDeletion.getTriples(subjects, VERSION_TRIPLES)
+                .anyMatch(x -> x.getPredicate().getURI().equals(CONTAINS.getURI())
+                            && x.getObject().getURI().equals(childLocation)));
+
+        // delete the child node
+        childResource.delete();
+        session.commit();
+
+        assertFalse(resource.getTriples(subjects, VERSION_TRIPLES)
+                .anyMatch(x -> x.getPredicate().getURI().equals(CONTAINS.getURI())
+                            && x.getObject().getURI().equals(childLocation)));
+
+        // verify the child node containment triple after child deletion
+        final FedoraResource mementoAfterDeletion = resource.getTimeMap().getChild("20000510183000");
+        assertTrue(mementoAfterDeletion.getTriples(subjects, VERSION_TRIPLES)
+                          .anyMatch(x -> x.getPredicate().getURI().equals(CONTAINS.getURI())
+                                      && x.getObject().getURI().equals(childLocation)));
     }
 
     @Test

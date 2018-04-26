@@ -19,10 +19,11 @@ package org.fcrepo.kernel.modeshape.services;
 
 import static java.util.Arrays.asList;
 import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.FedoraTypes.MEMENTO;
 import static org.fcrepo.kernel.api.FedoraTypes.MEMENTO_DATETIME;
-import static org.fcrepo.kernel.api.RequiredRdfContext.EMBED_RESOURCES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_CONTAINMENT;
 import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_MEMBERSHIP;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
@@ -45,12 +46,14 @@ import java.util.Collection;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.jcr.ItemExistsException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
@@ -68,9 +71,10 @@ import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.api.services.VersionService;
 import org.fcrepo.kernel.modeshape.ContainerImpl;
+import org.fcrepo.kernel.modeshape.rdf.impl.InternalIdentifierTranslator;
 import org.fcrepo.kernel.modeshape.utils.iterators.RelaxedRdfAdder;
 import org.slf4j.Logger;
-import org.springframework.stereotype.Component;;
+import org.springframework.stereotype.Component;
 
 /**
  * This service exposes management of node versioning for resources and binaries.
@@ -87,8 +91,8 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
     private static final DateTimeFormatter MEMENTO_DATETIME_ID_FORMATTER =
             DateTimeFormatter.ofPattern("yyyyMMddHHmmss").withZone(ZoneId.of("GMT"));
 
-    private static final Set<TripleCategory> VERSION_TRIPLES = new HashSet<>(asList(
-            PROPERTIES, EMBED_RESOURCES, SERVER_MANAGED, LDP_MEMBERSHIP, LDP_CONTAINMENT));
+    public static final Set<TripleCategory> VERSION_TRIPLES = new HashSet<>(asList(
+            PROPERTIES, SERVER_MANAGED, LDP_MEMBERSHIP, LDP_CONTAINMENT));
 
     /**
      * The bitstream service
@@ -136,7 +140,10 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
             mementoRdfStream = DefaultRdfStream.fromModel(createURI(mementoUri), inputModel);
         }
 
-        final RdfStream mappedStream = remapRdfSubjects(mementoUri, resourceUri, mementoRdfStream);
+        final IdentifierConverter<Resource, FedoraResource> internalIdTranslator
+                = new InternalIdentifierTranslator(getJcrSession(session));
+        final RdfStream mappedStream = remapRdfSubjects(mementoUri, resourceUri, mementoRdfStream,
+                idTranslator, internalIdTranslator);
 
         final Session jcrSession = getJcrSession(session);
         new RelaxedRdfAdder(idTranslator, jcrSession, mappedStream, session.getNamespaces()).consume();
@@ -160,10 +167,39 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
         }
     }
 
-    private RdfStream remapRdfSubjects(final String mementoUri, final String resourceUri, final RdfStream rdfStream) {
+    private RdfStream remapRdfSubjects(final String mementoUri,
+            final String resourceUri,
+            final RdfStream rdfStream,
+            final IdentifierConverter<Resource, FedoraResource> idTranslator,
+            final IdentifierConverter<Resource, FedoraResource> internalIdTranslator) {
         final org.apache.jena.graph.Node mementoNode = createURI(mementoUri);
+        final Stream<Triple> mappedStream = rdfStream.map(t -> mapSubject(t, resourceUri, mementoUri))
+                .map(t -> convertToInternalReference(t, idTranslator, internalIdTranslator));
+        return new DefaultRdfStream(mementoNode, mappedStream);
+    }
 
-        return new DefaultRdfStream(mementoNode, rdfStream.map(t -> mapSubject(t, resourceUri, mementoUri)));
+    /**
+     * Convert the referencing resource uri to internal identifier
+     * @param t the Triple to convert
+     * @param idTranslator the Converter that convert the resource uri to a path
+     * @param internalIdTranslator the Converter that convert a path to internal identifier
+     * @return
+     */
+    protected Triple convertToInternalReference(final Triple t,
+            final IdentifierConverter<Resource, FedoraResource> idTranslator,
+            final IdentifierConverter<Resource, FedoraResource> internalIdTranslator) {
+        if (t.getObject().isURI() && idTranslator.inDomain(createResource(t.getObject().getURI()))) {
+            final String path = idTranslator.convert(createDefaultModel().asRDFNode(t.getObject()).asResource())
+                    .getPath();
+            final Resource obj = createResource(internalIdTranslator.toDomain(path).getURI());
+
+            LOGGER.debug("Converting referencing resource uri {} to internal indentifier {}.",
+                    t.getObject().getURI(), obj.getURI());
+
+            return new Triple(t.getSubject(), t.getPredicate(), obj.asNode());
+        } else {
+            return t;
+        }
     }
 
     @Override

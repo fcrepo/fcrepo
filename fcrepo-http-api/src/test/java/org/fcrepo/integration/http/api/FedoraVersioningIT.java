@@ -53,6 +53,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
+import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
@@ -392,6 +393,76 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                     results.contains(ANY, mementoSubject, TEST_PROPERTY_NODE, createLiteral("bar")));
             assertFalse("Memento must not have second updated property",
                     results.contains(ANY, mementoSubject, TEST_PROPERTY_NODE, createLiteral("far")));
+        }
+    }
+
+
+    @Test
+    public void testMementoContainmentReferences() throws Exception {
+        createVersionedContainer(id);
+
+        final String childUri = subjectUri + "/x";
+        createObjectAndClose(id + "/x");
+
+        // create memento
+        final String mementoUri = createContainerMementoWithBody(subjectUri, MEMENTO_DATETIME);
+
+        // Remove the child resource
+        assertEquals("Expected delete to succeed",
+                NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(childUri)));
+
+        // Ensure that the resource reference is gone
+        try (final CloseableHttpResponse getResponse1 = execute(new HttpGet(subjectUri));
+                final CloseableDataset dataset = getDataset(getResponse1);) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertFalse("Expected NOT to have child resource: " + graph, graph.contains(ANY,
+                    ANY, createURI(CONTAINS.getURI()), createURI(childUri)));
+        }
+
+        // Ensure that the resource reference is still in memento
+        try (final CloseableHttpResponse getResponse1 = execute(new HttpGet(mementoUri));
+                final CloseableDataset dataset = getDataset(getResponse1);) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertTrue("Expected child resource NOT found: " + graph, graph.contains(ANY,
+                    ANY, createURI(CONTAINS.getURI()), createURI(childUri)));
+        }
+    }
+
+    @Test
+    public void testMementoExternalReference() throws Exception {
+        createVersionedContainer(id);
+
+        final String pid = getRandomUniqueId();
+        final String resource = serverAddress + pid;
+        createObjectAndClose(pid);
+
+        final HttpPatch updateObjectGraphMethod = patchObjMethod(id);
+        updateObjectGraphMethod.addHeader(CONTENT_TYPE, "application/sparql-update");
+        updateObjectGraphMethod.setEntity(new StringEntity("INSERT {"
+                + " <> <http://pcdm.org/models#hasMember> <" + resource + "> } WHERE {}"));
+        executeAndClose(updateObjectGraphMethod);
+
+        // create memento
+        final String mementoUri = createContainerMementoWithBody(subjectUri, MEMENTO_DATETIME);
+
+        // Remove the referencing resource
+        assertEquals("Expected delete to succeed",
+                NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(resource)));
+
+        // Ensure that the resource reference is gone
+        try (final CloseableHttpResponse getResponse1 = execute(new HttpGet(subjectUri));
+                final CloseableDataset dataset = getDataset(getResponse1);) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertFalse("Expected NOT to have resource: " + graph, graph.contains(ANY,
+                    ANY, createURI("http://pcdm.org/models#hasMember"), createURI(resource)));
+        }
+
+        // Ensure that the resource reference is still in memento
+        try (final CloseableHttpResponse getResponse1 = execute(new HttpGet(mementoUri));
+                final CloseableDataset dataset = getDataset(getResponse1);) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertTrue("Expected resource NOT found: " + graph, graph.contains(ANY,
+                    ANY, createURI("http://pcdm.org/models#hasMember"), createURI(resource)));
         }
     }
 
