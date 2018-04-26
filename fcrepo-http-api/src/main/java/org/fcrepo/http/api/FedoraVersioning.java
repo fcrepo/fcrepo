@@ -144,7 +144,6 @@ public class FedoraVersioning extends ContentExposingResource {
      *
      * @param datetimeHeader memento-datetime header
      * @param requestContentType Content-Type of the request body
-     * @param contentDisposition Content-Disposition
      * @param digest digests of the request body
      * @param requestBodyStream request body stream
      * @return response
@@ -186,11 +185,6 @@ public class FedoraVersioning extends ContentExposingResource {
             }
 
             final boolean createFromExisting = isBlank(datetimeHeader);
-
-            if (requestContentType == null && !createFromExisting) {
-                throw new ClientErrorException("Content Type is required for creating a binary memento",
-                        UNSUPPORTED_MEDIA_TYPE);
-            }
 
             try {
                 LOGGER.info("Request to add version for date '{}' for '{}'", datetimeHeader, externalPath);
