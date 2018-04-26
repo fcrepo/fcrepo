@@ -88,6 +88,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
     }
 
     @Test
+    @Ignore("Until WebACAuthorizingRealm is complete: https://jira.duraspace.org/browse/FCREPO-2760")
     public void testDescribeHtml() throws IOException {
         final HtmlPage page = webClient.getPage(serverAddress);
         ((HtmlElement)page.getFirstByXPath("//h4[text()='Properties']")).click();
@@ -102,6 +103,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
     }
 
     @Test
+    @Ignore("Until WebACAuthorizingRealm is complete: https://jira.duraspace.org/browse/FCREPO-2760")
     public void testCreateNewNodeWithProvidedId() throws IOException {
         createAndVerifyObjectWithIdFromRootPage(randomUUID().toString());
     }
@@ -129,6 +131,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
     }
 
     @Test
+    @Ignore("Until WebACAuthorizingRealm is complete: https://jira.duraspace.org/browse/FCREPO-2760")
     public void testCreateNewNodeWithGeneratedId() throws IOException {
 
         final HtmlPage page = webClient.getPage(serverAddress);
@@ -170,6 +173,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
     }
 
     @Test
+    @Ignore("Until WebACAuthorizingRealm is complete: https://jira.duraspace.org/browse/FCREPO-2760")
     public void testCreateNewDatastreamWithNoFileAttached() throws IOException {
 
         final String pid = randomUUID().toString();
@@ -193,6 +197,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
     }
 
     @Test
+    @Ignore("Until WebACAuthorizingRealm is complete: https://jira.duraspace.org/browse/FCREPO-2760")
     public void testCreateNewObjectAndDeleteIt() throws IOException {
         final boolean throwExceptionOnFailingStatusCode = webClient.getOptions().isThrowExceptionOnFailingStatusCode();
         webClient.getOptions().setThrowExceptionOnFailingStatusCode(false);
