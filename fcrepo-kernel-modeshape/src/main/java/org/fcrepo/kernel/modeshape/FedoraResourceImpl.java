@@ -177,8 +177,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
     public static final String LDPCV_TIME_MAP = "fedora:timemap";
 
-    public static final String LDPCV_BINARY_TIME_MAP = "fedora:binaryTimemap";
-
     public static final String CONTAINER_WEBAC_ACL = "fedora:acl";
 
     // A curried type accepting resource, translator, and "minimality", returning triples.
@@ -413,12 +411,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @Override
     public FedoraResource getTimeMap() {
         try {
-            final Node timeMapNode;
-            if (this instanceof FedoraBinary) {
-                timeMapNode = getNode().getParent().getNode(LDPCV_BINARY_TIME_MAP);
-            } else {
-                timeMapNode = node.getNode(LDPCV_TIME_MAP);
-            }
+            final Node timeMapNode = node.getNode(LDPCV_TIME_MAP);
             return Optional.of(timeMapNode).map(nodeConverter::convert).orElse(null);
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);

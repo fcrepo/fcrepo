@@ -73,6 +73,10 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements N
     private Node getContentNode() {
         LOGGER.trace("Retrieved datastream content node.");
         try {
+            if (isMemento()) {
+                final String mementoName = node.getName();
+                return node.getNode("../../../" + LDPCV_TIME_MAP + "/" + mementoName);
+            }
             return node.getParent();
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
