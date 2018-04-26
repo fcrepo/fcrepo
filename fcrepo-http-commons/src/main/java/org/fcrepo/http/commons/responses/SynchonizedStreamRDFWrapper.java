@@ -30,8 +30,8 @@ import org.apache.jena.sparql.core.Quad;
 public class SynchonizedStreamRDFWrapper extends StreamRDFWrapper {
 
     /**
-     * 
-     * @param stream
+     *
+     * @param stream the StreamRDF
      */
     public SynchonizedStreamRDFWrapper(final StreamRDF stream) {
         super(stream);

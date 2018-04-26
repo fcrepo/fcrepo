@@ -41,6 +41,7 @@ public interface CacheEntry {
      * Check the fixity of a {@link CacheEntry} with list of digest algorithms
      * @param algorithms the given algorithms
      * @return a {@link FixityResult} containing the relevant data
+     * @throws UnsupportedAlgorithmException in case the fixity check tries to use an unsupported algorithm
      */
     Collection<URI> checkFixity(final Collection<String> algorithms) throws UnsupportedAlgorithmException;
 

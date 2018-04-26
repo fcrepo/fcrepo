@@ -33,7 +33,7 @@ import java.lang.annotation.Target;
 @Retention(RUNTIME)
 public @interface HtmlTemplate {
 
-    /**
+    /*
      * The name of the HTML template to render for this method
      */
     String value();
