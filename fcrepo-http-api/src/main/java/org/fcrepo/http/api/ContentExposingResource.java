@@ -498,7 +498,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             servletResponse.addHeader(LINK, link.toString());
         } else if (resource instanceof FedoraBinary) {
             // Link to the original description
-            final FedoraResource description = resource.getOriginalResource().getDescribedResource();
+            final FedoraResource description = resource.getOriginalResource().getDescription();
             final URI uri = getUri(description);
             final Link.Builder builder = Link.fromUri(uri).rel("describedby");
 

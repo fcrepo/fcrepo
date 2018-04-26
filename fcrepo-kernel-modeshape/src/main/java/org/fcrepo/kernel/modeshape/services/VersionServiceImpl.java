@@ -186,6 +186,9 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
         return mementoResource;
     }
 
+    /*
+     * Creates a minimal container node for further population elsewhere
+     */
     private Container createContainer(final FedoraSession session, final String path) {
         try {
             final Node node = findOrCreateNode(session, path, NT_FOLDER);

@@ -81,6 +81,7 @@ public class ContentRdfContextTest {
     public void setUp() throws RepositoryException {
         initMocks(this);
         when(mockBinary.getNode()).thenReturn(mockBinaryNode);
+        when(mockBinary.getOriginalResource()).thenReturn(mockBinary);
         when(mockBinary.getDescription()).thenReturn(mockResource);
         when(mockBinaryNode.getSession()).thenReturn(mockSession);
         when(mockResource.getNode()).thenReturn(mockNode);
@@ -91,6 +92,7 @@ public class ContentRdfContextTest {
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
         when(mockNamespaceRegistry.getURI("jcr")).thenReturn(JCR_NAMESPACE);
         when(mockResource.getDescribedResource()).thenReturn(mockBinary);
+        when(mockResource.getOriginalResource()).thenReturn(mockResource);
         when(mockNode.hasProperties()).thenReturn(false);
         when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[] {});
         when(mockBinaryNode.getMixinNodeTypes()).thenReturn(new NodeType[]{});

@@ -253,11 +253,13 @@ public class FedoraLdpTest {
         when(mockNonRdfSourceDescription.getEtagValue()).thenReturn("");
         when(mockNonRdfSourceDescription.getPath()).thenReturn(binaryDescriptionPath);
         when(mockNonRdfSourceDescription.getDescribedResource()).thenReturn(mockBinary);
+        when(mockNonRdfSourceDescription.getOriginalResource()).thenReturn(mockNonRdfSourceDescription);
 
         when(mockBinary.getEtagValue()).thenReturn("");
         when(mockBinary.getPath()).thenReturn(binaryPath);
         when(mockBinary.getDescription()).thenReturn(mockNonRdfSourceDescription);
         when(mockBinary.getDescribedResource()).thenReturn(mockBinary);
+        when(mockBinary.getOriginalResource()).thenReturn(mockBinary);
 
         when(mockHeaders.getHeaderString("user-agent")).thenReturn("Test UserAgent");
 
@@ -387,6 +389,7 @@ public class FedoraLdpTest {
     public void testHeadWithBinary() throws Exception {
         final FedoraBinary mockResource = (FedoraBinary)setResource(FedoraBinary.class);
         when(mockResource.getDescription()).thenReturn(mockNonRdfSourceDescription);
+        when(mockResource.getOriginalResource()).thenReturn(mockResource);
         when(mockResource.getMimeType()).thenReturn("image/jpeg");
         final Response actual = testObj.head();
         assertEquals(OK.getStatusCode(), actual.getStatus());
@@ -438,6 +441,7 @@ public class FedoraLdpTest {
     public void testHeadWithExternalBinary() throws Exception {
         final FedoraBinary mockResource = (FedoraBinary)setResource(FedoraBinary.class);
         when(mockResource.getDescription()).thenReturn(mockNonRdfSourceDescription);
+        when(mockResource.getOriginalResource()).thenReturn(mockResource);
         when(mockResource.getMimeType()).thenReturn("message/external-body; access-type=URL; URL=\"some:uri\"");
         final Response actual = testObj.head();
         assertEquals(TEMPORARY_REDIRECT.getStatusCode(), actual.getStatus());
@@ -451,6 +455,7 @@ public class FedoraLdpTest {
         final NonRdfSourceDescription mockResource
                 = (NonRdfSourceDescription)setResource(NonRdfSourceDescription.class);
         when(mockResource.getDescribedResource()).thenReturn(mockBinary);
+        when(mockResource.getOriginalResource()).thenReturn(mockResource);
         final Response actual = testObj.head();
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertTrue("Should be an LDP RDFSource", mockResponse.getHeaders(LINK).contains("<" + LDP_NAMESPACE +
@@ -494,6 +499,7 @@ public class FedoraLdpTest {
     public void testOptionWithBinary() throws Exception {
         final FedoraBinary mockResource = (FedoraBinary)setResource(FedoraBinary.class);
         when(mockResource.getDescription()).thenReturn(mockNonRdfSourceDescription);
+        when(mockResource.getOriginalResource()).thenReturn(mockResource);
         final Response actual = testObj.options();
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertShouldNotAdvertiseAcceptPostFlavors();
@@ -507,6 +513,7 @@ public class FedoraLdpTest {
         final NonRdfSourceDescription mockResource
                 = (NonRdfSourceDescription)setResource(NonRdfSourceDescription.class);
         when(mockResource.getDescribedResource()).thenReturn(mockBinary);
+        when(mockResource.getOriginalResource()).thenReturn(mockResource);
         final Response actual = testObj.options();
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertShouldNotAdvertiseAcceptPostFlavors();
@@ -738,6 +745,7 @@ public class FedoraLdpTest {
         when(mockResource.getDescription()).thenReturn(mockNonRdfSourceDescription);
         when(mockResource.getMimeType()).thenReturn("text/plain");
         when(mockResource.getContent()).thenReturn(toInputStream("xyz", UTF_8));
+        when(mockResource.getOriginalResource()).thenReturn(mockResource);
         final Response actual = testObj.getResource(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertShouldBeAnLDPNonRDFSource();
@@ -756,6 +764,7 @@ public class FedoraLdpTest {
     public void testGetWithExternalMessageBinary() throws Exception {
         final FedoraBinary mockResource = (FedoraBinary)setResource(FedoraBinary.class);
         when(mockResource.getDescription()).thenReturn(mockNonRdfSourceDescription);
+        when(mockResource.getOriginalResource()).thenReturn(mockResource);
         when(mockResource.getMimeType()).thenReturn("message/external-body; access-type=URL; URL=\"some:uri\"");
         when(mockResource.getContent()).thenReturn(toInputStream("xyz", UTF_8));
         final Response actual = testObj.getResource(null);
@@ -772,6 +781,7 @@ public class FedoraLdpTest {
         when(mockResource.getDescription()).thenReturn(mockNonRdfSourceDescription);
         when(mockResource.getMimeType()).thenReturn("message/external-body; access-type=URL;");
         when(mockResource.getContent()).thenReturn(toInputStream("xyz", UTF_8));
+        when(mockResource.getOriginalResource()).thenReturn(mockResource);
         final Response actual = testObj.getResource(null);
         assertEquals(UNSUPPORTED_MEDIA_TYPE.getStatusCode(), actual.getStatus());
     }
@@ -784,6 +794,7 @@ public class FedoraLdpTest {
         final NonRdfSourceDescription mockResource
                 = (NonRdfSourceDescription)setResource(NonRdfSourceDescription.class);
         when(mockResource.getDescribedResource()).thenReturn(mockBinary);
+        when(mockResource.getOriginalResource()).thenReturn(mockResource);
         when(mockBinary.getTriples(eq(idTranslator), any(TripleCategory.class)))
             .thenReturn(new DefaultRdfStream(createURI("mockBinary")));
         when(mockBinary.getTriples(eq(idTranslator), any(EnumSet.class)))
