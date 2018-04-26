@@ -86,9 +86,9 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
         return session;
     }
 
-    protected IdentifierConverter<Resource, FedoraResource> idTranslator;
+    private IdentifierConverter<Resource, FedoraResource> idTranslator;
 
-    protected IdentifierConverter<Resource, FedoraResource> translator() {
+    private IdentifierConverter<Resource, FedoraResource> translator() {
         if (idTranslator == null) {
             idTranslator = new HttpResourceConverter(session(), UriBuilder.fromResource(FedoraLdp.class));
         }
@@ -100,7 +100,7 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
      * Useful for constructing URLs
      */
     @Context
-    protected UriInfo uriInfo;
+    private UriInfo uriInfo;
 
 
     @Override

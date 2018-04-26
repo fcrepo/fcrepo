@@ -193,7 +193,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
     }
 
     @Test
-    @Ignore("needs principal providers config")
+    @Ignore("needs principal providers config: https://jira.duraspace.org/browse/FCREPO-2778")
     public void scenario2() throws IOException {
         final String id = "/rest/box/bag/collection";
         final String testObj = ingestObj(id);
@@ -227,7 +227,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
     }
 
     @Test
-    @Ignore("needs principal providers config")
+    @Ignore("needs principal providers config: https://jira.duraspace.org/browse/FCREPO-2778")
     public void scenario3() throws IOException {
         final String idDark = "/rest/dark/archive";
         final String idLight = "/rest/dark/archive/sunshine";
@@ -259,7 +259,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
     }
 
     @Test
-    @Ignore("needs principal providers config")
+    @Ignore("needs principal providers config: https://jira.duraspace.org/browse/FCREPO-2778")
     public void scenario4() throws IOException {
         final String id = "/rest/public_collection";
         final String testObj = ingestObj(id);
@@ -339,7 +339,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
     }
 
     @Test
-    @Ignore("needs principal providers config")
+    @Ignore("needs principal providers config: https://jira.duraspace.org/browse/FCREPO-2778")
     public void scenario5() throws IOException {
         final String idPublic = "/rest/mixedCollection/publicObj";
         final String idPrivate = "/rest/mixedCollection/privateObj";
