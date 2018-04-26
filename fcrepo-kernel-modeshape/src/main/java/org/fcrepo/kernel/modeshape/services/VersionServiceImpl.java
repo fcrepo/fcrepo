@@ -22,15 +22,11 @@ import static java.util.Arrays.stream;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.fcrepo.kernel.api.FedoraTypes.CONTENT_DIGEST;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.FedoraTypes.MEMENTO;
 import static org.fcrepo.kernel.api.FedoraTypes.MEMENTO_DATETIME;
-import static org.fcrepo.kernel.api.FedoraTypes.CONTENT_DIGEST;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_SERVICE;
-import static org.fcrepo.kernel.api.RdfLexicon.NT_LEAF_NODE;
-import static org.fcrepo.kernel.api.RdfLexicon.NT_VERSION_FILE;
 import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_CONTAINMENT;
 import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_MEMBERSHIP;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
@@ -79,16 +75,12 @@ import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.BinaryService;
-import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.api.services.VersionService;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.modeshape.ContainerImpl;
 import org.fcrepo.kernel.modeshape.rdf.impl.InternalIdentifierTranslator;
-import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
-import org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl;
 import org.fcrepo.kernel.modeshape.utils.iterators.RelaxedRdfAdder;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
@@ -120,9 +112,6 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
     @Inject
     protected BinaryService binaryService;
 
-    @Inject
-    protected NodeService nodeService;
-
     @Override
     public FedoraResource createVersion(final FedoraSession session, final FedoraResource resource,
             final IdentifierConverter<Resource, FedoraResource> idTranslator, final Instant dateTime) {
@@ -146,7 +135,7 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
         if (resource instanceof Container) {
             mementoResource = createContainer(session, mementoPath);
         } else {
-            mementoResource = createNonRdfSourceMemento(session, mementoPath);
+            mementoResource = binaryService.findOrCreateDescription(session, mementoPath);
         }
 
         final String mementoUri = getUri(mementoResource, idTranslator);
@@ -198,27 +187,6 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
             }
 
             return new ContainerImpl(node);
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-    }
-
-    /*
-     * Creates memento node for non-rdf source using leaf node type
-     */
-    private NonRdfSourceDescription createNonRdfSourceMemento(final FedoraSession session, final String path) {
-        try {
-            final Node descNode = findOrCreateNode(session, path, NT_LEAF_NODE);
-
-            if (descNode.canAddMixin(FEDORA_NON_RDF_SOURCE_DESCRIPTION)) {
-                descNode.addMixin(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
-            }
-
-            if (descNode.canAddMixin(FEDORA_BINARY)) {
-                descNode.addMixin(FEDORA_BINARY);
-            }
-
-            return new NonRdfSourceDescriptionImpl(descNode);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -280,7 +248,7 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
 
         assertMementoDoesNotExist(session, mementoPath);
 
-        final FedoraBinary memento = createBinary(session, mementoPath);
+        final FedoraBinary memento = binaryService.findOrCreateBinary(session, mementoPath);
 
         if (contentStream == null) {
             LOGGER.debug("Creating memento {} for resource {} using existing state", mementoPath, resource.getPath());
@@ -293,23 +261,6 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
         decorateWithMementoProperties(session, mementoPath, dateTime);
 
         return memento;
-    }
-
-    private FedoraBinary createBinary(final FedoraSession session, final String path) {
-        try {
-            final Node dsNode = findOrCreateNode(session, path, NT_VERSION_FILE);
-
-            if (dsNode.canAddMixin(FEDORA_RESOURCE)) {
-                dsNode.addMixin(FEDORA_RESOURCE);
-            }
-            if (dsNode.canAddMixin(FEDORA_BINARY)) {
-                dsNode.addMixin(FEDORA_BINARY);
-            }
-
-            return new FedoraBinaryImpl(dsNode);
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
     }
 
     private void populateBinaryMementoFromExisting(final FedoraBinary resource, final FedoraBinary memento)
