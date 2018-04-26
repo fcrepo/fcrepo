@@ -102,10 +102,6 @@ public class FedoraEventSerializerTestBase {
         when(mockEvent.getInfo()).thenReturn(auxInfo);
     }
 
-
-    /**
-     * @param model
-     */
     protected void testModel(final Model model) {
         final Resource resourceSubject = createResource(baseUrl + path);
         final Resource eventSubject = createResource(eventResourceId);

@@ -57,11 +57,11 @@ public class RequiredPropertiesUtil {
             NON_RDF_SOURCE, FEDORA_BINARY, FEDORA_RESOURCE);
 
     /**
-     * Throws a ConstraintViolationException if the model does not contain all required server managed triples for a
+     * Throws a ConstraintViolationException if the model does not contain all required server-managed triples for a
      * container.
      *
      * @param model rdf to validate
-     * @throws ConstraintViolationException
+     * @throws ConstraintViolationException if model does not contain all required server-managed triples for container
      */
     public static void assertRequiredContainerTriples(final Model model)
             throws ConstraintViolationException {
@@ -70,11 +70,12 @@ public class RequiredPropertiesUtil {
     }
 
     /**
-     * Throws a ConstraintViolationException if the model does not contain all required server managed triples for a
+     * Throws a ConstraintViolationException if the model does not contain all required server-managed triples for a
      * binary description.
      *
      * @param model rdf to validate
-     * @throws ConstraintViolationException
+     * @throws ConstraintViolationException if model does not contain all required server-managed triples for binary
+     * description
      */
     public static void assertRequiredBinaryTriples(final Model model)
             throws ConstraintViolationException {

@@ -27,13 +27,15 @@ import static org.apache.http.HttpStatus.SC_NOT_MODIFIED;
  */
 public class PreconditionException extends RepositoryRuntimeException {
 
+    private static final long serialVersionUID = 1L;
+
     private int httpStatus;
 
     /**
      * Ordinary constructor
-     * 
+     *
      * @param msg error message
-     * @param httpStatus
+     * @param httpStatus the http status code
      */
     public PreconditionException(final String msg, final int httpStatus) {
         super(msg);

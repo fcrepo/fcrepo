@@ -44,8 +44,8 @@ public class FedoraSessionUserUtil {
 
     /**
      * Returns the user agent based on the session user id.
-     * @param sessionUserId
-     * @return
+     * @param sessionUserId the acting user's id for this session
+     * @return the uri of the user agent
      */
     public static URI getUserURI(final String sessionUserId) {
         // user id could be in format <anonymous>, remove < at the beginning and the > at the end in this case.
