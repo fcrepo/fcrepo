@@ -26,11 +26,12 @@ import com.codahale.metrics.servlets.AdminServletContextListener;
 /**
  * A ServletContextListener to set the ServletContext attributes that the
  * Metrics servlets expect.
- * 
+ *
  * @author Edwin Shin
  * @see <a
  *      href="http://metrics.codahale.com/manual/servlets/">http://metrics.codahale.com/manual/servlets/</a>
  */
+@SuppressWarnings("deprecation")
 @WebListener
 public class MetricsContextListener extends AdminServletContextListener {
 

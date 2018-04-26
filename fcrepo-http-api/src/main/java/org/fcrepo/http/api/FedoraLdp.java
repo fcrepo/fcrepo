@@ -381,6 +381,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @throws InvalidChecksumException if invalid checksum exception occurred
      * @throws MalformedRdfException if malformed rdf exception occurred
      * @throws UnsupportedAlgorithmException if an unsupported algorithm exception occurs
+     * @throws UnsupportedAccessTypeException if the access type of the resource is not supported
      */
     @PUT
     @Consumes
@@ -607,6 +608,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @throws IOException if IO exception occurred
      * @throws MalformedRdfException if malformed rdf exception occurred
      * @throws UnsupportedAlgorithmException if an unsupported algorithm exception occurs
+     * @throws UnsupportedAccessTypeException if the access type of the resource is not supported
      */
     @POST
     @Consumes({MediaType.APPLICATION_OCTET_STREAM + ";qs=1.000", WILDCARD})

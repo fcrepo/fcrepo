@@ -44,7 +44,7 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
-import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isNonRdfSourceDescription;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFedoraBinary;
 import static org.fcrepo.kernel.modeshape.utils.FedoraSessionUserUtil.USER_AGENT_BASE_URI_PROPERTY;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -83,8 +83,8 @@ import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.services.NodeService;
+import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
 import org.fcrepo.kernel.modeshape.FedoraSessionImpl;
 import org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
@@ -196,8 +196,8 @@ public class WebACRolesProvider implements AccessRolesProvider {
 
         // Get the effective ACL by searching the target node and any ancestors.
         final Optional<ACLHandle> effectiveAcl = getEffectiveAcl(
-                isNonRdfSourceDescription.test(getJcrNode(resource)) ?
-                    ((NonRdfSourceDescription)nodeConverter.convert(getJcrNode(resource))).getDescribedResource() :
+                isFedoraBinary.test(getJcrNode(resource)) ? ((FedoraBinaryImpl) nodeConverter.convert(
+                        getJcrNode(resource))).getDescription() :
                     resource);
 
         // Construct a list of acceptable acl:accessTo values for the target resource.
