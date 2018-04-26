@@ -671,6 +671,9 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(new HttpGet(mementoUri))) {
             assertMementoDatetimeHeaderMatches(response, MEMENTO_DATETIME);
 
+            // Content-type is not retained for a binary memento created without description
+            assertEquals(OCTET_STREAM_TYPE, response.getFirstHeader(CONTENT_TYPE).getValue());
+
             assertEquals("Binary content of memento must match updated content",
                     BINARY_UPDATED, EntityUtils.toString(response.getEntity()));
         }
@@ -697,7 +700,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             assertFalse("Memento type should not be visible",
                     results.contains(ANY, mementoSubject, RDF.type.asNode(), MEMENTO_TYPE_NODE));
             assertFalse("Property added to original must not appear in memento",
-                    results.contains(ANY, mementoSubject, RDF.type.asNode(), FEDORA_BINARY.asNode()));
+                    results.contains(ANY, mementoSubject, DC.title.asNode(), ANY));
         }
 
         // No binary memento should be created when specifically creating a description memento.
@@ -750,12 +753,12 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     @Test
     public void testCreateVersionHistoricBinaryAndDescription() throws Exception {
-        createVersionedBinary(id);
+        createVersionedBinary(id, "text/plain", BINARY_CONTENT);
 
         final String descriptionUri = subjectUri + "/fcr:metadata";
 
         final String binaryMementoUri = createMemento(subjectUri, MEMENTO_DATETIME,
-                "text/plain", "content");
+                null, "content");
         assertMementoUri(binaryMementoUri, subjectUri);
 
         final String mementoUri = createContainerMementoWithBody(descriptionUri, MEMENTO_DATETIME);
@@ -764,7 +767,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         try (final CloseableDataset dataset = getDataset(new HttpGet(mementoUri))) {
             final DatasetGraph results = dataset.asDatasetGraph();
 
-            final Node mementoSubject = createURI(mementoUri);
+            final Node mementoSubject = createURI(subjectUri);
 
             assertTrue("Type must be a fedora:Binary",
                     results.contains(ANY, mementoSubject, RDF.type.asNode(), FEDORA_BINARY.asNode()));

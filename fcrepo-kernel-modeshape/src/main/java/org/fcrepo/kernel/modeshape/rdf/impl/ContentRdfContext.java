@@ -36,6 +36,7 @@ import org.apache.jena.rdf.model.Resource;
  * @since 10/16/14
  */
 public class ContentRdfContext extends NodeRdfContext {
+
     /**
      * Default constructor.
      *
@@ -48,14 +49,13 @@ public class ContentRdfContext extends NodeRdfContext {
 
         // if there's an accessible jcr:content node, include information about it
         if (resource instanceof NonRdfSourceDescription) {
-            final FedoraResource contentNode = resource().getDescribedResource();
+            final FedoraResource contentNode = resource().getOriginalResource().getDescribedResource();
             final Node subject = uriFor(resource());
             final Node contentSubject = uriFor(contentNode);
             // add triples representing parent-to-content-child relationship
             concat(of(create(subject, DESCRIBES.asNode(), contentSubject)));
-
         } else if (resource instanceof FedoraBinary) {
-            final FedoraResource description = resource.getDescription();
+            final FedoraResource description = resource.getOriginalResource().getDescription();
             concat(of(create(uriFor(resource), DESCRIBED_BY.asNode(), uriFor(description))));
         }
     }
