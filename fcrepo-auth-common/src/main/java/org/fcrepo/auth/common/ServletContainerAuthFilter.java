@@ -66,6 +66,8 @@ public class ServletContainerAuthFilter implements Filter {
             throws IOException, ServletException {
         final HttpServletRequest httpRequest = (HttpServletRequest) request;
         final Principal servletUser = httpRequest.getUserPrincipal();
+        final Subject currentUser = SecurityUtils.getSubject();
+
         if (servletUser != null) {
             log.debug("There is a servlet user: {}", servletUser.getName());
             final Set<String> roles = new HashSet<>();
@@ -78,10 +80,11 @@ public class ServletContainerAuthFilter implements Filter {
             }
             final ContainerAuthToken token = new ContainerAuthToken(servletUser.getName(), roles);
             log.debug("Credentials for servletUser = {}", token.getCredentials());
-            final Subject currentUser = SecurityUtils.getSubject();
             currentUser.login(token);
         } else {
             log.debug("Anonymous request");
+            // ensure the user is actually logged out
+            currentUser.logout();
         }
         chain.doFilter(request, response);
     }

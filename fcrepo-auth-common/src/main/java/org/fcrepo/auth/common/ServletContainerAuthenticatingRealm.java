@@ -49,7 +49,7 @@ public class ServletContainerAuthenticatingRealm extends AuthenticatingRealm {
         principals.add(authToken.getPrincipal(), getName());
         // container-managed auth roles
         principals.addAll(authToken.getRoles(), getName());
-        return new SimpleAuthenticationInfo(principals, ContainerAuthToken.AUTHORIZED, getName());
+        return new SimpleAuthenticationInfo(principals, ContainerAuthToken.AUTHORIZED);
     }
 
     @Override

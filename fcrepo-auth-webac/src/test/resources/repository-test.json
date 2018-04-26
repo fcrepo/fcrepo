@@ -19,11 +19,9 @@
   "security" : {
     "anonymous" : {
       "roles" : ["readonly","readwrite","admin"],
-      "useOnFailedLogin" : false
+      "useOnFailedLogin" : true
     },
-    "providers" : [
-        { "classname" : "org.fcrepo.auth.common.ServletContainerAuthenticationProvider" }
-    ]
+    "providers" : []
   },
   "node-types" : ["fedora-node-types.cnd"]
 }

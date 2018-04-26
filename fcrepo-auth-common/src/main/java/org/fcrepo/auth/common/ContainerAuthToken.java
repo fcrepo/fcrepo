@@ -22,6 +22,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.http.auth.BasicUserPrincipal;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.fcrepo.auth.common.ContainerRolesPrincipalProvider.ContainerRolesPrincipal;
 import org.slf4j.Logger;
@@ -35,7 +36,7 @@ public class ContainerAuthToken implements AuthenticationToken {
 
     public static final String AUTHORIZED = "AUTHORIZED";
 
-    private String servletUsername;
+    private BasicUserPrincipal servletUser;
 
     private Set<ContainerRolesPrincipal> servletRoles;
 
@@ -44,7 +45,7 @@ public class ContainerAuthToken implements AuthenticationToken {
      * @param servletRoleNames roles returned from servlet container authentication
      */
     public ContainerAuthToken(final String servletUsername, final Set<String> servletRoleNames) {
-        this.servletUsername = servletUsername;
+        servletUser = new BasicUserPrincipal(servletUsername);
         log.debug("Setting servlet username {}", servletUsername);
         this.servletRoles = new HashSet<>();
         for (String roleName : servletRoleNames) {
@@ -55,7 +56,7 @@ public class ContainerAuthToken implements AuthenticationToken {
 
     @Override
     public Object getPrincipal() {
-        return servletUsername;
+        return servletUser;
     }
 
     /**
