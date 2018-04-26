@@ -27,17 +27,9 @@ import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.api.RdfStream;
-import org.fcrepo.kernel.api.TripleCategory;
-import org.fcrepo.kernel.api.utils.CacheEntry;
-import org.fcrepo.kernel.api.utils.ContentDigest;
-import org.fcrepo.kernel.api.utils.FixityResult;
-import org.fcrepo.kernel.modeshape.rdf.impl.FixityRdfContext;
-import org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils;
-import org.fcrepo.kernel.modeshape.utils.impl.CacheEntryFactory;
-import org.fcrepo.metrics.RegistryService;
-import org.modeshape.jcr.api.Binary;
-import org.modeshape.jcr.api.ValueFactory;
 import org.slf4j.Logger;
+
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFedoraBinary;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
@@ -47,25 +39,13 @@ import javax.jcr.Value;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDstring;
-import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_DESCRIPTION;
-import static org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM.SHA1;
-import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FIELD_DELIMITER;
-import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFedoraBinary;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author cabeer
  * @since 9/19/14
  */
-public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary {
+public class FedoraBinaryImpl extends AbstractFedoraBinary {
 
     private static final Logger LOGGER = getLogger(FedoraBinaryImpl.class);
 
@@ -168,35 +148,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
 
         // Clear the wrapped binary object prior to setting the content
         wrappedBinary = null;
-/*
-        if (isCopy()) {
-            try {
-                final MessageExternalBodyContentType parsedContentType = MessageExternalBodyContentType.parse(
-                        contentType);
-
-                // Expiration of external-body specified, pull content in
-                final String expiration = parsedContentType.getExpiration();
-                if (expiration != null && !expiration.isEmpty()) {
-                    String dsMimeType = parsedContentType.getMimeType();
-                    if (dsMimeType == null || dsMimeType.isEmpty()) {
-                        dsMimeType = "application/octet-stream";
-                    }
-
-                    final String storageLocation = parsedContentType.getResourceLocation();
-                    final InputStream externalStream = new URL(storageLocation).openStream();
-
-                    getBinary(dsMimeType).setContent(externalStream, dsMimeType, checksums, originalFileName,
-                            storagePolicyDecisionPoint);
-                    return;
-                }
-            } catch (final UnsupportedAccessTypeException e) {
-                throw new RepositoryRuntimeException(e);
-            } catch (final IOException e) {
-                throw new RepositoryRuntimeException(e);
-            }
-        }
-        */
-
+        // Need to pass the new filename to get the correct implementation.
         getBinary().setContent(content, contentType, checksums, originalFileName,
                 storagePolicyDecisionPoint);
     }
@@ -226,7 +178,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
      */
     @Override
     public Boolean isProxy() {
-        return hasProperty(PROXY_FOR);
+        return hasDescriptionProperty(PROXY_FOR);
     }
 
     /*
@@ -235,7 +187,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
      */
     @Override
     public Boolean isRedirect() {
-        return hasProperty(REDIRECTS_TO);
+        return hasDescriptionProperty(REDIRECTS_TO);
     }
 
     /*
@@ -245,8 +197,8 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     @Override
     public String getProxyURL() {
         try {
-            if (hasProperty(PROXY_FOR)) {
-                return getProperty(PROXY_FOR).getString();
+            if (hasDescriptionProperty(PROXY_FOR)) {
+                return getDescriptionProperty(PROXY_FOR).getString();
             }
             return null;
         } catch (final RepositoryException e) {
@@ -261,8 +213,8 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     @Override
     public void setProxyURL(final String url) throws RepositoryRuntimeException {
         try {
-            getNode().setProperty(PROXY_FOR, url);
-            getNode().setProperty(REDIRECTS_TO, (Value)null);
+            getDescriptionNode().setProperty(PROXY_FOR, url);
+            getDescriptionNode().setProperty(REDIRECTS_TO, (Value) null);
         } catch (final Exception e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -275,8 +227,8 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     @Override
     public String getRedirectURL() {
         try {
-            if (hasProperty(REDIRECTS_TO)) {
-                return getProperty(REDIRECTS_TO).getString();
+            if (hasDescriptionProperty(REDIRECTS_TO)) {
+                return getDescriptionProperty(REDIRECTS_TO).getString();
             }
             return null;
         } catch (final RepositoryException e) {
@@ -291,8 +243,8 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     @Override
     public void setRedirectURL(final String url) throws RepositoryRuntimeException {
         try {
-            getNode().setProperty(REDIRECTS_TO, url);
-            getNode().setProperty(PROXY_FOR, (Value)null);
+            getDescriptionNode().setProperty(REDIRECTS_TO, url);
+            getDescriptionNode().setProperty(PROXY_FOR, (Value) null);
         } catch (final Exception e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -351,7 +303,8 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
         return getBinary().getBaseVersion();
     }
 
-    private boolean hasDescriptionProperty(final String relPath) {
+    @Override
+    protected boolean hasDescriptionProperty(final String relPath) {
         try {
             final Node descNode = getDescriptionNodeOrNull();
             if (descNode == null) {
@@ -363,7 +316,8 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
         }
     }
 
-    private Property getDescriptionProperty(final String relPath) {
+    @Override
+    protected Property getDescriptionProperty(final String relPath) {
         try {
             return getDescriptionNode().getProperty(relPath);
         } catch (final RepositoryException e) {
@@ -388,6 +342,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
 
     /**
      * Check if the given node is a Fedora binary
+     *
      * @param node the given node
      * @return whether the given node is a Fedora binary
      */

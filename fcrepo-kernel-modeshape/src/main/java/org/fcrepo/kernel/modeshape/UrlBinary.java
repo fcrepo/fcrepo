@@ -33,8 +33,9 @@ import java.util.stream.Collectors;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
-
 import org.apache.jena.rdf.model.Resource;
+import org.apache.tika.io.IOUtils;
+
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -84,6 +85,22 @@ public class UrlBinary extends AbstractFedoraBinary {
         }
     }
 
+    @Override
+    public long getContentSize() {
+        final long sizeValue = super.getContentSize();
+        if (sizeValue > -1L) {
+            return sizeValue;
+        }
+        try {
+            final String content = IOUtils.toString(getResourceUri().toURL().openStream());
+            setContentSize(content.length());
+            return content.length();
+        } catch (final IOException e) {
+            // Error getting remote size.
+        }
+        return -1L;
+    }
+
     /*
      * (non-Javadoc)
      * @see org.fcrepo.kernel.modeshape.FedoraBinaryImpl#setContent(java.io.InputStream, java.lang.String,
@@ -104,6 +121,7 @@ public class UrlBinary extends AbstractFedoraBinary {
             /* that this is a PROXY or REDIRECT has already been set on this resource before
                we enter this setContent() method
              */
+            final Node descNode = getDescriptionNode();
             final Node contentNode = getNode();
 
             if (contentNode.canAddMixin(FEDORA_BINARY)) {
@@ -111,10 +129,10 @@ public class UrlBinary extends AbstractFedoraBinary {
             }
 
             if (originalFileName != null) {
-                contentNode.setProperty(FILENAME, originalFileName);
+                descNode.setProperty(FILENAME, originalFileName);
             }
 
-            contentNode.setProperty(HAS_MIME_TYPE, contentType);
+            descNode.setProperty(HAS_MIME_TYPE, contentType);
 
             // Store the required jcr:data property
             contentNode.setProperty(JCR_DATA, "");
@@ -128,10 +146,10 @@ public class UrlBinary extends AbstractFedoraBinary {
             // Store checksums on node
             final String[] checksumArray = new String[nonNullChecksums.size()];
             nonNullChecksums.stream().map(Object::toString).collect(Collectors.toSet()).toArray(checksumArray);
-            contentNode.setProperty(CONTENT_DIGEST, checksumArray);
+            descNode.setProperty(CONTENT_DIGEST, checksumArray);
 
-            FedoraTypesUtils.touch(getNode());
-            FedoraTypesUtils.touch(((FedoraResourceImpl) getDescription()).getNode());
+            FedoraTypesUtils.touch(contentNode);
+            FedoraTypesUtils.touch(descNode);
 
             LOGGER.debug("Set url binary content from path: {}", getResourceLocation());
 
@@ -145,9 +163,9 @@ public class UrlBinary extends AbstractFedoraBinary {
 
         Property property = null;
         if (isProxy()) {
-            property = getProperty(PROXY_FOR);
+            property = getDescriptionProperty(PROXY_FOR);
         } else if (isRedirect()) {
-            property = getProperty(REDIRECTS_TO);
+            property = getDescriptionProperty(REDIRECTS_TO);
         } // what else could it be?
 
         LOGGER.info("Property is: {}", property.getName());
@@ -157,16 +175,26 @@ public class UrlBinary extends AbstractFedoraBinary {
 
         final CacheEntry cacheEntry = CacheEntryFactory.forProperty(property);
         // Loop through provided checksums validating against computed values
-        checksums.forEach(checksum -> {
-            final String algorithm = ContentDigest.getAlgorithm(checksum);
-            cacheEntry.checkFixity(algorithm).stream().findFirst().ifPresent(
-                    fixityResult -> {
-                        if (!fixityResult.matches(checksum)) {
+        // checksums.forEach(checksum -> {
+        // final String algorithm = ContentDigest.getAlgorithm(checksum);
+        // cacheEntry.checkFixity(algorithm).stream().findFirst().ifPresent(
+        // fixityResult -> {
+        // if (!fixityResult.matches(checksum)) {
+        // LOGGER.debug("Failed checksum test");
+        // checksumErrors.put(checksum, fixityResult.getComputedChecksum());
+        // }
+        // });
+        // });
+
+        for (final URI check : checksums) {
+            final String algorithm = ContentDigest.getAlgorithm(check);
+            for (final FixityResult result : cacheEntry.checkFixity(algorithm)) {
+                if (!result.matches(check)) {
                             LOGGER.debug("Failed checksum test");
-                            checksumErrors.put(checksum, fixityResult.getComputedChecksum());
+                    checksumErrors.put(check, result.getComputedChecksum());
                         }
-                    });
-        });
+            }
+        }
 
         // Throw an exception if any checksum errors occurred
         if (!checksumErrors.isEmpty()) {
@@ -210,9 +238,10 @@ public class UrlBinary extends AbstractFedoraBinary {
 
             Collection<FixityResult> fixityResults = null;
             if (isProxy()) {
-                fixityResults = CacheEntryFactory.forProperty(getProperty(PROXY_FOR)).checkFixity(algorithm);
+                fixityResults = CacheEntryFactory.forProperty(getDescriptionProperty(PROXY_FOR)).checkFixity(algorithm);
             } else if (isRedirect()) {
-                fixityResults = CacheEntryFactory.forProperty(getProperty(REDIRECTS_TO)).checkFixity(algorithm);
+                fixityResults =
+                    CacheEntryFactory.forProperty(getDescriptionProperty(REDIRECTS_TO)).checkFixity(algorithm);
             }
             return new FixityRdfContext(this, idTranslator, fixityResults, digestUri, contentSize);
         } catch (final RepositoryException e) {
@@ -233,10 +262,10 @@ public class UrlBinary extends AbstractFedoraBinary {
             LOGGER.debug("Checking external resource: " + resourceLocation);
             Collection<URI> list = null;
             if (isProxy()) {
-                 list = CacheEntryFactory.forProperty(getProperty(PROXY_FOR)).checkFixity(algorithms);
+                list = CacheEntryFactory.forProperty(getDescriptionProperty(PROXY_FOR)).checkFixity(algorithms);
 
             } else if (isRedirect()) {
-                list = CacheEntryFactory.forProperty(getProperty(REDIRECTS_TO)).checkFixity(algorithms);
+                list = CacheEntryFactory.forProperty(getDescriptionProperty(REDIRECTS_TO)).checkFixity(algorithms);
             }
             LOGGER.debug("FIXITY INFO: {} ", list.iterator().next().toString());
             LOGGER.debug("FIXITY INFO size: {} ", list.size());
@@ -255,6 +284,7 @@ public class UrlBinary extends AbstractFedoraBinary {
     public String getMimeType() {
         return getMimeTypeValue();
     }
+
     protected String getResourceLocation() {
         LOGGER.info("Getting resource location {}", getProxyURL());
         if (isProxy()) {

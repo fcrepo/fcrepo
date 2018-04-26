@@ -5,13 +5,12 @@ import static org.fcrepo.kernel.api.RdfLexicon.EXTERNAL_CONTENT;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.google.common.base.Splitter;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.fcrepo.kernel.api.exception.ExternalMessageBodyException;
-
+import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -53,11 +52,12 @@ public class ExternalContentHandler {
     */
 
     public ExternalContentHandler(final String linkHeader) {
-        final Map<String, String> map = parseLinkHeader(linkHeader);
+        final Link externalLink = parseLinkHeader(linkHeader);
 
         // if it gets past that, good, parse it
-        verifyRequestForExternalBody(map);
+        verifyRequestForExternalBody(externalLink);
         originalLinkHeader = linkHeader;
+        final Map<String, String> map = externalLink.getParams();
         url = map.get("url");
         handling = map.get("HANDLING");
         type = map.get(CONTENT_TYPE);
@@ -125,6 +125,10 @@ public class ExternalContentHandler {
      */
     static String findExternalLink(final List<String> links) {
 
+        if (links == null) {
+            return null;
+        }
+
         final List<String> externalContentLinks = links.stream()
                 .filter(x -> x.contains(EXTERNAL_CONTENT.toString()))
                 .collect(Collectors.toList());
@@ -156,23 +160,17 @@ public class ExternalContentHandler {
      * @param parsedHeader
      * @throws ExternalMessageBodyException
      */
-    private void verifyRequestForExternalBody(final Map<String,String> parsedHeader) throws ExternalMessageBodyException {
+    private void verifyRequestForExternalBody(final Link externalLink) throws ExternalMessageBodyException {
 
         try {
-            final URL url = new URL(parsedHeader.get("url"));
+            final URL url = externalLink.getUri().toURL();
         } catch (final MalformedURLException e) {
             throw new ExternalMessageBodyException("External content link header url is malformed");
         }
 
-        // must have rel= as above
-        if (EXTERNAL_CONTENT.toString().toLowerCase() != parsedHeader.get("rel")) {
-            // error
-            throw new ExternalMessageBodyException("Link header formatted incorrectly: no 'rel' information");
-        }
-
         // if no 'handling' key, error with constrainedBy
         // if 'handling' key, but it's not {copy, proxy, redirect} throw error with constrainedBy
-        final String handling = parsedHeader.get(HANDLING);
+        final String handling = externalLink.getParams().get(HANDLING);
         if (handling == null || !handling.matches("(?i)" + PROXY + "|" + COPY + "|" + REDIRECT)) {
             // error
             throw new ExternalMessageBodyException(
@@ -182,21 +180,14 @@ public class ExternalContentHandler {
         // if we get this far, things are good
     }
 
-    private Map<String, String> parseLinkHeader(final String link) throws ExternalMessageBodyException {
-        final List<String> list = Splitter.on(';').trimResults().omitEmptyStrings().splitToList(link);
+    private Link parseLinkHeader(final String link) throws ExternalMessageBodyException {
+        final Link realLink = Link.valueOf(link);
 
-        final String url = list.get(0).trim().toLowerCase();
+        final String url = realLink.getUri().toString().toLowerCase();
         if (url.isEmpty() || !url.startsWith("http") || !url.startsWith("file")) {
             throw new ExternalMessageBodyException("Link header formatted incorrectly: URI incorrectly formatted");
         }
-
-        list.set(0, "url=" + url);
-
-        return list.stream().map(x -> x.split("="))
-                .collect(Collectors.toMap(
-                                x -> x[0].trim().toLowerCase(),
-                                x -> x.length > 1 ? x[1].trim().toLowerCase() : "")
-                );
+        return realLink;
     }
 
 }

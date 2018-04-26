@@ -293,7 +293,17 @@ public class InternalFedoraBinary extends AbstractFedoraBinary {
             descNode.setProperty(CONTENT_SIZE, dataProperty.getLength());
 
             LOGGER.debug("Decorated data property at path: {}", dataProperty.getPath());
+        }
     }
-}
+
+    @Override
+    public Boolean isRedirect() {
+        return false;
+    }
+
+    @Override
+    public Boolean isProxy() {
+        return false;
+    }
 
 }

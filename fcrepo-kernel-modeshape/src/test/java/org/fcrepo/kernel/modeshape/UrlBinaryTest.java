@@ -46,6 +46,7 @@ import java.net.URI;
 import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.Property;
+import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.nodetype.NodeType;
@@ -135,42 +136,31 @@ public class UrlBinaryTest {
         when(mockNodeType.getName()).thenReturn("nt:versionedFile");
         when(mockContent.getPrimaryNodeType()).thenReturn(mockNodeType);
 
-        when(proxyURLProperty.getString()).thenReturn(fileUrl);
-        when(proxyURLProperty.getValue()).thenReturn(mockURIValue);
-        when(proxyURLProperty.getName()).thenReturn(PROXY_FOR.toString());
-        when(mockURIValue.toString()).thenReturn(fileUrl);
-
-        when(mockContent.hasProperty(PROXY_FOR)).thenReturn(true);
-        when(mockContent.getProperty(PROXY_FOR)).thenReturn(proxyURLProperty);
-
-        when(redirectURLProperty.getString()).thenReturn(fileUrl);
-        when(redirectURLProperty.getValue()).thenReturn(mockURIValue);
-        when(redirectURLProperty.getName()).thenReturn(PROXY_FOR.toString());
-        when(mockContent.hasProperty(REDIRECTS_TO)).thenReturn(true);
-        when(mockContent.getProperty(REDIRECTS_TO)).thenReturn(redirectURLProperty);
-
         testObj = new UrlBinary(mockContent);
     }
 
     @Test
     public void testSetContent() throws Exception {
+        mockProxyProperty();
         testObj.setContent(mockStream, mimeType, null, null, null);
 
-        verify(mockContent).setProperty(HAS_MIME_TYPE, mimeType);
+        verify(mockDescNode).setProperty(HAS_MIME_TYPE, mimeType);
     }
 
     @Test
     public void testSetContentWithFilename() throws Exception {
+        mockProxyProperty();
         final String fileName = "content.txt";
         testObj.setContent(mockStream, mimeType, null, fileName, null);
 
-        verify(mockContent).setProperty(HAS_MIME_TYPE, mimeType);
-        verify(mockContent).setProperty(FILENAME, fileName);
+        verify(mockDescNode).setProperty(HAS_MIME_TYPE, mimeType);
+        verify(mockDescNode).setProperty(FILENAME, fileName);
     }
 
     @Test
     public void testSetContentWithChecksum() throws Exception {
         final String checksum = checksumString(EXPECTED_CONTENT);
+        mockProxyProperty();
 
         testObj.setContent(mockStream, mimeType, singleton(
                 new URI(checksum)), null, null);
@@ -178,21 +168,24 @@ public class UrlBinaryTest {
 
     @Test(expected = InvalidChecksumException.class)
     public void testSetContentWithChecksumMismatch() throws Exception {
+        mockProxyProperty();
         testObj.setContent(mockStream, mimeType, singleton(new URI("urn:sha1:xyz")), null, null);
     }
 
     @Test
     public void getContentSize() throws Exception {
+        mockProxyProperty();
         testObj.setContent(mockStream, mimeType, null, null, null);
 
         final long contentSize = testObj.getContentSize();
-        assertEquals(-1l, contentSize);
+        assertEquals(EXPECTED_CONTENT.length(), contentSize);
     }
 
     @Test
     public void testGetProxyURL() throws Exception {
         getContentNodeMock(mockContent, mockDescNode, EXPECTED_CONTENT);
         when(mockDescNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+        mockProxyProperty();
 
         final String url = testObj.getProxyURL();
         assertEquals(fileUrl, url);
@@ -202,9 +195,10 @@ public class UrlBinaryTest {
     public void testSetProxyURL() throws Exception {
         getContentNodeMock(mockContent, mockDescNode, EXPECTED_CONTENT);
         when(mockDescNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+        mockProxyProperty();
 
         testObj.setProxyURL(fileUrl);
-        verify(mockContent).setProperty(PROXY_FOR, fileUrl);
+        verify(mockDescNode).setProperty(PROXY_FOR, fileUrl);
 
         assertEquals(fileUrl, testObj.getProxyURL());
     }
@@ -213,6 +207,7 @@ public class UrlBinaryTest {
     public void testGetRedirectURL() throws Exception {
         getContentNodeMock(mockContent, mockDescNode, EXPECTED_CONTENT);
         when(mockDescNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+        mockRedirectProperty();
 
         final String url = testObj.getRedirectURL();
         assertEquals(fileUrl, url);
@@ -222,9 +217,10 @@ public class UrlBinaryTest {
     public void testSetRedirectURL() throws Exception {
         getContentNodeMock(mockContent, mockDescNode, EXPECTED_CONTENT);
         when(mockDescNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+        mockRedirectProperty();
 
         testObj.setRedirectURL(fileUrl);
-        verify(mockContent).setProperty(REDIRECTS_TO, fileUrl);
+        verify(mockDescNode).setProperty(REDIRECTS_TO, fileUrl);
 
         assertEquals(fileUrl, testObj.getRedirectURL());
     }
@@ -232,6 +228,7 @@ public class UrlBinaryTest {
     @Test
     public void testGetContentDigest() throws Exception {
         final String checksum = checksumString(EXPECTED_CONTENT);
+        mockProxyProperty();
         mockChecksumProperty(checksum);
 
         testObj.setContent(mockStream, mimeType, singleton(
@@ -249,13 +246,40 @@ public class UrlBinaryTest {
         assertEquals(mimeType, mimeType);
     }
 
+    private void mockProxyProperty() {
+        try {
+            when(proxyURLProperty.getString()).thenReturn(fileUrl);
+            when(proxyURLProperty.getValue()).thenReturn(mockURIValue);
+            when(proxyURLProperty.getName()).thenReturn(PROXY_FOR.toString());
+            when(mockURIValue.toString()).thenReturn(fileUrl);
+
+            when(mockDescNode.hasProperty(PROXY_FOR)).thenReturn(true);
+            when(mockDescNode.getProperty(PROXY_FOR)).thenReturn(proxyURLProperty);
+        } catch (final RepositoryException e) {
+            // This catch left intentionally blank.
+        }
+    }
+
+    private void mockRedirectProperty() {
+        try {
+            when(redirectURLProperty.getString()).thenReturn(fileUrl);
+            when(redirectURLProperty.getValue()).thenReturn(mockURIValue);
+            when(redirectURLProperty.getName()).thenReturn(PROXY_FOR.toString());
+            when(mockDescNode.hasProperty(REDIRECTS_TO)).thenReturn(true);
+            when(mockDescNode.getProperty(REDIRECTS_TO)).thenReturn(redirectURLProperty);
+        } catch (final RepositoryException e) {
+            // This catch left intentionally blank.
+        }
+
+    }
+
     private void mockChecksumProperty(final String checksum) throws Exception {
-        when(mockContent.hasProperty(CONTENT_DIGEST)).thenReturn(true);
+        when(mockDescNode.hasProperty(CONTENT_DIGEST)).thenReturn(true);
         final Property checksumProperty = mock(Property.class);
         final Value checksumValue = mock(Value.class);
         when(checksumValue.getString()).thenReturn(checksum);
         when(checksumProperty.getString()).thenReturn(checksum);
         when(checksumProperty.getValue()).thenReturn(checksumValue);
-        when(mockContent.getProperty(CONTENT_DIGEST)).thenReturn(checksumProperty);
+        when(mockDescNode.getProperty(CONTENT_DIGEST)).thenReturn(checksumProperty);
     }
 }

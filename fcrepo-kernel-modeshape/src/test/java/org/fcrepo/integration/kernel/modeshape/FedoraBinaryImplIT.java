@@ -20,8 +20,6 @@ package org.fcrepo.integration.kernel.modeshape;
 import static java.util.Arrays.asList;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.UUID.randomUUID;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;

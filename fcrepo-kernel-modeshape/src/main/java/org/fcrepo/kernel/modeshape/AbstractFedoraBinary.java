@@ -95,8 +95,8 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
     @Override
     public long getContentSize() {
         try {
-            if (hasProperty(CONTENT_SIZE)) {
-                return getProperty(CONTENT_SIZE).getLong();
+            if (hasDescriptionProperty(CONTENT_SIZE)) {
+                return getDescriptionProperty(CONTENT_SIZE).getLong();
             }
         } catch (final RepositoryException e) {
             LOGGER.info("Could not get contentSize(): {}", e.getMessage());
@@ -152,7 +152,7 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
      */
     @Override
     public Boolean isProxy() {
-        return hasProperty(PROXY_FOR);
+        return hasDescriptionProperty(PROXY_FOR);
     }
 
     /*
@@ -161,7 +161,7 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
      */
     @Override
     public Boolean isRedirect() {
-        return hasProperty(REDIRECTS_TO);
+        return hasDescriptionProperty(REDIRECTS_TO);
     }
 
     /*
@@ -171,10 +171,10 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
     @Override
     public String getProxyURL() {
         try {
-            LOGGER.info("getproxy info asking first: {} ", hasProperty(PROXY_FOR));
-            if (hasProperty(PROXY_FOR)) {
-                LOGGER.info("get proxy info fetching: PROXY_FOR: {} ", getProperty(PROXY_FOR).getString());
-                return getProperty(PROXY_FOR).getString();
+            LOGGER.info("getproxy info asking first: {} ", hasDescriptionProperty(PROXY_FOR));
+            if (hasDescriptionProperty(PROXY_FOR)) {
+                LOGGER.info("get proxy info fetching: PROXY_FOR: {} ", getDescriptionProperty(PROXY_FOR).getString());
+                return getDescriptionProperty(PROXY_FOR).getString();
             }
             return null;
         } catch (final RepositoryException e) {
@@ -190,8 +190,8 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
     public void setProxyURL(final String url) throws RepositoryRuntimeException {
         try {
             LOGGER.info("Setting Property PROXY_FOR!");
-            getNode().setProperty(PROXY_FOR, url);
-            getNode().setProperty(REDIRECTS_TO, (Value)null);
+            getDescriptionNode().setProperty(PROXY_FOR, url);
+            getDescriptionNode().setProperty(REDIRECTS_TO, (Value) null);
         } catch (final Exception e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -205,9 +205,9 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
     public String getRedirectURL() {
         try {
 
-            LOGGER.info("get redirecgt info asking first: {} ", hasProperty(REDIRECTS_TO));
-            if (hasProperty(REDIRECTS_TO)) {
-                return getProperty(REDIRECTS_TO).getString();
+            LOGGER.info("get redirecgt info asking first: {} ", hasDescriptionProperty(REDIRECTS_TO));
+            if (hasDescriptionProperty(REDIRECTS_TO)) {
+                return getDescriptionProperty(REDIRECTS_TO).getString();
             }
 
             return null;
@@ -224,8 +224,8 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
     public void setRedirectURL(final String url) throws RepositoryRuntimeException {
         try {
             LOGGER.info("Setting Property REDIRECTS_TO!");
-            getNode().setProperty(REDIRECTS_TO, url);
-            getNode().setProperty(PROXY_FOR, (Value)null);
+            getDescriptionNode().setProperty(REDIRECTS_TO, url);
+            getDescriptionNode().setProperty(PROXY_FOR, (Value) null);
         } catch (final Exception e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -233,8 +233,9 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
 
     protected String getMimeTypeValue() {
         try {
-            if (hasProperty(HAS_MIME_TYPE)) {
-                return getProperty(HAS_MIME_TYPE).getString().replace(FIELD_DELIMITER + XSDstring.getURI(), "");
+            if (hasDescriptionProperty(HAS_MIME_TYPE)) {
+                return getDescriptionProperty(HAS_MIME_TYPE).getString().replace(FIELD_DELIMITER + XSDstring.getURI(),
+                    "");
             }
             return DEFAULT_MIME_TYPE;
         } catch (final RepositoryException e) {
@@ -249,10 +250,10 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
     @Override
     public String getFilename() {
         try {
-            if (hasProperty(FILENAME)) {
-                return getProperty(FILENAME).getString().replace(FIELD_DELIMITER + XSDstring.getURI(), "");
+            if (hasDescriptionProperty(FILENAME)) {
+                return getDescriptionProperty(FILENAME).getString().replace(FIELD_DELIMITER + XSDstring.getURI(), "");
             }
-            return node.getParent().getName();
+            return node.getName();
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -270,9 +271,9 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
     public void delete() {
         final FedoraResource description = getDescription();
 
-        super.delete();
-
         description.delete();
+
+        super.delete();
     }
 
     @Override
@@ -320,6 +321,19 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
     protected Property getDescriptionProperty(final String relPath) {
         try {
             return getDescriptionNode().getProperty(relPath);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    /**
+     * Set the content size
+     *
+     * @param size the new value of the content size.
+     */
+    protected void setContentSize(final long size) {
+        try {
+            getDescriptionNode().setProperty(CONTENT_SIZE, size);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }

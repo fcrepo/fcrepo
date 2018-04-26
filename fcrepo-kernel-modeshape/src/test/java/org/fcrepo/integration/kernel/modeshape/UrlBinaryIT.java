@@ -144,7 +144,7 @@ public class UrlBinaryIT extends AbstractIT {
 
         final FedoraBinary ds = binaryService.findOrCreate(session, dsId);
 
-        assertEquals(-1L, ds.getContentSize());
+        assertEquals(EXPECTED_CONTENT.length(), ds.getContentSize());
         assertEquals(EXPECTED_CONTENT, contentString(ds));
 
         assertEquals(mimeType, ds.getMimeType());

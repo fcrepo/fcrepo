@@ -39,6 +39,7 @@ import java.net.URI;
 
 import javax.jcr.Node;
 import javax.jcr.Property;
+import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.nodetype.NodeType;
@@ -109,19 +110,10 @@ public class LocalFileBinaryTest {
         when(mimeTypeProperty.getValue()).thenReturn(mockValue);
         when(mockValue.getString()).thenReturn(mimeType);
 
-        when(mockContent.hasProperty(HAS_MIME_TYPE)).thenReturn(true);
-        when(mockContent.getProperty(HAS_MIME_TYPE)).thenReturn(mimeTypeProperty);
+        when(mockDescNode.hasProperty(HAS_MIME_TYPE)).thenReturn(true);
+        when(mockDescNode.getProperty(HAS_MIME_TYPE)).thenReturn(mimeTypeProperty);
 
-        when(proxyURIProperty.toString()).thenReturn(contentFile.toURI().toString());
-        when(proxyURIProperty.getString()).thenReturn(contentFile.toURI().toString());
-        when(proxyURIProperty.getValue()).thenReturn(mockURIValue);
-        when(proxyURIProperty.getName()).thenReturn(PROXY_FOR.toString());
-
-        when(mockURIValue.toString()).thenReturn(contentFile.toURI().toString());
-        when(mockURIValue.getString()).thenReturn(contentFile.toURI().toString());
-
-        when(mockContent.hasProperty(PROXY_FOR)).thenReturn(true);
-        when(mockContent.getProperty(PROXY_FOR)).thenReturn(proxyURIProperty);
+        mockProxyProperty();
 
         final NodeType[] nodeTypes = new NodeType[] { mockDsNodeType };
         when(mockDsNodeType.getName()).thenReturn(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
@@ -154,7 +146,7 @@ public class LocalFileBinaryTest {
         when(mockDescNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
 
         testObj.setProxyURL(contentFile.toURI().toString());
-        verify(mockContent).setProperty(PROXY_FOR, contentFile.toURI().toString());
+        verify(mockDescNode).setProperty(PROXY_FOR, contentFile.toURI().toString());
 
         assertEquals(contentFile.toURI().toString(), testObj.getProxyURL());
     }
@@ -162,17 +154,17 @@ public class LocalFileBinaryTest {
     @Test
     public void testSetContent() throws Exception {
         testObj.setProxyURL(contentFile.toURI().toString());
-        verify(mockContent).setProperty(PROXY_FOR, contentFile.toURI().toString());
+        verify(mockDescNode).setProperty(PROXY_FOR, contentFile.toURI().toString());
 
-        testObj.setContent(mockStream, mimeType, null, null, null);
-        verify(mockContent).setProperty(HAS_MIME_TYPE, mimeType);
+        testObj.setContent(null, mimeType, null, null, null);
+        verify(mockDescNode).setProperty(HAS_MIME_TYPE, mimeType);
     }
 
     @Test
     public void testSetContentWithFilename() throws Exception {
         testObj.setContent(mockStream, mimeType, null, contentFile.getName(), null);
 
-        verify(mockContent).setProperty(FILENAME, contentFile.getName());
+        verify(mockDescNode).setProperty(FILENAME, contentFile.getName());
     }
 
     @Test
@@ -222,13 +214,30 @@ public class LocalFileBinaryTest {
         assertEquals("text/plain", mimeType);
     }
 
+    private void mockProxyProperty() {
+        try {
+            when(proxyURIProperty.toString()).thenReturn(contentFile.toURI().toString());
+            when(proxyURIProperty.getString()).thenReturn(contentFile.toURI().toString());
+            when(proxyURIProperty.getValue()).thenReturn(mockURIValue);
+            when(proxyURIProperty.getName()).thenReturn(PROXY_FOR.toString());
+
+            when(mockURIValue.toString()).thenReturn(contentFile.toURI().toString());
+            when(mockURIValue.getString()).thenReturn(contentFile.toURI().toString());
+
+            when(mockDescNode.hasProperty(PROXY_FOR)).thenReturn(true);
+            when(mockDescNode.getProperty(PROXY_FOR)).thenReturn(proxyURIProperty);
+        } catch (final RepositoryException e) {
+            // This catch left intentionally blank.
+        }
+    }
+
     private void mockChecksumProperty(final String checksum) throws Exception {
-        when(mockContent.hasProperty(CONTENT_DIGEST)).thenReturn(true);
+        when(mockDescNode.hasProperty(CONTENT_DIGEST)).thenReturn(true);
         final Property checksumProperty = mock(Property.class);
         final Value checksumValue = mock(Value.class);
         when(checksumValue.getString()).thenReturn(checksum);
         when(checksumProperty.getString()).thenReturn(checksum);
         when(checksumProperty.getValue()).thenReturn(checksumValue);
-        when(mockContent.getProperty(CONTENT_DIGEST)).thenReturn(checksumProperty);
+        when(mockDescNode.getProperty(CONTENT_DIGEST)).thenReturn(checksumProperty);
     }
 }

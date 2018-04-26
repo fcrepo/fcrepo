@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.modeshape;
 
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -29,19 +30,11 @@ import java.util.stream.Collectors;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
-import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
-import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils;
-import org.fcrepo.kernel.modeshape.utils.impl.CacheEntryFactory;
 import org.slf4j.Logger;
-
-import com.codahale.metrics.Timer;
 
 /**
  * External binary from a local file
@@ -75,6 +68,7 @@ public class LocalFileBinary extends UrlBinary {
         try {
             /* that this is a proxy or redirect has already been set before we get here
              */
+            final Node descNode = getDescriptionNode();
             final Node contentNode = getNode();
 
             LOGGER.debug("HERE HERE HERE HERE HERE");
@@ -83,13 +77,13 @@ public class LocalFileBinary extends UrlBinary {
             }
 
             if (originalFileName != null) {
-                contentNode.setProperty(FILENAME, originalFileName);
+                descNode.setProperty(FILENAME, originalFileName);
             }
 
             if (contentType == null) {
-                contentNode.setProperty(HAS_MIME_TYPE, DEFAULT_MIME_TYPE);
+                descNode.setProperty(HAS_MIME_TYPE, DEFAULT_MIME_TYPE);
             } else {
-                contentNode.setProperty(HAS_MIME_TYPE, contentType);
+                descNode.setProperty(HAS_MIME_TYPE, contentType);
             }
 
             // Store the required jcr:data property
@@ -101,23 +95,36 @@ public class LocalFileBinary extends UrlBinary {
             final Collection<URI> nonNullChecksums = (null == checksums) ? new HashSet<>() : checksums;
             verifyChecksums(nonNullChecksums);
 
-            // Store checksums on node
-            final String[] checksumArray = new String[nonNullChecksums.size()];
-            nonNullChecksums.stream().map(Object::toString).collect(Collectors.toSet()).toArray(checksumArray);
-            contentNode.setProperty(CONTENT_DIGEST, checksumArray);
-
-            // Store the size of the file
-            final long size = getContentSize();
-            contentSizeHistogram.update(size);
-            contentNode.setProperty(CONTENT_SIZE, size);
-
-            FedoraTypesUtils.touch(getNode());
-            FedoraTypesUtils.touch(((FedoraResourceImpl) getDescription()).getNode());
+            decorateContentNode(contentNode, descNode, nonNullChecksums, getContentSize());
+            FedoraTypesUtils.touch(contentNode);
+            FedoraTypesUtils.touch(descNode);
 
             LOGGER.debug("Set local file content at path: {}", getResourceLocation());
 
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    private static void decorateContentNode(final Node dsNode, final Node descNode, final Collection<URI> checksums,
+        final long size)
+        throws RepositoryException {
+        if (dsNode == null) {
+            LOGGER.warn("{} node appears to be null!", JCR_CONTENT);
+            return;
+        }
+
+        if (dsNode.hasProperty(JCR_DATA)) {
+            // Store checksums on node
+            final String[] checksumArray = new String[checksums.size()];
+            checksums.stream().map(Object::toString).collect(Collectors.toSet()).toArray(checksumArray);
+            descNode.setProperty(CONTENT_DIGEST, checksumArray);
+
+            // Store the size of the file
+            contentSizeHistogram.update(size);
+            descNode.setProperty(CONTENT_SIZE, size);
+
+            LOGGER.debug("Decorated local file data property at path: {}", dsNode.getPath());
         }
     }
 
@@ -137,6 +144,7 @@ public class LocalFileBinary extends UrlBinary {
             return sizeValue;
         }
         final File file = new File(getResourceUri().getPath());
+        setContentSize(file.length());
         return file.length();
     }
 
@@ -146,33 +154,34 @@ public class LocalFileBinary extends UrlBinary {
      * org.fcrepo.kernel.modeshape.FedoraBinaryImpl#checkFixity(org.fcrepo.kernel.api.identifiers.IdentifierConverter,
      * java.util.Collection)
      */
-    @Override
-    public Collection<URI> checkFixity(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-            final Collection<String> algorithms) throws UnsupportedAlgorithmException,
-            UnsupportedAccessTypeException {
+    // @Override
+    // public Collection<URI> checkFixity(final IdentifierConverter<Resource, FedoraResource> idTranslator,
+    // final Collection<String> algorithms) throws UnsupportedAlgorithmException,
+    // UnsupportedAccessTypeException {
 
-        fixityCheckCounter.inc();
+    // fixityCheckCounter.inc();
 
-        return checkFixity(algorithms);
-    }
+    // return checkFixity(algorithms);
+    // }
 
-    private Collection<URI> checkFixity(final Collection<String> algorithms) throws UnsupportedAlgorithmException {
-        try (final Timer.Context context = timer.time()) {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Checking external resource: {}", getResourceLocation());
-            }
-            if (isProxy()) {
-                LOGGER.debug("CHECK Fixity for PROXY: {}", getProperty(PROXY_FOR).getString());
-                return CacheEntryFactory.forProperty(getProperty(PROXY_FOR)).checkFixity(algorithms);
-            } else if (isRedirect()) {
-                LOGGER.debug("CHECK Fixity for REDIRECT: {}", getProperty(REDIRECTS_TO).getString());
-                return CacheEntryFactory.forProperty(getProperty(REDIRECTS_TO)).checkFixity(algorithms);
-            }
-            LOGGER.debug("NEITHER PROXY OR REDIRECT");
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
+    // private Collection<URI> checkFixity(final Collection<String> algorithms) throws UnsupportedAlgorithmException {
+    // try (final Timer.Context context = timer.time()) {
+    // if (LOGGER.isDebugEnabled()) {
+    // LOGGER.debug("Checking external resource: {}", getResourceLocation());
+    // }
+    // final Collection<URI> list;
+    // if (isProxy()) {
+    // LOGGER.debug("CHECK Fixity for PROXY: {}", getDescriptionProperty(PROXY_FOR).getString());
+    // return CacheEntryFactory.forProperty(getDescriptionProperty(PROXY_FOR)).checkFixity(algorithms);
+    // } else if (isRedirect()) {
+    // LOGGER.debug("CHECK Fixity for REDIRECT: {}", getDescriptionProperty(REDIRECTS_TO).getString());
+    // return CacheEntryFactory.forProperty(getDescriptionProperty(REDIRECTS_TO)).checkFixity(algorithms);
+    // }
+    // LOGGER.debug("NEITHER PROXY OR REDIRECT");
+    // } catch (final RepositoryException e) {
+    // throw new RepositoryRuntimeException(e);
+    // }
 
-        return null;
-    }
+    // return null;
+    // }
 }

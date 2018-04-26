@@ -54,9 +54,9 @@ public class ExternalResourceCacheEntry extends BinaryCacheEntry {
         try {
             LOGGER.info("getInputStream getExternalIdentifier: {} {} ", property().getName(), getExternalIdentifier());
             return URI.create(getExternalIdentifier()).toURL().openStream();
-        } catch (MalformedURLException e) {
+        } catch (final MalformedURLException e) {
             throw new RepositoryRuntimeException("Malformed URL: " + getExternalIdentifier(), e);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RepositoryRuntimeException(e);
         }
     }

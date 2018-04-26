@@ -19,12 +19,11 @@ package org.fcrepo.integration.kernel.modeshape.services;
 
 import static org.fcrepo.kernel.api.FedoraTypes.HAS_MIME_TYPE;
 import static org.fcrepo.kernel.api.FedoraTypes.FILENAME;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_DESCRIPTION;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
-
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -139,7 +138,7 @@ public class BinaryServiceImplIT extends AbstractIT {
     public void testGetDatastreamContentLocalFile() throws Exception {
         FedoraSession session = repository.login();
         Session jcrSession = getJcrSession(session);
-        final Path contentFile = Files.createTempFile("content", ".txt");
+        final Path contentFile = Files.createTempFile("file", ".txt");
         Files.write(contentFile, "asdf".getBytes());
 
         final String contentType = "application/octet-stream";
@@ -162,7 +161,7 @@ public class BinaryServiceImplIT extends AbstractIT {
 
         assertTrue(jcrSession.getRootNode().hasNode("testLocalFileNode"));
         assertEquals(contentType, jcrSession.getNode("/testLocalFileNode").getNode(
-                JCR_CONTENT).getProperty(HAS_MIME_TYPE).getString());
+            FEDORA_DESCRIPTION).getProperty(HAS_MIME_TYPE).getString());
 
         final FedoraBinary binary =
                 binaryService.findOrCreate(session, "/testLocalFileNode");

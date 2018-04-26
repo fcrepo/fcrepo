@@ -220,7 +220,7 @@ public class FedoraLdp extends ContentExposingResource {
 
             if (((FedoraBinary)resource()).isRedirect()) {
                 try {
-                    builder = temporaryRedirect(new URI(((FedoraBinary) resource()).getRedirectURL()));
+                    builder = temporaryRedirect(((FedoraBinary) resource()).getRedirectURI());
                 } catch (final Exception e) {
                     throw new ExternalMessageBodyException("Redirect URL Failed for " + externalPath  + " : " +
                             ((FedoraBinary)resource).getRedirectURL());
@@ -727,13 +727,15 @@ public class FedoraLdp extends ContentExposingResource {
 
                         InputStream stream = requestBodyStream;
 
-                        if (extContent.isCopy()) {
-                            LOGGER.debug("POST copying data {} ", externalPath);
-                            stream = extContent.fetchExternalContent();
-                        } else if (extContent.isProxy()) {
-                            ((FedoraBinary)resource).setProxyURL(extContent.getURL());
-                        } else if (extContent.isRedirect()) {
-                            ((FedoraBinary)resource).setRedirectURL(extContent.getURL());
+                        if (extContent != null) {
+                            if (extContent.isCopy()) {
+                                LOGGER.debug("POST copying data {} ", externalPath);
+                                stream = extContent.fetchExternalContent();
+                            } else if (extContent.isProxy()) {
+                                ((FedoraBinary) resource).setProxyURL(extContent.getURL());
+                            } else if (extContent.isRedirect()) {
+                                ((FedoraBinary) resource).setRedirectURL(extContent.getURL());
+                            }
                         }
 
                         replaceResourceBinaryWithStream((FedoraBinary) resource,

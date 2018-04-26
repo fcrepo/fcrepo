@@ -31,7 +31,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.modeshape.jcr.api.ValueFactory;
 
-import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
@@ -55,7 +54,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -110,18 +108,14 @@ public class FedoraBinaryImplTest implements FedoraTypes {
             when(mockDescNode.getMixinNodeTypes()).thenReturn(nodeTypes);
             when(mockDescNode.getParent()).thenReturn(mockContent);
             when(mockContent.getSession()).thenReturn(mockSession);
-            when(mockContent.isNodeType(FEDORA_BINARY)).thenReturn(true);
             when(mockContent.getParent()).thenReturn(mockParentNode);
             when(mockContent.getNode(FEDORA_DESCRIPTION)).thenReturn(mockDescNode);
+            when(mockContent.isNodeType(FEDORA_BINARY)).thenReturn(true);
             final NodeType mockNodeType = mock(NodeType.class);
             when(mockNodeType.getName()).thenReturn("nt:versionedFile");
             when(mockContent.getPrimaryNodeType()).thenReturn(mockNodeType);
             testObj = new FedoraBinaryImpl(mockContent);
 
-            when(mockContent.setProperty(anyString(), any(Binary.class))).thenReturn(mockProperty);
-            when(mockSession.getValueFactory()).thenReturn(mockVF);
-            when(mockVF.createBinary(any(InputStream.class), any(String.class)))
-                    .thenReturn(mockBinary);
         } catch (final RepositoryException e) {
             e.printStackTrace();
             fail(e.getMessage());
@@ -211,7 +205,7 @@ public class FedoraBinaryImplTest implements FedoraTypes {
     @Test
     public void getContentSize() throws RepositoryException {
         final int expectedContentLength = 2;
-        getContentNodeMock(mockContent, mockDescNode, "aa");
+        getContentNodeMock(mockContent, mockDescNode, expectedContentLength);
         when(mockDescNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         final long actual = testObj.getContentSize();
         verify(mockDescNode).getProperty(CONTENT_SIZE);
