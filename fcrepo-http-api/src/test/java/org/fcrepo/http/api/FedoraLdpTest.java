@@ -425,6 +425,7 @@ public class FedoraLdpTest {
     private void assertShouldHaveAcceptExternalContentHandlingHeader() {
         assertTrue("Should have Accept-External-Content-Handling header",
                 mockResponse.containsHeader(FedoraLdp.ACCEPT_EXTERNAL_CONTENT));
+
         assertEquals("Should support copy, redirect, and proxy", "copy,redirect,proxy",
                 mockResponse.getHeader(FedoraLdp.ACCEPT_EXTERNAL_CONTENT));
     }

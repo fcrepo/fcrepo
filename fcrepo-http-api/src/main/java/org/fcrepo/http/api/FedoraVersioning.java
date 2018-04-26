@@ -231,7 +231,11 @@ public class FedoraVersioning extends ContentExposingResource {
     /**
      * Get the list of versions for the object
      *
+     * @param rangeValue starting and ending byte offsets
+     * @param acceptValue the rdf media-type
      * @return List of versions for the object as RDF
+     * @throws IOException in case of error extracting content
+     * @throws UnsupportedAccessTypeException if mimeType not a valid message/external-body content type
      */
     @GET
     @HtmlTemplate(value = "fcr:versions")
