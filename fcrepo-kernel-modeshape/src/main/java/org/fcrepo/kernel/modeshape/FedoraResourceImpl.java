@@ -119,6 +119,7 @@ import org.fcrepo.kernel.api.exception.InteractionModelViolationException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.FedoraTimeMap;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.utils.GraphDifferencer;
@@ -409,9 +410,31 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     }
 
     @Override
-    public FedoraResource getTimeMap() {
+    public FedoraResource getOriginalResource() {
+        if (!isMemento()) {
+            return this;
+        }
+
         try {
-            final Node timeMapNode = node.getNode(LDPCV_TIME_MAP);
+            return nodeConverter.convert(node.getParent().getParent());
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    @Override
+    public FedoraResource getTimeMap() {
+        if (this instanceof FedoraTimeMap) {
+            return this;
+        }
+
+        try {
+            final Node timeMapNode;
+            if (isMemento()) {
+                timeMapNode = node.getParent();
+            } else {
+                timeMapNode = node.getNode(LDPCV_TIME_MAP);
+            }
             return Optional.of(timeMapNode).map(nodeConverter::convert).orElse(null);
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);

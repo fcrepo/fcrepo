@@ -48,7 +48,6 @@ import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;
@@ -492,11 +491,15 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     protected void addResourceLinkHeaders(final FedoraResource resource, final boolean includeAnchor) {
         if (resource instanceof NonRdfSourceDescription) {
-            final URI uri = getUri(resource.getDescribedResource());
+            // Link to the original described resource
+            final FedoraResource described = resource.getOriginalResource().getDescribedResource();
+            final URI uri = getUri(described);
             final Link link = Link.fromUri(uri).rel("describes").build();
             servletResponse.addHeader(LINK, link.toString());
         } else if (resource instanceof FedoraBinary) {
-            final URI uri = getUri(resource.getDescription());
+            // Link to the original description
+            final FedoraResource description = resource.getOriginalResource().getDescribedResource();
+            final URI uri = getUri(description);
             final Link.Builder builder = Link.fromUri(uri).rel("describedby");
 
             if (includeAnchor) {
@@ -519,19 +522,19 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 buildLink(constraintURI, CONSTRAINED_BY.getURI()));
         }
 
-        if (resource.isVersioned()) {
-            servletResponse.addHeader(LINK, buildLink(RdfLexicon.VERSIONED_RESOURCE.getURI(), "type"));
-            servletResponse.addHeader(LINK, buildLink(RdfLexicon.VERSIONING_TIMEGATE_TYPE, "type"));
-            servletResponse.addHeader(LINK, buildLink(getUri(resource.getDescribedResource()), "original"));
-            servletResponse.addHeader(LINK, buildLink(getUri(resource.getDescribedResource()), "timegate"));
-            final String timemapUri = getUri(resource.getDescribedResource()) + "/" + FCR_VERSIONS;
-            servletResponse.addHeader(LINK, buildLink(timemapUri, "timemap"));
-        } else if (resource.isMemento()) {
-            final URI originalUri = getUri(resource.getDescribedResource().getContainer().getContainer());
-            final URI timemapUri = getUri(resource.getDescribedResource().getContainer());
+        final boolean isVersioned = resource.isVersioned();
+        // Add versioning headers for versioned originals and mementos
+        if (isVersioned || resource.isMemento()) {
+            final URI originalUri = getUri(resource.getOriginalResource());
+            final URI timemapUri = getUri(resource.getTimeMap());
             servletResponse.addHeader(LINK, buildLink(originalUri, "timegate"));
             servletResponse.addHeader(LINK, buildLink(originalUri, "original"));
             servletResponse.addHeader(LINK, buildLink(timemapUri, "timemap"));
+
+            if (isVersioned) {
+                servletResponse.addHeader(LINK, buildLink(RdfLexicon.VERSIONED_RESOURCE.getURI(), "type"));
+                servletResponse.addHeader(LINK, buildLink(RdfLexicon.VERSIONING_TIMEGATE_TYPE, "type"));
+            }
         }
     }
 
@@ -928,7 +931,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     /**
      * Create a checksum URI object.
      **/
-    private static URI checksumURI( final String checksum ) {
+    protected static URI checksumURI( final String checksum ) {
         if (!isBlank(checksum)) {
             return URI.create(checksum);
         }

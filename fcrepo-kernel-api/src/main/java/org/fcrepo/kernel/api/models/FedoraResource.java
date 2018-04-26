@@ -69,7 +69,16 @@ public interface FedoraResource {
     FedoraResource getContainer();
 
     /**
+     * Get the Original Resource for which this resource is a memento. If this resource is not a memento,
+     * then it is the original.
+     *
+     * @return the original resource for this
+     */
+    FedoraResource getOriginalResource();
+
+    /**
      * Get the TimeMap/LDPCv of this resource
+     *
      * @return the container for TimeMap/LDPCv of this resource
      */
     FedoraResource getTimeMap();
