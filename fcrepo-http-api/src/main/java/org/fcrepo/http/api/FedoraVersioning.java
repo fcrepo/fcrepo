@@ -306,7 +306,6 @@ public class FedoraVersioning extends ContentExposingResource {
     }
 
     @Override
-    @Override
     protected String externalPath() {
         return externalPath;
     }

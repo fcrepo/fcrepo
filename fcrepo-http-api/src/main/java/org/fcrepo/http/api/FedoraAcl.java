@@ -100,7 +100,6 @@ public class FedoraAcl extends ContentExposingResource {
     }
 
     @Override
-    @Override
     protected String externalPath() {
         return externalPath;
     }
