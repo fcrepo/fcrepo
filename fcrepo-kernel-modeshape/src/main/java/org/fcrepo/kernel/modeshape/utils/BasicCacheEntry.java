@@ -69,6 +69,8 @@ public abstract class BasicCacheEntry implements CacheEntry {
             // actually calculate the digest by consuming the stream
             while (fixityInputStream.read(devNull) != -1) { }
 
+            LOGGER.debug("FIXITY ALG and PATH: {} : {}", algorithm, this.getExternalIdentifier());
+
             final URI calculatedChecksum =
                     ContentDigest.asURI(algorithm, fixityInputStream.getMessageDigest().digest());
 

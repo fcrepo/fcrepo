@@ -780,16 +780,9 @@ public class FedoraLdpTest {
         assertEquals(new URI("http:some:uri"), actual.getLocation());
     }
 
-    @Test(expected = ClientErrorException.class)
-    public void testPostWithExternalMessageMissingURLBinary() throws Exception {
-        final String badExternal = Link.fromUri("test").rel(EXTERNAL_CONTENT.toString()).param("handling", "redirect")
-            .type("text/plain").build().toString().replace("<test>", "");
-        final Response actual = testObj.createObject(null, null, null, null, Arrays.asList(badExternal), null);
-    }
-
     @Test(expected = ExternalMessageBodyException.class)
     public void testPostWithExternalMessageBadHandling() throws Exception {
-        final String badExternal = Link.fromUri("test").rel(EXTERNAL_CONTENT.toString()).param("handling", "boogie")
+        final String badExternal = Link.fromUri("http://test.com").rel(EXTERNAL_CONTENT.toString()).param("handling", "boogie")
             .type("text/plain").build().toString();
         final Response actual = testObj.createObject(null, null, null, null, Arrays.asList(badExternal), null);
     }

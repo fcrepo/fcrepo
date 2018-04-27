@@ -25,8 +25,9 @@ import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
+import org.fcrepo.kernel.api.TripleCategory;
 import org.slf4j.Logger;
 
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFedoraBinary;
@@ -34,11 +35,11 @@ import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFedoraBinary;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
-import javax.jcr.Value;
 
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
+import java.util.Set;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -96,6 +97,7 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
     private FedoraBinary getBinaryImplementation() {
         final String url = getURLInfo();
         LOGGER.debug("getBinaryImplementation: url is '{}'",url);
+        LOGGER.debug("getBinaryImplementation: url is proxy?  {}, redirect? {}", isProxy(), isRedirect());
         if (url != null) {
             if (url.toLowerCase().startsWith(LOCAL_FILE_ACCESS_TYPE)) {
                 LOGGER.debug("Instantiating local file FedoraBinary");
@@ -178,7 +180,7 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
      */
     @Override
     public Boolean isProxy() {
-        return hasDescriptionProperty(PROXY_FOR);
+        return getBinary().isProxy();
     }
 
     /*
@@ -187,7 +189,7 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
      */
     @Override
     public Boolean isRedirect() {
-        return hasDescriptionProperty(REDIRECTS_TO);
+        return getBinary().isRedirect();
     }
 
     /*
@@ -196,14 +198,7 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
      */
     @Override
     public String getProxyURL() {
-        try {
-            if (hasDescriptionProperty(PROXY_FOR)) {
-                return getDescriptionProperty(PROXY_FOR).getString();
-            }
-            return null;
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
+        return getBinary().getProxyURL();
     }
 
     /*
@@ -212,12 +207,7 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
      */
     @Override
     public void setProxyURL(final String url) throws RepositoryRuntimeException {
-        try {
-            getDescriptionNode().setProperty(PROXY_FOR, url);
-            getDescriptionNode().setProperty(REDIRECTS_TO, (Value) null);
-        } catch (final Exception e) {
-            throw new RepositoryRuntimeException(e);
-        }
+        getBinary().setProxyURL(url);
     }
 
     /*
@@ -226,14 +216,7 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
      */
     @Override
     public String getRedirectURL() {
-        try {
-            if (hasDescriptionProperty(REDIRECTS_TO)) {
-                return getDescriptionProperty(REDIRECTS_TO).getString();
-            }
-            return null;
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
+       return getBinary().getRedirectURL();
     }
 
     /*
@@ -242,12 +225,7 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
      */
     @Override
     public void setRedirectURL(final String url) throws RepositoryRuntimeException {
-        try {
-            getDescriptionNode().setProperty(REDIRECTS_TO, url);
-            getDescriptionNode().setProperty(PROXY_FOR, (Value) null);
-        } catch (final Exception e) {
-            throw new RepositoryRuntimeException(e);
-        }
+       getBinary().setRedirectURL(url);
     }
 
     /*
@@ -323,6 +301,12 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
+    }
+
+    @Override
+    public RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> idTranslator,
+                                final Set<? extends TripleCategory> contexts) {
+        return getDescription().getTriples(idTranslator, contexts);
     }
 
     @Override

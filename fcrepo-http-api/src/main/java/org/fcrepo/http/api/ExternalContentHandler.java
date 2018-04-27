@@ -39,7 +39,8 @@ public class ExternalContentHandler {
     public final static String CONTENT_TYPE = "type";
 
     private final String originalLinkHeader;
-    private final String url;
+    private final Link link;
+    private String url;
     private final String handling;
     private final String type;
     private final MediaType contentType;
@@ -52,16 +53,14 @@ public class ExternalContentHandler {
     */
 
     public ExternalContentHandler(final String linkHeader) {
-        final Link externalLink = parseLinkHeader(linkHeader);
+        // if it parses, then we're mostly good to go.
+        link = parseLinkHeader(linkHeader);
 
-        // if it gets past that, good, parse it
-        verifyRequestForExternalBody(externalLink);
         originalLinkHeader = linkHeader;
-        final Map<String, String> map = externalLink.getParams();
-        url = map.get("url");
-        handling = map.get("HANDLING");
+        final Map<String, String> map = link.getParams();
+        handling = map.get(HANDLING);
         type = map.get(CONTENT_TYPE);
-        contentType = type != null ? MediaType.valueOf(type) : findContentType(url);
+        contentType = type != null ? MediaType.valueOf(type) : findContentType(getURL());
     }
 
     private MediaType findContentType(final String url) {
@@ -101,20 +100,23 @@ public class ExternalContentHandler {
         return handling;
     }
 
-    public String getURL() throws MalformedURLException {
-        return url;
+    public String getURL() {
+        return link != null ? link.getUri().toString() : null;
     }
 
-    public Boolean isCopy() {
-        return handling == COPY ? true : false;
+    public boolean isCopy() {
+        LOGGER.info("isCopy() handling is {}!", handling);
+        return handling != null ? handling.equals(COPY) : false;
     }
 
-    public Boolean isRedirect() {
-        return handling == REDIRECT ? true : false;
+    public boolean isRedirect() {
+        LOGGER.info("isRedirect() handling is {}!", handling);
+        return handling != null ? handling.equals(REDIRECT) : false;
     }
 
-    public Boolean isProxy() {
-        return handling == PROXY ? true : false;
+    public boolean isProxy() {
+        LOGGER.info("isProxy() handling is {}!", handling);
+        return handling != null ? handling.equals(PROXY) : false;
     }
 
     /**
@@ -130,6 +132,7 @@ public class ExternalContentHandler {
         }
 
         final List<String> externalContentLinks = links.stream()
+                .peek(x -> LOGGER.info("LINK: {}", x))
                 .filter(x -> x.contains(EXTERNAL_CONTENT.toString()))
                 .collect(Collectors.toList());
 
@@ -145,49 +148,43 @@ public class ExternalContentHandler {
 
     public InputStream fetchExternalContent() throws IOException {
 
-        if (handling == COPY) {
-            if (url.startsWith("file://")) {
+        final String url = getURL();
+
+        if (handling.equals(COPY)) {
+            LOGGER.info("COPY fetchingExternalContent from: {}", url);
+            if (url.startsWith("file:")) {
+                LOGGER.info("COPY fetchingExternalContent file");
                 return new FileInputStream(url);
             } else if (url.startsWith("http")) {
+                LOGGER.info("COPY fetchingExternalContent http");
                 return new URL(url).openStream();
             }
         }
         return null;
     }
 
-    /**
-     * Examines a link header for ExternalContent to verify that it's legit
-     * @param parsedHeader
-     * @throws ExternalMessageBodyException
-     */
-    private void verifyRequestForExternalBody(final Link externalLink) throws ExternalMessageBodyException {
-
-        try {
-            final URL url = externalLink.getUri().toURL();
-        } catch (final MalformedURLException e) {
-            throw new ExternalMessageBodyException("External content link header url is malformed");
-        }
-
-        // if no 'handling' key, error with constrainedBy
-        // if 'handling' key, but it's not {copy, proxy, redirect} throw error with constrainedBy
-        final String handling = externalLink.getParams().get(HANDLING);
-        if (handling == null || !handling.matches("(?i)" + PROXY + "|" + COPY + "|" + REDIRECT)) {
-            // error
-            throw new ExternalMessageBodyException(
-                    "Link header formatted incorrectly: 'handling' parameter incorrect");
-        }
-
-        // if we get this far, things are good
-    }
 
     private Link parseLinkHeader(final String link) throws ExternalMessageBodyException {
         final Link realLink = Link.valueOf(link);
 
-        final String url = realLink.getUri().toString().toLowerCase();
-        if (url.isEmpty() || !url.startsWith("http") || !url.startsWith("file")) {
-            throw new ExternalMessageBodyException("Link header formatted incorrectly: URI incorrectly formatted");
+        try {
+            final String url = realLink.getUri().toString().toLowerCase();
+            // see if it's a legit url, if it's not an error will be thrown
+            realLink.getUri().toURL();
+            LOGGER.info("URL URL is {}", url);
+            if (url.isEmpty() || (!url.startsWith("http") && !url.startsWith("file"))) {
+                throw new ExternalMessageBodyException("Link header formatted incorrectly: URI incorrectly formatted");
+            }
+
+            final String handling = realLink.getParams().get(HANDLING);
+            if (handling == null || !handling.matches("(?i)" + PROXY + "|" + COPY + "|" + REDIRECT)) {
+                // error
+                throw new ExternalMessageBodyException(
+                        "Link header formatted incorrectly: 'handling' parameter incorrect or missing");
+            }
+        } catch (final MalformedURLException e) {
+            throw new ExternalMessageBodyException("External content link header url is malformed");
         }
         return realLink;
     }
-
 }

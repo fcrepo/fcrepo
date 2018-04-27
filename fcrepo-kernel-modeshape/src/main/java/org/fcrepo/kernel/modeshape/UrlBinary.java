@@ -78,6 +78,8 @@ public class UrlBinary extends AbstractFedoraBinary {
      */
     @Override
     public InputStream getContent() {
+        // todo - this needs to be more complete so the proxy information will
+        // make it up to the higher levels. Ie, so one can pass back the response information
         try {
             return getResourceUri().toURL().openStream();
         } catch (final IOException e) {
@@ -192,7 +194,7 @@ public class UrlBinary extends AbstractFedoraBinary {
                 if (!result.matches(check)) {
                             LOGGER.debug("Failed checksum test");
                     checksumErrors.put(check, result.getComputedChecksum());
-                        }
+                }
             }
         }
 
@@ -238,10 +240,14 @@ public class UrlBinary extends AbstractFedoraBinary {
 
             Collection<FixityResult> fixityResults = null;
             if (isProxy()) {
+                LOGGER.debug("URL Binary -- PROXY and Fixity");
                 fixityResults = CacheEntryFactory.forProperty(getDescriptionProperty(PROXY_FOR)).checkFixity(algorithm);
             } else if (isRedirect()) {
+                LOGGER.debug("URL Binary -- REDIRECT and Fixity");
                 fixityResults =
                     CacheEntryFactory.forProperty(getDescriptionProperty(REDIRECTS_TO)).checkFixity(algorithm);
+            } else {
+                LOGGER.warn("URL Binary -- not proxy or redirect, so what is it?");
             }
             return new FixityRdfContext(this, idTranslator, fixityResults, digestUri, contentSize);
         } catch (final RepositoryException e) {
