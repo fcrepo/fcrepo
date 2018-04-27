@@ -12,6 +12,13 @@
 		<param-value>WEB-INF/classes/spring/repository.xml</param-value>
 	</context-param>
 
+  <!-- To allow request object to be wired to WebACAuthorizingRealm -->
+  <listener>
+    <listener-class>
+      org.springframework.web.context.request.RequestContextListener
+    </listener-class>
+  </listener>
+
   <!-- The filter-name matches name of a 'shiroFilter' bean inside applicationContext.xml -->
   <filter>
       <filter-name>shiroFilter</filter-name>
