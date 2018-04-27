@@ -146,6 +146,16 @@ public class WebACFilterTest {
         when(mockSubject.isPermitted(writePermission)).thenReturn(true);
     }
 
+    private void setupAuthUserReadAppendWrite() {
+        // authenticated user with read and write permissions
+        when(mockSubject.isAuthenticated()).thenReturn(true);
+        when(mockSubject.hasRole(FEDORA_ADMIN_ROLE)).thenReturn(false);
+        when(mockSubject.hasRole(FEDORA_USER_ROLE)).thenReturn(true);
+        when(mockSubject.isPermitted(readPermission)).thenReturn(true);
+        when(mockSubject.isPermitted(appendPermission)).thenReturn(true);
+        when(mockSubject.isPermitted(writePermission)).thenReturn(true);
+    }
+
     @Test
     public void testAdminUserGet() throws ServletException, IOException {
         setupAdminUser();
@@ -396,6 +406,17 @@ public class WebACFilterTest {
         webacFilter.doFilter(request, response, filterChain);
         assertEquals(SC_OK, response.getStatus());
     }
+
+    @Test
+    public void testAuthUserReadAppendWriteDelete() throws ServletException, IOException {
+        setupAuthUserReadAppendWrite();
+        // DELETE => 200
+        request.setRequestURI(testPath);
+        request.setMethod("DELETE");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_OK, response.getStatus());
+    }
+
     @After
     public void clearSubject() {
         // unbind the subject to the thread

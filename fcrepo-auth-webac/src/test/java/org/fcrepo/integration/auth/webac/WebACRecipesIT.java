@@ -29,6 +29,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.Optional;
 
 import javax.ws.rs.core.Link;
@@ -38,6 +39,7 @@ import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
@@ -413,6 +415,92 @@ public class WebACRecipesIT extends AbstractResourceIT {
         final HttpGet requestGet3 = getObjMethod(idPublic);
         setAuth(requestGet3, "person3");
         assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestGet3));
+    }
+
+    @Test
+    public void scenario18Test1() throws IOException, UnsupportedEncodingException {
+        final String testObj = ingestObj("/rest/append_only_resource");
+        final String acl = ingestAcl("fedoraAdmin", "/acls/18/acl.ttl", "/acls/18/append_only.ttl");
+
+        final String id = "/rest/append_only_resource/" + getRandomUniqueId();
+        ingestObj(id);
+
+        logger.debug("user18 can't read (no ACL): {}", id);
+        final HttpGet requestGet = getObjMethod(id);
+        setAuth(requestGet, "user18");
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestGet));
+
+        logger.debug("user18 can't delete (no ACL): {}", id);
+        final HttpDelete requestDelete = deleteObjMethod(id);
+        setAuth(requestDelete, "user18");
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestDelete));
+
+        // Add ACL to root
+        linkToAcl("/rest/append_only_resource", acl);
+
+        logger.debug("user18 still can't read (ACL append): {}", id);
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestGet));
+
+        logger.debug("user18 still can't delete (ACL append): {}", id);
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestDelete));
+    }
+
+    @Test
+    public void scenario18Test2() throws IOException, UnsupportedEncodingException {
+        final String testObj = ingestObj("/rest/read_append_resource");
+        final String acl = ingestAcl("fedoraAdmin", "/acls/18/acl.ttl", "/acls/18/read_append.ttl");
+
+        final String id = "/rest/read_append_resource/" + getRandomUniqueId();
+        ingestObj(id);
+
+        logger.debug("user18 can't read (no ACL): {}", id);
+        final HttpGet requestGet = getObjMethod(id);
+        setAuth(requestGet, "user18");
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestGet));
+
+        logger.debug("user18 can't delete (no ACL): {}", id);
+        final HttpDelete requestDelete = deleteObjMethod(id);
+        setAuth(requestDelete, "user18");
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestDelete));
+
+        // Add ACL to root
+        linkToAcl("/rest/read_append_resource", acl);
+
+        logger.debug("user18 can read (ACL read, append): {}", id);
+        assertEquals(HttpStatus.SC_OK, getStatus(requestGet));
+
+        logger.debug("user18 still can't delete (ACL read, append): {}", id);
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestDelete));
+    }
+
+    @Test
+    public void scenario18Test3() throws IOException, UnsupportedEncodingException {
+        final String testObj = ingestObj("/rest/read_append_write_resource");
+        final String acl = ingestAcl("fedoraAdmin", "/acls/18/acl.ttl", "/acls/18/read_append_write.ttl");
+
+        final String id = "/rest/read_append_write_resource/" + getRandomUniqueId();
+        ingestObj(id);
+
+        System.clearProperty(ROOT_AUTHORIZATION_PROPERTY);
+
+        logger.debug("user18 can't read (no ACL): {}", id);
+        final HttpGet requestGet = getObjMethod(id);
+        setAuth(requestGet, "user18");
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestGet));
+
+        logger.debug("user18 can't delete (no ACL): {}", id);
+        final HttpDelete requestDelete = deleteObjMethod(id);
+        setAuth(requestDelete, "user18");
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestDelete));
+
+        // Add ACL to root
+        linkToAcl("/rest/read_append_write_resource", acl);
+
+        logger.debug("user18 can read (ACL read, append, write): {}", id);
+        assertEquals(HttpStatus.SC_OK, getStatus(requestGet));
+
+        logger.debug("user18 can delete (ACL read, append, write): {}", id);
+        assertEquals(HttpStatus.SC_NO_CONTENT, getStatus(requestDelete));
     }
 
     @Test
