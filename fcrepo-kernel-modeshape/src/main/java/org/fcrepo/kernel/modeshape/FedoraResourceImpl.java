@@ -27,7 +27,9 @@ import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.empty;
 import static java.util.stream.Stream.of;
 import static org.apache.commons.codec.digest.DigestUtils.sha1Hex;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static org.apache.jena.update.UpdateAction.execute;
 import static org.apache.jena.update.UpdateFactory.create;
@@ -126,6 +128,7 @@ import org.fcrepo.kernel.modeshape.rdf.impl.AclRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.ChildrenRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.ContentRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.HashRdfContext;
+import org.fcrepo.kernel.modeshape.rdf.impl.InternalIdentifierTranslator;
 import org.fcrepo.kernel.modeshape.rdf.impl.LdpContainerRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.LdpIsMemberOfRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.LdpRdfContext;
@@ -898,10 +901,18 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     public RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> idTranslator,
                                 final Set<? extends TripleCategory> contexts) {
 
-        return new DefaultRdfStream(idTranslator.reverse().convert(this).asNode(), contexts.stream()
+        Stream<Triple> triples = contexts.stream()
                 .filter(contextMap::containsKey)
                 .map(x -> contextMap.get(x).apply(this).apply(idTranslator).apply(contexts.contains(MINIMAL)))
-                .reduce(empty(), Stream::concat));
+                .reduce(empty(), Stream::concat);
+
+        if (isMemento()) {
+            final IdentifierConverter<Resource, FedoraResource> internalIdTranslator
+                    = new InternalIdentifierTranslator(getSession());
+            triples = triples.map(convertInternalResource(idTranslator, internalIdTranslator));
+        }
+
+        return new DefaultRdfStream(idTranslator.reverse().convert(this).asNode(), triples);
     }
 
     /* (non-Javadoc)
@@ -1081,6 +1092,30 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             return sha1Hex(getPath() + lastModifiedDate.toEpochMilli());
         }
         return "";
+    }
+
+
+    /**
+     * A method that takes a Triple and returns a Triple with internal translation of
+     * that triple with referencing resource for the given resource.
+     * @param translator a converter to get the external resource identifier from a path
+     * @param internalTranslator a converter to get the path from an internal identifier
+     * @return a function to convert triples
+     */
+    private static Function<Triple, Triple> convertInternalResource(
+            final IdentifierConverter<Resource, FedoraResource> translator,
+            final IdentifierConverter<Resource, FedoraResource> internalTranslator) {
+        return t -> {
+            if (t.getObject().isURI()) {
+                final Resource object = createDefaultModel().asRDFNode(t.getObject()).asResource();
+                if (internalTranslator.inDomain(object)) {
+                    final String path = internalTranslator.convert(object).getPath();
+                    final Resource newObject = createResource(translator.toDomain(path).getURI());
+                    return new Triple(t.getSubject(), t.getPredicate(), newObject.asNode());
+                }
+            }
+            return t;
+        };
     }
 
     private static Collection<IllegalArgumentException> validateUpdateRequest(final UpdateRequest request) {
