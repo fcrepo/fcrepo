@@ -68,11 +68,13 @@ public class WebACFilter implements Filter {
                 if (!isAuthorized(currentUser, httpRequest)) {
                     // if the user is not authorized, set response to forbidden
                     ((HttpServletResponse) response).sendError(SC_FORBIDDEN);
+                    return;
                 }
             } else {
                 log.debug("User has no recognized servlet container role");
                 // missing a container role, return forbidden
                 ((HttpServletResponse) response).sendError(SC_FORBIDDEN);
+                return;
             }
         } else {
             log.debug("User is NOT authenticated");
@@ -80,6 +82,7 @@ public class WebACFilter implements Filter {
             if (!isAuthorized(currentUser, httpRequest)) {
                 // if anonymous user is not authorized, set response to forbidden
                 ((HttpServletResponse) response).sendError(SC_FORBIDDEN);
+                return;
             }
         }
 
