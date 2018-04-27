@@ -76,6 +76,8 @@ import org.fcrepo.kernel.modeshape.utils.iterators.RelaxedRdfAdder;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
+import com.google.common.annotations.VisibleForTesting;
+
 /**
  * This service exposes management of node versioning for resources and binaries.
  *
@@ -91,6 +93,7 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
     private static final DateTimeFormatter MEMENTO_DATETIME_ID_FORMATTER =
             DateTimeFormatter.ofPattern("yyyyMMddHHmmss").withZone(ZoneId.of("GMT"));
 
+    @VisibleForTesting
     public static final Set<TripleCategory> VERSION_TRIPLES = new HashSet<>(asList(
             PROPERTIES, SERVER_MANAGED, LDP_MEMBERSHIP, LDP_CONTAINMENT));
 
@@ -183,9 +186,9 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
      * @param t the Triple to convert
      * @param idTranslator the Converter that convert the resource uri to a path
      * @param internalIdTranslator the Converter that convert a path to internal identifier
-     * @return
+     * @return Triple a triple with referencing resource uri converted to internal identifier
      */
-    protected Triple convertToInternalReference(final Triple t,
+    private Triple convertToInternalReference(final Triple t,
             final IdentifierConverter<Resource, FedoraResource> idTranslator,
             final IdentifierConverter<Resource, FedoraResource> internalIdTranslator) {
         if (t.getObject().isURI() && idTranslator.inDomain(createResource(t.getObject().getURI()))) {
@@ -193,7 +196,7 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
                     .getPath();
             final Resource obj = createResource(internalIdTranslator.toDomain(path).getURI());
 
-            LOGGER.debug("Converting referencing resource uri {} to internal indentifier {}.",
+            LOGGER.debug("Converting referencing resource uri {} to internal identifier {}.",
                     t.getObject().getURI(), obj.getURI());
 
             return new Triple(t.getSubject(), t.getPredicate(), obj.asNode());
