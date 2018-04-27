@@ -118,6 +118,7 @@ public class WebACRolesProviderTest {
         when(mockSession.getJcrSession()).thenReturn(mockJcrSession);
 
         when(mockResource.getNode()).thenReturn(mockNode);
+        when(mockResource.getOriginalResource()).thenReturn(mockResource);
         when(mockNode.getDepth()).thenReturn(0);
     }
 
@@ -129,11 +130,13 @@ public class WebACRolesProviderTest {
         when(mockResource.getContainer()).thenReturn(mockParentResource);
         when(mockResource.getTriples(anyObject(), eq(PROPERTIES)))
                 .thenReturn(new DefaultRdfStream(createURI("subject")));
+        when(mockResource.getOriginalResource()).thenReturn(mockResource);
         when(mockNode.getDepth()).thenReturn(1);
 
         when(mockParentResource.getNode()).thenReturn(mockParentNode);
         when(mockParentResource.getTriples(anyObject(), eq(PROPERTIES)))
                 .thenReturn(new DefaultRdfStream(createURI("subject")));
+        when(mockParentResource.getOriginalResource()).thenReturn(mockParentResource);
         when(mockParentNode.getDepth()).thenReturn(0);
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockNode, true);
@@ -153,12 +156,14 @@ public class WebACRolesProviderTest {
         when(mockResource.getPath()).thenReturn(accessTo + "/foo");
         when(mockResource.getTriples(anyObject(), eq(PROPERTIES)))
                 .thenReturn(new DefaultRdfStream(createURI("subject")));
+        when(mockResource.getOriginalResource()).thenReturn(mockResource);
         when(mockNode.getDepth()).thenReturn(1);
 
         when(mockParentResource.getNode()).thenReturn(mockParentNode);
         when(mockParentResource.getPath()).thenReturn(accessTo);
         when(mockParentResource.getTriples(anyObject(), eq(PROPERTIES)))
                 .thenReturn(getResourceRdfStream(accessTo, acl));
+        when(mockParentResource.getOriginalResource()).thenReturn(mockParentResource);
         when(mockParentNode.getDepth()).thenReturn(0);
 
         when(mockProperty.getString()).thenReturn(acl);
@@ -193,6 +198,7 @@ public class WebACRolesProviderTest {
         when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getTriples(anyObject(), eq(PROPERTIES)))
                 .thenReturn(getResourceRdfStream(accessTo, acl));
+        when(mockResource.getOriginalResource()).thenReturn(mockResource);
 
         when(mockAuthorizationResource1.getTypes()).thenReturn(Arrays.asList(WEBAC_AUTHORIZATION));
         when(mockAuthorizationResource1.getPath()).thenReturn(auth);
@@ -221,6 +227,7 @@ public class WebACRolesProviderTest {
         when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getTriples(anyObject(), eq(PROPERTIES)))
                 .thenReturn(getResourceRdfStream(accessTo, acl));
+        when(mockResource.getOriginalResource()).thenReturn(mockResource);
 
         when(mockAuthorizationResource1.getTypes()).thenReturn(Arrays.asList(WEBAC_AUTHORIZATION));
         when(mockAuthorizationResource1.getPath()).thenReturn(auth);
@@ -247,6 +254,7 @@ public class WebACRolesProviderTest {
         when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getTriples(anyObject(), eq(PROPERTIES)))
                 .thenReturn(getResourceRdfStream(accessTo, acl));
+        when(mockResource.getOriginalResource()).thenReturn(mockResource);
 
         when(mockAuthorizationResource1.getTypes()).thenReturn(Arrays.asList(WEBAC_AUTHORIZATION));
         when(mockAuthorizationResource1.getPath()).thenReturn(auth);
@@ -277,6 +285,7 @@ public class WebACRolesProviderTest {
         when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getTriples(anyObject(), eq(PROPERTIES)))
                 .thenReturn(getResourceRdfStream(accessTo, acl));
+        when(mockResource.getOriginalResource()).thenReturn(mockResource);
 
         when(mockAuthorizationResource1.getTypes()).thenReturn(Arrays.asList(WEBAC_AUTHORIZATION));
         when(mockAuthorizationResource1.getPath()).thenReturn(auth1);
@@ -311,6 +320,7 @@ public class WebACRolesProviderTest {
         when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getTriples(anyObject(), eq(PROPERTIES)))
                 .thenReturn(getResourceRdfStream(accessTo, acl));
+        when(mockResource.getOriginalResource()).thenReturn(mockResource);
 
         when(mockAuthorizationResource1.getTypes()).thenReturn(Arrays.asList(WEBAC_AUTHORIZATION));
         when(mockAuthorizationResource1.getPath()).thenReturn(auth1);
@@ -346,6 +356,7 @@ public class WebACRolesProviderTest {
         when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getTriples(anyObject(), eq(PROPERTIES)))
                 .thenReturn(getResourceRdfStream(accessTo, acl));
+        when(mockResource.getOriginalResource()).thenReturn(mockResource);
 
         when(mockAuthorizationResource1.getTypes()).thenReturn(Arrays.asList(WEBAC_AUTHORIZATION));
         when(mockAuthorizationResource1.getPath()).thenReturn(auth1);
@@ -421,6 +432,7 @@ public class WebACRolesProviderTest {
         when(mockResource.getTypes()).thenReturn(Arrays.asList(URI.create("http://example.com/terms#publicImage")));
         when(mockResource.getTriples(anyObject(), eq(PROPERTIES)))
                 .thenReturn(getResourceRdfStream(accessTo, acl));
+        when(mockResource.getOriginalResource()).thenReturn(mockResource);
 
         when(mockAuthorizationResource1.getTypes()).thenReturn(Arrays.asList(WEBAC_AUTHORIZATION));
         when(mockAuthorizationResource1.getPath()).thenReturn(auth1);
@@ -465,6 +477,7 @@ public class WebACRolesProviderTest {
         when(mockResource.getTypes()).thenReturn(new ArrayList<>());
         when(mockResource.getTriples(anyObject(), eq(PROPERTIES)))
                 .thenReturn(getResourceRdfStream(accessTo, acl));
+        when(mockResource.getOriginalResource()).thenReturn(mockResource);
 
         when(mockAuthorizationResource1.getTypes()).thenReturn(Arrays.asList(WEBAC_AUTHORIZATION));
         when(mockAuthorizationResource1.getPath()).thenReturn(auth);
@@ -510,6 +523,7 @@ public class WebACRolesProviderTest {
         when(mockResource.getTypes()).thenReturn(new ArrayList<>());
         when(mockResource.getTriples(anyObject(), eq(PROPERTIES)))
                 .thenReturn(getResourceRdfStream(accessTo, acl));
+        when(mockResource.getOriginalResource()).thenReturn(mockResource);
 
         when(mockAuthorizationResource1.getTypes()).thenReturn(Arrays.asList(WEBAC_AUTHORIZATION));
         when(mockAuthorizationResource1.getPath()).thenReturn(auth);
@@ -542,6 +556,7 @@ public class WebACRolesProviderTest {
         when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getTriples(anyObject(), eq(PROPERTIES)))
                 .thenReturn(getResourceRdfStream(accessTo, acl));
+        when(mockResource.getOriginalResource()).thenReturn(mockResource);
 
         when(mockAuthorizationResource1.getTypes()).thenReturn(Arrays.asList(WEBAC_AUTHORIZATION));
         when(mockAuthorizationResource1.getPath()).thenReturn(auth1);
@@ -571,6 +586,7 @@ public class WebACRolesProviderTest {
         when(mockResource.getPath()).thenReturn("/");
         when(mockResource.getTypes()).thenReturn(
                 Arrays.asList(URI.create(REPOSITORY_NAMESPACE + "Resource")));
+        when(mockResource.getOriginalResource()).thenReturn(mockResource);
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockNode, true);
 
         assertEquals("There should be exactly one agent", 1, roles.size());
@@ -588,6 +604,7 @@ public class WebACRolesProviderTest {
         when(mockResource.getPath()).thenReturn("/");
         when(mockResource.getTypes()).thenReturn(
                 Arrays.asList(URI.create(REPOSITORY_NAMESPACE + "Resource")));
+        when(mockResource.getOriginalResource()).thenReturn(mockResource);
 
         System.setProperty(ROOT_AUTHORIZATION_PROPERTY, "./target/test-classes/logback-test.xml");
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockNode, true);

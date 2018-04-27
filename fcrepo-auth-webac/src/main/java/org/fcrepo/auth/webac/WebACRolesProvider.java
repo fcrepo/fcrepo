@@ -425,7 +425,7 @@ public class WebACRolesProvider implements AccessRolesProvider {
         try {
             final IdentifierConverter<Resource, FedoraResource> translator =
                 new DefaultIdentifierTranslator(getJcrNode(resource).getSession());
-            final List<String> acls = resource.getTriples(translator, PROPERTIES)
+            final List<String> acls = resource.getOriginalResource().getTriples(translator, PROPERTIES)
                     .filter(triple -> triple.getPredicate().equals(createURI(WEBAC_ACCESS_CONTROL_VALUE)))
                     .map(triple -> {
                         if (triple.getObject().isURI()) {
