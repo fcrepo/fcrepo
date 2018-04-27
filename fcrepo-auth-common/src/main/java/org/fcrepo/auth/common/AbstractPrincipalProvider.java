@@ -71,7 +71,7 @@ abstract class AbstractPrincipalProvider implements PrincipalProvider {
                 log.debug("Shiro Principal object is not found in session!");
                 currentPrincipals = newPrincipals;
               } else {
-                currentPrincipals = new HashSet<Principal>((Set<Principal>) principals.asSet());
+                currentPrincipals = new HashSet<>((Set<Principal>) principals.asSet());
                 log.debug("Number of Principals already in session object: {}", currentPrincipals.size());
                 currentPrincipals.addAll(newPrincipals);
             }
