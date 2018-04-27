@@ -39,15 +39,14 @@
 
     <bean name="modeshapeRepofactory"
         class="org.fcrepo.kernel.modeshape.spring.ModeShapeRepositoryFactoryBean"
-        p:repositoryConfiguration="${fcrepo.modeshape.configuration}"
-        depends-on="authenticationProvider"/>
+        p:repositoryConfiguration="${fcrepo.modeshape.configuration}"/>
 
 
     <!-- **************************
               Authentication
          ************************** -->
 
-    <!-- Optional PrincipalProvider that will inspect the request header, "some-header", for user role values -->
+    <!-- Optional PrincipalProvider filter that will inspect the request header, "some-header", for user role values -->
     <!--
     <bean name="headerProvider" class="org.fcrepo.auth.common.HttpHeaderPrincipalProvider">
         <property name="headerName" value="some-header"/>
@@ -55,7 +54,7 @@
     </bean>
     -->
 
-    <!-- Optional PrincipalProvider that will use container configured roles as principals -->
+    <!-- Optional PrincipalProvider filter that will use container configured roles as principals -->
     <!--
     <bean name="containerRolesProvider" class="org.fcrepo.auth.common.ContainerRolesPrincipalProvider">
       <property name="roleNames">
@@ -67,33 +66,53 @@
     </bean>
     -->
 
-    <!-- delegatedPrincipleProvider allows a single user to be passed in the header "On-Behalf-Of",
+    <!-- delegatedPrincipleProvider filter allows a single user to be passed in the header "On-Behalf-Of",
            this is to be used as the actor making the request when authenticating.
            NOTE: On users with the role fedoraAdmin can delegate to another user.
            NOTE: Only supported in WebAC authentication -->
     <bean name="delegatedPrincipalProvider" class="org.fcrepo.auth.common.DelegateHeaderPrincipalProvider"/>
 
+    <bean name="accessRolesProvider" class="org.fcrepo.auth.webac.WebACRolesProvider"/>
 
-    <!-- Defines a set of PrincipleProviders -->
-    <util:set id="principalProviderSet">
-      <ref bean="delegatedPrincipalProvider"/>
-      <!--<ref bean="headerProvider"/>-->
-      <!--<ref bean="containerRolesProvider"/>-->
-    </util:set>
+    <!-- Shiro Auth Confiuration -->
+    <!-- Define the Shiro Realm implementation you want to use to connect to your back-end -->
+    <!-- WebAC Authorization Realm -->
+    <bean id="webACAuthorizingRealm" class="org.fcrepo.auth.webac.WebACAuthorizingRealm" />
 
-    <!-- **** WebAC Authentication **** -->
-      <bean name="fad" class="org.fcrepo.auth.webac.WebACAuthorizationDelegate"/>
-      <bean name="accessRolesProvider" class="org.fcrepo.auth.webac.WebACRolesProvider"/>
+    <!-- Servlet Container Authentication Realm -->
+    <bean id="servletContainerAuthenticatingRealm" class="org.fcrepo.auth.common.ServletContainerAuthenticatingRealm" />
 
+    <!-- Security Manager  -->
+    <bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+      <property name="realms">
+        <util:set set-class="java.util.HashSet">
+          <ref bean="webACAuthorizingRealm"/>
+          <ref bean="servletContainerAuthenticatingRealm"/>
+        </util:set>
+      </property>
+      <!-- By default the servlet container sessions will be used.  Uncomment this line
+          to use shiro's native sessions (see the JavaDoc for more): -->
+      <!-- <property name="sessionMode" value="native"/> -->
+    </bean>
 
-    <!-- Creates a servlet container authentication provider with the supplied FAD and set
-         of principles providers.
+    <!-- Post processor that automatically invokes init() and destroy() methods -->
+    <bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor"/>
 
-         *** To use authorization, see steps on line 32 of this file. ***
-    -->
-    <bean name="authenticationProvider" class="org.fcrepo.auth.common.ServletContainerAuthenticationProvider">
-      <property name="fad" ref="fad"/>
-      <property name="principalProviders" ref="principalProviderSet"/>
+    <!-- Authentication Filter -->
+    <bean id="servletContainerAuthFilter" class="org.fcrepo.auth.common.ServletContainerAuthFilter"/>
+
+    <!-- Authorization Filter -->
+    <bean id="webACFilter" class="org.fcrepo.auth.webac.WebACFilter"/>
+
+    <bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+      <property name="securityManager" ref="securityManager"/>
+      <property name="filterChainDefinitions">
+        <value>
+          <!-- The Auth filter should come first, followed by 0 or more of the principal provider filters, -->
+          <!-- and finally the webACFilter -->
+          /** = servletContainerAuthFilter,delegatedPrincipalProvider,webACFilter
+        </value>
+      </property>
     </bean>
 
     <!-- **************************
