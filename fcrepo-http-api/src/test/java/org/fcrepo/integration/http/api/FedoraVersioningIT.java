@@ -33,7 +33,6 @@ import static javax.ws.rs.core.Response.Status.FOUND;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
-import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
@@ -608,19 +607,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(descGet)) {
             assertMementoDatetimeHeaderPresent(response);
             assertHasLink(response, type, RDF_SOURCE.getURI());
-        }
-    }
-
-    @Test
-    public void testCreateVersionOfBinaryWithDatetime() throws Exception {
-        createVersionedBinary(id);
-
-        final HttpPost createVersionMethod = postObjMethod(id + "/" + FCR_VERSIONS);
-        createVersionMethod.addHeader(MEMENTO_DATETIME_HEADER, MEMENTO_DATETIME);
-
-        try (final CloseableHttpResponse response = execute(createVersionMethod)) {
-            assertEquals("Must reject memento creation without Content Type",
-                    UNSUPPORTED_MEDIA_TYPE.getStatusCode(), getStatus(response));
         }
     }
 
