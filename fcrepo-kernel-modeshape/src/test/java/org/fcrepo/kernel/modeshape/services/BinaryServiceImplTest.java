@@ -95,10 +95,11 @@ public class BinaryServiceImplTest {
         when(mockDsNode.isNew()).thenReturn(true);
         when(mockDsNode.isNodeType(FEDORA_BINARY)).thenReturn(true);
         final String testPath = "/foo/bar";
-        when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockDsNode);
-        when(mockSession.getNode("/")).thenReturn(mockRoot);
+        when(mockDsNode.getPath()).thenReturn(testPath);
 
-        when(mockDsNode.getNode("fedora:description")).thenReturn(mockDescNode);
+        when(mockSession.getNode("/")).thenReturn(mockRoot);
+        when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockDsNode);
+        when(mockRoot.getNode(testPath.substring(1) + "/fedora:description")).thenReturn(mockDescNode);
 
         testObj.findOrCreate(testSession, testPath);
         verify(mockRoot).getNode(testPath.substring(1));
