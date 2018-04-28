@@ -40,7 +40,7 @@ public class MessageExternalBodyContentType {
     /**
      * Utility method to parse the external body content in format: message/external-body; access-type=URL;
      * url="http://www.example.com/file"
-     * 
+     *
      * @param mimeType the MimeType value for external resource
      * @return MessageExternalBodyContentType value
      * @throws UnsupportedAccessTypeException if mimeType param is not a valid message/external-body content type.
@@ -75,7 +75,7 @@ public class MessageExternalBodyContentType {
     }
 
     /**
-     * @return
+     * @return the resource location
      */
     public String getResourceLocation() {
         return this.resourceLocation;

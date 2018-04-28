@@ -65,6 +65,7 @@ public class WebACFilter implements Filter {
     public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain chain)
             throws IOException, ServletException {
         final Subject currentUser = SecurityUtils.getSubject();
+        final HttpServletRequest httpRequest = (HttpServletRequest) request;
 
         if (currentUser.isAuthenticated()) {
             log.debug("User is authenticated");
@@ -73,18 +74,25 @@ public class WebACFilter implements Filter {
             } else if (currentUser.hasRole(FEDORA_USER_ROLE)) {
                 log.debug("User has fedoraUser role");
                 // non-admins are subject to permission checks
-                final HttpServletRequest httpRequest = (HttpServletRequest) request;
                 if (!isAuthorized(currentUser, httpRequest)) {
                     // if the user is not authorized, set response to forbidden
                     ((HttpServletResponse) response).sendError(SC_FORBIDDEN);
+                    return;
                 }
             } else {
                 log.debug("User has no recognized servlet container role");
                 // missing a container role, return forbidden
                 ((HttpServletResponse) response).sendError(SC_FORBIDDEN);
+                return;
             }
         } else {
             log.debug("User is NOT authenticated");
+            // anonymous users are subject to permission checks
+            if (!isAuthorized(currentUser, httpRequest)) {
+                // if anonymous user is not authorized, set response to forbidden
+                ((HttpServletResponse) response).sendError(SC_FORBIDDEN);
+                return;
+            }
         }
 
         // proceed to the next filter
@@ -98,6 +106,7 @@ public class WebACFilter implements Filter {
 
     private boolean isAuthorized(final Subject currentUser, final HttpServletRequest httpRequest) throws IOException {
         final URI requestURI = URI.create(httpRequest.getRequestURL().toString());
+        log.debug("Request URI is {}", requestURI);
         switch (httpRequest.getMethod()) {
         case "GET":
             return currentUser.isPermitted(new WebACPermission(WEBAC_MODE_READ, requestURI));

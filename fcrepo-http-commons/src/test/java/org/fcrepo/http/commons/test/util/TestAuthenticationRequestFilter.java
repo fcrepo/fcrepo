@@ -65,7 +65,9 @@ public class TestAuthenticationRequestFilter implements Filter {
         final String username = getUsername(req);
         // Validate the extracted credentials
         Set<String> containerRoles = emptySet();
-        if (FEDORA_ADMIN_USER.equals(username)) {
+        if (username == null) {
+            log.debug("ANONYMOUS");
+        } else if (FEDORA_ADMIN_USER.equals(username)) {
             containerRoles = singleton("fedoraAdmin");
             log.debug("ADMIN AUTHENTICATED");
         } else {
@@ -84,7 +86,7 @@ public class TestAuthenticationRequestFilter implements Filter {
      */
     private static ServletRequest proxy(final HttpServletRequest request,
             final String username, final Set<String> containerRoles) {
-        final Principal user = new GrizzlyPrincipal(username);
+        final Principal user = username != null ? new GrizzlyPrincipal(username) : null;
         final HttpServletRequest result =
                 (HttpServletRequest) newProxyInstance(request.getClass()
                         .getClassLoader(),
