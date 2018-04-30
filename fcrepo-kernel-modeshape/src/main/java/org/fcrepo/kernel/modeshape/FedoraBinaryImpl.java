@@ -94,10 +94,27 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
         }
     }
 */
+
+    /*
+    private FedoraBinary getBinaryImplementation(final String externalURL) {
+        if (externalURL != null) {
+            if (externalURL.toLowerCase().startsWith(LOCAL_FILE_ACCESS_TYPE)) {
+                LOGGER.debug("Instantiating local file FedoraBinary");
+                return new LocalFileBinary(getNode());
+            } else if  (externalURL.toLowerCase().startsWith(URL_ACCESS_TYPE)) {
+                LOGGER.debug("Instantiating URI FedoraBinary");
+                return new UrlBinary(getNode());
+            }
+        }
+
+        LOGGER.debug("Instantiating Internal Fedora Binary");
+        return new InternalFedoraBinary(getNode());
+    }
+
+    */
     private FedoraBinary getBinaryImplementation() {
         final String url = getURLInfo();
         LOGGER.debug("getBinaryImplementation: url is '{}'",url);
-        LOGGER.debug("getBinaryImplementation: url is proxy?  {}, redirect? {}", isProxy(), isRedirect());
         if (url != null) {
             if (url.toLowerCase().startsWith(LOCAL_FILE_ACCESS_TYPE)) {
                 LOGGER.debug("Instantiating local file FedoraBinary");
@@ -113,13 +130,29 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
     }
 
     private String getURLInfo() {
-        if (isProxy()) {
-            return getProxyURL();
-        } else if (isRedirect()) {
-            return getRedirectURL();
+        try {
+            if (getNode().hasProperty(PROXY_FOR)) {
+                return getNode().getProperty(PROXY_FOR).toString();
+            } else if (getNode().hasProperty(REDIRECTS_TO)) {
+                return getNode().getProperty(REDIRECTS_TO).toString();
+            }
+        } catch (RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
         }
 
         return null;
+        /*
+        try {
+            if (getNode().hasProperty(PROXY_FOR)) {
+                 return getNode().getProperty(PROXY_FOR).getString();
+            } else if (getNode().hasProperty(REDIRECTS_TO)) {
+                return getNode().getProperty(REDIRECTS_TO).getString();
+            }
+        } catch (RepositoryException e) {
+            LOGGER.info("Repository Exception occurred when retrieving PROXY/REDIRECT info");
+        }
+        return null;
+        */
     }
 
     @Override

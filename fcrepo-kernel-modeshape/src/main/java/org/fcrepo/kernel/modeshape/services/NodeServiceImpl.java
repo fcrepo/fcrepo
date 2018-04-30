@@ -144,4 +144,16 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
     public FedoraResource findOrCreate(final FedoraSession session, final String path) {
         throw new RepositoryRuntimeException("unimplemented");
     }
+
+    /**
+     * @param session the session
+     * @param path the path
+     * @param externalHandling method of external handling
+     * @param externalUrl url of external resource
+     */
+    @Override
+    public FedoraResource findOrCreate(final FedoraSession session, final String path, final String externalHandling,
+                                       final String externalUrl) {
+        throw new RepositoryRuntimeException("unimplemented");
+    }
 }

@@ -206,7 +206,7 @@ public class HttpResourceConverterTest {
     @Test
     public void testDoBackwardWithDatastreamContent() throws Exception {
         when(node.isNodeType(FEDORA_BINARY)).thenReturn(true);
-        final Resource converted = converter.reverse().convert(new FedoraBinaryImpl(node));
+        final Resource converted = converter.reverse().convert(new FedoraBinaryImpl(node, null, null));
         assertEquals(resource, converted);
     }
 
@@ -396,7 +396,7 @@ public class HttpResourceConverterTest {
 
         when(node.isNodeType(MEMENTO)).thenReturn(true);
 
-        final FedoraBinary memento = new FedoraBinaryImpl(node);
+        final FedoraBinary memento = new FedoraBinaryImpl(node, null, null);
 
         final Resource converted = converter.reverse().convert(memento);
         final Resource expectedResource = createResource(resourceUri + "/fcr:versions/20180315180915");

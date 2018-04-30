@@ -50,4 +50,16 @@ public interface Service<T> {
      * @return retrieved T
      */
     public T findOrCreate(final FedoraSession session, final String path);
+
+     /**
+     * Retrieve a T instance by session and path, if it creates one it will check the external URL info.
+     *
+     * @param session the session
+     * @param path the path to the node
+     * @param externalHandling if external binary, what type of handling it requires
+     * @param externalURL if external binary, the URL
+     * @return retrieved T
+     */
+    public T findOrCreate(final FedoraSession session, final String path, final String externalHandling,
+                          final String externalURL);
 }

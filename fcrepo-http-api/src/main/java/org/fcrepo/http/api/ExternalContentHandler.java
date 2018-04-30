@@ -2,6 +2,9 @@ package org.fcrepo.http.api;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.EXTERNAL_CONTENT;
+import static org.fcrepo.kernel.api.FedoraExternalContent.COPY;
+import static org.fcrepo.kernel.api.FedoraExternalContent.REDIRECT;
+import static org.fcrepo.kernel.api.FedoraExternalContent.PROXY;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -32,10 +35,7 @@ public class ExternalContentHandler {
 
     private static final Logger LOGGER = getLogger(FedoraLdp.class);
 
-    public final static String PROXY = "proxy";
     public final static String HANDLING = "handling";
-    public final static String COPY = "copy";
-    public final static String REDIRECT = "redirect";
     public final static String CONTENT_TYPE = "type";
 
     private final String originalLinkHeader;

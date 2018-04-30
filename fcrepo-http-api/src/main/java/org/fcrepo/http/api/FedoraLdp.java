@@ -67,6 +67,9 @@ import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODELS;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
+import static org.fcrepo.kernel.api.FedoraExternalContent.COPY;
+import static org.fcrepo.kernel.api.FedoraExternalContent.PROXY;
+import static org.fcrepo.kernel.api.FedoraExternalContent.REDIRECT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -498,7 +501,7 @@ public class FedoraLdp extends ContentExposingResource {
                             LOGGER.info("PUT resource external content COPY '{}', '{}'", externalPath,
                                     extContent.getURL());
                             stream = extContent.fetchExternalContent();
-                        } else if (extContent.isProxy()) {
+                        } /*else if (extContent.isProxy()) {
                             LOGGER.info("PUT resource external content PROXY '{}', '{}'", externalPath,
                                     extContent.getURL());
                             ((FedoraBinary) resource).setProxyURL(extContent.getURL());
@@ -506,7 +509,7 @@ public class FedoraLdp extends ContentExposingResource {
                             LOGGER.info("PUT resource external content REDIRECT '{}', '{}'", externalPath,
                                     extContent.getURL());
                             ((FedoraBinary) resource).setRedirectURL(extContent.getURL());
-                        }
+                        } */
                         type = contentType;  // if external, then this already holds the correct value
                     }
 
@@ -881,7 +884,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         } else if (resource() instanceof FedoraBinary) {
             options = "DELETE,HEAD,GET,PUT,OPTIONS";
-            servletResponse.addHeader(ACCEPT_EXTERNAL_CONTENT, "copy,redirect,proxy");
+            servletResponse.addHeader(ACCEPT_EXTERNAL_CONTENT, COPY + "," + REDIRECT + "," + PROXY);
 
         } else if (resource() instanceof NonRdfSourceDescription) {
             options = "HEAD,GET,DELETE,PUT,PATCH,OPTIONS";
@@ -942,7 +945,8 @@ public class FedoraLdp extends ContentExposingResource {
         final FedoraResource result;
         if ("ldp:NonRDFSource".equals(interactionModel) || extContent != null ||
                 (contentPresent && interactionModel == null && !isRDF(simpleContentType))) {
-            result = binaryService.findOrCreate(session.getFedoraSession(), path);
+            result = binaryService.findOrCreate(session.getFedoraSession(), path, extContent.getHandling(),
+                    extContent.getURL());
         } else {
             result = containerService.findOrCreate(session.getFedoraSession(), path);
         }
