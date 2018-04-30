@@ -65,7 +65,10 @@ public class WebACFilter implements Filter {
     public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain chain)
             throws IOException, ServletException {
         final Subject currentUser = SecurityUtils.getSubject();
-        final HttpServletRequest httpRequest = (HttpServletRequest) request;
+        HttpServletRequest httpRequest = (HttpServletRequest) request;
+        if (isSparqlUpdate(httpRequest)) {
+            httpRequest = new CachedSparqlRequest(httpRequest);
+        }
 
         if (currentUser.isAuthenticated()) {
             log.debug("User is authenticated");
@@ -96,7 +99,7 @@ public class WebACFilter implements Filter {
         }
 
         // proceed to the next filter
-        chain.doFilter(request, response);
+        chain.doFilter(httpRequest, response);
     }
 
     @Override
@@ -129,7 +132,7 @@ public class WebACFilter implements Filter {
     }
 
     private boolean isPatchContentPermitted(final HttpServletRequest httpRequest) throws IOException {
-        if (!contentTypeSPARQLUpdate.equalsIgnoreCase(httpRequest.getContentType())) {
+        if (!isSparqlUpdate(httpRequest)) {
             log.debug("Cannot verify authorization on NON-SPARQL Patch request.");
             return false;
         }
@@ -154,5 +157,10 @@ public class WebACFilter implements Filter {
                 .peek(update -> log.debug("Inspecting update statement for DELETE clause: {}", update.toString()))
                 .map(update -> (UpdateModify)update)
                 .anyMatch(UpdateModify::hasDeleteClause);
+    }
+
+    private boolean isSparqlUpdate(final HttpServletRequest request) {
+        return request.getMethod().equals("PATCH") &&
+                contentTypeSPARQLUpdate.equalsIgnoreCase(request.getContentType());
     }
 }

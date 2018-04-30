@@ -430,19 +430,43 @@ public class WebACRecipesIT extends AbstractResourceIT {
         setAuth(requestGet, "user18");
         assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestGet));
 
+        logger.debug("user18 can't append (no ACL): {}", id);
+        final HttpPatch requestPatch = patchObjMethod(id);
+        setAuth(requestPatch, "user18");
+        requestPatch.setHeader("Content-type", "application/sparql-update");
+        requestPatch.setEntity(new StringEntity("INSERT { <> <" + title.getURI() + "> \"Test title\" . } WHERE {}"));
+
         logger.debug("user18 can't delete (no ACL): {}", id);
         final HttpDelete requestDelete = deleteObjMethod(id);
         setAuth(requestDelete, "user18");
         assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestDelete));
 
-        // Add ACL to root
         linkToAcl("/rest/append_only_resource", acl);
 
         logger.debug("user18 still can't read (ACL append): {}", id);
         assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestGet));
 
+        logger.debug("user18 can patch - SPARQL INSERTs (ACL append): {}", id);
+        assertEquals(HttpStatus.SC_NO_CONTENT, getStatus(requestPatch));
+
         logger.debug("user18 still can't delete (ACL append): {}", id);
         assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestDelete));
+
+        requestPatch.setEntity(new StringEntity("DELETE { <> <" + title.getURI() + "> \"Test title\" . } WHERE {}"));
+
+        logger.debug("user18 can not patch - SPARQL DELETEs (ACL append): {}", id);
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestPatch));
+
+        requestPatch.setEntity(null);
+
+        logger.debug("user18 can patch (is authorized, but bad request) - Empty SPARQL (ACL append): {}", id);
+        assertEquals(HttpStatus.SC_BAD_REQUEST, getStatus(requestPatch));
+
+        requestPatch.setHeader("Content-type", null);
+
+        logger.debug("user18 can not patch - Non SPARQL (ACL append): {}", id);
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestPatch));
+
     }
 
     @Test
@@ -458,16 +482,26 @@ public class WebACRecipesIT extends AbstractResourceIT {
         setAuth(requestGet, "user18");
         assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestGet));
 
+        logger.debug("user18 can't append (no ACL): {}", id);
+        final HttpPatch requestPatch = patchObjMethod(id);
+        setAuth(requestPatch, "user18");
+        requestPatch.setHeader("Content-type", "application/sparql-update");
+        requestPatch.setEntity(new StringEntity(
+                "INSERT { <> <" + title.getURI() + "> \"some title\" . } WHERE {}"));
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestPatch));
+
         logger.debug("user18 can't delete (no ACL): {}", id);
         final HttpDelete requestDelete = deleteObjMethod(id);
         setAuth(requestDelete, "user18");
         assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestDelete));
 
-        // Add ACL to root
         linkToAcl("/rest/read_append_resource", acl);
 
         logger.debug("user18 can read (ACL read, append): {}", id);
         assertEquals(HttpStatus.SC_OK, getStatus(requestGet));
+
+        logger.debug("user18 can append (ACL read, append): {}", id);
+        assertEquals(HttpStatus.SC_NO_CONTENT, getStatus(requestPatch));
 
         logger.debug("user18 still can't delete (ACL read, append): {}", id);
         assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestDelete));
@@ -481,23 +515,31 @@ public class WebACRecipesIT extends AbstractResourceIT {
         final String id = "/rest/read_append_write_resource/" + getRandomUniqueId();
         ingestObj(id);
 
-        System.clearProperty(ROOT_AUTHORIZATION_PROPERTY);
-
         logger.debug("user18 can't read (no ACL): {}", id);
         final HttpGet requestGet = getObjMethod(id);
         setAuth(requestGet, "user18");
         assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestGet));
+
+        logger.debug("user18 can't append (no ACL): {}", id);
+        final HttpPatch requestPatch = patchObjMethod(id);
+        setAuth(requestPatch, "user18");
+        requestPatch.setHeader("Content-type", "application/sparql-update");
+        requestPatch.setEntity(new StringEntity(
+                "INSERT { <> <http://purl.org/dc/elements/1.1/title> \"some title\" . } WHERE {}"));
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestPatch));
 
         logger.debug("user18 can't delete (no ACL): {}", id);
         final HttpDelete requestDelete = deleteObjMethod(id);
         setAuth(requestDelete, "user18");
         assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestDelete));
 
-        // Add ACL to root
         linkToAcl("/rest/read_append_write_resource", acl);
 
         logger.debug("user18 can read (ACL read, append, write): {}", id);
         assertEquals(HttpStatus.SC_OK, getStatus(requestGet));
+
+        logger.debug("user18 can append (ACL read, append, write): {}", id);
+        assertEquals(HttpStatus.SC_NO_CONTENT, getStatus(requestPatch));
 
         logger.debug("user18 can delete (ACL read, append, write): {}", id);
         assertEquals(HttpStatus.SC_NO_CONTENT, getStatus(requestDelete));
