@@ -405,11 +405,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         assertEquals("Expected delete to succeed",
                 NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(mementoUri)));
 
-        final String mementoTombstoneUri = mementoUri + "/fcr:tombstone";
-        assertEquals("Expected delete to succeed",
-                NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(mementoTombstoneUri)));
-
-        assertEquals("Delete memento must be removed",
+        assertEquals("Deleted memento must be removed",
                 NOT_FOUND.getStatusCode(), getStatus(new HttpGet(mementoUri)));
 
         final String recreatedUri = createContainerMementoWithBody(subjectUri, MEMENTO_DATETIME);
@@ -419,12 +415,38 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     @Test
     public void testDeleteAndPostBinaryMemento() throws Exception {
+        createVersionedBinary(id);
 
+        final String mementoUri = createLDPNRMementoWithExistingBody(MEMENTO_DATETIME);
+
+        assertEquals("Expected delete to succeed",
+                NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(mementoUri)));
+
+        assertEquals("Deleted memento must be removed",
+                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(mementoUri)));
+
+        final String recreatedUri = createLDPNRMementoWithExistingBody(MEMENTO_DATETIME);
+        assertEquals("Recreated memento must exist",
+                OK.getStatusCode(), getStatus(new HttpGet(recreatedUri)));
     }
 
     @Test
     public void testDeleteAndPostDescriptionMemento() throws Exception {
+        createVersionedBinary(id);
 
+        final String descId = id + "/" + FCR_METADATA;
+        final String descUri = serverAddress + descId;
+        final String mementoUri = createMementoWithExistingBody(descId, MEMENTO_DATETIME, false);
+
+        assertEquals("Expected delete to succeed",
+                NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(mementoUri)));
+
+        assertEquals("Deleted memento must be removed",
+                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(mementoUri)));
+
+        final String recreatedUri = createContainerMementoWithBody(descUri, MEMENTO_DATETIME);
+        assertEquals("Recreated memento must exist",
+                OK.getStatusCode(), getStatus(new HttpGet(recreatedUri)));
     }
 
     @Test

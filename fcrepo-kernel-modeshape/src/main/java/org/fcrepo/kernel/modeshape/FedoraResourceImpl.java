@@ -565,6 +565,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @Override
     public void delete() {
         try {
+            // Precalculate before node is removed
+            final boolean isMemento = isMemento();
+
             // Remove inbound references to this resource and, recursively, any of its children
             removeReferences(node);
 
@@ -581,7 +584,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             node.remove();
 
             if (parent != null) {
-                createTombstone(parent, name);
+                if (!isMemento) {
+                    createTombstone(parent, name);
+                }
 
                 // also update membershipResources for Direct/Indirect Containers
                 containingNode.filter(UncheckedPredicate.uncheck((final Node ancestor) ->

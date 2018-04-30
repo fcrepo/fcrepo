@@ -100,7 +100,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
 
     @Override
     public FedoraResource getDescription() {
-        final Node descNode = getDescriptionNode();
+        final Node descNode = getDescriptionNodeOrNull();
         if (descNode == null) {
             return null;
         }
@@ -437,7 +437,9 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     public void delete() {
         final FedoraResource description = getDescription();
 
-        description.delete();
+        if (description != null) {
+            description.delete();
+        }
 
         super.delete();
     }
