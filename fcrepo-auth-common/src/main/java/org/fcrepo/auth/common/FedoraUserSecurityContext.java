@@ -20,7 +20,6 @@ package org.fcrepo.auth.common;
 import static org.modeshape.jcr.ModeShapePermissions.READ;
 import static org.modeshape.jcr.ModeShapePermissions.REGISTER_NAMESPACE;
 import static org.modeshape.jcr.ModeShapePermissions.REGISTER_TYPE;
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
 import java.security.Principal;
 import java.util.Set;
@@ -49,27 +48,18 @@ public class FedoraUserSecurityContext implements SecurityContext,
 
     private Principal userPrincipal = null;
 
-    private FedoraAuthorizationDelegate fad = null;
-
     private boolean loggedIn = true;
+
+    private static final String FOAF_AGENT = "http://xmlns.com/foaf/0.1/Agent";
 
     /**
      * Constructs a new security context.
      *
      * @param userPrincipal the user principal associated with this security
      *        context
-     * @param fad the authorization delegate
      */
-    protected FedoraUserSecurityContext(final Principal userPrincipal,
-            final FedoraAuthorizationDelegate fad) {
-        this.fad = fad;
+    protected FedoraUserSecurityContext(final Principal userPrincipal) {
         this.userPrincipal = userPrincipal;
-
-        if (this.fad == null) {
-            LOGGER.warn("This security context must have a FAD injected");
-            throw new IllegalArgumentException(
-                    "This security context must have a FAD injected");
-        }
     }
 
     /**
@@ -89,7 +79,10 @@ public class FedoraUserSecurityContext implements SecurityContext,
      */
     @Override
     public final String getUserName() {
-        return getEffectiveUserPrincipal().getName();
+        if (isAnonymous()) {
+            return FOAF_AGENT;
+        }
+        return userPrincipal.getName();
     }
 
     /**
@@ -99,28 +92,8 @@ public class FedoraUserSecurityContext implements SecurityContext,
      */
     @Override
     public final boolean hasRole(final String roleName) {
-        // Under this custom PEP regime, all users have modeshape read and write
-        // roles.
-        if ("read".equals(roleName)) {
-            return true;
-        } else if ("write".equals(roleName)) {
-            return true;
-        } else if ("admin".equals(roleName)) {
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Get the user principal associated with this context.
-     *
-     * @return the user principal associated with this security context
-     */
-    public Principal getEffectiveUserPrincipal() {
-        if (this.loggedIn && this.userPrincipal != null) {
-            return this.userPrincipal;
-        }
-        return fad.getEveryonePrincipal();
+        // Always return true - Authorization already done by Server Filter
+        return true;
     }
 
     /**
@@ -147,6 +120,7 @@ public class FedoraUserSecurityContext implements SecurityContext,
             return false;
         }
 
+        // ****** Should this be migrated to WebAC filter?  *****
         if (absPath == null) {
             // this permission is required for login
             if (actions.length == 1 && READ.equals(actions[0])) {
@@ -163,19 +137,7 @@ public class FedoraUserSecurityContext implements SecurityContext,
             return filteredActions.isEmpty();
         }
 
-        // Trim jcr:content from paths, if necessary
-        final Path path;
-        if (null != absPath.getLastSegment() && absPath.getLastSegment().getString().equals(JCR_CONTENT)) {
-            path = absPath.subpath(0, absPath.size() - 1);
-            LOGGER.debug("..new path to be verified: {}", path);
-        } else {
-            path = absPath;
-        }
-
-        // delegate
-        if (fad != null) {
-            return fad.hasPermission(context.getSession(), path, actions);
-        }
-        return false;
+        // Always return true - Authorization already done by Server Filter
+        return true;
     }
 }

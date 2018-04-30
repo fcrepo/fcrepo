@@ -27,6 +27,7 @@ import org.fcrepo.kernel.api.services.ContainerService;
 import org.fcrepo.kernel.modeshape.services.ContainerServiceImpl;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -55,6 +56,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = {"/spring-test/mocked-fad-repo-1.xml"})
+@Ignore
 public class HttpHeaderPrincipalProviderIT {
 
     private static Logger logger =

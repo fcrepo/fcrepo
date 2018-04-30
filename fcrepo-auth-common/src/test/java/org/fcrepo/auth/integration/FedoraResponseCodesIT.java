@@ -25,6 +25,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.util.EntityUtils;
+import org.junit.Ignore;
 import org.junit.Test;
 
 
@@ -33,7 +34,8 @@ import org.junit.Test;
  *
  * @author gregjan
  */
-public class FedoraResponseCodesIT extends AbstractResourceIT {
+@Ignore
+ public class FedoraResponseCodesIT extends AbstractResourceIT {
 
     @Test
     public void testAllowedAddDatastream() throws Exception {

@@ -39,8 +39,8 @@
 
     <bean name="modeshapeRepofactory"
         class="org.fcrepo.kernel.modeshape.spring.ModeShapeRepositoryFactoryBean"
-        p:repositoryConfiguration="${fcrepo.modeshape.configuration}"/>
-
+        p:repositoryConfiguration="${fcrepo.modeshape.configuration}"
+        depends-on="authenticationProvider"/>
 
     <!-- **************************
               Authentication
@@ -71,6 +71,18 @@
            NOTE: On users with the role fedoraAdmin can delegate to another user.
            NOTE: Only supported in WebAC authentication -->
     <bean name="delegatedPrincipalProvider" class="org.fcrepo.auth.common.DelegateHeaderPrincipalProvider"/>
+
+    <!-- Defines a set of PrincipleProviders -->
+    <util:set id="principalProviderSet">
+        <ref bean="delegatedPrincipalProvider"/>
+        <!--<ref bean="headerProvider"/>-->
+        <!--<ref bean="containerRolesProvider"/>-->
+    </util:set>
+
+    <bean name="authenticationProvider" class="org.fcrepo.auth.common.ServletContainerAuthenticationProvider">
+        <!-- This can be removed, if the delegete processing code is moved to WebAC Shiro -->
+        <property name="principalProviders" ref="principalProviderSet"/>
+    </bean>
 
     <bean name="accessRolesProvider" class="org.fcrepo.auth.webac.WebACRolesProvider"/>
 
@@ -106,11 +118,18 @@
 
     <bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
       <property name="securityManager" ref="securityManager"/>
+      <property name="filters">
+        <util:map>
+          <entry key="containerAuthn" value-ref="servletContainerAuthFilter"/>
+          <entry key="delegatePrincipal" value-ref="delegatedPrincipalProvider"/>
+          <entry key="webac" value-ref="webACFilter"/>
+        </util:map>
+      </property>
       <property name="filterChainDefinitions">
         <value>
           <!-- The Auth filter should come first, followed by 0 or more of the principal provider filters, -->
           <!-- and finally the webACFilter -->
-          /** = servletContainerAuthFilter,delegatedPrincipalProvider,webACFilter
+          /** = containerAuthn,delegatePrincipal,webac
         </value>
       </property>
     </bean>
