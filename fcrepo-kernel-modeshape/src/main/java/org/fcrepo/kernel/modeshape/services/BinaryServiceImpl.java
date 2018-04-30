@@ -33,13 +33,9 @@ import javax.jcr.RepositoryException;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
-import static org.fcrepo.kernel.api.FedoraExternalContent.PROXY;
-import static org.fcrepo.kernel.api.FedoraExternalContent.REDIRECT;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_DESCRIPTION;
 import static org.fcrepo.kernel.api.RdfLexicon.NT_LEAF_NODE;
 import static org.fcrepo.kernel.api.RdfLexicon.NT_VERSION_FILE;
-import static org.fcrepo.kernel.api.RdfLexicon.PROXY_FOR;
-import static org.fcrepo.kernel.api.RdfLexicon.REDIRECTS_TO;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getContainingNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.touch;
@@ -105,35 +101,6 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
         }
     }
 
-    public FedoraBinary findOrCreate(final FedoraSession session, final String path, final String externalHandling,
-                                     final String externalUrl) {
-        try {
-            final Node dsNode = findOrCreateNode(session, path, NT_VERSION_FILE);
-
-            if (dsNode.isNew()) {
-                if (externalHandling != null && externalUrl != null) {
-                    initializeNewExternalNodeProperties(dsNode, externalHandling, externalUrl);
-                }
-                initializeNewDatastreamProperties(dsNode);
-
-                getContainingNode(dsNode).ifPresent(parent -> {
-                    touch(parent);
-                    touchLdpMembershipResource(dsNode);
-                });
-            }
-
-            final FedoraBinaryImpl binary = new FedoraBinaryImpl(dsNode);
-
-            if (dsNode.isNew()) {
-                touch(binary.getNode());
-            }
-
-            return binary;
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-    }
-
     /**
      * {@inheritDoc}
      */
@@ -159,21 +126,6 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
     @Override
     public FedoraBinary find(final FedoraSession session, final String path) {
         return cast(findNode(session, path));
-    }
-
-    private static void initializeNewExternalNodeProperties(final Node node, final String extHandling,
-                                                            final String extUrl) {
-        try {
-            if (extHandling.equals(PROXY)) {
-                node.setProperty(PROXY_FOR.toString(), extUrl);
-            } else if (extHandling.equals(REDIRECT)) {
-                node.setProperty(REDIRECTS_TO.toString(), extUrl);
-            } else {
-                throw new RepositoryException("Unknown External Handling type: " + extHandling);
-            }
-        } catch (RepositoryException e) {
-            LOGGER.warn("Could not initialize {} with external handling properties: {}", node, e);
-        }
     }
 
     private static void initializeNewDatastreamProperties(final Node node) {

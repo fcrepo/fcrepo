@@ -30,6 +30,8 @@ import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.api.TripleCategory;
 import org.slf4j.Logger;
 
+import static org.fcrepo.kernel.api.FedoraExternalContent.PROXY;
+import static org.fcrepo.kernel.api.FedoraExternalContent.REDIRECT;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFedoraBinary;
 
 import javax.jcr.Node;
@@ -70,12 +72,21 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
      * @return the fedora binary
      */
     private FedoraBinary getBinary() {
+        return getBinary(null);
+    }
+    /**
+     * Get the proxied binary content object wrapped by this object
+     *
+     * @return the fedora binary
+     */
+    private FedoraBinary getBinary(final String extUrl) {
         if (wrappedBinary == null) {
-            wrappedBinary = getBinaryImplementation();
+            wrappedBinary = getBinaryImplementation(extUrl);
             LOGGER.debug("Wrapping binary content of type {}", wrappedBinary.getClass().getName());
         }
         return wrappedBinary;
     }
+
 /*
     private String getEffectiveMimeType(final String contentType) {
         try {
@@ -112,8 +123,12 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
     }
 
     */
-    private FedoraBinary getBinaryImplementation() {
-        final String url = getURLInfo();
+    private FedoraBinary getBinaryImplementation(final String extUrl) {
+        String url = extUrl;
+        if (url == null || url.isEmpty()) {
+            url = getURLInfo();
+        }
+
         LOGGER.debug("getBinaryImplementation: url is '{}'",url);
         if (url != null) {
             if (url.toLowerCase().startsWith(LOCAL_FILE_ACCESS_TYPE)) {
@@ -169,6 +184,18 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
         return getBinary().getContent();
     }
 
+    @Override
+    public void setExternalContent(final InputStream content, final String contentType,
+                                   final Collection<URI> checksums, final String originalFileName,
+                                   final String externalHandling, final String externalUrl)
+            throws InvalidChecksumException {
+
+        // Clear the wrapped binary object prior to setting the content
+        wrappedBinary = null;
+        getBinary(externalUrl).setExternalContent(content, contentType, checksums, originalFileName,
+                externalHandling, externalUrl);
+    }
+
     /*
      * (non-Javadoc)
      * @see org.fcrepo.kernel.api.models.FedoraBinary#setContent(java.io.InputStream,
@@ -206,60 +233,65 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
         return getBinary().getContentDigest();
     }
 
-
     /*
      * (non-Javadoc)
      * @see org.fcrepo.kernel.api.models.FedoraBinary#isProxy()
      */
+    /*
     @Override
     public Boolean isProxy() {
         return getBinary().isProxy();
     }
-
+ */
     /*
      * (non-Javadoc)
      * @see org.fcrepo.kernel.api.models.FedoraBinary#isRedirect()
      */
+    /*
     @Override
     public Boolean isRedirect() {
         return getBinary().isRedirect();
     }
-
+*/
     /*
      * (non-Javadoc)
      * @see org.fcrepo.kernel.api.models.FedoraBinary#getProxyURL()
      */
+    /*
     @Override
     public String getProxyURL() {
         return getBinary().getProxyURL();
     }
-
+*/
     /*
      * (non-Javadoc)
      * @see org.fcrepo.kernel.api.models.FedoraBinary#setProxyURL()
      */
+    /*
     @Override
     public void setProxyURL(final String url) throws RepositoryRuntimeException {
         getBinary().setProxyURL(url);
-    }
+    } */
 
     /*
      * (non-Javadoc)
      * @see org.fcrepo.kernel.api.models.FedoraBinary#getRedirectURL()
      */
+    /*
     @Override
     public String getRedirectURL() {
        return getBinary().getRedirectURL();
     }
-
+*/
     /*
      * (non-Javadoc)
      * @see org.fcrepo.kernel.api.models.FedoraBinary#setRedirectURL()
      */
+    /*
     @Override
     public void setRedirectURL(final String url) throws RepositoryRuntimeException {
        getBinary().setRedirectURL(url);
-    }
+    } */
 
     /*
      * (non-Javadoc)
@@ -270,11 +302,11 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
         return getBinary().getMimeType();
     }
 
-
     /*
      * (non-Javadoc)
      * @see org.fcrepo.kernel.api.models.FedoraBinary#getFilename()
      */
+
     @Override
     public String getFilename() {
         return getBinary().getFilename();

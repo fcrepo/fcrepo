@@ -103,6 +103,13 @@ public class InternalFedoraBinary extends AbstractFedoraBinary {
         }
     }
 
+    @Override
+    public void setExternalContent(final InputStream content, final String contentType, final Collection<URI> checksums,
+                                   final String originalFileName, final String externalHandling, final String externalUrl)
+            throws InvalidChecksumException {
+        throw new UnsupportedOperationException("Cannot call setExternalContent from this context");
+    }
+
     /*
      * (non-Javadoc)
      * @see org.fcrepo.kernel.api.models.FedoraBinary#setContent(java.io.InputStream, java.lang.String, java.net.URI,

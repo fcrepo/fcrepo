@@ -36,6 +36,7 @@ import javax.jcr.Value;
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -43,6 +44,8 @@ import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.utils.ContentDigest;
 import org.fcrepo.metrics.RegistryService;
 import org.slf4j.Logger;
+import java.io.InputStream;
+import java.util.Collection;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
@@ -87,6 +90,7 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
             throw new RepositoryRuntimeException(e);
         }
     }
+
 
     /*
      * (non-Javadoc)

@@ -84,18 +84,6 @@ public class ContainerServiceImpl extends AbstractService implements ContainerSe
     }
 
     /**
-     * @param session the session
-     * @param path the path
-     * @param externalHandling method of external handling
-     * @param externalUrl url of external resource
-     */
-    @Override
-    public Container findOrCreate(final FedoraSession session, final String path, final String externalHandling,
-                                       final String externalUrl) {
-        throw new RepositoryRuntimeException("unimplemented");
-    }
-
-    /**
      * Retrieve a {@link org.fcrepo.kernel.api.models.Container} instance by pid and dsid
      *
      * @param path the path

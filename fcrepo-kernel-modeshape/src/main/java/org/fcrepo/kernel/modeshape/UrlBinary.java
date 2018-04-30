@@ -19,6 +19,8 @@ package org.fcrepo.kernel.modeshape;
 
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.slf4j.LoggerFactory.getLogger;
+import static org.fcrepo.kernel.api.FedoraExternalContent.PROXY;
+import static org.fcrepo.kernel.api.FedoraExternalContent.REDIRECT;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -103,6 +105,28 @@ public class UrlBinary extends AbstractFedoraBinary {
         return -1L;
     }
 
+    @Override
+    public void setExternalContent(final InputStream content, final String contentType,
+                           final Collection<URI> checksums, final String originalFileName,
+                           final String externalHandling, final String externalUrl)
+            throws InvalidChecksumException {
+
+        // set a few things on the description node, then set a few more in the other setContent() function
+        final Node descNode = getDescriptionNode();
+        try {
+            if (externalHandling.equals(PROXY)) {
+                descNode.setProperty(PROXY_FOR, externalUrl);
+            } else if (externalHandling.equals(REDIRECT)) {
+                descNode.setProperty(REDIRECTS_TO, externalUrl);
+            } else {
+                throw new RepositoryException("Unknown external content handling type: " + externalHandling);
+            }
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+
+        setContent(content, contentType, checksums, originalFileName, null);
+    }
     /*
      * (non-Javadoc)
      * @see org.fcrepo.kernel.modeshape.FedoraBinaryImpl#setContent(java.io.InputStream, java.lang.String,
@@ -159,6 +183,7 @@ public class UrlBinary extends AbstractFedoraBinary {
             throw new RepositoryRuntimeException(e);
         }
     }
+
 
     protected void verifyChecksums(final Collection<URI> checksums)
             throws InvalidChecksumException, RepositoryException {

@@ -103,9 +103,8 @@ public class LocalFileBinaryIT extends AbstractIT {
     @Test
     public void testProxyDatastreamWithMimeType() throws Exception {
         mimeType = "text/plain";
-        final FedoraBinary binary = binaryService.findOrCreate(session, dsId, "proxy",
-                contentFile.toURI().toURL().toString());
-        binary.setContent(null, mimeType, null, null, null);
+        final FedoraBinary binary = binaryService.findOrCreate(session, dsId);
+        binary.setExternalContent(null, mimeType, null, null, "proxy", contentFile.toURI().toURL().toString());
 
         session.commit();
 
@@ -120,9 +119,8 @@ public class LocalFileBinaryIT extends AbstractIT {
 
     @Test
     public void testProxyDatastreamWithOutMimeType() throws Exception {
-        final FedoraBinary binary = binaryService.findOrCreate(session, dsId, "proxy",
-                contentFile.toURI().toURL().toString());
-        binary.setContent(null, null, null, null, null);
+        final FedoraBinary binary = binaryService.findOrCreate(session, dsId);
+        binary.setExternalContent(null, null, null, null, "proxy", contentFile.toURI().toURL().toString());
 
         session.commit();
 
@@ -136,9 +134,8 @@ public class LocalFileBinaryIT extends AbstractIT {
     @Test
         public void testRedirectDatastreamWithMimeType() throws Exception {
         mimeType = "text/plain";
-        final FedoraBinary binary = binaryService.findOrCreate(session, dsId, "redirect",
-            contentFile.toURI().toURL().toString());
-        binary.setContent(null, mimeType, null, null, null);
+        final FedoraBinary binary = binaryService.findOrCreate(session, dsId);
+        binary.setExternalContent(null, mimeType, null, null, "redirect", contentFile.toURI().toURL().toString());
 
         session.commit();
 
@@ -152,9 +149,8 @@ public class LocalFileBinaryIT extends AbstractIT {
 
     @Test
     public void testRedirectDatastreamWithOutMimeType() throws Exception {
-        final FedoraBinary binary = binaryService.findOrCreate(session, dsId, "redirect",
-                contentFile.toURI().toURL().toString());
-        binary.setContent(null, null, null, null, null);
+        final FedoraBinary binary = binaryService.findOrCreate(session, dsId);
+        binary.setExternalContent(null, null, null, null, "redirect", contentFile.toURI().toURL().toString());
 
         session.commit();
 
@@ -168,9 +164,9 @@ public class LocalFileBinaryIT extends AbstractIT {
 
     @Test
     public void testWithValidChecksum() throws Exception {
-        final FedoraBinary binary = binaryService.findOrCreate(session, dsId, "proxy",
+        final FedoraBinary binary = binaryService.findOrCreate(session, dsId);
+        binary.setExternalContent(null, mimeType, sha1Set(CONTENT_SHA1), null, "proxy",
                 contentFile.toURI().toURL().toString());
-        binary.setContent(null, mimeType, sha1Set(CONTENT_SHA1), null, null);
 
         session.commit();
 
@@ -181,9 +177,9 @@ public class LocalFileBinaryIT extends AbstractIT {
 
     @Test(expected = InvalidChecksumException.class)
     public void testProxyWithInvalidChecksum() throws Exception {
-        final FedoraBinary binary = binaryService.findOrCreate(session, dsId, "proxy",
+        final FedoraBinary binary = binaryService.findOrCreate(session, dsId);
+        binary.setExternalContent(null, mimeType, sha1Set("badsum"), null, "proxy",
                 contentFile.toURI().toURL().toString());
-        binary.setContent(null, mimeType, sha1Set("badsum"), null, null);
     }
 
     @Ignore
@@ -192,9 +188,9 @@ public class LocalFileBinaryIT extends AbstractIT {
     // instead of a URI.
     @Test
     public void testCheckFixity() throws Exception {
-        final FedoraBinary binary = binaryService.findOrCreate(session, dsId, "proxy",
+        final FedoraBinary binary = binaryService.findOrCreate(session, dsId);
+        binary.setExternalContent(null, mimeType, sha1Set(CONTENT_SHA1), null, "proxy",
                 contentFile.toURI().toURL().toString());
-        binary.setContent(null, mimeType, sha1Set(CONTENT_SHA1), null, null);
 
         session.commit();
 

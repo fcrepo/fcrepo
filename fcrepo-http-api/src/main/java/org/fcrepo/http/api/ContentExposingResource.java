@@ -798,17 +798,28 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                                                    final InputStream requestBodyStream,
                                                    final ContentDisposition contentDisposition,
                                                    final MediaType contentType,
-                                                   final Collection<String> checksums) throws InvalidChecksumException {
+                                                   final Collection<String> checksums,
+                                                   final String externalHandling,
+                                                   final String externalUrl) throws InvalidChecksumException {
         final Collection<URI> checksumURIs = checksums == null ?
                 new HashSet<>() : checksums.stream().map(checksum -> checksumURI(checksum)).collect(Collectors.toSet());
         final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
         final String originalContentType = contentType != null ? contentType.toString() : "";
 
-        result.setContent(requestBodyStream,
-                originalContentType,
-                checksumURIs,
-                originalFileName,
-                storagePolicyDecisionPoint);
+        if (externalHandling != null) {
+            result.setExternalContent(requestBodyStream,
+                    originalContentType,
+                    checksumURIs,
+                    originalFileName,
+                    externalHandling,
+                    externalUrl);
+        } else {
+            result.setContent(requestBodyStream,
+                    originalContentType,
+                    checksumURIs,
+                    originalFileName,
+                    storagePolicyDecisionPoint);
+        }
     }
 
     protected void replaceResourceWithStream(final FedoraResource resource,
