@@ -17,7 +17,6 @@
  */
 package org.fcrepo.integration.http.api;
 
-import static com.google.common.collect.Iterators.size;
 import static java.time.format.DateTimeFormatter.ISO_INSTANT;
 import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
@@ -38,7 +37,6 @@ import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
-import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.vocabulary.DC_11.title;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.http.api.FedoraLdp.ACCEPT_DATETIME;
@@ -59,7 +57,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
-import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEMAP_TYPE;
 import static org.junit.Assert.assertArrayEquals;
@@ -84,6 +81,7 @@ import java.util.Collection;
 import java.util.List;
 import javax.ws.rs.core.Link;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
@@ -109,7 +107,6 @@ import org.apache.jena.vocabulary.DC;
 import org.apache.jena.vocabulary.RDF;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -399,6 +396,36 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Test
+    public void testDeleteAndPostContainerMemento() throws Exception {
+        createVersionedContainer(id);
+
+        final String mementoUri = createContainerMementoWithBody(subjectUri, MEMENTO_DATETIME);
+
+        assertEquals("Expected delete to succeed",
+                NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(mementoUri)));
+
+        final String mementoTombstoneUri = mementoUri + "/fcr:tombstone";
+        assertEquals("Expected delete to succeed",
+                NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(mementoTombstoneUri)));
+
+        assertEquals("Delete memento must be removed",
+                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(mementoUri)));
+
+        final String recreatedUri = createContainerMementoWithBody(subjectUri, MEMENTO_DATETIME);
+        assertEquals("Recreated memento must exist",
+                OK.getStatusCode(), getStatus(new HttpGet(recreatedUri)));
+    }
+
+    @Test
+    public void testDeleteAndPostBinaryMemento() throws Exception {
+
+    }
+
+    @Test
+    public void testDeleteAndPostDescriptionMemento() throws Exception {
+
+    }
 
     @Test
     public void testMementoContainmentReferences() throws Exception {
@@ -772,21 +799,52 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testGetUnversionedObjectVersionProfile() {
-        final String pid = getRandomUniqueId();
+    public void testGetUnversionedObjectVersionProfile() throws Exception {
+        final String containerUri = serverAddress + id;
 
-        createObject(pid);
+        createObject(id);
 
-        final HttpGet getVersion = new HttpGet(serverAddress + pid + "/" + FCR_VERSIONS);
+        final HttpGet getVersion = new HttpGet(containerUri + "/" + FCR_VERSIONS);
         assertEquals(NOT_FOUND.getStatusCode(), getStatus(getVersion));
+
+        // Verify original has no memento headers
+        assertNoMementoHeaders(containerUri);
     }
 
-    @Ignore("Disable until container version creation from existing resource implemented")
     @Test
-    public void testAddAndRetrieveVersion() throws IOException {
-        final String id = getRandomUniqueId();
-        createObjectAndClose(id);
-        enableVersioning(id);
+    public void testGetUnversionedBinaryAndDescriptionVersionProfile() throws Exception {
+        createDatastream(id, "ds", "content");
+
+        final String binaryUri = serverAddress + id + "/ds";
+        final HttpGet getBinary = new HttpGet(binaryUri + "/" + FCR_VERSIONS);
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(getBinary));
+
+        // Verify original binary has no memento headers
+        assertNoMementoHeaders(binaryUri);
+
+        final String metadataUri = binaryUri + "/" + FCR_METADATA;
+        final HttpGet getDesc = new HttpGet(metadataUri + "/" + FCR_VERSIONS);
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(getDesc));
+
+        // Verify original has no memento headers
+        assertNoMementoHeaders(metadataUri);
+    }
+
+    private void assertNoMementoHeaders(final String uri) throws Exception {
+        final HttpGet getOriginal = new HttpGet(uri);
+
+        try (final CloseableHttpResponse response = execute(getOriginal)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+
+            assertNoLinkHeader(response, MEMENTO_TYPE, "type");
+            assertNoLinkHeader(response, uri, "original");
+            assertNoMementoDatetimeHeaderPresent(response);
+        }
+    }
+
+    @Test
+    public void testAddAndRetrieveVersion() throws Exception {
+        createVersionedContainer(id);
 
         logger.debug("Setting a title");
         patchLiteralProperty(serverAddress + id, title.getURI(), "First Title");
@@ -796,17 +854,16 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                     ANY, title.asNode(), createLiteral("First Title")));
         }
         logger.debug("Posting version v0.0.1");
-        final String versionURI = postObjectVersion(id);
+        final String mementoUri = createContainerMementoWithBody(subjectUri, null);
+        assertMementoUri(mementoUri, subjectUri);
 
         logger.debug("Replacing the title");
         patchLiteralProperty(serverAddress + id, title.getURI(), "Second Title");
 
-        try (final CloseableDataset dataset = getContent(versionURI)) {
+        try (final CloseableDataset dataset = getContent(mementoUri)) {
             logger.debug("Got version profile:");
             final DatasetGraph versionResults = dataset.asDatasetGraph();
 
-            assertTrue("Didn't find a version triple!", versionResults.contains(ANY,
-                    ANY, type.asNode(), createURI(REPOSITORY_NAMESPACE + "Version")));
             assertTrue("Should find a title in historic version", versionResults.contains(ANY,
                     ANY, title.asNode(), ANY));
             assertTrue("Should find original title in historic version", versionResults.contains(ANY,
@@ -832,84 +889,52 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(postReq));
     }
 
-    @Ignore("Disable until DELETE memento implemented")
     @Test
-    public void testRemoveVersion() throws IOException {
-        // create an object and a named version
-        final String objId = getRandomUniqueId();
-        final Instant date1 = LocalDateTime.of(2000, 10, 15, 11, 35, 23).atZone(ZoneId.of("UTC")).toInstant();
+    public void testEnableVersioning() throws Exception {
+        final String containerUri = serverAddress + id;
+        createObjectAndClose(id);
 
-        createResource(serverAddress + objId);
-        createObjectAndClose(objId);
-        enableVersioning(objId);
+        final String versionsUri = containerUri + "/" + FCR_VERSIONS;
+        assertEquals("fcr:versions must not exist before enabling versioning",
+                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(versionsUri)));
 
-        final String version1Uri = postObjectVersion(objId, date1);
+        // Enable versioning
+        enableVersioning(containerUri);
 
-        // make sure the version exists
-        assertEquals(OK.getStatusCode(),
-            getStatus(new HttpGet(version1Uri)));
+        assertEquals("fcr:versions must be available after enabling versioning",
+                OK.getStatusCode(), getStatus(new HttpGet(versionsUri)));
 
-        // remove the version we created
-        assertEquals(NO_CONTENT.getStatusCode(),
-            getStatus(new HttpDelete(version1Uri)));
-
-        // make sure the version is gone
-        assertEquals(NOT_FOUND.getStatusCode(),
-            getStatus(new HttpGet(version1Uri)));
+        final String mementoUri = createMemento(subjectUri, null, null, null);
+        assertEquals("Memento must be created",
+                OK.getStatusCode(), getStatus(new HttpGet(mementoUri)));
     }
 
-    @Ignore("Disable until binary version creation implemented")
     @Test
-    public void testDatastreamAutoMixinAndRevert() throws IOException {
-        final String pid = getRandomUniqueId();
-        final String dsid = "ds1";
-        createObjectAndClose(pid);
+    public void testEnableVersioningBinary() throws Exception {
+        final String binaryUri = serverAddress + id + "/ds";
+        createDatastream(id, "ds", "content");
 
-        final String originalContent = "This is the original content";
-        createDatastream(pid, dsid, originalContent);
+        final String versionsUri = binaryUri + "/" + FCR_VERSIONS;
+        assertEquals("fcr:versions must not exist before enabling versioning",
+                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(versionsUri)));
 
-        // datastream should not have fcr:versions endpoint
-        assertEquals(NOT_FOUND.getStatusCode(),
-            getStatus(new HttpGet(serverAddress + pid + "/" + dsid + "/" + FCR_VERSIONS)));
+        final String descUri = serverAddress + id + "/ds/" + FCR_METADATA;
+        final String versionsDescUri = descUri + "/" + FCR_VERSIONS;
+        assertEquals("fcr:metadata/fcr:versions must not exist before enabling versioning",
+                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(versionsDescUri)));
 
-        // datastream should not be versionable
-        final HttpGet getReq = new HttpGet(serverAddress + pid + "/" + dsid + "/" + FCR_METADATA);
-        try (final CloseableHttpResponse response = execute(getReq)) {
-            checkForNLinkHeaders(response, VERSIONED_RESOURCE.getURI(), "type", 0);
-        }
-        // creating a version should fail
-        final HttpPost httpPost = new HttpPost(serverAddress + pid + "/" + dsid + "/fcr:versions");
+        // Enable versioning
+        enableVersioning(binaryUri);
 
-        try (final CloseableHttpResponse response = execute(httpPost)) {
-            assertEquals(NOT_FOUND.getStatusCode(), getStatus(response));
-        }
+        assertEquals("fcr:versions must be available after enabling versioning",
+                OK.getStatusCode(), getStatus(new HttpGet(versionsUri)));
 
-        // Make versionable
-        enableVersioning(serverAddress + pid + "/" + dsid);
+        assertEquals("fcr:metadata/fcr:versions must be available after enabling versioning",
+                OK.getStatusCode(), getStatus(new HttpGet(versionsDescUri)));
 
-        // Now it should succeed
-        try (final CloseableHttpResponse response = execute(httpPost)) {
-            assertEquals(CREATED.getStatusCode(), getStatus(response));
-            final String dsVersionURI = getLocation(response);
-            assertNotNull("No version location header found", dsVersionURI);
-            // version triples should not have fcr:metadata as the subject
-            try (final CloseableDataset dataset = getContent(dsVersionURI)) {
-                final DatasetGraph dsVersionProperties = dataset.asDatasetGraph();
-                assertTrue("Should have triples about the datastream", dsVersionProperties.contains(ANY,
-                        createURI(dsVersionURI.replaceAll("/fcr:metadata","")), ANY, ANY));
-                assertFalse("Shouldn't have triples about fcr:metadata", dsVersionProperties.contains(ANY,
-                        createURI(dsVersionURI), ANY, ANY));
-            }
-        }
-        // datastream should then have versions endpoint
-        assertEquals(OK.getStatusCode(), getStatus(new HttpGet(serverAddress + pid + "/" + dsid + "/fcr:versions")));
-
-        // update the content
-        final String updatedContent = "This is the updated content";
-        executeAndClose(putDSMethod(pid, dsid, updatedContent));
-        try (final CloseableHttpResponse dsResponse = execute(getDSMethod(pid, dsid))) {
-            assertEquals(updatedContent, EntityUtils.toString(dsResponse.getEntity()));
-        }
+        final String mementoUri = createMemento(subjectUri, null, null, null);
+        assertEquals("Memento must be created",
+                OK.getStatusCode(), getStatus(new HttpGet(mementoUri)));
     }
 
     @Test
@@ -993,17 +1018,13 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore("Disable until Fixity check implemented for versioned resource")
     @Test
-    public void testFixityOnVersionedResource() throws IOException {
-        final String id = getRandomUniqueId();
-        final String childId = id + "/child1";
-        createObjectAndClose(id);
-        createDatastream(id, "child1", "foo");
-        enableVersioning(childId);
-        final String childVersion = postObjectVersion(childId);
+    public void testFixityOnVersionedResource() throws Exception {
+        createVersionedBinary(id);
 
-        final HttpGet checkFixity = getObjMethod(childVersion + "/" + FCR_FIXITY);
+        final String mementoUri = createMemento(subjectUri, null, null, null);
+
+        final HttpGet checkFixity = new HttpGet(mementoUri + "/" + FCR_FIXITY);
         try (final CloseableHttpResponse response = execute(checkFixity)) {
             assertEquals("Did not get OK response", OK.getStatusCode(), getStatus(response));
         }
@@ -1086,7 +1107,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    @Ignore("Don't worry about binary Mementos until FCREPO-2708 and FCREPO-2709 land.")
     @Test
     public void testGetLDPNRMementoHeaders() throws Exception {
         final DateTimeFormatter FMT = RFC_1123_DATE_TIME.withZone(ZoneId.of("UTC"));
@@ -1279,39 +1299,18 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                         .anyMatch(l -> l.getRel().equals(CONSTRAINED_BY.getURI())));
     }
 
-    private static void enableVersioning(final String pid) throws IOException {
-        final HttpGet request = new HttpGet(serverAddress + pid);
-        final HttpPut putReq = new HttpPut(serverAddress + pid);
-        try (final CloseableHttpResponse response = execute(request)) {
-            if (getStatus(response) == OK.getStatusCode()) {
-                // Resource exists so get the body to put back with header
-                putReq.setEntity(response.getEntity());
-            }
+    private static void enableVersioning(final String uri) throws Exception {
+        final HttpPut enableMethod = new HttpPut(uri);
+        enableMethod.addHeader(CONTENT_TYPE, N3);
+        enableMethod.addHeader(LINK, VERSIONED_RESOURCE_LINK_HEADER);
+        // Resubmit the existing state of the resource
+        try (final CloseableHttpResponse response = execute(new HttpGet(uri))) {
+            final String body = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
+            enableMethod.setEntity(new StringEntity(body));
         }
-        putReq.setHeader("Link", VERSIONED_RESOURCE_LINK_HEADER);
-        try {
-            execute(putReq);
-        } catch (final IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
-    private String postObjectVersion(final String pid) throws IOException {
-        return postVersion(pid, Instant.now());
-    }
-
-    private String postObjectVersion(final String pid, final Instant datetime) throws IOException {
-        return postVersion(pid, datetime);
-    }
-
-    private String postVersion(final String path, final Instant mementoDateTime) throws IOException {
-        logger.debug("Posting version");
-        final HttpPost postVersion = postObjMethod(path + "/fcr:versions");
-        postVersion.addHeader(MEMENTO_DATETIME_HEADER, DateTimeFormatter.RFC_1123_DATE_TIME.format(mementoDateTime));
-        try (final CloseableHttpResponse response = execute(postVersion)) {
-            assertEquals(CREATED.getStatusCode(), getStatus(response));
-            assertNotNull("No version location header found", getLocation(response));
-            return getLocation(response);
+        try (final CloseableHttpResponse response = execute(enableMethod)) {
+            assertEquals("Didn't get a CREATED response!", NO_CONTENT.getStatusCode(), getStatus(response));
         }
     }
 
@@ -1330,10 +1329,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         return getDataset(getVersion);
     }
 
-    private static int countTriples(final DatasetGraph g) {
-        return size(g.find());
-    }
-
     private String[] getTimeMapResponseTypes() {
         rdfTypes.add(APPLICATION_LINK_FORMAT);
         return rdfTypes.toArray(new String[rdfTypes.size()]);
@@ -1341,10 +1336,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     protected static void assertMementoUri(final String mementoUri, final String subjectUri) {
         assertTrue(mementoUri.matches(subjectUri + "/fcr:versions/\\d+"));
-    }
-
-    private static void assertNonRdfSourceMementoUri(final String mementoUri, final String subjectUri) {
-        assertTrue(mementoUri.matches(subjectUri + "/fcr:metadata/fcr:versions/\\d+"));
     }
 
     private static void assertHasLink(final CloseableHttpResponse response, final Property relation,
