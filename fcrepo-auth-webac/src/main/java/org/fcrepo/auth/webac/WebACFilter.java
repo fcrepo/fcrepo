@@ -47,7 +47,6 @@ import org.apache.jena.update.UpdateRequest;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
-import org.springframework.web.util.ContentCachingRequestWrapper;
 
 /**
  * @author peichman
@@ -137,10 +136,9 @@ public class WebACFilter implements Filter {
             return false;
         }
         if (httpRequest.getInputStream() != null) {
-            final ContentCachingRequestWrapper cachedRequest = new ContentCachingRequestWrapper(httpRequest);
             boolean noDeletes = false;
             try {
-                noDeletes = !hasDeleteClause(IOUtils.toString(cachedRequest.getInputStream(), UTF_8));
+                noDeletes = !hasDeleteClause(IOUtils.toString(httpRequest.getInputStream(), UTF_8));
             } catch (QueryParseException ex) {
                 log.error("Cannot verify authorization! Exception while inspecting SPARQL query!", ex);
             }
