@@ -69,7 +69,8 @@ public interface VersionService {
             Lang rdfFormat);
 
     /**
-     * Explicitly creates a version of a binary resource. If no contentStream is provided, then
+     * Explicitly creates a version of a binary resource. If contentStream is provided, then it will be used as the
+     * content of the binary memento. Otherwise, the current state of the binary will be used.
      *
      * @param session the session in which the resource resides
      * @param resource the binary resource to version
@@ -90,7 +91,7 @@ public interface VersionService {
             throws InvalidChecksumException;
 
     /**
-     * Explicitly creates a version of a binary resource. If no contentStream is provided, then
+     * Explicitly creates a version of a binary resource from the current state of that binary.
      *
      * @param session the session in which the resource resides
      * @param resource the binary resource to version

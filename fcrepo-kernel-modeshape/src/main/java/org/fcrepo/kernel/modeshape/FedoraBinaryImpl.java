@@ -484,7 +484,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
             if (descNode == null) {
                 return false;
             }
-            return getDescriptionNode().hasProperty(relPath);
+            return descNode.hasProperty(relPath);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }

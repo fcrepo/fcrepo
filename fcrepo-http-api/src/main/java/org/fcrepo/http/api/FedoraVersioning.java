@@ -204,7 +204,7 @@ public class FedoraVersioning extends ContentExposingResource {
                 }
                 // Create rdf memento if the request resource was an rdf resource or a binary from the
                 // current version of the original resource.
-                if (!isBinary || (isBinary && createFromExisting)) {
+                if (!isBinary || createFromExisting) {
                     // Version the description in case the original is a binary
                     final FedoraResource originalResource = resource().getDescription();
                     final InputStream bodyStream = createFromExisting ? null : requestBodyStream;
