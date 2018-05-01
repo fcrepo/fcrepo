@@ -1329,6 +1329,15 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testPutBinaryChildViolation() throws IOException {
+        final String id = getRandomUniqueId();
+        createDatastream(id, "binary", "some-content");
+
+        final String location = serverAddress + id + "/binary/xx";
+        assertEquals("Should be a 409 Conflict!", CONFLICT.getStatusCode(), getStatus(new HttpPut(location)));
+    }
+
+    @Test
     public void testBinaryEtags() throws IOException, InterruptedException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);

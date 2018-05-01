@@ -435,6 +435,9 @@ public class FedoraLdp extends ContentExposingResource {
                                 + " to " + interactionModel + " is not allowed!");
                 }
             } else {
+
+                checkExistingAncestor(path);
+
                 final MediaType effectiveContentType
                         = requestBodyStream == null || requestContentType == null ? null : contentType;
                 resource = createFedoraResource(path, interactionModel, effectiveContentType,
@@ -837,6 +840,21 @@ public class FedoraLdp extends ContentExposingResource {
 
         // SPARQL updates are done on containers.
         return isRdfContentType(requestContentType.toString()) || matchContentType(ctRequest, ctSPARQLUpdate);
+    }
+
+    private void checkExistingAncestor(final String path) {
+        // check the closest existing ancestor for containment violations.
+        String parentPath = path.substring(0, path.lastIndexOf("/"));
+        while (!(parentPath.isEmpty() || parentPath.equals("/"))) {
+            if (nodeService.exists(session.getFedoraSession(), parentPath)) {
+                if (!(getResourceFromPath(parentPath) instanceof Container)) {
+                    throw new ClientErrorException("Unable to add child " + path.replace(parentPath, "")
+                            + " to resource " + parentPath + ".", CONFLICT);
+                }
+                break;
+            }
+            parentPath = parentPath.substring(0, parentPath.lastIndexOf("/"));
+        }
     }
 
     private FedoraResource createFedoraResource(final String path, final String interactionModel,
