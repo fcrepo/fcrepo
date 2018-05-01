@@ -417,6 +417,17 @@ public class WebACRecipesIT extends AbstractResourceIT {
         assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestGet3));
     }
 
+    /**
+     * Test cases to verify authorization with only acl:Append mode configured
+     * in the acl authorization of an resource.
+     * Tests:
+     *  1. Deny(403) on GET.
+     *  2. Allow(204) on PATCH.
+     *  3. Deny(403) on DELETE.
+     *  4. Deny(403) on PATCH with SPARQL DELETE statements.
+     *  5. Allow(400) on PATCH with empty SPARQL content.
+     *  6. Deny(403) on PATCH with non-SPARQL content,
+     */
     @Test
     public void scenario18Test1() throws IOException, UnsupportedEncodingException {
         final String testObj = ingestObj("/rest/append_only_resource");
@@ -469,6 +480,14 @@ public class WebACRecipesIT extends AbstractResourceIT {
 
     }
 
+    /**
+     * Test cases to verify authorization with acl:Read and acl:Append modes
+     * configured in the acl authorization of an resource.
+     * Tests:
+     *  1. Allow(200) on GET.
+     *  2. Allow(204) on PATCH.
+     *  3. Deny(403) on DELETE.
+     */
     @Test
     public void scenario18Test2() throws IOException, UnsupportedEncodingException {
         final String testObj = ingestObj("/rest/read_append_resource");
@@ -507,6 +526,14 @@ public class WebACRecipesIT extends AbstractResourceIT {
         assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestDelete));
     }
 
+    /**
+     * Test cases to verify authorization with acl:Read, acl:Append and 
+     * acl:Write modes configured in the acl authorization of an resource.
+     * Tests:
+     *  1. Allow(200) on GET.
+     *  2. Allow(204) on PATCH.
+     *  3. Allow(204) on DELETE.
+     */
     @Test
     public void scenario18Test3() throws IOException, UnsupportedEncodingException {
         final String testObj = ingestObj("/rest/read_append_write_resource");
