@@ -100,14 +100,35 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
 
     @Override
     public FedoraResource getDescription() {
+        final Node descNode = getDescriptionNodeOrNull();
+        if (descNode == null) {
+            return null;
+        }
         return new NonRdfSourceDescriptionImpl(getDescriptionNode());
     }
 
     @Override
     protected Node getDescriptionNode() {
         try {
+            final Node node = getNode();
+            if (isMemento()) {
+                final String mementoName = node.getName();
+                return node.getParent().getParent().getNode(FEDORA_DESCRIPTION)
+                        .getNode(LDPCV_TIME_MAP).getNode(mementoName);
+            }
             return getNode().getNode(FEDORA_DESCRIPTION);
         } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    private Node getDescriptionNodeOrNull() {
+        try {
+            return getDescriptionNode();
+        } catch (final RepositoryRuntimeException e) {
+            if (e.getCause() instanceof PathNotFoundException) {
+                return null;
+            }
             throw new RepositoryRuntimeException(e);
         }
     }
@@ -152,16 +173,7 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
             throws InvalidChecksumException {
 
         try {
-            final Node descNode = getDescriptionNode();
             final Node dsNode = getNode();
-
-            if (descNode != null) {
-                descNode.setProperty(HAS_MIME_TYPE, contentType);
-            }
-
-            if (originalFileName != null) {
-                descNode.setProperty(FILENAME, originalFileName);
-            }
 
             LOGGER.debug("Created content node at path: {}", dsNode.getPath());
 
@@ -193,9 +205,20 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
             final Collection<URI> nonNullChecksums = (null == checksums) ? new HashSet<>() : checksums;
             verifyChecksums(nonNullChecksums, dataProperty);
 
+            final Node descNode = getDescriptionNodeOrNull();
+
             decorateContentNode(dsNode, descNode, nonNullChecksums);
             FedoraTypesUtils.touch(dsNode);
-            FedoraTypesUtils.touch(descNode);
+
+            if (descNode != null) {
+                descNode.setProperty(HAS_MIME_TYPE, contentType);
+
+                if (originalFileName != null) {
+                    descNode.setProperty(FILENAME, originalFileName);
+                }
+
+                FedoraTypesUtils.touch(descNode);
+            }
 
             LOGGER.debug("Created data property at path: {}", dataProperty.getPath());
 
@@ -327,10 +350,14 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
                 return getDescriptionProperty(HAS_MIME_TYPE).getString()
                         .replace(FIELD_DELIMITER + XSDstring.getURI(), "");
             }
-            return "application/octet-stream";
+        } catch (final RepositoryRuntimeException e) {
+            if (!(e.getCause() instanceof PathNotFoundException) || !isMemento()) {
+                throw e;
+            }
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
+        return "application/octet-stream";
     }
 
     /*
@@ -411,7 +438,9 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
     public void delete() {
         final FedoraResource description = getDescription();
 
-        description.delete();
+        if (description != null) {
+            description.delete();
+        }
 
         super.delete();
     }
@@ -441,8 +470,10 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
             final String[] checksumArray = new String[checksums.size()];
             checksums.stream().map(Object::toString).collect(Collectors.toSet()).toArray(checksumArray);
 
-            descNode.setProperty(CONTENT_DIGEST, checksumArray);
-            descNode.setProperty(CONTENT_SIZE, dataProperty.getLength());
+            if (descNode != null) {
+                descNode.setProperty(CONTENT_DIGEST, checksumArray);
+                descNode.setProperty(CONTENT_SIZE, dataProperty.getLength());
+            }
 
             LOGGER.debug("Decorated data property at path: {}", dataProperty.getPath());
         }
@@ -450,7 +481,11 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
 
     private boolean hasDescriptionProperty(final String relPath) {
         try {
-            return getDescriptionNode().hasProperty(relPath);
+            final Node descNode = getDescriptionNodeOrNull();
+            if (descNode == null) {
+                return false;
+            }
+            return descNode.hasProperty(relPath);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }

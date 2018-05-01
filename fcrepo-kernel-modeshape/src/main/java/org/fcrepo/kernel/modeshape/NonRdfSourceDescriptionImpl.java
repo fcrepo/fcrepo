@@ -24,11 +24,13 @@ import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isNonRdfSourceD
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.TripleCategory;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -73,7 +75,13 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements N
     private Node getContentNode() {
         LOGGER.trace("Retrieved datastream content node.");
         try {
+            if (isMemento()) {
+                final String mementoName = node.getName();
+                return node.getParent().getParent().getParent().getNode(LDPCV_TIME_MAP).getNode(mementoName);
+            }
             return node.getParent();
+        } catch (final PathNotFoundException e) {
+            throw new PathNotFoundRuntimeException(e);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -82,7 +90,8 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements N
     @Override
     public RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> idTranslator,
                                 final Set<? extends TripleCategory> contexts) {
-        final FedoraResource described = getDescribedResource();
+        final FedoraResource described = getOriginalResource().getDescribedResource();
+
         final org.apache.jena.graph.Node describedNode = idTranslator.reverse().convert(described).asNode();
         final String resourceUri = idTranslator.reverse().convert(this).getURI();
 

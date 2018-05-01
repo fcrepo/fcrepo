@@ -31,6 +31,7 @@ import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -65,6 +66,9 @@ public class HttpApiResourcesTest {
     @Mock
     private FedoraBinary mockBinary;
 
+    @Mock
+    private NonRdfSourceDescription mockDescription;
+
     @Before
     public void setUp() {
         testObj = new HttpApiResources();
@@ -96,13 +100,15 @@ public class HttpApiResourcesTest {
     }
 
     @Test
-    public void shouldDecorateDatastreamsWithLinksToFixityChecks() {
+    public void shouldDecorateDescriptionWithLinksToFixityChecks() {
+        when(mockDescription.getDescribedResource()).thenReturn(mockBinary);
+        when(mockDescription.getPath()).thenReturn("/some/path/to/datastream/fedora:description");
         when(mockBinary.getPath()).thenReturn("/some/path/to/datastream");
         when(mockBinary.getDescribedResource()).thenReturn(mockBinary);
         final Resource graphSubject = mockSubjects.reverse().convert(mockBinary);
 
         final Model model =
-            testObj.createModelForResource(mockBinary, uriInfo, mockSubjects);
+            testObj.createModelForResource(mockDescription, uriInfo, mockSubjects);
 
         assertTrue(model.contains(graphSubject, HAS_FIXITY_SERVICE));
     }

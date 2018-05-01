@@ -77,7 +77,7 @@ public class RequiredPropertiesUtil {
      * @throws ConstraintViolationException if model does not contain all required server-managed triples for binary
      * description
      */
-    public static void assertRequiredBinaryTriples(final Model model)
+    public static void assertRequiredDescriptionTriples(final Model model)
             throws ConstraintViolationException {
         assertContainsRequiredProperties(model, REQUIRED_PROPERTIES);
         assertContainsRequiredTypes(model, BINARY_TYPES);

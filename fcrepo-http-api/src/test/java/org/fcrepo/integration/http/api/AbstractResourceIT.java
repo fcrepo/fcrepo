@@ -426,6 +426,20 @@ public abstract class AbstractResourceIT {
         return dcResp;
     }
 
+    protected CloseableHttpResponse setDescriptionProperty(final String id, final String txId,
+            final String propertyUri, final String value) throws IOException {
+        final HttpPatch postProp = new HttpPatch(serverAddress + (txId != null ? txId + "/" : "") + id +
+                "/fcr:metadata");
+        postProp.setHeader(CONTENT_TYPE, "application/sparql-update");
+        final String updateString =
+                "INSERT { <" + serverAddress + id + "> <" + propertyUri + "> \"" + value + "\" } WHERE { }";
+        postProp.setEntity(new StringEntity(updateString));
+        final CloseableHttpResponse dcResp = execute(postProp);
+        assertEquals(dcResp.getStatusLine().toString(), NO_CONTENT.getStatusCode(), getStatus(dcResp));
+        postProp.releaseConnection();
+        return dcResp;
+    }
+
     /**
      * Creates a transaction, asserts that it's successful and returns the transaction location.
      *

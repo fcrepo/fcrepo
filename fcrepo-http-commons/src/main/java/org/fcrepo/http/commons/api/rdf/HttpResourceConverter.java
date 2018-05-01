@@ -132,7 +132,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
                 final Node node = getNode(path);
 
                 final boolean metadata = values.containsKey("path")
-                        && values.get("path").endsWith("/" + FCR_METADATA);
+                        && values.get("path").contains("/" + FCR_METADATA);
 
                 final FedoraResource fedoraResource = nodeConverter.convert(node);
 

@@ -119,6 +119,7 @@ import org.fcrepo.kernel.api.exception.InteractionModelViolationException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.FedoraTimeMap;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.utils.GraphDifferencer;
@@ -176,8 +177,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     private static final PropertyConverter propertyConverter = new PropertyConverter();
 
     public static final String LDPCV_TIME_MAP = "fedora:timemap";
-
-    public static final String LDPCV_BINARY_TIME_MAP = "fedora:binaryTimemap";
 
     public static final String CONTAINER_WEBAC_ACL = "fedora:acl";
 
@@ -411,11 +410,28 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     }
 
     @Override
+    public FedoraResource getOriginalResource() {
+        if (!isMemento()) {
+            return this;
+        }
+
+        try {
+            return nodeConverter.convert(node.getParent().getParent());
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    @Override
     public FedoraResource getTimeMap() {
+        if (this instanceof FedoraTimeMap) {
+            return this;
+        }
+
         try {
             final Node timeMapNode;
-            if (this instanceof FedoraBinary) {
-                timeMapNode = getNode().getParent().getNode(LDPCV_BINARY_TIME_MAP);
+            if (isMemento()) {
+                timeMapNode = node.getParent();
             } else {
                 timeMapNode = node.getNode(LDPCV_TIME_MAP);
             }
@@ -549,6 +565,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @Override
     public void delete() {
         try {
+            // Precalculate before node is removed
+            final boolean isMemento = isMemento();
+
             // Remove inbound references to this resource and, recursively, any of its children
             removeReferences(node);
 
@@ -565,7 +584,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             node.remove();
 
             if (parent != null) {
-                createTombstone(parent, name);
+                if (!isMemento) {
+                    createTombstone(parent, name);
+                }
 
                 // also update membershipResources for Direct/Indirect Containers
                 containingNode.filter(UncheckedPredicate.uncheck((final Node ancestor) ->
