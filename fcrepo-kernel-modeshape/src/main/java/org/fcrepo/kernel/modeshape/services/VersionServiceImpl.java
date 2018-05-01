@@ -253,9 +253,9 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
         if (contentStream == null) {
             LOGGER.debug("Creating memento {} for resource {} using existing state", mementoPath, resource.getPath());
             // Creating memento from existing resource
-            populateBinaryMementoFromExisting(resource, memento);
+            populateBinaryMementoFromExisting(resource, memento, storagePolicyDecisionPoint);
         } else {
-            memento.setContent(contentStream, null, checksums, null, null);
+            memento.setContent(contentStream, null, checksums, null, storagePolicyDecisionPoint);
         }
 
         decorateWithMementoProperties(session, mementoPath, dateTime);
@@ -263,8 +263,8 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
         return memento;
     }
 
-    private void populateBinaryMementoFromExisting(final FedoraBinary resource, final FedoraBinary memento)
-            throws InvalidChecksumException {
+    private void populateBinaryMementoFromExisting(final FedoraBinary resource, final FedoraBinary memento,
+            final StoragePolicyDecisionPoint storagePolicyDecisionPoint) throws InvalidChecksumException {
 
         final Node contentNode = getJcrNode(resource);
         List<URI> checksums = null;
@@ -283,7 +283,7 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
             }
 
             memento.setContent(resource.getContent(), null, checksums,
-                    null, null);
+                    null, storagePolicyDecisionPoint);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
