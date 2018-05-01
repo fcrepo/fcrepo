@@ -77,7 +77,7 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements N
         try {
             if (isMemento()) {
                 final String mementoName = node.getName();
-                return node.getNode("../../../" + LDPCV_TIME_MAP + "/" + mementoName);
+                return node.getParent().getParent().getParent().getNode(LDPCV_TIME_MAP).getNode(mementoName);
             }
             return node.getParent();
         } catch (final PathNotFoundException e) {

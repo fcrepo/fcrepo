@@ -113,7 +113,8 @@ public class FedoraBinaryImpl extends FedoraResourceImpl implements FedoraBinary
             final Node node = getNode();
             if (isMemento()) {
                 final String mementoName = node.getName();
-                return node.getNode("../../" + FEDORA_DESCRIPTION + "/" + LDPCV_TIME_MAP + "/" + mementoName);
+                return node.getParent().getParent().getNode(FEDORA_DESCRIPTION)
+                        .getNode(LDPCV_TIME_MAP).getNode(mementoName);
             }
             return getNode().getNode(FEDORA_DESCRIPTION);
         } catch (final RepositoryException e) {
