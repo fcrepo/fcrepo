@@ -19,9 +19,11 @@ package org.fcrepo.auth.webac;
 
 import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
 import static javax.servlet.http.HttpServletResponse.SC_OK;
+import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_ADMIN_ROLE;
 import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_USER_ROLE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ;
+import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_APPEND;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
@@ -64,6 +66,8 @@ public class WebACFilterTest {
     private WebACFilter webacFilter = new WebACFilter();
 
     private static final WebACPermission readPermission = new WebACPermission(WEBAC_MODE_READ, testURI);
+
+    private static final WebACPermission appendPermission = new WebACPermission(WEBAC_MODE_APPEND, testURI);
 
     private static final WebACPermission writePermission = new WebACPermission(WEBAC_MODE_WRITE, testURI);
 
@@ -108,6 +112,7 @@ public class WebACFilterTest {
         when(mockSubject.hasRole(FEDORA_ADMIN_ROLE)).thenReturn(false);
         when(mockSubject.hasRole(FEDORA_USER_ROLE)).thenReturn(true);
         when(mockSubject.isPermitted(readPermission)).thenReturn(false);
+        when(mockSubject.isPermitted(appendPermission)).thenReturn(false);
         when(mockSubject.isPermitted(writePermission)).thenReturn(false);
     }
 
@@ -117,6 +122,17 @@ public class WebACFilterTest {
         when(mockSubject.hasRole(FEDORA_ADMIN_ROLE)).thenReturn(false);
         when(mockSubject.hasRole(FEDORA_USER_ROLE)).thenReturn(true);
         when(mockSubject.isPermitted(readPermission)).thenReturn(true);
+        when(mockSubject.isPermitted(appendPermission)).thenReturn(false);
+        when(mockSubject.isPermitted(writePermission)).thenReturn(false);
+    }
+
+    private void setupAuthUserReadAppend() {
+        // authenticated user with only read permissions
+        when(mockSubject.isAuthenticated()).thenReturn(true);
+        when(mockSubject.hasRole(FEDORA_ADMIN_ROLE)).thenReturn(false);
+        when(mockSubject.hasRole(FEDORA_USER_ROLE)).thenReturn(true);
+        when(mockSubject.isPermitted(readPermission)).thenReturn(true);
+        when(mockSubject.isPermitted(appendPermission)).thenReturn(true);
         when(mockSubject.isPermitted(writePermission)).thenReturn(false);
     }
 
@@ -126,6 +142,17 @@ public class WebACFilterTest {
         when(mockSubject.hasRole(FEDORA_ADMIN_ROLE)).thenReturn(false);
         when(mockSubject.hasRole(FEDORA_USER_ROLE)).thenReturn(true);
         when(mockSubject.isPermitted(readPermission)).thenReturn(true);
+        when(mockSubject.isPermitted(appendPermission)).thenReturn(false);
+        when(mockSubject.isPermitted(writePermission)).thenReturn(true);
+    }
+
+    private void setupAuthUserReadAppendWrite() {
+        // authenticated user with read and write permissions
+        when(mockSubject.isAuthenticated()).thenReturn(true);
+        when(mockSubject.hasRole(FEDORA_ADMIN_ROLE)).thenReturn(false);
+        when(mockSubject.hasRole(FEDORA_USER_ROLE)).thenReturn(true);
+        when(mockSubject.isPermitted(readPermission)).thenReturn(true);
+        when(mockSubject.isPermitted(appendPermission)).thenReturn(true);
         when(mockSubject.isPermitted(writePermission)).thenReturn(true);
     }
 
@@ -265,6 +292,77 @@ public class WebACFilterTest {
     }
 
     @Test
+    public void testAuthUserReadAppendPatchNonSparqlContent() throws ServletException, IOException {
+        setupAuthUserReadAppend();
+        // PATCH (Non Sparql Content) => 403
+        request.setRequestURI(testPath);
+        request.setMethod("PATCH");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_FORBIDDEN, response.getStatus());
+    }
+
+    @Test
+    public void testAuthUserReadAppendPatchSparqlNoContent() throws ServletException, IOException {
+        setupAuthUserReadAppend();
+        // PATCH (Sparql No Content) => 200 (204)
+        request.setContentType(contentTypeSPARQLUpdate);
+        request.setRequestURI(testPath);
+        request.setMethod("PATCH");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_OK, response.getStatus());
+    }
+
+    @Test
+    public void testAuthUserReadAppendPatchSparqlInvalidContent() throws ServletException, IOException {
+        setupAuthUserReadAppend();
+        // PATCH (Sparql Invalid Content) => 403
+        request.setContentType(contentTypeSPARQLUpdate);
+        request.setContent("SOME TEXT".getBytes());
+        request.setRequestURI(testPath);
+        request.setMethod("PATCH");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_FORBIDDEN, response.getStatus());
+    }
+
+    @Test
+    public void testAuthUserReadAppendPatchSparqlInsert() throws ServletException, IOException {
+        setupAuthUserReadAppend();
+        // PATCH (Sparql INSERT) => 200 (204)
+        final String updateString =
+                "INSERT { <> <http://purl.org/dc/elements/1.1/title> \"new title\" } WHERE { }";
+        request.setContentType(contentTypeSPARQLUpdate);
+        request.setContent(updateString.getBytes());
+        request.setRequestURI(testPath);
+        request.setMethod("PATCH");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_OK, response.getStatus());
+    }
+
+    @Test
+    public void testAuthUserReadAppendPatchSparqlDelete() throws ServletException, IOException {
+        setupAuthUserReadAppend();
+        // PATCH (Sparql DELETE) => 403
+        final String updateString =
+                "DELETE { <> <http://purl.org/dc/elements/1.1/title> \"new title\" } WHERE { }";
+        request.setContentType(contentTypeSPARQLUpdate);
+        request.setContent(updateString.getBytes());
+        request.setRequestURI(testPath);
+        request.setMethod("PATCH");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_FORBIDDEN, response.getStatus());
+    }
+
+    @Test
+    public void testAuthUserReadAppendDelete() throws ServletException, IOException {
+        setupAuthUserReadAppend();
+        // DELETE => 403
+        request.setRequestURI(testPath);
+        request.setMethod("DELETE");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_FORBIDDEN, response.getStatus());
+    }
+
+    @Test
     public void testAuthUserReadWriteGet() throws ServletException, IOException {
         setupAuthUserReadWrite();
         // GET => 200
@@ -308,6 +406,17 @@ public class WebACFilterTest {
         webacFilter.doFilter(request, response, filterChain);
         assertEquals(SC_OK, response.getStatus());
     }
+
+    @Test
+    public void testAuthUserReadAppendWriteDelete() throws ServletException, IOException {
+        setupAuthUserReadAppendWrite();
+        // DELETE => 200
+        request.setRequestURI(testPath);
+        request.setMethod("DELETE");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_OK, response.getStatus());
+    }
+
     @After
     public void clearSubject() {
         // unbind the subject to the thread

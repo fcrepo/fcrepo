@@ -1,0 +1,7 @@
+@prefix acl: <http://www.w3.org/ns/auth/acl#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+
+<> a acl:Authorization ;
+   acl:agent "user18" ;
+   acl:mode acl:Append ;
+   acl:accessTo </rest/append_only_resource> .

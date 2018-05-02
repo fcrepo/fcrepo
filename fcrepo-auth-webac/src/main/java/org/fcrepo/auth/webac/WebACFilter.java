@@ -17,12 +17,15 @@
  */
 package org.fcrepo.auth.webac;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
 import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_ADMIN_ROLE;
 import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_USER_ROLE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ;
+import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_APPEND;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE;
 import static org.slf4j.LoggerFactory.getLogger;
+import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 
 import java.io.IOException;
 import java.net.URI;
@@ -36,6 +39,11 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.jena.query.QueryParseException;
+import org.apache.jena.sparql.modify.request.UpdateModify;
+import org.apache.jena.update.UpdateFactory;
+import org.apache.jena.update.UpdateRequest;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
@@ -56,7 +64,10 @@ public class WebACFilter implements Filter {
     public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain chain)
             throws IOException, ServletException {
         final Subject currentUser = SecurityUtils.getSubject();
-        final HttpServletRequest httpRequest = (HttpServletRequest) request;
+        HttpServletRequest httpRequest = (HttpServletRequest) request;
+        if (isSparqlUpdate(httpRequest)) {
+            httpRequest = new CachedSparqlRequest(httpRequest);
+        }
 
         if (currentUser.isAuthenticated()) {
             log.debug("User is authenticated");
@@ -87,7 +98,7 @@ public class WebACFilter implements Filter {
         }
 
         // proceed to the next filter
-        chain.doFilter(request, response);
+        chain.doFilter(httpRequest, response);
     }
 
     @Override
@@ -95,7 +106,7 @@ public class WebACFilter implements Filter {
         // this method intentionally left empty
     }
 
-    private boolean isAuthorized(final Subject currentUser, final HttpServletRequest httpRequest) {
+    private boolean isAuthorized(final Subject currentUser, final HttpServletRequest httpRequest) throws IOException {
         final URI requestURI = URI.create(httpRequest.getRequestURL().toString());
         log.debug("Request URI is {}", requestURI);
         switch (httpRequest.getMethod()) {
@@ -104,11 +115,50 @@ public class WebACFilter implements Filter {
         case "PUT":
         case "POST":
         case "DELETE":
-        case "PATCH":
             return currentUser.isPermitted(new WebACPermission(WEBAC_MODE_WRITE, requestURI));
+        case "PATCH":
+            if (currentUser.isPermitted(new WebACPermission(WEBAC_MODE_WRITE, requestURI))) {
+                return true;
+            } else {
+                if (currentUser.isPermitted(new WebACPermission(WEBAC_MODE_APPEND, requestURI))) {
+                    return isPatchContentPermitted(httpRequest);
+                }
+            }
+            return false;
         default:
             return false;
         }
     }
 
+    private boolean isPatchContentPermitted(final HttpServletRequest httpRequest) throws IOException {
+        if (!isSparqlUpdate(httpRequest)) {
+            log.debug("Cannot verify authorization on NON-SPARQL Patch request.");
+            return false;
+        }
+        if (httpRequest.getInputStream() != null) {
+            boolean noDeletes = false;
+            try {
+                noDeletes = !hasDeleteClause(IOUtils.toString(httpRequest.getInputStream(), UTF_8));
+            } catch (QueryParseException ex) {
+                log.error("Cannot verify authorization! Exception while inspecting SPARQL query!", ex);
+            }
+            return noDeletes;
+        } else {
+            log.debug("Authorizing SPARQL request with no content.");
+            return true;
+        }
+    }
+
+    private boolean hasDeleteClause(final String sparqlString) {
+        final UpdateRequest sparqlUpdate = UpdateFactory.create(sparqlString);
+        return sparqlUpdate.getOperations().stream().filter(update -> (update instanceof UpdateModify))
+                .peek(update -> log.debug("Inspecting update statement for DELETE clause: {}", update.toString()))
+                .map(update -> (UpdateModify)update)
+                .anyMatch(UpdateModify::hasDeleteClause);
+    }
+
+    private boolean isSparqlUpdate(final HttpServletRequest request) {
+        return request.getMethod().equals("PATCH") &&
+                contentTypeSPARQLUpdate.equalsIgnoreCase(request.getContentType());
+    }
 }
