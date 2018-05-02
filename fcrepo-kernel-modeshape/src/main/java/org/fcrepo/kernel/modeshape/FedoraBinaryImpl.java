@@ -30,8 +30,6 @@ import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.api.TripleCategory;
 import org.slf4j.Logger;
 
-import static org.fcrepo.kernel.api.FedoraExternalContent.PROXY;
-import static org.fcrepo.kernel.api.FedoraExternalContent.REDIRECT;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFedoraBinary;
 
 import javax.jcr.Node;
@@ -125,11 +123,12 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
     */
     private FedoraBinary getBinaryImplementation(final String extUrl) {
         String url = extUrl;
+        LOGGER.debug("getBinaryImplementation ONE: url is '{}'",url);
         if (url == null || url.isEmpty()) {
             url = getURLInfo();
         }
 
-        LOGGER.debug("getBinaryImplementation: url is '{}'",url);
+        LOGGER.debug("getBinaryImplementation TWO: url is '{}'",url);
         if (url != null) {
             if (url.toLowerCase().startsWith(LOCAL_FILE_ACCESS_TYPE)) {
                 LOGGER.debug("Instantiating local file FedoraBinary");
@@ -146,10 +145,10 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
 
     private String getURLInfo() {
         try {
-            if (getNode().hasProperty(PROXY_FOR)) {
-                return getNode().getProperty(PROXY_FOR).toString();
-            } else if (getNode().hasProperty(REDIRECTS_TO)) {
-                return getNode().getProperty(REDIRECTS_TO).toString();
+            if (getDescriptionNode().hasProperty(PROXY_FOR)) {
+                return getDescriptionNode().getProperty(PROXY_FOR).getValue().getString();
+            } else if (getDescriptionNode().hasProperty(REDIRECTS_TO)) {
+                return getDescriptionNode().getProperty(REDIRECTS_TO).getValue().getString();
             }
         } catch (RepositoryException e) {
             throw new RepositoryRuntimeException(e);

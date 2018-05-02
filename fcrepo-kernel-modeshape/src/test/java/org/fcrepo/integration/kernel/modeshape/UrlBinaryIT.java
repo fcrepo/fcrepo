@@ -125,7 +125,7 @@ public class UrlBinaryIT extends AbstractIT {
     @Test
     public void testDatastream() throws Exception {
         logger.info("Running testDatastream");
-        final FedoraBinary binary = binaryService.findOrCreate(session, dsId);
+        final FedoraBinary binary = binaryService.findOrCreate(session, "/externalContent");
         logger.info("Just found or created");
         binary.setExternalContent(null, mimeType, null, null, "proxy", fileUrl);
 
@@ -133,12 +133,16 @@ public class UrlBinaryIT extends AbstractIT {
         assertFalse(binary.isRedirect());
         session.commit();
 
-        final FedoraBinary ds = binaryService.findOrCreate(session, dsId);
+        final FedoraBinary bin = binaryService.findOrCreate(session, "/externalContent");
 
-        assertEquals(EXPECTED_CONTENT.length(), ds.getContentSize());
-        assertEquals(EXPECTED_CONTENT, contentString(ds));
+        assertTrue(bin.isProxy());
+        assertFalse(bin.isRedirect());
+        LOGGER.info("testGetContent: bin.url: {}", bin.getProxyURL());
 
-        assertEquals(mimeType, ds.getMimeType());
+        assertEquals(EXPECTED_CONTENT.length(), bin.getContentSize());
+        assertEquals(EXPECTED_CONTENT, contentString(bin));
+
+        assertEquals(mimeType, bin.getMimeType());
     }
 
     @Test
@@ -188,8 +192,8 @@ public class UrlBinaryIT extends AbstractIT {
         assertNotEquals(0, fixityResults.size());
 
         final String checksum = fixityResults.iterator().next().toString();
-        LOGGER.debug("GOT IT GOT IT GOT IT: checksum returned is: {}", checksum);
-        LOGGER.debug("GOT IT GOT IT GOT IT: comparing to: {}", "urn:sha1:" + CONTENT_SHA1);
+        LOGGER.info("GOT IT GOT IT GOT IT: checksum returned is: {}", checksum);
+        LOGGER.info("GOT IT GOT IT GOT IT: comparing to: {}", "urn:sha1:" + CONTENT_SHA1);
         assertEquals("Fixity Checksum doesn't match",
                 "urn:sha1:" + CONTENT_SHA1, checksum);
     }

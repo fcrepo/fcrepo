@@ -105,7 +105,8 @@ public class InternalFedoraBinary extends AbstractFedoraBinary {
 
     @Override
     public void setExternalContent(final InputStream content, final String contentType, final Collection<URI> checksums,
-                                   final String originalFileName, final String externalHandling, final String externalUrl)
+                                   final String originalFileName, final String externalHandling,
+                                   final String externalUrl)
             throws InvalidChecksumException {
         throw new UnsupportedOperationException("Cannot call setExternalContent from this context");
     }
@@ -241,7 +242,7 @@ public class InternalFedoraBinary extends AbstractFedoraBinary {
     public RdfStream getFixity(final IdentifierConverter<Resource, FedoraResource> idTranslator,
             final URI digestUri,
             final long size) {
-
+        LOGGER.info("getFixity()");
         fixityCheckCounter.inc();
 
         try (final Timer.Context context = timer.time()) {
@@ -266,6 +267,7 @@ public class InternalFedoraBinary extends AbstractFedoraBinary {
             final Collection<String> algorithms)
             throws UnsupportedAlgorithmException, UnsupportedAccessTypeException {
 
+        LOGGER.info("checkFixity()");
         fixityCheckCounter.inc();
 
         try (final Timer.Context context = timer.time()) {
@@ -284,6 +286,7 @@ public class InternalFedoraBinary extends AbstractFedoraBinary {
             return;
         }
 
+        LOGGER.info("decorateContentNode()");
         if (dsNode.hasProperty(JCR_DATA)) {
             final Property dataProperty = dsNode.getProperty(JCR_DATA);
             final Binary binary = (Binary) dataProperty.getBinary();

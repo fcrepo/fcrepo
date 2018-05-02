@@ -782,8 +782,8 @@ public class FedoraLdpTest {
 
     @Test(expected = ExternalMessageBodyException.class)
     public void testPostWithExternalMessageBadHandling() throws Exception {
-        final String badExternal = Link.fromUri("http://test.com").rel(EXTERNAL_CONTENT.toString()).param("handling", "boogie")
-            .type("text/plain").build().toString();
+        final String badExternal = Link.fromUri("http://test.com")
+            .rel(EXTERNAL_CONTENT.toString()).param("handling", "boogie").type("text/plain").build().toString();
         final Response actual = testObj.createObject(null, null, null, null, Arrays.asList(badExternal), null);
     }
 

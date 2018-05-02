@@ -79,6 +79,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.EXTERNAL_CONTENT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MIME_TYPE;
@@ -811,9 +812,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
     @Test
     public void testGetExternalDatastreamWithWantDigest() throws IOException, ParseException {
 
+        LOGGER.info("Testing testGetExternalDatastreamWithWantDigest");
         final String dsId = getRandomUniqueId();
         createDatastream(dsId, "x", "01234567890123456789012345678901234567890123456789");
-
         final String dsUrl = serverAddress + dsId + "/x";
 
         final String id = getRandomUniqueId();
@@ -828,6 +829,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         requestConfig.setRedirectsEnabled(false);
         getObjMethod.setConfig(requestConfig.build());
 
+        LOGGER.info("Created, now getting");
         try (final CloseableHttpResponse response = execute(getObjMethod)) {
             assertEquals(TEMPORARY_REDIRECT.getStatusCode(), response.getStatusLine().getStatusCode());
             assertEquals(dsUrl, getLocation(response));

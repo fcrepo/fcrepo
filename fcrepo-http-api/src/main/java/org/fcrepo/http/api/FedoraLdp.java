@@ -320,7 +320,7 @@ public class FedoraLdp extends ContentExposingResource {
 
             if (resource() instanceof FedoraBinary && ((FedoraBinary)resource()).isRedirect()) {
                 return temporaryRedirect(((FedoraBinary) resource()).getRedirectURI()).build();
-            } else{
+            } else {
                 return getContent(rangeValue, getChildrenLimit(), rdfStream);
             }
         } finally {
@@ -447,7 +447,7 @@ public class FedoraLdp extends ContentExposingResource {
                 try {
                     LOGGER.info("PUT PUT after ext handler created: handling: {}, url: {}, mime: {}",
                             extContent.getHandling(), extContent.getURL().toString(), extContent.getContentType());
-                }catch (Exception e) {
+                } catch (Exception e) {
                 }
             }
 
@@ -497,7 +497,7 @@ public class FedoraLdp extends ContentExposingResource {
                     // override a few things, if it's external content
                     if (extContent != null) {
                         LOGGER.info("PUT resource external content '{}'", externalPath);
-                        if(extContent.isCopy()) {
+                        if (extContent.isCopy()) {
                             LOGGER.info("PUT resource external content COPY '{}', '{}'", externalPath,
                                     extContent.getURL());
                             stream = extContent.fetchExternalContent();
@@ -873,7 +873,7 @@ public class FedoraLdp extends ContentExposingResource {
     }
     private void addExternalContentHeaders(final FedoraResource resource) {
        if (resource instanceof FedoraBinary) {
-           if (((FedoraBinary) resource).isProxy()){
+           if (((FedoraBinary) resource).isProxy()) {
                servletResponse.addHeader(CONTENT_LOCATION, (((FedoraBinary)resource).getProxyURL()));
            }
        }

@@ -144,14 +144,13 @@ public class BinaryServiceImplIT extends AbstractIT {
         final String contentType = "application/octet-stream";
 
         final FedoraBinary binary1 = binaryService.findOrCreate(session, "/testLocalFileNode");
-        binary1.setProxyURL(contentFile.toUri().toURL().toString());
-        binary1.setContent(
+        binary1.setExternalContent(
                 null,
                 contentType,
                 null,
                 null,
-                null
-        );
+                "proxy",
+                contentFile.toUri().toURL().toString());
 
         session.commit();
         session.expire();
@@ -163,8 +162,10 @@ public class BinaryServiceImplIT extends AbstractIT {
         assertEquals(contentType, jcrSession.getNode("/testLocalFileNode").getNode(
             FEDORA_DESCRIPTION).getProperty(HAS_MIME_TYPE).getString());
 
+
         final FedoraBinary binary =
                 binaryService.findOrCreate(session, "/testLocalFileNode");
+        assertTrue(binary.isProxy());
         assertEquals("asdf", IOUtils.toString(binary.getContent(), "UTF-8"));
 
         session.expire();

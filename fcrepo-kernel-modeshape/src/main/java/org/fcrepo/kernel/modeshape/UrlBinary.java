@@ -100,6 +100,7 @@ public class UrlBinary extends AbstractFedoraBinary {
             setContentSize(content.length());
             return content.length();
         } catch (final IOException e) {
+            LOGGER.warn("Error getting getContentSize for '{}' : '{}'", getPath(), getResourceUri());
             // Error getting remote size.
         }
         return -1L;
@@ -177,7 +178,7 @@ public class UrlBinary extends AbstractFedoraBinary {
             FedoraTypesUtils.touch(contentNode);
             FedoraTypesUtils.touch(descNode);
 
-            LOGGER.debug("Set url binary content from path: {}", getResourceLocation());
+            LOGGER.info("Set url binary content from path: {}", getResourceLocation());
 
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
@@ -240,6 +241,7 @@ public class UrlBinary extends AbstractFedoraBinary {
      */
     @Override
     public RdfStream getFixity(final IdentifierConverter<Resource, FedoraResource> idTranslator) {
+        LOGGER.info("getFixity generic");
         return getFixity(idTranslator, getContentDigest(), getContentSize());
     }
 
@@ -253,6 +255,7 @@ public class UrlBinary extends AbstractFedoraBinary {
     public RdfStream getFixity(final IdentifierConverter<Resource, FedoraResource> idTranslator, final URI digestUri,
             final long size) {
 
+        LOGGER.info("getFixity specific");
         fixityCheckCounter.inc();
 
         try (final Timer.Context context = timer.time()) {
@@ -265,10 +268,10 @@ public class UrlBinary extends AbstractFedoraBinary {
 
             Collection<FixityResult> fixityResults = null;
             if (isProxy()) {
-                LOGGER.debug("URL Binary -- PROXY and Fixity");
+                LOGGER.info("URL Binary -- PROXY and Fixity");
                 fixityResults = CacheEntryFactory.forProperty(getDescriptionProperty(PROXY_FOR)).checkFixity(algorithm);
             } else if (isRedirect()) {
-                LOGGER.debug("URL Binary -- REDIRECT and Fixity");
+                LOGGER.info("URL Binary -- REDIRECT and Fixity");
                 fixityResults =
                     CacheEntryFactory.forProperty(getDescriptionProperty(REDIRECTS_TO)).checkFixity(algorithm);
             } else {
@@ -285,21 +288,21 @@ public class UrlBinary extends AbstractFedoraBinary {
             final Collection<String> algorithms)
             throws UnsupportedAlgorithmException, UnsupportedAccessTypeException {
 
+        LOGGER.info("checkFixity");
         fixityCheckCounter.inc();
 
         try (final Timer.Context context = timer.time()) {
 
             final String resourceLocation = getResourceLocation();
-            LOGGER.debug("Checking external resource: " + resourceLocation);
+            LOGGER.info("Checking external resource: " + resourceLocation);
             Collection<URI> list = null;
             if (isProxy()) {
                 list = CacheEntryFactory.forProperty(getDescriptionProperty(PROXY_FOR)).checkFixity(algorithms);
-
             } else if (isRedirect()) {
                 list = CacheEntryFactory.forProperty(getDescriptionProperty(REDIRECTS_TO)).checkFixity(algorithms);
             }
-            LOGGER.debug("FIXITY INFO: {} ", list.iterator().next().toString());
-            LOGGER.debug("FIXITY INFO size: {} ", list.size());
+            LOGGER.info("FIXITY INFO: {} ", list.iterator().next().toString());
+            LOGGER.info("FIXITY INFO size: {} ", list.size());
             return list;
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
@@ -317,10 +320,12 @@ public class UrlBinary extends AbstractFedoraBinary {
     }
 
     protected String getResourceLocation() {
-        LOGGER.info("Getting resource location {}", getProxyURL());
+        LOGGER.info("Getting resource location");
         if (isProxy()) {
+            LOGGER.info("Getting resource location PROXY {}", getProxyURL());
             return getProxyURL();
         } else {
+            LOGGER.info("Getting resource location REDIRECT {}", getRedirectURL());
             return getRedirectURL();
         }
     }

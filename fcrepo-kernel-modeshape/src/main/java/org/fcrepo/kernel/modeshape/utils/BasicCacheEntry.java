@@ -69,7 +69,7 @@ public abstract class BasicCacheEntry implements CacheEntry {
             // actually calculate the digest by consuming the stream
             while (fixityInputStream.read(devNull) != -1) { }
 
-            LOGGER.debug("FIXITY ALG and PATH: {} : {}", algorithm, this.getExternalIdentifier());
+            LOGGER.info("FIXITY ALG and PATH: {} : {}", algorithm, this.getExternalIdentifier());
 
             final URI calculatedChecksum =
                     ContentDigest.asURI(algorithm, fixityInputStream.getMessageDigest().digest());
@@ -80,7 +80,7 @@ public abstract class BasicCacheEntry implements CacheEntry {
                                     calculatedChecksum,
                                     algorithm);
 
-            LOGGER.debug("Got {}", result.toString());
+            LOGGER.info("Got {}", result.toString());
 
             return asList(result);
         } catch (final IOException e) {
@@ -107,6 +107,8 @@ public abstract class BasicCacheEntry implements CacheEntry {
             final Map<String, DigestInputStream> digestInputStreams = new HashMap<>();
             InputStream digestStream = binaryStream;
             for (String digestAlg : algorithms) {
+
+                LOGGER.debug("checkFixity() alg is: {}", digestAlg);
                 try {
                     digestStream = new DigestInputStream(digestStream, MessageDigest.getInstance(digestAlg));
                     digestInputStreams.put(digestAlg, (DigestInputStream)digestStream);
