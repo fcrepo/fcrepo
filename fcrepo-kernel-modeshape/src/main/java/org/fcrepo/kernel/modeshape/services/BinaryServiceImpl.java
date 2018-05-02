@@ -24,6 +24,7 @@ import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
+import org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
@@ -128,7 +129,7 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
         return cast(findNode(session, path));
     }
 
-    private static void initializeNewDatastreamProperties(final Node node) {
+    private static void initializeNewBinaryProperties(final Node node) {
         try {
 
             if (node.canAddMixin(FEDORA_RESOURCE)) {

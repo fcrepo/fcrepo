@@ -348,7 +348,7 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
     @Override
     protected boolean hasDescriptionProperty(final String relPath) {
         try {
-            final Node descNode = getDescriptionNodeOrNull();
+            final Node descNode = getDescriptionNode();
             if (descNode == null) {
                 return false;
             }
