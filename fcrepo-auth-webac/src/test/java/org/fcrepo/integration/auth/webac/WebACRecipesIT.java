@@ -426,7 +426,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
      *  3. Deny(403) on DELETE.
      *  4. Deny(403) on PATCH with SPARQL DELETE statements.
      *  5. Allow(400) on PATCH with empty SPARQL content.
-     *  6. Deny(403) on PATCH with non-SPARQL content,
+     *  6. Deny(403) on PATCH with non-SPARQL content.
      */
     @Test
     public void scenario18Test1() throws IOException, UnsupportedEncodingException {
@@ -527,7 +527,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
     }
 
     /**
-     * Test cases to verify authorization with acl:Read, acl:Append and 
+     * Test cases to verify authorization with acl:Read, acl:Append and
      * acl:Write modes configured in the acl authorization of an resource.
      * Tests:
      *  1. Allow(200) on GET.
