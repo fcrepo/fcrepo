@@ -445,6 +445,7 @@ public class FedoraLdpTest {
         when(mockResource.getMimeType()).thenReturn("text/plain");
         when(mockResource.isProxy()).thenReturn(false);
         when(mockResource.isRedirect()).thenReturn(true);
+        when(mockResource.getOriginalResource()).thenReturn(mockResource);
         when(mockResource.getRedirectURI()).thenReturn(URI.create("http:some:uri"));
         final Response actual = testObj.head();
         assertEquals(TEMPORARY_REDIRECT.getStatusCode(), actual.getStatus());
@@ -770,6 +771,7 @@ public class FedoraLdpTest {
         when(mockResource.getMimeType()).thenReturn("text/plain");
         when(mockResource.isProxy()).thenReturn(false);
         when(mockResource.isRedirect()).thenReturn(true);
+        when(mockResource.getOriginalResource()).thenReturn(mockResource);
         when(mockResource.getRedirectURI()).thenReturn(URI.create("http:some:uri"));
         when(mockResource.getContent()).thenReturn(toInputStream("xyz", UTF_8));
         final Response actual = testObj.getResource(null);

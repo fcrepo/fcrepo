@@ -636,9 +636,11 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     @Test
     public void testCreateVersionOfBinary() throws Exception {
-        createVersionedBinary(id);
-
+        logger.debug("testCreateVersionOfBinary()");
+        logger.debug("Creating versioned binary: {}", createVersionedBinary(id));
+        logger.debug("Creating memento for binary.");
         final String mementoUri = createMemento(subjectUri, null, null, null);
+        logger.debug("Done Creating memento for binary.");
         assertMementoUri(mementoUri, subjectUri);
 
         final HttpGet httpGet = new HttpGet(mementoUri);
@@ -1190,18 +1192,24 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     private String createMemento(final String subjectUri, final String mementoDateTime, final String contentType,
             final String body) throws Exception {
         final HttpPost createVersionMethod = new HttpPost(subjectUri + "/" + FCR_VERSIONS);
+        logger.debug("Creating Memento: {}/{}", subjectUri, FCR_VERSIONS);
         if (contentType != null) {
+            logger.debug("Adding content type");
             createVersionMethod.addHeader(CONTENT_TYPE, contentType);
         }
         if (body != null) {
+            logger.debug("Adding body");
             createVersionMethod.setEntity(new StringEntity(body));
         }
         if (mementoDateTime != null) {
+            logger.debug("Adding date time");
             createVersionMethod.addHeader(MEMENTO_DATETIME_HEADER, mementoDateTime);
         }
 
         // Create new memento of resource with updated body
         try (final CloseableHttpResponse response = execute(createVersionMethod)) {
+            logger.debug("Response was: {} {}", response.getStatusLine().getStatusCode(),
+                    response.getStatusLine().getReasonPhrase());
             assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
             assertMementoDatetimeHeaderPresent(response);
 
@@ -1270,6 +1278,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
      */
     private String createVersionedBinary(final String id, final String mimeType, final String content)
         throws Exception {
+        logger.debug("CreateVersionedBinary {}", id);
         final HttpPost createMethod = postObjMethod();
         createMethod.addHeader("Slug", id);
         if (mimeType == null && content == null) {
@@ -1283,6 +1292,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         try (final CloseableHttpResponse response = execute(createMethod)) {
             assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            logger.info("created object: {}", response.getFirstHeader(LOCATION).getValue());
             return response.getFirstHeader(LOCATION).getValue();
         }
     }

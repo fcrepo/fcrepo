@@ -464,20 +464,13 @@ public class FedoraLdp extends ContentExposingResource {
                                 + " to " + interactionModel + " is not allowed!");
                 }
 
-                // if it's an existing resource with new body content, make sure that it wasn't a
-                // Proxy or Redirect. Adjust if it was.
-                //if (resource instanceof FedoraBinary && extContent == null) {
-                 //   if(((FedoraBinary)resource).isProxy()) {
-                  //      LOGGER.info("Binary that was proxy shifting to internal content {}", externalPath);
-                   //     ((FedoraBinary)resource).setProxyURL(null);
-                  //  } else if (((FedoraBinary)resource).isRedirect()) {
-                  //      LOGGER.info("Binary that was redirect shifting to internal content {}", externalPath);
-                  //      ((FedoraBinary)resource).setRedirectURL(null);
-                   // }
-              //  }
             } else {
-                // requestBodyStream never appears to be null, even when not providing a body
-                resource = createFedoraResource(path, interactionModel, requestContentType,
+
+                checkExistingAncestor(path);
+
+                final MediaType effectiveContentType
+                        = requestBodyStream == null || requestContentType == null ? null : contentType;
+                resource = createFedoraResource(path, interactionModel, effectiveContentType,
                         !(requestBodyStream == null || requestContentType == null), extContent);
             }
 
@@ -501,15 +494,8 @@ public class FedoraLdp extends ContentExposingResource {
                             LOGGER.info("PUT resource external content COPY '{}', '{}'", externalPath,
                                     extContent.getURL());
                             stream = extContent.fetchExternalContent();
-                        } /*else if (extContent.isProxy()) {
-                            LOGGER.info("PUT resource external content PROXY '{}', '{}'", externalPath,
-                                    extContent.getURL());
-                            ((FedoraBinary) resource).setProxyURL(extContent.getURL());
-                        } else if (extContent.isRedirect()) {
-                            LOGGER.info("PUT resource external content REDIRECT '{}', '{}'", externalPath,
-                                    extContent.getURL());
-                            ((FedoraBinary) resource).setRedirectURL(extContent.getURL());
-                        } */
+                        }
+
                         type = contentType;  // if external, then this already holds the correct value
                     }
                     final String handling = extContent != null ? extContent.getHandling() : null;
@@ -691,7 +677,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
             addLinkAndOptionsHttpHeaders();
-
+            LOGGER.info("Nope, can't do this!");
             return status(METHOD_NOT_ALLOWED).build();
         }
 
@@ -751,11 +737,7 @@ public class FedoraLdp extends ContentExposingResource {
                             if (extContent.isCopy()) {
                                 LOGGER.debug("POST copying data {} ", externalPath);
                                 stream = extContent.fetchExternalContent();
-                            } /*else if (extContent.isProxy()) {
-                                ((FedoraBinary) resource).setProxyURL(extContent.getURL());
-                            } else if (extContent.isRedirect()) {
-                                ((FedoraBinary) resource).setRedirectURL(extContent.getURL());
-                            } */
+                            }
                         }
 
                         final String handling = extContent != null ? extContent.getHandling() : null;

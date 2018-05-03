@@ -29,6 +29,7 @@ import java.net.URI;
 import java.util.Optional;
 
 import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
@@ -76,14 +77,42 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
 
     @Override
     public FedoraResource getDescription() {
+        final Node descNode = getDescriptionNodeOrNull();
+        if (descNode == null) {
+            return null;
+        }
         return new NonRdfSourceDescriptionImpl(getDescriptionNode());
     }
 
     @Override
     protected Node getDescriptionNode() {
+
+        try {
+            final Node node = getNode();
+            if (isMemento()) {
+                final String mementoName = node.getName();
+                return node.getParent().getParent().getNode(FEDORA_DESCRIPTION)
+                        .getNode(LDPCV_TIME_MAP).getNode(mementoName);
+            }
+            return getNode().getNode(FEDORA_DESCRIPTION);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+        /*
         try {
             return getNode().getNode(FEDORA_DESCRIPTION);
         } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        } */
+    }
+
+    private Node getDescriptionNodeOrNull() {
+        try {
+            return getDescriptionNode();
+        } catch (final RepositoryRuntimeException e) {
+            if (e.getCause() instanceof PathNotFoundException) {
+                return null;
+            }
             throw new RepositoryRuntimeException(e);
         }
     }
@@ -238,12 +267,17 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
         try {
             if (hasDescriptionProperty(HAS_MIME_TYPE)) {
                 return getDescriptionProperty(HAS_MIME_TYPE).getString().replace(FIELD_DELIMITER + XSDstring.getURI(),
-                    "");
+                        "");
             }
-            return DEFAULT_MIME_TYPE;
+        } catch (final RepositoryRuntimeException e) {
+            if (!(e.getCause() instanceof PathNotFoundException) || !isMemento()) {
+                throw e;
+            }
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
+
+        return DEFAULT_MIME_TYPE;
     }
 
     /*
@@ -275,14 +309,18 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
     public void delete() {
         final FedoraResource description = getDescription();
 
-        description.delete();
+        if (description != null) {
+            description.delete();
+        }
 
         super.delete();
     }
 
     @Override
     public FedoraResource getBaseVersion() {
-        return getDescription().getBaseVersion();
+        LOGGER.warn("Removed method 'getBaseVersion()' is not used after implementing Memento!");
+        return null;
+       // return getDescription().getBaseVersion();
     }
 
     @Override

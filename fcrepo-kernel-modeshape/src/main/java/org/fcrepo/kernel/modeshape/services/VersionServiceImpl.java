@@ -126,9 +126,12 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
             final InputStream rdfInputStream,
             final Lang rdfFormat) {
 
+        LOGGER.debug("createVersion started");
         final String mementoPath = makeMementoPath(resource, dateTime);
 
+        LOGGER.debug("before assert");
         assertMementoDoesNotExist(session, mementoPath);
+        LOGGER.debug("after assert");
 
         // Construct an unpopulated resource of the appropriate type for new memento
         final FedoraResource mementoResource;
@@ -244,21 +247,29 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
             final Collection<URI> checksums,
             final StoragePolicyDecisionPoint storagePolicyDecisionPoint) throws InvalidChecksumException {
 
+        LOGGER.info("make memento path being called now");
         final String mementoPath = makeMementoPath(resource, dateTime);
 
+        LOGGER.info("Before createBinaryVersion assert");
         assertMementoDoesNotExist(session, mementoPath);
+        LOGGER.info("After createBinaryVersion assert");
+
 
         final FedoraBinary memento = binaryService.findOrCreateBinary(session, mementoPath);
+        LOGGER.info("got memento: {}", memento.getPath());
 
         if (contentStream == null) {
-            LOGGER.debug("Creating memento {} for resource {} using existing state", mementoPath, resource.getPath());
+            LOGGER.info("Creating memento {} for resource {} using existing state", mementoPath, resource.getPath());
             // Creating memento from existing resource
             populateBinaryMementoFromExisting(resource, memento, storagePolicyDecisionPoint);
         } else {
+            LOGGER.info("Creating memento for resource using new stuff");
             memento.setContent(contentStream, null, checksums, null, storagePolicyDecisionPoint);
         }
 
+        LOGGER.info("Decorating memento with properties now");
         decorateWithMementoProperties(session, mementoPath, dateTime);
+        LOGGER.info("DONE Now");
 
         return memento;
     }
@@ -290,6 +301,7 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
     }
 
     private String makeMementoPath(final FedoraResource resource, final Instant datetime) {
+        LOGGER.debug("makeMementoPath");
         return resource.getPath() + "/" + LDPCV_TIME_MAP + "/" + MEMENTO_DATETIME_ID_FORMATTER.format(datetime);
     }
 

@@ -193,18 +193,25 @@ public class FedoraVersioning extends ContentExposingResource {
                 FedoraResource memento = null;
                 final boolean isBinary = resource instanceof FedoraBinary;
                 if (isBinary) {
+                    LOGGER.info("Is binary {}", mementoInstant.toString());
                     final FedoraBinary binaryResource = (FedoraBinary) resource;
                     if (createFromExisting) {
+                        LOGGER.info("Create from existing");
                         memento = versionService.createBinaryVersion(session.getFedoraSession(),
                                 binaryResource, mementoInstant, storagePolicyDecisionPoint);
+
+                        LOGGER.info("Create from existing DONE");
                     } else {
+                        LOGGER.info("Create from request {}", mementoInstant.toString());
                         memento = createBinaryMementoFromRequest(binaryResource, mementoInstant,
                                 requestBodyStream, digest);
+                        LOGGER.info("Create from request DONE");
                     }
                 }
                 // Create rdf memento if the request resource was an rdf resource or a binary from the
                 // current version of the original resource.
                 if (!isBinary || createFromExisting) {
+                    LOGGER.info("Not binary {}", mementoInstant.toString());
                     // Version the description in case the original is a binary
                     final FedoraResource originalResource = resource().getDescription();
                     final InputStream bodyStream = createFromExisting ? null : requestBodyStream;
@@ -221,6 +228,8 @@ public class FedoraVersioning extends ContentExposingResource {
                         memento = rdfMemento;
                     }
                 }
+
+                LOGGER.debug("ALMOST done");
 
                 session.commit();
                 return createUpdateResponse(memento, true);
@@ -248,7 +257,7 @@ public class FedoraVersioning extends ContentExposingResource {
         final Collection<String> checksums = parseDigestHeader(digest);
         final Collection<URI> checksumURIs = checksums == null ? new HashSet<>() : checksums.stream().map(
                 checksum -> checksumURI(checksum)).collect(Collectors.toSet());
-
+        LOGGER.debug("createBinaryMemento - calling service now");
         return versionService.createBinaryVersion(session.getFedoraSession(), binaryResource,
                 mementoInstant, requestBodyStream, checksumURIs, storagePolicyDecisionPoint);
     }

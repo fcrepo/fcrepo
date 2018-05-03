@@ -85,42 +85,6 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
         return wrappedBinary;
     }
 
-/*
-    private String getEffectiveMimeType(final String contentType) {
-        try {
-
-            if (contentType != null) {
-                return contentType;
-            }
-
-            if (hasProperty(HAS_MIME_TYPE)) {
-                return getProperty(HAS_MIME_TYPE).getString().replace(FIELD_DELIMITER + XSDstring.getURI(), "");
-            }
-
-            return "application/octet-stream";
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-    }
-*/
-
-    /*
-    private FedoraBinary getBinaryImplementation(final String externalURL) {
-        if (externalURL != null) {
-            if (externalURL.toLowerCase().startsWith(LOCAL_FILE_ACCESS_TYPE)) {
-                LOGGER.debug("Instantiating local file FedoraBinary");
-                return new LocalFileBinary(getNode());
-            } else if  (externalURL.toLowerCase().startsWith(URL_ACCESS_TYPE)) {
-                LOGGER.debug("Instantiating URI FedoraBinary");
-                return new UrlBinary(getNode());
-            }
-        }
-
-        LOGGER.debug("Instantiating Internal Fedora Binary");
-        return new InternalFedoraBinary(getNode());
-    }
-
-    */
     private FedoraBinary getBinaryImplementation(final String extUrl) {
         String url = extUrl;
         LOGGER.debug("getBinaryImplementation ONE: url is '{}'",url);
@@ -145,9 +109,9 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
 
     private String getURLInfo() {
         try {
-            if (getDescriptionNode().hasProperty(PROXY_FOR)) {
+            if (hasDescriptionProperty(PROXY_FOR)) {
                 return getDescriptionNode().getProperty(PROXY_FOR).getValue().getString();
-            } else if (getDescriptionNode().hasProperty(REDIRECTS_TO)) {
+            } else if (hasDescriptionProperty(REDIRECTS_TO)) {
                 return getDescriptionNode().getProperty(REDIRECTS_TO).getValue().getString();
             }
         } catch (RepositoryException e) {
@@ -155,24 +119,12 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
         }
 
         return null;
-        /*
-        try {
-            if (getNode().hasProperty(PROXY_FOR)) {
-                 return getNode().getProperty(PROXY_FOR).getString();
-            } else if (getNode().hasProperty(REDIRECTS_TO)) {
-                return getNode().getProperty(REDIRECTS_TO).getString();
-            }
-        } catch (RepositoryException e) {
-            LOGGER.info("Repository Exception occurred when retrieving PROXY/REDIRECT info");
-        }
-        return null;
-        */
     }
-
+/*
     @Override
     public FedoraResource getDescription() {
         return getBinary().getDescription();
-    }
+    } */
 
     /*
      * (non-Javadoc)
