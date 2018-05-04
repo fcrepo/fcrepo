@@ -44,6 +44,7 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.services.ContainerService;
 import org.fcrepo.kernel.modeshape.services.ContainerServiceImpl;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -58,6 +59,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "/spring-test/mocked-fad-repo-3.xml" })
+@Ignore
 public class DelegatedUserIT {
 
     private static Logger logger =

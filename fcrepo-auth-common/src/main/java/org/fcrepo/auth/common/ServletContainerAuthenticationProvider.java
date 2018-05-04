@@ -64,8 +64,6 @@ public final class ServletContainerAuthenticationProvider implements
 
     private Set<PrincipalProvider> principalProviders = Collections.emptySet();
 
-    private FedoraAuthorizationDelegate fad;
-
     /**
      * Provides the singleton bean to ModeShape via reflection based on class
      * name.
@@ -110,8 +108,7 @@ public final class ServletContainerAuthenticationProvider implements
      * <ul>
      * <li>FEDORA_SERVLET_REQUEST will be assigned the ServletRequest instance associated with credentials.</li>
      * <li>FEDORA_ALL_PRINCIPALS will be assigned the union of all principals obtained from configured
-     * PrincipalProvider instances plus the authenticated user's principal; FEDORA_ALL_PRINCIPALS will be assigned the
-     * singleton set containing the fad.getEveryonePrincipal() principal otherwise.</li>
+     * PrincipalProvider instances plus the authenticated user's principal;</li>
      * </ul>
      */
     @Override
@@ -119,7 +116,7 @@ public final class ServletContainerAuthenticationProvider implements
             final String repositoryName, final String workspaceName,
             final ExecutionContext repositoryContext,
             final Map<String, Object> sessionAttributes) {
-        LOGGER.debug("Trying to authenticate: {}; FAD: {}", credentials, fad);
+        LOGGER.debug("Trying to authenticate: {}", credentials);
 
         if (!(credentials instanceof ServletCredentials)) {
             return null;
@@ -130,6 +127,8 @@ public final class ServletContainerAuthenticationProvider implements
         Principal userPrincipal = servletRequest.getUserPrincipal();
 
         if (userPrincipal != null && servletRequest.isUserInRole(FEDORA_ADMIN_ROLE)) {
+            // Should this be migrated to WebAC filter?
+            // https://jira.duraspace.org/browse/FCREPO-2778?
             // check if delegation is configured
             final Principal delegatedPrincipal = getDelegatedPrincipal(credentials);
             if (delegatedPrincipal != null) {
@@ -148,40 +147,19 @@ public final class ServletContainerAuthenticationProvider implements
         if (userPrincipal != null) {
             LOGGER.debug("Found user-principal: {}.", userPrincipal.getName());
 
-            sessionAttributes.put(
-                    FedoraAuthorizationDelegate.FEDORA_SERVLET_REQUEST,
-                    servletRequest);
-
-            sessionAttributes.put(
-                    FedoraAuthorizationDelegate.FEDORA_USER_PRINCIPAL,
-                    userPrincipal);
-
             final Set<Principal> principals = collectPrincipals(credentials);
             principals.add(userPrincipal);
-            principals.add(fad.getEveryonePrincipal());
-
-            sessionAttributes.put(
-                    FedoraAuthorizationDelegate.FEDORA_ALL_PRINCIPALS,
-                    principals);
 
             LOGGER.debug("All principals: {}", principals);
-
         } else {
             LOGGER.debug("No user-principal found.");
-
-            sessionAttributes.put(FedoraAuthorizationDelegate.FEDORA_USER_PRINCIPAL,
-                    fad.getEveryonePrincipal());
-
-            sessionAttributes.put(
-                    FedoraAuthorizationDelegate.FEDORA_ALL_PRINCIPALS,
-                    Collections.singleton(fad.getEveryonePrincipal()));
-
         }
 
-        return repositoryContext.with(new FedoraUserSecurityContext(
-                userPrincipal, fad));
+        return repositoryContext.with(new FedoraUserSecurityContext(userPrincipal));
     }
 
+    // Should this be migrated to WebAC filter?
+    // https://jira.duraspace.org/browse/FCREPO-2778?
     private Principal getDelegatedPrincipal(final Credentials credentials) {
         for (final PrincipalProvider provider : this.getPrincipalProviders()) {
             if (provider instanceof DelegateHeaderPrincipalProvider) {
@@ -192,20 +170,8 @@ public final class ServletContainerAuthenticationProvider implements
         return null;
     }
 
-    /**
-     * @return the authorization delegate
-     */
-    public FedoraAuthorizationDelegate getFad() {
-        return fad;
-    }
-
-    /**
-     * @param fad the authorization delegate to set
-     */
-    public void setFad(final FedoraAuthorizationDelegate fad) {
-        this.fad = fad;
-    }
-
+    // Should this be migrated to WebAC filter?
+    // https://jira.duraspace.org/browse/FCREPO-2778?
     private Set<Principal> collectPrincipals(final Credentials credentials) {
         final Set<Principal> principals = new HashSet<>();
 

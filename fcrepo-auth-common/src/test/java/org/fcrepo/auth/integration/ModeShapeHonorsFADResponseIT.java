@@ -37,6 +37,7 @@ import org.fcrepo.kernel.modeshape.services.ContainerServiceImpl;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -58,6 +59,7 @@ import javax.servlet.http.HttpServletRequest;
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = {"/spring-test/mocked-fad-repo.xml"})
+@Ignore
 public class ModeShapeHonorsFADResponseIT {
 
     private static Logger logger =
