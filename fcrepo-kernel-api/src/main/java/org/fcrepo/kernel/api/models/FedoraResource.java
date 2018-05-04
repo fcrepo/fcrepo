@@ -26,7 +26,6 @@ import java.util.stream.Stream;
 
 import org.apache.jena.rdf.model.Resource;
 
-import org.fcrepo.kernel.api.FedoraVersion;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
@@ -224,14 +223,8 @@ public interface FedoraResource {
     FedoraResource getBaseVersion();
 
     /**
-     * Get a stream of versions associated with this resource
-     *
-     * @return the versions associated with this resource
-     */
-    Stream<FedoraVersion> getVersions();
-
-    /**
      * Check if a resource was created in this session
+     * 
      * @return if resource created in this session
      */
     Boolean isNew();
