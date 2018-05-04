@@ -105,7 +105,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.fcrepo.kernel.api.FedoraTypes;
-import org.fcrepo.kernel.api.FedoraVersion;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.TripleCategory;
@@ -1230,11 +1229,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
   @Override
   public FedoraResource getBaseVersion() {
-    return null;
-  }
-
-  @Override
-  public Stream<FedoraVersion> getVersions() {
     return null;
   }
 
