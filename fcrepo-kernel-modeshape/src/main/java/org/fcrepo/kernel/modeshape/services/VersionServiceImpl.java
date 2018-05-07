@@ -21,7 +21,6 @@ import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
-import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.fcrepo.kernel.api.FedoraTypes.CONTENT_DIGEST;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.FedoraTypes.MEMENTO;
@@ -162,12 +161,10 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
             mementoRdfStream = DefaultRdfStream.fromModel(createURI(mementoUri), inputModel);
         }
 
-        final IdentifierConverter<Resource, FedoraResource> internalIdTranslator
-                = new InternalIdentifierTranslator(getJcrSession(session));
-        final RdfStream mappedStream = remapRdfSubjects(mementoUri, resourceUri, mementoRdfStream,
-                idTranslator, internalIdTranslator);
-
         final Session jcrSession = getJcrSession(session);
+        final RdfStream mappedStream = remapResourceUris(resourceUri, mementoUri, mementoRdfStream,
+                idTranslator, jcrSession);
+
         new RelaxedRdfAdder(idTranslator, jcrSession, mappedStream, session.getNamespaces()).consume();
 
         decorateWithMementoProperties(session, mementoPath, dateTime);
@@ -192,11 +189,26 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
         }
     }
 
-    private RdfStream remapRdfSubjects(final String mementoUri,
-            final String resourceUri,
+    /**
+     * Remaps the subjects of triples in rdfStream from the original resource URL to the URL of the new memento, and
+     * converts objects which reference resources to an internal identifier to prevent enforcement of referential
+     * integrity constraints.
+     *
+     * @param resourceUri uri of the original resource
+     * @param mementoUri uri of the memento resource
+     * @param rdfStream rdf stream
+     * @param idTranslator translator for producing URI of resources
+     * @param jcrSession jcr session
+     * @return
+     */
+    private RdfStream remapResourceUris(final String resourceUri,
+            final String mementoUri,
             final RdfStream rdfStream,
             final IdentifierConverter<Resource, FedoraResource> idTranslator,
-            final IdentifierConverter<Resource, FedoraResource> internalIdTranslator) {
+            final Session jcrSession) {
+        final IdentifierConverter<Resource, FedoraResource> internalIdTranslator = new InternalIdentifierTranslator(
+                jcrSession);
+
         final org.apache.jena.graph.Node mementoNode = createURI(mementoUri);
         final Stream<Triple> mappedStream = rdfStream.map(t -> mapSubject(t, resourceUri, mementoUri))
                 .map(t -> convertToInternalReference(t, idTranslator, internalIdTranslator));
@@ -204,7 +216,8 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
     }
 
     /**
-     * Convert the referencing resource uri to internal identifier
+     * Convert the referencing resource uri to un-dereferenceable internal identifier.
+     *
      * @param t the Triple to convert
      * @param idTranslator the Converter that convert the resource uri to a path
      * @param internalIdTranslator the Converter that convert a path to internal identifier
@@ -213,18 +226,19 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
     private Triple convertToInternalReference(final Triple t,
             final IdentifierConverter<Resource, FedoraResource> idTranslator,
             final IdentifierConverter<Resource, FedoraResource> internalIdTranslator) {
-        if (t.getObject().isURI() && idTranslator.inDomain(createResource(t.getObject().getURI()))) {
-            final String path = idTranslator.convert(createDefaultModel().asRDFNode(t.getObject()).asResource())
-                    .getPath();
-            final Resource obj = createResource(internalIdTranslator.toDomain(path).getURI());
+        if (t.getObject().isURI()) {
+            final Resource object = createResource(t.getObject().getURI());
+            if (idTranslator.inDomain(object)) {
+                final String path = idTranslator.convert(object).getPath();
+                final Resource obj = createResource(internalIdTranslator.toDomain(path).getURI());
+                LOGGER.debug("Converting referencing resource uri {} to internal identifier {}.",
+                        t.getObject().getURI(), obj.getURI());
 
-            LOGGER.debug("Converting referencing resource uri {} to internal identifier {}.",
-                    t.getObject().getURI(), obj.getURI());
-
-            return new Triple(t.getSubject(), t.getPredicate(), obj.asNode());
-        } else {
-            return t;
+                return new Triple(t.getSubject(), t.getPredicate(), obj.asNode());
+            }
         }
+
+        return t;
     }
 
     @Override
