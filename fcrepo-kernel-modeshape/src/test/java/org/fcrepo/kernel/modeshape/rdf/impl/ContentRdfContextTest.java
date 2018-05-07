@@ -59,21 +59,21 @@ public class ContentRdfContextTest {
 
     @Test
     public void testForLowLevelStorageTriples() throws IOException {
-        try (final ContentRdfContext contentRdfContext = new ContentRdfContext(mockResource, idTranslator)) {
+        try (final ContentRdfContext contentRdfContext = new ContentRdfContext(mockBinary, idTranslator)) {
             final Model results = contentRdfContext.collect(toModel());
             logRdf("Retrieved RDF for testForLowLevelStorageTriples():", results);
-            assertTrue("Didn't find triple showing node has content!", results.contains(mockSubject, DESCRIBES,
-                    mockContentSubject));
+            assertTrue("Didn't find triple showing node has content!",
+                    results.contains(mockContentSubject, DESCRIBES, mockContentSubject));
         }
     }
 
     @Test
-    public void testFedoraBinaryTriples() {
+    public void testDescriptionTriples() {
 
-        try (final ContentRdfContext contentRdfContext = new ContentRdfContext(mockBinary, idTranslator)) {
+        try (final ContentRdfContext contentRdfContext = new ContentRdfContext(mockResource, idTranslator)) {
             final Model results = contentRdfContext.collect(toModel());
-            assertTrue("Didn't find triple showing content has node!", results.contains(mockContentSubject,
-                    DESCRIBED_BY, mockSubject));
+            assertTrue("Didn't find triple showing content has node!",
+                    results.contains(mockContentSubject, DESCRIBED_BY, mockSubject));
         }
     }
 
@@ -86,7 +86,7 @@ public class ContentRdfContextTest {
         when(mockBinaryNode.getSession()).thenReturn(mockSession);
         when(mockResource.getNode()).thenReturn(mockNode);
         when(mockNode.getSession()).thenReturn(mockSession);
-        when(mockResource.getPath()).thenReturn("/mockNode");
+        when(mockResource.getPath()).thenReturn("/mockNode/fedora:description");
         when(mockSession.getRepository()).thenReturn(mockRepository);
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNamespaceRegistry);
@@ -97,7 +97,7 @@ public class ContentRdfContextTest {
         when(mockNode.getMixinNodeTypes()).thenReturn(new NodeType[] {});
         when(mockBinaryNode.getMixinNodeTypes()).thenReturn(new NodeType[]{});
         when(mockBinaryNode.hasProperties()).thenReturn(false);
-        when(mockBinary.getPath()).thenReturn("/mockNode/jcr:content");
+        when(mockBinary.getPath()).thenReturn("/mockNode");
         idTranslator = new DefaultIdentifierTranslator(mockSession);
         when(mockNode.getPrimaryNodeType()).thenReturn(mockNodeType);
         when(mockBinaryNode.getPrimaryNodeType()).thenReturn(mockNodeType);
