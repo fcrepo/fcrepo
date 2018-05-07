@@ -19,9 +19,11 @@
   "security" : {
     "anonymous" : {
       "roles" : ["readonly","readwrite","admin"],
-      "useOnFailedLogin" : true
+      "useOnFailedLogin" : false
     },
-    "providers" : []
+    "providers" : [
+      { "classname": "org.fcrepo.auth.common.ShiroAuthenticationProvider" }
+    ]
   },
   "node-types" : ["fedora-node-types.cnd"]
 }
