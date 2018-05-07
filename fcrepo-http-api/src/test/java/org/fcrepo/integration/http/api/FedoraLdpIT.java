@@ -77,6 +77,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
+import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
@@ -750,6 +751,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
             graph.find().forEachRemaining(quad -> {
                 assertEquals("Found a triple with incorrect subject!", correctDSSubject, quad.getSubject());
             });
+            assertTrue(graph.contains(ANY, ANY, DESCRIBED_BY.asNode(),
+                    createURI(serverAddress + id + "/x/fcr:metadata")));
         }
     }
 
