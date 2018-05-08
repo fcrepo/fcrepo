@@ -39,7 +39,11 @@
 
     <bean name="modeshapeRepofactory"
         class="org.fcrepo.kernel.modeshape.spring.ModeShapeRepositoryFactoryBean"
-        p:repositoryConfiguration="${fcrepo.modeshape.configuration}"/>
+        p:repositoryConfiguration="${fcrepo.modeshape.configuration}"
+        depends-on="authenticationProvider"/>
+  
+    <bean name="authenticationProvider" class="org.fcrepo.auth.common.ShiroAuthenticationProvider"/>
+        
 
 
     <!-- **************************

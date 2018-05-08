@@ -11,6 +11,15 @@
 		<param-name>contextConfigLocation</param-name>
 		<param-value>WEB-INF/classes/spring/repository.xml</param-value>
 	</context-param>
+  
+  <context-param>
+    <param-name>shiroEnvironmentClass</param-name>
+    <param-value>org.apache.shiro.web.env.DefaultWebEnvironment</param-value>
+  </context-param>
+    
+  <listener>
+    <listener-class>org.apache.shiro.web.env.EnvironmentLoaderListener</listener-class>
+  </listener>
 
   <!-- To allow request object to be wired to WebACAuthorizingRealm -->
   <listener>
