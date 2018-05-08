@@ -27,6 +27,7 @@ import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
 import javax.jcr.RepositoryException;
 
+import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.TripleCategory;
@@ -36,6 +37,7 @@ import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.modeshape.rdf.impl.InternalIdentifierTranslator;
 import org.slf4j.Logger;
 
 import java.util.Calendar;
@@ -95,11 +97,21 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements N
         final org.apache.jena.graph.Node describedNode = idTranslator.reverse().convert(described).asNode();
         final String resourceUri = idTranslator.reverse().convert(this).getURI();
 
-        return new DefaultRdfStream(idTranslator.reverse().convert(described).asNode(), contexts.stream()
+        Stream<Triple> triples = contexts.stream()
                 .filter(contextMap::containsKey)
                 .map(x -> contextMap.get(x).apply(this).apply(idTranslator).apply(contexts.contains(MINIMAL)))
                 .reduce(empty(), Stream::concat)
-                .map(t -> mapSubject(t, resourceUri, describedNode)));
+                .map(t -> mapSubject(t, resourceUri, describedNode));
+
+        // if a memento, convert object references from referential integrity ignoring internal URL back to
+        // the original external URL.
+        if (isMemento()) {
+            final IdentifierConverter<Resource, FedoraResource> internalIdTranslator =
+                    new InternalIdentifierTranslator(getSession());
+            triples = triples.map(convertInternalResource(idTranslator, internalIdTranslator));
+        }
+
+        return new DefaultRdfStream(idTranslator.reverse().convert(described).asNode(), triples);
     }
 
     /**

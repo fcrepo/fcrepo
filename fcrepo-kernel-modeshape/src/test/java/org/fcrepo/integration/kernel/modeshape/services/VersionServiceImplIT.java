@@ -28,6 +28,7 @@ import org.fcrepo.integration.kernel.modeshape.AbstractIT;
 import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.ContainerService;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.api.services.VersionService;
@@ -38,6 +39,7 @@ import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
+import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBED_BY;
 import static org.fcrepo.kernel.modeshape.services.VersionServiceImpl.VERSION_TRIPLES;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.junit.Assert.assertEquals;
@@ -60,6 +62,9 @@ public class VersionServiceImplIT extends AbstractIT {
 
     @Inject
     ContainerService containerService;
+
+    @Inject
+    BinaryService binaryService;
 
     @Inject
     VersionService versionService;
@@ -151,6 +156,28 @@ public class VersionServiceImplIT extends AbstractIT {
         versionService.createVersion(session, resource, subjects, mementoDate2);
         session.commit();
         assertEquals(2L, countVersions(session, resource));
+    }
+
+    @Test
+    public void testCreateDescriptionVersion() throws Exception {
+        final String pid = getRandomPid();
+        final FedoraResource resource = binaryService.findOrCreate(session, "/" + pid);
+        resource.enableVersioning();
+        session.commit();
+
+        final FedoraResource descResc = resource.getDescription();
+
+        // create a memento
+        final FedoraResource memento = versionService.createVersion(session, descResc, subjects, mementoDate2);
+        session.commit();
+
+        final String descPath = "info:fedora/" + pid + "/fedora:description";
+
+        assertTrue(memento.getTriples(subjects, VERSION_TRIPLES)
+                .anyMatch(x -> x.getPredicate().getURI().equals(DESCRIBED_BY.getURI()) && x.getObject().getURI()
+                        .equals(descPath)));
+
+        assertEquals(1L, countVersions(session, descResc));
     }
 
     private static long countVersions(final FedoraSession session, final FedoraResource resource )
