@@ -54,13 +54,12 @@ public class ExternalContentHandler {
     public final static String HANDLING = "handling";
     public final static String CONTENT_TYPE = "type";
 
-    private final String originalLinkHeader;
     private final Link link;
     private final String handling;
     private final String type;
     private final MediaType contentType;
 
-    /* link should look like this:
+    /* link header for external content should look like this:
           Link: <http://example.org/some/content>;
           rel="http://fedora.info/definitions/fcrepo#ExternalContent";
           handling="proxy";
@@ -76,7 +75,6 @@ public class ExternalContentHandler {
         // if it parses, then we're mostly good to go.
         link = parseLinkHeader(linkHeader);
 
-        originalLinkHeader = linkHeader;
         final Map<String, String> map = link.getParams();
         handling = map.get(HANDLING);
         type = map.get(CONTENT_TYPE);
@@ -104,7 +102,6 @@ public class ExternalContentHandler {
      * @return a String of the URL that was in the Link header
      */
     public String getURL() {
-        LOGGER.info("link uri is {}", link.getUri().toString());
         return link != null ? link.getUri().toString() : null;
     }
 
@@ -113,7 +110,6 @@ public class ExternalContentHandler {
      * @return boolean value representing whether or not the content handling is "copy"
      */
     public boolean isCopy() {
-        LOGGER.info("isCopy() handling is {}!", handling);
         return handling != null ? handling.equals(COPY) : false;
     }
 
@@ -122,7 +118,6 @@ public class ExternalContentHandler {
      * @return boolean value representing whether or not the content handling is "redirect"
      */
     public boolean isRedirect() {
-        LOGGER.info("isRedirect() handling is {}!", handling);
         return handling != null ? handling.equals(REDIRECT) : false;
     }
 
@@ -131,7 +126,6 @@ public class ExternalContentHandler {
      * @return boolean value representing whether or not the content handling is "proxy"
      */
     public boolean isProxy() {
-        LOGGER.info("isProxy() handling is {}!", handling);
         return handling != null ? handling.equals(PROXY) : false;
     }
 
@@ -148,7 +142,6 @@ public class ExternalContentHandler {
         }
 
         final List<String> externalContentLinks = links.stream()
-                .peek(x -> LOGGER.info("LINK: {}", x))
                 .filter(x -> x.contains(EXTERNAL_CONTENT.toString()))
                 .collect(Collectors.toList());
 
@@ -217,10 +210,8 @@ public class ExternalContentHandler {
                 final HttpHead httpHead = new HttpHead(url);
                 try (CloseableHttpResponse response = httpClient.execute(httpHead)) {
                     if (response.getStatusLine().getStatusCode() == SC_OK) {
-                        LOGGER.debug("findContentType got {} status", response.getStatusLine().getStatusCode());
                         final String contentType = response.getFirstHeader("Content-Type").getValue();
                         if (contentType != null) {
-                            LOGGER.debug("findContentType got {} mediaType", contentType);
                             return MediaType.valueOf(contentType);
                         }
                     }

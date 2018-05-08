@@ -437,19 +437,9 @@ public class FedoraLdp extends ContentExposingResource {
         try {
 
             final Collection<String> checksums = parseDigestHeader(digest);
-            LOGGER.info("PUT PUT before ext handler created");
             final String extContentLinkHeader = ExternalContentHandler.findExternalLink(links);
-            LOGGER.info("PUT PUT after ext handler created. Link: {}", extContentLinkHeader);
             final ExternalContentHandler extContent = extContentLinkHeader != null ?
                     new ExternalContentHandler(extContentLinkHeader) : null;
-
-            if (extContent != null) {
-                try {
-                    LOGGER.info("PUT PUT after ext handler created: handling: {}, url: {}, mime: {}",
-                            extContent.getHandling(), extContent.getURL().toString(), extContent.getContentType());
-                } catch (Exception e) {
-                }
-            }
 
             final MediaType contentType =  getSimpleContentType(
                     extContent != null ? extContent.getContentType() : requestContentType);
@@ -483,16 +473,13 @@ public class FedoraLdp extends ContentExposingResource {
 
             try (final RdfStream resourceTriples =
                     created ? new DefaultRdfStream(asNode(resource())) : getResourceTriples()) {
-                LOGGER.info("PUT resource '{}'", externalPath);
                 if (resource instanceof FedoraBinary) {
                     InputStream stream = requestBodyStream;
                     MediaType type = requestContentType;
                     // override a few things, if it's external content
                     if (extContent != null) {
-                        LOGGER.info("PUT resource external content '{}'", externalPath);
                         if (extContent.isCopy()) {
-                            LOGGER.info("PUT resource external content COPY '{}', '{}'", externalPath,
-                                    extContent.getURL());
+                            LOGGER.debug("External content COPY '{}', '{}'", externalPath, extContent.getURL());
                             stream = extContent.fetchExternalContent();
                         }
 
@@ -525,6 +512,9 @@ public class FedoraLdp extends ContentExposingResource {
 
             if (hasVersionedResourceLink(links)) {
                 resource.enableVersioning();
+                if (resource instanceof FedoraBinary) {
+                    resource.getDescription().enableVersioning();
+                }
             }
 
             ensureInteractionType(resource, interactionModel,
@@ -759,6 +749,9 @@ public class FedoraLdp extends ContentExposingResource {
 
                 if (hasVersionedResourceLink(links)) {
                     resource.enableVersioning();
+                    if (resource instanceof FedoraBinary) {
+                        resource.getDescription().enableVersioning();
+                    }
                 }
 
                 ensureInteractionType(resource, interactionModel,

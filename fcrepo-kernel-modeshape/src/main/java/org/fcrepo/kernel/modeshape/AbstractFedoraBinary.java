@@ -96,6 +96,11 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
             }
             return getNode().getNode(FEDORA_DESCRIPTION);
         } catch (final RepositoryException e) {
+
+            // ignore error as Desc memento may not be there yet
+            if (isMemento()) {
+                return null;
+            }
             throw new RepositoryRuntimeException(e);
         }
         /*
@@ -106,7 +111,7 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
         } */
     }
 
-    private Node getDescriptionNodeOrNull() {
+    protected Node getDescriptionNodeOrNull() {
         try {
             return getDescriptionNode();
         } catch (final RepositoryRuntimeException e) {
@@ -184,7 +189,7 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
      */
     @Override
     public Boolean isProxy() {
-        return hasDescriptionProperty(PROXY_FOR);
+        return hasProperty(PROXY_FOR);
     }
 
     /*
@@ -193,7 +198,7 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
      */
     @Override
     public Boolean isRedirect() {
-        return hasDescriptionProperty(REDIRECTS_TO);
+        return hasProperty(REDIRECTS_TO);
     }
 
     /*
@@ -203,10 +208,10 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
     @Override
     public String getProxyURL() {
         try {
-            LOGGER.info("getproxy info asking first: {} ", hasDescriptionProperty(PROXY_FOR));
-            if (hasDescriptionProperty(PROXY_FOR)) {
-                LOGGER.info("get proxy info fetching: PROXY_FOR: {} ", getDescriptionProperty(PROXY_FOR).getString());
-                return getDescriptionProperty(PROXY_FOR).getString();
+            LOGGER.info("getproxy info asking first: {} ", hasProperty(PROXY_FOR));
+            if (hasProperty(PROXY_FOR)) {
+                LOGGER.info("get proxy info fetching: PROXY_FOR: {} ", getProperty(PROXY_FOR).getString());
+                return getProperty(PROXY_FOR).getString();
             }
             return null;
         } catch (final RepositoryException e) {
@@ -222,8 +227,8 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
     public void setProxyURL(final String url) throws RepositoryRuntimeException {
         try {
             LOGGER.info("Setting Property PROXY_FOR!");
-            getDescriptionNode().setProperty(PROXY_FOR, url);
-            getDescriptionNode().setProperty(REDIRECTS_TO, (Value) null);
+            getNode().setProperty(PROXY_FOR, url);
+            getNode().setProperty(REDIRECTS_TO, (Value) null);
         } catch (final Exception e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -237,9 +242,9 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
     public String getRedirectURL() {
         try {
 
-            LOGGER.info("get redirecgt info asking first: {} ", hasDescriptionProperty(REDIRECTS_TO));
-            if (hasDescriptionProperty(REDIRECTS_TO)) {
-                return getDescriptionProperty(REDIRECTS_TO).getString();
+            LOGGER.info("get redirect info asking first: {} ", hasProperty(REDIRECTS_TO));
+            if (hasProperty(REDIRECTS_TO)) {
+                return getProperty(REDIRECTS_TO).getString();
             }
 
             return null;
@@ -256,14 +261,28 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
     public void setRedirectURL(final String url) throws RepositoryRuntimeException {
         try {
             LOGGER.info("Setting Property REDIRECTS_TO!");
-            getDescriptionNode().setProperty(REDIRECTS_TO, url);
-            getDescriptionNode().setProperty(PROXY_FOR, (Value) null);
+            getNode().setProperty(REDIRECTS_TO, url);
+            getNode().setProperty(PROXY_FOR, (Value) null);
         } catch (final Exception e) {
             throw new RepositoryRuntimeException(e);
         }
     }
 
     protected String getMimeTypeValue() {
+        try {
+            if (hasDescriptionProperty(HAS_MIME_TYPE)) {
+                return getDescriptionProperty(HAS_MIME_TYPE).getString()
+                        .replace(FIELD_DELIMITER + XSDstring.getURI(), "");
+            }
+        } catch (final RepositoryRuntimeException e) {
+            if (!(e.getCause() instanceof PathNotFoundException) || !isMemento()) {
+                throw e;
+            }
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+        return DEFAULT_MIME_TYPE;
+        /*
         try {
             if (hasDescriptionProperty(HAS_MIME_TYPE)) {
                 return getDescriptionProperty(HAS_MIME_TYPE).getString().replace(FIELD_DELIMITER + XSDstring.getURI(),
@@ -275,9 +294,8 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
             }
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
-        }
+        } */
 
-        return DEFAULT_MIME_TYPE;
     }
 
     /*
@@ -322,12 +340,7 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
         return null;
        // return getDescription().getBaseVersion();
     }
-
-    @Override
-    public boolean isVersioned() {
-        return getDescription().isVersioned();
-    }
-
+/*
     @Override
     public void enableVersioning() {
         super.enableVersioning();
@@ -339,7 +352,7 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
         super.disableVersioning();
         getDescription().disableVersioning();
     }
-
+*/
     /**
      * Check of the property exists on the description of this binary.
      *
@@ -347,11 +360,22 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
      * @return true if property exists.
      */
     protected boolean hasDescriptionProperty(final String relPath) {
+
+        try {
+            final Node descNode = getDescriptionNodeOrNull();
+            if (descNode == null) {
+                return false;
+            }
+            return descNode.hasProperty(relPath);
+        } catch (final RepositoryException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+        /*
         try {
             return getDescriptionNode().hasProperty(relPath);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
-        }
+        } */
     }
 
     /**

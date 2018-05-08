@@ -1244,14 +1244,14 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         getTimeMap().delete();
   }
 
-    @Override
-    public boolean isVersioned() {
-        try {
-            return getNode(getNode(), LDPCV_TIME_MAP, false) != null;
-        } catch (final RepositoryException ex) {
-            throw new RepositoryRuntimeException(ex);
-        }
-    }
+  @Override
+  public boolean isVersioned() {
+      try {
+          return getNode(getNode(), LDPCV_TIME_MAP, false) != null;
+      } catch (final RepositoryException ex) {
+          throw new RepositoryRuntimeException(ex);
+      }
+  }
 
   @Override
   public FedoraResource findMementoByDatetime(final Instant mementoDatetime) {

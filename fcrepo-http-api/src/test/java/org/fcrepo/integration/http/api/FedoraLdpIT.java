@@ -757,7 +757,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertTrue("Binary should be a ldp:NonRDFSource", graph.contains(ANY,
                     correctDSSubject, rdfType, NON_RDF_SOURCE.asNode()));
             // every triple in the response should have a subject of the actual resource described
-            logger.info("Found graph:\n{}", graph);
+            LOGGER.info("Found graph:\n{}", graph);
             graph.find().forEachRemaining(quad -> {
                 assertEquals("Found a triple with incorrect subject!", correctDSSubject, quad.getSubject());
             });
@@ -812,7 +812,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     @Test
     public void testGetExternalDatastreamWithWantDigest() throws IOException, ParseException {
 
-        LOGGER.info("Testing testGetExternalDatastreamWithWantDigest");
+        LOGGER.debug("Testing testGetExternalDatastreamWithWantDigest");
         final String dsId = getRandomUniqueId();
         createDatastream(dsId, "x", "01234567890123456789012345678901234567890123456789");
         final String dsUrl = serverAddress + dsId + "/x";
@@ -829,13 +829,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
         requestConfig.setRedirectsEnabled(false);
         getObjMethod.setConfig(requestConfig.build());
 
-        LOGGER.info("Created, now getting");
+        LOGGER.debug("Created, now getting");
         try (final CloseableHttpResponse response = execute(getObjMethod)) {
             assertEquals(TEMPORARY_REDIRECT.getStatusCode(), response.getStatusLine().getStatusCode());
             assertEquals(dsUrl, getLocation(response));
             assertTrue(response.getHeaders(DIGEST).length > 0);
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
-            LOGGER.debug("TEST FIXITY: {} : {}", digesterHeaderValue, "sha=9578f951955d37f20b601c26591e260c1e5389bf");
             assertTrue("Fixity Checksum doesn't match",
                     digesterHeaderValue.equals("sha=9578f951955d37f20b601c26591e260c1e5389bf"));
         }
@@ -1309,7 +1308,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final StringWriter w = new StringWriter()) {
             model.write(w, "N-TRIPLE");
             replaceMethod.setEntity(new StringEntity(w.toString()));
-            logger.trace("Retrieved object graph for testRoundTripReplaceGraph():\n {}", w);
+            LOGGER.trace("Retrieved object graph for testRoundTripReplaceGraph():\n {}", w);
         }
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(replaceMethod));
     }
@@ -1962,7 +1961,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             public
             void testCreateManyObjects() throws IOException, InterruptedException {
         if (System.getProperty(TEST_ACTIVATION_PROPERTY) == null) {
-            logger.info("Not running testCreateManyObjects because system property TEST_ACTIVATION_PROPERTY not set.");
+            LOGGER.info("Not running testCreateManyObjects because system property TEST_ACTIVATION_PROPERTY not set.");
             return;
         }
         final int manyObjects = 2000;
@@ -2051,7 +2050,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     @Test
     public void testGetObjectGraph() throws IOException {
-        logger.trace("Entering testGetObjectGraph()...");
+        LOGGER.trace("Entering testGetObjectGraph()...");
         final String location = getLocation(postObjMethod());
         final HttpGet getObjMethod = new HttpGet(location);
 
@@ -2064,13 +2063,13 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 assertTrue("Didn't find any type triples!", dataset.asDatasetGraph().contains(ANY,
                         createURI(location), rdfType, ANY));
             }
-            logger.trace("Leaving testGetObjectGraph()...");
+            LOGGER.trace("Leaving testGetObjectGraph()...");
         }
     }
 
     @Test
     public void verifyFullSetOfRdfTypes() throws IOException {
-        logger.trace("Entering verifyFullSetOfRdfTypes()...");
+        LOGGER.trace("Entering verifyFullSetOfRdfTypes()...");
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
 
@@ -2080,7 +2079,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             verifyResource(graph, resource, REPOSITORY_NAMESPACE, "Container");
             verifyResource(graph, resource, REPOSITORY_NAMESPACE, "Resource");
         }
-        logger.trace("Leaving verifyFullSetOfRdfTypes()...");
+        LOGGER.trace("Leaving verifyFullSetOfRdfTypes()...");
     }
 
     private static void verifyResource(final DatasetGraph g, final Node subject, final String ns, final String type) {
@@ -2683,7 +2682,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final Model model = createDefaultModel();
         try (final CloseableHttpResponse getResponse = execute(getObjMethod)) {
             final String graph = EntityUtils.toString(getResponse.getEntity());
-            logger.trace("Got serialized object graph for testRoundTripReplaceGraphForDatastream():\n {}", graph);
+            LOGGER.trace("Got serialized object graph for testRoundTripReplaceGraphForDatastream():\n {}", graph);
             try (final StringReader r = new StringReader(graph)) {
                 model.read(r, subjectURI, "TURTLE");
             }
@@ -2694,7 +2693,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final String updatedMetadata = w.toString() +
                 "<" + subjectURI + "> <http://www.w3.org/2000/01/rdf-schema#label> 'foo' .";
             replaceMethod.setEntity(new StringEntity(updatedMetadata));
-            logger.trace("Transmitting object graph for testRoundTripReplaceGraphForDatastream():\n {}", w);
+            LOGGER.trace("Transmitting object graph for testRoundTripReplaceGraphForDatastream():\n {}", w);
         }
         replaceMethod.addHeader(CONTENT_TYPE, "application/n-triples");
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(replaceMethod));
@@ -2717,7 +2716,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final String location = getLocation(postObjMethod());
             try (final CloseableHttpResponse response = cachClient.execute(new HttpGet(location))) {
                 assertEquals("Client didn't return a OK!", OK.getStatusCode(), getStatus(response));
-                logger.debug("Found HTTP headers:\n{}", asList(response.getAllHeaders()));
+                LOGGER.debug("Found HTTP headers:\n{}", asList(response.getAllHeaders()));
                 assertTrue("Didn't find Last-Modified header!", response.containsHeader("Last-Modified"));
                 final String lastModed = response.getFirstHeader("Last-Modified").getValue();
                 final String etag = response.getFirstHeader("ETag").getValue();
@@ -2755,7 +2754,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(getMethod)) {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final String content = EntityUtils.toString(response.getEntity());
-            logger.trace("Retrieved HTML view:\n" + content);
+            LOGGER.trace("Retrieved HTML view:\n" + content);
             final HtmlParser htmlParser = new HtmlParser(ALLOW);
             htmlParser.setDoctypeExpectation(NO_DOCTYPE_ERRORS);
             htmlParser.setErrorHandler(new HTMLErrorHandler());
@@ -2763,7 +2762,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             try (final InputStream htmlStream = new ByteArrayInputStream(content.getBytes(UTF_8))) {
                 htmlParser.parse(new InputSource(htmlStream));
             }
-            logger.debug("HTML found to be valid.");
+            LOGGER.debug("HTML found to be valid.");
         }
     }
 
@@ -3101,7 +3100,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
             httpPut.addHeader(LINK, getExternalContentLinkHeader("http://www.example.com/file", "redirect", null));
 
             try (final CloseableHttpResponse response = execute(httpPut)) {
-                LOGGER.debug("Test to create redirect got: {}  status", getStatus(response));
                 assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
                 final HttpGet get = new HttpGet(getLocation(response));
                 try (final CloseableHttpResponse getResponse = noFollowClient.execute(get)) {
@@ -3114,8 +3112,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     @Test
     public void testExternalMessageBodyCopy() throws IOException {
-        LOGGER.info("HERE HERE: testExternalMessageBodyCopy");
-
         /* create a random object */
         final String copyPid = getRandomUniqueId();
         createObject(copyPid);
@@ -3126,9 +3122,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         httpPut.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
         httpPut.addHeader(LINK, getExternalContentLinkHeader(copyLocation, "copy", null));
 
-        LOGGER.info("HERE HERE: COPY Executing PUT now");
         try (final CloseableHttpResponse response = execute(httpPut)) {
-            LOGGER.info("HERE HERE: PUT Response was {}", response.getStatusLine().toString());
             assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
         }
     }
@@ -3370,7 +3364,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     @Test
     public void testPutServerManagedPredicateInIndirectContainer() throws IOException {
-        logger.info("running testPutServerManagedPredicateInIndirectContainer");
+        LOGGER.info("running testPutServerManagedPredicateInIndirectContainer");
         // Create a resource
         final String id = getRandomUniqueId();
         executeAndClose(putObjMethod(id));

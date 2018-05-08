@@ -198,7 +198,7 @@ public class UrlBinaryTest {
         mockProxyProperty();
 
         testObj.setProxyURL(fileUrl);
-        verify(mockDescNode).setProperty(PROXY_FOR, fileUrl);
+        verify(mockContent).setProperty(PROXY_FOR, fileUrl);
 
         assertEquals(fileUrl, testObj.getProxyURL());
     }
@@ -220,7 +220,7 @@ public class UrlBinaryTest {
         mockRedirectProperty();
 
         testObj.setRedirectURL(fileUrl);
-        verify(mockDescNode).setProperty(REDIRECTS_TO, fileUrl);
+        verify(mockContent).setProperty(REDIRECTS_TO, fileUrl);
 
         assertEquals(fileUrl, testObj.getRedirectURL());
     }
@@ -253,8 +253,8 @@ public class UrlBinaryTest {
             when(proxyURLProperty.getName()).thenReturn(PROXY_FOR.toString());
             when(mockURIValue.toString()).thenReturn(fileUrl);
 
-            when(mockDescNode.hasProperty(PROXY_FOR)).thenReturn(true);
-            when(mockDescNode.getProperty(PROXY_FOR)).thenReturn(proxyURLProperty);
+            when(mockContent.hasProperty(PROXY_FOR)).thenReturn(true);
+            when(mockContent.getProperty(PROXY_FOR)).thenReturn(proxyURLProperty);
         } catch (final RepositoryException e) {
             // This catch left intentionally blank.
         }
@@ -265,8 +265,8 @@ public class UrlBinaryTest {
             when(redirectURLProperty.getString()).thenReturn(fileUrl);
             when(redirectURLProperty.getValue()).thenReturn(mockURIValue);
             when(redirectURLProperty.getName()).thenReturn(PROXY_FOR.toString());
-            when(mockDescNode.hasProperty(REDIRECTS_TO)).thenReturn(true);
-            when(mockDescNode.getProperty(REDIRECTS_TO)).thenReturn(redirectURLProperty);
+            when(mockContent.hasProperty(REDIRECTS_TO)).thenReturn(true);
+            when(mockContent.getProperty(REDIRECTS_TO)).thenReturn(redirectURLProperty);
         } catch (final RepositoryException e) {
             // This catch left intentionally blank.
         }

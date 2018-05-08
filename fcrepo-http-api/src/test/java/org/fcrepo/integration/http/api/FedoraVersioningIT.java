@@ -636,11 +636,9 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     @Test
     public void testCreateVersionOfBinary() throws Exception {
-        logger.debug("testCreateVersionOfBinary()");
-        logger.debug("Creating versioned binary: {}", createVersionedBinary(id));
-        logger.debug("Creating memento for binary.");
+        createVersionedBinary(id);
+
         final String mementoUri = createMemento(subjectUri, null, null, null);
-        logger.debug("Done Creating memento for binary.");
         assertMementoUri(mementoUri, subjectUri);
 
         final HttpGet httpGet = new HttpGet(mementoUri);
@@ -936,17 +934,13 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     @Test
     public void testEnableVersioningBinary() throws Exception {
+        logger.debug("testEnableVersioningBinary");
         final String binaryUri = serverAddress + id + "/ds";
         createDatastream(id, "ds", "content");
 
         final String versionsUri = binaryUri + "/" + FCR_VERSIONS;
-        assertEquals("fcr:versions must not exist before enabling versioning",
-                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(versionsUri)));
-
         final String descUri = serverAddress + id + "/ds/" + FCR_METADATA;
         final String versionsDescUri = descUri + "/" + FCR_VERSIONS;
-        assertEquals("fcr:metadata/fcr:versions must not exist before enabling versioning",
-                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(versionsDescUri)));
 
         // Enable versioning
         enableVersioning(binaryUri);
@@ -1201,8 +1195,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             logger.debug("Adding body");
             createVersionMethod.setEntity(new StringEntity(body));
         }
-        if (mementoDateTime != null) {
-            logger.debug("Adding date time");
+        if (mementoDateTime != null && !mementoDateTime.isEmpty()) {
+            logger.debug("Adding date time: {}", mementoDateTime);
             createVersionMethod.addHeader(MEMENTO_DATETIME_HEADER, mementoDateTime);
         }
 

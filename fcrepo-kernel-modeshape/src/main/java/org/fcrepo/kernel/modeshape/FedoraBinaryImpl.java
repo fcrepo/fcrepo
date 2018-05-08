@@ -92,6 +92,8 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
             url = getURLInfo();
         }
 
+        LOGGER.debug("Is memento? {}", isMemento());
+
         LOGGER.debug("getBinaryImplementation TWO: url is '{}'",url);
         if (url != null) {
             if (url.toLowerCase().startsWith(LOCAL_FILE_ACCESS_TYPE)) {
@@ -109,10 +111,10 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
 
     private String getURLInfo() {
         try {
-            if (hasDescriptionProperty(PROXY_FOR)) {
-                return getDescriptionNode().getProperty(PROXY_FOR).getValue().getString();
-            } else if (hasDescriptionProperty(REDIRECTS_TO)) {
-                return getDescriptionNode().getProperty(REDIRECTS_TO).getValue().getString();
+            if (hasProperty(PROXY_FOR)) {
+                return getNode().getProperty(PROXY_FOR).getValue().getString();
+            } else if (hasProperty(REDIRECTS_TO)) {
+                return getNode().getProperty(REDIRECTS_TO).getValue().getString();
             }
         } catch (RepositoryException e) {
             throw new RepositoryRuntimeException(e);
@@ -324,7 +326,7 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
                                 final Set<? extends TripleCategory> contexts) {
         return getDescription().getTriples(idTranslator, contexts);
     }
-
+/*
     @Override
     public boolean isVersioned() {
         return getBinary().isVersioned();
@@ -339,7 +341,7 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
     public void disableVersioning() {
         getBinary().disableVersioning();
     }
-
+*/
     /**
      * Check if the given node is a Fedora binary
      *

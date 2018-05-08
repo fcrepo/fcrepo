@@ -29,14 +29,12 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 import static java.util.Collections.singletonList;
-import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
-import org.slf4j.Logger;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import javax.inject.Inject;
@@ -69,7 +67,6 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options
  */
 @ContextConfiguration({ "/spring-test/repo.xml" })
 public class UrlBinaryIT extends AbstractIT {
-    private static final Logger LOGGER = getLogger(UrlBinaryIT.class);
 
     private static final String EXPECTED_CONTENT = "test content";
 
@@ -137,7 +134,6 @@ public class UrlBinaryIT extends AbstractIT {
 
         assertTrue(bin.isProxy());
         assertFalse(bin.isRedirect());
-        LOGGER.info("testGetContent: bin.url: {}", bin.getProxyURL());
 
         assertEquals(EXPECTED_CONTENT.length(), bin.getContentSize());
         assertEquals(EXPECTED_CONTENT, contentString(bin));
@@ -192,8 +188,6 @@ public class UrlBinaryIT extends AbstractIT {
         assertNotEquals(0, fixityResults.size());
 
         final String checksum = fixityResults.iterator().next().toString();
-        LOGGER.info("GOT IT GOT IT GOT IT: checksum returned is: {}", checksum);
-        LOGGER.info("GOT IT GOT IT GOT IT: comparing to: {}", "urn:sha1:" + CONTENT_SHA1);
         assertEquals("Fixity Checksum doesn't match",
                 "urn:sha1:" + CONTENT_SHA1, checksum);
     }

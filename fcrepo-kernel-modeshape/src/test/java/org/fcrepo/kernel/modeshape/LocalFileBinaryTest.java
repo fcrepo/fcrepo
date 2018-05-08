@@ -146,7 +146,7 @@ public class LocalFileBinaryTest {
         when(mockDescNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
 
         testObj.setProxyURL(contentFile.toURI().toString());
-        verify(mockDescNode).setProperty(PROXY_FOR, contentFile.toURI().toString());
+        verify(mockContent).setProperty(PROXY_FOR, contentFile.toURI().toString());
 
         assertEquals(contentFile.toURI().toString(), testObj.getProxyURL());
     }
@@ -154,7 +154,7 @@ public class LocalFileBinaryTest {
     @Test
     public void testSetContent() throws Exception {
         testObj.setProxyURL(contentFile.toURI().toString());
-        verify(mockDescNode).setProperty(PROXY_FOR, contentFile.toURI().toString());
+        verify(mockContent).setProperty(PROXY_FOR, contentFile.toURI().toString());
 
         testObj.setContent(null, mimeType, null, null, null);
         verify(mockDescNode).setProperty(HAS_MIME_TYPE, mimeType);
@@ -224,8 +224,8 @@ public class LocalFileBinaryTest {
             when(mockURIValue.toString()).thenReturn(contentFile.toURI().toString());
             when(mockURIValue.getString()).thenReturn(contentFile.toURI().toString());
 
-            when(mockDescNode.hasProperty(PROXY_FOR)).thenReturn(true);
-            when(mockDescNode.getProperty(PROXY_FOR)).thenReturn(proxyURIProperty);
+            when(mockContent.hasProperty(PROXY_FOR)).thenReturn(true);
+            when(mockContent.getProperty(PROXY_FOR)).thenReturn(proxyURIProperty);
         } catch (final RepositoryException e) {
             // This catch left intentionally blank.
         }

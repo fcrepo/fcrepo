@@ -147,41 +147,4 @@ public class LocalFileBinary extends UrlBinary {
         setContentSize(file.length());
         return file.length();
     }
-
-    /*
-     * (non-Javadoc)
-     * @see
-     * org.fcrepo.kernel.modeshape.FedoraBinaryImpl#checkFixity(org.fcrepo.kernel.api.identifiers.IdentifierConverter,
-     * java.util.Collection)
-     */
-    // @Override
-    // public Collection<URI> checkFixity(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-    // final Collection<String> algorithms) throws UnsupportedAlgorithmException,
-    // UnsupportedAccessTypeException {
-
-    // fixityCheckCounter.inc();
-
-    // return checkFixity(algorithms);
-    // }
-
-    // private Collection<URI> checkFixity(final Collection<String> algorithms) throws UnsupportedAlgorithmException {
-    // try (final Timer.Context context = timer.time()) {
-    // if (LOGGER.isDebugEnabled()) {
-    // LOGGER.debug("Checking external resource: {}", getResourceLocation());
-    // }
-    // final Collection<URI> list;
-    // if (isProxy()) {
-    // LOGGER.debug("CHECK Fixity for PROXY: {}", getDescriptionProperty(PROXY_FOR).getString());
-    // return CacheEntryFactory.forProperty(getDescriptionProperty(PROXY_FOR)).checkFixity(algorithms);
-    // } else if (isRedirect()) {
-    // LOGGER.debug("CHECK Fixity for REDIRECT: {}", getDescriptionProperty(REDIRECTS_TO).getString());
-    // return CacheEntryFactory.forProperty(getDescriptionProperty(REDIRECTS_TO)).checkFixity(algorithms);
-    // }
-    // LOGGER.debug("NEITHER PROXY OR REDIRECT");
-    // } catch (final RepositoryException e) {
-    // throw new RepositoryRuntimeException(e);
-    // }
-
-    // return null;
-    // }
 }

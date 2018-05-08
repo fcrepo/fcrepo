@@ -35,7 +35,6 @@ import org.fcrepo.kernel.api.models.FedoraTimeMap;
  * @since Oct. 04, 2017
  */
 public class FedoraTimeMapImpl extends FedoraResourceImpl implements FedoraTimeMap {
-
     /**
      * Construct a {@link org.fcrepo.kernel.api.models.FedoraResource} from an existing JCR Node
      * @param node an existing JCR node to be treated as a fcrepo object

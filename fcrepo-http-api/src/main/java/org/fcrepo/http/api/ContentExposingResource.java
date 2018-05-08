@@ -158,7 +158,6 @@ import org.slf4j.Logger;
 public abstract class ContentExposingResource extends FedoraBaseResource {
 
     private static final Logger LOGGER = getLogger(ContentExposingResource.class);
-    public static final String URL_ACCESS_TYPE = "URL";
 
     private static final List<String> VARY_HEADERS = Arrays.asList("Accept", "Range", "Accept-Encoding",
             "Accept-Language");
