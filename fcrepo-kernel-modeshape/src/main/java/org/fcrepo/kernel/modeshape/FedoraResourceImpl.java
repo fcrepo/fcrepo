@@ -365,7 +365,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     private Stream<FedoraResource> nodeToGoodChildren(final Node input) throws RepositoryException {
         return iteratorToStream(input.getNodes()).filter(nastyChildren.negate())
             .flatMap(uncheck((final Node child) -> child.isNodeType(FEDORA_PAIRTREE) ? nodeToGoodChildren(child) :
-                        of(nodeToObjectBinaryConverter.convert(child))));
+                        of(nodeConverter.convert(child))));
     }
 
     /**
@@ -378,29 +378,12 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     /**
      * Children for whom we will not generate triples.
      */
-    private static Predicate<Node> nastyChildren = isInternalNode
+    protected static Predicate<Node> nastyChildren = isInternalNode
                     .or(TombstoneImpl::hasMixin)
                     .or(FedoraTimeMapImpl::hasMixin)
                     .or(FedoraWebacAclImpl::hasMixin)
                     .or(UncheckedPredicate.uncheck(p -> p.getName().equals(JCR_CONTENT)))
                     .or(UncheckedPredicate.uncheck(p -> p.getName().equals("#")));
-
-    private static final Converter<FedoraResource, FedoraResource> datastreamToBinary
-            = new Converter<FedoraResource, FedoraResource>() {
-
-        @Override
-        protected FedoraResource doForward(final FedoraResource fedoraResource) {
-            return fedoraResource.getDescribedResource();
-        }
-
-        @Override
-        protected FedoraResource doBackward(final FedoraResource fedoraResource) {
-            return fedoraResource.getDescription();
-        }
-    };
-
-    private static final Converter<Node, FedoraResource> nodeToObjectBinaryConverter
-            = nodeConverter.andThen(datastreamToBinary);
 
     @Override
     public FedoraResource getContainer() {
@@ -1128,12 +1111,13 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     protected static Function<Triple, Triple> convertInternalResource(
             final IdentifierConverter<Resource, FedoraResource> translator,
             final IdentifierConverter<Resource, FedoraResource> internalTranslator) {
+
         return t -> {
             if (t.getObject().isURI()) {
                 final Resource object = createResource(t.getObject().getURI());
                 if (internalTranslator.inDomain(object)) {
-                    final String path = internalTranslator.convert(object).getPath();
-                    final Resource newObject = createResource(translator.toDomain(path).getURI());
+                    final FedoraResource objResc = internalTranslator.convert(object);
+                    final Resource newObject = translator.reverse().convert(objResc);
                     return new Triple(t.getSubject(), t.getPredicate(), newObject.asNode());
                 }
             }
