@@ -621,17 +621,6 @@
       <timezone>-5</timezone>
     </developer>
     <developer>
-      <id>acoburn</id>
-      <name>Aaron Coburn</name>
-      <email>acoburn @ (domain of organization url)</email>
-      <organization>Amherst College</organization>
-      <organizationUrl>https://www.amherst.edu/</organizationUrl>
-      <roles>
-        <role>developer</role>
-      </roles>
-      <timezone>-5</timezone>
-    </developer>
-    <developer>
       <id>escowles</id>
       <name>Esmé Cowles</name>
       <email>escowles @ ticklefish dot org</email>
