@@ -24,7 +24,7 @@
             "useOnFailedLogin" : false
         },
         "providers" : [
-            { "classname" : "org.fcrepo.auth.common.ServletContainerAuthenticationProvider" }
+            { "classname" : "org.fcrepo.auth.common.ShiroAuthenticationProvider" }
         ]
     },
     "garbageCollection" : {
