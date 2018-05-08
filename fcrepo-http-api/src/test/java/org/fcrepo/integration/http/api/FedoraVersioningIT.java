@@ -51,7 +51,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
-import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBES;
+import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
@@ -548,12 +548,13 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         assertEquals("Expected delete to succeed",
                 NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(referencedResource)));
 
+        final Node originalBinaryNode = createURI(serverAddress + id);
         // Ensure that the resource reference is gone
         try (final CloseableHttpResponse getResponse1 = execute(new HttpGet(metadataUri));
                 final CloseableDataset dataset = getDataset(getResponse1);) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             assertFalse("Expected NOT to have resource: " + graph, graph.contains(ANY,
-                    ANY, createURI(relation), createURI(referencedResource)));
+                    originalBinaryNode, createURI(relation), createURI(referencedResource)));
         }
 
         final String descMementoUrl = mementoUri.replace(FCR_VERSIONS, "fcr:metadata/fcr:versions");
@@ -562,11 +563,11 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                 final CloseableDataset dataset = getDataset(getResponse1);) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             assertTrue("Expected resource NOT found: " + graph, graph.contains(ANY,
-                    createURI(serverAddress + id), createURI(relation), createURI(referencedResource)));
+                    originalBinaryNode, createURI(relation), createURI(referencedResource)));
 
             // Verify that described by link persists and there is only one
-            final Iterator<Quad> describedIt = graph.find(ANY, ANY, DESCRIBES.asNode(), ANY);
-            assertEquals(serverAddress + id, describedIt.next().getObject().getURI());
+            final Iterator<Quad> describedIt = graph.find(ANY, originalBinaryNode, DESCRIBED_BY.asNode(), ANY);
+            assertEquals(metadataUri, describedIt.next().getObject().getURI());
             assertFalse(describedIt.hasNext());
         }
     }
