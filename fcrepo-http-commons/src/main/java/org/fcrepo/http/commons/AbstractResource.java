@@ -33,7 +33,7 @@ import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.api.services.ContainerService;
 import org.fcrepo.kernel.api.services.VersionService;
-import org.fcrepo.kernel.api.services.functions.HierarchicalIdentifierSupplier;
+import org.fcrepo.kernel.api.services.functions.ConfigurableHierarchicalSupplier;
 import org.fcrepo.kernel.api.services.functions.UniqueValueSupplier;
 
 import org.jvnet.hk2.annotations.Optional;
@@ -97,7 +97,9 @@ public class AbstractResource {
     @Optional
     protected Supplier<String> pidMinter;
 
-    protected UniqueValueSupplier defaultPidMinter = new DefaultPathMinter();
+    // Mint non-hierarchical identifiers. To force pairtree creation as default, use
+    //  ConfigurableHierarchicalSupplier(int length, count) instead.
+    protected UniqueValueSupplier defaultPidMinter = new ConfigurableHierarchicalSupplier();
 
     /**
      * Convert a JAX-RS list of PathSegments to a JCR path
@@ -115,7 +117,4 @@ public class AbstractResource {
 
         return path.isEmpty() ? "/" : path;
     }
-
-    private static class DefaultPathMinter implements HierarchicalIdentifierSupplier { }
-
 }

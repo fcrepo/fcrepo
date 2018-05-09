@@ -135,10 +135,12 @@
     <!-- **************************
               PID Minter
          ************************** -->
-    <!-- Mints PIDs using random UUIDs and generates additional hierarchy -->
-    <!--<bean class="org.fcrepo.mint.UUIDPathMinter"
-        c:length="${fcrepo.uuid.path.length:2}"
-        c:count="${fcrepo.uuid.path.count:4}"/>
+    <!-- Mint hierarchical identifiers with args to control length and count
+          of the pairtree. A length or count of ZERO will return a 
+          non-hierarchical identifier.
+    <bean class="org.fcrepo.kernel.api.services.functions.ConfigurableHierarchicalSupplier"
+        c:desiredLength="${fcrepo.uuid.path.length:2}"
+        c:desiredCount="${fcrepo.uuid.path.count:4}"/>
     -->
 
     <!-- Mints Pids with no additional hierarchy.
