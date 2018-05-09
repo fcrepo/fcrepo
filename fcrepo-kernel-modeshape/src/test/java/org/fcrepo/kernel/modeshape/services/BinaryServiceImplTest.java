@@ -29,7 +29,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import javax.jcr.Node;
-import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
@@ -38,8 +37,6 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.anyString;
-import static org.fcrepo.kernel.api.FedoraTypes.HAS_MIME_TYPE;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.when;
@@ -137,21 +134,5 @@ public class BinaryServiceImplTest {
         when(mockNode.isNodeType(FEDORA_CONTAINER)).thenReturn(true);
 
         testObj.find(testSession, testPath);
-    }
-
-    @Test
-    public void testFindOrCreateLocalFileBinary() throws Exception {
-        final String testPath = "/foo/bar";
-        when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockDsNode);
-
-        when(mockNode.isNodeType(FEDORA_BINARY)).thenReturn(true);
-        when(mockNode.hasProperty(HAS_MIME_TYPE)).thenReturn(true);
-        final Property mimeTypeProperty = mock(Property.class);
-        when(mimeTypeProperty.getString()).thenReturn(LOCAL_FILE_RESOURCE);
-        when(mockNode.getProperty(HAS_MIME_TYPE)).thenReturn(mimeTypeProperty);
-
-        when(mockSession.getNode("/")).thenReturn(mockRoot);
-        testObj.findOrCreate(testSession, testPath);
-        verify(mockRoot).getNode(testPath.substring(1));
     }
 }

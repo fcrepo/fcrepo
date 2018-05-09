@@ -23,7 +23,7 @@ package org.fcrepo.kernel.api.exception;
  * @author bseeger
  * @since April 18, 2018
  */
-public class ExternalMessageBodyException extends RepositoryRuntimeException {
+public class ExternalMessageBodyException extends ConstraintViolationException {
 
     private static final long serialVersionUID = 1L;
 
@@ -34,15 +34,5 @@ public class ExternalMessageBodyException extends RepositoryRuntimeException {
      */
     public ExternalMessageBodyException(final String msg) {
         super(msg);
-    }
-
-    /**
-     * Ordinary constructor
-     *
-     * @param msg the message
-     * @param rootCause the root cause
-     */
-    public ExternalMessageBodyException(final String msg, final Throwable rootCause) {
-        super(msg, rootCause);
     }
 }

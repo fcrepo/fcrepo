@@ -77,7 +77,7 @@ public class LocalFileBinaryIT extends AbstractIT {
 
     private File contentFile;
 
-    private String mimeType;
+    private final String mimeType = "text/plain";
 
     private String dsId;
 
@@ -87,8 +87,6 @@ public class LocalFileBinaryIT extends AbstractIT {
 
         contentFile = File.createTempFile("file", ".txt");
         IOUtils.write(EXPECTED_CONTENT, new FileOutputStream(contentFile), "UTF-8");
-
-        mimeType = "text/plain";
 
         dsId = makeDsId();
 
@@ -102,9 +100,8 @@ public class LocalFileBinaryIT extends AbstractIT {
 
     @Test
     public void testProxyDatastreamWithMimeType() throws Exception {
-        mimeType = "text/plain";
         final FedoraBinary binary = binaryService.findOrCreate(session, dsId);
-        binary.setExternalContent(null, mimeType, null, null, "proxy", contentFile.toURI().toURL().toString());
+        binary.setExternalContent(mimeType, null, null, "proxy", contentFile.toURI().toURL().toString());
 
         session.commit();
 
@@ -120,7 +117,7 @@ public class LocalFileBinaryIT extends AbstractIT {
     @Test
     public void testProxyDatastreamWithOutMimeType() throws Exception {
         final FedoraBinary binary = binaryService.findOrCreate(session, dsId);
-        binary.setExternalContent(null, null, null, null, "proxy", contentFile.toURI().toURL().toString());
+        binary.setExternalContent(null, null, null, "proxy", contentFile.toURI().toURL().toString());
 
         session.commit();
 
@@ -132,10 +129,9 @@ public class LocalFileBinaryIT extends AbstractIT {
         assertEquals("application/octet-stream", ds.getMimeType());
     }
     @Test
-        public void testRedirectDatastreamWithMimeType() throws Exception {
-        mimeType = "text/plain";
+    public void testRedirectDatastreamWithMimeType() throws Exception {
         final FedoraBinary binary = binaryService.findOrCreate(session, dsId);
-        binary.setExternalContent(null, mimeType, null, null, "redirect", contentFile.toURI().toURL().toString());
+        binary.setExternalContent(mimeType, null, null, "redirect", contentFile.toURI().toURL().toString());
 
         session.commit();
 
@@ -150,7 +146,7 @@ public class LocalFileBinaryIT extends AbstractIT {
     @Test
     public void testRedirectDatastreamWithOutMimeType() throws Exception {
         final FedoraBinary binary = binaryService.findOrCreate(session, dsId);
-        binary.setExternalContent(null, null, null, null, "redirect", contentFile.toURI().toURL().toString());
+        binary.setExternalContent(null, null, null, "redirect", contentFile.toURI().toURL().toString());
 
         session.commit();
 
@@ -165,7 +161,7 @@ public class LocalFileBinaryIT extends AbstractIT {
     @Test
     public void testWithValidChecksum() throws Exception {
         final FedoraBinary binary = binaryService.findOrCreate(session, dsId);
-        binary.setExternalContent(null, mimeType, sha1Set(CONTENT_SHA1), null, "proxy",
+        binary.setExternalContent(mimeType, sha1Set(CONTENT_SHA1), null, "proxy",
                 contentFile.toURI().toURL().toString());
 
         session.commit();
@@ -178,7 +174,7 @@ public class LocalFileBinaryIT extends AbstractIT {
     @Test(expected = InvalidChecksumException.class)
     public void testProxyWithInvalidChecksum() throws Exception {
         final FedoraBinary binary = binaryService.findOrCreate(session, dsId);
-        binary.setExternalContent(null, mimeType, sha1Set("badsum"), null, "proxy",
+        binary.setExternalContent(mimeType, sha1Set("badsum"), null, "proxy",
                 contentFile.toURI().toURL().toString());
     }
 
@@ -189,7 +185,7 @@ public class LocalFileBinaryIT extends AbstractIT {
     @Test
     public void testCheckFixity() throws Exception {
         final FedoraBinary binary = binaryService.findOrCreate(session, dsId);
-        binary.setExternalContent(null, mimeType, sha1Set(CONTENT_SHA1), null, "proxy",
+        binary.setExternalContent(mimeType, sha1Set(CONTENT_SHA1), null, "proxy",
                 contentFile.toURI().toURL().toString());
 
         session.commit();

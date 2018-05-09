@@ -30,6 +30,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.HAS_MIME_TYPE;
 import static org.fcrepo.kernel.api.FedoraTypes.PROXY_FOR;
 import static org.fcrepo.kernel.api.FedoraTypes.REDIRECTS_TO;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_DESCRIPTION;
+import static org.fcrepo.kernel.api.FedoraExternalContent.PROXY;
 import static org.fcrepo.kernel.modeshape.utils.TestHelpers.getContentNodeMock;
 import static org.fcrepo.kernel.modeshape.utils.TestHelpers.checksumString;
 import static org.junit.Assert.assertEquals;
@@ -74,7 +75,7 @@ public class UrlBinaryTest {
 
     private FedoraBinary testObj;
 
-    private String mimeType;
+    private final String mimeType = "text/plain";
 
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(options().dynamicPort());
@@ -121,7 +122,6 @@ public class UrlBinaryTest {
                         .withBody(EXPECTED_CONTENT)));
         fileUrl = "http://localhost:" + wireMockRule.port() + "/file.txt";
 
-        mimeType = "text/plain";
 
         when(mockDescNodeType.getName()).thenReturn(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
         when(mockDescNode.getMixinNodeTypes()).thenReturn(nodeTypes);
@@ -148,6 +148,15 @@ public class UrlBinaryTest {
     }
 
     @Test
+    public void testSetExternalContent() throws Exception {
+        mockProxyProperty();
+        testObj.setExternalContent(mimeType, null, null, PROXY, "http://example.com");
+
+        verify(mockDescNode).setProperty(HAS_MIME_TYPE, mimeType);
+        verify(mockContent).setProperty(PROXY_FOR, "http://example.com");
+    }
+
+    @Test
     public void testSetContentWithFilename() throws Exception {
         mockProxyProperty();
         final String fileName = "content.txt";
@@ -158,13 +167,28 @@ public class UrlBinaryTest {
     }
 
     @Test
+    public void testSetExternalContentWithChecksum() throws Exception {
+        final String checksum = checksumString(EXPECTED_CONTENT);
+        mockProxyProperty();
+
+        testObj.setExternalContent(mimeType, singleton(new URI(checksum)), null, PROXY, "http://www.example.com");
+
+        verify(mockDescNode).setProperty(CONTENT_DIGEST, new String[]{checksum});
+        verify(mockDescNode).setProperty(HAS_MIME_TYPE, mimeType);
+    }
+
+    @Test
     public void testSetContentWithChecksum() throws Exception {
         final String checksum = checksumString(EXPECTED_CONTENT);
         mockProxyProperty();
 
         testObj.setContent(mockStream, mimeType, singleton(
                 new URI(checksum)), null, null);
+
+        verify(mockDescNode).setProperty(CONTENT_DIGEST, new String[]{checksum});
+        verify(mockDescNode).setProperty(HAS_MIME_TYPE, mimeType);
     }
+
 
     @Test(expected = InvalidChecksumException.class)
     public void testSetContentWithChecksumMismatch() throws Exception {

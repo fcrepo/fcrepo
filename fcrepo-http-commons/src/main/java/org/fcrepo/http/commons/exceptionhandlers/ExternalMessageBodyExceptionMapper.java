@@ -26,17 +26,21 @@ import org.slf4j.Logger;
 
 import javax.servlet.ServletContext;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
 /**
- * Created by bseeger on 4/18/18.
+ * If an External Content Link header isn't formatted correctly or missing something, return
+ * a Bad Request error.
+ *
+ * @author bseeger
+ * @since 4/18/18.
  */
 @Provider
-public class ExternalMessageBodyExceptionMapper implements
-    ExceptionMapper<ExternalMessageBodyException>, ExceptionDebugLogging {
+public class ExternalMessageBodyExceptionMapper extends ConstraintExceptionMapper<ExternalMessageBodyException>
+        implements ExceptionDebugLogging {
 
     private static final Logger LOGGER = getLogger(ExternalMessageBodyExceptionMapper.class);
 
@@ -54,8 +58,9 @@ public class ExternalMessageBodyExceptionMapper implements
      */
     @Override
     public Response toResponse(final ExternalMessageBodyException e) {
-        LOGGER.error("ExternalMessageBodyExceptionMapper caught an exception: {}", e.getMessage());
         debugException(this, e, LOGGER);
-        return status(BAD_REQUEST).entity(e.getMessage()).type(TEXT_PLAIN_WITH_CHARSET).build();
+        final Link link = buildConstraintLink(e, context, uriInfo);
+        final String msg = e.getMessage();
+        return status(BAD_REQUEST).entity(msg).links(link).type(TEXT_PLAIN_WITH_CHARSET).build();
     }
 }

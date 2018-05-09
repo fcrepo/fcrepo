@@ -104,7 +104,7 @@ public class InternalFedoraBinary extends AbstractFedoraBinary {
     }
 
     @Override
-    public void setExternalContent(final InputStream content, final String contentType, final Collection<URI> checksums,
+    public void setExternalContent(final String contentType, final Collection<URI> checksums,
                                    final String originalFileName, final String externalHandling,
                                    final String externalUrl)
             throws InvalidChecksumException {

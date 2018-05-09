@@ -56,7 +56,8 @@ public class LocalFileBinary extends UrlBinary {
 
     /*
      * (non-Javadoc)
-      mlol* @see org.fcrepo.kernel.modeshape.FedoraBinaryImpl#setContent(java.io.InputStream, java.lang.String,
+     * @see
+     * org.fcrepo.kernel.modeshape.FedoraBinaryImpl#setContent(java.io.InputStream, java.lang.String,
      * java.util.Collection, java.lang.String, org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint)
      */
     @Override
@@ -71,7 +72,6 @@ public class LocalFileBinary extends UrlBinary {
             final Node descNode = getDescriptionNode();
             final Node contentNode = getNode();
 
-            LOGGER.debug("HERE HERE HERE HERE HERE");
             if (contentNode.canAddMixin(FEDORA_BINARY)) {
                 contentNode.addMixin(FEDORA_BINARY);
             }
@@ -106,6 +106,14 @@ public class LocalFileBinary extends UrlBinary {
         }
     }
 
+    /**
+     * Adds necessary information to the binary node, like digest info and content size
+     *
+     * @param dsNode  node to decorate
+     * @param descNode the description node for this binary
+     * @param checksums checksum values for this binary
+     * @param size the content size
+     */
     private static void decorateContentNode(final Node dsNode, final Node descNode, final Collection<URI> checksums,
         final long size)
         throws RepositoryException {

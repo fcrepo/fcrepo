@@ -282,20 +282,6 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
             throw new RepositoryRuntimeException(e);
         }
         return DEFAULT_MIME_TYPE;
-        /*
-        try {
-            if (hasDescriptionProperty(HAS_MIME_TYPE)) {
-                return getDescriptionProperty(HAS_MIME_TYPE).getString().replace(FIELD_DELIMITER + XSDstring.getURI(),
-                        "");
-            }
-        } catch (final RepositoryRuntimeException e) {
-            if (!(e.getCause() instanceof PathNotFoundException) || !isMemento()) {
-                throw e;
-            }
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        } */
-
     }
 
     /*
@@ -370,12 +356,6 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
-        /*
-        try {
-            return getDescriptionNode().hasProperty(relPath);
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        } */
     }
 
     /**

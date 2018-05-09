@@ -80,32 +80,25 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
     private FedoraBinary getBinary(final String extUrl) {
         if (wrappedBinary == null) {
             wrappedBinary = getBinaryImplementation(extUrl);
-            LOGGER.debug("Wrapping binary content of type {}", wrappedBinary.getClass().getName());
         }
         return wrappedBinary;
     }
 
     private FedoraBinary getBinaryImplementation(final String extUrl) {
         String url = extUrl;
-        LOGGER.debug("getBinaryImplementation ONE: url is '{}'",url);
         if (url == null || url.isEmpty()) {
             url = getURLInfo();
         }
 
-        LOGGER.debug("Is memento? {}", isMemento());
 
-        LOGGER.debug("getBinaryImplementation TWO: url is '{}'",url);
         if (url != null) {
             if (url.toLowerCase().startsWith(LOCAL_FILE_ACCESS_TYPE)) {
-                LOGGER.debug("Instantiating local file FedoraBinary");
                 return new LocalFileBinary(getNode());
             } else if (url.toLowerCase().startsWith(URL_ACCESS_TYPE)) {
-                LOGGER.debug("Instantiating URI FedoraBinary");
                 return new UrlBinary(getNode());
             }
         }
 
-        LOGGER.debug("Instantiating Internal Fedora Binary");
         return new InternalFedoraBinary(getNode());
     }
 
@@ -122,11 +115,6 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
 
         return null;
     }
-/*
-    @Override
-    public FedoraResource getDescription() {
-        return getBinary().getDescription();
-    } */
 
     /*
      * (non-Javadoc)
@@ -138,14 +126,14 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
     }
 
     @Override
-    public void setExternalContent(final InputStream content, final String contentType,
+    public void setExternalContent(final String contentType,
                                    final Collection<URI> checksums, final String originalFileName,
                                    final String externalHandling, final String externalUrl)
             throws InvalidChecksumException {
 
         // Clear the wrapped binary object prior to setting the content
         wrappedBinary = null;
-        getBinary(externalUrl).setExternalContent(content, contentType, checksums, originalFileName,
+        getBinary(externalUrl).setExternalContent(contentType, checksums, originalFileName,
                 externalHandling, externalUrl);
     }
 
@@ -188,66 +176,6 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
 
     /*
      * (non-Javadoc)
-     * @see org.fcrepo.kernel.api.models.FedoraBinary#isProxy()
-     */
-    /*
-    @Override
-    public Boolean isProxy() {
-        return getBinary().isProxy();
-    }
- */
-    /*
-     * (non-Javadoc)
-     * @see org.fcrepo.kernel.api.models.FedoraBinary#isRedirect()
-     */
-    /*
-    @Override
-    public Boolean isRedirect() {
-        return getBinary().isRedirect();
-    }
-*/
-    /*
-     * (non-Javadoc)
-     * @see org.fcrepo.kernel.api.models.FedoraBinary#getProxyURL()
-     */
-    /*
-    @Override
-    public String getProxyURL() {
-        return getBinary().getProxyURL();
-    }
-*/
-    /*
-     * (non-Javadoc)
-     * @see org.fcrepo.kernel.api.models.FedoraBinary#setProxyURL()
-     */
-    /*
-    @Override
-    public void setProxyURL(final String url) throws RepositoryRuntimeException {
-        getBinary().setProxyURL(url);
-    } */
-
-    /*
-     * (non-Javadoc)
-     * @see org.fcrepo.kernel.api.models.FedoraBinary#getRedirectURL()
-     */
-    /*
-    @Override
-    public String getRedirectURL() {
-       return getBinary().getRedirectURL();
-    }
-*/
-    /*
-     * (non-Javadoc)
-     * @see org.fcrepo.kernel.api.models.FedoraBinary#setRedirectURL()
-     */
-    /*
-    @Override
-    public void setRedirectURL(final String url) throws RepositoryRuntimeException {
-       getBinary().setRedirectURL(url);
-    } */
-
-    /*
-     * (non-Javadoc)
      * @see org.fcrepo.kernel.api.models.FedoraBinary#getMimeType()
      */
     @Override
@@ -259,7 +187,6 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
      * (non-Javadoc)
      * @see org.fcrepo.kernel.api.models.FedoraBinary#getFilename()
      */
-
     @Override
     public String getFilename() {
         return getBinary().getFilename();
@@ -326,22 +253,7 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
                                 final Set<? extends TripleCategory> contexts) {
         return getDescription().getTriples(idTranslator, contexts);
     }
-/*
-    @Override
-    public boolean isVersioned() {
-        return getBinary().isVersioned();
-    }
 
-    @Override
-    public void enableVersioning() {
-        getBinary().enableVersioning();
-    }
-
-    @Override
-    public void disableVersioning() {
-        getBinary().disableVersioning();
-    }
-*/
     /**
      * Check if the given node is a Fedora binary
      *

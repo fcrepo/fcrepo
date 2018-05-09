@@ -36,6 +36,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSE
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -85,6 +86,7 @@ import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
 /**
@@ -94,6 +96,8 @@ import org.springframework.context.annotation.Scope;
 @Scope("request")
 @Path("/{path: .*}/fcr:versions")
 public class FedoraVersioning extends ContentExposingResource {
+
+    private static final Logger LOGGER = getLogger(FedoraVersioning.class);
 
     @VisibleForTesting
     public static final String MEMENTO_DATETIME_HEADER = "Memento-Datetime";
@@ -127,6 +131,7 @@ public class FedoraVersioning extends ContentExposingResource {
      */
     @DELETE
     public Response disableVersioning() {
+        LOGGER.debug("Disable versioning for '{}'", externalPath);
         resource().disableVersioning();
         session.commit();
         return noContent().build();
@@ -182,6 +187,7 @@ public class FedoraVersioning extends ContentExposingResource {
             final boolean createFromExisting = isBlank(datetimeHeader);
 
             try {
+                LOGGER.debug("Request to add version for date '{}' for '{}'", datetimeHeader, externalPath);
 
                 // Create memento
                 FedoraResource memento = null;
@@ -242,6 +248,7 @@ public class FedoraVersioning extends ContentExposingResource {
         final Collection<String> checksums = parseDigestHeader(digest);
         final Collection<URI> checksumURIs = checksums == null ? new HashSet<>() : checksums.stream().map(
                 checksum -> checksumURI(checksum)).collect(Collectors.toSet());
+
         return versionService.createBinaryVersion(session.getFedoraSession(), binaryResource,
                 mementoInstant, requestBodyStream, checksumURIs, storagePolicyDecisionPoint);
     }
@@ -267,6 +274,8 @@ public class FedoraVersioning extends ContentExposingResource {
         }
         final FedoraResource theTimeMap = resource().findOrCreateTimeMap();
         checkCacheControlHeaders(request, servletResponse, theTimeMap, session);
+
+        LOGGER.debug("GET resource '{}'", externalPath);
 
         addResourceHttpHeaders(theTimeMap);
 

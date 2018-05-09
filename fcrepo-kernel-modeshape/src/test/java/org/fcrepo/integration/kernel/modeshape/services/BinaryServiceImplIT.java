@@ -145,7 +145,6 @@ public class BinaryServiceImplIT extends AbstractIT {
 
         final FedoraBinary binary1 = binaryService.findOrCreate(session, "/testLocalFileNode");
         binary1.setExternalContent(
-                null,
                 contentType,
                 null,
                 null,

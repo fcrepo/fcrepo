@@ -56,9 +56,8 @@ public interface FedoraBinary extends FedoraResource {
             throws InvalidChecksumException;
 
     /**
-     * Sets up this stream for external content
+     * Sets the external content reference for this datastream
      *
-     * @param content  InputStream of binary content to be stored
      * @param contentType MIME type of content (optional)
      * @param checksums Collection of checksum URIs of the content (optional)
      * @param originalFileName Original file name of the content (optional)
@@ -66,7 +65,7 @@ public interface FedoraBinary extends FedoraResource {
      * @param externalUrl Url for the external resourcej
      * @throws InvalidChecksumException if invalid checksum exception occurred
      */
-    void setExternalContent(InputStream content, String contentType, Collection<URI> checksums,
+    void setExternalContent(String contentType, Collection<URI> checksums,
                     String originalFileName, String externalHandling, String externalUrl)
             throws InvalidChecksumException;
     /**
@@ -111,7 +110,7 @@ public interface FedoraBinary extends FedoraResource {
     /**
      * Get URL as a URI
      * 
-     * @return URI containung the object to redirect to.
+     * @return URI containing the object to redirect to.
      */
     default URI getRedirectURI() {
         return URI.create(getRedirectURL());

@@ -319,7 +319,7 @@ public class FedoraLdpTest {
     private void assertShouldHaveConstraintsLink() {
         assertTrue("Should have a constraints document",
                 mockResponse.getHeaders(LINK).contains("<" + containerConstraints + ">; rel=\"" +
-                CONSTRAINED_BY.toString() + "\""));
+                        CONSTRAINED_BY.toString() + "\""));
     }
 
     @Test
@@ -755,7 +755,7 @@ public class FedoraLdpTest {
         assertShouldBeAnLDPNonRDFSource();
         assertShouldNotAdvertiseAcceptPatchFlavors();
         assertShouldContainLinkToBinaryDescription();
-        assertTrue(IOUtils.toString((InputStream)actual.getEntity(), UTF_8).equals("xyz"));
+        assertTrue(IOUtils.toString((InputStream) actual.getEntity(), UTF_8).equals("xyz"));
     }
 
     private void assertShouldBeAnLDPNonRDFSource() {
@@ -783,8 +783,21 @@ public class FedoraLdpTest {
     }
 
     @Test(expected = ExternalMessageBodyException.class)
-    public void testPostWithExternalMessageBadHandling() throws Exception {
+    public void testGetWithExternalMessageMissingURLBinary() throws Exception {
         final String badExternal = Link.fromUri("http://test.com")
+                .rel(EXTERNAL_CONTENT.toString())
+                .param("handling", "proxy")
+                .type("text/plain")
+                .build()
+                .toString()
+                .replaceAll("<.*>", "< >");
+
+        final Response actual = testObj.createObject(null, null, null, null, Arrays.asList(badExternal), null);
+    }
+
+    @Test(expected = ExternalMessageBodyException.class)
+    public void testPostWithExternalMessageBadHandling() throws Exception {
+         final String badExternal = Link.fromUri("http://test.com")
             .rel(EXTERNAL_CONTENT.toString()).param("handling", "boogie").type("text/plain").build().toString();
         final Response actual = testObj.createObject(null, null, null, null, Arrays.asList(badExternal), null);
     }
@@ -802,7 +815,7 @@ public class FedoraLdpTest {
             .thenReturn(new DefaultRdfStream(createURI("mockBinary")));
         when(mockBinary.getTriples(eq(idTranslator), any(EnumSet.class)))
             .thenReturn(new DefaultRdfStream(createURI("mockBinary"), of(new Triple
-                (createURI("mockBinary"), createURI("called"), createURI("child:properties")))));
+                    (createURI("mockBinary"), createURI("called"), createURI("child:properties")))));
         final Response actual = testObj.getResource(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertTrue("Should be an LDP RDFSource",

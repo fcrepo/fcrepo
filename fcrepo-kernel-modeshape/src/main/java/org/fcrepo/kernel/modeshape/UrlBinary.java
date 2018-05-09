@@ -107,7 +107,7 @@ public class UrlBinary extends AbstractFedoraBinary {
     }
 
     @Override
-    public void setExternalContent(final InputStream content, final String contentType,
+    public void setExternalContent(final String contentType,
                            final Collection<URI> checksums, final String originalFileName,
                            final String externalHandling, final String externalUrl)
             throws InvalidChecksumException {
@@ -126,7 +126,7 @@ public class UrlBinary extends AbstractFedoraBinary {
             throw new RepositoryRuntimeException(e);
         }
 
-        setContent(content, contentType, checksums, originalFileName, null);
+        setContent(null, contentType, checksums, originalFileName, null);
     }
     /*
      * (non-Javadoc)
@@ -181,7 +181,7 @@ public class UrlBinary extends AbstractFedoraBinary {
                 FedoraTypesUtils.touch(descNode);
             }
 
-            LOGGER.info("Set url binary content from path: {}", getResourceLocation());
+            LOGGER.debug("Set url binary content from path: {}", getResourceLocation());
 
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
@@ -199,29 +199,15 @@ public class UrlBinary extends AbstractFedoraBinary {
             property = getProperty(REDIRECTS_TO);
         } // what else could it be?
 
-        LOGGER.info("Property is: {}", property.getName());
-        LOGGER.info("IsProxy? {} isRedirect? {}", isProxy(), isRedirect());
-
         final Map<URI, URI> checksumErrors = new HashMap<>();
 
         final CacheEntry cacheEntry = CacheEntryFactory.forProperty(property);
         // Loop through provided checksums validating against computed values
-        // checksums.forEach(checksum -> {
-        // final String algorithm = ContentDigest.getAlgorithm(checksum);
-        // cacheEntry.checkFixity(algorithm).stream().findFirst().ifPresent(
-        // fixityResult -> {
-        // if (!fixityResult.matches(checksum)) {
-        // LOGGER.debug("Failed checksum test");
-        // checksumErrors.put(checksum, fixityResult.getComputedChecksum());
-        // }
-        // });
-        // });
-
         for (final URI check : checksums) {
             final String algorithm = ContentDigest.getAlgorithm(check);
             for (final FixityResult result : cacheEntry.checkFixity(algorithm)) {
                 if (!result.matches(check)) {
-                            LOGGER.debug("Failed checksum test");
+                    LOGGER.debug("Failed checksum test");
                     checksumErrors.put(check, result.getComputedChecksum());
                 }
             }
@@ -244,7 +230,6 @@ public class UrlBinary extends AbstractFedoraBinary {
      */
     @Override
     public RdfStream getFixity(final IdentifierConverter<Resource, FedoraResource> idTranslator) {
-        LOGGER.info("getFixity generic");
         return getFixity(idTranslator, getContentDigest(), getContentSize());
     }
 
@@ -258,7 +243,6 @@ public class UrlBinary extends AbstractFedoraBinary {
     public RdfStream getFixity(final IdentifierConverter<Resource, FedoraResource> idTranslator, final URI digestUri,
             final long size) {
 
-        LOGGER.info("getFixity specific");
         fixityCheckCounter.inc();
 
         try (final Timer.Context context = timer.time()) {
@@ -271,14 +255,13 @@ public class UrlBinary extends AbstractFedoraBinary {
 
             Collection<FixityResult> fixityResults = null;
             if (isProxy()) {
-                LOGGER.info("URL Binary -- PROXY and Fixity");
                 fixityResults = CacheEntryFactory.forProperty(getProperty(PROXY_FOR)).checkFixity(algorithm);
             } else if (isRedirect()) {
-                LOGGER.info("URL Binary -- REDIRECT and Fixity");
                 fixityResults =
                     CacheEntryFactory.forProperty(getProperty(REDIRECTS_TO)).checkFixity(algorithm);
             } else {
                 LOGGER.warn("URL Binary -- not proxy or redirect, so what is it?");
+                throw new RepositoryException("Binary resource marked as external is not proxy or redirect.");
             }
             return new FixityRdfContext(this, idTranslator, fixityResults, digestUri, contentSize);
         } catch (final RepositoryException e) {
@@ -291,21 +274,17 @@ public class UrlBinary extends AbstractFedoraBinary {
             final Collection<String> algorithms)
             throws UnsupportedAlgorithmException, UnsupportedAccessTypeException {
 
-        LOGGER.info("checkFixity");
         fixityCheckCounter.inc();
 
         try (final Timer.Context context = timer.time()) {
 
             final String resourceLocation = getResourceLocation();
-            LOGGER.info("Checking external resource: " + resourceLocation);
             Collection<URI> list = null;
             if (isProxy()) {
                 list = CacheEntryFactory.forProperty(getProperty(PROXY_FOR)).checkFixity(algorithms);
             } else if (isRedirect()) {
                 list = CacheEntryFactory.forProperty(getProperty(REDIRECTS_TO)).checkFixity(algorithms);
             }
-            LOGGER.info("FIXITY INFO: {} ", list.iterator().next().toString());
-            LOGGER.info("FIXITY INFO size: {} ", list.size());
             return list;
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
@@ -316,23 +295,27 @@ public class UrlBinary extends AbstractFedoraBinary {
     /**
      * Returns the specified mimetype in place of the original external-body if provided
      */
-
     @Override
     public String getMimeType() {
         return getMimeTypeValue();
     }
 
+    /**
+     * Gets the URL for where this resource is actually located
+     * @return String containing actual location of resource
+     */
     protected String getResourceLocation() {
-        LOGGER.info("Getting resource location");
         if (isProxy()) {
-            LOGGER.info("Getting resource location PROXY {}", getProxyURL());
             return getProxyURL();
         } else {
-            LOGGER.info("Getting resource location REDIRECT {}", getRedirectURL());
             return getRedirectURL();
         }
     }
 
+    /**
+     * Get a URI for the resource
+     * @return URI object representing resource's location
+     */
     protected URI getResourceUri() {
         try {
             return new URI(getResourceLocation());

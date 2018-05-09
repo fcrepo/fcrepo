@@ -54,11 +54,9 @@ public final class CacheEntryFactory {
      */
     public static CacheEntry forProperty(final Property property) throws RepositoryException {
         // if it's an external binary, catch that here and treat it differently.
-        LOGGER.info("Did you know that property.getName() is: '{}' and Proxy: {} ", property.getName(),
-                PROXY_FOR.getNameSpace() + ":" + PROXY_FOR.getLocalName());
         if (property.getName().endsWith(PROXY_FOR.getLocalName()) ||
                 property.getName().endsWith(REDIRECTS_TO.getLocalName())) {
-            LOGGER.info("Creating ExternalResourceCacheEntry for property: {} {}", property.getName(),
+            LOGGER.debug("Creating ExternalResourceCacheEntry for property: {} {}", property.getName(),
                     property.getValue().toString());
             return new ExternalResourceCacheEntry(property);
         }

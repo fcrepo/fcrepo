@@ -232,8 +232,6 @@ public class FedoraLdp extends ContentExposingResource {
                 }
             }
 
-            //todo -- we may not want this header info on a redirect
-
             // we set the content-type explicitly to avoid content-negotiation from getting in the way
             builder.type(mediaType.toString());
 
@@ -437,9 +435,7 @@ public class FedoraLdp extends ContentExposingResource {
         try {
 
             final Collection<String> checksums = parseDigestHeader(digest);
-            final String extContentLinkHeader = ExternalContentHandler.findExternalLink(links);
-            final ExternalContentHandler extContent = extContentLinkHeader != null ?
-                    new ExternalContentHandler(extContentLinkHeader) : null;
+            final ExternalContentHandler extContent = ExternalContentHandler.createFromLinks(links);
 
             final MediaType contentType =  getSimpleContentType(
                     extContent != null ? extContent.getContentType() : requestContentType);
@@ -461,7 +457,7 @@ public class FedoraLdp extends ContentExposingResource {
                 final MediaType effectiveContentType
                         = requestBodyStream == null || requestContentType == null ? null : contentType;
                 resource = createFedoraResource(path, interactionModel, effectiveContentType,
-                        !(requestBodyStream == null || requestContentType == null), extContent);
+                        !(requestBodyStream == null || requestContentType == null), extContent != null ? true : false);
             }
 
             if (httpConfiguration.putRequiresIfMatch() && StringUtils.isBlank(ifMatch) && !resource.isNew()) {
@@ -488,8 +484,8 @@ public class FedoraLdp extends ContentExposingResource {
                     final String handling = extContent != null ? extContent.getHandling() : null;
                     replaceResourceBinaryWithStream((FedoraBinary) resource,
                             stream, contentDisposition, type, checksums,
-                            handling != null && !handling.equals(COPY) ? handling : null,
-                            extContent != null ? extContent.getURL() : null);
+                            (handling != null && !handling.equals(COPY)) ? handling : null,
+                            (extContent != null && !handling.equals(COPY)) ? extContent.getURL() : null);
 
                 } else if (isRdfContentType(contentType.toString())) {
                     replaceResourceWithStream(resource, requestBodyStream, contentType, resourceTriples);
@@ -667,16 +663,15 @@ public class FedoraLdp extends ContentExposingResource {
 
         if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
             addLinkAndOptionsHttpHeaders();
-            LOGGER.info("Nope, can't do this!");
+            LOGGER.info("Unable to handle POST request on a path containing {}. Path was: {}",
+                    FedoraTypes.FCR_VERSIONS, externalPath);
             return status(METHOD_NOT_ALLOWED).build();
         }
 
         final String interactionModel = checkInteractionModel(links);
 
         // If request is an external binary, verify link header before proceeding
-        final String extContentLinkHeader = ExternalContentHandler.findExternalLink(links);
-        final ExternalContentHandler extContent = extContentLinkHeader != null ?
-                new ExternalContentHandler(extContentLinkHeader) : null;
+        final ExternalContentHandler extContent = ExternalContentHandler.createFromLinks(links);
 
         if (!(resource() instanceof Container)) {
             throw new ClientErrorException("Object cannot have child nodes", CONFLICT);
@@ -701,7 +696,7 @@ public class FedoraLdp extends ContentExposingResource {
             LOGGER.info("Ingest with path: {}", newObjectPath);
 
             resource = createFedoraResource(newObjectPath, interactionModel, contentType,
-                    !(requestBodyStream == null || requestContentType == null), extContent);
+                    !(requestBodyStream == null || requestContentType == null), extContent != null ? true : false);
 
             try (final RdfStream resourceTriples =
                      resource.isNew() ? new DefaultRdfStream(asNode(resource())) : getResourceTriples()) {
@@ -919,12 +914,12 @@ public class FedoraLdp extends ContentExposingResource {
     }
 
     private FedoraResource createFedoraResource(final String path, final String interactionModel,
-            final MediaType contentType, final boolean contentPresent, final ExternalContentHandler extContent) {
+            final MediaType contentType, final boolean contentPresent, final boolean contentExternal) {
 
         final MediaType simpleContentType = contentPresent ? getSimpleContentType(contentType) : null;
 
         final FedoraResource result;
-        if ("ldp:NonRDFSource".equals(interactionModel) || extContent != null ||
+        if ("ldp:NonRDFSource".equals(interactionModel) || contentExternal ||
                 (contentPresent && interactionModel == null && !isRDF(simpleContentType))) {
             result = binaryService.findOrCreate(session.getFedoraSession(), path);
         } else {

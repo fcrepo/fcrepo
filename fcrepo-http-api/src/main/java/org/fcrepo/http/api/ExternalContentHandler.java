@@ -25,18 +25,19 @@ import static org.fcrepo.kernel.api.FedoraExternalContent.PROXY;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import org.apache.http.Header;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.fcrepo.kernel.api.exception.ExternalMessageBodyException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -45,6 +46,11 @@ import org.slf4j.Logger;
 
 /**
  * @author bseeger
+ *
+ * This class is a helper for dealing with the External Content Link header and External Content itself, in the case
+ * of handling="copy". This class will verify that an External Content Link header is formatted correctly and
+ * help parse it, delivering parts of it when asked.
+ *
  */
 
 public class ExternalContentHandler {
@@ -130,12 +136,13 @@ public class ExternalContentHandler {
     }
 
     /**
-     * Looks for ExternalContent link header
+     * Looks for ExternalContent link header and if it finds one it will return a new
+     * ExternalContentHandler object based on the found Link header.
      *
      * @param links - links from the request header
-     * @return External Content link header if found, else null
+     * @return External Content Handler Object if Link header found, else null
      */
-    public static String findExternalLink(final List<String> links) {
+    public static ExternalContentHandler createFromLinks(final List<String> links) {
 
         if (links == null) {
             return null;
@@ -147,9 +154,9 @@ public class ExternalContentHandler {
 
         if (externalContentLinks.size() > 1) {
             // got a problem, you can only have one ExternalContent links
-            // todo - throw error with constrained by info
+            throw new ExternalMessageBodyException("More then one External Content Link header in request");
         } else if (externalContentLinks.size() == 1) {
-            return externalContentLinks.get(0);
+            return new ExternalContentHandler(externalContentLinks.get(0));
         }
 
         return null;
@@ -162,18 +169,25 @@ public class ExternalContentHandler {
      */
     public InputStream fetchExternalContent() throws IOException {
 
-        final String url = getURL();
-
-        if (handling.equals(COPY)) {
-            if (url.startsWith("file:")) {
-                return new FileInputStream(url);
-            } else if (url.startsWith("http")) {
-                return new URL(url).openStream();
+        final URI uri = link.getUri();
+        final String scheme = uri.getScheme();
+        LOGGER.info("scheme is {}", scheme);
+        if (scheme != null) {
+            if (scheme.equals("file")) {
+                return new FileInputStream(uri.toString());
+            } else if (scheme.equals("http") || scheme.equals("https")) {
+                return uri.toURL().openStream();
             }
         }
         return null;
     }
 
+    /**
+     * Validate that an external content link header is appropriately formatted
+     * @param link
+     * @return Link object if the header is formatted correctly, else null
+     * @throws ExternalMessageBodyException
+     */
 
     private Link parseLinkHeader(final String link) throws ExternalMessageBodyException {
         final Link realLink = Link.valueOf(link);
@@ -192,12 +206,17 @@ public class ExternalContentHandler {
                 throw new ExternalMessageBodyException(
                         "Link header formatted incorrectly: 'handling' parameter incorrect or missing");
             }
-        } catch (final MalformedURLException e) {
+        } catch (final Exception e) {
             throw new ExternalMessageBodyException("External content link header url is malformed");
         }
         return realLink;
     }
 
+    /**
+     * Find the content type for a remote resource
+     * @param url
+     * @return the content type reported by remote system or "application/octet-stream" if not supplied
+     */
     private MediaType findContentType(final String url) {
         if (url == null) {
             return null;
@@ -210,15 +229,14 @@ public class ExternalContentHandler {
                 final HttpHead httpHead = new HttpHead(url);
                 try (CloseableHttpResponse response = httpClient.execute(httpHead)) {
                     if (response.getStatusLine().getStatusCode() == SC_OK) {
-                        final String contentType = response.getFirstHeader("Content-Type").getValue();
+                        final Header contentType = response.getFirstHeader("Content-Type");
                         if (contentType != null) {
-                            return MediaType.valueOf(contentType);
+                            return MediaType.valueOf(contentType.getValue());
                         }
                     }
-
                 }
             } catch (final Exception e) {
-                throw new ExternalMessageBodyException("Failed to get remote content type for external message");
+                throw new RepositoryRuntimeException(e);
             }
         }
         LOGGER.debug("Defaulting to octet stream for media type");

@@ -806,8 +806,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         final String originalContentType = contentType != null ? contentType.toString() : "";
 
         if (externalHandling != null) {
-            result.setExternalContent(requestBodyStream,
-                    originalContentType,
+            result.setExternalContent(originalContentType,
                     checksumURIs,
                     originalFileName,
                     externalHandling,

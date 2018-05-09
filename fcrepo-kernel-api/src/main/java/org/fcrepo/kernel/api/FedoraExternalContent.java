@@ -21,11 +21,13 @@ package org.fcrepo.kernel.api;
  * @author bseeger
  */
 
-public interface FedoraExternalContent {
+public final class FedoraExternalContent {
 
-    String PROXY = "proxy";
+    public static final String PROXY = "proxy";
 
-    String REDIRECT = "redirect";
+    public static final String REDIRECT = "redirect";
 
-    String COPY = "copy";
+    public static final String COPY = "copy";
+
+    private FedoraExternalContent() { }
 }
