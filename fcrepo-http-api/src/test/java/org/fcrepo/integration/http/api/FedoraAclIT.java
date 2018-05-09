@@ -90,7 +90,7 @@ public class FedoraAclIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testPatchAclOnAclResource() throws Exception {
+    public void testPatchAcl() throws Exception {
         createObjectAndClose(id);
 
         final HttpPatch patch = new HttpPatch(subjectUri + "/" + FCR_ACL);
@@ -98,6 +98,25 @@ public class FedoraAclIT extends AbstractResourceIT {
         patch.setEntity(new StringEntity("PREFIX acl: <http://www.w3.org/ns/auth/acl#> " +
                 "INSERT DATA { <#readAccess> acl:mode acl:write . }"));
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(patch));
+
+    }
+
+    @Test
+    public void testPatchAclOnAclResource() throws Exception {
+        createObjectAndClose(id);
+
+        final HttpPut put = new HttpPut(subjectUri + "/" + FCR_ACL);
+        final String aclLocation;
+        try (final CloseableHttpResponse response = execute(put)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            aclLocation = response.getFirstHeader("Location").getValue();
+        }
+
+        final HttpPatch patch = new HttpPatch(aclLocation + "/" + FCR_ACL);
+        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
+        patch.setEntity(new StringEntity("PREFIX acl: <http://www.w3.org/ns/auth/acl#> " +
+                "INSERT DATA { <#readAccess> acl:mode acl:write . }"));
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(patch));
 
     }
 
