@@ -98,6 +98,8 @@ public class FedoraAclIT extends AbstractResourceIT {
         patch.setEntity(new StringEntity("PREFIX acl: <http://www.w3.org/ns/auth/acl#> " +
                 "INSERT DATA { <#readAccess> acl:mode acl:write . }"));
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(patch));
+        // TODO add a test to verify inserted triples were actually on the resource.
+        // after the @GET method is implemented on FedoraAcl.java
 
     }
 
