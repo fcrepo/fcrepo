@@ -24,7 +24,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_LOCATION;
 import static javax.ws.rs.core.HttpHeaders.LOCATION;
 import static javax.ws.rs.core.MediaType.WILDCARD;
 import static javax.ws.rs.core.Response.noContent;
@@ -221,15 +220,11 @@ public class FedoraLdp extends ContentExposingResource {
         Response.ResponseBuilder builder = ok();
 
         if (resource() instanceof FedoraBinary) {
+            final FedoraBinary binary = (FedoraBinary) resource();
             final MediaType mediaType = getBinaryResourceMediaType();
 
-            if (((FedoraBinary)resource()).isRedirect()) {
-                try {
-                    builder = temporaryRedirect(((FedoraBinary) resource()).getRedirectURI());
-                } catch (final Exception e) {
-                    throw new ExternalMessageBodyException("Redirect URL Failed for " + externalPath  + " : " +
-                            ((FedoraBinary)resource).getRedirectURL());
-                }
+            if (binary.isRedirect()) {
+                    builder = temporaryRedirect(binary.getRedirectURI());
             }
 
             // we set the content-type explicitly to avoid content-negotiation from getting in the way
@@ -238,7 +233,7 @@ public class FedoraLdp extends ContentExposingResource {
             // Respect the Want-Digest header with fixity check
             final String wantDigest = headers.getHeaderString(WANT_DIGEST);
             if (!isNullOrEmpty(wantDigest)) {
-                builder.header(DIGEST, handleWantDigestHeader((FedoraBinary)resource(), wantDigest));
+                builder.header(DIGEST, handleWantDigestHeader(binary, wantDigest));
             }
         } else {
             final String accept = headers.getHeaderString(HttpHeaders.ACCEPT);
@@ -301,7 +296,6 @@ public class FedoraLdp extends ContentExposingResource {
             if (resource() instanceof FedoraBinary && acceptableMediaTypes.size() > 0) {
 
                 final MediaType mediaType = getBinaryResourceMediaType();
-
 
                 // Respect the Want-Digest header for fixity check
                 final String wantDigest = headers.getHeaderString(WANT_DIGEST);
@@ -840,13 +834,6 @@ public class FedoraLdp extends ContentExposingResource {
     @Override
     protected String externalPath() {
         return externalPath;
-    }
-    private void addExternalContentHeaders(final FedoraResource resource) {
-       if (resource instanceof FedoraBinary) {
-           if (((FedoraBinary) resource).isProxy()) {
-               servletResponse.addHeader(CONTENT_LOCATION, (((FedoraBinary)resource).getProxyURL()));
-           }
-       }
     }
 
     private void addLinkAndOptionsHttpHeaders() {

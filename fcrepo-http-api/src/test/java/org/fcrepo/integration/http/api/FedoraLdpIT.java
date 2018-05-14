@@ -209,25 +209,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     private static DateTimeFormatter tripleFormat =
       DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(of("GMT"));
 
-    private String getExternalContentLinkHeader(final String url, final String handling, final String mimeType) {
-        // leave lots of room to leave things out of the link to test variations.
-        String link = "";
-        if (url != null && !url.isEmpty()) {
-            link += "<" + url + ">";
-        }
 
-        link += "; rel=\"" + EXTERNAL_CONTENT + "\"";
-
-        if (handling != null && !handling.isEmpty()) {
-            link += "; handling=\"" + handling + "\"";
-        }
-
-        if (mimeType != null && !mimeType.isEmpty()) {
-            link += "; type=\"" + mimeType + "\"";
-        }
-        LOGGER.info("Created link: {}", link);
-        return link;
-    }
 
     @Test
     public void testHeadRepositoryGraph() {
@@ -434,6 +416,26 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertTrue("MD5 fixity checksum doesn't match",
                     digesterHeaderValue.indexOf("md5=baed005300234f3d1503c50a48ce8e6f") >= 0);
         }
+    }
+
+    private String getExternalContentLinkHeader(final String url, final String handling, final String mimeType) {
+        // leave lots of room to leave things out of the link to test variations.
+        String link = "";
+        if (url != null && !url.isEmpty()) {
+            link += "<" + url + ">";
+        }
+
+        link += "; rel=\"" + EXTERNAL_CONTENT + "\"";
+
+        if (handling != null && !handling.isEmpty()) {
+            link += "; handling=\"" + handling + "\"";
+        }
+
+        if (mimeType != null && !mimeType.isEmpty()) {
+            link += "; type=\"" + mimeType + "\"";
+        }
+        LOGGER.info("Created link: {}", link);
+        return link;
     }
 
     @Test
@@ -811,8 +813,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     @Test
     public void testGetExternalDatastreamWithWantDigest() throws IOException, ParseException {
-
-        LOGGER.debug("Testing testGetExternalDatastreamWithWantDigest");
         final String dsId = getRandomUniqueId();
         createDatastream(dsId, "x", "01234567890123456789012345678901234567890123456789");
         final String dsUrl = serverAddress + dsId + "/x";
@@ -829,7 +829,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         requestConfig.setRedirectsEnabled(false);
         getObjMethod.setConfig(requestConfig.build());
 
-        LOGGER.debug("Created, now getting");
         try (final CloseableHttpResponse response = execute(getObjMethod)) {
             assertEquals(TEMPORARY_REDIRECT.getStatusCode(), response.getStatusLine().getStatusCode());
             assertEquals(dsUrl, getLocation(response));
@@ -1308,7 +1307,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final StringWriter w = new StringWriter()) {
             model.write(w, "N-TRIPLE");
             replaceMethod.setEntity(new StringEntity(w.toString()));
-            LOGGER.trace("Retrieved object graph for testRoundTripReplaceGraph():\n {}", w);
+            logger.trace("Retrieved object graph for testRoundTripReplaceGraph():\n {}", w);
         }
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(replaceMethod));
     }
@@ -2050,7 +2049,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     @Test
     public void testGetObjectGraph() throws IOException {
-        LOGGER.trace("Entering testGetObjectGraph()...");
+        logger.trace("Entering testGetObjectGraph()...");
         final String location = getLocation(postObjMethod());
         final HttpGet getObjMethod = new HttpGet(location);
 
@@ -2063,13 +2062,13 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 assertTrue("Didn't find any type triples!", dataset.asDatasetGraph().contains(ANY,
                         createURI(location), rdfType, ANY));
             }
-            LOGGER.trace("Leaving testGetObjectGraph()...");
+            logger.trace("Leaving testGetObjectGraph()...");
         }
     }
 
     @Test
     public void verifyFullSetOfRdfTypes() throws IOException {
-        LOGGER.trace("Entering verifyFullSetOfRdfTypes()...");
+        logger.trace("Entering verifyFullSetOfRdfTypes()...");
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
 
@@ -2079,7 +2078,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             verifyResource(graph, resource, REPOSITORY_NAMESPACE, "Container");
             verifyResource(graph, resource, REPOSITORY_NAMESPACE, "Resource");
         }
-        LOGGER.trace("Leaving verifyFullSetOfRdfTypes()...");
+        logger.trace("Leaving verifyFullSetOfRdfTypes()...");
     }
 
     private static void verifyResource(final DatasetGraph g, final Node subject, final String ns, final String type) {
@@ -2682,7 +2681,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final Model model = createDefaultModel();
         try (final CloseableHttpResponse getResponse = execute(getObjMethod)) {
             final String graph = EntityUtils.toString(getResponse.getEntity());
-            LOGGER.trace("Got serialized object graph for testRoundTripReplaceGraphForDatastream():\n {}", graph);
+            logger.trace("Got serialized object graph for testRoundTripReplaceGraphForDatastream():\n {}", graph);
             try (final StringReader r = new StringReader(graph)) {
                 model.read(r, subjectURI, "TURTLE");
             }
@@ -2693,7 +2692,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final String updatedMetadata = w.toString() +
                 "<" + subjectURI + "> <http://www.w3.org/2000/01/rdf-schema#label> 'foo' .";
             replaceMethod.setEntity(new StringEntity(updatedMetadata));
-            LOGGER.trace("Transmitting object graph for testRoundTripReplaceGraphForDatastream():\n {}", w);
+            logger.trace("Transmitting object graph for testRoundTripReplaceGraphForDatastream():\n {}", w);
         }
         replaceMethod.addHeader(CONTENT_TYPE, "application/n-triples");
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(replaceMethod));
@@ -2716,7 +2715,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final String location = getLocation(postObjMethod());
             try (final CloseableHttpResponse response = cachClient.execute(new HttpGet(location))) {
                 assertEquals("Client didn't return a OK!", OK.getStatusCode(), getStatus(response));
-                LOGGER.debug("Found HTTP headers:\n{}", asList(response.getAllHeaders()));
+                logger.debug("Found HTTP headers:\n{}", asList(response.getAllHeaders()));
                 assertTrue("Didn't find Last-Modified header!", response.containsHeader("Last-Modified"));
                 final String lastModed = response.getFirstHeader("Last-Modified").getValue();
                 final String etag = response.getFirstHeader("ETag").getValue();
@@ -2754,7 +2753,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(getMethod)) {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final String content = EntityUtils.toString(response.getEntity());
-            LOGGER.trace("Retrieved HTML view:\n" + content);
+            logger.trace("Retrieved HTML view:\n" + content);
             final HtmlParser htmlParser = new HtmlParser(ALLOW);
             htmlParser.setDoctypeExpectation(NO_DOCTYPE_ERRORS);
             htmlParser.setErrorHandler(new HTMLErrorHandler());
@@ -2762,7 +2761,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             try (final InputStream htmlStream = new ByteArrayInputStream(content.getBytes(UTF_8))) {
                 htmlParser.parse(new InputSource(htmlStream));
             }
-            LOGGER.debug("HTML found to be valid.");
+            logger.debug("HTML found to be valid.");
         }
     }
 
@@ -3126,8 +3125,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
         }
     }
-/*
- TODO - get proxy working
+
     @Test
     public void testExternalMessageBodyProxy() throws IOException {
         // Create a resource
@@ -3151,13 +3149,13 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final HttpGet get = new HttpGet(getLocation(response));
             try (final CloseableHttpResponse getResponse = execute(get)) {
                 assertEquals(OK.getStatusCode(), getStatus(getResponse));
-                assertEquals(origLocation, getLocation(getResponse));
-                assertEquals("Entity Data doesn't match original object!",
-                        response.getEntity().getContent().toString(), entityStr);
+                assertEquals(origLocation, getContentLocation(getResponse));
+                final String content = EntityUtils.toString(getResponse.getEntity());
+                assertEquals("Entity Data doesn't match original object!", entityStr, content);
             }
         }
     }
-*/
+
     @Test
     public void testUnsupportedHandlingTypeInExternalMessagePUT() throws IOException {
 

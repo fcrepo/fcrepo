@@ -208,9 +208,7 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
     @Override
     public String getProxyURL() {
         try {
-            LOGGER.info("getproxy info asking first: {} ", hasProperty(PROXY_FOR));
             if (hasProperty(PROXY_FOR)) {
-                LOGGER.info("get proxy info fetching: PROXY_FOR: {} ", getProperty(PROXY_FOR).getString());
                 return getProperty(PROXY_FOR).getString();
             }
             return null;

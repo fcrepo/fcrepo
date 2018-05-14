@@ -82,8 +82,9 @@ public class ExternalContentHandler {
         link = parseLinkHeader(linkHeader);
 
         final Map<String, String> map = link.getParams();
-        handling = map.get(HANDLING);
-        type = map.get(CONTENT_TYPE);
+        // handling will be in the map, where as content type may not be
+        handling = map.get(HANDLING).toLowerCase();
+        type = map.get(CONTENT_TYPE) != null ? map.get(CONTENT_TYPE).toLowerCase() : null;
         contentType = type != null ? MediaType.valueOf(type) : findContentType(getURL());
     }
 

@@ -25,6 +25,7 @@ import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_LOCATION;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
@@ -452,6 +453,18 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
     }
 
+    protected void addExternalContentHeaders(final FedoraResource resource) {
+        if (resource instanceof FedoraBinary) {
+            final FedoraBinary binary = (FedoraBinary)resource;
+
+            if (binary.isProxy()) {
+                servletResponse.addHeader(CONTENT_LOCATION, binary.getProxyURL());
+            } else if (binary.isRedirect()) {
+                servletResponse.addHeader(CONTENT_LOCATION, binary.getRedirectURL());
+            }
+        }
+    }
+
     protected void addAclHeader(final FedoraResource resource) {
         if (!(resource instanceof FedoraWebacAcl) && !resource.isMemento()) {
             servletResponse.addHeader(LINK, buildLink(getUri(resource.getDescribedResource()) + "/" + FCR_ACL, "acl"));
@@ -754,6 +767,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected Response createUpdateResponse(final FedoraResource resource, final boolean created) {
         addCacheControlHeaders(servletResponse, resource, session);
         addResourceLinkHeaders(resource, created);
+        addExternalContentHeaders(resource);
         addAclHeader(resource);
         addMementoHeaders(resource);
 

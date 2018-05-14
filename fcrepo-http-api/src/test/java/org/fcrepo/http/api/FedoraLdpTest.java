@@ -441,14 +441,17 @@ public class FedoraLdpTest {
     @Test
     public void testHeadWithExternalBinary() throws Exception {
         final FedoraBinary mockResource = (FedoraBinary)setResource(FedoraBinary.class);
+        final String url = "http://example.com/some/url";
         when(mockResource.getDescription()).thenReturn(mockNonRdfSourceDescription);
         when(mockResource.getMimeType()).thenReturn("text/plain");
         when(mockResource.isProxy()).thenReturn(false);
         when(mockResource.isRedirect()).thenReturn(true);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
-        when(mockResource.getRedirectURI()).thenReturn(URI.create("http:some:uri"));
+        when(mockResource.getRedirectURL()).thenReturn(url);
+        when(mockResource.getRedirectURI()).thenReturn(URI.create(url));
         final Response actual = testObj.head();
         assertEquals(TEMPORARY_REDIRECT.getStatusCode(), actual.getStatus());
+        assertEquals(new URI(url), actual.getLocation());
         assertShouldBeAnLDPNonRDFSource();
         assertShouldNotAdvertiseAcceptPatchFlavors();
         assertShouldContainLinkToBinaryDescription();
@@ -767,19 +770,21 @@ public class FedoraLdpTest {
     @Test
     public void testGetWithExternalMessageBinary() throws Exception {
         final FedoraBinary mockResource = (FedoraBinary)setResource(FedoraBinary.class);
+        final String url = "http://example.com/some/url";
         when(mockResource.getDescription()).thenReturn(mockNonRdfSourceDescription);
         when(mockResource.getMimeType()).thenReturn("text/plain");
         when(mockResource.isProxy()).thenReturn(false);
         when(mockResource.isRedirect()).thenReturn(true);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
-        when(mockResource.getRedirectURI()).thenReturn(URI.create("http:some:uri"));
+        when(mockResource.getRedirectURI()).thenReturn(URI.create(url));
+        when(mockResource.getRedirectURL()).thenReturn(url);
         when(mockResource.getContent()).thenReturn(toInputStream("xyz", UTF_8));
         final Response actual = testObj.getResource(null);
         assertEquals(TEMPORARY_REDIRECT.getStatusCode(), actual.getStatus());
         assertTrue("Should be an LDP NonRDFSource", mockResponse.getHeaders(LINK).contains("<" + LDP_NAMESPACE +
                 "NonRDFSource>;rel=\"type\""));
         assertShouldContainLinkToBinaryDescription();
-        assertEquals(new URI("http:some:uri"), actual.getLocation());
+        assertEquals(new URI(url), actual.getLocation());
     }
 
     @Test(expected = ExternalMessageBodyException.class)

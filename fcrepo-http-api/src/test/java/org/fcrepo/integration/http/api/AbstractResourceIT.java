@@ -24,6 +24,7 @@ import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_LOCATION;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.Status.CREATED;
@@ -292,6 +293,16 @@ public abstract class AbstractResourceIT {
      */
     protected static String getLocation(final HttpResponse response) {
         return response.getFirstHeader("Location").getValue();
+    }
+
+     /**
+     * Retrieve the value of the first Content-Location header from an open HTTP response.
+     *
+     * @param response the open response
+     * @return the value of the first Content-Location header in the response
+     */
+    protected static String getContentLocation(final HttpResponse response) {
+        return response.getFirstHeader(CONTENT_LOCATION).getValue();
     }
 
     protected String getContentType(final HttpUriRequest method) throws IOException {
