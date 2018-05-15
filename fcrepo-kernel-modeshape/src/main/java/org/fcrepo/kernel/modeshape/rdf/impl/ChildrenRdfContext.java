@@ -54,7 +54,7 @@ public class ChildrenRdfContext extends NodeRdfContext {
             LOGGER.trace("Found children of this resource: {}", resource.getPath());
 
             concat(resource().getChildren().peek(child -> LOGGER.trace("Creating triple for child node: {}", child))
-                    .map(child -> create(subject(), CONTAINS.asNode(), uriFor(child.getDescribedResource()))));
+                    .map(child -> create(subject(), CONTAINS.asNode(), uriFor(child))));
         }
     }
 

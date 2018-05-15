@@ -81,6 +81,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import javax.ws.rs.core.Link;
 
 import org.apache.commons.io.IOUtils;
@@ -1204,6 +1206,52 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             assertNoLinkHeader(response, VERSIONED_RESOURCE.toString(), "type");
             assertNoLinkHeader(response, VERSIONING_TIMEMAP_TYPE.toString(), "type");
             assertNoLinkHeader(response, version1Uri + "/" + FCR_ACL, "acl");
+        }
+    }
+
+    /*
+     * Verify binary description timemap RDF representation can be retrieved with and without
+     * accompanying binary memento
+     */
+    @Test
+    public void testFcrepo2792() throws Exception {
+        // 1. Create versioned resource
+        createVersionedBinary(id);
+
+        final String descriptionUri = subjectUri + "/fcr:metadata";
+        final String descTimemapUri = descriptionUri + "/" + FCR_VERSIONS;
+
+        // 2. verify that metadata versions endpoint returns 200
+        assertEquals(OK.getStatusCode(), getStatus(new HttpGet(descTimemapUri)));
+
+        // 3. create a binary version against binary timemap
+        final String mementoUri = createMemento(subjectUri, null, null, null);
+        final String descMementoUri = mementoUri.replace("fcr:versions", "fcr:metadata/fcr:versions");
+
+        final Node timemapSubject = createURI(descTimemapUri);
+        final Node descMementoResc = createURI(descMementoUri);
+        // 4. verify that the binary description timemap RDF is there and contains the new description memento
+        try (final CloseableDataset dataset = getDataset(new HttpGet(descTimemapUri))) {
+            final DatasetGraph results = dataset.asDatasetGraph();
+            assertTrue("Timemap RDF response must contain description memento",
+                    results.contains(ANY, timemapSubject, CONTAINS.asNode(), descMementoResc));
+        }
+
+        // Wait a second to avoid timestamp collisions
+        TimeUnit.SECONDS.sleep(1);
+
+        // 5. Create a second binary description memento
+        final String descMementoUri2 = createMemento(descriptionUri, null, null, null);
+
+        // 6. verify that the binary description timemap availabe (returns 404 in fcrepo-2792)
+        try (final CloseableDataset dataset = getDataset(new HttpGet(descTimemapUri))) {
+            final DatasetGraph results = dataset.asDatasetGraph();
+            final Node descMementoResc2 = createURI(descMementoUri2);
+
+            assertTrue("Timemap RDF response must contain first description memento",
+                    results.contains(ANY, timemapSubject, CONTAINS.asNode(), descMementoResc));
+            assertTrue("Timemap RDF response must contain second description memento",
+                    results.contains(ANY, timemapSubject, CONTAINS.asNode(), descMementoResc2));
         }
     }
 
