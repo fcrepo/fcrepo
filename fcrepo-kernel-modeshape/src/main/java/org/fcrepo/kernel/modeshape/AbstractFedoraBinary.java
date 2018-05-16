@@ -103,12 +103,6 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
             }
             throw new RepositoryRuntimeException(e);
         }
-        /*
-        try {
-            return getNode().getNode(FEDORA_DESCRIPTION);
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        } */
     }
 
     protected Node getDescriptionNodeOrNull() {
@@ -134,9 +128,8 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
                 return getDescriptionProperty(CONTENT_SIZE).getLong();
             }
         } catch (final RepositoryException e) {
-            LOGGER.info("Could not get contentSize(): {}", e.getMessage());
+            LOGGER.warn("Could not get contentSize(): {}", e.getMessage());
         }
-
         return -1L;
     }
 
@@ -147,7 +140,7 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
     @Override
     public URI getContentDigest() {
 
-        LOGGER.info("getContentDigest getting digest info");
+        LOGGER.debug("getContentDigest getting digest info");
         try {
             // Determine which digest algorithm to use
             final String algorithm = hasDescriptionProperty(DEFAULT_DIGEST_ALGORITHM) ? property2values.apply(
@@ -224,10 +217,10 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
     @Override
     public void setProxyURL(final String url) throws RepositoryRuntimeException {
         try {
-            LOGGER.info("Setting Property PROXY_FOR!");
             getNode().setProperty(PROXY_FOR, url);
+            // clear redirect property, in case it used to be a redirect
             getNode().setProperty(REDIRECTS_TO, (Value) null);
-        } catch (final Exception e) {
+        } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
     }
@@ -239,12 +232,9 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
     @Override
     public String getRedirectURL() {
         try {
-
-            LOGGER.info("get redirect info asking first: {} ", hasProperty(REDIRECTS_TO));
             if (hasProperty(REDIRECTS_TO)) {
                 return getProperty(REDIRECTS_TO).getString();
             }
-
             return null;
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
@@ -258,10 +248,10 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
     @Override
     public void setRedirectURL(final String url) throws RepositoryRuntimeException {
         try {
-            LOGGER.info("Setting Property REDIRECTS_TO!");
             getNode().setProperty(REDIRECTS_TO, url);
+            // clear proxy property in case it used to be a proxy
             getNode().setProperty(PROXY_FOR, (Value) null);
-        } catch (final Exception e) {
+        } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
     }
@@ -300,7 +290,6 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
 
     @Override
     public RdfStream getFixity(final IdentifierConverter<Resource, FedoraResource> idTranslator) {
-        LOGGER.info("getFixity");
         return getFixity(idTranslator, getContentDigest(), getContentSize());
     }
 
@@ -322,9 +311,8 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
     public FedoraResource getBaseVersion() {
         LOGGER.warn("Removed method 'getBaseVersion()' is not used after implementing Memento!");
         return null;
-       // return getDescription().getBaseVersion();
     }
-/*
+
     @Override
     public void enableVersioning() {
         super.enableVersioning();
@@ -336,7 +324,7 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
         super.disableVersioning();
         getDescription().disableVersioning();
     }
-*/
+
     /**
      * Check of the property exists on the description of this binary.
      *
