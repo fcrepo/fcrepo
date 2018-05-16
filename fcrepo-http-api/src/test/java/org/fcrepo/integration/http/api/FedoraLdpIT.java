@@ -3111,18 +3111,30 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     @Test
     public void testExternalMessageBodyCopy() throws IOException {
-        /* create a random object */
+        // create a random binary object
         final String copyPid = getRandomUniqueId();
-        createObject(copyPid);
-        final String copyLocation = serverAddress + copyPid;
+        final String entityStr = "Hello there, this is the original object speaking.";
+        final String copyLocation = serverAddress + copyPid + "/binary";
+        assertEquals(CREATED.getStatusCode(), getStatus(putDSMethod(copyPid, "binary", entityStr)));
 
+        // create a copy of it
         final String id = getRandomUniqueId();
         final HttpPut httpPut = putObjMethod(id);
         httpPut.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
-        httpPut.addHeader(LINK, getExternalContentLinkHeader(copyLocation, "copy", null));
+        httpPut.addHeader(LINK, getExternalContentLinkHeader(copyLocation, "copy", "text/plain"));
 
         try (final CloseableHttpResponse response = execute(httpPut)) {
             assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+
+            // fetch the copy of the object
+            final HttpGet get = new HttpGet(getLocation(response));
+            try (final CloseableHttpResponse getResponse = execute(get)) {
+                assertEquals(OK.getStatusCode(), getStatus(getResponse));
+                final String content = EntityUtils.toString(getResponse.getEntity());
+                assertEquals("Entity Data doesn't match original object!", entityStr, content);
+                assertEquals("Content-Type is different from expected on External COPY", "text/plain",
+                        response.getFirstHeader(CONTENT_TYPE).getValue());
+            }
         }
     }
 

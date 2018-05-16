@@ -172,7 +172,7 @@ public class ExternalContentHandler {
 
         final URI uri = link.getUri();
         final String scheme = uri.getScheme();
-        LOGGER.info("scheme is {}", scheme);
+        LOGGER.debug("scheme is {}", scheme);
         if (scheme != null) {
             if (scheme.equals("file")) {
                 return new FileInputStream(uri.toString());
@@ -230,7 +230,7 @@ public class ExternalContentHandler {
                 final HttpHead httpHead = new HttpHead(url);
                 try (CloseableHttpResponse response = httpClient.execute(httpHead)) {
                     if (response.getStatusLine().getStatusCode() == SC_OK) {
-                        final Header contentType = response.getFirstHeader("Content-Type");
+                        final Header contentType = response.getFirstHeader(CONTENT_TYPE);
                         if (contentType != null) {
                             return MediaType.valueOf(contentType.getValue());
                         }
