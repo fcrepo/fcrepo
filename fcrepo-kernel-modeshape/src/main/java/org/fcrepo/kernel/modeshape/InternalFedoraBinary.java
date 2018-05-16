@@ -177,57 +177,6 @@ public class InternalFedoraBinary extends AbstractFedoraBinary {
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
-        /*
-            final Node descNode = getDescriptionNode();
-            final Node dsNode = getNode();
-
-            if (descNode != null) {
-                descNode.setProperty(HAS_MIME_TYPE, contentType);
-            }
-
-            if (originalFileName != null && descNode != null) {
-                descNode.setProperty(FILENAME, originalFileName);
-            }
-
-            LOGGER.debug("Created content node at path: {}", dsNode.getPath());
-
-            String hint = null;
-
-            if (storagePolicyDecisionPoint != null) {
-                hint = storagePolicyDecisionPoint.evaluatePolicies(this);
-            }
-            final ValueFactory modevf =
-                    (ValueFactory) node.getSession().getValueFactory();
-            final Binary binary = modevf.createBinary(content, hint);
-             */
-
-            /*
-             * This next line of code deserves explanation. If we chose for the simpler line: Property dataProperty =
-             * contentNode.setProperty(JCR_DATA, requestBodyStream); then the JCR would not block on the stream's
-             * completion, and we would return to the requester before the mutation to the repo had actually completed.
-             * So instead we use createBinary(requestBodyStream), because its contract specifies: "The passed
-             * InputStream is closed before this method returns either normally or because of an exception." which lets
-             * us block and not return until the job is done! The simpler code may still be useful to us for an
-             * asynchronous method that we develop later.
-             */
-        /*
-            final Property dataProperty = dsNode.setProperty(JCR_DATA, binary);
-
-            // Ensure provided checksums are valid
-            final Collection<URI> nonNullChecksums = (null == checksums) ? new HashSet<>() : checksums;
-            verifyChecksums(nonNullChecksums, dataProperty);
-
-            decorateContentNode(dsNode, descNode, nonNullChecksums);
-            FedoraTypesUtils.touch(dsNode);
-            if (descNode != null) {
-                FedoraTypesUtils.touch(descNode);
-            }
-
-            LOGGER.debug("Created data property at path: {}", dataProperty.getPath());
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-        */
     }
 
     /*
@@ -302,12 +251,11 @@ public class InternalFedoraBinary extends AbstractFedoraBinary {
     public RdfStream getFixity(final IdentifierConverter<Resource, FedoraResource> idTranslator,
             final URI digestUri,
             final long size) {
-        LOGGER.info("getFixity()");
         fixityCheckCounter.inc();
 
         try (final Timer.Context context = timer.time()) {
 
-            LOGGER.debug("Checking resource: " + getPath());
+            LOGGER.debug("Checking resource: {}" + getPath());
 
             final String algorithm = ContentDigest.getAlgorithm(digestUri);
 
@@ -327,18 +275,24 @@ public class InternalFedoraBinary extends AbstractFedoraBinary {
             final Collection<String> algorithms)
             throws UnsupportedAlgorithmException, UnsupportedAccessTypeException {
 
-        LOGGER.info("checkFixity()");
         fixityCheckCounter.inc();
 
         try (final Timer.Context context = timer.time()) {
 
-            LOGGER.debug("Checking resource: " + getPath());
+            LOGGER.debug("Checking resource: {}", getPath());
             return CacheEntryFactory.forProperty(getProperty(JCR_DATA)).checkFixity(algorithms);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
     }
 
+    /**
+     * Add necessary information to node
+     * @param dsNode The target binary node to add information to
+     * @param descNode The description node associated with the binary node
+     * @param checksums The checksum information
+     * @throws RepositoryException
+     */
     private static void decorateContentNode(final Node dsNode, final Node descNode, final Collection<URI> checksums)
         throws RepositoryException {
 
@@ -366,31 +320,6 @@ public class InternalFedoraBinary extends AbstractFedoraBinary {
 
             LOGGER.debug("Decorated data property at path: {}", dataProperty.getPath());
         }
-       /*
-        if (dsNode == null) {
-            LOGGER.warn("{} node appears to be null!", JCR_CONTENT);
-            return;
-        }
-
-        LOGGER.info("decorateContentNode()");
-        if (dsNode.hasProperty(JCR_DATA)) {
-            final Property dataProperty = dsNode.getProperty(JCR_DATA);
-            final Binary binary = (Binary) dataProperty.getBinary();
-            final String dsChecksum = binary.getHexHash();
-
-            contentSizeHistogram.update(dataProperty.getLength());
-
-            checksums.add(ContentDigest.asURI(SHA1.algorithm, dsChecksum));
-
-            final String[] checksumArray = new String[checksums.size()];
-            checksums.stream().map(Object::toString).collect(Collectors.toSet()).toArray(checksumArray);
-            if (descNode != null) {
-                descNode.setProperty(CONTENT_DIGEST, checksumArray);
-                descNode.setProperty(CONTENT_SIZE, dataProperty.getLength());
-            }
-
-            LOGGER.debug("Decorated data property at path: {}", dataProperty.getPath());
-        } */
     }
 
     @Override

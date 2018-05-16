@@ -33,7 +33,6 @@ import org.slf4j.Logger;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFedoraBinary;
 
 import javax.jcr.Node;
-import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 
 import java.io.InputStream;
@@ -72,6 +71,7 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
     private FedoraBinary getBinary() {
         return getBinary(null);
     }
+
     /**
      * Get the proxied binary content object wrapped by this object
      *
@@ -84,12 +84,16 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
         return wrappedBinary;
     }
 
+    /**
+     * Return the proper object that can handle this type of binary
+     * @param extUrl URL of external binary, else null if it's internal to modeshape.
+     * @return the fedora binary, of the proper kind based on the URL or lack there of
+     */
     private FedoraBinary getBinaryImplementation(final String extUrl) {
         String url = extUrl;
         if (url == null || url.isEmpty()) {
             url = getURLInfo();
         }
-
 
         if (url != null) {
             if (url.toLowerCase().startsWith(LOCAL_FILE_ACCESS_TYPE)) {
@@ -102,6 +106,10 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
         return new InternalFedoraBinary(getNode());
     }
 
+    /**
+     * Fetch the URL of the external binary
+     * @return String containing the URL location of external binary, else null if it's an internal binary
+     */
     private String getURLInfo() {
         try {
             if (hasProperty(PROXY_FOR)) {
@@ -229,20 +237,11 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
     @Override
     protected boolean hasDescriptionProperty(final String relPath) {
         try {
-            final Node descNode = getDescriptionNode();
+            final Node descNode = getDescriptionNodeOrNull();
             if (descNode == null) {
                 return false;
             }
             return descNode.hasProperty(relPath);
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-    }
-
-    @Override
-    protected Property getDescriptionProperty(final String relPath) {
-        try {
-            return getDescriptionNode().getProperty(relPath);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
