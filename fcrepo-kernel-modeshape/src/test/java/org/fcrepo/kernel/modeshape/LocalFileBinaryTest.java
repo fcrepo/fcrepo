@@ -34,7 +34,6 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.net.URI;
 
 import javax.jcr.Node;
@@ -50,8 +49,6 @@ import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import static java.util.Collections.singleton;
@@ -69,6 +66,7 @@ public class LocalFileBinaryTest {
     private FedoraBinary testObj;
 
     private File contentFile;
+    private String fileName;
 
     @Mock
     private Session mockSession;
@@ -93,18 +91,12 @@ public class LocalFileBinaryTest {
     @Mock
     private Value mockValue;
 
-    @Mock
-    private InputStream mockStream;
-
-    @Captor
-    private ArgumentCaptor<InputStream> inputStreamCaptor;
-
     @Before
     public void setUp() throws Exception {
         contentFile = File.createTempFile("file", ".txt");
+        fileName = contentFile.getName();
         IOUtils.write(EXPECTED_CONTENT, new FileOutputStream(contentFile));
         mimeType = "text/plain";
-
 
         when(mimeTypeProperty.getString()).thenReturn(mimeType);
         when(mimeTypeProperty.getValue()).thenReturn(mockValue);
@@ -151,32 +143,33 @@ public class LocalFileBinaryTest {
         assertEquals(contentFile.toURI().toString(), testObj.getProxyURL());
     }
 
-    @Test
+    @Test(expected = UnsupportedOperationException.class)
     public void testSetContent() throws Exception {
-        testObj.setProxyURL(contentFile.toURI().toString());
-        verify(mockContent).setProperty(PROXY_FOR, contentFile.toURI().toString());
-
         testObj.setContent(null, mimeType, null, null, null);
-        verify(mockDescNode).setProperty(HAS_MIME_TYPE, mimeType);
+    }
+
+    @Test
+    public void testSetExternalContent() throws Exception {
+        testObj.setExternalContent(mimeType, null, null, "proxy", fileName);
+        verify(mockContent).setProperty(PROXY_FOR, fileName);
     }
 
     @Test
     public void testSetContentWithFilename() throws Exception {
-        testObj.setContent(mockStream, mimeType, null, contentFile.getName(), null);
+        testObj.setExternalContent(mimeType, null, fileName, "proxy", fileName);
 
-        verify(mockDescNode).setProperty(FILENAME, contentFile.getName());
+        verify(mockDescNode).setProperty(FILENAME, fileName);
     }
 
     @Test
     public void testSetContentWithChecksum() throws Exception {
         final String checksum = checksumString(EXPECTED_CONTENT);
-        testObj.setContent(mockStream, mimeType, singleton(
-                new URI(checksum)), contentFile.getName(), null);
+        testObj.setExternalContent(mimeType, singleton(new URI(checksum)), fileName, "proxy", fileName);
     }
 
     @Test(expected = InvalidChecksumException.class)
     public void testSetContentWithChecksumMismatch() throws Exception {
-        testObj.setContent(mockStream, mimeType, singleton(new URI("urn:sha1:xyz")), null, null);
+        testObj.setExternalContent(mimeType, singleton(new URI("urn:sha1:xyz")), null, "proxy", fileName);
     }
 
     @Test

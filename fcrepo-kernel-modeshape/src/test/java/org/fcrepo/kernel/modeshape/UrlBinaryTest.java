@@ -42,7 +42,6 @@ import static org.mockito.Mockito.when;
 import static java.util.Collections.singleton;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
-import java.io.InputStream;
 import java.net.URI;
 import javax.jcr.Binary;
 import javax.jcr.Node;
@@ -109,9 +108,6 @@ public class UrlBinaryTest {
     @Mock
     private NodeType mockDescNodeType;
 
-    @Mock
-    private InputStream mockStream;
-
     @Before
     public void setUp() throws Exception {
         final NodeType[] nodeTypes = new NodeType[] { mockDescNodeType };
@@ -139,12 +135,10 @@ public class UrlBinaryTest {
         testObj = new UrlBinary(mockContent);
     }
 
-    @Test
+    @Test(expected = UnsupportedOperationException.class)
     public void testSetContent() throws Exception {
         mockProxyProperty();
-        testObj.setContent(mockStream, mimeType, null, null, null);
-
-        verify(mockDescNode).setProperty(HAS_MIME_TYPE, mimeType);
+        testObj.setContent(null, mimeType, null, null, null);
     }
 
     @Test
@@ -160,7 +154,7 @@ public class UrlBinaryTest {
     public void testSetContentWithFilename() throws Exception {
         mockProxyProperty();
         final String fileName = "content.txt";
-        testObj.setContent(mockStream, mimeType, null, fileName, null);
+        testObj.setExternalContent(mimeType, null, fileName, PROXY, fileName);
 
         verify(mockDescNode).setProperty(HAS_MIME_TYPE, mimeType);
         verify(mockDescNode).setProperty(FILENAME, fileName);
@@ -182,8 +176,7 @@ public class UrlBinaryTest {
         final String checksum = checksumString(EXPECTED_CONTENT);
         mockProxyProperty();
 
-        testObj.setContent(mockStream, mimeType, singleton(
-                new URI(checksum)), null, null);
+        testObj.setExternalContent(mimeType, singleton(new URI(checksum)), null, PROXY, "content.txt");
 
         verify(mockDescNode).setProperty(CONTENT_DIGEST, new String[]{checksum});
         verify(mockDescNode).setProperty(HAS_MIME_TYPE, mimeType);
@@ -193,13 +186,13 @@ public class UrlBinaryTest {
     @Test(expected = InvalidChecksumException.class)
     public void testSetContentWithChecksumMismatch() throws Exception {
         mockProxyProperty();
-        testObj.setContent(mockStream, mimeType, singleton(new URI("urn:sha1:xyz")), null, null);
+        testObj.setExternalContent(mimeType, singleton(new URI("urn:sha1:xyz")), null, PROXY, "content.txt");
     }
 
     @Test
     public void getContentSize() throws Exception {
         mockProxyProperty();
-        testObj.setContent(mockStream, mimeType, null, null, null);
+        testObj.setExternalContent(mimeType, null, null, PROXY, "content.txt");
 
         final long contentSize = testObj.getContentSize();
         assertEquals(EXPECTED_CONTENT.length(), contentSize);
@@ -255,8 +248,7 @@ public class UrlBinaryTest {
         mockProxyProperty();
         mockChecksumProperty(checksum);
 
-        testObj.setContent(mockStream, mimeType, singleton(
-                new URI(checksum)), null, null);
+        testObj.setExternalContent(mimeType, singleton(new URI(checksum)), null, PROXY, "contents.txt");
 
         final URI digestUri = testObj.getContentDigest();
         assertEquals(checksum, digestUri.toString());

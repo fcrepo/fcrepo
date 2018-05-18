@@ -17,23 +17,18 @@
  */
 package org.fcrepo.kernel.modeshape;
 
-import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
-import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.File;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.stream.Collectors;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
-import org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils;
 import org.slf4j.Logger;
 
 /**
@@ -64,75 +59,31 @@ public class LocalFileBinary extends UrlBinary {
     public void setContent(final InputStream content, final String contentType,
                            final Collection<URI> checksums, final String originalFileName,
                            final StoragePolicyDecisionPoint storagePolicyDecisionPoint)
+            throws UnsupportedOperationException {
+        throw new UnsupportedOperationException(
+                "Cannot call setContent() on local file, call setExternalContent() instead");
+    }
+
+    @Override
+    public void setExternalContent(final String contentType,
+                                   final Collection<URI> checksums, final String originalFileName,
+                                   final String externalHandling, final String externalUrl)
             throws InvalidChecksumException {
-
         try {
-            /* that this is a proxy or redirect has already been set before we get here
-             */
-            final Node descNode = getDescriptionNode();
-            final Node contentNode = getNode();
+            super.setExternalContent(contentType, checksums, originalFileName, externalHandling, externalUrl);
 
-            if (contentNode.canAddMixin(FEDORA_BINARY)) {
-                contentNode.addMixin(FEDORA_BINARY);
+            final Node descNode = getDescriptionNodeOrNull();
+            // Store the size of the file
+            final long size = getContentSize();
+            contentSizeHistogram.update(size);
+            if (descNode != null) {
+                descNode.setProperty(CONTENT_SIZE, size);
             }
 
-            if (originalFileName != null) {
-                descNode.setProperty(FILENAME, originalFileName);
-            }
-
-            if (contentType == null) {
-                descNode.setProperty(HAS_MIME_TYPE, DEFAULT_MIME_TYPE);
-            } else {
-                descNode.setProperty(HAS_MIME_TYPE, contentType);
-            }
-
-            // Store the required jcr:data property
-            contentNode.setProperty(JCR_DATA, "");
-
-            LOGGER.debug("Created content node at path: {}", contentNode.getPath());
-
-            // Ensure provided checksums are valid
-            final Collection<URI> nonNullChecksums = (null == checksums) ? new HashSet<>() : checksums;
-            verifyChecksums(nonNullChecksums);
-
-            decorateContentNode(contentNode, descNode, nonNullChecksums, getContentSize());
-            FedoraTypesUtils.touch(contentNode);
-            FedoraTypesUtils.touch(descNode);
-
-            LOGGER.debug("Set local file content at path: {}", getResourceLocation());
+            LOGGER.debug("Decorated local file data property at path: {}", descNode.getPath());
 
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
-        }
-    }
-
-    /**
-     * Adds necessary information to the binary node, like digest info and content size
-     *
-     * @param dsNode  node to decorate
-     * @param descNode the description node for this binary
-     * @param checksums checksum values for this binary
-     * @param size the content size
-     */
-    private static void decorateContentNode(final Node dsNode, final Node descNode, final Collection<URI> checksums,
-        final long size)
-        throws RepositoryException {
-        if (dsNode == null) {
-            LOGGER.warn("{} node appears to be null!", JCR_CONTENT);
-            return;
-        }
-
-        if (dsNode.hasProperty(JCR_DATA)) {
-            // Store checksums on node
-            final String[] checksumArray = new String[checksums.size()];
-            checksums.stream().map(Object::toString).collect(Collectors.toSet()).toArray(checksumArray);
-            descNode.setProperty(CONTENT_DIGEST, checksumArray);
-
-            // Store the size of the file
-            contentSizeHistogram.update(size);
-            descNode.setProperty(CONTENT_SIZE, size);
-
-            LOGGER.debug("Decorated local file data property at path: {}", dsNode.getPath());
         }
     }
 

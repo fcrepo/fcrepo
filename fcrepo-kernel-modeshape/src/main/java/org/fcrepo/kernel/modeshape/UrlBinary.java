@@ -17,7 +17,7 @@
  */
 package org.fcrepo.kernel.modeshape;
 
-import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
+//import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.fcrepo.kernel.api.FedoraExternalContent.PROXY;
 import static org.fcrepo.kernel.api.FedoraExternalContent.REDIRECT;
@@ -113,51 +113,20 @@ public class UrlBinary extends AbstractFedoraBinary {
             throws InvalidChecksumException {
 
         // set a few things on the description node, then set a few more in the other setContent() function
-        final Node binaryNode = getNode();
+        final Node descNode = getDescriptionNodeOrNull();
+        final Node contentNode = getNode();
         try {
             if (externalHandling.equals(PROXY)) {
-                binaryNode.setProperty(PROXY_FOR, externalUrl);
+                contentNode.setProperty(PROXY_FOR, externalUrl);
             } else if (externalHandling.equals(REDIRECT)) {
-                binaryNode.setProperty(REDIRECTS_TO, externalUrl);
+                contentNode.setProperty(REDIRECTS_TO, externalUrl);
             } else {
                 throw new RepositoryException("Unknown external content handling type: " + externalHandling);
             }
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-
-        setContent(null, contentType, checksums, originalFileName, null);
-    }
-    /*
-     * (non-Javadoc)
-     * @see org.fcrepo.kernel.modeshape.FedoraBinaryImpl#setContent(java.io.InputStream, java.lang.String,
-     * java.util.Collection, java.lang.String, org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint)
-     */
-    @Override
-    public void setContent(final InputStream content, final String contentType,
-            final Collection<URI> checksums, final String originalFileName,
-            final StoragePolicyDecisionPoint storagePolicyDecisionPoint)
-            throws InvalidChecksumException {
-
-        if (contentType == null) {
-            throw new IllegalArgumentException(
-                    "ContentType must be non-null when setting content for local file binary");
-        }
-
-        try {
-            /* that this is a PROXY or REDIRECT has already been set on this resource before
-               we enter this setContent() method
-             */
-            final Node descNode = getDescriptionNodeOrNull();
-            final Node contentNode = getNode();
 
             if (contentNode.canAddMixin(FEDORA_BINARY)) {
                 contentNode.addMixin(FEDORA_BINARY);
             }
-
-
-            // Store the required jcr:data property
-            contentNode.setProperty(JCR_DATA, "");
 
             LOGGER.debug("Created content node at path: {}", contentNode.getPath());
 
@@ -169,11 +138,16 @@ public class UrlBinary extends AbstractFedoraBinary {
             final String[] checksumArray = new String[nonNullChecksums.size()];
             nonNullChecksums.stream().map(Object::toString).collect(Collectors.toSet()).toArray(checksumArray);
 
+
             FedoraTypesUtils.touch(contentNode);
 
             if (descNode != null) {
                 descNode.setProperty(CONTENT_DIGEST, checksumArray);
-                descNode.setProperty(HAS_MIME_TYPE, contentType);
+                if (contentType != null) {
+                    descNode.setProperty(HAS_MIME_TYPE, contentType);
+                } else {
+                    descNode.setProperty(HAS_MIME_TYPE, DEFAULT_MIME_TYPE);
+                }
 
                 if (originalFileName != null) {
                     descNode.setProperty(FILENAME, originalFileName);
@@ -186,6 +160,19 @@ public class UrlBinary extends AbstractFedoraBinary {
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
+    }
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.modeshape.FedoraBinaryImpl#setContent(java.io.InputStream, java.lang.String,
+     * java.util.Collection, java.lang.String, org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint)
+     */
+    @Override
+    public void setContent(final InputStream content, final String contentType,
+            final Collection<URI> checksums, final String originalFileName,
+            final StoragePolicyDecisionPoint storagePolicyDecisionPoint)
+            throws UnsupportedOperationException {
+        throw new UnsupportedOperationException(
+                "Cannot call setContent() on external binary. Call setExternalContent() instead.");
     }
 
 
@@ -284,6 +271,8 @@ public class UrlBinary extends AbstractFedoraBinary {
                 list = CacheEntryFactory.forProperty(getProperty(PROXY_FOR)).checkFixity(algorithms);
             } else if (isRedirect()) {
                 list = CacheEntryFactory.forProperty(getProperty(REDIRECTS_TO)).checkFixity(algorithms);
+            } else {
+                throw new RepositoryRuntimeException("External content error: not proxy or redirect");
             }
             return list;
         } catch (final RepositoryException e) {

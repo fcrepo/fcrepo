@@ -122,7 +122,6 @@ public class UrlBinaryIT extends AbstractIT {
     @Test
     public void testDatastream() throws Exception {
         final FedoraBinary binary = binaryService.findOrCreate(session, "/externalContent");
-        logger.info("Just found or created");
         binary.setExternalContent(mimeType, null, null, "proxy", fileUrl);
 
         assertTrue(binary.isProxy());
