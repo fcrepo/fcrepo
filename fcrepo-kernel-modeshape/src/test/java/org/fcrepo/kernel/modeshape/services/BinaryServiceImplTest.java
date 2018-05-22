@@ -49,8 +49,6 @@ import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 @RunWith(MockitoJUnitRunner.class)
 public class BinaryServiceImplTest {
 
-    private static final String LOCAL_FILE_RESOURCE = "file:///path/to/file";
-
     private BinaryServiceImpl testObj;
 
     private FedoraSession testSession;

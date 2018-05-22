@@ -50,12 +50,6 @@ public class ExternalMessageBodyExceptionMapper extends ConstraintExceptionMappe
     @Context
     private ServletContext context;
 
-    /**
-     * For External Message Body requests that are malformed or missing something.
-     *
-     * @author bseeger
-     * @since April 18, 2018
-     */
     @Override
     public Response toResponse(final ExternalMessageBodyException e) {
         debugException(this, e, LOGGER);

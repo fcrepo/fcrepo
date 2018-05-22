@@ -50,5 +50,4 @@ public interface Service<T> {
      * @return retrieved T
      */
     public T findOrCreate(final FedoraSession session, final String path);
-
 }

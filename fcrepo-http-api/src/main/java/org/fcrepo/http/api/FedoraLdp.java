@@ -736,7 +736,7 @@ public class FedoraLdp extends ContentExposingResource {
                 if (hasVersionedResourceLink(links)) {
                     resource.enableVersioning();
                     if (resource instanceof FedoraBinary) {
-                        resource.getDescription().enableVersioning();
+                        resource.enableVersioning();
                     }
                 }
 

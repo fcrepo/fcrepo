@@ -45,14 +45,13 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 
 /**
- * @author bseeger
- *
  * This class is a helper for dealing with the External Content Link header and External Content itself, in the case
  * of handling="copy". This class will verify that an External Content Link header is formatted correctly and
  * help parse it, delivering parts of it when asked.
  *
+ * @author bseeger
+ * @since 5/7/2018
  */
-
 public class ExternalContentHandler {
 
     private static final Logger LOGGER = getLogger(FedoraLdp.class);
