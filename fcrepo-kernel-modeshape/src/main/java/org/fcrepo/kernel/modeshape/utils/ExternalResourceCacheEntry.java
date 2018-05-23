@@ -17,17 +17,17 @@
  */
 package org.fcrepo.kernel.modeshape.utils;
 
-import java.io.IOException;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
+import org.slf4j.Logger;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
-import org.fcrepo.kernel.api.utils.MessageExternalBodyContentType;
 
 /**
  * Cache entry that wraps a binary stream for External Resource
@@ -36,7 +36,7 @@ import org.fcrepo.kernel.api.utils.MessageExternalBodyContentType;
  * @since 2017-09-18
  */
 public class ExternalResourceCacheEntry extends BinaryCacheEntry {
-
+    private static final Logger LOGGER = getLogger(ExternalResourceCacheEntry.class);
     /**
      * Create a new ExternalResourceCacheEntry
      * @param property the given property
@@ -52,10 +52,11 @@ public class ExternalResourceCacheEntry extends BinaryCacheEntry {
     @Override
     public InputStream getInputStream() {
         try {
+            LOGGER.debug("getInputStream getExternalIdentifier: {} {} ", property().getName(), getExternalIdentifier());
             return URI.create(getExternalIdentifier()).toURL().openStream();
-        } catch (MalformedURLException e) {
+        } catch (final MalformedURLException e) {
             throw new RepositoryRuntimeException("Malformed URL: " + getExternalIdentifier(), e);
-        } catch (IOException e) {
+        } catch (final Exception e) {
             throw new RepositoryRuntimeException(e);
         }
     }
@@ -67,8 +68,9 @@ public class ExternalResourceCacheEntry extends BinaryCacheEntry {
     @Override
     public String getExternalIdentifier() {
         try {
-            return MessageExternalBodyContentType.parse(property().getValue().getString()).getResourceLocation();
-        } catch (final RepositoryException | UnsupportedAccessTypeException e) {
+            LOGGER.debug("getExternalIdentifier for property {} ", property().getName());
+            return property().getValue().toString();
+        } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
     }

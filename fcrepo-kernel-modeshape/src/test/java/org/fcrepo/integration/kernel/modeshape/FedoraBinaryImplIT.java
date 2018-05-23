@@ -524,6 +524,6 @@ public class FedoraBinaryImplIT extends AbstractIT {
             session.expire();
         }
     }
-
-
 }
+
+

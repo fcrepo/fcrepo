@@ -241,6 +241,11 @@ public final class RdfLexicon {
     public static final Set<Property> contentProperties = of(HAS_CONTENT_LOCATION, HAS_CONTENT_LOCATION_VALUE,
             HAS_SIZE);
 
+    // EXTERNAL CONTENT
+    public static final Property EXTERNAL_CONTENT = createProperty(FCREPO_API_NAMESPACE + "ExternalContent");
+    public static final Property PROXY_FOR = createProperty(REPOSITORY_NAMESPACE + "proxyFor");
+    public static final Property REDIRECTS_TO = createProperty(REPOSITORY_NAMESPACE + "redirectsTo");
+
     // RDF EXTRACTION
     public static final Property COULD_NOT_STORE_PROPERTY =
             createProperty(REPOSITORY_NAMESPACE + "couldNotStoreProperty");

@@ -25,7 +25,7 @@ import static java.util.regex.Pattern.compile;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_LOCATION;
+import static javax.ws.rs.core.HttpHeaders.LOCATION;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.Link.fromUri;
@@ -79,6 +79,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.EXTERNAL_CONTENT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MIME_TYPE;
@@ -207,6 +208,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     private static DateTimeFormatter tripleFormat =
       DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(of("GMT"));
+
+
 
     @Test
     public void testHeadRepositoryGraph() {
@@ -415,14 +418,32 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
     }
 
+    private String getExternalContentLinkHeader(final String url, final String handling, final String mimeType) {
+        // leave lots of room to leave things out of the link to test variations.
+        String link = "";
+        if (url != null && !url.isEmpty()) {
+            link += "<" + url + ">";
+        }
+
+        link += "; rel=\"" + EXTERNAL_CONTENT + "\"";
+
+        if (handling != null && !handling.isEmpty()) {
+            link += "; handling=\"" + handling + "\"";
+        }
+
+        if (mimeType != null && !mimeType.isEmpty()) {
+            link += "; type=\"" + mimeType + "\"";
+        }
+        LOGGER.info("Created link: {}", link);
+        return link;
+    }
+
     @Test
-    public void testHeadExternalDatastream() throws IOException, ParseException {
-        final String externalContentType = "message/external-body;access-type=URL;url=\"some:uri\"";
+    public void testHeadExternalDatastreamRedirect() throws IOException, ParseException {
 
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id);
-        put.addHeader(CONTENT_TYPE, externalContentType);
-        put.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        put.addHeader(LINK, getExternalContentLinkHeader("http://example.com/test", "redirect", "image/jpeg"));
         assertEquals(CREATED.getStatusCode(), getStatus(put));
 
         // Configure HEAD request to NOT follow redirects
@@ -433,8 +454,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             assertEquals(TEMPORARY_REDIRECT.getStatusCode(), response.getStatusLine().getStatusCode());
-            assertEquals(externalContentType, response.getFirstHeader(CONTENT_TYPE).getValue());
-            assertEquals("some:uri", response.getFirstHeader(CONTENT_LOCATION).getValue());
+            assertEquals("http://example.com/test", getLocation(response));
             assertEquals("bytes", response.getFirstHeader("Accept-Ranges").getValue());
             final ContentDisposition disposition =
                     new ContentDisposition(response.getFirstHeader(CONTENT_DISPOSITION).getValue());
@@ -444,11 +464,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     @Test
     public void testGetExternalDatastream() throws IOException, ParseException {
-        final String externalContentType = "message/external-body;access-type=URL;url=\"some:uri\"";
-
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id);
-        put.addHeader(CONTENT_TYPE, externalContentType);
+        put.addHeader(LINK, getExternalContentLinkHeader("http://example.com/test", "redirect", "image/jpeg"));
         assertEquals(CREATED.getStatusCode(), getStatus(put));
 
         // Configure HEAD request to NOT follow redirects
@@ -459,8 +477,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         try (final CloseableHttpResponse response = execute(getObjMethod)) {
             assertEquals(TEMPORARY_REDIRECT.getStatusCode(), response.getStatusLine().getStatusCode());
-            assertEquals(externalContentType, response.getFirstHeader(CONTENT_TYPE).getValue());
-            assertEquals("some:uri", response.getFirstHeader(CONTENT_LOCATION).getValue());
+            assertEquals("http://example.com/test", getLocation(response));
             assertEquals("bytes", response.getFirstHeader("Accept-Ranges").getValue());
             final ContentDisposition disposition =
                     new ContentDisposition(response.getFirstHeader(CONTENT_DISPOSITION).getValue());
@@ -475,11 +492,10 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createDatastream(dsId, "x", "01234567890123456789012345678901234567890123456789");
 
         final String dsUrl = serverAddress + dsId + "/x";
-        final String externalContentType = "message/external-body;access-type=URL;url=\"" + dsUrl + "\"";
 
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id);
-        put.addHeader(CONTENT_TYPE, externalContentType);
+        put.addHeader(LINK, getExternalContentLinkHeader(dsUrl, "redirect", "text/plain"));
         assertEquals(CREATED.getStatusCode(), getStatus(put));
 
         // Configure HEAD request to NOT follow redirects
@@ -491,8 +507,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             assertEquals(TEMPORARY_REDIRECT.getStatusCode(), response.getStatusLine().getStatusCode());
-            assertEquals(externalContentType, response.getFirstHeader(CONTENT_TYPE).getValue());
             assertTrue(response.getHeaders(DIGEST).length > 0);
+            assertEquals(dsUrl, getLocation(response));
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
             assertTrue("Fixity Checksum doesn't match",
                     digesterHeaderValue.equals("sha=9578f951955d37f20b601c26591e260c1e5389bf"));
@@ -507,11 +523,10 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createDatastream(dsId, "x", "01234567890123456789012345678901234567890123456789");
 
         final String dsUrl = serverAddress + dsId + "/x";
-        final String externalContentType = "message/external-body;access-type=URL;url=\"" + dsUrl + "\"";
 
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id);
-        put.addHeader(CONTENT_TYPE, externalContentType);
+        put.addHeader(LINK, getExternalContentLinkHeader(dsUrl, "redirect", "image/jpeg"));
         assertEquals(CREATED.getStatusCode(), getStatus(put));
 
         // Configure HEAD request to NOT follow redirects
@@ -523,7 +538,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             assertEquals(TEMPORARY_REDIRECT.getStatusCode(), response.getStatusLine().getStatusCode());
-            assertEquals(externalContentType, response.getFirstHeader(CONTENT_TYPE).getValue());
+            assertEquals(dsUrl, getLocation(response));
             assertTrue(response.getHeaders(DIGEST).length > 0);
 
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
@@ -624,9 +639,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertTrue("POST should support application/rdf+xml", postTypes.contains(contentTypeRDFXML));
         assertTrue("POST should support application/n-triples", postTypes.contains(contentTypeNTriples));
         assertTrue("POST should support multipart/form-data", postTypes.contains("multipart/form-data"));
-        assertTrue("POST should support message/external-body; access-type=URL", postTypes.contains(
-                "message/external-body; access-type=URL"));
-
     }
 
     private static void assertRdfOptionsHeaders(final HttpResponse httpResponse) {
@@ -747,7 +759,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertTrue("Binary should be a ldp:NonRDFSource", graph.contains(ANY,
                     correctDSSubject, rdfType, NON_RDF_SOURCE.asNode()));
             // every triple in the response should have a subject of the actual resource described
-            logger.info("Found graph:\n{}", graph);
+            LOGGER.info("Found graph:\n{}", graph);
             graph.find().forEachRemaining(quad -> {
                 assertEquals("Found a triple with incorrect subject!", correctDSSubject, quad.getSubject());
             });
@@ -790,7 +802,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
             assertTrue("SHA-1 Fixity Checksum doesn't match",
-                digesterHeaderValue.indexOf("sha=9578f951955d37f20b601c26591e260c1e5389bf") >= 0);
+                    digesterHeaderValue.indexOf("sha=9578f951955d37f20b601c26591e260c1e5389bf") >= 0);
             assertTrue("MD5 fixity checksum doesn't match",
                     digesterHeaderValue.indexOf("md5=baed005300234f3d1503c50a48ce8e6f") >= 0);
             assertTrue("SHA-256 fixity checksum doesn't match",
@@ -801,16 +813,13 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     @Test
     public void testGetExternalDatastreamWithWantDigest() throws IOException, ParseException {
-
         final String dsId = getRandomUniqueId();
         createDatastream(dsId, "x", "01234567890123456789012345678901234567890123456789");
-
         final String dsUrl = serverAddress + dsId + "/x";
-        final String externalContentType = "message/external-body;access-type=URL;url=\"" + dsUrl + "\"";
 
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id);
-        put.addHeader(CONTENT_TYPE, externalContentType);
+        put.addHeader(LINK, getExternalContentLinkHeader(dsUrl, "redirect", "text/plain"));
         assertEquals(CREATED.getStatusCode(), getStatus(put));
 
         // Configure GET request to NOT follow redirects
@@ -822,7 +831,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         try (final CloseableHttpResponse response = execute(getObjMethod)) {
             assertEquals(TEMPORARY_REDIRECT.getStatusCode(), response.getStatusLine().getStatusCode());
-            assertEquals(externalContentType, response.getFirstHeader(CONTENT_TYPE).getValue());
+            assertEquals(dsUrl, getLocation(response));
             assertTrue(response.getHeaders(DIGEST).length > 0);
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
             assertTrue("Fixity Checksum doesn't match",
@@ -838,11 +847,10 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createDatastream(dsId, "x", "01234567890123456789012345678901234567890123456789");
 
         final String dsUrl = serverAddress + dsId + "/x";
-        final String externalContentType = "message/external-body;access-type=URL;url=\"" + dsUrl + "\"";
 
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id);
-        put.addHeader(CONTENT_TYPE, externalContentType);
+        put.addHeader(LINK, getExternalContentLinkHeader(dsUrl, "redirect", "text/plain"));
         assertEquals(CREATED.getStatusCode(), getStatus(put));
 
         // Configure Get request to NOT follow redirects
@@ -854,7 +862,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         try (final CloseableHttpResponse response = execute(getObjMethod)) {
             assertEquals(TEMPORARY_REDIRECT.getStatusCode(), response.getStatusLine().getStatusCode());
-            assertEquals(externalContentType, response.getFirstHeader(CONTENT_TYPE).getValue());
+            assertEquals(dsUrl, response.getFirstHeader(LOCATION).getValue());
             assertTrue(response.getHeaders(DIGEST).length > 0);
 
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
@@ -1226,11 +1234,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     private void checkForVersionedResourceLinkHeader(final CloseableHttpResponse response) {
-        checkForLinkHeader(response,VERSIONED_RESOURCE.getURI(), "type");
+        checkForLinkHeader(response, VERSIONED_RESOURCE.getURI(), "type");
     }
 
     private void checkForMementoTimeGateLinkHeader(final CloseableHttpResponse response) {
-        checkForLinkHeader(response,VERSIONING_TIMEGATE_TYPE, "type");
+        checkForLinkHeader(response, VERSIONING_TIMEGATE_TYPE, "type");
     }
 
     @Test
@@ -1953,7 +1961,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             public
             void testCreateManyObjects() throws IOException, InterruptedException {
         if (System.getProperty(TEST_ACTIVATION_PROPERTY) == null) {
-            logger.info("Not running testCreateManyObjects because system property TEST_ACTIVATION_PROPERTY not set.");
+            LOGGER.info("Not running testCreateManyObjects because system property TEST_ACTIVATION_PROPERTY not set.");
             return;
         }
         final int manyObjects = 2000;
@@ -2473,8 +2481,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpPatch updateObjectGraphMethod = new HttpPatch(subjectURI);
         updateObjectGraphMethod.addHeader(CONTENT_TYPE, "application/sparql-update");
         updateObjectGraphMethod.setEntity(new StringEntity("INSERT {<" + subjectURI + "> <info:test#label> \"foo\" ; " +
-                    " <info:test#number> 42 ; " +
-                    " <info:test#date> \"1953?\"^^<http://id.loc.gov/datatypes/edtf/EDTF> }" +
+                " <info:test#number> 42 ; " +
+                " <info:test#date> \"1953?\"^^<http://id.loc.gov/datatypes/edtf/EDTF> }" +
                 " WHERE {}"));
         executeAndClose(updateObjectGraphMethod);
         try (CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
@@ -3081,7 +3089,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testExternalMessageBody() throws IOException {
+    public void testExternalMessageBodyRedirect() throws IOException {
 
         // we need a client that won't automatically follow redirects
         try (final CloseableHttpClient noFollowClient = HttpClientBuilder.create().disableRedirectHandling().build()) {
@@ -3089,8 +3097,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final String id = getRandomUniqueId();
             final HttpPut httpPut = putObjMethod(id);
             httpPut.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
-            httpPut.addHeader(CONTENT_TYPE, "message/external-body; access-type=URL; " +
-                    "URL=\"http://www.example.com/file\"");
+            httpPut.addHeader(LINK, getExternalContentLinkHeader("http://www.example.com/file", "redirect", null));
 
             try (final CloseableHttpResponse response = execute(httpPut)) {
                 assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
@@ -3104,112 +3111,99 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testUnsupportedAccessTypeInExternalMessagePUT() throws IOException {
+    public void testExternalMessageBodyCopy() throws IOException {
+        // create a random binary object
+        final String copyPid = getRandomUniqueId();
+        final String entityStr = "Hello there, this is the original object speaking.";
+        final String copyLocation = serverAddress + copyPid + "/binary";
+        assertEquals(CREATED.getStatusCode(), getStatus(putDSMethod(copyPid, "binary", entityStr)));
 
-        // we need a client that won't automatically follow redirects
-        try (final CloseableHttpClient noFollowClient = HttpClientBuilder.create().disableRedirectHandling()
-                .build()) {
+        // create a copy of it
+        final String id = getRandomUniqueId();
+        final HttpPut httpPut = putObjMethod(id);
+        httpPut.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        httpPut.addHeader(LINK, getExternalContentLinkHeader(copyLocation, "copy", "text/plain"));
 
-            final String id = getRandomUniqueId();
-            final HttpPut httpPut = putObjMethod(id);
-            httpPut.addHeader(CONTENT_TYPE, "message/external-body; access-type=ftp; " +
-                    "URL=\"ftp://www.example.com/file\"");
+        try (final CloseableHttpResponse response = execute(httpPut)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
 
-            try (final CloseableHttpResponse response = execute(httpPut)) {
-                assertEquals("Didn't get an UNSUPPORTED_MEDIA_TYPE response!", UNSUPPORTED_MEDIA_TYPE.getStatusCode(),
-                        getStatus(response));
+            // fetch the copy of the object
+            final HttpGet get = new HttpGet(getLocation(response));
+            try (final CloseableHttpResponse getResponse = execute(get)) {
+                assertEquals(OK.getStatusCode(), getStatus(getResponse));
+                final String content = EntityUtils.toString(getResponse.getEntity());
+                assertEquals("Entity Data doesn't match original object!", entityStr, content);
+                assertEquals("Content-Type is different from expected on External COPY", "text/plain",
+                        response.getFirstHeader(CONTENT_TYPE).getValue());
             }
         }
     }
 
     @Test
-    public void testUnsupportedAccessTypeInExternalMessagePOST() throws IOException {
+    public void testExternalMessageBodyProxy() throws IOException {
+        // Create a resource
+        final HttpPost method = postObjMethod();
+        final String entityStr = "Hello there, this is the original object speaking.";
+        method.setEntity(new StringEntity(entityStr));
 
-        // we need a client that won't automatically follow redirects
-        try (final CloseableHttpClient noFollowClient = HttpClientBuilder.create().disableRedirectHandling()
-                .build()) {
+        final String origLocation;
+        try (final CloseableHttpResponse response = execute(method)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            origLocation = response.getFirstHeader("Location").getValue();
+        }
 
-            final String id = getRandomUniqueId();
-            final HttpPost httpPost = postObjMethod(id);
-            httpPost.addHeader(CONTENT_TYPE, "message/external-body; access-type=ftp; " +
-                    "URL=\"ftp://www.example.com/file\"");
+        final String id = getRandomUniqueId();
+        final HttpPut httpPut = putObjMethod(id);
+        httpPut.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        httpPut.addHeader(LINK, getExternalContentLinkHeader(origLocation, "proxy", null));
 
-            try (final CloseableHttpResponse response = execute(httpPost)) {
-                assertEquals("Didn't get an UNSUPPORTED_MEDIA_TYPE response!", UNSUPPORTED_MEDIA_TYPE.getStatusCode(),
-                        getStatus(response));
+        try (final CloseableHttpResponse response = execute(httpPut)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            final HttpGet get = new HttpGet(getLocation(response));
+            try (final CloseableHttpResponse getResponse = execute(get)) {
+                assertEquals(OK.getStatusCode(), getStatus(getResponse));
+                assertEquals(origLocation, getContentLocation(getResponse));
+                final String content = EntityUtils.toString(getResponse.getEntity());
+                assertEquals("Entity Data doesn't match original object!", entityStr, content);
             }
         }
     }
 
     @Test
-    public void testMissingAccessTypeInExternalMessage() throws IOException {
+    public void testUnsupportedHandlingTypeInExternalMessagePUT() throws IOException {
 
-        // we need a client that won't automatically follow redirects
-        try (final CloseableHttpClient noFollowClient = HttpClientBuilder.create().disableRedirectHandling()
-                .build()) {
+        final String id = getRandomUniqueId();
+        final HttpPut httpPut = putObjMethod(id);
+        httpPut.addHeader(LINK, getExternalContentLinkHeader("http://example.com/test", "junk", "image/jpeg"));
 
-            final String id = getRandomUniqueId();
-            final HttpPut httpPut = putObjMethod(id);
-            httpPut.addHeader(CONTENT_TYPE, "message/external-body; accept-type;" +
-                    "URL=\"http://www.example.com/file\"");
-
-            try (final CloseableHttpResponse response = execute(httpPut)) {
-                assertEquals("Didn't get a BAD_REQUEST response!", BAD_REQUEST.getStatusCode(),
-                        getStatus(response));
-            }
+        try (final CloseableHttpResponse response = execute(httpPut)) {
+            assertEquals("Didn't get a BAD REQUEST error!", BAD_REQUEST.getStatusCode(),
+                    getStatus(response));
         }
     }
 
     @Test
-    public void testInvalidExternalMessageBodyMissingURLParam() throws IOException {
+    public void testUnsupportedHandlingTypeInExternalMessagePOST() throws IOException {
 
-        // we need a client that won't automatically follow redirects
-        try (final CloseableHttpClient noFollowClient = HttpClientBuilder.create().disableRedirectHandling()
-                .build()) {
+        final String id = getRandomUniqueId();
+        final HttpPost httpPost = postObjMethod(id);
+        httpPost.addHeader(LINK, getExternalContentLinkHeader("http://example.com/junk", "junk", "image/jpeg"));
 
-            final String id = getRandomUniqueId();
-            final HttpPut httpPut = putObjMethod(id);
-            httpPut.addHeader(CONTENT_TYPE, "message/external-body; access-type=URL; ");
-
-            try (final CloseableHttpResponse response = execute(httpPut)) {
-                assertEquals("Didn't get an UNSUPPORTED_MEDIA_TYPE response!", UNSUPPORTED_MEDIA_TYPE.getStatusCode(),
-                        getStatus(response));
-            }
+        try (final CloseableHttpResponse response = execute(httpPost)) {
+        assertEquals("Didn't get a BAD_REQUEST response!", BAD_REQUEST.getStatusCode(),
+                    getStatus(response));
         }
     }
 
     @Test
-    public void testInvalidExternalMessageBodyMissingURLValue() throws IOException {
+    public void testMissingHandlingTypeInExternalMessage() throws IOException {
+        final String id = getRandomUniqueId();
+        final HttpPut httpPut = putObjMethod(id);
+        httpPut.addHeader(LINK, getExternalContentLinkHeader("http://example.com/junk", null, "image/jpeg"));
 
-        // we need a client that won't automatically follow redirects
-        try (final CloseableHttpClient noFollowClient = HttpClientBuilder.create().disableRedirectHandling()
-                .build()) {
-
-            final String id = getRandomUniqueId();
-            final HttpPut httpPut = putObjMethod(id);
-            httpPut.addHeader(CONTENT_TYPE, "message/external-body; access-type=URL; URL");
-
-            try (final CloseableHttpResponse response = execute(httpPut)) {
-                assertEquals("Didn't get an UNSUPPORTED_MEDIA_TYPE response!", BAD_REQUEST.getStatusCode(),
-                        getStatus(response));
-            }
-        }
-    }
-
-    @Test
-    public void testWildcardExternalMessageBodyWithValidAccessType() throws IOException {
-        // we need a client that won't automatically follow redirects
-        try (final CloseableHttpClient noFollowClient = HttpClientBuilder.create().disableRedirectHandling()
-                .build()) {
-
-            final String id = getRandomUniqueId();
-            final HttpPut httpPut = putObjMethod(id);
-            httpPut.addHeader(CONTENT_TYPE, "*/*; access-type=url; url=\"some://url\"");
-
-            try (final CloseableHttpResponse response = execute(httpPut)) {
-                assertEquals("wasn't successful", CREATED.getStatusCode(),
-                        getStatus(response));
-            }
+        try (final CloseableHttpResponse response = execute(httpPut)) {
+            assertEquals("Didn't get a BAD_REQUEST response!", BAD_REQUEST.getStatusCode(),
+                    getStatus(response));
         }
     }
 
@@ -3381,7 +3375,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     @Test
     public void testPutServerManagedPredicateInIndirectContainer() throws IOException {
-        logger.info("running testPutServerManagedPredicateInIndirectContainer");
+        LOGGER.info("running testPutServerManagedPredicateInIndirectContainer");
         // Create a resource
         final String id = getRandomUniqueId();
         executeAndClose(putObjMethod(id));

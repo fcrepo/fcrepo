@@ -131,7 +131,7 @@ public class FedoraVersioning extends ContentExposingResource {
      */
     @DELETE
     public Response disableVersioning() {
-        LOGGER.info("Disable versioning for '{}'", externalPath);
+        LOGGER.debug("Disable versioning for '{}'", externalPath);
         resource().disableVersioning();
         session.commit();
         return noContent().build();
@@ -187,7 +187,7 @@ public class FedoraVersioning extends ContentExposingResource {
             final boolean createFromExisting = isBlank(datetimeHeader);
 
             try {
-                LOGGER.info("Request to add version for date '{}' for '{}'", datetimeHeader, externalPath);
+                LOGGER.debug("Request to add version for date '{}' for '{}'", datetimeHeader, externalPath);
 
                 // Create memento
                 FedoraResource memento = null;
@@ -275,7 +275,7 @@ public class FedoraVersioning extends ContentExposingResource {
         final FedoraResource theTimeMap = resource().findOrCreateTimeMap();
         checkCacheControlHeaders(request, servletResponse, theTimeMap, session);
 
-        LOGGER.info("GET resource '{}'", externalPath);
+        LOGGER.debug("GET resource '{}'", externalPath);
 
         addResourceHttpHeaders(theTimeMap);
 

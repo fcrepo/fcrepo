@@ -36,7 +36,6 @@ import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.notAcceptable;
 import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
-import static javax.ws.rs.core.Response.temporaryRedirect;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.PARTIAL_CONTENT;
 import static javax.ws.rs.core.Response.Status.REQUESTED_RANGE_NOT_SATISFIABLE;
@@ -83,8 +82,8 @@ import java.text.MessageFormat;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -107,7 +106,6 @@ import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.ResponseBuilder;
 import org.apache.jena.atlas.RuntimeIOException;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
@@ -145,7 +143,6 @@ import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.api.utils.ContentDigest;
-import org.fcrepo.kernel.api.utils.MessageExternalBodyContentType;
 
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.jvnet.hk2.annotations.Optional;
@@ -162,7 +159,6 @@ import org.slf4j.Logger;
 public abstract class ContentExposingResource extends FedoraBaseResource {
 
     private static final Logger LOGGER = getLogger(ContentExposingResource.class);
-    public static final String URL_ACCESS_TYPE = "URL";
 
     private static final List<String> VARY_HEADERS = Arrays.asList("Accept", "Range", "Accept-Encoding",
             "Accept-Language");
@@ -174,7 +170,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     @Context protected Request request;
     @Context protected HttpServletResponse servletResponse;
     @Context protected ServletContext context;
-
 
     @Inject
     @Optional
@@ -228,12 +223,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         final RdfNamespacedStream outputStream;
 
         if (resource() instanceof FedoraBinary) {
-            final MediaType mediaType = getBinaryResourceMediaType();
-
-            if (isExternalBody(mediaType)) {
-                return externalBodyRedirect(getExternalResourceLocation(mediaType)).build();
-            }
-
             return getBinaryContent(rangeValue);
         } else {
             outputStream = new RdfNamespacedStream(
@@ -262,23 +251,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     }
 
 
-    protected URI getExternalResourceLocation(final MediaType mediaType) throws UnsupportedAccessTypeException {
-        return URI.create(MessageExternalBodyContentType.parse(mediaType.toString()).getResourceLocation());
-    }
 
-    /**
-     * Checks if media type matches "message/external-body"
-     * @param mediaType media-type to check
-     * @return true if matches
-     */
-    protected boolean isExternalBody(final MediaType mediaType) {
-        return mediaType == null ? false : (mediaType.getType() + "/" + mediaType.getSubtype()).equals(
-                MessageExternalBodyContentType.MEDIA_TYPE);
-    }
 
-    protected ResponseBuilder externalBodyRedirect(final URI resourceLocation) {
-        return temporaryRedirect(resourceLocation).header(CONTENT_LOCATION, resourceLocation);
-    }
 
     protected RdfStream getResourceTriples() {
         return getResourceTriples(-1);
@@ -476,6 +450,18 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 servletResponse.addHeader(MEMENTO_DATETIME_HEADER, mementoDatetime);
             }
             servletResponse.addHeader(LINK, buildLink(MEMENTO_TYPE, "type"));
+        }
+    }
+
+    protected void addExternalContentHeaders(final FedoraResource resource) {
+        if (resource instanceof FedoraBinary) {
+            final FedoraBinary binary = (FedoraBinary)resource;
+
+            if (binary.isProxy()) {
+                servletResponse.addHeader(CONTENT_LOCATION, binary.getProxyURL());
+            } else if (binary.isRedirect()) {
+                servletResponse.addHeader(CONTENT_LOCATION, binary.getRedirectURL());
+            }
         }
     }
 
@@ -781,6 +767,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected Response createUpdateResponse(final FedoraResource resource, final boolean created) {
         addCacheControlHeaders(servletResponse, resource, session);
         addResourceLinkHeaders(resource, created);
+        addExternalContentHeaders(resource);
         addAclHeader(resource);
         addMementoHeaders(resource);
 
@@ -811,7 +798,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     }
 
     protected static MediaType getSimpleContentType(final MediaType requestContentType) {
-        return requestContentType != null ? new MediaType(requestContentType.getType(), requestContentType.getSubtype())
+        return requestContentType != null ?
+                new MediaType(requestContentType.getType(), requestContentType.getSubtype())
                 : APPLICATION_OCTET_STREAM_TYPE;
     }
 
@@ -823,17 +811,27 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                                                    final InputStream requestBodyStream,
                                                    final ContentDisposition contentDisposition,
                                                    final MediaType contentType,
-                                                   final Collection<String> checksums) throws InvalidChecksumException {
+                                                   final Collection<String> checksums,
+                                                   final String externalHandling,
+                                                   final String externalUrl) throws InvalidChecksumException {
         final Collection<URI> checksumURIs = checksums == null ?
                 new HashSet<>() : checksums.stream().map(checksum -> checksumURI(checksum)).collect(Collectors.toSet());
         final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
         final String originalContentType = contentType != null ? contentType.toString() : "";
 
-        result.setContent(requestBodyStream,
-                originalContentType,
-                checksumURIs,
-                originalFileName,
-                storagePolicyDecisionPoint);
+        if (externalHandling != null) {
+            result.setExternalContent(originalContentType,
+                    checksumURIs,
+                    originalFileName,
+                    externalHandling,
+                    externalUrl);
+        } else {
+            result.setContent(requestBodyStream,
+                    originalContentType,
+                    checksumURIs,
+                    originalFileName,
+                    storagePolicyDecisionPoint);
+        }
     }
 
     protected void replaceResourceWithStream(final FedoraResource resource,

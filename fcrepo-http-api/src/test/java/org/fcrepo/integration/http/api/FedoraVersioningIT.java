@@ -994,11 +994,12 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final String versionsUri = binaryUri + "/" + FCR_VERSIONS;
         assertEquals("fcr:versions must not exist before enabling versioning",
                 NOT_FOUND.getStatusCode(), getStatus(new HttpGet(versionsUri)));
-
         final String descUri = serverAddress + id + "/ds/" + FCR_METADATA;
         final String versionsDescUri = descUri + "/" + FCR_VERSIONS;
+
         assertEquals("fcr:metadata/fcr:versions must not exist before enabling versioning",
                 NOT_FOUND.getStatusCode(), getStatus(new HttpGet(versionsDescUri)));
+
 
         // Enable versioning
         enableVersioning(binaryUri);
@@ -1250,7 +1251,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         if (body != null) {
             createVersionMethod.setEntity(new StringEntity(body));
         }
-        if (mementoDateTime != null) {
+        if (mementoDateTime != null && !mementoDateTime.isEmpty()) {
             createVersionMethod.addHeader(MEMENTO_DATETIME_HEADER, mementoDateTime);
         }
 
@@ -1337,6 +1338,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         try (final CloseableHttpResponse response = execute(createMethod)) {
             assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            logger.info("created object: {}", response.getFirstHeader(LOCATION).getValue());
             return response.getFirstHeader(LOCATION).getValue();
         }
     }

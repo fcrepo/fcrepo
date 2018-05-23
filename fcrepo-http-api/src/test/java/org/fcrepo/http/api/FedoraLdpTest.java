@@ -33,7 +33,6 @@ import static javax.ws.rs.core.Response.Status.NOT_MODIFIED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static javax.ws.rs.core.Response.Status.TEMPORARY_REDIRECT;
-import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static org.apache.commons.io.IOUtils.toInputStream;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
@@ -49,6 +48,7 @@ import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.EXTERNAL_CONTENT;
 import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
@@ -114,6 +114,7 @@ import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
+import org.fcrepo.kernel.api.exception.ExternalMessageBodyException;
 import org.fcrepo.kernel.api.exception.InsufficientStorageException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
@@ -318,7 +319,7 @@ public class FedoraLdpTest {
     private void assertShouldHaveConstraintsLink() {
         assertTrue("Should have a constraints document",
                 mockResponse.getHeaders(LINK).contains("<" + containerConstraints + ">; rel=\"" +
-                CONSTRAINED_BY.toString() + "\""));
+                        CONSTRAINED_BY.toString() + "\""));
     }
 
     @Test
@@ -440,11 +441,17 @@ public class FedoraLdpTest {
     @Test
     public void testHeadWithExternalBinary() throws Exception {
         final FedoraBinary mockResource = (FedoraBinary)setResource(FedoraBinary.class);
+        final String url = "http://example.com/some/url";
         when(mockResource.getDescription()).thenReturn(mockNonRdfSourceDescription);
+        when(mockResource.getMimeType()).thenReturn("text/plain");
+        when(mockResource.isProxy()).thenReturn(false);
+        when(mockResource.isRedirect()).thenReturn(true);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
-        when(mockResource.getMimeType()).thenReturn("message/external-body; access-type=URL; URL=\"some:uri\"");
+        when(mockResource.getRedirectURL()).thenReturn(url);
+        when(mockResource.getRedirectURI()).thenReturn(URI.create(url));
         final Response actual = testObj.head();
         assertEquals(TEMPORARY_REDIRECT.getStatusCode(), actual.getStatus());
+        assertEquals(new URI(url), actual.getLocation());
         assertShouldBeAnLDPNonRDFSource();
         assertShouldNotAdvertiseAcceptPatchFlavors();
         assertShouldContainLinkToBinaryDescription();
@@ -751,7 +758,7 @@ public class FedoraLdpTest {
         assertShouldBeAnLDPNonRDFSource();
         assertShouldNotAdvertiseAcceptPatchFlavors();
         assertShouldContainLinkToBinaryDescription();
-        assertTrue(IOUtils.toString((InputStream)actual.getEntity(), UTF_8).equals("xyz"));
+        assertTrue(IOUtils.toString((InputStream) actual.getEntity(), UTF_8).equals("xyz"));
     }
 
     private void assertShouldBeAnLDPNonRDFSource() {
@@ -763,27 +770,41 @@ public class FedoraLdpTest {
     @Test
     public void testGetWithExternalMessageBinary() throws Exception {
         final FedoraBinary mockResource = (FedoraBinary)setResource(FedoraBinary.class);
+        final String url = "http://example.com/some/url";
         when(mockResource.getDescription()).thenReturn(mockNonRdfSourceDescription);
+        when(mockResource.getMimeType()).thenReturn("text/plain");
+        when(mockResource.isProxy()).thenReturn(false);
+        when(mockResource.isRedirect()).thenReturn(true);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
-        when(mockResource.getMimeType()).thenReturn("message/external-body; access-type=URL; URL=\"some:uri\"");
+        when(mockResource.getRedirectURI()).thenReturn(URI.create(url));
+        when(mockResource.getRedirectURL()).thenReturn(url);
         when(mockResource.getContent()).thenReturn(toInputStream("xyz", UTF_8));
         final Response actual = testObj.getResource(null);
         assertEquals(TEMPORARY_REDIRECT.getStatusCode(), actual.getStatus());
         assertTrue("Should be an LDP NonRDFSource", mockResponse.getHeaders(LINK).contains("<" + LDP_NAMESPACE +
                 "NonRDFSource>;rel=\"type\""));
         assertShouldContainLinkToBinaryDescription();
-        assertEquals(new URI("some:uri"), actual.getLocation());
+        assertEquals(new URI(url), actual.getLocation());
     }
 
-    @Test(expected = UnsupportedAccessTypeException.class)
+    @Test(expected = ExternalMessageBodyException.class)
     public void testGetWithExternalMessageMissingURLBinary() throws Exception {
-        final FedoraBinary mockResource = (FedoraBinary)setResource(FedoraBinary.class);
-        when(mockResource.getDescription()).thenReturn(mockNonRdfSourceDescription);
-        when(mockResource.getMimeType()).thenReturn("message/external-body; access-type=URL;");
-        when(mockResource.getContent()).thenReturn(toInputStream("xyz", UTF_8));
-        when(mockResource.getOriginalResource()).thenReturn(mockResource);
-        final Response actual = testObj.getResource(null);
-        assertEquals(UNSUPPORTED_MEDIA_TYPE.getStatusCode(), actual.getStatus());
+        final String badExternal = Link.fromUri("http://test.com")
+                .rel(EXTERNAL_CONTENT.toString())
+                .param("handling", "proxy")
+                .type("text/plain")
+                .build()
+                .toString()
+                .replaceAll("<.*>", "< >");
+
+        final Response actual = testObj.createObject(null, null, null, null, Arrays.asList(badExternal), null);
+    }
+
+    @Test(expected = ExternalMessageBodyException.class)
+    public void testPostWithExternalMessageBadHandling() throws Exception {
+         final String badExternal = Link.fromUri("http://test.com")
+            .rel(EXTERNAL_CONTENT.toString()).param("handling", "boogie").type("text/plain").build().toString();
+        final Response actual = testObj.createObject(null, null, null, null, Arrays.asList(badExternal), null);
     }
 
     @Test
@@ -799,7 +820,7 @@ public class FedoraLdpTest {
             .thenReturn(new DefaultRdfStream(createURI("mockBinary")));
         when(mockBinary.getTriples(eq(idTranslator), any(EnumSet.class)))
             .thenReturn(new DefaultRdfStream(createURI("mockBinary"), of(new Triple
-                (createURI("mockBinary"), createURI("called"), createURI("child:properties")))));
+                    (createURI("mockBinary"), createURI("called"), createURI("child:properties")))));
         final Response actual = testObj.getResource(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertTrue("Should be an LDP RDFSource",

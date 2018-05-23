@@ -90,7 +90,13 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
                 });
             }
 
-            return new FedoraBinaryImpl(dsNode);
+            final FedoraBinaryImpl binary = new FedoraBinaryImpl(dsNode);
+
+            if (dsNode.isNew()) {
+                touch(binary.getNode());
+            }
+
+            return binary;
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }

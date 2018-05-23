@@ -25,6 +25,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.modeshape.jcr.api.ValueFactory;
@@ -48,6 +50,8 @@ import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.TestHelpers.checksumString;
 import static org.fcrepo.kernel.modeshape.utils.TestHelpers.getContentNodeMock;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
@@ -65,6 +69,8 @@ import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class FedoraBinaryImplTest implements FedoraTypes {
+
+    private static final String EXPECTED_CONTENT = "test content";
 
     private static final String testDsId = "testDs";
 
@@ -85,6 +91,15 @@ public class FedoraBinaryImplTest implements FedoraTypes {
     @Mock
     private NodeType mockDescNodeType;
 
+    @Mock
+    private Property mockProperty;
+
+    @Mock
+    private org.modeshape.jcr.api.Binary mockBinary;
+
+    @Captor
+    private ArgumentCaptor<InputStream> inputStreamCaptor;
+
     @Before
     public void setUp() {
         final NodeType[] nodeTypes = new NodeType[] { mockDescNodeType };
@@ -95,10 +110,12 @@ public class FedoraBinaryImplTest implements FedoraTypes {
             when(mockContent.getSession()).thenReturn(mockSession);
             when(mockContent.getParent()).thenReturn(mockParentNode);
             when(mockContent.getNode(FEDORA_DESCRIPTION)).thenReturn(mockDescNode);
+            when(mockContent.isNodeType(FEDORA_BINARY)).thenReturn(true);
             final NodeType mockNodeType = mock(NodeType.class);
             when(mockNodeType.getName()).thenReturn("nt:versionedFile");
             when(mockContent.getPrimaryNodeType()).thenReturn(mockNodeType);
             testObj = new FedoraBinaryImpl(mockContent);
+
         } catch (final RepositoryException e) {
             e.printStackTrace();
             fail(e.getMessage());
@@ -254,4 +271,16 @@ public class FedoraBinaryImplTest implements FedoraTypes {
         assertEquals(cal.getTimeInMillis(), actual.toEpochMilli());
     }
 
+    @Test
+    public void testHasMixin() throws Exception {
+        assertTrue(FedoraBinaryImpl.hasMixin(mockContent));
+    }
+
+    @Test
+    public void testHasMixinNotBinary() throws Exception {
+        when(mockContent.isNodeType(FEDORA_BINARY)).thenReturn(false);
+        when(mockContent.isNodeType(FEDORA_TOMBSTONE)).thenReturn(true);
+
+        assertFalse(FedoraBinaryImpl.hasMixin(mockContent));
+    }
 }

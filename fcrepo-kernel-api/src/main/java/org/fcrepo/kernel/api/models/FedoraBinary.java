@@ -56,6 +56,19 @@ public interface FedoraBinary extends FedoraResource {
             throws InvalidChecksumException;
 
     /**
+     * Sets the external content reference for this datastream
+     *
+     * @param contentType MIME type of content (optional)
+     * @param checksums Collection of checksum URIs of the content (optional)
+     * @param originalFileName Original file name of the content (optional)
+     * @param externalHandling What type of handling the external resource needs (proxy or redirect)
+     * @param externalUrl Url for the external resourcej
+     * @throws InvalidChecksumException if invalid checksum exception occurred
+     */
+    void setExternalContent(String contentType, Collection<URI> checksums,
+                    String originalFileName, String externalHandling, String externalUrl)
+            throws InvalidChecksumException;
+    /**
      * @return The size in bytes of content associated with this datastream.
      */
     long getContentSize();
@@ -65,6 +78,50 @@ public interface FedoraBinary extends FedoraResource {
      * @return a URI with the format algorithm:value
      */
     URI getContentDigest();
+
+    /**
+     * @return Whether or not this binary is a proxy to another resource
+     */
+    Boolean isProxy();
+
+    /**
+     * @return Whether or not this binary is a redirect to another resource
+     */
+    Boolean isRedirect();
+
+    /**
+     * Get the URL that this resource is a Proxy for
+     * @return String containing URL of object to proxy
+     */
+    String getProxyURL();
+
+    /**
+     * Set the URL that this resource is a proxy for
+     * @param url - the url of the resource this is a proxy for
+     */
+    void setProxyURL(String url);
+
+    /**
+     * Get the URL this resource should redirect to
+     * @return String containing URL of object to redirect to
+     */
+    String getRedirectURL();
+
+    /**
+     * Get URL as a URI
+     * 
+     * @return URI containing the object to redirect to.
+     */
+    default URI getRedirectURI() {
+        return URI.create(getRedirectURL());
+    }
+
+    /**
+     * Set the URL that this is a redirect to
+     * 
+     * @param url - the url of the resource this redirects to
+     */
+    void setRedirectURL(String url);
 
     /**
      * @return The MimeType of content associated with this datastream.

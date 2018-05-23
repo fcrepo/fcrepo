@@ -77,6 +77,10 @@ public interface FedoraTypes {
 
     String HAS_MIME_TYPE = "ebucore:hasMimeType";
 
+    String PROXY_FOR = "fedora:proxyFor";
+
+    String REDIRECTS_TO = "fedora:redirectsTo";
+
     String CONTENT_SIZE = "premis:hasSize";
 
     String CONTENT_DIGEST = "premis:hasMessageDigest";

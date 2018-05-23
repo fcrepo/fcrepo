@@ -17,12 +17,16 @@
  */
 package org.fcrepo.kernel.modeshape.utils.impl;
 
+import static org.fcrepo.kernel.api.RdfLexicon.PROXY_FOR;
+import static org.fcrepo.kernel.api.RdfLexicon.REDIRECTS_TO;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import org.fcrepo.kernel.api.utils.CacheEntry;
-import org.fcrepo.kernel.api.utils.MessageExternalBodyContentType;
 import org.fcrepo.kernel.modeshape.utils.BinaryCacheEntry;
 import org.fcrepo.kernel.modeshape.utils.ExternalResourceCacheEntry;
 import org.fcrepo.kernel.modeshape.utils.ProjectedCacheEntry;
 import org.modeshape.jcr.value.binary.ExternalBinaryValue;
+import org.slf4j.Logger;
 
 import javax.jcr.Binary;
 import javax.jcr.Property;
@@ -33,6 +37,8 @@ import javax.jcr.RepositoryException;
  * @author cabeer
  */
 public final class CacheEntryFactory {
+
+    private static final Logger LOGGER = getLogger(CacheEntryFactory.class);
 
     /**
      * No public constructor on utility class
@@ -47,15 +53,19 @@ public final class CacheEntryFactory {
      * @throws RepositoryException if repository exception occurred
      */
     public static CacheEntry forProperty(final Property property) throws RepositoryException {
-        if (property.getValue().getString().indexOf((MessageExternalBodyContentType.MEDIA_TYPE)) >= 0) {
+        // if it's an external binary, catch that here and treat it differently.
+        if (property.getName().endsWith(PROXY_FOR.getLocalName()) ||
+                property.getName().endsWith(REDIRECTS_TO.getLocalName())) {
+            LOGGER.debug("Creating ExternalResourceCacheEntry for property: {} {}", property.getName(),
+                    property.getValue().toString());
             return new ExternalResourceCacheEntry(property);
-        } else {
-            final Binary binary = property.getBinary();
-
-            if (binary instanceof ExternalBinaryValue) {
-               return new ProjectedCacheEntry(property);
-            }
-            return new BinaryCacheEntry(property);
         }
+
+        final Binary binary = property.getBinary();
+
+        if (binary instanceof ExternalBinaryValue) {
+           return new ProjectedCacheEntry(property);
+        }
+        return new BinaryCacheEntry(property);
     }
 }

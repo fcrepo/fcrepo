@@ -126,7 +126,6 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
             final Lang rdfFormat) {
 
         final String mementoPath = makeMementoPath(resource, dateTime);
-
         assertMementoDoesNotExist(session, mementoPath);
 
         // Construct an unpopulated resource of the appropriate type for new memento
@@ -259,20 +258,17 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
             final StoragePolicyDecisionPoint storagePolicyDecisionPoint) throws InvalidChecksumException {
 
         final String mementoPath = makeMementoPath(resource, dateTime);
-
         assertMementoDoesNotExist(session, mementoPath);
 
         final FedoraBinary memento = binaryService.findOrCreateBinary(session, mementoPath);
+        decorateWithMementoProperties(session, mementoPath, dateTime);
 
         if (contentStream == null) {
-            LOGGER.debug("Creating memento {} for resource {} using existing state", mementoPath, resource.getPath());
             // Creating memento from existing resource
             populateBinaryMementoFromExisting(resource, memento, storagePolicyDecisionPoint);
         } else {
             memento.setContent(contentStream, null, checksums, null, storagePolicyDecisionPoint);
         }
-
-        decorateWithMementoProperties(session, mementoPath, dateTime);
 
         return memento;
     }

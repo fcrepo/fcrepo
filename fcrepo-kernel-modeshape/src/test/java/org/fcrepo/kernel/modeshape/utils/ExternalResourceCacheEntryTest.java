@@ -25,7 +25,6 @@ import java.io.InputStream;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
-import javax.jcr.ValueFormatException;
 
 import org.apache.jena.datatypes.xsd.impl.XSDBaseStringType;
 import org.junit.Before;
@@ -57,18 +56,16 @@ public class ExternalResourceCacheEntryTest {
     private ExternalResourceCacheEntry testObj;
 
     public static String RESOURCE_URL = "http://www.example.com/file";
-    private static String EXTERNAL_RESOURCE = "message/external-body;"
-        + " access-type=URL; URL=\"" + RESOURCE_URL + "\"";
 
     @Before
     public void setUp() throws RepositoryException {
         when(mockProperty.getValue()).thenReturn(mockValue);
-        when(mockValue.getString()).thenReturn(EXTERNAL_RESOURCE);
+        when(mockValue.toString()).thenReturn(RESOURCE_URL);
         testObj = new ExternalResourceCacheEntry(mockProperty);
     }
 
     @Test
-    public void testGetExternalIdentifier() throws ValueFormatException, RepositoryException {
+    public void testGetExternalIdentifier() throws RepositoryException {
         assertEquals(RESOURCE_URL, testObj.getExternalIdentifier());
     }
 }

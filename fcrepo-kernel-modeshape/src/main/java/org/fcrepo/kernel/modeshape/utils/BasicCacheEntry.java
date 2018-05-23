@@ -78,8 +78,6 @@ public abstract class BasicCacheEntry implements CacheEntry {
                                     calculatedChecksum,
                                     algorithm);
 
-            LOGGER.debug("Got {}", result.toString());
-
             return asList(result);
         } catch (final IOException e) {
             LOGGER.debug("Got error closing input stream: {}", e);
@@ -105,6 +103,7 @@ public abstract class BasicCacheEntry implements CacheEntry {
             final Map<String, DigestInputStream> digestInputStreams = new HashMap<>();
             InputStream digestStream = binaryStream;
             for (String digestAlg : algorithms) {
+
                 try {
                     digestStream = new DigestInputStream(digestStream, MessageDigest.getInstance(digestAlg));
                     digestInputStreams.put(digestAlg, (DigestInputStream)digestStream);
