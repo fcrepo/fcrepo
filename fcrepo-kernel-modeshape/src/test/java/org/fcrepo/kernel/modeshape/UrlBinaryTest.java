@@ -19,10 +19,12 @@ package org.fcrepo.kernel.modeshape;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.head;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 import static org.fcrepo.kernel.api.FedoraTypes.CONTENT_DIGEST;
+import static org.fcrepo.kernel.api.FedoraTypes.CONTENT_SIZE;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FILENAME;
@@ -68,8 +70,6 @@ import com.github.tomakehurst.wiremock.junit.WireMockRule;
 @RunWith(MockitoJUnitRunner.class)
 public class UrlBinaryTest {
 
-    private static final String DS_ID = "testDs";
-
     private static final String EXPECTED_CONTENT = "test content";
 
     private FedoraBinary testObj;
@@ -112,9 +112,14 @@ public class UrlBinaryTest {
     public void setUp() throws Exception {
         final NodeType[] nodeTypes = new NodeType[] { mockDescNodeType };
 
+        stubFor(head(urlEqualTo("/file.txt"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Length", Long.toString(EXPECTED_CONTENT.length()))
+                        .withHeader("Content-Type", "text/plain")));
         stubFor(get(urlEqualTo("/file.txt"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "text/plain")
+                        .withHeader("Content-Length", Long.toString(EXPECTED_CONTENT.length()))
                         .withBody(EXPECTED_CONTENT)));
         fileUrl = "http://localhost:" + wireMockRule.port() + "/file.txt";
 
@@ -146,6 +151,7 @@ public class UrlBinaryTest {
         mockProxyProperty();
         testObj.setExternalContent(mimeType, null, null, PROXY, "http://example.com");
 
+        verify(mockDescNode).setProperty(CONTENT_SIZE, EXPECTED_CONTENT.length());
         verify(mockDescNode).setProperty(HAS_MIME_TYPE, mimeType);
         verify(mockContent).setProperty(PROXY_FOR, "http://example.com");
     }
@@ -190,9 +196,13 @@ public class UrlBinaryTest {
     }
 
     @Test
-    public void getContentSize() throws Exception {
+    public void testGetContentSize() throws Exception {
         mockProxyProperty();
         testObj.setExternalContent(mimeType, null, null, PROXY, "content.txt");
+
+        when(mockProperty.getLong()).thenReturn((long) EXPECTED_CONTENT.length());
+        when(mockDescNode.getProperty(CONTENT_SIZE)).thenReturn(mockProperty);
+        when(mockDescNode.hasProperty(CONTENT_SIZE)).thenReturn(true);
 
         final long contentSize = testObj.getContentSize();
         assertEquals(EXPECTED_CONTENT.length(), contentSize);

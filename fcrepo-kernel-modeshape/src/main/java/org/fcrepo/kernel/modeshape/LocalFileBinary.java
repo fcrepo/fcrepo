@@ -102,8 +102,12 @@ public class LocalFileBinary extends UrlBinary {
         if (sizeValue > -1L) {
             return sizeValue;
         }
+        return getRemoteContentSize();
+    }
+
+    @Override
+    protected long getRemoteContentSize() {
         final File file = new File(getResourceUri().getPath());
-        setContentSize(file.length());
         return file.length();
     }
 }

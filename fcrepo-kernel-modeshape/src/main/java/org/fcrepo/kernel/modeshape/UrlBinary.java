@@ -24,6 +24,7 @@ import static org.fcrepo.kernel.api.FedoraExternalContent.REDIRECT;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collection;
@@ -36,8 +37,6 @@ import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.tika.io.IOUtils;
-
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -89,19 +88,28 @@ public class UrlBinary extends AbstractFedoraBinary {
         }
     }
 
-    @Override
-    public long getContentSize() {
-        final long sizeValue = super.getContentSize();
-        if (sizeValue > -1L) {
-            return sizeValue;
-        }
+    protected long getRemoteContentSize() {
+        final URI resourceUri = getResourceUri();
         try {
-            final String content = IOUtils.toString(getResourceUri().toURL().openStream());
-            setContentSize(content.length());
-            return content.length();
+            final HttpURLConnection httpConn = (HttpURLConnection) resourceUri.toURL().openConnection();
+            httpConn.setRequestMethod("HEAD");
+            httpConn.connect();
+
+            final int status = httpConn.getResponseCode();
+
+            if (status == HttpURLConnection.HTTP_OK) {
+                final String contentLength = httpConn.getHeaderField("Content-Length");
+                if (contentLength != null) {
+                    try {
+                        return Long.parseLong(contentLength);
+                    } catch (final NumberFormatException e) {
+                        LOGGER.warn("Unable to parse Content-Length of remote file {}", resourceUri, e);
+                    }
+                }
+            }
+
         } catch (final IOException e) {
-            LOGGER.warn("Error getting getContentSize for '{}' : '{}'", getPath(), getResourceUri());
-            // Error getting remote size.
+            LOGGER.warn("Error getting content size for '{}' : '{}'", getPath(), resourceUri, e);
         }
         return -1L;
     }
@@ -138,7 +146,6 @@ public class UrlBinary extends AbstractFedoraBinary {
             final String[] checksumArray = new String[nonNullChecksums.size()];
             nonNullChecksums.stream().map(Object::toString).collect(Collectors.toSet()).toArray(checksumArray);
 
-
             FedoraTypesUtils.touch(contentNode);
 
             if (descNode != null) {
@@ -152,6 +159,8 @@ public class UrlBinary extends AbstractFedoraBinary {
                 if (originalFileName != null) {
                     descNode.setProperty(FILENAME, originalFileName);
                 }
+                setContentSize(getRemoteContentSize());
+
                 FedoraTypesUtils.touch(descNode);
             }
 
@@ -265,7 +274,6 @@ public class UrlBinary extends AbstractFedoraBinary {
 
         try (final Timer.Context context = timer.time()) {
 
-            final String resourceLocation = getResourceLocation();
             Collection<URI> list = null;
             if (isProxy()) {
                 list = CacheEntryFactory.forProperty(getProperty(PROXY_FOR)).checkFixity(algorithms);

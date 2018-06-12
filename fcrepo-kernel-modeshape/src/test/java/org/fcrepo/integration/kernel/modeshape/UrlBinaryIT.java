@@ -57,6 +57,7 @@ import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.head;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
@@ -99,14 +100,15 @@ public class UrlBinaryIT extends AbstractIT {
 
         mimeType = "application/octet-stream";
 
-        final FedoraBinary externalContent = binaryService.findOrCreate(session, "/externalContent");
-        externalContent.setExternalContent(mimeType, null, null, "proxy", fileUrl);
-        session.commit();
-
         dsId = makeDsId();
 
+        stubFor(head(urlEqualTo("/file.txt"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Length", Long.toString(EXPECTED_CONTENT.length()))
+                        .withHeader("Content-Type", "text/plain")));
         stubFor(get(urlEqualTo("/file.txt"))
                 .willReturn(aResponse()
+                        .withHeader("Content-Length", Long.toString(EXPECTED_CONTENT.length()))
                         .withHeader("Content-Type", "text/plain")
                         .withBody(EXPECTED_CONTENT)));
 
