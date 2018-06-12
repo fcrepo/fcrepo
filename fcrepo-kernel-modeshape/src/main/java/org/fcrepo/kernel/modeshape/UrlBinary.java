@@ -103,7 +103,7 @@ public class UrlBinary extends AbstractFedoraBinary {
                     try {
                         return Long.parseLong(contentLength);
                     } catch (final NumberFormatException e) {
-                        LOGGER.debug("Unable to parse Content-Length of remote file {}", resourceUri, e);
+                        LOGGER.warn("Unable to parse Content-Length of remote file {}", resourceUri, e);
                     }
                 }
             }
