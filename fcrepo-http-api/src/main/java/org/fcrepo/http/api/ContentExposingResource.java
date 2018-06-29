@@ -564,7 +564,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                     .build();
 
             servletResponse.addHeader(CONTENT_TYPE, binary.getMimeType());
-            servletResponse.addHeader(CONTENT_LENGTH, String.valueOf(binary.getContentSize()));
+            if (!binary.isRedirect()) {
+                servletResponse.addHeader(CONTENT_LENGTH, String.valueOf(binary.getContentSize()));
+            }
             servletResponse.addHeader("Accept-Ranges", "bytes");
             servletResponse.addHeader(CONTENT_DISPOSITION, contentDisposition.toString());
         }
