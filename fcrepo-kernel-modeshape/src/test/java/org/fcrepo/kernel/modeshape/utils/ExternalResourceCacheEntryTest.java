@@ -60,7 +60,7 @@ public class ExternalResourceCacheEntryTest {
     @Before
     public void setUp() throws RepositoryException {
         when(mockProperty.getValue()).thenReturn(mockValue);
-        when(mockValue.toString()).thenReturn(RESOURCE_URL);
+        when(mockValue.getString()).thenReturn(RESOURCE_URL);
         testObj = new ExternalResourceCacheEntry(mockProperty);
     }
 

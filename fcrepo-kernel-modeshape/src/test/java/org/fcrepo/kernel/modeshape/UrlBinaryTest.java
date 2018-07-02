@@ -277,7 +277,7 @@ public class UrlBinaryTest {
             when(proxyURLProperty.getString()).thenReturn(fileUrl);
             when(proxyURLProperty.getValue()).thenReturn(mockURIValue);
             when(proxyURLProperty.getName()).thenReturn(PROXY_FOR.toString());
-            when(mockURIValue.toString()).thenReturn(fileUrl);
+            when(mockURIValue.getString()).thenReturn(fileUrl);
 
             when(mockContent.hasProperty(PROXY_FOR)).thenReturn(true);
             when(mockContent.getProperty(PROXY_FOR)).thenReturn(proxyURLProperty);
