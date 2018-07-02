@@ -69,7 +69,7 @@ public class ExternalResourceCacheEntry extends BinaryCacheEntry {
     public String getExternalIdentifier() {
         try {
             LOGGER.debug("getExternalIdentifier for property {} ", property().getName());
-            return property().getValue().toString();
+            return property().getValue().getString();
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
