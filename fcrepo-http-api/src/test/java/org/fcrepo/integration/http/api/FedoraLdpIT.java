@@ -127,6 +127,7 @@ import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.Variant;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -161,7 +162,9 @@ import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
@@ -209,7 +212,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
     private static DateTimeFormatter tripleFormat =
       DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(of("GMT"));
 
-
+    @Rule
+    public TemporaryFolder tmpDir = new TemporaryFolder();
 
     @Test
     public void testHeadRepositoryGraph() {
@@ -3106,6 +3110,34 @@ public class FedoraLdpIT extends AbstractResourceIT {
                     assertEquals(TEMPORARY_REDIRECT.getStatusCode(), getStatus(getResponse));
                     assertEquals("http://www.example.com/file", getLocation(getResponse));
                 }
+            }
+        }
+    }
+
+    @Test
+    public void testExternalMessageBodyCopyLocalFile() throws Exception {
+        final String entityStr = "Hello there, this is the original object speaking.";
+
+        final File localFile = tmpDir.newFile();
+        FileUtils.writeStringToFile(localFile, entityStr, "UTF-8");
+
+        final String id = getRandomUniqueId();
+        final HttpPut httpPut = putObjMethod(id);
+        httpPut.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        final String localPath = localFile.toURI().toString();
+        httpPut.addHeader(LINK, getExternalContentLinkHeader(localPath, "copy", "text/plain"));
+
+        try (final CloseableHttpResponse response = execute(httpPut)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+
+            // fetch the copy of the object
+            final HttpGet get = new HttpGet(getLocation(response));
+            try (final CloseableHttpResponse getResponse = execute(get)) {
+                assertEquals(OK.getStatusCode(), getStatus(getResponse));
+                final String content = EntityUtils.toString(getResponse.getEntity());
+                assertEquals("Entity Data doesn't match original object!", entityStr, content);
+                assertEquals("Content-Type is different from expected on External COPY", "text/plain",
+                        response.getFirstHeader(CONTENT_TYPE).getValue());
             }
         }
     }
