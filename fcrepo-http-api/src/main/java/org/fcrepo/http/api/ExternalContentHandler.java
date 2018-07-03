@@ -174,7 +174,7 @@ public class ExternalContentHandler {
         LOGGER.debug("scheme is {}", scheme);
         if (scheme != null) {
             if (scheme.equals("file")) {
-                return new FileInputStream(uri.toString());
+                return new FileInputStream(uri.getPath());
             } else if (scheme.equals("http") || scheme.equals("https")) {
                 return uri.toURL().openStream();
             }
