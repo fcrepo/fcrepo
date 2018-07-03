@@ -456,6 +456,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertEquals(TEMPORARY_REDIRECT.getStatusCode(), response.getStatusLine().getStatusCode());
             assertEquals("http://example.com/test", getLocation(response));
             assertEquals("bytes", response.getFirstHeader("Accept-Ranges").getValue());
+            assertEquals("0", response.getFirstHeader("Content-Length").getValue());
             final ContentDisposition disposition =
                     new ContentDisposition(response.getFirstHeader(CONTENT_DISPOSITION).getValue());
             assertEquals("attachment", disposition.getType());
