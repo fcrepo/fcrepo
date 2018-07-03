@@ -564,6 +564,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                     .build();
 
             servletResponse.addHeader(CONTENT_TYPE, binary.getMimeType());
+            // Returning content-length > 0 causes the client to wait for additional data before following the redirect.
             if (!binary.isRedirect()) {
                 servletResponse.addHeader(CONTENT_LENGTH, String.valueOf(binary.getContentSize()));
             }
