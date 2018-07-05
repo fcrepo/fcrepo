@@ -603,6 +603,23 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     }
 
     /**
+     * Multi-value Link header values parsed by the javax.ws.rs.core are not split out by the framework Therefore we
+     * must do this ourselves.
+     *
+     * @param rawLinks the list of unprocessed links
+     * @return List of strings containing one link value per string.
+     */
+    protected List<String> unpackLinks(final List<String> rawLinks) {
+        if (rawLinks == null) {
+            return null;
+        }
+
+        return rawLinks.stream()
+                .flatMap(x -> Arrays.asList(x.split(",")).stream())
+                .collect(Collectors.toList());
+    }
+
+    /**
      * Add any resource-specific headers to the response
      * @param resource the resource
      */

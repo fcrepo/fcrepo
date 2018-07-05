@@ -19,6 +19,7 @@ package org.fcrepo.http.api;
 
 import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static javax.ws.rs.core.Response.noContent;
@@ -155,7 +156,8 @@ public class FedoraVersioning extends ContentExposingResource {
     public Response addVersion(@HeaderParam(MEMENTO_DATETIME_HEADER) final String datetimeHeader,
             @HeaderParam(CONTENT_TYPE) final MediaType requestContentType,
             @HeaderParam("Digest") final String digest,
-            @ContentLocation final InputStream requestBodyStream)
+            @ContentLocation final InputStream requestBodyStream,
+            @HeaderParam(LINK) final List<String> rawLinks)
             throws InvalidChecksumException, MementoDatetimeFormatException {
 
         final FedoraResource timeMap = resource().findOrCreateTimeMap();
@@ -199,8 +201,11 @@ public class FedoraVersioning extends ContentExposingResource {
                         memento = versionService.createBinaryVersion(session.getFedoraSession(),
                                 binaryResource, mementoInstant, storagePolicyDecisionPoint);
                     } else {
+                        final List<String> links = unpackLinks(rawLinks);
+                        final ExternalContentHandler extContent = ExternalContentHandler.createFromLinks(links);
+
                         memento = createBinaryMementoFromRequest(binaryResource, mementoInstant,
-                                requestBodyStream, digest);
+                                requestBodyStream, extContent, digest);
                     }
                 }
                 // Create rdf memento if the request resource was an rdf resource or a binary from the
@@ -244,14 +249,22 @@ public class FedoraVersioning extends ContentExposingResource {
     private FedoraBinary createBinaryMementoFromRequest(final FedoraBinary binaryResource,
             final Instant mementoInstant,
             final InputStream requestBodyStream,
+            final ExternalContentHandler extContent,
             final String digest) throws InvalidChecksumException, UnsupportedAlgorithmException {
 
         final Collection<String> checksums = parseDigestHeader(digest);
         final Collection<URI> checksumURIs = checksums == null ? new HashSet<>() : checksums.stream().map(
                 checksum -> checksumURI(checksum)).collect(Collectors.toSet());
 
-        return versionService.createBinaryVersion(session.getFedoraSession(), binaryResource,
-                mementoInstant, requestBodyStream, checksumURIs, storagePolicyDecisionPoint);
+        // TODO add handling for copy
+
+        if (extContent == null) {
+            return versionService.createBinaryVersion(session.getFedoraSession(), binaryResource,
+                    mementoInstant, requestBodyStream, checksumURIs, storagePolicyDecisionPoint);
+        } else {
+            return versionService.createExternalBinaryVersion(session.getFedoraSession(), binaryResource,
+                    mementoInstant, checksumURIs, extContent.getHandling(), extContent.getURL());
+        }
     }
 
     /**

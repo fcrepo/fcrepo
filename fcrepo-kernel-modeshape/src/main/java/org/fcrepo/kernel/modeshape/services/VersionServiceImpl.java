@@ -241,6 +241,25 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
     }
 
     @Override
+    public FedoraBinary createExternalBinaryVersion(final FedoraSession session,
+            final FedoraBinary resource,
+            final Instant dateTime,
+            final Collection<URI> checksums,
+            final String externalHandling,
+            final String externalUrl)
+            throws InvalidChecksumException {
+        final String mementoPath = makeMementoPath(resource, dateTime);
+        assertMementoDoesNotExist(session, mementoPath);
+
+        final FedoraBinary memento = binaryService.findOrCreateBinary(session, mementoPath);
+        decorateWithMementoProperties(session, mementoPath, dateTime);
+
+        memento.setExternalContent(null, checksums, null, externalHandling, externalUrl);
+
+        return memento;
+    }
+
+    @Override
     public FedoraBinary createBinaryVersion(final FedoraSession session,
             final FedoraBinary resource,
             final Instant dateTime,

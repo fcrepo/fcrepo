@@ -103,4 +103,22 @@ public interface VersionService {
     FedoraBinary createBinaryVersion(FedoraSession session, FedoraBinary resource, Instant dateTime,
             StoragePolicyDecisionPoint storagePolicyDecisionPoint)
             throws InvalidChecksumException;
+
+    /**
+     * @param session the session in which the resource resides
+     * @param resource the binary resource to version
+     * @param dateTime the date/time of the version
+     * @param checksums Collection of checksum URIs of the content (optional)
+     * @param externalHandling What type of handling the external resource needs (proxy or redirect)
+     * @param externalUrl Url for the external resourcej
+     * @return the version
+     * @throws InvalidChecksumException if there are errors applying checksums
+     */
+    FedoraBinary createExternalBinaryVersion(final FedoraSession session,
+            final FedoraBinary resource,
+            final Instant dateTime,
+            final Collection<URI> checksums,
+            final String externalHandling,
+            final String externalUrl)
+            throws InvalidChecksumException;
 }
