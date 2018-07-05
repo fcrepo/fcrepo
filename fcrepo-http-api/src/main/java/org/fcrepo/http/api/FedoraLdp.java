@@ -48,15 +48,12 @@ import static org.apache.jena.riot.WebContent.ctTextCSV;
 import static org.apache.jena.riot.WebContent.ctTextPlain;
 import static org.apache.jena.riot.WebContent.matchContentType;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
-import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
-import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_PAIRTREE;
@@ -854,10 +851,7 @@ public class FedoraLdp extends ContentExposingResource {
             options = "MOVE,COPY,DELETE,POST,HEAD,GET,PUT,PATCH,OPTIONS";
             servletResponse.addHeader(HTTP_HEADER_ACCEPT_PATCH, contentTypeSPARQLUpdate);
 
-            final String rdfTypes = TURTLE + "," + N3 + "," + N3_ALT2 + ","
-                    + RDF_XML + "," + NTRIPLES + "," + JSON_LD;
-            servletResponse.addHeader("Accept-Post", rdfTypes + "," + MediaType.MULTIPART_FORM_DATA + "," +
-                    contentTypeSPARQLUpdate);
+            addAcceptPostHeader();
         } else {
             options = "";
         }

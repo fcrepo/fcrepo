@@ -45,6 +45,7 @@ import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
+import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
@@ -69,6 +70,12 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.MINIMAL;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
 import static org.fcrepo.http.api.FedoraVersioning.MEMENTO_DATETIME_HEADER;
+import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
+import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
+import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.fasterxml.jackson.core.JsonParseException;
@@ -428,6 +435,15 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         return resource;
     }
 
+    /**
+     * Add the standard Accept-Post header, for reuse.
+     */
+    protected void addAcceptPostHeader() {
+        final String rdfTypes = TURTLE + "," + N3 + "," + N3_ALT2 + "," + RDF_XML + "," + NTRIPLES + "," + JSON_LD;
+        servletResponse.addHeader("Accept-Post", rdfTypes + "," + MediaType.MULTIPART_FORM_DATA + "," +
+            contentTypeSPARQLUpdate);
+    }
+
     protected void addTimeMapHeader(final FedoraResource resource) {
         if (resource instanceof FedoraTimeMap) {
             final URI parentUri = getUri(resource());
@@ -438,6 +454,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
             servletResponse.addHeader("Vary-Post", MEMENTO_DATETIME_HEADER);
             servletResponse.addHeader("Allow", "POST,HEAD,GET,OPTIONS,DELETE");
+            addAcceptPostHeader();
+
         }
     }
 
@@ -576,7 +594,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         if (resource instanceof FedoraBinary) {
             servletResponse.addHeader(LINK, "<" + LDP_NAMESPACE + "NonRDFSource>;rel=\"type\"");
-        } else if (resource instanceof Container) {
+        } else if (resource instanceof Container || resource instanceof FedoraTimeMap) {
             servletResponse.addHeader(LINK, "<" + CONTAINER.getURI() + ">;rel=\"type\"");
             if (resource.hasType(LDP_BASIC_CONTAINER)) {
                 servletResponse.addHeader(LINK, "<" + BASIC_CONTAINER.getURI() + ">;rel=\"type\"");

@@ -50,6 +50,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
+import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
@@ -620,10 +621,25 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         verifyTimemapResponse(descriptionUri, descriptionId);
     }
 
+    /**
+     * Verify an application/link-format TimeMap response.
+     *
+     * @param uri The full URI of the Original Resource.
+     * @param id The path of the Original Resource.
+     * @throws Exception
+     */
     private void verifyTimemapResponse(final String uri, final String id) throws Exception {
         verifyTimemapResponse(uri, id, null, null, null);
     }
 
+    /**
+     * Verify an application/link-format TimeMap response.
+     *
+     * @param uri The full URI of the Original Resource.
+     * @param id The path of the Original Resource.
+     * @param mementoDateTime a RFC-1123 datetime
+     * @throws Exception
+     */
     private void verifyTimemapResponse(final String uri, final String id, final String mementoDateTime)
         throws Exception {
         final String[] mementoDateTimes = { mementoDateTime };
@@ -673,13 +689,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(httpGet)) {
             assertEquals("Didn't get a OK response!", OK.getStatusCode(), getStatus(response));
             // verify headers in link format.
-            checkForLinkHeader(response, RESOURCE.toString(), "type");
-            checkForLinkHeader(response, RDF_SOURCE.toString(), "type");
-            checkForLinkHeader(response, uri, "original");
-            checkForLinkHeader(response, uri, "timegate");
-            checkForLinkHeader(response, uri + "/" + FCR_VERSIONS, "timemap");
-            checkForLinkHeader(response, VERSIONING_TIMEMAP_TYPE, "type");
-            checkForLinkHeader(response, ldpcvUri + "/" + FCR_ACL, "acl");
+            verifyTimeMapHeaders(response, uri);
             final List<String> bodyList = Arrays.asList(EntityUtils.toString(response.getEntity()).split(",\n"));
             //the links from the body are not
 
@@ -688,6 +698,24 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                                                       .map(Link::valueOf).toArray(Link[]::new);
             assertArrayEquals(expectedLinks, bodyLinks);
         }
+    }
+
+    /**
+     * Utility function to verify TimeMap headers
+     * 
+     * @param response the response
+     * @param uri the URI of the resource.
+     */
+    private static void verifyTimeMapHeaders(final CloseableHttpResponse response, final String uri) {
+        final String ldpcvUri = uri + "/" + FCR_VERSIONS;
+        checkForLinkHeader(response, RESOURCE.toString(), "type");
+        checkForLinkHeader(response, CONTAINER.toString(), "type");
+        checkForLinkHeader(response, uri, "original");
+        checkForLinkHeader(response, uri, "timegate");
+        checkForLinkHeader(response, uri + "/" + FCR_VERSIONS, "timemap");
+        checkForLinkHeader(response, VERSIONING_TIMEMAP_TYPE, "type");
+        checkForLinkHeader(response, ldpcvUri + "/" + FCR_ACL, "acl");
+        assertEquals(1, response.getHeaders("Accept-Post").length);
     }
 
     @Test
@@ -1253,6 +1281,17 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                     results.contains(ANY, timemapSubject, CONTAINS.asNode(), descMementoResc));
             assertTrue("Timemap RDF response must contain second description memento",
                     results.contains(ANY, timemapSubject, CONTAINS.asNode(), descMementoResc2));
+        }
+    }
+
+    @Test
+    public void testOptionsTimeMap() throws Exception {
+        createVersionedContainer(id);
+        final String timemapUri = subjectUri + "/" + FCR_VERSIONS;
+
+        try (final CloseableHttpResponse response = execute(new HttpOptions(timemapUri))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            verifyTimeMapHeaders(response, subjectUri);
         }
     }
 

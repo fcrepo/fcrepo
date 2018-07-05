@@ -547,7 +547,7 @@ public abstract class AbstractResourceIT {
      * @param uri the URI not to exist in the LINK header
      * @param rel the rel argument to check for
      */
-    protected void assertNoLinkHeader(final CloseableHttpResponse response, final String uri, final String rel) {
+    protected static void assertNoLinkHeader(final CloseableHttpResponse response, final String uri, final String rel) {
         assertEquals(0, countLinkHeader(response, uri, rel));
     }
 
@@ -558,7 +558,7 @@ public abstract class AbstractResourceIT {
      * @param uri the URI expected in the LINK header
      * @param rel the rel argument to check for
      */
-    protected void checkForLinkHeader(final CloseableHttpResponse response, final String uri, final String rel) {
+    protected static void checkForLinkHeader(final CloseableHttpResponse response, final String uri, final String rel) {
         assertEquals(1, countLinkHeader(response, uri, rel));
     }
 
@@ -570,7 +570,7 @@ public abstract class AbstractResourceIT {
      * @param rel the rel argument to check for
      * @param count how many LINK headers should exist
      */
-    protected void checkForNLinkHeaders(final CloseableHttpResponse response, final String uri, final String rel,
+    protected static void checkForNLinkHeaders(final CloseableHttpResponse response, final String uri, final String rel,
         final int count) {
         assertEquals(count, countLinkHeader(response, uri, rel));
     }
@@ -583,7 +583,7 @@ public abstract class AbstractResourceIT {
      * @param rel the rel argument to check for
      * @return the count of LINK headers.
      */
-    private int countLinkHeader(final CloseableHttpResponse response, final String uri, final String rel) {
+    private static int countLinkHeader(final CloseableHttpResponse response, final String uri, final String rel) {
         final Link linkA = Link.valueOf("<" + uri + ">; rel=" + rel);
         return (int) Arrays.asList(response.getHeaders(LINK)).stream().filter(x -> {
             final Link linkB = Link.valueOf(x.getValue());
