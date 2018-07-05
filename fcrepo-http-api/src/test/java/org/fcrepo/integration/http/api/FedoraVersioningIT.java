@@ -1297,7 +1297,33 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     @Test
     public void testCreateExternalBinaryProxyVersion() throws Exception {
+        // Create binary to use as content for proxying
+        final String proxyContent = "proxied content";
+        final String proxiedId = getRandomUniqueId();
+        final String proxiedUri = serverAddress + proxiedId + "/ds";
+        createDatastream(proxiedId, "ds", proxyContent);
 
+        // Create the proxied external binary object using the first binary
+        final HttpPut httpPut = putObjMethod(id);
+        httpPut.addHeader(LINK, "<" + NON_RDF_SOURCE.getURI() + ">;rel=\"type\"");
+        httpPut.addHeader(LINK, getExternalContentLinkHeader(proxiedUri, "proxy", null));
+        httpPut.addHeader(LINK, VERSIONED_RESOURCE_LINK_HEADER);
+        try (final CloseableHttpResponse response = execute(httpPut)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+        }
+
+        // Create a version of the external binary using the second binary as content
+        final String mementoUri = createMemento(subjectUri, null, null, null);
+
+        // Verify that the historic version exists and proxies the old content
+        final HttpGet httpGet1 = new HttpGet(mementoUri);
+        try (final CloseableHttpResponse getResponse = execute(httpGet1)) {
+            assertEquals(OK.getStatusCode(), getStatus(getResponse));
+            assertMementoDatetimeHeaderPresent(getResponse);
+            assertEquals(proxiedUri, getContentLocation(getResponse));
+            final String content = EntityUtils.toString(getResponse.getEntity());
+            assertEquals("Entity Data doesn't match proxied versioned content!", proxyContent, content);
+        }
     }
 
     @Test
@@ -1353,6 +1379,11 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             final String content = EntityUtils.toString(getResponse.getEntity());
             assertEquals("Entity Data doesn't match proxied historic content!", newContent, content);
         }
+    }
+
+    @Test
+    public void testCreateHistoricExternalBinaryRedirectVersion() throws Exception {
+
     }
 
     @Test
