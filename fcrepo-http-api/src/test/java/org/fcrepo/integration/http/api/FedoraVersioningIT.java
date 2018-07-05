@@ -69,6 +69,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.time.Instant;
@@ -86,6 +87,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.core.Link;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -113,7 +115,9 @@ import org.apache.jena.vocabulary.DC;
 import org.apache.jena.vocabulary.RDF;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * @author lsitu
@@ -141,6 +145,9 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     private String subjectUri;
     private String id;
+
+    @Rule
+    public TemporaryFolder tmpDir = new TemporaryFolder();
 
     @Before
     public void init() {
@@ -1397,7 +1404,32 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     @Test
     public void testCreateHistoricExternalBinaryCopyVersion() throws Exception {
-        assertTrue(false);
+        final String newContent = "new content";
+
+        final String oldContent = "old content";
+        final File localFile = tmpDir.newFile();
+        FileUtils.writeStringToFile(localFile, oldContent, "UTF-8");
+
+        createVersionedBinary(id, "text/plain", newContent);
+
+        final String mementoUri = createExternalBinaryMemento(subjectUri, "copy", localFile.toURI().toString());
+
+        // Verify that the historic version exists and is the copied old content
+        final HttpGet httpGet1 = new HttpGet(mementoUri);
+        try (final CloseableHttpResponse getResponse = execute(httpGet1)) {
+            assertEquals(OK.getStatusCode(), getStatus(getResponse));
+            assertMementoDatetimeHeaderMatches(getResponse, MEMENTO_DATETIME);
+            final String content = EntityUtils.toString(getResponse.getEntity());
+            assertEquals("Content doesn't match copied historic content", oldContent, content);
+        }
+
+        // Verify that the current version is still available
+        final HttpGet httpGet2 = new HttpGet(subjectUri);
+        try (final CloseableHttpResponse getResponse = execute(httpGet2)) {
+            assertEquals(OK.getStatusCode(), getStatus(getResponse));
+            final String content = EntityUtils.toString(getResponse.getEntity());
+            assertEquals("Binary doesn't match expected content", newContent, content);
+        }
     }
 
     private void createVersionedExternalBinaryMemento(final String rescId, final String handling,

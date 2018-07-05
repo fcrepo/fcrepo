@@ -250,17 +250,21 @@ public class FedoraVersioning extends ContentExposingResource {
             final Instant mementoInstant,
             final InputStream requestBodyStream,
             final ExternalContentHandler extContent,
-            final String digest) throws InvalidChecksumException, UnsupportedAlgorithmException {
+            final String digest) throws InvalidChecksumException, UnsupportedAlgorithmException, IOException {
 
         final Collection<String> checksums = parseDigestHeader(digest);
         final Collection<URI> checksumURIs = checksums == null ? new HashSet<>() : checksums.stream().map(
                 checksum -> checksumURI(checksum)).collect(Collectors.toSet());
 
-        // TODO add handling for copy
+        // Create internal binary either from supplied body or copy external uri
+        if (extContent == null || extContent.isCopy()) {
+            InputStream contentStream = requestBodyStream;
+            if (extContent != null) {
+                contentStream = extContent.fetchExternalContent();
+            }
 
-        if (extContent == null) {
             return versionService.createBinaryVersion(session.getFedoraSession(), binaryResource,
-                    mementoInstant, requestBodyStream, checksumURIs, storagePolicyDecisionPoint);
+                    mementoInstant, contentStream, checksumURIs, storagePolicyDecisionPoint);
         } else {
             return versionService.createExternalBinaryVersion(session.getFedoraSession(), binaryResource,
                     mementoInstant, checksumURIs, extContent.getHandling(), extContent.getURL());
