@@ -1304,13 +1304,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         createDatastream(proxiedId, "ds", proxyContent);
 
         // Create the proxied external binary object using the first binary
-        final HttpPut httpPut = putObjMethod(id);
-        httpPut.addHeader(LINK, "<" + NON_RDF_SOURCE.getURI() + ">;rel=\"type\"");
-        httpPut.addHeader(LINK, getExternalContentLinkHeader(proxiedUri, "proxy", null));
-        httpPut.addHeader(LINK, VERSIONED_RESOURCE_LINK_HEADER);
-        try (final CloseableHttpResponse response = execute(httpPut)) {
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
-        }
+        createVersionedExternalBinaryMemento(id, "proxy", proxiedUri);
 
         // Create a version of the external binary using the second binary as content
         final String mementoUri = createMemento(subjectUri, null, null, null);
@@ -1340,26 +1334,10 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         createDatastream(proxied2Id, "ds", "old content");
 
         // Create the proxied external binary object using the first binary
-        final HttpPut httpPut = putObjMethod(id);
-        httpPut.addHeader(LINK, "<" + NON_RDF_SOURCE.getURI() + ">;rel=\"type\"");
-        httpPut.addHeader(LINK, getExternalContentLinkHeader(proxied1Uri, "proxy", null));
-        httpPut.addHeader(LINK, VERSIONED_RESOURCE_LINK_HEADER);
-        try (final CloseableHttpResponse response = execute(httpPut)) {
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
-        }
+        createVersionedExternalBinaryMemento(id, "proxy", proxied1Uri);
 
         // Create a historic version of the external binary using the second binary as content
-        final String ldpcvUri = subjectUri + "/fcr:versions";
-        final HttpPost httpPost = new HttpPost(ldpcvUri);
-        httpPost.addHeader(LINK, getExternalContentLinkHeader(proxied2Uri, "proxy", null));
-        httpPost.addHeader(MEMENTO_DATETIME_HEADER, MEMENTO_DATETIME);
-
-        final String mementoUri;
-        try (final CloseableHttpResponse response = execute(httpPost)) {
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
-            assertMementoDatetimeHeaderPresent(response);
-            mementoUri = response.getFirstHeader(LOCATION).getValue();
-        }
+        final String mementoUri = createExternalBinaryMemento(subjectUri, "proxy", proxied2Uri);
 
         // Verify that the historic version exists and proxies the old content
         final HttpGet httpGet1 = new HttpGet(mementoUri);
@@ -1383,12 +1361,68 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     @Test
     public void testCreateHistoricExternalBinaryRedirectVersion() throws Exception {
+        // Create two binaries to use as content for proxying
+        final String newContent = "new content";
+        final String ext1Id = getRandomUniqueId();
+        final String ext1Uri = serverAddress + ext1Id + "/ds";
+        createDatastream(ext1Id, "ds", newContent);
 
+        final String oldContent = "old content";
+        final String ext2Id = getRandomUniqueId();
+        final String ext2Uri = serverAddress + ext2Id + "/ds";
+        createDatastream(ext2Id, "ds", "old content");
+
+        // Create the proxied external binary object using the first binary
+        createVersionedExternalBinaryMemento(id, "redirect", ext1Uri);
+
+        // Create a historic version of the external binary using the second binary as content
+        final String mementoUri = createExternalBinaryMemento(subjectUri, "redirect", ext2Uri);
+
+        // Verify that the historic version exists and redirects to the old content
+        final HttpGet httpGet1 = new HttpGet(mementoUri);
+        try (final CloseableHttpResponse getResponse = execute(httpGet1)) {
+            assertEquals(OK.getStatusCode(), getStatus(getResponse));
+            final String content = EntityUtils.toString(getResponse.getEntity());
+            assertEquals("Content doesn't match redirected historic content", oldContent, content);
+        }
+
+        // Verify that the current version still redirects to the correct content
+        final HttpGet httpGet2 = new HttpGet(subjectUri);
+        try (final CloseableHttpResponse getResponse = execute(httpGet2)) {
+            assertEquals(OK.getStatusCode(), getStatus(getResponse));
+            final String content = EntityUtils.toString(getResponse.getEntity());
+            assertEquals("Content doesn't match redirected historic content", newContent, content);
+        }
     }
 
     @Test
     public void testCreateHistoricExternalBinaryCopyVersion() throws Exception {
         assertTrue(false);
+    }
+
+    private void createVersionedExternalBinaryMemento(final String rescId, final String handling,
+            final String externalUri) throws Exception {
+        final HttpPut httpPut = putObjMethod(rescId);
+        httpPut.addHeader(LINK, "<" + NON_RDF_SOURCE.getURI() + ">;rel=\"type\"");
+        httpPut.addHeader(LINK, getExternalContentLinkHeader(externalUri, handling, null));
+        httpPut.addHeader(LINK, VERSIONED_RESOURCE_LINK_HEADER);
+        try (final CloseableHttpResponse response = execute(httpPut)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+        }
+    }
+
+    private String createExternalBinaryMemento(final String rescUri, final String handling, final String externalUri)
+            throws Exception {
+        final String ldpcvUri = rescUri + "/fcr:versions";
+        final HttpPost httpPost = new HttpPost(ldpcvUri);
+        httpPost.addHeader(LINK, getExternalContentLinkHeader(externalUri, handling, null));
+        httpPost.addHeader(MEMENTO_DATETIME_HEADER, MEMENTO_DATETIME);
+
+        try (final CloseableHttpResponse response = execute(httpPost)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            assertMementoDatetimeHeaderPresent(response);
+            return response.getFirstHeader(LOCATION).getValue();
+        }
     }
 
     private static void assertMementoOptionsHeaders(final HttpResponse httpResponse) {
