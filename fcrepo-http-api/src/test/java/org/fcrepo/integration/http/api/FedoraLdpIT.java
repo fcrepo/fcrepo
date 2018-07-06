@@ -637,13 +637,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertTrue("Should allow POST", methods.contains(HttpPost.METHOD_NAME));
 
         final List<String> postTypes = headerValues(httpResponse, "Accept-Post");
-        assertTrue("POST should support application/sparql-update", postTypes.contains(contentTypeSPARQLUpdate));
         assertTrue("POST should support text/turtle", postTypes.contains(contentTypeTurtle));
         assertTrue("POST should support text/rdf+n3", postTypes.contains(contentTypeN3));
         assertTrue("POST should support text/n3", postTypes.contains(contentTypeN3Alt2));
         assertTrue("POST should support application/rdf+xml", postTypes.contains(contentTypeRDFXML));
         assertTrue("POST should support application/n-triples", postTypes.contains(contentTypeNTriples));
-        assertTrue("POST should support multipart/form-data", postTypes.contains("multipart/form-data"));
     }
 
     private static void assertRdfOptionsHeaders(final HttpResponse httpResponse) {

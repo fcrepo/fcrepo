@@ -47,6 +47,9 @@ import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.apache.jena.vocabulary.RDF.type;
+import static org.fcrepo.kernel.api.FedoraExternalContent.COPY;
+import static org.fcrepo.kernel.api.FedoraExternalContent.PROXY;
+import static org.fcrepo.kernel.api.FedoraExternalContent.REDIRECT;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
@@ -59,6 +62,8 @@ import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
+import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEGATE_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEMAP_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
@@ -129,7 +134,6 @@ import org.fcrepo.http.commons.domain.ldp.LdpPreferTag;
 import org.fcrepo.http.commons.responses.RangeRequestInputStream;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.http.commons.session.HttpSession;
-import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.exception.InsufficientStorageException;
@@ -173,6 +177,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     static final String INSUFFICIENT_SPACE_IDENTIFYING_MESSAGE = "No space left on device";
 
     public static final String ACCEPT_DATETIME = "Accept-Datetime";
+
+    static final String ACCEPT_EXTERNAL_CONTENT = "Accept-External-Content-Handling";
+
+    static final String HTTP_HEADER_ACCEPT_PATCH = "Accept-Patch";
 
     @Context protected Request request;
     @Context protected HttpServletResponse servletResponse;
@@ -440,23 +448,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      */
     protected void addAcceptPostHeader() {
         final String rdfTypes = TURTLE + "," + N3 + "," + N3_ALT2 + "," + RDF_XML + "," + NTRIPLES + "," + JSON_LD;
-        servletResponse.addHeader("Accept-Post", rdfTypes + "," + MediaType.MULTIPART_FORM_DATA + "," +
-            contentTypeSPARQLUpdate);
-    }
-
-    protected void addTimeMapHeader(final FedoraResource resource) {
-        if (resource instanceof FedoraTimeMap) {
-            final URI parentUri = getUri(resource());
-            servletResponse.addHeader(LINK, Link.fromUri(VERSIONING_TIMEMAP_TYPE).rel("type").build().toString());
-            servletResponse.addHeader(LINK, Link.fromUri(parentUri).rel("original").build().toString());
-            servletResponse.addHeader(LINK, Link.fromUri(parentUri).rel("timegate").build().toString());
-            servletResponse.addHeader(LINK, Link.fromUri(getUri(resource)).rel("timemap").build().toString());
-
-            servletResponse.addHeader("Vary-Post", MEMENTO_DATETIME_HEADER);
-            servletResponse.addHeader("Allow", "POST,HEAD,GET,OPTIONS,DELETE");
-            addAcceptPostHeader();
-
-        }
+        servletResponse.addHeader("Accept-Post", rdfTypes);
     }
 
     protected void addMementoHeaders(final FedoraResource resource) {
@@ -528,7 +520,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         final boolean isVersioned = resource.isVersioned();
         // Add versioning headers for versioned originals and mementos
-        if (isVersioned || resource.isMemento()) {
+        if (isVersioned || resource.isMemento() || resource instanceof FedoraTimeMap) {
             final URI originalUri = getUri(resource.getOriginalResource());
             final URI timemapUri = getUri(resource.getTimeMap());
             servletResponse.addHeader(LINK, buildLink(originalUri, "timegate"));
@@ -536,10 +528,56 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             servletResponse.addHeader(LINK, buildLink(timemapUri, "timemap"));
 
             if (isVersioned) {
-                servletResponse.addHeader(LINK, buildLink(RdfLexicon.VERSIONED_RESOURCE.getURI(), "type"));
-                servletResponse.addHeader(LINK, buildLink(RdfLexicon.VERSIONING_TIMEGATE_TYPE, "type"));
+                servletResponse.addHeader(LINK, buildLink(VERSIONED_RESOURCE.getURI(), "type"));
+                servletResponse.addHeader(LINK, buildLink(VERSIONING_TIMEGATE_TYPE, "type"));
+            } else if (resource instanceof FedoraTimeMap) {
+                servletResponse.addHeader(LINK, buildLink(VERSIONING_TIMEMAP_TYPE, "type"));
             }
         }
+    }
+
+    /**
+     * Utility constructor using resource() function.
+     */
+    protected void addLinkAndOptionsHttpHeaders() {
+        addLinkAndOptionsHttpHeaders(resource());
+    }
+
+    /**
+     * Add Link and Option headers
+     *
+     * @param resource the resource to generate headers for
+     */
+    protected void addLinkAndOptionsHttpHeaders(final FedoraResource resource) {
+        // Add Link headers
+        addResourceLinkHeaders(resource);
+
+        // Add Options headers
+        final String options;
+        if (resource.isMemento()) {
+            options = "GET,HEAD,OPTIONS,DELETE";
+
+        } else if (resource instanceof FedoraTimeMap) {
+            options = "POST,HEAD,GET,OPTIONS,DELETE";
+            servletResponse.addHeader("Vary-Post", MEMENTO_DATETIME_HEADER);
+            addAcceptPostHeader();
+        } else if (resource instanceof FedoraBinary) {
+            options = "DELETE,HEAD,GET,PUT,OPTIONS";
+            servletResponse.addHeader(ACCEPT_EXTERNAL_CONTENT, COPY + "," + REDIRECT + "," + PROXY);
+
+        } else if (resource instanceof NonRdfSourceDescription) {
+            options = "HEAD,GET,DELETE,PUT,PATCH,OPTIONS";
+            servletResponse.addHeader(HTTP_HEADER_ACCEPT_PATCH, contentTypeSPARQLUpdate);
+
+        } else if (resource instanceof Container) {
+            options = "MOVE,COPY,DELETE,POST,HEAD,GET,PUT,PATCH,OPTIONS";
+            servletResponse.addHeader(HTTP_HEADER_ACCEPT_PATCH, contentTypeSPARQLUpdate);
+            addAcceptPostHeader();
+        } else {
+            options = "";
+        }
+
+        servletResponse.addHeader("Allow", options);
     }
 
     /**
@@ -612,9 +650,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             httpHeaderInject.addHttpHeaderToResponseStream(servletResponse, uriInfo, resource());
         }
 
+        addLinkAndOptionsHttpHeaders(resource);
         addAclHeader(resource);
-
-        addTimeMapHeader(resource);
         addMementoHeaders(resource);
     }
 
