@@ -271,7 +271,7 @@ public class FedoraVersioning extends ContentExposingResource {
     public Response getVersionList(@HeaderParam("Range") final String rangeValue,
         @HeaderParam("Accept") final String acceptValue) throws IOException, UnsupportedAccessTypeException {
         if (!resource().isVersioned()) {
-            throw new RepositoryVersionRuntimeException("This operation requires that the node be versionable");
+            throw new RepositoryVersionRuntimeException("This operation requires that the resource be versionable");
         }
         final FedoraResource theTimeMap = resource().findOrCreateTimeMap();
         checkCacheControlHeaders(request, servletResponse, theTimeMap, session);
@@ -325,13 +325,13 @@ public class FedoraVersioning extends ContentExposingResource {
     /**
      * Outputs information about the supported HTTP methods, etc.
      *
-     * @return the outputs information about the supported HTTP methods, etc.
+     * @return the information about the supported HTTP methods, etc.
      */
     @OPTIONS
     @Timed
     public Response options() {
         if (!resource().isVersioned()) {
-            throw new RepositoryVersionRuntimeException("This operation requires that the node be versionable");
+            throw new RepositoryVersionRuntimeException("This operation requires that the resource be versionable");
         }
         final FedoraResource theTimeMap = resource().findOrCreateTimeMap();
         LOGGER.info("OPTIONS for '{}'", externalPath);
