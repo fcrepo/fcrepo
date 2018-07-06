@@ -48,15 +48,12 @@ import static org.apache.jena.riot.WebContent.ctTextCSV;
 import static org.apache.jena.riot.WebContent.ctTextPlain;
 import static org.apache.jena.riot.WebContent.matchContentType;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
-import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
-import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_PAIRTREE;
@@ -67,8 +64,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODELS;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.FedoraExternalContent.COPY;
-import static org.fcrepo.kernel.api.FedoraExternalContent.PROXY;
-import static org.fcrepo.kernel.api.FedoraExternalContent.REDIRECT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -138,7 +133,6 @@ import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.utils.ContentDigest;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
@@ -157,13 +151,9 @@ public class FedoraLdp extends ContentExposingResource {
 
     private static final Logger LOGGER = getLogger(FedoraLdp.class);
 
-    static final String HTTP_HEADER_ACCEPT_PATCH = "Accept-Patch";
-
     static final String WANT_DIGEST = "Want-Digest";
 
     static final String DIGEST = "Digest";
-
-    static final String ACCEPT_EXTERNAL_CONTENT = "Accept-External-Content-Handling";
 
     @PathParam("path") protected String externalPath;
 
@@ -825,7 +815,6 @@ public class FedoraLdp extends ContentExposingResource {
 
         }
         addExternalContentHeaders(resource);
-        addLinkAndOptionsHttpHeaders();
     }
 
     @Override
@@ -833,37 +822,6 @@ public class FedoraLdp extends ContentExposingResource {
         return externalPath;
     }
 
-    private void addLinkAndOptionsHttpHeaders() {
-        // Add Link headers
-        addResourceLinkHeaders(resource());
-
-        // Add Options headers
-        final String options;
-        if (resource().isMemento()) {
-            options = "GET,HEAD,OPTIONS,DELETE";
-
-        } else if (resource() instanceof FedoraBinary) {
-            options = "DELETE,HEAD,GET,PUT,OPTIONS";
-            servletResponse.addHeader(ACCEPT_EXTERNAL_CONTENT, COPY + "," + REDIRECT + "," + PROXY);
-
-        } else if (resource() instanceof NonRdfSourceDescription) {
-            options = "HEAD,GET,DELETE,PUT,PATCH,OPTIONS";
-            servletResponse.addHeader(HTTP_HEADER_ACCEPT_PATCH, contentTypeSPARQLUpdate);
-
-        } else if (resource() instanceof Container) {
-            options = "MOVE,COPY,DELETE,POST,HEAD,GET,PUT,PATCH,OPTIONS";
-            servletResponse.addHeader(HTTP_HEADER_ACCEPT_PATCH, contentTypeSPARQLUpdate);
-
-            final String rdfTypes = TURTLE + "," + N3 + "," + N3_ALT2 + ","
-                    + RDF_XML + "," + NTRIPLES + "," + JSON_LD;
-            servletResponse.addHeader("Accept-Post", rdfTypes + "," + MediaType.MULTIPART_FORM_DATA + "," +
-                    contentTypeSPARQLUpdate);
-        } else {
-            options = "";
-        }
-
-        servletResponse.addHeader("Allow", options);
-    }
 
     private static boolean isRDF(final MediaType requestContentType) {
         if (requestContentType == null) {

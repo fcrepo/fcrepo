@@ -58,6 +58,7 @@ import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
+import javax.ws.rs.OPTIONS;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -69,7 +70,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.jena.riot.Lang;
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
@@ -270,7 +271,7 @@ public class FedoraVersioning extends ContentExposingResource {
     public Response getVersionList(@HeaderParam("Range") final String rangeValue,
         @HeaderParam("Accept") final String acceptValue) throws IOException, UnsupportedAccessTypeException {
         if (!resource().isVersioned()) {
-            throw new RepositoryVersionRuntimeException("This operation requires that the node be versionable");
+            throw new RepositoryVersionRuntimeException("This operation requires that the resource be versionable");
         }
         final FedoraResource theTimeMap = resource().findOrCreateTimeMap();
         checkCacheControlHeaders(request, servletResponse, theTimeMap, session);
@@ -319,6 +320,23 @@ public class FedoraVersioning extends ContentExposingResource {
                 readLock.release();
             }
         }
+    }
+
+    /**
+     * Outputs information about the supported HTTP methods, etc.
+     *
+     * @return the information about the supported HTTP methods, etc.
+     */
+    @OPTIONS
+    @Timed
+    public Response options() {
+        if (!resource().isVersioned()) {
+            throw new RepositoryVersionRuntimeException("This operation requires that the resource be versionable");
+        }
+        final FedoraResource theTimeMap = resource().findOrCreateTimeMap();
+        LOGGER.info("OPTIONS for '{}'", externalPath);
+        addResourceHttpHeaders(theTimeMap);
+        return ok().build();
     }
 
     /**
