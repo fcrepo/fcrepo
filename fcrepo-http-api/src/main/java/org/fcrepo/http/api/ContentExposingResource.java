@@ -548,7 +548,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      *
      * @param resource the resource to generate headers for
      */
-    protected void addLinkAndOptionsHttpHeaders(final FedoraResource resource) {
+    private void addLinkAndOptionsHttpHeaders(final FedoraResource resource) {
         // Add Link headers
         addResourceLinkHeaders(resource);
 

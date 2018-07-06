@@ -626,7 +626,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
      *
      * @param uri The full URI of the Original Resource.
      * @param id The path of the Original Resource.
-     * @throws Exception
+     * @throws Exception on HTTP request error
      */
     private void verifyTimemapResponse(final String uri, final String id) throws Exception {
         verifyTimemapResponse(uri, id, null, null, null);
@@ -638,7 +638,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
      * @param uri The full URI of the Original Resource.
      * @param id The path of the Original Resource.
      * @param mementoDateTime a RFC-1123 datetime
-     * @throws Exception
+     * @throws Exception on HTTP request error
      */
     private void verifyTimemapResponse(final String uri, final String id, final String mementoDateTime)
         throws Exception {
@@ -654,7 +654,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
      * @param mementoDateTime Array of all the RFC-1123 datetimes for all the mementos.
      * @param rangeStart RFC-1123 datetime of the first memento.
      * @param rangeEnd RFC-1123 datetime of the last memento.
-     * @throws Exception
+     * @throws Exception on HTTP request error
      */
     private void verifyTimemapResponse(final String uri, final String id, final String[] mementoDateTime,
         final String rangeStart, final String rangeEnd)
@@ -702,7 +702,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     /**
      * Utility function to verify TimeMap headers
-     * 
+     *
      * @param response the response
      * @param uri the URI of the resource.
      */
