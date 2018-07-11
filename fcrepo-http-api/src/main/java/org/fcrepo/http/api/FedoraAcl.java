@@ -22,6 +22,15 @@ import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
+import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
+import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_WEBAC_ACL;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -33,25 +42,29 @@ import javax.jcr.nodetype.ConstraintViolationException;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import org.apache.commons.io.IOUtils;
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
+import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
+import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
@@ -59,6 +72,7 @@ import com.codahale.metrics.annotation.Timed;
 
 /**
  * @author lsitu
+ * @author peichman
  * @since 4/20/18
  */
 @Scope("request")
@@ -178,5 +192,37 @@ public class FedoraAcl extends ContentExposingResource {
     @Override
     protected String externalPath() {
         return externalPath;
+    }
+
+    /**
+     * GET to retrieve the ACL resource.
+     *
+     * @param rangeValue the range value
+     * @return a binary or the triples for the specified node
+     * @throws IOException if IO exception occurred
+     * @throws UnsupportedAlgorithmException if unsupported digest algorithm occurred
+     * @throws UnsupportedAccessTypeException if unsupported access-type occurred
+     */
+    @GET
+    @Produces({ TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
+        N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
+        TURTLE_X, TEXT_HTML_WITH_CHARSET })
+    public Response getResource(@HeaderParam("Range") final String rangeValue)
+            throws IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+
+        final FedoraResource aclResource = resource().getAcl();
+
+        checkCacheControlHeaders(request, servletResponse, aclResource, session);
+
+        LOGGER.info("GET resource '{}'", externalPath);
+        final AcquiredLock readLock = lockManager.lockForRead(aclResource.getPath());
+        try (final RdfStream rdfStream = new DefaultRdfStream(asNode(aclResource))) {
+
+            addResourceHttpHeaders(aclResource);
+            return getContent(rangeValue, getChildrenLimit(), rdfStream);
+
+        } finally {
+            readLock.release();
+        }
     }
 }

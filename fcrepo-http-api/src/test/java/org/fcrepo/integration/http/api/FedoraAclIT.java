@@ -21,10 +21,12 @@ import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
+import static javax.ws.rs.core.Response.Status.OK;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.junit.Assert.assertEquals;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
@@ -119,6 +121,24 @@ public class FedoraAclIT extends AbstractResourceIT {
         patch.setEntity(new StringEntity("PREFIX acl: <http://www.w3.org/ns/auth/acl#> " +
                 "INSERT DATA { <#readAccess> acl:mode acl:write . }"));
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(patch));
+
+    }
+
+    @Test
+    public void testCreateAndRetrieveAcl() throws Exception {
+        createObjectAndClose(id);
+
+        final HttpPut put = new HttpPut(subjectUri + "/" + FCR_ACL);
+        final String aclLocation;
+        try (final CloseableHttpResponse response = execute(put)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            aclLocation = response.getFirstHeader("Location").getValue();
+            // verify the acl container is translated to fcr:acl
+            assertEquals(subjectUri + "/" + FCR_ACL, aclLocation);
+        }
+
+        final HttpGet get = new HttpGet(aclLocation);
+        assertEquals(OK.getStatusCode(), getStatus(get));
 
     }
 
