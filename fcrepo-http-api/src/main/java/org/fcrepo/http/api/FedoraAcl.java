@@ -18,6 +18,8 @@
 package org.fcrepo.http.api;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static org.apache.commons.lang3.StringUtils.isBlank;
@@ -37,11 +39,11 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-
 import javax.jcr.nodetype.ConstraintViolationException;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.PUT;
@@ -53,6 +55,7 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import com.codahale.metrics.annotation.Timed;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.domain.ContentLocation;
@@ -67,8 +70,6 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
-
-import com.codahale.metrics.annotation.Timed;
 
 /**
  * @author lsitu
@@ -212,6 +213,10 @@ public class FedoraAcl extends ContentExposingResource {
 
         final FedoraResource aclResource = resource().getAcl();
 
+        if (aclResource == null) {
+            return notFound();
+        }
+
         checkCacheControlHeaders(request, servletResponse, aclResource, session);
 
         LOGGER.info("GET resource '{}'", externalPath);
@@ -224,5 +229,40 @@ public class FedoraAcl extends ContentExposingResource {
         } finally {
             readLock.release();
         }
+    }
+
+    /**
+     * Deletes an object.
+     *
+     * @return response
+     */
+    @DELETE
+    @Timed
+    public Response deleteObject() {
+
+        hasRestrictedPath(externalPath);
+        LOGGER.info("Delete resource '{}'", externalPath);
+
+        final AcquiredLock lock = lockManager.lockForDelete(resource().getPath());
+
+        try {
+            final FedoraResource aclResource = resource().getAcl();
+            if (aclResource != null) {
+                aclResource.delete();
+            }
+            session.commit();
+
+            if (aclResource != null) {
+                return noContent().build();
+            } else {
+                return notFound();
+            }
+        } finally {
+            lock.release();
+        }
+    }
+
+    private Response notFound() {
+        return status(NOT_FOUND).entity("Resource does not exist.").build();
     }
 }

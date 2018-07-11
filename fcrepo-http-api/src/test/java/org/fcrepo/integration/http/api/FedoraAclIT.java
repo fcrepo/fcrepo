@@ -20,12 +20,14 @@ package org.fcrepo.integration.http.api;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.junit.Assert.assertEquals;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPut;
@@ -142,4 +144,35 @@ public class FedoraAclIT extends AbstractResourceIT {
 
     }
 
+    @Test
+    public void testDeleteAcl() throws Exception {
+        createObjectAndClose(id);
+
+        final HttpPut put = new HttpPut(subjectUri + "/" + FCR_ACL);
+        final String aclLocation;
+        try (final CloseableHttpResponse response = execute(put)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            aclLocation = response.getFirstHeader("Location").getValue();
+            // verify the acl container is translated to fcr:acl
+            assertEquals(subjectUri + "/" + FCR_ACL, aclLocation);
+        }
+
+        final HttpGet get = new HttpGet(aclLocation);
+        assertEquals(OK.getStatusCode(), getStatus(get));
+
+        final HttpDelete delete = new HttpDelete(aclLocation);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(delete));
+
+        final HttpGet getNotFound = new HttpGet(aclLocation);
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(getNotFound));
+
+    }
+
+    @Test
+    public void testGetNonExistentAcl() throws Exception {
+        createObjectAndClose(id);
+        final HttpGet getNotFound = new HttpGet(subjectUri + "/" + FCR_ACL);
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(getNotFound));
+
+    }
 }

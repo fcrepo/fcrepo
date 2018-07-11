@@ -103,6 +103,13 @@ public interface FedoraResource {
     boolean isMemento();
 
     /**
+     * Returns true if this resource is an ACL.
+     *
+     * @return true if the resource is an ACL.
+     */
+    boolean isAcl();
+
+    /**
      * Retrieve the Memento with the closest datetime to the request.
      *
      * @param mementoDatetime The requested date time.
