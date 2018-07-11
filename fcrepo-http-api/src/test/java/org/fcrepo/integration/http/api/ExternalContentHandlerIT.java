@@ -25,7 +25,6 @@ import static org.junit.Assert.assertEquals;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.apache.http.HttpStatus.SC_CREATED;
 
-import javax.ws.rs.core.Link;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
@@ -56,9 +55,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         }
         // Make an external content resource proxying the above URI.
         final HttpPut put = putObjMethod(final_location);
-        final String externalLink = Link.fromUri(external_location)
-            .rel("http://fedora.info/definitions/fcrepo#ExternalContent").param("handling", "proxy").build().toString();
-        put.addHeader("Link", externalLink);
+        put.addHeader(LINK, getExternalContentLinkHeader(external_location, "proxy", null));
         try (final CloseableHttpResponse response = execute(put)) {
             assertEquals(SC_CREATED, getStatus(response));
         }
