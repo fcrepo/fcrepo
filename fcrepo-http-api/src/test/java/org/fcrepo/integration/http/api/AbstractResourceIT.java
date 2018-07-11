@@ -35,6 +35,7 @@ import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
+import static org.fcrepo.kernel.api.RdfLexicon.EXTERNAL_CONTENT;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
@@ -589,5 +590,24 @@ public abstract class AbstractResourceIT {
             final Link linkB = Link.valueOf(x.getValue());
             return linkB.equals(linkA);
         }).count();
+    }
+
+    protected String getExternalContentLinkHeader(final String url, final String handling, final String mimeType) {
+        // leave lots of room to leave things out of the link to test variations.
+        String link = "";
+        if (url != null && !url.isEmpty()) {
+            link += "<" + url + ">";
+        }
+
+        link += "; rel=\"" + EXTERNAL_CONTENT + "\"";
+
+        if (handling != null && !handling.isEmpty()) {
+            link += "; handling=\"" + handling + "\"";
+        }
+
+        if (mimeType != null && !mimeType.isEmpty()) {
+            link += "; type=\"" + mimeType + "\"";
+        }
+        return link;
     }
 }

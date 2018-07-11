@@ -74,7 +74,6 @@ import java.net.URLDecoder;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -503,25 +502,6 @@ public class FedoraLdp extends ContentExposingResource {
         } finally {
             lock.release();
         }
-    }
-
-
-
-    /**
-     * Multi-value Link header values parsed by the javax.ws.rs.core are not split out by the framework
-     * Therefore we must do this ourselves.
-     *
-     * @param rawLinks the list of unprocessed links
-     * @return List of strings containing one link value per string.
-     */
-    private List<String> unpackLinks(final List<String> rawLinks) {
-        if (rawLinks == null) {
-            return null;
-        }
-
-        return rawLinks.stream()
-                       .flatMap(x -> Arrays.asList(x.split(",")).stream())
-                       .collect(Collectors.toList());
     }
 
     /**

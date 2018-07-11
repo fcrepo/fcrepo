@@ -21,6 +21,8 @@ import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.fcrepo.kernel.api.FedoraExternalContent.PROXY;
+import static org.fcrepo.kernel.api.FedoraExternalContent.REDIRECT;
 import static org.fcrepo.kernel.api.FedoraTypes.CONTENT_DIGEST;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.FedoraTypes.MEMENTO;
@@ -241,6 +243,25 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
     }
 
     @Override
+    public FedoraBinary createExternalBinaryVersion(final FedoraSession session,
+            final FedoraBinary resource,
+            final Instant dateTime,
+            final Collection<URI> checksums,
+            final String externalHandling,
+            final String externalUrl)
+            throws InvalidChecksumException {
+        final String mementoPath = makeMementoPath(resource, dateTime);
+        assertMementoDoesNotExist(session, mementoPath);
+
+        final FedoraBinary memento = binaryService.findOrCreateBinary(session, mementoPath);
+        decorateWithMementoProperties(session, mementoPath, dateTime);
+
+        memento.setExternalContent(null, checksums, null, externalHandling, externalUrl);
+
+        return memento;
+    }
+
+    @Override
     public FedoraBinary createBinaryVersion(final FedoraSession session,
             final FedoraBinary resource,
             final Instant dateTime,
@@ -292,8 +313,24 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
                         }).collect(Collectors.toList());
             }
 
-            memento.setContent(resource.getContent(), null, checksums,
-                    null, storagePolicyDecisionPoint);
+            // if current binary is external, gather details
+            String handling = null;
+            String externalUrl = null;
+            if (resource.isProxy()) {
+                handling = PROXY;
+                externalUrl = resource.getProxyURL();
+            } else if (resource.isRedirect()) {
+                handling = REDIRECT;
+                externalUrl = resource.getRedirectURL();
+            }
+
+            // Create memento as external or internal based on state of original
+            if (handling != null && externalUrl != null) {
+                memento.setExternalContent(null, checksums, null, handling, externalUrl);
+            } else {
+                memento.setContent(resource.getContent(), null, checksums,
+                        null, storagePolicyDecisionPoint);
+            }
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }

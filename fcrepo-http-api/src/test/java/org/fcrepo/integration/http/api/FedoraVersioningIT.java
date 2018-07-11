@@ -69,6 +69,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.time.Instant;
@@ -86,6 +87,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.core.Link;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -113,7 +115,9 @@ import org.apache.jena.vocabulary.DC;
 import org.apache.jena.vocabulary.RDF;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * @author lsitu
@@ -141,6 +145,9 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     private String subjectUri;
     private String id;
+
+    @Rule
+    public TemporaryFolder tmpDir = new TemporaryFolder();
 
     @Before
     public void init() {
@@ -1292,6 +1299,161 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(new HttpOptions(timemapUri))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
             verifyTimeMapHeaders(response, subjectUri);
+        }
+    }
+
+    @Test
+    public void testCreateExternalBinaryProxyVersion() throws Exception {
+        // Create binary to use as content for proxying
+        final String proxyContent = "proxied content";
+        final String proxiedId = getRandomUniqueId();
+        final String proxiedUri = serverAddress + proxiedId + "/ds";
+        createDatastream(proxiedId, "ds", proxyContent);
+
+        // Create the proxied external binary object using the first binary
+        createVersionedExternalBinaryMemento(id, "proxy", proxiedUri);
+
+        // Create a version of the external binary using the second binary as content
+        final String mementoUri = createMemento(subjectUri, null, null, null);
+
+        // Verify that the historic version exists and proxies the old content
+        final HttpGet httpGet1 = new HttpGet(mementoUri);
+        try (final CloseableHttpResponse getResponse = execute(httpGet1)) {
+            assertEquals(OK.getStatusCode(), getStatus(getResponse));
+            assertMementoDatetimeHeaderPresent(getResponse);
+            assertEquals(proxiedUri, getContentLocation(getResponse));
+            final String content = EntityUtils.toString(getResponse.getEntity());
+            assertEquals("Entity Data doesn't match proxied versioned content!", proxyContent, content);
+        }
+    }
+
+    @Test
+    public void testCreateHistoricExternalBinaryProxyVersion() throws Exception {
+        // Create two binaries to use as content for proxying
+        final String newContent = "new content";
+        final String proxied1Id = getRandomUniqueId();
+        final String proxied1Uri = serverAddress + proxied1Id + "/ds";
+        createDatastream(proxied1Id, "ds", newContent);
+
+        final String oldContent = "old content";
+        final String proxied2Id = getRandomUniqueId();
+        final String proxied2Uri = serverAddress + proxied2Id + "/ds";
+        createDatastream(proxied2Id, "ds", "old content");
+
+        // Create the proxied external binary object using the first binary
+        createVersionedExternalBinaryMemento(id, "proxy", proxied1Uri);
+
+        // Create a historic version of the external binary using the second binary as content
+        final String mementoUri = createExternalBinaryMemento(subjectUri, "proxy", proxied2Uri);
+
+        // Verify that the historic version exists and proxies the old content
+        final HttpGet httpGet1 = new HttpGet(mementoUri);
+        try (final CloseableHttpResponse getResponse = execute(httpGet1)) {
+            assertEquals(OK.getStatusCode(), getStatus(getResponse));
+            assertMementoDatetimeHeaderMatches(getResponse, MEMENTO_DATETIME);
+            assertEquals(proxied2Uri, getContentLocation(getResponse));
+            final String content = EntityUtils.toString(getResponse.getEntity());
+            assertEquals("Entity Data doesn't match proxied historic content!", oldContent, content);
+        }
+
+        // Verify that the current version still proxies the correct content
+        final HttpGet httpGet2 = new HttpGet(subjectUri);
+        try (final CloseableHttpResponse getResponse = execute(httpGet2)) {
+            assertEquals(OK.getStatusCode(), getStatus(getResponse));
+            assertEquals(proxied1Uri, getContentLocation(getResponse));
+            final String content = EntityUtils.toString(getResponse.getEntity());
+            assertEquals("Entity Data doesn't match proxied historic content!", newContent, content);
+        }
+    }
+
+    @Test
+    public void testCreateHistoricExternalBinaryRedirectVersion() throws Exception {
+        // Create two binaries to use as content for proxying
+        final String newContent = "new content";
+        final String ext1Id = getRandomUniqueId();
+        final String ext1Uri = serverAddress + ext1Id + "/ds";
+        createDatastream(ext1Id, "ds", newContent);
+
+        final String oldContent = "old content";
+        final String ext2Id = getRandomUniqueId();
+        final String ext2Uri = serverAddress + ext2Id + "/ds";
+        createDatastream(ext2Id, "ds", "old content");
+
+        // Create the proxied external binary object using the first binary
+        createVersionedExternalBinaryMemento(id, "redirect", ext1Uri);
+
+        // Create a historic version of the external binary using the second binary as content
+        final String mementoUri = createExternalBinaryMemento(subjectUri, "redirect", ext2Uri);
+
+        // Verify that the historic version exists and redirects to the old content
+        final HttpGet httpGet1 = new HttpGet(mementoUri);
+        try (final CloseableHttpResponse getResponse = execute(httpGet1)) {
+            assertEquals(OK.getStatusCode(), getStatus(getResponse));
+            final String content = EntityUtils.toString(getResponse.getEntity());
+            assertEquals("Content doesn't match redirected historic content", oldContent, content);
+        }
+
+        // Verify that the current version still redirects to the correct content
+        final HttpGet httpGet2 = new HttpGet(subjectUri);
+        try (final CloseableHttpResponse getResponse = execute(httpGet2)) {
+            assertEquals(OK.getStatusCode(), getStatus(getResponse));
+            final String content = EntityUtils.toString(getResponse.getEntity());
+            assertEquals("Content doesn't match redirected historic content", newContent, content);
+        }
+    }
+
+    @Test
+    public void testCreateHistoricExternalBinaryCopyVersion() throws Exception {
+        final String newContent = "new content";
+
+        final String oldContent = "old content";
+        final File localFile = tmpDir.newFile();
+        FileUtils.writeStringToFile(localFile, oldContent, "UTF-8");
+
+        createVersionedBinary(id, "text/plain", newContent);
+
+        final String mementoUri = createExternalBinaryMemento(subjectUri, "copy", localFile.toURI().toString());
+
+        // Verify that the historic version exists and is the copied old content
+        final HttpGet httpGet1 = new HttpGet(mementoUri);
+        try (final CloseableHttpResponse getResponse = execute(httpGet1)) {
+            assertEquals(OK.getStatusCode(), getStatus(getResponse));
+            assertMementoDatetimeHeaderMatches(getResponse, MEMENTO_DATETIME);
+            final String content = EntityUtils.toString(getResponse.getEntity());
+            assertEquals("Content doesn't match copied historic content", oldContent, content);
+        }
+
+        // Verify that the current version is still available
+        final HttpGet httpGet2 = new HttpGet(subjectUri);
+        try (final CloseableHttpResponse getResponse = execute(httpGet2)) {
+            assertEquals(OK.getStatusCode(), getStatus(getResponse));
+            final String content = EntityUtils.toString(getResponse.getEntity());
+            assertEquals("Binary doesn't match expected content", newContent, content);
+        }
+    }
+
+    private void createVersionedExternalBinaryMemento(final String rescId, final String handling,
+            final String externalUri) throws Exception {
+        final HttpPut httpPut = putObjMethod(rescId);
+        httpPut.addHeader(LINK, "<" + NON_RDF_SOURCE.getURI() + ">;rel=\"type\"");
+        httpPut.addHeader(LINK, getExternalContentLinkHeader(externalUri, handling, null));
+        httpPut.addHeader(LINK, VERSIONED_RESOURCE_LINK_HEADER);
+        try (final CloseableHttpResponse response = execute(httpPut)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+        }
+    }
+
+    private String createExternalBinaryMemento(final String rescUri, final String handling, final String externalUri)
+            throws Exception {
+        final String ldpcvUri = rescUri + "/fcr:versions";
+        final HttpPost httpPost = new HttpPost(ldpcvUri);
+        httpPost.addHeader(LINK, getExternalContentLinkHeader(externalUri, handling, null));
+        httpPost.addHeader(MEMENTO_DATETIME_HEADER, MEMENTO_DATETIME);
+
+        try (final CloseableHttpResponse response = execute(httpPost)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            assertMementoDatetimeHeaderPresent(response);
+            return response.getFirstHeader(LOCATION).getValue();
         }
     }
 

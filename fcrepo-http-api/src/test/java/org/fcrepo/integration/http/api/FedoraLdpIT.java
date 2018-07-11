@@ -79,7 +79,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.EXTERNAL_CONTENT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MIME_TYPE;
@@ -420,26 +419,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertTrue("MD5 fixity checksum doesn't match",
                     digesterHeaderValue.indexOf("md5=baed005300234f3d1503c50a48ce8e6f") >= 0);
         }
-    }
-
-    private String getExternalContentLinkHeader(final String url, final String handling, final String mimeType) {
-        // leave lots of room to leave things out of the link to test variations.
-        String link = "";
-        if (url != null && !url.isEmpty()) {
-            link += "<" + url + ">";
-        }
-
-        link += "; rel=\"" + EXTERNAL_CONTENT + "\"";
-
-        if (handling != null && !handling.isEmpty()) {
-            link += "; handling=\"" + handling + "\"";
-        }
-
-        if (mimeType != null && !mimeType.isEmpty()) {
-            link += "; type=\"" + mimeType + "\"";
-        }
-        LOGGER.info("Created link: {}", link);
-        return link;
     }
 
     @Test
