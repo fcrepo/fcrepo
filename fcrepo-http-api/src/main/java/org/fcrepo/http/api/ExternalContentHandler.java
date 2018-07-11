@@ -22,6 +22,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.EXTERNAL_CONTENT;
 import static org.fcrepo.kernel.api.FedoraExternalContent.COPY;
 import static org.fcrepo.kernel.api.FedoraExternalContent.REDIRECT;
 import static org.fcrepo.kernel.api.FedoraExternalContent.PROXY;
+import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -57,7 +58,7 @@ public class ExternalContentHandler {
     private static final Logger LOGGER = getLogger(FedoraLdp.class);
 
     public final static String HANDLING = "handling";
-    public final static String CONTENT_TYPE = "type";
+    public final static String EXT_CONTENT_TYPE = "type";
 
     private final Link link;
     private final String handling;
@@ -83,7 +84,7 @@ public class ExternalContentHandler {
         final Map<String, String> map = link.getParams();
         // handling will be in the map, where as content type may not be
         handling = map.get(HANDLING).toLowerCase();
-        type = map.get(CONTENT_TYPE) != null ? map.get(CONTENT_TYPE).toLowerCase() : null;
+        type = map.get(EXT_CONTENT_TYPE) != null ? map.get(EXT_CONTENT_TYPE).toLowerCase() : null;
         contentType = type != null ? MediaType.valueOf(type) : findContentType(getURL());
     }
 
