@@ -64,7 +64,6 @@ import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
-import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.slf4j.Logger;
@@ -81,11 +80,15 @@ public class FedoraAcl extends ContentExposingResource {
 
     private static final Logger LOGGER = getLogger(FedoraAcl.class);
 
-    @Context protected Request request;
-    @Context protected HttpServletResponse servletResponse;
-    @Context protected UriInfo uriInfo;
+    @Context
+    protected Request request;
+    @Context
+    protected HttpServletResponse servletResponse;
+    @Context
+    protected UriInfo uriInfo;
 
-    @PathParam("path") protected String externalPath;
+    @PathParam("path")
+    protected String externalPath;
 
     /**
      * Default JAX-RS entry point
@@ -102,6 +105,7 @@ public class FedoraAcl extends ContentExposingResource {
      */
     @PUT
     public Response createFedoraWebacAcl() throws ConstraintViolationException {
+
         if (resource().hasType(FEDORA_WEBAC_ACL) || resource().isMemento()) {
             throw new BadRequestException("ACL resource creation is not allowed for resource " + resource().getPath());
         }
@@ -121,7 +125,7 @@ public class FedoraAcl extends ContentExposingResource {
             lock.release();
         }
 
-        addCacheControlHeaders(servletResponse, resource, session);
+        addCacheControlHeaders(servletResponse, aclResource, session);
         final URI location = getUri(aclResource);
         if (created) {
             return created(location).build();
@@ -138,22 +142,24 @@ public class FedoraAcl extends ContentExposingResource {
      * @throws IOException if IO exception occurred
      */
     @PATCH
-    @Consumes({ contentTypeSPARQLUpdate })
+    @Consumes( {contentTypeSPARQLUpdate})
     @Timed
     public Response updateSparql(@ContentLocation final InputStream requestBodyStream)
-            throws IOException {
+        throws IOException, ItemNotFoundException {
         hasRestrictedPath(externalPath);
 
         if (null == requestBodyStream) {
             throw new BadRequestException("SPARQL-UPDATE requests must have content!");
         }
 
-        if (resource() instanceof FedoraBinary) {
-            throw new BadRequestException(resource().getPath() + " is not a valid object to receive a PATCH");
+        final FedoraResource aclResource = resource().getAcl();
+
+        if (aclResource == null) {
+            throw new ItemNotFoundException();
         }
 
-        final AcquiredLock lock = lockManager.lockForWrite(resource().getPath(), session.getFedoraSession(),
-                nodeService);
+        final AcquiredLock lock = lockManager.lockForWrite(aclResource.getPath(), session.getFedoraSession(),
+                                                           nodeService);
 
         try {
             final String requestBody = IOUtils.toString(requestBodyStream, UTF_8);
@@ -161,16 +167,17 @@ public class FedoraAcl extends ContentExposingResource {
                 throw new BadRequestException("SPARQL-UPDATE requests must have content!");
             }
 
-            evaluateRequestPreconditions(request, servletResponse, resource(), session);
+            evaluateRequestPreconditions(request, servletResponse, aclResource, session);
 
             try (final RdfStream resourceTriples =
-                    resource().isNew() ? new DefaultRdfStream(asNode(resource())) : getResourceTriples()) {
+                     aclResource.isNew() ? new DefaultRdfStream(asNode(aclResource)) :
+                     getResourceTriples(aclResource)) {
                 LOGGER.info("PATCH for '{}'", externalPath);
-                patchResourcewithSparql(resource(), requestBody, resourceTriples);
+                patchResourcewithSparql(aclResource, requestBody, resourceTriples);
             }
             session.commit();
 
-            addCacheControlHeaders(servletResponse, resource(), session);
+            addCacheControlHeaders(servletResponse, aclResource, session);
 
             return noContent().build();
         } catch (final IllegalArgumentException iae) {
@@ -199,14 +206,14 @@ public class FedoraAcl extends ContentExposingResource {
      *
      * @param rangeValue the range value
      * @return a binary or the triples for the specified node
-     * @throws IOException if IO exception occurred
-     * @throws UnsupportedAlgorithmException if unsupported digest algorithm occurred
+     * @throws IOException                    if IO exception occurred
+     * @throws UnsupportedAlgorithmException  if unsupported digest algorithm occurred
      * @throws UnsupportedAccessTypeException if unsupported access-type occurred
      */
     @GET
-    @Produces({ TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
-        N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
-        TURTLE_X, TEXT_HTML_WITH_CHARSET })
+    @Produces( {TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
+                N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
+                TURTLE_X, TEXT_HTML_WITH_CHARSET})
     public Response getResource(@HeaderParam("Range") final String rangeValue)
             throws IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException, ItemNotFoundException {
 
@@ -223,7 +230,7 @@ public class FedoraAcl extends ContentExposingResource {
         try (final RdfStream rdfStream = new DefaultRdfStream(asNode(aclResource))) {
 
             addResourceHttpHeaders(aclResource);
-            return getContent(rangeValue, getChildrenLimit(), rdfStream);
+            return getContent(rangeValue, getChildrenLimit(), rdfStream, aclResource);
 
         } finally {
             readLock.release();

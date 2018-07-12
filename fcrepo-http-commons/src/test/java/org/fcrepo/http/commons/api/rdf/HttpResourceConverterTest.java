@@ -17,6 +17,30 @@
  */
 package org.fcrepo.http.commons.api.rdf;
 
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TIME_MAP;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_WEBAC_ACL;
+import static org.fcrepo.kernel.api.FedoraTypes.MEMENTO;
+import static org.fcrepo.kernel.api.FedoraTypes.MEMENTO_ORIGINAL;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_DESCRIPTION;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
+
+import javax.jcr.Node;
+import javax.jcr.Property;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.Workspace;
+import javax.jcr.version.Version;
+import javax.jcr.version.VersionHistory;
+import javax.jcr.version.VersionManager;
+import javax.ws.rs.core.UriBuilder;
+
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.FedoraSession;
@@ -39,30 +63,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import javax.jcr.Node;
-import javax.jcr.Property;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.Workspace;
-import javax.jcr.version.Version;
-import javax.jcr.version.VersionHistory;
-import javax.jcr.version.VersionManager;
-import javax.ws.rs.core.UriBuilder;
-
-import static org.apache.jena.rdf.model.ResourceFactory.createResource;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TIME_MAP;
-import static org.fcrepo.kernel.api.FedoraTypes.MEMENTO;
-import static org.fcrepo.kernel.api.FedoraTypes.MEMENTO_ORIGINAL;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_WEBAC_ACL;
-import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_DESCRIPTION;
-import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
-import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
 
 /**
  * @author cabeer
@@ -436,6 +436,31 @@ public class HttpResourceConverterTest {
 
         final Resource converted = converter.reverse().convert(webacAcl);
         final Resource expectedResource = createResource("http://localhost:8080/some/" + path + "/fcr:acl");
+        assertEquals(expectedResource, converted);
+    }
+
+    @Test
+    public void testDoForwardWithWebacAclWithHash() throws Exception {
+        final Resource resource = createResource("http://localhost:8080/some/container/fcr:acl#hash_resource");
+        when(session.getNode("/container")).thenReturn(node);
+
+        when(session.getNode("/container/fedora:acl/#/hash_resource")).thenReturn(webacAclNode);
+
+        final FedoraResource converted = converter.convert(resource);
+        assertTrue("Converted resource must be a FedoraWebacAcl", converted instanceof FedoraWebacAcl);
+
+        final Node resultNode = getJcrNode(converted);
+        assertEquals(webacAclNode, resultNode);
+    }
+
+    @Test
+    public void testDoBackWithWebacAclHash() throws Exception {
+        final FedoraWebacAcl webacAcl = new FedoraWebacAclImpl(webacAclNode);
+        when(webacAclNode.getPath()).thenReturn(path + "/fedora:acl/#/hash_resource");
+
+        final Resource converted = converter.reverse().convert(webacAcl);
+        final Resource expectedResource =
+            createResource("http://localhost:8080/some/" + path + "/fcr:acl#hash_resource");
         assertEquals(expectedResource, converted);
     }
 }

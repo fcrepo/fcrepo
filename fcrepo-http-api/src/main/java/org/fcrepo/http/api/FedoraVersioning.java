@@ -160,7 +160,8 @@ public class FedoraVersioning extends ContentExposingResource {
             @HeaderParam(LINK) final List<String> rawLinks)
             throws InvalidChecksumException, MementoDatetimeFormatException {
 
-        final FedoraResource timeMap = resource().findOrCreateTimeMap();
+        final FedoraResource resource = resource();
+        final FedoraResource timeMap = resource.findOrCreateTimeMap();
         // If the timemap was created in this request, commit it.
         if (timeMap.isNew()) {
             session.commit();
@@ -330,9 +331,7 @@ public class FedoraVersioning extends ContentExposingResource {
         } else {
             final AcquiredLock readLock = lockManager.lockForRead(theTimeMap.getPath());
             try (final RdfStream rdfStream = new DefaultRdfStream(asNode(theTimeMap))) {
-                // Need to set the timemap as the resource for the below function.
-                setResource(theTimeMap);
-                return getContent(rangeValue, getChildrenLimit(), rdfStream);
+                return getContent(rangeValue, getChildrenLimit(), rdfStream, theTimeMap);
             } finally {
                 readLock.release();
             }
@@ -354,15 +353,6 @@ public class FedoraVersioning extends ContentExposingResource {
         LOGGER.info("OPTIONS for '{}'", externalPath);
         addResourceHttpHeaders(theTimeMap);
         return ok().build();
-    }
-
-    /**
-     * Set the resource to an alternate from that retrieved automatically.
-     *
-     * @param resource a FedoraResource
-     */
-    private void setResource(final FedoraResource resource) {
-        this.resource = resource;
     }
 
     @Override

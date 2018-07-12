@@ -59,6 +59,7 @@ import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunction
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getContainingNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.hasInternalNamespace;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isAcl;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isMemento;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.ldpInsertedContentProperty;
@@ -129,7 +130,6 @@ import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.FedoraTimeMap;
-import org.fcrepo.kernel.api.models.FedoraWebacAcl;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.utils.GraphDifferencer;
@@ -473,7 +473,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
     @Override
     public boolean isAcl() {
-        return this instanceof FedoraWebacAcl;
+        return isAcl.test(getNode());
     }
 
 
@@ -515,8 +515,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                 LOGGER.debug("Created Webac ACL {}", aclNode.getPath());
 
                 // add mixin type fedora:Resource
-                if (node.canAddMixin(FEDORA_RESOURCE)) {
-                    node.addMixin(FEDORA_RESOURCE);
+                if (aclNode.canAddMixin(FEDORA_RESOURCE)) {
+                    aclNode.addMixin(FEDORA_RESOURCE);
                 }
 
                 // add mixin type webac:Acl

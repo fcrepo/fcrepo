@@ -199,7 +199,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         final String datetimeHeader = headers.getHeaderString(ACCEPT_DATETIME);
         if (!isBlank(datetimeHeader) && resource().isVersioned()) {
-            return getMemento(datetimeHeader);
+            return getMemento(datetimeHeader, resource());
         }
 
         checkCacheControlHeaders(request, servletResponse, resource(), session);
@@ -210,7 +210,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         if (resource() instanceof FedoraBinary) {
             final FedoraBinary binary = (FedoraBinary) resource();
-            final MediaType mediaType = getBinaryResourceMediaType();
+            final MediaType mediaType = getBinaryResourceMediaType(binary);
 
             if (binary.isRedirect()) {
                     builder = temporaryRedirect(binary.getRedirectURI());
@@ -229,7 +229,7 @@ public class FedoraLdp extends ContentExposingResource {
             if (accept == null || "*/*".equals(accept)) {
                 builder.type(TURTLE_WITH_CHARSET);
             }
-            setVaryAndPreferenceAppliedHeaders(servletResponse, prefer);
+            setVaryAndPreferenceAppliedHeaders(servletResponse, prefer, resource());
         }
 
 
@@ -244,7 +244,7 @@ public class FedoraLdp extends ContentExposingResource {
     @Timed
     public Response options() {
         LOGGER.info("OPTIONS for '{}'", externalPath);
-        addLinkAndOptionsHttpHeaders();
+        addLinkAndOptionsHttpHeaders(resource());
         return ok().build();
     }
 
@@ -267,7 +267,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         final String datetimeHeader = headers.getHeaderString(ACCEPT_DATETIME);
         if (!isBlank(datetimeHeader) && resource().isVersioned()) {
-            return getMemento(datetimeHeader);
+            return getMemento(datetimeHeader, resource());
         }
 
         checkCacheControlHeaders(request, servletResponse, resource(), session);
@@ -284,7 +284,7 @@ public class FedoraLdp extends ContentExposingResource {
 
             if (resource() instanceof FedoraBinary && acceptableMediaTypes.size() > 0) {
 
-                final MediaType mediaType = getBinaryResourceMediaType();
+                final MediaType mediaType = getBinaryResourceMediaType(resource());
 
                 // Respect the Want-Digest header for fixity check
                 final String wantDigest = headers.getHeaderString(WANT_DIGEST);
@@ -302,7 +302,7 @@ public class FedoraLdp extends ContentExposingResource {
             if (resource() instanceof FedoraBinary && ((FedoraBinary)resource()).isRedirect()) {
                 return temporaryRedirect(((FedoraBinary) resource()).getRedirectURI()).build();
             } else {
-                return getContent(rangeValue, getChildrenLimit(), rdfStream);
+                return getContent(rangeValue, getChildrenLimit(), rdfStream, resource());
             }
         } finally {
             readLock.release();
@@ -313,12 +313,13 @@ public class FedoraLdp extends ContentExposingResource {
      * Return the location of a requested Memento.
      *
      * @param datetimeHeader The RFC datetime for the Memento.
+     * @param resource The fedora resource
      * @return A 302 Found response or 404 if no mementos.
      */
-    public Response getMemento(final String datetimeHeader) {
+    protected Response getMemento(final String datetimeHeader, final FedoraResource resource) {
         try {
             final Instant mementoDatetime = Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(datetimeHeader));
-            final FedoraResource memento = resource().findMementoByDatetime(mementoDatetime);
+            final FedoraResource memento = resource.findMementoByDatetime(mementoDatetime);
             final Response builder;
             if (memento != null) {
                 builder =
@@ -326,8 +327,8 @@ public class FedoraLdp extends ContentExposingResource {
             } else {
                 builder = status(NOT_FOUND).build();
             }
-            addResourceHttpHeaders(resource());
-            setVaryAndPreferenceAppliedHeaders(servletResponse, prefer);
+            addResourceHttpHeaders(resource);
+            setVaryAndPreferenceAppliedHeaders(servletResponse, prefer, resource);
             return builder;
         } catch (final DateTimeParseException e) {
             throw new MementoDatetimeFormatException("Invalid Accept-Datetime value. "
@@ -402,7 +403,7 @@ public class FedoraLdp extends ContentExposingResource {
 
 
         if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
-            addLinkAndOptionsHttpHeaders();
+            addLinkAndOptionsHttpHeaders(resource());
 
             return status(METHOD_NOT_ALLOWED).build();
         }
@@ -451,7 +452,7 @@ public class FedoraLdp extends ContentExposingResource {
             final boolean created = resource.isNew();
 
             try (final RdfStream resourceTriples =
-                    created ? new DefaultRdfStream(asNode(resource())) : getResourceTriples()) {
+                    created ? new DefaultRdfStream(asNode(resource())) : getResourceTriples(resource())) {
                 if (resource instanceof FedoraBinary) {
                     InputStream stream = requestBodyStream;
                     MediaType type = requestContentType;
@@ -533,7 +534,7 @@ public class FedoraLdp extends ContentExposingResource {
         hasRestrictedPath(externalPath);
 
         if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
-            addLinkAndOptionsHttpHeaders();
+            addLinkAndOptionsHttpHeaders(resource());
 
             return status(METHOD_NOT_ALLOWED).build();
         }
@@ -558,7 +559,7 @@ public class FedoraLdp extends ContentExposingResource {
             evaluateRequestPreconditions(request, servletResponse, resource(), session);
 
             try (final RdfStream resourceTriples =
-                    resource().isNew() ? new DefaultRdfStream(asNode(resource())) : getResourceTriples()) {
+                    resource().isNew() ? new DefaultRdfStream(asNode(resource())) : getResourceTriples(resource())) {
                 LOGGER.info("PATCH for '{}'", externalPath);
                 patchResourcewithSparql(resource(), requestBody, resourceTriples);
             }
@@ -623,7 +624,7 @@ public class FedoraLdp extends ContentExposingResource {
         final List<String> links = unpackLinks(rawLinks);
 
         if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
-            addLinkAndOptionsHttpHeaders();
+            addLinkAndOptionsHttpHeaders(resource());
             LOGGER.info("Unable to handle POST request on a path containing {}. Path was: {}",
                     FedoraTypes.FCR_VERSIONS, externalPath);
             return status(METHOD_NOT_ALLOWED).build();
@@ -656,11 +657,11 @@ public class FedoraLdp extends ContentExposingResource {
 
             LOGGER.info("Ingest with path: {}", newObjectPath);
 
-            resource = createFedoraResource(newObjectPath, interactionModel, contentType,
+            final FedoraResource resource = createFedoraResource(newObjectPath, interactionModel, contentType,
                     !(requestBodyStream == null || requestContentType == null), extContent != null ? true : false);
 
             try (final RdfStream resourceTriples =
-                     resource.isNew() ? new DefaultRdfStream(asNode(resource())) : getResourceTriples()) {
+                     resource.isNew() ? new DefaultRdfStream(asNode(resource())) : getResourceTriples(resource())) {
 
                 if (requestBodyStream == null && extContent == null) {
                     LOGGER.trace("No request body detected");
