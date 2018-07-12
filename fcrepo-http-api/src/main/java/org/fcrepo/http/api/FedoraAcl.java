@@ -18,8 +18,6 @@
 package org.fcrepo.http.api;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static org.apache.commons.lang3.StringUtils.isBlank;
@@ -39,6 +37,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import javax.jcr.ItemNotFoundException;
 import javax.jcr.nodetype.ConstraintViolationException;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
@@ -209,7 +208,7 @@ public class FedoraAcl extends ContentExposingResource {
         N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
         TURTLE_X, TEXT_HTML_WITH_CHARSET })
     public Response getResource(@HeaderParam("Range") final String rangeValue)
-            throws IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+            throws IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException, ItemNotFoundException {
 
         final FedoraResource aclResource = resource().getAcl();
 
@@ -238,7 +237,7 @@ public class FedoraAcl extends ContentExposingResource {
      */
     @DELETE
     @Timed
-    public Response deleteObject() {
+    public Response deleteObject() throws ItemNotFoundException {
 
         hasRestrictedPath(externalPath);
         LOGGER.info("Delete resource '{}'", externalPath);
@@ -262,7 +261,7 @@ public class FedoraAcl extends ContentExposingResource {
         }
     }
 
-    private Response notFound() {
-        return status(NOT_FOUND).entity("Resource does not exist.").build();
+    private Response notFound() throws ItemNotFoundException {
+        throw new ItemNotFoundException("Resource does not exist.");
     }
 }
