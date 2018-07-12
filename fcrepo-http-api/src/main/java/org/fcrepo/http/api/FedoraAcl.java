@@ -213,7 +213,7 @@ public class FedoraAcl extends ContentExposingResource {
         final FedoraResource aclResource = resource().getAcl();
 
         if (aclResource == null) {
-            return notFound();
+            throwItemNotFoundException();
         }
 
         checkCacheControlHeaders(request, servletResponse, aclResource, session);
@@ -251,17 +251,18 @@ public class FedoraAcl extends ContentExposingResource {
             }
             session.commit();
 
-            if (aclResource != null) {
-                return noContent().build();
-            } else {
-                return notFound();
+            if (aclResource == null) {
+                throwItemNotFoundException();
             }
+
+            return noContent().build();
+
         } finally {
             lock.release();
         }
     }
 
-    private Response notFound() throws ItemNotFoundException {
+    private void throwItemNotFoundException() throws ItemNotFoundException {
         throw new ItemNotFoundException("Resource does not exist.");
     }
 }
