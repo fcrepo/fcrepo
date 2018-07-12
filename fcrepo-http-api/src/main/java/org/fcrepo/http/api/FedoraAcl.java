@@ -37,11 +37,12 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-
+import javax.jcr.ItemNotFoundException;
 import javax.jcr.nodetype.ConstraintViolationException;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.PUT;
@@ -53,6 +54,7 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import com.codahale.metrics.annotation.Timed;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.domain.ContentLocation;
@@ -67,8 +69,6 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
-
-import com.codahale.metrics.annotation.Timed;
 
 /**
  * @author lsitu
@@ -208,9 +208,13 @@ public class FedoraAcl extends ContentExposingResource {
         N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
         TURTLE_X, TEXT_HTML_WITH_CHARSET })
     public Response getResource(@HeaderParam("Range") final String rangeValue)
-            throws IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+            throws IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException, ItemNotFoundException {
 
         final FedoraResource aclResource = resource().getAcl();
+
+        if (aclResource == null) {
+            throw new ItemNotFoundException();
+        }
 
         checkCacheControlHeaders(request, servletResponse, aclResource, session);
 
@@ -225,4 +229,37 @@ public class FedoraAcl extends ContentExposingResource {
             readLock.release();
         }
     }
+
+    /**
+     * Deletes an object.
+     *
+     * @return response
+     */
+    @DELETE
+    @Timed
+    public Response deleteObject() throws ItemNotFoundException {
+
+        hasRestrictedPath(externalPath);
+        LOGGER.info("Delete resource '{}'", externalPath);
+
+        final AcquiredLock lock = lockManager.lockForDelete(resource().getPath());
+
+        try {
+            final FedoraResource aclResource = resource().getAcl();
+            if (aclResource != null) {
+                aclResource.delete();
+            }
+            session.commit();
+
+            if (aclResource == null) {
+                throw new ItemNotFoundException();
+            }
+
+            return noContent().build();
+
+        } finally {
+            lock.release();
+        }
+    }
+
 }
