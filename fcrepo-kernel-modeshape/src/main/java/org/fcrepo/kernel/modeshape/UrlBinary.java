@@ -38,6 +38,7 @@ import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.exception.ExternalContentAccessException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
@@ -84,7 +85,7 @@ public class UrlBinary extends AbstractFedoraBinary {
         try {
             return getResourceUri().toURL().openStream();
         } catch (final IOException e) {
-            throw new RepositoryRuntimeException(e);
+            throw new ExternalContentAccessException("Problems getting external content : " + e.getMessage(), e);
         }
     }
 
