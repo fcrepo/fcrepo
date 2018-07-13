@@ -23,8 +23,13 @@ import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
+import static org.apache.jena.graph.Node.ANY;
+import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.io.IOException;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
@@ -32,6 +37,8 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
+import org.apache.jena.sparql.core.DatasetGraph;
+import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -68,15 +75,18 @@ public class FedoraAclIT extends AbstractResourceIT {
     public void testCreateAclOnAclResource() throws Exception {
         createObjectAndClose(id);
 
-        final HttpPut put = new HttpPut(subjectUri + "/" + FCR_ACL);
-        final String aclLocation;
-        try (final CloseableHttpResponse response = execute(put)) {
-            assertEquals(CREATED.getStatusCode(), getStatus(response));
-            aclLocation = response.getFirstHeader("Location").getValue();
-        }
+        final String aclLocation = createACL();
 
         final HttpPut put1 = new HttpPut(aclLocation + "/" + FCR_ACL);
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(put1));
+    }
+
+    private String createACL() throws IOException {
+        final HttpPut put = new HttpPut(subjectUri + "/" + FCR_ACL);
+        try (final CloseableHttpResponse response = execute(put)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            return response.getFirstHeader("Location").getValue();
+        }
     }
 
     @Test
@@ -96,33 +106,21 @@ public class FedoraAclIT extends AbstractResourceIT {
     @Test
     public void testPatchAcl() throws Exception {
         createObjectAndClose(id);
-
-        final HttpPatch patch = new HttpPatch(subjectUri + "/" + FCR_ACL);
+        final String aclURI = createACL();
+        final HttpPatch patch = new HttpPatch(aclURI);
         patch.addHeader(CONTENT_TYPE, "application/sparql-update");
         patch.setEntity(new StringEntity("PREFIX acl: <http://www.w3.org/ns/auth/acl#> " +
-                "INSERT DATA { <#readAccess> acl:mode acl:write . }"));
+                                         "INSERT { <#writeAccess> acl:mode acl:write . } WHERE { }"));
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(patch));
-        // TODO add a test to verify inserted triples were actually on the resource.
-        // after the @GET method is implemented on FedoraAcl.java
 
-    }
-
-    @Test
-    public void testPatchAclOnAclResource() throws Exception {
-        createObjectAndClose(id);
-
-        final HttpPut put = new HttpPut(subjectUri + "/" + FCR_ACL);
-        final String aclLocation;
-        try (final CloseableHttpResponse response = execute(put)) {
-            assertEquals(CREATED.getStatusCode(), getStatus(response));
-            aclLocation = response.getFirstHeader("Location").getValue();
+        //verify the patch worked
+        try (final CloseableDataset dataset = getDataset(new HttpGet(aclURI))) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertTrue(graph.contains(ANY,
+                                      createURI(aclURI + "#writeAccess"),
+                                      createURI("http://www.w3.org/ns/auth/acl#mode"),
+                                      createURI("http://www.w3.org/ns/auth/acl#write")));
         }
-
-        final HttpPatch patch = new HttpPatch(aclLocation + "/" + FCR_ACL);
-        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
-        patch.setEntity(new StringEntity("PREFIX acl: <http://www.w3.org/ns/auth/acl#> " +
-                "INSERT DATA { <#readAccess> acl:mode acl:write . }"));
-        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(patch));
 
     }
 

@@ -58,7 +58,6 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.TombstoneException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.models.FedoraWebacAcl;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.modeshape.TombstoneImpl;
 import org.fcrepo.kernel.modeshape.identifiers.HashConverter;
@@ -84,12 +83,14 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
     private static final Logger LOGGER = getLogger(HttpResourceConverter.class);
 
     // Regex pattern which decomposes a http resource uri into components
-    // First group is the path of the resource or original resource,
-    // second group determines if it is an fcr:metadata non-rdf source,
-    // third group determines if the path is for a memento or timemap,
-    // the fourth group allows for a memento identifier, and the fifth group for ACL
+    // The first group is the path of the resource or original resource.
+    // The second group determines if it is an fcr:metadata non-rdf source.
+    // The third group determines if the path is for a memento or timemap.
+    // The fourth group allows for a memento identifier.
+    // The fifth group for allows ACL.
+    // The sixth group allows for any hashed suffixes on the acls.
     private final static Pattern FORWARD_COMPONENT_PATTERN = Pattern.compile(
-            "(.*?)(/" + FCR_METADATA + ")?(/" + FCR_VERSIONS + "(/\\d+)?)?(/" + FCR_ACL + ")?$");
+            "(.*?)(/" + FCR_METADATA + ")?(/" + FCR_VERSIONS + "(/\\d+)?)?(/" + FCR_ACL + "(\\#\\w+)?)?$");
 
     protected List<Converter<String, String>> translationChain;
 
@@ -290,10 +291,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
             throw new RepositoryRuntimeException("Unable to process reverse chain for resource " + resource);
         }
 
-        if (resource instanceof FedoraWebacAcl) {
-            // For ACL container, replace the name with fcr:acl path
-            path = replaceOnce(path, "/" + CONTAINER_WEBAC_ACL, "/" + FCR_ACL);
-        }
+        path = replaceOnce(path, "/" + CONTAINER_WEBAC_ACL, "/" + FCR_ACL);
 
         path = replaceOnce(path, "/" + LDPCV_TIME_MAP, "/" + FCR_VERSIONS);
 

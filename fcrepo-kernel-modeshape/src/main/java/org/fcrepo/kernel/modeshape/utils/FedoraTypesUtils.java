@@ -139,6 +139,12 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
      */
     public static Predicate<Node> isMemento = new AnyTypesPredicate(MEMENTO);
 
+
+    /**
+     * Predicate for determining whether this {@link Node} is an Web ACL.
+     */
+    public static Predicate<Node> isAcl = new AnyTypesPredicate(FEDORA_WEBAC_ACL);
+
     /**
      * Check if a property is a reference property.
      */

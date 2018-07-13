@@ -47,6 +47,13 @@ import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.apache.jena.vocabulary.RDF.type;
+import static org.fcrepo.http.api.FedoraVersioning.MEMENTO_DATETIME_HEADER;
+import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
+import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
+import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.kernel.api.FedoraExternalContent.COPY;
 import static org.fcrepo.kernel.api.FedoraExternalContent.PROXY;
 import static org.fcrepo.kernel.api.FedoraExternalContent.REDIRECT;
@@ -74,13 +81,6 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_MEMBERSHIP;
 import static org.fcrepo.kernel.api.RequiredRdfContext.MINIMAL;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
-import static org.fcrepo.http.api.FedoraVersioning.MEMENTO_DATETIME_HEADER;
-import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
-import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
-import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
-import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
-import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.fasterxml.jackson.core.JsonParseException;
@@ -118,6 +118,7 @@ import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
+
 import org.apache.jena.atlas.RuntimeIOException;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
@@ -154,7 +155,6 @@ import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.api.utils.ContentDigest;
-
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.jvnet.hk2.annotations.Optional;
 import org.slf4j.Logger;
@@ -201,7 +201,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     @Optional
     StoragePolicyDecisionPoint storagePolicyDecisionPoint;
 
-    protected FedoraResource resource;
+    private FedoraResource fedoraResource;
 
     @Inject
     protected  PathLockManager lockManager;
@@ -216,41 +216,38 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected static final Splitter.MapSplitter RFC3230_SPLITTER =
         Splitter.on(',').omitEmptyStrings().trimResults().withKeyValueSeparator(Splitter.on('=').limit(2));
 
-    protected Response getContent(final String rangeValue,
-            final RdfStream rdfStream) throws IOException, UnsupportedAccessTypeException {
-        return getContent(rangeValue, -1, rdfStream);
-    }
-
     /**
      * This method returns an HTTP response with content body appropriate to the following arguments.
      *
      * @param rangeValue starting and ending byte offsets, see {@link Range}
      * @param limit is the number of child resources returned in the response, -1 for all
      * @param rdfStream to which response RDF will be concatenated
+     * @param resource the fedora resource
      * @return HTTP response
      * @throws IOException in case of error extracting content
      * @throws UnsupportedAccessTypeException if mimeType not a valid message/external-body content type
      */
     protected Response getContent(final String rangeValue,
                                   final int limit,
-                                  final RdfStream rdfStream) throws IOException, UnsupportedAccessTypeException {
+                                  final RdfStream rdfStream,
+                                  final FedoraResource resource) throws IOException, UnsupportedAccessTypeException {
 
         final RdfNamespacedStream outputStream;
 
-        if (resource() instanceof FedoraBinary) {
-            return getBinaryContent(rangeValue);
+        if (resource instanceof FedoraBinary) {
+            return getBinaryContent(rangeValue, resource);
         } else {
             outputStream = new RdfNamespacedStream(
                     new DefaultRdfStream(rdfStream.topic(), concat(rdfStream,
-                        getResourceTriples(limit))),
+                        getResourceTriples(limit, resource))),
                     session.getFedoraSession().getNamespaces());
         }
-        setVaryAndPreferenceAppliedHeaders(servletResponse, prefer);
+        setVaryAndPreferenceAppliedHeaders(servletResponse, prefer, resource);
         return ok(outputStream).build();
     }
 
     protected void setVaryAndPreferenceAppliedHeaders(final HttpServletResponse servletResponse,
-            final MultiPrefer prefer) {
+            final MultiPrefer prefer, final FedoraResource resource) {
         if (prefer != null) {
             prefer.getReturn().addResponseHeaders(servletResponse);
         }
@@ -258,7 +255,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         // add vary headers
         final List<String> varyValues = new ArrayList<>(VARY_HEADERS);
 
-        if (resource().isVersioned()) {
+        if (resource.isVersioned()) {
             varyValues.add(ACCEPT_DATETIME);
         }
 
@@ -269,17 +266,19 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
 
 
-    protected RdfStream getResourceTriples() {
-        return getResourceTriples(-1);
+    protected RdfStream getResourceTriples(final FedoraResource resource) {
+        return getResourceTriples(-1, resource);
     }
 
     /**
      * This method returns a stream of RDF triples associated with this target resource
      *
      * @param limit is the number of child resources returned in the response, -1 for all
+     * @param resource the fedora resource
      * @return {@link RdfStream}
      */
-    protected RdfStream getResourceTriples(final int limit) {
+    private RdfStream getResourceTriples(final int limit, final FedoraResource resource) {
+
         final PreferTag returnPreference;
 
         if (prefer != null && prefer.hasReturn()) {
@@ -298,49 +297,49 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         final List<Stream<Triple>> streams = new ArrayList<>();
 
         if (returnPreference.getValue().equals("minimal")) {
-            streams.add(getTriples(of(PROPERTIES, MINIMAL)).filter(tripleFilter));
+            streams.add(getTriples(resource, of(PROPERTIES, MINIMAL)).filter(tripleFilter));
 
             if (ldpPreferences.prefersServerManaged()) {
-                streams.add(getTriples(of(SERVER_MANAGED, MINIMAL)));
+                streams.add(getTriples(resource, of(SERVER_MANAGED, MINIMAL)));
             }
         } else {
-            streams.add(getTriples(PROPERTIES).filter(tripleFilter));
+            streams.add(getTriples(resource, PROPERTIES).filter(tripleFilter));
 
             // Additional server-managed triples about this resource
             if (ldpPreferences.prefersServerManaged()) {
-                streams.add(getTriples(SERVER_MANAGED));
+                streams.add(getTriples(resource, SERVER_MANAGED));
             }
 
             // containment triples about this resource
             if (ldpPreferences.prefersContainment()) {
                 if (limit == -1) {
-                    streams.add(getTriples(LDP_CONTAINMENT));
+                    streams.add(getTriples(resource, LDP_CONTAINMENT));
                 } else {
-                    streams.add(getTriples(LDP_CONTAINMENT).limit(limit));
+                    streams.add(getTriples(resource, LDP_CONTAINMENT).limit(limit));
                 }
             }
 
             // LDP container membership triples for this resource
             if (ldpPreferences.prefersMembership()) {
-                streams.add(getTriples(LDP_MEMBERSHIP));
+                streams.add(getTriples(resource, LDP_MEMBERSHIP));
             }
 
             // Include inbound references to this object
             if (ldpPreferences.prefersReferences()) {
-                streams.add(getTriples(INBOUND_REFERENCES));
+                streams.add(getTriples(resource, INBOUND_REFERENCES));
             }
 
             // Embed the children of this object
             if (ldpPreferences.prefersEmbed()) {
-                streams.add(getTriples(EMBED_RESOURCES));
+                streams.add(getTriples(resource, EMBED_RESOURCES));
             }
         }
 
         final RdfStream rdfStream = new DefaultRdfStream(
-                asNode(resource()), streams.stream().reduce(empty(), Stream::concat));
+                asNode(resource), streams.stream().reduce(empty(), Stream::concat));
 
         if (httpTripleUtil != null && ldpPreferences.prefersServerManaged()) {
-            return httpTripleUtil.addHttpComponentModelsForResourceToStream(rdfStream, resource(), uriInfo,
+            return httpTripleUtil.addHttpComponentModelsForResourceToStream(rdfStream, resource, uriInfo,
                     translator());
         }
 
@@ -351,12 +350,13 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * Get the binary content of a datastream
      *
      * @param rangeValue the range value
+     * @param resource the fedora resource
      * @return Binary blob
      * @throws IOException if io exception occurred
      */
-    protected Response getBinaryContent(final String rangeValue)
+    private Response getBinaryContent(final String rangeValue, final FedoraResource resource)
             throws IOException {
-            final FedoraBinary binary = (FedoraBinary)resource();
+            final FedoraBinary binary = (FedoraBinary)resource;
             final CacheControl cc = new CacheControl();
             cc.setMaxAge(0);
             cc.setMustRevalidate(true);
@@ -405,22 +405,14 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             // we set the content-type explicitly to avoid content-negotiation from getting in the way
             // getBinaryResourceMediaType will try to use the mime type on the resource, falling back on
             // 'application/octet-stream' if the mime type is syntactically invalid
-            return builder.type(getBinaryResourceMediaType().toString())
+            return builder.type(getBinaryResourceMediaType(resource).toString())
                     .cacheControl(cc)
                     .build();
 
         }
 
-    protected RdfStream getTriples(final Set<? extends TripleCategory> x) {
-        return getTriples(resource(), x);
-    }
-
     protected RdfStream getTriples(final FedoraResource resource, final Set<? extends TripleCategory> x) {
         return resource.getTriples(translator(), x);
-    }
-
-    protected RdfStream getTriples(final TripleCategory x) {
-        return getTriples(resource(), x);
     }
 
     protected RdfStream getTriples(final FedoraResource resource, final TripleCategory x) {
@@ -437,10 +429,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     }
 
     protected FedoraResource resource() {
-        if (resource == null) {
-            resource = getResourceFromPath(externalPath());
+        if (fedoraResource == null) {
+            fedoraResource = getResourceFromPath(externalPath());
         }
-        return resource;
+        return fedoraResource;
     }
 
     /**
@@ -537,18 +529,11 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     }
 
     /**
-     * Utility constructor using resource() function.
-     */
-    protected void addLinkAndOptionsHttpHeaders() {
-        addLinkAndOptionsHttpHeaders(resource());
-    }
-
-    /**
      * Add Link and Option headers
      *
      * @param resource the resource to generate headers for
      */
-    private void addLinkAndOptionsHttpHeaders(final FedoraResource resource) {
+    protected void addLinkAndOptionsHttpHeaders(final FedoraResource resource) {
         // Add Link headers
         addResourceLinkHeaders(resource);
 
@@ -664,7 +649,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             servletResponse.addHeader(LINK, "<" + LDP_NAMESPACE + "RDFSource>;rel=\"type\"");
         }
         if (httpHeaderInject != null) {
-            httpHeaderInject.addHttpHeaderToResponseStream(servletResponse, uriInfo, resource());
+            httpHeaderInject.addHttpHeaderToResponseStream(servletResponse, uriInfo, resource);
         }
 
         addLinkAndOptionsHttpHeaders(resource);
@@ -866,7 +851,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 prefer.getReturn().addResponseHeaders(servletResponse);
             }
             final RdfNamespacedStream rdfStream = new RdfNamespacedStream(
-                new DefaultRdfStream(asNode(resource()), getResourceTriples()),
+                new DefaultRdfStream(asNode(resource), getResourceTriples(resource)),
                 session().getFedoraSession().getNamespaces());
             return builder.entity(rdfStream).build();
         }
@@ -913,7 +898,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                                              final InputStream requestBodyStream,
                                              final MediaType contentType,
                                              final RdfStream resourceTriples) throws MalformedRdfException {
-        final Model inputModel = parseBodyAsModel(requestBodyStream, contentType);
+        final Model inputModel = parseBodyAsModel(requestBodyStream, contentType, resource);
 
         ensureValidMemberRelation(inputModel);
 
@@ -925,17 +910,18 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      *
      * @param requestBodyStream rdf request body
      * @param contentType content type of body
+     * @param resource the fedora resource
      * @return Model containing triples from request body
      * @throws MalformedRdfException in case rdf json cannot be parsed
      */
-    protected Model parseBodyAsModel(final InputStream requestBodyStream,
-            final MediaType contentType) throws MalformedRdfException {
+    private Model parseBodyAsModel(final InputStream requestBodyStream,
+            final MediaType contentType, final FedoraResource resource) throws MalformedRdfException {
         final Lang format = contentTypeToLang(contentType.toString());
 
         final Model inputModel;
         try {
             inputModel = createDefaultModel();
-            inputModel.read(requestBodyStream, getUri(resource()).toString(), format.getName().toUpperCase());
+            inputModel.read(requestBodyStream, getUri(resource).toString(), format.getName().toUpperCase());
             return inputModel;
         } catch (final RiotException e) {
             throw new BadRequestException("RDF was not parsable: " + e.getMessage(), e);
@@ -988,15 +974,15 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * This method returns a MediaType for a binary resource.
      * If the resource's media type is syntactically incorrect, it will
      * return 'application/octet-stream' as the media type.
-     *
+     * @param  resource the fedora resource
      * @return the media type of of a binary resource
      */
-    protected MediaType getBinaryResourceMediaType() {
+    protected MediaType getBinaryResourceMediaType(final FedoraResource resource) {
         try {
-            return MediaType.valueOf(((FedoraBinary) resource()).getMimeType());
+            return MediaType.valueOf(((FedoraBinary) resource).getMimeType());
         } catch (final IllegalArgumentException e) {
             LOGGER.warn("Syntactically incorrect MediaType encountered on resource {}: '{}'",
-                    resource().getPath(), ((FedoraBinary)resource()).getMimeType());
+                    resource.getPath(), ((FedoraBinary)resource).getMimeType());
             return MediaType.APPLICATION_OCTET_STREAM_TYPE;
         }
     }
