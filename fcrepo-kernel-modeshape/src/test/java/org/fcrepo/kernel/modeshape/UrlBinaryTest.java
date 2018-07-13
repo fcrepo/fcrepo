@@ -42,6 +42,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static java.util.Collections.singleton;
+
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
 import java.net.URI;
@@ -53,8 +54,10 @@ import javax.jcr.Session;
 import javax.jcr.Value;
 import javax.jcr.nodetype.NodeType;
 
+import org.fcrepo.kernel.api.exception.ExternalContentAccessException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.models.FedoraBinary;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -62,6 +65,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import com.github.tomakehurst.wiremock.http.Fault;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 
 /**
@@ -270,6 +274,22 @@ public class UrlBinaryTest {
 
         final String mimeType = testObj.getMimeType();
         assertEquals(mimeType, mimeType);
+    }
+
+    @Test(expected = ExternalContentAccessException.class)
+    public void testDisappearingRemoteUri() throws Exception {
+        final String remoteHost = "http://localhost:" + wireMockRule.port();
+        final String remoteUri = "/resource1";
+        stubFor(get(urlEqualTo(remoteUri))
+            .willReturn(aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER)));
+
+        mockProxyProperty();
+        when(proxyURLProperty.getString()).thenReturn(remoteHost + remoteUri);
+        when(mockURIValue.getString()).thenReturn(remoteHost + remoteUri);
+
+        when(mockContent.getPath()).thenReturn("/some-fake-path");
+
+        testObj.getContent();
     }
 
     private void mockProxyProperty() {
