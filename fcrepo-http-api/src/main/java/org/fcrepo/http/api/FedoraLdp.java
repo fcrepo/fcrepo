@@ -316,7 +316,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @param resource The fedora resource
      * @return A 302 Found response or 404 if no mementos.
      */
-    protected Response getMemento(final String datetimeHeader, final FedoraResource resource) {
+    private Response getMemento(final String datetimeHeader, final FedoraResource resource) {
         try {
             final Instant mementoDatetime = Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(datetimeHeader));
             final FedoraResource memento = resource.findMementoByDatetime(mementoDatetime);

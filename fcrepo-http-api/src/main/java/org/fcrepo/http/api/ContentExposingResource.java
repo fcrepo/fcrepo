@@ -31,14 +31,14 @@ import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static javax.ws.rs.core.MediaType.TEXT_HTML;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.PARTIAL_CONTENT;
-import static javax.ws.rs.core.Response.Status.REQUESTED_RANGE_NOT_SATISFIABLE;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.notAcceptable;
 import static javax.ws.rs.core.Response.ok;
 import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.PARTIAL_CONTENT;
+import static javax.ws.rs.core.Response.Status.REQUESTED_RANGE_NOT_SATISFIABLE;
 import static javax.ws.rs.core.Variant.mediaTypes;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
@@ -83,6 +83,9 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -91,8 +94,8 @@ import java.text.MessageFormat;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -116,9 +119,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Splitter;
 import org.apache.jena.atlas.RuntimeIOException;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
@@ -144,8 +144,8 @@ import org.fcrepo.kernel.api.exception.PreconditionException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
 import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
-import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
+import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -277,7 +277,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * @param resource the fedora resource
      * @return {@link RdfStream}
      */
-    protected RdfStream getResourceTriples(final int limit, final FedoraResource resource) {
+    private RdfStream getResourceTriples(final int limit, final FedoraResource resource) {
 
         final PreferTag returnPreference;
 
@@ -354,7 +354,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * @return Binary blob
      * @throws IOException if io exception occurred
      */
-    protected Response getBinaryContent(final String rangeValue, final FedoraResource resource)
+    private Response getBinaryContent(final String rangeValue, final FedoraResource resource)
             throws IOException {
             final FedoraBinary binary = (FedoraBinary)resource;
             final CacheControl cc = new CacheControl();
@@ -914,7 +914,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * @return Model containing triples from request body
      * @throws MalformedRdfException in case rdf json cannot be parsed
      */
-    protected Model parseBodyAsModel(final InputStream requestBodyStream,
+    private Model parseBodyAsModel(final InputStream requestBodyStream,
             final MediaType contentType, final FedoraResource resource) throws MalformedRdfException {
         final Lang format = contentTypeToLang(contentType.toString());
 

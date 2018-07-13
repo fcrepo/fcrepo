@@ -80,15 +80,11 @@ public class FedoraAcl extends ContentExposingResource {
 
     private static final Logger LOGGER = getLogger(FedoraAcl.class);
 
-    @Context
-    protected Request request;
-    @Context
-    protected HttpServletResponse servletResponse;
-    @Context
-    protected UriInfo uriInfo;
+    @Context protected Request request;
+    @Context protected HttpServletResponse servletResponse;
+    @Context protected UriInfo uriInfo;
 
-    @PathParam("path")
-    protected String externalPath;
+    @PathParam("path") protected String externalPath;
 
     /**
      * Default JAX-RS entry point
@@ -142,7 +138,7 @@ public class FedoraAcl extends ContentExposingResource {
      * @throws IOException if IO exception occurred
      */
     @PATCH
-    @Consumes( {contentTypeSPARQLUpdate})
+    @Consumes({ contentTypeSPARQLUpdate })
     @Timed
     public Response updateSparql(@ContentLocation final InputStream requestBodyStream)
         throws IOException, ItemNotFoundException {
@@ -206,14 +202,14 @@ public class FedoraAcl extends ContentExposingResource {
      *
      * @param rangeValue the range value
      * @return a binary or the triples for the specified node
-     * @throws IOException                    if IO exception occurred
+     * @throws IOException if IO exception occurred
      * @throws UnsupportedAlgorithmException  if unsupported digest algorithm occurred
      * @throws UnsupportedAccessTypeException if unsupported access-type occurred
      */
     @GET
-    @Produces( {TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
+    @Produces({ TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
                 N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
-                TURTLE_X, TEXT_HTML_WITH_CHARSET})
+                TURTLE_X, TEXT_HTML_WITH_CHARSET })
     public Response getResource(@HeaderParam("Range") final String rangeValue)
             throws IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException, ItemNotFoundException {
 

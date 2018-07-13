@@ -17,30 +17,6 @@
  */
 package org.fcrepo.http.commons.api.rdf;
 
-import static org.apache.jena.rdf.model.ResourceFactory.createResource;
-import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TIME_MAP;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_WEBAC_ACL;
-import static org.fcrepo.kernel.api.FedoraTypes.MEMENTO;
-import static org.fcrepo.kernel.api.FedoraTypes.MEMENTO_ORIGINAL;
-import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_DESCRIPTION;
-import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
-
-import javax.jcr.Node;
-import javax.jcr.Property;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.Workspace;
-import javax.jcr.version.Version;
-import javax.jcr.version.VersionHistory;
-import javax.jcr.version.VersionManager;
-import javax.ws.rs.core.UriBuilder;
-
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.FedoraSession;
@@ -63,6 +39,30 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+
+import javax.jcr.Node;
+import javax.jcr.Property;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.Workspace;
+import javax.jcr.version.Version;
+import javax.jcr.version.VersionHistory;
+import javax.jcr.version.VersionManager;
+import javax.ws.rs.core.UriBuilder;
+
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TIME_MAP;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_WEBAC_ACL;
+import static org.fcrepo.kernel.api.FedoraTypes.MEMENTO;
+import static org.fcrepo.kernel.api.FedoraTypes.MEMENTO_ORIGINAL;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_DESCRIPTION;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
 
 /**
  * @author cabeer
