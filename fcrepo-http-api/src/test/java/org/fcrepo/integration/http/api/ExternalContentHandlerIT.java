@@ -46,7 +46,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         method.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
         method.setEntity(new StringEntity("xyz"));
         final String external_location;
-        final String final_location = "proxy_resource";
+        final String final_location = getRandomUniqueId();
 
         // Make an external remote URI.
         try (final CloseableHttpResponse response = execute(method)) {
