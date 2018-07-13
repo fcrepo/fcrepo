@@ -26,6 +26,8 @@ import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
+import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -101,6 +103,14 @@ public class FedoraAclIT extends AbstractResourceIT {
             // verify the acl container for binary is translated to fcr:acl
             assertEquals(subjectUri + "/x/" + FCR_ACL, aclLocation);
         }
+
+        try (final CloseableDataset dataset = getDataset(new HttpGet(aclLocation))) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertTrue(graph.contains(ANY,
+                                      createURI(aclLocation),
+                                      createURI(RDF_NAMESPACE + "type"),
+                                      createURI(LDP_NAMESPACE + "RDFSource")));
+        }
     }
 
     @Test
@@ -173,4 +183,5 @@ public class FedoraAclIT extends AbstractResourceIT {
         assertEquals(NOT_FOUND.getStatusCode(), getStatus(getNotFound));
 
     }
+
 }

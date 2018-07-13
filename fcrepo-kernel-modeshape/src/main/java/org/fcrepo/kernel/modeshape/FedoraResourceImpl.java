@@ -127,7 +127,6 @@ import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.FedoraTimeMap;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
@@ -482,7 +481,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         final Node parentNode;
 
         try {
-            if (this instanceof FedoraBinary) {
+            if (this instanceof NonRdfSourceDescription) {
                 parentNode = getNode().getParent();
             } else {
                 parentNode = getNode();
