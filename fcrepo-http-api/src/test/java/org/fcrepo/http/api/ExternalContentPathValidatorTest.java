@@ -21,6 +21,7 @@ import static java.nio.file.StandardOpenOption.APPEND;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 
 import org.fcrepo.kernel.api.exception.ExternalMessageBodyException;
@@ -52,6 +53,7 @@ public class ExternalContentPathValidatorTest {
     @Test(expected = ExternalMessageBodyException.class)
     public void testValidateWithNoAllowList() throws Exception {
         validator.setAllowListPath(null);
+        validator.init();
 
         final String extPath = "file:///this/path/file.txt";
         validator.validate(extPath);
@@ -166,9 +168,17 @@ public class ExternalContentPathValidatorTest {
         validator.validate(null);
     }
 
+    @Test(expected = IOException.class)
+    public void testListFileDoesNotExist() throws Exception {
+        allowListFile.delete();
+
+        validator.init();
+    }
+
     private void addAllowedPath(final String allowed) throws Exception {
         try (BufferedWriter writer = Files.newBufferedWriter(allowListFile.toPath(), APPEND)) {
             writer.write(allowed + System.lineSeparator());
         }
+        validator.init();
     }
 }
