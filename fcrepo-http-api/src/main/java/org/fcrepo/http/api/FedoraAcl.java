@@ -18,6 +18,7 @@
 package org.fcrepo.http.api;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static org.apache.commons.lang3.StringUtils.isBlank;
@@ -31,7 +32,6 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_WEBAC_ACL;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -50,6 +50,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -59,6 +60,7 @@ import org.apache.commons.io.IOUtils;
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
+import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
@@ -95,14 +97,17 @@ public class FedoraAcl extends ContentExposingResource {
 
     /**
      * PUT to create FedoraWebacACL resource.
-     *
+     * @param requestContentType The content type of the resource body
+     * @param requestBodyStream  The request body as stream
      * @return the response for a request to create a Fedora WebAc acl
      * @throws ConstraintViolationException in case this action would violate a constraint on repository structure
      */
     @PUT
-    public Response createFedoraWebacAcl() throws ConstraintViolationException {
+    public Response createFedoraWebacAcl(@HeaderParam(CONTENT_TYPE) final MediaType requestContentType,
+                                         @ContentLocation final InputStream requestBodyStream)
+        throws ConstraintViolationException {
 
-        if (resource().hasType(FEDORA_WEBAC_ACL) || resource().isMemento()) {
+        if (resource().isAcl() || resource().isMemento()) {
             throw new BadRequestException("ACL resource creation is not allowed for resource " + resource().getPath());
         }
 
@@ -116,6 +121,21 @@ public class FedoraAcl extends ContentExposingResource {
 
             aclResource = resource().findOrCreateAcl();
             created = aclResource.isNew();
+
+            final MediaType contentType = requestContentType == null ? RDFMediaType.TURTLE_TYPE : requestContentType;
+            if (isRdfContentType(contentType.toString())) {
+
+                try (final RdfStream resourceTriples =
+                         created ? new DefaultRdfStream(asNode(aclResource)) : getResourceTriples(aclResource)) {
+                    replaceResourceWithStream(aclResource, requestBodyStream, contentType, resourceTriples);
+
+                } catch (final Exception e) {
+                    throw new RuntimeException(e);
+                }
+            } else {
+                throw new BadRequestException("Content-Type (" + requestContentType + ") is invalid. Try text/turtle " +
+                                              "or other RDF compatible type.");
+            }
             session.commit();
         } finally {
             lock.release();

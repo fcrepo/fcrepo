@@ -60,7 +60,7 @@ public class FedoraAclIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testCreateAcl() throws Exception {
+    public void testCreateAclWithoutBody() throws Exception {
         createObjectAndClose(id);
 
         final HttpPut put = new HttpPut(subjectUri + "/" + FCR_ACL);
@@ -85,6 +85,7 @@ public class FedoraAclIT extends AbstractResourceIT {
 
     private String createACL() throws IOException {
         final HttpPut put = new HttpPut(subjectUri + "/" + FCR_ACL);
+
         try (final CloseableHttpResponse response = execute(put)) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
             return response.getFirstHeader("Location").getValue();
@@ -184,4 +185,31 @@ public class FedoraAclIT extends AbstractResourceIT {
 
     }
 
+    @Test
+    public void testCreateAclWithBody() throws Exception {
+        createObjectAndClose(id);
+
+        final HttpPut put = new HttpPut(subjectUri + "/" + FCR_ACL);
+        final String aclBody = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
+                               "@prefix foaf: <http://xmlns.com/foaf/0.1/> .\n" +
+                               "@prefix ldp: <http://www.w3.org/ns/ldp#> .\n" +
+                               "\n" +
+                               "<#authorization_1> a acl:Authorization ;\n" +
+                               "    acl:agentClass foaf:Agent ;\n" +
+                               "    acl:accessToClass ldp:Resource ;\n" +
+                               "    acl:default <https://example.org/root/> ;\n" +
+                               "    acl:mode acl:Read .";
+
+        put.setEntity(new StringEntity(aclBody));
+        put.setHeader("Content-Type", "text/turtle");
+
+        final String aclLocation;
+        try (final CloseableHttpResponse response = execute(put)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            aclLocation = response.getFirstHeader("Location").getValue();
+            // verify the acl container is translated to fcr:acl
+            assertEquals(subjectUri + "/" + FCR_ACL, aclLocation);
+
+        }
+    }
 }
