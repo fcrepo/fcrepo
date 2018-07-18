@@ -50,7 +50,7 @@ public class ExternalContentPathValidatorTest {
         allowListFile = tmpDir.newFile();
 
         validator = new ExternalContentPathValidator();
-        validator.setAllowListPath(allowListFile.getAbsolutePath());
+        validator.setConfigPath(allowListFile.getAbsolutePath());
     }
 
     @After
@@ -60,7 +60,7 @@ public class ExternalContentPathValidatorTest {
 
     @Test(expected = ExternalMessageBodyException.class)
     public void testValidateWithNoAllowList() throws Exception {
-        validator.setAllowListPath(null);
+        validator.setConfigPath(null);
         validator.init();
 
         final String extPath = "file:///this/path/file.txt";

@@ -58,7 +58,7 @@ public class ExternalContentPathValidator {
 
     private final Pattern RELATIVE_MOD_PATTERN = Pattern.compile(".*(^|/)\\.\\.($|/).*");
 
-    private String allowedListPath;
+    private String configPath;
 
     private List<String> allowedList;
 
@@ -112,7 +112,7 @@ public class ExternalContentPathValidator {
      * Initialize the allow list
      */
     public void init() throws IOException {
-        if (isEmpty(allowedListPath)) {
+        if (isEmpty(configPath)) {
             return;
         }
 
@@ -138,12 +138,12 @@ public class ExternalContentPathValidator {
      * @throws IOException
      */
     private synchronized void loadAllowedPaths() throws IOException {
-        try (final Stream<String> stream = Files.lines(Paths.get(allowedListPath))) {
+        try (final Stream<String> stream = Files.lines(Paths.get(configPath))) {
             allowedList = stream.map(line -> line.trim().toLowerCase())
                 .filter(line -> {
                     if (line.contains("../") || !SCHEME_PATTERN.matcher(line).matches()) {
                         LOGGER.error("Invalid path {} specified in external path configuration {}",
-                                line, allowedListPath);
+                                line, configPath);
                         return false;
                     }
                     return true;
@@ -159,9 +159,9 @@ public class ExternalContentPathValidator {
             return;
         }
 
-        final Path path = Paths.get(allowedListPath);
+        final Path path = Paths.get(configPath);
         if (!path.toFile().exists()) {
-            LOGGER.debug("Allow list configuration {} does not exist, disabling monitoring", allowedListPath);
+            LOGGER.debug("Allow list configuration {} does not exist, disabling monitoring", configPath);
             return;
         }
         final Path directoryPath = path.getParent();
@@ -232,10 +232,10 @@ public class ExternalContentPathValidator {
     /**
      * Set the file path for the allowed external path configuration
      *
-     * @param allowListPath
+     * @param configPath
      */
-    public void setAllowListPath(final String allowListPath) {
-        this.allowedListPath = allowListPath;
+    public void setConfigPath(final String configPath) {
+        this.configPath = configPath;
     }
 
     /**
