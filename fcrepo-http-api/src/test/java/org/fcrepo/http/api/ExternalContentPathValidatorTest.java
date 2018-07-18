@@ -18,14 +18,17 @@
 package org.fcrepo.http.api;
 
 import static java.nio.file.StandardOpenOption.APPEND;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-
 import org.fcrepo.kernel.api.exception.ExternalMessageBodyException;
+import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -48,6 +51,11 @@ public class ExternalContentPathValidatorTest {
 
         validator = new ExternalContentPathValidator();
         validator.setAllowListPath(allowListFile.getAbsolutePath());
+    }
+
+    @After
+    public void after() {
+        validator.shutdown();
     }
 
     @Test(expected = ExternalMessageBodyException.class)
@@ -197,6 +205,51 @@ public class ExternalContentPathValidatorTest {
         addAllowedPath(goodPath);
 
         validator.validate(extPath);
+    }
+
+    /*
+     * Test ignored because it takes around 10+ seconds to poll for events on MacOS:
+     * https://bugs.openjdk.java.net/browse/JDK-7133447 Can be enabled for one off testing
+     */
+    @Ignore("Test is ignored due to file event timing")
+    @Test
+    public void testDetectModification() throws Exception {
+        validator.setMonitorForChanges(true);
+
+        addAllowedPath("file:///different/path/");
+
+        final String path = "file:///this/path/will/be/good/file";
+        try {
+            validator.validate(path);
+            fail();
+        } catch (final ExternalMessageBodyException e) {
+            // Expected
+        }
+
+        // Wait to ensure that the watch service is watching...
+        Thread.sleep(5000);
+
+        // Add a new allowed path
+        try (BufferedWriter writer = Files.newBufferedWriter(allowListFile.toPath(), APPEND)) {
+            writer.write("file:///this/path/" + System.lineSeparator());
+        }
+
+        // Check that the new allowed path was detected
+        boolean pass = false;
+        // Polling to see if change occurred for 20 seconds
+        final long endTimes = System.nanoTime() + 20000000000l;
+        while (System.nanoTime() < endTimes) {
+            Thread.sleep(50);
+            try {
+                validator.validate(path);
+                pass = true;
+                break;
+            } catch (final ExternalMessageBodyException e) {
+                // Still not passing, retry
+            }
+        }
+
+        assertTrue("Validator did not update with new path", pass);
     }
 
     private void addAllowedPath(final String allowed) throws Exception {
