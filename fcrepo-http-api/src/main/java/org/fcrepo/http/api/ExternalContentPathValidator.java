@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -45,6 +46,8 @@ public class ExternalContentPathValidator {
     private static final Logger LOGGER = getLogger(ExternalContentPathValidator.class);
 
     private final Set<String> ALLOWED_SCHEMES = new HashSet<>(Arrays.asList("file", "http", "https"));
+
+    private final Pattern SCHEME_PATTERN = Pattern.compile("^(http|https|file):///?.*");
 
     private String allowedListPath;
 
@@ -66,13 +69,14 @@ public class ExternalContentPathValidator {
             throw new ExternalMessageBodyException("External content path was empty");
         }
 
-        if (extPath.contains("../")) {
+        final String path = extPath.toLowerCase();
+        if (path.contains("../")) {
             throw new ExternalMessageBodyException("Path was not absolute: " + extPath);
         }
 
         final URI uri;
         try {
-            uri = new URI(extPath);
+            uri = new URI(path);
         } catch (final URISyntaxException e) {
             throw new ExternalMessageBodyException("Path was not a valid URI: " + extPath);
         }
@@ -83,7 +87,7 @@ public class ExternalContentPathValidator {
             throw new ExternalMessageBodyException("Path did not provide an accept scheme: " + extPath);
         }
 
-        if (allowedList.stream().anyMatch(allowed -> extPath.startsWith(allowed))) {
+        if (allowedList.stream().anyMatch(allowed -> path.startsWith(allowed))) {
             return;
         }
         throw new ExternalMessageBodyException("Path did not match any allowed external content paths: " + extPath);
@@ -101,21 +105,11 @@ public class ExternalContentPathValidator {
             return;
         }
         try (final Stream<String> stream = Files.lines(Paths.get(allowedListPath))) {
-            allowedList = stream.map(line -> line.trim())
+            allowedList = stream.map(line -> line.trim().toLowerCase())
                 .filter(line -> {
-                    if (line.contains("../")) {
-                        return false;
-                    }
-                    final URI uri;
-                    try {
-                        uri = new URI(line);
-                    } catch (final URISyntaxException e) {
-                        LOGGER.error("Invalid URL {} provided in allowed external path configuration", line);
-                        return false;
-                    }
-                    if (!uri.isAbsolute() || !ALLOWED_SCHEMES.contains(uri.getScheme())) {
-                        LOGGER.error("Invalid URL or scheme {} provided in allowed external path configuration",
-                                line);
+                    if (line.contains("../") || !SCHEME_PATTERN.matcher(line).matches()) {
+                        LOGGER.error("Invalid path {} specified in external path configuration {}",
+                                line, allowedListPath);
                         return false;
                     }
                     return true;

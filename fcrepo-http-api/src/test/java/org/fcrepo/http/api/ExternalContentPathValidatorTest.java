@@ -71,7 +71,7 @@ public class ExternalContentPathValidatorTest {
 
     @Test
     public void testValidHttpUri() throws Exception {
-        final String goodPath = "http:///example.com/";
+        final String goodPath = "http://example.com/";
         final String extPath = goodPath + "file.txt";
 
         addAllowedPath(goodPath);
@@ -102,7 +102,7 @@ public class ExternalContentPathValidatorTest {
 
     @Test
     public void testMultipleSchemes() throws Exception {
-        final String httpPath = "http:///example.com/";
+        final String httpPath = "http://example.com/";
         final String filePath = "file:///this/path/is/good/";
         final String extPath = filePath + "file.txt";
 
@@ -124,8 +124,8 @@ public class ExternalContentPathValidatorTest {
 
     @Test(expected = ExternalMessageBodyException.class)
     public void testInvalidHttpUri() throws Exception {
-        final String goodPath = "http:///good.example.com/";
-        final String extPath = "http:///bad.example.com/file.txt";
+        final String goodPath = "http://good.example.com/";
+        final String extPath = "http://bad.example.com/file.txt";
 
         addAllowedPath(goodPath);
 
@@ -173,6 +173,30 @@ public class ExternalContentPathValidatorTest {
         allowListFile.delete();
 
         validator.init();
+    }
+
+    @Test
+    public void testAllowAny() throws Exception {
+        addAllowedPath("file:///");
+        addAllowedPath("http://");
+        addAllowedPath("https://");
+
+        final String path1 = "file:///this/path/is/good/file";
+        validator.validate(path1);
+        final String path2 = "http://example.com/file";
+        validator.validate(path2);
+        final String path3 = "https://example.com/file";
+        validator.validate(path3);
+    }
+
+    @Test
+    public void testCaseInsensitive() throws Exception {
+        final String goodPath = "FILE:///this/path/";
+        final String extPath = "file:///this/path/file.txt";
+
+        addAllowedPath(goodPath);
+
+        validator.validate(extPath);
     }
 
     private void addAllowedPath(final String allowed) throws Exception {
