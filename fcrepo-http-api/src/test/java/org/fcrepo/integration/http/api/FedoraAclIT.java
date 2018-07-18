@@ -121,7 +121,7 @@ public class FedoraAclIT extends AbstractResourceIT {
         final HttpPatch patch = new HttpPatch(aclURI);
         patch.addHeader(CONTENT_TYPE, "application/sparql-update");
         patch.setEntity(new StringEntity("PREFIX acl: <http://www.w3.org/ns/auth/acl#> " +
-                                         "INSERT { <#writeAccess> acl:mode acl:write . } WHERE { }"));
+                                         "INSERT { <#writeAccess> acl:mode acl:Write . } WHERE { }"));
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(patch));
 
         //verify the patch worked
@@ -130,7 +130,7 @@ public class FedoraAclIT extends AbstractResourceIT {
             assertTrue(graph.contains(ANY,
                                       createURI(aclURI + "#writeAccess"),
                                       createURI("http://www.w3.org/ns/auth/acl#mode"),
-                                      createURI("http://www.w3.org/ns/auth/acl#write")));
+                                      createURI("http://www.w3.org/ns/auth/acl#Write")));
         }
 
     }
@@ -194,10 +194,7 @@ public class FedoraAclIT extends AbstractResourceIT {
                                "@prefix foaf: <http://xmlns.com/foaf/0.1/> .\n" +
                                "@prefix ldp: <http://www.w3.org/ns/ldp#> .\n" +
                                "\n" +
-                               "<#authorization_1> a acl:Authorization ;\n" +
-                               "    acl:agentClass foaf:Agent ;\n" +
-                               "    acl:accessToClass ldp:Resource ;\n" +
-                               "    acl:default <https://example.org/root/> ;\n" +
+                               "<#readAccess> a acl:Authorization ;\n" +
                                "    acl:mode acl:Read .";
 
         put.setEntity(new StringEntity(aclBody));
@@ -211,5 +208,15 @@ public class FedoraAclIT extends AbstractResourceIT {
             assertEquals(subjectUri + "/" + FCR_ACL, aclLocation);
 
         }
+
+        //verify the put worked
+        try (final CloseableDataset dataset = getDataset(new HttpGet(aclLocation))) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertTrue(graph.contains(ANY,
+                                      createURI(aclLocation + "#readAccess"),
+                                      createURI("http://www.w3.org/ns/auth/acl#mode"),
+                                      createURI("http://www.w3.org/ns/auth/acl#Read")));
+        }
+
     }
 }
