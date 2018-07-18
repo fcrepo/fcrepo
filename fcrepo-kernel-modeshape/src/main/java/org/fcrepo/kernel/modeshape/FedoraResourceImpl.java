@@ -913,12 +913,12 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                 .map(x -> contextMap.get(x).apply(this).apply(idTranslator).apply(contexts.contains(MINIMAL)))
                 .reduce(empty(), Stream::concat);
 
-        // if a memento, convert object references from referential integrity ignoring internal URL back to
-        // the original external URL.
+        // if a memento, convert subjects to original resource and object references from referential integrity
+        // ignoring internal URL back the original external URL.
         if (isMemento()) {
             final IdentifierConverter<Resource, FedoraResource> internalIdTranslator
                     = new InternalIdentifierTranslator(getSession());
-            triples = triples.map(convertInternalResource(idTranslator, internalIdTranslator));
+            triples = triples.map(convertMementoReferences(idTranslator, internalIdTranslator));
         }
 
         return new DefaultRdfStream(idTranslator.reverse().convert(this).asNode(), triples);
@@ -1105,29 +1105,36 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
 
     /**
-     * Returns a function that converts the object of a triple from an undereferenceable internal identifier
-     * back to it's original external resource path.
-     * If the object is not an internal identifier, the original triple is returned.
+     * Returns a function that converts the subject to the original URI and the object of a triple from an
+     * undereferenceable internal identifier back to it's original external resource path.
+     * If the object is not an internal identifier, the object is returned.
      *
      * @param translator a converter to get the external resource identifier from a path
      * @param internalTranslator a converter to get the path from an internal identifier
      * @return a function to convert triples
      */
-    protected static Function<Triple, Triple> convertInternalResource(
+     protected static Function<Triple, Triple> convertMementoReferences(
             final IdentifierConverter<Resource, FedoraResource> translator,
             final IdentifierConverter<Resource, FedoraResource> internalTranslator) {
 
-        return t -> {
-            if (t.getObject().isURI()) {
-                final Resource object = createResource(t.getObject().getURI());
-                if (internalTranslator.inDomain(object)) {
-                    final FedoraResource objResc = internalTranslator.convert(object);
-                    final Resource newObject = translator.reverse().convert(objResc);
-                    return new Triple(t.getSubject(), t.getPredicate(), newObject.asNode());
-                }
-            }
-            return t;
-        };
+         return t -> {
+             final Resource subject = createResource(t.getSubject().getURI());
+             final FedoraResource subjResc = translator.convert(subject);
+             final org.apache.jena.graph.Node subjectNode =
+                 translator.reverse().convert(subjResc.getOriginalResource()).asNode();
+
+             org.apache.jena.graph.Node objectNode = t.getObject();
+             if (t.getObject().isURI()) {
+                 final Resource object = createResource(t.getObject().getURI());
+                 if (internalTranslator.inDomain(object)) {
+                     final FedoraResource objResc = internalTranslator.convert(object);
+                     final Resource newObject = translator.reverse().convert(objResc);
+                     objectNode = newObject.asNode();
+                 }
+             }
+
+             return new Triple(subjectNode, t.getPredicate(), objectNode);
+         };
     }
 
     private static Collection<IllegalArgumentException> validateUpdateRequest(final UpdateRequest request) {

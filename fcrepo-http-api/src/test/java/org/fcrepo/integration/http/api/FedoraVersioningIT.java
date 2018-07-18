@@ -522,13 +522,30 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                     ANY, createURI("http://pcdm.org/models#hasMember"), createURI(resource)));
         }
 
-        // Ensure that the resource reference is still in memento
         try (final CloseableHttpResponse getResponse1 = execute(new HttpGet(mementoUri));
                 final CloseableDataset dataset = getDataset(getResponse1);) {
+
             final DatasetGraph graph = dataset.asDatasetGraph();
+
+            // Ensure that the resource reference is still in memento
             assertTrue("Expected resource NOT found: " + graph, graph.contains(ANY,
                     ANY, createURI("http://pcdm.org/models#hasMember"), createURI(resource)));
+
+            // Ensure that the subject of the memento is the original reosurce
+            assertTrue("Subjects should be the original resource, not the memento: " + graph,
+                       !graph.contains(ANY,
+                                       createURI(
+                                           mementoUri),
+                                       ANY,
+                                       ANY));
+
         }
+
+        try (final CloseableHttpResponse getResponse1 = execute(new HttpGet(mementoUri));
+             final CloseableDataset dataset = getDataset(getResponse1);) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+        }
+
     }
 
     @Test
