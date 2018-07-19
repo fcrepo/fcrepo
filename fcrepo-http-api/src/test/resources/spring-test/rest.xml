@@ -24,7 +24,7 @@
   <!-- External content configuration -->
   <bean name="externalContentPathValidator" class="org.fcrepo.http.api.ExternalContentPathValidator"
       init-method="init">
-    <property name="configPath" value="src/test/resources/allowed_external_paths.txt" />
+    <property name="configPath" value="${fcrepo.external.content.allowed:src/test/resources/allowed_external_paths.txt}" />
     <property name="monitorForChanges" value="false" />
   </bean>
 
