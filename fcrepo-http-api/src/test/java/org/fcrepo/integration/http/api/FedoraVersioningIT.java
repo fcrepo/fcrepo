@@ -335,7 +335,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         try (final CloseableDataset dataset = getDataset(httpGet)) {
             final DatasetGraph results = dataset.asDatasetGraph();
 
-            final Node mementoSubject = createURI(mementoUri);
+            final Node mementoSubject = createURI(subjectUri);
 
             assertTrue("Memento created without datetime must retain original state",
                     results.contains(ANY, mementoSubject, TEST_PROPERTY_NODE, createLiteral("foo")));
@@ -350,7 +350,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         final String mementoUri = createContainerMementoWithBody(subjectUri, MEMENTO_DATETIME);
         assertMementoUri(mementoUri, subjectUri);
-        final Node mementoSubject = createURI(mementoUri);
+        final Node mementoSubject = createURI(subjectUri);
         final Node subject = createURI(subjectUri);
 
         // Verify that the memento has the new property added to it
@@ -397,7 +397,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                     CONFLICT.getStatusCode(), getStatus(response));
         }
 
-        final Node mementoSubject = createURI(mementoUri);
+        final Node mementoSubject = createURI(subjectUri);
         // Verify first memento content persists
         try (final CloseableDataset dataset = getDataset(new HttpGet(mementoUri))) {
             final DatasetGraph results = dataset.asDatasetGraph();
