@@ -74,8 +74,8 @@ public class ExternalContentPathValidator {
      * Validates that an external path is valid. The path must be an HTTP or file URI within the allow list of paths,
      * be absolute, and contain no relative modifier.
      *
-     * @param extPath
-     * @throws ExternalMessageBodyException
+     * @param extPath external binary path to validate
+     * @throws ExternalMessageBodyException thrown if the path is invalid.
      */
     public void validate(final String extPath) throws ExternalMessageBodyException {
         if (allowedList == null || allowedList.size() == 0) {
@@ -101,7 +101,7 @@ public class ExternalContentPathValidator {
             throw new ExternalMessageBodyException("Path was not absolute: " + extPath);
         }
         if (!ALLOWED_SCHEMES.contains(uri.getScheme())) {
-            throw new ExternalMessageBodyException("Path did not provide an accept scheme: " + extPath);
+            throw new ExternalMessageBodyException("Path did not provide an allowed scheme: " + extPath);
         }
 
         if (allowedList.stream().anyMatch(allowed -> path.startsWith(allowed))) {
@@ -143,9 +143,9 @@ public class ExternalContentPathValidator {
     }
 
     /**
-     * Loads the allowed list
+     * Loads the allowed list.
      *
-     * @throws IOException
+     * @throws IOException thrown if the allowed list configuration file cannot be read.
      */
     private synchronized void loadAllowedPaths() throws IOException {
         try (final Stream<String> stream = Files.lines(Paths.get(configPath))) {
@@ -243,25 +243,16 @@ public class ExternalContentPathValidator {
     /**
      * Set the file path for the allowed external path configuration
      *
-     * @param configPath
+     * @param configPath file path for configuration
      */
     public void setConfigPath(final String configPath) {
         this.configPath = configPath;
     }
 
     /**
-     * Get the file path for the configuration file
-     *
-     * @return
-     */
-    public String getConfigPath() {
-        return configPath;
-    }
-
-    /**
      * Set whether to monitor the configuration file for changes
      *
-     * @param monitorForChanges
+     * @param monitorForChanges flag controlling if to enable configuration monitoring
      */
     public void setMonitorForChanges(final boolean monitorForChanges) {
         this.monitorForChanges = monitorForChanges;

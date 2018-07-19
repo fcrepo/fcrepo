@@ -18,11 +18,13 @@
 package org.fcrepo.http.api;
 
 import static org.fcrepo.kernel.api.RdfLexicon.EXTERNAL_CONTENT;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.fcrepo.kernel.api.exception.ExternalMessageBodyException;
+import org.slf4j.Logger;
 
 /**
  * Constructs ExternalContentHandler objects from link headers
@@ -30,6 +32,8 @@ import org.fcrepo.kernel.api.exception.ExternalMessageBodyException;
  * @author bbpennel
  */
 public class ExternalContentHandlerFactory {
+
+    private static final Logger LOGGER = getLogger(ExternalContentHandlerFactory.class);
 
     private ExternalContentPathValidator validator;
 
@@ -59,7 +63,12 @@ public class ExternalContentHandlerFactory {
             final String link = externalContentLinks.get(0);
             final String uri = getUriString(link);
             // Validate that the URI is valid according to allowed set of external uris
-            validator.validate(uri);
+            try {
+                validator.validate(uri);
+            } catch (final ExternalMessageBodyException e) {
+                LOGGER.warn("Rejected invalid external path {}", uri);
+                throw e;
+            }
 
             return new ExternalContentHandler(link);
         }
