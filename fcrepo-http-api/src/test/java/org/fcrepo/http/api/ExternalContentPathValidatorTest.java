@@ -207,6 +207,28 @@ public class ExternalContentPathValidatorTest {
         validator.validate(extPath);
     }
 
+    @Test
+    public void testFileSlashes() throws Exception {
+        addAllowedPath("file:/one/slash/");
+        addAllowedPath("file://two/slash/");
+        addAllowedPath("file:///three/slash/");
+        addAllowedPath("file:////toomany/slash/");
+
+        validator.validate("file:/one/slash/file");
+        validator.validate("file://one/slash/file");
+        validator.validate("file:///one/slash/file");
+
+        validator.validate("file:/two/slash/file");
+        validator.validate("file://two/slash/file");
+        validator.validate("file:///two/slash/file");
+
+        validator.validate("file:/three/slash/file");
+        validator.validate("file://three/slash/file");
+        validator.validate("file:///three/slash/file");
+
+        validator.validate("file:////toomany/slash/file");
+    }
+
     /*
      * Test ignored because it takes around 10+ seconds to poll for events on MacOS:
      * https://bugs.openjdk.java.net/browse/JDK-7133447 Can be enabled for one off testing

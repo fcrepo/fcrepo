@@ -203,7 +203,7 @@ public class FedoraVersioning extends ContentExposingResource {
                                 binaryResource, mementoInstant, storagePolicyDecisionPoint);
                     } else {
                         final List<String> links = unpackLinks(rawLinks);
-                        final ExternalContentHandler extContent = ExternalContentHandler.createFromLinks(links);
+                        final ExternalContentHandler extContent = extContentHandlerFactory.createFromLinks(links);
 
                         memento = createBinaryMementoFromRequest(binaryResource, mementoInstant,
                                 requestBodyStream, extContent, digest);

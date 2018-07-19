@@ -206,6 +206,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     @Inject
     protected  PathLockManager lockManager;
 
+    @Inject
+    protected ExternalContentHandlerFactory extContentHandlerFactory;
+
     private static final Predicate<Triple> IS_MANAGED_TYPE = t -> t.getPredicate().equals(type.asNode()) &&
             isManagedNamespace.test(t.getObject().getNameSpace());
     private static final Predicate<Triple> IS_MANAGED_TRIPLE = IS_MANAGED_TYPE

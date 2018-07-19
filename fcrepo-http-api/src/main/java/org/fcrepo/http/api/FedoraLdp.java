@@ -419,7 +419,7 @@ public class FedoraLdp extends ContentExposingResource {
         try {
 
             final Collection<String> checksums = parseDigestHeader(digest);
-            final ExternalContentHandler extContent = ExternalContentHandler.createFromLinks(links);
+            final ExternalContentHandler extContent = extContentHandlerFactory.createFromLinks(links);
 
             final MediaType contentType =  getSimpleContentType(
                     extContent != null ? extContent.getContentType() : requestContentType);
@@ -633,7 +633,7 @@ public class FedoraLdp extends ContentExposingResource {
         final String interactionModel = checkInteractionModel(links);
 
         // If request is an external binary, verify link header before proceeding
-        final ExternalContentHandler extContent = ExternalContentHandler.createFromLinks(links);
+        final ExternalContentHandler extContent = extContentHandlerFactory.createFromLinks(links);
 
         if (!(resource() instanceof Container)) {
             throw new ClientErrorException("Object cannot have child nodes", CONFLICT);

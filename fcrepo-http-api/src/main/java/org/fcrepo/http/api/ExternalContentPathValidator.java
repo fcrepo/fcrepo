@@ -54,9 +54,11 @@ public class ExternalContentPathValidator {
 
     private final Set<String> ALLOWED_SCHEMES = new HashSet<>(Arrays.asList("file", "http", "https"));
 
-    private final Pattern SCHEME_PATTERN = Pattern.compile("^(http|https|file):///?.*");
+    private final Pattern SCHEME_PATTERN = Pattern.compile("^(http|https|file):/.*");
 
     private final Pattern RELATIVE_MOD_PATTERN = Pattern.compile(".*(^|/)\\.\\.($|/).*");
+
+    private final Pattern NORMALIZE_FILE_URI = Pattern.compile("^file:/{2,3}");
 
     private String configPath;
 
@@ -84,7 +86,7 @@ public class ExternalContentPathValidator {
             throw new ExternalMessageBodyException("External content path was empty");
         }
 
-        final String path = extPath.toLowerCase();
+        final String path = normalizePath(extPath.toLowerCase());
         if (RELATIVE_MOD_PATTERN.matcher(path).matches()) {
             throw new ExternalMessageBodyException("Path was not absolute: " + extPath);
         }
@@ -106,6 +108,14 @@ public class ExternalContentPathValidator {
             return;
         }
         throw new ExternalMessageBodyException("Path did not match any allowed external content paths: " + extPath);
+    }
+
+    private String normalizePath(final String path) {
+        // file uris can have between 1 and 3 slashes depending on if the authority is present
+        if (path.startsWith("file://")) {
+            return NORMALIZE_FILE_URI.matcher(path).replaceFirst("file:/");
+        }
+        return path;
     }
 
     /**
@@ -139,9 +149,10 @@ public class ExternalContentPathValidator {
      */
     private synchronized void loadAllowedPaths() throws IOException {
         try (final Stream<String> stream = Files.lines(Paths.get(configPath))) {
-            allowedList = stream.map(line -> line.trim().toLowerCase())
+            allowedList = stream.map(line -> normalizePath(line.trim().toLowerCase()))
                 .filter(line -> {
-                    if (line.contains("../") || !SCHEME_PATTERN.matcher(line).matches()) {
+                        if (RELATIVE_MOD_PATTERN.matcher(line).matches()
+                            || !SCHEME_PATTERN.matcher(line).matches()) {
                         LOGGER.error("Invalid path {} specified in external path configuration {}",
                                 line, configPath);
                         return false;
@@ -236,6 +247,15 @@ public class ExternalContentPathValidator {
      */
     public void setConfigPath(final String configPath) {
         this.configPath = configPath;
+    }
+
+    /**
+     * Get the file path for the configuration file
+     *
+     * @return
+     */
+    public String getConfigPath() {
+        return configPath;
     }
 
     /**

@@ -18,7 +18,6 @@
 package org.fcrepo.http.api;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
-import static org.fcrepo.kernel.api.RdfLexicon.EXTERNAL_CONTENT;
 import static org.fcrepo.kernel.api.FedoraExternalContent.COPY;
 import static org.fcrepo.kernel.api.FedoraExternalContent.REDIRECT;
 import static org.fcrepo.kernel.api.FedoraExternalContent.PROXY;
@@ -39,10 +38,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-
 import org.slf4j.Logger;
 
 /**
@@ -77,7 +73,7 @@ public class ExternalContentHandler {
      *
      *  @param linkHeader actual link header from request
      */
-    public ExternalContentHandler(final String linkHeader) {
+    protected ExternalContentHandler(final String linkHeader) {
         // if it parses, then we're mostly good to go.
         link = parseLinkHeader(linkHeader);
 
@@ -134,33 +130,6 @@ public class ExternalContentHandler {
      */
     public boolean isProxy() {
         return handling != null ? handling.equals(PROXY) : false;
-    }
-
-    /**
-     * Looks for ExternalContent link header and if it finds one it will return a new
-     * ExternalContentHandler object based on the found Link header.
-     *
-     * @param links - links from the request header
-     * @return External Content Handler Object if Link header found, else null
-     */
-    public static ExternalContentHandler createFromLinks(final List<String> links) {
-
-        if (links == null) {
-            return null;
-        }
-
-        final List<String> externalContentLinks = links.stream()
-                .filter(x -> x.contains(EXTERNAL_CONTENT.toString()))
-                .collect(Collectors.toList());
-
-        if (externalContentLinks.size() > 1) {
-            // got a problem, you can only have one ExternalContent links
-            throw new ExternalMessageBodyException("More then one External Content Link header in request");
-        } else if (externalContentLinks.size() == 1) {
-            return new ExternalContentHandler(externalContentLinks.get(0));
-        }
-
-        return null;
     }
 
     /**
