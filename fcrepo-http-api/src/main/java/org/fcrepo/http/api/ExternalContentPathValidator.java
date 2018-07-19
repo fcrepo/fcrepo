@@ -22,6 +22,7 @@ import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -36,6 +37,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -151,11 +153,22 @@ public class ExternalContentPathValidator {
         try (final Stream<String> stream = Files.lines(Paths.get(configPath))) {
             allowedList = stream.map(line -> normalizePath(line.trim().toLowerCase()))
                 .filter(line -> {
-                        if (RELATIVE_MOD_PATTERN.matcher(line).matches()
-                            || !SCHEME_PATTERN.matcher(line).matches()) {
+                    final Matcher schemeMatcher = SCHEME_PATTERN.matcher(line);
+                    final boolean schemeMatches = schemeMatcher.matches();
+                    if (!schemeMatches || RELATIVE_MOD_PATTERN.matcher(line).matches()) {
                         LOGGER.error("Invalid path {} specified in external path configuration {}",
                                 line, configPath);
                         return false;
+                    }
+                    if (schemeMatches && "file".equals(schemeMatcher.group(1))) {
+                        // If a file uri ends with / it must be a directory, otherwise it must be a file.
+                        final File allowing = new File(URI.create(line).getPath());
+                        if ((line.endsWith("/") && !allowing.isDirectory())
+                                || (!line.endsWith("/") && !allowing.isFile())) {
+                            LOGGER.error("Invalid path {} in configuration {}, directories must end with a '/'",
+                                    line, configPath);
+                            return false;
+                        }
                     }
                     return true;
                 }).collect(Collectors.toList());

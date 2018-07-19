@@ -43,6 +43,10 @@ public class ExternalContentPathValidatorTest {
     @Rule
     public TemporaryFolder tmpDir = new TemporaryFolder();
 
+    private File dataDir;
+
+    private String dataUri;
+
     private File allowListFile;
 
     @Before
@@ -51,6 +55,9 @@ public class ExternalContentPathValidatorTest {
 
         validator = new ExternalContentPathValidator();
         validator.setConfigPath(allowListFile.getAbsolutePath());
+
+        dataDir = tmpDir.newFolder();
+        dataUri = dataDir.toURI().toString();
     }
 
     @After
@@ -69,10 +76,9 @@ public class ExternalContentPathValidatorTest {
 
     @Test
     public void testValidFileUri() throws Exception {
-        final String goodPath = "file:///this/path/is/good/";
-        final String extPath = goodPath + "file.txt";
+        final String extPath = dataUri + "file.txt";
 
-        addAllowedPath(goodPath);
+        addAllowedPath(dataUri);
 
         validator.validate(extPath);
     }
@@ -89,7 +95,8 @@ public class ExternalContentPathValidatorTest {
 
     @Test
     public void testExactFileUri() throws Exception {
-        final String goodPath = "file:///this/path/is/good/file.txt";
+        new File(dataDir, "file.txt").createNewFile();
+        final String goodPath = dataUri + "/file.txt";
 
         addAllowedPath(goodPath);
 
@@ -98,12 +105,12 @@ public class ExternalContentPathValidatorTest {
 
     @Test
     public void testMultipleMatches() throws Exception {
-        final String goodPath = "file:///this/path/is/good/";
-        final String extPath = goodPath + "file.txt";
-        final String anotherPath = "file:///this/path/";
+        new File(dataDir, "file.txt").createNewFile();
+        final String extPath = dataUri + "file.txt";
+        final String anotherPath = tmpDir.getRoot().toURI().toString();
 
         addAllowedPath(anotherPath);
-        addAllowedPath(goodPath);
+        addAllowedPath(dataUri);
 
         validator.validate(extPath);
     }
@@ -111,21 +118,19 @@ public class ExternalContentPathValidatorTest {
     @Test
     public void testMultipleSchemes() throws Exception {
         final String httpPath = "http://example.com/";
-        final String filePath = "file:///this/path/is/good/";
-        final String extPath = filePath + "file.txt";
+        final String extPath = dataUri + "file.txt";
 
         addAllowedPath(httpPath);
-        addAllowedPath(filePath);
+        addAllowedPath(dataUri);
 
         validator.validate(extPath);
     }
 
     @Test(expected = ExternalMessageBodyException.class)
     public void testInvalidFileUri() throws Exception {
-        final String goodPath = "file:///this/path/is/good/";
-        final String extPath = "file:///a/different/path/file.txt";
+        final String extPath = tmpDir.newFile("file.txt").toURI().toString();
 
-        addAllowedPath(goodPath);
+        addAllowedPath(dataUri);
 
         validator.validate(extPath);
     }
@@ -142,36 +147,32 @@ public class ExternalContentPathValidatorTest {
 
     @Test(expected = ExternalMessageBodyException.class)
     public void testRelativeModifier() throws Exception {
-        final String goodPath = "file:///this/path/";
-        final String extPath = goodPath + "../sneaky/file.txt";
+        final String extPath = dataUri + "../sneaky.txt";
 
-        addAllowedPath(goodPath);
+        addAllowedPath(dataUri);
 
         validator.validate(extPath);
     }
 
     @Test(expected = ExternalMessageBodyException.class)
     public void testNoScheme() throws Exception {
-        final String goodPath = "file:///this/path/is/good/";
-        final String extPath = "/this/path/is/good/file.txt";
+        final String extPath = dataDir.getAbsolutePath() + "file.txt";
 
-        addAllowedPath(goodPath);
+        addAllowedPath(dataUri);
 
         validator.validate(extPath);
     }
 
     @Test(expected = ExternalMessageBodyException.class)
     public void testEmptyPath() throws Exception {
-        final String goodPath = "file:///this/path/is/good/";
-        addAllowedPath(goodPath);
+        addAllowedPath(dataUri);
 
         validator.validate("");
     }
 
     @Test(expected = ExternalMessageBodyException.class)
     public void testNullPath() throws Exception {
-        final String goodPath = "file:///this/path/is/good/";
-        addAllowedPath(goodPath);
+        addAllowedPath(dataUri);
 
         validator.validate(null);
     }
@@ -189,7 +190,7 @@ public class ExternalContentPathValidatorTest {
         addAllowedPath("http://");
         addAllowedPath("https://");
 
-        final String path1 = "file:///this/path/is/good/file";
+        final String path1 = dataUri + "file";
         validator.validate(path1);
         final String path2 = "http://example.com/file";
         validator.validate(path2);
@@ -199,8 +200,8 @@ public class ExternalContentPathValidatorTest {
 
     @Test
     public void testCaseInsensitive() throws Exception {
-        final String goodPath = "FILE:///this/path/";
-        final String extPath = "file:///this/path/file.txt";
+        final String goodPath = "FILE://" + dataDir.getAbsolutePath() + "/";
+        final String extPath = dataUri + "/file.txt";
 
         addAllowedPath(goodPath);
 
@@ -209,24 +210,54 @@ public class ExternalContentPathValidatorTest {
 
     @Test
     public void testFileSlashes() throws Exception {
-        addAllowedPath("file:/one/slash/");
-        addAllowedPath("file://two/slash/");
-        addAllowedPath("file:///three/slash/");
-        addAllowedPath("file:////toomany/slash/");
+        final File oneFolder = tmpDir.newFolder("one");
+        final File twoFolder = tmpDir.newFolder("two");
+        final File threeFolder = tmpDir.newFolder("three");
+        final File manyFolder = tmpDir.newFolder("toomany");
 
-        validator.validate("file:/one/slash/file");
-        validator.validate("file://one/slash/file");
-        validator.validate("file:///one/slash/file");
+        addAllowedPath("file:" + oneFolder.getAbsolutePath() + "/");
+        addAllowedPath("file:/" + twoFolder.getAbsolutePath() + "/");
+        addAllowedPath("file://" + threeFolder.getAbsolutePath() + "/");
+        addAllowedPath("file:///" + manyFolder.getAbsolutePath() + "/");
 
-        validator.validate("file:/two/slash/file");
-        validator.validate("file://two/slash/file");
-        validator.validate("file:///two/slash/file");
+        validator.validate("file:" + oneFolder.getAbsolutePath() + "/file");
+        validator.validate("file:/" + oneFolder.getAbsolutePath() + "/file");
+        validator.validate("file://" + oneFolder.getAbsolutePath() + "/file");
 
-        validator.validate("file:/three/slash/file");
-        validator.validate("file://three/slash/file");
-        validator.validate("file:///three/slash/file");
+        validator.validate("file:" + twoFolder.getAbsolutePath() + "/file");
+        validator.validate("file:/" + twoFolder.getAbsolutePath() + "/file");
+        validator.validate("file://" + twoFolder.getAbsolutePath() + "/file");
 
-        validator.validate("file:////toomany/slash/file");
+        validator.validate("file:" + threeFolder.getAbsolutePath() + "/file");
+        validator.validate("file:/" + threeFolder.getAbsolutePath() + "/file");
+        validator.validate("file://" + threeFolder.getAbsolutePath() + "/file");
+
+        try {
+            validator.validate("file:" + manyFolder.getAbsolutePath() + "file");
+            fail();
+        } catch (final ExternalMessageBodyException e) {
+            // expected
+        }
+    }
+
+    @Test(expected = ExternalMessageBodyException.class)
+    public void testDisallowDirectoryUriWithoutSlash() throws Exception {
+        final String allowDir = dataUri.substring(0, dataUri.length() - 1);
+        addAllowedPath(allowDir);
+
+        final String extPath = dataUri + "file.txt";
+        validator.validate(extPath);
+    }
+
+    @Test(expected = ExternalMessageBodyException.class)
+    public void testDisallowFileUriWithSlash() throws Exception {
+        new File(dataDir, "file").createNewFile();
+        final String extPath = dataUri + "file/";
+        final String allowExactPath = extPath + "/";
+
+        addAllowedPath(allowExactPath);
+
+        validator.validate(extPath);
     }
 
     /*
@@ -238,9 +269,10 @@ public class ExternalContentPathValidatorTest {
     public void testDetectModification() throws Exception {
         validator.setMonitorForChanges(true);
 
-        addAllowedPath("file:///different/path/");
+        final String anotherPath = tmpDir.newFolder("other").toURI().toString();
+        addAllowedPath(anotherPath);
 
-        final String path = "file:///this/path/will/be/good/file";
+        final String path = dataUri + "file";
         try {
             validator.validate(path);
             fail();
@@ -253,7 +285,7 @@ public class ExternalContentPathValidatorTest {
 
         // Add a new allowed path
         try (BufferedWriter writer = Files.newBufferedWriter(allowListFile.toPath(), APPEND)) {
-            writer.write("file:///this/path/" + System.lineSeparator());
+            writer.write(dataUri + System.lineSeparator());
         }
 
         // Check that the new allowed path was detected
