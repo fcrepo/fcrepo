@@ -85,7 +85,7 @@ public final class NamespaceTools {
             final int colonPosition = segment.indexOf(':');
             if (segment.length() > 0 && colonPosition > -1) {
                 final String prefix = segment.substring(0, colonPosition);
-                if (!prefix.equals("fedora")) {
+                if (!prefix.equals("fedora") && !prefix.equals("fcr")) {
                     if (prefix.length() == 0) {
                         throw new FedoraInvalidNamespaceException("Empty namespace in " + segment);
                     }

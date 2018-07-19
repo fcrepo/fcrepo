@@ -400,9 +400,10 @@ public class FedoraLdp extends ContentExposingResource {
 
         final List<String> links = unpackLinks(rawLinks);
 
+        final String path = toPath(translator(), externalPath);
 
         if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
-            addLinkAndOptionsHttpHeaders(resource());
+            mementoLinkAndOptionsHttpHeaders(path);
 
             return status(METHOD_NOT_ALLOWED).build();
         }
@@ -412,8 +413,6 @@ public class FedoraLdp extends ContentExposingResource {
         checkAclLinkHeader(links);
 
         final FedoraResource resource;
-
-        final String path = toPath(translator(), externalPath);
 
         final AcquiredLock lock = lockManager.lockForWrite(path, session.getFedoraSession(), nodeService);
 
@@ -535,7 +534,8 @@ public class FedoraLdp extends ContentExposingResource {
         hasRestrictedPath(externalPath);
 
         if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
-            addLinkAndOptionsHttpHeaders(resource());
+            final String path = toPath(translator(), externalPath);
+            mementoLinkAndOptionsHttpHeaders(path);
 
             return status(METHOD_NOT_ALLOWED).build();
         }
@@ -625,7 +625,8 @@ public class FedoraLdp extends ContentExposingResource {
         final List<String> links = unpackLinks(rawLinks);
 
         if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
-            addLinkAndOptionsHttpHeaders(resource());
+            final String path = toPath(translator(), externalPath);
+            mementoLinkAndOptionsHttpHeaders(path);
             LOGGER.info("Unable to handle POST request on a path containing {}. Path was: {}",
                     FedoraTypes.FCR_VERSIONS, externalPath);
             return status(METHOD_NOT_ALLOWED).build();
