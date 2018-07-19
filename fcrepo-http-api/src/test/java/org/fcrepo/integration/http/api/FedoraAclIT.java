@@ -60,7 +60,7 @@ public class FedoraAclIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testCreateAcl() throws Exception {
+    public void testCreateAclWithoutBody() throws Exception {
         createObjectAndClose(id);
 
         final HttpPut put = new HttpPut(subjectUri + "/" + FCR_ACL);
@@ -85,6 +85,7 @@ public class FedoraAclIT extends AbstractResourceIT {
 
     private String createACL() throws IOException {
         final HttpPut put = new HttpPut(subjectUri + "/" + FCR_ACL);
+
         try (final CloseableHttpResponse response = execute(put)) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
             return response.getFirstHeader("Location").getValue();
@@ -120,7 +121,7 @@ public class FedoraAclIT extends AbstractResourceIT {
         final HttpPatch patch = new HttpPatch(aclURI);
         patch.addHeader(CONTENT_TYPE, "application/sparql-update");
         patch.setEntity(new StringEntity("PREFIX acl: <http://www.w3.org/ns/auth/acl#> " +
-                                         "INSERT { <#writeAccess> acl:mode acl:write . } WHERE { }"));
+                                         "INSERT { <#writeAccess> acl:mode acl:Write . } WHERE { }"));
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(patch));
 
         //verify the patch worked
@@ -129,7 +130,7 @@ public class FedoraAclIT extends AbstractResourceIT {
             assertTrue(graph.contains(ANY,
                                       createURI(aclURI + "#writeAccess"),
                                       createURI("http://www.w3.org/ns/auth/acl#mode"),
-                                      createURI("http://www.w3.org/ns/auth/acl#write")));
+                                      createURI("http://www.w3.org/ns/auth/acl#Write")));
         }
 
     }
@@ -184,4 +185,38 @@ public class FedoraAclIT extends AbstractResourceIT {
 
     }
 
+    @Test
+    public void testCreateAclWithBody() throws Exception {
+        createObjectAndClose(id);
+
+        final HttpPut put = new HttpPut(subjectUri + "/" + FCR_ACL);
+        final String aclBody = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
+                               "@prefix foaf: <http://xmlns.com/foaf/0.1/> .\n" +
+                               "@prefix ldp: <http://www.w3.org/ns/ldp#> .\n" +
+                               "\n" +
+                               "<#readAccess> a acl:Authorization ;\n" +
+                               "    acl:mode acl:Read .";
+
+        put.setEntity(new StringEntity(aclBody));
+        put.setHeader("Content-Type", "text/turtle");
+
+        final String aclLocation;
+        try (final CloseableHttpResponse response = execute(put)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            aclLocation = response.getFirstHeader("Location").getValue();
+            // verify the acl container is translated to fcr:acl
+            assertEquals(subjectUri + "/" + FCR_ACL, aclLocation);
+
+        }
+
+        //verify the put worked
+        try (final CloseableDataset dataset = getDataset(new HttpGet(aclLocation))) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertTrue(graph.contains(ANY,
+                                      createURI(aclLocation + "#readAccess"),
+                                      createURI("http://www.w3.org/ns/auth/acl#mode"),
+                                      createURI("http://www.w3.org/ns/auth/acl#Read")));
+        }
+
+    }
 }
