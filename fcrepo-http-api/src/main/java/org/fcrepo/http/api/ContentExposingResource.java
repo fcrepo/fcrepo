@@ -81,7 +81,6 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_MEMBERSHIP;
 import static org.fcrepo.kernel.api.RequiredRdfContext.MINIMAL;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
-import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.LDPCV_TIME_MAP;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.fasterxml.jackson.core.JsonParseException;
@@ -576,7 +575,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * @param path the path of the memento
      */
     protected void mementoLinkAndOptionsHttpHeaders(final String path) {
-        if (path.contains("/" + LDPCV_TIME_MAP + "/") && nodeService.exists(session.getFedoraSession(), path)) {
+        if (nodeService.exists(session.getFedoraSession(), path)) {
             addLinkAndOptionsHttpHeaders(resource());
         }
     }
