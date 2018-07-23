@@ -17,6 +17,8 @@
  */
 package org.fcrepo.kernel.modeshape.spring;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import org.junit.Assert;
 import org.junit.After;
 import org.junit.Before;
@@ -36,6 +38,8 @@ public class DefaultPropertiesLoaderTest {
     private static final String PROP_TEST = "fcrepo.binary.directory";
     private static final String HOME_PROP = "fcrepo.home";
 
+    private static final String NO_DEFAULT_PROP = "fcrepo.external.content.allowed";
+
     @Before
     public void setUp() {
         loader = new DefaultPropertiesLoader();
@@ -50,6 +54,7 @@ public class DefaultPropertiesLoaderTest {
         System.clearProperty(PROP_FLAG);
         System.clearProperty(PROP_TEST);
         System.clearProperty(HOME_PROP);
+        System.clearProperty(NO_DEFAULT_PROP);
     }
 
     @Test
@@ -113,6 +118,28 @@ public class DefaultPropertiesLoaderTest {
 
         Assert.assertEquals(new File(new File("test"), "sub"),
                 new File(System.getProperty(PROP_TEST)));
+        clearProps();
+    }
+
+    @Test
+    public void testNoDefault() {
+        loader.loadSystemProperties();
+
+        assertNull("No default should be set for property", System.getProperty(NO_DEFAULT_PROP));
+
+        clearProps();
+    }
+
+    @Test
+    public void testValueSetForNoDefault() {
+        final String value = "/absolute/path";
+        System.setProperty(NO_DEFAULT_PROP, value);
+
+        loader.loadSystemProperties();
+
+        assertEquals("Value must be set for property with no default",
+                value, System.getProperty(NO_DEFAULT_PROP));
+
         clearProps();
     }
 
