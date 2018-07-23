@@ -17,9 +17,9 @@
     <owl:Ontology rdf:about="static/constraints/ExternalMessageBodyException">
         <rdfs:label xml:lang="en">External Message Body Constraint</rdfs:label>
         <rdfs:comment xml:lang="en">Part of the request for creating/updating an External Message Body was missing
-            or malformed. Link header must include a URI reference to an external resource from an allowed path,
-            a link relation type ('rel') that is set to "http://fedora.info/definitions/fcrepo#ExternalContent";',
-            a 'handling' attribute set to one of the following three values: proxy, redirect, or copy,
+            or malformed. Link header must include a URI reference to an external resource from an allowed path;
+            a link relation type ('rel') that is set to "http://fedora.info/definitions/fcrepo#ExternalContent";
+            a 'handling' attribute set to one of the following three values: proxy, redirect, or copy;
             and an optional 'type' attribute representing the content type of the external body.
         </rdfs:comment>
     </owl:Ontology>

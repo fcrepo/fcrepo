@@ -220,7 +220,7 @@
     <!-- External content configuration -->
     <bean name="externalContentPathValidator" class="org.fcrepo.http.api.ExternalContentPathValidator"
         init-method="init" destroy-method="shutdown">
-        <property name="configPath" value="${fcrepo.external.content.allowed:}" />
+        <property name="configPath" value="${fcrepo.external.content.allowed:#{null}}" />
         <property name="monitorForChanges" value="true" />
     </bean>
     
