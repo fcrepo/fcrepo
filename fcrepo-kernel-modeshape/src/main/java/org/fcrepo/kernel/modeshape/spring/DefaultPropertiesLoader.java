@@ -112,11 +112,8 @@ public class DefaultPropertiesLoader {
         }
 
         for (final PROPERTIES prop : PROPERTIES.values()) {
-            final String name = prop.getValue();
-            final String val = getProperty(name);
-            if (val != null) {
-                LOGGER.info("{} = {}", name, val);
-            }
+            final String val = prop.getValue();
+            LOGGER.info("{} = {}", val, getProperty(val));
         }
     }
 
