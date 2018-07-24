@@ -54,16 +54,28 @@ public class DefaultPropertiesLoader {
         OBJECT_STORE("fcrepo.object.directory"),
         BINARY_STORE("fcrepo.binary.directory"),
         MODE_INDEX("fcrepo.modeshape.index.directory"),
-        ACTIVE_MQ("fcrepo.activemq.directory");
+        ACTIVE_MQ("fcrepo.activemq.directory"),
+        ALLOWED_EXTERNAL_CONTENT("fcrepo.external.content.allowed", false);
 
         private String text;
 
+        private boolean setDefaultValue;
+
         private PROPERTIES(final String text) {
+            this(text, true);
+        }
+
+        private PROPERTIES(final String text, final boolean setDefaultValue) {
             this.text = text;
+            this.setDefaultValue = setDefaultValue;
         }
 
         public String getValue() {
             return text;
+        }
+
+        public boolean getSetDefaultValue() {
+            return setDefaultValue;
         }
     }
 
@@ -90,7 +102,9 @@ public class DefaultPropertiesLoader {
             for (final PROPERTIES prop : PROPERTIES.values()) {
                 final String value = getProperty(prop.getValue());
                 if (value == null) {
-                    setProperty(prop.getValue(), baseDir);
+                    if (prop.getSetDefaultValue()) {
+                        setProperty(prop.getValue(), baseDir);
+                    }
                 } else {
                     updateRelativePropertyPath(prop.getValue(), value, baseDir);
                 }

@@ -21,4 +21,15 @@
   </util:list>
 
   <context:component-scan base-package="org.fcrepo"  />
+  
+  <!-- External content configuration -->
+  <bean name="externalContentPathValidator" class="org.fcrepo.http.api.ExternalContentPathValidator"
+      init-method="init">
+    <property name="configPath" value="src/test/resources/allowed_external_paths.txt" />
+    <property name="monitorForChanges" value="false" />
+  </bean>
+  
+  <bean name="externalContentHandlerFactory" class="org.fcrepo.http.api.ExternalContentHandlerFactory">
+    <property name="validator" ref="externalContentPathValidator" />
+  </bean>
 </beans>

@@ -60,6 +60,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Matchers.anySetOf;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -217,6 +218,9 @@ public class FedoraLdpTest {
     @Mock
     private PreferTag preferTag;
 
+    @Mock
+    private ExternalContentHandlerFactory extContentHandlerFactory;
+
     private static final Logger log = getLogger(FedoraLdpTest.class);
 
 
@@ -243,6 +247,7 @@ public class FedoraLdpTest {
         setField(testObj, "lockManager", mockLockManager);
         setField(testObj, "context", mockServletContext);
         setField(testObj, "prefer", prefer);
+        setField(testObj, "extContentHandlerFactory", extContentHandlerFactory);
 
         when(mockHttpConfiguration.putRequiresIfMatch()).thenReturn(false);
 
@@ -789,6 +794,9 @@ public class FedoraLdpTest {
 
     @Test(expected = ExternalMessageBodyException.class)
     public void testGetWithExternalMessageMissingURLBinary() throws Exception {
+        when(extContentHandlerFactory.createFromLinks(anyListOf(String.class)))
+                .thenThrow(new ExternalMessageBodyException(""));
+
         final String badExternal = Link.fromUri("http://test.com")
                 .rel(EXTERNAL_CONTENT.toString())
                 .param("handling", "proxy")
@@ -797,14 +805,17 @@ public class FedoraLdpTest {
                 .toString()
                 .replaceAll("<.*>", "< >");
 
-        final Response actual = testObj.createObject(null, null, null, null, Arrays.asList(badExternal), null);
+        testObj.createObject(null, null, null, null, Arrays.asList(badExternal), null);
     }
 
     @Test(expected = ExternalMessageBodyException.class)
     public void testPostWithExternalMessageBadHandling() throws Exception {
+        when(extContentHandlerFactory.createFromLinks(anyListOf(String.class)))
+                .thenThrow(new ExternalMessageBodyException(""));
+
          final String badExternal = Link.fromUri("http://test.com")
             .rel(EXTERNAL_CONTENT.toString()).param("handling", "boogie").type("text/plain").build().toString();
-        final Response actual = testObj.createObject(null, null, null, null, Arrays.asList(badExternal), null);
+        testObj.createObject(null, null, null, null, Arrays.asList(badExternal), null);
     }
 
     @Test

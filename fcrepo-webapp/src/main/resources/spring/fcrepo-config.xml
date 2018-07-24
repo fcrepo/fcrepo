@@ -217,6 +217,16 @@
     <!-- Fedora's lightweight internal event bus. Currently memory-resident.-->
     <bean name="fedoraInternalEventBus" class="com.google.common.eventbus.EventBus"/>
 
+    <!-- External content configuration -->
+    <bean name="externalContentPathValidator" class="org.fcrepo.http.api.ExternalContentPathValidator"
+        init-method="init" destroy-method="shutdown">
+        <property name="configPath" value="${fcrepo.external.content.allowed:#{null}}" />
+        <property name="monitorForChanges" value="true" />
+    </bean>
+    
+    <bean name="externalContentHandlerFactory" class="org.fcrepo.http.api.ExternalContentHandlerFactory">
+        <property name="validator" ref="externalContentPathValidator" />
+    </bean>
 
     <!-- ***********************************
             Internal system configuration
