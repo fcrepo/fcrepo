@@ -49,7 +49,6 @@ import static org.fcrepo.kernel.api.FedoraTypes.FCR_FIXITY;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
-import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBED_BY;
@@ -80,7 +79,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -1618,13 +1616,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         assertMementoDatetimeHeaderPresent(response);
         assertEquals("Response memento datetime did not match expected value",
                 expected, response.getFirstHeader(MEMENTO_DATETIME_HEADER).getValue());
-    }
-
-    private static void assertConstrainedByPresent(final CloseableHttpResponse response) {
-        final Collection<String> linkHeaders = getLinkHeaders(response);
-        assertTrue("Constrained by link header no present",
-                linkHeaders.stream().map(Link::valueOf)
-                        .anyMatch(l -> l.getRel().equals(CONSTRAINED_BY.getURI())));
     }
 
     private static void enableVersioning(final String uri) throws Exception {

@@ -127,6 +127,7 @@ import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.MementoDatetimeFormatException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.RequestWithAclLinkHeaderException;
 import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.models.Container;
@@ -410,6 +411,8 @@ public class FedoraLdp extends ContentExposingResource {
 
         final String interactionModel = checkInteractionModel(links);
 
+        checkAclLinkHeader(links);
+
         final FedoraResource resource;
 
         final String path = toPath(translator(), externalPath);
@@ -631,6 +634,8 @@ public class FedoraLdp extends ContentExposingResource {
         }
 
         final String interactionModel = checkInteractionModel(links);
+
+        checkAclLinkHeader(links);
 
         // If request is an external binary, verify link header before proceeding
         final ExternalContentHandler extContent = ExternalContentHandler.createFromLinks(links);
@@ -1013,6 +1018,13 @@ public class FedoraLdp extends ContentExposingResource {
                 throw new ClientErrorException("Invalid 'Want-Digest' header value: " + wantDigest + "\n", BAD_REQUEST);
             }
             throw e;
+        }
+    }
+
+    private void checkAclLinkHeader(final List<String> links) throws RequestWithAclLinkHeaderException {
+        if (links != null && links.stream().anyMatch(l -> Link.valueOf(l).getRel().equals("acl"))) {
+            throw new RequestWithAclLinkHeaderException(
+                    "Unable to handle request with the specified LDP-RS as the ACL.");
         }
     }
 }
