@@ -75,7 +75,6 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.jena.riot.Lang;
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
-import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.responses.LinkFormatStream;
 import org.fcrepo.kernel.api.RdfStream;
@@ -156,7 +155,7 @@ public class FedoraVersioning extends ContentExposingResource {
     public Response addVersion(@HeaderParam(MEMENTO_DATETIME_HEADER) final String datetimeHeader,
             @HeaderParam(CONTENT_TYPE) final MediaType requestContentType,
             @HeaderParam("Digest") final String digest,
-            @ContentLocation final InputStream requestBodyStream,
+            final InputStream requestBodyStream,
             @HeaderParam(LINK) final List<String> rawLinks)
             throws InvalidChecksumException, MementoDatetimeFormatException {
 

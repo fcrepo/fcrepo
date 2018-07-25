@@ -113,7 +113,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.atlas.web.ContentType;
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
-import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.RdfStream;
@@ -389,7 +388,7 @@ public class FedoraLdp extends ContentExposingResource {
     @Timed
     public Response createOrReplaceObjectRdf(
             @HeaderParam(CONTENT_TYPE) final MediaType requestContentType,
-            @ContentLocation final InputStream requestBodyStream,
+            final InputStream requestBodyStream,
             @HeaderParam(CONTENT_DISPOSITION) final ContentDisposition contentDisposition,
             @HeaderParam("If-Match") final String ifMatch,
             @HeaderParam(LINK) final List<String> rawLinks,
@@ -529,7 +528,7 @@ public class FedoraLdp extends ContentExposingResource {
     @PATCH
     @Consumes({contentTypeSPARQLUpdate})
     @Timed
-    public Response updateSparql(@ContentLocation final InputStream requestBodyStream)
+    public Response updateSparql(final InputStream requestBodyStream)
             throws IOException {
         hasRestrictedPath(externalPath);
 
@@ -615,7 +614,7 @@ public class FedoraLdp extends ContentExposingResource {
     public Response createObject(@HeaderParam(CONTENT_DISPOSITION) final ContentDisposition contentDisposition,
                                  @HeaderParam(CONTENT_TYPE) final MediaType requestContentType,
                                  @HeaderParam("Slug") final String slug,
-                                 @ContentLocation final InputStream requestBodyStream,
+            final InputStream requestBodyStream,
                                  @HeaderParam(LINK) final List<String> rawLinks,
                                  @HeaderParam("Digest") final String digest)
             throws InvalidChecksumException, IOException, MalformedRdfException, UnsupportedAlgorithmException,
