@@ -119,7 +119,6 @@ import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
-import org.fcrepo.kernel.api.exception.ExternalMessageBodyException;
 import org.fcrepo.kernel.api.exception.InsufficientStorageException;
 import org.fcrepo.kernel.api.exception.InteractionModelViolationException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
@@ -673,10 +672,6 @@ public class FedoraLdp extends ContentExposingResource {
                         replaceResourceWithStream(resource, requestBodyStream, contentType, resourceTriples);
                     } else if (resource instanceof FedoraBinary) {
                         LOGGER.trace("Created a datastream and have a binary payload.");
-
-                        if (requestBodyStream != null && extContent != null) {
-                            throw new ExternalMessageBodyException("Body included in request.");
-                        }
 
                         InputStream stream = requestBodyStream;
 
