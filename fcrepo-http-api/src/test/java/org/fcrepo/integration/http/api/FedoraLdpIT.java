@@ -3180,6 +3180,37 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testPostExternalContentProxy() throws Exception {
+        // Create a resource
+        final HttpPost method = postObjMethod();
+        final String entityStr = "Hello there, this is the original object speaking.";
+        method.setEntity(new StringEntity(entityStr));
+
+        final String origLocation;
+        try (final CloseableHttpResponse response = execute(method)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            origLocation = response.getFirstHeader("Location").getValue();
+        }
+
+        final String id = getRandomUniqueId();
+        final HttpPost httpPost = postObjMethod();
+        httpPost.addHeader("Slug", id);
+        httpPost.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        httpPost.addHeader(LINK, getExternalContentLinkHeader(origLocation, "proxy", null));
+
+        try (final CloseableHttpResponse response = execute(httpPost)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            final HttpGet get = new HttpGet(getLocation(response));
+            try (final CloseableHttpResponse getResponse = execute(get)) {
+                assertEquals(OK.getStatusCode(), getStatus(getResponse));
+                assertEquals(origLocation, getContentLocation(getResponse));
+                final String content = EntityUtils.toString(getResponse.getEntity());
+                assertEquals("Entity Data doesn't match original object!", entityStr, content);
+            }
+        }
+    }
+
+    @Test
     public void testUnsupportedHandlingTypeInExternalMessagePUT() throws IOException {
 
         final String id = getRandomUniqueId();
