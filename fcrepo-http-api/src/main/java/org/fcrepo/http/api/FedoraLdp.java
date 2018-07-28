@@ -674,17 +674,20 @@ public class FedoraLdp extends ContentExposingResource {
                         LOGGER.trace("Created a datastream and have a binary payload.");
 
                         InputStream stream = requestBodyStream;
+                        MediaType type = requestContentType;
 
                         if (extContent != null) {
                             if (extContent.isCopy()) {
                                 LOGGER.debug("POST copying data {} ", externalPath);
                                 stream = extContent.fetchExternalContent();
                             }
+
+                            type = contentType; // if external, then this already holds the correct value
                         }
 
                         final String handling = extContent != null ? extContent.getHandling() : null;
                         replaceResourceBinaryWithStream((FedoraBinary) resource,
-                            stream, contentDisposition, requestContentType, checksum,
+                                stream, contentDisposition, type, checksum,
                             handling != null && !handling.equals(COPY) ? handling : null,
                             extContent != null ? extContent.getURL() : null);
 

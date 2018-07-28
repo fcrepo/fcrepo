@@ -3196,7 +3196,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpPost httpPost = postObjMethod();
         httpPost.addHeader("Slug", id);
         httpPost.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
-        httpPost.addHeader(LINK, getExternalContentLinkHeader(origLocation, "proxy", null));
+        httpPost.addHeader(LINK, getExternalContentLinkHeader(origLocation, "proxy", "text/plain"));
 
         try (final CloseableHttpResponse response = execute(httpPost)) {
             assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
@@ -3204,6 +3204,10 @@ public class FedoraLdpIT extends AbstractResourceIT {
             try (final CloseableHttpResponse getResponse = execute(get)) {
                 assertEquals(OK.getStatusCode(), getStatus(getResponse));
                 assertEquals(origLocation, getContentLocation(getResponse));
+
+                final String contentType = getResponse.getFirstHeader("Content-Type").getValue();
+                assertEquals("text/plain", contentType);
+
                 final String content = EntityUtils.toString(getResponse.getEntity());
                 assertEquals("Entity Data doesn't match original object!", entityStr, content);
             }
