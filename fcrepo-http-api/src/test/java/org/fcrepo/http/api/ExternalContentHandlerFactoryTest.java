@@ -75,14 +75,6 @@ public class ExternalContentHandlerFactoryTest {
         factory.createFromLinks(links);
     }
 
-    @Test(expected = ExternalMessageBodyException.class)
-    public void testGetWithExternalMessageMissingURLBinary() throws Exception {
-        final List<String> links = makeLinks("http://test.com");
-        links.set(0, links.get(0).replaceAll("<.*>", "< >"));
-
-        factory.createFromLinks(links);
-    }
-
     private List<String> makeLinks(final String... uris) {
         return Arrays.stream(uris)
                 .map(uri -> Link.fromUri(uri)

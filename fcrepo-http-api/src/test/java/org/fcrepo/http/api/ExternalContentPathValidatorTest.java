@@ -49,6 +49,10 @@ public class ExternalContentPathValidatorTest {
 
     private File allowListFile;
 
+    private File goodFile;
+
+    private String goodFileUri;
+
     @Before
     public void init() throws Exception {
         allowListFile = tmpDir.newFile();
@@ -58,6 +62,10 @@ public class ExternalContentPathValidatorTest {
 
         dataDir = tmpDir.newFolder();
         dataUri = dataDir.toURI().toString();
+
+        goodFile = new File(dataDir, "file.txt");
+        goodFile.createNewFile();
+        goodFileUri = goodFile.toURI().toString();
     }
 
     @After
@@ -70,17 +78,14 @@ public class ExternalContentPathValidatorTest {
         validator.setConfigPath(null);
         validator.init();
 
-        final String extPath = "file:///this/path/file.txt";
-        validator.validate(extPath);
+        validator.validate(goodFileUri);
     }
 
     @Test
     public void testValidFileUri() throws Exception {
-        final String extPath = dataUri + "file.txt";
-
         addAllowedPath(dataUri);
 
-        validator.validate(extPath);
+        validator.validate(goodFileUri);
     }
 
     @Test
@@ -95,18 +100,15 @@ public class ExternalContentPathValidatorTest {
 
     @Test
     public void testExactFileUri() throws Exception {
-        new File(dataDir, "file.txt").createNewFile();
-        final String goodPath = dataUri + "/file.txt";
+        addAllowedPath(goodFileUri);
 
-        addAllowedPath(goodPath);
-
-        validator.validate(goodPath);
+        validator.validate(goodFileUri);
     }
 
     @Test
     public void testMultipleMatches() throws Exception {
         new File(dataDir, "file.txt").createNewFile();
-        final String extPath = dataUri + "file.txt";
+        final String extPath = goodFileUri;
         final String anotherPath = tmpDir.getRoot().toURI().toString();
 
         addAllowedPath(anotherPath);
@@ -118,12 +120,11 @@ public class ExternalContentPathValidatorTest {
     @Test
     public void testMultipleSchemes() throws Exception {
         final String httpPath = "http://example.com/";
-        final String extPath = dataUri + "file.txt";
 
         addAllowedPath(httpPath);
         addAllowedPath(dataUri);
 
-        validator.validate(extPath);
+        validator.validate(goodFileUri);
     }
 
     @Test(expected = ExternalMessageBodyException.class)
@@ -131,6 +132,26 @@ public class ExternalContentPathValidatorTest {
         final String extPath = tmpDir.newFile("file.txt").toURI().toString();
 
         addAllowedPath(dataUri);
+
+        validator.validate(extPath);
+    }
+
+    @Test(expected = ExternalMessageBodyException.class)
+    public void testMalformedUri() throws Exception {
+        final String goodPath = "http://example.com/";
+        final String extPath = ".bad://example.com/file.txt";
+
+        addAllowedPath(goodPath);
+
+        validator.validate(extPath);
+    }
+
+    @Test(expected = ExternalMessageBodyException.class)
+    public void testNonabsoluteUri() throws Exception {
+        final String goodPath = "http://example.com/";
+        final String extPath = "/example.com/file.txt";
+
+        addAllowedPath(goodPath);
 
         validator.validate(extPath);
     }
@@ -190,7 +211,7 @@ public class ExternalContentPathValidatorTest {
         addAllowedPath("http://");
         addAllowedPath("https://");
 
-        final String path1 = dataUri + "file";
+        final String path1 = goodFileUri;
         validator.validate(path1);
         final String path2 = "http://example.com/file";
         validator.validate(path2);
@@ -214,6 +235,10 @@ public class ExternalContentPathValidatorTest {
         final File twoFolder = tmpDir.newFolder("two");
         final File threeFolder = tmpDir.newFolder("three");
         final File manyFolder = tmpDir.newFolder("toomany");
+        new File(oneFolder, "file").createNewFile();
+        new File(twoFolder, "file").createNewFile();
+        new File(threeFolder, "file").createNewFile();
+        new File(manyFolder, "file").createNewFile();
 
         addAllowedPath("file:" + oneFolder.getAbsolutePath() + "/");
         addAllowedPath("file:/" + twoFolder.getAbsolutePath() + "/");
