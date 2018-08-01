@@ -58,7 +58,6 @@ import javax.ws.rs.core.UriInfo;
 import com.codahale.metrics.annotation.Timed;
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
-import org.fcrepo.http.commons.domain.ContentLocation;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.fcrepo.kernel.api.RdfStream;
@@ -104,7 +103,7 @@ public class FedoraAcl extends ContentExposingResource {
      */
     @PUT
     public Response createFedoraWebacAcl(@HeaderParam(CONTENT_TYPE) final MediaType requestContentType,
-                                         @ContentLocation final InputStream requestBodyStream)
+                                         final InputStream requestBodyStream)
         throws ConstraintViolationException {
 
         if (resource().isAcl() || resource().isMemento()) {
@@ -160,7 +159,7 @@ public class FedoraAcl extends ContentExposingResource {
     @PATCH
     @Consumes({ contentTypeSPARQLUpdate })
     @Timed
-    public Response updateSparql(@ContentLocation final InputStream requestBodyStream)
+    public Response updateSparql(final InputStream requestBodyStream)
         throws IOException, ItemNotFoundException {
         hasRestrictedPath(externalPath);
 
