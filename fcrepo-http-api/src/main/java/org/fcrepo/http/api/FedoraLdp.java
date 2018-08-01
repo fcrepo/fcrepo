@@ -118,7 +118,6 @@ import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
-import org.fcrepo.kernel.api.exception.ExternalMessageBodyException;
 import org.fcrepo.kernel.api.exception.InsufficientStorageException;
 import org.fcrepo.kernel.api.exception.InteractionModelViolationException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
@@ -673,22 +672,21 @@ public class FedoraLdp extends ContentExposingResource {
                     } else if (resource instanceof FedoraBinary) {
                         LOGGER.trace("Created a datastream and have a binary payload.");
 
-                        if (requestBodyStream != null && extContent != null) {
-                            throw new ExternalMessageBodyException("Body included in request.");
-                        }
-
                         InputStream stream = requestBodyStream;
+                        MediaType type = requestContentType;
 
                         if (extContent != null) {
                             if (extContent.isCopy()) {
                                 LOGGER.debug("POST copying data {} ", externalPath);
                                 stream = extContent.fetchExternalContent();
                             }
+
+                            type = contentType; // if external, then this already holds the correct value
                         }
 
                         final String handling = extContent != null ? extContent.getHandling() : null;
                         replaceResourceBinaryWithStream((FedoraBinary) resource,
-                            stream, contentDisposition, requestContentType, checksum,
+                                stream, contentDisposition, type, checksum,
                             handling != null && !handling.equals(COPY) ? handling : null,
                             extContent != null ? extContent.getURL() : null);
 
