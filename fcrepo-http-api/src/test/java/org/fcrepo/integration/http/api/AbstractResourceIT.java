@@ -615,7 +615,7 @@ public abstract class AbstractResourceIT {
 
     protected static void assertConstrainedByPresent(final CloseableHttpResponse response) {
         final Collection<String> linkHeaders = getLinkHeaders(response);
-        assertTrue("Constrained by link header no present",
+        assertTrue("Constrained by link header not present",
                 linkHeaders.stream().map(Link::valueOf)
                         .anyMatch(l -> l.getRel().equals(CONSTRAINED_BY.getURI())));
     }

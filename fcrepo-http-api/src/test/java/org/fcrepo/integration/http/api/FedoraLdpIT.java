@@ -4008,7 +4008,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createMethod.addHeader("Slug", subjectURI);
         createMethod.setEntity(new StringEntity("test body"));
 
-        checkReponseForMethodWithAcl(createMethod);
+        checkResponseForMethodWithAcl(createMethod);
     }
 
 @Test
@@ -4021,7 +4021,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createMethod.addHeader("Slug", subjectURI);
         createMethod.setEntity(new StringEntity("<> <info:test#label> \"foo\""));
 
-        checkReponseForMethodWithAcl(createMethod);
+        checkResponseForMethodWithAcl(createMethod);
 }
 
     @Test
@@ -4033,7 +4033,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         putMethod.addHeader("Link", "<" + aclURI + ">; rel=\"acl\"");
         putMethod.setEntity(new StringEntity("test body"));
 
-        checkReponseForMethodWithAcl(putMethod);
+        checkResponseForMethodWithAcl(putMethod);
     }
 
     @Test
@@ -4045,10 +4045,10 @@ public class FedoraLdpIT extends AbstractResourceIT {
         putMethod.addHeader("Link", "<" + aclURI + ">; rel=\"acl\"");
         putMethod.setEntity(new StringEntity("<" + subjectURI + "> <info:test#label> \"foo\""));
 
-        checkReponseForMethodWithAcl(putMethod);
+        checkResponseForMethodWithAcl(putMethod);
     }
 
-    private void checkReponseForMethodWithAcl(final HttpUriRequest req) throws IOException {
+    private void checkResponseForMethodWithAcl(final HttpUriRequest req) throws IOException {
         try (final CloseableHttpResponse response = execute(req)) {
             assertEquals(BAD_REQUEST.getStatusCode(), getStatus(response));
             assertConstrainedByPresent(response);

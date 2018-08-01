@@ -15,9 +15,10 @@
      xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
     <owl:Ontology rdf:about="static/constraints/CannotCreateResourceWithAclException">
-        <rdfs:label xml:lang="en">Request With Acl Link Header Exception</rdfs:label>
+        <rdfs:label xml:lang="en">Request With ACL Link Header Exception</rdfs:label>
         <rdfs:comment xml:lang="en">
-          Fedora will not handle request with the specified LDP-RS as the ACL in the request.
+          Fedora cannot handle requests containing Link headers where rel="acl".
+          ACL locations are system-defined and cannot be altered.
         </rdfs:comment>
     </owl:Ontology>
 </rdf:RDF>
