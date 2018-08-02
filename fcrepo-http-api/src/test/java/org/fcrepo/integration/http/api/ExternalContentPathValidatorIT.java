@@ -51,18 +51,18 @@ import org.slf4j.Logger;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.TestExecutionListeners;
+import org.springframework.test.context.TestExecutionListeners.MergeMode;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
-import org.springframework.test.context.support.DirtiesContextBeforeModesTestExecutionListener;
-import org.springframework.test.context.support.DirtiesContextTestExecutionListener;
 
 /**
  * @author bbpennel
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @DirtiesContext(classMode = ClassMode.BEFORE_CLASS)
-@TestExecutionListeners(listeners = { DirtiesContextBeforeModesTestExecutionListener.class,
-    DependencyInjectionTestExecutionListener.class, DirtiesContextTestExecutionListener.class })
+@TestExecutionListeners(listeners = { DependencyInjectionTestExecutionListener.class,
+    DirtyContextBeforeAndAfterClassTestExecutionListener.class },
+        mergeMode = MergeMode.MERGE_WITH_DEFAULTS)
 public class ExternalContentPathValidatorIT extends AbstractResourceIT {
 
     private static final Logger LOGGER = getLogger(ExternalContentPathValidatorIT.class);
@@ -115,6 +115,8 @@ public class ExternalContentPathValidatorIT extends AbstractResourceIT {
                 }
             }
         }
+        // Now that fedora has started, clear the property so it won't impact other tests
+        System.clearProperty("fcrepo.external.content.allowed");
     }
 
     @Test
