@@ -571,10 +571,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     }
 
     /**
-     * Add Link and Option headers for a memento
-     * @param path the path of the memento
+     * Add Link and Option headers if the resource exists
+     * @param path the path of the resource
      */
-    protected void mementoLinkAndOptionsHttpHeaders(final String path) {
+    protected void addLinkAndOptionsHttpHeadersIfExists(final String path) {
         if (nodeService.exists(session.getFedoraSession(), path)) {
             addLinkAndOptionsHttpHeaders(resource());
         }
