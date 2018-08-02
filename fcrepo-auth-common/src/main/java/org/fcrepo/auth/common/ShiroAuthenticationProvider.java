@@ -37,6 +37,10 @@ public class ShiroAuthenticationProvider implements AuthenticationProvider {
             final String workspaceName, final ExecutionContext repositoryContext,
             final Map<String, Object> sessionAttributes) {
 
+        if (credentials == null) {
+            return null;
+        }
+
         return repositoryContext.with(new ShiroSecurityContext(SecurityUtils.getSubject()));
     }
 
