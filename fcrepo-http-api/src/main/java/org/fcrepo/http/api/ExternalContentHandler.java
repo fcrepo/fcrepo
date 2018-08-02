@@ -163,13 +163,6 @@ public class ExternalContentHandler {
         final Link realLink = Link.valueOf(link);
 
         try {
-            final String url = realLink.getUri().toString().toLowerCase();
-            // see if it's a legit url, if it's not an error will be thrown
-            realLink.getUri().toURL();
-            if (url.isEmpty() || (!url.startsWith("http") && !url.startsWith("file"))) {
-                throw new ExternalMessageBodyException("Link header formatted incorrectly: URI incorrectly formatted");
-            }
-
             final String handling = realLink.getParams().get(HANDLING);
             if (handling == null || !handling.matches("(?i)" + PROXY + "|" + COPY + "|" + REDIRECT)) {
                 // error

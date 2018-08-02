@@ -25,7 +25,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -89,23 +88,40 @@ public class ExternalContentPathValidator {
         }
 
         final String path = normalizePath(extPath.toLowerCase());
-        if (RELATIVE_MOD_PATTERN.matcher(path).matches()) {
-            throw new ExternalMessageBodyException("Path was not absolute: " + extPath);
-        }
 
         final URI uri;
         try {
+            // Ensure that the path is a valid URL
             uri = new URI(path);
-        } catch (final URISyntaxException e) {
+            uri.toURL();
+        } catch (final Exception e) {
             throw new ExternalMessageBodyException("Path was not a valid URI: " + extPath);
         }
+
+        // Decode the uri and ensure that it does not contain modifiers
+        final String decodedPath = uri.getPath();
+        if (RELATIVE_MOD_PATTERN.matcher(decodedPath).matches()) {
+            throw new ExternalMessageBodyException("Path was not absolute: " + extPath);
+        }
+
+        // Require that the path is absolute
         if (!uri.isAbsolute()) {
             throw new ExternalMessageBodyException("Path was not absolute: " + extPath);
         }
-        if (!ALLOWED_SCHEMES.contains(uri.getScheme())) {
+
+        // Ensure that an accept scheme was provided
+        final String scheme = uri.getScheme();
+        if (!ALLOWED_SCHEMES.contains(scheme)) {
             throw new ExternalMessageBodyException("Path did not provide an allowed scheme: " + extPath);
         }
 
+        // If a file, verify that it exists
+        if (scheme.equals("file") && !Paths.get(uri).toFile().exists()) {
+            throw new ExternalMessageBodyException("Path did not match any allowed external content paths: " +
+                    extPath);
+        }
+
+        // Check that the uri is within an allowed path
         if (allowedList.stream().anyMatch(allowed -> path.startsWith(allowed))) {
             return;
         }
@@ -150,6 +166,7 @@ public class ExternalContentPathValidator {
      * @throws IOException thrown if the allowed list configuration file cannot be read.
      */
     private synchronized void loadAllowedPaths() throws IOException {
+        LOGGER.info("Loading list of allowed external content locations from {}", configPath);
         try (final Stream<String> stream = Files.lines(Paths.get(configPath))) {
             allowedList = stream.map(line -> normalizePath(line.trim().toLowerCase()))
                 .filter(line -> {
