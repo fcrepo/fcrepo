@@ -103,12 +103,12 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements N
                 .reduce(empty(), Stream::concat)
                 .map(t -> mapSubject(t, resourceUri, describedNode));
 
-        // if a memento, convert object references from referential integrity ignoring internal URL back to
-        // the original external URL.
+        // if a memento, convert subjects to original resource and object references from referential integrity
+        // ignoring internal URL back the original external URL.
         if (isMemento()) {
             final IdentifierConverter<Resource, FedoraResource> internalIdTranslator =
                     new InternalIdentifierTranslator(getSession());
-            triples = triples.map(convertInternalResource(idTranslator, internalIdTranslator));
+            triples = triples.map(convertMementoReferences(idTranslator, internalIdTranslator));
         }
 
         return new DefaultRdfStream(idTranslator.reverse().convert(described).asNode(), triples);

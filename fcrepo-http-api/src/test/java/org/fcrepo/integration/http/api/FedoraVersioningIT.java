@@ -333,7 +333,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         try (final CloseableDataset dataset = getDataset(httpGet)) {
             final DatasetGraph results = dataset.asDatasetGraph();
 
-            final Node mementoSubject = createURI(mementoUri);
+            final Node mementoSubject = createURI(subjectUri);
 
             assertTrue("Memento created without datetime must retain original state",
                     results.contains(ANY, mementoSubject, TEST_PROPERTY_NODE, createLiteral("foo")));
@@ -348,7 +348,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         final String mementoUri = createContainerMementoWithBody(subjectUri, MEMENTO_DATETIME);
         assertMementoUri(mementoUri, subjectUri);
-        final Node mementoSubject = createURI(mementoUri);
+        final Node mementoSubject = createURI(subjectUri);
         final Node subject = createURI(subjectUri);
 
         // Verify that the memento has the new property added to it
@@ -395,7 +395,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                     CONFLICT.getStatusCode(), getStatus(response));
         }
 
-        final Node mementoSubject = createURI(mementoUri);
+        final Node mementoSubject = createURI(subjectUri);
         // Verify first memento content persists
         try (final CloseableDataset dataset = getDataset(new HttpGet(mementoUri))) {
             final DatasetGraph results = dataset.asDatasetGraph();
@@ -520,12 +520,18 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                     ANY, createURI("http://pcdm.org/models#hasMember"), createURI(resource)));
         }
 
-        // Ensure that the resource reference is still in memento
         try (final CloseableHttpResponse getResponse1 = execute(new HttpGet(mementoUri));
                 final CloseableDataset dataset = getDataset(getResponse1);) {
+
             final DatasetGraph graph = dataset.asDatasetGraph();
+
+            // Ensure that the resource reference is still in memento
             assertTrue("Expected resource NOT found: " + graph, graph.contains(ANY,
                     ANY, createURI("http://pcdm.org/models#hasMember"), createURI(resource)));
+
+            // Ensure that the subject of the memento is the original reosurce
+            assertTrue("Subjects should be the original resource, not the memento: " + graph,
+                       !graph.contains(ANY, createURI(mementoUri), ANY, ANY));
         }
     }
 
