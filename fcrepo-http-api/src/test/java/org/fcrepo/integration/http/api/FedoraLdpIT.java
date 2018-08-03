@@ -140,6 +140,7 @@ import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.FileEntity;
@@ -4029,6 +4030,63 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(httpDelete)) {
             assertEquals("Must not be able to DELETE with fedora namespaced path!", CONFLICT.getStatusCode(),
                 getStatus(response));
+        }
+    }
+
+    @Test
+    public void testPostCreateNonRDFSourceWithAcl() throws IOException {
+        final String aclURI = createAcl();
+        final String subjectURI = getRandomUniqueId();
+        final HttpPost createMethod = new HttpPost(serverAddress);
+        createMethod.addHeader(CONTENT_TYPE, "text/plain");
+        createMethod.addHeader("Link", "<" + aclURI + ">; rel=\"acl\"");
+        createMethod.addHeader("Slug", subjectURI);
+        createMethod.setEntity(new StringEntity("test body"));
+
+        checkResponseForMethodWithAcl(createMethod);
+    }
+
+@Test
+    public void testPostCreateRDFSourceWithAcl() throws IOException {
+        final String aclURI = createAcl();
+        final String subjectURI = getRandomUniqueId();
+        final HttpPost createMethod = new HttpPost(serverAddress);
+        createMethod.addHeader(CONTENT_TYPE, "text/n3");
+        createMethod.addHeader("Link", "<" + aclURI + ">; rel=\"acl\"");
+        createMethod.addHeader("Slug", subjectURI);
+        createMethod.setEntity(new StringEntity("<> <info:test#label> \"foo\""));
+
+        checkResponseForMethodWithAcl(createMethod);
+}
+
+    @Test
+    public void testPutCreateNonRDFSourceWithAcl() throws IOException {
+        final String aclURI = createAcl();
+        final String subjectURI = serverAddress + getRandomUniqueId();
+        final HttpPut putMethod = new HttpPut(subjectURI);
+        putMethod.addHeader(CONTENT_TYPE, "text/plain");
+        putMethod.addHeader("Link", "<" + aclURI + ">; rel=\"acl\"");
+        putMethod.setEntity(new StringEntity("test body"));
+
+        checkResponseForMethodWithAcl(putMethod);
+    }
+
+    @Test
+    public void testPutCreateRDFSourceWithAcl() throws IOException {
+        final String aclURI = createAcl();
+        final String subjectURI = serverAddress + getRandomUniqueId();
+        final HttpPut putMethod = new HttpPut(subjectURI);
+        putMethod.addHeader(CONTENT_TYPE, "text/n3");
+        putMethod.addHeader("Link", "<" + aclURI + ">; rel=\"acl\"");
+        putMethod.setEntity(new StringEntity("<" + subjectURI + "> <info:test#label> \"foo\""));
+
+        checkResponseForMethodWithAcl(putMethod);
+    }
+
+    private void checkResponseForMethodWithAcl(final HttpUriRequest req) throws IOException {
+        try (final CloseableHttpResponse response = execute(req)) {
+            assertEquals(BAD_REQUEST.getStatusCode(), getStatus(response));
+            assertConstrainedByPresent(response);
         }
     }
 }

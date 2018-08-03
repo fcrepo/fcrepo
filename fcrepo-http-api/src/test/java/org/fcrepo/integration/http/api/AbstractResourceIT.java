@@ -33,6 +33,7 @@ import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
+import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.EXTERNAL_CONTENT;
@@ -42,6 +43,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -610,4 +612,12 @@ public abstract class AbstractResourceIT {
         }
         return link;
     }
+
+    protected static void assertConstrainedByPresent(final CloseableHttpResponse response) {
+        final Collection<String> linkHeaders = getLinkHeaders(response);
+        assertTrue("Constrained by link header not present",
+                linkHeaders.stream().map(Link::valueOf)
+                        .anyMatch(l -> l.getRel().equals(CONSTRAINED_BY.getURI())));
+    }
+
 }
