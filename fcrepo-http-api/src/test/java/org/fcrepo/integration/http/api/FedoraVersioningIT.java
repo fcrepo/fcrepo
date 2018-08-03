@@ -533,19 +533,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
             // Ensure that the subject of the memento is the original reosurce
             assertTrue("Subjects should be the original resource, not the memento: " + graph,
-                       !graph.contains(ANY,
-                                       createURI(
-                                           mementoUri),
-                                       ANY,
-                                       ANY));
-
+                       !graph.contains(ANY, createURI(mementoUri), ANY, ANY));
         }
-
-        try (final CloseableHttpResponse getResponse1 = execute(new HttpGet(mementoUri));
-             final CloseableDataset dataset = getDataset(getResponse1);) {
-            final DatasetGraph graph = dataset.asDatasetGraph();
-        }
-
     }
 
     @Test
