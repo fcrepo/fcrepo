@@ -186,9 +186,9 @@ public class ExternalContentPathValidatorIT extends AbstractResourceIT {
     @Test
     public void testDisallowedFilePath() throws Exception {
         final String fileContent = "content";
-        final File permittedFile = new File(disallowedDir, "test.txt");
-        FileUtils.writeStringToFile(permittedFile, fileContent, "UTF-8");
-        final String fileUri = permittedFile.toURI().toString();
+        final File disallowedFile = new File(disallowedDir, "test.txt");
+        FileUtils.writeStringToFile(disallowedFile, fileContent, "UTF-8");
+        final String fileUri = disallowedFile.toURI().toString();
 
         final String id = getRandomUniqueId();
         final HttpPut put = putObjMethod(id);
@@ -202,8 +202,8 @@ public class ExternalContentPathValidatorIT extends AbstractResourceIT {
     public void testPathModifiers() throws Exception {
         // Creating file in disallowed path
         final String fileContent = "content";
-        final File permittedFile = new File(disallowedDir, "test.txt");
-        FileUtils.writeStringToFile(permittedFile, fileContent, "UTF-8");
+        final File disallowedFile = new File(disallowedDir, "test.txt");
+        FileUtils.writeStringToFile(disallowedFile, fileContent, "UTF-8");
 
         // Variations of path modifiers that should be rejected or fail to find file.
         final List<String> modifiers = Arrays.asList("../", "%2e%2e%2f", "%2e%2e/", "..%2f",
