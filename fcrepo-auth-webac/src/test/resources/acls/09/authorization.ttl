@@ -1,6 +1,0 @@
-@prefix acl: <http://www.w3.org/ns/auth/acl#> .
-
-<> a acl:Authorization ;
-   acl:agentGroup </rest/group/foo> ;
-   acl:mode acl:Read, acl:Write ;
-   acl:accessTo </rest/anotherCollection> .

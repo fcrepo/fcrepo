@@ -1,3 +1,12 @@
-@prefix webac: <http://fedora.info/definitions/v4/webac#> .
+@prefix acl: <http://www.w3.org/ns/auth/acl#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
 
-<> a webac:Acl .
+<#open> a acl:Authorization ;
+   acl:agentClass foaf:Agent ;
+   acl:mode acl:Read ;
+   acl:accessTo </rest/dark/archive/sunshine> .
+
+<#restricted> a acl:Authorization ;
+   acl:agent "Restricted" ;
+   acl:mode acl:Read ;
+   acl:accessTo </rest/dark/archive> .

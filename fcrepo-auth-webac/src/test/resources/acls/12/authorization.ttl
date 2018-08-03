@@ -1,6 +1,0 @@
-PREFIX acl: <http://www.w3.org/ns/auth/acl#>
-
-<> a acl:Authorization ;
-acl:accessTo </rest/versionResourceUri> ;
-acl:mode acl:Read, acl:Write;
-acl:agent "user12" .

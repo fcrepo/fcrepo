@@ -1,6 +1,0 @@
-@prefix acl: <http://www.w3.org/ns/auth/acl#> .
-
-<> a acl:Authorization ;
-   acl:agent 'Admins' ;
-   acl:mode acl:Read ;
-   acl:accessTo </rest/mixedCollection> .
