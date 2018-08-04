@@ -23,7 +23,10 @@ import org.springframework.test.context.TestContext;
 import org.springframework.test.context.support.AbstractTestExecutionListener;
 
 /**
- * @author Sam Brannen
+ * TestExecutionListener which marks the context as dirty before and after the test class.
+ * Based on example from https://stackoverflow.com/questions/39277040/
+ *
+ * @author bbpennel
  */
 public class DirtyContextBeforeAndAfterClassTestExecutionListener
         extends AbstractTestExecutionListener {
