@@ -216,9 +216,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public TemporaryFolder tmpDir = new TemporaryFolder();
 
     @Test
-    public void testHeadRepositoryGraph() {
+    public void testHeadRepositoryGraph() throws IOException {
         final HttpHead headObjMethod = new HttpHead(serverAddress);
-        assertEquals(OK.getStatusCode(), getStatus(headObjMethod));
+        try (final CloseableHttpResponse response = execute(headObjMethod)) {
+          assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
+          checkForLinkHeader(response, serverAddress + FCR_ACL, "acl");
+        }
     }
 
     @Test
