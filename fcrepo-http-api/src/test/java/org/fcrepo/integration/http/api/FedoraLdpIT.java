@@ -104,6 +104,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
@@ -128,6 +129,7 @@ import javax.ws.rs.core.Variant;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -203,6 +205,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
     private static final String WANT_DIGEST = "Want-Digest";
 
     private static final String DIGEST = "Digest";
+
+    private static final String TEST_BINARY_CONTENT = "01234567890123456789012345678901234567890123456789";
+
+    private static final String TEST_SHA_DIGEST_HEADER_VALUE = "sha=9578f951955d37f20b601c26591e260c1e5389bf";
+
+    private static final String TEST_MD5_DIGEST_HEADER_VALUE = "md5=baed005300234f3d1503c50a48ce8e6f";
 
     private static final Logger LOGGER = getLogger(FedoraLdpIT.class);
 
@@ -388,7 +396,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     @Test
     public void testHeadDatastreamWithWantDigest() throws IOException, ParseException {
         final String id = getRandomUniqueId();
-        createDatastream(id, "x", "01234567890123456789012345678901234567890123456789");
+        createDatastream(id, "x", TEST_BINARY_CONTENT);
 
         final HttpHead headObjMethod = headObjMethod(id + "/x");
         headObjMethod.addHeader(WANT_DIGEST, "SHA");
@@ -398,14 +406,14 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertTrue(response.getHeaders(DIGEST).length > 0);
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
             assertTrue("Fixity Checksum doesn't match",
-                    digesterHeaderValue.equals("sha=9578f951955d37f20b601c26591e260c1e5389bf"));
+                    digesterHeaderValue.equals(TEST_SHA_DIGEST_HEADER_VALUE));
         }
     }
 
     @Test
     public void testHeadDatastreamWithWantDigestMultiple() throws IOException, ParseException {
         final String id = getRandomUniqueId();
-        createDatastream(id, "x", "01234567890123456789012345678901234567890123456789");
+        createDatastream(id, "x", TEST_BINARY_CONTENT);
 
         final HttpHead headObjMethod = headObjMethod(id + "/x");
         headObjMethod.addHeader(WANT_DIGEST, "SHA, md5;q=0.3");
@@ -416,9 +424,182 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
             assertTrue("SHA-1 Fixity Checksum doesn't match",
-                    digesterHeaderValue.indexOf("sha=9578f951955d37f20b601c26591e260c1e5389bf") >= 0);
+                    digesterHeaderValue.indexOf(TEST_SHA_DIGEST_HEADER_VALUE) >= 0);
             assertTrue("MD5 fixity checksum doesn't match",
-                    digesterHeaderValue.indexOf("md5=baed005300234f3d1503c50a48ce8e6f") >= 0);
+                    digesterHeaderValue.indexOf(TEST_MD5_DIGEST_HEADER_VALUE) >= 0);
+        }
+    }
+
+    @Test
+    public void testExternalDatastreamProxyWithWantDigestForLocalFile() throws IOException, ParseException {
+
+        final File externalFile = createExternalLocalFile(TEST_BINARY_CONTENT);
+
+        final String fileUri = externalFile.toURI().toString();
+
+        final String id = getRandomUniqueId();
+        final HttpPut put = putObjMethod(id);
+        put.addHeader(LINK, getExternalContentLinkHeader(fileUri, "proxy", "text/plain"));
+        assertEquals(CREATED.getStatusCode(), getStatus(put));
+
+        final String expectedDigestHeaderValue = TEST_SHA_DIGEST_HEADER_VALUE;
+
+        // HEAD request with Want-Digest
+        final HttpHead headObjMethod = headObjMethod(id);
+        headObjMethod.addHeader(WANT_DIGEST, "sha");
+        checkExternalDataStreamResponseHeader(headObjMethod, fileUri, expectedDigestHeaderValue);
+
+        // GET request with Want-Digest
+        final HttpGet getObjMethod = getObjMethod(id);
+        getObjMethod.addHeader(WANT_DIGEST, "sha");
+        checkExternalDataStreamResponseHeader(getObjMethod, fileUri, expectedDigestHeaderValue);
+    }
+
+    @Test
+    public void testExternalDatastreamCopyWithWantDigestForLocalFile() throws IOException, ParseException {
+
+        final File externalFile = createExternalLocalFile(TEST_BINARY_CONTENT);
+
+        final String fileUri = externalFile.toURI().toString();
+
+        final String id = getRandomUniqueId();
+        final HttpPut put = putObjMethod(id);
+        put.addHeader(LINK, getExternalContentLinkHeader(fileUri, "copy", "text/plain"));
+        assertEquals(CREATED.getStatusCode(), getStatus(put));
+
+        final String expectedDigestHeaderValue = TEST_SHA_DIGEST_HEADER_VALUE;
+
+        // HEAD request with Want-Digest
+        final HttpHead headObjMethod = headObjMethod(id);
+        headObjMethod.addHeader(WANT_DIGEST, "sha");
+        checkExternalDataStreamResponseHeader(headObjMethod, null, expectedDigestHeaderValue);
+
+        // GET request with Want-Digest
+        final HttpGet getObjMethod = getObjMethod(id);
+        getObjMethod.addHeader(WANT_DIGEST, "sha");
+        checkExternalDataStreamResponseHeader(getObjMethod, null, expectedDigestHeaderValue);
+    }
+
+    @Test
+    public void testExternalDatastreamProxyWithWantDigest() throws IOException, ParseException {
+
+        final String dsId = getRandomUniqueId();
+        createDatastream(dsId, "x", TEST_BINARY_CONTENT);
+
+        final String dsUrl = serverAddress + dsId + "/x";
+
+        final String id = getRandomUniqueId();
+        final HttpPut put = putObjMethod(id);
+        put.addHeader(LINK, getExternalContentLinkHeader(dsUrl, "proxy", "text/plain"));
+        assertEquals(CREATED.getStatusCode(), getStatus(put));
+
+        final String expectedDigestHeaderValue = TEST_SHA_DIGEST_HEADER_VALUE;
+
+        // HEAD request with Want-Digest
+        final HttpHead headObjMethod = headObjMethod(id);
+        headObjMethod.addHeader(WANT_DIGEST, "sha");
+        checkExternalDataStreamResponseHeader(headObjMethod, dsUrl, expectedDigestHeaderValue);
+
+        // GET request with Want-Digest
+        final HttpGet getObjMethod = getObjMethod(id);
+        getObjMethod.addHeader(WANT_DIGEST, "sha");
+        checkExternalDataStreamResponseHeader(getObjMethod, dsUrl, expectedDigestHeaderValue);
+    }
+
+    @Test
+    public void testExternalDatastreamCopyWithWantDigest() throws IOException, ParseException {
+
+        final String dsId = getRandomUniqueId();
+        createDatastream(dsId, "x", TEST_BINARY_CONTENT);
+
+        final String dsUrl = serverAddress + dsId + "/x";
+
+        final String id = getRandomUniqueId();
+        final HttpPut put = putObjMethod(id);
+        put.addHeader(LINK, getExternalContentLinkHeader(dsUrl, "copy", "text/plain"));
+        assertEquals(CREATED.getStatusCode(), getStatus(put));
+
+        final String expectedDigestHeaderValue = TEST_SHA_DIGEST_HEADER_VALUE;
+
+        // HEAD request with Want-Digest
+        final HttpHead headObjMethod = headObjMethod(id);
+        headObjMethod.addHeader(WANT_DIGEST, "sha");
+        checkExternalDataStreamResponseHeader(headObjMethod, null, expectedDigestHeaderValue);
+
+        // GET request with Want-Digest
+        final HttpGet getObjMethod = getObjMethod(id);
+        getObjMethod.addHeader(WANT_DIGEST, "sha");
+        checkExternalDataStreamResponseHeader(getObjMethod, null, expectedDigestHeaderValue);
+    }
+
+    @Test
+    public void testExternalDatastreamProxyWithWantDigestMultipleForLocalFile() throws IOException, ParseException {
+
+        final File externalFile = createExternalLocalFile(TEST_BINARY_CONTENT);
+
+        final String fileUri = externalFile.toURI().toString();
+
+        final String id = getRandomUniqueId();
+        final HttpPut put = putObjMethod(id);
+        put.addHeader(LINK, getExternalContentLinkHeader(fileUri, "proxy", "text/plain"));
+        assertEquals(CREATED.getStatusCode(), getStatus(put));
+
+        // HEAD request with Want-Digest
+        final HttpHead headObjMethod = headObjMethod(id);
+        headObjMethod.addHeader(WANT_DIGEST, "sha, md5;q=0.3");
+        try (final CloseableHttpResponse response = execute(headObjMethod)) {
+            assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
+            assertEquals(fileUri, getContentLocation(response));
+            assertTrue(response.getHeaders(DIGEST).length > 0);
+
+            final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
+            assertTrue("SHA-1 Fixity Checksum doesn't match",
+                    digesterHeaderValue.indexOf(TEST_SHA_DIGEST_HEADER_VALUE) >= 0);
+            assertTrue("MD5 fixity checksum doesn't match",
+                    digesterHeaderValue.indexOf(TEST_MD5_DIGEST_HEADER_VALUE) >= 0);
+        }
+
+        // GET request with Want-Digest
+        final HttpGet getObjMethod = getObjMethod(id);
+        getObjMethod.addHeader(WANT_DIGEST, "sha, md5;q=0.3");
+        try (final CloseableHttpResponse response = execute(getObjMethod)) {
+            assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
+            assertEquals(fileUri, getContentLocation(response));
+            assertTrue(response.getHeaders(DIGEST).length > 0);
+
+            final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
+            assertTrue("SHA-1 Fixity Checksum doesn't match",
+                    digesterHeaderValue.indexOf(TEST_SHA_DIGEST_HEADER_VALUE) >= 0);
+            assertTrue("MD5 fixity checksum doesn't match",
+                    digesterHeaderValue.indexOf(TEST_MD5_DIGEST_HEADER_VALUE) >= 0);
+        }
+    }
+
+    private File createExternalLocalFile(final String content) {
+        final File externalFile;
+        try {
+            externalFile = File.createTempFile("binary", ".txt");
+            externalFile.deleteOnExit();
+            try (final FileWriter fw = new FileWriter(externalFile)) {
+                fw.write(content);
+            }
+            return externalFile;
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void checkExternalDataStreamResponseHeader(final HttpUriRequest req, final String contenLocation,
+            final String shaValue) throws IOException {
+        try (final CloseableHttpResponse response = execute(req)) {
+            assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
+            assertTrue(response.getHeaders(DIGEST).length > 0);
+            if (StringUtils.isNoneBlank(contenLocation)) {
+                assertEquals(contenLocation, getContentLocation(response));
+            }
+            final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
+            assertTrue("Fixity Checksum doesn't match",
+                    digesterHeaderValue.equals(shaValue));
         }
     }
 
@@ -474,7 +655,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testHeadExternalDatastreamWithWantDigest() throws IOException, ParseException {
 
         final String dsId = getRandomUniqueId();
-        createDatastream(dsId, "x", "01234567890123456789012345678901234567890123456789");
+        createDatastream(dsId, "x", TEST_BINARY_CONTENT);
 
         final String dsUrl = serverAddress + dsId + "/x";
 
@@ -496,7 +677,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertEquals(dsUrl, getLocation(response));
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
             assertTrue("Fixity Checksum doesn't match",
-                    digesterHeaderValue.equals("sha=9578f951955d37f20b601c26591e260c1e5389bf"));
+                    digesterHeaderValue.equals(TEST_SHA_DIGEST_HEADER_VALUE));
         }
     }
 
@@ -505,7 +686,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testHeadExternalDatastreamWithWantDigestMultiple() throws IOException, ParseException {
 
         final String dsId = getRandomUniqueId();
-        createDatastream(dsId, "x", "01234567890123456789012345678901234567890123456789");
+        createDatastream(dsId, "x", TEST_BINARY_CONTENT);
 
         final String dsUrl = serverAddress + dsId + "/x";
 
@@ -528,9 +709,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
             assertTrue("SHA-1 Fixity Checksum doesn't match",
-                    digesterHeaderValue.indexOf("sha=9578f951955d37f20b601c26591e260c1e5389bf") >= 0);
+                    digesterHeaderValue.indexOf(TEST_SHA_DIGEST_HEADER_VALUE) >= 0);
             assertTrue("MD5 fixity checksum doesn't match",
-                    digesterHeaderValue.indexOf("md5=baed005300234f3d1503c50a48ce8e6f") >= 0);
+                    digesterHeaderValue.indexOf(TEST_MD5_DIGEST_HEADER_VALUE) >= 0);
         }
     }
 
@@ -754,7 +935,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     @Test
     public void testGetNonRDFSourceWithWantDigest() throws IOException {
         final String id = getRandomUniqueId();
-        createDatastream(id, "x", "01234567890123456789012345678901234567890123456789");
+        createDatastream(id, "x", TEST_BINARY_CONTENT);
 
         final HttpGet getMethod = getDSMethod(id, "x");
         getMethod.addHeader(WANT_DIGEST, "SHA");
@@ -762,18 +943,18 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final HttpEntity entity = response.getEntity();
             final String content = EntityUtils.toString(entity);
             assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
-            assertEquals("01234567890123456789012345678901234567890123456789", content);
+            assertEquals(TEST_BINARY_CONTENT, content);
 
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
             assertTrue("Fixity Checksum doesn't match",
-                    digesterHeaderValue.equals("sha=9578f951955d37f20b601c26591e260c1e5389bf"));
+                    digesterHeaderValue.equals(TEST_SHA_DIGEST_HEADER_VALUE));
         }
     }
 
     @Test
     public void testGetNonRDFSourceWithWantDigestMultiple() throws IOException {
         final String id = getRandomUniqueId();
-        createDatastream(id, "x", "01234567890123456789012345678901234567890123456789");
+        createDatastream(id, "x", TEST_BINARY_CONTENT);
 
         final HttpGet getMethod = getDSMethod(id, "x");
         getMethod.addHeader(WANT_DIGEST, "SHA,md5;q=0.3,sha-256;q=0.2");
@@ -781,13 +962,13 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final HttpEntity entity = response.getEntity();
             final String content = EntityUtils.toString(entity);
             assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
-            assertEquals("01234567890123456789012345678901234567890123456789", content);
+            assertEquals(TEST_BINARY_CONTENT, content);
 
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
             assertTrue("SHA-1 Fixity Checksum doesn't match",
-                    digesterHeaderValue.indexOf("sha=9578f951955d37f20b601c26591e260c1e5389bf") >= 0);
+                    digesterHeaderValue.indexOf(TEST_SHA_DIGEST_HEADER_VALUE) >= 0);
             assertTrue("MD5 fixity checksum doesn't match",
-                    digesterHeaderValue.indexOf("md5=baed005300234f3d1503c50a48ce8e6f") >= 0);
+                    digesterHeaderValue.indexOf(TEST_MD5_DIGEST_HEADER_VALUE) >= 0);
             assertTrue("SHA-256 fixity checksum doesn't match",
                 digesterHeaderValue
                     .indexOf("sha256=fb871ff8cce8fea83dfaeab41784305a1461e008dc02a371ed26d856c766c903") >= 0);
@@ -797,7 +978,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     @Test
     public void testGetExternalDatastreamWithWantDigest() throws IOException, ParseException {
         final String dsId = getRandomUniqueId();
-        createDatastream(dsId, "x", "01234567890123456789012345678901234567890123456789");
+        createDatastream(dsId, "x", TEST_BINARY_CONTENT);
         final String dsUrl = serverAddress + dsId + "/x";
 
         final String id = getRandomUniqueId();
@@ -818,7 +999,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertTrue(response.getHeaders(DIGEST).length > 0);
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
             assertTrue("Fixity Checksum doesn't match",
-                    digesterHeaderValue.equals("sha=9578f951955d37f20b601c26591e260c1e5389bf"));
+                    digesterHeaderValue.equals(TEST_SHA_DIGEST_HEADER_VALUE));
         }
     }
 
@@ -827,7 +1008,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testGetExternalDatastreamWithWantDigestMultiple() throws IOException, ParseException {
 
         final String dsId = getRandomUniqueId();
-        createDatastream(dsId, "x", "01234567890123456789012345678901234567890123456789");
+        createDatastream(dsId, "x", TEST_BINARY_CONTENT);
 
         final String dsUrl = serverAddress + dsId + "/x";
 
@@ -850,9 +1031,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
             assertTrue("SHA-1 Fixity Checksum doesn't match",
-                    digesterHeaderValue.indexOf("sha=9578f951955d37f20b601c26591e260c1e5389bf") >= 0);
+                    digesterHeaderValue.indexOf(TEST_SHA_DIGEST_HEADER_VALUE) >= 0);
             assertTrue("MD5 fixity checksum doesn't match",
-                    digesterHeaderValue.indexOf("md5=baed005300234f3d1503c50a48ce8e6f") >= 0);
+                    digesterHeaderValue.indexOf(TEST_MD5_DIGEST_HEADER_VALUE) >= 0);
         }
     }
 
@@ -3517,10 +3698,10 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpPatch delPatch = new HttpPatch(location);
 
         final String longLiteral =   // minimumBinaryInByteSize is currently 40 bytes
-                "01234567890123456789012345678901234567890123456789" +
-                        "01234567890123456789012345678901234567890123456789" +
-                        "01234567890123456789012345678901234567890123456789" +
-                        "01234567890123456789012345678901234567890123456789";
+                TEST_BINARY_CONTENT +
+                        TEST_BINARY_CONTENT +
+                        TEST_BINARY_CONTENT +
+                        TEST_BINARY_CONTENT;
 
         LOGGER.info("BINARY LITERAL TEST");
 
