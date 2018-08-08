@@ -403,7 +403,7 @@ public class FedoraLdp extends ContentExposingResource {
         final String path = toPath(translator(), externalPath);
 
         if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
-          addLinkAndOptionsHttpHeadersIfExists(path);
+            addLinkAndOptionsHttpHeadersIfExists(path);
 
             return status(METHOD_NOT_ALLOWED).build();
         }

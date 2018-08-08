@@ -1165,15 +1165,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     public void testPatchOnMemento() throws Exception {
         createVersionedContainer(id);
 
-        final String anyMementoUri = subjectUri + "/fcr:versions/any";
-        final HttpPatch anyPatch = new HttpPatch(anyMementoUri);
-        anyPatch.addHeader(CONTENT_TYPE, "application/sparql-update");
-        anyPatch.setEntity(new StringEntity(
-                "INSERT DATA { <> <" + title.getURI() + "> \"Memento title\" } "));
-
-        // status 405: PATCH on memento path is not allowed.
-        assertEquals(405, getStatus(anyPatch));
-
         final String mementoUri = createContainerMementoWithBody(subjectUri, MEMENTO_DATETIME);
         final HttpPatch patch = new HttpPatch(mementoUri);
         patch.addHeader(CONTENT_TYPE, "application/sparql-update");
@@ -1185,7 +1176,35 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testPatchOnAbsentMemento() throws Exception {
+        createVersionedContainer(id);
+
+        final String anyMementoUri = subjectUri + "/fcr:versions/any";
+        final HttpPatch anyPatch = new HttpPatch(anyMementoUri);
+        anyPatch.addHeader(CONTENT_TYPE, "application/sparql-update");
+        anyPatch.setEntity(new StringEntity(
+                "INSERT DATA { <> <" + title.getURI() + "> \"Memento title\" } "));
+
+        // status 405: PATCH on memento path is not allowed.
+        assertEquals(405, getStatus(anyPatch));
+    }
+
+    @Test
     public void testPostOnMemento() throws Exception {
+        createVersionedContainer(id);
+
+        final String mementoUri = createContainerMementoWithBody(subjectUri, MEMENTO_DATETIME);
+        final String body = createContainerMementoBodyContent(subjectUri, N3);
+        final HttpPost post = new HttpPost(mementoUri);
+        post.addHeader(CONTENT_TYPE, N3);
+        post.setEntity(new StringEntity(body));
+
+        // status 405: POST on memento is not allowed.
+        assertEquals(405, getStatus(post));
+    }
+
+    @Test
+    public void testPostOnAbsentMemento() throws Exception {
         createVersionedContainer(id);
 
         final String body = createContainerMementoBodyContent(subjectUri, N3);
@@ -1196,18 +1215,24 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         // status 405: POST on memento path is not allowed.
         assertEquals(405, getStatus(anyPost));
-
-        final String mementoUri = createContainerMementoWithBody(subjectUri, MEMENTO_DATETIME);
-        final HttpPost post = new HttpPost(mementoUri);
-        post.addHeader(CONTENT_TYPE, N3);
-        post.setEntity(new StringEntity(body));
-
-        // status 405: POST on memento is not allowed.
-        assertEquals(405, getStatus(post));
     }
 
     @Test
     public void testPutOnMemento() throws Exception {
+        createVersionedContainer(id);
+
+        final String mementoUri = createContainerMementoWithBody(subjectUri, MEMENTO_DATETIME);
+        final String body = createContainerMementoBodyContent(subjectUri, N3);
+        final HttpPut put = new HttpPut(mementoUri);
+        put.addHeader(CONTENT_TYPE, N3);
+        put.setEntity(new StringEntity(body));
+
+        // status 405: PUT on memento is not allowed.
+        assertEquals(405, getStatus(put));
+    }
+
+    @Test
+    public void testPutOnAbsentMemento() throws Exception {
         createVersionedContainer(id);
 
         final String body = createContainerMementoBodyContent(subjectUri, N3);
@@ -1218,14 +1243,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         // status 405: PUT on memento path is not allowed.
         assertEquals(405, getStatus(anyPut));
-
-        final String mementoUri = createContainerMementoWithBody(subjectUri, MEMENTO_DATETIME);
-        final HttpPut put = new HttpPut(mementoUri);
-        put.addHeader(CONTENT_TYPE, N3);
-        put.setEntity(new StringEntity(body));
-
-        // status 405: PUT on memento is not allowed.
-        assertEquals(405, getStatus(put));
     }
 
     @Test
