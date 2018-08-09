@@ -1,7 +1,0 @@
-@prefix acl: <http://www.w3.org/ns/auth/acl#> .
-@prefix foaf: <http://xmlns.com/foaf/0.1/> .
-
-<> a acl:Authorization ;
-   acl:agent foaf:Agent ;
-   acl:mode acl:Read ;
-   acl:accessTo </rest/dark/archive/sunshine> .

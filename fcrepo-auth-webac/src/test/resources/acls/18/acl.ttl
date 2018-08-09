@@ -1,3 +1,0 @@
-@prefix webac: <http://fedora.info/definitions/v4/webac#> .
-
-<> a webac:Acl .

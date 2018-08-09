@@ -1,3 +1,7 @@
-@prefix webac: <http://fedora.info/definitions/v4/webac#> .
+@prefix acl: <http://www.w3.org/ns/auth/acl#>
+@prefix pcdm: <http://pcdm.org/models#>
 
-<> a webac:Acl .
+<#authorization> a acl:Authorization ;
+acl:accessToClass pcdm:Object ;
+acl:mode acl:Read, acl:Write;
+acl:agent "user10" .

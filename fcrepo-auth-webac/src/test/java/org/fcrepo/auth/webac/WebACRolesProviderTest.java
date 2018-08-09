@@ -24,7 +24,6 @@ import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.riot.Lang.TTL;
 import static org.fcrepo.auth.webac.URIConstants.VCARD_GROUP;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_ACCESS_CONTROL_VALUE;
-import static org.fcrepo.auth.webac.URIConstants.WEBAC_AUTHORIZATION;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE_VALUE;
 import static org.fcrepo.auth.webac.WebACRolesProvider.ROOT_AUTHORIZATION_PROPERTY;
@@ -81,7 +80,7 @@ public class WebACRolesProviderTest {
     private static final String FEDORA_URI_PREFIX = "file:///rest";
 
     @Mock
-    private Node mockNode, mockParentNode;
+    private Node mockNode, mockAclNode, mockParentNode;
 
     @Mock
     private FedoraSessionImpl mockSession;
@@ -99,7 +98,10 @@ public class WebACRolesProviderTest {
     private FedoraResourceImpl mockResource, mockParentResource;
 
     @Mock
-    private FedoraResource mockAclResource, mockAgentClassResource,
+    private FedoraResourceImpl mockAclResource;
+
+    @Mock
+    private FedoraResource mockAgentClassResource,
             mockAuthorizationResource1, mockAuthorizationResource2;
 
     @Mock
@@ -112,12 +114,13 @@ public class WebACRolesProviderTest {
         setField(roleProvider, "nodeService", mockNodeService);
         setField(roleProvider, "sessionFactory", mockSessionFactory);
 
-        when(mockNodeService.find(any(FedoraSession.class), any())).thenReturn(mockResource);
         when(mockNode.getSession()).thenReturn(mockJcrSession);
         when(mockSessionFactory.getInternalSession()).thenReturn(mockSession);
         when(mockSession.getJcrSession()).thenReturn(mockJcrSession);
 
         when(mockResource.getNode()).thenReturn(mockNode);
+        when(mockAclResource.getNode()).thenReturn(mockAclNode);
+
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
         when(mockNode.getDepth()).thenReturn(0);
     }
@@ -125,6 +128,12 @@ public class WebACRolesProviderTest {
     @Test
     public void noAclTest() throws RepositoryException {
         final String accessTo = "/dark/archive/sunshine";
+
+        when(mockResource.getAcl()).thenReturn(null);
+        when(mockParentResource.getAcl()).thenReturn(null);
+
+        when(mockNodeService.find(any(FedoraSession.class), eq(accessTo))).thenReturn(mockResource);
+        when(mockNode.getPath()).thenReturn(accessTo);
 
         when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getContainer()).thenReturn(mockParentResource);
@@ -134,8 +143,6 @@ public class WebACRolesProviderTest {
         when(mockNode.getDepth()).thenReturn(1);
 
         when(mockParentResource.getNode()).thenReturn(mockParentNode);
-        when(mockParentResource.getTriples(anyObject(), eq(PROPERTIES)))
-                .thenReturn(new DefaultRdfStream(createURI("subject")));
         when(mockParentResource.getOriginalResource()).thenReturn(mockParentResource);
         when(mockParentNode.getDepth()).thenReturn(0);
 
@@ -147,35 +154,30 @@ public class WebACRolesProviderTest {
     @Test
     public void acl01ParentTest() throws RepositoryException {
         final String agent = "user01";
-        final String accessTo = "/webacl_box1";
-        final String acl = "/acls/01";
-        final String auth = acl + "/authorization.ttl";
+        final String parentPath = "/webacl_box1";
+        final String accessTo = parentPath + "/foo";
+        final String acl = "/acls/01/acl.ttl";
+
+        when(mockNodeService.find(any(FedoraSession.class), eq(acl))).thenReturn(mockAclResource);
+        when(mockNodeService.find(any(FedoraSession.class), eq(accessTo))).thenReturn(mockResource);
+        when(mockNode.getPath()).thenReturn(accessTo);
+        when(mockAclNode.getPath()).thenReturn(acl);
+
+        when(mockResource.getAcl()).thenReturn(null);
+        when(mockParentResource.getAcl()).thenReturn(mockAclResource);
 
         when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getContainer()).thenReturn(mockParentResource);
-        when(mockResource.getPath()).thenReturn(accessTo + "/foo");
-        when(mockResource.getTriples(anyObject(), eq(PROPERTIES)))
-                .thenReturn(new DefaultRdfStream(createURI("subject")));
+        when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
         when(mockNode.getDepth()).thenReturn(1);
 
         when(mockParentResource.getNode()).thenReturn(mockParentNode);
-        when(mockParentResource.getPath()).thenReturn(accessTo);
-        when(mockParentResource.getTriples(anyObject(), eq(PROPERTIES)))
-                .thenReturn(getResourceRdfStream(accessTo, acl));
-        when(mockParentResource.getOriginalResource()).thenReturn(mockParentResource);
-        when(mockParentNode.getDepth()).thenReturn(0);
-
-        when(mockProperty.getString()).thenReturn(acl);
-        when(mockNodeService.find(mockSession, acl)).thenReturn(mockAclResource);
+        when(mockParentResource.getPath()).thenReturn(parentPath);
         when(mockAclResource.getPath()).thenReturn(acl);
 
-        when(mockAuthorizationResource1.getTypes()).thenReturn(Arrays.asList(WEBAC_AUTHORIZATION));
-        when(mockAuthorizationResource1.getPath()).thenReturn(auth);
-        when(mockAuthorizationResource1.getTriples(anyObject(), eq(PROPERTIES)))
-                .thenReturn(getRdfStreamFromResource(auth, TTL));
-
-        when(mockAclResource.getChildren()).thenReturn(of(mockAuthorizationResource1));
+        when(mockAclResource.getTriples(anyObject(), eq(PROPERTIES)))
+                .thenReturn(getRdfStreamFromResource(acl, TTL));
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockNode, true);
 
@@ -189,23 +191,20 @@ public class WebACRolesProviderTest {
     public void acl01Test1() throws RepositoryException {
         final String agent = "user01";
         final String accessTo = "/webacl_box1";
-        final String acl = "/acls/01";
-        final String auth = acl + "/authorization.ttl";
+        final String acl = "/acls/01/acl.ttl";
 
+        when(mockNodeService.find(any(FedoraSession.class), eq(acl))).thenReturn(mockAclResource);
+        when(mockNodeService.find(any(FedoraSession.class), eq(accessTo))).thenReturn(mockResource);
+        when(mockNode.getPath()).thenReturn(accessTo);
+        when(mockAclNode.getPath()).thenReturn(acl);
+        when(mockResource.getAcl()).thenReturn(mockAclResource);
         when(mockNodeService.find(mockSession, acl)).thenReturn(mockAclResource);
-        when(mockProperty.getString()).thenReturn(acl);
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockResource.getPath()).thenReturn(accessTo);
-        when(mockResource.getTriples(anyObject(), eq(PROPERTIES)))
-                .thenReturn(getResourceRdfStream(accessTo, acl));
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
+        when(mockAclResource.getTriples(anyObject(), eq(PROPERTIES)))
+            .thenReturn(getRdfStreamFromResource(acl, TTL));
 
-        when(mockAuthorizationResource1.getTypes()).thenReturn(Arrays.asList(WEBAC_AUTHORIZATION));
-        when(mockAuthorizationResource1.getPath()).thenReturn(auth);
-        when(mockAuthorizationResource1.getTriples(anyObject(), eq(PROPERTIES)))
-                .thenReturn(getRdfStreamFromResource(auth, TTL));
-
-        when(mockAclResource.getChildren()).thenReturn(of(mockAuthorizationResource1));
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockNode, true);
 
@@ -218,23 +217,19 @@ public class WebACRolesProviderTest {
     @Test
     public void acl01Test2() throws RepositoryException {
         final String accessTo = "/webacl_box2";
-        final String acl = "/acls/01";
-        final String auth = acl + "/authorization.ttl";
+        final String acl = "/acls/01/acl.ttl";
 
+        when(mockNodeService.find(any(FedoraSession.class), eq(acl))).thenReturn(mockAclResource);
+        when(mockNodeService.find(any(FedoraSession.class), eq(accessTo ))).thenReturn(mockResource);
+        when(mockNode.getPath()).thenReturn(accessTo);
+        when(mockAclNode.getPath()).thenReturn(acl);
+        when(mockResource.getAcl()).thenReturn(mockAclResource);
         when(mockNodeService.find(mockSession, acl)).thenReturn(mockAclResource);
-        when(mockProperty.getString()).thenReturn(acl);
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockResource.getPath()).thenReturn(accessTo);
-        when(mockResource.getTriples(anyObject(), eq(PROPERTIES)))
-                .thenReturn(getResourceRdfStream(accessTo, acl));
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
-
-        when(mockAuthorizationResource1.getTypes()).thenReturn(Arrays.asList(WEBAC_AUTHORIZATION));
-        when(mockAuthorizationResource1.getPath()).thenReturn(auth);
-        when(mockAuthorizationResource1.getTriples(anyObject(), eq(PROPERTIES)))
-                .thenReturn(getRdfStreamFromResource(auth, TTL));
-
-        when(mockAclResource.getChildren()).thenReturn(of(mockAuthorizationResource1));
+        when(mockAclResource.getTriples(anyObject(), eq(PROPERTIES)))
+            .thenReturn(getRdfStreamFromResource(acl, TTL));
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockNode, true);
 
@@ -245,23 +240,21 @@ public class WebACRolesProviderTest {
     public void acl02Test() throws RepositoryException {
         final String agent = "Editors";
         final String accessTo = "/box/bag/collection";
-        final String acl = "/acls/02";
-        final String auth = acl + "/authorization.ttl";
+        final String acl = "/acls/02/acl.ttl";
 
-        when(mockNodeService.find(mockSession, acl)).thenReturn(mockAclResource);
+        when(mockNodeService.find(any(FedoraSession.class), eq(acl))).thenReturn(mockAclResource);
+        when(mockNodeService.find(any(FedoraSession.class), eq(accessTo))).thenReturn(mockResource);
+        when(mockNode.getPath()).thenReturn(accessTo);
+        when(mockAclNode.getPath()).thenReturn(acl);
+
+        when(mockResource.getAcl()).thenReturn(mockAclResource);
         when(mockProperty.getString()).thenReturn(acl);
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockResource.getPath()).thenReturn(accessTo);
-        when(mockResource.getTriples(anyObject(), eq(PROPERTIES)))
-                .thenReturn(getResourceRdfStream(accessTo, acl));
+        when(mockAclResource.getTriples(anyObject(), eq(PROPERTIES)))
+            .thenReturn(getRdfStreamFromResource(acl, TTL));
+
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
-
-        when(mockAuthorizationResource1.getTypes()).thenReturn(Arrays.asList(WEBAC_AUTHORIZATION));
-        when(mockAuthorizationResource1.getPath()).thenReturn(auth);
-        when(mockAuthorizationResource1.getTriples(anyObject(), eq(PROPERTIES)))
-                .thenReturn(getRdfStreamFromResource(auth, TTL));
-
-        when(mockAclResource.getChildren()).thenReturn(of(mockAuthorizationResource1));
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockNode, true);
 
@@ -275,29 +268,19 @@ public class WebACRolesProviderTest {
     public void acl03Test1() throws RepositoryException {
         final String agent = "http://xmlns.com/foaf/0.1/Agent";
         final String accessTo = "/dark/archive/sunshine";
-        final String acl = "/acls/03";
-        final String auth1 = acl + "/auth_restricted.ttl";
-        final String auth2 = acl + "/auth_open.ttl";
+        final String acl = "/acls/03/acl.ttl";
 
+        when(mockNodeService.find(any(FedoraSession.class), eq(acl))).thenReturn(mockAclResource);
+        when(mockNodeService.find(any(FedoraSession.class), eq(accessTo ))).thenReturn(mockResource);
+        when(mockNode.getPath()).thenReturn(accessTo);
+        when(mockAclNode.getPath()).thenReturn(acl);
+        when(mockResource.getAcl()).thenReturn(mockAclResource);
         when(mockNodeService.find(mockSession, acl)).thenReturn(mockAclResource);
-        when(mockProperty.getString()).thenReturn(acl);
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockResource.getPath()).thenReturn(accessTo);
-        when(mockResource.getTriples(anyObject(), eq(PROPERTIES)))
-                .thenReturn(getResourceRdfStream(accessTo, acl));
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
-
-        when(mockAuthorizationResource1.getTypes()).thenReturn(Arrays.asList(WEBAC_AUTHORIZATION));
-        when(mockAuthorizationResource1.getPath()).thenReturn(auth1);
-        when(mockAuthorizationResource1.getTriples(anyObject(), eq(PROPERTIES)))
-                .thenReturn(getRdfStreamFromResource(auth1, TTL));
-
-        when(mockAuthorizationResource2.getTypes()).thenReturn(Arrays.asList(WEBAC_AUTHORIZATION));
-        when(mockAuthorizationResource2.getPath()).thenReturn(auth2);
-        when(mockAuthorizationResource2.getTriples(anyObject(), eq(PROPERTIES)))
-                .thenReturn(getRdfStreamFromResource(auth2, TTL));
-
-        when(mockAclResource.getChildren()).thenReturn(of(mockAuthorizationResource1, mockAuthorizationResource2));
+        when(mockAclResource.getTriples(anyObject(), eq(PROPERTIES)))
+            .thenReturn(getRdfStreamFromResource(acl, TTL));
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockNode, true);
 
@@ -310,29 +293,19 @@ public class WebACRolesProviderTest {
     public void acl03Test2() throws RepositoryException {
         final String agent = "Restricted";
         final String accessTo = "/dark/archive";
-        final String acl = "/acls/03";
-        final String auth1 = acl + "/auth_restricted.ttl";
-        final String auth2 = acl + "/auth_open.ttl";
+        final String acl = "/acls/03/acl.ttl";
 
+        when(mockNodeService.find(any(FedoraSession.class), eq(acl))).thenReturn(mockAclResource);
+        when(mockNodeService.find(any(FedoraSession.class), eq(accessTo ))).thenReturn(mockResource);
+        when(mockNode.getPath()).thenReturn(accessTo);
+        when(mockAclNode.getPath()).thenReturn(acl);
+        when(mockResource.getAcl()).thenReturn(mockAclResource);
         when(mockNodeService.find(mockSession, acl)).thenReturn(mockAclResource);
-        when(mockProperty.getString()).thenReturn(acl);
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockResource.getPath()).thenReturn(accessTo);
-        when(mockResource.getTriples(anyObject(), eq(PROPERTIES)))
-                .thenReturn(getResourceRdfStream(accessTo, acl));
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
-
-        when(mockAuthorizationResource1.getTypes()).thenReturn(Arrays.asList(WEBAC_AUTHORIZATION));
-        when(mockAuthorizationResource1.getPath()).thenReturn(auth1);
-        when(mockAuthorizationResource1.getTriples(anyObject(), eq(PROPERTIES)))
-                .thenReturn(getRdfStreamFromResource(auth1, TTL));
-
-        when(mockAuthorizationResource2.getTypes()).thenReturn(Arrays.asList(WEBAC_AUTHORIZATION));
-        when(mockAuthorizationResource2.getPath()).thenReturn(auth2);
-        when(mockAuthorizationResource2.getTriples(anyObject(), eq(PROPERTIES)))
-                .thenReturn(getRdfStreamFromResource(auth2, TTL));
-
-        when(mockAclResource.getChildren()).thenReturn(of(mockAuthorizationResource1, mockAuthorizationResource2));
+        when(mockAclResource.getTriples(anyObject(), eq(PROPERTIES)))
+            .thenReturn(getRdfStreamFromResource(acl, TTL));
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockNode, true);
 
@@ -346,29 +319,19 @@ public class WebACRolesProviderTest {
         final String agent1 = "http://xmlns.com/foaf/0.1/Agent";
         final String agent2 = "Editors";
         final String accessTo = "/public_collection";
-        final String acl = "/acls/04";
-        final String auth1 = acl + "/auth1.ttl";
-        final String auth2 = acl + "/auth2.ttl";
+        final String acl = "/acls/04/acl.ttl";
 
+        when(mockNodeService.find(any(FedoraSession.class), eq(acl))).thenReturn(mockAclResource);
+        when(mockNodeService.find(any(FedoraSession.class), eq(accessTo))).thenReturn(mockResource);
+        when(mockNode.getPath()).thenReturn(accessTo);
+        when(mockAclNode.getPath()).thenReturn(acl);
+        when(mockResource.getAcl()).thenReturn(mockAclResource);
         when(mockNodeService.find(mockSession, acl)).thenReturn(mockAclResource);
-        when(mockProperty.getString()).thenReturn(acl);
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockResource.getPath()).thenReturn(accessTo);
-        when(mockResource.getTriples(anyObject(), eq(PROPERTIES)))
-                .thenReturn(getResourceRdfStream(accessTo, acl));
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
-
-        when(mockAuthorizationResource1.getTypes()).thenReturn(Arrays.asList(WEBAC_AUTHORIZATION));
-        when(mockAuthorizationResource1.getPath()).thenReturn(auth1);
-        when(mockAuthorizationResource1.getTriples(anyObject(), eq(PROPERTIES)))
-                .thenReturn(getRdfStreamFromResource(auth1, TTL));
-
-        when(mockAuthorizationResource2.getTypes()).thenReturn(Arrays.asList(WEBAC_AUTHORIZATION));
-        when(mockAuthorizationResource2.getPath()).thenReturn(auth2);
-        when(mockAuthorizationResource2.getTriples(anyObject(), eq(PROPERTIES)))
-                .thenReturn(getRdfStreamFromResource(auth2, TTL));
-
-        when(mockAclResource.getChildren()).thenReturn(of(mockAuthorizationResource1, mockAuthorizationResource2));
+        when(mockAclResource.getTriples(anyObject(), eq(PROPERTIES)))
+            .thenReturn(getRdfStreamFromResource(acl, TTL));
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockNode, true);
 
@@ -380,33 +343,26 @@ public class WebACRolesProviderTest {
         assertTrue("The agent should be able to write", roles.get(agent2).contains(WEBAC_MODE_READ_VALUE));
     }
 
+    @Test
     public void acl05Test() throws RepositoryException {
         final String agent1 = "http://xmlns.com/foaf/0.1/Agent";
         final String agent2 = "Admins";
         final String accessTo = "/mixedCollection";
-        final String acl = "/acls/05";
-        final String auth1 = acl + "/auth_restricted.ttl";
-        final String auth2 = acl + "/auth_open.ttl";
+        final String acl = "/acls/05/acl.ttl";
 
+        when(mockNodeService.find(any(FedoraSession.class), eq(acl))).thenReturn(mockAclResource);
+        when(mockNodeService.find(any(FedoraSession.class), eq(accessTo))).thenReturn(mockResource);
+        when(mockNode.getPath()).thenReturn(accessTo);
+        when(mockAclNode.getPath()).thenReturn(acl);
+        when(mockResource.getAcl()).thenReturn(mockAclResource);
         when(mockNodeService.find(mockSession, acl)).thenReturn(mockAclResource);
-        when(mockProperty.getString()).thenReturn(acl);
+        when(mockResource.getTypes()).thenReturn(Arrays.asList(URI.create("http://example.com/terms#publicImage")));
+
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockResource.getPath()).thenReturn(accessTo);
-        when(mockResource.getTypes()).thenReturn(Arrays.asList(URI.create("http://example.com/terms#publicImage")));
-        when(mockResource.getTriples(anyObject(), eq(PROPERTIES)))
-                .thenReturn(getResourceRdfStream(accessTo, acl));
-
-        when(mockAuthorizationResource1.getTypes()).thenReturn(Arrays.asList(WEBAC_AUTHORIZATION));
-        when(mockAuthorizationResource1.getPath()).thenReturn(auth1);
-        when(mockAuthorizationResource1.getTriples(anyObject(), eq(PROPERTIES)))
-                .thenReturn(getRdfStreamFromResource(auth1, TTL));
-
-        when(mockAuthorizationResource2.getTypes()).thenReturn(Arrays.asList(WEBAC_AUTHORIZATION));
-        when(mockAuthorizationResource2.getPath()).thenReturn(auth2);
-        when(mockAuthorizationResource2.getTriples(anyObject(), eq(PROPERTIES)))
-                .thenReturn(getRdfStreamFromResource(auth2, TTL));
-
-        when(mockAclResource.getChildren()).thenReturn(of(mockAuthorizationResource1, mockAuthorizationResource2));
+        when(mockResource.getOriginalResource()).thenReturn(mockResource);
+        when(mockAclResource.getTriples(anyObject(), eq(PROPERTIES)))
+            .thenReturn(getRdfStreamFromResource(acl, TTL));
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockNode, true);
 
@@ -421,34 +377,24 @@ public class WebACRolesProviderTest {
     public void acl05Test2() throws RepositoryException {
         final String agent1 = "http://xmlns.com/foaf/0.1/Agent";
         final String accessTo = "/someOtherCollection";
-        final String acl = "/acls/05";
-        final String auth1 = acl + "/auth_restricted.ttl";
-        final String auth2 = acl + "/auth_open.ttl";
+        final String acl = "/acls/05/acl.ttl";
 
+        when(mockNodeService.find(any(FedoraSession.class), eq(acl))).thenReturn(mockAclResource);
+        when(mockNodeService.find(any(FedoraSession.class), eq(accessTo))).thenReturn(mockResource);
+        when(mockNode.getPath()).thenReturn(accessTo);
+        when(mockAclNode.getPath()).thenReturn(acl);
+        when(mockResource.getAcl()).thenReturn(mockAclResource);
         when(mockNodeService.find(mockSession, acl)).thenReturn(mockAclResource);
-        when(mockProperty.getString()).thenReturn(acl);
+        when(mockResource.getTypes()).thenReturn(Arrays.asList(URI.create("http://example.com/terms#publicImage")));
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockResource.getPath()).thenReturn(accessTo);
-        when(mockResource.getTypes()).thenReturn(Arrays.asList(URI.create("http://example.com/terms#publicImage")));
-        when(mockResource.getTriples(anyObject(), eq(PROPERTIES)))
-                .thenReturn(getResourceRdfStream(accessTo, acl));
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
-
-        when(mockAuthorizationResource1.getTypes()).thenReturn(Arrays.asList(WEBAC_AUTHORIZATION));
-        when(mockAuthorizationResource1.getPath()).thenReturn(auth1);
-        when(mockAuthorizationResource1.getTriples(anyObject(), eq(PROPERTIES)))
-                .thenReturn(getRdfStreamFromResource(auth1, TTL));
-
-        when(mockAuthorizationResource2.getTypes()).thenReturn(Arrays.asList(WEBAC_AUTHORIZATION));
-        when(mockAuthorizationResource2.getPath()).thenReturn(auth2);
-        when(mockAuthorizationResource2.getTriples(anyObject(), eq(PROPERTIES)))
-                .thenReturn(getRdfStreamFromResource(auth2, TTL));
-
-        when(mockAclResource.getChildren()).thenReturn(of(mockAuthorizationResource1, mockAuthorizationResource2));
+        when(mockAclResource.getTriples(anyObject(), eq(PROPERTIES)))
+            .thenReturn(getRdfStreamFromResource(acl, TTL));
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockNode, true);
 
-        assertEquals("There should be exactly agent", 1, roles.size());
+        assertEquals("There should be exactly one agent", 1, roles.size());
         assertEquals("The agent should have one mode", 1, roles.get(agent1).size());
         assertTrue("The agent should be able to read", roles.get(agent1).contains(WEBAC_MODE_READ_VALUE));
     }
@@ -465,31 +411,29 @@ public class WebACRolesProviderTest {
         final String accessTo = "/anotherCollection";
 
         final String groupResource = "/group/foo";
-        final String acl = "/acls/09";
-        final String auth = acl + "/authorization.ttl";
-        final String group = acl + "/group.ttl";
+        final String aclDir = "/acls/09";
+        final String acl = aclDir + "/acl.ttl";
+        final String group = aclDir + "/group.ttl";
 
         when(mockNodeService.find(mockSession, acl)).thenReturn(mockAclResource);
         when(mockNodeService.find(mockSession, groupResource)).thenReturn(mockAgentClassResource);
-        when(mockProperty.getString()).thenReturn(acl);
+        when(mockNodeService.find(any(FedoraSession.class), eq(acl))).thenReturn(mockAclResource);
+        when(mockNodeService.find(any(FedoraSession.class), eq(accessTo))).thenReturn(mockResource);
+        when(mockNode.getPath()).thenReturn(accessTo);
+        when(mockAclNode.getPath()).thenReturn(acl);
+        when(mockResource.getAcl()).thenReturn(mockAclResource);
+        when(mockNodeService.find(mockSession, acl)).thenReturn(mockAclResource);
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockResource.getPath()).thenReturn(accessTo);
-        when(mockResource.getTypes()).thenReturn(new ArrayList<>());
-        when(mockResource.getTriples(anyObject(), eq(PROPERTIES)))
-                .thenReturn(getResourceRdfStream(accessTo, acl));
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
-
-        when(mockAuthorizationResource1.getTypes()).thenReturn(Arrays.asList(WEBAC_AUTHORIZATION));
-        when(mockAuthorizationResource1.getPath()).thenReturn(auth);
-        when(mockAuthorizationResource1.getTriples(anyObject(), eq(PROPERTIES)))
-        .thenReturn(getRdfStreamFromResource(auth, TTL));
+        when(mockAclResource.getTriples(anyObject(), eq(PROPERTIES)))
+            .thenReturn(getRdfStreamFromResource(acl, TTL));
 
         when(mockAgentClassResource.getTypes()).thenReturn(Arrays.asList(VCARD_GROUP));
         when(mockAgentClassResource.getPath()).thenReturn(groupResource);
         when(mockAgentClassResource.getTriples(anyObject(), eq(PROPERTIES)))
                 .thenReturn(getRdfStreamFromResource(group, TTL));
 
-        when(mockAclResource.getChildren()).thenReturn(of(mockAuthorizationResource1));
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockNode, true);
 
@@ -511,31 +455,27 @@ public class WebACRolesProviderTest {
         final String accessTo = "/anotherCollection";
 
         final String groupResource = "/group/foo";
-        final String acl = "/acls/09";
-        final String auth = acl + "/authorization.ttl";
-        final String group = acl + "/group.ttl";
+        final String acl = "/acls/09/acl.ttl";
+        final String group = "/acls/09/group.ttl";
 
         when(mockNodeService.find(mockSession, acl)).thenReturn(mockAclResource);
         when(mockNodeService.find(mockSession, groupResource)).thenReturn(mockAgentClassResource);
-        when(mockProperty.getString()).thenReturn(acl);
+        when(mockNodeService.find(any(FedoraSession.class), eq(acl))).thenReturn(mockAclResource);
+        when(mockNodeService.find(any(FedoraSession.class), eq(accessTo))).thenReturn(mockResource);
+        when(mockNode.getPath()).thenReturn(accessTo);
+        when(mockAclNode.getPath()).thenReturn(acl);
+        when(mockResource.getAcl()).thenReturn(mockAclResource);
+        when(mockNodeService.find(mockSession, acl)).thenReturn(mockAclResource);
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockResource.getPath()).thenReturn(accessTo);
-        when(mockResource.getTypes()).thenReturn(new ArrayList<>());
-        when(mockResource.getTriples(anyObject(), eq(PROPERTIES)))
-                .thenReturn(getResourceRdfStream(accessTo, acl));
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
-
-        when(mockAuthorizationResource1.getTypes()).thenReturn(Arrays.asList(WEBAC_AUTHORIZATION));
-        when(mockAuthorizationResource1.getPath()).thenReturn(auth);
-        when(mockAuthorizationResource1.getTriples(anyObject(), eq(PROPERTIES)))
-                .thenReturn(getRdfStreamFromResource(auth, TTL));
+        when(mockAclResource.getTriples(anyObject(), eq(PROPERTIES)))
+            .thenReturn(getRdfStreamFromResource(acl, TTL));
 
         when(mockAgentClassResource.getTypes()).thenReturn(new ArrayList<>());
         when(mockAgentClassResource.getPath()).thenReturn(groupResource);
         when(mockAgentClassResource.getTriples(anyObject(), eq(PROPERTIES)))
-                .thenReturn(getRdfStreamFromResource(group, TTL));
-
-        when(mockAclResource.getChildren()).thenReturn(of(mockAuthorizationResource1));
+            .thenReturn(getRdfStreamFromResource(group, TTL));
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockNode, true);
 
@@ -546,29 +486,19 @@ public class WebACRolesProviderTest {
     public void acl17Test1() throws RepositoryException {
         final String foafAgent = "http://xmlns.com/foaf/0.1/Agent";
         final String accessTo = "/dark/archive/sunshine";
-        final String acl = "/acls/17";
-        final String auth1 = acl + "/auth_valid_foaf_agent.ttl";
-        final String auth2 = acl + "/auth_invalid_foaf_agent.ttl";
+        final String acl = "/acls/17/acl.ttl";
 
+        when(mockNodeService.find(any(FedoraSession.class), eq(acl))).thenReturn(mockAclResource);
+        when(mockNodeService.find(any(FedoraSession.class), eq(accessTo))).thenReturn(mockResource);
+        when(mockNode.getPath()).thenReturn(accessTo);
+        when(mockAclNode.getPath()).thenReturn(acl);
+        when(mockResource.getAcl()).thenReturn(mockAclResource);
         when(mockNodeService.find(mockSession, acl)).thenReturn(mockAclResource);
-        when(mockProperty.getString()).thenReturn(acl);
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockResource.getPath()).thenReturn(accessTo);
-        when(mockResource.getTriples(anyObject(), eq(PROPERTIES)))
-                .thenReturn(getResourceRdfStream(accessTo, acl));
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
-
-        when(mockAuthorizationResource1.getTypes()).thenReturn(Arrays.asList(WEBAC_AUTHORIZATION));
-        when(mockAuthorizationResource1.getPath()).thenReturn(auth1);
-        when(mockAuthorizationResource1.getTriples(anyObject(), eq(PROPERTIES)))
-                .thenReturn(getRdfStreamFromResource(auth1, TTL));
-
-        when(mockAuthorizationResource2.getTypes()).thenReturn(Arrays.asList(WEBAC_AUTHORIZATION));
-        when(mockAuthorizationResource2.getPath()).thenReturn(auth2);
-        when(mockAuthorizationResource2.getTriples(anyObject(), eq(PROPERTIES)))
-                .thenReturn(getRdfStreamFromResource(auth2, TTL));
-
-        when(mockAclResource.getChildren()).thenReturn(of(mockAuthorizationResource1, mockAuthorizationResource2));
+        when(mockAclResource.getTriples(anyObject(), eq(PROPERTIES)))
+            .thenReturn(getRdfStreamFromResource(acl, TTL));
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockNode, true);
 
@@ -581,8 +511,9 @@ public class WebACRolesProviderTest {
     public void noAclTest1() throws RepositoryException {
         final String agent1 = "http://xmlns.com/foaf/0.1/Agent";
 
-        when(mockResource.getTriples(anyObject(), eq(PROPERTIES)))
-            .thenReturn(new DefaultRdfStream(createURI("subject")));
+        when(mockNodeService.find(any(FedoraSession.class), any())).thenReturn(mockResource);
+        when(mockResource.getAcl()).thenReturn(null);
+
         when(mockResource.getPath()).thenReturn("/");
         when(mockResource.getTypes()).thenReturn(
                 Arrays.asList(URI.create(REPOSITORY_NAMESPACE + "Resource")));
@@ -597,10 +528,9 @@ public class WebACRolesProviderTest {
     public void noAclTestMalformedRdf2() throws RepositoryException {
         final String agent1 = "http://xmlns.com/foaf/0.1/Agent";
 
-        when(mockResource.getTriples(anyObject(), eq(PROPERTIES)))
-            .thenReturn(new DefaultRdfStream(createURI("subject")));
-        when(mockResource.getTriples(anyObject(), eq(PROPERTIES)))
-            .thenReturn(new DefaultRdfStream(createURI("subject")));
+        when(mockNodeService.find(any(FedoraSession.class), any())).thenReturn(mockResource);
+        when(mockResource.getAcl()).thenReturn(null);
+
         when(mockResource.getPath()).thenReturn("/");
         when(mockResource.getTypes()).thenReturn(
                 Arrays.asList(URI.create(REPOSITORY_NAMESPACE + "Resource")));
@@ -618,8 +548,8 @@ public class WebACRolesProviderTest {
     public void noAclTestOkRdf3() throws RepositoryException {
         final String agent1 = "testAdminUser";
 
-        when(mockResource.getTriples(anyObject(), eq(PROPERTIES)))
-            .thenReturn(new DefaultRdfStream(createURI("subject")));
+        when(mockNodeService.find(any(FedoraSession.class), any())).thenReturn(mockResource);
+        when(mockResource.getAcl()).thenReturn(null);
         when(mockResource.getPath()).thenReturn("/");
         when(mockResource.getTypes()).thenReturn(
                 Arrays.asList(URI.create(REPOSITORY_NAMESPACE + "Resource")));

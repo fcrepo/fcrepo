@@ -1,7 +1,0 @@
-PREFIX acl: <http://www.w3.org/ns/auth/acl#>
-PREFIX pcdm: <http://pcdm.org/models#>
-
-<> a acl:Authorization ;
-acl:accessToClass pcdm:Object ;
-acl:mode acl:Read, acl:Write;
-acl:agent "user10" .

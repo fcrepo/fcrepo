@@ -1,7 +1,0 @@
-@prefix acl: <http://www.w3.org/ns/auth/acl#> .
-@prefix fedora: <http://fedora.info/definitions/v4/repository#> .
-
-<> a acl:Authorization ;
-   acl:agent <info:user/smith123> , <info:group/group123> ;
-   acl:mode acl:Read, acl:Write ;
-   acl:accessToClass fedora:Resource .
