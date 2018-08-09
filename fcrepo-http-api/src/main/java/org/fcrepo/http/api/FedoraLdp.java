@@ -400,10 +400,8 @@ public class FedoraLdp extends ContentExposingResource {
 
         final List<String> links = unpackLinks(rawLinks);
 
-        final String path = toPath(translator(), externalPath);
-
         if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
-            addLinkAndOptionsHttpHeadersIfExists(path);
+            handleRequestDisallowedOnMemento();
 
             return status(METHOD_NOT_ALLOWED).build();
         }
@@ -413,6 +411,8 @@ public class FedoraLdp extends ContentExposingResource {
         checkAclLinkHeader(links);
 
         final FedoraResource resource;
+
+        final String path = toPath(translator(), externalPath);
 
         final AcquiredLock lock = lockManager.lockForWrite(path, session.getFedoraSession(), nodeService);
 
@@ -534,8 +534,7 @@ public class FedoraLdp extends ContentExposingResource {
         hasRestrictedPath(externalPath);
 
         if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
-            final String path = toPath(translator(), externalPath);
-            addLinkAndOptionsHttpHeadersIfExists(path);
+            handleRequestDisallowedOnMemento();
 
             return status(METHOD_NOT_ALLOWED).build();
         }
@@ -625,10 +624,8 @@ public class FedoraLdp extends ContentExposingResource {
         final List<String> links = unpackLinks(rawLinks);
 
         if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
-            final String path = toPath(translator(), externalPath);
-            addLinkAndOptionsHttpHeadersIfExists(path);
-            LOGGER.info("Unable to handle POST request on a path containing {}. Path was: {}",
-                    FedoraTypes.FCR_VERSIONS, externalPath);
+            handleRequestDisallowedOnMemento();
+
             return status(METHOD_NOT_ALLOWED).build();
         }
 
@@ -1024,5 +1021,18 @@ public class FedoraLdp extends ContentExposingResource {
             throw new RequestWithAclLinkHeaderException(
                     "Unable to handle request with the specified LDP-RS as the ACL.");
         }
+    }
+
+    private void handleRequestDisallowedOnMemento() {
+        try {
+            addLinkAndOptionsHttpHeaders(resource());
+        } catch (Exception ex) {
+            // Catch the exception to ensure status 405 for any requests on memento.
+            LOGGER.debug("Unable to add link and options headers for PATCH request to memento path {}: {}.",
+                externalPath, ex.getMessage());
+        }
+
+        LOGGER.info("Unable to handle {} request on a path containing {}. Path was: {}", request.getMethod(),
+            FedoraTypes.FCR_VERSIONS, externalPath);
     }
 }

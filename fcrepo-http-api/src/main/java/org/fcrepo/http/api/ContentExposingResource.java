@@ -571,16 +571,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     }
 
     /**
-     * Add Link and Option headers if the resource exists
-     * @param path the path of the resource
-     */
-    protected void addLinkAndOptionsHttpHeadersIfExists(final String path) {
-        if (nodeService.exists(session.getFedoraSession(), path)) {
-            addLinkAndOptionsHttpHeaders(resource());
-        }
-    }
-
-    /**
      * Utility function for building a Link.
      *
      * @param linkUri String of URI for the link.
