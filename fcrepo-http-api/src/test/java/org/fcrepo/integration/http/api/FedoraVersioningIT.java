@@ -1176,7 +1176,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testPatchOnAbsentMemento() throws Exception {
+    public void testPatchOnInvalidMementoPath() throws Exception {
         createVersionedContainer(id);
 
         final String anyMementoUri = subjectUri + "/fcr:versions/any";
@@ -1204,7 +1204,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testPostOnAbsentMemento() throws Exception {
+    public void testPostOnInvalidMementoPath() throws Exception {
         createVersionedContainer(id);
 
         final String body = createContainerMementoBodyContent(subjectUri, N3);
@@ -1232,7 +1232,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testPutOnAbsentMemento() throws Exception {
+    public void testPutOnInvalidMementoPath() throws Exception {
         createVersionedContainer(id);
 
         final String body = createContainerMementoBodyContent(subjectUri, N3);
