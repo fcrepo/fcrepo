@@ -1131,7 +1131,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         getMemento.addHeader(ACCEPT_DATETIME, requestDatetime);
 
         try (final CloseableHttpResponse response = customClient.execute(getMemento)) {
-            assertEquals("Did not get NOT_FOUND response", NOT_FOUND.getStatusCode(), getStatus(response));
+            assertEquals("Did not get NOT_ACCEPTABLE response", NOT_ACCEPTABLE.getStatusCode(), getStatus(response));
             assertNull("Did not expect a Location header", response.getFirstHeader(LOCATION));
             assertNotEquals("Did not get Content-Length > 0", 0, response.getFirstHeader(CONTENT_LENGTH).getValue());
         }

@@ -36,8 +36,8 @@ import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static javax.ws.rs.core.Response.Status.FOUND;
 import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
+import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.jena.atlas.web.ContentType.create;
@@ -324,7 +324,7 @@ public class FedoraLdp extends ContentExposingResource {
                 builder =
                     status(FOUND).header(LOCATION, translator().reverse().convert(memento).toString()).build();
             } else {
-                builder = status(NOT_FOUND).build();
+                builder = status(NOT_ACCEPTABLE).build();
             }
             addResourceHttpHeaders(resource);
             setVaryAndPreferenceAppliedHeaders(servletResponse, prefer, resource);
