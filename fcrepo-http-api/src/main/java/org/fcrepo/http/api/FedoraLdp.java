@@ -64,6 +64,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODELS;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.FedoraExternalContent.COPY;
+import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.LDPCV_TIME_MAP;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -121,6 +122,7 @@ import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
 import org.fcrepo.kernel.api.exception.InsufficientStorageException;
 import org.fcrepo.kernel.api.exception.InteractionModelViolationException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.InvalidMementoPathException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.MementoDatetimeFormatException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
@@ -196,6 +198,8 @@ public class FedoraLdp extends ContentExposingResource {
     public Response head() throws UnsupportedAlgorithmException, UnsupportedAccessTypeException {
         LOGGER.info("HEAD for: {}", externalPath);
 
+        checkMementoPath();
+
         final String datetimeHeader = headers.getHeaderString(ACCEPT_DATETIME);
         if (!isBlank(datetimeHeader) && resource().isVersioned()) {
             return getMemento(datetimeHeader, resource());
@@ -243,6 +247,9 @@ public class FedoraLdp extends ContentExposingResource {
     @Timed
     public Response options() {
         LOGGER.info("OPTIONS for '{}'", externalPath);
+
+        checkMementoPath();
+
         addLinkAndOptionsHttpHeaders(resource());
         return ok().build();
     }
@@ -263,6 +270,8 @@ public class FedoraLdp extends ContentExposingResource {
             TURTLE_X, TEXT_HTML_WITH_CHARSET})
     public Response getResource(@HeaderParam("Range") final String rangeValue)
             throws IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+
+        checkMementoPath();
 
         final String datetimeHeader = headers.getHeaderString(ACCEPT_DATETIME);
         if (!isBlank(datetimeHeader) && resource().isVersioned()) {
@@ -1034,5 +1043,17 @@ public class FedoraLdp extends ContentExposingResource {
 
         LOGGER.info("Unable to handle {} request on a path containing {}. Path was: {}", request.getMethod(),
             FedoraTypes.FCR_VERSIONS, externalPath);
+    }
+
+    /*
+     * Ensure that an incoming versioning/memento path can be converted.
+     */
+    private void checkMementoPath() {
+        if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
+            final String path = toPath(translator(), externalPath);
+            if (path.contains(FedoraTypes.FCR_VERSIONS) && !LDPCV_TIME_MAP.equals(FedoraTypes.FCR_VERSIONS)) {
+                throw new InvalidMementoPathException("Invalid versioning request with path: " + path);
+            }
+        }
     }
 }
