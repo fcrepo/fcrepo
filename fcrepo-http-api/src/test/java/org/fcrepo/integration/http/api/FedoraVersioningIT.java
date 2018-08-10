@@ -96,6 +96,7 @@ import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
@@ -489,6 +490,76 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             assertTrue("Expected child resource NOT found: " + graph, graph.contains(ANY,
                     ANY, createURI(CONTAINS.getURI()), createURI(childUri)));
         }
+    }
+
+    @Test
+    public void testHeadOnMemento() throws Exception {
+        final DateTimeFormatter FMT = RFC_1123_DATE_TIME.withZone(ZoneId.of("UTC"));
+
+        createVersionedContainer(id);
+        final String mementoDateTime =
+            FMT.format(ISO_INSTANT.parse("2017-06-10T11:41:00Z", Instant::from));
+        final String mementoUri = createLDPRSMementoWithExistingBody(mementoDateTime);
+
+        // Status 200: HEAD request on existing memento
+        final HttpHead headMethod = new HttpHead(mementoUri);
+        assertEquals("Expected memento is NOT found: " + mementoUri, OK.getStatusCode(), getStatus(headMethod));
+
+        // Status 404: HEAD request on absent memento
+        final HttpHead headMementoAbsent = headObjMethod(id + "/" + FCR_VERSIONS + "/20000101000001");
+        assertEquals("Didn't get status 404 on absent memento!",
+            NOT_FOUND.getStatusCode(), getStatus(headMementoAbsent));
+
+        // Status 400: HEAD request with invalid memento path
+        final HttpHead headMethodInvalid = headObjMethod(id + "/" + FCR_VERSIONS + "/any");
+        checkResponseWithInvalidMementoID(headMethodInvalid);
+    }
+
+    @Test
+    public void testGetOnMemento() throws Exception {
+        final DateTimeFormatter FMT = RFC_1123_DATE_TIME.withZone(ZoneId.of("UTC"));
+
+        createVersionedContainer(id);
+        final String mementoDateTime =
+            FMT.format(ISO_INSTANT.parse("2017-06-10T11:41:00Z", Instant::from));
+        final String mementoUri = createLDPRSMementoWithExistingBody(mementoDateTime);
+
+        // Status 200: GET request on existing memento
+        final HttpGet getMemento = new HttpGet(mementoUri);
+        assertEquals("Expected memento is NOT found: " + mementoUri, OK.getStatusCode(), getStatus(getMemento));
+
+        // Status 404: GET request on absent memento
+        final HttpGet getMementoAbsent = getObjMethod(id + "/" + FCR_VERSIONS + "/20000101000001");
+        assertEquals("Didn't get status 404 on absent memento!",
+            NOT_FOUND.getStatusCode(), getStatus(getMementoAbsent));
+
+        // Status 400: GET request with invalid memento path
+        final HttpGet getMementoInvalid = getObjMethod(id + "/" + FCR_VERSIONS + "/any");
+        checkResponseWithInvalidMementoID(getMementoInvalid);
+    }
+
+    @Test
+    public void testOptionsOnMemento() throws Exception {
+        final DateTimeFormatter FMT = RFC_1123_DATE_TIME.withZone(ZoneId.of("UTC"));
+
+        createVersionedContainer(id);
+        final String mementoDateTime =
+            FMT.format(ISO_INSTANT.parse("2017-06-10T11:41:00Z", Instant::from));
+        final String mementoUri = createLDPRSMementoWithExistingBody(mementoDateTime);
+
+        // Status 200: OPTIONS request on existing memento
+        final HttpOptions optionsMemento = new HttpOptions(mementoUri);
+        assertEquals("Expected memento is NOT found: " + mementoUri, OK.getStatusCode(), getStatus(optionsMemento));
+
+        // Status 404: OPTIONS request on absent memento
+        final String absentMementoPath = serverAddress + id + "/" + FCR_VERSIONS + "/20000101000001";
+        final HttpOptions optionsMementoAbsent = new HttpOptions(absentMementoPath);
+        assertEquals("Didn't get status 404 on absent memento!",
+            NOT_FOUND.getStatusCode(), getStatus(optionsMementoAbsent));
+
+        // Status 400: OPTIONS request with invalid memento path
+        final HttpOptions optionsMementoInvalid = new HttpOptions(serverAddress + id + "/" + FCR_VERSIONS + "/any");
+        checkResponseWithInvalidMementoID(optionsMementoInvalid);
     }
 
     @Test
@@ -1711,5 +1782,15 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         assertTrue("Missing link " + relName + " with value " + uri, getLinkHeaders(response)
                 .stream().map(Link::valueOf)
                 .anyMatch(l -> relName.equals(l.getRel()) && uri.equals(l.getUri().toString())));
+    }
+
+    private void checkResponseWithInvalidMementoID(final HttpUriRequest req) throws IOException {
+        try (final CloseableHttpResponse response = execute(req)) {
+            assertEquals("Didn't get status 400 with invalid memento path!",
+                BAD_REQUEST.getStatusCode(), getStatus(req));
+
+            // Request must fail with constrained exception due to invalid memento ID
+            assertConstrainedByPresent(response);
+        }
     }
 }
