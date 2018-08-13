@@ -64,7 +64,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODELS;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.FedoraExternalContent.COPY;
-import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.LDPCV_TIME_MAP;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -1051,7 +1050,7 @@ public class FedoraLdp extends ContentExposingResource {
     private void checkMementoPath() {
         if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
             final String path = toPath(translator(), externalPath);
-            if (path.contains(FedoraTypes.FCR_VERSIONS) && !LDPCV_TIME_MAP.equals(FedoraTypes.FCR_VERSIONS)) {
+            if (path.contains(FedoraTypes.FCR_VERSIONS)) {
                 throw new InvalidMementoPathException("Invalid versioning request with path: " + path);
             }
         }
