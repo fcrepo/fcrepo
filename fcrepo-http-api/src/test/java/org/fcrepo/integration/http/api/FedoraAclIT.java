@@ -24,7 +24,9 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.jena.graph.Node.ANY;
+import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.fcrepo.http.api.FedoraAcl.ROOT_AUTHORIZATION_PROPERTY;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
@@ -183,6 +185,32 @@ public class FedoraAclIT extends AbstractResourceIT {
         final HttpGet getNotFound = new HttpGet(subjectUri + "/" + FCR_ACL);
         assertEquals(NOT_FOUND.getStatusCode(), getStatus(getNotFound));
 
+    }
+
+    @Test
+    public void testGetDefaultRootAcl() throws Exception {
+        final String rootAclUri = serverAddress + FCR_ACL;
+        try (final CloseableDataset dataset = getDataset(new HttpGet(rootAclUri))) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertTrue(graph.contains(ANY,
+                                      createURI(rootAclUri),
+                                      createURI("http://www.w3.org/2000/01/rdf-schema#label"),
+                                      createLiteral("Root Authorization")));
+        }
+    }
+
+    @Test
+    public void testGetUserDefinedDefaultRootAcl() throws Exception {
+        System.setProperty(ROOT_AUTHORIZATION_PROPERTY, "./target/test-classes/test-root-authorization.ttl");
+        final String rootAclUri = serverAddress + FCR_ACL;
+        try (final CloseableDataset dataset = getDataset(new HttpGet(rootAclUri))) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertTrue(graph.contains(ANY,
+                                      createURI(rootAclUri),
+                                      createURI("http://www.w3.org/2000/01/rdf-schema#label"),
+                                      createLiteral("(Test) Root Authorization")));
+        }
+        System.clearProperty(ROOT_AUTHORIZATION_PROPERTY);
     }
 
     @Test

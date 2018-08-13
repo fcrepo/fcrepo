@@ -21,7 +21,11 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
+import static javax.ws.rs.core.Response.ok;
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.riot.Lang.TTL;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2_WITH_CHARSET;
@@ -32,8 +36,11 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -57,9 +64,13 @@ import javax.ws.rs.core.UriInfo;
 
 import com.codahale.metrics.annotation.Timed;
 import org.apache.commons.io.IOUtils;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.shared.JenaException;
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.http.commons.domain.RDFMediaType;
+import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
@@ -76,10 +87,14 @@ import org.springframework.context.annotation.Scope;
  * @since 4/20/18
  */
 @Scope("request")
-@Path("/{path: .*}/fcr:acl")
+@Path("/{path: (.+/)?}fcr:acl")
 public class FedoraAcl extends ContentExposingResource {
 
     private static final Logger LOGGER = getLogger(FedoraAcl.class);
+
+    public static final String ROOT_AUTHORIZATION_PROPERTY = "fcrepo.auth.webac.authorization";
+
+    public static final String ROOT_AUTHORIZATION_LOCATION = "/root-authorization.ttl";
 
     @Context protected Request request;
     @Context protected HttpServletResponse servletResponse;
@@ -232,9 +247,22 @@ public class FedoraAcl extends ContentExposingResource {
     public Response getResource(@HeaderParam("Range") final String rangeValue)
             throws IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException, ItemNotFoundException {
 
+        LOGGER.info("GET resource '{}'", externalPath);
+
         final FedoraResource aclResource = resource().getAcl();
 
         if (aclResource == null) {
+            if (resource().hasType(FEDORA_REPOSITORY_ROOT)) {
+                final String resourceUri = getUri(resource()).toString();
+                final String aclUri = resourceUri + (resourceUri.endsWith("/") ? "" : "/") + FCR_ACL;
+
+                final RdfStream defaultRdfStream = DefaultRdfStream.fromModel(createResource(aclUri).asNode(),
+                    getDefaultAcl(aclUri));
+                final RdfNamespacedStream output = new RdfNamespacedStream(defaultRdfStream,
+                    session.getFedoraSession().getNamespaces());
+                return ok(output).build();
+            }
+
             throw new ItemNotFoundException();
         }
 
@@ -284,4 +312,35 @@ public class FedoraAcl extends ContentExposingResource {
         }
     }
 
+    /**
+     * Retrieve the default root ACL from a user specified location if it exists,
+     * otherwise the one provided by Fedora will be used.
+     * @return Model the rdf model of the default root ACL
+     */
+    public static Model getDefaultAcl(final String baseUri) {
+        final String rootAcl = System.getProperty(ROOT_AUTHORIZATION_PROPERTY);
+        final Model model = createDefaultModel();
+
+        if (rootAcl != null && new File(rootAcl).isFile()) {
+            try {
+                LOGGER.debug("Getting root authorization from file: {}", rootAcl);
+
+                RDFDataMgr.read(model, rootAcl, baseUri, null);
+
+                return model;
+            } catch (final JenaException ex) {
+                throw new RuntimeException("Error parsing the default root ACL " + rootAcl + ".", ex);
+            }
+        }
+
+        try (final InputStream is = FedoraAcl.class.getResourceAsStream(ROOT_AUTHORIZATION_LOCATION)) {
+            LOGGER.debug("Getting root ACL from classpath: {}", ROOT_AUTHORIZATION_LOCATION);
+
+            return model.read(is, baseUri, TTL.getName());
+        } catch (final IOException ex) {
+            throw new RuntimeException("Error reading the default root Acl " + ROOT_AUTHORIZATION_LOCATION + ".", ex);
+        } catch (final JenaException ex) {
+            throw new RuntimeException("Error parsing the default root ACL " + ROOT_AUTHORIZATION_LOCATION + ".", ex);
+        }
+    }
 }

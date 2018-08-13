@@ -26,7 +26,7 @@ import static org.fcrepo.auth.webac.URIConstants.VCARD_GROUP;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_ACCESS_CONTROL_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE_VALUE;
-import static org.fcrepo.auth.webac.WebACRolesProvider.ROOT_AUTHORIZATION_PROPERTY;
+import static org.fcrepo.http.api.FedoraAcl.ROOT_AUTHORIZATION_PROPERTY;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.junit.Assert.assertEquals;
@@ -524,9 +524,8 @@ public class WebACRolesProviderTest {
         assertEquals("The agent should have zero modes", 0, roles.get(agent1).size());
     }
 
-    @Test
+    @Test(expected = RuntimeException.class)
     public void noAclTestMalformedRdf2() throws RepositoryException {
-        final String agent1 = "http://xmlns.com/foaf/0.1/Agent";
 
         when(mockNodeService.find(any(FedoraSession.class), any())).thenReturn(mockResource);
         when(mockResource.getAcl()).thenReturn(null);
@@ -537,11 +536,8 @@ public class WebACRolesProviderTest {
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
 
         System.setProperty(ROOT_AUTHORIZATION_PROPERTY, "./target/test-classes/logback-test.xml");
-        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockNode, true);
+        roleProvider.getRoles(mockNode, true);
         System.clearProperty(ROOT_AUTHORIZATION_PROPERTY);
-
-        assertEquals("There should be exactly one agent", 1, roles.size());
-        assertEquals("The agent should have zero modes", 0, roles.get(agent1).size());
     }
 
     @Test
