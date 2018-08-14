@@ -21,7 +21,6 @@ import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_LOCATION;
 import static javax.ws.rs.core.HttpHeaders.LINK;
-import static javax.ws.rs.core.HttpHeaders.LOCATION;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -45,6 +44,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -321,38 +321,25 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         }
     }
 
-    @Test
-    public void testHeadExternalDatastreamWithWantDigest() throws IOException, ParseException {
-
-        final String dsId = getRandomUniqueId();
-        createDatastream(dsId, "x", TEST_BINARY_CONTENT);
-
-        final String dsUrl = serverAddress + dsId + "/x";
-
-        final String id = getRandomUniqueId();
-        final HttpPut put = putObjMethod(id);
-        put.addHeader(LINK, getExternalContentLinkHeader(dsUrl, "redirect", "text/plain"));
-        assertEquals(CREATED.getStatusCode(), getStatus(put));
-
-        // Configure HEAD request to NOT follow redirects
-        final HttpHead headObjMethod = headObjMethod(id);
-        headObjMethod.addHeader(WANT_DIGEST, "sha");
-        final RequestConfig.Builder requestConfig = RequestConfig.custom();
-        requestConfig.setRedirectsEnabled(false);
-        headObjMethod.setConfig(requestConfig.build());
-
-        try (final CloseableHttpResponse response = execute(headObjMethod)) {
+    private void checkRedirectWantDigestResult(final HttpRequestBase request, final String dsUrl, final String sha1,
+            final String md5) throws IOException {
+        try (final CloseableHttpResponse response = execute(request)) {
             assertEquals(TEMPORARY_REDIRECT.getStatusCode(), response.getStatusLine().getStatusCode());
-            assertTrue(response.getHeaders(DIGEST).length > 0);
             assertEquals(dsUrl, getLocation(response));
+            assertTrue(response.getHeaders(DIGEST).length > 0);
+
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
-            assertTrue("Fixity Checksum doesn't match",
-                    digesterHeaderValue.equals(TEST_SHA_DIGEST_HEADER_VALUE));
+            assertTrue("SHA-1 Fixity Checksum doesn't match",
+                    digesterHeaderValue.indexOf(sha1) >= 0);
+            if (md5 != null) {
+                assertTrue("MD5 fixity checksum doesn't match",
+                        digesterHeaderValue.indexOf(md5) >= 0);
+            }
         }
     }
 
     @Test
-    public void testHeadExternalDatastreamWithWantDigestMultiple() throws IOException, ParseException {
+    public void testRedirectWithWantDigest() throws IOException, ParseException {
 
         final String dsId = getRandomUniqueId();
         createDatastream(dsId, "x", TEST_BINARY_CONTENT);
@@ -364,85 +351,41 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         put.addHeader(LINK, getExternalContentLinkHeader(dsUrl, "redirect", "image/jpeg"));
         assertEquals(CREATED.getStatusCode(), getStatus(put));
 
-        // Configure HEAD request to NOT follow redirects
-        final HttpHead headObjMethod = headObjMethod(id);
-        headObjMethod.addHeader(WANT_DIGEST, "sha, md5;q=0.3");
+        // Configure request to NOT follow redirects
         final RequestConfig.Builder requestConfig = RequestConfig.custom();
         requestConfig.setRedirectsEnabled(false);
+
+        // Verify HEAD request behavior with single Want-Digest
+        final HttpHead headObjMethod = headObjMethod(id);
+        headObjMethod.addHeader(WANT_DIGEST, "sha");
         headObjMethod.setConfig(requestConfig.build());
 
-        try (final CloseableHttpResponse response = execute(headObjMethod)) {
-            assertEquals(TEMPORARY_REDIRECT.getStatusCode(), response.getStatusLine().getStatusCode());
-            assertEquals(dsUrl, getLocation(response));
-            assertTrue(response.getHeaders(DIGEST).length > 0);
+        checkRedirectWantDigestResult(headObjMethod, dsUrl,
+                TEST_SHA_DIGEST_HEADER_VALUE, null);
 
-            final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
-            assertTrue("SHA-1 Fixity Checksum doesn't match",
-                    digesterHeaderValue.indexOf(TEST_SHA_DIGEST_HEADER_VALUE) >= 0);
-            assertTrue("MD5 fixity checksum doesn't match",
-                    digesterHeaderValue.indexOf(TEST_MD5_DIGEST_HEADER_VALUE) >= 0);
-        }
-    }
+        // Verify HEAD request behavior with multiple Want-Digest
+        final HttpHead headObjMethodMulti = headObjMethod(id);
+        headObjMethodMulti.addHeader(WANT_DIGEST, "sha, md5;q=0.3");
+        headObjMethodMulti.setConfig(requestConfig.build());
 
-    @Test
-    public void testGetExternalDatastreamWithWantDigest() throws IOException, ParseException {
-        final String dsId = getRandomUniqueId();
-        createDatastream(dsId, "x", TEST_BINARY_CONTENT);
-        final String dsUrl = serverAddress + dsId + "/x";
+        checkRedirectWantDigestResult(headObjMethodMulti, dsUrl,
+                TEST_SHA_DIGEST_HEADER_VALUE, TEST_MD5_DIGEST_HEADER_VALUE);
 
-        final String id = getRandomUniqueId();
-        final HttpPut put = putObjMethod(id);
-        put.addHeader(LINK, getExternalContentLinkHeader(dsUrl, "redirect", "text/plain"));
-        assertEquals(CREATED.getStatusCode(), getStatus(put));
-
-        // Configure GET request to NOT follow redirects
+        // Verify GET request behavior with Want-Digest
         final HttpGet getObjMethod = getObjMethod(id);
         getObjMethod.addHeader(WANT_DIGEST, "sha");
-        final RequestConfig.Builder requestConfig = RequestConfig.custom();
-        requestConfig.setRedirectsEnabled(false);
         getObjMethod.setConfig(requestConfig.build());
 
-        try (final CloseableHttpResponse response = execute(getObjMethod)) {
-            assertEquals(TEMPORARY_REDIRECT.getStatusCode(), response.getStatusLine().getStatusCode());
-            assertEquals(dsUrl, getLocation(response));
-            assertTrue(response.getHeaders(DIGEST).length > 0);
-            final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
-            assertTrue("Fixity Checksum doesn't match",
-                    digesterHeaderValue.equals(TEST_SHA_DIGEST_HEADER_VALUE));
-        }
-    }
+        checkRedirectWantDigestResult(getObjMethod, dsUrl,
+                TEST_SHA_DIGEST_HEADER_VALUE, null);
 
-    @Test
-    public void testGetExternalDatastreamWithWantDigestMultiple() throws IOException, ParseException {
+        // Verify GET with multiple Want-Digest
+        final HttpGet getObjMethodMulti = getObjMethod(id);
+        getObjMethodMulti.addHeader(WANT_DIGEST, "sha, md5;q=0.3");
+        getObjMethodMulti.setConfig(requestConfig.build());
 
-        final String dsId = getRandomUniqueId();
-        createDatastream(dsId, "x", TEST_BINARY_CONTENT);
-
-        final String dsUrl = serverAddress + dsId + "/x";
-
-        final String id = getRandomUniqueId();
-        final HttpPut put = putObjMethod(id);
-        put.addHeader(LINK, getExternalContentLinkHeader(dsUrl, "redirect", "text/plain"));
-        assertEquals(CREATED.getStatusCode(), getStatus(put));
-
-        // Configure Get request to NOT follow redirects
-        final HttpGet getObjMethod = getObjMethod(id);
-        getObjMethod.addHeader(WANT_DIGEST, "sha, md5;q=0.3");
-        final RequestConfig.Builder requestConfig = RequestConfig.custom();
-        requestConfig.setRedirectsEnabled(false);
-        getObjMethod.setConfig(requestConfig.build());
-
-        try (final CloseableHttpResponse response = execute(getObjMethod)) {
-            assertEquals(TEMPORARY_REDIRECT.getStatusCode(), response.getStatusLine().getStatusCode());
-            assertEquals(dsUrl, response.getFirstHeader(LOCATION).getValue());
-            assertTrue(response.getHeaders(DIGEST).length > 0);
-
-            final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
-            assertTrue("SHA-1 Fixity Checksum doesn't match",
-                    digesterHeaderValue.indexOf(TEST_SHA_DIGEST_HEADER_VALUE) >= 0);
-            assertTrue("MD5 fixity checksum doesn't match",
-                    digesterHeaderValue.indexOf(TEST_MD5_DIGEST_HEADER_VALUE) >= 0);
-        }
+        checkRedirectWantDigestResult(getObjMethodMulti, dsUrl,
+                TEST_SHA_DIGEST_HEADER_VALUE, TEST_MD5_DIGEST_HEADER_VALUE);
     }
 
     @Test
