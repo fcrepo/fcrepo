@@ -62,7 +62,9 @@ import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.fcrepo.kernel.modeshape.FedoraSessionImpl;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -106,6 +108,9 @@ public class WebACRolesProviderTest {
 
     @Mock
     private Property mockProperty;
+
+    @Rule
+    public final RestoreSystemProperties restoreSystemProperties = new RestoreSystemProperties();
 
     @Before
     public void setUp() throws RepositoryException {
@@ -537,7 +542,6 @@ public class WebACRolesProviderTest {
 
         System.setProperty(ROOT_AUTHORIZATION_PROPERTY, "./target/test-classes/logback-test.xml");
         roleProvider.getRoles(mockNode, true);
-        System.clearProperty(ROOT_AUTHORIZATION_PROPERTY);
     }
 
     @Test

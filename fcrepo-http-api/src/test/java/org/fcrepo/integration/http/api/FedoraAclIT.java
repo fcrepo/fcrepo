@@ -44,7 +44,9 @@ import org.apache.http.entity.StringEntity;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 
 /**
  * @author lsitu
@@ -54,6 +56,9 @@ public class FedoraAclIT extends AbstractResourceIT {
 
     private String subjectUri;
     private String id;
+
+    @Rule
+    public final RestoreSystemProperties restoreSystemProperties = new RestoreSystemProperties();
 
     @Before
     public void init() {
@@ -208,9 +213,8 @@ public class FedoraAclIT extends AbstractResourceIT {
             assertTrue(graph.contains(ANY,
                                       createURI(rootAclUri),
                                       createURI("http://www.w3.org/2000/01/rdf-schema#label"),
-                                      createLiteral("(Test) Root Authorization")));
+                                      createLiteral("(Test) Root ACL")));
         }
-        System.clearProperty(ROOT_AUTHORIZATION_PROPERTY);
     }
 
     @Test

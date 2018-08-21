@@ -315,6 +315,7 @@ public class FedoraAcl extends ContentExposingResource {
     /**
      * Retrieve the default root ACL from a user specified location if it exists,
      * otherwise the one provided by Fedora will be used.
+     * @param baseUri the URI of the default ACL
      * @return Model the rdf model of the default root ACL
      */
     public static Model getDefaultAcl(final String baseUri) {

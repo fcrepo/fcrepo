@@ -3,7 +3,7 @@
 @prefix fedora: <http://fedora.info/definitions/v4/repository#> .
 
 <> a acl:Authorization ;
-   rdfs:label "(Test) Root Authorization" ;
+   rdfs:label "(Test) Root ACL" ;
    rdfs:comment "Provide read access to all resources to the testAdminUser agent." ;
    acl:agent "testAdminUser" ;
    acl:mode acl:Read ;
