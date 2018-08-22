@@ -129,7 +129,7 @@ public class WebACFilter implements Filter {
         return session;
     }
 
-    private FedoraResource resource(URI requestURI) {
+    private FedoraResource resource(final URI requestURI) {
         if (resource == null) {
             resource = nodeService.find(session(), requestURI.toString());
         }
