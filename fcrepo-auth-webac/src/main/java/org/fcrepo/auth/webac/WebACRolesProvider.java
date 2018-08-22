@@ -26,8 +26,6 @@ import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.empty;
 import static java.util.stream.Stream.of;
 import static org.apache.jena.graph.NodeFactory.createURI;
-import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
-import static org.apache.jena.riot.Lang.TTL;
 import static org.fcrepo.auth.webac.URIConstants.FOAF_AGENT_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.VCARD_GROUP;
 import static org.fcrepo.auth.webac.URIConstants.VCARD_MEMBER_VALUE;
@@ -39,6 +37,7 @@ import static org.fcrepo.auth.webac.URIConstants.WEBAC_AGENT_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_AUTHORIZATION_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_NAMESPACE_VALUE;
+import static org.fcrepo.http.api.FedoraAcl.getDefaultAcl;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
@@ -48,9 +47,6 @@ import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFedoraBinary;
 import static org.fcrepo.kernel.modeshape.utils.FedoraSessionUserUtil.USER_AGENT_BASE_URI_PROPERTY;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -74,10 +70,8 @@ import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
 import org.apache.jena.graph.Triple;
-import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.shared.JenaException;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -97,15 +91,11 @@ import org.slf4j.Logger;
  */
 public class WebACRolesProvider implements AccessRolesProvider {
 
-    public static final String ROOT_AUTHORIZATION_PROPERTY = "fcrepo.auth.webac.authorization";
-
     public static final String GROUP_AGENT_BASE_URI_PROPERTY = "fcrepo.auth.webac.groupAgent.baseUri";
 
     private static final Logger LOGGER = getLogger(WebACRolesProvider.class);
 
     private static final String FEDORA_INTERNAL_PREFIX = "info:fedora";
-
-    private static final String ROOT_AUTHORIZATION_LOCATION = "/root-authorization.ttl";
 
     private static final String JCR_VERSIONABLE_UUID_PROPERTY = "jcr:versionableUuid";
 
@@ -460,7 +450,7 @@ public class WebACRolesProvider implements AccessRolesProvider {
         final Map<String, List<String>> aclTriples = new HashMap<>();
         final List<WebACAuthorization> authorizations = new ArrayList<>();
 
-        getDefaultAcl().listStatements().mapWith(Statement::asTriple).forEachRemaining(triple -> {
+        getDefaultAcl(null).listStatements().mapWith(Statement::asTriple).forEachRemaining(triple -> {
             if (hasAclPredicate.test(triple)) {
                 final String predicate = triple.getPredicate().getURI();
                 final List<String> values = aclTriples.computeIfAbsent(predicate,
@@ -489,28 +479,5 @@ public class WebACRolesProvider implements AccessRolesProvider {
             }
         }
         return empty();
-    }
-
-    private static Model getDefaultAcl() {
-        final String rootAcl = System.getProperty(ROOT_AUTHORIZATION_PROPERTY);
-        final Model model = createDefaultModel();
-
-        if (rootAcl != null && new File(rootAcl).isFile()) {
-            try {
-                LOGGER.debug("Getting root authorization from file: {}", rootAcl);
-                return model.read(rootAcl);
-            } catch (final JenaException ex) {
-                LOGGER.error("Error parsing root authorization file: {}", ex.getMessage());
-            }
-        }
-        try (final InputStream is = WebACRolesProvider.class.getResourceAsStream(ROOT_AUTHORIZATION_LOCATION)) {
-            LOGGER.debug("Getting root authorization from classpath: {}", ROOT_AUTHORIZATION_LOCATION);
-            return model.read(is, null, TTL.getName());
-        } catch (final IOException ex) {
-            LOGGER.error("Error reading root authorization file: {}", ex.getMessage());
-        } catch (final JenaException ex) {
-            LOGGER.error("Error parsing root authorization file: {}", ex.getMessage());
-        }
-        return createDefaultModel();
     }
 }

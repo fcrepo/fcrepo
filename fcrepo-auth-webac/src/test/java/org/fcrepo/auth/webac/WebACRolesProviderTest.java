@@ -26,7 +26,7 @@ import static org.fcrepo.auth.webac.URIConstants.VCARD_GROUP;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_ACCESS_CONTROL_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE_VALUE;
-import static org.fcrepo.auth.webac.WebACRolesProvider.ROOT_AUTHORIZATION_PROPERTY;
+import static org.fcrepo.http.api.FedoraAcl.ROOT_AUTHORIZATION_PROPERTY;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.junit.Assert.assertEquals;
@@ -62,7 +62,9 @@ import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.fcrepo.kernel.modeshape.FedoraSessionImpl;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -106,6 +108,9 @@ public class WebACRolesProviderTest {
 
     @Mock
     private Property mockProperty;
+
+    @Rule
+    public final RestoreSystemProperties restoreSystemProperties = new RestoreSystemProperties();
 
     @Before
     public void setUp() throws RepositoryException {
@@ -524,9 +529,8 @@ public class WebACRolesProviderTest {
         assertEquals("The agent should have zero modes", 0, roles.get(agent1).size());
     }
 
-    @Test
+    @Test(expected = RuntimeException.class)
     public void noAclTestMalformedRdf2() throws RepositoryException {
-        final String agent1 = "http://xmlns.com/foaf/0.1/Agent";
 
         when(mockNodeService.find(any(FedoraSession.class), any())).thenReturn(mockResource);
         when(mockResource.getAcl()).thenReturn(null);
@@ -537,11 +541,7 @@ public class WebACRolesProviderTest {
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
 
         System.setProperty(ROOT_AUTHORIZATION_PROPERTY, "./target/test-classes/logback-test.xml");
-        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockNode, true);
-        System.clearProperty(ROOT_AUTHORIZATION_PROPERTY);
-
-        assertEquals("There should be exactly one agent", 1, roles.size());
-        assertEquals("The agent should have zero modes", 0, roles.get(agent1).size());
+        roleProvider.getRoles(mockNode, true);
     }
 
     @Test
