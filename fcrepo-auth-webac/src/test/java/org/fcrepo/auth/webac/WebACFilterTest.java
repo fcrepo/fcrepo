@@ -128,16 +128,16 @@ public class WebACFilterTest {
 
         when(mockSessionFactory.getInternalSession()).thenReturn(mockFedoraSession);
 
-        when(mockNodeService.exists(mockFedoraSession, baseURL + testPath)).thenReturn(true);
-        when(mockNodeService.exists(mockFedoraSession, baseURL + testChildPath)).thenReturn(false);
+        when(mockNodeService.exists(mockFedoraSession, testPath)).thenReturn(true);
+        when(mockNodeService.exists(mockFedoraSession, testChildPath)).thenReturn(false);
     }
 
     private void setupContainerResource() {
-        when(mockNodeService.find(mockFedoraSession, testURIString)).thenReturn(mockContainer);
+        when(mockNodeService.find(mockFedoraSession, testPath)).thenReturn(mockContainer);
     }
 
     private void setupBinaryResource() {
-        when(mockNodeService.find(mockFedoraSession, testURIString)).thenReturn(mockBinary);
+        when(mockNodeService.find(mockFedoraSession, testPath)).thenReturn(mockBinary);
     }
 
     private void setupAdminUser() {

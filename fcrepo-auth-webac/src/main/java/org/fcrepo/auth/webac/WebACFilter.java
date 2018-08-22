@@ -129,27 +129,32 @@ public class WebACFilter implements Filter {
         return session;
     }
 
-    private FedoraResource resource(final URI requestURI) {
+    private FedoraResource resource(final String repoPath) {
         if (resource == null) {
-            resource = nodeService.find(session(), requestURI.toString());
+            resource = nodeService.find(session(), repoPath);
         }
         return resource;
     }
 
-    private String findNearestParent(final String baseURL, final String childPath) {
+    private String findNearestParent(final String childPath) {
+        log.debug("Checking child path {}", childPath);
+
         if (childPath.isEmpty()) {
             return "/";
         }
         final String parentPath = childPath.substring(0, childPath.lastIndexOf("/"));
-        if (nodeService.exists(session(), baseURL + parentPath)) {
+        log.debug("Checking parent path {}", parentPath);
+        if (nodeService.exists(session(), parentPath)) {
             return parentPath;
         } else {
-            return findNearestParent(baseURL, parentPath);
+            return findNearestParent(parentPath);
         }
     }
 
     private boolean isAuthorized(final Subject currentUser, final HttpServletRequest httpRequest) throws IOException {
         final String requestURL = httpRequest.getRequestURL().toString();
+        final String repoPath = httpRequest.getPathInfo();
+
         final URI requestURI = URI.create(requestURL);
         log.debug("Request URI is {}", requestURI);
 
@@ -165,15 +170,13 @@ public class WebACFilter implements Filter {
             if (currentUser.isPermitted(toWrite)) {
                 return true;
             } else {
-                log.warn(requestURL);
-                if (nodeService.exists(session(), requestURL)) {
+                if (nodeService.exists(session(), repoPath)) {
                     // can't PUT to an existing resource without acl:Write permission
                     return false;
                 } else {
                     // find nearest parent resource and verify that user has acl:Append on it
-                    final String repoPath = httpRequest.getPathInfo();
                     final String baseURL = requestURL.replace(repoPath, "");
-                    final String nearestParent = findNearestParent(baseURL, repoPath);
+                    final String nearestParent = findNearestParent(repoPath);
                     log.debug("Nearest parent path of the new resource is {}", nearestParent);
                     final WebACPermission toAppendToParentURI = new WebACPermission(WEBAC_MODE_APPEND, URI.create(
                             baseURL + nearestParent));
@@ -184,7 +187,7 @@ public class WebACFilter implements Filter {
             if (currentUser.isPermitted(toWrite)) {
                 return true;
             } else {
-                if (resource(requestURI) instanceof FedoraBinary) {
+                if (resource(repoPath) instanceof FedoraBinary) {
                     // LDP-NR
                     // user without the acl:Write permission cannot POST to binaries
                     return false;
