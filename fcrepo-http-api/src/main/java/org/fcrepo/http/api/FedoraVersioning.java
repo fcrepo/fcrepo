@@ -160,11 +160,7 @@ public class FedoraVersioning extends ContentExposingResource {
             throws InvalidChecksumException, MementoDatetimeFormatException {
 
         final FedoraResource resource = resource();
-        final FedoraResource timeMap = resource.findOrCreateTimeMap();
-        // If the timemap was created in this request, commit it.
-        if (timeMap.isNew()) {
-            session.commit();
-        }
+        final FedoraResource timeMap = resource.getTimeMap();
 
         final AcquiredLock lock = lockManager.lockForWrite(timeMap.getPath(),
             session.getFedoraSession(), nodeService);
