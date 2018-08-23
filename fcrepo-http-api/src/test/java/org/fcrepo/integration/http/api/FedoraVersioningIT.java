@@ -1122,7 +1122,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         assertEquals("fcr:metadata/fcr:versions must be available after enabling versioning",
                 OK.getStatusCode(), getStatus(new HttpGet(versionsDescUri)));
 
-        final String mementoUri = createMemento(subjectUri, null, null, null);
+        final String mementoUri = createMemento(binaryUri, null, null, null);
         assertEquals("Memento must be created",
                 OK.getStatusCode(), getStatus(new HttpGet(mementoUri)));
     }
@@ -1546,6 +1546,17 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             assertEquals(OK.getStatusCode(), getStatus(getResponse));
             final String content = EntityUtils.toString(getResponse.getEntity());
             assertEquals("Binary doesn't match expected content", newContent, content);
+        }
+    }
+
+    @Test
+    public void createVersionOnNonVersionedResource() throws Exception {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+        final String timemap = id + "/" + FCR_VERSIONS;
+        final HttpPost versionPost = postObjMethod(timemap);
+        try (final CloseableHttpResponse response = execute(versionPost)) {
+            assertEquals(NOT_FOUND.getStatusCode(), getStatus(response));
         }
     }
 
