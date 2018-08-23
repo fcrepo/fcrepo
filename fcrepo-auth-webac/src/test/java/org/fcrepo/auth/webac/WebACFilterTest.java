@@ -22,8 +22,8 @@ import static javax.servlet.http.HttpServletResponse.SC_OK;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_ADMIN_ROLE;
 import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_USER_ROLE;
-import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_APPEND;
+import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
@@ -37,6 +37,12 @@ import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.subject.support.SubjectThreadState;
+import org.fcrepo.http.commons.session.SessionFactory;
+import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.services.NodeService;
+import org.fcrepo.kernel.modeshape.ContainerImpl;
+import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -55,12 +61,32 @@ import org.springframework.mock.web.MockHttpServletResponse;
 @RunWith(MockitoJUnitRunner.class)
 public class WebACFilterTest {
 
+    private static final String baseURL = "http://localhost";
+
     private static final String testPath = "/testUri";
 
-    private static final URI testURI = URI.create("http://localhost" + testPath);
+    private static final String testChildPath = testPath + "/child";
+
+    private static final URI testURI = URI.create(baseURL + testPath);
+
+    private static final String testURIString = testURI.toString();
+
+    private static final URI testChildURI = URI.create(baseURL + testChildPath);
 
     @Mock
     private SecurityManager mockSecurityManager;
+
+    @Mock
+    private SessionFactory mockSessionFactory;
+
+    @Mock
+    private NodeService mockNodeService;
+
+    private FedoraSession mockFedoraSession;
+
+    private FedoraResource mockContainer;
+
+    private FedoraResource mockBinary;
 
     @InjectMocks
     private WebACFilter webacFilter = new WebACFilter();
@@ -68,6 +94,8 @@ public class WebACFilterTest {
     private static final WebACPermission readPermission = new WebACPermission(WEBAC_MODE_READ, testURI);
 
     private static final WebACPermission appendPermission = new WebACPermission(WEBAC_MODE_APPEND, testURI);
+
+    private static final WebACPermission appendChildPermission = new WebACPermission(WEBAC_MODE_APPEND, testChildURI);
 
     private static final WebACPermission writePermission = new WebACPermission(WEBAC_MODE_WRITE, testURI);
 
@@ -98,6 +126,22 @@ public class WebACFilterTest {
         // so the request URI and path info are the same
         request.setPathInfo(testPath);
         request.setRequestURI(testPath);
+
+        mockContainer = Mockito.mock(ContainerImpl.class);
+        mockBinary = Mockito.mock(FedoraBinaryImpl.class);
+
+        when(mockSessionFactory.getInternalSession()).thenReturn(mockFedoraSession);
+
+        when(mockNodeService.exists(mockFedoraSession, testPath)).thenReturn(true);
+        when(mockNodeService.exists(mockFedoraSession, testChildPath)).thenReturn(false);
+    }
+
+    private void setupContainerResource() {
+        when(mockNodeService.find(mockFedoraSession, testPath)).thenReturn(mockContainer);
+    }
+
+    private void setupBinaryResource() {
+        when(mockNodeService.find(mockFedoraSession, testPath)).thenReturn(mockBinary);
     }
 
     private void setupAdminUser() {
@@ -126,6 +170,17 @@ public class WebACFilterTest {
         when(mockSubject.isPermitted(writePermission)).thenReturn(false);
     }
 
+    private void setupAuthUserAppendOnly() {
+        // authenticated user with only read permissions
+        when(mockSubject.isAuthenticated()).thenReturn(true);
+        when(mockSubject.hasRole(FEDORA_ADMIN_ROLE)).thenReturn(false);
+        when(mockSubject.hasRole(FEDORA_USER_ROLE)).thenReturn(true);
+        when(mockSubject.isPermitted(readPermission)).thenReturn(false);
+        when(mockSubject.isPermitted(appendPermission)).thenReturn(true);
+        when(mockSubject.isPermitted(appendChildPermission)).thenReturn(true);
+        when(mockSubject.isPermitted(writePermission)).thenReturn(false);
+    }
+
     private void setupAuthUserReadAppend() {
         // authenticated user with only read permissions
         when(mockSubject.isAuthenticated()).thenReturn(true);
@@ -133,6 +188,7 @@ public class WebACFilterTest {
         when(mockSubject.hasRole(FEDORA_USER_ROLE)).thenReturn(true);
         when(mockSubject.isPermitted(readPermission)).thenReturn(true);
         when(mockSubject.isPermitted(appendPermission)).thenReturn(true);
+        when(mockSubject.isPermitted(appendChildPermission)).thenReturn(true);
         when(mockSubject.isPermitted(writePermission)).thenReturn(false);
     }
 
@@ -153,6 +209,7 @@ public class WebACFilterTest {
         when(mockSubject.hasRole(FEDORA_USER_ROLE)).thenReturn(true);
         when(mockSubject.isPermitted(readPermission)).thenReturn(true);
         when(mockSubject.isPermitted(appendPermission)).thenReturn(true);
+        when(mockSubject.isPermitted(appendChildPermission)).thenReturn(true);
         when(mockSubject.isPermitted(writePermission)).thenReturn(true);
     }
 
@@ -353,6 +410,60 @@ public class WebACFilterTest {
     }
 
     @Test
+    public void testAuthUserAppendPostContainer() throws IOException, ServletException {
+        setupAuthUserAppendOnly();
+        setupContainerResource();
+        // POST => 200
+        request.setRequestURI(testPath);
+        request.setMethod("POST");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_OK, response.getStatus());
+    }
+
+    @Test
+    public void testAuthUserAppendPostBinary() throws IOException, ServletException {
+        setupAuthUserAppendOnly();
+        setupBinaryResource();
+        // POST => 403
+        request.setRequestURI(testPath);
+        request.setMethod("POST");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_FORBIDDEN, response.getStatus());
+    }
+
+    @Test
+    public void testAuthUserAppendDelete() throws IOException, ServletException {
+        setupAuthUserAppendOnly();
+        // POST => 403
+        request.setRequestURI(testPath);
+        request.setMethod("DELETE");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_FORBIDDEN, response.getStatus());
+    }
+
+    @Test
+    public void testAuthUserReadAppendPostContainer() throws IOException, ServletException {
+        setupAuthUserReadAppend();
+        setupContainerResource();
+        // POST => 200
+        request.setRequestURI(testPath);
+        request.setMethod("POST");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_OK, response.getStatus());
+    }
+
+    @Test
+    public void testAuthUserReadAppendPostBinary() throws IOException, ServletException {
+        setupAuthUserReadAppend();
+        setupBinaryResource();
+        // POST => 403
+        request.setRequestURI(testPath);
+        request.setMethod("POST");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_FORBIDDEN, response.getStatus());
+    }
+
+    @Test
     public void testAuthUserReadAppendDelete() throws ServletException, IOException {
         setupAuthUserReadAppend();
         // DELETE => 403
@@ -360,6 +471,28 @@ public class WebACFilterTest {
         request.setMethod("DELETE");
         webacFilter.doFilter(request, response, filterChain);
         assertEquals(SC_FORBIDDEN, response.getStatus());
+    }
+
+    @Test
+    public void testAuthUserReadAppendWritePostContainer() throws IOException, ServletException {
+        setupAuthUserReadAppendWrite();
+        setupContainerResource();
+        // POST => 200
+        request.setRequestURI(testPath);
+        request.setMethod("POST");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_OK, response.getStatus());
+    }
+
+    @Test
+    public void testAuthUserReadAppendWritePostBinary() throws IOException, ServletException {
+        setupAuthUserReadAppendWrite();
+        setupBinaryResource();
+        // POST => 200
+        request.setRequestURI(testPath);
+        request.setMethod("POST");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_OK, response.getStatus());
     }
 
     @Test
@@ -413,6 +546,17 @@ public class WebACFilterTest {
         // DELETE => 200
         request.setRequestURI(testPath);
         request.setMethod("DELETE");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_OK, response.getStatus());
+    }
+
+    @Test
+    public void testAuthUserAppendPutNewChild() throws IOException, ServletException {
+        setupAuthUserAppendOnly();
+        // PUT => 200
+        request.setRequestURI(testChildPath);
+        request.setPathInfo(testChildPath);
+        request.setMethod("PUT");
         webacFilter.doFilter(request, response, filterChain);
         assertEquals(SC_OK, response.getStatus());
     }

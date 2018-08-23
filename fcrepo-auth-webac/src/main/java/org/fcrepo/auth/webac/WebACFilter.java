@@ -19,17 +19,18 @@ package org.fcrepo.auth.webac;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
+import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_ADMIN_ROLE;
 import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_USER_ROLE;
-import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_APPEND;
+import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE;
 import static org.slf4j.LoggerFactory.getLogger;
-import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 
 import java.io.IOException;
 import java.net.URI;
 
+import javax.inject.Inject;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -46,6 +47,11 @@ import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
+import org.fcrepo.http.commons.session.SessionFactory;
+import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.models.FedoraBinary;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.services.NodeService;
 import org.slf4j.Logger;
 
 /**
@@ -54,6 +60,16 @@ import org.slf4j.Logger;
 public class WebACFilter implements Filter {
 
     private static final Logger log = getLogger(WebACFilter.class);
+
+    private FedoraResource resource;
+
+    private FedoraSession session;
+
+    @Inject
+    private NodeService nodeService;
+
+    @Inject
+    private SessionFactory sessionFactory;
 
     @Override
     public void init(final FilterConfig filterConfig) throws ServletException {
@@ -106,21 +122,101 @@ public class WebACFilter implements Filter {
         // this method intentionally left empty
     }
 
+    private FedoraSession session() {
+        if (session == null) {
+            session = sessionFactory.getInternalSession();
+        }
+        return session;
+    }
+
+    private FedoraResource resource(final String repoPath) {
+        if (resource == null) {
+            resource = nodeService.find(session(), repoPath);
+        }
+        return resource;
+    }
+
+    private String findNearestParent(final String childPath) {
+        log.debug("Checking child path {}", childPath);
+
+        if (childPath.isEmpty()) {
+            return "/";
+        }
+        final String parentPath = childPath.substring(0, childPath.lastIndexOf("/"));
+        log.debug("Checking parent path {}", parentPath);
+        if (nodeService.exists(session(), parentPath)) {
+            return parentPath;
+        } else {
+            return findNearestParent(parentPath);
+        }
+    }
+
     private boolean isAuthorized(final Subject currentUser, final HttpServletRequest httpRequest) throws IOException {
-        final URI requestURI = URI.create(httpRequest.getRequestURL().toString());
+        final String requestURL = httpRequest.getRequestURL().toString();
+        final String repoPath = httpRequest.getPathInfo();
+
+        final URI requestURI = URI.create(requestURL);
         log.debug("Request URI is {}", requestURI);
+
+        // WebAC permissions
+        final WebACPermission toRead = new WebACPermission(WEBAC_MODE_READ, requestURI);
+        final WebACPermission toWrite = new WebACPermission(WEBAC_MODE_WRITE, requestURI);
+        final WebACPermission toAppend = new WebACPermission(WEBAC_MODE_APPEND, requestURI);
+
         switch (httpRequest.getMethod()) {
         case "GET":
-            return currentUser.isPermitted(new WebACPermission(WEBAC_MODE_READ, requestURI));
+            return currentUser.isPermitted(toRead);
         case "PUT":
-        case "POST":
-        case "DELETE":
-            return currentUser.isPermitted(new WebACPermission(WEBAC_MODE_WRITE, requestURI));
-        case "PATCH":
-            if (currentUser.isPermitted(new WebACPermission(WEBAC_MODE_WRITE, requestURI))) {
+            if (currentUser.isPermitted(toWrite)) {
+                log.debug("PUT allowed by {} permission", toWrite);
                 return true;
             } else {
-                if (currentUser.isPermitted(new WebACPermission(WEBAC_MODE_APPEND, requestURI))) {
+                if (nodeService.exists(session(), repoPath)) {
+                    // can't PUT to an existing resource without acl:Write permission
+                    log.debug("PUT prohibited to existing resource without {} permission", toWrite);
+                    return false;
+                } else {
+                    // find nearest parent resource and verify that user has acl:Append on it
+                    // this works because when the authorizations are inherited, it is the target request URI that is
+                    // added as the resource, not the accessTo or other URI in the original authorization
+                    log.debug("Resource doesn't exist; checking parent resources for acl:Append permission");
+                    if (currentUser.isPermitted(toAppend)) {
+                        log.debug("PUT allowed for new resource by inherited {} permission", toAppend);
+                        return true;
+                    } else {
+                        log.debug("PUT prohibited for new resource without inherited {} permission", toAppend);
+                        return false;
+                    }
+                }
+            }
+        case "POST":
+            if (currentUser.isPermitted(toWrite)) {
+                log.debug("POST allowed by {} permission", toWrite);
+                return true;
+            } else {
+                if (resource(repoPath) instanceof FedoraBinary) {
+                    // LDP-NR
+                    // user without the acl:Write permission cannot POST to binaries
+                    log.debug("POST prohibited to binary resource without {} permission", toWrite);
+                    return false;
+                } else {
+                    // LDP-RS
+                    // user with the acl:Append permission may POST to containers
+                    if (currentUser.isPermitted(toAppend)) {
+                        log.debug("POST allowed to container by {} permission", toAppend);
+                        return true;
+                    } else {
+                        log.debug("POST prohibited to container without {} permission", toAppend);
+                    }
+                }
+            }
+        case "DELETE":
+            return currentUser.isPermitted(toWrite);
+        case "PATCH":
+            if (currentUser.isPermitted(toWrite)) {
+                return true;
+            } else {
+                if (currentUser.isPermitted(toAppend)) {
                     return isPatchContentPermitted(httpRequest);
                 }
             }

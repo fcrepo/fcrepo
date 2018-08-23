@@ -12,10 +12,6 @@
         <param-value>classpath:spring-test/master.xml</param-value>
     </context-param>
 
-    <listener>
-        <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
-    </listener>
-    
     <context-param>
       <param-name>shiroEnvironmentClass</param-name>
       <param-value>org.apache.shiro.web.env.DefaultWebEnvironment</param-value>
@@ -27,6 +23,10 @@
     
     <listener>
       <listener-class>org.springframework.web.context.request.RequestContextListener</listener-class>
+    </listener>
+
+    <listener>
+      <listener-class>org.fcrepo.http.commons.FedoraContextLoaderListener</listener-class>
     </listener>
 
   <servlet>
