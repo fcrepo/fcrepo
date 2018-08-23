@@ -7,4 +7,5 @@
    rdfs:label "Root Authorization" ;
    rdfs:comment "By default, all non-Admin agents (foaf:Agent) are denied access (no acl:mode is specified) to all resources." ;
    acl:agentClass foaf:Agent ;
-   acl:accessToClass fedora:Resource .
+   acl:accessToClass fedora:Resource ;
+   acl:default <.> .

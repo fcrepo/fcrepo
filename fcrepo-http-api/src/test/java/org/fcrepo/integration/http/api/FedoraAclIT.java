@@ -30,6 +30,7 @@ import static org.fcrepo.http.api.FedoraAcl.ROOT_AUTHORIZATION_PROPERTY;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_NAMESPACE_VALUE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -201,6 +202,11 @@ public class FedoraAclIT extends AbstractResourceIT {
                                       createURI(rootAclUri),
                                       createURI("http://www.w3.org/2000/01/rdf-schema#label"),
                                       createLiteral("Root Authorization")));
+
+            assertTrue(graph.contains(ANY,
+                                      createURI(rootAclUri),
+                                      createURI(WEBAC_NAMESPACE_VALUE + "default"),
+                                      createURI(serverAddress)));
         }
     }
 
@@ -214,7 +220,12 @@ public class FedoraAclIT extends AbstractResourceIT {
                                       createURI(rootAclUri),
                                       createURI("http://www.w3.org/2000/01/rdf-schema#label"),
                                       createLiteral("(Test) Root ACL")));
-        }
+
+            assertTrue(graph.contains(ANY,
+                                      createURI(rootAclUri),
+                                      createURI(WEBAC_NAMESPACE_VALUE + "default"),
+                                      createURI(serverAddress)));
+            }
     }
 
     @Test
