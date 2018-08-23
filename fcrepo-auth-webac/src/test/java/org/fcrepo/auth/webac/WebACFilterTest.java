@@ -71,6 +71,8 @@ public class WebACFilterTest {
 
     private static final String testURIString = testURI.toString();
 
+    private static final URI testChildURI = URI.create(baseURL + testChildPath);
+
     @Mock
     private SecurityManager mockSecurityManager;
 
@@ -92,6 +94,8 @@ public class WebACFilterTest {
     private static final WebACPermission readPermission = new WebACPermission(WEBAC_MODE_READ, testURI);
 
     private static final WebACPermission appendPermission = new WebACPermission(WEBAC_MODE_APPEND, testURI);
+
+    private static final WebACPermission appendChildPermission = new WebACPermission(WEBAC_MODE_APPEND, testChildURI);
 
     private static final WebACPermission writePermission = new WebACPermission(WEBAC_MODE_WRITE, testURI);
 
@@ -173,6 +177,7 @@ public class WebACFilterTest {
         when(mockSubject.hasRole(FEDORA_USER_ROLE)).thenReturn(true);
         when(mockSubject.isPermitted(readPermission)).thenReturn(false);
         when(mockSubject.isPermitted(appendPermission)).thenReturn(true);
+        when(mockSubject.isPermitted(appendChildPermission)).thenReturn(true);
         when(mockSubject.isPermitted(writePermission)).thenReturn(false);
     }
 
@@ -183,6 +188,7 @@ public class WebACFilterTest {
         when(mockSubject.hasRole(FEDORA_USER_ROLE)).thenReturn(true);
         when(mockSubject.isPermitted(readPermission)).thenReturn(true);
         when(mockSubject.isPermitted(appendPermission)).thenReturn(true);
+        when(mockSubject.isPermitted(appendChildPermission)).thenReturn(true);
         when(mockSubject.isPermitted(writePermission)).thenReturn(false);
     }
 
@@ -203,6 +209,7 @@ public class WebACFilterTest {
         when(mockSubject.hasRole(FEDORA_USER_ROLE)).thenReturn(true);
         when(mockSubject.isPermitted(readPermission)).thenReturn(true);
         when(mockSubject.isPermitted(appendPermission)).thenReturn(true);
+        when(mockSubject.isPermitted(appendChildPermission)).thenReturn(true);
         when(mockSubject.isPermitted(writePermission)).thenReturn(true);
     }
 

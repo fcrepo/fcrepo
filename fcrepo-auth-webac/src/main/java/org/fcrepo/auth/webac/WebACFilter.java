@@ -168,33 +168,46 @@ public class WebACFilter implements Filter {
             return currentUser.isPermitted(toRead);
         case "PUT":
             if (currentUser.isPermitted(toWrite)) {
+                log.debug("PUT allowed by {} permission", toWrite);
                 return true;
             } else {
                 if (nodeService.exists(session(), repoPath)) {
                     // can't PUT to an existing resource without acl:Write permission
+                    log.debug("PUT prohibited to existing resource without {} permission", toWrite);
                     return false;
                 } else {
                     // find nearest parent resource and verify that user has acl:Append on it
-                    final String baseURL = requestURL.replace(repoPath, "");
-                    final String nearestParent = findNearestParent(repoPath);
-                    log.debug("Nearest parent path of the new resource is {}", nearestParent);
-                    final WebACPermission toAppendToParentURI = new WebACPermission(WEBAC_MODE_APPEND, URI.create(
-                            baseURL + nearestParent));
-                    return currentUser.isPermitted(toAppendToParentURI);
+                    // this works because when the authorizations are inherited, it is the target request URI that is
+                    // added as the resource, not the accessTo or other URI in the original authorization
+                    log.debug("Resource doesn't exist; checking parent resources for acl:Append permission");
+                    if (currentUser.isPermitted(toAppend)) {
+                        log.debug("PUT allowed for new resource by inherited {} permission", toAppend);
+                        return true;
+                    } else {
+                        log.debug("PUT prohibited for new resource without inherited {} permission", toAppend);
+                        return false;
+                    }
                 }
             }
         case "POST":
             if (currentUser.isPermitted(toWrite)) {
+                log.debug("POST allowed by {} permission", toWrite);
                 return true;
             } else {
                 if (resource(repoPath) instanceof FedoraBinary) {
                     // LDP-NR
                     // user without the acl:Write permission cannot POST to binaries
+                    log.debug("POST prohibited to binary resource without {} permission", toWrite);
                     return false;
                 } else {
                     // LDP-RS
                     // user with the acl:Append permission may POST to containers
-                    return currentUser.isPermitted(toAppend);
+                    if (currentUser.isPermitted(toAppend)) {
+                        log.debug("POST allowed to container by {} permission", toAppend);
+                        return true;
+                    } else {
+                        log.debug("POST prohibited to container without {} permission", toAppend);
+                    }
                 }
             }
         case "DELETE":
