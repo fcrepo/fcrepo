@@ -214,6 +214,15 @@ public class WebACFilterTest {
     }
 
     @Test
+    public void testAdminUserHead() throws ServletException, IOException {
+        setupAdminUser();
+        // HEAD => 200
+        request.setMethod("HEAD");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_OK, response.getStatus());
+    }
+
+    @Test
     public void testAdminUserGet() throws ServletException, IOException {
         setupAdminUser();
         // GET => 200
@@ -259,6 +268,15 @@ public class WebACFilterTest {
     }
 
     @Test
+    public void testAuthUserNoPermsHead() throws ServletException, IOException {
+        setupAuthUserNoPerms();
+        // HEAD => 403
+        request.setMethod("HEAD");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_FORBIDDEN, response.getStatus());
+    }
+
+    @Test
     public void testAuthUserNoPermsGet() throws ServletException, IOException {
         setupAuthUserNoPerms();
         // GET => 403
@@ -301,6 +319,15 @@ public class WebACFilterTest {
         request.setMethod("DELETE");
         webacFilter.doFilter(request, response, filterChain);
         assertEquals(SC_FORBIDDEN, response.getStatus());
+    }
+
+    @Test
+    public void testAuthUserReadOnlyHead() throws ServletException, IOException {
+        setupAuthUserReadOnly();
+        // HEAD => 200
+        request.setMethod("HEAD");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_OK, response.getStatus());
     }
 
     @Test
@@ -491,6 +518,15 @@ public class WebACFilterTest {
         // POST => 200
         request.setRequestURI(testPath);
         request.setMethod("POST");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_OK, response.getStatus());
+    }
+
+    @Test
+    public void testAuthUserReadWriteHead() throws ServletException, IOException {
+        setupAuthUserReadWrite();
+        // HEAD => 200
+        request.setMethod("HEAD");
         webacFilter.doFilter(request, response, filterChain);
         assertEquals(SC_OK, response.getStatus());
     }
