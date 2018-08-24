@@ -41,6 +41,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
@@ -859,6 +860,16 @@ public class WebACRecipesIT extends AbstractResourceIT {
         patchReq.setEntity(new StringEntity("PREFIX dc: <http://purl.org/dc/elements/1.1/>\n"
                 + "DELETE { <> dc:rights ?any . } WHERE { <> dc:rights ?any . }"));
         assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(patchReq));
+    }
+
+    @Test
+    public void testHeadWithReadOnlyUser() throws IOException {
+        final String testObj = ingestObj("/rest/test_head");
+        final String acl = ingestAcl("fedoraAdmin", "/acls/19/acl.ttl", testObj + "/fcr:acl");
+
+        final HttpHead headReq = new HttpHead(testObj);
+        setAuth(headReq, "user19");
+        assertEquals(HttpStatus.SC_OK, getStatus(headReq));
     }
 
 }
