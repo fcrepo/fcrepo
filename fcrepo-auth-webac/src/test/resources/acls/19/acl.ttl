@@ -1,0 +1,6 @@
+@prefix acl: <http://www.w3.org/ns/auth/acl#> .
+
+<#readonly> a acl:Authorization ;
+    acl:agent "user19" ;
+    acl:mode acl:Read ;
+    acl:accessTo </rest/test_head> .
