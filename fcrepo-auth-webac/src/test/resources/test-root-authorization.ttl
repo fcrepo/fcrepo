@@ -7,4 +7,5 @@
    rdfs:comment "Provide read access to all resources to the testAdminUser agent." ;
    acl:agent "testAdminUser" ;
    acl:mode acl:Read ;
-   acl:accessToClass fedora:Resource .
+   acl:accessToClass fedora:Resource ;
+   acl:default <.> .

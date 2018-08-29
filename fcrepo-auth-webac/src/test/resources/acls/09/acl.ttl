@@ -1,5 +1,7 @@
 @prefix acl: <http://www.w3.org/ns/auth/acl#> .
 
+<> acl:default <.> .
+
 <#authorization> a acl:Authorization ;
    acl:agentGroup </rest/group/foo> ;
    acl:mode acl:Read, acl:Write ;

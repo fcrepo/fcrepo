@@ -30,6 +30,7 @@ import static org.fcrepo.http.api.FedoraAcl.ROOT_AUTHORIZATION_PROPERTY;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyObject;
@@ -170,6 +171,7 @@ public class WebACRolesProviderTest {
 
         when(mockResource.getAcl()).thenReturn(null);
         when(mockParentResource.getAcl()).thenReturn(mockAclResource);
+        when(mockAclResource.hasProperty("acl:default")).thenReturn(true);
 
         when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getContainer()).thenReturn(mockParentResource);
@@ -190,6 +192,49 @@ public class WebACRolesProviderTest {
         assertEquals("The agent should have exactly two modes", 2, roles.get(agent).size());
         assertTrue("The agent should be able to read", roles.get(agent).contains(WEBAC_MODE_READ_VALUE));
         assertTrue("The agent should be able to write", roles.get(agent).contains(WEBAC_MODE_WRITE_VALUE));
+    }
+
+    @Test
+    public void acl20NoDefaultACLStatementTest() throws RepositoryException {
+        final String agent = "user20";
+        final String parentPath = "/resource_acl_no_inheritance";
+        final String accessTo = parentPath + "/foo";
+        final String acl = "/acls/20/acl.ttl";
+
+        when(mockNodeService.find(any(FedoraSession.class), eq(acl))).thenReturn(mockAclResource);
+        when(mockNodeService.find(any(FedoraSession.class), eq(accessTo))).thenReturn(mockResource);
+        when(mockNode.getPath()).thenReturn(accessTo);
+        when(mockAclNode.getPath()).thenReturn(acl);
+
+        when(mockResource.getAcl()).thenReturn(null);
+        when(mockParentResource.getAcl()).thenReturn(mockAclResource);
+        when(mockAclResource.hasProperty("acl:default")).thenReturn(false);
+
+        when(mockResource.getPath()).thenReturn(accessTo);
+        when(mockResource.getContainer()).thenReturn(mockParentResource);
+        when(mockResource.getPath()).thenReturn(accessTo);
+        when(mockResource.getOriginalResource()).thenReturn(mockResource);
+        when(mockNode.getDepth()).thenReturn(1);
+
+        when(mockParentResource.getNode()).thenReturn(mockParentNode);
+        when(mockParentResource.getPath()).thenReturn(parentPath);
+        when(mockAclResource.getPath()).thenReturn(acl);
+        when(mockParentNode.getDepth()).thenReturn(0);
+
+
+        when(mockAclResource.getTriples(anyObject(), eq(PROPERTIES)))
+                .thenReturn(getRdfStreamFromResource(acl, TTL));
+
+        System.setProperty(ROOT_AUTHORIZATION_PROPERTY, "./target/test-classes/test-root-authorization2.ttl");
+
+        // The default root ACL should be used for authorization instead of the parent ACL
+        final String rootAgent = "user06a";
+        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockNode, true);
+        assertEquals("Contains no agents in the role map!", 1, roles.size());
+        assertNull("Contains agent " + agent + " from ACL in parent node!", roles.get(agent));
+        assertEquals("Should have agent " + rootAgent + " from the root ACL!", 1, roles.get(rootAgent).size());
+        assertTrue("Should have read mode for agent " + rootAgent + " from the root ACL!",
+                roles.get(rootAgent).contains(WEBAC_MODE_READ_VALUE));
     }
 
     @Test

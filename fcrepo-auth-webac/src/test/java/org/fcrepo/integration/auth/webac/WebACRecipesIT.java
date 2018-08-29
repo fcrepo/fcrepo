@@ -51,7 +51,9 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.message.AbstractHttpMessage;
 import org.fcrepo.integration.http.api.AbstractResourceIT;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,6 +65,9 @@ import org.slf4j.LoggerFactory;
 public class WebACRecipesIT extends AbstractResourceIT {
 
     private static final Logger logger = LoggerFactory.getLogger(WebACRecipesIT.class);
+
+    @Rule
+    public final RestoreSystemProperties restoreSystemProperties = new RestoreSystemProperties();
 
     /**
      * Convenience method to create an ACL with 0 or more authorization resources in the respository.
@@ -589,6 +594,35 @@ public class WebACRecipesIT extends AbstractResourceIT {
         final HttpGet requestGet7 = getObjMethod(id);
         setAuth(requestGet7, "user06b");
         assertEquals(HttpStatus.SC_OK, getStatus(requestGet7));
+    }
+
+    @Test
+    public void scenario20TestACLNotForInheritance() throws IOException {
+        final String parentPath = "/rest/resource_acl_no_inheritance";
+        final String parentObj = ingestObj(parentPath);
+
+        final String id = parentPath + "/" + getRandomUniqueId();
+        final String testObj = ingestObj(id);
+
+        // Ingest ACL with no acl:default statement to the parent resource
+        ingestAcl("fedoraAdmin", "/acls/20/acl.ttl", parentObj + "/fcr:acl");
+
+        // Test the parent ACL with no acl:default is applied for the parent resource authorization.
+        final HttpGet requestGet1 = getObjMethod(parentPath);
+        setAuth(requestGet1, "user20");
+        assertEquals("Agent user20 can't read resource " + parentPath + " with its own ACL!",
+                HttpStatus.SC_OK, getStatus(requestGet1));
+
+        final HttpGet requestGet2 = getObjMethod(id);
+        assertEquals("Agent user20 inherits read permission from parent ACL to read resource " + testObj + "!",
+                HttpStatus.SC_FORBIDDEN, getStatus(requestGet2));
+
+        // Test the default root ACL is inherited for authorization while the parent ACL with no acl:default is ignored
+        System.setProperty(ROOT_AUTHORIZATION_PROPERTY, "./target/test-classes/test-root-authorization2.ttl");
+        final HttpGet requestGet3 = getObjMethod(id);
+        setAuth(requestGet3, "user06a");
+        assertEquals("Agent user06a can't inherit read persmssion from root ACL to read resource " + testObj + "!",
+                HttpStatus.SC_OK, getStatus(requestGet3));
     }
 
     @Test

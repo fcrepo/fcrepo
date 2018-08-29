@@ -38,6 +38,7 @@ import static org.fcrepo.auth.webac.URIConstants.WEBAC_AUTHORIZATION_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_NAMESPACE_VALUE;
 import static org.fcrepo.http.api.FedoraAcl.getDefaultAcl;
+import static org.fcrepo.kernel.api.FedoraTypes.ACL_DEFAULT;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
@@ -188,7 +189,7 @@ public class WebACRolesProvider implements AccessRolesProvider {
         final Optional<ACLHandle> effectiveAcl = getEffectiveAcl(
                 isFedoraBinary.test(getJcrNode(resource)) ? ((FedoraBinaryImpl) nodeConverter.convert(
                         getJcrNode(resource))).getDescription() :
-                    resource);
+                    resource, false);
 
         // Construct a list of acceptable acl:accessTo values for the target resource.
         final List<String> resourcePaths = new ArrayList<>();
@@ -422,8 +423,10 @@ public class WebACRolesProvider implements AccessRolesProvider {
      * This way, if the effective ACL is pointed to from a parent resource, the child will inherit
      * any permissions that correspond to access to that parent. This ACL resource may or may not exist,
      * and it may be external to the fedora repository.
+     * @param resource the Fedora resource
+     * @param ancestorAcl the flag for looking up ACL from ancestor hierarchy resources
      */
-    static Optional<ACLHandle> getEffectiveAcl(final FedoraResource resource) {
+    static Optional<ACLHandle> getEffectiveAcl(final FedoraResource resource, final boolean ancestorAcl) {
         try {
 
             final FedoraResource aclResource = resource.getAcl();
@@ -431,14 +434,18 @@ public class WebACRolesProvider implements AccessRolesProvider {
             if (aclResource != null) {
                 final IdentifierConverter<Resource, FedoraResource> translator =
                     new DefaultIdentifierTranslator(getJcrNode(aclResource).getSession());
-                return Optional
-                    .of(new ACLHandle(URI.create(translator.reverse().convert(aclResource).getURI()), resource));
-            } else if (getJcrNode(resource).getDepth() == 0) {
+                if (!ancestorAcl || aclResource.hasProperty(ACL_DEFAULT)) {
+                    return Optional.of(
+                            new ACLHandle(URI.create(translator.reverse().convert(aclResource).getURI()), resource));
+                }
+            }
+
+            if (getJcrNode(resource).getDepth() == 0) {
                 LOGGER.debug("No ACLs defined on this node or in parent hierarchy");
                 return Optional.empty();
             } else {
                 LOGGER.trace("Checking parent resource for ACL. No ACL found at {}", resource.getPath());
-                return getEffectiveAcl(resource.getContainer());
+                return getEffectiveAcl(resource.getContainer(), true);
             }
         } catch (final RepositoryException ex) {
             LOGGER.debug("Exception finding effective ACL: {}", ex.getMessage());

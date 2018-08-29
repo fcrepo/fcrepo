@@ -74,7 +74,7 @@ public class LinkHeaderProvider implements UriAwareHttpHeaderFactory {
 
         LOGGER.debug("Adding WebAC Link Header for Resource: {}", resource.getPath());
         // Get the correct Acl for this resource
-        WebACRolesProvider.getEffectiveAcl(resource).ifPresent(acls -> {
+        WebACRolesProvider.getEffectiveAcl(resource, false).ifPresent(acls -> {
             // If the Acl is present we need to use the internal session to get its URI
             nodeService.find(internalSession, acls.resource.getPath())
             .getTriples(translator, PROPERTIES)
