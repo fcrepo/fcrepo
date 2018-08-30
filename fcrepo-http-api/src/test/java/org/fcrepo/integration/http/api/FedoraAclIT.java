@@ -162,6 +162,16 @@ public class FedoraAclIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testPutACLBadRdf() throws IOException {
+        createObjectAndClose(id);
+
+        final HttpPut put = new HttpPut(subjectUri + "/" + FCR_ACL);
+        put.setHeader(CONTENT_TYPE, "text/turtle");
+        put.setEntity(new StringEntity("<> a junk:Object ;"));
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(put));
+    }
+
+    @Test
     public void testDeleteAcl() throws Exception {
         createObjectAndClose(id);
 
