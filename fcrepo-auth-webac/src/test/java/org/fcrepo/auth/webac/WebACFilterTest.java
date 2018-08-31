@@ -223,6 +223,15 @@ public class WebACFilterTest {
     }
 
     @Test
+    public void testAdminUserOptions() throws ServletException, IOException {
+        setupAdminUser();
+        // GET => 200
+        request.setMethod("OPTIONS");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_OK, response.getStatus());
+    }
+
+    @Test
     public void testAdminUserGet() throws ServletException, IOException {
         setupAdminUser();
         // GET => 200
@@ -277,6 +286,15 @@ public class WebACFilterTest {
     }
 
     @Test
+    public void testAuthUserNoPermsOptions() throws ServletException, IOException {
+        setupAuthUserNoPerms();
+        // GET => 403
+        request.setMethod("OPTIONS");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_FORBIDDEN, response.getStatus());
+    }
+
+    @Test
     public void testAuthUserNoPermsGet() throws ServletException, IOException {
         setupAuthUserNoPerms();
         // GET => 403
@@ -326,6 +344,15 @@ public class WebACFilterTest {
         setupAuthUserReadOnly();
         // HEAD => 200
         request.setMethod("HEAD");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_OK, response.getStatus());
+    }
+
+    @Test
+    public void testAuthUserReadOnlyOptions() throws ServletException, IOException {
+        setupAuthUserReadOnly();
+        // GET => 200
+        request.setMethod("OPTIONS");
         webacFilter.doFilter(request, response, filterChain);
         assertEquals(SC_OK, response.getStatus());
     }
@@ -527,6 +554,15 @@ public class WebACFilterTest {
         setupAuthUserReadWrite();
         // HEAD => 200
         request.setMethod("HEAD");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_OK, response.getStatus());
+    }
+
+    @Test
+    public void testAuthUserReadWriteOptions() throws ServletException, IOException {
+        setupAuthUserReadWrite();
+        // GET => 200
+        request.setMethod("OPTIONS");
         webacFilter.doFilter(request, response, filterChain);
         assertEquals(SC_OK, response.getStatus());
     }

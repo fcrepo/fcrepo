@@ -164,6 +164,7 @@ public class WebACFilter implements Filter {
         final WebACPermission toAppend = new WebACPermission(WEBAC_MODE_APPEND, requestURI);
 
         switch (httpRequest.getMethod()) {
+        case "OPTIONS":
         case "HEAD":
         case "GET":
             return currentUser.isPermitted(toRead);

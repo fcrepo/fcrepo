@@ -42,6 +42,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
+import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
@@ -870,6 +871,16 @@ public class WebACRecipesIT extends AbstractResourceIT {
         final HttpHead headReq = new HttpHead(testObj);
         setAuth(headReq, "user19");
         assertEquals(HttpStatus.SC_OK, getStatus(headReq));
+    }
+
+    @Test
+    public void testOptionsWithReadOnlyUser() throws IOException {
+        final String testObj = ingestObj("/rest/test_options");
+        final String acl = ingestAcl("fedoraAdmin", "/acls/20/acl.ttl", testObj + "/fcr:acl");
+
+        final HttpOptions optionsReq = new HttpOptions(testObj);
+        setAuth(optionsReq, "user20");
+        assertEquals(HttpStatus.SC_OK, getStatus(optionsReq));
     }
 
 }
