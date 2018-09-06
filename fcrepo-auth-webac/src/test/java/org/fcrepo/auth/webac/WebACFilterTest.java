@@ -23,6 +23,7 @@ import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_ADMIN_ROLE;
 import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_USER_ROLE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_APPEND;
+import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_CONTROL;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE;
 import static org.junit.Assert.assertEquals;
@@ -67,7 +68,11 @@ public class WebACFilterTest {
 
     private static final String testChildPath = testPath + "/child";
 
+    private static final String testAclPath = testPath + "/fcr:acl";
+
     private static final URI testURI = URI.create(baseURL + testPath);
+
+    private static final URI testAclURI = URI.create(baseURL + testAclPath);
 
     private static final String testURIString = testURI.toString();
 
@@ -98,6 +103,13 @@ public class WebACFilterTest {
     private static final WebACPermission appendChildPermission = new WebACPermission(WEBAC_MODE_APPEND, testChildURI);
 
     private static final WebACPermission writePermission = new WebACPermission(WEBAC_MODE_WRITE, testURI);
+
+    private static final WebACPermission controlPermission = new WebACPermission(WEBAC_MODE_CONTROL, testURI);
+
+    private static final WebACPermission readAclPermission = new WebACPermission(WEBAC_MODE_READ, testAclURI);
+    private static final WebACPermission appendAclPermission = new WebACPermission(WEBAC_MODE_APPEND, testAclURI);
+    private static final WebACPermission writeAclPermission = new WebACPermission(WEBAC_MODE_WRITE, testAclURI);
+    private static final WebACPermission controlAclPermission = new WebACPermission(WEBAC_MODE_CONTROL, testAclURI);
 
     private MockHttpServletRequest request;
 
@@ -158,6 +170,8 @@ public class WebACFilterTest {
         when(mockSubject.isPermitted(readPermission)).thenReturn(false);
         when(mockSubject.isPermitted(appendPermission)).thenReturn(false);
         when(mockSubject.isPermitted(writePermission)).thenReturn(false);
+        when(mockSubject.isPermitted(controlPermission)).thenReturn(false);
+
     }
 
     private void setupAuthUserReadOnly() {
@@ -168,6 +182,8 @@ public class WebACFilterTest {
         when(mockSubject.isPermitted(readPermission)).thenReturn(true);
         when(mockSubject.isPermitted(appendPermission)).thenReturn(false);
         when(mockSubject.isPermitted(writePermission)).thenReturn(false);
+        when(mockSubject.isPermitted(controlPermission)).thenReturn(false);
+
     }
 
     private void setupAuthUserAppendOnly() {
@@ -179,6 +195,8 @@ public class WebACFilterTest {
         when(mockSubject.isPermitted(appendPermission)).thenReturn(true);
         when(mockSubject.isPermitted(appendChildPermission)).thenReturn(true);
         when(mockSubject.isPermitted(writePermission)).thenReturn(false);
+        when(mockSubject.isPermitted(controlPermission)).thenReturn(false);
+
     }
 
     private void setupAuthUserReadAppend() {
@@ -190,6 +208,7 @@ public class WebACFilterTest {
         when(mockSubject.isPermitted(appendPermission)).thenReturn(true);
         when(mockSubject.isPermitted(appendChildPermission)).thenReturn(true);
         when(mockSubject.isPermitted(writePermission)).thenReturn(false);
+        when(mockSubject.isPermitted(controlPermission)).thenReturn(false);
     }
 
     private void setupAuthUserReadWrite() {
@@ -200,6 +219,40 @@ public class WebACFilterTest {
         when(mockSubject.isPermitted(readPermission)).thenReturn(true);
         when(mockSubject.isPermitted(appendPermission)).thenReturn(false);
         when(mockSubject.isPermitted(writePermission)).thenReturn(true);
+        when(mockSubject.isPermitted(controlPermission)).thenReturn(false);
+    }
+
+    private void setupAuthUserReadWriteControl() {
+        // authenticated user with read and write permissions
+        when(mockSubject.isAuthenticated()).thenReturn(true);
+        when(mockSubject.hasRole(FEDORA_ADMIN_ROLE)).thenReturn(false);
+        when(mockSubject.hasRole(FEDORA_USER_ROLE)).thenReturn(true);
+        when(mockSubject.isPermitted(readPermission)).thenReturn(true);
+        when(mockSubject.isPermitted(appendPermission)).thenReturn(false);
+        when(mockSubject.isPermitted(writePermission)).thenReturn(true);
+        when(mockSubject.isPermitted(controlPermission)).thenReturn(true);
+    }
+
+    private void setupAuthUserAclControl() {
+        // authenticated user with read and write permissions
+        when(mockSubject.isAuthenticated()).thenReturn(true);
+        when(mockSubject.hasRole(FEDORA_ADMIN_ROLE)).thenReturn(false);
+        when(mockSubject.hasRole(FEDORA_USER_ROLE)).thenReturn(true);
+        when(mockSubject.isPermitted(readAclPermission)).thenReturn(false);
+        when(mockSubject.isPermitted(appendAclPermission)).thenReturn(false);
+        when(mockSubject.isPermitted(writeAclPermission)).thenReturn(false);
+        when(mockSubject.isPermitted(controlAclPermission)).thenReturn(true);
+    }
+
+    private void setupAuthUserNoAclControl() {
+        // authenticated user with read and write permissions
+        when(mockSubject.isAuthenticated()).thenReturn(true);
+        when(mockSubject.hasRole(FEDORA_ADMIN_ROLE)).thenReturn(false);
+        when(mockSubject.hasRole(FEDORA_USER_ROLE)).thenReturn(true);
+        when(mockSubject.isPermitted(readAclPermission)).thenReturn(true);
+        when(mockSubject.isPermitted(appendAclPermission)).thenReturn(true);
+        when(mockSubject.isPermitted(writeAclPermission)).thenReturn(true);
+        when(mockSubject.isPermitted(controlAclPermission)).thenReturn(false);
     }
 
     private void setupAuthUserReadAppendWrite() {
@@ -211,6 +264,8 @@ public class WebACFilterTest {
         when(mockSubject.isPermitted(appendPermission)).thenReturn(true);
         when(mockSubject.isPermitted(appendChildPermission)).thenReturn(true);
         when(mockSubject.isPermitted(writePermission)).thenReturn(true);
+        when(mockSubject.isPermitted(controlPermission)).thenReturn(true);
+
     }
 
     @Test
@@ -632,6 +687,98 @@ public class WebACFilterTest {
         webacFilter.doFilter(request, response, filterChain);
         assertEquals(SC_OK, response.getStatus());
     }
+
+    @Test
+    public void testAclControlPutToAcl() throws ServletException, IOException {
+        setupAuthUserAclControl();
+        request.setRequestURI(testAclPath);
+        request.setMethod("PUT");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_OK, response.getStatus());
+    }
+
+    @Test
+    public void testNoAclControlPutToAcl() throws ServletException, IOException {
+        setupAuthUserNoAclControl();
+        request.setRequestURI(testAclPath);
+        request.setMethod("PUT");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_FORBIDDEN, response.getStatus());
+    }
+
+    @Test
+    public void testAclControlGetToAcl() throws ServletException, IOException {
+        setupAuthUserAclControl();
+        request.setRequestURI(testAclPath);
+        request.setMethod("GET");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_OK, response.getStatus());
+    }
+
+    @Test
+    public void testNoAclControlGetToAcl() throws ServletException, IOException {
+        setupAuthUserNoAclControl();
+        request.setRequestURI(testAclPath);
+        request.setMethod("GET");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_FORBIDDEN, response.getStatus());
+    }
+
+    @Test
+    public void testAclControlHeadToAcl() throws ServletException, IOException {
+        setupAuthUserAclControl();
+        request.setRequestURI(testAclPath);
+        request.setMethod("HEAD");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_OK, response.getStatus());
+    }
+
+    @Test
+    public void testNoAclControlHeadToAcl() throws ServletException, IOException {
+        setupAuthUserNoAclControl();
+        request.setRequestURI(testAclPath);
+        request.setMethod("HEAD");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_FORBIDDEN, response.getStatus());
+    }
+
+    @Test
+    public void testAclControlPatchToAcl() throws ServletException, IOException {
+        setupAuthUserAclControl();
+        request.setRequestURI(testAclPath);
+        request.setMethod("PATCH");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_OK, response.getStatus());
+    }
+
+    @Test
+    public void testNoAclControlPatchToAcl() throws ServletException, IOException {
+        setupAuthUserNoAclControl();
+        request.setRequestURI(testAclPath);
+        request.setMethod("PATCH");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_FORBIDDEN, response.getStatus());
+    }
+
+    @Test
+    public void testAclControlDelete() throws ServletException, IOException {
+        setupAuthUserAclControl();
+        request.setRequestURI(testAclPath);
+        request.setMethod("DELETE");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_OK, response.getStatus());
+    }
+
+    @Test
+    public void testNoAclControlDelete() throws ServletException, IOException {
+        setupAuthUserNoAclControl();
+        request.setRequestURI(testAclPath);
+        request.setMethod("DELETE");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_FORBIDDEN, response.getStatus());
+    }
+
+
 
     @After
     public void clearSubject() {

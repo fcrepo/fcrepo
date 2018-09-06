@@ -136,7 +136,8 @@ public class FedoraAcl extends ContentExposingResource {
             aclResource = resource().findOrCreateAcl();
             created = aclResource.isNew();
 
-            final MediaType contentType = requestContentType == null ? RDFMediaType.TURTLE_TYPE : requestContentType;
+            final MediaType contentType =
+                getSimpleContentType(requestContentType == null ? RDFMediaType.TURTLE_TYPE : requestContentType);
             if (isRdfContentType(contentType.toString())) {
 
                 try (final RdfStream resourceTriples =
