@@ -121,6 +121,12 @@ final public class URIConstants {
     public static final URI WEBAC_ACCESSTO_CLASS = URI.create(WEBAC_ACCESSTO_CLASS_VALUE);
 
     /**
+     * WebAC default
+     */
+    public static final String WEBAC_DEFAULT_VALUE = WEBAC_NAMESPACE_VALUE + "default";
+    public static final URI WEBAC_DEFAULT = URI.create(WEBAC_DEFAULT_VALUE);
+
+    /**
      * WebAC accessControl
      */
     public static final String WEBAC_ACCESS_CONTROL_VALUE = RdfLexicon.WEBAC_ACCESS_CONTROL_VALUE;

@@ -1,8 +1,7 @@
 @prefix acl: <http://www.w3.org/ns/auth/acl#> .
 
-<> acl:default <.> .
-
 <> a acl:Authorization ;
+   acl:default </rest/webacl_box1>;
    acl:agent "user01" ;
    acl:mode acl:Read, acl:Write ;
    acl:accessTo </rest/webacl_box1> .

@@ -47,6 +47,7 @@ public class WebACAuthorizationTest {
     private final String ACCESS_TO_CLASS2 = "ex:Archive";
     private final String ACCESS_GROUP1 = "/groupA";
     private final String ACCESS_GROUP2 = "/groupB";
+    private final String DEFAULT_1 = "/foo";
 
     @Test
     public void testLists() {
@@ -56,9 +57,10 @@ public class WebACAuthorizationTest {
         final List<String> accessTo = Arrays.asList(ACCESS_TO1, ACCESS_TO2, ACCESS_TO3);
         final List<String> accessToClass = Arrays.asList(ACCESS_TO_CLASS1, ACCESS_TO_CLASS2);
         final List<String> accessGroups = Arrays.asList(ACCESS_GROUP1, ACCESS_GROUP2);
+        final List<String> defaults = Arrays.asList(DEFAULT_1);
 
         final WebACAuthorization auth = new WebACAuthorization(agents, agentClasses,
-                modes, accessTo, accessToClass, accessGroups);
+                modes, accessTo, accessToClass, accessGroups, defaults);
 
         assertEquals(2, auth.getAgents().size());
         assertTrue(auth.getAgents().contains(AGENT1));
@@ -73,6 +75,8 @@ public class WebACAuthorizationTest {
         assertEquals(2, auth.getAgentGroups().size());
         assertTrue(auth.getAgentGroups().contains(ACCESS_GROUP1));
         assertTrue(auth.getAgentGroups().contains(ACCESS_GROUP2));
+        assertEquals(1, auth.getDefaults().size());
+
     }
 
     @Test
@@ -83,9 +87,10 @@ public class WebACAuthorizationTest {
         final Set<String> accessTo = new HashSet<>(Arrays.asList(ACCESS_TO1, ACCESS_TO2, ACCESS_TO3));
         final Set<String> accessToClass = new HashSet<>(Arrays.asList(ACCESS_TO_CLASS1, ACCESS_TO_CLASS2));
         final Set<String> accessGroups = new HashSet<>(Arrays.asList(ACCESS_GROUP1, ACCESS_GROUP2));
+        final Set<String> defaults = new HashSet<>(Arrays.asList(DEFAULT_1));
 
         final WebACAuthorization auth = new WebACAuthorization(agents, agentClasses,
-                modes, accessTo, accessToClass, accessGroups);
+                modes, accessTo, accessToClass, accessGroups, defaults);
 
         assertEquals(2, auth.getAgents().size());
         assertTrue(auth.getAgents().contains(AGENT1));
@@ -97,6 +102,7 @@ public class WebACAuthorizationTest {
         assertTrue(auth.getAccessToURIs().contains(ACCESS_TO3));
         assertEquals(2, auth.getAccessToClassURIs().size());
         assertTrue(auth.getAccessToClassURIs().contains(ACCESS_TO_CLASS2));
+        assertEquals(1, auth.getDefaults().size());
         assertEquals(2, auth.getAgentGroups().size());
         assertTrue(auth.getAgentGroups().contains(ACCESS_GROUP1));
         assertTrue(auth.getAgentGroups().contains(ACCESS_GROUP2));

@@ -35,17 +35,17 @@ import static org.fcrepo.auth.webac.URIConstants.WEBAC_AGENT_CLASS_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_AGENT_GROUP_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_AGENT_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_AUTHORIZATION_VALUE;
+import static org.fcrepo.auth.webac.URIConstants.WEBAC_DEFAULT_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_NAMESPACE_VALUE;
 import static org.fcrepo.http.api.FedoraAcl.getDefaultAcl;
-import static org.fcrepo.kernel.api.FedoraTypes.ACL_DEFAULT;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
+import static org.fcrepo.kernel.modeshape.utils.FedoraSessionUserUtil.USER_AGENT_BASE_URI_PROPERTY;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFedoraBinary;
-import static org.fcrepo.kernel.modeshape.utils.FedoraSessionUserUtil.USER_AGENT_BASE_URI_PROPERTY;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
@@ -61,7 +61,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import javax.inject.Inject;
 import javax.jcr.ItemNotFoundException;
 import javax.jcr.Node;
@@ -189,7 +188,7 @@ public class WebACRolesProvider implements AccessRolesProvider {
         final Optional<ACLHandle> effectiveAcl = getEffectiveAcl(
                 isFedoraBinary.test(getJcrNode(resource)) ? ((FedoraBinaryImpl) nodeConverter.convert(
                         getJcrNode(resource))).getDescription() :
-                    resource, false);
+                    resource, false, sessionFactory);
 
         // Construct a list of acceptable acl:accessTo values for the target resource.
         final List<String> resourcePaths = new ArrayList<>();
@@ -228,7 +227,7 @@ public class WebACRolesProvider implements AccessRolesProvider {
 
         // Read the effective Acl and return a list of acl:Authorization statements
         final List<WebACAuthorization> authorizations = effectiveAcl
-                .map(auth -> getAuthorizations(auth.uri.toString()))
+                .map(auth -> auth.authorizations)
                 .orElseGet(() -> getDefaultAuthorizations());
 
         // Filter the acl:Authorization statements so that they correspond only to statements that apply to
@@ -349,31 +348,32 @@ public class WebACRolesProvider implements AccessRolesProvider {
         triple.getPredicate().getNameSpace().equals(WEBAC_NAMESPACE_VALUE);
 
     /**
-     *  This function reads a Fedora ACL resource and all of its acl:Authorization children.
-     *  The RDF from each child resource is put into a WebACAuthorization object, and the
-     *  full list is returned.
+     * This function reads a Fedora ACL resource and all of its acl:Authorization children.
+     * The RDF from each child resource is put into a WebACAuthorization object, and the
+     * full list is returned.
      *
-     *  @param location the location of the ACL resource
-     *  @return a list of acl:Authorization objects
+     * @param aclResource the ACL resource
+     * @param ancestorAcl flag indicating whether or not the ACL resource associated with an ancestor of the target
+     *                    resource
+     * @param sessionFactory the session factory
+     * @return a list of acl:Authorization objects
      */
-    private List<WebACAuthorization> getAuthorizations(final String location) {
+    private static List<WebACAuthorization> getAuthorizations(final FedoraResource aclResource,
+                                                              final boolean ancestorAcl,
+                                                              final SessionFactory sessionFactory) {
 
         final FedoraSession internalSession = sessionFactory.getInternalSession();
         final List<WebACAuthorization> authorizations = new ArrayList<>();
         final IdentifierConverter<Resource, FedoraResource> translator =
                 new DefaultIdentifierTranslator(getJcrSession(internalSession));
 
-        LOGGER.debug("Effective ACL: {}", location);
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("ACL: {}", aclResource.getPath());
+        }
 
-        // Find the specified ACL resource
-
-        if (location.startsWith(FEDORA_INTERNAL_PREFIX)) {
-
-            final FedoraResource resource = nodeService.find(internalSession,
-                    location.substring(FEDORA_INTERNAL_PREFIX.length()));
-
+        if (aclResource.isAcl()) {
             //resolve set of subjects that are of type acl:authorization
-            final List<Triple> triples = resource.getTriples(translator, PROPERTIES).collect(toList());
+            final List<Triple> triples = aclResource.getTriples(translator, PROPERTIES).collect(toList());
 
             final Set<org.apache.jena.graph.Node> authSubjects = triples.stream().filter(t -> {
                 return t.getPredicate().getURI().toString().equals(RDF_NAMESPACE + "type") &&
@@ -398,9 +398,16 @@ public class WebACRolesProvider implements AccessRolesProvider {
                         }
                     });
             // Create a WebACAuthorization object from the provided triples.
-            LOGGER.debug("Adding acl:Authorization from {}", resource.getPath());
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Adding acl:Authorization from {}", aclResource.getPath());
+            }
             authMap.values().forEach(aclTriples -> {
-                authorizations.add(createAuthorizationFromMap(aclTriples));
+                final WebACAuthorization authorization = createAuthorizationFromMap(aclTriples);
+                //only include authorizations if the acl resource is not an ancestor acl
+                //or the authorization has at least one acl:default
+                if (!ancestorAcl || authorization.getDefaults().size() > 0) {
+                    authorizations.add(authorization);
+                }
             });
         }
 
@@ -415,7 +422,8 @@ public class WebACRolesProvider implements AccessRolesProvider {
                 .map(URI::create).collect(toList()),
                 data.getOrDefault(WEBAC_ACCESSTO_VALUE, emptyList()),
                 data.getOrDefault(WEBAC_ACCESSTO_CLASS_VALUE, emptyList()),
-                data.getOrDefault(WEBAC_AGENT_GROUP_VALUE, emptyList()));
+                data.getOrDefault(WEBAC_AGENT_GROUP_VALUE, emptyList()),
+                data.getOrDefault(WEBAC_DEFAULT_VALUE, emptyList()));
     }
 
     /**
@@ -425,8 +433,10 @@ public class WebACRolesProvider implements AccessRolesProvider {
      * and it may be external to the fedora repository.
      * @param resource the Fedora resource
      * @param ancestorAcl the flag for looking up ACL from ancestor hierarchy resources
+     * @param sessionFactory session factory
      */
-    static Optional<ACLHandle> getEffectiveAcl(final FedoraResource resource, final boolean ancestorAcl) {
+    static Optional<ACLHandle> getEffectiveAcl(final FedoraResource resource, final boolean ancestorAcl,
+                                                final SessionFactory sessionFactory) {
         try {
 
             final FedoraResource aclResource = resource.getAcl();
@@ -434,9 +444,12 @@ public class WebACRolesProvider implements AccessRolesProvider {
             if (aclResource != null) {
                 final IdentifierConverter<Resource, FedoraResource> translator =
                     new DefaultIdentifierTranslator(getJcrNode(aclResource).getSession());
-                if (!ancestorAcl || aclResource.hasProperty(ACL_DEFAULT)) {
+                final List<WebACAuthorization> authorizations =
+                    getAuthorizations(aclResource, ancestorAcl, sessionFactory);
+                if (authorizations.size() > 0) {
                     return Optional.of(
-                            new ACLHandle(URI.create(translator.reverse().convert(aclResource).getURI()), resource));
+                        new ACLHandle(URI.create(translator.reverse().convert(aclResource).getURI()), resource,
+                                      authorizations));
                 }
             }
 
@@ -445,7 +458,7 @@ public class WebACRolesProvider implements AccessRolesProvider {
                 return Optional.empty();
             } else {
                 LOGGER.trace("Checking parent resource for ACL. No ACL found at {}", resource.getPath());
-                return getEffectiveAcl(resource.getContainer(), true);
+                return getEffectiveAcl(resource.getContainer(), true, sessionFactory);
             }
         } catch (final RepositoryException ex) {
             LOGGER.debug("Exception finding effective ACL: {}", ex.getMessage());

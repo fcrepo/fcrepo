@@ -5,5 +5,6 @@
 <#authorization> a acl:Authorization ;
    acl:agentGroup </rest/group/foo> ;
    acl:mode acl:Read, acl:Write ;
+   acl:default </rest/anotherCollection> ;
    acl:accessTo </rest/anotherCollection> .
 

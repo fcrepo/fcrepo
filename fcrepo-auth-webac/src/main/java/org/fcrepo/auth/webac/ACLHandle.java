@@ -18,6 +18,7 @@
 package org.fcrepo.auth.webac;
 
 import java.net.URI;
+import java.util.List;
 
 import org.fcrepo.kernel.api.models.FedoraResource;
 
@@ -32,15 +33,18 @@ public class ACLHandle {
 
     public final FedoraResource resource;
 
+    public final List<WebACAuthorization> authorizations;
     /**
      * Default constructor.
      *
      * @param uri the URI pointing to an ACL
      * @param resource the requested FedoraResource
+     * @param authorizations any authorizations associated with the uri
      */
-    public ACLHandle(final URI uri, final FedoraResource resource) {
+    public ACLHandle(final URI uri, final FedoraResource resource, final List<WebACAuthorization> authorizations) {
         this.uri = uri;
         this.resource = resource;
+        this.authorizations = authorizations;
     }
 
 }

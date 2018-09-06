@@ -1,13 +1,13 @@
 @prefix acl: <http://www.w3.org/ns/auth/acl#> .
 
-<> acl:default <.> .
-
 <#authorization> a acl:Authorization ;
    acl:agent "user07" ;
    acl:mode acl:Read, acl:Write ;
+   acl:default </rest/book/file> ;
    acl:accessTo </rest/book/file> .
 
 <#authorizationBook> a acl:Authorization ;
   acl:agent "no-one" ;
   acl:mode acl:Read ;
+  acl:default </rest/book> ;
   acl:accessTo </rest/book> .

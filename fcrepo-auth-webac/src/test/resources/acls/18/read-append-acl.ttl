@@ -1,11 +1,12 @@
 @prefix acl: <http://www.w3.org/ns/auth/acl#> .
 @prefix foaf: <http://xmlns.com/foaf/0.1/> .
 
-<> acl:default <.> .
+
 
 <#readAppend> a acl:Authorization ;
    acl:agent "user18" ;
    acl:mode acl:Read, acl:Append ;
+   acl:default </rest/read_append_resource> ;
    acl:accessTo </rest/read_append_resource> .
 
 
