@@ -1,0 +1,6 @@
+@prefix acl: <http://www.w3.org/ns/auth/acl#> .
+
+<> a acl:Authorization ;
+   acl:agent "user21" ;
+   acl:mode acl:Read, acl:Write ;
+   acl:accessTo </rest/resource_acl_no_inheritance> .

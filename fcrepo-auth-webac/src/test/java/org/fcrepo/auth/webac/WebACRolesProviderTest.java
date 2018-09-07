@@ -196,11 +196,11 @@ public class WebACRolesProviderTest {
     }
 
     @Test
-    public void acl20NoDefaultACLStatementTest() throws RepositoryException {
-        final String agent = "user20";
+    public void acl21NoDefaultACLStatementTest() throws RepositoryException {
+        final String agent = "user21";
         final String parentPath = "/resource_acl_no_inheritance";
         final String accessTo = parentPath + "/foo";
-        final String acl = "/acls/20/acl.ttl";
+        final String acl = "/acls/21/acl.ttl";
 
         when(mockNodeService.find(any(FedoraSession.class), eq(acl))).thenReturn(mockAclResource);
         when(mockNodeService.find(any(FedoraSession.class), eq(accessTo))).thenReturn(mockResource);

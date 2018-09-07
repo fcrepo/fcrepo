@@ -597,7 +597,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
     }
 
     @Test
-    public void scenario20TestACLNotForInheritance() throws IOException {
+    public void scenario21TestACLNotForInheritance() throws IOException {
         final String parentPath = "/rest/resource_acl_no_inheritance";
         final String parentObj = ingestObj(parentPath);
 
@@ -605,16 +605,16 @@ public class WebACRecipesIT extends AbstractResourceIT {
         final String testObj = ingestObj(id);
 
         // Ingest ACL with no acl:default statement to the parent resource
-        ingestAcl("fedoraAdmin", "/acls/20/acl.ttl", parentObj + "/fcr:acl");
+        ingestAcl("fedoraAdmin", "/acls/21/acl.ttl", parentObj + "/fcr:acl");
 
         // Test the parent ACL with no acl:default is applied for the parent resource authorization.
         final HttpGet requestGet1 = getObjMethod(parentPath);
-        setAuth(requestGet1, "user20");
-        assertEquals("Agent user20 can't read resource " + parentPath + " with its own ACL!",
+        setAuth(requestGet1, "user21");
+        assertEquals("Agent user21 can't read resource " + parentPath + " with its own ACL!",
                 HttpStatus.SC_OK, getStatus(requestGet1));
 
         final HttpGet requestGet2 = getObjMethod(id);
-        assertEquals("Agent user20 inherits read permission from parent ACL to read resource " + testObj + "!",
+        assertEquals("Agent user21 inherits read permission from parent ACL to read resource " + testObj + "!",
                 HttpStatus.SC_FORBIDDEN, getStatus(requestGet2));
 
         // Test the default root ACL is inherited for authorization while the parent ACL with no acl:default is ignored
@@ -623,6 +623,40 @@ public class WebACRecipesIT extends AbstractResourceIT {
         setAuth(requestGet3, "user06a");
         assertEquals("Agent user06a can't inherit read persmssion from root ACL to read resource " + testObj + "!",
                 HttpStatus.SC_OK, getStatus(requestGet3));
+    }
+
+    @Test
+    public void scenario22TestACLAuthorizationNotForInheritance() throws IOException {
+        final String parentPath = "/rest/resource_mix_acl_default";
+        final String parentObj = ingestObj(parentPath);
+
+        final String id = parentPath + "/" + getRandomUniqueId();
+        final String testObj = ingestObj(id);
+
+        // Ingest ACL with mix acl:default authorization to the parent resource
+        ingestAcl("fedoraAdmin", "/acls/22/acl.ttl", parentObj + "/fcr:acl");
+
+        // Test the parent ACL is applied for the parent resource authorization.
+        final HttpGet requestGet1 = getObjMethod(parentPath);
+        setAuth(requestGet1, "user22a");
+        assertEquals("Agent user22a can't read resource " + parentPath + " with its own ACL!",
+                HttpStatus.SC_OK, getStatus(requestGet1));
+
+        final HttpGet requestGet2 = getObjMethod(parentPath);
+        setAuth(requestGet2, "user22b");
+        assertEquals("Agent user22b can't read resource " + parentPath + " with its own ACL!",
+                HttpStatus.SC_OK, getStatus(requestGet1));
+
+        // Test the parent ACL is applied for the parent resource authorization.
+        final HttpGet requestGet3 = getObjMethod(id);
+        setAuth(requestGet3, "user22a");
+        assertEquals("Agent user22a inherits read permission from parent ACL to read resource " + testObj + "!",
+                HttpStatus.SC_FORBIDDEN, getStatus(requestGet3));
+
+        final HttpGet requestGet4 = getObjMethod(id);
+        setAuth(requestGet4, "user22b");
+        assertEquals("Agent user22b can't inherits read permission from parent ACL to read resource " + testObj + "!",
+                HttpStatus.SC_OK, getStatus(requestGet4));
     }
 
     @Test
