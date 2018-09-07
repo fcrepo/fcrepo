@@ -7,4 +7,5 @@
    rdfs:comment "Provide read access to all resources to the user06a agent." ;
    acl:agent "user06a" ;
    acl:mode acl:Read ;
-   acl:accessTo <info:fedora/> .
+   acl:accessTo <info:fedora/> ;
+   acl:default <.> .

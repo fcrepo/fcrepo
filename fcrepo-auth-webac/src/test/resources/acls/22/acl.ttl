@@ -1,0 +1,12 @@
+@prefix acl: <http://www.w3.org/ns/auth/acl#> .
+
+<#authorization> a acl:Authorization ;
+   acl:agent "user22a" ;
+   acl:mode acl:Read, acl:Write ;
+   acl:accessTo </rest/resource_mix_acl_default> .
+
+<#authorizationDefault> a acl:Authorization ;
+  acl:agent "user22b" ;
+  acl:mode acl:Read ;
+  acl:default </rest/resource_mix_acl_default> ;
+  acl:accessTo </rest/resource_mix_acl_default> .

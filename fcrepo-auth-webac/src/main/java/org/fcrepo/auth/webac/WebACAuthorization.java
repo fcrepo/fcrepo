@@ -41,6 +41,8 @@ public class WebACAuthorization {
 
     private final Set<String> agentGroups = new HashSet<>();
 
+    private final Set<String> defaults = new HashSet<>();
+
     /**
      * Constructor
      *
@@ -50,16 +52,18 @@ public class WebACAuthorization {
      * @param accessTo the acl:accessTo values
      * @param accessToClass the acl:accessToClass values
      * @param agentGroups the acl:agentGroup values
+     * @param defaults the acl:default values
      */
     public WebACAuthorization(final Collection<String> agents, final Collection<String> agentClasses,
             final Collection<URI> modes, final Collection<String> accessTo, final Collection<String> accessToClass,
-            final Collection<String> agentGroups) {
+            final Collection<String> agentGroups, final Collection<String> defaults) {
         this.agents.addAll(agents);
         this.agentClasses.addAll(agentClasses);
         this.modes.addAll(modes);
         this.accessTo.addAll(accessTo);
         this.accessToClass.addAll(accessToClass);
         this.agentGroups.addAll(agentGroups);
+        this.defaults.addAll(defaults);
     }
 
     /**
@@ -114,5 +118,14 @@ public class WebACAuthorization {
      */
     public Set<String> getAgentGroups() {
         return agentGroups;
+    }
+
+    /**
+     * Get the set of strings describing the defaults for this ACL, empty set if none.
+     *
+     * @return set of Strings
+     */
+    public Set<String> getDefaults() {
+        return defaults;
     }
 }

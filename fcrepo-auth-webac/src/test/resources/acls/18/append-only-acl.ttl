@@ -4,5 +4,6 @@
 <#appendOnly> a acl:Authorization ;
    acl:agent "user18" ;
    acl:mode acl:Append ;
+   acl:default </rest/append_only_resource> ;
    acl:accessTo </rest/append_only_resource> .
 
