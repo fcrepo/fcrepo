@@ -105,7 +105,6 @@
  * A Fedora webac:Acl mixin.
  */
 [webac:Acl] > fedora:Resource mixin
-  - acl:default (REFERENCE)
 
 /*
  * Some content that can have a checksum

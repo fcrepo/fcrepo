@@ -100,6 +100,4 @@ public interface FedoraTypes {
     String LDP_IS_MEMBER_OF_RELATION = "ldp:isMemberOfRelation";
 
     String LDP_MEMBER_RESOURCE = "ldp:membershipResource";
-
-    String ACL_DEFAULT = "acl:default";
 }
