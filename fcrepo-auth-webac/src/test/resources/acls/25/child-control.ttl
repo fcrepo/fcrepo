@@ -1,0 +1,7 @@
+@prefix acl: <http://www.w3.org/ns/auth/acl#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+
+<#restricted> a acl:Authorization ;
+acl:agent "testuser" ;
+acl:mode acl:Control ;
+acl:accessTo </rest/control/child> .
