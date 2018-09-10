@@ -1208,6 +1208,39 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+
+    @Test
+    public void testGetWithDateTimeNegotiation() throws Exception {
+        final CloseableHttpClient customClient = createClient(true);
+        final DateTimeFormatter FMT = RFC_1123_DATE_TIME.withZone(ZoneId.of("UTC"));
+        final String mementoDateTime =
+            FMT.format(ISO_INSTANT.parse("2017-08-29T15:47:50Z", Instant::from));
+
+        createVersionedContainer(id);
+
+        // Status 406: Get absent memento with datetime negotiation.
+        final HttpGet getMethod1 = getObjMethod(id);
+        getMethod1.setHeader(ACCEPT_DATETIME, mementoDateTime);
+        assertEquals("Didn't get status 406 on absent memento!",
+            NOT_ACCEPTABLE.getStatusCode(), getStatus(customClient.execute(getMethod1)));
+
+        // Create memento
+        final String mementoUri = createLDPRSMementoWithExistingBody(mementoDateTime);
+
+        // Status 302: GET memento with datetime negotiation
+        final HttpGet getMethod2 = getObjMethod(id);
+        getMethod2.setHeader(ACCEPT_DATETIME, mementoDateTime);
+        assertEquals("Expected memento is NOT found: " + mementoUri, FOUND.getStatusCode(),
+                getStatus(customClient.execute(getMethod2)));
+
+        // Status 400: Get memento with bad Accept-Datetime header value
+        final String badDataTime = "Wed, 29 Aug 2017 15:47:50 GMT"; // should be TUE, 29 Aug 2017 15:47:50 GMT
+        final HttpGet getMethod3 = getObjMethod(id);
+        getMethod3.setHeader(ACCEPT_DATETIME, badDataTime);
+        assertEquals("Didn't get status 400 on bad Accept-Datetime value!",
+            BAD_REQUEST.getStatusCode(), getStatus(customClient.execute(getMethod3)));
+    }
+
     @Test
     public void testFixityOnVersionedResource() throws Exception {
         createVersionedBinary(id);

@@ -321,7 +321,7 @@ public class FedoraLdp extends ContentExposingResource {
      *
      * @param datetimeHeader The RFC datetime for the Memento.
      * @param resource The fedora resource
-     * @return A 302 Found response or 404 if no mementos.
+     * @return A 302 Found response or 406 if no mementos.
      */
     private Response getMemento(final String datetimeHeader, final FedoraResource resource) {
         try {
@@ -338,8 +338,8 @@ public class FedoraLdp extends ContentExposingResource {
             setVaryAndPreferenceAppliedHeaders(servletResponse, prefer, resource);
             return builder;
         } catch (final DateTimeParseException e) {
-            throw new MementoDatetimeFormatException("Invalid Accept-Datetime value. "
-                + "Please use RFC-1123 date-time format, such as 'Tue, 3 Jun 2008 11:05:30 GMT'", e);
+            throw new MementoDatetimeFormatException("Invalid Accept-Datetime value: " + e.getMessage()
+                + ". Please use RFC-1123 date-time format, such as 'Tue, 3 Jun 2008 11:05:30 GMT'", e);
         }
     }
 
