@@ -85,10 +85,13 @@ WHERE { }
 #if ($isVersionable == true)
 <form id="action_create_version" name="action_create_version" method="POST">
     <h3>Create Version Snapshot</h3>
-    <div class="form-group">
-    <input type="text" id="version_id" placeholder="(auto-generated name)" name="version_name" class="form-control"/>
-    </div>
     <button id="create-version-button" type="submit" class="btn btn-primary">Create Version</button>
+    <hr />
+</form>
+#else
+<form id="action_enable_version" name="action_enable_version" method="POST">
+    <h3>Versioning</h3>
+    <button id="create-version-button" type="submit" class="btn btn-primary">Enable Versioning</button>
     <hr />
 </form>
 #end
