@@ -44,6 +44,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.apache.jena.vocabulary.RDF.type;
@@ -72,6 +73,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEGATE_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEMAP_TYPE;
+import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_NAMESPACE_VALUE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 import static org.fcrepo.kernel.api.RequiredRdfContext.EMBED_RESOURCES;
@@ -98,6 +100,7 @@ import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -181,6 +184,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     static final String ACCEPT_EXTERNAL_CONTENT = "Accept-External-Content-Handling";
 
     static final String HTTP_HEADER_ACCEPT_PATCH = "Accept-Patch";
+
+    static final String WEBAC_ACCESS_TO = WEBAC_NAMESPACE_VALUE + "accessTo";
+
+    static final String WEBAC_ACCESS_TO_CLASS = WEBAC_NAMESPACE_VALUE + "accessToClass";
 
     @Context protected Request request;
     @Context protected HttpServletResponse servletResponse;
@@ -907,6 +914,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         ensureValidMemberRelation(inputModel);
 
+        setACLAuthorizationAccessTargetIfMissing(resource, inputModel);
+
         resource.replaceProperties(translator(), inputModel, resourceTriples);
     }
 
@@ -967,6 +976,44 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 }
             }
         });
+    }
+
+    /**
+     * If the ACL Authorization is missing accessTo or accessToClass, add accessTo triple to point to the containing
+     * resource.
+     * 
+     * @param inputModel to be checked and updated
+     */
+    private void setACLAuthorizationAccessTargetIfMissing(final FedoraResource resource, final Model inputModel) {
+        if (resource.isAcl()) {
+            final Map<String, Boolean> authSubjectHasAccessTarget = new HashMap<>();
+            inputModel.listStatements().forEachRemaining((final Statement s) -> {
+                LOGGER.debug("statement: s={}, p={}, o={}", s.getSubject(), s.getPredicate(), s.getObject());
+                final String subject = s.getSubject().toString();
+                // If subject is Authorization Hash Resource, add it to the map with its accessTo/accessToClass status.
+                if (subject.contains("/" + FCR_ACL + "#")) {
+                    if (!authSubjectHasAccessTarget.containsKey(subject)) {
+                        authSubjectHasAccessTarget.put(subject, false);
+                    }
+                    final String predicate = s.getPredicate().toString();
+                    if (predicate.equals(WEBAC_ACCESS_TO) || predicate.equals(WEBAC_ACCESS_TO_CLASS)) {
+                        authSubjectHasAccessTarget.put(subject, true);
+                    }
+                }
+            });
+            authSubjectHasAccessTarget.keySet().forEach((final String subject) -> {
+                if (authSubjectHasAccessTarget.get(subject) == false) {
+                    LOGGER.debug("Authorization resource '{}' does not have an accessTo or accessToClass", subject);
+                    // Set the current resource as the accessTo target
+                    final String currentResourcePath = subject.substring(0, subject.indexOf("/" + FCR_ACL));
+                    inputModel.add(
+                        createResource(subject),
+                        createProperty(WEBAC_ACCESS_TO),
+                        createResource(currentResourcePath));
+                    LOGGER.debug("Added {} as the accessTo target", currentResourcePath);
+                }
+             });
+        }
     }
 
     protected void patchResourcewithSparql(final FedoraResource resource,
