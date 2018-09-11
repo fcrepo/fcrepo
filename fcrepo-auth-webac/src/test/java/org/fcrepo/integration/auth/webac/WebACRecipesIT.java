@@ -36,6 +36,7 @@ import javax.ws.rs.core.Link;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -124,6 +125,19 @@ public class WebACRecipesIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(request)) {
             assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
             return response.getFirstHeader("Location").getValue();
+        }
+    }
+
+    private String ingestBinary(final String path, final HttpEntity body) throws IOException {
+        final HttpPut request = putObjMethod(path.replace(serverAddress, ""));
+        setAuth(request, "fedoraAdmin");
+        request.setEntity(body);
+        request.setHeader(body.getContentType());
+        try (final CloseableHttpResponse response = execute(request)) {
+            assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
+            final String location = response.getFirstHeader("Location").getValue();
+            logger.debug("Created binary at {}", location);
+            return location;
         }
     }
 
@@ -949,6 +963,96 @@ public class WebACRecipesIT extends AbstractResourceIT {
         final HttpOptions optionsReq = new HttpOptions(testObj);
         setAuth(optionsReq, "user20");
         assertEquals(HttpStatus.SC_OK, getStatus(optionsReq));
+    }
+
+    @Test
+    public void testAppendOnlyToContainer() throws IOException {
+        final String testObj = ingestObj("/rest/test_append");
+        final String acl = ingestAcl("fedoraAdmin", "/acls/23/acl.ttl", testObj + "/fcr:acl");
+        final String username = "user23";
+
+        final HttpOptions optionsReq = new HttpOptions(testObj);
+        setAuth(optionsReq, username);
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(optionsReq));
+
+        final HttpHead headReq = new HttpHead(testObj);
+        setAuth(headReq, username);
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(headReq));
+
+        final HttpGet getReq = new HttpGet(testObj);
+        setAuth(getReq, username);
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(getReq));
+
+        final HttpPut putReq = new HttpPut(testObj);
+        setAuth(putReq, username);
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(putReq));
+
+        final HttpDelete deleteReq = new HttpDelete(testObj);
+        setAuth(deleteReq, username);
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(deleteReq));
+
+        final HttpPost postReq = new HttpPost(testObj);
+        setAuth(postReq, username);
+        assertEquals(HttpStatus.SC_CREATED, getStatus(postReq));
+
+        final String[] legalSPARQLQueries = new String[] {
+            "INSERT DATA { <> <http://purl.org/dc/terms/title> \"Test23\" . }",
+            "INSERT { <> <http://purl.org/dc/terms/alternative> \"Test XXIII\" . } WHERE {}",
+            "DELETE {} INSERT { <> <http://purl.org/dc/terms/description> \"Test append only\" . } WHERE {}"
+        };
+        for (final String query : legalSPARQLQueries) {
+            final HttpPatch patchReq = new HttpPatch(testObj);
+            setAuth(patchReq, username);
+            patchReq.setEntity(new StringEntity(query));
+            patchReq.setHeader("Content-Type", "application/sparql-update");
+            logger.debug("Testing SPARQL update: {}", query);
+            assertEquals(HttpStatus.SC_NO_CONTENT, getStatus(patchReq));
+        }
+
+        final String[] illegalSPARQLQueries = new String[] {
+            "DELETE DATA { <> <http://purl.org/dc/terms/title> \"Test23\" . }",
+            "DELETE { <> <http://purl.org/dc/terms/alternative> \"Test XXIII\" . } WHERE {}",
+            "DELETE { <> <http://purl.org/dc/terms/description> \"Test append only\" . } INSERT {} WHERE {}"
+        };
+        for (final String query : illegalSPARQLQueries) {
+            final HttpPatch patchReq = new HttpPatch(testObj);
+            setAuth(patchReq, username);
+            patchReq.setEntity(new StringEntity(query));
+            patchReq.setHeader("Content-Type", "application/sparql-update");
+            logger.debug("Testing SPARQL update: {}", query);
+            assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(patchReq));
+        }
+    }
+
+    @Test
+    public void testAppendOnlyToBinary() throws IOException {
+        final String testObj = ingestBinary("/rest/test_append_binary", new StringEntity("foo"));
+        final String acl = ingestAcl("fedoraAdmin", "/acls/24/acl.ttl", testObj + "/fcr:acl");
+        final String username = "user24";
+
+        final HttpOptions optionsReq = new HttpOptions(testObj);
+        setAuth(optionsReq, username);
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(optionsReq));
+
+        final HttpHead headReq = new HttpHead(testObj);
+        setAuth(headReq, username);
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(headReq));
+
+        final HttpGet getReq = new HttpGet(testObj);
+        setAuth(getReq, username);
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(getReq));
+
+        final HttpPut putReq = new HttpPut(testObj);
+        setAuth(putReq, username);
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(putReq));
+
+        final HttpDelete deleteReq = new HttpDelete(testObj);
+        setAuth(deleteReq, username);
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(deleteReq));
+
+        final HttpPost postReq = new HttpPost(testObj);
+        setAuth(postReq, username);
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(postReq));
     }
 
 }
