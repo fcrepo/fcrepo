@@ -446,6 +446,13 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         servletResponse.addHeader("Accept-Post", rdfTypes);
     }
 
+    /**
+     * Add the standard Accept-External-Content-Handling header, for reuse.
+     */
+    protected void addAcceptExternalHeader() {
+        servletResponse.addHeader(ACCEPT_EXTERNAL_CONTENT, COPY + "," + REDIRECT + "," + PROXY);
+    }
+
     protected void addMementoHeaders(final FedoraResource resource) {
         if (resource.isMemento()) {
             final Instant mementoInstant = resource.getMementoDatetime();
@@ -541,24 +548,21 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected void addLinkAndOptionsHttpHeaders(final FedoraResource resource) {
         // Add Link headers
         addResourceLinkHeaders(resource);
+        addAcceptExternalHeader();
 
         // Add Options headers
         final String options;
         if (resource.isMemento()) {
             options = "GET,HEAD,OPTIONS,DELETE";
-
         } else if (resource instanceof FedoraTimeMap) {
             options = "POST,HEAD,GET,OPTIONS,DELETE";
             servletResponse.addHeader("Vary-Post", MEMENTO_DATETIME_HEADER);
             addAcceptPostHeader();
         } else if (resource instanceof FedoraBinary) {
             options = "DELETE,HEAD,GET,PUT,OPTIONS";
-            servletResponse.addHeader(ACCEPT_EXTERNAL_CONTENT, COPY + "," + REDIRECT + "," + PROXY);
-
         } else if (resource instanceof NonRdfSourceDescription) {
             options = "HEAD,GET,DELETE,PUT,PATCH,OPTIONS";
             servletResponse.addHeader(HTTP_HEADER_ACCEPT_PATCH, contentTypeSPARQLUpdate);
-
         } else if (resource instanceof Container) {
             options = "MOVE,COPY,DELETE,POST,HEAD,GET,PUT,PATCH,OPTIONS";
             servletResponse.addHeader(HTTP_HEADER_ACCEPT_PATCH, contentTypeSPARQLUpdate);

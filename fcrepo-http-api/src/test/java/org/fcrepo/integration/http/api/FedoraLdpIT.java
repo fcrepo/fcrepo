@@ -67,6 +67,9 @@ import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_VARIANTS;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+import static org.fcrepo.kernel.api.FedoraExternalContent.COPY;
+import static org.fcrepo.kernel.api.FedoraExternalContent.PROXY;
+import static org.fcrepo.kernel.api.FedoraExternalContent.REDIRECT;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
@@ -511,6 +514,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertTrue("POST should support text/n3", postTypes.contains(contentTypeN3Alt2));
         assertTrue("POST should support application/rdf+xml", postTypes.contains(contentTypeRDFXML));
         assertTrue("POST should support application/n-triples", postTypes.contains(contentTypeNTriples));
+
+        final List<String> externalTypes = headerValues(httpResponse, "Accept-External-Content-Handling");
+        assertTrue("COPY should be advertised for accepted external content.", externalTypes.contains(COPY));
+        assertTrue("PROXY should be advertised for accepted external content.", externalTypes.contains(PROXY));
+        assertTrue("REDIRECT should be advertised for accepted external content.", externalTypes.contains(REDIRECT));
     }
 
     private static void assertRdfOptionsHeaders(final HttpResponse httpResponse) {
