@@ -19,6 +19,9 @@ package org.fcrepo.integration.auth.webac;
 
 import static java.util.Arrays.stream;
 import static javax.ws.rs.core.Response.Status.CREATED;
+import static org.apache.http.HttpStatus.SC_FORBIDDEN;
+import static org.apache.http.HttpStatus.SC_NOT_FOUND;
+import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.apache.jena.vocabulary.DC_11.title;
 import static org.fcrepo.auth.webac.WebACRolesProvider.GROUP_AGENT_BASE_URI_PROPERTY;
 import static org.fcrepo.http.api.FedoraAcl.ROOT_AUTHORIZATION_PROPERTY;
@@ -36,9 +39,11 @@ import javax.ws.rs.core.Link;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
+import org.apache.http.HeaderElement;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.NameValuePair;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -47,6 +52,7 @@ import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.AbstractHttpMessage;
@@ -964,6 +970,107 @@ public class WebACRecipesIT extends AbstractResourceIT {
         final HttpOptions optionsReq = new HttpOptions(testObj);
         setAuth(optionsReq, "user20");
         assertEquals(HttpStatus.SC_OK, getStatus(optionsReq));
+    }
+
+    protected static HttpResponse HEAD(final String requestURI) throws IOException {
+        return HEAD(requestURI, "fedoraAdmin");
+    }
+
+    protected static HttpResponse HEAD(final String requestURI, final String username) throws IOException {
+        final HttpHead req = new HttpHead(requestURI);
+        setAuth(req, username);
+        return execute(req);
+    }
+
+    protected static HttpResponse PUT(final String requestURI) throws IOException {
+        return PUT(requestURI, "fedoraAdmin");
+    }
+
+    protected static HttpResponse PUT(final String requestURI, final String username) throws IOException {
+        final HttpPut req = new HttpPut(requestURI);
+        setAuth(req, username);
+        return execute(req);
+    }
+
+    protected static HttpResponse DELETE(final String requestURI) throws IOException {
+        return DELETE(requestURI, "fedoraAdmin");
+    }
+
+    protected static HttpResponse DELETE(final String requestURI, final String username) throws IOException {
+        final HttpDelete req = new HttpDelete(requestURI);
+        setAuth(req, username);
+        return execute(req);
+    }
+
+    protected static HttpResponse GET(final String requestURI) throws IOException {
+        return GET(requestURI, "fedoraAdmin");
+    }
+
+    protected static HttpResponse GET(final String requestURI, final String username) throws IOException {
+        final HttpGet req = new HttpGet(requestURI);
+        setAuth(req, username);
+        return execute(req);
+    }
+
+    protected static HttpResponse PATCH(final String requestURI, final HttpEntity body) throws IOException {
+        return PATCH(requestURI, body, "fedoraAdmin");
+    }
+
+    protected static HttpResponse PATCH(final String requestURI, final HttpEntity body, final String username)
+            throws IOException {
+        final HttpPatch req = new HttpPatch(requestURI);
+        setAuth(req, username);
+        if (body != null) {
+            req.setEntity(body);
+        }
+        return execute(req);
+    }
+
+    protected static String getLink(final HttpResponse res, final String rel) {
+        for (final Header h : res.getHeaders("Link")) {
+            final HeaderElement link = h.getElements()[0];
+            for (final NameValuePair param : link.getParameters()) {
+                if (param.getName().equals("rel") && param.getValue().equals("acl")) {
+                    return link.getName().replaceAll("^<|>$", "");
+                }
+            }
+        }
+        return null;
+    }
+
+    protected String ingestObjWithACL(final String path, final String aclResourcePath) throws IOException {
+        final String newURI = ingestObj(path);
+        final HttpResponse res = HEAD(newURI);
+        final String aclURI = getLink(res, "acl");
+
+        logger.debug("Creating ACL at {}", aclURI);
+        ingestAcl("fedoraAdmin", aclResourcePath, aclURI);
+
+        return newURI;
+    }
+
+    @Test
+    public void testControl() throws IOException {
+        final String controlObj = ingestObjWithACL("/rest/control", "/acls/25/control.ttl");
+        final String readwriteObj = ingestObjWithACL("/rest/readwrite", "/acls/25/readwrite.ttl");
+
+        final String rwChildACL = getLink(PUT(readwriteObj + "/child"), "acl");
+        assertEquals(SC_FORBIDDEN, getStatus(HEAD(rwChildACL, "testuser")));
+        assertEquals(SC_FORBIDDEN, getStatus(GET(rwChildACL, "testuser")));
+        assertEquals(SC_FORBIDDEN, getStatus(PUT(rwChildACL, "testuser")));
+        assertEquals(SC_FORBIDDEN, getStatus(DELETE(rwChildACL, "testuser")));
+
+        final String controlChildACL = getLink(PUT(controlObj + "/child"), "acl");
+        assertEquals(SC_NOT_FOUND, getStatus(HEAD(controlChildACL, "testuser")));
+        assertEquals(SC_NOT_FOUND, getStatus(GET(controlChildACL, "testuser")));
+
+        ingestAcl("testuser", "/acls/25/child-control.ttl", controlChildACL);
+        final StringEntity sparqlUpdate = new StringEntity(
+                "PREFIX acl: <http://www.w3.org/ns/auth/acl#>  INSERT { <#restricted> acl:mode acl:Read } WHERE { }",
+                ContentType.create("application/sparql-update"));
+        assertEquals(SC_NO_CONTENT, getStatus(PATCH(controlChildACL, sparqlUpdate, "testuser")));
+
+        assertEquals(SC_NO_CONTENT, getStatus(DELETE(controlChildACL, "testuser")));
     }
 
     @Test

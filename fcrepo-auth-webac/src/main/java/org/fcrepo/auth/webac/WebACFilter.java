@@ -23,14 +23,15 @@ import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_ADMIN_ROLE;
 import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_USER_ROLE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_APPEND;
+import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_CONTROL;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.net.URI;
-
 import javax.inject.Inject;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -150,7 +151,7 @@ public class WebACFilter implements Filter {
     private boolean isAuthorized(final Subject currentUser, final HttpServletRequest httpRequest) throws IOException {
         final String requestURL = httpRequest.getRequestURL().toString();
         final String repoPath = httpRequest.getPathInfo();
-
+        final boolean isAcl = requestURL.endsWith(FCR_ACL);
         final URI requestURI = URI.create(requestURL);
         log.debug("Request URI is {}", requestURI);
 
@@ -158,14 +159,33 @@ public class WebACFilter implements Filter {
         final WebACPermission toRead = new WebACPermission(WEBAC_MODE_READ, requestURI);
         final WebACPermission toWrite = new WebACPermission(WEBAC_MODE_WRITE, requestURI);
         final WebACPermission toAppend = new WebACPermission(WEBAC_MODE_APPEND, requestURI);
+        final WebACPermission toControl = new WebACPermission(WEBAC_MODE_CONTROL, requestURI);
 
         switch (httpRequest.getMethod()) {
         case "OPTIONS":
         case "HEAD":
         case "GET":
-            return currentUser.isPermitted(toRead);
+            if (isAcl) {
+                if (currentUser.isPermitted(toControl)) {
+                    log.debug("GET allowed by {} permission", toControl);
+                    return true;
+                } else {
+                    log.debug("GET prohibited by {} permission", toControl);
+                    return false;
+                }
+            } else {
+                return currentUser.isPermitted(toRead);
+            }
         case "PUT":
-            if (currentUser.isPermitted(toWrite)) {
+            if (isAcl) {
+                if (currentUser.isPermitted(toControl)) {
+                    log.debug("PUT allowed by {} permission", toControl);
+                    return true;
+                } else {
+                    log.debug("PUT prohibited by {} permission", toControl);
+                    return false;
+                }
+            } else if (currentUser.isPermitted(toWrite)) {
                 log.debug("PUT allowed by {} permission", toWrite);
                 return true;
             } else {
@@ -210,9 +230,28 @@ public class WebACFilter implements Filter {
                 }
             }
         case "DELETE":
-            return currentUser.isPermitted(toWrite);
+            if (isAcl) {
+                if (currentUser.isPermitted(toControl)) {
+                    log.debug("DELETE allowed by {} permission", toControl);
+                    return true;
+                } else {
+                    log.debug("DELETE prohibited by {} permission", toControl);
+                    return false;
+                }
+            } else {
+                return currentUser.isPermitted(toWrite);
+            }
         case "PATCH":
-            if (currentUser.isPermitted(toWrite)) {
+
+            if (isAcl) {
+                if (currentUser.isPermitted(toControl)) {
+                    log.debug("PATCH allowed by {} permission", toControl);
+                    return true;
+                } else {
+                    log.debug("PATCH prohibited by {} permission", toControl);
+                    return false;
+                }
+            } else if (currentUser.isPermitted(toWrite)) {
                 return true;
             } else {
                 if (currentUser.isPermitted(toAppend)) {
