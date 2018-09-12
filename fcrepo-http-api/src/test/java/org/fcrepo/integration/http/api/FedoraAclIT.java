@@ -18,6 +18,8 @@
 package org.fcrepo.integration.http.api;
 
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.HttpHeaders.LINK;
+import static javax.ws.rs.core.Link.fromUri;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -28,6 +30,7 @@ import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.fcrepo.http.api.FedoraAcl.ROOT_AUTHORIZATION_PROPERTY;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
+import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_NAMESPACE_VALUE;
@@ -36,6 +39,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.net.URI;
+
+import javax.ws.rs.core.Link;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
@@ -395,6 +401,33 @@ public class FedoraAclIT extends AbstractResourceIT {
                                       createURI(aclLocation + "#readAccess"),
                                       createURI("http://www.w3.org/ns/auth/acl#accessTo"),
                                       createURI(subjectUri)));
+        }
+    }
+
+    @Test
+    public void testCreateAclWithBothAccessToandAccessToClassIsNotAllowed() throws Exception {
+        createObjectAndClose(id);
+
+        final HttpPut put = new HttpPut(subjectUri + "/" + FCR_ACL);
+        final String aclBody = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
+                               "@prefix webac: <http://fedora.info/definitions/v4/webac#> .\n" +
+                               "@prefix foaf: <http://xmlns.com/foaf/0.1/> .\n" +
+                               "@prefix ldp: <http://www.w3.org/ns/ldp#> .\n" +
+                               "\n" +
+                               "<#readAccess> a acl:Authorization ;\n" +
+                               "    acl:mode acl:Read ;\n" +
+                               "    acl:accessTo <http://example.com/> ;\n" +
+                               "    acl:accessToClass webac:Acl .";
+        final Link ex = fromUri(URI.create(serverAddress +
+                                    "static/constraints/ACLAuthorizationConstraintViolationException.rdf"))
+                               .rel(CONSTRAINED_BY.getURI()).build();
+
+        put.setEntity(new StringEntity(aclBody));
+        put.setHeader("Content-Type", "text/turtle");
+
+        try (final CloseableHttpResponse response = execute(put)) {
+            assertEquals(BAD_REQUEST.getStatusCode(), getStatus(response));
+            assertEquals(ex.toString(), response.getFirstHeader(LINK).getValue().toString());
         }
     }
 }

@@ -42,9 +42,11 @@ import static javax.ws.rs.core.Response.Status.REQUESTED_RANGE_NOT_SATISFIABLE;
 import static javax.ws.rs.core.Variant.mediaTypes;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
+import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.rdf.model.ResourceFactory.createStatement;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.apache.jena.vocabulary.RDF.type;
@@ -100,7 +102,6 @@ import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -123,8 +124,11 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 
 import org.apache.jena.atlas.RuntimeIOException;
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.riot.Lang;
@@ -140,6 +144,7 @@ import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.TripleCategory;
+import org.fcrepo.kernel.api.exception.ACLAuthorizationConstraintViolationException;
 import org.fcrepo.kernel.api.exception.InsufficientStorageException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
@@ -188,6 +193,12 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     static final String WEBAC_ACCESS_TO = WEBAC_NAMESPACE_VALUE + "accessTo";
 
     static final String WEBAC_ACCESS_TO_CLASS = WEBAC_NAMESPACE_VALUE + "accessToClass";
+
+    static final Node WEBAC_ACCESS_TO_URI = createURI(WEBAC_ACCESS_TO);
+
+    static final Node WEBAC_ACCESS_TO_CLASS_URI = createURI(WEBAC_ACCESS_TO_CLASS);
+
+    static final Property WEBAC_ACCESS_TO_PROPERTY = createProperty(WEBAC_ACCESS_TO);
 
     @Context protected Request request;
     @Context protected HttpServletResponse servletResponse;
@@ -914,7 +925,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         ensureValidMemberRelation(inputModel);
 
-        setACLAuthorizationAccessTargetIfMissing(resource, inputModel);
+        ensureValidACLAuthorization(resource, inputModel);
 
         resource.replaceProperties(translator(), inputModel, resourceTriples);
     }
@@ -979,41 +990,53 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     }
 
     /**
-     * If the ACL Authorization is missing accessTo or accessToClass, add accessTo triple to point to the containing
-     * resource.
+     * This method does two things:
+     * - Throws an exception if an authorization has both accessTo and accessToClass
+     * - Adds a default accessTo target if an authorization has neither accessTo nor accessToClass
      * 
+     * @param resource the fedora resource
      * @param inputModel to be checked and updated
      */
-    private void setACLAuthorizationAccessTargetIfMissing(final FedoraResource resource, final Model inputModel) {
+    private void ensureValidACLAuthorization(final FedoraResource resource, final Model inputModel) {
         if (resource.isAcl()) {
-            final Map<String, Boolean> authSubjectHasAccessTarget = new HashMap<>();
+            final Set<Node> uniqueAuthSubjects = new HashSet<>();
             inputModel.listStatements().forEachRemaining((final Statement s) -> {
                 LOGGER.debug("statement: s={}, p={}, o={}", s.getSubject(), s.getPredicate(), s.getObject());
-                final String subject = s.getSubject().toString();
+                final Node subject = s.getSubject().asNode();
                 // If subject is Authorization Hash Resource, add it to the map with its accessTo/accessToClass status.
-                if (subject.contains("/" + FCR_ACL + "#")) {
-                    if (!authSubjectHasAccessTarget.containsKey(subject)) {
-                        authSubjectHasAccessTarget.put(subject, false);
-                    }
-                    final String predicate = s.getPredicate().toString();
-                    if (predicate.equals(WEBAC_ACCESS_TO) || predicate.equals(WEBAC_ACCESS_TO_CLASS)) {
-                        authSubjectHasAccessTarget.put(subject, true);
-                    }
+                if (subject.toString().contains("/" + FCR_ACL + "#")) {
+                    uniqueAuthSubjects.add(subject);
                 }
             });
-            authSubjectHasAccessTarget.keySet().forEach((final String subject) -> {
-                if (authSubjectHasAccessTarget.get(subject) == false) {
-                    LOGGER.debug("Authorization resource '{}' does not have an accessTo or accessToClass", subject);
-                    // Set the current resource as the accessTo target
-                    final String currentResourcePath = subject.substring(0, subject.indexOf("/" + FCR_ACL));
-                    inputModel.add(
-                        createResource(subject),
-                        createProperty(WEBAC_ACCESS_TO),
-                        createResource(currentResourcePath));
-                    LOGGER.debug("Added {} as the accessTo target", currentResourcePath);
+            final Graph graph = inputModel.getGraph();
+            uniqueAuthSubjects.forEach((final Node subject) -> {
+                if (graph.contains(subject, WEBAC_ACCESS_TO_URI, Node.ANY) &&
+                        graph.contains(subject, WEBAC_ACCESS_TO_CLASS_URI, Node.ANY)) {
+                    throw new ACLAuthorizationConstraintViolationException(
+                        MessageFormat.format(
+                                "Using both accessTo and accessToClass within " +
+                                        "a single Authorization is not allowed: {0}.",
+                                subject.toString().substring(subject.toString().lastIndexOf("#"))));
+                } else if (!(graph.contains(subject, WEBAC_ACCESS_TO_URI, Node.ANY) ||
+                        graph.contains(subject, WEBAC_ACCESS_TO_CLASS_URI, Node.ANY))) {
+                    inputModel.add(createDefaultAccessToStatement(subject.toString()));
                 }
-             });
+            });
         }
+    }
+
+    /**
+     * Returns a Statement with the resource containing the acl to be the accessTo target for the given auth subject.
+     * 
+     * @param authSubject - acl authorization subject uri string
+     * @return
+     */
+    private Statement createDefaultAccessToStatement(final String authSubject) {
+        final String currentResourcePath = authSubject.substring(0, authSubject.indexOf("/" + FCR_ACL));
+        return createStatement(
+                        createResource(authSubject),
+                        WEBAC_ACCESS_TO_PROPERTY,
+                        createResource(currentResourcePath));
     }
 
     protected void patchResourcewithSparql(final FedoraResource resource,
