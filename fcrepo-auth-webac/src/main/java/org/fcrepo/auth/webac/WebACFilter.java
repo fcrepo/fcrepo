@@ -25,6 +25,7 @@ import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_USER_ROLE
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_APPEND;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -50,7 +51,6 @@ import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.api.FedoraSession;
-import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.slf4j.Logger;
@@ -61,8 +61,6 @@ import org.slf4j.Logger;
 public class WebACFilter implements Filter {
 
     private static final Logger log = getLogger(WebACFilter.class);
-
-    private FedoraResource resource;
 
     private FedoraSession session;
 
@@ -131,10 +129,7 @@ public class WebACFilter implements Filter {
     }
 
     private FedoraResource resource(final String repoPath) {
-        if (resource == null) {
-            resource = nodeService.find(session(), repoPath);
-        }
-        return resource;
+        return nodeService.find(session(), repoPath);
     }
 
     private String findNearestParent(final String childPath) {
@@ -197,7 +192,7 @@ public class WebACFilter implements Filter {
                 log.debug("POST allowed by {} permission", toWrite);
                 return true;
             } else {
-                if (resource(repoPath) instanceof FedoraBinary) {
+                if (resource(repoPath).hasType(FEDORA_BINARY)) {
                     // LDP-NR
                     // user without the acl:Write permission cannot POST to binaries
                     log.debug("POST prohibited to binary resource without {} permission", toWrite);
@@ -210,6 +205,7 @@ public class WebACFilter implements Filter {
                         return true;
                     } else {
                         log.debug("POST prohibited to container without {} permission", toAppend);
+                        return false;
                     }
                 }
             }

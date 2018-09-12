@@ -129,16 +129,17 @@ public class WebACRecipesIT extends AbstractResourceIT {
     }
 
     private String ingestBinary(final String path, final HttpEntity body) throws IOException {
-        final HttpPut request = putObjMethod(path.replace(serverAddress, ""));
+        logger.info("Ingesting {} binary to {}", body.getContentType().getValue(), path);
+        final HttpPut request = new HttpPut(serverAddress + path);
         setAuth(request, "fedoraAdmin");
         request.setEntity(body);
         request.setHeader(body.getContentType());
-        try (final CloseableHttpResponse response = execute(request)) {
-            assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
-            final String location = response.getFirstHeader("Location").getValue();
-            logger.debug("Created binary at {}", location);
-            return location;
-        }
+        final CloseableHttpResponse response = execute(request);
+        assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
+        final String location = response.getFirstHeader("Location").getValue();
+        logger.info("Created binary at {}", location);
+        return location;
+
     }
 
     private String ingestDatastream(final String path, final String ds) throws IOException {
