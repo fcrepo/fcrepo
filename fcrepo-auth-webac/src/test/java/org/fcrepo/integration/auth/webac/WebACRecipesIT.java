@@ -969,7 +969,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
     @Test
     public void testAppendOnlyToContainer() throws IOException {
         final String testObj = ingestObj("/rest/test_append");
-        final String acl = ingestAcl("fedoraAdmin", "/acls/23/acl.ttl", testObj + "/fcr:acl");
+        ingestAcl("fedoraAdmin", "/acls/23/acl.ttl", testObj + "/fcr:acl");
         final String username = "user23";
 
         final HttpOptions optionsReq = new HttpOptions(testObj);
@@ -1042,7 +1042,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
     @Test
     public void testAppendOnlyToBinary() throws IOException {
         final String testObj = ingestBinary("/rest/test_append_binary", new StringEntity("foo"));
-        final String acl = ingestAcl("fedoraAdmin", "/acls/24/acl.ttl", testObj + "/fcr:acl");
+        ingestAcl("fedoraAdmin", "/acls/24/acl.ttl", testObj + "/fcr:acl");
         final String username = "user24";
 
         final HttpOptions optionsReq = new HttpOptions(testObj);
