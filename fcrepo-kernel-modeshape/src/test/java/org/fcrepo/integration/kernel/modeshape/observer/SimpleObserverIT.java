@@ -210,10 +210,8 @@ public class SimpleObserverIT extends AbstractIT {
         awaitEvent("/object6/object7", RESOURCE_DELETION);
         awaitEvent("/object6/object7/child1", RESOURCE_DELETION);
         awaitEvent("/object6/object7/child2", RESOURCE_DELETION);
-        // should produce two of these
-        awaitEvent("/object6", RESOURCE_MODIFICATION);
 
-        assertEquals("Move operation didn't generate additional events", (Integer) 12, eventBusMessageCount);
+        assertEquals("Move operation didn't generate additional events", (Integer) 10, eventBusMessageCount);
     }
 
     @Test
