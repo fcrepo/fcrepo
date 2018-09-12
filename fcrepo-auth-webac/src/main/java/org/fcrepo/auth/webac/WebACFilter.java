@@ -42,6 +42,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.query.QueryParseException;
+import org.apache.jena.sparql.modify.request.UpdateDataDelete;
 import org.apache.jena.sparql.modify.request.UpdateModify;
 import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
@@ -237,7 +238,7 @@ public class WebACFilter implements Filter {
             boolean noDeletes = false;
             try {
                 noDeletes = !hasDeleteClause(IOUtils.toString(httpRequest.getInputStream(), UTF_8));
-            } catch (QueryParseException ex) {
+            } catch (final QueryParseException ex) {
                 log.error("Cannot verify authorization! Exception while inspecting SPARQL query!", ex);
             }
             return noDeletes;
@@ -249,10 +250,15 @@ public class WebACFilter implements Filter {
 
     private boolean hasDeleteClause(final String sparqlString) {
         final UpdateRequest sparqlUpdate = UpdateFactory.create(sparqlString);
-        return sparqlUpdate.getOperations().stream().filter(update -> (update instanceof UpdateModify))
+        return sparqlUpdate.getOperations().stream()
+                .filter(update -> update instanceof UpdateDataDelete)
+                .map(update -> (UpdateDataDelete) update)
+                .anyMatch(update -> update.getQuads().size() > 0) ||
+                sparqlUpdate.getOperations().stream().filter(update -> (update instanceof UpdateModify))
                 .peek(update -> log.debug("Inspecting update statement for DELETE clause: {}", update.toString()))
                 .map(update -> (UpdateModify)update)
-                .anyMatch(UpdateModify::hasDeleteClause);
+                .filter(UpdateModify::hasDeleteClause)
+                .anyMatch(update -> update.getDeleteQuads().size() > 0);
     }
 
     private boolean isSparqlUpdate(final HttpServletRequest request) {

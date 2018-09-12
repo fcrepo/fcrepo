@@ -1022,6 +1022,20 @@ public class WebACRecipesIT extends AbstractResourceIT {
             logger.debug("Testing SPARQL update: {}", query);
             assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(patchReq));
         }
+        final String[] allowedDeleteSPARQLQueries = new String[] {
+            "DELETE DATA {}",
+            "DELETE { } WHERE {}",
+            "DELETE { } INSERT {} WHERE {}"
+        };
+        for (final String query : allowedDeleteSPARQLQueries) {
+            final HttpPatch patchReq = new HttpPatch(testObj);
+            setAuth(patchReq, username);
+            patchReq.setEntity(new StringEntity(query));
+            patchReq.setHeader("Content-Type", "application/sparql-update");
+            logger.debug("Testing SPARQL update: {}", query);
+            assertEquals(HttpStatus.SC_NO_CONTENT, getStatus(patchReq));
+        }
+
     }
 
     @Test
