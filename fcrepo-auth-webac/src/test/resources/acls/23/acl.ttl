@@ -1,0 +1,6 @@
+@prefix acl: <http://www.w3.org/ns/auth/acl#> .
+
+<> a acl:Authorization ;
+   acl:agent "user23" ;
+   acl:mode acl:Append ;
+   acl:accessTo </rest/test_append> .
