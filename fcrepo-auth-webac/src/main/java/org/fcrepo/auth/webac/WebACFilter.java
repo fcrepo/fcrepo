@@ -27,6 +27,7 @@ import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_CONTROL;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -43,6 +44,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.query.QueryParseException;
+import org.apache.jena.sparql.modify.request.UpdateDataDelete;
 import org.apache.jena.sparql.modify.request.UpdateModify;
 import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
@@ -50,7 +52,6 @@ import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.api.FedoraSession;
-import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.slf4j.Logger;
@@ -61,8 +62,6 @@ import org.slf4j.Logger;
 public class WebACFilter implements Filter {
 
     private static final Logger log = getLogger(WebACFilter.class);
-
-    private FedoraResource resource;
 
     private FedoraSession session;
 
@@ -131,10 +130,7 @@ public class WebACFilter implements Filter {
     }
 
     private FedoraResource resource(final String repoPath) {
-        if (resource == null) {
-            resource = nodeService.find(session(), repoPath);
-        }
-        return resource;
+        return nodeService.find(session(), repoPath);
     }
 
     private String findNearestParent(final String childPath) {
@@ -216,7 +212,7 @@ public class WebACFilter implements Filter {
                 log.debug("POST allowed by {} permission", toWrite);
                 return true;
             } else {
-                if (resource(repoPath) instanceof FedoraBinary) {
+                if (resource(repoPath).hasType(FEDORA_BINARY)) {
                     // LDP-NR
                     // user without the acl:Write permission cannot POST to binaries
                     log.debug("POST prohibited to binary resource without {} permission", toWrite);
@@ -229,6 +225,7 @@ public class WebACFilter implements Filter {
                         return true;
                     } else {
                         log.debug("POST prohibited to container without {} permission", toAppend);
+                        return false;
                     }
                 }
             }
@@ -276,7 +273,7 @@ public class WebACFilter implements Filter {
             boolean noDeletes = false;
             try {
                 noDeletes = !hasDeleteClause(IOUtils.toString(httpRequest.getInputStream(), UTF_8));
-            } catch (QueryParseException ex) {
+            } catch (final QueryParseException ex) {
                 log.error("Cannot verify authorization! Exception while inspecting SPARQL query!", ex);
             }
             return noDeletes;
@@ -288,10 +285,15 @@ public class WebACFilter implements Filter {
 
     private boolean hasDeleteClause(final String sparqlString) {
         final UpdateRequest sparqlUpdate = UpdateFactory.create(sparqlString);
-        return sparqlUpdate.getOperations().stream().filter(update -> (update instanceof UpdateModify))
+        return sparqlUpdate.getOperations().stream()
+                .filter(update -> update instanceof UpdateDataDelete)
+                .map(update -> (UpdateDataDelete) update)
+                .anyMatch(update -> update.getQuads().size() > 0) ||
+                sparqlUpdate.getOperations().stream().filter(update -> (update instanceof UpdateModify))
                 .peek(update -> log.debug("Inspecting update statement for DELETE clause: {}", update.toString()))
                 .map(update -> (UpdateModify)update)
-                .anyMatch(UpdateModify::hasDeleteClause);
+                .filter(UpdateModify::hasDeleteClause)
+                .anyMatch(update -> update.getDeleteQuads().size() > 0);
     }
 
     private boolean isSparqlUpdate(final HttpServletRequest request) {

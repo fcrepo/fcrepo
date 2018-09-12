@@ -26,6 +26,7 @@ import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_APPEND;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_CONTROL;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
 
@@ -150,10 +151,12 @@ public class WebACFilterTest {
 
     private void setupContainerResource() {
         when(mockNodeService.find(mockFedoraSession, testPath)).thenReturn(mockContainer);
+        when(mockBinary.hasType(FEDORA_BINARY)).thenReturn(false);
     }
 
     private void setupBinaryResource() {
         when(mockNodeService.find(mockFedoraSession, testPath)).thenReturn(mockBinary);
+        when(mockBinary.hasType(FEDORA_BINARY)).thenReturn(true);
     }
 
     private void setupAdminUser() {
@@ -361,6 +364,7 @@ public class WebACFilterTest {
     @Test
     public void testAuthUserNoPermsPost() throws ServletException, IOException {
         setupAuthUserNoPerms();
+        setupContainerResource();
         // POST => 403
         request.setMethod("POST");
         webacFilter.doFilter(request, response, filterChain);
@@ -424,6 +428,7 @@ public class WebACFilterTest {
     @Test
     public void testAuthUserReadOnlyPost() throws ServletException, IOException {
         setupAuthUserReadOnly();
+        setupContainerResource();
         // POST => 403
         request.setMethod("POST");
         webacFilter.doFilter(request, response, filterChain);
