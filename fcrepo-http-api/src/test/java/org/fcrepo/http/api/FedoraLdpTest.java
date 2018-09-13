@@ -438,11 +438,6 @@ public class FedoraLdpTest {
                 mockResponse.getHeader(FedoraLdp.ACCEPT_EXTERNAL_CONTENT));
     }
 
-    private void assertShouldNotHaveAcceptExternalContentHandlingHeader() {
-        assertFalse("Should not have Accept-External-Content-Handling header",
-                mockResponse.containsHeader(FedoraLdp.ACCEPT_EXTERNAL_CONTENT));
-    }
-
     @Test
     public void testHeadWithExternalBinary() throws Exception {
         final FedoraBinary mockResource = (FedoraBinary)setResource(FedoraBinary.class);
@@ -494,17 +489,17 @@ public class FedoraLdpTest {
         final Response actual = testObj.options();
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertTrue("Should have an Allow header", mockResponse.containsHeader("Allow"));
-        assertShouldNotHaveAcceptExternalContentHandlingHeader();
+        assertShouldHaveAcceptExternalContentHandlingHeader();
     }
 
     @Test
-    public void testOptionWithObject() throws Exception {
+    public void testOptionWithLDPRS() throws Exception {
         setResource(Container.class);
         final Response actual = testObj.options();
         assertEquals(OK.getStatusCode(), actual.getStatus());
         assertTrue("Should advertise Accept-Post flavors", mockResponse.containsHeader("Accept-Post"));
         assertShouldAdvertiseAcceptPatchFlavors();
-        assertShouldNotHaveAcceptExternalContentHandlingHeader();
+        assertShouldHaveAcceptExternalContentHandlingHeader();
     }
 
     @Test
@@ -531,7 +526,7 @@ public class FedoraLdpTest {
         assertShouldNotAdvertiseAcceptPostFlavors();
         assertShouldAdvertiseAcceptPatchFlavors();
         assertShouldContainLinkToTheBinary();
-        assertShouldNotHaveAcceptExternalContentHandlingHeader();
+        assertShouldHaveAcceptExternalContentHandlingHeader();
     }
 
 
