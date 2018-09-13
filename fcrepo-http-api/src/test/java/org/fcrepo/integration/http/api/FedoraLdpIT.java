@@ -209,7 +209,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
       DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US).withZone(of("GMT"));
 
     private static DateTimeFormatter tripleFormat =
-      DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(of("GMT"));
+      DateTimeFormatter.ISO_INSTANT.withZone(of("GMT"));
 
     @Test
     public void testHeadRepositoryGraph() throws IOException {
