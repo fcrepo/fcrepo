@@ -90,7 +90,7 @@ import org.slf4j.Logger;
  * @author acoburn
  * @since 9/3/15
  */
-public class WebACRolesProvider implements AccessRolesProvider {
+public class WebACRolesProvider {
 
     public static final String GROUP_AGENT_BASE_URI_PROPERTY = "fcrepo.auth.webac.groupAgent.baseUri";
 
@@ -108,17 +108,14 @@ public class WebACRolesProvider implements AccessRolesProvider {
     @Inject
     private SessionFactory sessionFactory;
 
-    @Override
-    public void postRoles(final Node node, final Map<String, Set<String>> data) throws RepositoryException {
-        throw new UnsupportedOperationException("postRoles() is not implemented");
-    }
-
-    @Override
-    public void deleteRoles(final Node node) throws RepositoryException {
-        throw new UnsupportedOperationException("deleteRoles() is not implemented");
-    }
-
-    @Override
+    /**
+     * Finds effective roles assigned to a path, using first real ancestor node.
+     *
+     * @param absPath the real or potential node path
+     * @param session session
+     * @return the roles assigned to each principal
+     * @throws RepositoryException if PathNotFoundException can not handle
+     */
     public Map<String, Collection<String>> findRolesForPath(final Path absPath, final Session session)
             throws RepositoryException {
         return getAgentRoles(locateResource(absPath, new FedoraSessionImpl(session)));
@@ -169,7 +166,13 @@ public class WebACRolesProvider implements AccessRolesProvider {
         return resource;
     }
 
-    @Override
+    /**
+     * Get the roles assigned to this Node. Optionally search up the tree for the effective roles.
+     *
+     * @param node the subject Node
+     * @param effective if true then search for effective roles
+     * @return a set of roles for each principal
+     */
     public Map<String, Collection<String>> getRoles(final Node node, final boolean effective) {
         try {
             return getAgentRoles(nodeService.find(new FedoraSessionImpl(node.getSession()), node.getPath()));
