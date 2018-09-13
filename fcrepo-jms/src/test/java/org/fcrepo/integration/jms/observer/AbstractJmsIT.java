@@ -29,6 +29,7 @@ import static org.fcrepo.jms.DefaultMessageFactory.RESOURCE_TYPE_HEADER_NAME;
 import static org.fcrepo.jms.DefaultMessageFactory.TIMESTAMP_HEADER_NAME;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
+import static org.fcrepo.kernel.api.observer.EventType.INBOUND_REFERENCE;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_CREATION;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_DELETION;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_MODIFICATION;
@@ -51,12 +52,12 @@ import javax.jms.MessageListener;
 import javax.jms.Session;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.apache.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.observer.EventType;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.ContainerService;
@@ -89,9 +90,6 @@ abstract class AbstractJmsIT implements MessageListener {
 
     private static final String testMeta = "/testMessageFromMetadata-" + randomUUID();
 
-    private static final String RESOURCE_CREATION_EVENT_TYPE = EventType.RESOURCE_CREATION.getType();
-    private static final String RESOURCE_DELETION_EVENT_TYPE = EventType.RESOURCE_DELETION.getType();
-    private static final String RESOURCE_MODIFICATION_EVENT_TYPE = EventType.RESOURCE_MODIFICATION.getType();
     private static final String TEST_USER_AGENT = "FedoraClient/1.0";
     private static final String TEST_BASE_URL = "http://localhost:8080/rest";
 
@@ -214,6 +212,29 @@ abstract class AbstractJmsIT implements MessageListener {
             resource.delete();
             session.commit();
             awaitMessageOrFail(testRemoved, RESOURCE_DELETION.getType(), null);
+        } finally {
+            session.expire();
+        }
+    }
+
+    @Test(timeout = TIMEOUT)
+    public void testInboundReference() throws RepositoryException {
+        final String uri1 = "/testInboundReference-" + randomUUID().toString();
+        final String uri2 = "/testInboundReference-" + randomUUID().toString();
+
+        final FedoraSession session = repository.login();
+        final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator(getJcrSession(session));
+        session.addSessionData(BASE_URL, TEST_BASE_URL);
+        session.addSessionData(USER_AGENT, TEST_USER_AGENT);
+        try {
+            final Container resource = containerService.findOrCreate(session, uri1);
+            final Container resource2 = containerService.findOrCreate(session, uri2);
+            session.commit();
+            final Resource subject2 = subjects.reverse().convert(resource2);
+            final String sparql = "insert { <> <http://foo.com/prop> <" + subject2 + "> . } where {}";
+            resource.updateProperties(subjects, sparql, resource.getTriples(subjects, PROPERTIES));
+            session.commit();
+            awaitMessageOrFail(uri2, INBOUND_REFERENCE.getType(), null);
         } finally {
             session.expire();
         }

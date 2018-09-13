@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.modeshape.observer.eventmappings;
 
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FEDORA_JCR_REFERENCE;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
 import static org.fcrepo.kernel.modeshape.observer.FedoraEventImpl.from;
@@ -28,9 +29,9 @@ import static java.util.stream.Stream.empty;
 import static java.util.stream.Stream.of;
 import static javax.jcr.observation.Event.PROPERTY_CHANGED;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import javax.jcr.RepositoryException;
@@ -39,6 +40,7 @@ import javax.jcr.observation.Event;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
 import org.fcrepo.kernel.modeshape.observer.FedoraEventImpl;
+import org.fcrepo.kernel.modeshape.observer.WrappedJcrEvent;
 
 import org.slf4j.Logger;
 
@@ -56,15 +58,27 @@ public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
 
     /**
      * If the only event is a modification of the jcr:lastModified it is most likely the effect of an inbound reference.
+     * Wrap the old event in a new one that replaces the event type with FEDORA_JCR_REFERENCE for later mapping.
+     *
+     * @param ev The list of events to check.
+     * @return The original list or a list with the altered event.
      */
-    private static final Predicate<List<Event>> INBOUND_REFERENCE_EVENT = (ev -> {
+    private static final List<Event> AlterReferenceEvents(final List<Event> ev) {
         try {
-            return ev.size() == 1 && ev.get(0).getPath().endsWith("/" + JCR_LASTMODIFIED) &&
-                ev.get(0).getType() == PROPERTY_CHANGED;
+            if (ev.size() == 1 && ev.get(0).getPath().endsWith("/" + JCR_LASTMODIFIED) &&
+                ev.get(0).getType() == PROPERTY_CHANGED) {
+                final Event original = ev.get(0);
+                final Event tempEv =
+                    new WrappedJcrEvent((org.modeshape.jcr.api.observation.Event) original, FEDORA_JCR_REFERENCE);
+                final List<Event> list = new ArrayList<Event>();
+                list.add(tempEv);
+                return list;
+            }
+            return ev;
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
-    });
+    }
 
     /**
      * Extracts an identifier from a JCR {@link Event} by building an id from nodepath and user to collapse multiple
@@ -83,12 +97,8 @@ public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
         // each of which returns either a singleton Stream or an empty Stream. The final result
         // will be a concatenated Stream of FedoraEvent objects.
         return events.collect(groupingBy(EXTRACT_NODE_ID)).entrySet().stream().flatMap(entry -> {
-            final List<Event> evts = entry.getValue();
+            final List<Event> evts = AlterReferenceEvents(entry.getValue());
             if (!evts.isEmpty()) {
-                if (INBOUND_REFERENCE_EVENT.test(evts)) {
-                    // Suppress the inbound reference event.
-                    return empty();
-                }
                 // build a FedoraEvent from the first JCR Event
                 final FedoraEvent fedoraEvent = from(evts.get(0));
                 evts.stream().skip(1).forEach(evt -> {

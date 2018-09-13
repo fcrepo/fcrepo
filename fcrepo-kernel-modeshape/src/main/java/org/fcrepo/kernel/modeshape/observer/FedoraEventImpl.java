@@ -22,6 +22,8 @@ import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_CREATION;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_DELETION;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_MODIFICATION;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_RELOCATION;
+import static org.fcrepo.kernel.api.observer.EventType.INBOUND_REFERENCE;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FEDORA_JCR_REFERENCE;
 import static org.fcrepo.kernel.api.observer.OptionalValues.BASE_URL;
 import static org.fcrepo.kernel.api.observer.OptionalValues.USER_AGENT;
 import static javax.jcr.observation.Event.NODE_ADDED;
@@ -93,7 +95,7 @@ public class FedoraEventImpl implements FedoraEvent {
     private final Set<EventType> eventTypes = new HashSet<>();
 
     private static final List<Integer> PROPERTY_TYPES = asList(Event.PROPERTY_ADDED,
-            Event.PROPERTY_CHANGED, Event.PROPERTY_REMOVED);
+        Event.PROPERTY_CHANGED, Event.PROPERTY_REMOVED, FEDORA_JCR_REFERENCE);
 
     /**
      * Create a new FedoraEvent
@@ -221,7 +223,8 @@ public class FedoraEventImpl implements FedoraEvent {
             .put(PROPERTY_ADDED, RESOURCE_MODIFICATION)
             .put(PROPERTY_REMOVED, RESOURCE_MODIFICATION)
             .put(PROPERTY_CHANGED, RESOURCE_MODIFICATION)
-            .put(NODE_MOVED, RESOURCE_RELOCATION).build();
+            .put(NODE_MOVED, RESOURCE_RELOCATION)
+            .put(FEDORA_JCR_REFERENCE, INBOUND_REFERENCE).build();
 
     /**
      * Get the Fedora event type for a JCR type
@@ -287,7 +290,8 @@ public class FedoraEventImpl implements FedoraEvent {
      * @return the types recorded on the resource associated to this event
      */
     public static Stream<String> getResourceTypes(final Event event) {
-        if (event instanceof org.modeshape.jcr.api.observation.Event) {
+        if (event instanceof org.modeshape.jcr.api.observation.Event ||
+            event instanceof org.fcrepo.kernel.modeshape.observer.WrappedJcrEvent) {
             try {
                 final org.modeshape.jcr.api.observation.Event modeEvent =
                         (org.modeshape.jcr.api.observation.Event) event;

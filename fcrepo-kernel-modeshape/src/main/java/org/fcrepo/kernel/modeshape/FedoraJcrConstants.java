@@ -48,6 +48,9 @@ public final class FedoraJcrConstants {
 
     public static final String FIELD_DELIMITER = "\30^^\30";
 
+    // Fake JCR event type to allow mapping inbound references to an ActivityStreams FOLLOW activity.
+    public static final int FEDORA_JCR_REFERENCE = 88;
+
     private FedoraJcrConstants() {
         // Prevent instantiation
     }

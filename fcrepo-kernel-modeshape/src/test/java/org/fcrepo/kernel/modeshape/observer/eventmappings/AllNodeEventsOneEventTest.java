@@ -22,6 +22,7 @@ import static java.util.stream.Stream.of;
 import static javax.jcr.observation.Event.NODE_ADDED;
 import static javax.jcr.observation.Event.PROPERTY_ADDED;
 import static javax.jcr.observation.Event.PROPERTY_CHANGED;
+import static org.fcrepo.kernel.api.observer.EventType.INBOUND_REFERENCE;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -29,9 +30,12 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
+
 import javax.jcr.RepositoryException;
+import javax.jcr.nodetype.NodeType;
 import javax.jcr.observation.Event;
 
+import java.util.List;
 import java.util.stream.Stream;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -68,7 +72,13 @@ public class AllNodeEventsOneEventTest {
     private final AllNodeEventsOneEvent testMapping = new AllNodeEventsOneEvent();
 
     @Mock
-    private Event mockEvent1, mockEvent2, mockEvent3, mockEvent4, mockEvent5, mockEvent6;
+    private Event mockEvent1, mockEvent2, mockEvent3, mockEvent4, mockEvent5;
+
+    @Mock
+    private NodeType mockNodeType, mockMixinType;
+
+    @Mock
+    org.modeshape.jcr.api.observation.Event mockEvent6;
 
     private Stream<Event> mockStream, mockStream2;
 
@@ -93,8 +103,16 @@ public class AllNodeEventsOneEventTest {
         when(mockEvent1.getDate()).thenReturn(5L);
         mockStream2 = of(mockEvent4, mockEvent5);
 
+        when(mockNodeType.getName()).thenReturn("mock:node_type");
+        when(mockMixinType.getName()).thenReturn("mock:mixin_type");
+
+        final NodeType[] addTypes = new NodeType[1];
+        addTypes[0] = mockMixinType;
+
         when(mockEvent6.getType()).thenReturn(PROPERTY_CHANGED);
         when(mockEvent6.getPath()).thenReturn(TEST_PATH6);
+        when(mockEvent6.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockEvent6.getMixinNodeTypes()).thenReturn(addTypes);
 
     }
 
@@ -126,34 +144,15 @@ public class AllNodeEventsOneEventTest {
     }
 
     @Test
-    public void testKeeplastModifiedWithOthers() throws RepositoryException {
-        // 3 events attached to one path.
-        final Stream<Event> mockStream = of(mockEvent4, mockEvent5, mockEvent6);
-        // 3 events attached to two paths.
-        final Stream<Event> mockStream2 = of(mockEvent3, mockEvent5, mockEvent6);
-
-        final Stream<FedoraEvent> stream = testMapping.apply(mockStream);
-        assertNotNull(stream);
-        assertEquals("Got the wrong number of events.", 1, stream.count());
-
-        final Stream<FedoraEvent> stream2 = testMapping.apply(mockStream2);
-        assertNotNull(stream2);
-        assertEquals("Got the wrong number of events.", 2, stream2.count());
-    }
-
-    @Test
-    public void testSuppressLastModifiedOnly() throws RepositoryException {
+    public void testAlterEvents() throws RepositoryException {
         // Two events attached to 2 paths, one is a jcr:lastModified only
         final Stream<Event> mockStream = of(mockEvent3, mockEvent6);
-        // One jcr:lastModified event.
-        final Stream<Event> mockStream2 = of(mockEvent6);
 
         final Stream<FedoraEvent> stream = testMapping.apply(mockStream);
         assertNotNull(stream);
-        assertEquals("Got the wrong number of events.", 1, stream.count());
-
-        final Stream<FedoraEvent> stream2 = testMapping.apply(mockStream2);
-        assertNotNull(stream2);
-        assertEquals("Got a single jcr:lastModified event.", 0, stream2.count());
+        final List<FedoraEvent> list = stream.collect(toList());
+        assertEquals("Got the wrong number of events.", 2, list.size());
+        assertEquals("Got the wrong number of events with Inbound Reference", 1,
+            list.stream().filter(e -> e.getTypes().contains(INBOUND_REFERENCE)).count());
     }
 }
