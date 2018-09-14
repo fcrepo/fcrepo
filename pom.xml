@@ -97,11 +97,6 @@
         we DO need. The benefit is that we don't have to specify the versions of
 	any of those modules. -->
       <dependency>
-        <groupId>org.jboss.logging</groupId>
-        <artifactId>jboss-logging</artifactId>
-        <version>${jboss-logging.version}</version>
-      </dependency>
-      <dependency>
         <groupId>org.modeshape.bom</groupId>
         <artifactId>modeshape-bom-embedded</artifactId>
         <version>${modeshape.version}</version>
