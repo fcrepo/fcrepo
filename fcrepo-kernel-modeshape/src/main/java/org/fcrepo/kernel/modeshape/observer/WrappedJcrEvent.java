@@ -25,7 +25,7 @@ import javax.jcr.nodetype.NodeType;
 import org.modeshape.jcr.api.observation.Event;
 
 /**
- * Wrap a JCR Event so we can modify its event type.
+ * Wrap a Modeshape JCR Event so we can modify its event type.
  *
  * @author whikloj
  * @since 2018-09-13
@@ -37,7 +37,7 @@ public class WrappedJcrEvent implements Event {
     private final int eventType;
 
     /**
-     * Construct a wrapped JCR Event
+     * Construct a wrapped Modeshape JCR Event
      *
      * @param event The original event.
      * @param type The new event type.

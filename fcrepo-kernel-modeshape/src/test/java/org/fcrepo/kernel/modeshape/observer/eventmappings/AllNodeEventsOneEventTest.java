@@ -155,4 +155,18 @@ public class AllNodeEventsOneEventTest {
         assertEquals("Got the wrong number of events with Inbound Reference", 1,
             list.stream().filter(e -> e.getTypes().contains(INBOUND_REFERENCE)).count());
     }
+
+    @Test
+    public void testNotAlterEvents() {
+        // Three events attached to 2 paths, one is a node add and a jcr:lastModified property change.
+        // So we should NOT alter it to an INBOUND_REFERENCE.
+        final Stream<Event> mockStream = of(mockEvent3, mockEvent4, mockEvent6);
+
+        final Stream<FedoraEvent> stream = testMapping.apply(mockStream);
+        assertNotNull(stream);
+        final List<FedoraEvent> list = stream.collect(toList());
+        assertEquals("Got the wrong number of events.", 2, list.size());
+        assertEquals("Got the wrong number of events with Inbound Reference", 0,
+            list.stream().filter(e -> e.getTypes().contains(INBOUND_REFERENCE)).count());
+    }
 }

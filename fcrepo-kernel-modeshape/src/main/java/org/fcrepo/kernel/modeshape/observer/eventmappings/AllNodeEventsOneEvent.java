@@ -63,14 +63,14 @@ public class AllNodeEventsOneEvent implements InternalExternalEventMapper {
      * @param ev The list of events to check.
      * @return The original list or a list with the altered event.
      */
-    private static final List<Event> AlterReferenceEvents(final List<Event> ev) {
+    private static List<Event> AlterReferenceEvents(final List<Event> ev) {
         try {
             if (ev.size() == 1 && ev.get(0).getPath().endsWith("/" + JCR_LASTMODIFIED) &&
                 ev.get(0).getType() == PROPERTY_CHANGED) {
                 final Event original = ev.get(0);
                 final Event tempEv =
                     new WrappedJcrEvent((org.modeshape.jcr.api.observation.Event) original, FEDORA_JCR_REFERENCE);
-                final List<Event> list = new ArrayList<Event>();
+                final List<Event> list = new ArrayList<>();
                 list.add(tempEv);
                 return list;
             }

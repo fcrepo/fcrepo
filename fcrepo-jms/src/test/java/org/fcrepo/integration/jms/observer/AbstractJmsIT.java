@@ -218,7 +218,7 @@ abstract class AbstractJmsIT implements MessageListener {
     }
 
     @Test(timeout = TIMEOUT)
-    public void testInboundReference() throws RepositoryException {
+    public void testInboundReference() {
         final String uri1 = "/testInboundReference-" + randomUUID().toString();
         final String uri2 = "/testInboundReference-" + randomUUID().toString();
 
