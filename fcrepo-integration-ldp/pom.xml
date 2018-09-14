@@ -14,7 +14,6 @@
 
   <properties>
     <junit.version>4.12</junit.version>
-    <jetty-plugin.version>9.3.1.v20150714</jetty-plugin.version>
     <ldp-testsuite.version>0.1.1</ldp-testsuite.version>
   </properties>
 
@@ -89,7 +88,7 @@
             <plugin>
               <groupId>org.eclipse.jetty</groupId>
               <artifactId>jetty-maven-plugin</artifactId>
-              <version>${jetty-plugin.version}</version>
+              <version>${jetty.version}</version>
               <configuration>
                 <systemProperties>
                   <force>true</force>
