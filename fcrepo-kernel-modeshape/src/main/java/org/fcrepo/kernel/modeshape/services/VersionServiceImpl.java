@@ -70,6 +70,7 @@ import org.apache.jena.riot.Lang;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.TripleCategory;
+import org.fcrepo.kernel.api.exception.ConstraintViolationException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
@@ -148,6 +149,11 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
         } else {
             final Model inputModel = ModelFactory.createDefaultModel();
             inputModel.read(rdfInputStream, mementoUri, rdfFormat.getName());
+
+            if (inputModel.isEmpty()) {
+                throw new ConstraintViolationException(
+                        "Cannot create historic memento from an empty body");
+            }
 
             // Validate server managed triples are provided
             if (resource instanceof Container) {

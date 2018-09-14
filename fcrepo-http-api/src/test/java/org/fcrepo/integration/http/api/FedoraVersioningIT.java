@@ -409,6 +409,23 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testCreateVersionWithDatetimeAndEmptyBody() throws Exception {
+        createVersionedContainer(id);
+
+        final HttpPost createVersionMethod = new HttpPost(subjectUri + "/" + FCR_VERSIONS);
+        createVersionMethod.setEntity(new StringEntity(""));
+        createVersionMethod.addHeader(MEMENTO_DATETIME_HEADER, MEMENTO_DATETIME);
+
+        // Create new memento of resource with updated body
+        try (final CloseableHttpResponse response = execute(createVersionMethod)) {
+            assertEquals("Didn't get a BAD_REQUEST response!", BAD_REQUEST.getStatusCode(), getStatus(response));
+            final String responseMsg = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
+            assertTrue("Expected error message indicating empty body provided, received: " + responseMsg,
+                    responseMsg.contains("Cannot create historic memento from an empty body"));
+        }
+    }
+
+    @Test
     public void testDeleteAndPostContainerMemento() throws Exception {
         createVersionedContainer(id);
 
