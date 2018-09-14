@@ -22,6 +22,7 @@ import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_LOCATION;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.BAD_GATEWAY;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.OK;
 import static javax.ws.rs.core.Response.Status.TEMPORARY_REDIRECT;
@@ -33,7 +34,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.ParseException;
-
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.apache.http.HttpStatus.SC_CREATED;
 
@@ -567,6 +567,98 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(httpPut)) {
             assertEquals("Didn't get a BAD_REQUEST response!", BAD_REQUEST.getStatusCode(),
                     getStatus(response));
+        }
+    }
+
+    @Test
+    public void testCopyNotFoundHttpContent() throws Exception {
+        final String nonexistentPath = serverAddress + getRandomUniqueId();
+
+        // create a copy of it
+        final HttpPost httpPost = postObjMethod();
+        httpPost.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        httpPost.addHeader(LINK, getExternalContentLinkHeader(nonexistentPath, "copy", null));
+
+        try (final CloseableHttpResponse response = execute(httpPost)) {
+            assertEquals("Didn't get a BAD_REQUEST response!", BAD_GATEWAY.getStatusCode(),
+                    getStatus(response));
+        }
+    }
+
+    @Test
+    public void testCopyUnreachableHttpContent() throws Exception {
+        final String nonexistentPath = "http://" + getRandomUniqueId() + ".example.com/";
+
+        // create a copy of it
+        final HttpPost httpPost = postObjMethod();
+        httpPost.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        httpPost.addHeader(LINK, getExternalContentLinkHeader(nonexistentPath, "copy", null));
+
+        try (final CloseableHttpResponse response = execute(httpPost)) {
+            assertEquals("Didn't get a BAD_GATEWAY response!", BAD_GATEWAY.getStatusCode(),
+                    getStatus(response));
+        }
+    }
+
+    @Test
+    public void testProxyNotFoundHttpContent() throws Exception {
+        final String nonexistentPath = serverAddress + getRandomUniqueId();
+
+        // create a copy of it
+        final HttpPost httpPost = postObjMethod();
+        httpPost.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        httpPost.addHeader(LINK, getExternalContentLinkHeader(nonexistentPath, "proxy", null));
+
+        try (final CloseableHttpResponse response = execute(httpPost)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(),
+                    getStatus(response));
+
+            final HttpGet get = new HttpGet(getLocation(response));
+            try (final CloseableHttpResponse getResponse = execute(get)) {
+                assertEquals(BAD_GATEWAY.getStatusCode(), getStatus(getResponse));
+            }
+        }
+    }
+
+    @Test
+    public void testProxyUnreachableHttpContent() throws Exception {
+        final String nonexistentPath = "http://" + getRandomUniqueId() + ".example.com/";
+
+        // create a copy of it
+        final HttpPost httpPost = postObjMethod();
+        httpPost.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        httpPost.addHeader(LINK, getExternalContentLinkHeader(nonexistentPath, "proxy", null));
+
+        try (final CloseableHttpResponse response = execute(httpPost)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(),
+                    getStatus(response));
+
+            final HttpGet get = new HttpGet(getLocation(response));
+            try (final CloseableHttpResponse getResponse = execute(get)) {
+                assertEquals(BAD_GATEWAY.getStatusCode(), getStatus(getResponse));
+            }
+        }
+    }
+
+    @Test
+    public void testRedirectUnreachableHttpContent() throws Exception {
+        final String nonexistentPath = "http://" + getRandomUniqueId() + ".example.com/";
+
+        // create a copy of it
+        final HttpPost httpPost = postObjMethod();
+        httpPost.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        httpPost.addHeader(LINK, getExternalContentLinkHeader(nonexistentPath, "redirect", null));
+
+        try (final CloseableHttpResponse response = execute(httpPost)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(),
+                    getStatus(response));
+
+            final HttpGet get = new HttpGet(getLocation(response));
+            try (final CloseableHttpClient noFollowClient =
+                    HttpClientBuilder.create().disableRedirectHandling().build();
+                    final CloseableHttpResponse getResponse = noFollowClient.execute(get);) {
+                assertEquals(TEMPORARY_REDIRECT.getStatusCode(), getStatus(getResponse));
+            }
         }
     }
 }
