@@ -17,7 +17,6 @@
  */
 package org.fcrepo.kernel.modeshape.services;
 
-import static com.codahale.metrics.MetricRegistry.name;
 import static org.fcrepo.kernel.modeshape.FedoraRepositoryImpl.getJcrRepository;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.fcrepo.kernel.modeshape.services.ServiceHelpers.getRepositoryCount;
@@ -26,7 +25,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.metrics.RegistryService;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -43,8 +41,6 @@ import org.modeshape.jcr.api.RepositoryManager;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
-import com.codahale.metrics.Timer;
-
 /**
  * Service for repository-wide management and querying
  *
@@ -59,9 +55,6 @@ public class RepositoryServiceImpl extends AbstractService implements Repository
 
     private static final Logger LOGGER = getLogger(RepositoryServiceImpl.class);
 
-    private final Timer objectSizeCalculationTimer = RegistryService.getInstance().getMetrics().timer(
-            name(RepositoryService.class, "objectSizeCalculation"));
-
     /**
      * Calculate the total size of all the binary properties in the repository
      *
@@ -74,12 +67,9 @@ public class RepositoryServiceImpl extends AbstractService implements Repository
             LOGGER.debug("Calculating repository size from index");
             final Repository repo = getJcrRepository(repository);
 
-            try (final Timer.Context context = objectSizeCalculationTimer.time()) {
-                // Differentiating between the local getRepositorySize and
-                // ServiceHelpers
-                return ServiceHelpers.getRepositorySize(repo);
-
-            }
+            // Differentiating between the local getRepositorySize and
+            // ServiceHelpers
+            return ServiceHelpers.getRepositorySize(repo);
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }

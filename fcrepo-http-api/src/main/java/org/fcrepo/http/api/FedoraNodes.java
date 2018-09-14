@@ -47,7 +47,6 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
-import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.jena.rdf.model.ResourceFactory;
 
@@ -103,7 +102,6 @@ public class FedoraNodes extends ContentExposingResource {
      * @return the response
      */
     @COPY
-    @Timed
     @Deprecated
     public Response copyObject(@HeaderParam("Destination") final String destinationUri)
             throws URISyntaxException {
@@ -154,7 +152,6 @@ public class FedoraNodes extends ContentExposingResource {
      * @return the response
      */
     @MOVE
-    @Timed
     @Deprecated
     public Response moveObject(@HeaderParam("Destination") final String destinationUri)
             throws URISyntaxException {

@@ -44,8 +44,6 @@ import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
-import com.codahale.metrics.annotation.Timed;
-
 /**
  * Run a fixity check on a path
  *
@@ -85,7 +83,6 @@ public class FedoraFixity extends ContentExposingResource {
      * @return datastream fixity in the given format
      */
     @GET
-    @Timed
     @HtmlTemplate(value = "fcr:fixity")
     @Produces({TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8", N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET,
             RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET, TURTLE_X, TEXT_HTML_WITH_CHARSET, "*/*"})

@@ -17,7 +17,6 @@
  */
 package org.fcrepo.kernel.modeshape;
 
-import static com.codahale.metrics.MetricRegistry.name;
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDstring;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_DESCRIPTION;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FIELD_DELIMITER;
@@ -40,14 +39,8 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.utils.ContentDigest;
-import org.fcrepo.metrics.RegistryService;
 import org.slf4j.Logger;
-
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.Histogram;
-import com.codahale.metrics.Timer;
 
 /**
  * Abstract class representing the content of a binary resource
@@ -59,17 +52,6 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
     private static final Logger LOGGER = getLogger(AbstractFedoraBinary.class);
 
     protected static final String DEFAULT_MIME_TYPE = "application/octet-stream";
-
-    static final RegistryService registryService = RegistryService.getInstance();
-
-    static final Counter fixityCheckCounter = registryService.getMetrics().counter(name(FedoraBinary.class,
-            "fixity-check-counter"));
-
-    static final Timer timer = registryService.getMetrics().timer(
-            name(NonRdfSourceDescription.class, "fixity-check-time"));
-
-    static final Histogram contentSizeHistogram =
-            registryService.getMetrics().histogram(name(FedoraBinary.class, "content-size"));
 
     protected AbstractFedoraBinary(final Node node) {
         super(node);

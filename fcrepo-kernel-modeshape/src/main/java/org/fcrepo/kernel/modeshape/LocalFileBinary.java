@@ -75,7 +75,6 @@ public class LocalFileBinary extends UrlBinary {
             final Node descNode = getDescriptionNodeOrNull();
             // Store the size of the file
             final long size = getContentSize();
-            contentSizeHistogram.update(size);
             if (descNode != null) {
                 descNode.setProperty(CONTENT_SIZE, size);
             }

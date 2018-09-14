@@ -45,7 +45,6 @@
     <jgroups.version>3.6.11.Final</jgroups.version>
     <jsonld.version>0.8.3</jsonld.version>
     <logback.version>1.1.7</logback.version>
-    <metrics.version>3.1.2</metrics.version>
     <modeshape.version>5.4.0.Final</modeshape.version>
     <slf4j.version>1.7.21</slf4j.version>
     <snappy-java.version>1.1.2.6</snappy-java.version>
@@ -80,7 +79,6 @@
     <module>fcrepo-jms</module>
     <module>fcrepo-http-commons</module>
     <module>fcrepo-http-api</module>
-    <module>fcrepo-metrics</module>
     <module>fcrepo-auth-common</module>
     <module>fcrepo-configs</module>
     <module>fcrepo-parent</module>

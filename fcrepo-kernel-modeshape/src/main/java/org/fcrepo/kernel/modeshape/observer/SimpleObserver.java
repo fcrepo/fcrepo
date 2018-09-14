@@ -17,7 +17,6 @@
  */
 package org.fcrepo.kernel.modeshape.observer;
 
-import static com.codahale.metrics.MetricRegistry.name;
 import static com.google.common.collect.Iterators.filter;
 import static java.util.stream.Collectors.toSet;
 import static java.util.stream.Stream.concat;
@@ -50,8 +49,6 @@ import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
 import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import  org.fcrepo.metrics.RegistryService;
-
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -79,7 +76,6 @@ import org.fcrepo.kernel.modeshape.utils.FedoraSessionUserUtil;
 
 import org.slf4j.Logger;
 
-import com.codahale.metrics.Counter;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.eventbus.EventBus;
 
@@ -97,12 +93,6 @@ public class SimpleObserver implements EventListener {
 
     private static final Set<String> filteredNamespaces = ImmutableSet.of(
             JCR_NAMESPACE, MIX_NAMESPACE, JCR_NT_NAMESPACE, MODE_NAMESPACE);
-
-    /**
-     * A simple counter of events that pass through this observer
-     */
-    static final Counter EVENT_COUNTER =
-            RegistryService.getInstance().getMetrics().counter(name(SimpleObserver.class, "onEvent"));
 
     static final Integer EVENT_TYPES = NODE_ADDED + NODE_REMOVED + NODE_MOVED + PROPERTY_ADDED + PROPERTY_CHANGED
             + PROPERTY_REMOVED;
@@ -240,6 +230,5 @@ public class SimpleObserver implements EventListener {
 
     private void post(final FedoraEvent evt) {
         eventBus.post(evt);
-        EVENT_COUNTER.inc();
     }
 }

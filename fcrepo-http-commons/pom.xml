@@ -12,7 +12,6 @@
 
   <properties>
     <osgi.import.packages>
-      org.fcrepo.metrics,
       org.fcrepo.kernel.api,
       org.fcrepo.kernel.modeshape,
 
@@ -22,7 +21,6 @@
       javax.servlet.http,
       javax.ws.rs.*,
       
-      com.codahale.metrics.*,
       com.fasterxml.jackson.core,
       org.apache.jena.*,
       com.google.common.*,
@@ -59,11 +57,6 @@
     </dependencies>
   </dependencyManagement>
   <dependencies>
-    <dependency>
-      <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-metrics</artifactId>
-      <version>${project.version}</version>
-    </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>

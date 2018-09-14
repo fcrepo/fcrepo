@@ -88,8 +88,6 @@ import org.mockito.Mock;
 import org.modeshape.jcr.api.JcrTools;
 import org.modeshape.jcr.api.NamespaceRegistry;
 import org.modeshape.jcr.value.BinaryValue;
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.MetricRegistry;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
@@ -551,14 +549,8 @@ public class JcrRdfToolsTest implements FedoraTypes {
     private RowIterator mockRowIterator;
 
     @Mock
-    private MetricRegistry mockMetrics;
-
-    @Mock
     private Node mockChildNode, mockChildNode2, mockChildNode3, mockChildNode4, mockChildNode5, mockFullChildNode,
             mockRootNode, mockHashNode;
-
-    @Mock
-    private Counter mockCounter;
 
     @Mock
     private NodeTypeManager mockNodeTypeManager;
