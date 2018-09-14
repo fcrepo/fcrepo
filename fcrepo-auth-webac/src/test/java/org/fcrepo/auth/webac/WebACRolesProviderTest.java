@@ -44,7 +44,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
@@ -371,6 +370,62 @@ public class WebACRolesProviderTest {
         assertEquals("There should be exactly one agent", 1, roles.size());
         assertEquals("The agent should have one mode", 1, roles.get(agent).size());
         assertTrue("The agent should be able to read", roles.get(agent).contains(WEBAC_MODE_READ_VALUE));
+    }
+
+    @Test
+    public void foafAgentTest() throws RepositoryException {
+        final String agent = "http://xmlns.com/foaf/0.1/Agent";
+        final String accessTo = "/foaf-agent";
+        final String acl = "/acls/03/foaf-agent.ttl";
+
+        when(mockNodeService.find(any(FedoraSession.class), eq(acl))).thenReturn(mockAclResource);
+        when(mockNodeService.find(any(FedoraSession.class), eq(accessTo))).thenReturn(mockResource);
+        when(mockNode.getPath()).thenReturn(accessTo);
+        when(mockAclNode.getPath()).thenReturn(acl);
+        when(mockResource.getAcl()).thenReturn(mockAclResource);
+        when(mockNodeService.find(mockSession, acl)).thenReturn(mockAclResource);
+        when(mockAclResource.getPath()).thenReturn(acl);
+        when(mockAclResource.isAcl()).thenReturn(true);
+        when(mockResource.getPath()).thenReturn(accessTo);
+        when(mockResource.getOriginalResource()).thenReturn(mockResource);
+        when(mockAclResource.getTriples(anyObject(), eq(PROPERTIES)))
+            .thenReturn(getRdfStreamFromResource(acl, TTL));
+
+        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockNode, true);
+
+        assertEquals("There should be only one valid role", 1, roles.size());
+        assertEquals("The foaf:Agent should have exactly one valid mode", 1,
+                     roles.get(agent).size());
+        assertTrue("The foaf:Agent should be able to write",
+                   roles.get(agent).contains(WEBAC_MODE_READ_VALUE));
+    }
+
+    @Test
+    public void authenticatedAgentTest() throws RepositoryException {
+        final String aclAuthenticatedAgent = "http://www.w3.org/ns/auth/acl#AuthenticatedAgent";
+        final String accessTo = "/authenticated-agent";
+        final String acl = "/acls/03/authenticated-agent.ttl";
+
+        when(mockNodeService.find(any(FedoraSession.class), eq(acl))).thenReturn(mockAclResource);
+        when(mockNodeService.find(any(FedoraSession.class), eq(accessTo))).thenReturn(mockResource);
+        when(mockNode.getPath()).thenReturn(accessTo);
+        when(mockAclNode.getPath()).thenReturn(acl);
+        when(mockResource.getAcl()).thenReturn(mockAclResource);
+        when(mockNodeService.find(mockSession, acl)).thenReturn(mockAclResource);
+        when(mockAclResource.getPath()).thenReturn(acl);
+        when(mockAclResource.isAcl()).thenReturn(true);
+        when(mockResource.getPath()).thenReturn(accessTo);
+        when(mockResource.getOriginalResource()).thenReturn(mockResource);
+        when(mockAclResource.getTriples(anyObject(), eq(PROPERTIES)))
+            .thenReturn(getRdfStreamFromResource(acl, TTL));
+
+        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockNode, true);
+
+        assertEquals("There should be only one valid role", 1, roles.size());
+        assertEquals("The acl:AuthenticatedAgent should have exactly one valid mode", 1,
+                     roles.get(aclAuthenticatedAgent).size());
+        assertTrue("The acl:AuthenticatedAgent should be able to write",
+                   roles.get(aclAuthenticatedAgent).contains(WEBAC_MODE_READ_VALUE));
     }
 
     @Test

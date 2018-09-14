@@ -34,6 +34,7 @@ import static org.fcrepo.auth.webac.URIConstants.WEBAC_ACCESSTO_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_AGENT_CLASS_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_AGENT_GROUP_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_AGENT_VALUE;
+import static org.fcrepo.auth.webac.URIConstants.WEBAC_AUTHENTICATED_AGENT_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_AUTHORIZATION_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_DEFAULT_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_VALUE;
@@ -179,7 +180,7 @@ public class WebACRolesProvider implements AccessRolesProvider {
 
     /**
      *  For a given FedoraResource, get a mapping of acl:agent values to acl:mode values and
-     *  for foaf:Agent include the acl:agentClass value to acl:mode.
+     *  for foaf:Agent and acl:AuthenticatedAgent include the acl:agentClass value to acl:mode.
      */
     private Map<String, Collection<String>> getAgentRoles(final FedoraResource resource) {
         LOGGER.debug("Getting agent roles for: {}", resource.getPath());
@@ -236,20 +237,23 @@ public class WebACRolesProvider implements AccessRolesProvider {
         // of acl:modes for each particular acl:agent.
         final Map<String, Collection<String>> effectiveRoles = new HashMap<>();
         authorizations.stream()
-            .filter(checkAccessTo.or(checkAccessToClass))
-            .forEach(auth -> {
-                concat(auth.getAgents().stream(), dereferenceAgentGroups(auth.getAgentGroups()).stream())
-                    .filter(agent -> !agent.equals(FOAF_AGENT_VALUE))
-                    .forEach(agent -> {
-                        effectiveRoles.computeIfAbsent(agent, key -> new HashSet<>())
-                            .addAll(auth.getModes().stream().map(URI::toString).collect(toSet()));
-                    });
-                auth.getAgentClasses().stream().filter(agentClass -> agentClass.equals(FOAF_AGENT_VALUE))
-                    .forEach(agentClass -> {
-                        effectiveRoles.computeIfAbsent(agentClass, key -> new HashSet<>())
-                            .addAll(auth.getModes().stream().map(URI::toString).collect(toSet()));
-                    });
-            });
+                      .filter(checkAccessTo.or(checkAccessToClass))
+                      .forEach(auth -> {
+                          concat(auth.getAgents().stream(), dereferenceAgentGroups(auth.getAgentGroups()).stream())
+                              .filter(agent -> !agent.equals(FOAF_AGENT_VALUE) &&
+                                               !agent.equals(WEBAC_AUTHENTICATED_AGENT_VALUE))
+                              .forEach(agent -> {
+                                  effectiveRoles.computeIfAbsent(agent, key -> new HashSet<>())
+                                                .addAll(auth.getModes().stream().map(URI::toString).collect(toSet()));
+                              });
+                          auth.getAgentClasses().stream().filter(agentClass -> agentClass.equals(FOAF_AGENT_VALUE) ||
+                                                                               agentClass.equals(
+                                                                                   WEBAC_AUTHENTICATED_AGENT_VALUE))
+                              .forEach(agentClass -> {
+                                  effectiveRoles.computeIfAbsent(agentClass, key -> new HashSet<>())
+                                                .addAll(auth.getModes().stream().map(URI::toString).collect(toSet()));
+                              });
+                      });
 
         LOGGER.debug("Unfiltered ACL: {}", effectiveRoles);
 
