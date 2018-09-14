@@ -318,17 +318,22 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         final List<Stream<Triple>> streams = new ArrayList<>();
 
+
         if (returnPreference.getValue().equals("minimal")) {
             streams.add(getTriples(resource, of(PROPERTIES, MINIMAL)).filter(tripleFilter));
 
-            if (ldpPreferences.prefersServerManaged()) {
+            // Mementos already have the server managed properties in the PROPERTIES category
+            // since mementos are immutable and these triples are no longer managed
+            if (!resource.isMemento() && ldpPreferences.prefersServerManaged()) {
                 streams.add(getTriples(resource, of(SERVER_MANAGED, MINIMAL)));
             }
         } else {
             streams.add(getTriples(resource, PROPERTIES).filter(tripleFilter));
 
             // Additional server-managed triples about this resource
-            if (ldpPreferences.prefersServerManaged()) {
+            // Mementos already have the server managed properties in the PROPERTIES category
+            // since mementos are immutable and these triples are no longer managed
+            if (!resource.isMemento() && ldpPreferences.prefersServerManaged()) {
                 streams.add(getTriples(resource, SERVER_MANAGED));
             }
 
@@ -359,6 +364,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         final RdfStream rdfStream = new DefaultRdfStream(
                 asNode(resource), streams.stream().reduce(empty(), Stream::concat));
+
 
         if (httpTripleUtil != null && ldpPreferences.prefersServerManaged()) {
             return httpTripleUtil.addHttpComponentModelsForResourceToStream(rdfStream, resource, uriInfo,

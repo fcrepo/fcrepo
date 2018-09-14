@@ -908,20 +908,34 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     public RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> idTranslator,
                                 final Set<? extends TripleCategory> contexts) {
 
+        final String contextString = Arrays.toString(contexts.toArray());
+        /*
         Stream<Triple> triples = contexts.stream()
                 .filter(contextMap::containsKey)
                 .map(x -> contextMap.get(x).apply(this).apply(idTranslator).apply(contexts.contains(MINIMAL)))
                 .reduce(empty(), Stream::concat);
+        */
+        List<Triple> triples = contexts.stream()
+                .filter(contextMap::containsKey)
+                .map(x -> contextMap.get(x).apply(this).apply(idTranslator).apply(contexts.contains(MINIMAL)))
+                .reduce(empty(), Stream::concat).collect(Collectors.toList());
+
+        for (Triple t:triples) {
+            LOGGER.info("triples {}: {} ", contextString, t);
+        }
+
 
         // if a memento, convert subjects to original resource and object references from referential integrity
         // ignoring internal URL back the original external URL.
         if (isMemento()) {
             final IdentifierConverter<Resource, FedoraResource> internalIdTranslator
                     = new InternalIdentifierTranslator(getSession());
-            triples = triples.map(convertMementoReferences(idTranslator, internalIdTranslator));
+            triples = triples.stream()
+                    .map(convertMementoReferences(idTranslator, internalIdTranslator))
+                    .collect(Collectors.toList());
         }
 
-        return new DefaultRdfStream(idTranslator.reverse().convert(this).asNode(), triples);
+        return new DefaultRdfStream(idTranslator.reverse().convert(this).asNode(), triples.stream());
     }
 
     /* (non-Javadoc)
