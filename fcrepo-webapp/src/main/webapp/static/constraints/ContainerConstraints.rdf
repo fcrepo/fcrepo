@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="owl2html.xsl"?>
 
 <!DOCTYPE rdf:RDF [
@@ -30,5 +30,11 @@
         <rdfs:comment xml:lang="en">Properties in the &lt;http://fedora.info/definitions/v4/repository#&gt;
           namespace, and types in the &lt;http://fedora.info/definitions/v4/repository#&gt; and
           &lt;http://www.w3.org/ns/ldp#&gt; namespace can only be modified by the repository.</rdfs:comment>
+        <rdfs:comment xml:lang="en">
+			Fedora’s versioning interaction model implements Memento. This interaction model is independent
+			of any other interaction model and MUST be declared at the time of resource creation by using a
+			Link header (Link: &lt;http://mementoweb.org/ns#OriginalResource&gt;; rel="type"). See the Fedora
+			Specification and RFC-7089 for more information.
+        </rdfs:comment>
     </owl:Ontology>
 </rdf:RDF>
