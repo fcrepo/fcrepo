@@ -103,7 +103,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilderException;
 import javax.ws.rs.core.Variant.VariantListBuilder;
 
-import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
@@ -190,7 +189,6 @@ public class FedoraLdp extends ContentExposingResource {
      * @throws UnsupportedAccessTypeException if unsupported access-type occurred
      */
     @HEAD
-    @Timed
     @Produces({ TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
         N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
         TURTLE_X, TEXT_HTML_WITH_CHARSET })
@@ -243,7 +241,6 @@ public class FedoraLdp extends ContentExposingResource {
      * @return the outputs information about the supported HTTP methods, etc.
      */
     @OPTIONS
-    @Timed
     public Response options() {
         LOGGER.info("OPTIONS for '{}'", externalPath);
 
@@ -349,7 +346,6 @@ public class FedoraLdp extends ContentExposingResource {
      * @return response
      */
     @DELETE
-    @Timed
     public Response deleteObject() {
         hasRestrictedPath(externalPath);
         if (resource() instanceof Container) {
@@ -393,7 +389,6 @@ public class FedoraLdp extends ContentExposingResource {
      */
     @PUT
     @Consumes
-    @Timed
     public Response createOrReplaceObjectRdf(
             @HeaderParam(CONTENT_TYPE) final MediaType requestContentType,
             final InputStream requestBodyStream,
@@ -536,7 +531,6 @@ public class FedoraLdp extends ContentExposingResource {
      */
     @PATCH
     @Consumes({contentTypeSPARQLUpdate})
-    @Timed
     public Response updateSparql(final InputStream requestBodyStream)
             throws IOException {
         hasRestrictedPath(externalPath);
@@ -616,7 +610,6 @@ public class FedoraLdp extends ContentExposingResource {
      */
     @POST
     @Consumes({MediaType.APPLICATION_OCTET_STREAM + ";qs=1.000", WILDCARD})
-    @Timed
     @Produces({TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
             N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
             TURTLE_X, TEXT_HTML_WITH_CHARSET, "*/*"})
@@ -1034,7 +1027,7 @@ public class FedoraLdp extends ContentExposingResource {
     private void handleRequestDisallowedOnMemento() {
         try {
             addLinkAndOptionsHttpHeaders(resource());
-        } catch (Exception ex) {
+        } catch (final Exception ex) {
             // Catch the exception to ensure status 405 for any requests on memento.
             LOGGER.debug("Unable to add link and options headers for PATCH request to memento path {}: {}.",
                 externalPath, ex.getMessage());

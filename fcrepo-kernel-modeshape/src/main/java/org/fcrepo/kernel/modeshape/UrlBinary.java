@@ -54,8 +54,6 @@ import org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils;
 import org.fcrepo.kernel.modeshape.utils.impl.CacheEntryFactory;
 import org.slf4j.Logger;
 
-import com.codahale.metrics.Timer;
-
 /**
  * External binary from a url
  *
@@ -240,9 +238,7 @@ public class UrlBinary extends AbstractFedoraBinary {
     public RdfStream getFixity(final IdentifierConverter<Resource, FedoraResource> idTranslator, final URI digestUri,
             final long size) {
 
-        fixityCheckCounter.inc();
-
-        try (final Timer.Context context = timer.time()) {
+        try {
 
             LOGGER.debug("Checking resource: " + getPath());
 
@@ -271,9 +267,7 @@ public class UrlBinary extends AbstractFedoraBinary {
             final Collection<String> algorithms)
             throws UnsupportedAlgorithmException, UnsupportedAccessTypeException {
 
-        fixityCheckCounter.inc();
-
-        try (final Timer.Context context = timer.time()) {
+        try {
 
             Collection<URI> list = null;
             if (isProxy()) {

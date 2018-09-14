@@ -115,16 +115,8 @@ public final class RdfLexicon {
     public static final Property HAS_FIXITY_RESULT =
         createProperty(PREMIS_NAMESPACE + "hasFixity");
 
-    public static final Property HAS_FIXITY_CHECK_COUNT =
-            createProperty(REPOSITORY_NAMESPACE + "numFixityChecks");
-    public static final Property HAS_FIXITY_ERROR_COUNT =
-            createProperty(REPOSITORY_NAMESPACE + "numFixityErrors");
-    public static final Property HAS_FIXITY_REPAIRED_COUNT =
-            createProperty(REPOSITORY_NAMESPACE + "numFixityRepaired");
-
     public static final Set<Property> fixityProperties = of(
-            HAS_FIXITY_RESULT, HAS_MESSAGE_DIGEST, HAS_SIZE,
-            HAS_FIXITY_CHECK_COUNT, HAS_FIXITY_ERROR_COUNT, HAS_FIXITY_REPAIRED_COUNT);
+            HAS_FIXITY_RESULT, HAS_MESSAGE_DIGEST, HAS_SIZE);
 
     public static final Resource EVENT_OUTCOME_INFORMATION = createResource(PREMIS_NAMESPACE + "EventOutcomeDetail");
 

@@ -71,7 +71,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import com.codahale.metrics.annotation.Timed;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.jena.riot.Lang;
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
@@ -339,7 +338,6 @@ public class FedoraVersioning extends ContentExposingResource {
      * @return the information about the supported HTTP methods, etc.
      */
     @OPTIONS
-    @Timed
     public Response options() {
         if (!resource().isVersioned()) {
             throw new RepositoryVersionRuntimeException("This operation requires that the resource be versionable");

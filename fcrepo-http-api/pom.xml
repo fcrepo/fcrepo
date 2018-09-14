@@ -34,7 +34,6 @@
         org.springframework.stereotype,
         org.springframework.context.*,
 
-        com.codahale.metrics.*,
         com.fasterxml.jackson.*,
         com.google.common.*,
         org.apache.jena.*,
@@ -84,12 +83,6 @@
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-context</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>io.dropwizard.metrics</groupId>
-      <artifactId>metrics-annotation</artifactId>
-      <version>${metrics.version}</version>
     </dependency>
     
     <dependency>

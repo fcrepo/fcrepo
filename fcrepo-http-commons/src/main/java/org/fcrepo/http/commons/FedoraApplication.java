@@ -26,9 +26,6 @@ import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.process.internal.RequestScoped;
 
-import com.codahale.metrics.jersey2.InstrumentedResourceMethodApplicationListener;
-import com.codahale.metrics.MetricRegistry;
-
 import java.util.logging.Logger;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -54,8 +51,6 @@ public class FedoraApplication extends ResourceConfig {
         if (LOGGER.isDebugEnabled()) {
             register(new LoggingFeature(Logger.getLogger(LoggingFeature.class.getName())));
         }
-
-        register(new InstrumentedResourceMethodApplicationListener(new MetricRegistry()));
     }
 
     static class FactoryBinder extends AbstractBinder {

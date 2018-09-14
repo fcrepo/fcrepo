@@ -62,7 +62,6 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import com.codahale.metrics.annotation.Timed;
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.RDFDataMgr;
@@ -172,7 +171,6 @@ public class FedoraAcl extends ContentExposingResource {
      */
     @PATCH
     @Consumes({ contentTypeSPARQLUpdate })
-    @Timed
     public Response updateSparql(final InputStream requestBodyStream)
         throws IOException, ItemNotFoundException {
         hasRestrictedPath(externalPath);
@@ -285,7 +283,6 @@ public class FedoraAcl extends ContentExposingResource {
      * @return response
      */
     @DELETE
-    @Timed
     public Response deleteObject() throws ItemNotFoundException {
 
         hasRestrictedPath(externalPath);

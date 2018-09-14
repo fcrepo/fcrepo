@@ -55,8 +55,6 @@ import org.modeshape.jcr.api.Binary;
 import org.modeshape.jcr.api.ValueFactory;
 import org.slf4j.Logger;
 
-import com.codahale.metrics.Timer;
-
 /**
  * Fedora Binary stored internally in modeshape
  *
@@ -251,9 +249,8 @@ public class InternalFedoraBinary extends AbstractFedoraBinary {
     public RdfStream getFixity(final IdentifierConverter<Resource, FedoraResource> idTranslator,
             final URI digestUri,
             final long size) {
-        fixityCheckCounter.inc();
 
-        try (final Timer.Context context = timer.time()) {
+        try {
 
             LOGGER.debug("Checking resource: {}" + getPath());
 
@@ -275,9 +272,7 @@ public class InternalFedoraBinary extends AbstractFedoraBinary {
             final Collection<String> algorithms)
             throws UnsupportedAlgorithmException, UnsupportedAccessTypeException {
 
-        fixityCheckCounter.inc();
-
-        try (final Timer.Context context = timer.time()) {
+        try {
 
             LOGGER.debug("Checking resource: {}", getPath());
             return CacheEntryFactory.forProperty(getProperty(JCR_DATA)).checkFixity(algorithms);
@@ -305,8 +300,6 @@ public class InternalFedoraBinary extends AbstractFedoraBinary {
             final Property dataProperty = dsNode.getProperty(JCR_DATA);
             final Binary binary = (Binary) dataProperty.getBinary();
             final String dsChecksum = binary.getHexHash();
-
-            contentSizeHistogram.update(dataProperty.getLength());
 
             checksums.add(ContentDigest.asURI(SHA1.algorithm, dsChecksum));
 
