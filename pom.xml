@@ -25,6 +25,7 @@
     <!-- Dependency version properties -->
     <activemq.version>5.15.5</activemq.version>
     <commons-codec.version>1.11</commons-codec.version>
+    <commons-collections.version>3.2.2</commons-collections.version>
     <commons-io.version>2.6</commons-io.version>
     <commons-lang.version>3.7</commons-lang.version>
     <narayana-jta.version>5.9.0.Final</narayana-jta.version>
