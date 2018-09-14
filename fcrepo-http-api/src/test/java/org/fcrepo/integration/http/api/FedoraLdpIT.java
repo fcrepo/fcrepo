@@ -761,6 +761,31 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testTrailingSlashTombstoneLink() throws IOException {
+        final String id = getRandomUniqueId();
+        final URI expectedTombstone = URI.create(serverAddress + id + "/fcr:tombstone");
+        createObjectAndClose(id);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(serverAddress + id)));
+        assertDeleted(id);
+        final HttpGet get1 = getObjMethod(id);
+        final Link tombstone;
+        try (final CloseableHttpResponse response = execute(get1)) {
+            tombstone = Link.valueOf(response.getFirstHeader(LINK).getValue());
+        }
+        assertEquals("hasTombstone", tombstone.getRel());
+        assertEquals(expectedTombstone, tombstone.getUri());
+        // Now with a trailing slash
+        final HttpGet get2 = getObjMethod(id + "/");
+        final Link tombstone2;
+        try (final CloseableHttpResponse response = execute(get2)) {
+            tombstone2 = Link.valueOf(response.getFirstHeader(LINK).getValue());
+        }
+        assertEquals("hasTombstone", tombstone2.getRel());
+        assertEquals(expectedTombstone, tombstone2.getUri());
+
+    }
+
+    @Test
     public void testEmptyPatch() {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);

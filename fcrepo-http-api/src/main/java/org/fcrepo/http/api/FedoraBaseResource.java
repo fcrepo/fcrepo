@@ -33,6 +33,7 @@ import org.slf4j.Logger;
 
 import java.net.URI;
 import java.security.Principal;
+import java.util.regex.Pattern;
 import javax.inject.Inject;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
@@ -52,6 +53,8 @@ abstract public class FedoraBaseResource extends AbstractResource {
     private static final Logger LOGGER = getLogger(FedoraBaseResource.class);
 
     static final String JMS_BASEURL_PROP = "fcrepo.jms.baseUrl";
+
+    private static final Pattern TRAILING_SLASH_REGEX = Pattern.compile("/+$");
 
     @Inject
     protected HttpSession session;
@@ -91,7 +94,8 @@ abstract public class FedoraBaseResource extends AbstractResource {
         final FedoraResource fedoraResource = translator().convert(resource);
 
         if (fedoraResource instanceof Tombstone) {
-            throw new TombstoneException(fedoraResource, resource.getURI() + "/fcr:tombstone");
+            final String resourceURI = TRAILING_SLASH_REGEX.matcher(resource.getURI()).replaceAll("");
+            throw new TombstoneException(fedoraResource, resourceURI + "/fcr:tombstone");
         }
 
         return fedoraResource;
