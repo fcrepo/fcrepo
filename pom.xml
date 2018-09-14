@@ -32,7 +32,7 @@
     <guava.version>25.1-jre</guava.version>
     <hk2.version>2.5.0-b62</hk2.version>
     <htmlunit.version>2.27</htmlunit.version>
-    <httpclient.version>4.5.3</httpclient.version>
+    <httpclient.version>4.5.6</httpclient.version>
     <httpmime.version>4.5.6</httpmime.version>
     <httpcore.version>4.4.10</httpcore.version>
     <javax.servlet-api.version>4.0.1</javax.servlet-api.version>
@@ -40,10 +40,10 @@
     <jackson2.version>2.9.6</jackson2.version>
     <jboss-logging.version>3.3.2.Final</jboss-logging.version>
     <jcr.version>2.0</jcr.version>
-    <jena.version>3.6.0</jena.version>
+    <jena.version>3.8.0</jena.version>
     <jersey.version>2.25.1</jersey.version>
     <jgroups.version>4.0.13.Final</jgroups.version>
-    <jsonld.version>0.11.0</jsonld.version>
+    <jsonld.version>0.12.1</jsonld.version>
     <logback.version>1.2.3</logback.version>
     <metrics.version>3.2.6</metrics.version>
     <modeshape.version>5.4.1.Final</modeshape.version>
@@ -185,6 +185,10 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -199,6 +203,10 @@
           <exclusion>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -236,6 +244,12 @@
         <groupId>com.github.jsonld-java</groupId>
         <artifactId>jsonld-java</artifactId>
         <version>${jsonld.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient-osgi</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
@@ -336,6 +350,10 @@
           <exclusion>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
