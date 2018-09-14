@@ -30,11 +30,11 @@
         <rdfs:comment xml:lang="en">Properties in the &lt;http://fedora.info/definitions/v4/repository#&gt;
           namespace, and types in the &lt;http://fedora.info/definitions/v4/repository#&gt; and
           &lt;http://www.w3.org/ns/ldp#&gt; namespace can only be modified by the repository.</rdfs:comment>
-        <rdfs:comment xml:lang="en">Fedora will create resources that are of the type 
-          &gt;http://mementoweb.org/ns#TimeMap&gt;.  When DELETE operations are made against the TimeMap, 
-          the original resource will no longer be versioned (and no longer be a memento TimeGate and no longer provide 
-          to the RFC-7089 Memento TimeGate interaction model.  POST operations to the TimeMap will result in 
-          new version creation.
+        <rdfs:comment xml:lang="en">
+			Fedora’s versioning interaction model implements Memento. This interaction model is independent
+			of any other interaction model and MUST be declared at the time of resource creation by using a
+			Link header (Link: &lt;http://mementoweb.org/ns#OriginalResource&gt;; rel="type"). See the Fedora
+			Specification and RFC-7089 for more information.
         </rdfs:comment>
     </owl:Ontology>
 </rdf:RDF>
