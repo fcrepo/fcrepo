@@ -69,6 +69,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEGATE_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEMAP_TYPE;
@@ -577,7 +578,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * @param relation the relation string.
      * @return the string version of the link.
      */
-    private static String buildLink(final String linkUri, final String relation) {
+    public static final String buildLink(final String linkUri, final String relation) {
         return buildLink(URI.create(linkUri), relation);
     }
 
@@ -641,6 +642,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             servletResponse.addHeader(LINK, "<" + LDP_NAMESPACE + "NonRDFSource>;rel=\"type\"");
         } else if (resource instanceof Container || resource instanceof FedoraTimeMap) {
             servletResponse.addHeader(LINK, "<" + CONTAINER.getURI() + ">;rel=\"type\"");
+            servletResponse.addHeader(LINK, buildLink(RDF_SOURCE.getURI(), "type"));
             if (resource.hasType(LDP_BASIC_CONTAINER)) {
                 servletResponse.addHeader(LINK, "<" + BASIC_CONTAINER.getURI() + ">;rel=\"type\"");
             } else if (resource.hasType(LDP_DIRECT_CONTAINER)) {
@@ -651,7 +653,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 servletResponse.addHeader(LINK, "<" + BASIC_CONTAINER.getURI() + ">;rel=\"type\"");
             }
         } else {
-            servletResponse.addHeader(LINK, "<" + LDP_NAMESPACE + "RDFSource>;rel=\"type\"");
+            servletResponse.addHeader(LINK, buildLink(RDF_SOURCE.getURI(), "type"));
         }
         if (httpHeaderInject != null) {
             httpHeaderInject.addHttpHeaderToResponseStream(servletResponse, uriInfo, resource);
