@@ -36,6 +36,7 @@ import static javax.ws.rs.core.Response.Status.TEMPORARY_REDIRECT;
 import static org.apache.commons.io.IOUtils.toInputStream;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
+import static org.fcrepo.http.api.ContentExposingResource.buildLink;
 import static org.fcrepo.http.api.ContentExposingResource.getSimpleContentType;
 import static org.fcrepo.http.api.FedoraBaseResource.JMS_BASEURL_PROP;
 import static org.fcrepo.http.api.FedoraLdp.HTTP_HEADER_ACCEPT_PATCH;
@@ -53,6 +54,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.observer.OptionalValues.BASE_URL;
 import static org.junit.Assert.assertEquals;
@@ -465,8 +467,8 @@ public class FedoraLdpTest {
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
         final Response actual = testObj.head();
         assertEquals(OK.getStatusCode(), actual.getStatus());
-        assertTrue("Should be an LDP RDFSource", mockResponse.getHeaders(LINK).contains("<" + LDP_NAMESPACE +
-                "RDFSource>;rel=\"type\""));
+        assertTrue("Should be an LDP RDFSource",
+            mockResponse.getHeaders(LINK).contains(buildLink(RDF_SOURCE.getURI(), "type")));
         assertShouldNotAdvertiseAcceptPostFlavors();
         assertShouldAdvertiseAcceptPatchFlavors();
         assertShouldContainLinkToTheBinary();
@@ -829,8 +831,9 @@ public class FedoraLdpTest {
                     (createURI("mockBinary"), createURI("called"), createURI("child:properties")))));
         final Response actual = testObj.getResource(null);
         assertEquals(OK.getStatusCode(), actual.getStatus());
+
         assertTrue("Should be an LDP RDFSource",
-                mockResponse.getHeaders(LINK).contains("<" + LDP_NAMESPACE + "RDFSource>;rel=\"type\""));
+            mockResponse.getHeaders(LINK).contains(buildLink(RDF_SOURCE.getURI(), "type")));
         assertShouldNotAdvertiseAcceptPostFlavors();
         assertShouldAdvertiseAcceptPatchFlavors();
         assertShouldContainLinkToTheBinary();

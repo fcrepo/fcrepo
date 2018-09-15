@@ -809,6 +809,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final String ldpcvUri = uri + "/" + FCR_VERSIONS;
         checkForLinkHeader(response, RESOURCE.toString(), "type");
         checkForLinkHeader(response, CONTAINER.toString(), "type");
+        checkForLinkHeader(response, RDF_SOURCE.getURI(), "type");
         checkForLinkHeader(response, uri, "original");
         checkForLinkHeader(response, uri, "timegate");
         checkForLinkHeader(response, uri + "/" + FCR_VERSIONS, "timemap");
@@ -1383,6 +1384,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             checkForLinkHeader(response, subjectUri, "timegate");
             checkForLinkHeader(response, subjectUri + "/" + FCR_VERSIONS, "timemap");
             checkForLinkHeader(response, RESOURCE.toString(), "type");
+            checkForLinkHeader(response, RDF_SOURCE.toString(), "type");
             assertNoLinkHeader(response, VERSIONED_RESOURCE.toString(), "type");
             assertNoLinkHeader(response, VERSIONING_TIMEMAP_TYPE.toString(), "type");
             assertNoLinkHeader(response, version1Uri + "/" + FCR_ACL, "acl");

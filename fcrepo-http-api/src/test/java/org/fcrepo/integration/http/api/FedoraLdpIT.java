@@ -91,6 +91,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.LDP_MEMBER;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEGATE_TYPE;
@@ -237,6 +238,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createObject(id).close();
         final HttpHead headObjMethod = headObjMethod(id);
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
+            checkForLinkHeader(response, RDF_SOURCE.getURI(), "type");
             assertTrue("Didn't find LDP container link header!", getLinkHeaders(response).contains(
                     BASIC_CONTAINER_LINK_HEADER));
         }
@@ -252,6 +254,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpHead headObjMethod = headObjMethod(id);
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             final Collection<String> links = getLinkHeaders(response);
+            checkForLinkHeader(response, RDF_SOURCE.getURI(), "type");
             assertTrue("Didn't find LDP container link header!", links.contains(BASIC_CONTAINER_LINK_HEADER));
         }
     }
@@ -350,6 +353,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpHead headObjMethod = headObjMethod(id);
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
             final Collection<String> links = getLinkHeaders(response);
+            checkForLinkHeader(response, RDF_SOURCE.getURI(), "type");
             assertTrue("Didn't find LDP container link header!", links.contains(DIRECT_CONTAINER_LINK_HEADER));
             testHeadVaryAndPreferHeaders(response);
         }
@@ -558,6 +562,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(new HttpGet(serverAddress + id))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
             checkForLinkHeader(response, location + "/" + FCR_ACL, "acl");
+            checkForLinkHeader(response, RDF_SOURCE.getURI(), "type");
             final HttpEntity entity = response.getEntity();
             final String contentType = parse(entity.getContentType().getValue()).getMimeType();
             assertNotNull("Entity is not an RDF serialization!", contentTypeToLang(contentType));
@@ -1036,6 +1041,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String subjectURI = createVersionedRDFResource();
         try (final CloseableHttpResponse response = execute(new HttpGet(subjectURI))) {
             verifyVersionedResourceResponseHeaders(subjectURI, response);
+            checkForLinkHeader(response, RDF_SOURCE.getURI(), "type");
         }
     }
 
@@ -1900,6 +1906,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(getObjMethod)) {
             assertEquals(OK.getStatusCode(), getStatus(response));
             assertResourceOptionsHeaders(response);
+            checkForLinkHeader(response, RDF_SOURCE.getURI(), "type");
             assertTrue("Didn't find LDP link header!", getLinkHeaders(response).contains(LDP_RESOURCE_LINK_HEADER));
             checkForLinkHeader(response, location + "/" + FCR_ACL, "acl");
             try (final CloseableDataset dataset = getDataset(response)) {
@@ -3769,4 +3776,5 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertConstrainedByPresent(response);
         }
     }
+
 }
