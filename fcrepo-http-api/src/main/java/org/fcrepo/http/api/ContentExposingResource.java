@@ -578,7 +578,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * @param relation the relation string.
      * @return the string version of the link.
      */
-    public static final String buildLink(final String linkUri, final String relation) {
+    protected static String buildLink(final String linkUri, final String relation) {
         return buildLink(URI.create(linkUri), relation);
     }
 
