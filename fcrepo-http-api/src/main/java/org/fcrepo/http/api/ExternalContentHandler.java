@@ -30,6 +30,7 @@ import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.fcrepo.kernel.api.exception.ExternalContentAccessException;
 import org.fcrepo.kernel.api.exception.ExternalMessageBodyException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import javax.ws.rs.core.Link;
@@ -143,10 +144,14 @@ public class ExternalContentHandler {
         final String scheme = uri.getScheme();
         LOGGER.debug("scheme is {}", scheme);
         if (scheme != null) {
-            if (scheme.equals("file")) {
-                return new FileInputStream(uri.getPath());
-            } else if (scheme.equals("http") || scheme.equals("https")) {
-                return uri.toURL().openStream();
+            try {
+                if (scheme.equals("file")) {
+                    return new FileInputStream(uri.getPath());
+                } else if (scheme.equals("http") || scheme.equals("https")) {
+                    return uri.toURL().openStream();
+                }
+            } catch (final IOException e) {
+                throw new ExternalContentAccessException("Failed to read external content from " + uri, e);
             }
         }
         return null;
@@ -198,6 +203,8 @@ public class ExternalContentHandler {
                         }
                     }
                 }
+            } catch (final IOException e) {
+                LOGGER.warn("Unable to retrieve external content from {} due to {}", url, e.getMessage());
             } catch (final Exception e) {
                 throw new RepositoryRuntimeException(e);
             }
