@@ -18,6 +18,8 @@
 package org.fcrepo.integration.http.api;
 
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.HttpHeaders.LINK;
+import static javax.ws.rs.core.Link.fromUri;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -28,13 +30,18 @@ import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.fcrepo.http.api.FedoraAcl.ROOT_AUTHORIZATION_PROPERTY;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
+import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_NAMESPACE_VALUE;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.net.URI;
+
+import javax.ws.rs.core.Link;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
@@ -271,5 +278,156 @@ public class FedoraAclIT extends AbstractResourceIT {
                                       createURI("http://www.w3.org/ns/auth/acl#Read")));
         }
 
+    }
+
+    @Test
+    public void testCreateAclWithoutAccessToSetsDefaultTarget() throws Exception {
+        createObjectAndClose(id);
+
+        final HttpPut put = new HttpPut(subjectUri + "/" + FCR_ACL);
+        final String aclBody = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
+                               "@prefix foaf: <http://xmlns.com/foaf/0.1/> .\n" +
+                               "@prefix ldp: <http://www.w3.org/ns/ldp#> .\n" +
+                               "\n" +
+                               "<#readAccess> a acl:Authorization ;\n" +
+                               "    acl:mode acl:Read .";
+
+        put.setEntity(new StringEntity(aclBody));
+        put.setHeader("Content-Type", "text/turtle");
+
+        final String aclLocation;
+        try (final CloseableHttpResponse response = execute(put)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            aclLocation = response.getFirstHeader("Location").getValue();
+            // verify the acl container is translated to fcr:acl
+            assertEquals(subjectUri + "/" + FCR_ACL, aclLocation);
+        }
+
+        // verify that the accessTo is set to subjectUri when no accessTo or accessToClass
+        try (final CloseableDataset dataset = getDataset(new HttpGet(aclLocation))) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertTrue(graph.contains(ANY,
+                                      createURI(aclLocation + "#readAccess"),
+                                      createURI("http://www.w3.org/ns/auth/acl#accessTo"),
+                                      createURI(subjectUri)));
+        }
+
+    }
+
+    @Test
+    public void testCreateAclWithAccessTo() throws Exception {
+        createObjectAndClose(id);
+
+        final HttpPut put = new HttpPut(subjectUri + "/" + FCR_ACL);
+        final String aclBody = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
+                               "@prefix foaf: <http://xmlns.com/foaf/0.1/> .\n" +
+                               "@prefix ldp: <http://www.w3.org/ns/ldp#> .\n" +
+                               "\n" +
+                               "<#readAccess> a acl:Authorization ;\n" +
+                               "    acl:mode acl:Read ;\n" +
+                               "    acl:accessTo <http://example.com/> .";
+        System.out.println("ACLBODY");
+        System.out.println(aclBody);
+
+        put.setEntity(new StringEntity(aclBody));
+        put.setHeader("Content-Type", "text/turtle");
+
+        final String aclLocation;
+        try (final CloseableHttpResponse response = execute(put)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            aclLocation = response.getFirstHeader("Location").getValue();
+            // verify the acl container is translated to fcr:acl
+            assertEquals(subjectUri + "/" + FCR_ACL, aclLocation);
+        }
+
+        // verify that the accessTo is set to the sepcified accessTo Target
+        try (final CloseableDataset dataset = getDataset(new HttpGet(aclLocation))) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertTrue(graph.contains(ANY,
+                                      createURI(aclLocation + "#readAccess"),
+                                      createURI("http://www.w3.org/ns/auth/acl#accessTo"),
+                                      createURI("http://example.com/")));
+        }
+
+        // verify that the accessTo is not set to subjectUri (default)
+        try (final CloseableDataset dataset = getDataset(new HttpGet(aclLocation))) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertFalse(graph.contains(ANY,
+                                      createURI(aclLocation + "#readAccess"),
+                                      createURI("http://www.w3.org/ns/auth/acl#accessTo"),
+                                      createURI(subjectUri)));
+        }
+    }
+
+    @Test
+    public void testCreateAclWithAccessToClass() throws Exception {
+        createObjectAndClose(id);
+
+        final HttpPut put = new HttpPut(subjectUri + "/" + FCR_ACL);
+        final String aclBody = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
+                               "@prefix webac: <http://fedora.info/definitions/v4/webac#> .\n" +
+                               "@prefix foaf: <http://xmlns.com/foaf/0.1/> .\n" +
+                               "@prefix ldp: <http://www.w3.org/ns/ldp#> .\n" +
+                               "\n" +
+                               "<#readAccess> a acl:Authorization ;\n" +
+                               "    acl:mode acl:Read ;\n" +
+                               "    acl:accessToClass webac:Acl .";
+
+        put.setEntity(new StringEntity(aclBody));
+        put.setHeader("Content-Type", "text/turtle");
+
+        final String aclLocation;
+        try (final CloseableHttpResponse response = execute(put)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            aclLocation = response.getFirstHeader("Location").getValue();
+            // verify the acl container is translated to fcr:acl
+            assertEquals(subjectUri + "/" + FCR_ACL, aclLocation);
+
+        }
+
+        // verify that the accessToClass is set to the specified accessToClass
+        try (final CloseableDataset dataset = getDataset(new HttpGet(aclLocation))) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertTrue(graph.contains(ANY,
+                                      createURI(aclLocation + "#readAccess"),
+                                      createURI("http://www.w3.org/ns/auth/acl#accessToClass"),
+                                      createURI("http://fedora.info/definitions/v4/webac#Acl")));
+        }
+
+        // verify that the accessTo is not set to subjectUri (default)
+        try (final CloseableDataset dataset = getDataset(new HttpGet(aclLocation))) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertFalse(graph.contains(ANY,
+                                      createURI(aclLocation + "#readAccess"),
+                                      createURI("http://www.w3.org/ns/auth/acl#accessTo"),
+                                      createURI(subjectUri)));
+        }
+    }
+
+    @Test
+    public void testCreateAclWithBothAccessToandAccessToClassIsNotAllowed() throws Exception {
+        createObjectAndClose(id);
+
+        final HttpPut put = new HttpPut(subjectUri + "/" + FCR_ACL);
+        final String aclBody = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
+                               "@prefix webac: <http://fedora.info/definitions/v4/webac#> .\n" +
+                               "@prefix foaf: <http://xmlns.com/foaf/0.1/> .\n" +
+                               "@prefix ldp: <http://www.w3.org/ns/ldp#> .\n" +
+                               "\n" +
+                               "<#readAccess> a acl:Authorization ;\n" +
+                               "    acl:mode acl:Read ;\n" +
+                               "    acl:accessTo <http://example.com/> ;\n" +
+                               "    acl:accessToClass webac:Acl .";
+        final Link ex = fromUri(URI.create(serverAddress +
+                                    "static/constraints/ACLAuthorizationConstraintViolationException.rdf"))
+                               .rel(CONSTRAINED_BY.getURI()).build();
+
+        put.setEntity(new StringEntity(aclBody));
+        put.setHeader("Content-Type", "text/turtle");
+
+        try (final CloseableHttpResponse response = execute(put)) {
+            assertEquals(BAD_REQUEST.getStatusCode(), getStatus(response));
+            assertEquals(ex.toString(), response.getFirstHeader(LINK).getValue().toString());
+        }
     }
 }
