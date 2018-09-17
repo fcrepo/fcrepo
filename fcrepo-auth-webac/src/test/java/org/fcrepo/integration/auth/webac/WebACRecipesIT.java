@@ -1180,18 +1180,24 @@ public class WebACRecipesIT extends AbstractResourceIT {
     @Test
     public void testFoafAgent() throws IOException {
         final String path = ingestObj("/rest/foaf-agent");
-        ingestAcl("fedoraAdmin", "/acls/03/foaf-agent.ttl", path + "/fcr:acl");
+        ingestAcl("fedoraAdmin", "/acls/26/foaf-agent.ttl", path + "/fcr:acl");
         final String username = "user1";
 
         final HttpGet req = new HttpGet(path);
+
+        //NB: Actually no authentication headers should be set for this test
+        //since the point of foaf:Agent is to allow unauthenticated access for everyone.
+        //However at this time the test integration test server requires callers to
+        //authenticate.
         setAuth(req, username);
+
         assertEquals(HttpStatus.SC_OK, getStatus(req));
     }
 
     @Test
     public void testAuthenticatedAgent() throws IOException {
         final String path = ingestObj("/rest/authenticated-agent");
-        ingestAcl("fedoraAdmin", "/acls/03/authenticated-agent.ttl", path + "/fcr:acl");
+        ingestAcl("fedoraAdmin", "/acls/26/authenticated-agent.ttl", path + "/fcr:acl");
         final String username = "user1";
 
         final HttpGet darkReq = new HttpGet(path);

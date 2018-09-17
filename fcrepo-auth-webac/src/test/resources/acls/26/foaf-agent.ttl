@@ -1,0 +1,7 @@
+@prefix acl: <http://www.w3.org/ns/auth/acl#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+
+<#authenticated_agent> a acl:Authorization ;
+   acl:agentClass foaf:Agent ;
+   acl:mode acl:Read ;
+   acl:accessTo </rest/foaf-agent> .

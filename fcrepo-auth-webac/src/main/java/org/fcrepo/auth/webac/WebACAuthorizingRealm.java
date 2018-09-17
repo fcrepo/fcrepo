@@ -166,11 +166,9 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
             modes.addAll(foafAgentModes);
         }
 
-        if (userPrincipal != null) {
-            final Collection<String> authenticatedAgentRoles = roles.get(WEBAC_AUTHENTICATED_AGENT_VALUE);
-            if (authenticatedAgentRoles != null) {
-                modes.addAll(authenticatedAgentRoles);
-            }
+        final Collection<String> authenticatedAgentRoles = roles.get(WEBAC_AUTHENTICATED_AGENT_VALUE);
+        if (authenticatedAgentRoles != null) {
+            modes.addAll(authenticatedAgentRoles);
         }
 
         return modes;

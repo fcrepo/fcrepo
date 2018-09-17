@@ -1,0 +1,6 @@
+@prefix acl: <http://www.w3.org/ns/auth/acl#> .
+
+<#authenticated_agent> a acl:Authorization ;
+   acl:agentClass acl:AuthenticatedAgent ;
+   acl:mode acl:Read ;
+   acl:accessTo </rest/authenticated-agent> .
