@@ -33,7 +33,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Optional;
-
 import javax.ws.rs.core.Link;
 
 import org.apache.commons.codec.binary.Base64;
@@ -1208,5 +1207,38 @@ public class WebACRecipesIT extends AbstractResourceIT {
         final HttpGet darkReq = new HttpGet(path);
         setAuth(darkReq, username);
         assertEquals(HttpStatus.SC_OK, getStatus(darkReq));
+    }
+
+    public void testAgentGroupWithHashUris() throws Exception {
+        ingestTurtleResource("fedoraAdmin", "/acls/agent-group-list.ttl",
+                             serverAddress + "/rest/agent-group-list");
+        //check that the authorized are authorized.
+        final String authorized = ingestObj("/rest/agent-group-with-hash-uri-authorized");
+        ingestAcl("fedoraAdmin", "/acls/agent-group-with-hash-uri-authorized.ttl", authorized + "/fcr:acl");
+
+        final HttpGet getAuthorized = new HttpGet(authorized);
+        setAuth(getAuthorized, "testuser");
+        assertEquals(HttpStatus.SC_OK, getStatus(getAuthorized));
+
+        //check that the unauthorized are unauthorized.
+        final String unauthorized = ingestObj("/rest/agent-group-with-hash-uri-unauthorized");
+        ingestAcl("fedoraAdmin", "/acls/agent-group-with-hash-uri-unauthorized.ttl", unauthorized + "/fcr:acl");
+
+        final HttpGet getUnauthorized = new HttpGet(unauthorized);
+        setAuth(getUnauthorized, "testuser");
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(getUnauthorized));
+    }
+
+    @Test
+    public void testAgentGroup() throws Exception {
+        ingestTurtleResource("fedoraAdmin", "/acls/agent-group-list-flat.ttl",
+                             serverAddress + "/rest/agent-group-list-flat");
+        //check that the authorized are authorized.
+        final String flat = ingestObj("/rest/agent-group-flat");
+        ingestAcl("fedoraAdmin", "/acls/agent-group-flat.ttl", flat + "/fcr:acl");
+
+        final HttpGet getFlat = new HttpGet(flat);
+        setAuth(getFlat, "testuser");
+        assertEquals(HttpStatus.SC_OK, getStatus(getFlat));
     }
 }

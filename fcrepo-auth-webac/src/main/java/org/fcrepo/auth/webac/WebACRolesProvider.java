@@ -27,7 +27,7 @@ import static java.util.stream.Stream.empty;
 import static java.util.stream.Stream.of;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.fcrepo.auth.webac.URIConstants.FOAF_AGENT_VALUE;
-import static org.fcrepo.auth.webac.URIConstants.VCARD_GROUP;
+import static org.fcrepo.auth.webac.URIConstants.VCARD_GROUP_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.VCARD_MEMBER_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_ACCESSTO_CLASS_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_ACCESSTO_VALUE;
@@ -99,6 +99,10 @@ public class WebACRolesProvider implements AccessRolesProvider {
     private static final String FEDORA_INTERNAL_PREFIX = "info:fedora";
 
     private static final String JCR_VERSIONABLE_UUID_PROPERTY = "jcr:versionableUuid";
+
+    private static final org.apache.jena.graph.Node RDF_TYPE_NODE = createURI(RDF_NAMESPACE + "type");
+    private static final org.apache.jena.graph.Node VCARD_GROUP_NODE = createURI(VCARD_GROUP_VALUE);
+    private static final org.apache.jena.graph.Node VCARD_MEMBER_NODE = createURI(VCARD_MEMBER_VALUE);
 
     @Inject
     private NodeService nodeService;
@@ -298,9 +302,15 @@ public class WebACRolesProvider implements AccessRolesProvider {
 
         final List<String> members = agentGroups.stream().flatMap(agentGroup -> {
             if (agentGroup.startsWith(FEDORA_INTERNAL_PREFIX)) {
+                //strip off trailing hash.
+                final int hashIndex = agentGroup.indexOf("#");
+                final String agentGroupNoHash = hashIndex > 0 ?
+                                         agentGroup.substring(0, hashIndex) :
+                                         agentGroup;
+                final String hashedSuffix = hashIndex > 0 ? agentGroup.substring(hashIndex) : null;
                 final FedoraResource resource = nodeService.find(
-                    internalSession, agentGroup.substring(FEDORA_INTERNAL_PREFIX.length()));
-                return getAgentMembers(translator, resource);
+                    internalSession, agentGroupNoHash.substring(FEDORA_INTERNAL_PREFIX.length()));
+                return getAgentMembers(translator, resource, hashedSuffix);
             } else if (agentGroup.equals(FOAF_AGENT_VALUE)) {
                 return of(agentGroup);
             } else {
@@ -317,12 +327,25 @@ public class WebACRolesProvider implements AccessRolesProvider {
     }
 
     /**
-     *  Given a FedoraResource, return a list of agents.
+     * Given a FedoraResource, return a list of agents.
      */
     private static Stream<String> getAgentMembers(final IdentifierConverter<Resource, FedoraResource> translator,
-            final FedoraResource resource) {
-        return resource.getTriples(translator, PROPERTIES).filter(memberTestFromTypes.apply(resource.getTypes()))
-            .map(Triple::getObject).flatMap(WebACRolesProvider::nodeToStringStream);
+                                                  final FedoraResource resource, final String hashPortion) {
+
+        //resolve list of triples, accounting for hash-uris.
+        final List<Triple> triples = resource.getTriples(translator, PROPERTIES).filter(
+            triple -> hashPortion == null || triple.getSubject().getURI().endsWith(hashPortion)).collect(toList());
+        //determine if there is a rdf:type vcard:Group
+        final boolean hasVcardGroup = triples.stream().anyMatch(
+            triple -> triple.matches(triple.getSubject(), RDF_TYPE_NODE, VCARD_GROUP_NODE));
+        //return members only if there is an associated vcard:Group
+        if (hasVcardGroup) {
+            return triples.stream()
+                          .filter(triple -> triple.predicateMatches(VCARD_MEMBER_NODE))
+                          .map(Triple::getObject).flatMap(WebACRolesProvider::nodeToStringStream);
+        } else {
+            return empty();
+        }
     }
 
     /**
@@ -339,11 +362,6 @@ public class WebACRolesProvider implements AccessRolesProvider {
         }
     }
 
-    /**
-     * A simple predicate for filtering out any non-vcard:hasMember properties
-     */
-    private static final Function<List<URI>, Predicate<Triple>> memberTestFromTypes = types -> triple -> types
-            .contains(VCARD_GROUP) && triple.predicateMatches(createURI(VCARD_MEMBER_VALUE));
 
     /**
      *  A simple predicate for filtering out any non-acl triples.

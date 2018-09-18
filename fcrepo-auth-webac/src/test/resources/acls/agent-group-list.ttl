@@ -1,0 +1,6 @@
+@prefix    acl:  <http://www.w3.org/ns/auth/acl#>.
+@prefix  vcard:  <http://www.w3.org/2006/vcard/ns#>.
+<#authorized> a vcard:Group ;
+          vcard:hasMember  "testuser" .
+<#unauthorized> a vcard:Group ;
+          vcard:hasMember  "anotheruser" .
