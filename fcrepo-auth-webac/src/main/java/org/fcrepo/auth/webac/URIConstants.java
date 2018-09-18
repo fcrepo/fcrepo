@@ -139,6 +139,11 @@ final public class URIConstants {
     public static final URI WEBAC_MODE = URI.create(WEBAC_MODE_VALUE);
 
     /**
+     * WebAC AuthenticatedAgent
+     */
+    public static final String WEBAC_AUTHENTICATED_AGENT_VALUE = WEBAC_NAMESPACE_VALUE + "AuthenticatedAgent";
+
+    /**
      * FOAF Namespace
      */
     public static final String FOAF_NAMESPACE_VALUE = "http://xmlns.com/foaf/0.1/";

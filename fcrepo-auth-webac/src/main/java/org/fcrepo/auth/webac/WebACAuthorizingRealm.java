@@ -19,13 +19,16 @@ package org.fcrepo.auth.webac;
 
 import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_ADMIN_ROLE;
 import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_USER_ROLE;
+import static org.fcrepo.auth.webac.URIConstants.FOAF_AGENT_VALUE;
+import static org.fcrepo.auth.webac.URIConstants.WEBAC_AUTHENTICATED_AGENT_VALUE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
 import java.security.Principal;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
-
+import java.util.Set;
 import javax.inject.Inject;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
@@ -131,7 +134,7 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
                 final Principal userPrincipal = principals.oneByType(BasicUserPrincipal.class);
                 if (userPrincipal != null) {
                     log.debug("Basic user principal username: {}", userPrincipal.getName());
-                    final Collection<String> modesForUser = roles.get(userPrincipal.getName());
+                    final Collection<String> modesForUser = getModesForUser(roles, userPrincipal);
                     if (modesForUser != null) {
                         // add WebACPermission instance for each mode in the Authorization
                         final URI fullRequestURI = URI.create(request.getRequestURL().toString());
@@ -148,6 +151,27 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
         }
 
         return authzInfo;
+    }
+
+    private Collection<String> getModesForUser(final Map<String, Collection<String>> roles,
+                                               final Principal userPrincipal) {
+        final Set<String> modes = new HashSet<>();
+        final Collection<String> userModes = roles.get(userPrincipal.getName());
+        if (userModes != null) {
+            modes.addAll(userModes);
+        }
+
+        final Collection<String> foafAgentModes = roles.get(FOAF_AGENT_VALUE);
+        if (foafAgentModes != null) {
+            modes.addAll(foafAgentModes);
+        }
+
+        final Collection<String> authenticatedAgentRoles = roles.get(WEBAC_AUTHENTICATED_AGENT_VALUE);
+        if (authenticatedAgentRoles != null) {
+            modes.addAll(authenticatedAgentRoles);
+        }
+
+        return modes;
     }
 
     /**
