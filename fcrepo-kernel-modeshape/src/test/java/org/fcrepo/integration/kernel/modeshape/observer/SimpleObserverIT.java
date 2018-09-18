@@ -17,6 +17,7 @@
  */
 package org.fcrepo.integration.kernel.modeshape.observer;
 
+import static java.util.UUID.randomUUID;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static com.jayway.awaitility.Awaitility.await;
@@ -30,6 +31,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_DESCRIPTION;
 import static org.fcrepo.kernel.api.RdfLexicon.NT_LEAF_NODE;
 import static org.fcrepo.kernel.api.RdfLexicon.NT_VERSION_FILE;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
+import static org.fcrepo.kernel.api.observer.EventType.INBOUND_REFERENCE;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_CREATION;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_DELETION;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_MODIFICATION;
@@ -373,6 +375,43 @@ public class SimpleObserverIT extends AbstractIT {
         awaitEvent("/object13", RESOURCE_MODIFICATION);
 
         assertEquals("Where are my events?", (Integer) 14, eventBusMessageCount);
+    }
+
+    @Test
+    public void testInboundReferenceEvents() throws RepositoryException {
+        final FedoraSession session = repository.login();
+        final Session se = getJcrSession(session);
+        final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator(se);
+
+        final String path1 = "/" + randomUUID();
+        final String path2 = "/" + randomUUID();
+
+        final Container obj1 = containerService.findOrCreate(session, path1);
+        final Container obj2 = containerService.findOrCreate(session, path2);
+
+        final Resource subject2 = subjects.reverse().convert(obj2);
+
+        try {
+            session.commit();
+
+            awaitEvent(path1, RESOURCE_CREATION);
+            awaitEvent(path1, RESOURCE_MODIFICATION);
+            awaitEvent(path2, RESOURCE_CREATION);
+
+            assertEquals("Where are my events?", (Integer) 3, eventBusMessageCount);
+
+            obj1.updateProperties(subjects, "PREFIX ore: <http://www.openarchives.org/ore/terms/>\n" +
+                "INSERT { <> ore:proxyFor <" + subject2 + "> } WHERE {}", obj1.getTriples(subjects, PROPERTIES));
+            session.commit();
+
+            awaitEvent(path1, RESOURCE_MODIFICATION);
+            awaitEvent(path2, INBOUND_REFERENCE);
+
+            assertEquals("Where are my events?", (Integer) 5, eventBusMessageCount);
+        } finally {
+            session.expire();
+        }
+
     }
 
     private void awaitEvent(final String id, final EventType eventType, final String resourceType) {

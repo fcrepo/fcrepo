@@ -22,15 +22,20 @@ import static java.util.stream.Stream.of;
 import static javax.jcr.observation.Event.NODE_ADDED;
 import static javax.jcr.observation.Event.PROPERTY_ADDED;
 import static javax.jcr.observation.Event.PROPERTY_CHANGED;
+import static org.fcrepo.kernel.api.observer.EventType.INBOUND_REFERENCE;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 
+
 import javax.jcr.RepositoryException;
+import javax.jcr.nodetype.NodeType;
 import javax.jcr.observation.Event;
 
+import java.util.List;
 import java.util.stream.Stream;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -62,28 +67,20 @@ public class AllNodeEventsOneEventTest {
 
     private static final String TEST_PATH5 = "/test/node3/" + JCR_CONTENT;
 
+    private static final String TEST_PATH6 = "/test/node3/" + JCR_LASTMODIFIED;
+
     private final AllNodeEventsOneEvent testMapping = new AllNodeEventsOneEvent();
 
     @Mock
-    private Event mockEvent1;
+    private Event mockEvent1, mockEvent2, mockEvent3, mockEvent4, mockEvent5;
 
     @Mock
-    private Event mockEvent2;
+    private NodeType mockNodeType, mockMixinType;
 
     @Mock
-    private Event mockEvent3;
+    org.modeshape.jcr.api.observation.Event mockEvent6;
 
-    @Mock
-    private Event mockEvent4;
-
-    @Mock
-    private Event mockEvent5;
-
-    private Stream<Event> mockStream;
-
-    private Stream<Event> mockStream2;
-
-    private Stream<Event> mockStream3;
+    private Stream<Event> mockStream, mockStream2;
 
     @Before
     public void setUp() throws RepositoryException {
@@ -106,7 +103,17 @@ public class AllNodeEventsOneEventTest {
         when(mockEvent1.getDate()).thenReturn(5L);
         mockStream2 = of(mockEvent4, mockEvent5);
 
-        mockStream3 = of(mockEvent4, mockEvent5);
+        when(mockNodeType.getName()).thenReturn("mock:node_type");
+        when(mockMixinType.getName()).thenReturn("mock:mixin_type");
+
+        final NodeType[] addTypes = new NodeType[1];
+        addTypes[0] = mockMixinType;
+
+        when(mockEvent6.getType()).thenReturn(PROPERTY_CHANGED);
+        when(mockEvent6.getPath()).thenReturn(TEST_PATH6);
+        when(mockEvent6.getPrimaryNodeType()).thenReturn(mockNodeType);
+        when(mockEvent6.getMixinNodeTypes()).thenReturn(addTypes);
+
     }
 
     @Test
@@ -134,5 +141,32 @@ public class AllNodeEventsOneEventTest {
         final Stream<FedoraEvent> stream = testMapping.apply(mockStream);
         assertNotNull(stream);
         stream.collect(toList());
+    }
+
+    @Test
+    public void testAlterEvents() throws RepositoryException {
+        // Two events attached to 2 paths, one is a jcr:lastModified only
+        final Stream<Event> mockStream = of(mockEvent3, mockEvent6);
+
+        final Stream<FedoraEvent> stream = testMapping.apply(mockStream);
+        assertNotNull(stream);
+        final List<FedoraEvent> list = stream.collect(toList());
+        assertEquals("Got the wrong number of events.", 2, list.size());
+        assertEquals("Got the wrong number of events with Inbound Reference", 1,
+            list.stream().filter(e -> e.getTypes().contains(INBOUND_REFERENCE)).count());
+    }
+
+    @Test
+    public void testNotAlterEvents() {
+        // Three events attached to 2 paths, one is a node add and a jcr:lastModified property change.
+        // So we should NOT alter it to an INBOUND_REFERENCE.
+        final Stream<Event> mockStream = of(mockEvent3, mockEvent4, mockEvent6);
+
+        final Stream<FedoraEvent> stream = testMapping.apply(mockStream);
+        assertNotNull(stream);
+        final List<FedoraEvent> list = stream.collect(toList());
+        assertEquals("Got the wrong number of events.", 2, list.size());
+        assertEquals("Got the wrong number of events with Inbound Reference", 0,
+            list.stream().filter(e -> e.getTypes().contains(INBOUND_REFERENCE)).count());
     }
 }
