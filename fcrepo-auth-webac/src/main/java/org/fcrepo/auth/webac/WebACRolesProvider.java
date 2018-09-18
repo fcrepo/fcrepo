@@ -101,6 +101,8 @@ public class WebACRolesProvider implements AccessRolesProvider {
     private static final String JCR_VERSIONABLE_UUID_PROPERTY = "jcr:versionableUuid";
 
     private static final org.apache.jena.graph.Node RDF_TYPE_NODE = createURI(RDF_NAMESPACE + "type");
+    private static final org.apache.jena.graph.Node VCARD_GROUP_NODE = createURI(VCARD_GROUP_VALUE);
+    private static final org.apache.jena.graph.Node VCARD_MEMBER_NODE = createURI(VCARD_MEMBER_VALUE);
 
     @Inject
     private NodeService nodeService;
@@ -334,13 +336,12 @@ public class WebACRolesProvider implements AccessRolesProvider {
         final List<Triple> triples = resource.getTriples(translator, PROPERTIES).filter(
             triple -> hashPortion == null || triple.getSubject().getURI().endsWith(hashPortion)).collect(toList());
         //determine if there is a rdf:type vcard:Group
-        final boolean hasVcardGroup = triples.stream().filter(
-            triple -> triple.predicateMatches(RDF_TYPE_NODE) &&
-                      triple.getObject().getURI().equals(VCARD_GROUP_VALUE)).count() > 0;
+        final boolean hasVcardGroup = triples.stream().anyMatch(
+            triple -> triple.matches(triple.getSubject(), RDF_TYPE_NODE, VCARD_GROUP_NODE));
         //return members only if there is an associated vcard:Group
         if (hasVcardGroup) {
             return triples.stream()
-                          .filter(triple -> triple.predicateMatches(createURI(VCARD_MEMBER_VALUE)))
+                          .filter(triple -> triple.predicateMatches(VCARD_MEMBER_NODE))
                           .map(Triple::getObject).flatMap(WebACRolesProvider::nodeToStringStream);
         } else {
             return empty();
