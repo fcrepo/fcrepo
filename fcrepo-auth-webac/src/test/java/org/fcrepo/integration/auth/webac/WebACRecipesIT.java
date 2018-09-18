@@ -461,6 +461,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
         logger.debug("user18 can patch - SPARQL INSERTs (ACL append): {}", id);
         assertEquals(HttpStatus.SC_NO_CONTENT, getStatus(requestPatch));
 
+        // Alter the Content-type to include a character set, to ensure correct matching.
         requestPatch.setHeader("Content-type", "application/sparql-update; charset=UTF-8");
         logger.debug("user18 can patch - SPARQL INSERTs (ACL append with charset): {}", id);
         assertEquals(HttpStatus.SC_NO_CONTENT, getStatus(requestPatch));

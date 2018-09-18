@@ -302,7 +302,7 @@ public class WebACFilter implements Filter {
     private boolean isSparqlUpdate(final HttpServletRequest request) {
         try {
             return request.getMethod().equals("PATCH") &&
-                    request.getContentType() != null && sparqlUpdate.isCompatible(MediaType.valueOf(request
+                    sparqlUpdate.isCompatible(MediaType.valueOf(request
                             .getContentType()));
         } catch (final IllegalArgumentException e) {
             return false;
