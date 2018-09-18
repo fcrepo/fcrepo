@@ -41,6 +41,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.core.MediaType;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.query.QueryParseException;
@@ -62,6 +63,8 @@ import org.slf4j.Logger;
 public class WebACFilter implements Filter {
 
     private static final Logger log = getLogger(WebACFilter.class);
+
+    private static MediaType sparqlUpdate = MediaType.valueOf(contentTypeSPARQLUpdate);
 
     private FedoraSession session;
 
@@ -297,7 +300,12 @@ public class WebACFilter implements Filter {
     }
 
     private boolean isSparqlUpdate(final HttpServletRequest request) {
-        return request.getMethod().equals("PATCH") &&
-                contentTypeSPARQLUpdate.equalsIgnoreCase(request.getContentType());
+        try {
+            return request.getMethod().equals("PATCH") &&
+                    request.getContentType() != null && sparqlUpdate.isCompatible(MediaType.valueOf(request
+                            .getContentType()));
+        } catch (final IllegalArgumentException e) {
+            return false;
+        }
     }
 }

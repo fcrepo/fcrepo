@@ -461,6 +461,10 @@ public class WebACRecipesIT extends AbstractResourceIT {
         logger.debug("user18 can patch - SPARQL INSERTs (ACL append): {}", id);
         assertEquals(HttpStatus.SC_NO_CONTENT, getStatus(requestPatch));
 
+        requestPatch.setHeader("Content-type", "application/sparql-update; charset=UTF-8");
+        logger.debug("user18 can patch - SPARQL INSERTs (ACL append with charset): {}", id);
+        assertEquals(HttpStatus.SC_NO_CONTENT, getStatus(requestPatch));
+
         logger.debug("user18 still can't delete (ACL append): {}", id);
         assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestDelete));
 
