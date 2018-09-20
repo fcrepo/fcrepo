@@ -28,9 +28,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.net.URI;
 import java.security.Principal;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import javax.inject.Inject;
 import javax.jcr.Node;
 import javax.jcr.PathNotFoundException;
@@ -124,7 +122,7 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
             if (delegatePrincipals.size() > 1) {
                 throw new RepositoryConfigurationException("Too many delegates! " + delegatePrincipals);
             } else if (delegatePrincipals.size() < 1) {
-            authzInfo.addRole(FEDORA_ADMIN_ROLE);
+                authzInfo.addRole(FEDORA_ADMIN_ROLE);
                 return authzInfo;
             }
             isAdmin = true;
@@ -134,7 +132,7 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
             authzInfo.addRole(FEDORA_USER_ROLE);
         }
 
-            // for non-admins, we must check the ACL for the requested resource
+        // for non-admins, we must check the ACL for the requested resource
         roles = getRolesForPath();
 
         for (Object o : principals.asList()) {
@@ -146,10 +144,12 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
         if (isAdmin && delegatePrincipals.size() == 1) {
             final DelegatedHeaderPrincipal delegatedPrincipal = delegatePrincipals.iterator().next();
             log.debug("Admin user is delegating to {}", delegatedPrincipal);
-            addPermissions(authzInfo, roles, delegatedPrincipal);
+            addPermissions(authzInfo, roles, delegatedPrincipal.getName());
+            addPermissions(authzInfo, roles, WEBAC_AUTHENTICATED_AGENT_VALUE);
         } else if (userPrincipal != null) {
             log.debug("Basic user principal username: {}", userPrincipal.getName());
-            addPermissions(authzInfo, roles, userPrincipal);
+            addPermissions(authzInfo, roles, userPrincipal.getName());
+            addPermissions(authzInfo, roles, WEBAC_AUTHENTICATED_AGENT_VALUE);
         } else {
             log.debug("No basic user principal found");
         }
@@ -158,8 +158,11 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
             log.debug("No header principals found!");
         }
         headerPrincipals.forEach((headerPrincipal) -> {
-            addPermissions(authzInfo, roles, headerPrincipal);
+            addPermissions(authzInfo, roles, headerPrincipal.getName());
         });
+
+        // Added FOAF_AGENT permissions for both authenticated and unauthenticated users
+        addPermissions(authzInfo, roles, FOAF_AGENT_VALUE);
 
         return authzInfo;
 
@@ -167,21 +170,21 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
 
     private Map<String, Collection<String>> getRolesForPath() {
         Map<String, Collection<String>> roles = null;
-            final FedoraResource fedoraResource = getResourceOrParentFromPath(request.getPathInfo());
+        final FedoraResource fedoraResource = getResourceOrParentFromPath(request.getPathInfo());
 
-            if (fedoraResource != null) {
-                final Node node = ((FedoraResourceImpl) fedoraResource).getNode();
+        if (fedoraResource != null) {
+            final Node node = ((FedoraResourceImpl) fedoraResource).getNode();
 
-                // check ACL for the request URI and get a mapping of agent => modes
+            // check ACL for the request URI and get a mapping of agent => modes
             roles = rolesProvider.getRoles(node, true);
         }
         return roles;
     }
 
     private void addPermissions(final SimpleAuthorizationInfo authzInfo, final Map<String, Collection<String>> roles,
-            final Principal principal) {
+            final String agentName) {
         if (roles != null) {
-            final Collection<String> modesForUser = getModesForUser(roles, principal);
+            final Collection<String> modesForUser = roles.get(agentName);
                 if (modesForUser != null) {
                     // add WebACPermission instance for each mode in the Authorization
                     final URI fullRequestURI = URI.create(request.getRequestURL().toString());
@@ -192,27 +195,6 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
                     }
                 }
         }
-    }
-
-    private Collection<String> getModesForUser(final Map<String, Collection<String>> roles,
-                                               final Principal userPrincipal) {
-        final Set<String> modes = new HashSet<>();
-        final Collection<String> userModes = roles.get(userPrincipal.getName());
-        if (userModes != null) {
-            modes.addAll(userModes);
-        }
-
-        final Collection<String> foafAgentModes = roles.get(FOAF_AGENT_VALUE);
-        if (foafAgentModes != null) {
-            modes.addAll(foafAgentModes);
-        }
-
-        final Collection<String> authenticatedAgentRoles = roles.get(WEBAC_AUTHENTICATED_AGENT_VALUE);
-        if (authenticatedAgentRoles != null) {
-            modes.addAll(authenticatedAgentRoles);
-        }
-
-        return modes;
     }
 
     /**
