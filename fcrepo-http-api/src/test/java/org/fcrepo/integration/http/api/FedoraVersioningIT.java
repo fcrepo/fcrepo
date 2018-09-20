@@ -55,10 +55,12 @@ import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_BINARY;
+import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.SERVER_MANAGED_PROPERTIES_MODE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEMAP_TYPE;
 import static org.junit.Assert.assertArrayEquals;
@@ -233,6 +235,54 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         logger.info("MEMENTO testCreateVersion END");
     }
 
+    /**
+     * This test will test for weird date time scenario.
+     * @throws Exception
+     */
+
+    @Test
+    public void testCreateVersionWithLastModifiedDateTimestamp() throws Exception {
+        logger.info("testCreateVersionWithBodyContainingTimestamp START");
+        final String origMode = System.getProperty(SERVER_MANAGED_PROPERTIES_MODE);
+
+        // relaxing the server managed mode here to try to catch an issue with
+        // lastModifiedDate
+        System.setProperty(SERVER_MANAGED_PROPERTIES_MODE, "relaxed");
+
+        final String aDate = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").format(
+                LocalDateTime.of(2018, 9, 21, 5, 30, 01, 860000000).atZone(ZoneOffset.UTC));
+/*
+        final String bDate = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").format(
+                LocalDateTime.of(2000, 5, 1, 5, 30, 01, 860000000).atZone(ZoneOffset.UTC));
+
+        final String cDate = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SS'Z'").format(
+                LocalDateTime.of(2000, 5, 1, 5, 30, 01, 86000000).atZone(ZoneOffset.UTC));
+
+        final String dDate = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SS'Z'").format(
+                LocalDateTime.of(2000, 5, 1, 5, 30, 01, 860000000).atZone(ZoneOffset.UTC));
+*/
+        createVersionedContainer(id);
+/*
+        patchLiteralProperty(serverAddress + id, "info:test#randomDate", bDate,
+                "<http://www.w3.org/2001/XMLSchema#dateTime>");
+        patchLiteralProperty(serverAddress + id, "info:test#randomDate", cDate,
+                "<http://www.w3.org/2001/XMLSchema#dateTime>");
+        patchLiteralProperty(serverAddress + id, "info:test#randomDate", dDate,
+                "<http://www.w3.org/2001/XMLSchema#dateTime>");
+*/
+        // this is really the only important one - it modifies the lastModifiedDate' milliseconds to
+        // something that has 2 digits (and optionally a 0 to pad it) to see how the system handles it.
+        patchLiteralProperty(serverAddress + id, LAST_MODIFIED_DATE.toString(), aDate,
+                "<http://www.w3.org/2001/XMLSchema#dateTime>");
+
+        final String memento = createMemento(subjectUri, null, null, null);
+
+        assertMementoEqualsOriginal(memento);
+
+        System.setProperty(SERVER_MANAGED_PROPERTIES_MODE, origMode);
+        logger.info("testCreateVersionWithBodyContainingTimestamp END");
+    }
+
     @Test
     public void testCreateVersionWithSlugHeader() throws Exception {
         createVersionedContainer(id);
@@ -347,6 +397,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             assertFalse("Memento created without datetime must ignore updates",
                     results.contains(ANY, mementoSubject, TEST_PROPERTY_NODE, createLiteral("bar")));
 
+            // memento should be the same as original, in this case
             assertMementoEqualsOriginal(mementoUri);
         }
     }
@@ -1885,10 +1936,16 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     private static void patchLiteralProperty(final String url, final String predicate, final String literal)
             throws IOException {
+        patchLiteralProperty(url, predicate, literal, null);
+    }
+    private static void patchLiteralProperty(final String url, final String predicate, final String literal,
+                                             final String xsdType)
+            throws IOException {
         final HttpPatch updateObjectGraphMethod = new HttpPatch(url);
+        final String type = xsdType != null ? "^^" + xsdType : "";
         updateObjectGraphMethod.addHeader(CONTENT_TYPE, "application/sparql-update");
         updateObjectGraphMethod.setEntity(new StringEntity(
-                "INSERT DATA { <> <" + predicate + "> \"" + literal + "\" } "));
+                "INSERT DATA { <> <" + predicate + "> \"" + literal + "\"" + type + " } "));
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(updateObjectGraphMethod));
     }
 
@@ -1907,17 +1964,25 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         assertTrue(mementoUri.matches(subjectUri + "/fcr:versions/\\d+"));
     }
 
+
+
     protected static void assertMementoEqualsOriginal(final String mementoURI) throws Exception {
 
         final HttpGet getMemento = new HttpGet(mementoURI);
         getMemento.addHeader(ACCEPT, "application/n-triples");
+        //final Model modelMemento = createDefaultModel();
+        //final Lang rdfLang = RDFLanguages.contentTypeToLang(N3);
 
         try (final CloseableHttpResponse response = execute(getMemento)) {
+            //modelMemento.read(response.getEntity().getContent(), "", rdfLang.getName());
 
             final HttpGet getOriginal = new HttpGet(getOriginalResourceUri(response));
             getOriginal.addHeader(ACCEPT, "application/n-triples");
 
             try (final CloseableHttpResponse origResponse = execute(getOriginal)) {
+
+                //final Model modelOrig = createDefaultModel();
+                //modelOrig.read(origResponse.getEntity().getContent(), "", rdfLang.getName());
 
                 final String[] mTriples = EntityUtils.toString(response.getEntity()).split(".(\\r\\n|\\r|\\n)");
                 final String[] oTriples = EntityUtils.toString(origResponse.getEntity()).split(".(\\r\\n|\\r|\\n)");
@@ -1925,12 +1990,12 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                 sort(mTriples);
                 sort(oTriples);
 
-                logger.info("mtriples: ");
+                logger.info("mtriples: {} ", mTriples.length);
                 for (int i = 0; i < mTriples.length;  i++) {
                     logger.info("\t {}", mTriples[i]);
                 }
 
-                logger.info("otriples: ");
+                logger.info("otriples: {} ", oTriples.length);
                 for (int i = 0; i < oTriples.length;  i++) {
                     logger.info("\t {}", oTriples[i]);
                 }

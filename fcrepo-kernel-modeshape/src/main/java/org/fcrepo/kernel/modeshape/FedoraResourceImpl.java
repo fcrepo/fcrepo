@@ -27,6 +27,7 @@ import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.empty;
 import static java.util.stream.Stream.of;
 import static org.apache.commons.codec.digest.DigestUtils.sha1Hex;
+import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDdateTime;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.rdf.model.ResourceFactory.createTypedLiteral;
@@ -687,7 +688,10 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         try {
             final long created = createdDate == null ? NO_TIME : createdDate.toEpochMilli();
             if (hasProperty(FEDORA_LASTMODIFIED)) {
-                return ofEpochMilli(getTimestamp(FEDORA_LASTMODIFIED, created));
+                final Instant in = ofEpochMilli(getTimestamp(FEDORA_LASTMODIFIED, created));
+                LOGGER.info("GET LAST MODIFIED: {} ", in.toString());
+                return in;
+                //return ofEpochMilli(getTimestamp(FEDORA_LASTMODIFIED, created));
             } else if (hasProperty(JCR_LASTMODIFIED)) {
                 return ofEpochMilli(getTimestamp(JCR_LASTMODIFIED, created));
             }
@@ -713,6 +717,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             LOGGER.trace("Returning the later created date ({} > {}) for {}", created, timestamp, property);
             return created;
         }
+
+        LOGGER.info("getTimestamp: {}", timestamp);
         return timestamp;
     }
 
@@ -753,7 +759,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                 .filter(hasInternalNamespace.negate())
                 .distinct()
                 .map(nodeTypeNameToURI)
-                .peek(x -> LOGGER.debug("node has rdf:type {}", x))
                 .collect(Collectors.toList());
 
             return types;
@@ -909,12 +914,12 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                                 final Set<? extends TripleCategory> contexts) {
 
         final String contextString = Arrays.toString(contexts.toArray());
-        /*
+
         Stream<Triple> triples = contexts.stream()
                 .filter(contextMap::containsKey)
                 .map(x -> contextMap.get(x).apply(this).apply(idTranslator).apply(contexts.contains(MINIMAL)))
                 .reduce(empty(), Stream::concat);
-        */
+        /*
         List<Triple> triples = contexts.stream()
                 .filter(contextMap::containsKey)
                 .map(x -> contextMap.get(x).apply(this).apply(idTranslator).apply(contexts.contains(MINIMAL)))
@@ -923,19 +928,25 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         for (Triple t:triples) {
             LOGGER.info("triples {}: {} ", contextString, t);
         }
-
+*/
 
         // if a memento, convert subjects to original resource and object references from referential integrity
         // ignoring internal URL back the original external URL.
         if (isMemento()) {
             final IdentifierConverter<Resource, FedoraResource> internalIdTranslator
                     = new InternalIdentifierTranslator(getSession());
-            triples = triples.stream()
+            triples = triples.peek(t->LOGGER.info("MEMENTO TRIPLE BEFORE: {} ", t.toString()))
                     .map(convertMementoReferences(idTranslator, internalIdTranslator))
-                    .collect(Collectors.toList());
+                    .peek(t->LOGGER.info("MEMENTO TRIPLE: {} ", t.toString()));
+/*
+            for (Triple t:triples) {
+                LOGGER.info("triples MEMENTO {}: {} ", contextString, t);
+            }
+*/
         }
 
-        return new DefaultRdfStream(idTranslator.reverse().convert(this).asNode(), triples.stream());
+
+        return new DefaultRdfStream(idTranslator.reverse().convert(this).asNode(), triples);
     }
 
     /* (non-Javadoc)
@@ -1147,7 +1158,17 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                  }
              }
 
-             return new Triple(subjectNode, t.getPredicate(), objectNode);
+             // this fixes an issue where the milliseconds get translated incorrectly and
+             // .95  ms gets translated to .096
+             if (t.getObject().isLiteral() && t.getObject().getLiteralDatatype() == XSDdateTime) {
+                 LOGGER.info("XSDDateTime: MEMENTO: new {}", objectNode.getLiteralLexicalForm());
+                 LOGGER.info("XSDDateTime: MEMENTO: t {}", t.getObject().getLiteralLexicalForm());
+                 final Instant instant = Instant.parse(t.getObject().getLiteralLexicalForm());
+                 final Calendar c = new Calendar.Builder().setInstant(instant.toEpochMilli()).build();
+                 return new Triple(subjectNode, t.getPredicate(), createTypedLiteral(c).asNode());
+             } else {
+                 return new Triple(subjectNode, t.getPredicate(), objectNode);
+             }
          };
     }
 
@@ -1234,6 +1255,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             if (t.getPredicate().toString().equals(LAST_MODIFIED_DATE.toString())
                     && t.getSubject().equals(translator.convert(getJcrNode(r)).asNode())) {
                 final Calendar c = new Calendar.Builder().setInstant(r.getLastModifiedDate().toEpochMilli()).build();
+                LOGGER.info("SHOW LMD: {} ", c);
+                LOGGER.info("SHOW LMD typed: {} ", createTypedLiteral(c).toString());
                 return new Triple(t.getSubject(), t.getPredicate(), createTypedLiteral(c).asNode());
             }
             return t;

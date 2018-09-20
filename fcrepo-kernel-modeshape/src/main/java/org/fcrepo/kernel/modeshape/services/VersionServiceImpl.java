@@ -24,6 +24,7 @@ import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.kernel.api.FedoraExternalContent.PROXY;
 import static org.fcrepo.kernel.api.FedoraExternalContent.REDIRECT;
 import static org.fcrepo.kernel.api.FedoraTypes.CONTENT_DIGEST;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.FedoraTypes.MEMENTO;
 import static org.fcrepo.kernel.api.FedoraTypes.MEMENTO_DATETIME;
@@ -169,6 +170,9 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
         }
 
         final Session jcrSession = getJcrSession(session);
+
+        final Model m = ModelFactory.createDefaultModel();
+
         final RdfStream mappedStream = remapResourceUris(resourceUri, mementoUri, mementoRdfStream,
                 idTranslator, jcrSession);
 
@@ -188,6 +192,7 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
 
             if (node.canAddMixin(FEDORA_RESOURCE)) {
                 node.addMixin(FEDORA_RESOURCE);
+                node.addMixin(FEDORA_CONTAINER);
             }
 
             return new ContainerImpl(node);
@@ -217,8 +222,12 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
                 jcrSession);
 
         final org.apache.jena.graph.Node mementoNode = createURI(mementoUri);
-        final Stream<Triple> mappedStream = rdfStream.map(t -> mapSubject(t, resourceUri, mementoUri))
-                .map(t -> convertToInternalReference(t, idTranslator, internalIdTranslator));
+        final Stream<Triple> mappedStream = rdfStream
+                .peek(t-> LOGGER.info("remap BEFORE: {}", t.toString()))
+                .map(t -> mapSubject(t, resourceUri, mementoUri))
+                .peek(t-> LOGGER.info("remap AFTER: {}", t.toString()))
+                .map(t -> convertToInternalReference(t, idTranslator, internalIdTranslator))
+                .peek(t-> LOGGER.info("remap internal: {}", t.toString()));
         return new DefaultRdfStream(mementoNode, mappedStream);
     }
 
