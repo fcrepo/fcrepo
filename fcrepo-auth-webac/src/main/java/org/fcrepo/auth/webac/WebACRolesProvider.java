@@ -66,7 +66,6 @@ import javax.inject.Inject;
 import javax.jcr.ItemNotFoundException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
@@ -83,7 +82,6 @@ import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
 import org.fcrepo.kernel.modeshape.FedoraSessionImpl;
 import org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
-import org.modeshape.jcr.value.Path;
 import org.slf4j.Logger;
 
 /**
@@ -111,39 +109,6 @@ public class WebACRolesProvider {
 
     @Inject
     private SessionFactory sessionFactory;
-
-    /**
-     * Finds effective roles assigned to a path, using first real ancestor node.
-     *
-     * @param absPath the real or potential node path
-     * @param session session
-     * @return the roles assigned to each principal
-     * @throws RepositoryException if PathNotFoundException can not handle
-     */
-    public Map<String, Collection<String>> findRolesForPath(final Path absPath, final Session session)
-            throws RepositoryException {
-        return getAgentRoles(locateResource(absPath, new FedoraSessionImpl(session)));
-    }
-
-    private FedoraResource locateResource(final Path path, final FedoraSession session) {
-        try {
-            if (getJcrSession(session).nodeExists(path.toString()) || path.isRoot()) {
-                LOGGER.debug("findRolesForPath: {}", path.getString());
-                final FedoraResource resource = nodeResourceConverter.convert(
-                        getJcrSession(session).getNode(path.toString()));
-
-                if (resource.hasType("nt:version")) {
-                    LOGGER.debug("{} is a version, getting the baseVersion", resource);
-                    return getBaseVersion(resource);
-                }
-                return resource;
-            }
-        } catch (final RepositoryException ex) {
-            throw new RepositoryRuntimeException(ex);
-        }
-        LOGGER.trace("Path: {} does not exist, checking parent", path.getString());
-        return locateResource(path.getParent(), session);
-    }
 
     /**
      * Get the versionable FedoraResource for this version resource

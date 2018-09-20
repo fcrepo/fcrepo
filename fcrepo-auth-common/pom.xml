@@ -33,11 +33,6 @@
     </dependency>
     <dependency>
       <groupId>org.modeshape</groupId>
-      <artifactId>modeshape-web-jcr</artifactId>
-      <version>${modeshape.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.modeshape</groupId>
       <artifactId>modeshape-jcr</artifactId>
     </dependency>
     <dependency>
