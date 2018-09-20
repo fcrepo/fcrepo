@@ -198,7 +198,6 @@ public class WebACRecipesIT extends AbstractResourceIT {
     }
 
     @Test
-    @Ignore("needs principal providers config: https://jira.duraspace.org/browse/FCREPO-2778")
     public void scenario2() throws IOException {
         final String id = "/rest/box/bag/collection";
         final String testObj = ingestObj(id);
@@ -231,16 +230,15 @@ public class WebACRecipesIT extends AbstractResourceIT {
     }
 
     @Test
-    @Ignore("needs principal providers config: https://jira.duraspace.org/browse/FCREPO-2778")
     public void scenario3() throws IOException {
         final String idDark = "/rest/dark/archive";
         final String idLight = "/rest/dark/archive/sunshine";
         final String testObj = ingestObj(idDark);
         final String testObj2 = ingestObj(idLight);
         final String aclDark =
-                ingestAcl("fedoraAdmin", "/acls/03/acl.ttl", idDark + "/fcr:acl");
+                ingestAcl("fedoraAdmin", "/acls/03/acl.ttl", testObj + "/fcr:acl");
         final String aclLight =
-            ingestAcl("fedoraAdmin", "/acls/03/acl.ttl", idLight + "/fcr:acl");
+            ingestAcl("fedoraAdmin", "/acls/03/acl.ttl", testObj2 + "/fcr:acl");
 
         logger.debug("Anonymous can't read " + testObj);
         final HttpGet requestGet = getObjMethod(idDark);
@@ -264,11 +262,10 @@ public class WebACRecipesIT extends AbstractResourceIT {
     }
 
     @Test
-    @Ignore("needs principal providers config: https://jira.duraspace.org/browse/FCREPO-2778")
     public void scenario4() throws IOException {
         final String id = "/rest/public_collection";
         final String testObj = ingestObj(id);
-        final String acl4 = ingestAcl("fedoraAdmin", "/acls/04/acl.ttl", id + "/fcr:acl");
+        final String acl4 = ingestAcl("fedoraAdmin", "/acls/04/acl.ttl", testObj + "/fcr:acl");
 
         logger.debug("Anonymous can read " + testObj);
         final HttpGet requestGet = getObjMethod(id);
@@ -343,24 +340,21 @@ public class WebACRecipesIT extends AbstractResourceIT {
     }
 
     @Test
-    @Ignore("needs principal providers config: https://jira.duraspace.org/browse/FCREPO-2778")
     public void scenario5() throws IOException {
         final String idPublic = "/rest/mixedCollection/publicObj";
         final String idPrivate = "/rest/mixedCollection/privateObj";
         final String testObj = ingestObj("/rest/mixedCollection");
         final String publicObj = ingestObj(idPublic);
+        final String privateObj = ingestObj(idPrivate);
         final HttpPatch patch = patchObjMethod(idPublic);
-        final String acl5Public =
-                ingestAcl("fedoraAdmin", "/acls/05/acl.ttl", idPublic + "/fcr:acl");
-        final String acl5Private =
-            ingestAcl("fedoraAdmin", "/acls/05/acl.ttl", idPrivate + "/fcr:acl");
+        final String acl5TestObj =
+                ingestAcl("fedoraAdmin", "/acls/05/acl.ttl", testObj + "/fcr:acl");
 
         setAuth(patch, "fedoraAdmin");
         patch.setHeader("Content-type", "application/sparql-update");
         patch.setEntity(new StringEntity("INSERT { <> a <http://example.com/terms#publicImage> . } WHERE {}"));
         assertEquals(HttpStatus.SC_NO_CONTENT, getStatus(patch));
 
-        final String privateObj = ingestObj(idPrivate);
 
         logger.debug("Anonymous can see eg:publicImage " + publicObj);
         final HttpGet requestGet = getObjMethod(idPublic);
@@ -755,7 +749,6 @@ public class WebACRecipesIT extends AbstractResourceIT {
     }
 
     @Test
-    @Ignore("needs principal providers config: https://jira.duraspace.org/browse/FCREPO-2778")
     public void testDelegatedUserAccess() throws IOException {
         logger.debug("testing delegated authentication");
         final String targetPath = "/rest/foo";
