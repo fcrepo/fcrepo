@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.auth.webac;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -32,6 +33,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.net.URI;
+
 import javax.inject.Inject;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -42,15 +44,21 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.UriBuilder;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.query.QueryParseException;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.modify.request.UpdateDataDelete;
 import org.apache.jena.sparql.modify.request.UpdateModify;
 import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
+import org.fcrepo.http.api.FedoraLdp;
+import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
+import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -132,8 +140,41 @@ public class WebACFilter implements Filter {
         return session;
     }
 
-    private FedoraResource resource(final String repoPath) {
-        return nodeService.find(session(), repoPath);
+    private String getBaseURL(final HttpServletRequest servletRequest) {
+        final String url = servletRequest.getRequestURL().toString();
+        // the base URL will be the request URL if there is no path info
+        String baseURL = url;
+
+        // strip out the path info, if it exists
+        final String pathInfo = servletRequest.getPathInfo();
+        if (pathInfo != null) {
+            final int loc = url.lastIndexOf(pathInfo);
+            baseURL = url.substring(0, loc);
+        }
+
+        log.debug("Base URL determined from servlet request is {}", baseURL);
+        return baseURL;
+    }
+
+    private FedoraResource resource(final HttpServletRequest servletRequest) {
+        return nodeService.find(session(), getRepoPath(servletRequest));
+    }
+
+    private boolean resourceExists(final HttpServletRequest servletRequest) {
+        return nodeService.exists(session(), getRepoPath(servletRequest));
+    }
+
+    private String getRepoPath(final HttpServletRequest servletRequest) {
+        final String httpURI = servletRequest.getRequestURL().toString();
+        final HttpSession httpSession = new HttpSession(session());
+
+        final UriBuilder uriBuilder = UriBuilder.fromUri(getBaseURL(servletRequest)).path(FedoraLdp.class);
+        final HttpResourceConverter conv = new HttpResourceConverter(httpSession, uriBuilder);
+        final Resource resource = ModelFactory.createDefaultModel().createResource(httpURI);
+
+        final String repoPath = conv.asString(resource);
+        log.debug("Converted request URI {} to repo path {}", httpURI, repoPath);
+        return repoPath;
     }
 
     private String findNearestParent(final String childPath) {
@@ -173,7 +214,7 @@ public class WebACFilter implements Filter {
                     log.debug("GET allowed by {} permission", toControl);
                     return true;
                 } else {
-                    log.debug("GET prohibited by {} permission", toControl);
+                    log.debug("GET prohibited without {} permission", toControl);
                     return false;
                 }
             } else {
@@ -185,14 +226,14 @@ public class WebACFilter implements Filter {
                     log.debug("PUT allowed by {} permission", toControl);
                     return true;
                 } else {
-                    log.debug("PUT prohibited by {} permission", toControl);
+                    log.debug("PUT prohibited without {} permission", toControl);
                     return false;
                 }
             } else if (currentUser.isPermitted(toWrite)) {
                 log.debug("PUT allowed by {} permission", toWrite);
                 return true;
             } else {
-                if (nodeService.exists(session(), repoPath)) {
+                if (resourceExists(httpRequest)) {
                     // can't PUT to an existing resource without acl:Write permission
                     log.debug("PUT prohibited to existing resource without {} permission", toWrite);
                     return false;
@@ -214,8 +255,9 @@ public class WebACFilter implements Filter {
             if (currentUser.isPermitted(toWrite)) {
                 log.debug("POST allowed by {} permission", toWrite);
                 return true;
-            } else {
-                if (resource(repoPath).hasType(FEDORA_BINARY)) {
+            }
+            if (resourceExists(httpRequest)) {
+                if (resource(httpRequest).hasType(FEDORA_BINARY)) {
                     // LDP-NR
                     // user without the acl:Write permission cannot POST to binaries
                     log.debug("POST prohibited to binary resource without {} permission", toWrite);
@@ -231,6 +273,10 @@ public class WebACFilter implements Filter {
                         return false;
                     }
                 }
+            } else {
+                // prohibit POST to non-existent resources without the acl:Write permission
+                log.debug("POST prohibited to non-existent resource without {} permission", toWrite);
+                return false;
             }
         case "DELETE":
             if (isAcl) {
@@ -238,7 +284,7 @@ public class WebACFilter implements Filter {
                     log.debug("DELETE allowed by {} permission", toControl);
                     return true;
                 } else {
-                    log.debug("DELETE prohibited by {} permission", toControl);
+                    log.debug("DELETE prohibited without {} permission", toControl);
                     return false;
                 }
             } else {
@@ -251,7 +297,7 @@ public class WebACFilter implements Filter {
                     log.debug("PATCH allowed by {} permission", toControl);
                     return true;
                 } else {
-                    log.debug("PATCH prohibited by {} permission", toControl);
+                    log.debug("PATCH prohibited without {} permission", toControl);
                     return false;
                 }
             } else if (currentUser.isPermitted(toWrite)) {
