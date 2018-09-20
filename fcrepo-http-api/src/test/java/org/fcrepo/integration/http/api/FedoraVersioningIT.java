@@ -76,6 +76,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1205,6 +1206,49 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             assertNoMementoDatetimeHeaderPresent(response);
             assertEquals("Did not get Location header", version1Uri, response.getFirstHeader(LOCATION).getValue());
             assertEquals("Did not get Content-Length == 0", "0", response.getFirstHeader(CONTENT_LENGTH).getValue());
+        }
+    }
+
+    @Test
+    public void testDatetimeNegotiationExactMatch() throws Exception {
+        final CloseableHttpClient customClient = createClient(true);
+        final DateTimeFormatter FMT = RFC_1123_DATE_TIME.withZone(ZoneId.of("UTC"));
+
+        final String originalUri = createVersionedContainer(id);
+
+        // Create a current memento
+        final String version1Uri = createMemento(originalUri, null, "text/turtle", null);
+        final HttpHead httpHead = new HttpHead(version1Uri);
+        String version1Datetime;
+        try (final CloseableHttpResponse response = customClient.execute(httpHead)) {
+            version1Datetime = response.getFirstHeader(MEMENTO_DATETIME_HEADER).getValue();
+        }
+
+        // Create a slightly older memento
+        final Instant version2Instant = Instant.from(FMT.parse(version1Datetime)).minus(5, ChronoUnit.SECONDS);
+        final String version2Datetime = FMT.format(version2Instant);
+        final String version2Uri = createLDPRSMementoWithExistingBody(version2Datetime);
+
+        // Attempt to retrieve older memento
+        final HttpGet getVersion2 = getObjMethod(id);
+        getVersion2.addHeader(ACCEPT_DATETIME, version2Datetime);
+
+        try (final CloseableHttpResponse response = customClient.execute(getVersion2)) {
+            assertEquals("Did not get FOUND response", FOUND.getStatusCode(), getStatus(response));
+            assertNoMementoDatetimeHeaderPresent(response);
+            assertEquals("Did not get expected memento location",
+                    version2Uri, response.getFirstHeader(LOCATION).getValue());
+        }
+
+        // Attempt to get newest memento
+        final HttpGet getVersion1 = getObjMethod(id);
+        getVersion1.addHeader(ACCEPT_DATETIME, version1Datetime);
+
+        try (final CloseableHttpResponse response = customClient.execute(getVersion1)) {
+            assertEquals("Did not get FOUND response", FOUND.getStatusCode(), getStatus(response));
+            assertNoMementoDatetimeHeaderPresent(response);
+            assertEquals("Did not get expected memento location",
+                    version1Uri, response.getFirstHeader(LOCATION).getValue());
         }
     }
 
