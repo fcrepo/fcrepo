@@ -1184,6 +1184,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             FMT.format(ISO_INSTANT.parse("2016-06-17T11:41:00Z", Instant::from));
         final String version2Uri = createLDPRSMementoWithExistingBody(memento2);
 
+        // Request datetime between memento1 and memento2
         final String request1Datetime =
             FMT.format(ISO_INSTANT.parse("2017-01-12T00:00:00Z", Instant::from));
         final HttpGet getMemento = getObjMethod(id);
@@ -1196,6 +1197,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             assertEquals("Did not get Content-Length == 0", "0", response.getFirstHeader(CONTENT_LENGTH).getValue());
         }
 
+        // Request datetime more recent than both mementos
         final String request2Datetime =
             FMT.format(ISO_INSTANT.parse("2018-01-10T00:00:00Z", Instant::from));
         final HttpGet getMemento2 = getObjMethod(id);
@@ -1205,6 +1207,19 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             assertEquals("Did not get FOUND response", FOUND.getStatusCode(), getStatus(response));
             assertNoMementoDatetimeHeaderPresent(response);
             assertEquals("Did not get Location header", version1Uri, response.getFirstHeader(LOCATION).getValue());
+            assertEquals("Did not get Content-Length == 0", "0", response.getFirstHeader(CONTENT_LENGTH).getValue());
+        }
+
+        // Request datetime older than either mementos
+        final String request3Datetime =
+                FMT.format(ISO_INSTANT.parse("2014-01-01T00:00:00Z", Instant::from));
+        final HttpGet getMemento3 = getObjMethod(id);
+        getMemento3.addHeader(ACCEPT_DATETIME, request3Datetime);
+
+        try (final CloseableHttpResponse response = customClient.execute(getMemento3)) {
+            assertEquals("Did not get FOUND response", FOUND.getStatusCode(), getStatus(response));
+            assertNoMementoDatetimeHeaderPresent(response);
+            assertEquals("Did not get Location header", version2Uri, response.getFirstHeader(LOCATION).getValue());
             assertEquals("Did not get Content-Length == 0", "0", response.getFirstHeader(CONTENT_LENGTH).getValue());
         }
     }
