@@ -21,6 +21,8 @@ import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_ADMIN_ROL
 import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_USER_ROLE;
 import static org.fcrepo.auth.webac.URIConstants.FOAF_AGENT_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_AUTHENTICATED_AGENT_VALUE;
+import static org.fcrepo.auth.common.HttpHeaderPrincipalProvider.HttpHeaderPrincipal;
+import static org.fcrepo.auth.common.DelegateHeaderPrincipalProvider.DelegatedHeaderPrincipal;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
@@ -51,6 +53,7 @@ import org.fcrepo.http.api.FedoraLdp;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.http.commons.session.SessionFactory;
+import org.fcrepo.kernel.api.exception.RepositoryConfigurationException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -109,48 +112,86 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
     @Override
     protected AuthorizationInfo doGetAuthorizationInfo(final PrincipalCollection principals) {
         final SimpleAuthorizationInfo authzInfo = new SimpleAuthorizationInfo();
+        final Map<String, Collection<String>> roles;
+        boolean isAdmin = false;
+
+        final Collection<DelegatedHeaderPrincipal> delegatePrincipals =
+                principals.byType(DelegatedHeaderPrincipal.class);
 
         // if the user was assigned the "fedoraAdmin" container role, they get the
         // "fedoraAdmin" application role
         if (principals.byType(ContainerRolesPrincipal.class).contains(adminPrincipal)) {
+            if (delegatePrincipals.size() > 1) {
+                throw new RepositoryConfigurationException("Too many delegates! " + delegatePrincipals);
+            } else if (delegatePrincipals.size() < 1) {
             authzInfo.addRole(FEDORA_ADMIN_ROLE);
-        } else {
-            // otherwise, they are a normal user
+                return authzInfo;
+            }
+            isAdmin = true;
+            // if Admin is delegating, they are a normal user
             authzInfo.addRole(FEDORA_USER_ROLE);
+        } else if (principals.byType(ContainerRolesPrincipal.class).contains(userPrincipal)) {
+            authzInfo.addRole(FEDORA_USER_ROLE);
+        }
 
             // for non-admins, we must check the ACL for the requested resource
-            // convert the request URI to a JCR node
+        roles = getRolesForPath();
+
+        for (Object o : principals.asList()) {
+            log.debug("User has principal with name: {}", ((Principal) o).getName());
+        }
+        final Principal userPrincipal = principals.oneByType(BasicUserPrincipal.class);
+        final Collection<HttpHeaderPrincipal> headerPrincipals = principals.byType(HttpHeaderPrincipal.class);
+        // Add permissions for user or delegated user principal
+        if (isAdmin && delegatePrincipals.size() == 1) {
+            final DelegatedHeaderPrincipal delegatedPrincipal = delegatePrincipals.iterator().next();
+            log.debug("Admin user is delegating to {}", delegatedPrincipal);
+            addPermissions(authzInfo, roles, delegatedPrincipal);
+        } else if (userPrincipal != null) {
+            log.debug("Basic user principal username: {}", userPrincipal.getName());
+            addPermissions(authzInfo, roles, userPrincipal);
+        } else {
+            log.debug("No basic user principal found");
+        }
+        // Add permissions for header principals
+        if (headerPrincipals.isEmpty()) {
+            log.debug("No header principals found!");
+        }
+        headerPrincipals.forEach((headerPrincipal) -> {
+            addPermissions(authzInfo, roles, headerPrincipal);
+        });
+
+        return authzInfo;
+
+    }
+
+    private Map<String, Collection<String>> getRolesForPath() {
+        Map<String, Collection<String>> roles = null;
             final FedoraResource fedoraResource = getResourceOrParentFromPath(request.getPathInfo());
 
             if (fedoraResource != null) {
                 final Node node = ((FedoraResourceImpl) fedoraResource).getNode();
 
                 // check ACL for the request URI and get a mapping of agent => modes
-                final Map<String, Collection<String>> roles = rolesProvider.getRoles(node, true);
-
-                for (Object o : principals.asList()) {
-                    log.debug("User has principal with name: {}", ((Principal) o).getName());
-                }
-                final Principal userPrincipal = principals.oneByType(BasicUserPrincipal.class);
-                if (userPrincipal != null) {
-                    log.debug("Basic user principal username: {}", userPrincipal.getName());
-                    final Collection<String> modesForUser = getModesForUser(roles, userPrincipal);
-                    if (modesForUser != null) {
-                        // add WebACPermission instance for each mode in the Authorization
-                        final URI fullRequestURI = URI.create(request.getRequestURL().toString());
-                        for (String mode : modesForUser) {
-                            final WebACPermission perm = new WebACPermission(URI.create(mode), fullRequestURI);
-                            authzInfo.addObjectPermission(perm);
-                            log.debug("Added permission {}", perm);
-                        }
-                    }
-                } else {
-                    log.debug("No basic user principal found");
-                }
-            }
+            roles = rolesProvider.getRoles(node, true);
         }
+        return roles;
+    }
 
-        return authzInfo;
+    private void addPermissions(final SimpleAuthorizationInfo authzInfo, final Map<String, Collection<String>> roles,
+            final Principal principal) {
+        if (roles != null) {
+            final Collection<String> modesForUser = getModesForUser(roles, principal);
+                if (modesForUser != null) {
+                    // add WebACPermission instance for each mode in the Authorization
+                    final URI fullRequestURI = URI.create(request.getRequestURL().toString());
+                    for (String mode : modesForUser) {
+                        final WebACPermission perm = new WebACPermission(URI.create(mode), fullRequestURI);
+                        authzInfo.addObjectPermission(perm);
+                        log.debug("Added permission {}", perm);
+                    }
+                }
+        }
     }
 
     private Collection<String> getModesForUser(final Map<String, Collection<String>> roles,
