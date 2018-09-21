@@ -9,4 +9,5 @@
 <#auth2> a acl:Authorization ;
   acl:agent "Editors" ;
   acl:mode acl:Read, acl:Write ;
+  acl:default </rest/public_collection> ;
   acl:accessTo </rest/public_collection> .

@@ -35,6 +35,43 @@ public class DelegateHeaderPrincipalProvider extends HttpHeaderPrincipalProvider
     private static final String SEP = "no-separator";
     protected static final String DELEGATE_HEADER = "On-Behalf-Of";
 
+    public static class DelegatedHeaderPrincipal implements Principal {
+
+        private final String name;
+
+        protected DelegatedHeaderPrincipal(final String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String getName() {
+            return name;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (o instanceof DelegatedHeaderPrincipal) {
+                return ((DelegatedHeaderPrincipal) o).getName().equals(
+                        this.getName());
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            if (name == null) {
+                return 0;
+            }
+            return name.hashCode();
+        }
+
+    }
+
     /**
      * Default Constructor
      */
@@ -62,6 +99,11 @@ public class DelegateHeaderPrincipalProvider extends HttpHeaderPrincipalProvider
         }
 
         throw new RepositoryConfigurationException("Too many delegates! " + principals);
+    }
+
+    @Override
+    protected Principal createPrincipal(final String name) {
+        return new DelegatedHeaderPrincipal(name.trim());
     }
 
 }

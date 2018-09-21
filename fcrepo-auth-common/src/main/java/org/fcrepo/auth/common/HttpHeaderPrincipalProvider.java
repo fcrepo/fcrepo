@@ -37,11 +37,11 @@ import java.util.Set;
  */
 public class HttpHeaderPrincipalProvider extends AbstractPrincipalProvider {
 
-    protected static class HttpHeaderPrincipal implements Principal {
+    public static class HttpHeaderPrincipal implements Principal {
 
         private final String name;
 
-        HttpHeaderPrincipal(final String name) {
+        protected HttpHeaderPrincipal(final String name) {
             this.name = name;
         }
 
@@ -128,11 +128,15 @@ public class HttpHeaderPrincipalProvider extends AbstractPrincipalProvider {
 
         for (final String name : names) {
             LOGGER.debug("Adding HTTP header-provided principal: {}", name.trim());
-            principals.add(new HttpHeaderPrincipal(name.trim()));
+            principals.add(createPrincipal(name));
         }
 
         return principals;
 
+    }
+
+    protected Principal createPrincipal(final String name) {
+        return new HttpHeaderPrincipal(name.trim());
     }
 
 }

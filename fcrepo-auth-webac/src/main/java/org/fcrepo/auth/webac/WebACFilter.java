@@ -22,6 +22,7 @@ import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_ADMIN_ROLE;
 import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_USER_ROLE;
+import static org.fcrepo.auth.webac.URIConstants.FOAF_AGENT_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_APPEND;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_CONTROL;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ;
@@ -32,6 +33,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.net.URI;
+import java.security.Principal;
+
 import javax.inject.Inject;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -50,6 +53,8 @@ import org.apache.jena.sparql.modify.request.UpdateModify;
 import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
 import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.subject.PrincipalCollection;
+import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.apache.shiro.subject.Subject;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.api.FedoraSession;
@@ -67,6 +72,25 @@ public class WebACFilter implements Filter {
     private static MediaType sparqlUpdate = MediaType.valueOf(contentTypeSPARQLUpdate);
 
     private FedoraSession session;
+
+    private static final Principal FOAF_AGENT_PRINCIPAL = new Principal() {
+
+        @Override
+        public String getName() {
+            return FOAF_AGENT_VALUE;
+        }
+
+        @Override
+        public String toString() {
+            return getName();
+        }
+
+    };
+
+    private static final PrincipalCollection FOAF_AGENT_PRINCIPAL_COLLECTION =
+            new SimplePrincipalCollection(FOAF_AGENT_PRINCIPAL, WebACAuthorizingRealm.class.getCanonicalName());
+
+    private static Subject FOAF_AGENT_SUBJECT;
 
     @Inject
     private NodeService nodeService;
@@ -109,7 +133,7 @@ public class WebACFilter implements Filter {
         } else {
             log.debug("User is NOT authenticated");
             // anonymous users are subject to permission checks
-            if (!isAuthorized(currentUser, httpRequest)) {
+            if (!isAuthorized(getFoafAgentSubject(), httpRequest)) {
                 // if anonymous user is not authorized, set response to forbidden
                 ((HttpServletResponse) response).sendError(SC_FORBIDDEN);
                 return;
@@ -118,6 +142,13 @@ public class WebACFilter implements Filter {
 
         // proceed to the next filter
         chain.doFilter(httpRequest, response);
+    }
+
+    private Subject getFoafAgentSubject() {
+        if (FOAF_AGENT_SUBJECT == null) {
+            FOAF_AGENT_SUBJECT = new Subject.Builder().principals(FOAF_AGENT_PRINCIPAL_COLLECTION).buildSubject();
+        }
+        return FOAF_AGENT_SUBJECT;
     }
 
     @Override

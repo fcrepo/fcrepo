@@ -17,7 +17,6 @@
  */
 package org.fcrepo.auth.common;
 
-import static org.apache.shiro.subject.support.DefaultSubjectContext.PRINCIPALS_SESSION_KEY;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.servlet.FilterChain;
@@ -26,15 +25,16 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.security.Principal;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.SimplePrincipalCollection;
+import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
 
 /**
@@ -62,13 +62,14 @@ abstract class AbstractPrincipalProvider implements PrincipalProvider {
     public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain chain)
             throws IOException, ServletException {
         final HttpServletRequest hsRequest = (HttpServletRequest) request;
-        final HttpSession session = hsRequest.getSession();
-        PrincipalCollection principals = (PrincipalCollection) session.getAttribute(PRINCIPALS_SESSION_KEY);
+        final Subject currentUser = SecurityUtils.getSubject();
+        PrincipalCollection principals = currentUser.getPrincipals();
+
         final Set<Principal> newPrincipals = getPrincipals(hsRequest);
         if (newPrincipals.size() > 0) {
             final Set<Principal> currentPrincipals;
-            if (principals == null) {
-                log.debug("Shiro Principal object is not found in session!");
+            if (principals == null || principals.asList().isEmpty()) {
+                log.debug("Shiro Principal object is not found!");
                 currentPrincipals = newPrincipals;
               } else {
                 currentPrincipals = new HashSet<>((Set<Principal>) principals.asSet());
@@ -77,7 +78,7 @@ abstract class AbstractPrincipalProvider implements PrincipalProvider {
             }
             log.debug("Number of Principals after processing the current request: {}", currentPrincipals.size());
             principals = new SimplePrincipalCollection(currentPrincipals, REALM_NAME);
-            hsRequest.getSession().setAttribute(PRINCIPALS_SESSION_KEY, principals);
+            currentUser.runAs(principals);
         } else {
             log.debug("New Principals not found in the request!");
         }
