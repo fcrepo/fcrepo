@@ -1,0 +1,9 @@
+@prefix acl: <http://www.w3.org/ns/auth/acl#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+
+<#restricted> a acl:Authorization ;
+              acl:agent "user27" ;
+              acl:mode acl:Read;
+              acl:mode acl:Append;
+              acl:default </rest/test-read-append> ;
+              acl:accessTo </rest/test-read-append> .

@@ -32,6 +32,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
 import java.util.Optional;
 import javax.ws.rs.core.Link;
 
@@ -1196,6 +1197,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
         assertEquals(HttpStatus.SC_OK, getStatus(darkReq));
     }
 
+    @Test
     public void testAgentGroupWithHashUris() throws Exception {
         ingestTurtleResource("fedoraAdmin", "/acls/agent-group-list.ttl",
                              serverAddress + "/rest/agent-group-list");
@@ -1227,5 +1229,71 @@ public class WebACRecipesIT extends AbstractResourceIT {
         final HttpGet getFlat = new HttpGet(flat);
         setAuth(getFlat, "testuser");
         assertEquals(HttpStatus.SC_OK, getStatus(getFlat));
+    }
+
+    @Test
+    public void testAclAppendPermissions() throws Exception {
+        final String testObj = ingestBinary("/rest/test-read-append", new StringEntity("foo"));
+        ingestAcl("fedoraAdmin", "/acls/27/read-append.ttl", testObj + "/fcr:acl");
+        final String username = "user27";
+
+        final HttpOptions optionsReq = new HttpOptions(testObj);
+        setAuth(optionsReq, username);
+        assertEquals(HttpStatus.SC_OK, getStatus(optionsReq));
+
+        final HttpHead headReq = new HttpHead(testObj);
+        setAuth(headReq, username);
+        assertEquals(HttpStatus.SC_OK, getStatus(headReq));
+
+        final HttpGet getReq = new HttpGet(testObj);
+        setAuth(getReq, username);
+        final String descriptionUri;
+        try (final CloseableHttpResponse response = execute(getReq)) {
+            assertEquals(HttpStatus.SC_OK, getStatus(response));
+            descriptionUri = Arrays.stream(response.getHeaders("Link"))
+                    .flatMap(header -> Arrays.stream(header.getValue().split(","))).map(linkStr -> Link.valueOf(
+                            linkStr))
+                    .filter(link -> link.getRels().contains("describedby")).map(link -> link.getUri().toString())
+                    .findFirst().orElse(null);
+        }
+
+
+        final HttpPut putReq = new HttpPut(testObj);
+        setAuth(putReq, username);
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(putReq));
+
+        final HttpDelete deleteReq = new HttpDelete(testObj);
+        setAuth(deleteReq, username);
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(deleteReq));
+
+        final HttpPost postReq = new HttpPost(testObj);
+        setAuth(postReq, username);
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(postReq));
+
+        if (descriptionUri != null) {
+            final HttpOptions optionsDescReq = new HttpOptions(descriptionUri);
+            setAuth(optionsDescReq, username);
+            assertEquals(HttpStatus.SC_OK, getStatus(optionsDescReq));
+
+            final HttpHead headDescReq = new HttpHead(descriptionUri);
+            setAuth(headDescReq, username);
+            assertEquals(HttpStatus.SC_OK, getStatus(headDescReq));
+
+            final HttpGet getDescReq = new HttpGet(descriptionUri);
+            setAuth(getDescReq, username);
+            assertEquals(HttpStatus.SC_OK, getStatus(getDescReq));
+
+            final HttpPut putDescReq = new HttpPut(descriptionUri);
+            setAuth(putDescReq, username);
+            assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(putDescReq));
+
+            final HttpDelete deleteDescReq = new HttpDelete(descriptionUri);
+            setAuth(deleteDescReq, username);
+            assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(deleteDescReq));
+
+            final HttpPost postDescReq = new HttpPost(descriptionUri);
+            setAuth(postDescReq, username);
+            assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(postDescReq));
+        }
     }
 }
