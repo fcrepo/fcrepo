@@ -53,7 +53,7 @@ public class ContentDigestTest {
     @Test
     public void testSHA256() {
         assertEquals("Failed to produce a proper content digest URI!",
-                create("urn:sha256:fake"), asURI("SHA-256", "fake"));
+                create("urn:sha-256:fake"), asURI("SHA-256", "fake"));
     }
 
     @Test
