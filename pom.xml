@@ -56,7 +56,7 @@
     <xml-apis.version>1.4.01</xml-apis.version>
     <velocity.version>1.7</velocity.version>
     <!-- JCBC dependencies -->
-    <postgresql.version>42.2.4</postgresql.version>
+    <postgresql.version>42.2.5</postgresql.version>
     <mysql.version>5.1.46</mysql.version>
     <!-- AWS S3 dependencies -->
     <aws.client.version>1.11.412</aws.client.version>
