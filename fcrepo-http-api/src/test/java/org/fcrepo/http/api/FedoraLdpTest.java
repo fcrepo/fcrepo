@@ -1119,8 +1119,8 @@ public class FedoraLdpTest {
         try (final InputStream content = toInputStream("x", UTF_8)) {
             final MediaType requestContentType = MediaType.valueOf("some/mime-type; with=some; param=s");
             final String sha = "73cb3858a687a8494ca3323053016282f3dad39d42cf62ca4e79dda2aac7d9ac";
-            final String requestSHA = "sha256=" + sha;
-            final Set<URI> shaURI = singleton(URI.create("urn:sha256:" + sha));
+            final String requestSHA = "sha-256=" + sha;
+            final Set<URI> shaURI = singleton(URI.create("urn:sha-256:" + sha));
             final Response actual = testObj.createObject(null, requestContentType, "b", content, nonRDFSourceLink,
                 requestSHA);
             assertEquals(CREATED.getStatusCode(), actual.getStatus());

@@ -207,6 +207,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     private static final String TEST_MD5_DIGEST_HEADER_VALUE = "md5=baed005300234f3d1503c50a48ce8e6f";
 
+    private static final String TEST_SHA256_DIGEST_HEADER_VALUE =
+            "sha-256=fb871ff8cce8fea83dfaeab41784305a1461e008dc02a371ed26d856c766c903";
+
     private static final Logger LOGGER = getLogger(FedoraLdpIT.class);
 
     private static DateTimeFormatter headerFormat =
@@ -428,7 +431,23 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
     }
 
+    @Test
+    public void testHeadDatastreamWithWantDigestSha256() throws IOException, ParseException {
+        final String id = getRandomUniqueId();
+        createDatastream(id, "x", TEST_BINARY_CONTENT);
 
+        final HttpHead headObjMethod = headObjMethod(id + "/x");
+        headObjMethod.addHeader(WANT_DIGEST, "sha-256");
+        try (final CloseableHttpResponse response = execute(headObjMethod)) {
+            assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
+            assertEquals(TEXT_PLAIN, response.getFirstHeader(CONTENT_TYPE).getValue());
+            assertTrue(response.getHeaders(DIGEST).length > 0);
+
+            final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
+            assertTrue("SHA-256 Fixity Checksum doesn't match",
+                    digesterHeaderValue.indexOf(TEST_SHA256_DIGEST_HEADER_VALUE) >= 0);
+        }
+    }
 
     @Test
     public void testHeadRdfResourceHeaders() throws IOException {
@@ -692,7 +711,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
                     digesterHeaderValue.indexOf(TEST_MD5_DIGEST_HEADER_VALUE) >= 0);
             assertTrue("SHA-256 fixity checksum doesn't match",
                 digesterHeaderValue
-                    .indexOf("sha256=fb871ff8cce8fea83dfaeab41784305a1461e008dc02a371ed26d856c766c903") >= 0);
+                            .indexOf(
+                                    "sha-256=fb871ff8cce8fea83dfaeab41784305a1461e008dc02a371ed26d856c766c903") >= 0);
         }
     }
 
@@ -1687,7 +1707,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final File img = new File("src/test/resources/test-objects/img.png");
         method.addHeader(CONTENT_TYPE, "application/octet-stream");
         method.addHeader("Digest", "md5=6668675a91f39ca1afe46c084e8406ba," +
-                " sha256=7b115a72978fe138287c1a6dfe6cc1afce4720fb3610a81d32e4ad518700c923");
+                " sha-256=7b115a72978fe138287c1a6dfe6cc1afce4720fb3610a81d32e4ad518700c923");
         method.setEntity(new FileEntity(img));
         method.addHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
 
