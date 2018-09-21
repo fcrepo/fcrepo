@@ -39,7 +39,7 @@ public final class ContentDigest {
     private static final Logger LOGGER = getLogger(ContentDigest.class);
 
     public enum DIGEST_ALGORITHM {
-        SHA1("SHA", "urn:sha1"), SHA256("SHA-256", "urn:sha256"), MD5("MD5", "urn:md5"), MISSING("NONE", "missing");
+        SHA1("SHA", "urn:sha1"), SHA256("SHA-256", "urn:sha-256"), MD5("MD5", "urn:md5"), MISSING("NONE", "missing");
 
         final public String algorithm;
         final private String scheme;

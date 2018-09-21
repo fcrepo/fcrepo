@@ -1258,12 +1258,13 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             final FedoraResource timemap = this.getTimeMap();
             if (timemap != null) {
                 final Stream<FedoraResource> mementos = timemap.getChildren();
-                final Optional<FedoraResource> closest =
-                    mementos.filter(t -> t.getMementoDatetime().compareTo(mementoDatetime) <= 0)
-                        .reduce((a,
-                            b) -> dateTimeDifference(a.getMementoDatetime(), mementoDatetime,
-                                ChronoUnit.SECONDS) <= dateTimeDifference(b.getMementoDatetime(), mementoDatetime,
-                                    ChronoUnit.SECONDS) ? a : b);
+                // Filter to mementos prior to mementoDatetime, then reduce to the nearest one
+                final Optional<FedoraResource> closest = mementos
+                        .filter(t -> dateTimeDifference(mementoDatetime, t.getMementoDatetime()) <= 0)
+                        .reduce((a, b) ->
+                                dateTimeDifference(a.getMementoDatetime(), mementoDatetime)
+                                <= dateTimeDifference(b.getMementoDatetime(), mementoDatetime) ?
+                                        a : b);
                 if (closest.isPresent()) {
                     // Return the closest version older than the requested date.
                     return closest.get();
@@ -1285,11 +1286,10 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
      *
      * @param d1 first datetime
      * @param d2 second datetime
-     * @param unit unit to compare down to
      * @return the difference
      */
-  static long dateTimeDifference(final Temporal d1, final Temporal d2, final ChronoUnit unit) {
-      return unit.between(d1, d2);
+  static long dateTimeDifference(final Temporal d1, final Temporal d2) {
+      return ChronoUnit.SECONDS.between(d1, d2);
   }
 
   @Override

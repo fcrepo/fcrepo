@@ -40,13 +40,17 @@ public class ShiroSecurityContext implements SecurityContext {
      * @param user subject to create the security context for
      */
     public ShiroSecurityContext(final Subject user) {
-        this.user = user;
-        final PrincipalCollection principals = user.getPrincipals();
-        final BasicUserPrincipal userPrincipal = principals.oneByType(BasicUserPrincipal.class);
-        if (userPrincipal != null) {
-            this.userName = userPrincipal.getName();
-        } else {
-            this.userName = null;
+        if (user != null) {
+            this.user = user;
+            final PrincipalCollection principals = user.getPrincipals();
+            if (principals != null) {
+                final BasicUserPrincipal userPrincipal = principals.oneByType(BasicUserPrincipal.class);
+                if (userPrincipal != null) {
+                    this.userName = userPrincipal.getName();
+                } else {
+                    this.userName = null;
+                }
+            }
         }
     }
 

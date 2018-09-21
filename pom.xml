@@ -71,7 +71,6 @@
     <fcrepo.test.context.path />
   </properties>
   <modules>
-    <module>fcrepo-boms</module>
     <module>fcrepo-kernel-api</module>
     <module>fcrepo-kernel-modeshape</module>
     <module>fcrepo-webapp</module>
@@ -88,23 +87,10 @@
   </modules>
   <dependencyManagement>
     <dependencies>
-      <!-- Import the ModeShape BOM for embedded usage. This adds to the
-        "dependenciesManagement" section defaults for all of the modules we might
-        need, but we still have to include in the "dependencies" section the modules
-        we DO need. The benefit is that we don't have to specify the versions of
-        any of those modules. -->
       <dependency>
-        <groupId>org.modeshape.bom</groupId>
-        <artifactId>modeshape-bom-embedded</artifactId>
+        <groupId>org.modeshape</groupId>
+        <artifactId>modeshape-jcr</artifactId>
         <version>${modeshape.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>org.jboss.logging</groupId>
-            <artifactId>jboss-logging</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.jboss.logging</groupId>

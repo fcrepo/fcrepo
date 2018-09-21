@@ -7,6 +7,13 @@
  
   <context:property-placeholder/>
     <!-- Shiro config -->
+
+   <bean name="headerProvider" class="org.fcrepo.auth.common.HttpHeaderPrincipalProvider">
+      <property name="headerName" value="some-header"/>
+      <property name="separator" value=","/>
+  </bean>
+
+  <bean name="delegatedPrincipalProvider" class="org.fcrepo.auth.common.DelegateHeaderPrincipalProvider"/>
   
   <bean id="testAuthFilter" class="org.fcrepo.http.commons.test.util.TestAuthenticationRequestFilter"/>
   <bean id="webACFilter" class="org.fcrepo.auth.webac.WebACFilter"/>
@@ -16,7 +23,7 @@
     <property name="securityManager" ref="securityManager"/>
     <property name="filterChainDefinitions">
       <value>
-        /** = testAuthFilter, servletAuthFilter, webACFilter
+        /** = testAuthFilter, servletAuthFilter, delegatedPrincipalProvider, headerProvider, webACFilter
       </value>
     </property>
   </bean>

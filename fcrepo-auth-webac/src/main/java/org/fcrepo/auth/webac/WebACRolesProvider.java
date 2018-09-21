@@ -64,7 +64,6 @@ import javax.inject.Inject;
 import javax.jcr.ItemNotFoundException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 import javax.jcr.version.Version;
 import javax.jcr.version.VersionHistory;
 
@@ -80,14 +79,13 @@ import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.modeshape.FedoraSessionImpl;
 import org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
-import org.modeshape.jcr.value.Path;
 import org.slf4j.Logger;
 
 /**
  * @author acoburn
  * @since 9/3/15
  */
-public class WebACRolesProvider implements AccessRolesProvider {
+public class WebACRolesProvider {
 
     public static final String GROUP_AGENT_BASE_URI_PROPERTY = "fcrepo.auth.webac.groupAgent.baseUri";
 
@@ -108,42 +106,6 @@ public class WebACRolesProvider implements AccessRolesProvider {
 
     @Inject
     private SessionFactory sessionFactory;
-
-    @Override
-    public void postRoles(final Node node, final Map<String, Set<String>> data) throws RepositoryException {
-        throw new UnsupportedOperationException("postRoles() is not implemented");
-    }
-
-    @Override
-    public void deleteRoles(final Node node) throws RepositoryException {
-        throw new UnsupportedOperationException("deleteRoles() is not implemented");
-    }
-
-    @Override
-    public Map<String, Collection<String>> findRolesForPath(final Path absPath, final Session session)
-            throws RepositoryException {
-        return getAgentRoles(locateResource(absPath, new FedoraSessionImpl(session)));
-    }
-
-    private FedoraResource locateResource(final Path path, final FedoraSession session) {
-        try {
-            if (getJcrSession(session).nodeExists(path.toString()) || path.isRoot()) {
-                LOGGER.debug("findRolesForPath: {}", path.getString());
-                final FedoraResource resource = nodeResourceConverter.convert(
-                        getJcrSession(session).getNode(path.toString()));
-
-                if (resource.hasType("nt:version")) {
-                    LOGGER.debug("{} is a version, getting the baseVersion", resource);
-                    return getBaseVersion(resource);
-                }
-                return resource;
-            }
-        } catch (final RepositoryException ex) {
-            throw new RepositoryRuntimeException(ex);
-        }
-        LOGGER.trace("Path: {} does not exist, checking parent", path.getString());
-        return locateResource(path.getParent(), session);
-    }
 
     /**
      * Get the versionable FedoraResource for this version resource
@@ -170,7 +132,13 @@ public class WebACRolesProvider implements AccessRolesProvider {
         return resource;
     }
 
-    @Override
+    /**
+     * Get the roles assigned to this Node. Optionally search up the tree for the effective roles.
+     *
+     * @param node the subject Node
+     * @param effective if true then search for effective roles
+     * @return a set of roles for each principal
+     */
     public Map<String, Collection<String>> getRoles(final Node node, final boolean effective) {
         try {
             return getAgentRoles(nodeService.find(new FedoraSessionImpl(node.getSession()), node.getPath()));

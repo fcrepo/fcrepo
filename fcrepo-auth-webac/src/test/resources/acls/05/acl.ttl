@@ -5,9 +5,11 @@
 <#open> a acl:Authorization ;
    acl:agentClass foaf:Agent ;
    acl:mode acl:Read ;
+   acl:default </rest/mixedCollection> ;
    acl:accessToClass eg:publicImage .
 
 <#restricted> a acl:Authorization ;
    acl:agent 'Admins' ;
    acl:mode acl:Read ;
+   acl:default </rest/mixedCollection> ;
    acl:accessTo </rest/mixedCollection> .
