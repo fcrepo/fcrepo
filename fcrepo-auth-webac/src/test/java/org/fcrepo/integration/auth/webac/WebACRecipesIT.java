@@ -234,11 +234,9 @@ public class WebACRecipesIT extends AbstractResourceIT {
         final String idDark = "/rest/dark/archive";
         final String idLight = "/rest/dark/archive/sunshine";
         final String testObj = ingestObj(idDark);
-        final String testObj2 = ingestObj(idLight);
+        final String testObj2 = ingestObjWithACL(idLight, "/acls/03/acl.ttl");
         final String aclDark =
                 ingestAcl("fedoraAdmin", "/acls/03/acl.ttl", testObj + "/fcr:acl");
-        final String aclLight =
-            ingestAcl("fedoraAdmin", "/acls/03/acl.ttl", testObj2 + "/fcr:acl");
 
         logger.debug("Anonymous can't read " + testObj);
         final HttpGet requestGet = getObjMethod(idDark);
@@ -264,8 +262,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
     @Test
     public void scenario4() throws IOException {
         final String id = "/rest/public_collection";
-        final String testObj = ingestObj(id);
-        final String acl4 = ingestAcl("fedoraAdmin", "/acls/04/acl.ttl", testObj + "/fcr:acl");
+        final String testObj = ingestObjWithACL(id, "/acls/04/acl.ttl");
 
         logger.debug("Anonymous can read " + testObj);
         final HttpGet requestGet = getObjMethod(id);
@@ -343,12 +340,10 @@ public class WebACRecipesIT extends AbstractResourceIT {
     public void scenario5() throws IOException {
         final String idPublic = "/rest/mixedCollection/publicObj";
         final String idPrivate = "/rest/mixedCollection/privateObj";
-        final String testObj = ingestObj("/rest/mixedCollection");
+        final String testObj = ingestObjWithACL("/rest/mixedCollection", "/acls/05/acl.ttl");
         final String publicObj = ingestObj(idPublic);
         final String privateObj = ingestObj(idPrivate);
         final HttpPatch patch = patchObjMethod(idPublic);
-        final String acl5TestObj =
-                ingestAcl("fedoraAdmin", "/acls/05/acl.ttl", testObj + "/fcr:acl");
 
         setAuth(patch, "fedoraAdmin");
         patch.setHeader("Content-type", "application/sparql-update");
@@ -618,13 +613,12 @@ public class WebACRecipesIT extends AbstractResourceIT {
     @Test
     public void scenario21TestACLNotForInheritance() throws IOException {
         final String parentPath = "/rest/resource_acl_no_inheritance";
-        final String parentObj = ingestObj(parentPath);
+        // Ingest ACL with no acl:default statement to the parent resource
+        final String parentObj = ingestObjWithACL(parentPath, "/acls/21/acl.ttl");
 
         final String id = parentPath + "/" + getRandomUniqueId();
         final String testObj = ingestObj(id);
 
-        // Ingest ACL with no acl:default statement to the parent resource
-        ingestAcl("fedoraAdmin", "/acls/21/acl.ttl", parentObj + "/fcr:acl");
 
         // Test the parent ACL with no acl:default is applied for the parent resource authorization.
         final HttpGet requestGet1 = getObjMethod(parentPath);
