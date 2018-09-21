@@ -292,6 +292,11 @@
         <artifactId>maven-war-plugin</artifactId>
         <configuration>
           <attachClasses>true</attachClasses>
+          <nonFilteredFileExtensions>
+            <nonFilteredFileExtension>ico</nonFilteredFileExtension>
+            <nonFilteredFileExtension>ttf</nonFilteredFileExtension>
+            <nonFilteredFileExtension>woff</nonFilteredFileExtension>
+          </nonFilteredFileExtensions>
           <webResources>
             <resource>
               <directory>src/main/webapp</directory>
