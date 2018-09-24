@@ -783,7 +783,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
      */
     private void verifyTimemapResponse(final String uri, final String id, final String mementoDateTime)
         throws Exception {
-        final String[] mementoDateTimes = {mementoDateTime};
+        final String[] mementoDateTimes = { mementoDateTime };
         verifyTimemapResponse(uri, id, mementoDateTimes, null, null);
     }
 
@@ -808,7 +808,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final javax.ws.rs.core.Link.Builder selfLink = Link.fromUri(ldpcvUri).rel("self").type(APPLICATION_LINK_FORMAT);
         if (rangeStart != null && rangeEnd != null) {
             selfLink.param("from", rangeStart).param("until",
-                    rangeEnd);
+                rangeEnd);
         }
         listLinks.add(selfLink.build());
         if (mementoDateTime != null) {
@@ -1754,7 +1754,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     }
 
     private String createMementoWithExistingBody(final String id, final String mementoDateTime, final boolean isLDPNR)
-            throws Exception {
+        throws Exception {
         final HttpGet getRequest = getObjMethod(id);
         if (!isLDPNR) {
             getRequest.setHeader(ACCEPT, NTRIPLES);
