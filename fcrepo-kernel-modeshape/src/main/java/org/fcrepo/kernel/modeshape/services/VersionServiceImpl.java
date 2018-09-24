@@ -170,9 +170,6 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
         }
 
         final Session jcrSession = getJcrSession(session);
-
-        final Model m = ModelFactory.createDefaultModel();
-
         final RdfStream mappedStream = remapResourceUris(resourceUri, mementoUri, mementoRdfStream,
                 idTranslator, jcrSession);
 
@@ -222,12 +219,8 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
                 jcrSession);
 
         final org.apache.jena.graph.Node mementoNode = createURI(mementoUri);
-        final Stream<Triple> mappedStream = rdfStream
-                .peek(t-> LOGGER.info("remap BEFORE: {}", t.toString()))
-                .map(t -> mapSubject(t, resourceUri, mementoUri))
-                .peek(t-> LOGGER.info("remap AFTER: {}", t.toString()))
-                .map(t -> convertToInternalReference(t, idTranslator, internalIdTranslator))
-                .peek(t-> LOGGER.info("remap internal: {}", t.toString()));
+        final Stream<Triple> mappedStream = rdfStream.map(t -> mapSubject(t, resourceUri, mementoUri))
+                .map(t -> convertToInternalReference(t, idTranslator, internalIdTranslator));
         return new DefaultRdfStream(mementoNode, mappedStream);
     }
 

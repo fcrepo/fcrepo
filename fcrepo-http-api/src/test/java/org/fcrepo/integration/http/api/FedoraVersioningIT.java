@@ -216,7 +216,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     @Test
     public void testCreateVersion() throws Exception {
-        logger.info("MEMENTO testCreateVersion Start");
         createVersionedContainer(id);
 
         final String mementoUri = createContainerMementoWithBody(subjectUri, null);
@@ -232,46 +231,28 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
             assertMementoEqualsOriginal(mementoUri);
         }
-        logger.info("MEMENTO testCreateVersion END");
     }
 
     /**
-     * This test will test for weird date time scenario.
-     * @throws Exception
+     * This test will test for weird date/time scenario.  If the date time stamp has
+     * only 2 digits for the ms field, then Modeshape will end up changing the
+     * ms to something that's incorrect -- ie 860 ms becomes 86 ms.
      */
-
     @Test
     public void testCreateVersionWithLastModifiedDateTimestamp() throws Exception {
-        logger.info("testCreateVersionWithBodyContainingTimestamp START");
-        final String origMode = System.getProperty(SERVER_MANAGED_PROPERTIES_MODE);
+        logger.debug("testCreateVersionWithLastModifiedDateTimestamp START");
 
-        // relaxing the server managed mode here to try to catch an issue with
-        // lastModifiedDate
+        // relaxing the server managed mode here so lastModifiedDate can be set
         System.setProperty(SERVER_MANAGED_PROPERTIES_MODE, "relaxed");
 
+        // this results in a time which has .86 in the ms area. This is key for this test.
         final String aDate = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").format(
                 LocalDateTime.of(2018, 9, 21, 5, 30, 01, 860000000).atZone(ZoneOffset.UTC));
-/*
-        final String bDate = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").format(
-                LocalDateTime.of(2000, 5, 1, 5, 30, 01, 860000000).atZone(ZoneOffset.UTC));
 
-        final String cDate = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SS'Z'").format(
-                LocalDateTime.of(2000, 5, 1, 5, 30, 01, 86000000).atZone(ZoneOffset.UTC));
-
-        final String dDate = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SS'Z'").format(
-                LocalDateTime.of(2000, 5, 1, 5, 30, 01, 860000000).atZone(ZoneOffset.UTC));
-*/
         createVersionedContainer(id);
-/*
-        patchLiteralProperty(serverAddress + id, "info:test#randomDate", bDate,
-                "<http://www.w3.org/2001/XMLSchema#dateTime>");
-        patchLiteralProperty(serverAddress + id, "info:test#randomDate", cDate,
-                "<http://www.w3.org/2001/XMLSchema#dateTime>");
-        patchLiteralProperty(serverAddress + id, "info:test#randomDate", dDate,
-                "<http://www.w3.org/2001/XMLSchema#dateTime>");
-*/
-        // this is really the only important one - it modifies the lastModifiedDate' milliseconds to
-        // something that has 2 digits (and optionally a 0 to pad it) to see how the system handles it.
+
+        // this modifies the lastModifiedDate milliseconds to something that has 2 digits
+        // to see how the system handles it.
         patchLiteralProperty(serverAddress + id, LAST_MODIFIED_DATE.toString(), aDate,
                 "<http://www.w3.org/2001/XMLSchema#dateTime>");
 
@@ -279,8 +260,10 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         assertMementoEqualsOriginal(memento);
 
-        System.setProperty(SERVER_MANAGED_PROPERTIES_MODE, origMode);
-        logger.info("testCreateVersionWithBodyContainingTimestamp END");
+        // set server managed mode back to strict
+        System.clearProperty(SERVER_MANAGED_PROPERTIES_MODE);
+
+        logger.debug("testCreateVersionWithLastModifiedDateTimestamp END");
     }
 
     @Test
@@ -1970,35 +1953,19 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         final HttpGet getMemento = new HttpGet(mementoURI);
         getMemento.addHeader(ACCEPT, "application/n-triples");
-        //final Model modelMemento = createDefaultModel();
-        //final Lang rdfLang = RDFLanguages.contentTypeToLang(N3);
 
         try (final CloseableHttpResponse response = execute(getMemento)) {
-            //modelMemento.read(response.getEntity().getContent(), "", rdfLang.getName());
 
             final HttpGet getOriginal = new HttpGet(getOriginalResourceUri(response));
             getOriginal.addHeader(ACCEPT, "application/n-triples");
 
             try (final CloseableHttpResponse origResponse = execute(getOriginal)) {
 
-                //final Model modelOrig = createDefaultModel();
-                //modelOrig.read(origResponse.getEntity().getContent(), "", rdfLang.getName());
-
                 final String[] mTriples = EntityUtils.toString(response.getEntity()).split(".(\\r\\n|\\r|\\n)");
                 final String[] oTriples = EntityUtils.toString(origResponse.getEntity()).split(".(\\r\\n|\\r|\\n)");
 
                 sort(mTriples);
                 sort(oTriples);
-
-                logger.info("mtriples: {} ", mTriples.length);
-                for (int i = 0; i < mTriples.length;  i++) {
-                    logger.info("\t {}", mTriples[i]);
-                }
-
-                logger.info("otriples: {} ", oTriples.length);
-                for (int i = 0; i < oTriples.length;  i++) {
-                    logger.info("\t {}", oTriples[i]);
-                }
 
                 assertTrue("Memento and Original Resource triples do not match!", Arrays.equals(mTriples, oTriples));
             }

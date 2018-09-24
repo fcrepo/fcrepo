@@ -71,11 +71,11 @@ public class RelaxedRdfAdder extends RdfAdder {
             if (t.getPredicate().equals(type) && t.getObject().isResource()) {
                 final Resource mixinResource = t.getObject().asResource();
 
-                LOGGER.info("Operating on node: {} with mixin: {}.",
+                LOGGER.debug("Operating on node: {} with mixin: {}.",
                         subjectNode.getPath(), mixinResource);
                 operateOnMixin(mixinResource, subjectNode);
             } else {
-                LOGGER.info("Operating on node: {} from triple: {}.", subjectNode.getPath(), t);
+                LOGGER.debug("Operating on node: {} from triple: {}.", subjectNode.getPath(), t);
                 operateOnProperty(t, subjectNode);
             }
         } catch (final RepositoryException | RepositoryRuntimeException e) {
@@ -85,11 +85,10 @@ public class RelaxedRdfAdder extends RdfAdder {
 
     @Override
     protected void operateOnProperty(final Statement t, final FedoraResource resource) throws RepositoryException {
-        LOGGER.info("Adding property from triple: {} to resource: {}.", t, resource
+        LOGGER.debug("Adding property from triple: {} to resource: {}.", t, resource
                 .getPath());
 
         jcrRdfTools().addProperty(resource, t.getPredicate(), t.getObject(),
                 getNamespaces(getJcrNode(resource).getSession()), true);
-
     }
 }

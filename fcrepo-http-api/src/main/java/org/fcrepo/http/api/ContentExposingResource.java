@@ -365,7 +365,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         final RdfStream rdfStream = new DefaultRdfStream(
                 asNode(resource), streams.stream().reduce(empty(), Stream::concat));
 
-
         if (httpTripleUtil != null && ldpPreferences.prefersServerManaged()) {
             return httpTripleUtil.addHttpComponentModelsForResourceToStream(rdfStream, resource, uriInfo,
                     translator());

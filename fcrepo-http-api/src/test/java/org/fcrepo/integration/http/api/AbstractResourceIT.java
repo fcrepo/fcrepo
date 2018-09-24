@@ -603,8 +603,6 @@ public abstract class AbstractResourceIT {
         assertTrue("No original resource Link in headers", linkList.size() != 0);
         assertTrue("More then one original resource link in Link headers", linkList.size() == 1);
 
-        logger.info("FOO Original resource is {}", linkList.get(0));
-
         return linkList.get(0);
     }
 
