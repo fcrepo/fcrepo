@@ -213,15 +213,15 @@ public class JcrRdfTools {
             LOGGER.debug("Using default JCR value creation for RDF literal: {}",
                     data);
 
-            // this fixes an issue where a date literal with only two digits in the ms area
-            // get parsed incorrectly in the modeshape code.  All this does is make the ms
-            // section 3 digits and then modeshape behaves.
+            // If the date time stamp has a ms field which is a multiple of 10 (ie, .5 or .86) and is truncated to
+            // one or two characters, then Modeshape 5.0 will incorrectly parse the timestamp
+            // and pad the number incorrectly: ie. .5 ms becomes .005 ms, .86 becomes .086), thereby changing the
+            // time stamp.  All this does is make the ms section 3 digits and then Modeshape behaves.
             String theValue = data.asLiteral().getString();
 
             if (type == DATE) {
                 theValue = Instant.parse(data.asLiteral().getString()).toString();
             }
-
             return valueFactory.createValue(theValue, type);
         }
     }

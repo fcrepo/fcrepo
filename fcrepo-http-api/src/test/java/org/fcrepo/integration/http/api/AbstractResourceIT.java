@@ -595,15 +595,12 @@ public abstract class AbstractResourceIT {
     }
 
     protected static String getOriginalResourceUri(final CloseableHttpResponse response) {
-        final List<String> linkList = getLinkHeaders(response).stream().filter(x -> {
-            final Link theLink = Link.valueOf(x);
-            return theLink.getRel().equals("original");
-        }).map(x -> Link.valueOf(x).getUri().toString()).collect(toList());
+        final List<Link> linkList = getLinkHeaders(response).stream()
+            .map(x -> Link.valueOf(x))
+            .filter(x -> x.getRel().equals("original"))
+            .collect(toList());
 
-        assertTrue("No original resource Link in headers", linkList.size() != 0);
-        assertTrue("More then one original resource link in Link headers", linkList.size() == 1);
-
-        return linkList.get(0);
+        return linkList.get(0).getUri().toString();
     }
 
     protected String getExternalContentLinkHeader(final String url, final String handling, final String mimeType) {

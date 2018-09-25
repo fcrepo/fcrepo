@@ -56,6 +56,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
+import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
@@ -234,36 +235,41 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     }
 
     /**
-     * This test will test for weird date/time scenario.  If the date time stamp has
-     * only 2 digits for the ms field, then Modeshape will end up changing the
-     * ms to something that's incorrect -- ie 860 ms becomes 86 ms.
+     * This will test for weird date/time scenario.  If the date time stamp has
+     * a ms field which is a multiple of 10 and only has one or two digits (ie, .5 or .86)
+     * then Modeshape 5.0 will incorrectly parse that value (ie. .5 s becomes .005 s),
+     * thereby changing the time.
      */
     @Test
     public void testCreateVersionWithLastModifiedDateTimestamp() throws Exception {
-        logger.debug("testCreateVersionWithLastModifiedDateTimestamp START");
+        try {
+            // relaxing the server managed mode here so lastModifiedDate can be set
+            System.setProperty(SERVER_MANAGED_PROPERTIES_MODE, "relaxed");
 
-        // relaxing the server managed mode here so lastModifiedDate can be set
-        System.setProperty(SERVER_MANAGED_PROPERTIES_MODE, "relaxed");
+            createVersionedContainer(id);
 
-        // this results in a time which has .86 in the ms area. This is key for this test.
-        final String aDate = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").format(
-                LocalDateTime.of(2018, 9, 21, 5, 30, 01, 860000000).atZone(ZoneOffset.UTC));
+            // this results in a time which has .86 in the ms area. This is key for this test.
+            final String createdDate = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").format(
+                    LocalDateTime.of(2018, 9, 21, 5, 30, 01, 860000000).atZone(ZoneOffset.UTC));
 
-        createVersionedContainer(id);
+            final String lastModified = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").format(
+                    LocalDateTime.of(2018, 9, 21, 5, 30, 03, 500000000).atZone(ZoneOffset.UTC));
 
-        // this modifies the lastModifiedDate milliseconds to something that has 2 digits
-        // to see how the system handles it.
-        patchLiteralProperty(serverAddress + id, LAST_MODIFIED_DATE.toString(), aDate,
-                "<http://www.w3.org/2001/XMLSchema#dateTime>");
+            // patch the resource with timestamps that trigger millisecond truncation in modeshape 5.0
+            // (ie, .86 will get interpreted by Modeshape as .086 and .5 will become .005)
+            patchLiteralProperty(serverAddress + id, CREATED_DATE.toString(), createdDate,
+                    "<http://www.w3.org/2001/XMLSchema#dateTime>");
+            patchLiteralProperty(serverAddress + id, LAST_MODIFIED_DATE.toString(), lastModified,
+                    "<http://www.w3.org/2001/XMLSchema#dateTime>");
 
-        final String memento = createMemento(subjectUri, null, null, null);
+            final String memento = createMemento(subjectUri, null, null, null);
 
-        assertMementoEqualsOriginal(memento);
+            assertMementoEqualsOriginal(memento);
 
-        // set server managed mode back to strict
-        System.clearProperty(SERVER_MANAGED_PROPERTIES_MODE);
-
-        logger.debug("testCreateVersionWithLastModifiedDateTimestamp END");
+        } finally {
+            // set server managed mode back to strict
+            System.clearProperty(SERVER_MANAGED_PROPERTIES_MODE);
+        }
     }
 
     @Test
@@ -1945,27 +1951,24 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         assertTrue(mementoUri.matches(subjectUri + "/fcr:versions/\\d+"));
     }
 
-
-
     protected static void assertMementoEqualsOriginal(final String mementoURI) throws Exception {
 
         final HttpGet getMemento = new HttpGet(mementoURI);
         getMemento.addHeader(ACCEPT, "application/n-triples");
 
         try (final CloseableHttpResponse response = execute(getMemento)) {
-
             final HttpGet getOriginal = new HttpGet(getOriginalResourceUri(response));
             getOriginal.addHeader(ACCEPT, "application/n-triples");
 
             try (final CloseableHttpResponse origResponse = execute(getOriginal)) {
 
-                final String[] mTriples = EntityUtils.toString(response.getEntity()).split(".(\\r\\n|\\r|\\n)");
-                final String[] oTriples = EntityUtils.toString(origResponse.getEntity()).split(".(\\r\\n|\\r|\\n)");
+                final String[] mTriples = EntityUtils.toString(response.getEntity()).split("\\.\\r?\\n");
+                final String[] oTriples = EntityUtils.toString(origResponse.getEntity()).split("\\.\\r?\\n");
 
                 sort(mTriples);
                 sort(oTriples);
 
-                assertTrue("Memento and Original Resource triples do not match!", Arrays.equals(mTriples, oTriples));
+                assertArrayEquals("Memento and Original Resource triples do not match!", mTriples, oTriples);
             }
         }
     }
