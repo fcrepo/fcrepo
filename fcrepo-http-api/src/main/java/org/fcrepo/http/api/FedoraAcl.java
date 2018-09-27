@@ -22,6 +22,7 @@ import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.Response.created;
 import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.ok;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
@@ -48,6 +49,7 @@ import javax.jcr.ItemNotFoundException;
 import javax.jcr.nodetype.ConstraintViolationException;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -182,6 +184,12 @@ public class FedoraAcl extends ContentExposingResource {
         final FedoraResource aclResource = resource().getAcl();
 
         if (aclResource == null) {
+            if (resource().hasType(FEDORA_REPOSITORY_ROOT)) {
+                throw new ClientErrorException("The default root ACL is system generated and cannot be modified. " +
+                        "To override the default root ACL you must PUT a user-defined ACL to this endpoint.",
+                        CONFLICT);
+            }
+
             throw new ItemNotFoundException();
         }
 
@@ -298,6 +306,12 @@ public class FedoraAcl extends ContentExposingResource {
             session.commit();
 
             if (aclResource == null) {
+                if (resource().hasType(FEDORA_REPOSITORY_ROOT)) {
+                    throw new ClientErrorException("The default root ACL is system generated and cannot be deleted. " +
+                            "To override the default root ACL you must PUT a user-defined ACL to this endpoint.",
+                            CONFLICT);
+                }
+
                 throw new ItemNotFoundException();
             }
 

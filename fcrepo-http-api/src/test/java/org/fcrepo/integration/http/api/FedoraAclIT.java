@@ -21,6 +21,7 @@ import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.Link.fromUri;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
@@ -228,6 +229,20 @@ public class FedoraAclIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testDeleteDefaultRootAcl() throws Exception {
+        final String rootAclUri = serverAddress + FCR_ACL;
+        assertEquals("DELETE should fail for default generated root ACL.",
+                CONFLICT.getStatusCode(), getStatus(new HttpDelete(rootAclUri)));
+    }
+
+    @Test
+    public void testPatchDefaultRootAcl() throws Exception {
+        final String rootAclUri = serverAddress + FCR_ACL;
+        assertEquals("PATCH should fail for default generated root ACL.",
+                CONFLICT.getStatusCode(), getStatus(new HttpPatch(rootAclUri)));
+    }
+
+    @Test
     public void testGetUserDefinedDefaultRootAcl() throws Exception {
         System.setProperty(ROOT_AUTHORIZATION_PROPERTY, "./target/test-classes/test-root-authorization.ttl");
         final String rootAclUri = serverAddress + FCR_ACL;
@@ -243,6 +258,37 @@ public class FedoraAclIT extends AbstractResourceIT {
                                       createURI(WEBAC_NAMESPACE_VALUE + "default"),
                                       createURI(serverAddress)));
             }
+    }
+
+    @Test
+    public void testAddModifyDeleteUserDefinedDefaultRootAcl() throws Exception {
+        final String rootAclUri = serverAddress + FCR_ACL;
+        final HttpPut put = new HttpPut(rootAclUri);
+        final String aclBody = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
+                               "@prefix foaf: <http://xmlns.com/foaf/0.1/> .\n" +
+                               "@prefix ldp: <http://www.w3.org/ns/ldp#> .\n" +
+                               "\n" +
+                               "<#readAccess> a acl:Authorization ;\n" +
+                               "    acl:mode acl:Read .";
+
+        put.setEntity(new StringEntity(aclBody));
+        put.setHeader("Content-Type", "text/turtle");
+
+        // Test PUT
+        assertEquals("PUT a new ACL should succeed.",
+                CREATED.getStatusCode(), getStatus(put));
+
+        // Test PATCH
+        final HttpPatch patch = new HttpPatch(rootAclUri);
+        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
+        patch.setEntity(new StringEntity("PREFIX acl: <http://www.w3.org/ns/auth/acl#> " +
+                                            "INSERT { <#readAccess> acl:mode acl:Write . } WHERE { }"));
+        assertEquals("PATCH should succeed for default generated root ACL.",
+                NO_CONTENT.getStatusCode(), getStatus(patch));
+
+        // Test DELETE
+        assertEquals("DELETE should succeed for user-defined default root ACL.",
+                NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(rootAclUri)));
     }
 
     @Test
