@@ -594,6 +594,13 @@ public abstract class AbstractResourceIT {
         }).count();
     }
 
+    protected static String getOriginalResourceUri(final CloseableHttpResponse response) {
+        return getLinkHeaders(response).stream()
+            .map(x -> Link.valueOf(x))
+            .filter(x -> x.getRel().equals("original"))
+            .findFirst().get().getUri().toString();
+    }
+
     protected String getExternalContentLinkHeader(final String url, final String handling, final String mimeType) {
         // leave lots of room to leave things out of the link to test variations.
         String link = "";

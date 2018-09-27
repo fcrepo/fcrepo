@@ -24,6 +24,7 @@ import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.kernel.api.FedoraExternalContent.PROXY;
 import static org.fcrepo.kernel.api.FedoraExternalContent.REDIRECT;
 import static org.fcrepo.kernel.api.FedoraTypes.CONTENT_DIGEST;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.FedoraTypes.MEMENTO;
 import static org.fcrepo.kernel.api.FedoraTypes.MEMENTO_DATETIME;
@@ -188,6 +189,7 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
 
             if (node.canAddMixin(FEDORA_RESOURCE)) {
                 node.addMixin(FEDORA_RESOURCE);
+                node.addMixin(FEDORA_CONTAINER);
             }
 
             return new ContainerImpl(node);

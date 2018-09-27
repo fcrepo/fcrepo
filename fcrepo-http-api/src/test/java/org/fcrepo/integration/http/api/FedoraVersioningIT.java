@@ -19,6 +19,7 @@ package org.fcrepo.integration.http.api;
 
 import static java.time.format.DateTimeFormatter.ISO_INSTANT;
 import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
+import static java.util.Arrays.sort;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
@@ -54,10 +55,13 @@ import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_BINARY;
+import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
+import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.SERVER_MANAGED_PROPERTIES_MODE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEMAP_TYPE;
 import static org.junit.Assert.assertArrayEquals;
@@ -225,6 +229,46 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
             assertFalse("Memento type should not be visible",
                     results.contains(ANY, mementoSubject, RDF.type.asNode(), MEMENTO_TYPE_NODE));
+
+            assertMementoEqualsOriginal(mementoUri);
+        }
+    }
+
+    /**
+     * This will test for weird date/time scenario.  If the date time stamp has
+     * a ms field which is a multiple of 10 and only has one or two digits (ie, .5 or .86)
+     * then Modeshape 5.0 will incorrectly parse that value (ie. .5 s becomes .005 s),
+     * thereby changing the time.
+     */
+    @Test
+    public void testCreateVersionWithLastModifiedDateTimestamp() throws Exception {
+        try {
+            // relaxing the server managed mode here so lastModifiedDate can be set
+            System.setProperty(SERVER_MANAGED_PROPERTIES_MODE, "relaxed");
+
+            createVersionedContainer(id);
+
+            // this results in a time which has .86 in the ms area. This is key for this test.
+            final String createdDate = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").format(
+                    LocalDateTime.of(2018, 9, 21, 5, 30, 01, 860000000).atZone(ZoneOffset.UTC));
+
+            final String lastModified = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").format(
+                    LocalDateTime.of(2018, 9, 21, 5, 30, 03, 500000000).atZone(ZoneOffset.UTC));
+
+            // patch the resource with timestamps that trigger millisecond truncation in modeshape 5.0
+            // (ie, .86 will get interpreted by Modeshape as .086 and .5 will become .005)
+            patchLiteralProperty(serverAddress + id, CREATED_DATE.toString(), createdDate,
+                    "<http://www.w3.org/2001/XMLSchema#dateTime>");
+            patchLiteralProperty(serverAddress + id, LAST_MODIFIED_DATE.toString(), lastModified,
+                    "<http://www.w3.org/2001/XMLSchema#dateTime>");
+
+            final String memento = createMemento(subjectUri, null, null, null);
+
+            assertMementoEqualsOriginal(memento);
+
+        } finally {
+            // set server managed mode back to strict
+            System.clearProperty(SERVER_MANAGED_PROPERTIES_MODE);
         }
     }
 
@@ -341,6 +385,9 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                     results.contains(ANY, mementoSubject, TEST_PROPERTY_NODE, createLiteral("foo")));
             assertFalse("Memento created without datetime must ignore updates",
                     results.contains(ANY, mementoSubject, TEST_PROPERTY_NODE, createLiteral("bar")));
+
+            // memento should be the same as original, in this case
+            assertMementoEqualsOriginal(mementoUri);
         }
     }
 
@@ -1876,10 +1923,16 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     private static void patchLiteralProperty(final String url, final String predicate, final String literal)
             throws IOException {
+        patchLiteralProperty(url, predicate, literal, null);
+    }
+    private static void patchLiteralProperty(final String url, final String predicate, final String literal,
+                                             final String xsdType)
+            throws IOException {
         final HttpPatch updateObjectGraphMethod = new HttpPatch(url);
+        final String type = xsdType != null ? "^^" + xsdType : "";
         updateObjectGraphMethod.addHeader(CONTENT_TYPE, "application/sparql-update");
         updateObjectGraphMethod.setEntity(new StringEntity(
-                "INSERT DATA { <> <" + predicate + "> \"" + literal + "\" } "));
+                "INSERT DATA { <> <" + predicate + "> \"" + literal + "\"" + type + " } "));
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(updateObjectGraphMethod));
     }
 
@@ -1896,6 +1949,28 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     protected static void assertMementoUri(final String mementoUri, final String subjectUri) {
         assertTrue(mementoUri.matches(subjectUri + "/fcr:versions/\\d+"));
+    }
+
+    protected static void assertMementoEqualsOriginal(final String mementoURI) throws Exception {
+
+        final HttpGet getMemento = new HttpGet(mementoURI);
+        getMemento.addHeader(ACCEPT, "application/n-triples");
+
+        try (final CloseableHttpResponse response = execute(getMemento)) {
+            final HttpGet getOriginal = new HttpGet(getOriginalResourceUri(response));
+            getOriginal.addHeader(ACCEPT, "application/n-triples");
+
+            try (final CloseableHttpResponse origResponse = execute(getOriginal)) {
+
+                final String[] mTriples = EntityUtils.toString(response.getEntity()).split("\\.\\r?\\n");
+                final String[] oTriples = EntityUtils.toString(origResponse.getEntity()).split("\\.\\r?\\n");
+
+                sort(mTriples);
+                sort(oTriples);
+
+                assertArrayEquals("Memento and Original Resource triples do not match!", mTriples, oTriples);
+            }
+        }
     }
 
     private static void assertHasLink(final CloseableHttpResponse response, final Property relation,

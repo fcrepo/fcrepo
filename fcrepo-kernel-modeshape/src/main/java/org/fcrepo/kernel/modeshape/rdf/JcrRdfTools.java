@@ -20,6 +20,7 @@ package org.fcrepo.kernel.modeshape.rdf;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.UUID.randomUUID;
+import static javax.jcr.PropertyType.DATE;
 import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.STRING;
 import static javax.jcr.PropertyType.UNDEFINED;
@@ -45,6 +46,7 @@ import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isReferenceProp
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -210,7 +212,17 @@ public class JcrRdfTools {
         } else {
             LOGGER.debug("Using default JCR value creation for RDF literal: {}",
                     data);
-            return valueFactory.createValue(data.asLiteral().getString(), type);
+
+            // If the date time stamp has a ms field which is a multiple of 10 (ie, .5 or .86) and is truncated to
+            // one or two characters, then Modeshape 5.0 will incorrectly parse the timestamp
+            // and pad the number incorrectly: ie. .5 ms becomes .005 ms, .86 becomes .086), thereby changing the
+            // time stamp.  All this does is make the ms section 3 digits and then Modeshape behaves.
+            String theValue = data.asLiteral().getString();
+
+            if (type == DATE) {
+                theValue = Instant.parse(data.asLiteral().getString()).toString();
+            }
+            return valueFactory.createValue(theValue, type);
         }
     }
 
