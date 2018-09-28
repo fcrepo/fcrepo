@@ -1,5 +1,6 @@
 #set ($content = $helpers.getContentNode($topic))
 #set ($writable = $helpers.isWritable($rdf, $topic))
+#set ($isRoot = $helpers.isRootResource($rdf, $topic))
 
 #if ($isVersion == true)
 <div class="alert alert-warning">
@@ -82,17 +83,22 @@ WHERE { }
     <hr />
 </form>
 
-#if ($isVersionable == true)
+#if ( !$isRoot )
+	#if ( $isLDPNR )
+	<h3>Versioning</h3>
+	<p>Versioning of binary resources is not currently available through the HTML UI.</p>
+	<hr />
+	#elseif ($isVersionable == true)
 <form id="action_create_version" name="action_create_version" method="POST">
     <h3>Create Version Snapshot</h3>
     <button id="create-version-button" type="submit" class="btn btn-primary">Create Version</button>
     <h4><a href="$topic/fcr:versions">View Mementos</a></h4>
     <hr />
 </form>
-#else
+	#else
 <form id="action_enable_version" name="action_enable_version" method="POST">
     <h3>Versioning</h3>
-    <button id="create-version-button" type="submit" class="btn btn-primary">Enable Versioning</button>
+    <button id="enable-version-button" type="submit" class="btn btn-primary">Enable Versioning</button>
     <hr />
 </form>
 #end
@@ -102,6 +108,7 @@ WHERE { }
     <button name="delete-button" type="submit" class="btn btn-danger">Delete</button>
     <hr />
 </form>
+	#end
 #end
 
 #end

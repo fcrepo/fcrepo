@@ -72,6 +72,7 @@ import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.glassfish.jersey.uri.UriTemplate;
 import org.slf4j.Logger;
@@ -92,29 +93,18 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
     UriInfo uriInfo;
 
     @javax.ws.rs.core.Context
-    private SessionFactory sessionFactory;
+    SessionFactory sessionFactory;
 
     @javax.ws.rs.core.Context
-    private HttpServletRequest request;
-
-    private HttpSession session;
+    HttpServletRequest request;
 
     private HttpSession session() {
-        if (session == null) {
-            session = sessionFactory.getSession(request);
-        }
-        return session;
+        return sessionFactory.getSession(request);
     }
 
-    protected IdentifierConverter<Resource, FedoraResource> idTranslator;
-
-    protected IdentifierConverter<Resource, FedoraResource> translator() {
-        if (idTranslator == null) {
-            idTranslator = new HttpResourceConverter(session(),
+    private IdentifierConverter<Resource, FedoraResource> translator() {
+        return new HttpResourceConverter(session(),
                 uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class));
-        }
-
-        return idTranslator;
     }
 
     private static EscapeTool escapeTool = new EscapeTool();
@@ -202,6 +192,8 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
         final FedoraResource resource = getResourceFromSubject(subject.toString());
         context.put("isVersionable", (resource != null ? resource.isVersioned() : false));
         context.put("isVersion", (resource != null ? resource.isMemento() : false));
+        context.put("isLDPNR", (resource != null
+            ? resource instanceof FedoraBinary || !resource.getDescribedResource().equals(resource) : false));
 
         // the contract of MessageBodyWriter<T> is _not_ to close the stream
         // after writing to it
