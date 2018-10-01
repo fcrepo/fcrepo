@@ -134,10 +134,10 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
 
             try {
                 operateOnTriple(s);
-            } catch (final ConstraintViolationException e) {
-                throw e;
             } catch (final MalformedRdfException e) {
                 exceptions.add(e.getMessage());
+            } catch (final ConstraintViolationException e) {
+                throw e;
             }
         });
 

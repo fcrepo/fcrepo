@@ -44,6 +44,7 @@ import org.apache.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.exception.ConstraintViolationException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.services.ContainerService;
@@ -239,8 +240,8 @@ public class ContainerImplIT extends AbstractIT {
         assertTrue(e.getMessage().contains("/another-relative-url"));
     }
 
-    @Test(expected = MalformedRdfException.class)
-    public void testUpdatingObjectGraphWithOutOfDomainSubjects() throws MalformedRdfException {
+    @Test(expected = ConstraintViolationException.class)
+    public void testUpdatingObjectGraphWithOutOfDomainSubjects() throws ConstraintViolationException {
         final Container object =
             containerService.findOrCreate(session, "/graphObject");
 

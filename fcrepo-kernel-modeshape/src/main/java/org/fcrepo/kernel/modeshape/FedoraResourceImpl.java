@@ -975,11 +975,11 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             try (final DefaultRdfStream diffStream =
                     new DefaultRdfStream(replacementStream.topic(), differencer.difference())) {
                 new RdfRemover(idTranslator, getSession(), diffStream).consume();
-            } catch (final ConstraintViolationException e) {
-                throw e;
             } catch (final MalformedRdfException e) {
                 exceptions.append(e.getMessage());
                 exceptions.append("\n");
+            } catch (final ConstraintViolationException e) {
+                throw e;
             }
 
             try (
@@ -1002,10 +1002,10 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                 }
 
                 new RdfAdder(idTranslator, getSession(), notCommonStream, inputModel.getNsPrefixMap()).consume();
-            } catch (final ConstraintViolationException e) {
-                throw e;
             } catch (final MalformedRdfException e) {
                 exceptions.append(e.getMessage());
+            } catch (final ConstraintViolationException e) {
+                throw e;
             }
 
             // If this resource's structural parent is an IndirectContainer, check whether the
