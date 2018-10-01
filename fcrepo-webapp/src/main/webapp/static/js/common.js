@@ -270,7 +270,8 @@
       const url = document.getElementById('main').getAttribute('resource');
       const get_headers = [
           ['Prefer', 'return=representation; omit="http://fedora.info/definitions/v4/repository#ServerManaged"'],
-          ['Accept', 'application/ld+json']
+          ['Accept', 'application/ld+json'],
+          ['Cache-Control', 'no-cache']
       ];
       const put_headers = [
           ['Prefer', 'handling=lenient; received="minimal"'],
@@ -279,7 +280,7 @@
       ];
       http('GET', url, get_headers, function(res) {
           if (res.status == 200) {
-              var body = res.responseText; 
+              var body = res.responseText;
               http('PUT', url, put_headers, body, function(res) {
                   if (res.status == 204) {
                       window.location.reload(true);
