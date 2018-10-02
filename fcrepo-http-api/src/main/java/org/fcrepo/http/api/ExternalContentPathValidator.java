@@ -17,21 +17,14 @@
  */
 package org.fcrepo.http.api;
 
-import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
-import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.WatchEvent;
-import java.nio.file.WatchKey;
-import java.nio.file.WatchService;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -42,6 +35,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.fcrepo.kernel.api.exception.ExternalMessageBodyException;
+import org.fcrepo.kernel.api.utils.AutoReloadingConfiguration;
 import org.slf4j.Logger;
 
 /**
@@ -49,7 +43,7 @@ import org.slf4j.Logger;
  *
  * @author bbpennel
  */
-public class ExternalContentPathValidator {
+public class ExternalContentPathValidator extends AutoReloadingConfiguration {
 
     private static final Logger LOGGER = getLogger(ExternalContentPathValidator.class);
 
@@ -61,15 +55,7 @@ public class ExternalContentPathValidator {
 
     private final Pattern NORMALIZE_FILE_URI = Pattern.compile("^file:/{2,3}");
 
-    private String configPath;
-
     private List<String> allowedList;
-
-    private boolean monitorForChanges;
-
-    private Thread monitorThread;
-
-    private boolean monitorRunning;
 
     /**
      * Validates that an external path is valid. The path must be an HTTP or file URI within the allow list of paths,
@@ -137,35 +123,12 @@ public class ExternalContentPathValidator {
     }
 
     /**
-     * Initialize the allow list
-     */
-    public void init() throws IOException {
-        if (isEmpty(configPath)) {
-            return;
-        }
-
-        loadAllowedPaths();
-
-        if (monitorForChanges) {
-            monitorForChanges();
-        }
-    }
-
-    /**
-     * Shut down the validator's change monitoring thread
-     */
-    public void shutdown() {
-        if (monitorThread != null) {
-            monitorThread.interrupt();
-        }
-    }
-
-    /**
      * Loads the allowed list.
      *
      * @throws IOException thrown if the allowed list configuration file cannot be read.
      */
-    private synchronized void loadAllowedPaths() throws IOException {
+    @Override
+    protected synchronized void loadConfiguration() throws IOException {
         LOGGER.info("Loading list of allowed external content locations from {}", configPath);
         try (final Stream<String> stream = Files.lines(Paths.get(configPath))) {
             allowedList = stream.map(line -> normalizePath(line.trim().toLowerCase()))
@@ -190,101 +153,5 @@ public class ExternalContentPathValidator {
                     return true;
                 }).collect(Collectors.toList());
         }
-    }
-
-    /**
-     * Starts up monitoring of the allowed list configuration for changes.
-     */
-    private void monitorForChanges() {
-        if (monitorRunning) {
-            return;
-        }
-
-        final Path path = Paths.get(configPath);
-        if (!path.toFile().exists()) {
-            LOGGER.debug("Allow list configuration {} does not exist, disabling monitoring", configPath);
-            return;
-        }
-        final Path directoryPath = path.getParent();
-
-        try {
-            final WatchService watchService = FileSystems.getDefault().newWatchService();
-            directoryPath.register(watchService, ENTRY_MODIFY);
-
-            monitorThread = new Thread(new Runnable() {
-
-                @Override
-                public void run() {
-                    try {
-                        for (;;) {
-                            WatchKey key;
-                            try {
-                                key = watchService.take();
-                            } catch (final InterruptedException e) {
-                                LOGGER.debug("Interrupted the configuration monitor thread.");
-                                break;
-                            }
-
-                            for (final WatchEvent<?> event : key.pollEvents()) {
-                                final WatchEvent.Kind<?> kind = event.kind();
-                                if (kind == OVERFLOW) {
-                                    continue;
-                                }
-
-                                // If the configuration file triggered this event, reload it
-                                final Path changed = (Path) event.context();
-                                if (changed.equals(path.getFileName())) {
-                                    LOGGER.info(
-                                            "External binary configuration {} has been updated, reloading.",
-                                            path);
-                                    try {
-                                        loadAllowedPaths();
-                                    } catch (final IOException e) {
-                                        LOGGER.error("Failed to reload external locations configuration", e);
-                                    }
-                                }
-
-                                // reset the key
-                                final boolean valid = key.reset();
-                                if (!valid) {
-                                    LOGGER.debug("Monitor of {} is no longer valid", path);
-                                    break;
-                                }
-                            }
-                        }
-                    } finally {
-                        try {
-                            watchService.close();
-                        } catch (final IOException e) {
-                            LOGGER.error("Failed to stop configuration monitor", e);
-                        }
-                    }
-                    monitorRunning = false;
-                }
-            });
-        } catch (final IOException e) {
-            LOGGER.error("Failed to start configuration monitor", e);
-        }
-
-        monitorThread.start();
-        monitorRunning = true;
-    }
-
-    /**
-     * Set the file path for the allowed external path configuration
-     *
-     * @param configPath file path for configuration
-     */
-    public void setConfigPath(final String configPath) {
-        this.configPath = configPath;
-    }
-
-    /**
-     * Set whether to monitor the configuration file for changes
-     *
-     * @param monitorForChanges flag controlling if to enable configuration monitoring
-     */
-    public void setMonitorForChanges(final boolean monitorForChanges) {
-        this.monitorForChanges = monitorForChanges;
     }
 }
