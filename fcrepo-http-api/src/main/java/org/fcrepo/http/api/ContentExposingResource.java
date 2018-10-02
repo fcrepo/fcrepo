@@ -162,6 +162,7 @@ import org.fcrepo.kernel.api.models.FedoraTimeMap;
 import org.fcrepo.kernel.api.models.FedoraWebacAcl;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.api.utils.ContentDigest;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
@@ -228,6 +229,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     @Inject
     protected ExternalContentHandlerFactory extContentHandlerFactory;
 
+    @Inject
+    protected RdfNamespaceRegistry namespaceRegistry;
+
     private static final Predicate<Triple> IS_MANAGED_TYPE = t -> t.getPredicate().equals(type.asNode()) &&
             isManagedNamespace.test(t.getObject().getNameSpace());
     private static final Predicate<Triple> IS_MANAGED_TRIPLE = IS_MANAGED_TYPE
@@ -262,7 +266,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             outputStream = new RdfNamespacedStream(
                     new DefaultRdfStream(rdfStream.topic(), concat(rdfStream,
                         getResourceTriples(limit, resource))),
-                    session.getFedoraSession().getNamespaces());
+                    namespaceRegistry.getNamespaces());
         }
         setVaryAndPreferenceAppliedHeaders(servletResponse, prefer, resource);
         return ok(outputStream).build();
@@ -886,7 +890,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             }
             final RdfNamespacedStream rdfStream = new RdfNamespacedStream(
                 new DefaultRdfStream(asNode(resource), getResourceTriples(resource)),
-                session().getFedoraSession().getNamespaces());
+                namespaceRegistry.getNamespaces());
             return builder.entity(rdfStream).build();
         }
     }
@@ -1004,7 +1008,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * This method does two things:
      * - Throws an exception if an authorization has both accessTo and accessToClass
      * - Adds a default accessTo target if an authorization has neither accessTo nor accessToClass
-     * 
+     *
      * @param resource the fedora resource
      * @param inputModel to be checked and updated
      */
@@ -1038,7 +1042,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     /**
      * Returns a Statement with the resource containing the acl to be the accessTo target for the given auth subject.
-     * 
+     *
      * @param authSubject - acl authorization subject uri string
      * @return
      */

@@ -101,7 +101,7 @@ public class FedoraFixity extends ContentExposingResource {
         return new RdfNamespacedStream(
                 new DefaultRdfStream(asNode(resource()),
                     ((FedoraBinary)resource()).getFixity(translator())),
-                session().getFedoraSession().getNamespaces());
+                namespaceRegistry.getNamespaces());
     }
 
     @Override

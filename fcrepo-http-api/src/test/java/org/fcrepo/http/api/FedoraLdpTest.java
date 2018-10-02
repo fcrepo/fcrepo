@@ -84,6 +84,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -130,6 +131,7 @@ import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.ContainerService;
 import org.fcrepo.kernel.api.services.NodeService;
@@ -200,6 +202,9 @@ public class FedoraLdpTest {
     private FedoraHttpConfiguration mockHttpConfiguration;
 
     @Mock
+    private RdfNamespaceRegistry rdfNamespaceRegistry;
+
+    @Mock
     private HttpHeaders mockHeaders;
 
     @Mock
@@ -250,6 +255,9 @@ public class FedoraLdpTest {
         setField(testObj, "context", mockServletContext);
         setField(testObj, "prefer", prefer);
         setField(testObj, "extContentHandlerFactory", extContentHandlerFactory);
+        setField(testObj, "namespaceRegistry", rdfNamespaceRegistry);
+
+        when(rdfNamespaceRegistry.getNamespaces()).thenReturn(new HashMap<>());
 
         when(mockHttpConfiguration.putRequiresIfMatch()).thenReturn(false);
 
