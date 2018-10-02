@@ -79,6 +79,7 @@ import java.io.StringWriter;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
@@ -239,16 +240,18 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     @Test
     public void testCreateVersionWithLastModifiedDateTimestamp() throws Exception {
         try {
+            final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+
             // relaxing the server managed mode here so lastModifiedDate can be set
             System.setProperty(SERVER_MANAGED_PROPERTIES_MODE, "relaxed");
 
             createVersionedContainer(id);
 
             // this results in a time which has .86 in the ms area. This is key for this test.
-            final String createdDate = MEMENTO_RFC_1123_FORMATTER.format(
+            final String createdDate = FMT.format(
                     LocalDateTime.of(2018, 9, 21, 5, 30, 01, 860000000).atZone(ZoneOffset.UTC));
 
-            final String lastModified = MEMENTO_RFC_1123_FORMATTER.format(
+            final String lastModified = FMT.format(
                     LocalDateTime.of(2018, 9, 21, 5, 30, 03, 500000000).atZone(ZoneOffset.UTC));
 
             // patch the resource with timestamps that trigger millisecond truncation in modeshape 5.0
