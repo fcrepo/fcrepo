@@ -46,7 +46,6 @@ import java.net.URI;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.GregorianCalendar;
@@ -101,9 +100,6 @@ import com.google.common.annotations.VisibleForTesting;
 public class VersionServiceImpl extends AbstractService implements VersionService {
 
     private static final Logger LOGGER = getLogger(VersionService.class);
-
-    private static final DateTimeFormatter MEMENTO_DATETIME_ID_FORMATTER =
-            DateTimeFormatter.ofPattern("yyyyMMddHHmmss").withZone(ZoneId.of("GMT"));
 
     @VisibleForTesting
     public static final Set<TripleCategory> VERSION_TRIPLES = new HashSet<>(asList(
@@ -345,7 +341,7 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
     }
 
     private String makeMementoPath(final FedoraResource resource, final Instant datetime) {
-        return resource.getPath() + "/" + LDPCV_TIME_MAP + "/" + MEMENTO_DATETIME_ID_FORMATTER.format(datetime);
+        return resource.getPath() + "/" + LDPCV_TIME_MAP + "/" + MEMENTO_LABEL_FORMATTER.format(datetime);
     }
 
     protected String getUri(final FedoraResource resource,

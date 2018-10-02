@@ -38,13 +38,12 @@ import static org.fcrepo.kernel.api.RdfLexicon.WRITABLE;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
+import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
+import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static java.time.ZoneId.of;
-
 import java.time.Instant;
-import java.time.format.DateTimeFormatter;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -74,12 +73,6 @@ public class ViewHelpersTest {
 
     private ViewHelpers testObj;
 
-    private final DateTimeFormatter RFC_1123_PATTERN =
-        DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(of("GMT"));
-
-    private final DateTimeFormatter DATE_PATTERN =
-        DateTimeFormatter.ofPattern("yyyyMMddHHmmss").withZone(of("GMT"));
-
     private static final String REPOSITORY_ROOT_URI =
         FEDORA_REPOSITORY_ROOT.replaceAll("fedora:", REPOSITORY_NAMESPACE);
 
@@ -93,9 +86,9 @@ public class ViewHelpersTest {
         final Graph mem = createDefaultModel().getGraph();
         final String resource_version = "http://localhost/fcrepo/abc/" + FCR_VERSIONS;
         final Instant recent = Instant.now();
-        final Node version = createURI(resource_version + "/" + DATE_PATTERN.format(recent));
+        final Node version = createURI(resource_version + "/" + MEMENTO_LABEL_FORMATTER.format(recent));
         mem.add(new Triple(createURI(resource_version), CONTAINS.asNode(), version));
-        mem.add(new Triple(version, CREATED_DATE.asNode(), createLiteral(RFC_1123_PATTERN.format(recent))));
+        mem.add(new Triple(version, CREATED_DATE.asNode(), createLiteral(MEMENTO_RFC_1123_FORMATTER.format(recent))));
         assertEquals("Version should be available.",
             version, testObj.getVersions(mem, createURI(resource_version)).next());
     }
@@ -106,17 +99,20 @@ public class ViewHelpersTest {
         final Instant recent = Instant.now();
         final Instant past = recent.minus(3, java.time.temporal.ChronoUnit.DAYS);
         final Instant way_past = recent.minus(60, java.time.temporal.ChronoUnit.DAYS);
-        final Node v1 = createURI("http://localhost/fcrepo/abc/" + FCR_VERSIONS + "/" + DATE_PATTERN.format(recent));
-        final Node v2 = createURI("http://localhost/fcrepo/abc/" + FCR_VERSIONS + "/" + DATE_PATTERN.format(past));
-        final Node v3 = createURI("http://localhost/fcrepo/abc/" + FCR_VERSIONS + "/" + DATE_PATTERN.format(way_past));
+        final Node v1 =
+            createURI("http://localhost/fcrepo/abc/" + FCR_VERSIONS + "/" + MEMENTO_LABEL_FORMATTER.format(recent));
+        final Node v2 =
+            createURI("http://localhost/fcrepo/abc/" + FCR_VERSIONS + "/" + MEMENTO_LABEL_FORMATTER.format(past));
+        final Node v3 =
+            createURI("http://localhost/fcrepo/abc/" + FCR_VERSIONS + "/" + MEMENTO_LABEL_FORMATTER.format(way_past));
 
         final Graph mem = createDefaultModel().getGraph();
         mem.add(new Triple(resource_version, CONTAINS.asNode(), v1));
         mem.add(new Triple(resource_version, CONTAINS.asNode(), v2));
         mem.add(new Triple(resource_version, CONTAINS.asNode(), v3));
-        mem.add(new Triple(v1, CREATED_DATE.asNode(), createLiteral(RFC_1123_PATTERN.format(recent))));
-        mem.add(new Triple(v2, CREATED_DATE.asNode(), createLiteral(RFC_1123_PATTERN.format(past))));
-        mem.add(new Triple(v3, CREATED_DATE.asNode(), createLiteral(RFC_1123_PATTERN.format(way_past))));
+        mem.add(new Triple(v1, CREATED_DATE.asNode(), createLiteral(MEMENTO_RFC_1123_FORMATTER.format(recent))));
+        mem.add(new Triple(v2, CREATED_DATE.asNode(), createLiteral(MEMENTO_RFC_1123_FORMATTER.format(past))));
+        mem.add(new Triple(v3, CREATED_DATE.asNode(), createLiteral(MEMENTO_RFC_1123_FORMATTER.format(way_past))));
 
         final Iterator<Node> versions = testObj.getOrderedVersions(mem, resource_version, CONTAINS);
         assertTrue(versions.hasNext());
@@ -212,9 +208,9 @@ public class ViewHelpersTest {
         final Graph mem = createDefaultModel().getGraph();
         final String date_str = "20011231050505";
         final Node subject = createURI("a/b/c/" + date_str);
-        final Instant date = Instant.from(DATE_PATTERN.parse(date_str));
+        final Instant date = Instant.from(MEMENTO_LABEL_FORMATTER.parse(date_str));
         mem.add(new Triple(subject, CREATED_DATE.asNode(),
-            createLiteral(RFC_1123_PATTERN.format(date))));
+            createLiteral(MEMENTO_RFC_1123_FORMATTER.format(date))));
 
         assertEquals("Date should be available.", date, testObj.getVersionDate(mem, subject));
     }

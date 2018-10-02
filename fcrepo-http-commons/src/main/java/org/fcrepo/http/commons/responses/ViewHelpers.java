@@ -26,7 +26,6 @@ import static org.apache.jena.vocabulary.DC.title;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.apache.jena.vocabulary.RDFS.label;
 import static org.apache.jena.vocabulary.SKOS.prefLabel;
-import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 import static java.time.Instant.now;
 import static java.time.ZoneId.of;
 import static java.util.Arrays.asList;
@@ -40,10 +39,11 @@ import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.WRITABLE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
+import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
+import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.time.Instant;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -159,7 +159,7 @@ public class ViewHelpers {
      */
     public String getVersionLabel(final Graph graph, final Node subject) {
         final Instant datetime = getVersionDate(graph, subject);
-        return RFC_1123_DATE_TIME.withZone(ZoneId.of("UTC")).format(datetime);
+        return MEMENTO_RFC_1123_FORMATTER.format(datetime);
     }
 
     /**
@@ -171,8 +171,7 @@ public class ViewHelpers {
      */
     public Instant getVersionDate(final Graph graph, final Node subject) {
         final String[] pathParts = subject.getURI().split("/");
-        final Instant datetime = DateTimeFormatter.ofPattern("yyyyMMddHHmmss").withZone(ZoneId.of("UTC"))
-            .parse(pathParts[pathParts.length - 1], Instant::from);
+        final Instant datetime = MEMENTO_LABEL_FORMATTER.parse(pathParts[pathParts.length - 1], Instant::from);
         return datetime;
     }
 

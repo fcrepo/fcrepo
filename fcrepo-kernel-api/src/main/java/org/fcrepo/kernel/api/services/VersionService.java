@@ -17,9 +17,13 @@
  */
 package org.fcrepo.kernel.api.services;
 
+import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
+
 import java.io.InputStream;
 import java.net.URI;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 
 import org.apache.jena.rdf.model.Resource;
@@ -39,6 +43,17 @@ import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
  * @since Feb 19, 2014
  */
 public interface VersionService {
+
+    /**
+     * To format a datetime for use as a Memento path.
+     */
+    public static final DateTimeFormatter MEMENTO_LABEL_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
+            .withZone(ZoneId.of("UTC"));
+
+    /**
+     * To format a datetime as RFC-1123 with correct timezone.
+     */
+    public static final DateTimeFormatter MEMENTO_RFC_1123_FORMATTER = RFC_1123_DATE_TIME.withZone(ZoneId.of("UTC"));
 
     /**
      * Explicitly creates a version for the resource at the path provided.

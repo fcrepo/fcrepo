@@ -17,7 +17,6 @@
  */
 package org.fcrepo.http.api;
 
-import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
@@ -37,13 +36,14 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSE
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
+import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.time.Instant;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -176,7 +176,7 @@ public class FedoraVersioning extends ContentExposingResource {
             final Instant mementoInstant;
             try {
                 mementoInstant = (isBlank(datetimeHeader) ? Instant.now()
-                    : Instant.from(RFC_1123_DATE_TIME.parse(datetimeHeader)));
+                    : Instant.from(MEMENTO_RFC_1123_FORMATTER.parse(datetimeHeader)));
             } catch (final DateTimeParseException e) {
                 throw new MementoDatetimeFormatException("Invalid memento date-time value. "
                         + "Please use RFC-1123 date-time format, such as 'Tue, 3 Jun 2008 11:05:30 GMT'", e);
@@ -304,8 +304,7 @@ public class FedoraVersioning extends ContentExposingResource {
                 final URI childUri = getUri(t);
                 versionLinks.add(Link.fromUri(childUri).rel("memento")
                                      .param("datetime",
-                                            RFC_1123_DATE_TIME.format(t.getMementoDatetime()
-                                                                       .atZone(ZoneOffset.UTC)))
+                        MEMENTO_RFC_1123_FORMATTER.format(t.getMementoDatetime()))
                                      .build());
             });
             // Based on the dates of the above mementos, add the range to the below link.
@@ -316,9 +315,9 @@ public class FedoraVersioning extends ContentExposingResource {
                 Link.fromUri(parentUri + "/" + FCR_VERSIONS).rel("self").type(APPLICATION_LINK_FORMAT);
             if (Mementos.length >= 2) {
                 // There are 2 or more Mementos so make a range.
-                linkBuilder.param("from", RFC_1123_DATE_TIME.format(Mementos[0].atOffset(ZoneOffset.UTC)));
+                linkBuilder.param("from", MEMENTO_RFC_1123_FORMATTER.format(Mementos[0].atZone(ZoneId.of("UTC"))));
                 linkBuilder.param("until",
-                    RFC_1123_DATE_TIME.format(Mementos[Mementos.length - 1].atOffset(ZoneOffset.UTC)));
+                    MEMENTO_RFC_1123_FORMATTER.format(Mementos[Mementos.length - 1].atZone(ZoneId.of("UTC"))));
             }
             versionLinks.add(linkBuilder.build());
             return ok(new LinkFormatStream(versionLinks.stream())).build();

@@ -268,10 +268,13 @@
 
   function enableVersioning(e) {
       const url = document.getElementById('main').getAttribute('resource');
+      const d = new Date();
+      const expires = (new Date(d - 1000000)).toUTCString();
       const get_headers = [
           ['Prefer', 'return=representation; omit="http://fedora.info/definitions/v4/repository#ServerManaged"'],
           ['Accept', 'application/ld+json'],
-          ['Cache-Control', 'no-cache']
+          ['Cache-Control', 'no-cache, no-store, max-age=0'],
+          ['Expires', expires]
       ];
       const put_headers = [
           ['Prefer', 'handling=lenient; received="minimal"'],
