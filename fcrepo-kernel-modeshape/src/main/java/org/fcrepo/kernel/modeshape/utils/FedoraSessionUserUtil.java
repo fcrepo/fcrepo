@@ -58,7 +58,7 @@ public class FedoraSessionUserUtil {
             } else {
                 return buildDefaultURI(userId);
             }
-        } catch (IllegalArgumentException e) {
+        } catch (final IllegalArgumentException e) {
             return buildDefaultURI(userId);
         }
     }
@@ -78,7 +78,7 @@ public class FedoraSessionUserUtil {
 
         final String userAgentUri = userAgentBaseUri + userId;
 
-        LOGGER.warn("Default URI is created for user {}: {}", userId, userAgentUri);
+        LOGGER.trace("Default URI is created for user {}: {}", userId, userAgentUri);
         return URI.create(userAgentUri);
     }
 
