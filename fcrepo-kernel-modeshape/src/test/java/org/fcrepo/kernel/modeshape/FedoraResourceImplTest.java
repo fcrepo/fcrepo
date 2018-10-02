@@ -59,8 +59,8 @@ import javax.jcr.Session;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
 
+import org.fcrepo.kernel.api.exception.ConstraintViolationException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.RdfStream;
@@ -267,7 +267,7 @@ public class FedoraResourceImplTest {
                 testObj.isNew());
     }
 
-    @Test(expected = MalformedRdfException.class)
+    @Test(expected = ConstraintViolationException.class)
     public void testReplacePropertiesDataset() throws RepositoryException {
 
         final DefaultIdentifierTranslator defaultGraphSubjects = new DefaultIdentifierTranslator(mockSession);

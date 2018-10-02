@@ -57,7 +57,6 @@ import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.ConstraintViolationException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.InvalidPrefixException;
-import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -574,8 +573,8 @@ public class FedoraResourceImplIT extends AbstractIT {
 //        assertTrue(graphStore.contains(s, HAS_VERSION_LABEL, createPlainLiteral("v0.0.1")));
     }
 
-    @Test(expected = MalformedRdfException.class)
-    public void testAddMissingReference() throws MalformedRdfException {
+    @Test(expected = ConstraintViolationException.class)
+    public void testAddMissingReference() throws ConstraintViolationException {
         final FedoraResource object =
                 containerService.findOrCreate(session, "/testRefObject");
 
