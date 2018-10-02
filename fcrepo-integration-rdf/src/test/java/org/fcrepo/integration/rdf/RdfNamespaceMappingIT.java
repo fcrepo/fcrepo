@@ -22,69 +22,35 @@ import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.slf4j.LoggerFactory.getLogger;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
-
-import org.apache.commons.io.FileUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.integration.http.api.AbstractResourceIT;
-import org.fcrepo.integration.http.api.DirtyContextBeforeAndAfterClassTestExecutionListener;
+import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.slf4j.Logger;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.annotation.DirtiesContext.ClassMode;
-import org.springframework.test.context.TestExecutionListeners;
-import org.springframework.test.context.TestExecutionListeners.MergeMode;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 
 /**
  * @author bbpennel
  */
-@RunWith(SpringJUnit4ClassRunner.class)
-@DirtiesContext(classMode = ClassMode.BEFORE_CLASS)
-@TestExecutionListeners(listeners = { DependencyInjectionTestExecutionListener.class,
-    DirtyContextBeforeAndAfterClassTestExecutionListener.class },
-        mergeMode = MergeMode.MERGE_WITH_DEFAULTS)
 public class RdfNamespaceMappingIT extends AbstractResourceIT {
 
-    private static final Logger LOGGER = getLogger(RdfNamespaceMappingIT.class);
+    private Map<String, String> namespaces = new HashMap<>();
 
-    private static Map<String, String> namespaces = new HashMap<>();;
-
-    static {
-        try {
-            final File registryFile = File.createTempFile("namespaces", ".yml");
-            registryFile.deleteOnExit();
-
-            namespaces.put("ldp", "http://www.w3.org/ns/ldp#");
-            namespaces.put("memento", "http://mementoweb.org/ns#");
-            namespaces.put("unused", "http://example.com/ns#");
-            namespaces.put("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
-            namespaces.put("fedora", "http://fedora.info/definitions/v4/repository#");
-
-            final String yaml = namespaces.entrySet().stream()
-                    .map(n -> n.getKey() + ": " + n.getValue())
-                    .collect(Collectors.joining("\n"));
-            FileUtils.write(registryFile, yaml, "UTF-8");
-
-            System.setProperty("fcrepo.namespace.registry", registryFile.getAbsolutePath());
-            LOGGER.debug("fcrepo.namespace.registry = {}", registryFile.getAbsolutePath());
-        } catch (final Exception e) {
-            LOGGER.error("Failed to setup namespace configuration file", e);
-        }
+    @Before
+    public void init() {
+        namespaces.put("ldp", "http://www.w3.org/ns/ldp#");
+        namespaces.put("memento", "http://mementoweb.org/ns#");
+        namespaces.put("unused", "http://example.com/ns#");
+        namespaces.put("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
+        namespaces.put("fedora", "http://fedora.info/definitions/v4/repository#");
     }
 
     @Test
@@ -94,7 +60,9 @@ public class RdfNamespaceMappingIT extends AbstractResourceIT {
 
         // create object with rdf that contains a namespace declaration
         final String content = "@prefix asdf: <http://asdf.org/> . <> asdf:foo 'bar' .";
-        executeAndClose(putObjMethod(pid, "text/turtle", content));
+        try (final CloseableHttpResponse response = execute(putObjMethod(pid, "text/turtle", content))) {
+            assertEquals(201, response.getStatusLine().getStatusCode());
+        }
 
         // that namespace should come back without a prefix
         final HttpGet httpGet = getObjMethod(pid);

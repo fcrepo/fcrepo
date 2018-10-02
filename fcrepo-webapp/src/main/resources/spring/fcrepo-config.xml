@@ -220,10 +220,9 @@
     <!-- Configuration of namespace prefixes -->
     <bean name="rdfNamespaceRegistry" class="org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry"
         init-method="init" destroy-method="shutdown">
-      <property name="configPath" value="${fcrepo.namespace.registry:#{null}}" />
+      <property name="configPath" value="${fcrepo.namespace.registry:classpath:/namespaces.yml}" />
       <property name="monitorForChanges" value="true" />
     </bean>
-
 
     <!-- External content configuration -->
     <bean name="externalContentPathValidator" class="org.fcrepo.http.api.ExternalContentPathValidator"

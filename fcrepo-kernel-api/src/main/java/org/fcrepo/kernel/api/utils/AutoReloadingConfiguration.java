@@ -163,7 +163,13 @@ public abstract class AutoReloadingConfiguration {
      * @param configPath file path for configuration
      */
     public void setConfigPath(final String configPath) {
-        this.configPath = configPath;
+        // Resolve classpath references without springs help
+        if (configPath != null && configPath.startsWith("classpath:")) {
+            final String relativePath = configPath.substring(10);
+            this.configPath = this.getClass().getResource(relativePath).getPath();
+        } else {
+            this.configPath = configPath;
+        }
     }
 
     /**

@@ -1,0 +1,5 @@
+memento: http://mementoweb.org/ns#
+rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+fedora: http://fedora.info/definitions/v4/repository#
+ldp: http://www.w3.org/ns/ldp#
+unused: http://example.com/ns#
