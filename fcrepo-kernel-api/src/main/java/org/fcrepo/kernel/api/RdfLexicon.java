@@ -177,6 +177,8 @@ public final class RdfLexicon {
 
     private static final Set<Property> ldpManagedProperties = of(CONTAINS);
 
+    private static final Set<Resource> ldpManagedTypes = of(CONTAINER, BASIC_CONTAINER, RDF_SOURCE);
+
     // REPOSITORY INFORMATION
     public static final Property HAS_OBJECT_COUNT =
             createProperty(REPOSITORY_NAMESPACE + "objectCount");
@@ -279,6 +281,11 @@ public final class RdfLexicon {
      */
     public static final Predicate<Property> isManagedPredicate =
         hasFedoraNamespace.or(p -> managedProperties.contains(p));
+
+    /**
+     * Detects whether an RDF resource is a managed LDP Type.
+     */
+    public static final Predicate<Resource> isManagedLDPType = p -> ldpManagedTypes.contains(p);
 
     /**
      * Fedora defined JCR node type with supertype of nt:file with two nt:folder named fedora:timemap and

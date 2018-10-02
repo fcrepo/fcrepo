@@ -77,6 +77,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEGATE_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEMAP_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_NAMESPACE_VALUE;
+import static org.fcrepo.kernel.api.RdfLexicon.isManagedLDPType;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 import static org.fcrepo.kernel.api.RequiredRdfContext.EMBED_RESOURCES;
@@ -229,7 +230,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected ExternalContentHandlerFactory extContentHandlerFactory;
 
     private static final Predicate<Triple> IS_MANAGED_TYPE = t -> t.getPredicate().equals(type.asNode()) &&
-            isManagedNamespace.test(t.getObject().getNameSpace());
+            (isManagedNamespace.test(t.getObject().getNameSpace()) ||
+            isManagedLDPType.test(createResource(t.getObject().getURI())));
     private static final Predicate<Triple> IS_MANAGED_TRIPLE = IS_MANAGED_TYPE
         .or(t -> isManagedPredicate.test(createProperty(t.getPredicate().getURI())));
 
