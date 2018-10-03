@@ -51,6 +51,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.http.commons.responses.HtmlTemplate;
@@ -64,7 +65,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
@@ -94,6 +94,9 @@ public class StreamingBaseHtmlProviderTest {
     @Mock
     private NamespaceRegistry mockNamespaceRegistry;
 
+    @Mock
+    private UriInfo mockUriInfo;
+
     @Before
     public void setup() throws RepositoryException {
         when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
@@ -112,11 +115,13 @@ public class StreamingBaseHtmlProviderTest {
         testData = new RdfNamespacedStream(stream, getNamespaces(mockSession));
 
         testData2 = new RdfNamespacedStream(stream2, getNamespaces(mockSession));
-        final UriInfo info = Mockito.mock(UriInfo.class);
-        final URI baseUri = URI.create("http://localhost:8080/rest/");
-        when(info.getBaseUri()).thenReturn(baseUri);
 
-        setField(testProvider, "uriInfo", info);
+        final URI baseUri = URI.create("http://localhost:8080/rest/");
+        final UriBuilder baseUriBuilder = UriBuilder.fromUri(baseUri);
+        when(mockUriInfo.getBaseUri()).thenReturn(baseUri);
+        when(mockUriInfo.getBaseUriBuilder()).thenReturn(baseUriBuilder);
+
+        setField(testProvider, "uriInfo", mockUriInfo);
     }
 
     @Test

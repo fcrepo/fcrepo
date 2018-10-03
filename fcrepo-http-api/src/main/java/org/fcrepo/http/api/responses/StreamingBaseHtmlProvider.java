@@ -39,11 +39,13 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -54,22 +56,32 @@ import javax.ws.rs.ext.Provider;
 import com.google.common.collect.ImmutableMap;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.context.Context;
 import org.apache.velocity.tools.generic.EscapeTool;
 import org.apache.velocity.tools.generic.FieldTool;
+import org.fcrepo.http.api.FedoraLdp;
+import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.http.commons.responses.ViewHelpers;
+import org.fcrepo.http.commons.session.HttpSession;
+import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.api.RdfLexicon;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.FedoraBinary;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.glassfish.jersey.uri.UriTemplate;
 import org.slf4j.Logger;
 
 /**
  * Simple HTML provider for RdfNamespacedStreams
  *
  * @author ajs6f
+ * @author whikloj
  * @since Nov 19, 2013
  */
 @Provider
@@ -79,6 +91,21 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
 
     @javax.ws.rs.core.Context
     UriInfo uriInfo;
+
+    @javax.ws.rs.core.Context
+    SessionFactory sessionFactory;
+
+    @javax.ws.rs.core.Context
+    HttpServletRequest request;
+
+    private HttpSession session() {
+        return sessionFactory.getSession(request);
+    }
+
+    private IdentifierConverter<Resource, FedoraResource> translator() {
+        return new HttpResourceConverter(session(),
+                uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class));
+    }
 
     private static EscapeTool escapeTool = new EscapeTool();
 
@@ -154,6 +181,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
                         final OutputStream entityStream) throws IOException {
 
         final Node subject = ViewHelpers.getContentNode(nsStream.stream.topic());
+
         final Model model = nsStream.stream.collect(toModel());
         model.setNsPrefixes(nsStream.namespaces);
 
@@ -161,11 +189,34 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
 
         final Context context = getContext(model, subject);
 
+        final FedoraResource resource = getResourceFromSubject(subject.toString());
+        context.put("isVersionable", (resource != null ? resource.isVersioned() : false));
+        context.put("isVersion", (resource != null ? resource.isMemento() : false));
+        context.put("isLDPNR", (resource != null
+            ? resource instanceof FedoraBinary || !resource.getDescribedResource().equals(resource) : false));
+
         // the contract of MessageBodyWriter<T> is _not_ to close the stream
         // after writing to it
         final Writer outWriter = new OutputStreamWriter(entityStream);
         nodeTypeTemplate.merge(context, outWriter);
         outWriter.flush();
+    }
+
+    /**
+     * Get a FedoraResource for the subject of the graph, if it exists.
+     *
+     * @param subjectUri the uri of the subject
+     * @return FedoraResource if exists or null
+     */
+    private FedoraResource getResourceFromSubject(final String subjectUri) {
+        final UriTemplate uriTemplate =
+            new UriTemplate(uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class).toTemplate());
+        final Map<String, String> values = new HashMap<String, String>();
+        uriTemplate.match(subjectUri, values);
+        if (values.containsKey("path")) {
+            return translator().convert(translator().toDomain(values.get("path")));
+        }
+        return null;
     }
 
     protected Context getContext(final Model model, final Node subject) {

@@ -18,7 +18,6 @@
 package org.fcrepo.integration.http.api;
 
 import static java.time.format.DateTimeFormatter.ISO_INSTANT;
-import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 import static java.util.Arrays.sort;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
@@ -64,6 +63,8 @@ import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.SERVER_MANAGED_PROPERTIES_MODE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEMAP_TYPE;
+import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
+import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -77,7 +78,6 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -129,9 +129,6 @@ import org.junit.rules.TemporaryFolder;
  */
 public class FedoraVersioningIT extends AbstractResourceIT {
 
-    public static final DateTimeFormatter MEMENTO_DATETIME_ID_FORMATTER =
-            DateTimeFormatter.ofPattern("yyyyMMddHHmmss").withZone(ZoneId.of("GMT"));
-
     private static final String VERSIONED_RESOURCE_LINK_HEADER = "<" + VERSIONED_RESOURCE.getURI() + ">; rel=\"type\"";
     private static final String BINARY_CONTENT = "binary content";
     private static final String BINARY_UPDATED = "updated content";
@@ -144,7 +141,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     private static final Property TEST_PROPERTY = createProperty("info:test#label");
 
     private final String MEMENTO_DATETIME =
-            RFC_1123_DATE_TIME.format(LocalDateTime.of(2000, 1, 1, 00, 00).atZone(ZoneOffset.UTC));
+        MEMENTO_RFC_1123_FORMATTER.format(LocalDateTime.of(2000, 1, 1, 00, 00).atZone(ZoneOffset.UTC));
     private final List<String> rdfTypes = new ArrayList<>(Arrays.asList(POSSIBLE_RDF_RESPONSE_VARIANTS_STRING));
 
     private String subjectUri;
@@ -190,11 +187,11 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     public void testGetTimeMapResponseMultipleMementos() throws Exception {
         createVersionedContainer(id);
         final String memento1 =
-            RFC_1123_DATE_TIME.format(LocalDateTime.of(2000, 1, 1, 00, 00, 00).atOffset(ZoneOffset.UTC));
+            MEMENTO_RFC_1123_FORMATTER.format(LocalDateTime.of(2000, 1, 1, 00, 00, 00).atOffset(ZoneOffset.UTC));
         final String memento2 =
-            RFC_1123_DATE_TIME.format(LocalDateTime.of(2015, 8, 13, 18, 30, 0).atOffset(ZoneOffset.UTC));
+            MEMENTO_RFC_1123_FORMATTER.format(LocalDateTime.of(2015, 8, 13, 18, 30, 0).atOffset(ZoneOffset.UTC));
         final String memento3 =
-            RFC_1123_DATE_TIME.format(LocalDateTime.of(1980, 5, 31, 9, 15, 30).atOffset(ZoneOffset.UTC));
+            MEMENTO_RFC_1123_FORMATTER.format(LocalDateTime.of(1980, 5, 31, 9, 15, 30).atOffset(ZoneOffset.UTC));
         createContainerMementoWithBody(subjectUri, memento1);
         createContainerMementoWithBody(subjectUri, memento2);
         createContainerMementoWithBody(subjectUri, memento3);
@@ -243,16 +240,18 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     @Test
     public void testCreateVersionWithLastModifiedDateTimestamp() throws Exception {
         try {
+            final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+
             // relaxing the server managed mode here so lastModifiedDate can be set
             System.setProperty(SERVER_MANAGED_PROPERTIES_MODE, "relaxed");
 
             createVersionedContainer(id);
 
             // this results in a time which has .86 in the ms area. This is key for this test.
-            final String createdDate = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").format(
+            final String createdDate = FMT.format(
                     LocalDateTime.of(2018, 9, 21, 5, 30, 01, 860000000).atZone(ZoneOffset.UTC));
 
-            final String lastModified = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").format(
+            final String lastModified = FMT.format(
                     LocalDateTime.of(2018, 9, 21, 5, 30, 03, 500000000).atZone(ZoneOffset.UTC));
 
             // patch the resource with timestamps that trigger millisecond truncation in modeshape 5.0
@@ -559,11 +558,10 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     @Test
     public void testHeadOnMemento() throws Exception {
-        final DateTimeFormatter FMT = RFC_1123_DATE_TIME.withZone(ZoneId.of("UTC"));
 
         createVersionedContainer(id);
         final String mementoDateTime =
-            FMT.format(ISO_INSTANT.parse("2017-06-10T11:41:00Z", Instant::from));
+            MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2017-06-10T11:41:00Z", Instant::from));
         final String mementoUri = createLDPRSMementoWithExistingBody(mementoDateTime);
 
         // Status 200: HEAD request on existing memento
@@ -582,11 +580,10 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     @Test
     public void testGetOnMemento() throws Exception {
-        final DateTimeFormatter FMT = RFC_1123_DATE_TIME.withZone(ZoneId.of("UTC"));
 
         createVersionedContainer(id);
         final String mementoDateTime =
-            FMT.format(ISO_INSTANT.parse("2017-06-10T11:41:00Z", Instant::from));
+            MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2017-06-10T11:41:00Z", Instant::from));
         final String mementoUri = createLDPRSMementoWithExistingBody(mementoDateTime);
 
         // Status 200: GET request on existing memento
@@ -605,11 +602,10 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     @Test
     public void testOptionsOnMemento() throws Exception {
-        final DateTimeFormatter FMT = RFC_1123_DATE_TIME.withZone(ZoneId.of("UTC"));
 
         createVersionedContainer(id);
         final String mementoDateTime =
-            FMT.format(ISO_INSTANT.parse("2017-06-10T11:41:00Z", Instant::from));
+            MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2017-06-10T11:41:00Z", Instant::from));
         final String mementoUri = createLDPRSMementoWithExistingBody(mementoDateTime);
 
         // Status 200: OPTIONS request on existing memento
@@ -819,8 +815,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         listLinks.add(selfLink.build());
         if (mementoDateTime != null) {
             for (final String memento : mementoDateTime) {
-                final TemporalAccessor instant = RFC_1123_DATE_TIME.parse(memento);
-                listLinks.add(Link.fromUri(ldpcvUri + "/" + MEMENTO_DATETIME_ID_FORMATTER.format(instant))
+                final TemporalAccessor instant = MEMENTO_RFC_1123_FORMATTER.parse(memento);
+                listLinks.add(Link.fromUri(ldpcvUri + "/" + MEMENTO_LABEL_FORMATTER.format(instant))
                               .rel("memento")
                     .param("datetime", memento)
                               .build());
@@ -1221,19 +1217,18 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     @Test
     public void testDatetimeNegotiationLDPRv() throws Exception {
         final CloseableHttpClient customClient = createClient(true);
-        final DateTimeFormatter FMT = RFC_1123_DATE_TIME.withZone(ZoneId.of("UTC"));
 
         createVersionedContainer(id);
         final String memento1 =
-            FMT.format(ISO_INSTANT.parse("2017-06-10T11:41:00Z", Instant::from));
+            MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2017-06-10T11:41:00Z", Instant::from));
         final String version1Uri = createLDPRSMementoWithExistingBody(memento1);
         final String memento2 =
-            FMT.format(ISO_INSTANT.parse("2016-06-17T11:41:00Z", Instant::from));
+            MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2016-06-17T11:41:00Z", Instant::from));
         final String version2Uri = createLDPRSMementoWithExistingBody(memento2);
 
         // Request datetime between memento1 and memento2
         final String request1Datetime =
-            FMT.format(ISO_INSTANT.parse("2017-01-12T00:00:00Z", Instant::from));
+            MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2017-01-12T00:00:00Z", Instant::from));
         final HttpGet getMemento = getObjMethod(id);
         getMemento.addHeader(ACCEPT_DATETIME, request1Datetime);
 
@@ -1246,7 +1241,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         // Request datetime more recent than both mementos
         final String request2Datetime =
-            FMT.format(ISO_INSTANT.parse("2018-01-10T00:00:00Z", Instant::from));
+            MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2018-01-10T00:00:00Z", Instant::from));
         final HttpGet getMemento2 = getObjMethod(id);
         getMemento2.addHeader(ACCEPT_DATETIME, request2Datetime);
 
@@ -1259,7 +1254,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         // Request datetime older than either mementos
         final String request3Datetime =
-                FMT.format(ISO_INSTANT.parse("2014-01-01T00:00:00Z", Instant::from));
+            MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2014-01-01T00:00:00Z", Instant::from));
         final HttpGet getMemento3 = getObjMethod(id);
         getMemento3.addHeader(ACCEPT_DATETIME, request3Datetime);
 
@@ -1274,21 +1269,21 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     @Test
     public void testDatetimeNegotiationExactMatch() throws Exception {
         final CloseableHttpClient customClient = createClient(true);
-        final DateTimeFormatter FMT = RFC_1123_DATE_TIME.withZone(ZoneId.of("UTC"));
 
         final String originalUri = createVersionedContainer(id);
 
         // Create a current memento
         final String version1Uri = createMemento(originalUri, null, "text/turtle", null);
         final HttpHead httpHead = new HttpHead(version1Uri);
-        String version1Datetime;
+        final String version1Datetime;
         try (final CloseableHttpResponse response = customClient.execute(httpHead)) {
             version1Datetime = response.getFirstHeader(MEMENTO_DATETIME_HEADER).getValue();
         }
 
         // Create a slightly older memento
-        final Instant version2Instant = Instant.from(FMT.parse(version1Datetime)).minus(5, ChronoUnit.SECONDS);
-        final String version2Datetime = FMT.format(version2Instant);
+        final Instant version2Instant =
+            Instant.from(MEMENTO_RFC_1123_FORMATTER.parse(version1Datetime)).minus(5, ChronoUnit.SECONDS);
+        final String version2Datetime = MEMENTO_RFC_1123_FORMATTER.format(version2Instant);
         final String version2Uri = createLDPRSMementoWithExistingBody(version2Datetime);
 
         // Attempt to retrieve older memento
@@ -1317,11 +1312,10 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     @Test
     public void testDatetimeNegotiationNoMementos() throws Exception {
         final CloseableHttpClient customClient = createClient(true);
-        final DateTimeFormatter FMT = RFC_1123_DATE_TIME.withZone(ZoneId.of("UTC"));
 
         createVersionedContainer(id);
         final String requestDatetime =
-            FMT.format(ISO_INSTANT.parse("2017-01-12T00:00:00Z", Instant::from));
+            MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2017-01-12T00:00:00Z", Instant::from));
         final HttpGet getMemento = getObjMethod(id);
         getMemento.addHeader(ACCEPT_DATETIME, requestDatetime);
 
@@ -1336,9 +1330,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     @Test
     public void testGetWithDateTimeNegotiation() throws Exception {
         final CloseableHttpClient customClient = createClient(true);
-        final DateTimeFormatter FMT = RFC_1123_DATE_TIME.withZone(ZoneId.of("UTC"));
         final String mementoDateTime =
-            FMT.format(ISO_INSTANT.parse("2017-08-29T15:47:50Z", Instant::from));
+            MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2017-08-29T15:47:50Z", Instant::from));
 
         createVersionedContainer(id);
 
@@ -1475,11 +1468,10 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     @Test
     public void testGetLDPRSMementoHeaders() throws Exception {
-        final DateTimeFormatter FMT = RFC_1123_DATE_TIME.withZone(ZoneId.of("UTC"));
         createVersionedContainer(id);
 
         final String memento1 =
-            FMT.format(ISO_INSTANT.parse("2001-06-10T16:41:00Z", Instant::from));
+            MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2001-06-10T16:41:00Z", Instant::from));
         final String version1Uri = createLDPRSMementoWithExistingBody(memento1);
         final HttpGet getRequest = new HttpGet(version1Uri);
 
@@ -1499,11 +1491,10 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     @Test
     public void testGetLDPNRMementoHeaders() throws Exception {
-        final DateTimeFormatter FMT = RFC_1123_DATE_TIME.withZone(ZoneId.of("UTC"));
         createVersionedBinary(id, "text/plain", "This is some versioned content");
 
         final String memento1 =
-            FMT.format(ISO_INSTANT.parse("2001-06-10T16:41:00Z", Instant::from));
+            MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2001-06-10T16:41:00Z", Instant::from));
         final String version1Uri = createLDPNRMementoWithExistingBody(memento1);
         final HttpGet getRequest = new HttpGet(version1Uri);
 

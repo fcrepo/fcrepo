@@ -34,13 +34,16 @@ import static java.util.Collections.emptyMap;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toMap;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
-import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
-import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.WRITABLE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
+import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
+import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -48,6 +51,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
+
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.jena.graph.Graph;
@@ -106,8 +110,8 @@ public class ViewHelpers {
      */
     public Iterator<Node> getVersions(final Graph graph,
         final Node subject) {
-        LOGGER.warn("May Need Update with Mementos!");
-        return null;
+        // Mementos should be ordered by date so use the getOrderedVersions.
+        return getOrderedVersions(graph, subject, CONTAINS.asResource());
     }
 
     /**
@@ -121,7 +125,7 @@ public class ViewHelpers {
      */
     public Iterator<Node> getOrderedVersions(final Graph g, final Node subject, final Resource predicate) {
         final List<Node> vs = listObjects(g, subject, predicate.asNode()).toList();
-        vs.sort((v1, v2) -> getVersionDate(g, v1).orElse(DEFAULT).compareTo(getVersionDate(g, v2).orElse(DEFAULT)));
+        vs.sort((v1, v2) -> getVersionDate(g, v1).compareTo(getVersionDate(g, v2)));
         return vs.iterator();
     }
 
@@ -147,14 +151,28 @@ public class ViewHelpers {
      }
 
     /**
+     * Get the date time as the version label.
+     *
+     * @param graph the graph
+     * @param subject the subject
+     * @return the datetime in RFC 1123 format.
+     */
+    public String getVersionLabel(final Graph graph, final Node subject) {
+        final Instant datetime = getVersionDate(graph, subject);
+        return MEMENTO_RFC_1123_FORMATTER.format(datetime);
+    }
+
+    /**
      * Gets a modification date of a subject from the graph
      *
      * @param graph the graph
      * @param subject the subject
      * @return the modification date if it exists
      */
-    public Optional<String> getVersionDate(final Graph graph, final Node subject) {
-        return getValue(graph, subject, CREATED_DATE.asNode());
+    public Instant getVersionDate(final Graph graph, final Node subject) {
+        final String[] pathParts = subject.getURI().split("/");
+        final Instant datetime = MEMENTO_LABEL_FORMATTER.parse(pathParts[pathParts.length - 1], Instant::from);
+        return datetime;
     }
 
     private static Optional<String> getValue(final Graph graph, final Node subject, final Node predicate) {
@@ -191,15 +209,15 @@ public class ViewHelpers {
     }
 
     /**
-     * Determines whether the subject is of type fedora:Version.
-     * true if node has type fedora:Version
+     * Determines whether the subject is of type memento:Memento.
+     *
      * @param graph the graph
      * @param subject the subject
      * @return whether the subject is a versioned node
      */
     public boolean isVersionedNode(final Graph graph, final Node subject) {
         return listObjects(graph, subject, RDF.type.asNode()).toList().stream().map(Node::getURI)
-            .anyMatch((REPOSITORY_NAMESPACE + "Version")::equals);
+            .anyMatch((MEMENTO_TYPE.toString())::equals);
     }
 
     /**
@@ -330,6 +348,19 @@ public class ViewHelpers {
         LOGGER.trace("Is RDF Resource? s:{}, ns:{}, r:{}, g:{}", subject, namespace, resource, graph);
         return graph.find(subject, type.asNode(),
                 createResource(namespace + resource).asNode()).hasNext();
+    }
+
+    /**
+     * Is the subject the repository root resource.
+     *
+     * @param graph The graph
+     * @param subject The current subject
+     * @return true if has rdf:type http://fedora.info/definitions/v4/repository#RepositoryRoot
+     */
+    public boolean isRootResource(final Graph graph, final Node subject) {
+        final String rootRes = graph.getPrefixMapping().expandPrefix(FEDORA_REPOSITORY_ROOT);
+        final Node root = createResource(rootRes).asNode();
+        return graph.contains(subject, rdfType().asNode(), root);
     }
 
     /**

@@ -86,6 +86,7 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_MEMBERSHIP;
 import static org.fcrepo.kernel.api.RequiredRdfContext.MINIMAL;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
+import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import com.fasterxml.jackson.core.JsonParseException;
@@ -98,7 +99,6 @@ import java.net.URISyntaxException;
 import java.text.MessageFormat;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -481,7 +481,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         if (resource.isMemento()) {
             final Instant mementoInstant = resource.getMementoDatetime();
             if (mementoInstant != null) {
-                final String mementoDatetime = DateTimeFormatter.RFC_1123_DATE_TIME
+                final String mementoDatetime = MEMENTO_RFC_1123_FORMATTER
                         .format(mementoInstant.atZone(ZoneOffset.UTC));
                 servletResponse.addHeader(MEMENTO_DATETIME_HEADER, mementoDatetime);
             }
