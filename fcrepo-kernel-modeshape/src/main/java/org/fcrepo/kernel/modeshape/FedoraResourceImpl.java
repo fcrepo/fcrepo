@@ -142,7 +142,6 @@ import org.fcrepo.kernel.modeshape.rdf.impl.InternalIdentifierTranslator;
 import org.fcrepo.kernel.modeshape.rdf.impl.LdpContainerRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.LdpIsMemberOfRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.LdpRdfContext;
-import org.fcrepo.kernel.modeshape.rdf.impl.ParentRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.PropertiesRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.ReferencesRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.RootRdfContext;
@@ -214,8 +213,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             new LdpRdfContext(resource, translator),
             new AclRdfContext(resource, translator),
             new RootRdfContext(resource, translator),
-            new ContentRdfContext(resource, translator),
-            new ParentRdfContext(resource, translator));
+            new ContentRdfContext(resource, translator));
         return streams.reduce(empty(), Stream::concat);
     });
 
