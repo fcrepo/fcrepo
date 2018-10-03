@@ -1008,7 +1008,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * This method does two things:
      * - Throws an exception if an authorization has both accessTo and accessToClass
      * - Adds a default accessTo target if an authorization has neither accessTo nor accessToClass
-     *
+     * 
      * @param resource the fedora resource
      * @param inputModel to be checked and updated
      */
@@ -1042,7 +1042,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     /**
      * Returns a Statement with the resource containing the acl to be the accessTo target for the given auth subject.
-     *
+     * 
      * @param authSubject - acl authorization subject uri string
      * @return
      */

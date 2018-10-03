@@ -49,7 +49,7 @@ public abstract class AutoReloadingConfiguration {
     protected boolean monitorRunning;
 
     /**
-     * Initialize the allow list
+     * Initialize the configuration and set up monitoring
      */
     public void init() throws IOException {
         if (isEmpty(configPath)) {
@@ -80,7 +80,7 @@ public abstract class AutoReloadingConfiguration {
     protected abstract void loadConfiguration() throws IOException;
 
     /**
-     * Starts up monitoring of the allowed list configuration for changes.
+     * Starts up monitoring of the configuration for changes.
      */
     protected void monitorForChanges() {
         if (monitorRunning) {
@@ -163,7 +163,7 @@ public abstract class AutoReloadingConfiguration {
      * @param configPath file path for configuration
      */
     public void setConfigPath(final String configPath) {
-        // Resolve classpath references without springs help
+        // Resolve classpath references without spring's help
         if (configPath != null && configPath.startsWith("classpath:")) {
             final String relativePath = configPath.substring(10);
             this.configPath = this.getClass().getResource(relativePath).getPath();

@@ -585,7 +585,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final HttpEntity entity = response.getEntity();
             final String contentType = parse(entity.getContentType().getValue()).getMimeType();
             assertNotNull("Entity is not an RDF serialization!", contentTypeToLang(contentType));
-            System.out.println(EntityUtils.toString(entity));
         }
     }
 
