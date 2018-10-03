@@ -31,6 +31,7 @@ public class EventSerializerTest extends FedoraEventSerializerTestBase {
 
     @Test
     public void testAsModel() {
+        mockEvent(path);
         testModel(EventSerializer.toModel(mockEvent));
     }
 

@@ -20,8 +20,12 @@ package org.fcrepo.event.serialization;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.RdfLexicon.PROV_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.CONTAINER_WEBAC_ACL;
+import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.LDPCV_TIME_MAP;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -30,15 +34,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.fcrepo.kernel.api.observer.EventType;
-
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.jena.rdf.model.Model;
+import org.fcrepo.kernel.api.observer.EventType;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * <p>
@@ -53,6 +55,7 @@ public class JsonLDSerializerTest extends FedoraEventSerializerTestBase {
 
     @Test
     public void testJsonSerializationAsModel() {
+        mockEvent(path);
         final EventSerializer serializer = new JsonLDSerializer();
         final String json = serializer.serialize(mockEvent);
         final Model model = createDefaultModel();
@@ -62,6 +65,27 @@ public class JsonLDSerializerTest extends FedoraEventSerializerTestBase {
 
     @Test
     public void testJsonSerializationAsJson() throws IOException {
+        testJsonSerializationAsJson(path, path);
+    }
+
+    @Test
+    public void testJsonSerializationAsJsonWithAclPath() throws IOException {
+        testJsonSerializationAsJson("/resource/" + CONTAINER_WEBAC_ACL, "/resource/" + FCR_ACL);
+    }
+
+    @Test
+    public void testJsonSerializationAsJsonWithTimeMapPath() throws IOException {
+        testJsonSerializationAsJson("/resource/" + LDPCV_TIME_MAP, "/resource/" + FCR_VERSIONS);
+    }
+
+    @Test
+    public void testJsonSerializationAsJsonWithMementoPath() throws IOException {
+        testJsonSerializationAsJson("/resource/" + LDPCV_TIME_MAP + "/20001231000000",
+                                    "/resource/" + FCR_VERSIONS + "/20001231000000");
+    }
+
+    private void testJsonSerializationAsJson(final String inputPath, final String outputPath) throws IOException {
+        mockEvent(inputPath);
         final EventSerializer serializer = new JsonLDSerializer();
         final String json = serializer.serialize(mockEvent);
 
@@ -85,7 +109,7 @@ public class JsonLDSerializerTest extends FedoraEventSerializerTestBase {
         assertEquals(node.get("published").textValue(), timestamp.toString());
         final List<String> types = new ArrayList<>();
         final JsonNode objectNode = node.get("object");
-        assertEquals(baseUrl + path, objectNode.get("id").asText());
+        assertEquals(baseUrl + outputPath, objectNode.get("id").asText());
         assertEquals(objectNode.get("isPartOf").textValue(), baseUrl);
         objectNode.get("type").elements().forEachRemaining(n -> {
             types.add(n.textValue());

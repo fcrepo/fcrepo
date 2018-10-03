@@ -19,6 +19,7 @@
 package org.fcrepo.event.serialization;
 
 import static java.util.stream.Collectors.toList;
+import static org.fcrepo.http.commons.api.rdf.HttpResourceConverter.convertToExternalPath;
 import static org.fcrepo.kernel.api.RdfLexicon.PROV_NAMESPACE;
 import static org.fcrepo.kernel.api.observer.OptionalValues.BASE_URL;
 import static org.fcrepo.kernel.api.observer.OptionalValues.USER_AGENT;
@@ -165,8 +166,7 @@ class JsonLDEventMessage {
         final String baseUrl = evt.getInfo().get(BASE_URL);
 
         // build objectId
-        final String objectId = baseUrl + evt.getPath();
-
+        final String objectId = convertToExternalPath(baseUrl + evt.getPath());
         // build event types list
         final List<String> types = evt.getTypes()
                 .stream()
