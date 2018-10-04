@@ -29,7 +29,6 @@ import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -45,7 +44,6 @@ import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.modeshape.utils.FedoraSessionUserUtil;
-import org.fcrepo.kernel.modeshape.utils.NamespaceTools;
 
 /**
  * An implementation of the FedoraSession abstraction
@@ -141,11 +139,6 @@ public class FedoraSessionImpl implements FedoraSession {
     @Override
     public URI getUserURI() {
         return FedoraSessionUserUtil.getUserURI(jcrSession.getUserID());
-    }
-
-    @Override
-    public Map<String, String> getNamespaces() {
-        return NamespaceTools.getNamespaces(jcrSession);
     }
 
     /**

@@ -21,7 +21,6 @@ import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -73,12 +72,6 @@ public interface FedoraSession {
     URI getUserURI();
 
     /**
-     * Get a mapping of registered namespaces
-     * @return the namespace mapping
-     */
-    Map<String, String> getNamespaces();
-
-    /**
      * Add session-specific data
      * @param key the key
      * @param value the value
@@ -106,7 +99,7 @@ public interface FedoraSession {
      * Remove all session data for a particular key
      * @param key the data key
      */
-    default void removeSessionData(String key) {
+    default void removeSessionData(final String key) {
         getSessionData(key).forEach(v -> removeSessionData(key, v));
     }
 }

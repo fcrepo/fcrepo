@@ -55,7 +55,8 @@ public class DefaultPropertiesLoader {
         BINARY_STORE("fcrepo.binary.directory"),
         MODE_INDEX("fcrepo.modeshape.index.directory"),
         ACTIVE_MQ("fcrepo.activemq.directory"),
-        ALLOWED_EXTERNAL_CONTENT("fcrepo.external.content.allowed", false);
+        ALLOWED_EXTERNAL_CONTENT("fcrepo.external.content.allowed", false),
+        NAMESPACE_REGISTRY("fcrepo.namespace.registry", false);
 
         private String text;
 

@@ -264,7 +264,7 @@ public class FedoraAcl extends ContentExposingResource {
                 final RdfStream defaultRdfStream = DefaultRdfStream.fromModel(createResource(aclUri).asNode(),
                     getDefaultAcl(aclUri));
                 final RdfNamespacedStream output = new RdfNamespacedStream(defaultRdfStream,
-                    session.getFedoraSession().getNamespaces());
+                    namespaceRegistry.getNamespaces());
                 return ok(output).build();
             }
 
