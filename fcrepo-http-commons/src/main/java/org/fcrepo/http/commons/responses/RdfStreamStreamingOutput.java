@@ -30,18 +30,27 @@ import static org.apache.jena.riot.system.StreamRDFWriter.defaultSerialization;
 import static org.apache.jena.riot.system.StreamRDFWriter.getWriterStream;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.slf4j.LoggerFactory.getLogger;
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
-
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.StreamingOutput;
 
 import com.google.common.util.concurrent.AbstractFuture;
 import org.apache.jena.riot.RiotException;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.NsIterator;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
@@ -63,6 +72,8 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
     private static final String JSONLD_COMPACTED = "http://www.w3.org/ns/json-ld#compacted";
 
     private static final String JSONLD_FLATTENED = "http://www.w3.org/ns/json-ld#flattened";
+
+    public static final String RDF_TYPE = RDF_NAMESPACE + "type";
 
     private final Lang format;
 
@@ -125,17 +136,35 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
         // For formats that can be block-streamed (n-triples, turtle)
         if (format != null) {
             LOGGER.debug("Stream-based serialization of {}", dataFormat.toString());
+            final Set<String> namespacesPresent = new HashSet<>();
+
             final StreamRDF stream = new SynchonizedStreamRDFWrapper(getWriterStream(output, format));
             stream.start();
-            nsPrefixes.forEach(stream::prefix);
-            rdfStream.forEach(stream::triple);
+            // Must read the rdf stream before writing out ns prefixes, otherwise the prefixes come after the triples
+            final List<Triple> tripleList = rdfStream.peek(t -> {
+                // Collect the namespaces present in the RDF stream, using the same
+                // criteria for where to look that jena's model.listNameSpaces() does
+                namespacesPresent.add(t.getPredicate().getNameSpace());
+                if (RDF_TYPE.equals(t.getPredicate().getURI()) && t.getObject().isURI()) {
+                    namespacesPresent.add(t.getObject().getNameSpace());
+                }
+            }).collect(Collectors.toList());
+
+            nsPrefixes.forEach((prefix, uri) -> {
+                // Only add namespace prefixes if the namespace is present in the rdf stream
+                if (namespacesPresent.contains(uri)) {
+                    stream.prefix(prefix, uri);
+                }
+            });
+            tripleList.forEach(stream::triple);
             stream.finish();
 
         // For formats that require analysis of the entire model and cannot be streamed directly (rdfxml, n3)
         } else {
             LOGGER.debug("Non-stream serialization of {}", dataFormat.toString());
             final Model model = rdfStream.collect(toModel());
-            model.setNsPrefixes(nsPrefixes);
+
+            model.setNsPrefixes(filterNamespacesToPresent(model, nsPrefixes));
             // use block output streaming for RDFXML
             if (RDFXML.equals(dataFormat)) {
                 RDFDataMgr.write(output, model.getGraph(), RDFXML_PLAIN);
@@ -146,6 +175,33 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
                 RDFDataMgr.write(output, model.getGraph(), dataFormat);
             }
         }
+    }
+
+    /**
+     * Filters the map of namespace prefix mappings to just those containing namespace URIs present in the model
+     *
+     * @param model model
+     * @param nsPrefixes map of namespace to uris
+     * @return nsPrefixes filtered to namespaces found in the model
+     */
+    private static Map<String, String> filterNamespacesToPresent(final Model model,
+            final Map<String, String> nsPrefixes) {
+        final Map<String, String> resultNses = new HashMap<>();
+        final Set<Entry<String, String>> nsSet = nsPrefixes.entrySet();
+        final NsIterator nsIt = model.listNameSpaces();
+        while (nsIt.hasNext()) {
+            final String ns = nsIt.next();
+
+            final Optional<Entry<String, String>> nsOpt = nsSet.stream()
+                    .filter(nsEntry -> nsEntry.getValue().equals(ns))
+                    .findFirst();
+            if (nsOpt.isPresent()) {
+                final Entry<String, String> nsMatch = nsOpt.get();
+                resultNses.put(nsMatch.getKey(), nsMatch.getValue());
+            }
+        }
+
+        return resultNses;
     }
 
     private static RDFFormat getFormatFromMediaType(final MediaType mediaType) {
