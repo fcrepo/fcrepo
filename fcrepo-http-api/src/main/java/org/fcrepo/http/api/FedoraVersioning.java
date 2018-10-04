@@ -21,7 +21,6 @@ import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
-import static javax.ws.rs.core.Response.noContent;
 import static javax.ws.rs.core.Response.ok;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
@@ -56,7 +55,6 @@ import javax.jcr.ItemExistsException;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
-import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.OPTIONS;
@@ -123,18 +121,6 @@ public class FedoraVersioning extends ContentExposingResource {
     @VisibleForTesting
     public FedoraVersioning(final String externalPath) {
         this.externalPath = externalPath;
-    }
-
-    /**
-     * Disable versioning
-     * @return the response
-     */
-    @DELETE
-    public Response disableVersioning() {
-        LOGGER.debug("Disable versioning for '{}'", externalPath);
-        resource().disableVersioning();
-        session.commit();
-        return noContent().build();
     }
 
     /**

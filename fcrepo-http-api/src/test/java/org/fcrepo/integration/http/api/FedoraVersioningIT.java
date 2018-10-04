@@ -27,6 +27,7 @@ import static javax.ws.rs.core.HttpHeaders.LOCATION;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
 import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
 import static javax.ws.rs.core.Response.Status.FOUND;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -157,22 +158,13 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testDeleteTimeMapForContainer() throws Exception {
+    public void testDeleteTimeMapNotAllowed() throws Exception {
         createVersionedContainer(id);
-
-        final String mementoUri = createMemento(subjectUri, null, null, null);
-        assertEquals(200, getStatus(new HttpGet(mementoUri)));
-
         final String timeMapUri = subjectUri + "/" + FCR_VERSIONS;
         assertEquals(200, getStatus(new HttpGet(timeMapUri)));
-
         // disabled versioning to delete TimeMap
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(serverAddress + id + "/" + FCR_VERSIONS)));
-
-        // validate that the memento version is gone
-        assertEquals(404, getStatus(new HttpGet(mementoUri)));
-        // validate that the LDPCv is gone
-        assertEquals(404, getStatus(new HttpGet(timeMapUri)));
+        assertEquals(METHOD_NOT_ALLOWED.getStatusCode(),
+                     getStatus(new HttpDelete(serverAddress + id + "/" + FCR_VERSIONS)));
     }
 
     @Test
