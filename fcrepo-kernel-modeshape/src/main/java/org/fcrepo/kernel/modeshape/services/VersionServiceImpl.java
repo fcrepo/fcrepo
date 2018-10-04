@@ -79,6 +79,7 @@ import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.VersionService;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
@@ -114,6 +115,9 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
      */
     @Inject
     protected BinaryService binaryService;
+
+    @Inject
+    protected RdfNamespaceRegistry namespaceRegistry;
 
     @Override
     public FedoraResource createVersion(final FedoraSession session, final FedoraResource resource,
@@ -173,7 +177,7 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
         final RdfStream mappedStream = remapResourceUris(resourceUri, mementoUri, mementoRdfStream,
                 idTranslator, jcrSession);
 
-        new RelaxedRdfAdder(idTranslator, jcrSession, mappedStream, session.getNamespaces()).consume();
+        new RelaxedRdfAdder(idTranslator, jcrSession, mappedStream, namespaceRegistry.getNamespaces()).consume();
 
         decorateWithMementoProperties(session, mementoPath, dateTime);
 

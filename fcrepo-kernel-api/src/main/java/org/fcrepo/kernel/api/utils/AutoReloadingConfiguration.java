@@ -46,7 +46,7 @@ public abstract class AutoReloadingConfiguration {
 
     private Thread monitorThread;
 
-    protected boolean monitorRunning;
+    private boolean monitorRunning;
 
     /**
      * Initialize the configuration and set up monitoring
@@ -82,7 +82,7 @@ public abstract class AutoReloadingConfiguration {
     /**
      * Starts up monitoring of the configuration for changes.
      */
-    protected void monitorForChanges() {
+    private void monitorForChanges() {
         if (monitorRunning) {
             return;
         }

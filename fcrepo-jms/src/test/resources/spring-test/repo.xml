@@ -11,6 +11,11 @@
 
     <context:component-scan base-package="org.fcrepo"/>
     
+    <!-- Configuration of namespace prefixes -->
+    <bean name="rdfNamespaceRegistry" class="org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry">
+      <property name="monitorForChanges" value="false" />
+    </bean>
+    
     <bean name="modeshapeRepofactory"
         class="org.fcrepo.kernel.modeshape.spring.ModeShapeRepositoryFactoryBean"
         p:repositoryConfiguration="${fcrepo.modeshape.configuration:config/testing/repository.json}"/>

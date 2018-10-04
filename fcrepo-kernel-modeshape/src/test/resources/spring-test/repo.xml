@@ -12,6 +12,11 @@
   <context:annotation-config/>
 
   <context:property-placeholder/>
+  
+  <!-- Configuration of namespace prefixes -->
+  <bean name="rdfNamespaceRegistry" class="org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry">
+    <property name="monitorForChanges" value="false" />
+  </bean>
 
   <bean name="modeshapeRepofactory"
     class="org.fcrepo.kernel.modeshape.spring.ModeShapeRepositoryFactoryBean"
