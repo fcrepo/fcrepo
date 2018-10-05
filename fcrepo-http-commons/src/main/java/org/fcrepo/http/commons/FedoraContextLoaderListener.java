@@ -47,7 +47,7 @@ public class FedoraContextLoaderListener extends ContextLoaderListener {
                     "You must configure a 'repository.json'\n" +
                     "\n" +
                     "See documentation specific to your version of Fedora\n" +
-                    "https://wiki.duraspace.org/display/FEDORA4x/Application+Configuration\n" +
+                    "https://wiki.duraspace.org/display/FEDORA5x/Application+Configuration\n" +
                     "\n" +
                     "=====================================================================\n" +
                     "=====================================================================\n";
