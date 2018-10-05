@@ -1381,8 +1381,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         // Create the DirectContainer
         final HttpPut createContainer = new HttpPut(serverAddress + members);
         createContainer.addHeader(CONTENT_TYPE, "text/turtle");
-        final String membersRDF = "<> a <http://www.w3.org/ns/ldp#DirectContainer>; "
-            + "<http://www.w3.org/ns/ldp#hasMemberRelation> <http://pcdm.org/models#hasMember>; "
+        createContainer.addHeader(LINK, "<http://www.w3.org/ns/ldp#DirectContainer>;rel=type");
+        final String membersRDF = "<> <http://www.w3.org/ns/ldp#hasMemberRelation> <http://pcdm.org/models#hasMember>; "
             + "<http://www.w3.org/ns/ldp#membershipResource> <" + serverAddress + id + "> . ";
         createContainer.setEntity(new StringEntity(membersRDF));
         assertEquals("Membership container not created!", CREATED.getStatusCode(), getStatus(createContainer));
@@ -1417,8 +1417,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         // Create the IndirectContainer
         final HttpPut createContainer = new HttpPut(serverAddress + members);
         createContainer.addHeader(CONTENT_TYPE, "text/turtle");
-        final String membersRDF = "<> a <http://www.w3.org/ns/ldp#IndirectContainer>; "
-            + "<http://www.w3.org/ns/ldp#hasMemberRelation> <info:fedora/test/hasTitle> ; "
+        createContainer.addHeader(LINK, "<http://www.w3.org/ns/ldp#IndirectContainer>;rel=type");
+        final String membersRDF = "<> <http://www.w3.org/ns/ldp#hasMemberRelation> <info:fedora/test/hasTitle> ; "
             + "<http://www.w3.org/ns/ldp#insertedContentRelation> <http://www.w3.org/2004/02/skos/core#prefLabel>; "
             + "<http://www.w3.org/ns/ldp#membershipResource> <" + serverAddress + id + "> . ";
         createContainer.setEntity(new StringEntity(membersRDF));
@@ -2209,11 +2209,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertTrue(getLinkHeaders(getObjMethod(pid + "/b")).contains(DIRECT_CONTAINER_LINK_HEADER));
 
         // successful update the properties with the interaction mode
-        final String ttla = "<> a <" + DIRECT_CONTAINER.getURI()
-                + "> ; <" + MEMBERSHIP_RESOURCE + "> <" + container + ">;\n"
+        final String ttla = "<> <" + MEMBERSHIP_RESOURCE + "> <" + container + ">;\n"
                 + "<" + HAS_MEMBER_RELATION + "> <info:some/relation> .\n";
         final HttpPut puta = putObjMethod(pid + "/b", "text/turtle", ttla);
         puta.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
+        puta.addHeader(LINK, "<http://www.w3.org/ns/ldp#DirectContainer>;rel=type");
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(puta));
 
         // attempt to change direct container to basic container
@@ -2323,8 +2323,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         // create an indirect container
         final HttpPut createContainer = new HttpPut(serverAddress + pid1 + "/members");
         createContainer.addHeader(CONTENT_TYPE, "text/turtle");
-        final String membersRDF = "<> a <http://www.w3.org/ns/ldp#IndirectContainer>; "
-            + "<http://www.w3.org/ns/ldp#hasMemberRelation> <" + memberRelation + ">; "
+        createContainer.addHeader(LINK, "<http://www.w3.org/ns/ldp#IndirectContainer>;rel=type");
+        final String membersRDF = "<> <http://www.w3.org/ns/ldp#hasMemberRelation> <" + memberRelation + ">; "
             + "<http://www.w3.org/ns/ldp#insertedContentRelation> <http://www.openarchives.org/ore/terms/proxyFor>; "
             + "<http://www.w3.org/ns/ldp#membershipResource> <" + serverAddress + pid1 + "> . ";
         createContainer.setEntity(new StringEntity(membersRDF));
@@ -3707,8 +3707,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final long lastmod3;
         final HttpPut createContainer = new HttpPut(objURI + "/members");
         createContainer.addHeader(CONTENT_TYPE, "text/turtle");
-        final String membersRDF = "<> a <http://www.w3.org/ns/ldp#DirectContainer>; "
-            + "<http://www.w3.org/ns/ldp#hasMemberRelation> <http://pcdm.org/models#hasMember>; "
+        createContainer.addHeader(LINK, "<http://www.w3.org/ns/ldp#DirectContainer>;rel=type");
+        final String membersRDF = "<> <http://www.w3.org/ns/ldp#hasMemberRelation> <http://pcdm.org/models#hasMember>; "
             + "<http://www.w3.org/ns/ldp#membershipResource> <" + objURI + "> . ";
         createContainer.setEntity(new StringEntity(membersRDF));
         try (final CloseableHttpResponse response = execute(createContainer)) {
