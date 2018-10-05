@@ -105,7 +105,6 @@ import javax.ws.rs.core.Variant.VariantListBuilder;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.atlas.web.ContentType;
@@ -484,9 +483,7 @@ public class FedoraLdp extends ContentExposingResource {
                 checkForInsufficientStorageException(e, e);
             }
 
-            if (hasVersionedResourceLink(links)) {
-                resource.enableVersioning();
-            }
+            resource.enableVersioning();
 
             ensureInteractionType(resource, interactionModel,
                     (requestBodyStream == null || requestContentType == null));
@@ -696,12 +693,8 @@ public class FedoraLdp extends ContentExposingResource {
                     }
                 }
 
-                if (hasVersionedResourceLink(links)) {
-                    resource.enableVersioning();
-                    if (resource instanceof FedoraBinary) {
-                        resource.enableVersioning();
-                    }
-                }
+                //enable versioning by default
+                resource.enableVersioning();
 
                 ensureInteractionType(resource, interactionModel,
                         (requestBodyStream == null || requestContentType == null));
@@ -742,35 +735,6 @@ public class FedoraLdp extends ContentExposingResource {
         } else {
             throw new RepositoryRuntimeException(rootThrowable);
         }
-    }
-
-    /**
-     * Returns true if there is a link with a VERSIONED_RESOURCE type.
-     * @param links a list of link header values.
-     * @return True if there is a matching link header.
-     */
-    private boolean hasVersionedResourceLink(final List<String> links) {
-        if (!CollectionUtils.isEmpty(links)) {
-            try {
-                for (final String link : links) {
-                    final Link linq = Link.valueOf(link);
-                    if ("type".equals(linq.getRel())) {
-                        final Resource type = createResource(linq.getUri().toString());
-                        if (type.equals(VERSIONED_RESOURCE)) {
-                            return true;
-                        }
-                    }
-                }
-            } catch (final RuntimeException e) {
-                if (e instanceof IllegalArgumentException | e instanceof UriBuilderException) {
-                    throw new ClientErrorException("Invalid link specified: " + String.join(", ", links),
-                            BAD_REQUEST);
-                }
-                throw e;
-            }
-        }
-
-        return false;
     }
 
     @Override
