@@ -2110,7 +2110,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final DatasetGraph graph = dataset.asDatasetGraph();
             final Node resource = createURI(serverAddress + id);
             assertTrue("Didn't find member resources", graph.find(ANY, resource, LDP_MEMBER.asNode(), ANY).hasNext());
-            assertTrue("Didn't find contained", graph.find(ANY, resource,  CONTAINS.asNode(), ANY).hasNext());
+            assertFalse("Expected nothing server managed",
+                    graph.find(ANY, resource, CONTAINS.asNode(), ANY).hasNext());
             assertFalse("Expected nothing server managed",
                     graph.find(ANY, resource, ANY, CONTAINER.asNode()).hasNext());
             assertFalse("Expected nothing server managed",

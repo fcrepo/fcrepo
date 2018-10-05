@@ -68,8 +68,8 @@ public class LdpPreferTag extends PreferTag {
         membership = (!preferMinimalContainer && !omits.contains(LDP_NAMESPACE + "PreferMembership")) ||
                 includes.contains(LDP_NAMESPACE + "PreferMembership");
 
-        containment = (!preferMinimalContainer && !omits.contains(LDP_NAMESPACE + "PreferContainment")) ||
-                includes.contains(LDP_NAMESPACE + "PreferContainment");
+        containment = (!preferMinimalContainer && !omits.contains(LDP_NAMESPACE + "PreferContainment") &&
+                !omits.contains(SERVER_MANAGED.toString())) || includes.contains(LDP_NAMESPACE + "PreferContainment");
 
         references = includes.contains(INBOUND_REFERENCES.toString());
 
