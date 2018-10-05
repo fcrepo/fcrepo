@@ -77,15 +77,19 @@ import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
+import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MIME_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_ORIGINAL_NAME;
 import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_MEMBER;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
@@ -1377,8 +1381,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         // Create the DirectContainer
         final HttpPut createContainer = new HttpPut(serverAddress + members);
         createContainer.addHeader(CONTENT_TYPE, "text/turtle");
-        final String membersRDF = "<> a <http://www.w3.org/ns/ldp#DirectContainer>; "
-            + "<http://www.w3.org/ns/ldp#hasMemberRelation> <http://pcdm.org/models#hasMember>; "
+        createContainer.addHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
+        final String membersRDF = "<> <http://www.w3.org/ns/ldp#hasMemberRelation> <http://pcdm.org/models#hasMember>; "
             + "<http://www.w3.org/ns/ldp#membershipResource> <" + serverAddress + id + "> . ";
         createContainer.setEntity(new StringEntity(membersRDF));
         assertEquals("Membership container not created!", CREATED.getStatusCode(), getStatus(createContainer));
@@ -1413,8 +1417,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         // Create the IndirectContainer
         final HttpPut createContainer = new HttpPut(serverAddress + members);
         createContainer.addHeader(CONTENT_TYPE, "text/turtle");
-        final String membersRDF = "<> a <http://www.w3.org/ns/ldp#IndirectContainer>; "
-            + "<http://www.w3.org/ns/ldp#hasMemberRelation> <info:fedora/test/hasTitle> ; "
+        createContainer.addHeader(LINK, INDIRECT_CONTAINER_LINK_HEADER);
+        final String membersRDF = "<> <http://www.w3.org/ns/ldp#hasMemberRelation> <info:fedora/test/hasTitle> ; "
             + "<http://www.w3.org/ns/ldp#insertedContentRelation> <http://www.w3.org/2004/02/skos/core#prefLabel>; "
             + "<http://www.w3.org/ns/ldp#membershipResource> <" + serverAddress + id + "> . ";
         createContainer.setEntity(new StringEntity(membersRDF));
@@ -2028,6 +2032,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     @Test
     public void testGetObjectOmitMembership() throws IOException {
         final String id = getRandomUniqueId();
+        final Node resource = createURI(serverAddress + id);
         createObjectAndClose(id);
         addMixin(id, BASIC_CONTAINER.getURI());
         createObjectAndClose(id + "/a");
@@ -2036,6 +2041,16 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 + "omit=\"http://www.w3.org/ns/ldp#PreferContainment http://www.w3.org/ns/ldp#PreferMembership\"");
         try (final CloseableDataset dataset = getDataset(getObjMethod)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
+            assertTrue("Expected server managed", graph.find(ANY, resource, ANY, CONTAINER.asNode()).hasNext());
+            assertTrue("Expected server managed", graph.find(ANY, resource, ANY, BASIC_CONTAINER.asNode()).hasNext());
+            assertTrue("Expected server managed", graph.find(ANY, resource, ANY, RDF_SOURCE.asNode()).hasNext());
+            assertTrue("Expected server managed", graph.find(ANY, resource, ANY, FEDORA_CONTAINER.asNode()).hasNext());
+            assertTrue("Expected server managed", graph.find(ANY, resource, ANY, FEDORA_RESOURCE.asNode()).hasNext());
+            assertTrue("Expected server managed", graph.find(ANY, resource, CREATED_DATE.asNode(), ANY).hasNext());
+            assertTrue("Expected server managed", graph.find(ANY, resource, CREATED_BY.asNode(), ANY).hasNext());
+            assertTrue("Expected server managed",
+                    graph.find(ANY, resource, LAST_MODIFIED_DATE.asNode(), ANY).hasNext());
+            assertTrue("Expected server managed", graph.find(ANY, resource, LAST_MODIFIED_BY.asNode(), ANY).hasNext());
             assertFalse("Didn't expect inlined member resources", graph.find(ANY,
                     createURI(serverAddress + id), HAS_CHILD.asNode(), ANY).hasNext());
         }
@@ -2061,7 +2076,117 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final DatasetGraph graph = dataset.asDatasetGraph();
             final Node resource = createURI(serverAddress + id);
             assertTrue("Didn't find member resources", graph.find(ANY, resource, LDP_MEMBER.asNode(), ANY).hasNext());
+            assertTrue("Expected server managed", graph.find(ANY, resource, ANY, CONTAINER.asNode()).hasNext());
+            assertTrue("Expected server managed", graph.find(ANY, resource, ANY, BASIC_CONTAINER.asNode()).hasNext());
+            assertTrue("Expected server managed", graph.find(ANY, resource, ANY, RDF_SOURCE.asNode()).hasNext());
+            assertTrue("Expected server managed", graph.find(ANY, resource, ANY, FEDORA_CONTAINER.asNode()).hasNext());
+            assertTrue("Expected server managed", graph.find(ANY, resource, ANY, FEDORA_RESOURCE.asNode()).hasNext());
+            assertTrue("Expected server managed", graph.find(ANY, resource, CREATED_DATE.asNode(), ANY).hasNext());
+            assertTrue("Expected server managed", graph.find(ANY, resource, CREATED_BY.asNode(), ANY).hasNext());
+            assertTrue("Expected server managed",
+                    graph.find(ANY, resource, LAST_MODIFIED_DATE.asNode(), ANY).hasNext());
+            assertTrue("Expected server managed", graph.find(ANY, resource, LAST_MODIFIED_BY.asNode(), ANY).hasNext());
             assertFalse("Expected nothing contained", graph.find(ANY, resource, CONTAINS.asNode(), ANY).hasNext());
+        }
+    }
+
+    @Test
+    public void testGetObjectOmitServerManaged() throws IOException {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+        final String location = serverAddress + id;
+        final String updateString = "<> <" + MEMBERSHIP_RESOURCE.getURI() +
+                "> <" + location + "> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_NAMESPACE + "member> .";
+        final HttpPut put = putObjMethod(id + "/a", "text/turtle", updateString);
+        put.setHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
+        assertEquals(CREATED.getStatusCode(), getStatus(put));
+        assertTrue(getLinkHeaders(getObjMethod(id + "/a")).contains(DIRECT_CONTAINER_LINK_HEADER));
+        createObject(id + "/a/1");
+
+        final HttpGet getObjMethod = getObjMethod(id);
+        getObjMethod.addHeader("Prefer",
+                "return=representation; omit=\"http://fedora.info/definitions/v4/repository#ServerManaged\"");
+        try (final CloseableDataset dataset = getDataset(getObjMethod)) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            final Node resource = createURI(serverAddress + id);
+            assertTrue("Didn't find member resources", graph.find(ANY, resource, LDP_MEMBER.asNode(), ANY).hasNext());
+            assertTrue("Didn't find contained", graph.find(ANY, resource,  CONTAINS.asNode(), ANY).hasNext());
+            assertFalse("Expected nothing server managed",
+                    graph.find(ANY, resource, ANY, CONTAINER.asNode()).hasNext());
+            assertFalse("Expected nothing server managed",
+                    graph.find(ANY, resource, ANY, BASIC_CONTAINER.asNode()).hasNext());
+            assertFalse("Expected nothing server managed",
+                    graph.find(ANY, resource, ANY, RDF_SOURCE.asNode()).hasNext());
+            assertFalse("Expected nothing server managed",
+                    graph.find(ANY, resource, ANY, FEDORA_CONTAINER.asNode()).hasNext());
+            assertFalse("Expected nothing server managed",
+                    graph.find(ANY, resource, ANY, FEDORA_RESOURCE.asNode()).hasNext());
+            assertFalse("Expected nothing server managed",
+                    graph.find(ANY, resource, CREATED_DATE.asNode(), ANY).hasNext());
+            assertFalse("Expected nothing server managed",
+                    graph.find(ANY, resource, CREATED_BY.asNode(), ANY).hasNext());
+            assertFalse("Expected nothing server managed",
+                    graph.find(ANY, resource, LAST_MODIFIED_DATE.asNode(), ANY).hasNext());
+            assertFalse("Expected nothing server managed",
+                    graph.find(ANY, resource, LAST_MODIFIED_BY.asNode(), ANY).hasNext());
+        }
+    }
+
+    @Test
+    public void testGetLDPRmOmitServerManaged() throws IOException {
+        final String versionedResourceURI = createVersionedRDFResource();
+        final String mementoResourceURI = getLocation(new HttpPost(versionedResourceURI + "/fcr:versions"));
+
+        final HttpGet mementoGetMethod = new HttpGet(mementoResourceURI);
+        mementoGetMethod.addHeader("Prefer",
+                "return=representation; omit=\"http://fedora.info/definitions/v4/repository#ServerManaged\"");
+        try (final CloseableDataset dataset = getDataset(mementoGetMethod)) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            final Node resource = createURI(versionedResourceURI);
+            assertFalse("Expected nothing server managed",
+                    graph.find(ANY, resource, ANY, CONTAINER.asNode()).hasNext());
+            assertFalse("Expected nothing server managed",
+                    graph.find(ANY, resource, ANY, RDF_SOURCE.asNode()).hasNext());
+            assertFalse("Expected nothing server managed",
+                    graph.find(ANY, resource, ANY, FEDORA_CONTAINER.asNode()).hasNext());
+            assertFalse("Expected nothing server managed",
+                    graph.find(ANY, resource, ANY, FEDORA_RESOURCE.asNode()).hasNext());
+            assertFalse("Expected nothing server managed",
+                    graph.find(ANY, resource, CREATED_DATE.asNode(), ANY).hasNext());
+            assertFalse("Expected nothing server managed",
+                    graph.find(ANY, resource, CREATED_BY.asNode(), ANY).hasNext());
+            assertFalse("Expected nothing server managed",
+                    graph.find(ANY, resource, LAST_MODIFIED_DATE.asNode(), ANY).hasNext());
+            assertFalse("Expected nothing server managed",
+                    graph.find(ANY, resource, LAST_MODIFIED_BY.asNode(), ANY).hasNext());
+        }
+    }
+
+    @Test
+    public void testGetLDPRmWithoutOmitServerManager() throws IOException {
+        final String versionedResourceURI = createVersionedRDFResource();
+        final String mementoResourceURI = getLocation(new HttpPost(versionedResourceURI + "/fcr:versions"));
+
+        final HttpGet mementoGetMethod = new HttpGet(mementoResourceURI);
+        try (final CloseableDataset dataset = getDataset(mementoGetMethod)) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            final Node resource = createURI(versionedResourceURI);
+            assertTrue("Expected server managed",
+                    graph.find(ANY, resource, ANY, CONTAINER.asNode()).hasNext());
+            assertTrue("Expected server managed",
+                    graph.find(ANY, resource, ANY, RDF_SOURCE.asNode()).hasNext());
+            assertTrue("Expected server managed",
+                    graph.find(ANY, resource, ANY, FEDORA_CONTAINER.asNode()).hasNext());
+            assertTrue("Expected server managed",
+                    graph.find(ANY, resource, ANY, FEDORA_RESOURCE.asNode()).hasNext());
+            assertTrue("Expected server managed",
+                    graph.find(ANY, resource, CREATED_DATE.asNode(), ANY).hasNext());
+            assertTrue("Expected server managed",
+                    graph.find(ANY, resource, CREATED_BY.asNode(), ANY).hasNext());
+            assertTrue("Expected server managed",
+                    graph.find(ANY, resource, LAST_MODIFIED_DATE.asNode(), ANY).hasNext());
+            assertTrue("Expected server managed",
+                    graph.find(ANY, resource, LAST_MODIFIED_BY.asNode(), ANY).hasNext());
         }
     }
 
@@ -2142,11 +2267,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertTrue(getLinkHeaders(getObjMethod(pid + "/b")).contains(DIRECT_CONTAINER_LINK_HEADER));
 
         // successful update the properties with the interaction mode
-        final String ttla = "<> a <" + DIRECT_CONTAINER.getURI()
-                + "> ; <" + MEMBERSHIP_RESOURCE + "> <" + container + ">;\n"
+        final String ttla = "<> <" + MEMBERSHIP_RESOURCE + "> <" + container + ">;\n"
                 + "<" + HAS_MEMBER_RELATION + "> <info:some/relation> .\n";
         final HttpPut puta = putObjMethod(pid + "/b", "text/turtle", ttla);
         puta.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
+        puta.addHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(puta));
 
         // attempt to change direct container to basic container
@@ -2256,8 +2381,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         // create an indirect container
         final HttpPut createContainer = new HttpPut(serverAddress + pid1 + "/members");
         createContainer.addHeader(CONTENT_TYPE, "text/turtle");
-        final String membersRDF = "<> a <http://www.w3.org/ns/ldp#IndirectContainer>; "
-            + "<http://www.w3.org/ns/ldp#hasMemberRelation> <" + memberRelation + ">; "
+        createContainer.addHeader(LINK, INDIRECT_CONTAINER_LINK_HEADER);
+        final String membersRDF = "<> <http://www.w3.org/ns/ldp#hasMemberRelation> <" + memberRelation + ">; "
             + "<http://www.w3.org/ns/ldp#insertedContentRelation> <http://www.openarchives.org/ore/terms/proxyFor>; "
             + "<http://www.w3.org/ns/ldp#membershipResource> <" + serverAddress + pid1 + "> . ";
         createContainer.setEntity(new StringEntity(membersRDF));
@@ -3614,8 +3739,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final long lastmod3;
         final HttpPut createContainer = new HttpPut(objURI + "/members");
         createContainer.addHeader(CONTENT_TYPE, "text/turtle");
-        final String membersRDF = "<> a <http://www.w3.org/ns/ldp#DirectContainer>; "
-            + "<http://www.w3.org/ns/ldp#hasMemberRelation> <http://pcdm.org/models#hasMember>; "
+        createContainer.addHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
+        final String membersRDF = "<> <http://www.w3.org/ns/ldp#hasMemberRelation> <http://pcdm.org/models#hasMember>; "
             + "<http://www.w3.org/ns/ldp#membershipResource> <" + objURI + "> . ";
         createContainer.setEntity(new StringEntity(membersRDF));
         try (final CloseableHttpResponse response = execute(createContainer)) {

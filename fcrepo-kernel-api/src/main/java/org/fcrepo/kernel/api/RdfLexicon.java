@@ -90,7 +90,8 @@ public final class RdfLexicon {
     /**
      * Is this namespace one that the repository manages?
      */
-    public static final Predicate<String> isManagedNamespace = p -> p.equals(REPOSITORY_NAMESPACE);
+    public static final Predicate<String> isManagedNamespace = p -> p.equals(REPOSITORY_NAMESPACE) ||
+            p.equals(LDP_NAMESPACE);
 
     // MEMBERSHIP
     public static final Property HAS_PARENT =

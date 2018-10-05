@@ -20,6 +20,7 @@ package org.fcrepo.integration.ldp;
 import static java.lang.Integer.MAX_VALUE;
 import static java.lang.Integer.parseInt;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -103,10 +104,8 @@ public class LdpTestSuiteIT {
         final String pid = "ldp-test-basic-" + UUID.randomUUID().toString();
 
         final HttpPut request = new HttpPut(serverAddress + pid);
-        final BasicHttpEntity entity = new BasicHttpEntity();
-        entity.setContent(IOUtils.toInputStream("<> a <" + BASIC_CONTAINER + "> ."));
-        request.setEntity(entity);
         request.setHeader(CONTENT_TYPE, "text/turtle");
+        request.setHeader(LINK, "<" + BASIC_CONTAINER + ">;rel=type");
         try (final CloseableHttpResponse response = executeWithBasicAuth(request)) {
             assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
 
@@ -129,11 +128,11 @@ public class LdpTestSuiteIT {
 
         final HttpPut request = new HttpPut(serverAddress + pid);
         final BasicHttpEntity entity = new BasicHttpEntity();
-        entity.setContent(IOUtils.toInputStream("<> a <" + DIRECT_CONTAINER + "> ;" +
-                "    <" + LDP_NAMESPACE + "membershipResource> <> ;" +
+        entity.setContent(IOUtils.toInputStream("<> <" + LDP_NAMESPACE + "membershipResource> <> ;" +
                 "    <" + LDP_NAMESPACE + "hasMemberRelation> <" + LDP_NAMESPACE + "member> ."));
         request.setEntity(entity);
         request.setHeader(CONTENT_TYPE, "text/turtle");
+        request.setHeader(LINK, "<" + DIRECT_CONTAINER + ">;rel=type");
         try (final CloseableHttpResponse response = executeWithBasicAuth(request)) {
             assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
 
@@ -155,12 +154,12 @@ public class LdpTestSuiteIT {
 
         final HttpPut request = new HttpPut(serverAddress + pid);
         final BasicHttpEntity entity = new BasicHttpEntity();
-        entity.setContent(IOUtils.toInputStream("<> a <" + INDIRECT_CONTAINER + ">;" +
-                "    <" + LDP_NAMESPACE + "membershipResource> <> ;" +
+        entity.setContent(IOUtils.toInputStream("<> <" + LDP_NAMESPACE + "membershipResource> <> ;" +
                 "    <" + LDP_NAMESPACE + "insertedContentRelation> <" + LDP_NAMESPACE + "MemberSubject> ;" +
                 "    <" + LDP_NAMESPACE + "hasMemberRelation> <" + LDP_NAMESPACE + "member> ."));
         request.setEntity(entity);
         request.setHeader(CONTENT_TYPE, "text/turtle");
+        request.setHeader(LINK, "<" + INDIRECT_CONTAINER + ">;rel=type");
         try (final CloseableHttpResponse response = executeWithBasicAuth(request)) {
             assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
 
