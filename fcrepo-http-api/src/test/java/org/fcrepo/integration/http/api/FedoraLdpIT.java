@@ -2133,6 +2133,64 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testGetLDPRmOmitServerManaged() throws IOException {
+        final String versionedResourceURI = createVersionedRDFResource();
+        final String mementoResourceURI = getLocation(new HttpPost(versionedResourceURI + "/fcr:versions"));
+
+        final HttpGet mementoGetMethod = new HttpGet(mementoResourceURI);
+        mementoGetMethod.addHeader("Prefer",
+                "return=representation; omit=\"http://fedora.info/definitions/v4/repository#ServerManaged\"");
+        try (final CloseableDataset dataset = getDataset(mementoGetMethod)) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            final Node resource = createURI(versionedResourceURI);
+            assertFalse("Expected nothing server managed",
+                    graph.find(ANY, resource, ANY, CONTAINER.asNode()).hasNext());
+            assertFalse("Expected nothing server managed",
+                    graph.find(ANY, resource, ANY, RDF_SOURCE.asNode()).hasNext());
+            assertFalse("Expected nothing server managed",
+                    graph.find(ANY, resource, ANY, FEDORA_CONTAINER.asNode()).hasNext());
+            assertFalse("Expected nothing server managed",
+                    graph.find(ANY, resource, ANY, FEDORA_RESOURCE.asNode()).hasNext());
+            assertFalse("Expected nothing server managed",
+                    graph.find(ANY, resource, CREATED_DATE.asNode(), ANY).hasNext());
+            assertFalse("Expected nothing server managed",
+                    graph.find(ANY, resource, CREATED_BY.asNode(), ANY).hasNext());
+            assertFalse("Expected nothing server managed",
+                    graph.find(ANY, resource, LAST_MODIFIED_DATE.asNode(), ANY).hasNext());
+            assertFalse("Expected nothing server managed",
+                    graph.find(ANY, resource, LAST_MODIFIED_BY.asNode(), ANY).hasNext());
+        }
+    }
+
+    @Test
+    public void testGetLDPRmWithoutOmitServerManager() throws IOException {
+        final String versionedResourceURI = createVersionedRDFResource();
+        final String mementoResourceURI = getLocation(new HttpPost(versionedResourceURI + "/fcr:versions"));
+
+        final HttpGet mementoGetMethod = new HttpGet(mementoResourceURI);
+        try (final CloseableDataset dataset = getDataset(mementoGetMethod)) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            final Node resource = createURI(versionedResourceURI);
+            assertTrue("Expected server managed",
+                    graph.find(ANY, resource, ANY, CONTAINER.asNode()).hasNext());
+            assertTrue("Expected server managed",
+                    graph.find(ANY, resource, ANY, RDF_SOURCE.asNode()).hasNext());
+            assertTrue("Expected server managed",
+                    graph.find(ANY, resource, ANY, FEDORA_CONTAINER.asNode()).hasNext());
+            assertTrue("Expected server managed",
+                    graph.find(ANY, resource, ANY, FEDORA_RESOURCE.asNode()).hasNext());
+            assertTrue("Expected server managed",
+                    graph.find(ANY, resource, CREATED_DATE.asNode(), ANY).hasNext());
+            assertTrue("Expected server managed",
+                    graph.find(ANY, resource, CREATED_BY.asNode(), ANY).hasNext());
+            assertTrue("Expected server managed",
+                    graph.find(ANY, resource, LAST_MODIFIED_DATE.asNode(), ANY).hasNext());
+            assertTrue("Expected server managed",
+                    graph.find(ANY, resource, LAST_MODIFIED_BY.asNode(), ANY).hasNext());
+        }
+    }
+
+    @Test
     public void testPatchToCreateDirectContainerInSparqlUpdate() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
