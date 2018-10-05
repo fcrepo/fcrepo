@@ -111,34 +111,34 @@ public class FedoraEventSerializerTestBase {
         assertTrue(model.contains(resourceSubject, type, createResource("http://example.com/SampleType")));
         assertTrue(model.contains(eventSubject, type, createResource(EventType.RESOURCE_MODIFICATION.getType())));
         assertTrue(model.contains(eventSubject, createProperty(ACTIVITY_STREAMS_NAMESPACE + "object"),
-                                  resourceSubject));
+                resourceSubject));
 
         assertTrue(model.contains(eventSubject, createProperty(ACTIVITY_STREAMS_NAMESPACE + "published"),
-                                  (RDFNode) null));
+                    (RDFNode) null));
 
         final AtomicInteger actors = new AtomicInteger();
         model.listStatements(new SimpleSelector(eventSubject, createProperty(ACTIVITY_STREAMS_NAMESPACE + "actor"),
-                                                blankNode))
-             .forEachRemaining(statement -> {
-                 final Resource r = statement.getResource();
-                 if (r.hasProperty(type, createResource(ACTIVITY_STREAMS_NAMESPACE + "Person"))) {
-                     assertTrue(r.hasProperty(type, createResource(ACTIVITY_STREAMS_NAMESPACE + "Person")));
-                     assertEquals(getAgentIRI(), r.toString());
-                 } else {
-                     assertTrue(r.hasProperty(type, createResource(ACTIVITY_STREAMS_NAMESPACE + "Application")));
-                     assertTrue(r.hasProperty(createProperty(ACTIVITY_STREAMS_NAMESPACE + "name"), softwareAgent));
-                 }
-                 actors.incrementAndGet();
-             });
+                blankNode))
+                .forEachRemaining(statement -> {
+                    final Resource r = statement.getResource();
+                    if (r.hasProperty(type, createResource(ACTIVITY_STREAMS_NAMESPACE + "Person"))) {
+                        assertTrue(r.hasProperty(type, createResource(ACTIVITY_STREAMS_NAMESPACE + "Person")));
+                        assertEquals(getAgentIRI(), r.toString());
+                    } else {
+                        assertTrue(r.hasProperty(type, createResource(ACTIVITY_STREAMS_NAMESPACE + "Application")));
+                        assertTrue(r.hasProperty(createProperty(ACTIVITY_STREAMS_NAMESPACE + "name"), softwareAgent));
+                    }
+                    actors.incrementAndGet();
+                });
         assertEquals(actors.get(), 2);
 
         final AtomicInteger eventName = new AtomicInteger();
         model.listStatements(new SimpleSelector(eventSubject, createProperty(ACTIVITY_STREAMS_NAMESPACE + "name"),
-                                                blankNode))
-             .forEachRemaining(statement -> {
-                 assertEquals(EventType.RESOURCE_MODIFICATION.getName(), statement.getString());
-                 eventName.incrementAndGet();
-             });
+                blankNode))
+                .forEachRemaining(statement -> {
+                    assertEquals(EventType.RESOURCE_MODIFICATION.getName(), statement.getString());
+                    eventName.incrementAndGet();
+                });
         assertEquals(1, eventName.get());
     }
 

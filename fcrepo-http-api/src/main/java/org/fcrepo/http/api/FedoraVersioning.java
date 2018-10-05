@@ -52,7 +52,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import javax.annotation.PostConstruct;
 import javax.jcr.ItemExistsException;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
@@ -115,15 +114,6 @@ public class FedoraVersioning extends ContentExposingResource {
      */
     public FedoraVersioning() {
         super();
-    }
-
-
-    /**
-     * Run these actions after initializing this resource
-     */
-    @PostConstruct
-    public void postConstruct() {
-        setUpJMSInfo(uriInfo, headers);
     }
 
     /**

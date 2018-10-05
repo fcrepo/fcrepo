@@ -80,7 +80,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
@@ -171,14 +170,6 @@ public class FedoraLdp extends ContentExposingResource {
     @VisibleForTesting
     public FedoraLdp(final String externalPath) {
         this.externalPath = externalPath;
-    }
-
-    /**
-     * Run these actions after initializing this resource
-     */
-    @PostConstruct
-    public void postConstruct() {
-        setUpJMSInfo(uriInfo, headers);
     }
 
     /**

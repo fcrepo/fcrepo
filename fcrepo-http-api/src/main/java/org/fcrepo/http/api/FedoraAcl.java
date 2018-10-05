@@ -45,7 +45,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import javax.annotation.PostConstruct;
 import javax.jcr.ItemNotFoundException;
 import javax.jcr.nodetype.ConstraintViolationException;
 import javax.servlet.http.HttpServletResponse;
@@ -109,14 +108,6 @@ public class FedoraAcl extends ContentExposingResource {
      */
     public FedoraAcl() {
         super();
-    }
-
-    /**
-     * Run these actions after initializing this resource
-     */
-    @PostConstruct
-    public void postConstruct() {
-        setUpJMSInfo(uriInfo, headers);
     }
 
     /**
