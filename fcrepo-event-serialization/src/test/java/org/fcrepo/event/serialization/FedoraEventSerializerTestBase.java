@@ -39,14 +39,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.fcrepo.kernel.api.observer.EventType;
-import org.fcrepo.kernel.api.observer.FedoraEvent;
-
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.SimpleSelector;
-import org.junit.Before;
+import org.fcrepo.kernel.api.observer.EventType;
+import org.fcrepo.kernel.api.observer.FedoraEvent;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -79,8 +77,7 @@ public class FedoraEventSerializerTestBase {
 
     protected String softwareAgent = "fcrepo-java-client";
 
-    @Before
-    public void setUp() {
+    protected void mockEvent(final String path) {
         final Set<EventType> typeSet = new HashSet<>();
         typeSet.add(EventType.RESOURCE_MODIFICATION);
         final Set<String> resourceTypeSet = new HashSet<>();
@@ -117,7 +114,7 @@ public class FedoraEventSerializerTestBase {
                 resourceSubject));
 
         assertTrue(model.contains(eventSubject, createProperty(ACTIVITY_STREAMS_NAMESPACE + "published"),
-                (RDFNode) null));
+                    (RDFNode) null));
 
         final AtomicInteger actors = new AtomicInteger();
         model.listStatements(new SimpleSelector(eventSubject, createProperty(ACTIVITY_STREAMS_NAMESPACE + "actor"),

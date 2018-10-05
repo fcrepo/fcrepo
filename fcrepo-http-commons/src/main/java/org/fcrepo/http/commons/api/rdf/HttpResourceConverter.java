@@ -286,20 +286,28 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
      */
     private String doBackwardPathOnly(final FedoraResource resource) {
 
-        String path = reverse.convert(resource.getPath());
+        final String path = reverse.convert(resource.getPath());
         if (path == null) {
             throw new RepositoryRuntimeException("Unable to process reverse chain for resource " + resource);
         }
 
-        path = replaceOnce(path, "/" + CONTAINER_WEBAC_ACL, "/" + FCR_ACL);
-
-        path = replaceOnce(path, "/" + LDPCV_TIME_MAP, "/" + FCR_VERSIONS);
-
-        path = replaceOnce(path, "/" + FEDORA_DESCRIPTION, "/" + FCR_METADATA);
-
-        return path;
+        return convertToExternalPath(path);
     }
 
+    /**
+     * Converts internal path segments to their external formats.
+     * @param path the internal path
+     * @return the external path
+     */
+    public static  String convertToExternalPath(final String path) {
+        String newPath = replaceOnce(path, "/" + CONTAINER_WEBAC_ACL, "/" + FCR_ACL);
+
+        newPath = replaceOnce(newPath, "/" + LDPCV_TIME_MAP, "/" + FCR_VERSIONS);
+
+        newPath = replaceOnce(newPath, "/" + FEDORA_DESCRIPTION, "/" + FCR_METADATA);
+
+        return newPath;
+    }
 
     protected void resetTranslationChain() {
         if (translationChain == null) {
