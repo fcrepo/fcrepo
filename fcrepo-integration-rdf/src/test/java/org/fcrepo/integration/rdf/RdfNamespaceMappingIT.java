@@ -29,6 +29,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.integration.http.api.AbstractResourceIT;
 import org.junit.Test;
@@ -37,6 +38,8 @@ import org.junit.Test;
  * @author bbpennel
  */
 public class RdfNamespaceMappingIT extends AbstractResourceIT {
+
+    public static final Property RDF_TYPE = createProperty(RDF_NAMESPACE + "type");
 
     @Test
     public void testUnregisteredNamespace() throws Exception {
@@ -84,7 +87,7 @@ public class RdfNamespaceMappingIT extends AbstractResourceIT {
 
             final Resource resc = model.getResource(subjectURI);
             assertTrue("Must contain property using register namespaces",
-                    resc.hasProperty(createProperty(RDF_NAMESPACE + "type"), FEDORA_CONTAINER));
+                    resc.hasProperty(RDF_TYPE, FEDORA_CONTAINER));
         }
     }
 
@@ -115,6 +118,27 @@ public class RdfNamespaceMappingIT extends AbstractResourceIT {
 
             assertFalse("Must not contain prefix for registered but unused namespace",
                     model.getNsPrefixMap().containsKey("unused"));
+        }
+    }
+
+    @Test
+    public void testUnprefixedSerialization() throws Exception {
+        final String pid = getRandomUniqueId();
+        final String subjectURI = serverAddress + pid;
+        createObject(pid);
+
+        final HttpGet httpGet = getObjMethod(pid);
+        httpGet.addHeader(ACCEPT, "application/n-triples");
+        final Model model = createDefaultModel();
+        try (final CloseableHttpResponse response = execute(httpGet)) {
+            model.read(response.getEntity().getContent(), subjectURI, "NTRIPLES");
+
+            assertTrue("No namespaces should be returned",
+                    model.getNsPrefixMap().isEmpty());
+
+            final Resource resc = model.getResource(subjectURI);
+            assertTrue("Must contain property using register namespaces",
+                    resc.hasProperty(RDF_TYPE, FEDORA_CONTAINER));
         }
     }
 }

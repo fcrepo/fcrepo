@@ -39,9 +39,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.StreamingOutput;
@@ -136,44 +136,66 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
         // For formats that can be block-streamed (n-triples, turtle)
         if (format != null) {
             LOGGER.debug("Stream-based serialization of {}", dataFormat.toString());
-            final Set<String> namespacesPresent = new HashSet<>();
-
-            final StreamRDF stream = new SynchonizedStreamRDFWrapper(getWriterStream(output, format));
-            stream.start();
-            // Must read the rdf stream before writing out ns prefixes, otherwise the prefixes come after the triples
-            final List<Triple> tripleList = rdfStream.peek(t -> {
-                // Collect the namespaces present in the RDF stream, using the same
-                // criteria for where to look that jena's model.listNameSpaces() does
-                namespacesPresent.add(t.getPredicate().getNameSpace());
-                if (RDF_TYPE.equals(t.getPredicate().getURI()) && t.getObject().isURI()) {
-                    namespacesPresent.add(t.getObject().getNameSpace());
-                }
-            }).collect(Collectors.toList());
-
-            nsPrefixes.forEach((prefix, uri) -> {
-                // Only add namespace prefixes if the namespace is present in the rdf stream
-                if (namespacesPresent.contains(uri)) {
-                    stream.prefix(prefix, uri);
-                }
-            });
-            tripleList.forEach(stream::triple);
-            stream.finish();
-
+            if (RDFFormat.NTRIPLES.equals(format)) {
+                serializeNTriples(rdfStream, format, output);
+            } else {
+                serializeBlockStreamed(rdfStream, output, format, nsPrefixes);
+            }
         // For formats that require analysis of the entire model and cannot be streamed directly (rdfxml, n3)
         } else {
             LOGGER.debug("Non-stream serialization of {}", dataFormat.toString());
-            final Model model = rdfStream.collect(toModel());
+            serializeNonStreamed(rdfStream, output, dataFormat, dataMediaType, nsPrefixes);
+        }
+    }
 
-            model.setNsPrefixes(filterNamespacesToPresent(model, nsPrefixes));
-            // use block output streaming for RDFXML
-            if (RDFXML.equals(dataFormat)) {
-                RDFDataMgr.write(output, model.getGraph(), RDFXML_PLAIN);
-            } else if (JSONLD.equals(dataFormat)) {
-                final RDFFormat jsonldFormat = getFormatFromMediaType(dataMediaType);
-                RDFDataMgr.write(output, model.getGraph(), jsonldFormat);
-            } else {
-                RDFDataMgr.write(output, model.getGraph(), dataFormat);
+    private static void serializeNTriples(final RdfStream rdfStream, final RDFFormat format,
+            final OutputStream output) {
+        final StreamRDF stream = new SynchonizedStreamRDFWrapper(getWriterStream(output, format));
+        stream.start();
+        rdfStream.forEach(stream::triple);
+        stream.finish();
+    }
+
+    private static void serializeBlockStreamed(final RdfStream rdfStream, final OutputStream output,
+            final RDFFormat format, final Map<String, String> nsPrefixes) {
+
+        final Set<String> namespacesPresent = new HashSet<>();
+
+        final StreamRDF stream = new SynchonizedStreamRDFWrapper(getWriterStream(output, format));
+        stream.start();
+        // Must read the rdf stream before writing out ns prefixes, otherwise the prefixes come after the triples
+        final List<Triple> tripleList = rdfStream.peek(t -> {
+            // Collect the namespaces present in the RDF stream, using the same
+            // criteria for where to look that jena's model.listNameSpaces() does
+            namespacesPresent.add(t.getPredicate().getNameSpace());
+            if (RDF_TYPE.equals(t.getPredicate().getURI()) && t.getObject().isURI()) {
+                namespacesPresent.add(t.getObject().getNameSpace());
             }
+        }).collect(Collectors.toList());
+
+        nsPrefixes.forEach((prefix, uri) -> {
+            // Only add namespace prefixes if the namespace is present in the rdf stream
+            if (namespacesPresent.contains(uri)) {
+                stream.prefix(prefix, uri);
+            }
+        });
+        tripleList.forEach(stream::triple);
+        stream.finish();
+    }
+
+    private static void serializeNonStreamed(final RdfStream rdfStream, final OutputStream output,
+            final Lang dataFormat, final MediaType dataMediaType, final Map<String, String> nsPrefixes) {
+        final Model model = rdfStream.collect(toModel());
+
+        model.setNsPrefixes(filterNamespacesToPresent(model, nsPrefixes));
+        // use block output streaming for RDFXML
+        if (RDFXML.equals(dataFormat)) {
+            RDFDataMgr.write(output, model.getGraph(), RDFXML_PLAIN);
+        } else if (JSONLD.equals(dataFormat)) {
+            final RDFFormat jsonldFormat = getFormatFromMediaType(dataMediaType);
+            RDFDataMgr.write(output, model.getGraph(), jsonldFormat);
+        } else {
+            RDFDataMgr.write(output, model.getGraph(), dataFormat);
         }
     }
 
