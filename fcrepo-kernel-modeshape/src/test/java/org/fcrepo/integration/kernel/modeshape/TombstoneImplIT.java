@@ -42,7 +42,7 @@ import static org.junit.Assert.fail;
 /**
  * @author osmandin
  */
-@ContextConfiguration({"/spring-test/repo.xml"})
+@ContextConfiguration({"/spring-test/fcrepo-config.xml"})
 public class TombstoneImplIT extends AbstractIT {
 
     @Inject

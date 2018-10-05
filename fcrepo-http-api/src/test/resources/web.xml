@@ -9,7 +9,7 @@
     
     <context-param>
         <param-name>contextConfigLocation</param-name>
-        <param-value>classpath:spring-test/master.xml</param-value>
+        <param-value>classpath:spring-test/fcrepo-config.xml</param-value>
     </context-param>
 
     <listener>

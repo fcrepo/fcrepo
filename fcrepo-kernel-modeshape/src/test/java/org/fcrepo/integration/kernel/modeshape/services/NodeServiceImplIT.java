@@ -34,7 +34,7 @@ import javax.jcr.RepositoryException;
  * @author cabeer
  */
 
-@ContextConfiguration({"/spring-test/repo.xml"})
+@ContextConfiguration({"/spring-test/fcrepo-config.xml"})
 public class NodeServiceImplIT extends AbstractIT {
 
     @Inject

@@ -83,7 +83,7 @@ import org.apache.jena.rdf.model.Resource;
  * @author awoods
  * @author acoburn
  */
-@ContextConfiguration({"/spring-test/eventing.xml", "/spring-test/repo.xml"})
+@ContextConfiguration({ "/spring-test/eventing.xml", "/spring-test/fcrepo-config.xml" })
 public class SimpleObserverIT extends AbstractIT {
 
     private volatile List<FedoraEvent> events;

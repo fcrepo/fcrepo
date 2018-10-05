@@ -51,7 +51,7 @@ import org.springframework.test.context.ContextConfiguration;
  *
  * @author lsitu
  */
-@ContextConfiguration({"/spring-test/repo.xml"})
+@ContextConfiguration({"/spring-test/fcrepo-config.xml"})
 public class FedoraTimeMapImplIT extends AbstractIT {
 
     @Inject

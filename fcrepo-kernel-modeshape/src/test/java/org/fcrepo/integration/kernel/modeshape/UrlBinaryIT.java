@@ -66,7 +66,7 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options
 /**
  * @author bbpennel
  */
-@ContextConfiguration({ "/spring-test/repo.xml" })
+@ContextConfiguration({ "/spring-test/fcrepo-config.xml" })
 public class UrlBinaryIT extends AbstractIT {
 
     private static final String EXPECTED_CONTENT = "test content";
