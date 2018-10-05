@@ -1381,7 +1381,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         // Create the DirectContainer
         final HttpPut createContainer = new HttpPut(serverAddress + members);
         createContainer.addHeader(CONTENT_TYPE, "text/turtle");
-        createContainer.addHeader(LINK, "<http://www.w3.org/ns/ldp#DirectContainer>;rel=type");
+        createContainer.addHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
         final String membersRDF = "<> <http://www.w3.org/ns/ldp#hasMemberRelation> <http://pcdm.org/models#hasMember>; "
             + "<http://www.w3.org/ns/ldp#membershipResource> <" + serverAddress + id + "> . ";
         createContainer.setEntity(new StringEntity(membersRDF));
@@ -1417,7 +1417,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         // Create the IndirectContainer
         final HttpPut createContainer = new HttpPut(serverAddress + members);
         createContainer.addHeader(CONTENT_TYPE, "text/turtle");
-        createContainer.addHeader(LINK, "<http://www.w3.org/ns/ldp#IndirectContainer>;rel=type");
+        createContainer.addHeader(LINK, INDIRECT_CONTAINER_LINK_HEADER);
         final String membersRDF = "<> <http://www.w3.org/ns/ldp#hasMemberRelation> <info:fedora/test/hasTitle> ; "
             + "<http://www.w3.org/ns/ldp#insertedContentRelation> <http://www.w3.org/2004/02/skos/core#prefLabel>; "
             + "<http://www.w3.org/ns/ldp#membershipResource> <" + serverAddress + id + "> . ";
@@ -2271,7 +2271,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 + "<" + HAS_MEMBER_RELATION + "> <info:some/relation> .\n";
         final HttpPut puta = putObjMethod(pid + "/b", "text/turtle", ttla);
         puta.addHeader("Prefer", "handling=lenient; received=\"minimal\"");
-        puta.addHeader(LINK, "<http://www.w3.org/ns/ldp#DirectContainer>;rel=type");
+        puta.addHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(puta));
 
         // attempt to change direct container to basic container
@@ -2381,7 +2381,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         // create an indirect container
         final HttpPut createContainer = new HttpPut(serverAddress + pid1 + "/members");
         createContainer.addHeader(CONTENT_TYPE, "text/turtle");
-        createContainer.addHeader(LINK, "<http://www.w3.org/ns/ldp#IndirectContainer>;rel=type");
+        createContainer.addHeader(LINK, INDIRECT_CONTAINER_LINK_HEADER);
         final String membersRDF = "<> <http://www.w3.org/ns/ldp#hasMemberRelation> <" + memberRelation + ">; "
             + "<http://www.w3.org/ns/ldp#insertedContentRelation> <http://www.openarchives.org/ore/terms/proxyFor>; "
             + "<http://www.w3.org/ns/ldp#membershipResource> <" + serverAddress + pid1 + "> . ";
@@ -3765,7 +3765,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final long lastmod3;
         final HttpPut createContainer = new HttpPut(objURI + "/members");
         createContainer.addHeader(CONTENT_TYPE, "text/turtle");
-        createContainer.addHeader(LINK, "<http://www.w3.org/ns/ldp#DirectContainer>;rel=type");
+        createContainer.addHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
         final String membersRDF = "<> <http://www.w3.org/ns/ldp#hasMemberRelation> <http://pcdm.org/models#hasMember>; "
             + "<http://www.w3.org/ns/ldp#membershipResource> <" + objURI + "> . ";
         createContainer.setEntity(new StringEntity(membersRDF));
