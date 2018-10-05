@@ -178,8 +178,6 @@ public final class RdfLexicon {
 
     private static final Set<Property> ldpManagedProperties = of(CONTAINS);
 
-    private static final Set<Resource> ldpManagedTypes = of(CONTAINER, BASIC_CONTAINER, RDF_SOURCE);
-
     // REPOSITORY INFORMATION
     public static final Property HAS_OBJECT_COUNT =
             createProperty(REPOSITORY_NAMESPACE + "objectCount");
