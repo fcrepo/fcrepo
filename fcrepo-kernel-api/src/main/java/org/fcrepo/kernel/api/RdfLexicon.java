@@ -90,7 +90,8 @@ public final class RdfLexicon {
     /**
      * Is this namespace one that the repository manages?
      */
-    public static final Predicate<String> isManagedNamespace = p -> p.equals(REPOSITORY_NAMESPACE);
+    public static final Predicate<String> isManagedNamespace = p -> p.equals(REPOSITORY_NAMESPACE) ||
+            p.equals(LDP_NAMESPACE);
 
     // MEMBERSHIP
     public static final Property HAS_PARENT =
@@ -281,11 +282,6 @@ public final class RdfLexicon {
      */
     public static final Predicate<Property> isManagedPredicate =
         hasFedoraNamespace.or(p -> managedProperties.contains(p));
-
-    /**
-     * Detects whether an RDF resource is a managed LDP Type.
-     */
-    public static final Predicate<Resource> isManagedLDPType = p -> ldpManagedTypes.contains(p);
 
     /**
      * Fedora defined JCR node type with supertype of nt:file with two nt:folder named fedora:timemap and
