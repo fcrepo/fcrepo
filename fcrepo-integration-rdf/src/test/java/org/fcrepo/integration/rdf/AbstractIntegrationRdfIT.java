@@ -59,10 +59,20 @@ import static org.junit.Assert.assertTrue;
 public abstract class AbstractIntegrationRdfIT extends AbstractResourceIT {
 
     protected HttpResponse createLDPRSAndCheckResponse(final String pid, final String body) {
+        return createLDPRSAndCheckResponse(pid, body, null);
+    }
+
+    protected HttpResponse createLDPRSAndCheckResponse(final String pid, final String body,
+            final Map<String, String> headers) {
         try {
             final HttpPut httpPut = new HttpPut(serverAddress + pid);
-            httpPut.addHeader("Slug", pid);
-            httpPut.addHeader(CONTENT_TYPE, "text/turtle");
+            if (headers != null && !headers.isEmpty()) {
+                headers.keySet().stream().forEach(k -> httpPut.addHeader(k, headers.get(k)));
+            }
+            if (httpPut.getFirstHeader(CONTENT_TYPE) == null) {
+                httpPut.addHeader(CONTENT_TYPE, "text/turtle");
+            }
+            httpPut.setHeader("Slug", pid);
             final BasicHttpEntity e = new BasicHttpEntity();
             e.setContent(IOUtils.toInputStream(body, UTF_8));
             httpPut.setEntity(e);
