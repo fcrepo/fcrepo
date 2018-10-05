@@ -130,7 +130,6 @@ import org.junit.rules.TemporaryFolder;
  */
 public class FedoraVersioningIT extends AbstractResourceIT {
 
-    private static final String VERSIONED_RESOURCE_LINK_HEADER = "<" + VERSIONED_RESOURCE.getURI() + ">; rel=\"type\"";
     private static final String BINARY_CONTENT = "binary content";
     private static final String BINARY_UPDATED = "updated content";
 
