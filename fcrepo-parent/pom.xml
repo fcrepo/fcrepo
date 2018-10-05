@@ -57,7 +57,7 @@
     <scm-provider-gitexe.plugin.version>1.9.4</scm-provider-gitexe.plugin.version>
     <site.plugin.version>3.4</site.plugin.version>
     <source.plugin.version>2.4</source.plugin.version>
-    <surefire.plugin.version>2.18.1</surefire.plugin.version>
+    <surefire.plugin.version>2.22.0</surefire.plugin.version>
     <versions.plugin.version>2.1</versions.plugin.version>
     <!-- jacoco and sonar configuration -->
     <jacoco.outputDir>${project.build.directory}</jacoco.outputDir>
