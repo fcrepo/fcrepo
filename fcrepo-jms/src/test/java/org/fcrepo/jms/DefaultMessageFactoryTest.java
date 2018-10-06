@@ -31,7 +31,7 @@ import static org.fcrepo.jms.DefaultMessageFactory.EVENT_ID_HEADER_NAME;
 import static org.fcrepo.kernel.api.observer.OptionalValues.BASE_URL;
 import static org.fcrepo.kernel.api.observer.OptionalValues.USER_AGENT;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import java.net.URI;
@@ -52,7 +52,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * <p>DefaultMessageFactoryTest class.</p>

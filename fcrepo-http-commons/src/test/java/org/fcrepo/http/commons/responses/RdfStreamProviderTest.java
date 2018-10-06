@@ -48,14 +48,14 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 
 import org.junit.runner.RunWith;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * <p>RdfStreamProviderTest class.</p>
  *
  * @author ajs6f
  */
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class RdfStreamProviderTest {
 
     private final RdfStreamProvider testProvider = new RdfStreamProvider();

@@ -28,7 +28,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.modeshape.jcr.api.ValueFactory;
 
 import javax.jcr.Node;
@@ -53,7 +53,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -67,12 +68,8 @@ import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
  *
  * @author ksclarke
  */
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class FedoraBinaryImplTest implements FedoraTypes {
-
-    private static final String EXPECTED_CONTENT = "test content";
-
-    private static final String testDsId = "testDs";
 
     private FedoraBinary testObj;
 
@@ -104,16 +101,10 @@ public class FedoraBinaryImplTest implements FedoraTypes {
     public void setUp() {
         final NodeType[] nodeTypes = new NodeType[] { mockDescNodeType };
         try {
-            when(mockDescNodeType.getName()).thenReturn(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
-            when(mockDescNode.getMixinNodeTypes()).thenReturn(nodeTypes);
-            when(mockDescNode.getParent()).thenReturn(mockContent);
             when(mockContent.getSession()).thenReturn(mockSession);
-            when(mockContent.getParent()).thenReturn(mockParentNode);
             when(mockContent.getNode(FEDORA_DESCRIPTION)).thenReturn(mockDescNode);
             when(mockContent.isNodeType(FEDORA_BINARY)).thenReturn(true);
             final NodeType mockNodeType = mock(NodeType.class);
-            when(mockNodeType.getName()).thenReturn("nt:versionedFile");
-            when(mockContent.getPrimaryNodeType()).thenReturn(mockNodeType);
             testObj = new FedoraBinaryImpl(mockContent);
 
         } catch (final RepositoryException e) {
@@ -151,12 +142,10 @@ public class FedoraBinaryImplTest implements FedoraTypes {
                 mock(org.modeshape.jcr.api.Binary.class);
         getContentNodeMock(mockContent, mockDescNode, 8);
         when(mockDescNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
-        when(mockDescNode.getSession()).thenReturn(mockSession);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
-        when(mockVF.createBinary(any(InputStream.class), any(String.class)))
+        when(mockVF.createBinary(any(InputStream.class), isNull()))
                 .thenReturn(mockBin);
         final Property mockData = mock(Property.class);
-        when(mockContent.canAddMixin(FEDORA_BINARY)).thenReturn(true);
         when(mockContent.setProperty(JCR_DATA, mockBin)).thenReturn(mockData);
         when(mockContent.getProperty(JCR_DATA)).thenReturn(mockData);
         when(mockData.getBinary()).thenReturn(mockBin);
@@ -171,7 +160,7 @@ public class FedoraBinaryImplTest implements FedoraTypes {
         getContentNodeMock(mockContent, mockDescNode, 8);
         when(mockDescNode.getSession()).thenReturn(mockSession);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
-        when(mockVF.createBinary(any(InputStream.class), any(String.class)))
+        when(mockVF.createBinary(any(InputStream.class), isNull()))
                 .thenReturn(mockBin);
         final Property mockData = mock(Property.class);
         when(mockContent.canAddMixin(FEDORA_BINARY)).thenReturn(true);
@@ -189,15 +178,11 @@ public class FedoraBinaryImplTest implements FedoraTypes {
         final org.modeshape.jcr.api.Binary mockBin =
                 mock(org.modeshape.jcr.api.Binary.class);
         getContentNodeMock(mockContent, mockDescNode, 8);
-        when(mockDescNode.getSession()).thenReturn(mockSession);
-        when(mockDescNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         when(mockSession.getValueFactory()).thenReturn(mockVF);
-        when(mockVF.createBinary(any(InputStream.class), any(String.class)))
+        when(mockVF.createBinary(any(InputStream.class), isNull()))
                 .thenReturn(mockBin);
         final Property mockData = mock(Property.class);
-        when(mockContent.canAddMixin(FEDORA_BINARY)).thenReturn(true);
         when(mockContent.setProperty(JCR_DATA, mockBin)).thenReturn(mockData);
-        when(mockContent.getProperty(JCR_DATA)).thenReturn(mockData);
         when(mockData.getBinary()).thenReturn(mockBin);
         testObj.setContent(mockStream, null, singleton(new URI("urn:sha1:xyz")), null, null);
     }
@@ -206,7 +191,7 @@ public class FedoraBinaryImplTest implements FedoraTypes {
     public void getContentSize() throws RepositoryException {
         final int expectedContentLength = 2;
         getContentNodeMock(mockContent, mockDescNode, expectedContentLength);
-        when(mockDescNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
+        // when(mockDescNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
         final long actual = testObj.getContentSize();
         verify(mockDescNode).getProperty(CONTENT_SIZE);
         assertEquals(expectedContentLength, actual);

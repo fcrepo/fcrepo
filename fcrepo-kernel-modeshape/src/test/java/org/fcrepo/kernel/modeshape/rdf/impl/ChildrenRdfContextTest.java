@@ -30,7 +30,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
@@ -52,7 +52,7 @@ import java.util.stream.Stream;
  * @author awoods
  * @since 2015-11-28
  */
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ChildrenRdfContextTest {
 
     @Mock

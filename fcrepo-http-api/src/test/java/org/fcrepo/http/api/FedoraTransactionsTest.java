@@ -24,6 +24,7 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import java.net.URISyntaxException;
@@ -39,14 +40,14 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * <p>FedoraTransactionsTest class.</p>
  *
  * @author awoods
  */
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class FedoraTransactionsTest {
 
     private static final String USER_NAME = "test";
@@ -95,9 +96,11 @@ public class FedoraTransactionsTest {
 
     @Test
     public void shouldUpdateExpiryOnExistingTransaction() throws URISyntaxException {
+        when(mockSecurityContext.getUserPrincipal()).thenReturn(mockPrincipal);
+        when(mockPrincipal.getName()).thenReturn(USER_NAME);
         when(mockTxService.exists(any(String.class), any(String.class))).thenReturn(true);
         testObj.createTransaction(null);
-        verify(mockTxService).refresh(any(String.class), any(String.class));
+        verify(mockTxService).refresh(anyString(), anyString());
     }
 
     @Test

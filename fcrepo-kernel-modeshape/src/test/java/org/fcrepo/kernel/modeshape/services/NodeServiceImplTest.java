@@ -41,14 +41,14 @@ import org.mockito.Mock;
 import org.modeshape.jcr.api.nodetype.NodeTypeManager;
 
 import org.junit.runner.RunWith;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * <p>NodeServiceImplTest class.</p>
  *
  * @author ksclarke
  */
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class NodeServiceImplTest {
 
     @Mock

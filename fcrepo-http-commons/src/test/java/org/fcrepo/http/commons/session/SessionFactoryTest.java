@@ -20,7 +20,8 @@ package org.fcrepo.http.commons.session;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -38,9 +39,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
-import org.modeshape.jcr.api.ServletCredentials;
-
+import org.mockito.junit.MockitoJUnitRunner;
 import com.google.common.base.Throwables;
 
 /**
@@ -48,7 +47,7 @@ import com.google.common.base.Throwables;
  *
  * @author awoods
  */
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class SessionFactoryTest {
 
     SessionFactory testObj;
@@ -90,7 +89,7 @@ public class SessionFactoryTest {
         when(mockRequest.getContextPath()).thenReturn("");
         when(mockRepo.login(any(Credentials.class))).thenReturn(mockSession);
         testObj.getSession(mockRequest);
-        verify(mockRepo).login(any(ServletCredentials.class));
+        verify(mockRepo).login(isNull());
     }
 
    @Test
@@ -103,7 +102,7 @@ public class SessionFactoryTest {
     public void testCreateSession() {
         when(mockRequest.getPathInfo()).thenReturn("/some/path");
         testObj.createSession(mockRequest);
-        verify(mockRepo).login(any(Credentials.class));
+        verify(mockRepo).login(isNull());
     }
 
     @Test

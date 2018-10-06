@@ -62,7 +62,7 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 
 import org.junit.runner.RunWith;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * <p>RdfStreamStreamingOutputTest class.</p>
