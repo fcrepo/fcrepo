@@ -36,6 +36,7 @@ import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODELS;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
@@ -174,6 +175,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     public static final String LDPCV_TIME_MAP = "fedora:timemap";
 
     public static final String CONTAINER_WEBAC_ACL = "fedora:acl";
+
+    static final String RDF_TYPE_URI = RDF_NAMESPACE + "type";
 
     // A curried type accepting resource, translator, and "minimality", returning triples.
     protected static interface RdfGenerator extends Function<FedoraResource,
@@ -813,6 +816,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
         checkInteractionModel(request);
 
+        checkForDisallowedTriples(request);
+
         final FilteringJcrPropertyStatementListener listener = new FilteringJcrPropertyStatementListener(
                 idTranslator, getSession(), idTranslator.reverse().convert(described).asNode());
 
@@ -881,6 +886,42 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                             + ixn + " is not allowed!");
                 }
             });
+        }
+    }
+
+    /**
+     * Check sparql statements for disallowed modifications
+     * @param request
+     */
+    private void checkForDisallowedTriples(final UpdateRequest request) {
+        final List<Quad> quads = new ArrayList<>();
+
+        for (final Update operation : request.getOperations()) {
+            if (operation instanceof UpdateModify) {
+                final UpdateModify op = (UpdateModify) operation;
+                quads.addAll(op.getDeleteQuads());
+                quads.addAll(op.getInsertQuads());
+            } else if (operation instanceof UpdateData) {
+                final UpdateData op = (UpdateData) operation;
+                quads.addAll(op.getQuads());
+            } else if (operation instanceof UpdateDeleteWhere) {
+                final UpdateDeleteWhere op = (UpdateDeleteWhere) operation;
+                quads.addAll(op.getQuads());
+            }
+        }
+
+        quads.stream().forEach(e -> {
+           ensureNoMementNamespacedObjects(e.asTriple());
+        });
+    }
+
+    private void ensureNoMementNamespacedObjects(final Triple triple) {
+        final org.apache.jena.graph.Node object = triple.getObject();
+        if (object.isURI() && triple.getPredicate().getURI().equals(RDF_TYPE_URI) &&
+            object.getURI().startsWith(MEMENTO_NAMESPACE)) {
+            throw new MalformedRdfException(
+                "The " + RDF_TYPE_URI + " predicate may not take an object in the memento namespace (" +
+                MEMENTO_NAMESPACE + ").");
         }
     }
 
