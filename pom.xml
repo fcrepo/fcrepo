@@ -32,7 +32,7 @@
     <jetty.version>9.3.25.v20180904</jetty.version>
     <guava.version>25.1-jre</guava.version>
     <hk2.version>2.5.0-b62</hk2.version>
-    <htmlunit.version>2.27</htmlunit.version>
+    <htmlunit.version>2.33</htmlunit.version>
     <httpclient.version>4.5.6</httpclient.version>
     <httpmime.version>4.5.6</httpmime.version>
     <httpcore.version>4.4.10</httpcore.version>
@@ -571,7 +571,7 @@
                 <propertyName>jacoco.agent.it.arg</propertyName>
                 <append>true</append>
                 <excludes>
-                  <exclude>**/*SACParserCSS3TokenManager*</exclude>
+                  <exclude>**/*CSS3ParserTokenManager*</exclude>
                 </excludes>
               </configuration>
             </execution>
