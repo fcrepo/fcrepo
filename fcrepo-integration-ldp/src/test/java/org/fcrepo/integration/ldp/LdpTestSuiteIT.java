@@ -115,6 +115,7 @@ public class LdpTestSuiteIT {
             options.put("output", "report-basic");
             options.put("basic", "true");
             options.put("non-rdf", "true");
+            options.put("auth", "fedoraAdmin:fedoraAdmin");
             options.put("read-only-prop", "http://fedora.info/definitions/v4/repository#uuid");
             final LdpTestSuite testSuite = new LdpTestSuite(options);
             testSuite.run();
@@ -141,6 +142,7 @@ public class LdpTestSuiteIT {
             options.put("output", "report-direct");
             options.put("direct", "true");
             options.put("non-rdf", "true");
+            options.put("auth", "fedoraAdmin:fedoraAdmin");
             options.put("read-only-prop", "http://fedora.info/definitions/v4/repository#uuid");
             final LdpTestSuite testSuite = new LdpTestSuite(options);
             testSuite.run();
@@ -168,6 +170,7 @@ public class LdpTestSuiteIT {
             options.put("output", "report-indirect");
             options.put("indirect", "true");
             options.put("non-rdf", "true");
+            options.put("auth", "fedoraAdmin:fedoraAdmin");
             options.put("read-only-prop", "http://fedora.info/definitions/v4/repository#uuid");
             final LdpTestSuite testSuite = new LdpTestSuite(options);
             testSuite.run();
