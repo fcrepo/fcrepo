@@ -188,7 +188,7 @@ public class FedoraLdp extends ContentExposingResource {
         checkMementoPath();
 
         final String datetimeHeader = headers.getHeaderString(ACCEPT_DATETIME);
-        if (!isBlank(datetimeHeader) && resource().isVersioned()) {
+        if (!isBlank(datetimeHeader)) {
             return getMemento(datetimeHeader, resource());
         }
 
@@ -260,7 +260,7 @@ public class FedoraLdp extends ContentExposingResource {
         checkMementoPath();
 
         final String datetimeHeader = headers.getHeaderString(ACCEPT_DATETIME);
-        if (!isBlank(datetimeHeader) && resource().isVersioned()) {
+        if (!isBlank(datetimeHeader)) {
             return getMemento(datetimeHeader, resource());
         }
 

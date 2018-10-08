@@ -78,7 +78,6 @@ import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MementoDatetimeFormatException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.exception.RepositoryVersionRuntimeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.models.FedoraBinary;
@@ -268,9 +267,7 @@ public class FedoraVersioning extends ContentExposingResource {
         TURTLE_X, TEXT_HTML_WITH_CHARSET, APPLICATION_LINK_FORMAT })
     public Response getVersionList(@HeaderParam("Range") final String rangeValue,
         @HeaderParam("Accept") final String acceptValue) throws IOException, UnsupportedAccessTypeException {
-        if (!resource().isVersioned()) {
-            throw new RepositoryVersionRuntimeException("This operation requires that the resource be versionable");
-        }
+
         final FedoraResource theTimeMap = resource().findOrCreateTimeMap();
         checkCacheControlHeaders(request, servletResponse, theTimeMap, session);
 
@@ -324,9 +321,6 @@ public class FedoraVersioning extends ContentExposingResource {
      */
     @OPTIONS
     public Response options() {
-        if (!resource().isVersioned()) {
-            throw new RepositoryVersionRuntimeException("This operation requires that the resource be versionable");
-        }
         final FedoraResource theTimeMap = resource().findOrCreateTimeMap();
         LOGGER.info("OPTIONS for '{}'", externalPath);
         addResourceHttpHeaders(theTimeMap);
