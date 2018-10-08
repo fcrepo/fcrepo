@@ -2110,7 +2110,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final DatasetGraph graph = dataset.asDatasetGraph();
             final Node resource = createURI(serverAddress + id);
             assertTrue("Didn't find member resources", graph.find(ANY, resource, LDP_MEMBER.asNode(), ANY).hasNext());
-            assertTrue("Didn't find contained", graph.find(ANY, resource,  CONTAINS.asNode(), ANY).hasNext());
+            assertFalse("Expected nothing server managed",
+                    graph.find(ANY, resource, CONTAINS.asNode(), ANY).hasNext());
             assertFalse("Expected nothing server managed",
                     graph.find(ANY, resource, ANY, CONTAINER.asNode()).hasNext());
             assertFalse("Expected nothing server managed",
@@ -2129,6 +2130,30 @@ public class FedoraLdpIT extends AbstractResourceIT {
                     graph.find(ANY, resource, LAST_MODIFIED_DATE.asNode(), ANY).hasNext());
             assertFalse("Expected nothing server managed",
                     graph.find(ANY, resource, LAST_MODIFIED_BY.asNode(), ANY).hasNext());
+        }
+    }
+
+    @Test
+    public void testGetObjectIncludeContainmentAndOmitServerManaged() throws IOException {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+        final String location = serverAddress + id;
+        final String updateString = "<> <" + MEMBERSHIP_RESOURCE.getURI() +
+                "> <" + location + "> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_NAMESPACE + "member> .";
+        final HttpPut put = putObjMethod(id + "/a", "text/turtle", updateString);
+        put.setHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
+        assertEquals(CREATED.getStatusCode(), getStatus(put));
+        assertTrue(getLinkHeaders(getObjMethod(id + "/a")).contains(DIRECT_CONTAINER_LINK_HEADER));
+        createObject(id + "/a/1");
+
+        final HttpGet getObjMethod = getObjMethod(id);
+        getObjMethod.addHeader("Prefer",
+                "return=representation; omit=\"http://fedora.info/definitions/v4/repository#ServerManaged\"; " +
+                "include=\"http://www.w3.org/ns/ldp#PreferContainment\"");
+        try (final CloseableDataset dataset = getDataset(getObjMethod)) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            final Node resource = createURI(serverAddress + id);
+            assertTrue("Didn't find ldp containment", graph.find(ANY, resource, CONTAINS.asNode(), ANY).hasNext());
         }
     }
 
