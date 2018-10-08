@@ -2,13 +2,17 @@
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns:context="http://www.springframework.org/schema/context"
   xmlns:p="http://www.springframework.org/schema/p"
+  xmlns:util="http://www.springframework.org/schema/util"
   xsi:schemaLocation="
     http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
-    http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+    http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd
+    http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
 
   <!-- Context that supports the actual ModeShape JCR itself -->
 
   <context:annotation-config />
+
+  <context:property-placeholder />
 
   <context:component-scan base-package="org.fcrepo" />
 
@@ -23,5 +27,12 @@
   <bean class="org.modeshape.jcr.ModeShapeEngine" init-method="start"/>
 
   <bean id="connectionManager" class="org.apache.http.impl.conn.PoolingHttpClientConnectionManager" />
+
+  <bean class="org.fcrepo.http.commons.session.SessionFactory"/>
+
+  <!-- Identifier translation chain -->
+  <util:list id="translationChain" value-type="org.fcrepo.kernel.api.identifiers.InternalIdentifierConverter">
+    <bean class="org.fcrepo.kernel.modeshape.identifiers.NamespaceConverter"/>
+  </util:list>
 
 </beans>
