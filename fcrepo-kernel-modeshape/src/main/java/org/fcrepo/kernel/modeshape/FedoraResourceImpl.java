@@ -127,6 +127,7 @@ import org.fcrepo.kernel.api.exception.InvalidPrefixException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.FedoraTimeMap;
@@ -919,7 +920,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         final org.apache.jena.graph.Node object = triple.getObject();
         if (object.isURI() && triple.getPredicate().getURI().equals(RDF_TYPE_URI) &&
             object.getURI().startsWith(MEMENTO_NAMESPACE)) {
-            throw new MalformedRdfException(
+            throw new ServerManagedTypeException(
                 "The " + RDF_TYPE_URI + " predicate may not take an object in the memento namespace (" +
                 MEMENTO_NAMESPACE + ").");
         }

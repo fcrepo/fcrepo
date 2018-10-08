@@ -960,13 +960,13 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         resource.replaceProperties(translator(), inputModel, resourceTriples);
     }
 
-    private void ensureNoMementoNamespaceTypes(final Model inputModel) throws MalformedRdfException {
+    private void ensureNoMementoNamespaceTypes(final Model inputModel) {
         inputModel.listStatements().forEachRemaining((final Statement s) -> {
             LOGGER.debug("statement: s={}, p={}, o={}", s.getSubject(), s.getPredicate(), s.getObject());
             final RDFNode object = s.getObject();
             if (s.getObject().isURIResource() && s.getPredicate().getURI().equals(RDF_TYPE_URI.getURI()) &&
                 object.asResource().getURI().startsWith(MEMENTO_NAMESPACE)) {
-                throw new MalformedRdfException(
+                throw new ServerManagedPropertyException(
                     "The " + RDF_TYPE_URI.getURI() + " predicate may not take an object in the memento namespace (" +
                     MEMENTO_NAMESPACE + ").");
             }
