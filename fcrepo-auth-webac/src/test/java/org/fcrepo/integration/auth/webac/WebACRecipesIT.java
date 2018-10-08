@@ -426,10 +426,10 @@ public class WebACRecipesIT extends AbstractResourceIT {
         final String id = "/rest/append_only_resource/" + getRandomUniqueId();
         ingestObj(id);
 
-        logger.debug("user18 can't read (no ACL): {}", id);
+        logger.debug("user18 can read (has ACL:READ): {}", id);
         final HttpGet requestGet = getObjMethod(id);
         setAuth(requestGet, "user18");
-        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestGet));
+        assertEquals(HttpStatus.SC_OK, getStatus(requestGet));
 
         logger.debug("user18 can't append (no ACL): {}", id);
         final HttpPatch requestPatch = patchObjMethod(id);
@@ -490,10 +490,10 @@ public class WebACRecipesIT extends AbstractResourceIT {
         final String id = "/rest/read_append_resource/" + getRandomUniqueId();
         ingestObj(id);
 
-        logger.debug("user18 can't read (no ACL): {}", id);
+        logger.debug("user18 can read (has ACL:READ): {}", id);
         final HttpGet requestGet = getObjMethod(id);
         setAuth(requestGet, "user18");
-        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestGet));
+        assertEquals(HttpStatus.SC_OK, getStatus(requestGet));
 
         logger.debug("user18 can't append (no ACL): {}", id);
         final HttpPatch requestPatch = patchObjMethod(id);
@@ -535,10 +535,10 @@ public class WebACRecipesIT extends AbstractResourceIT {
         final String id = "/rest/read_append_write_resource/" + getRandomUniqueId();
         ingestObj(id);
 
-        logger.debug("user18 can't read (no ACL): {}", id);
+        logger.debug("user18 can read (has ACL:READ): {}", id);
         final HttpGet requestGet = getObjMethod(id);
         setAuth(requestGet, "user18");
-        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestGet));
+        assertEquals(HttpStatus.SC_OK, getStatus(requestGet));
 
         logger.debug("user18 can't append (no ACL): {}", id);
         final HttpPatch requestPatch = patchObjMethod(id);
@@ -570,19 +570,19 @@ public class WebACRecipesIT extends AbstractResourceIT {
         final String id = "/rest/" + getRandomUniqueId();
         final String testObj = ingestObj(id);
 
-        logger.debug("Anonymous can't read (no ACL): {}", id);
+        logger.debug("Anonymous can read (has ACL:READ): {}", id);
         final HttpGet requestGet1 = getObjMethod(id);
-        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestGet1));
+        assertEquals(HttpStatus.SC_OK, getStatus(requestGet1));
 
-        logger.debug("Can username 'user06a' read {} (no ACL)", id);
+        logger.debug("Can username 'user06a' read {} (has ACL:READ)", id);
         final HttpGet requestGet2 = getObjMethod(id);
         setAuth(requestGet2, "user06a");
-        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestGet2));
+        assertEquals(HttpStatus.SC_OK, getStatus(requestGet2));
 
-        logger.debug("Can username 'notuser06b' read {} (no ACL)", id);
+        logger.debug("Can username 'notuser06b' read {} (has ACL:READ)", id);
         final HttpGet requestGet3 = getObjMethod(id);
         setAuth(requestGet3, "user06b");
-        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestGet3));
+        assertEquals(HttpStatus.SC_OK, getStatus(requestGet3));
 
         System.setProperty(ROOT_AUTHORIZATION_PROPERTY, "./target/test-classes/test-root-authorization2.ttl");
         logger.debug("Can username 'user06a' read {} (overridden system ACL)", id);
@@ -629,7 +629,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
 
         final HttpGet requestGet2 = getObjMethod(id);
         assertEquals("Agent user21 inherits read permission from parent ACL to read resource " + testObj + "!",
-                HttpStatus.SC_FORBIDDEN, getStatus(requestGet2));
+                HttpStatus.SC_OK, getStatus(requestGet2));
 
         // Test the default root ACL is inherited for authorization while the parent ACL with no acl:default is ignored
         System.setProperty(ROOT_AUTHORIZATION_PROPERTY, "./target/test-classes/test-root-authorization2.ttl");
@@ -825,14 +825,14 @@ public class WebACRecipesIT extends AbstractResourceIT {
         final String id = "/rest/" + getRandomUniqueId();
         final String testObj = ingestObj(id);
 
-        logger.debug("Anonymous can't read (no ACL): {}", id);
+        logger.debug("Anonymous can read (has ACL:READ): {}", id);
         final HttpGet requestGet1 = getObjMethod(id);
-        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestGet1));
+        assertEquals(HttpStatus.SC_OK, getStatus(requestGet1));
 
         logger.debug("Can username 'smith123' read {} (no ACL)", id);
         final HttpGet requestGet2 = getObjMethod(id);
         setAuth(requestGet2, "smith123");
-        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestGet2));
+        assertEquals(HttpStatus.SC_OK, getStatus(requestGet2));
 
         System.setProperty(USER_AGENT_BASE_URI_PROPERTY, "info:user/");
         System.setProperty(GROUP_AGENT_BASE_URI_PROPERTY, "info:group/");
@@ -840,12 +840,14 @@ public class WebACRecipesIT extends AbstractResourceIT {
         logger.debug("Can username 'smith123' read {} (overridden system ACL)", id);
         final HttpGet requestGet3 = getObjMethod(id);
         setAuth(requestGet3, "smith123");
-        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestGet3));
+        // robyj - fcrepo-2668 changed this from SC_FORBIDDEN to SC_OK
+        assertEquals(HttpStatus.SC_OK, getStatus(requestGet3));
 
         logger.debug("Can username 'group123' read {} (overridden system ACL)", id);
         final HttpGet requestGet4 = getObjMethod(id);
         setAuth(requestGet4, "group123");
-        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestGet4));
+        // robyj - fcrepo-2668 changed the code from SC_FORBIDDEN to SC_OK
+        assertEquals(HttpStatus.SC_OK, getStatus(requestGet4));
 
         System.clearProperty(USER_AGENT_BASE_URI_PROPERTY);
         System.clearProperty(GROUP_AGENT_BASE_URI_PROPERTY);

@@ -640,7 +640,7 @@ public class WebACRolesProviderTest {
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockNode, true);
 
         assertEquals("There should be exactly one agent", 1, roles.size());
-        assertEquals("The agent should have zero modes", 0, roles.get(agent1).size());
+        assertEquals("The agent should have one mode", 1, roles.get(agent1).size());
     }
 
     @Test(expected = RuntimeException.class)
