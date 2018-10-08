@@ -65,7 +65,6 @@ import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
@@ -543,20 +542,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 builder.param("anchor", getUri(resource).toString());
             }
             servletResponse.addHeader(LINK, builder.build().toString());
-
-            final String path = context.getContextPath().equals("/") ? "" : context.getContextPath();
-            final String constraintURI = uriInfo.getBaseUri().getScheme() + "://" +
-                    uriInfo.getBaseUri().getAuthority() + path +
-                    "/static/constraints/NonRDFSourceConstraints.rdf";
-            servletResponse.addHeader(LINK,
-                buildLink(constraintURI, CONSTRAINED_BY.getURI()));
-        } else {
-            final String path = context.getContextPath().equals("/") ? "" : context.getContextPath();
-            final String constraintURI = uriInfo.getBaseUri().getScheme() + "://" +
-                    uriInfo.getBaseUri().getAuthority() + path +
-                    "/static/constraints/ContainerConstraints.rdf";
-            servletResponse.addHeader(LINK,
-                buildLink(constraintURI, CONSTRAINED_BY.getURI()));
         }
 
         final boolean isVersioned = resource.isVersioned();
