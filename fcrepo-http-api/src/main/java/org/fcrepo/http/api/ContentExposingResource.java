@@ -71,7 +71,9 @@ import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEGATE_TYPE;
@@ -202,6 +204,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     static final Node WEBAC_ACCESS_TO_CLASS_URI = createURI(WEBAC_ACCESS_TO_CLASS);
 
     static final Property WEBAC_ACCESS_TO_PROPERTY = createProperty(WEBAC_ACCESS_TO);
+
+    static final Node RDF_TYPE_URI = createURI(RDF_NAMESPACE + "type");
 
     @Context protected Request request;
     @Context protected HttpServletResponse servletResponse;
@@ -951,7 +955,22 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         ensureValidACLAuthorization(resource, inputModel);
 
+        ensureNoMementoNamespaceTypes(inputModel);
+
         resource.replaceProperties(translator(), inputModel, resourceTriples);
+    }
+
+    private void ensureNoMementoNamespaceTypes(final Model inputModel) {
+        inputModel.listStatements().forEachRemaining((final Statement s) -> {
+            LOGGER.debug("statement: s={}, p={}, o={}", s.getSubject(), s.getPredicate(), s.getObject());
+            final RDFNode object = s.getObject();
+            if (s.getObject().isURIResource() && s.getPredicate().getURI().equals(RDF_TYPE_URI.getURI()) &&
+                object.asResource().getURI().startsWith(MEMENTO_NAMESPACE)) {
+                throw new ServerManagedPropertyException(
+                    "The " + RDF_TYPE_URI.getURI() + " predicate may not take an object in the memento namespace (" +
+                    MEMENTO_NAMESPACE + ").");
+            }
+        });
     }
 
     /**
