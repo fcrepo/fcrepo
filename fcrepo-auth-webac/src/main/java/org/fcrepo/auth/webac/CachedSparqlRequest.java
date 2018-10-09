@@ -73,14 +73,14 @@ public class CachedSparqlRequest extends HttpServletRequestWrapper {
 
     private class CustomServletInputStream extends ServletInputStream {
 
-        private ByteArrayInputStream buffer;
+        private final ByteArrayInputStream buffer;
 
         public CustomServletInputStream(final byte[] contents) {
             this.buffer = new ByteArrayInputStream(contents);
         }
 
         @Override
-        public int read() throws IOException {
+        public int read() {
             return buffer.read();
         }
 

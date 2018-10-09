@@ -24,6 +24,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -57,7 +58,7 @@ public class WebACAuthorizationTest {
         final List<String> accessTo = Arrays.asList(ACCESS_TO1, ACCESS_TO2, ACCESS_TO3);
         final List<String> accessToClass = Arrays.asList(ACCESS_TO_CLASS1, ACCESS_TO_CLASS2);
         final List<String> accessGroups = Arrays.asList(ACCESS_GROUP1, ACCESS_GROUP2);
-        final List<String> defaults = Arrays.asList(DEFAULT_1);
+        final List<String> defaults = Collections.singletonList(DEFAULT_1);
 
         final WebACAuthorization auth = new WebACAuthorization(agents, agentClasses,
                 modes, accessTo, accessToClass, accessGroups, defaults);
@@ -87,7 +88,7 @@ public class WebACAuthorizationTest {
         final Set<String> accessTo = new HashSet<>(Arrays.asList(ACCESS_TO1, ACCESS_TO2, ACCESS_TO3));
         final Set<String> accessToClass = new HashSet<>(Arrays.asList(ACCESS_TO_CLASS1, ACCESS_TO_CLASS2));
         final Set<String> accessGroups = new HashSet<>(Arrays.asList(ACCESS_GROUP1, ACCESS_GROUP2));
-        final Set<String> defaults = new HashSet<>(Arrays.asList(DEFAULT_1));
+        final Set<String> defaults = new HashSet<>(Collections.singletonList(DEFAULT_1));
 
         final WebACAuthorization auth = new WebACAuthorization(agents, agentClasses,
                 modes, accessTo, accessToClass, accessGroups, defaults);

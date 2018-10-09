@@ -61,11 +61,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
-import javax.jcr.ItemNotFoundException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
-import javax.jcr.version.Version;
-import javax.jcr.version.VersionHistory;
 
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Resource;
@@ -77,7 +74,6 @@ import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.modeshape.FedoraSessionImpl;
-import org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 import org.slf4j.Logger;
 
@@ -102,44 +98,16 @@ public class WebACRolesProvider {
     @Inject
     private NodeService nodeService;
 
-    private static final NodeResourceConverter nodeResourceConverter = new NodeResourceConverter();
-
     @Inject
     private SessionFactory sessionFactory;
 
     /**
-     * Get the versionable FedoraResource for this version resource
-     *
-     * @param resource the Version resource
-     * @return the base versionable resource or the version if not found.
-     */
-    private FedoraResource getBaseVersion(final FedoraResource resource) {
-        final FedoraSession internalSession = sessionFactory.getInternalSession();
-
-        try {
-            final VersionHistory base = ((Version) getJcrNode(resource)).getContainingHistory();
-            if (base.hasProperty(JCR_VERSIONABLE_UUID_PROPERTY)) {
-                final String versionUuid = base.getProperty(JCR_VERSIONABLE_UUID_PROPERTY).getValue().getString();
-                LOGGER.debug("versionableUuid : {}", versionUuid);
-                return nodeService.find(internalSession,
-                        getJcrSession(internalSession).getNodeByIdentifier(versionUuid).getPath());
-            }
-        } catch (final ItemNotFoundException e) {
-            LOGGER.error("Node with jcr:versionableUuid not found : {}", e.getMessage());
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-        return resource;
-    }
-
-    /**
-     * Get the roles assigned to this Node. Optionally search up the tree for the effective roles.
+     * Get the roles assigned to this Node.
      *
      * @param node the subject Node
-     * @param effective if true then search for effective roles
      * @return a set of roles for each principal
      */
-    public Map<String, Collection<String>> getRoles(final Node node, final boolean effective) {
+    public Map<String, Collection<String>> getRoles(final Node node) {
         try {
             return getAgentRoles(nodeService.find(new FedoraSessionImpl(node.getSession()), node.getPath()));
         } catch (final RepositoryException ex) {
@@ -314,7 +282,7 @@ public class WebACRolesProvider {
      * Map a Jena Node to a Stream of Strings. Any non-URI, non-Literals map to an empty Stream,
      * making this suitable to use with flatMap.
      */
-    private static final Stream<String> nodeToStringStream(final org.apache.jena.graph.Node object) {
+    private static Stream<String> nodeToStringStream(final org.apache.jena.graph.Node object) {
         if (object.isURI()) {
             return of(object.getURI());
         } else if (object.isLiteral()) {
@@ -360,7 +328,7 @@ public class WebACRolesProvider {
             final List<Triple> triples = aclResource.getTriples(translator, PROPERTIES).collect(toList());
 
             final Set<org.apache.jena.graph.Node> authSubjects = triples.stream().filter(t -> {
-                return t.getPredicate().getURI().toString().equals(RDF_NAMESPACE + "type") &&
+                return t.getPredicate().getURI().equals(RDF_NAMESPACE + "type") &&
                        t.getObject().getURI().equals(WEBAC_AUTHORIZATION_VALUE);
             }).map(t -> t.getSubject()).collect(Collectors.toSet());
 
@@ -426,14 +394,11 @@ public class WebACRolesProvider {
             final FedoraResource aclResource = resource.getAcl();
 
             if (aclResource != null) {
-                final IdentifierConverter<Resource, FedoraResource> translator =
-                    new DefaultIdentifierTranslator(getJcrNode(aclResource).getSession());
                 final List<WebACAuthorization> authorizations =
                     getAuthorizations(aclResource, ancestorAcl, sessionFactory);
                 if (authorizations.size() > 0) {
                     return Optional.of(
-                        new ACLHandle(URI.create(translator.reverse().convert(aclResource).getURI()), resource,
-                                      authorizations));
+                        new ACLHandle(resource, authorizations));
                 }
             }
 

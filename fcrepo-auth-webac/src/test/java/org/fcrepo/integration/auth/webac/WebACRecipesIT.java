@@ -31,7 +31,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Optional;
 import javax.ws.rs.core.Link;
@@ -85,10 +84,8 @@ public class WebACRecipesIT extends AbstractResourceIT {
         // create the ACL
         final HttpResponse aclResponse = ingestTurtleResource(username, aclFilePath, aclResourcePath);
 
-        // get the URI to the newly created resource
-        final String aclURI = aclResponse.getFirstHeader("Location").getValue();
-
-        return aclURI;
+        // return the URI to the newly created resource
+        return aclResponse.getFirstHeader("Location").getValue();
     }
 
     /**
@@ -123,7 +120,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
      *
      * @param path Path to put the resource under
      * @return the Location of the newly created resource
-     * @throws IOException
+     * @throws IOException on error
      */
     private String ingestObj(final String path) throws IOException {
         final HttpPut request = putObjMethod(path.replace(serverAddress, ""));
@@ -202,7 +199,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
     public void scenario2() throws IOException {
         final String id = "/rest/box/bag/collection";
         final String testObj = ingestObj(id);
-        final String acl2 = ingestAcl("fedoraAdmin", "/acls/02/acl.ttl", testObj + "/fcr:acl");
+        ingestAcl("fedoraAdmin", "/acls/02/acl.ttl", testObj + "/fcr:acl");
 
         logger.debug("Anonymous can not read " + testObj);
         final HttpGet requestGet = getObjMethod(id);
@@ -236,8 +233,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
         final String idLight = "/rest/dark/archive/sunshine";
         final String testObj = ingestObj(idDark);
         final String testObj2 = ingestObjWithACL(idLight, "/acls/03/acl.ttl");
-        final String aclDark =
-                ingestAcl("fedoraAdmin", "/acls/03/acl.ttl", testObj + "/fcr:acl");
+        ingestAcl("fedoraAdmin", "/acls/03/acl.ttl", testObj + "/fcr:acl");
 
         logger.debug("Anonymous can't read " + testObj);
         final HttpGet requestGet = getObjMethod(idDark);
@@ -341,7 +337,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
     public void scenario5() throws IOException {
         final String idPublic = "/rest/mixedCollection/publicObj";
         final String idPrivate = "/rest/mixedCollection/privateObj";
-        final String testObj = ingestObjWithACL("/rest/mixedCollection", "/acls/05/acl.ttl");
+        ingestObjWithACL("/rest/mixedCollection", "/acls/05/acl.ttl");
         final String publicObj = ingestObj(idPublic);
         final String privateObj = ingestObj(idPrivate);
         final HttpPatch patch = patchObjMethod(idPublic);
@@ -391,7 +387,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
 
         assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(request));
 
-        final String acl9 = ingestAcl("fedoraAdmin", "/acls/09/acl.ttl", testObj + "/fcr:acl");
+        ingestAcl("fedoraAdmin", "/acls/09/acl.ttl", testObj + "/fcr:acl");
 
         logger.debug("Person1 can see object " + publicObj);
         final HttpGet requestGet1 = getObjMethod(idPublic);
@@ -421,7 +417,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
      *  6. Deny(403) on PATCH with non-SPARQL content.
      */
     @Test
-    public void scenario18Test1() throws IOException, UnsupportedEncodingException {
+    public void scenario18Test1() throws IOException {
         final String testObj = ingestObj("/rest/append_only_resource");
         final String id = "/rest/append_only_resource/" + getRandomUniqueId();
         ingestObj(id);
@@ -442,7 +438,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
         setAuth(requestDelete, "user18");
         assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestDelete));
 
-        final String acl = ingestAcl("fedoraAdmin", "/acls/18/append-only-acl.ttl", testObj + "/fcr:acl");
+        ingestAcl("fedoraAdmin", "/acls/18/append-only-acl.ttl", testObj + "/fcr:acl");
 
         logger.debug("user18 still can't read (ACL append): {}", id);
         assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestGet));
@@ -484,7 +480,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
      *  3. Deny(403) on DELETE.
      */
     @Test
-    public void scenario18Test2() throws IOException, UnsupportedEncodingException {
+    public void scenario18Test2() throws IOException {
         final String testObj = ingestObj("/rest/read_append_resource");
 
         final String id = "/rest/read_append_resource/" + getRandomUniqueId();
@@ -503,7 +499,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
                 "INSERT { <> <" + title.getURI() + "> \"some title\" . } WHERE {}"));
         assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestPatch));
 
-        final String acl = ingestAcl("fedoraAdmin", "/acls/18/read-append-acl.ttl", testObj + "/fcr:acl");
+        ingestAcl("fedoraAdmin", "/acls/18/read-append-acl.ttl", testObj + "/fcr:acl");
 
         logger.debug("user18 can't delete (no ACL): {}", id);
         final HttpDelete requestDelete = deleteObjMethod(id);
@@ -529,7 +525,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
      *  3. Allow(204) on DELETE.
      */
     @Test
-    public void scenario18Test3() throws IOException, UnsupportedEncodingException {
+    public void scenario18Test3() throws IOException {
         final String testObj = ingestObj("/rest/read_append_write_resource");
 
         final String id = "/rest/read_append_write_resource/" + getRandomUniqueId();
@@ -553,7 +549,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
         setAuth(requestDelete, "user18");
         assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestDelete));
 
-        final String acl = ingestAcl("fedoraAdmin", "/acls/18/read-append-write-acl.ttl", testObj + "/fcr:acl");
+        ingestAcl("fedoraAdmin", "/acls/18/read-append-write-acl.ttl", testObj + "/fcr:acl");
 
         logger.debug("user18 can read (ACL read, append, write): {}", id);
         assertEquals(HttpStatus.SC_OK, getStatus(requestGet));
@@ -593,8 +589,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
 
         // Add ACL to root
         final String rootURI = getObjMethod("/rest").getURI().toString();
-        final String acl = ingestAcl("fedoraAdmin", "/acls/06/acl.ttl",
-                                     rootURI + "/fcr:acl");
+        ingestAcl("fedoraAdmin", "/acls/06/acl.ttl", rootURI + "/fcr:acl");
 
         logger.debug("Anonymous still can't read (ACL present)");
         final HttpGet requestGet5 = getObjMethod(id);
@@ -615,7 +610,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
     public void scenario21TestACLNotForInheritance() throws IOException {
         final String parentPath = "/rest/resource_acl_no_inheritance";
         // Ingest ACL with no acl:default statement to the parent resource
-        final String parentObj = ingestObjWithACL(parentPath, "/acls/21/acl.ttl");
+        ingestObjWithACL(parentPath, "/acls/21/acl.ttl");
 
         final String id = parentPath + "/" + getRandomUniqueId();
         final String testObj = ingestObj(id);
@@ -682,8 +677,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
         // Open access datastream, "file"
         final String id = idBook + "/file";
         final String testObj = ingestDatastream(idBook, "file");
-        final String acl = ingestAcl("fedoraAdmin",
-                "/acls/07/acl.ttl", bookURI + "/fcr:acl");
+        ingestAcl("fedoraAdmin", "/acls/07/acl.ttl", bookURI + "/fcr:acl");
 
         logger.debug("Anonymous can't read");
         final HttpGet requestGet1 = getObjMethod(id);
@@ -701,7 +695,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
     public void testAccessToHashResource() throws IOException {
         final String id = "/rest/some/parent#hash-resource";
         final String testObj = ingestObj(id);
-        final String acl = ingestAcl("fedoraAdmin", "/acls/08/acl.ttl", testObj + "/fcr:acl");
+        ingestAcl("fedoraAdmin", "/acls/08/acl.ttl", testObj + "/fcr:acl");
 
         logger.debug("Anonymous can't read");
         final HttpGet requestGet1 = getObjMethod(id);
@@ -726,8 +720,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
                 new StringEntity("PREFIX pcdm: <http://pcdm.org/models#> INSERT { <> a pcdm:Object } WHERE {}"));
         assertEquals(HttpStatus.SC_NO_CONTENT, getStatus(requestPatch1));
 
-        final String acl = ingestAcl("fedoraAdmin",
-                "/acls/10/acl.ttl", idVersion + "/fcr:acl");
+        ingestAcl("fedoraAdmin", "/acls/10/acl.ttl", idVersion + "/fcr:acl");
 
         final HttpGet requestGet1 = getObjMethod(idVersion);
         setAuth(requestGet1, "user10");
@@ -749,7 +742,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
         final String targetPath = "/rest/foo";
         final String targetResource = ingestObj(targetPath);
 
-        final String acl = ingestAcl("fedoraAdmin", "/acls/11/acl.ttl", targetResource + "/fcr:acl");
+        ingestAcl("fedoraAdmin", "/acls/11/acl.ttl", targetResource + "/fcr:acl");
 
         final HttpGet adminGet = getObjMethod(targetPath);
         setAuth(adminGet, "fedoraAdmin");
@@ -803,8 +796,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
         final String idVersion = "/rest/versionResourceUri";
         ingestObj(idVersion);
 
-        final String acl = ingestAcl("fedoraAdmin",
-                "/acls/12/acl.ttl", idVersion + "/fcr:acl");
+        ingestAcl("fedoraAdmin", "/acls/12/acl.ttl", idVersion + "/fcr:acl");
 
         final HttpGet requestGet1 = getObjMethod(idVersion);
         setAuth(requestGet1, "user12");
@@ -851,7 +843,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
         System.clearProperty(GROUP_AGENT_BASE_URI_PROPERTY);
 
         // Add ACL to object
-        final String acl = ingestAcl("fedoraAdmin", "/acls/16/acl.ttl", testObj + "/fcr:acl");
+        ingestAcl("fedoraAdmin", "/acls/16/acl.ttl", testObj + "/fcr:acl");
 
         logger.debug("Anonymous still can't read (ACL present)");
         final HttpGet requestGet5 = getObjMethod(id);
@@ -882,7 +874,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
     @Test
     public void testRegisterNamespace() throws IOException {
         final String testObj = ingestObj("/rest/test_namespace");
-        final String acl1 = ingestAcl("fedoraAdmin", "/acls/13/acl.ttl", testObj + "/fcr:acl");
+        ingestAcl("fedoraAdmin", "/acls/13/acl.ttl", testObj + "/fcr:acl");
 
         final String id = "/rest/test_namespace/" + getRandomUniqueId();
         ingestObj(id);
@@ -898,7 +890,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
     @Test
     public void testRegisterNodeType() throws IOException {
         final String testObj = ingestObj("/rest/test_nodetype");
-        final String acl1 = ingestAcl("fedoraAdmin", "/acls/14/acl.ttl", testObj + "/fcr:acl");
+        ingestAcl("fedoraAdmin", "/acls/14/acl.ttl", testObj + "/fcr:acl");
 
         final String id = "/rest/test_nodetype/" + getRandomUniqueId();
         ingestObj(id);
@@ -916,7 +908,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
     @Test
     public void testDeletePropertyAsUser() throws IOException {
         final String testObj = ingestObj("/rest/test_delete");
-        final String acl1 = ingestAcl("fedoraAdmin", "/acls/15/acl.ttl", testObj + "/fcr:acl");
+        ingestAcl("fedoraAdmin", "/acls/15/acl.ttl", testObj + "/fcr:acl");
 
         final String id = "/rest/test_delete/" + getRandomUniqueId();
         ingestObj(id);
@@ -947,7 +939,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
     @Test
     public void testHeadWithReadOnlyUser() throws IOException {
         final String testObj = ingestObj("/rest/test_head");
-        final String acl = ingestAcl("fedoraAdmin", "/acls/19/acl.ttl", testObj + "/fcr:acl");
+        ingestAcl("fedoraAdmin", "/acls/19/acl.ttl", testObj + "/fcr:acl");
 
         final HttpHead headReq = new HttpHead(testObj);
         setAuth(headReq, "user19");
@@ -957,58 +949,46 @@ public class WebACRecipesIT extends AbstractResourceIT {
     @Test
     public void testOptionsWithReadOnlyUser() throws IOException {
         final String testObj = ingestObj("/rest/test_options");
-        final String acl = ingestAcl("fedoraAdmin", "/acls/20/acl.ttl", testObj + "/fcr:acl");
+        ingestAcl("fedoraAdmin", "/acls/20/acl.ttl", testObj + "/fcr:acl");
 
         final HttpOptions optionsReq = new HttpOptions(testObj);
         setAuth(optionsReq, "user20");
         assertEquals(HttpStatus.SC_OK, getStatus(optionsReq));
     }
 
-    protected static HttpResponse HEAD(final String requestURI) throws IOException {
+    private static HttpResponse HEAD(final String requestURI) throws IOException {
         return HEAD(requestURI, "fedoraAdmin");
     }
 
-    protected static HttpResponse HEAD(final String requestURI, final String username) throws IOException {
+    private static HttpResponse HEAD(final String requestURI, final String username) throws IOException {
         final HttpHead req = new HttpHead(requestURI);
         setAuth(req, username);
         return execute(req);
     }
 
-    protected static HttpResponse PUT(final String requestURI) throws IOException {
+    private static HttpResponse PUT(final String requestURI) throws IOException {
         return PUT(requestURI, "fedoraAdmin");
     }
 
-    protected static HttpResponse PUT(final String requestURI, final String username) throws IOException {
+    private static HttpResponse PUT(final String requestURI, final String username) throws IOException {
         final HttpPut req = new HttpPut(requestURI);
         setAuth(req, username);
         return execute(req);
     }
 
-    protected static HttpResponse DELETE(final String requestURI) throws IOException {
-        return DELETE(requestURI, "fedoraAdmin");
-    }
-
-    protected static HttpResponse DELETE(final String requestURI, final String username) throws IOException {
+    private static HttpResponse DELETE(final String requestURI, final String username) throws IOException {
         final HttpDelete req = new HttpDelete(requestURI);
         setAuth(req, username);
         return execute(req);
     }
 
-    protected static HttpResponse GET(final String requestURI) throws IOException {
-        return GET(requestURI, "fedoraAdmin");
-    }
-
-    protected static HttpResponse GET(final String requestURI, final String username) throws IOException {
+    private static HttpResponse GET(final String requestURI, final String username) throws IOException {
         final HttpGet req = new HttpGet(requestURI);
         setAuth(req, username);
         return execute(req);
     }
 
-    protected static HttpResponse PATCH(final String requestURI, final HttpEntity body) throws IOException {
-        return PATCH(requestURI, body, "fedoraAdmin");
-    }
-
-    protected static HttpResponse PATCH(final String requestURI, final HttpEntity body, final String username)
+    private static HttpResponse PATCH(final String requestURI, final HttpEntity body, final String username)
             throws IOException {
         final HttpPatch req = new HttpPatch(requestURI);
         setAuth(req, username);
@@ -1018,7 +998,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
         return execute(req);
     }
 
-    protected static String getLink(final HttpResponse res, final String rel) {
+    private static String getLink(final HttpResponse res) {
         for (final Header h : res.getHeaders("Link")) {
             final HeaderElement link = h.getElements()[0];
             for (final NameValuePair param : link.getParameters()) {
@@ -1030,10 +1010,10 @@ public class WebACRecipesIT extends AbstractResourceIT {
         return null;
     }
 
-    protected String ingestObjWithACL(final String path, final String aclResourcePath) throws IOException {
+    private String ingestObjWithACL(final String path, final String aclResourcePath) throws IOException {
         final String newURI = ingestObj(path);
         final HttpResponse res = HEAD(newURI);
-        final String aclURI = getLink(res, "acl");
+        final String aclURI = getLink(res);
 
         logger.debug("Creating ACL at {}", aclURI);
         ingestAcl("fedoraAdmin", aclResourcePath, aclURI);
@@ -1046,13 +1026,13 @@ public class WebACRecipesIT extends AbstractResourceIT {
         final String controlObj = ingestObjWithACL("/rest/control", "/acls/25/control.ttl");
         final String readwriteObj = ingestObjWithACL("/rest/readwrite", "/acls/25/readwrite.ttl");
 
-        final String rwChildACL = getLink(PUT(readwriteObj + "/child"), "acl");
+        final String rwChildACL = getLink(PUT(readwriteObj + "/child"));
         assertEquals(SC_FORBIDDEN, getStatus(HEAD(rwChildACL, "testuser")));
         assertEquals(SC_FORBIDDEN, getStatus(GET(rwChildACL, "testuser")));
         assertEquals(SC_FORBIDDEN, getStatus(PUT(rwChildACL, "testuser")));
         assertEquals(SC_FORBIDDEN, getStatus(DELETE(rwChildACL, "testuser")));
 
-        final String controlChildACL = getLink(PUT(controlObj + "/child"), "acl");
+        final String controlChildACL = getLink(PUT(controlObj + "/child"));
         assertEquals(SC_NOT_FOUND, getStatus(HEAD(controlChildACL, "testuser")));
         assertEquals(SC_NOT_FOUND, getStatus(GET(controlChildACL, "testuser")));
 
