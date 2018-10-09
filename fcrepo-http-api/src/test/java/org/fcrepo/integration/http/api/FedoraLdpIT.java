@@ -94,6 +94,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_MEMBER;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
@@ -2244,7 +2245,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                         "> <> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_NAMESPACE + "contains> .}";
         patch.setEntity(new StringEntity(updateString));
         assertEquals("Patch with sparql update allowed ldp:contains in indirect container!",
-                CONFLICT.getStatusCode(), getStatus(patch));
+                BAD_REQUEST.getStatusCode(), getStatus(patch));
     }
 
     @Test
@@ -2278,7 +2279,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                         "> <> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_NAMESPACE + "contains> .}";
         patch.setEntity(new StringEntity(updateString));
         assertEquals("Patch with sparql update allowed ldp:contains in direct container!",
-                CONFLICT.getStatusCode(), getStatus(patch));
+                BAD_REQUEST.getStatusCode(), getStatus(patch));
     }
 
     @Test
@@ -3991,7 +3992,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testPostCreateRDFSourceWithMementoNamespaceTriple() throws IOException {
+    public void testPostCreateRDFSourceWithMementoNamespaceType() throws IOException {
         final String subjectURI = getRandomUniqueId();
         final HttpPost createMethod = new HttpPost(serverAddress);
         createMethod.addHeader(CONTENT_TYPE, "text/turtle");
@@ -3999,26 +4000,26 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createMethod.setEntity(new StringEntity("<> a <" + MEMENTO_TYPE + "> ."));
         try (final CloseableHttpResponse response = execute(createMethod)) {
             assertEquals("Must not be able to POST RDF that contains an \"<> a  <" + MEMENTO_TYPE + ">\"",
-                         CONFLICT.getStatusCode(),
+                         BAD_REQUEST.getStatusCode(),
                          getStatus(response));
         }
     }
 
     @Test
-    public void testPutCreateRDFSourceWithMementoNamespaceTriple() throws IOException {
+    public void testPutCreateRDFSourceWithMementoNamespaceType() throws IOException {
         final String subjectURI = serverAddress + getRandomUniqueId();
         final HttpPut putMethod = new HttpPut(subjectURI);
         putMethod.addHeader(CONTENT_TYPE, "text/turtle");
         putMethod.setEntity(new StringEntity("<> a <" + MEMENTO_TYPE + "> ."));
         try (final CloseableHttpResponse response = execute(putMethod)) {
             assertEquals("Must not be able to PUT RDF that contains an \"<> a  <" + MEMENTO_TYPE + ">\"",
-                         CONFLICT.getStatusCode(),
+                         BAD_REQUEST.getStatusCode(),
                          getStatus(response));
         }
     }
 
     @Test
-    public void testPatchInsertMementoNamespaceTriple() throws IOException {
+    public void testPatchInsertMementoNamespaceType() throws IOException {
         final String pid =  getRandomUniqueId();
         final String subjectURI = serverAddress + pid;
         createObjectAndClose(pid);
@@ -4027,8 +4028,52 @@ public class FedoraLdpIT extends AbstractResourceIT {
         patch.setEntity(new StringEntity("INSERT { <> a <" + MEMENTO_TYPE + "> . } WHERE {} "));
 
         try (CloseableHttpResponse response = execute(patch)) {
-            assertEquals("Must not be able to INSERT  \"<>  <\" + RDF_NAMESPACE + \"type> <" + MEMENTO_TYPE + ">\"",
-                         CONFLICT.getStatusCode(), getStatus(patch));
+            assertEquals("Must not be able to INSERT  \"<>  a <" + MEMENTO_TYPE + ">\"",
+                         BAD_REQUEST.getStatusCode(), getStatus(patch));
+        }
+    }
+
+    @Test
+    public void testPostCreateRDFSourceWithMementoNamespacePredicate() throws IOException {
+        final String subjectURI = getRandomUniqueId();
+        final HttpPost createMethod = new HttpPost(serverAddress);
+        createMethod.addHeader(CONTENT_TYPE, "text/turtle");
+        createMethod.addHeader("Slug", subjectURI);
+        createMethod.setEntity(
+            new StringEntity("<>  <" + MEMENTO_NAMESPACE + "mementoDate" + "> \"Thu, 21 Jan 2010 00:09:40 GMT\""));
+        try (final CloseableHttpResponse response = execute(createMethod)) {
+            assertEquals("Must not be able to POST RDF that contains a memento namespace predicate",
+                         BAD_REQUEST.getStatusCode(),
+                         getStatus(response));
+        }
+    }
+
+    @Test
+    public void testPutCreateRDFSourceWithMementoNamespacePredicate() throws IOException {
+        final String subjectURI = serverAddress + getRandomUniqueId();
+        final HttpPut putMethod = new HttpPut(subjectURI);
+        putMethod.addHeader(CONTENT_TYPE, "text/turtle");
+        putMethod.setEntity(
+            new StringEntity("<>  <" + MEMENTO_NAMESPACE + "mementoDate" + "> \"Thu, 21 Jan 2010 00:09:40 GMT\""));
+        try (final CloseableHttpResponse response = execute(putMethod)) {
+            assertEquals("Must not be able to POST RDF that contains a memento namespace predicate",
+                         BAD_REQUEST.getStatusCode(),
+                         getStatus(response));
+        }
+    }
+
+    @Test
+    public void testPatchInsertMementoNamespacePredicate() throws IOException {
+        final String pid = getRandomUniqueId();
+        final String subjectURI = serverAddress + pid;
+        createObjectAndClose(pid);
+        final HttpPatch patch = new HttpPatch(subjectURI);
+        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
+        patch.setEntity(new StringEntity(
+            "INSERT { <>  <" + MEMENTO_NAMESPACE + "mementoDate" + "> \"Thu, 21 Jan 2010 00:09:40 GMT\". } WHERE {}"));
+        try (CloseableHttpResponse response = execute(patch)) {
+            assertEquals("Must not be able to POST RDF that contains a memento namespace predicate",
+                         BAD_REQUEST.getStatusCode(), getStatus(patch));
         }
     }
 }

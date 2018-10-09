@@ -129,7 +129,6 @@ import org.fcrepo.kernel.api.exception.InvalidPrefixException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.FedoraTimeMap;
@@ -180,6 +179,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     public static final String CONTAINER_WEBAC_ACL = "fedora:acl";
 
     static final String RDF_TYPE_URI = RDF_NAMESPACE + "type";
+
+    private Optional<String> resIxn;
+
 
     // A curried type accepting resource, translator, and "minimality", returning triples.
     protected static interface RdfGenerator extends Function<FedoraResource,
@@ -248,7 +250,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
      *
      * @see <a href="https://jira.duraspace.org/browse/FCREPO-1409"> FCREPO-1409 </a> for details.
      */
-    private static final Function<Quad, IllegalArgumentException> validatePredicateEndsWithSlash = uncheck(x -> {
+    private static final Function<Triple, IllegalArgumentException> validatePredicateEndsWithSlash = uncheck(x -> {
         if (x.getPredicate().isURI() && x.getPredicate().getURI().endsWith("/")) {
             return new IllegalArgumentException("Invalid predicate ends with '/': " + x.getPredicate().getURI());
         }
@@ -258,7 +260,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     /*
      * Ensures the object URI is valid
      */
-    private static final Function<Quad, IllegalArgumentException> validateObjectUrl = uncheck(x -> {
+    private static final Function<Triple, IllegalArgumentException> validateObjectUrl = uncheck(x -> {
         if (x.getObject().isURI()) {
             final String uri = x.getObject().toString();
             try {
@@ -270,8 +272,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         return null;
     });
 
-    private static final Function<Quad, IllegalArgumentException> validateMimeTypeTriple = uncheck(x -> {
-
+    private static final Function<Triple, IllegalArgumentException> validateMimeTypeTriple = uncheck(x -> {
         /* only look at the mime type if it's not a sparql variable */
         if (x.getPredicate().toString().equals(RdfLexicon.HAS_MIME_TYPE.toString()) &&
                 !x.getObject().toString(false).startsWith("?")) {
@@ -285,11 +286,48 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         return null;
     });
 
-    private static final List<Function<Quad, IllegalArgumentException>> quadValidators =
-            ImmutableList.<Function<Quad, IllegalArgumentException>>builder()
+
+    private static final Function<Triple, IllegalArgumentException> validateNoMementRdfTypes = uncheck(x ->  {
+        final org.apache.jena.graph.Node object = x.getObject();
+        if (object.isURI() && x.getPredicate().getURI().equals(RDF_TYPE_URI) &&
+            object.getURI().startsWith(MEMENTO_NAMESPACE)) {
+            return new IllegalArgumentException(
+                "The " + RDF_TYPE_URI + " predicate may not take an object in the memento namespace (" +
+                MEMENTO_NAMESPACE + ").");
+        }
+        return null;
+    });
+
+    private static final Function<Triple, IllegalArgumentException> validateNoMementoPredicates  = uncheck(x ->  {
+        if (x.getPredicate().getURI().startsWith(MEMENTO_NAMESPACE)) {
+            return new IllegalArgumentException(
+                "The " + RDF_TYPE_URI + " predicate may not take an object in the memento namespace (" +
+                MEMENTO_NAMESPACE + ").");
+        }
+
+        return null;
+    });
+
+    private static final Function<Triple, IllegalArgumentException> validateMemberRelation = uncheck(x -> {
+        final org.apache.jena.graph.Node object = x.getObject();
+        if (object.isURI() && x.getPredicate().getURI().equals(HAS_MEMBER_RELATION.toString()) &&
+            object.getURI().equals(CONTAINS.toString())) {
+            return new IllegalArgumentException(
+                "The " + HAS_MEMBER_RELATION + " predicate may not take the ldp:contains type. (" +
+                CONTAINS + ").");
+        }
+
+        return null;
+    });
+
+    private static final List<Function<Triple, IllegalArgumentException>> tripleValidators =
+            ImmutableList.<Function<Triple, IllegalArgumentException>>builder()
                     .add(validatePredicateEndsWithSlash)
                     .add(validateObjectUrl)
-                    .add(validateMimeTypeTriple).build();
+                    .add(validateMimeTypeTriple)
+                    .add(validateNoMementRdfTypes)
+                    .add(validateNoMementoPredicates)
+                    .add(validateMemberRelation).build();
 
     /**
      * Construct a {@link org.fcrepo.kernel.api.models.FedoraResource} from an existing JCR Node
@@ -819,8 +857,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
         checkInteractionModel(request);
 
-        checkForDisallowedTriples(request);
-
         final FilteringJcrPropertyStatementListener listener = new FilteringJcrPropertyStatementListener(
                 idTranslator, getSession(), idTranslator.reverse().convert(described).asNode());
 
@@ -851,10 +887,11 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
     /*
      * Check the SPARQLUpdate statements for the violation of changing interaction model
+     * Check the SPARQLUpdate statements invalid transformations
      * @param request the UpdateRequest
      * @throws InteractionModelViolationException when attempting to change the interaction model
      */
-    private void checkInteractionModel(final UpdateRequest request) {
+    private void checkInteractionModel(final UpdateRequest request)  {
         final List<Quad> deleteQuads = new ArrayList<>();
         final List<Quad> updateQuads = new ArrayList<>();
 
@@ -871,14 +908,11 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                 deleteQuads.addAll(op.getQuads());
             }
 
-            final Optional<String> resIxn = INTERACTION_MODELS.stream().filter(x -> hasType(x)).findFirst();
+            final Optional<String> resIxn = getResourceInteraction();
             if (resIxn.isPresent()) {
                 updateQuads.stream().forEach(e -> {
-                    final String ixn = getInteractionModel.apply(e.asTriple());
-                    if (StringUtils.isNotBlank(ixn) && !ixn.equals(resIxn.get())) {
-                        throw new InteractionModelViolationException("Changing the interaction model "
-                            + resIxn.get() + " to " + ixn + " is not allowed!");
-                    }
+                    // check for interaction model change violation
+                    checkInteractionModel(e.asTriple(), resIxn);
                 });
             }
 
@@ -892,51 +926,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         }
     }
 
-    /**
-     * Check sparql statements for disallowed modifications
-     * @param request
-     */
-    private void checkForDisallowedTriples(final UpdateRequest request) {
-        final List<Quad> quads = new ArrayList<>();
-
-        for (final Update operation : request.getOperations()) {
-            if (operation instanceof UpdateModify) {
-                final UpdateModify op = (UpdateModify) operation;
-                quads.addAll(op.getDeleteQuads());
-                quads.addAll(op.getInsertQuads());
-            } else if (operation instanceof UpdateData) {
-                final UpdateData op = (UpdateData) operation;
-                quads.addAll(op.getQuads());
-            } else if (operation instanceof UpdateDeleteWhere) {
-                final UpdateDeleteWhere op = (UpdateDeleteWhere) operation;
-                quads.addAll(op.getQuads());
-            }
-        }
-
-        quads.stream().forEach(e -> {
-           ensureNoMementNamespacedObjects(e.asTriple());
-           ensureValidMemberRelation(e.asTriple());
-        });
-    }
-
-    private void ensureNoMementNamespacedObjects(final Triple triple) {
-        final org.apache.jena.graph.Node object = triple.getObject();
-        if (object.isURI() && triple.getPredicate().getURI().equals(RDF_TYPE_URI) &&
-            object.getURI().startsWith(MEMENTO_NAMESPACE)) {
-            throw new ServerManagedTypeException(
-                "The " + RDF_TYPE_URI + " predicate may not take an object in the memento namespace (" +
-                MEMENTO_NAMESPACE + ").");
-        }
-    }
-
-    private void ensureValidMemberRelation(final Triple triple) {
-        final org.apache.jena.graph.Node object = triple.getObject();
-        if (object.isURI() && triple.getPredicate().getURI().equals(HAS_MEMBER_RELATION.toString()) &&
-            object.getURI().equals(CONTAINS.toString())) {
-            throw new ServerManagedTypeException(
-                "The " + HAS_MEMBER_RELATION + " predicate may not take the ldp:contains type. (" +
-                CONTAINS + ").");
-        }
+    private Optional<String> getResourceInteraction() {
+        return INTERACTION_MODELS.stream().filter(x -> hasType(x)).findFirst();
     }
 
     /*
@@ -993,7 +984,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @Override
     public void replaceProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
         final Model inputModel, final RdfStream originalTriples) throws MalformedRdfException {
-        final Optional<String> resIxn = INTERACTION_MODELS.stream().filter(x -> hasType(x)).findFirst();
 
         // remove any statements that update "relaxed" server-managed triples so they can be updated separately
         final List<Statement> filteredStatements = new ArrayList<>();
@@ -1004,12 +994,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                 filteredStatements.add(next);
                 it.remove();
             } else {
-                // check for interaction model change violation
-                final String ixn = getInteractionModel.apply(next.asTriple());
-                if (StringUtils.isNotBlank(ixn) && resIxn.isPresent() && !ixn.equals(resIxn.get())) {
-                    throw new InteractionModelViolationException("Changing the interaction model "
-                        + resIxn.get() + " to " + ixn + " is not allowed!");
-                }
+                checkInteractionModel(next.asTriple(), getResourceInteraction());
             }
         }
         // remove any "relaxed" server-managed triples from the existing triples
@@ -1044,8 +1029,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                 // do some very basic validation to catch invalid RDF
                 // this uses the same checks that updateProperties() uses
                 final Collection<IllegalArgumentException> errors = testStream
-                        .map(x -> Quad.create(x.getSubject(), x))
-                        .flatMap(FedoraResourceImpl::validateQuad)
+                        .flatMap(FedoraResourceImpl::validateTriple)
                         .filter(x -> x != null)
                         .collect(Collectors.toList());
 
@@ -1083,6 +1067,15 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             } catch (final RepositoryException e) {
                 throw new RuntimeException(e);
             }
+        }
+    }
+
+    private void checkInteractionModel(final Triple triple, final Optional<String> resIxn) {
+        // check for interaction model change violation
+        final String ixn = getInteractionModel.apply(triple);
+        if (StringUtils.isNotBlank(ixn) && resIxn.isPresent() && !ixn.equals(resIxn.get())) {
+            throw new InteractionModelViolationException("Changing the interaction model "
+                                                         + resIxn.get() + " to " + ixn + " is not allowed!");
         }
     }
 
@@ -1204,13 +1197,14 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                         return empty();
                     }
                 })
-                .flatMap(FedoraResourceImpl::validateQuad)
+                .map(x -> x.asTriple())
+                .flatMap(FedoraResourceImpl::validateTriple)
                 .filter(x -> x != null)
                 .collect(Collectors.toList());
     }
 
-    private static Stream<IllegalArgumentException> validateQuad(final Quad quad) {
-        return quadValidators.stream().map(x -> x.apply(quad));
+    private static Stream<IllegalArgumentException> validateTriple(final Triple triple) {
+        return tripleValidators.stream().map(x -> x.apply(triple));
     }
 
     @Override

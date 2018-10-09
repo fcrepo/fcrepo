@@ -70,7 +70,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
-import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
@@ -940,22 +939,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         ensureValidACLAuthorization(resource, inputModel);
 
-        ensureNoMementoNamespaceTypes(inputModel);
-
         resource.replaceProperties(translator(), inputModel, resourceTriples);
-    }
-
-    private void ensureNoMementoNamespaceTypes(final Model inputModel) {
-        inputModel.listStatements().forEachRemaining((final Statement s) -> {
-            LOGGER.debug("statement: s={}, p={}, o={}", s.getSubject(), s.getPredicate(), s.getObject());
-            final RDFNode object = s.getObject();
-            if (s.getObject().isURIResource() && s.getPredicate().getURI().equals(RDF_TYPE_URI.getURI()) &&
-                object.asResource().getURI().startsWith(MEMENTO_NAMESPACE)) {
-                throw new ServerManagedPropertyException(
-                    "The " + RDF_TYPE_URI.getURI() + " predicate may not take an object in the memento namespace (" +
-                    MEMENTO_NAMESPACE + ").");
-            }
-        });
     }
 
     /**
