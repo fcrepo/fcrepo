@@ -60,6 +60,7 @@ import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getContainingNo
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.hasInternalNamespace;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isAcl;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isTimeMap;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isMemento;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.ldpInsertedContentProperty;
@@ -406,13 +407,14 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         }
 
         try {
-            final Node timeMapNode;
-            if (isMemento()) {
-                timeMapNode = node.getParent();
+            if (isOriginalResource()) {
+                return findOrCreateTimeMap();
+            } else if (isMemento()) {
+                return Optional.of(node.getParent()).map(nodeConverter::convert).orElse(null);
+
             } else {
-                timeMapNode = node.getNode(LDPCV_TIME_MAP);
+                return null;
             }
-            return Optional.of(timeMapNode).map(nodeConverter::convert).orElse(null);
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
         } catch (final RepositoryException e) {
@@ -420,8 +422,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         }
     }
 
-    @Override
-    public FedoraResource findOrCreateTimeMap() {
+
+    private FedoraResource findOrCreateTimeMap() {
         final Node ldpcvNode;
         try {
             ldpcvNode = findOrCreateChild(getNode(), LDPCV_TIME_MAP, NT_FOLDER);
@@ -471,6 +473,10 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @Override
     public boolean isAcl() {
         return isAcl.test(getNode());
+    }
+
+    private boolean isTimeMap() {
+        return isTimeMap.test(getNode());
     }
 
 
@@ -1229,30 +1235,14 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     return null;
   }
 
-  @Override
-  public void enableVersioning() {
-        if (!isVersioned()) {
-            findOrCreateTimeMap();
-        }
-  }
-
-  @Override
-  public void disableVersioning() {
-        getTimeMap().delete();
-  }
-
     @Override
-    public boolean isVersioned() {
-        try {
-            return getNode(getNode(), LDPCV_TIME_MAP, false) != null;
-        } catch (final RepositoryException ex) {
-            throw new RepositoryRuntimeException(ex);
-        }
+    public boolean isOriginalResource() {
+        return !isAcl() && !isMemento() && !isTimeMap();
     }
 
   @Override
   public FedoraResource findMementoByDatetime(final Instant mementoDatetime) {
-      if (isVersioned()) {
+      if (isOriginalResource()) {
             final FedoraResource timemap = this.getTimeMap();
             if (timemap != null) {
                 final Stream<FedoraResource> mementos = timemap.getChildren();

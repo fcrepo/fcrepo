@@ -483,8 +483,6 @@ public class FedoraLdp extends ContentExposingResource {
                 checkForInsufficientStorageException(e, e);
             }
 
-            resource.enableVersioning();
-
             ensureInteractionType(resource, interactionModel,
                     (requestBodyStream == null || requestContentType == null));
 
@@ -693,9 +691,6 @@ public class FedoraLdp extends ContentExposingResource {
                     }
                 }
 
-                //enable versioning by default
-                resource.enableVersioning();
-
                 ensureInteractionType(resource, interactionModel,
                         (requestBodyStream == null || requestContentType == null));
 
@@ -804,6 +799,7 @@ public class FedoraLdp extends ContentExposingResource {
         } else {
             result = containerService.findOrCreate(session.getFedoraSession(), path);
         }
+
 
         final String resInteractionModel = getInteractionModel(result);
         if (StringUtils.isNoneBlank(interactionModel) && StringUtils.isNoneBlank(resInteractionModel)

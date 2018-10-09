@@ -96,6 +96,7 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
                 touch(binary.getNode());
             }
 
+
             return binary;
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
@@ -112,7 +113,9 @@ public class BinaryServiceImpl extends AbstractService implements BinaryService 
 
             initializeNewDescriptionProperties(descNode);
 
-            return new NonRdfSourceDescriptionImpl(descNode);
+            final NonRdfSourceDescription desc = new NonRdfSourceDescriptionImpl(descNode);
+
+            return desc;
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }

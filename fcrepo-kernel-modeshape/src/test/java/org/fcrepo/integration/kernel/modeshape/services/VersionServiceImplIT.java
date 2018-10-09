@@ -94,8 +94,6 @@ public class VersionServiceImplIT extends AbstractIT {
         final String pid = getRandomPid();
         final FedoraResource resource = containerService.findOrCreate(session, "/" + pid);
         session.commit();
-        resource.findOrCreateTimeMap();
-        session.commit();
 
         // create a version and make sure there are 2 versions (root + created)
         versionService.createVersion(session, resource, subjects, mementoDate1);
@@ -107,8 +105,6 @@ public class VersionServiceImplIT extends AbstractIT {
     public void testCreateMementoWithChildReference() throws RepositoryException {
         final String pid = getRandomPid();
         final FedoraResource resource = containerService.findOrCreate(session, "/" + pid);
-        session.commit();
-        resource.findOrCreateTimeMap();
         session.commit();
 
         final String childPath = "/" + pid + "/x";
@@ -162,7 +158,6 @@ public class VersionServiceImplIT extends AbstractIT {
     public void testCreateDescriptionVersion() throws Exception {
         final String pid = getRandomPid();
         final FedoraResource resource = binaryService.findOrCreate(session, "/" + pid);
-        resource.enableVersioning();
         session.commit();
 
         final FedoraResource descResc = resource.getDescription();
@@ -182,7 +177,7 @@ public class VersionServiceImplIT extends AbstractIT {
 
     private static long countVersions(final FedoraSession session, final FedoraResource resource )
             throws RepositoryException {
-        final FedoraResource timeMap = resource.findOrCreateTimeMap();
+        final FedoraResource timeMap = resource.getTimeMap();
         return timeMap.getChildren().count();
     }
 }

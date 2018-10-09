@@ -290,7 +290,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         // add vary headers
         final List<String> varyValues = new ArrayList<>(VARY_HEADERS);
 
-        if (resource.isVersioned()) {
+        if (resource.isOriginalResource()) {
             varyValues.add(ACCEPT_DATETIME);
         }
 
@@ -559,16 +559,16 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 buildLink(constraintURI, CONSTRAINED_BY.getURI()));
         }
 
-        final boolean isVersioned = resource.isVersioned();
+        final boolean isOriginal = resource.isOriginalResource();
         // Add versioning headers for versioned originals and mementos
-        if (isVersioned || resource.isMemento() || resource instanceof FedoraTimeMap) {
+        if (isOriginal || resource.isMemento() || resource instanceof FedoraTimeMap) {
             final URI originalUri = getUri(resource.getOriginalResource());
             final URI timemapUri = getUri(resource.getTimeMap());
             servletResponse.addHeader(LINK, buildLink(originalUri, "timegate"));
             servletResponse.addHeader(LINK, buildLink(originalUri, "original"));
             servletResponse.addHeader(LINK, buildLink(timemapUri, "timemap"));
 
-            if (isVersioned) {
+            if (isOriginal) {
                 servletResponse.addHeader(LINK, buildLink(VERSIONED_RESOURCE.getURI(), "type"));
                 servletResponse.addHeader(LINK, buildLink(VERSIONING_TIMEGATE_TYPE, "type"));
             } else if (resource instanceof FedoraTimeMap) {

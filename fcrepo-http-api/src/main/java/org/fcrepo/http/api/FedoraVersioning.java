@@ -268,7 +268,7 @@ public class FedoraVersioning extends ContentExposingResource {
     public Response getVersionList(@HeaderParam("Range") final String rangeValue,
         @HeaderParam("Accept") final String acceptValue) throws IOException, UnsupportedAccessTypeException {
 
-        final FedoraResource theTimeMap = resource().findOrCreateTimeMap();
+        final FedoraResource theTimeMap = resource().getTimeMap();
         checkCacheControlHeaders(request, servletResponse, theTimeMap, session);
 
         LOGGER.debug("GET resource '{}'", externalPath);
@@ -321,7 +321,7 @@ public class FedoraVersioning extends ContentExposingResource {
      */
     @OPTIONS
     public Response options() {
-        final FedoraResource theTimeMap = resource().findOrCreateTimeMap();
+        final FedoraResource theTimeMap = resource().getTimeMap();
         LOGGER.info("OPTIONS for '{}'", externalPath);
         addResourceHttpHeaders(theTimeMap);
         return ok().build();
