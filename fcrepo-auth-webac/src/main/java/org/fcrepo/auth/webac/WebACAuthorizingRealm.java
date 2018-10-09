@@ -170,9 +170,7 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
 
     private Map<String, Collection<String>> getRolesForPath() {
         Map<String, Collection<String>> roles = null;
-        //robyj
-        final String path = request.getPathInfo();
-        final FedoraResource fedoraResource = getResourceOrParentFromPath(path);
+        final FedoraResource fedoraResource = getResourceOrParentFromPath(request.getPathInfo());
 
         if (fedoraResource != null) {
             final Node node = ((FedoraResourceImpl) fedoraResource).getNode();
@@ -233,7 +231,6 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
                 }
             }
         }
-        log.debug("path to resource is {}",resource.getPath());
         return resource;
     }
 

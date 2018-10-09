@@ -40,7 +40,6 @@ import static org.fcrepo.auth.webac.URIConstants.WEBAC_DEFAULT_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_NAMESPACE_VALUE;
 import static org.fcrepo.http.api.FedoraAcl.getDefaultAcl;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
@@ -165,13 +164,6 @@ public class WebACRolesProvider {
         // Construct a list of acceptable acl:accessToClass values for the target resource.
         final List<URI> rdfTypes = resource.getTypes();
 
-        if  (rdfTypes.isEmpty() && resource.hasType(FEDORA_REPOSITORY_ROOT)) {
-        //    rdfTypes.add();
-            rdfTypes.add(URI.create(FEDORA_INTERNAL_PREFIX + resource.getPath()));
-            //resourcePaths.add(FEDORA_INTERNAL_PREFIX);
-            LOGGER.debug("Add default root items");
-        }
-
         // Add the resource location and types of the ACL-bearing parent,
         // if present and if different than the target resource.
         effectiveAcl
@@ -191,8 +183,6 @@ public class WebACRolesProvider {
         if (!effectiveAcl.isPresent()) {
             resourcePaths.addAll(getAllPathAncestors(resource.getPath()));
         }
-
-        LOGGER.debug("#1 resourcePaths = {}",resourcePaths.toString());
 
         // Create a function to check acl:accessTo, scoped to the given resourcePaths
         final Predicate<WebACAuthorization> checkAccessTo = accessTo.apply(resourcePaths);
@@ -222,7 +212,6 @@ public class WebACRolesProvider {
                                   effectiveRoles.computeIfAbsent(agent, key -> new HashSet<>())
                                                 .addAll(auth.getModes().stream().map(URI::toString).collect(toSet()));
                               });
-                            LOGGER.debug("effectiveRoles at 1: {}",effectiveRoles);
 
                           auth.getAgentClasses().stream().filter(agentClass -> agentClass.equals(FOAF_AGENT_VALUE) ||
                                                                                agentClass.equals(
@@ -231,7 +220,6 @@ public class WebACRolesProvider {
                                   effectiveRoles.computeIfAbsent(agentClass, key -> new HashSet<>())
                                                 .addAll(auth.getModes().stream().map(URI::toString).collect(toSet()));
                               });
-                            LOGGER.debug("effectiveRoles at 2: {}",effectiveRoles);
                       });
 
         LOGGER.debug("Unfiltered ACL: {}", effectiveRoles);
@@ -278,7 +266,6 @@ public class WebACRolesProvider {
         final List<String> members = agentGroups.stream().flatMap(agentGroup -> {
             if (agentGroup.startsWith(FEDORA_INTERNAL_PREFIX)) {
                 //strip off trailing hash.
-                LOGGER.debug("agentGroup is {}",agentGroup);
                 final int hashIndex = agentGroup.indexOf("#");
                 final String agentGroupNoHash = hashIndex > 0 ?
                                          agentGroup.substring(0, hashIndex) :
@@ -468,8 +455,7 @@ public class WebACRolesProvider {
         final Map<String, List<String>> aclTriples = new HashMap<>();
         final List<WebACAuthorization> authorizations = new ArrayList<>();
 
-        final String baseUri = System.getProperty("user.dir");
-        getDefaultAcl(baseUri).listStatements().mapWith(Statement::asTriple).forEachRemaining(triple -> {
+        getDefaultAcl(null).listStatements().mapWith(Statement::asTriple).forEachRemaining(triple -> {
             if (hasAclPredicate.test(triple)) {
                 final String predicate = triple.getPredicate().getURI();
                 final List<String> values = aclTriples.computeIfAbsent(predicate,

@@ -127,12 +127,9 @@ public class WebACFilter implements Filter {
                 log.debug("User has fedoraUser role");
                 // non-admins are subject to permission checks
                 if (!isAuthorized(currentUser, httpRequest)) {
-                    log.debug("is not authorized");
                     // if the user is not authorized, set response to forbidden
                     ((HttpServletResponse) response).sendError(SC_FORBIDDEN);
                     return;
-                } else {
-                    log.debug("is authorized, just not ACL");
                 }
             } else {
                 log.debug("User has no recognized servlet container role");
@@ -238,7 +235,6 @@ public class WebACFilter implements Filter {
         final WebACPermission toAppend = new WebACPermission(WEBAC_MODE_APPEND, requestURI);
         final WebACPermission toControl = new WebACPermission(WEBAC_MODE_CONTROL, requestURI);
 
-        log.debug("toRead is {}",toRead);
         switch (httpRequest.getMethod()) {
         case "OPTIONS":
         case "HEAD":
@@ -252,9 +248,6 @@ public class WebACFilter implements Filter {
                     return false;
                 }
             } else {
-                //robyj
-                log.debug("isACL is FALSE, returning...");
-                //
                 return currentUser.isPermitted(toRead);
             }
         case "PUT":

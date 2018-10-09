@@ -82,12 +82,6 @@ import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.StmtIterator;
-import org.apache.jena.rdf.model.RDFNode;
-
 /**
  * @author lsitu
  * @author peichman
@@ -343,8 +337,6 @@ public class FedoraAcl extends ContentExposingResource {
                 LOGGER.debug("Getting root authorization from file: {}", rootAcl);
 
                 RDFDataMgr.read(model, rootAcl, baseUri, null);
-                //robyj
-                LOGGER.debug("default ACL is {}",model.listStatements());
 
                 return model;
             } catch (final JenaException ex) {
@@ -354,26 +346,7 @@ public class FedoraAcl extends ContentExposingResource {
 
         try (final InputStream is = FedoraAcl.class.getResourceAsStream(ROOT_AUTHORIZATION_LOCATION)) {
             LOGGER.debug("Getting root ACL from classpath: {}", ROOT_AUTHORIZATION_LOCATION);
-            //robyj
-            //LOGGER.debug("default ACL is {}",model.listStatements().toList().toStream());
-            //final Model model = createDefaultModel();
-            //RDFDataMgr.read(model, rootAcl, baseUri, null);
-            model.read(is, baseUri, TTL.getName());
-            LOGGER.debug("size is {}",model.size());
-            final StmtIterator iter = model.listStatements();
-            while (iter.hasNext()) {
-                final Statement stmt = iter.nextStatement();
-                final Resource subject = stmt.getSubject();
-                final Property predicate = stmt.getPredicate();
-                final RDFNode object = stmt.getObject();
-                LOGGER.debug("subject = {}",subject.toString());
-                LOGGER.debug("predicate = {}",predicate.toString());
-                LOGGER.debug("object = {}", object.toString());
-                LOGGER.debug("\n");
-            }
-
-            //return model.read(is, baseUri, TTL.getName());
-            return model;
+            return model.read(is, baseUri, TTL.getName());
         } catch (final IOException ex) {
             throw new RuntimeException("Error reading the default root Acl " + ROOT_AUTHORIZATION_LOCATION + ".", ex);
         } catch (final JenaException ex) {
