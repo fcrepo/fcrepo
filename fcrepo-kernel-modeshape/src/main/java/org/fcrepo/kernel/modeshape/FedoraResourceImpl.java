@@ -33,6 +33,8 @@ import static org.apache.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static org.apache.jena.update.UpdateAction.execute;
 import static org.apache.jena.update.UpdateFactory.create;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
+import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODELS;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
@@ -913,6 +915,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
         quads.stream().forEach(e -> {
            ensureNoMementNamespacedObjects(e.asTriple());
+           ensureValidMemberRelation(e.asTriple());
         });
     }
 
@@ -923,6 +926,16 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             throw new ServerManagedTypeException(
                 "The " + RDF_TYPE_URI + " predicate may not take an object in the memento namespace (" +
                 MEMENTO_NAMESPACE + ").");
+        }
+    }
+
+    private void ensureValidMemberRelation(final Triple triple) {
+        final org.apache.jena.graph.Node object = triple.getObject();
+        if (object.isURI() && triple.getPredicate().getURI().equals(HAS_MEMBER_RELATION.toString()) &&
+            object.getURI().equals(CONTAINS.toString())) {
+            throw new ServerManagedTypeException(
+                "The " + HAS_MEMBER_RELATION + " predicate may not take the ldp:contains type. (" +
+                CONTAINS + ").");
         }
     }
 
