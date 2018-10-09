@@ -143,7 +143,7 @@ import static org.junit.Assert.fail;
  *
  * @author ajs6f
  */
-@ContextConfiguration({"/spring-test/repo.xml"})
+@ContextConfiguration({"/spring-test/fcrepo-config.xml"})
 public class FedoraResourceImplIT extends AbstractIT {
 
     @Inject

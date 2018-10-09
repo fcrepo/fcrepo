@@ -74,7 +74,7 @@ import org.springframework.test.context.ContextConfiguration;
  * @author ksclarke
  * @author ajs6f
  */
-@ContextConfiguration({"/spring-test/repo.xml"})
+@ContextConfiguration({"/spring-test/fcrepo-config.xml"})
 public class FedoraBinaryImplIT extends AbstractIT {
 
     @Inject

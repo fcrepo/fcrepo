@@ -47,7 +47,7 @@ import org.springframework.test.context.ContextConfiguration;
  *
  * @author ksclarke
  */
-@ContextConfiguration({"/spring-test/repo.xml"})
+@ContextConfiguration({"/spring-test/fcrepo-config.xml"})
 public class BinaryServiceImplIT extends AbstractIT {
 
     @Inject

@@ -33,7 +33,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
  * @author acoburn
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration({ "/spring-test/jms-topic.xml", "/spring-test/repo.xml",
+@ContextConfiguration({ "/spring-test/jms-topic.xml", "/spring-test/fcrepo-config.xml",
     "/spring-test/eventing.xml" })
 @DirtiesContext
 public class JmsTopicIT extends AbstractJmsIT {

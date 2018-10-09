@@ -54,7 +54,7 @@ import com.google.common.eventbus.Subscribe;
  * @author ajs6f
  * @since 2015-04-15
  */
-@ContextConfiguration({"/spring-test/eventing-suppress.xml", "/spring-test/repo.xml"})
+@ContextConfiguration({"/spring-test/eventing-suppress.xml", "/spring-test/fcrepo-config.xml"})
 public class SuppressByMixinFilterIT extends AbstractIT {
 
     @Inject

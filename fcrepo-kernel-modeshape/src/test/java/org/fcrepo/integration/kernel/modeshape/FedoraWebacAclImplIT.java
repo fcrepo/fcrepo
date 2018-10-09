@@ -42,7 +42,7 @@ import org.springframework.test.context.ContextConfiguration;
  * @author lsitu
  */
 @Ignore
-@ContextConfiguration({"/spring-test/repo.xml"})
+@ContextConfiguration({"/spring-test/fcrepo-config.xml"})
 public class FedoraWebacAclImplIT extends AbstractIT {
 
     @Inject

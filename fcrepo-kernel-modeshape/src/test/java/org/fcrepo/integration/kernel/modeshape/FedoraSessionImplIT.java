@@ -46,7 +46,7 @@ import org.springframework.test.context.ContextConfiguration;
  *
  * @author lsitu
  */
-@ContextConfiguration({"/spring-test/repo.xml"})
+@ContextConfiguration({"/spring-test/fcrepo-config.xml"})
 public class FedoraSessionImplIT extends AbstractIT {
 
     private static final String TEST_USER_AGENT_BASE_URI = "http://example.com/person#";

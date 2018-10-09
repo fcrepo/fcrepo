@@ -55,7 +55,7 @@ import org.slf4j.Logger;
 /**
  * @author bbpennel
  */
-@ContextConfiguration({ "/spring-test/repo.xml" })
+@ContextConfiguration({ "/spring-test/fcrepo-config.xml" })
 public class LocalFileBinaryIT extends AbstractIT {
 
     private static final Logger LOGGER = getLogger(LocalFileBinaryIT.class);

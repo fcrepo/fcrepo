@@ -51,7 +51,7 @@ import static org.junit.Assert.assertTrue;
  * @since 2014-05-29
  */
 
-@ContextConfiguration({"/spring-test/repo.xml"})
+@ContextConfiguration({"/spring-test/fcrepo-config.xml"})
 public class VersionServiceImplIT extends AbstractIT {
 
     @Inject
