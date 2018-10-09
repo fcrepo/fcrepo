@@ -120,12 +120,12 @@ public class RdfStreamStreamingOutputTest {
     @Test
     public void testWriteWithNamespace() throws IOException {
         final Map<String, String> namespaces = new HashMap<>();
-        namespaces.put("a", "info:a");
+        namespaces.put("a", "info:");
         try (final RdfStream input = new DefaultRdfStream(triple.getSubject(), of(triple));
                 final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             new RdfStreamStreamingOutput(input, namespaces, TURTLE_TYPE).write(output);
             final String s = output.toString("UTF-8");
-            assertTrue(s.replaceAll("\\s+", " ").contains("@prefix a: <info:a>"));
+            assertTrue(s.replaceAll("\\s+", " ").contains("@prefix a: <info:>"));
         }
     }
 

@@ -26,15 +26,12 @@ import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.integration.http.api.AbstractResourceIT;
-import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -42,16 +39,7 @@ import org.junit.Test;
  */
 public class RdfNamespaceMappingIT extends AbstractResourceIT {
 
-    private Map<String, String> namespaces = new HashMap<>();
-
-    @Before
-    public void init() {
-        namespaces.put("ldp", "http://www.w3.org/ns/ldp#");
-        namespaces.put("memento", "http://mementoweb.org/ns#");
-        namespaces.put("unused", "http://example.com/ns#");
-        namespaces.put("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
-        namespaces.put("fedora", "http://fedora.info/definitions/v4/repository#");
-    }
+    public static final Property RDF_TYPE = createProperty(RDF_NAMESPACE + "type");
 
     @Test
     public void testUnregisteredNamespace() throws Exception {
@@ -99,27 +87,58 @@ public class RdfNamespaceMappingIT extends AbstractResourceIT {
 
             final Resource resc = model.getResource(subjectURI);
             assertTrue("Must contain property using register namespaces",
-                    resc.hasProperty(createProperty(RDF_NAMESPACE + "type"), FEDORA_CONTAINER));
+                    resc.hasProperty(RDF_TYPE, FEDORA_CONTAINER));
         }
     }
 
     @Test
-    public void testAllNamespacesReturned() throws Exception {
+    public void testUnusedNamespaceNotReturned() throws Exception {
+        verifyUnusedNamespaceNotReturned("text/turtle", "TURTLE");
+    }
+
+    // Testing a serialization that cannot be block streamed
+    @Test
+    public void testUnusedNamespaceNotReturnedRdfXML() throws Exception {
+        verifyUnusedNamespaceNotReturned("application/rdf+xml", "RDF/XML");
+    }
+
+    private void verifyUnusedNamespaceNotReturned(final String acceptType, final String rdfLang) throws Exception {
         final String pid = getRandomUniqueId();
         final String subjectURI = serverAddress + pid;
         createObject(pid);
 
         final HttpGet httpGet = getObjMethod(pid);
-        httpGet.addHeader(ACCEPT, "text/turtle");
+        httpGet.addHeader(ACCEPT, acceptType);
         final Model model = createDefaultModel();
         try (final CloseableHttpResponse response = execute(httpGet)) {
-            model.read(response.getEntity().getContent(), subjectURI, "TURTLE");
+            model.read(response.getEntity().getContent(), subjectURI, rdfLang);
 
-            for (final Entry<String, String> namespace : namespaces.entrySet()) {
-                assertTrue("Must contain " + namespace.getKey() + " namespace prefix",
-                        model.getNsPrefixMap().containsKey(namespace.getKey()));
-                assertEquals(namespace.getValue(), model.getNsPrefixMap().get(namespace.getKey()));
-            }
+            assertTrue("Should contain fedora namespace prefix",
+                    model.getNsPrefixMap().containsKey("fedora"));
+
+            assertFalse("Must not contain prefix for registered but unused namespace",
+                    model.getNsPrefixMap().containsKey("unused"));
+        }
+    }
+
+    @Test
+    public void testUnprefixedSerialization() throws Exception {
+        final String pid = getRandomUniqueId();
+        final String subjectURI = serverAddress + pid;
+        createObject(pid);
+
+        final HttpGet httpGet = getObjMethod(pid);
+        httpGet.addHeader(ACCEPT, "application/n-triples");
+        final Model model = createDefaultModel();
+        try (final CloseableHttpResponse response = execute(httpGet)) {
+            model.read(response.getEntity().getContent(), subjectURI, "NTRIPLES");
+
+            assertTrue("No namespaces should be returned",
+                    model.getNsPrefixMap().isEmpty());
+
+            final Resource resc = model.getResource(subjectURI);
+            assertTrue("Must contain property using register namespaces",
+                    resc.hasProperty(RDF_TYPE, FEDORA_CONTAINER));
         }
     }
 }
