@@ -54,7 +54,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class RootTestResource extends AbstractResource {
 
     @Inject
-    protected HttpSession session;
+    private HttpSession session;
 
     private static final Logger LOGGER = getLogger(RootTestResource.class);
 
@@ -79,7 +79,7 @@ public class RootTestResource extends AbstractResource {
         return Response.created(location).build();
     }
 
-    protected IdentifierConverter<Resource,FedoraResource> translator() {
+    private IdentifierConverter<Resource,FedoraResource> translator() {
         return new HttpResourceConverter(session,
                     uriInfo.getBaseUriBuilder().clone().path(RootTestResource.class));
     }

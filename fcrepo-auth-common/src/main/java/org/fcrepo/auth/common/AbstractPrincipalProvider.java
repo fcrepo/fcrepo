@@ -54,7 +54,7 @@ abstract class AbstractPrincipalProvider implements PrincipalProvider {
     private static final String REALM_NAME = "org.fcrepo.auth.webac.WebACAuthorizingRealm";
 
     @Override
-    public void init(final FilterConfig filterConfig) throws ServletException {
+    public void init(final FilterConfig filterConfig) {
         // this method intentionally left empty
     }
 

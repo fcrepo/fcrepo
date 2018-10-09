@@ -72,10 +72,9 @@ public class ShiroSecurityContext implements SecurityContext {
             return true;
         } else if ("write".equals(roleName)) {
             return true;
-        } else if ("admin".equals(roleName)) {
-            return true;
+        } else {
+            return "admin".equals(roleName);
         }
-        return false;
     }
 
     @Override

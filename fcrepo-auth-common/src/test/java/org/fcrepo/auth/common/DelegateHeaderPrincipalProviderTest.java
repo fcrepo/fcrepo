@@ -17,7 +17,6 @@
  */
 package org.fcrepo.auth.common;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -42,10 +41,6 @@ public class DelegateHeaderPrincipalProviderTest {
 
     @Mock
     private HttpServletRequest request;
-
-    @Before
-    public void setUp() {
-    }
 
     @Test
     public void testGetDelegate0() {
