@@ -68,6 +68,15 @@ public class WebACPermission implements Permission {
         }
     }
 
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((mode == null) ? 0 : mode.hashCode());
+        result = prime * result + ((resource == null) ? 0 : resource.hashCode());
+        return result;
+    }
+
     /**
      * @return the mode
      */
