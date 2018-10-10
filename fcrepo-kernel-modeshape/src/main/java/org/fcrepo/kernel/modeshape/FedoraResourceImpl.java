@@ -889,11 +889,11 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
     private void checkInteractionModel(final Triple triple, final Optional<String> resourceInteractionModel) {
         // check for interaction model change violation
-        final String internactionModel = getInteractionModel.apply(triple);
-        if (StringUtils.isNotBlank(internactionModel) &&
-            !internactionModel.equals(resourceInteractionModel.get())) {
+        final String interactionModel = getInteractionModel.apply(triple);
+        if (StringUtils.isNotBlank(interactionModel) &&
+            !interactionModel.equals(resourceInteractionModel.get())) {
             throw new InteractionModelViolationException("Changing the resource's interaction model from "
-                                                         + resourceInteractionModel.get() + " to " + internactionModel +
+                                                         + resourceInteractionModel.get() + " to " + interactionModel +
                                                          " is not allowed!");
         }
     }
