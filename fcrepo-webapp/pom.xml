@@ -23,7 +23,7 @@
     <!-- for standalone operation -->
     <jetty.users.file>${project.build.directory}/test-classes/jetty-users.properties</jetty.users.file>
     <fcrepo.modeshape.configuration>classpath:/config/servlet-auth/repository.json</fcrepo.modeshape.configuration>
-    <jetty-console.version>1.60</jetty-console.version>
+    <jetty-console.version>1.61-SNAPSHOT</jetty-console.version>
   </properties>
 
   <dependencies>
@@ -527,7 +527,7 @@
           </plugin>
 
           <plugin>
-            <groupId>org.simplericity.jettyconsole</groupId>
+            <groupId>org.fcrepo</groupId>
             <artifactId>jetty-console-maven-plugin</artifactId>
             <version>${jetty-console.version}</version>
             <executions>
