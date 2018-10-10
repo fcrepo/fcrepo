@@ -38,7 +38,7 @@ public interface EventSerializer {
      * @param evt the Fedora event
      * @return an RDF model representing the event
      */
-    public static Model toModel(final FedoraEvent evt) {
+    static Model toModel(final FedoraEvent evt) {
         final EventSerializer serializer = new JsonLDSerializer();
         final String json = serializer.serialize(evt);
         final Model model = createDefaultModel();

@@ -63,19 +63,19 @@ public class FedoraEventSerializerTestBase {
     @Mock
     protected FedoraEvent mockEvent;
 
-    protected String baseUrl = "http://localhost:8080/fcrepo/rest";
+    protected final String baseUrl = "http://localhost:8080/fcrepo/rest";
 
-    protected String path = "/path/to/resource";
+    protected final String path = "/path/to/resource";
 
-    protected String eventResourceId = "urn:uuid:some-event";
+    protected final String eventResourceId = "urn:uuid:some-event";
 
-    protected String username = "fedoraadmin";
+    private final String username = "fedoraadmin";
 
-    protected Instant timestamp = ofEpochMilli(1465919304000L);
+    protected final Instant timestamp = ofEpochMilli(1465919304000L);
 
-    protected String userAgentBaseUri = "https://example.com/agents/";
+    private final String userAgentBaseUri = "https://example.com/agents/";
 
-    protected String softwareAgent = "fcrepo-java-client";
+    protected final String softwareAgent = "fcrepo-java-client";
 
     protected void mockEvent(final String path) {
         final Set<EventType> typeSet = new HashSet<>();
