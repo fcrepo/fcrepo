@@ -154,13 +154,11 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
     @Test
     public void testCreateNewBasicContainer() throws IOException {
         final HtmlPage newPage = createAndVerifyObjectWithIdFromRootPage(newPid(), "basic container");
-        System.err.println(newPage.asText());
         assertTrue("Set container type to ldp:BasicContainer", newPage.asText().contains(
                 "http://www.w3.org/ns/ldp#BasicContainer"));
     }
 
     @Test
-    @Ignore
     public void testCreateNewDirectContainer() throws IOException {
         final HtmlPage newPage = createAndVerifyObjectWithIdFromRootPage(newPid(), "direct container");
         assertTrue("Set container type to ldp:DirectContainer", newPage.asText().contains(
@@ -168,7 +166,6 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
     }
 
     @Test
-    @Ignore
     public void testCreateNewIndirectContainer() throws IOException {
         final HtmlPage newPage = createAndVerifyObjectWithIdFromRootPage(newPid(), "indirect container");
         assertTrue("Set container type to ldp:IndirectContainer", newPage.asText().contains(
