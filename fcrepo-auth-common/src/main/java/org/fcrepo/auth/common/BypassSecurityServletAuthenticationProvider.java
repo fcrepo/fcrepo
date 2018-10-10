@@ -61,7 +61,7 @@ public class BypassSecurityServletAuthenticationProvider implements
     public static class AnonymousAdminSecurityContext implements
             SecurityContext {
 
-        private String userName;
+        private final String userName;
 
         /**
          * Create a new security context with the given user name

@@ -57,7 +57,7 @@ public class ServletContainerAuthFilter implements Filter {
     private static final String[] ROLE_NAMES = { FEDORA_ADMIN_ROLE, FEDORA_USER_ROLE };
 
     @Override
-    public void init(final FilterConfig filterConfig) throws ServletException {
+    public void init(final FilterConfig filterConfig) {
         // this method intentionally left empty
     }
 

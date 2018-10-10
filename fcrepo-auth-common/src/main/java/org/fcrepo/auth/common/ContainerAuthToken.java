@@ -36,9 +36,9 @@ public class ContainerAuthToken implements AuthenticationToken {
 
     public static final String AUTHORIZED = "AUTHORIZED";
 
-    private BasicUserPrincipal servletUser;
+    private final BasicUserPrincipal servletUser;
 
-    private Set<ContainerRolesPrincipal> servletRoles;
+    private final Set<ContainerRolesPrincipal> servletRoles;
 
     /**
      * @param servletUsername username returned from servlet container authentication
