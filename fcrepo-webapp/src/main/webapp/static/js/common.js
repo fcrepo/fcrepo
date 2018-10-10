@@ -81,7 +81,16 @@
       };
       reader.readAsArrayBuffer(update_file);
     } else {
-      headers.push(['Link', '<http://www.w3.org/ns/ldp#BasicContainer>; rel=\"type\"']);
+      if (mixin == 'basic container') {
+        headers.push(['Link', '<http://www.w3.org/ns/ldp#BasicContainer>; rel=\"type\"']);
+      } else if (mixin == 'direct container') {
+        headers.push(['Link', '<http://www.w3.org/ns/ldp#DirectContainer>; rel=\"type\"']);
+      } else if (mixin == 'indirect container') {
+        headers.push(['Link', '<http://www.w3.org/ns/ldp#IndirectContainer>; rel=\"type\"']);
+      } else {
+        alert("Unrecognized type: " + mixin);
+        return;
+      }
       const turtle = document.getElementById('turtle_payload');
       if (turtle && turtle.value) {
         headers.push(['Content-Type', 'text/turtle']);

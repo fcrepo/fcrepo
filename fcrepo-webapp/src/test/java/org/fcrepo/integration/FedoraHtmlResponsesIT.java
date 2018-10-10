@@ -103,14 +103,23 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
     @Test
     public void testCreateNewNodeWithProvidedId() throws IOException {
-        createAndVerifyObjectWithIdFromRootPage(randomUUID().toString());
+        createAndVerifyObjectWithIdFromRootPage(newPid());
+    }
+
+    private String newPid() {
+        return randomUUID().toString();
     }
 
     private HtmlPage createAndVerifyObjectWithIdFromRootPage(final String pid) throws IOException {
+        return createAndVerifyObjectWithIdFromRootPage(pid, "basic container");
+    }
+
+    private HtmlPage createAndVerifyObjectWithIdFromRootPage(final String pid, final String containerType)
+            throws IOException {
         final HtmlPage page = webClient.getPage(serverAddress);
         final HtmlForm form = (HtmlForm)page.getElementById("action_create");
         final HtmlSelect type = (HtmlSelect)page.getElementById("new_mixin");
-        type.getOptionByValue("container").setSelected(true);
+        type.getOptionByValue(containerType).setSelected(true);
 
         final HtmlInput new_id = (HtmlInput)page.getElementById("new_id");
         new_id.setValueAttribute(pid);
@@ -134,12 +143,33 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         final HtmlPage page = webClient.getPage(serverAddress);
         final HtmlForm form = (HtmlForm)page.getElementById("action_create");
         final HtmlSelect type = (HtmlSelect)page.getElementById("new_mixin");
-        type.getOptionByValue("container").setSelected(true);
+        type.getOptionByValue("basic container").setSelected(true);
         final HtmlButton button = form.getFirstByXPath("button");
         button.click();
 
         final HtmlPage page1 = javascriptlessWebClient.getPage(serverAddress);
         assertTrue("Didn't see new information in page!", !page1.asText().equals(page.asText()));
+    }
+
+    @Test
+    public void testCreateNewBasicContainer() throws IOException {
+        final HtmlPage newPage = createAndVerifyObjectWithIdFromRootPage(newPid(), "basic container");
+        assertTrue("Set container type to ldp:BasicContainer", newPage.asText().contains(
+                "http://www.w3.org/ns/ldp#BasicContainer"));
+    }
+
+    @Test
+    public void testCreateNewDirectContainer() throws IOException {
+        final HtmlPage newPage = createAndVerifyObjectWithIdFromRootPage(newPid(), "direct container");
+        assertTrue("Set container type to ldp:DirectContainer", newPage.asText().contains(
+                "http://www.w3.org/ns/ldp#DirectContainer"));
+    }
+
+    @Test
+    public void testCreateNewIndirectContainer() throws IOException {
+        final HtmlPage newPage = createAndVerifyObjectWithIdFromRootPage(newPid(), "indirect container");
+        assertTrue("Set container type to ldp:IndirectContainer", newPage.asText().contains(
+                "http://www.w3.org/ns/ldp#IndirectContainer"));
     }
 
     @Test

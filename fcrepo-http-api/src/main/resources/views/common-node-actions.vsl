@@ -35,7 +35,9 @@
         Type
     </label>
     <select id="new_mixin" class="form-control">
-        <option value="container">container</option>
+        <option value="basic container">basic container</option>
+        <option value="direct container">direct container</option>
+        <option value="indirect container">indirect container</option>
         <option value="binary">binary</option>
     </select>
         </div>
