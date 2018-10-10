@@ -2245,7 +2245,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                         "> <> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_NAMESPACE + "contains> .}";
         patch.setEntity(new StringEntity(updateString));
         assertEquals("Patch with sparql update allowed ldp:contains in indirect container!",
-                BAD_REQUEST.getStatusCode(), getStatus(patch));
+                CONFLICT.getStatusCode(), getStatus(patch));
     }
 
     @Test
@@ -2279,7 +2279,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                         "> <> ; <" + HAS_MEMBER_RELATION + "> <" + LDP_NAMESPACE + "contains> .}";
         patch.setEntity(new StringEntity(updateString));
         assertEquals("Patch with sparql update allowed ldp:contains in direct container!",
-                BAD_REQUEST.getStatusCode(), getStatus(patch));
+                CONFLICT.getStatusCode(), getStatus(patch));
     }
 
     @Test
@@ -4000,7 +4000,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createMethod.setEntity(new StringEntity("<> a <" + MEMENTO_TYPE + "> ."));
         try (final CloseableHttpResponse response = execute(createMethod)) {
             assertEquals("Must not be able to POST RDF that contains an \"<> a  <" + MEMENTO_TYPE + ">\"",
-                         BAD_REQUEST.getStatusCode(),
+                         CONFLICT.getStatusCode(),
                          getStatus(response));
         }
     }
@@ -4013,7 +4013,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         putMethod.setEntity(new StringEntity("<> a <" + MEMENTO_TYPE + "> ."));
         try (final CloseableHttpResponse response = execute(putMethod)) {
             assertEquals("Must not be able to PUT RDF that contains an \"<> a  <" + MEMENTO_TYPE + ">\"",
-                         BAD_REQUEST.getStatusCode(),
+                         CONFLICT.getStatusCode(),
                          getStatus(response));
         }
     }
@@ -4029,7 +4029,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         try (CloseableHttpResponse response = execute(patch)) {
             assertEquals("Must not be able to INSERT  \"<>  a <" + MEMENTO_TYPE + ">\"",
-                         BAD_REQUEST.getStatusCode(), getStatus(patch));
+                         CONFLICT.getStatusCode(), getStatus(patch));
         }
     }
 
@@ -4043,7 +4043,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             new StringEntity("<>  <" + MEMENTO_NAMESPACE + "mementoDate" + "> \"Thu, 21 Jan 2010 00:09:40 GMT\""));
         try (final CloseableHttpResponse response = execute(createMethod)) {
             assertEquals("Must not be able to POST RDF that contains a memento namespace predicate",
-                         BAD_REQUEST.getStatusCode(),
+                         CONFLICT.getStatusCode(),
                          getStatus(response));
         }
     }
@@ -4057,7 +4057,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             new StringEntity("<>  <" + MEMENTO_NAMESPACE + "mementoDate" + "> \"Thu, 21 Jan 2010 00:09:40 GMT\""));
         try (final CloseableHttpResponse response = execute(putMethod)) {
             assertEquals("Must not be able to POST RDF that contains a memento namespace predicate",
-                         BAD_REQUEST.getStatusCode(),
+                         CONFLICT.getStatusCode(),
                          getStatus(response));
         }
     }
@@ -4073,7 +4073,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             "INSERT { <>  <" + MEMENTO_NAMESPACE + "mementoDate" + "> \"Thu, 21 Jan 2010 00:09:40 GMT\". } WHERE {}"));
         try (CloseableHttpResponse response = execute(patch)) {
             assertEquals("Must not be able to POST RDF that contains a memento namespace predicate",
-                         BAD_REQUEST.getStatusCode(), getStatus(patch));
+                         CONFLICT.getStatusCode(), getStatus(patch));
         }
     }
 }

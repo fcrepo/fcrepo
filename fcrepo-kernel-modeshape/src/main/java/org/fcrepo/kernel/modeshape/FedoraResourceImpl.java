@@ -129,6 +129,8 @@ import org.fcrepo.kernel.api.exception.InvalidPrefixException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
+import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.FedoraTimeMap;
@@ -179,9 +181,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     public static final String CONTAINER_WEBAC_ACL = "fedora:acl";
 
     static final String RDF_TYPE_URI = RDF_NAMESPACE + "type";
-
-    private Optional<String> resIxn;
-
 
     // A curried type accepting resource, translator, and "minimality", returning triples.
     protected static interface RdfGenerator extends Function<FedoraResource,
@@ -250,9 +249,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
      *
      * @see <a href="https://jira.duraspace.org/browse/FCREPO-1409"> FCREPO-1409 </a> for details.
      */
-    private static final Function<Triple, IllegalArgumentException> validatePredicateEndsWithSlash = uncheck(x -> {
+    private static final Function<Triple, ConstraintViolationException> validatePredicateEndsWithSlash = uncheck(x -> {
         if (x.getPredicate().isURI() && x.getPredicate().getURI().endsWith("/")) {
-            return new IllegalArgumentException("Invalid predicate ends with '/': " + x.getPredicate().getURI());
+            return new MalformedRdfException("Invalid predicate ends with '/': " + x.getPredicate().getURI());
         }
         return null;
     });
@@ -260,26 +259,26 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     /*
      * Ensures the object URI is valid
      */
-    private static final Function<Triple, IllegalArgumentException> validateObjectUrl = uncheck(x -> {
+    private static final Function<Triple, ConstraintViolationException> validateObjectUrl = uncheck(x -> {
         if (x.getObject().isURI()) {
             final String uri = x.getObject().toString();
             try {
                 new URI(uri);
             } catch (final Exception ex) {
-                return new IllegalArgumentException("Invalid object URI (" + uri + " ) : " + ex.getMessage());
+                return new MalformedRdfException("Invalid object URI (" + uri + " ) : " + ex.getMessage());
             }
         }
         return null;
     });
 
-    private static final Function<Triple, IllegalArgumentException> validateMimeTypeTriple = uncheck(x -> {
+    private static final Function<Triple, ConstraintViolationException> validateMimeTypeTriple = uncheck(x -> {
         /* only look at the mime type if it's not a sparql variable */
         if (x.getPredicate().toString().equals(RdfLexicon.HAS_MIME_TYPE.toString()) &&
                 !x.getObject().toString(false).startsWith("?")) {
             try {
                 parse(x.getObject().toString(false));
             } catch (final Exception ex) {
-                return new IllegalArgumentException("Invalid value for '" + RdfLexicon.HAS_MIME_TYPE +
+                return new MalformedRdfException("Invalid value for '" + RdfLexicon.HAS_MIME_TYPE +
                         "' encountered : " + x.getObject().toString());
             }
         }
@@ -287,32 +286,32 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     });
 
 
-    private static final Function<Triple, IllegalArgumentException> validateNoMementRdfTypes = uncheck(x ->  {
+    private static final Function<Triple, ConstraintViolationException> validateNoMementRdfTypes = uncheck(x ->  {
         final org.apache.jena.graph.Node object = x.getObject();
         if (object.isURI() && x.getPredicate().getURI().equals(RDF_TYPE_URI) &&
             object.getURI().startsWith(MEMENTO_NAMESPACE)) {
-            return new IllegalArgumentException(
+            return new ServerManagedTypeException(
                 "The " + RDF_TYPE_URI + " predicate may not take an object in the memento namespace (" +
                 MEMENTO_NAMESPACE + ").");
         }
         return null;
     });
 
-    private static final Function<Triple, IllegalArgumentException> validateNoMementoPredicates  = uncheck(x ->  {
+    private static final Function<Triple, ConstraintViolationException> validateNoMementoPredicates  = uncheck(x ->  {
         if (x.getPredicate().getURI().startsWith(MEMENTO_NAMESPACE)) {
-            return new IllegalArgumentException(
-                "The " + RDF_TYPE_URI + " predicate may not take an object in the memento namespace (" +
-                MEMENTO_NAMESPACE + ").");
+            return new ServerManagedPropertyException(
+                "The  predicates in the memento namespace (" +
+                MEMENTO_NAMESPACE + ") are server-managed and cannot be modified by the client.");
         }
 
         return null;
     });
 
-    private static final Function<Triple, IllegalArgumentException> validateMemberRelation = uncheck(x -> {
+    private static final Function<Triple, ConstraintViolationException> validateMemberRelation = uncheck(x -> {
         final org.apache.jena.graph.Node object = x.getObject();
         if (object.isURI() && x.getPredicate().getURI().equals(HAS_MEMBER_RELATION.toString()) &&
             object.getURI().equals(CONTAINS.toString())) {
-            return new IllegalArgumentException(
+            return new ServerManagedPropertyException(
                 "The " + HAS_MEMBER_RELATION + " predicate may not take the ldp:contains type. (" +
                 CONTAINS + ").");
         }
@@ -320,8 +319,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         return null;
     });
 
-    private static final List<Function<Triple, IllegalArgumentException>> tripleValidators =
-            ImmutableList.<Function<Triple, IllegalArgumentException>>builder()
+    private static final List<Function<Triple, ConstraintViolationException>> tripleValidators =
+            ImmutableList.<Function<Triple, ConstraintViolationException>>builder()
                     .add(validatePredicateEndsWithSlash)
                     .add(validateObjectUrl)
                     .add(validateMimeTypeTriple)
@@ -830,7 +829,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         final UpdateRequest request = create(sparqlUpdateStatement,
                 idTranslator.reverse().convert(described).toString());
 
-        final Collection<IllegalArgumentException> errors = validateUpdateRequest(request);
+        final Collection<ConstraintViolationException> errors = validateUpdateRequest(request);
 
         final NamespaceRegistry namespaceRegistry = getNamespaceRegistry(getSession());
 
@@ -851,9 +850,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                 }
            });
 
-        if (!errors.isEmpty()) {
-            throw new IllegalArgumentException(errors.stream().map(Exception::getMessage).collect(joining(",\n")));
-        }
+        throwConstraintErrorsIfPresent(errors);
 
         checkInteractionModel(request);
 
@@ -885,9 +882,24 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         }
     }
 
+
+    private Optional<String> getResourceInteraction() {
+        return INTERACTION_MODELS.stream().filter(x -> hasType(x)).findFirst();
+    }
+
+    private void checkInteractionModel(final Triple triple, final Optional<String> resourceInteractionModel) {
+        // check for interaction model change violation
+        final String internactionModel = getInteractionModel.apply(triple);
+        if (StringUtils.isNotBlank(internactionModel) &&
+            !internactionModel.equals(resourceInteractionModel.get())) {
+            throw new InteractionModelViolationException("Changing the resource's interaction model from "
+                                                         + resourceInteractionModel.get() + " to " + internactionModel +
+                                                         " is not allowed!");
+        }
+    }
+
     /*
-     * Check the SPARQLUpdate statements for the violation of changing interaction model
-     * Check the SPARQLUpdate statements invalid transformations
+     * Check the SPARQLUpdate statements for the invalid interaction model changes.
      * @param request the UpdateRequest
      * @throws InteractionModelViolationException when attempting to change the interaction model
      */
@@ -908,26 +920,22 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                 deleteQuads.addAll(op.getQuads());
             }
 
-            final Optional<String> resIxn = getResourceInteraction();
-            if (resIxn.isPresent()) {
+            final Optional<String> resourceInteractionModel = getResourceInteraction();
+            if (resourceInteractionModel.isPresent()) {
                 updateQuads.stream().forEach(e -> {
                     // check for interaction model change violation
-                    checkInteractionModel(e.asTriple(), resIxn);
+                    checkInteractionModel(e.asTriple(), resourceInteractionModel);
                 });
             }
 
             deleteQuads.stream().forEach(e -> {
-                final String ixn = getInteractionModel.apply(e.asTriple());
-                if (StringUtils.isNotBlank(ixn)) {
-                    throw new InteractionModelViolationException("Delete the interaction model "
-                            + ixn + " is not allowed!");
+                final String interactionModel = getInteractionModel.apply(e.asTriple());
+                if (StringUtils.isNotBlank(interactionModel)) {
+                    throw new InteractionModelViolationException("Deleting the interaction model "
+                            + interactionModel + " is not allowed!");
                 }
             });
         }
-    }
-
-    private Optional<String> getResourceInteraction() {
-        return INTERACTION_MODELS.stream().filter(x -> hasType(x)).findFirst();
     }
 
     /*
@@ -988,13 +996,17 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         // remove any statements that update "relaxed" server-managed triples so they can be updated separately
         final List<Statement> filteredStatements = new ArrayList<>();
         final StmtIterator it = inputModel.listStatements();
+        final Optional<String> resourceInteractionModel = getResourceInteraction();
+        final boolean hasInteractionModel = resourceInteractionModel.isPresent();
         while (it.hasNext()) {
             final Statement next = it.next();
             if (RdfLexicon.isRelaxed.test(next.getPredicate())) {
                 filteredStatements.add(next);
                 it.remove();
             } else {
-                checkInteractionModel(next.asTriple(), getResourceInteraction());
+                if (hasInteractionModel) {
+                    checkInteractionModel(next.asTriple(), resourceInteractionModel);
+                }
             }
         }
         // remove any "relaxed" server-managed triples from the existing triples
@@ -1028,15 +1040,12 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
                 // do some very basic validation to catch invalid RDF
                 // this uses the same checks that updateProperties() uses
-                final Collection<IllegalArgumentException> errors = testStream
+                final Collection<ConstraintViolationException> errors = testStream
                         .flatMap(FedoraResourceImpl::validateTriple)
                         .filter(x -> x != null)
                         .collect(Collectors.toList());
 
-                if (!errors.isEmpty()) {
-                    throw new ConstraintViolationException(
-                            errors.stream().map(Exception::getMessage).collect(joining(", \n")));
-                }
+                throwConstraintErrorsIfPresent(errors);
 
                 new RdfAdder(idTranslator, getSession(), notCommonStream, inputModel.getNsPrefixMap()).consume();
             } catch (final MalformedRdfException e) {
@@ -1070,12 +1079,17 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         }
     }
 
-    private void checkInteractionModel(final Triple triple, final Optional<String> resIxn) {
-        // check for interaction model change violation
-        final String ixn = getInteractionModel.apply(triple);
-        if (StringUtils.isNotBlank(ixn) && resIxn.isPresent() && !ixn.equals(resIxn.get())) {
-            throw new InteractionModelViolationException("Changing the interaction model "
-                                                         + resIxn.get() + " to " + ixn + " is not allowed!");
+    private void throwConstraintErrorsIfPresent(final Collection<ConstraintViolationException> errors) {
+        if (!errors.isEmpty()) {
+            if (errors.size() == 1) {
+                //throw the original constraint error if there
+                //is only one so that the constraints document that
+                //is returned to the user is as accurate as possible.
+                throw errors.stream().findFirst().get();
+            } else {
+                throw new ConstraintViolationException(
+                    errors.stream().map(Exception::getMessage).collect(joining(",\n")));
+            }
         }
     }
 
@@ -1183,7 +1197,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
          };
     }
 
-    private static Collection<IllegalArgumentException> validateUpdateRequest(final UpdateRequest request) {
+    private static Collection<ConstraintViolationException> validateUpdateRequest(final UpdateRequest request) {
         return request.getOperations().stream()
                 .flatMap(x -> {
                     if (x instanceof UpdateModify) {
@@ -1203,7 +1217,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                 .collect(Collectors.toList());
     }
 
-    private static Stream<IllegalArgumentException> validateTriple(final Triple triple) {
+    private static Stream<ConstraintViolationException> validateTriple(final Triple triple) {
         return tripleValidators.stream().map(x -> x.apply(triple));
     }
 
