@@ -146,11 +146,6 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
     public static Predicate<Node> isAcl = new AnyTypesPredicate(FEDORA_WEBAC_ACL);
 
     /**
-     * Predicate for determining whether this {@link Node} is a TimeMap.
-     */
-    public static Predicate<Node> isTimeMap = new AnyTypesPredicate(FEDORA_TIME_MAP);
-
-    /**
      * Check if a property is a reference property.
      */
     public static Predicate<Property> isInternalReferenceProperty = uncheck(p -> (p.getType() == REFERENCE ||

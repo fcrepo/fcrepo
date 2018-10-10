@@ -60,7 +60,6 @@ import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getContainingNo
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.hasInternalNamespace;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isAcl;
-import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isTimeMap;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isMemento;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.ldpInsertedContentProperty;
@@ -411,9 +410,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                 return findOrCreateTimeMap();
             } else if (isMemento()) {
                 return Optional.of(node.getParent()).map(nodeConverter::convert).orElse(null);
-
             } else {
-                return null;
+                throw new PathNotFoundException(
+                    "getTimeMap() is not supported for this node: " + node.getPath());
             }
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
@@ -466,6 +465,11 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     }
 
     @Override
+    public boolean isOriginalResource() {
+        return !isMemento();
+    }
+
+    @Override
     public boolean isMemento() {
         return isMemento.test(getNode());
     }
@@ -474,11 +478,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     public boolean isAcl() {
         return isAcl.test(getNode());
     }
-
-    private boolean isTimeMap() {
-        return isTimeMap.test(getNode());
-    }
-
 
     @Override
     public FedoraResource getAcl() {
@@ -1234,11 +1233,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
   public FedoraResource getBaseVersion() {
     return null;
   }
-
-    @Override
-    public boolean isOriginalResource() {
-        return !isAcl() && !isMemento() && !isTimeMap();
-    }
 
   @Override
   public FedoraResource findMementoByDatetime(final Instant mementoDatetime) {

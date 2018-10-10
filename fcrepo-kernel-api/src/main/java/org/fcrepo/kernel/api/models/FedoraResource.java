@@ -251,8 +251,10 @@ public interface FedoraResource {
     String getEtagValue();
 
     /**
-     * Check if a resource is versioned
-     * @return whether the resource is versioned
+     * Check if a resource is an original resource
+     * (ie versionable, as opposed to non-versionable resources
+     * like mementos, timemaps, and acls).
+     * @return whether the resource is an original resource.
      */
     boolean isOriginalResource();
 

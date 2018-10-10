@@ -37,6 +37,11 @@ public class FedoraWebacAclImpl extends ContainerImpl implements FedoraWebacAcl 
         super(node);
     }
 
+    @Override
+    public boolean isOriginalResource() {
+        return false;
+    }
+
     /**
      * Check if the JCR node has a webac:Acl mixin
      * @param node the JCR node
