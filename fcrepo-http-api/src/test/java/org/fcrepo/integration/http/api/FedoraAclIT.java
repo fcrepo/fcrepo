@@ -214,17 +214,29 @@ public class FedoraAclIT extends AbstractResourceIT {
     @Test
     public void testGetDefaultRootAcl() throws Exception {
         final String rootAclUri = serverAddress + FCR_ACL;
+        final String rootFedoraUri = "info:fedora/";
+        final String authzUri = rootFedoraUri + FCR_ACL + "#authz";
         try (final CloseableDataset dataset = getDataset(new HttpGet(rootAclUri))) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             assertTrue(graph.contains(ANY,
-                                      createURI(rootAclUri),
-                                      createURI("http://www.w3.org/2000/01/rdf-schema#label"),
-                                      createLiteral("Root Authorization")));
+                    createURI(authzUri),
+                    createURI("http://www.w3.org/2000/01/rdf-schema#label"),
+                    createLiteral("Root Authorization")));
 
             assertTrue(graph.contains(ANY,
-                                      createURI(rootAclUri),
-                                      createURI(WEBAC_NAMESPACE_VALUE + "default"),
-                                      createURI(serverAddress)));
+                    createURI(authzUri),
+                    createURI(WEBAC_NAMESPACE_VALUE + "default"),
+                    createURI(rootFedoraUri)));
+
+            assertTrue(graph.contains(ANY,
+                    createURI(authzUri),
+                    createURI(WEBAC_NAMESPACE_VALUE + "accessTo"),
+                    createURI(rootFedoraUri)));
+
+            assertTrue(graph.contains(ANY,
+                    createURI(authzUri),
+                    createURI(WEBAC_NAMESPACE_VALUE + "mode"),
+                    createURI(WEBAC_NAMESPACE_VALUE + "Read")));
         }
     }
 
