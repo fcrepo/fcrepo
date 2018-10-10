@@ -30,9 +30,9 @@ import org.apache.shiro.authz.Permission;
  */
 public class WebACPermission implements Permission {
 
-    private URI resource;
+    private final URI resource;
 
-    private URI mode;
+    private final URI mode;
 
     /**
      * @param mode ACL access mode
@@ -71,14 +71,14 @@ public class WebACPermission implements Permission {
     /**
      * @return the mode
      */
-    public URI getMode() {
+    private URI getMode() {
         return mode;
     }
 
     /**
      * @return the resource
      */
-    public URI getResource() {
+    private URI getResource() {
         return resource;
     }
 

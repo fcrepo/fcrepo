@@ -40,11 +40,6 @@ final public class URIConstants {
     public static final String WEBAC_NAMESPACE_VALUE = RdfLexicon.WEBAC_NAMESPACE_VALUE;
 
     /**
-     * Namespace for the W3C WebAC vocabulary.
-     */
-    public static final URI WEBAC_NAMESPACE = URI.create(WEBAC_NAMESPACE_VALUE);
-
-    /**
      * Read access mode.
      */
     public static final String WEBAC_MODE_READ_VALUE = WEBAC_NAMESPACE_VALUE + "Read";
@@ -67,7 +62,7 @@ final public class URIConstants {
     /**
      * Append access mode.
      */
-    public static final String WEBAC_MODE_APPEND_VALUE = WEBAC_NAMESPACE_VALUE + "Append";
+    private static final String WEBAC_MODE_APPEND_VALUE = WEBAC_NAMESPACE_VALUE + "Append";
 
     /**
      * Append access mode.
@@ -77,7 +72,7 @@ final public class URIConstants {
     /**
      * Control access mode.
      */
-    public static final String WEBAC_MODE_CONTROL_VALUE = WEBAC_NAMESPACE_VALUE + "Control";
+    private static final String WEBAC_MODE_CONTROL_VALUE = WEBAC_NAMESPACE_VALUE + "Control";
 
     /**
      * Control access mode.
@@ -88,55 +83,46 @@ final public class URIConstants {
      * Authorization class.
      */
     public static final String WEBAC_AUTHORIZATION_VALUE = WEBAC_NAMESPACE_VALUE + "Authorization";
-    public static final URI WEBAC_AUTHORIZATION = URI.create(WEBAC_AUTHORIZATION_VALUE);
 
     /**
      * WebAC agent
      */
     public static final String WEBAC_AGENT_VALUE = WEBAC_NAMESPACE_VALUE + "agent";
-    public static final URI WEBAC_AGENT = URI.create(WEBAC_AGENT_VALUE);
 
     /**
      * WebAC agentClass
      */
     public static final String WEBAC_AGENT_CLASS_VALUE = WEBAC_NAMESPACE_VALUE + "agentClass";
-    public static final URI WEBAC_AGENT_CLASS = URI.create(WEBAC_AGENT_CLASS_VALUE);
 
     /**
      * WebAC agentGroup
      */
     public static final String WEBAC_AGENT_GROUP_VALUE = WEBAC_NAMESPACE_VALUE + "agentGroup";
-    public static final URI WEBAC_AGENT_GROUP = URI.create(WEBAC_AGENT_CLASS_VALUE);
 
     /**
      * WebAC accessTo
      */
     public static final String WEBAC_ACCESSTO_VALUE = WEBAC_NAMESPACE_VALUE + "accessTo";
-    public static final URI WEBAC_ACCESSTO = URI.create(WEBAC_ACCESSTO_VALUE);
 
     /**
      * WebAC accessToClass
      */
     public static final String WEBAC_ACCESSTO_CLASS_VALUE = WEBAC_NAMESPACE_VALUE + "accessToClass";
-    public static final URI WEBAC_ACCESSTO_CLASS = URI.create(WEBAC_ACCESSTO_CLASS_VALUE);
 
     /**
      * WebAC default
      */
     public static final String WEBAC_DEFAULT_VALUE = WEBAC_NAMESPACE_VALUE + "default";
-    public static final URI WEBAC_DEFAULT = URI.create(WEBAC_DEFAULT_VALUE);
 
     /**
      * WebAC accessControl
      */
     public static final String WEBAC_ACCESS_CONTROL_VALUE = RdfLexicon.WEBAC_ACCESS_CONTROL_VALUE;
-    public static final URI WEBAC_ACCESS_CONTROL = RdfLexicon.WEBAC_ACCESS_CONTROL;
 
     /**
      * WebAC mode
      */
     public static final String WEBAC_MODE_VALUE = WEBAC_NAMESPACE_VALUE + "mode";
-    public static final URI WEBAC_MODE = URI.create(WEBAC_MODE_VALUE);
 
     /**
      * WebAC AuthenticatedAgent
@@ -146,32 +132,17 @@ final public class URIConstants {
     /**
      * FOAF Namespace
      */
-    public static final String FOAF_NAMESPACE_VALUE = "http://xmlns.com/foaf/0.1/";
-    public static final URI FOAF_NAMESPACE = URI.create(FOAF_NAMESPACE_VALUE);
+    private static final String FOAF_NAMESPACE_VALUE = "http://xmlns.com/foaf/0.1/";
 
     /**
      * FOAF Agent
      */
     public static final String FOAF_AGENT_VALUE = FOAF_NAMESPACE_VALUE + "Agent";
-    public static final URI FOAF_AGENT = URI.create(FOAF_AGENT_VALUE);
-
-    /**
-     * FOAF member
-     */
-    public static final String FOAF_MEMBER_VALUE = FOAF_NAMESPACE_VALUE + "member";
-    public static final URI FOAF_MEMBER = URI.create(FOAF_MEMBER_VALUE);
-
-    /**
-     * FOAF Group
-     */
-    public static final String FOAF_GROUP_VALUE = FOAF_NAMESPACE_VALUE + "Group";
-    public static final URI FOAF_GROUP = URI.create(FOAF_GROUP_VALUE);
 
     /**
      * vCard Namespace
      */
-    public static final String VCARD_NAMESPACE_VALUE = "http://www.w3.org/2006/vcard/ns#";
-    public static final URI VCARD_NAMESPACE = URI.create(VCARD_NAMESPACE_VALUE);
+    private static final String VCARD_NAMESPACE_VALUE = "http://www.w3.org/2006/vcard/ns#";
 
     /**
      * vCard Group
@@ -183,19 +154,6 @@ final public class URIConstants {
      * vCard member
      */
     public static final String VCARD_MEMBER_VALUE = VCARD_NAMESPACE_VALUE + "hasMember";
-    public static final URI VCARD_MEMBER = URI.create(VCARD_MEMBER_VALUE);
-
-    /**
-     * Fedora WebAC Namespace
-     */
-    public static final String FEDORA_WEBAC_NAMESPACE_VALUE = "http://fedora.info/definitions/v4/webac#";
-    public static final URI FEDORA_WEBAC_NAMESPACE = URI.create(FEDORA_WEBAC_NAMESPACE_VALUE);
-
-    /**
-     * Fedora ACL
-     */
-    public static final String FEDORA_WEBAC_ACL_VALUE = FEDORA_WEBAC_NAMESPACE_VALUE + "Acl";
-    public static final URI FEDORA_WEBAC_ACL = URI.create(FEDORA_WEBAC_ACL_VALUE);
 
     private URIConstants() {
     }

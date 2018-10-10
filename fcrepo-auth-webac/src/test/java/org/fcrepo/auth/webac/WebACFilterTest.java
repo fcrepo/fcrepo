@@ -75,8 +75,6 @@ public class WebACFilterTest {
 
     private static final URI testAclURI = URI.create(baseURL + testAclPath);
 
-    private static final String testURIString = testURI.toString();
-
     private static final URI testChildURI = URI.create(baseURL + testChildPath);
 
     @Mock
@@ -223,17 +221,6 @@ public class WebACFilterTest {
         when(mockSubject.isPermitted(appendPermission)).thenReturn(false);
         when(mockSubject.isPermitted(writePermission)).thenReturn(true);
         when(mockSubject.isPermitted(controlPermission)).thenReturn(false);
-    }
-
-    private void setupAuthUserReadWriteControl() {
-        // authenticated user with read and write permissions
-        when(mockSubject.isAuthenticated()).thenReturn(true);
-        when(mockSubject.hasRole(FEDORA_ADMIN_ROLE)).thenReturn(false);
-        when(mockSubject.hasRole(FEDORA_USER_ROLE)).thenReturn(true);
-        when(mockSubject.isPermitted(readPermission)).thenReturn(true);
-        when(mockSubject.isPermitted(appendPermission)).thenReturn(false);
-        when(mockSubject.isPermitted(writePermission)).thenReturn(true);
-        when(mockSubject.isPermitted(controlPermission)).thenReturn(true);
     }
 
     private void setupAuthUserAclControl() {

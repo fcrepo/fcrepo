@@ -76,7 +76,7 @@ public class WebACFilter implements Filter {
 
     private static final Logger log = getLogger(WebACFilter.class);
 
-    private static MediaType sparqlUpdate = MediaType.valueOf(contentTypeSPARQLUpdate);
+    private static final MediaType sparqlUpdate = MediaType.valueOf(contentTypeSPARQLUpdate);
 
     private FedoraSession session;
 
@@ -106,7 +106,7 @@ public class WebACFilter implements Filter {
     private SessionFactory sessionFactory;
 
     @Override
-    public void init(final FilterConfig filterConfig) throws ServletException {
+    public void init(final FilterConfig filterConfig) {
         // this method intentionally left empty
     }
 
@@ -207,24 +207,8 @@ public class WebACFilter implements Filter {
         return repoPath;
     }
 
-    private String findNearestParent(final String childPath) {
-        log.debug("Checking child path {}", childPath);
-
-        if (childPath.isEmpty()) {
-            return "/";
-        }
-        final String parentPath = childPath.substring(0, childPath.lastIndexOf("/"));
-        log.debug("Checking parent path {}", parentPath);
-        if (nodeService.exists(session(), parentPath)) {
-            return parentPath;
-        } else {
-            return findNearestParent(parentPath);
-        }
-    }
-
     private boolean isAuthorized(final Subject currentUser, final HttpServletRequest httpRequest) throws IOException {
         final String requestURL = httpRequest.getRequestURL().toString();
-        final String repoPath = httpRequest.getPathInfo();
         final boolean isAcl = requestURL.endsWith(FCR_ACL);
         final URI requestURI = URI.create(requestURL);
         log.debug("Request URI is {}", requestURI);

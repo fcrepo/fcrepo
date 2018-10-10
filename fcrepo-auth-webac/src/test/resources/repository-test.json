@@ -13,7 +13,7 @@
     },
     "binaryStorage" : {
       "type" : "file",
-      "directory" : "${fcrepo.binary.directory:target/binaries}",
+      "directory" : "${fcrepo.binary.directory:target/binaries}"
     }
   },
   "security" : {

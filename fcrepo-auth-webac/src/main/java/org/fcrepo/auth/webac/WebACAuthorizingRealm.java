@@ -176,7 +176,7 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
             final Node node = ((FedoraResourceImpl) fedoraResource).getNode();
 
             // check ACL for the request URI and get a mapping of agent => modes
-            roles = rolesProvider.getRoles(node, true);
+            roles = rolesProvider.getRoles(node);
         }
         return roles;
     }
