@@ -127,7 +127,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
     }
 
     @Override
-    public void consume() throws MalformedRdfException {
+    public void consume() {
         stream.forEach(t -> {
             final Statement s = m.asStatement(t);
             LOGGER.debug("Operating on triple {}.", s);
@@ -146,7 +146,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
         }
     }
 
-    protected void operateOnTriple(final Statement input) throws MalformedRdfException {
+    protected void operateOnTriple(final Statement input) {
         try {
 
             final Statement t = jcrRdfTools.skolemize(idTranslator, input, stream().topic().toString());

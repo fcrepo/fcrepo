@@ -994,7 +994,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * @param inputModel to be checked
      * @throws ServerManagedPropertyException
      */
-    private void ensureValidMemberRelation(final Model inputModel) throws BadRequestException {
+    private void ensureValidMemberRelation(final Model inputModel) {
         // check that ldp:hasMemberRelation value is not server managed predicate.
         inputModel.listStatements().forEachRemaining((final Statement s) -> {
             LOGGER.debug("statement: s={}, p={}, o={}", s.getSubject(), s.getPredicate(), s.getObject());

@@ -30,8 +30,8 @@ import java.util.stream.IntStream;
  */
 public class ConfigurableHierarchicalSupplier implements UniqueValueSupplier {
 
-    private final int DEFAULT_LENGTH = 0;
-    private final int DEFAULT_COUNT = 0;
+    private static final int DEFAULT_LENGTH = 0;
+    private static final int DEFAULT_COUNT = 0;
 
     private final int length;
     private final int count;
