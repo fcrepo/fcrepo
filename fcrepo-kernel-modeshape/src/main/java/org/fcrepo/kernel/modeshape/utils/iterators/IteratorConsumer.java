@@ -34,7 +34,6 @@
 package org.fcrepo.kernel.modeshape.utils.iterators;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import org.fcrepo.kernel.api.exception.MalformedRdfException;
 
 /**
  * Implemented by something that can consume an {@link java.util.Iterator}. The
@@ -50,9 +49,8 @@ public interface IteratorConsumer<E, T> {
 
     /**
      * Synchronous consumption.
-     * @throws MalformedRdfException if malformed rdf exception occurred
      */
-    void consume() throws MalformedRdfException;
+    void consume();
 
     /**
      * Asynchronous consumption.
