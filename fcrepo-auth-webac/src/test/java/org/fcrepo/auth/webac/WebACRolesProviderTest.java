@@ -21,6 +21,7 @@ import static java.util.Collections.singletonList;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.riot.Lang.TTL;
+import static org.fcrepo.auth.webac.URIConstants.FOAF_AGENT_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.VCARD_GROUP;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE_VALUE;
@@ -126,6 +127,11 @@ public class WebACRolesProviderTest {
         when(mockNode.getDepth()).thenReturn(0);
     }
 
+    private void assertOnlyDefaultAgentInRoles(final Map<String, Collection<String>> roles) {
+        assertEquals(1, roles.size());
+        assertTrue(roles.keySet().contains(FOAF_AGENT_VALUE));
+    }
+
     @Test
     public void noAclTest() throws RepositoryException {
         final String accessTo = "/dark/archive/sunshine";
@@ -149,7 +155,7 @@ public class WebACRolesProviderTest {
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockNode);
 
-        assertTrue("There should be no agents in the roles map", roles.isEmpty());
+        assertOnlyDefaultAgentInRoles(roles);
     }
 
     @Test
@@ -281,7 +287,7 @@ public class WebACRolesProviderTest {
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockNode);
 
-        assertTrue("There should be no agents associated with this object", roles.isEmpty());
+        assertOnlyDefaultAgentInRoles(roles);
     }
 
     @Test
@@ -590,7 +596,7 @@ public class WebACRolesProviderTest {
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockNode);
 
-        assertEquals("There should be exactly zero agents", 0, roles.size());
+        assertOnlyDefaultAgentInRoles(roles);
     }
 
     @Test
@@ -633,7 +639,7 @@ public class WebACRolesProviderTest {
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockNode);
 
         assertEquals("There should be exactly one agent", 1, roles.size());
-        assertEquals("The agent should have zero modes", 0, roles.get(agent1).size());
+        assertEquals("The agent should have one mode", 1, roles.get(agent1).size());
     }
 
     @Test(expected = RuntimeException.class)

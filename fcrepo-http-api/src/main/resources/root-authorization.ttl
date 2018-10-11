@@ -2,10 +2,14 @@
 @prefix acl: <http://www.w3.org/ns/auth/acl#> .
 @prefix foaf: <http://xmlns.com/foaf/0.1/> .
 @prefix fedora: <http://fedora.info/definitions/v4/repository#> .
+@prefix webac: <http://fedora.info/definitions/v4/webac#> .
 
-<> a acl:Authorization ;
+<info:fedora/fcr:acl> a webac:Acl .
+
+<info:fedora/fcr:acl#authz> a acl:Authorization ;
    rdfs:label "Root Authorization" ;
-   rdfs:comment "By default, all non-Admin agents (foaf:Agent) are denied access (no acl:mode is specified) to all resources." ;
+   rdfs:comment "By default, all non-Admin agents (foaf:Agent) only have read access (acl:Read) to the respository" ;
    acl:agentClass foaf:Agent ;
-   acl:accessToClass fedora:Resource ;
-   acl:default <.> .
+   acl:mode acl:Read ;
+   acl:accessTo <info:fedora/> ;
+   acl:default <info:fedora/> .
