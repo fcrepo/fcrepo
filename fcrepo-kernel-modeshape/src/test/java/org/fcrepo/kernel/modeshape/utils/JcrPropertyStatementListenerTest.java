@@ -22,7 +22,7 @@ import static org.apache.jena.vocabulary.RDF.type;
 import static javax.jcr.PropertyType.URI;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getPropertyType;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;

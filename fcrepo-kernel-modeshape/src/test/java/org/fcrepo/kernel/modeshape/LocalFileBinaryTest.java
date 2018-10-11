@@ -50,16 +50,14 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import static java.util.Collections.singleton;
 
 /**
  * @author bbpennel
  */
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class LocalFileBinaryTest {
-
-    private static final String DS_ID = "testDs";
 
     private static final String EXPECTED_CONTENT = "test content";
 

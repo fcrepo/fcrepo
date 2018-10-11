@@ -39,8 +39,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.jena.rdf.model.Model;
 import org.fcrepo.kernel.api.observer.EventType;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.runners.MockitoJUnitRunner;
 
 /**
  * <p>
@@ -50,7 +48,6 @@ import org.mockito.runners.MockitoJUnitRunner;
  * @author acoburn
  * @author dbernstein
  */
-@RunWith(MockitoJUnitRunner.class)
 public class JsonLDSerializerTest extends FedoraEventSerializerTestBase {
 
     @Test

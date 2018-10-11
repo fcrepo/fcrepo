@@ -42,7 +42,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * <p>FedoraObjectImplTest class.</p>
@@ -51,11 +51,6 @@ import org.mockito.runners.MockitoJUnitRunner;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class ContainerImplTest implements FedoraTypes {
-
-    private static final String testPid = "testObj";
-
-    private static final String mockUser = "mockUser";
-
     @Mock
     private Session mockSession;
 
@@ -74,29 +69,13 @@ public class ContainerImplTest implements FedoraTypes {
 
     @Before
     public void setUp() {
-        final String relPath = "/" + testPid;
-        final NodeType[] types = new NodeType[0];
         try {
-            when(mockObjNode.getName()).thenReturn(testPid);
-            when(mockObjNode.getSession()).thenReturn(mockSession);
-            when(mockObjNode.getMixinNodeTypes()).thenReturn(types);
-            final NodeType mockNodeType = mock(NodeType.class);
-            when(mockNodeType.getName()).thenReturn("nt:folder");
-            when(mockObjNode.getPrimaryNodeType()).thenReturn(mockNodeType);
-            when(mockSession.getRootNode()).thenReturn(mockRootNode);
-            when(mockRootNode.getNode(relPath)).thenReturn(mockObjNode);
-            when(mockSession.getUserID()).thenReturn(mockUser);
             testContainer = new ContainerImpl(mockObjNode);
 
             mockNodetypes = new NodeType[2];
             mockNodetypes[0] = mock(NodeType.class);
-            when(mockNodetypes[0].getName()).thenReturn("some:type");
             mockNodetypes[1] = mock(NodeType.class);
             when(mockObjNode.isNodeType("some:type")).thenReturn(true);
-
-            when(mockObjNode.getMixinNodeTypes()).thenReturn(mockNodetypes);
-
-            when(mockPredicate.test(mockObjNode)).thenReturn(true);
 
         } catch (final RepositoryException e) {
             e.printStackTrace();

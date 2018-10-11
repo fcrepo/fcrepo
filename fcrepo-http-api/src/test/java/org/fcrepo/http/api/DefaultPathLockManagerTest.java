@@ -19,8 +19,8 @@ package org.fcrepo.http.api;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
@@ -31,13 +31,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * Unit tests for DefaultPathLockManager.
  * @author Mike Durbin
  */
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class DefaultPathLockManagerTest {
 
     /**
@@ -193,7 +193,7 @@ public class DefaultPathLockManagerTest {
             AcquiredLock lock = null;
             try {
                 lock = l.acquireLock();
-            } catch (InterruptedRuntimeException e) {
+            } catch (final InterruptedRuntimeException e) {
                 interrupted = true;
             }
             if (lock != null) {
@@ -210,7 +210,7 @@ public class DefaultPathLockManagerTest {
             this.interrupt();
             try {
                 this.join();
-            } catch (InterruptedException e) {
+            } catch (final InterruptedException e) {
                 throw new RuntimeException(e);
             }
             return interrupted;
@@ -225,7 +225,7 @@ public class DefaultPathLockManagerTest {
         private boolean canComplete() {
             try {
                 this.join(WAIT);
-            } catch (InterruptedException e) {
+            } catch (final InterruptedException e) {
                 throw new RuntimeException(e);
             }
             return !this.isAlive();

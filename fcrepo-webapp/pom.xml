@@ -23,6 +23,7 @@
     <!-- for standalone operation -->
     <jetty.users.file>${project.build.directory}/test-classes/jetty-users.properties</jetty.users.file>
     <fcrepo.modeshape.configuration>classpath:/config/servlet-auth/repository.json</fcrepo.modeshape.configuration>
+    <jetty-console.version>1.61</jetty-console.version>
   </properties>
 
   <dependencies>
@@ -185,6 +186,10 @@
           <artifactId>jetty-util</artifactId>
         </exclusion>
         <exclusion>
+          <groupId>org.eclipse.jetty</groupId>
+          <artifactId>jetty-xml</artifactId>
+        </exclusion>
+        <exclusion>
           <groupId>xml-apis</groupId>
           <artifactId>xml-apis</artifactId>
         </exclusion>
@@ -341,7 +346,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>properties-maven-plugin</artifactId>
-        <version>1.0-alpha-2</version>
+        <version>1.0.0</version>
         <executions>
           <execution>
             <phase>pre-integration-test</phase>
@@ -393,7 +398,6 @@
             <id>start-jetty</id>
             <phase>pre-integration-test</phase>
             <goals>
-              <goal>stop</goal>
               <goal>start</goal>
             </goals>
             <configuration>
@@ -523,9 +527,9 @@
           </plugin>
 
           <plugin>
-            <groupId>org.simplericity.jettyconsole</groupId>
+            <groupId>org.fcrepo</groupId>
             <artifactId>jetty-console-maven-plugin</artifactId>
-            <version>1.56</version>
+            <version>${jetty-console.version}</version>
             <executions>
               <execution>
                 <goals>

@@ -23,50 +23,53 @@
     <project_name>fcrepo4</project_name>
     <project_organization>fcrepo4</project_organization>
     <!-- Dependency version properties -->
-    <activemq.version>5.14.1</activemq.version>
-    <commons-codec.version>1.10</commons-codec.version>
-    <commons-io.version>2.5</commons-io.version>
-    <commons-lang.version>3.5</commons-lang.version>
-    <narayana-jta.version>5.7.0.Final</narayana-jta.version>
-    <jetty.version>9.3.1.v20150714</jetty.version>
-    <guava.version>20.0</guava.version>
-    <hk2.version>2.3.0</hk2.version>
-    <htmlunit.version>2.27</htmlunit.version>
-    <httpclient.version>4.5.3</httpclient.version>
-    <httpmime.version>4.5.3</httpmime.version>
-    <httpcore.version>4.4.6</httpcore.version>
-    <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
-    <javaee-api.version>7.0</javaee-api.version>
-    <jackson2.version>2.8.4</jackson2.version>
-    <jboss-logging.version>3.3.0.Final</jboss-logging.version>
+    <activemq.version>5.15.5</activemq.version>
+    <commons-codec.version>1.11</commons-codec.version>
+    <commons-collections.version>3.2.2</commons-collections.version>
+    <commons-io.version>2.6</commons-io.version>
+    <commons-lang.version>3.7</commons-lang.version>
+    <narayana-jta.version>5.9.0.Final</narayana-jta.version>
+    <jetty.version>9.3.25.v20180904</jetty.version>
+    <guava.version>25.1-jre</guava.version>
+    <hk2.version>2.5.0-b62</hk2.version>
+    <htmlunit.version>2.33</htmlunit.version>
+    <httpclient.version>4.5.6</httpclient.version>
+    <httpmime.version>4.5.6</httpmime.version>
+    <httpcore.version>4.4.10</httpcore.version>
+    <javax.servlet-api.version>4.0.1</javax.servlet-api.version>
+    <javaee-api.version>8.0</javaee-api.version>
+    <jackson2.version>2.9.6</jackson2.version>
+    <jboss-logging.version>3.3.2.Final</jboss-logging.version>
     <jcr.version>2.0</jcr.version>
-    <jena.version>3.1.1</jena.version>
-    <jersey.version>2.24</jersey.version>
-    <jgroups.version>3.6.11.Final</jgroups.version>
-    <jsonld.version>0.8.3</jsonld.version>
-    <logback.version>1.1.7</logback.version>
-    <modeshape.version>5.4.0.Final</modeshape.version>
-    <slf4j.version>1.7.21</slf4j.version>
-    <snappy-java.version>1.1.2.6</snappy-java.version>
-    <spring.version>4.3.3.RELEASE</spring.version>
+    <jena.version>3.8.0</jena.version>
+    <jersey.version>2.25.1</jersey.version>
+    <jgroups.version>4.0.13.Final</jgroups.version>
+    <jsonld.version>0.12.1</jsonld.version>
+    <logback.version>1.2.3</logback.version>
+    <modeshape.version>5.4.1.Final</modeshape.version>
+    <slf4j.version>1.7.25</slf4j.version>
+    <snappy-java.version>1.1.7.2</snappy-java.version>
+    <spring.version>5.0.9.RELEASE</spring.version>
+    <tika.version>1.19</tika.version>
+    <xerces.version>2.12.0</xerces.version>
     <xml-apis.version>1.4.01</xml-apis.version>
     <velocity.version>1.7</velocity.version>
     <!-- JCBC dependencies -->
-    <postgresql.version>9.4.1211</postgresql.version>
-    <mysql.version>5.1.38</mysql.version>
+    <postgresql.version>42.2.5</postgresql.version>
+    <mysql.version>5.1.46</mysql.version>
     <!-- AWS S3 dependencies -->
-    <aws.client.version>1.11.95</aws.client.version>
+    <aws.client.version>1.11.413</aws.client.version>
     <!-- test gear -->
     <awaitility.version>1.7.0</awaitility.version>
-    <grizzly.version>2.3.28</grizzly.version>
+    <grizzly.version>2.4.3</grizzly.version>
     <junit.version>4.12</junit.version>
     <system-rules.version>1.18.0</system-rules.version>
-    <mockito.version>1.10.19</mockito.version>
+    <mockito.version>2.22.0</mockito.version>
     <wiremock.version>2.13.0</wiremock.version>
-    <!-- fcrepo4-specific plugins -->
-    <enforcer.plugin.version>1.4</enforcer.plugin.version>
+    <!-- fcrepo5-specific plugins -->
+    <enforcer.plugin.version>1.4.1</enforcer.plugin.version>
     <enforce-victims.rule.version>1.3.4</enforce-victims.rule.version>
-    <war.plugin.version>2.6</war.plugin.version>
+    <war.plugin.version>3.2.2</war.plugin.version>
     <!-- default properties that can be altered on the command line -->
     <fcrepo.test.context.path />
   </properties>
@@ -164,6 +167,10 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -178,6 +185,10 @@
           <exclusion>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -215,6 +226,12 @@
         <groupId>com.github.jsonld-java</groupId>
         <artifactId>jsonld-java</artifactId>
         <version>${jsonld.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient-osgi</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
@@ -293,9 +310,19 @@
         <version>${xml-apis.version}</version>
       </dependency>
       <dependency>
+        <groupId>xerces</groupId>
+        <artifactId>xercesImpl</artifactId>
+        <version>${xerces.version}</version>
+      </dependency>
+      <dependency>
         <groupId>commons-io</groupId>
         <artifactId>commons-io</artifactId>
         <version>${commons-io.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-codec</groupId>
+        <artifactId>commons-codec</artifactId>
+        <version>${commons-codec.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.httpcomponents</groupId>
@@ -310,6 +337,10 @@
           <exclusion>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -540,7 +571,7 @@
                 <propertyName>jacoco.agent.it.arg</propertyName>
                 <append>true</append>
                 <excludes>
-                  <exclude>**/*SACParserCSS3TokenManager*</exclude>
+                  <exclude>**/*CSS3ParserTokenManager*</exclude>
                 </excludes>
               </configuration>
             </execution>

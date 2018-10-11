@@ -20,7 +20,7 @@ package org.fcrepo.kernel.modeshape.spring;
 import static org.fcrepo.kernel.modeshape.FedoraRepositoryImpl.getJcrRepository;
 import static org.fcrepo.kernel.modeshape.utils.TestHelpers.setField;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 

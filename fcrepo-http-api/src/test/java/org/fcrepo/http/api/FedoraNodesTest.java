@@ -20,7 +20,7 @@ package org.fcrepo.http.api;
 import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.isA;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -63,7 +63,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.sparql.util.Context;
@@ -74,7 +74,7 @@ import org.apache.jena.sparql.util.Context;
  *
  * @author awoods
  */
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class FedoraNodesTest {
 
     FedoraNodes testObj;

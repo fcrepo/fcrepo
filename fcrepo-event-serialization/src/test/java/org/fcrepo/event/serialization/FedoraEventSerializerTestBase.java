@@ -47,7 +47,7 @@ import org.fcrepo.kernel.api.observer.EventType;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * <p>
@@ -57,7 +57,7 @@ import org.mockito.runners.MockitoJUnitRunner;
  * @author acoburn
  * @author dbernstein
  */
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class FedoraEventSerializerTestBase {
 
     @Mock

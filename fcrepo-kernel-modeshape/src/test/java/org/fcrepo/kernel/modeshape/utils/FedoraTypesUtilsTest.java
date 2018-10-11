@@ -35,7 +35,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import java.io.InputStream;
@@ -68,7 +68,7 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.modeshape.jcr.JcrRepository;
 import org.modeshape.jcr.JcrValueFactory;
 import org.modeshape.jcr.RepositoryConfiguration;
@@ -80,7 +80,7 @@ import org.modeshape.jcr.api.JcrConstants;
  * @author awoods
  * @author ajs6f
  */
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class FedoraTypesUtilsTest {
 
     @Mock

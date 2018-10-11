@@ -19,21 +19,18 @@ package org.fcrepo.kernel.modeshape.observer;
 
 import static org.fcrepo.kernel.modeshape.observer.SimpleObserver.EVENT_TYPES;
 import static org.fcrepo.kernel.modeshape.utils.TestHelpers.setField;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.mock;
-
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
 import javax.jcr.observation.EventIterator;
 import javax.jcr.observation.ObservationManager;
+import org.modeshape.jcr.api.Session;
+import org.modeshape.jcr.api.Workspace;
 
-import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
 import org.fcrepo.kernel.modeshape.FedoraRepositoryImpl;
 import org.fcrepo.kernel.modeshape.observer.eventmappings.OneToOne;
@@ -42,8 +39,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.modeshape.jcr.api.Repository;
 import org.modeshape.jcr.api.observation.Event;
 
@@ -59,8 +55,6 @@ import com.google.common.eventbus.EventBus;
 public class SimpleObserverTest {
 
     private SimpleObserver testObserver;
-
-    private FedoraRepository testRepository;
 
     @Mock
     private ObservationManager mockOM;
@@ -91,8 +85,7 @@ public class SimpleObserverTest {
 
     @Before
     public void setUp() throws RepositoryException {
-        mockSession = mock(Session.class, Mockito.withSettings().extraInterfaces(org.modeshape.jcr.api.Session.class));
-        when(mockRepository.login()).thenReturn((org.modeshape.jcr.api.Session) mockSession);
+        when(mockRepository.login()).thenReturn(mockSession);
         when(mockEvents.hasNext()).thenReturn(true, false);
         when(mockEvents.next()).thenReturn(mockEvent);
         when(mockEvent.getType()).thenReturn(1);

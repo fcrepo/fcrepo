@@ -14,7 +14,7 @@
 
   <properties>
     <junit.version>4.12</junit.version>
-    <jetty-plugin.version>9.3.1.v20150714</jetty-plugin.version>
+    <jetty-plugin.version>9.3.25.v20180904</jetty-plugin.version>
     <ldp-testsuite.version>0.1.1</ldp-testsuite.version>
     <jetty.users.file>${project.build.directory}/test-classes/jetty-users.properties</jetty.users.file>
   </properties>
@@ -155,7 +155,7 @@
                     <scanIntervalSeconds>0</scanIntervalSeconds>
                     <daemon>true</daemon>
                     <contextHandlers>
-                        <contextHandler implementation="org.eclipse.jetty.webapp.WebAppContext">
+                        <contextHandler implementation="org.eclipse.jetty.maven.plugin.JettyWebAppContext">
                           <war>${project.build.directory}/fcrepo.war</war>
                           <contextPath>/fcrepo</contextPath>
                         </contextHandler>

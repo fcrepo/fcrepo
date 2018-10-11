@@ -24,7 +24,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.modeshape.jcr.api.ValueFactory;
 
 import javax.jcr.Node;
@@ -54,7 +54,7 @@ import static org.mockito.Mockito.when;
  * @author ksclarke
  * @author ajs6f
  */
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class NonRdfSourceDescriptionImplTest implements FedoraTypes {
 
     private static final String testDsId = "testDs";
