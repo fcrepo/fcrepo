@@ -295,18 +295,6 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
         return null;
     }
 
-    @Override
-    public void enableVersioning() {
-        super.enableVersioning();
-        getDescription().enableVersioning();
-    }
-
-    @Override
-    public void disableVersioning() {
-        super.disableVersioning();
-        getDescription().disableVersioning();
-    }
-
     /**
      * Check of the property exists on the description of this binary.
      *

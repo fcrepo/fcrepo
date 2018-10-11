@@ -449,13 +449,14 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         }
 
         try {
-            final Node timeMapNode;
-            if (isMemento()) {
-                timeMapNode = node.getParent();
+            if (isOriginalResource()) {
+                return findOrCreateTimeMap();
+            } else if (isMemento()) {
+                return Optional.of(node.getParent()).map(nodeConverter::convert).orElse(null);
             } else {
-                timeMapNode = node.getNode(LDPCV_TIME_MAP);
+                throw new PathNotFoundException(
+                    "getTimeMap() is not supported for this node: " + node.getPath());
             }
-            return Optional.of(timeMapNode).map(nodeConverter::convert).orElse(null);
         } catch (final PathNotFoundException e) {
             throw new PathNotFoundRuntimeException(e);
         } catch (final RepositoryException e) {
@@ -463,8 +464,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         }
     }
 
-    @Override
-    public FedoraResource findOrCreateTimeMap() {
+
+    private FedoraResource findOrCreateTimeMap() {
         final Node ldpcvNode;
         try {
             ldpcvNode = findOrCreateChild(getNode(), LDPCV_TIME_MAP, NT_FOLDER);
@@ -507,6 +508,11 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     }
 
     @Override
+    public boolean isOriginalResource() {
+        return !isMemento();
+    }
+
+    @Override
     public boolean isMemento() {
         return isMemento.test(getNode());
     }
@@ -515,7 +521,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     public boolean isAcl() {
         return isAcl.test(getNode());
     }
-
 
     @Override
     public FedoraResource getAcl() {
@@ -1293,29 +1298,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
   }
 
   @Override
-  public void enableVersioning() {
-        if (!isVersioned()) {
-            findOrCreateTimeMap();
-        }
-  }
-
-  @Override
-  public void disableVersioning() {
-        getTimeMap().delete();
-  }
-
-    @Override
-    public boolean isVersioned() {
-        try {
-            return getNode(getNode(), LDPCV_TIME_MAP, false) != null;
-        } catch (final RepositoryException ex) {
-            throw new RepositoryRuntimeException(ex);
-        }
-    }
-
-  @Override
   public FedoraResource findMementoByDatetime(final Instant mementoDatetime) {
-      if (isVersioned()) {
+      if (isOriginalResource()) {
             final FedoraResource timemap = this.getTimeMap();
             if (timemap != null) {
                 final Stream<FedoraResource> mementos = timemap.getChildren();

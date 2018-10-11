@@ -190,7 +190,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
         final Context context = getContext(model, subject);
 
         final FedoraResource resource = getResourceFromSubject(subject.toString());
-        context.put("isVersionable", (resource != null ? resource.isVersioned() : false));
+        context.put("isOriginalResource", (resource != null ? resource.isOriginalResource() : false));
         context.put("isVersion", (resource != null ? resource.isMemento() : false));
         context.put("isLDPNR", (resource != null
             ? resource instanceof FedoraBinary || !resource.getDescribedResource().equals(resource) : false));

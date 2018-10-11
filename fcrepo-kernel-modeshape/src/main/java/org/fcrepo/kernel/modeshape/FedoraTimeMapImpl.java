@@ -45,6 +45,11 @@ public class FedoraTimeMapImpl extends FedoraResourceImpl implements FedoraTimeM
     }
 
     @Override
+    public boolean isOriginalResource() {
+        return false;
+    }
+
+    @Override
     public void delete() {
         try {
             // check to remove references to the TimeMap if it exists

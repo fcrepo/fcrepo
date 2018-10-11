@@ -1032,7 +1032,6 @@ public class FedoraResourceImplIT extends AbstractIT {
     public void testDeleteLinkedVersionedResources() throws RepositoryException {
         final Container object1 = containerService.findOrCreate(session, "/" + getRandomPid());
         final Container object2 = containerService.findOrCreate(session, "/" + getRandomPid());
-        object2.enableVersioning();
         session.commit();
 
         // Create a link between objects 1 and 2
@@ -1070,31 +1069,11 @@ public class FedoraResourceImplIT extends AbstractIT {
         }
     }
 
-    @Test
-    @Ignore ("Until implemented with Memento")
-    public void testDisableVersioning() throws RepositoryException {
-        final String pid = getRandomPid();
-        final Container object = containerService.findOrCreate(session, "/" + pid);
-        object.enableVersioning();
-        session.commit();
-        assertTrue(object.isVersioned());
-        object.disableVersioning();
-        assertFalse(object.isVersioned());
-    }
-
-    @Test (expected = RepositoryRuntimeException.class)
-    @Ignore ("Until implemented with Memento")
-    public void testDisableVersioningException() {
-        final String pid = getRandomPid();
-        final Container object = containerService.findOrCreate(session, "/" + pid);
-        object.disableVersioning();
-    }
 
     @Test
     public void testHash() throws RepositoryException {
         final String pid = getRandomPid();
         final Container object = containerService.findOrCreate(session, "/" + pid);
-        object.enableVersioning();
         session.commit();
         final FedoraResourceImpl frozenResource = new FedoraResourceImpl(getJcrNode(object));
         assertFalse(frozenResource.hashCode() == 0);
@@ -1148,7 +1127,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         session.commit();
 
         // Create TimeMap (LDPCv)
-        final FedoraResource ldpcvResource = resource.findOrCreateTimeMap();
+        final FedoraResource ldpcvResource = resource.getTimeMap();
 
         assertNotNull(ldpcvResource);
         assertEquals("/" + pid + "/" + LDPCV_TIME_MAP, ldpcvResource.getPath());
@@ -1166,7 +1145,6 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testGetMementoByDatetime() throws RepositoryException {
         final FedoraResource object1 = containerService.findOrCreate(session, "/" + getRandomPid());
-        object1.enableVersioning();
 
         final DateTimeFormatter FMT = new DateTimeFormatterBuilder()
             .appendPattern("yyyy-MM-dd'T'HH:mm:ss")
@@ -1215,7 +1193,6 @@ public class FedoraResourceImplIT extends AbstractIT {
     @Test
     public void testGetMementoByDatetimeEmpty() {
         final FedoraResource object1 = containerService.findOrCreate(session, "/" + getRandomPid());
-        object1.enableVersioning();
 
         final DateTimeFormatter FMT = new DateTimeFormatterBuilder()
             .appendPattern("yyyy-MM-dd'T'HH:mm:ss")

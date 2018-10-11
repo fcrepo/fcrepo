@@ -1098,7 +1098,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpPost createMethod = postObjMethod();
         createMethod.addHeader("Slug", id);
         createMethod.addHeader(CONTENT_TYPE, "text/n3");
-        createMethod.addHeader(LINK, VERSIONED_RESOURCE_LINK_HEADER);
         createMethod.setEntity(new StringEntity("<" + subjectURI + "> <info:test#label> \"foo\""));
 
         try (final CloseableHttpResponse response = execute(createMethod)) {

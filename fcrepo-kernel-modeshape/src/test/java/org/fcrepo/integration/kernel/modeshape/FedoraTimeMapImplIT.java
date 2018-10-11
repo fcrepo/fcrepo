@@ -17,10 +17,7 @@
  */
 package org.fcrepo.integration.kernel.modeshape;
 
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TIME_MAP;
-import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.LDPCV_TIME_MAP;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
@@ -31,14 +28,12 @@ import javax.jcr.RepositoryException;
 
 import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.FedoraSession;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.FedoraTimeMap;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.ContainerService;
-import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -79,28 +74,12 @@ public class FedoraTimeMapImplIT extends AbstractIT {
     }
 
     @Test
-    public void testDeleteTimeMap() throws RepositoryException {
-        final String pid = getRandomPid();
-        final Container object = containerService.findOrCreate(session, "/" + pid);
-        final FedoraResource timeMap = object.findOrCreateTimeMap();
-        session.commit();
-        assertTrue(((FedoraResourceImpl)timeMap).getNode().isNodeType(FEDORA_TIME_MAP));
-        object.disableVersioning();
-        session.commit();
-        assertFalse(object.isVersioned());
-
-        // should throw RepositoryRuntimeException when retrieving the TimeMap after deletion.
-        thrown.expect(RepositoryRuntimeException.class);
-        object.getChild(LDPCV_TIME_MAP);
-    }
-
-    @Test
     public void testGetOriginalResource() throws Exception {
         final String pid = getRandomPid();
         final Container object = containerService.findOrCreate(session, "/" + pid);
         session.commit();
 
-        final FedoraTimeMap timeMap = (FedoraTimeMap) object.findOrCreateTimeMap();
+        final FedoraTimeMap timeMap = (FedoraTimeMap) object.getTimeMap();
 
         final FedoraResource originalResource = timeMap.getOriginalResource();
         assertTrue(originalResource instanceof Container);
@@ -116,7 +95,7 @@ public class FedoraTimeMapImplIT extends AbstractIT {
             object.setContent(contentStream, "text/plain", null, null, null);
         }
 
-        final FedoraTimeMap timeMap = (FedoraTimeMap) object.findOrCreateTimeMap();
+        final FedoraTimeMap timeMap = (FedoraTimeMap) object.getTimeMap();
         session.commit();
 
         final FedoraResource originalResource = timeMap.getOriginalResource();
@@ -135,7 +114,7 @@ public class FedoraTimeMapImplIT extends AbstractIT {
         session.commit();
 
         final FedoraResource description = binary.getDescribedResource();
-        final FedoraTimeMap timeMap = (FedoraTimeMap) description.findOrCreateTimeMap();
+        final FedoraTimeMap timeMap = (FedoraTimeMap) description.getTimeMap();
 
         final FedoraResource originalResource = timeMap.getOriginalResource();
         assertTrue(originalResource instanceof FedoraBinary);

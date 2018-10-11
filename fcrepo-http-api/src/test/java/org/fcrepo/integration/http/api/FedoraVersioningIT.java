@@ -130,7 +130,6 @@ import org.junit.rules.TemporaryFolder;
  */
 public class FedoraVersioningIT extends AbstractResourceIT {
 
-    private static final String VERSIONED_RESOURCE_LINK_HEADER = "<" + VERSIONED_RESOURCE.getURI() + ">; rel=\"type\"";
     private static final String BINARY_CONTENT = "binary content";
     private static final String BINARY_UPDATED = "updated content";
 
@@ -1041,38 +1040,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    @Test
-    public void testGetUnversionedObjectVersionProfile() throws Exception {
-        final String containerUri = serverAddress + id;
-
-        createObject(id);
-
-        final HttpGet getVersion = new HttpGet(containerUri + "/" + FCR_VERSIONS);
-        assertEquals(NOT_FOUND.getStatusCode(), getStatus(getVersion));
-
-        // Verify original has no memento headers
-        assertNoMementoHeaders(containerUri);
-    }
-
-    @Test
-    public void testGetUnversionedBinaryAndDescriptionVersionProfile() throws Exception {
-        createDatastream(id, "ds", "content");
-
-        final String binaryUri = serverAddress + id + "/ds";
-        final HttpGet getBinary = new HttpGet(binaryUri + "/" + FCR_VERSIONS);
-        assertEquals(NOT_FOUND.getStatusCode(), getStatus(getBinary));
-
-        // Verify original binary has no memento headers
-        assertNoMementoHeaders(binaryUri);
-
-        final String metadataUri = binaryUri + "/" + FCR_METADATA;
-        final HttpGet getDesc = new HttpGet(metadataUri + "/" + FCR_VERSIONS);
-        assertEquals(NOT_FOUND.getStatusCode(), getStatus(getDesc));
-
-        // Verify original has no memento headers
-        assertNoMementoHeaders(metadataUri);
-    }
-
     private void assertNoMementoHeaders(final String uri) throws Exception {
         final HttpGet getOriginal = new HttpGet(uri);
 
@@ -1130,55 +1097,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         postReq.setEntity(new StringEntity(body));
 
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(postReq));
-    }
-
-    @Test
-    public void testEnableVersioning() throws Exception {
-        final String containerUri = serverAddress + id;
-        createObjectAndClose(id);
-
-        final String versionsUri = containerUri + "/" + FCR_VERSIONS;
-        assertEquals("fcr:versions must not exist before enabling versioning",
-                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(versionsUri)));
-
-        // Enable versioning
-        enableVersioning(containerUri);
-
-        assertEquals("fcr:versions must be available after enabling versioning",
-                OK.getStatusCode(), getStatus(new HttpGet(versionsUri)));
-
-        final String mementoUri = createMemento(subjectUri, null, null, null);
-        assertEquals("Memento must be created",
-                OK.getStatusCode(), getStatus(new HttpGet(mementoUri)));
-    }
-
-    @Test
-    public void testEnableVersioningBinary() throws Exception {
-        final String binaryUri = serverAddress + id + "/ds";
-        createDatastream(id, "ds", "content");
-
-        final String versionsUri = binaryUri + "/" + FCR_VERSIONS;
-        assertEquals("fcr:versions must not exist before enabling versioning",
-                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(versionsUri)));
-        final String descUri = serverAddress + id + "/ds/" + FCR_METADATA;
-        final String versionsDescUri = descUri + "/" + FCR_VERSIONS;
-
-        assertEquals("fcr:metadata/fcr:versions must not exist before enabling versioning",
-                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(versionsDescUri)));
-
-
-        // Enable versioning
-        enableVersioning(binaryUri);
-
-        assertEquals("fcr:versions must be available after enabling versioning",
-                OK.getStatusCode(), getStatus(new HttpGet(versionsUri)));
-
-        assertEquals("fcr:metadata/fcr:versions must be available after enabling versioning",
-                OK.getStatusCode(), getStatus(new HttpGet(versionsDescUri)));
-
-        final String mementoUri = createMemento(binaryUri, null, null, null);
-        assertEquals("Memento must be created",
-                OK.getStatusCode(), getStatus(new HttpGet(mementoUri)));
     }
 
     @Test
@@ -1691,13 +1609,13 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     }
 
     @Test
-    public void createVersionOnNonVersionedResource() throws Exception {
+    public void versionedResourcesCreatedByDefault() throws Exception {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
         final String timemap = id + "/" + FCR_VERSIONS;
         final HttpPost versionPost = postObjMethod(timemap);
         try (final CloseableHttpResponse response = execute(versionPost)) {
-            assertEquals(NOT_FOUND.getStatusCode(), getStatus(response));
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
         }
     }
 
@@ -1706,7 +1624,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final HttpPut httpPut = putObjMethod(rescId);
         httpPut.addHeader(LINK, "<" + NON_RDF_SOURCE.getURI() + ">;rel=\"type\"");
         httpPut.addHeader(LINK, getExternalContentLinkHeader(externalUri, handling, null));
-        httpPut.addHeader(LINK, VERSIONED_RESOURCE_LINK_HEADER);
         try (final CloseableHttpResponse response = execute(httpPut)) {
             assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
         }
@@ -1823,7 +1740,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final HttpPost createMethod = postObjMethod();
         createMethod.addHeader("Slug", id);
         createMethod.addHeader(CONTENT_TYPE, N3);
-        createMethod.addHeader(LINK, VERSIONED_RESOURCE_LINK_HEADER);
         createMethod.setEntity(new StringEntity("<> <info:test#label> \"foo\""));
 
         try (final CloseableHttpResponse response = execute(createMethod)) {
@@ -1852,7 +1768,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             createMethod.addHeader(CONTENT_TYPE, mimeType);
             createMethod.setEntity(new StringEntity(content));
         }
-        createMethod.addHeader(LINK, VERSIONED_RESOURCE_LINK_HEADER);
 
         try (final CloseableHttpResponse response = execute(createMethod)) {
             assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
@@ -1887,21 +1802,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         assertMementoDatetimeHeaderPresent(response);
         assertEquals("Response memento datetime did not match expected value",
                 expected, response.getFirstHeader(MEMENTO_DATETIME_HEADER).getValue());
-    }
-
-    private static void enableVersioning(final String uri) throws Exception {
-        final HttpPut enableMethod = new HttpPut(uri);
-        enableMethod.addHeader(CONTENT_TYPE, N3);
-        enableMethod.addHeader(LINK, VERSIONED_RESOURCE_LINK_HEADER);
-        // Resubmit the existing state of the resource
-        try (final CloseableHttpResponse response = execute(new HttpGet(uri))) {
-            final String body = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
-            enableMethod.setEntity(new StringEntity(body));
-        }
-
-        try (final CloseableHttpResponse response = execute(enableMethod)) {
-            assertEquals("Didn't get a CREATED response!", NO_CONTENT.getStatusCode(), getStatus(response));
-        }
     }
 
     private static void patchLiteralProperty(final String url, final String predicate, final String literal)

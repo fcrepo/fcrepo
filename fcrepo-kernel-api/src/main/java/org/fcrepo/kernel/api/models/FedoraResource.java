@@ -83,12 +83,6 @@ public interface FedoraResource {
     FedoraResource getTimeMap();
 
     /**
-     * Create the TimeMap/LDPCv of this resource if it doesn't exist
-     * @return the container for TimeMap/LDPCv of this resource
-     */
-    FedoraResource findOrCreateTimeMap();
-
-    /**
      * Retrieve the mementoDatetime property and return it as an Instant
      *
      * @return the Instant for this resource
@@ -257,20 +251,12 @@ public interface FedoraResource {
     String getEtagValue();
 
     /**
-     * Enable versioning
+     * Check if a resource is an original resource
+     * (ie versionable, as opposed to non-versionable resources
+     * like mementos, timemaps, and acls).
+     * @return whether the resource is an original resource.
      */
-    void enableVersioning();
-
-    /**
-     * Disable versioning
-     */
-    void disableVersioning();
-
-    /**
-     * Check if a resource is versioned
-     * @return whether the resource is versioned
-     */
-    boolean isVersioned();
+    boolean isOriginalResource();
 
     /**
      * Check if a resource is frozen (a historic version).
