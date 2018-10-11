@@ -60,6 +60,7 @@ import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
 
 import org.fcrepo.kernel.api.exception.ConstraintViolationException;
+import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
@@ -291,13 +292,13 @@ public class FedoraResourceImplTest {
     }
 
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = MalformedRdfException.class)
     public void testUpdateInvalidObjectUrlInSparql() throws RepositoryException {
         testUpdateInvalidSPARQL(
                 "INSERT DATA {<> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://pcdm.org/models##file> .}");
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = MalformedRdfException.class)
     public void testUpdateInvalidPredicateUrlInSparql() throws RepositoryException {
         testUpdateInvalidSPARQL("INSERT DATA {<> <http://www.w3.org/1999/02/> <http://pcdm.org/models#file> .}");
     }

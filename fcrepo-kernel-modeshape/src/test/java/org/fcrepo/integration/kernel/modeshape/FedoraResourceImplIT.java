@@ -57,6 +57,7 @@ import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.ConstraintViolationException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.InvalidPrefixException;
+import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -613,7 +614,7 @@ public class FedoraResourceImplIT extends AbstractIT {
                         + " WHERE { }", object.getTriples(subjects, emptySet()));
     }
 
-    @Test (expected = IllegalArgumentException.class)
+    @Test (expected = ConstraintViolationException.class)
     public void testInvalidSparqlUpdateValidation() {
         final String pid = getRandomPid();
         final FedoraResource object =
@@ -666,7 +667,7 @@ public class FedoraResourceImplIT extends AbstractIT {
                 object.getTriples(subjects, emptySet()));
     }
 
-    @Test (expected = IllegalArgumentException.class)
+    @Test (expected = MalformedRdfException.class)
     public void testInvalidSparqlUpdateValidationAltSyntax() {
         final String pid = getRandomPid();
         final FedoraResource object = containerService.findOrCreate(session, pid);
@@ -859,7 +860,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         }
     }
 
-    @Test (expected = IllegalArgumentException.class)
+    @Test (expected = MalformedRdfException.class)
     public void testUpdatePropertyBadMimeType() {
         final String pid = getRandomPid();
         final FedoraResource object = containerService.findOrCreate(session, pid);
