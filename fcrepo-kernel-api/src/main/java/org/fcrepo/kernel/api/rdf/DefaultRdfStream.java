@@ -43,7 +43,7 @@ import org.fcrepo.kernel.api.RdfStream;
  */
 public class DefaultRdfStream extends WrappingStream<Triple> implements RdfStream {
 
-    protected final Node node;
+    private final Node node;
 
     /**
      * Create an RdfStream

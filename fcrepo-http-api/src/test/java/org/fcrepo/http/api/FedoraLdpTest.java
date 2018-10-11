@@ -122,7 +122,6 @@ import org.fcrepo.kernel.api.exception.InsufficientStorageException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PreconditionException;
-import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.Container;
@@ -714,7 +713,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testGetWithObjectIncludeReferences()
-            throws ParseException, IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+            throws ParseException, IOException, UnsupportedAlgorithmException {
         setResource(Container.class);
         setField(testObj, "prefer", new MultiPrefer("return=representation; include=\"" + INBOUND_REFERENCES + "\""));
         final Response actual = testObj.getResource(null);
@@ -800,7 +799,7 @@ public class FedoraLdpTest {
     @Test
     @SuppressWarnings({"resource", "unchecked"})
     public void testGetWithBinaryDescription()
-            throws IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+            throws IOException, UnsupportedAlgorithmException {
 
         final NonRdfSourceDescription mockResource
                 = (NonRdfSourceDescription)setResource(NonRdfSourceDescription.class);
@@ -985,7 +984,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testCreateNewObject() throws MalformedRdfException, InvalidChecksumException,
-           IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+           IOException, UnsupportedAlgorithmException {
         setResource(Container.class);
         when(mockContainerService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockContainer);
         final Response actual = testObj.createObject(null, null, "b", null, null, null);
@@ -994,7 +993,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testCreateNewObjectWithVersionedResource() throws MalformedRdfException, InvalidChecksumException,
-           IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+           IOException, UnsupportedAlgorithmException {
         setResource(Container.class);
         when(mockContainerService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockContainer);
         final String versionedResourceLink = "<" + VERSIONED_RESOURCE.getURI() + ">;rel=\"type\"";
@@ -1004,7 +1003,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testCreateNewObjectWithSparql() throws MalformedRdfException,
-           InvalidChecksumException, UnsupportedAlgorithmException, IOException, UnsupportedAccessTypeException {
+           InvalidChecksumException, UnsupportedAlgorithmException, IOException {
         setResource(Container.class);
         when(mockContainerService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockContainer);
         final Response actual = testObj.createObject(null,
@@ -1015,7 +1014,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testCreateNewObjectWithRdf() throws MalformedRdfException,
-           InvalidChecksumException, IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+           InvalidChecksumException, IOException, UnsupportedAlgorithmException {
         setResource(Container.class);
         when(mockContainerService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockContainer);
         final Response actual = testObj.createObject(null, NTRIPLES_TYPE, "b",
@@ -1027,7 +1026,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testCreateNewBinary() throws MalformedRdfException, InvalidChecksumException,
-           IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+           IOException, UnsupportedAlgorithmException {
         setResource(Container.class);
         when(mockBinaryService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockBinary);
         try (final InputStream content = toInputStream("x", UTF_8)) {
@@ -1040,7 +1039,7 @@ public class FedoraLdpTest {
 
     @Test(expected = InsufficientStorageException.class)
     public void testCreateNewBinaryWithInsufficientResources() throws MalformedRdfException,
-           InvalidChecksumException, IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+           InvalidChecksumException, IOException, UnsupportedAlgorithmException {
         setResource(Container.class);
         when(mockBinaryService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockBinary);
 
@@ -1061,7 +1060,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testCreateNewBinaryWithContentTypeWithParams() throws MalformedRdfException,
-           InvalidChecksumException, IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+           InvalidChecksumException, IOException, UnsupportedAlgorithmException {
 
         setResource(Container.class);
         when(mockBinaryService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockBinary);
@@ -1076,7 +1075,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testCreateNewBinaryWithChecksumSHA() throws MalformedRdfException,
-           InvalidChecksumException, IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+           InvalidChecksumException, IOException, UnsupportedAlgorithmException {
 
         setResource(Container.class);
         when(mockBinaryService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockBinary);
@@ -1094,7 +1093,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testCreateNewBinaryWithChecksumSHA256() throws MalformedRdfException,
-        InvalidChecksumException, IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+        InvalidChecksumException, IOException, UnsupportedAlgorithmException {
 
         setResource(Container.class);
         when(mockBinaryService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockBinary);
@@ -1112,7 +1111,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testCreateNewBinaryWithChecksumMD5() throws MalformedRdfException,
-            InvalidChecksumException, IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+            InvalidChecksumException, IOException, UnsupportedAlgorithmException {
 
         setResource(Container.class);
         when(mockBinaryService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockBinary);
@@ -1130,7 +1129,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testCreateNewBinaryWithChecksumSHAandMD5() throws MalformedRdfException,
-           InvalidChecksumException, IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+           InvalidChecksumException, IOException, UnsupportedAlgorithmException {
 
         setResource(Container.class);
         when(mockBinaryService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockBinary);
@@ -1157,7 +1156,7 @@ public class FedoraLdpTest {
 
     @Test(expected = ClientErrorException.class)
     public void testPostToBinary() throws MalformedRdfException, InvalidChecksumException, IOException,
-            UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+            UnsupportedAlgorithmException {
         final FedoraBinary mockObject = (FedoraBinary)setResource(FedoraBinary.class);
         doReturn(mockObject).when(testObj).resource();
         testObj.createObject(null, null, null, null, null, null);
@@ -1165,7 +1164,7 @@ public class FedoraLdpTest {
 
     @Test(expected = CannotCreateResourceException.class)
     public void testLDPRNotImplemented() throws MalformedRdfException, InvalidChecksumException,
-            IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+            IOException, UnsupportedAlgorithmException {
         setResource(Container.class);
         when(mockContainerService.findOrCreate(mockFedoraSession, "/x")).thenReturn(mockContainer);
         testObj.createObject(null, null, "x", null, asList("<http://www.w3.org/ns/ldp#Resource>; rel=\"type\""), null);
@@ -1173,7 +1172,7 @@ public class FedoraLdpTest {
 
     @Test(expected = ClientErrorException.class)
     public void testLDPRNotImplementedInvalidLink() throws MalformedRdfException, InvalidChecksumException,
-            IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+            IOException, UnsupportedAlgorithmException {
         setResource(Container.class);
         when(mockContainerService.findOrCreate(mockFedoraSession, "/x")).thenReturn(mockContainer);
         testObj.createObject(null, null, "x", null, asList("<http://foo;rel=\"type\""), null);

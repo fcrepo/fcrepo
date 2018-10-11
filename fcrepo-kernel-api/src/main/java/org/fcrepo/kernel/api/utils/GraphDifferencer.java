@@ -41,11 +41,11 @@ import static org.apache.jena.sparql.graph.GraphFactory.createDefaultGraph;
  */
 public class GraphDifferencer {
 
-    private Graph notCommon;
+    private final Graph notCommon;
 
-    private Graph common;
+    private final Graph common;
 
-    private Stream.Builder<Triple> source = Stream.builder();
+    private final Stream.Builder<Triple> source = Stream.builder();
 
     /**
      * Diff a Model against a stream of triples

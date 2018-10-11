@@ -78,7 +78,6 @@ import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MementoDatetimeFormatException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -258,7 +257,6 @@ public class FedoraVersioning extends ContentExposingResource {
      * @param acceptValue the rdf media-type
      * @return List of versions for the object as RDF
      * @throws IOException in case of error extracting content
-     * @throws UnsupportedAccessTypeException if mimeType not a valid message/external-body content type
      */
     @GET
     @HtmlTemplate(value = "fcr:versions")
@@ -266,7 +264,7 @@ public class FedoraVersioning extends ContentExposingResource {
         N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
         TURTLE_X, TEXT_HTML_WITH_CHARSET, APPLICATION_LINK_FORMAT })
     public Response getVersionList(@HeaderParam("Range") final String rangeValue,
-        @HeaderParam("Accept") final String acceptValue) throws IOException, UnsupportedAccessTypeException {
+        @HeaderParam("Accept") final String acceptValue) throws IOException {
 
         final FedoraResource theTimeMap = resource().getTimeMap();
         checkCacheControlHeaders(request, servletResponse, theTimeMap, session);

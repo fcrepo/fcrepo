@@ -155,7 +155,6 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
 import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
-import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -262,12 +261,11 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * @param resource the fedora resource
      * @return HTTP response
      * @throws IOException in case of error extracting content
-     * @throws UnsupportedAccessTypeException if mimeType not a valid message/external-body content type
      */
     protected Response getContent(final String rangeValue,
                                   final int limit,
                                   final RdfStream rdfStream,
-                                  final FedoraResource resource) throws IOException, UnsupportedAccessTypeException {
+                                  final FedoraResource resource) throws IOException {
 
         final RdfNamespacedStream outputStream;
 

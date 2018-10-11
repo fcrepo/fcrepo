@@ -47,13 +47,13 @@ public interface VersionService {
     /**
      * To format a datetime for use as a Memento path.
      */
-    public static final DateTimeFormatter MEMENTO_LABEL_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
+    DateTimeFormatter MEMENTO_LABEL_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
             .withZone(ZoneId.of("UTC"));
 
     /**
      * To format a datetime as RFC-1123 with correct timezone.
      */
-    public static final DateTimeFormatter MEMENTO_RFC_1123_FORMATTER = RFC_1123_DATE_TIME.withZone(ZoneId.of("UTC"));
+    DateTimeFormatter MEMENTO_RFC_1123_FORMATTER = RFC_1123_DATE_TIME.withZone(ZoneId.of("UTC"));
 
     /**
      * Explicitly creates a version for the resource at the path provided.
@@ -113,7 +113,7 @@ public interface VersionService {
      * @param dateTime the date/time of the version
      * @param storagePolicyDecisionPoint optional storage policy
      * @return the version
-     * @throws InvalidChecksumException
+     * @throws InvalidChecksumException on error
      */
     FedoraBinary createBinaryVersion(FedoraSession session, FedoraBinary resource, Instant dateTime,
             StoragePolicyDecisionPoint storagePolicyDecisionPoint)

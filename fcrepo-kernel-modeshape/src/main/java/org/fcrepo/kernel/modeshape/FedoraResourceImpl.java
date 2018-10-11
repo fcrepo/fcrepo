@@ -1293,11 +1293,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     }
 
   @Override
-  public FedoraResource getBaseVersion() {
-    return null;
-  }
-
-  @Override
   public FedoraResource findMementoByDatetime(final Instant mementoDatetime) {
       if (isOriginalResource()) {
             final FedoraResource timemap = this.getTimeMap();
@@ -1337,33 +1332,4 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
       return ChronoUnit.SECONDS.between(d1, d2);
   }
 
-  @Override
-  public boolean isFrozenResource() {
-      LOGGER.warn("Review if method (isFrozenResource) can be removed after implementing Memento!");
-      return false;
-  }
-
-  @Override
-  public FedoraResource getVersionedAncestor() {
-      LOGGER.warn("Review if method (getVersionedAncestor) can be removed after implementing Memento!");
-      return null;
-  }
-
-  @Override
-  public FedoraResource getUnfrozenResource() {
-      LOGGER.warn("Review if method (getUnfrozenResource) can be removed after implementing Memento!");
-      return null;
-  }
-
-  @Override
-  public FedoraResource getVersion(final String label) {
-      LOGGER.warn("Review if method (getVersion) can be removed after implementing Memento!");
-      return null;
-  }
-
-  @Override
-  public String getVersionLabelOfFrozenResource() {
-      LOGGER.warn("Review if method (getVersionLabelOfFrozenResource) can be removed after implementing Memento!");
-      return null;
-  }
 }

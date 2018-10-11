@@ -30,7 +30,6 @@ public class TombstoneException extends RepositoryRuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    private final FedoraResource fedoraResource;
     private final String uri;
 
     /**
@@ -48,16 +47,7 @@ public class TombstoneException extends RepositoryRuntimeException {
      */
     public TombstoneException(final FedoraResource fedoraResource, final String uri) {
         super("Discovered tombstone resource at " + fedoraResource);
-        this.fedoraResource = fedoraResource;
         this.uri = uri;
-    }
-
-    /**
-     * Get the tombstone resource
-     * @return the tombstone resource
-     */
-    public FedoraResource getResource() {
-        return fedoraResource;
     }
 
     /**

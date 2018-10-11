@@ -20,7 +20,6 @@ package org.fcrepo.kernel.api;
 import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Collection;
 import java.util.Optional;
 
 /**
@@ -46,12 +45,6 @@ public interface FedoraSession {
      * @return the new expiration date
      */
     Instant updateExpiry(Duration amountToAdd);
-
-    /**
-     * Get the date this session was created
-     * @return creation date
-     */
-    Instant getCreated();
 
     /**
      * Get the date this session expires
@@ -81,25 +74,4 @@ public interface FedoraSession {
      */
     void addSessionData(String key, String value);
 
-    /**
-     * Retrieve the session data for a given key
-     * @param key the key
-     * @return the value
-     */
-    Collection<String> getSessionData(String key);
-
-    /**
-     * Remove a particular session key-value pair
-     * @param key the data key
-     * @param value the data value
-     */
-    void removeSessionData(String key, String value);
-
-    /**
-     * Remove all session data for a particular key
-     * @param key the data key
-     */
-    default void removeSessionData(final String key) {
-        getSessionData(key).forEach(v -> removeSessionData(key, v));
-    }
 }

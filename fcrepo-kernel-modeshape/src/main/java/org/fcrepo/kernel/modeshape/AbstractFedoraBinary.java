@@ -289,12 +289,6 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
         super.delete();
     }
 
-    @Override
-    public FedoraResource getBaseVersion() {
-        LOGGER.warn("Removed method 'getBaseVersion()' is not used after implementing Memento!");
-        return null;
-    }
-
     /**
      * Check of the property exists on the description of this binary.
      *

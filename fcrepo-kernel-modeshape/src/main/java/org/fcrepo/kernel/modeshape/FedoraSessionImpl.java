@@ -21,14 +21,12 @@ import static java.lang.Long.parseLong;
 import static java.time.Duration.ofMillis;
 import static java.time.Duration.ofMinutes;
 import static java.time.Instant.now;
-import static java.util.Collections.singleton;
 import static java.util.Optional.of;
 import static java.util.UUID.randomUUID;
 
 import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -122,11 +120,6 @@ public class FedoraSessionImpl implements FedoraSession {
     }
 
     @Override
-    public Instant getCreated() {
-        return created;
-    }
-
-    @Override
     public Optional<Instant> getExpires() {
         return of(expires);
     }
@@ -155,21 +148,6 @@ public class FedoraSessionImpl implements FedoraSession {
     @Override
     public void addSessionData(final String key, final String value) {
         sessionData.put(key, value);
-    }
-
-    @Override
-    public Collection<String> getSessionData(final String key) {
-        return singleton(sessionData.get(key));
-    }
-
-    @Override
-    public void removeSessionData(final String key, final String value) {
-        sessionData.remove(key, value);
-    }
-
-    @Override
-    public void removeSessionData(final String key) {
-        sessionData.remove(key);
     }
 
     /**

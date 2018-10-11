@@ -19,7 +19,6 @@ package org.fcrepo.kernel.api.models;
 
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
-import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.RdfStream;
@@ -158,8 +157,7 @@ public interface FedoraBinary extends FedoraResource {
      * @param algorithms the digest algorithms to be used
      * @return the checksums of this datastream
      * @throws org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException if unsupported digest algorithm occurred
-     * @throws org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException if unsupported access type occurred
      */
     Collection<URI> checkFixity(IdentifierConverter<Resource, FedoraResource> idTranslator,
-            Collection<String> algorithms) throws UnsupportedAlgorithmException, UnsupportedAccessTypeException;
+            Collection<String> algorithms) throws UnsupportedAlgorithmException;
 }

@@ -40,7 +40,6 @@ import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -270,7 +269,7 @@ public class InternalFedoraBinary extends AbstractFedoraBinary {
     @Override
     public Collection<URI> checkFixity(final IdentifierConverter<Resource, FedoraResource> idTranslator,
             final Collection<String> algorithms)
-            throws UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+            throws UnsupportedAlgorithmException {
 
         try {
 

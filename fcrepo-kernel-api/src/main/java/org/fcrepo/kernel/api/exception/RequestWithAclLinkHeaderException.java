@@ -36,13 +36,4 @@ public class RequestWithAclLinkHeaderException extends ConstraintViolationExcept
         super(msg);
     }
 
-    /**
-     * Ordinary constructor.
-     *
-     * @param rootCause the root cause
-     */
-    public RequestWithAclLinkHeaderException(final Throwable rootCause) {
-        super(rootCause);
-    }
-
 }

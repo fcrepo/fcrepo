@@ -42,7 +42,7 @@ public abstract class AutoReloadingConfiguration {
 
     protected String configPath;
 
-    protected boolean monitorForChanges;
+    private boolean monitorForChanges;
 
     private Thread monitorThread;
 

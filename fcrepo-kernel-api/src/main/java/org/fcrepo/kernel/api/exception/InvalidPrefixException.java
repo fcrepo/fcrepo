@@ -37,14 +37,4 @@ public class InvalidPrefixException extends RepositoryRuntimeException {
         super(msg);
     }
 
-    /**
-     * Ordinary constructor
-     *
-     * @param msg the message
-     * @param rootCause the root cause
-     */
-    public InvalidPrefixException(final String msg, final Throwable rootCause) {
-        super(msg, rootCause);
-    }
-
 }

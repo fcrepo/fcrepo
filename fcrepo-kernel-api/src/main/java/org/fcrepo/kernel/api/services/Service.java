@@ -33,7 +33,7 @@ public interface Service<T> {
      * @param session the session
      * @return whether T exists at the given path
      */
-    public boolean exists(final FedoraSession session, final String path);
+    boolean exists(final FedoraSession session, final String path);
     /**
      * Retrieve an existing T instance by session and path
      *
@@ -41,7 +41,7 @@ public interface Service<T> {
      * @param session the session
      * @return retrieved T
      */
-    public T find(final FedoraSession session, final String path);
+    T find(final FedoraSession session, final String path);
     /**
      * Retrieve a T instance by session and path
      *
@@ -49,5 +49,5 @@ public interface Service<T> {
      * @param path the path to the node
      * @return retrieved T
      */
-    public T findOrCreate(final FedoraSession session, final String path);
+    T findOrCreate(final FedoraSession session, final String path);
 }
