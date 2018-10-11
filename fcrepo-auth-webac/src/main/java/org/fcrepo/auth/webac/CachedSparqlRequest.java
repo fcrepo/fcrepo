@@ -71,7 +71,7 @@ public class CachedSparqlRequest extends HttpServletRequestWrapper {
         return this.reader;
     }
 
-    private class CustomServletInputStream extends ServletInputStream {
+    private static class CustomServletInputStream extends ServletInputStream {
 
         private final ByteArrayInputStream buffer;
 
