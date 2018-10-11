@@ -840,13 +840,11 @@ public class WebACRecipesIT extends AbstractResourceIT {
         logger.debug("Can username 'smith123' read {} (overridden system ACL)", id);
         final HttpGet requestGet3 = getObjMethod(id);
         setAuth(requestGet3, "smith123");
-        // robyj - fcrepo-2668 changed this from SC_FORBIDDEN to SC_OK
         assertEquals(HttpStatus.SC_OK, getStatus(requestGet3));
 
         logger.debug("Can username 'group123' read {} (overridden system ACL)", id);
         final HttpGet requestGet4 = getObjMethod(id);
         setAuth(requestGet4, "group123");
-        // robyj - fcrepo-2668 changed the code from SC_FORBIDDEN to SC_OK
         assertEquals(HttpStatus.SC_OK, getStatus(requestGet4));
 
         System.clearProperty(USER_AGENT_BASE_URI_PROPERTY);

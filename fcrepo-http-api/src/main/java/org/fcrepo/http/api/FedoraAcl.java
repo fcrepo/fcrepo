@@ -346,6 +346,7 @@ public class FedoraAcl extends ContentExposingResource {
 
         try (final InputStream is = FedoraAcl.class.getResourceAsStream(ROOT_AUTHORIZATION_LOCATION)) {
             LOGGER.debug("Getting root ACL from classpath: {}", ROOT_AUTHORIZATION_LOCATION);
+
             return model.read(is, baseUri, TTL.getName());
         } catch (final IOException ex) {
             throw new RuntimeException("Error reading the default root Acl " + ROOT_AUTHORIZATION_LOCATION + ".", ex);

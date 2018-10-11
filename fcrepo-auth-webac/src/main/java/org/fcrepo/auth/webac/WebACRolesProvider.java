@@ -212,7 +212,6 @@ public class WebACRolesProvider {
                                   effectiveRoles.computeIfAbsent(agent, key -> new HashSet<>())
                                                 .addAll(auth.getModes().stream().map(URI::toString).collect(toSet()));
                               });
-
                           auth.getAgentClasses().stream().filter(agentClass -> agentClass.equals(FOAF_AGENT_VALUE) ||
                                                                                agentClass.equals(
                                                                                    WEBAC_AUTHENTICATED_AGENT_VALUE))
