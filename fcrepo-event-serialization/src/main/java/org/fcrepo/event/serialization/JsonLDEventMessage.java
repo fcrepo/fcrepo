@@ -18,6 +18,7 @@
 
 package org.fcrepo.event.serialization;
 
+import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.fcrepo.http.commons.api.rdf.HttpResourceConverter.convertToExternalPath;
 import static org.fcrepo.kernel.api.RdfLexicon.PROV_NAMESPACE;
@@ -48,7 +49,7 @@ class JsonLDEventMessage {
     @JsonIgnore
     private static final Logger LOGGER = getLogger(JsonLDEventMessage.class);
 
-    public static final String ACTIVITYSTREAMS_NS = "https://www.w3.org/ns/activitystreams";
+    private static final String ACTIVITYSTREAMS_NS = "https://www.w3.org/ns/activitystreams";
 
     static class ContextElement {
 
@@ -184,11 +185,11 @@ class JsonLDEventMessage {
         }
 
         // build actors list
-        final List<Actor> actor = new ArrayList();
-        actor.add(new Person(evt.getUserURI().toString(), Arrays.asList("Person")));
+        final List<Actor> actor = new ArrayList<>();
+        actor.add(new Person(evt.getUserURI().toString(), singletonList("Person")));
         final String softwareAgent = evt.getInfo().get(USER_AGENT);
         if (softwareAgent != null) {
-            actor.add(new Application(softwareAgent, Arrays.asList("Application")));
+            actor.add(new Application(softwareAgent, singletonList("Application")));
         }
 
         final JsonLDEventMessage msg = new JsonLDEventMessage();
