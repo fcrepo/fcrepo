@@ -182,8 +182,8 @@
     
     <!-- JMS Topic -->
     <!-- IMPORTANT: While the JMS Topic is adequate for demonstrating Fedora's JMS message system,
-                    for production use it is recommended to either use the JMQ Queue instead,
-                    or to disable JMS messaging entirely by if you are not using any services that
+                    for production use it is recommended to either use the JMS Queue instead,
+                    or to disable JMS messaging entirely if you are not using any services that
                     require it (e.g., indexers, fixity checking, auditing, etc.) -->
     <bean class="org.fcrepo.jms.JMSTopicPublisher">
       <constructor-arg value="fedora"/>
