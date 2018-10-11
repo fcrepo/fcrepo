@@ -180,12 +180,19 @@
     <!-- publishes events from the internal bus to a JMS Topic or Queue.
          "constructor-arg" for both is topic/queue name. -->
     
-    <!--   JMS Topic -->
+    <!-- JMS Topic -->
+    <!-- IMPORTANT: While the JMS Topic is adequate for demonstrating Fedora's JMS message system,
+                    for production use it is recommended to either use the JMQ Queue instead,
+                    or to disable JMS messaging entirely by if you are not using any services that
+                    require it (e.g., indexers, fixity checking, auditing, etc.) -->
     <bean class="org.fcrepo.jms.JMSTopicPublisher">
       <constructor-arg value="fedora"/>
     </bean>
     
     <!-- JMS Queue -->
+    <!-- The JMS Queue is the RECOMMENDED messaging configuration for production deployments.
+         Unlike the topic, the queue will retain messages until they are consumed. To use the
+         queue, comment out the topic bean above and uncomment the queue bean below. -->
     <!--
     <bean class="org.fcrepo.jms.JMSQueuePublisher">
       <constructor-arg value="fedora"/>
