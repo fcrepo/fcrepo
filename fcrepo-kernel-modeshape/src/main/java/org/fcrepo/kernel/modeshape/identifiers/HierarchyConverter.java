@@ -42,7 +42,7 @@ import org.slf4j.Logger;
  */
 public class HierarchyConverter extends InternalIdentifierConverter {
 
-    public static final String DEFAULT_SEPARATOR = "/";
+    private static final String DEFAULT_SEPARATOR = "/";
 
     private String separator = DEFAULT_SEPARATOR;
 

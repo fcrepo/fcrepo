@@ -79,11 +79,11 @@ import static org.slf4j.LoggerFactory.getLogger;
  */
 public abstract class FedoraTypesUtils implements FedoraTypes {
 
-    public static final String REFERENCE_PROPERTY_SUFFIX = "_ref";
+    private static final String REFERENCE_PROPERTY_SUFFIX = "_ref";
 
     private static final Logger LOGGER = getLogger(FedoraTypesUtils.class);
 
-    private static Set<String> privateProperties = of(
+    private static final Set<String> privateProperties = of(
             "jcr:mime",
             "jcr:mimeType",
             "jcr:frozenUuid",
@@ -99,7 +99,7 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
             FROZEN_PRIMARY_TYPE,
             MEMENTO_DATETIME);
 
-    private static Set<String> validJcrProperties = of(
+    private static final Set<String> validJcrProperties = of(
             JCR_CREATED,
             JCR_CREATEDBY,
             JCR_LASTMODIFIED,
@@ -108,20 +108,21 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
     /**
      * Predicate for determining whether this {@link Node} is a {@link org.fcrepo.kernel.api.models.Container}.
      */
-    public static Predicate<Node> isContainer = new AnyTypesPredicate(FEDORA_CONTAINER);
+    public static final Predicate<Node> isContainer = new AnyTypesPredicate(FEDORA_CONTAINER);
 
     /**
      * Predicate for determining whether this {@link Node} is a
      * {@link org.fcrepo.kernel.api.models.NonRdfSourceDescription}.
      */
-    public static Predicate<Node> isNonRdfSourceDescription = new AnyTypesPredicate(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
+    public static final Predicate<Node> isNonRdfSourceDescription =
+            new AnyTypesPredicate(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
 
 
     /**
      * Predicate for determining whether this {@link Node} is a Fedora
      * binary.
      */
-    public static Predicate<Node> isFedoraBinary = new AnyTypesPredicate(FEDORA_BINARY);
+    public static final Predicate<Node> isFedoraBinary = new AnyTypesPredicate(FEDORA_BINARY);
 
     /**
      * Predicate for determining whether this {@link FedoraResource} has a frozen node
@@ -132,43 +133,43 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
     /**
      * Predicate for determining whether this {@link Node} is a Fedora Skolem node.
      */
-    public static Predicate<Node> isSkolemNode = new AnyTypesPredicate(FEDORA_SKOLEM);
+    public static final Predicate<Node> isSkolemNode = new AnyTypesPredicate(FEDORA_SKOLEM);
 
     /**
      * Predicate for determining whether this {@link Node} is a Memento.
      */
-    public static Predicate<Node> isMemento = new AnyTypesPredicate(MEMENTO);
+    public static final Predicate<Node> isMemento = new AnyTypesPredicate(MEMENTO);
 
 
     /**
      * Predicate for determining whether this {@link Node} is an Web ACL.
      */
-    public static Predicate<Node> isAcl = new AnyTypesPredicate(FEDORA_WEBAC_ACL);
+    public static final Predicate<Node> isAcl = new AnyTypesPredicate(FEDORA_WEBAC_ACL);
 
     /**
      * Check if a property is a reference property.
      */
-    public static Predicate<Property> isInternalReferenceProperty = uncheck(p -> (p.getType() == REFERENCE ||
+    public static final Predicate<Property> isInternalReferenceProperty = uncheck(p -> (p.getType() == REFERENCE ||
             p.getType() == WEAKREFERENCE) &&
             p.getName().endsWith(REFERENCE_PROPERTY_SUFFIX));
 
     /**
      *  Check whether a type should be internal.
      */
-    public static Predicate<String> hasInternalNamespace = type ->
+    public static final Predicate<String> hasInternalNamespace = type ->
         type.startsWith("jcr:") || type.startsWith("mode:") || type.startsWith("nt:") ||
             type.startsWith("mix:");
 
     /**
      * Predicate for determining whether a JCR property should be converted to the fedora namespace.
      */
-    public static Predicate<String> isPublicJcrProperty = validJcrProperties::contains;
+    private static final Predicate<String> isPublicJcrProperty = validJcrProperties::contains;
 
     /**
      * Check whether a property is protected (ie, cannot be modified directly) but
      * is not one we've explicitly chosen to include.
      */
-    private static Predicate<Property> isProtectedAndShouldBeHidden = uncheck(p -> {
+    private static final Predicate<Property> isProtectedAndShouldBeHidden = uncheck(p -> {
         if (!p.getDefinition().isProtected()) {
             return false;
         } else if (p.getParent().isNodeType(FROZEN_NODE)) {
@@ -187,14 +188,14 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
     * Check whether a property is an internal property that should be suppressed
     * from external output.
     */
-    public static Predicate<Property> isInternalProperty = isBinaryContentProperty
+    public static final Predicate<Property> isInternalProperty = isBinaryContentProperty
                             .or(isProtectedAndShouldBeHidden::test)
                             .or(uncheck(p -> privateProperties.contains(p.getName())));
 
     /**
      * Check whether a type is an internal type that should be suppressed from external output.
      */
-    public static Predicate<URI> isInternalType = t -> t.toString().equals(MEMENTO_TYPE);
+    public static final Predicate<URI> isInternalType = t -> t.toString().equals(MEMENTO_TYPE);
 
     /**
      * A functional predicate to check whether a property is a JCR property that should be exposed.
@@ -232,7 +233,7 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
      * Check if a node is "internal" and should not be exposed e.g. via the REST
      * API
      */
-    public static Predicate<Node> isInternalNode = uncheck(n -> n.isNodeType("mode:system"));
+    public static final Predicate<Node> isInternalNode = uncheck(n -> n.isNodeType("mode:system"));
 
     /**
      * Check if a node is externally managed.
@@ -251,7 +252,7 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
      * match the repository's configured store name, then it is an
      * external node.
      */
-    public static Predicate<Node> isExternalNode = uncheck(n ->  {
+    public static final Predicate<Node> isExternalNode = uncheck(n ->  {
         if (NodeKey.isValidRandomIdentifier(n.getIdentifier())) {
             return false;
         } else if (n.getPrimaryNodeType().getName().equals(ROOT)) {
@@ -302,7 +303,7 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
      * @return a JCR PropertyDefinition, if available
      * @throws javax.jcr.RepositoryException if repository exception occurred
      */
-    public static Optional<PropertyDefinition> getDefinitionForPropertyName(final Node node, final String propertyName)
+    private static Optional<PropertyDefinition> getDefinitionForPropertyName(final Node node, final String propertyName)
             throws RepositoryException {
         LOGGER.debug("Looking for property name: {}", propertyName);
         final Predicate<PropertyDefinition> sameName = p -> propertyName.equals(p.getName());
@@ -469,7 +470,7 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
      * @param modifyingUser the userID who modified this resource or null if not explicitly set
      *
      */
-    public static void touch(final Node node, final Calendar modified, final String modifyingUser) {
+    private static void touch(final Node node, final Calendar modified, final String modifyingUser) {
         touch(node, null, null, modified, modifyingUser);
     }
 

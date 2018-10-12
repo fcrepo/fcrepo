@@ -148,26 +148,26 @@ import static org.junit.Assert.fail;
 public class FedoraResourceImplIT extends AbstractIT {
 
     @Inject
-    FedoraRepository repo;
+    private FedoraRepository repo;
 
     @Inject
-    NodeService nodeService;
+    private NodeService nodeService;
 
     @Inject
-    ContainerService containerService;
+    private ContainerService containerService;
 
     @Inject
-    BinaryService binaryService;
+    private BinaryService binaryService;
 
     @Inject
-    VersionService versionService;
+    private VersionService versionService;
 
     private FedoraSession session;
 
     private DefaultIdentifierTranslator subjects;
 
     @Before
-    public void setUp() throws RepositoryException {
+    public void setUp() {
         session = repo.login();
         subjects = new DefaultIdentifierTranslator(getJcrSession(session));
     }
@@ -178,7 +178,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetRootNode() throws RepositoryException {
+    public void testGetRootNode() {
         final FedoraSession session = repo.login();
         final FedoraResource object = nodeService.find(session, "/");
         assertEquals("/", object.getPath());
@@ -204,7 +204,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testLastModified() throws RepositoryException {
+    public void testLastModified() {
         final String pid = getRandomPid();
         containerService.findOrCreate(session, "/" + pid);
 
@@ -731,7 +731,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testEtagValue() throws RepositoryException {
+    public void testEtagValue() {
         final FedoraResource object =
             containerService.findOrCreate(session, "/testEtagObject");
 
@@ -1029,7 +1029,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     @Test
     // @Ignore ("Until implemented with Memento")
-    public void testDeleteLinkedVersionedResources() throws RepositoryException {
+    public void testDeleteLinkedVersionedResources() {
         final Container object1 = containerService.findOrCreate(session, "/" + getRandomPid());
         final Container object2 = containerService.findOrCreate(session, "/" + getRandomPid());
         session.commit();
@@ -1071,7 +1071,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
 
     @Test
-    public void testHash() throws RepositoryException {
+    public void testHash() {
         final String pid = getRandomPid();
         final Container object = containerService.findOrCreate(session, "/" + pid);
         session.commit();
@@ -1143,7 +1143,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetMementoByDatetime() throws RepositoryException {
+    public void testGetMementoByDatetime() {
         final FedoraResource object1 = containerService.findOrCreate(session, "/" + getRandomPid());
 
         final DateTimeFormatter FMT = new DateTimeFormatterBuilder()
@@ -1206,7 +1206,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetAcl() throws RepositoryException {
+    public void testGetAcl() {
         final String pid = getRandomPid();
         final FedoraResource resource = containerService.findOrCreate(session, "/" + pid);
         session.commit();

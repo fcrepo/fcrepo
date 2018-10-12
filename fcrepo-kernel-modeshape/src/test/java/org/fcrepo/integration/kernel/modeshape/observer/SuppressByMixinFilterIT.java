@@ -66,7 +66,7 @@ public class SuppressByMixinFilterIT extends AbstractIT {
     private final Set<String> eventsReceived = new HashSet<>();
 
     @Test
-    public void shouldSuppressWithMixin() throws RepositoryException {
+    public void shouldSuppressWithMixin() {
 
         final Session se = getJcrSession(repository.login());
         try {
@@ -88,7 +88,7 @@ public class SuppressByMixinFilterIT extends AbstractIT {
     }
 
     @Test
-    public void shouldAllowWithoutMixin() throws RepositoryException {
+    public void shouldAllowWithoutMixin() {
 
         final Session se = getJcrSession(repository.login());
         try {

@@ -62,7 +62,7 @@ public abstract class TestHelpers {
         return getContentNodeMock(mock, mockDesc, content.getBytes());
     }
 
-    public static Node getContentNodeMock(final Node mock, final Node mockDesc, final byte[] content) {
+    private static Node getContentNodeMock(final Node mock, final Node mockDesc, final byte[] content) {
         final long size = content.length;
         final String digest = checksumString(content);
         final Value digestValue = mock(Value.class);
@@ -106,7 +106,7 @@ public abstract class TestHelpers {
         return checksumString(content.getBytes());
     }
 
-    public static String checksumString(final byte[] content) {
+    private static String checksumString(final byte[] content) {
         try {
             final MessageDigest d = MessageDigest.getInstance(SHA1.algorithm);
             final byte[] digest = d.digest(content);
@@ -148,7 +148,7 @@ public abstract class TestHelpers {
         return mock;
     }
 
-    public static byte[] randomData(final int byteLength) {
+    private static byte[] randomData(final int byteLength) {
         final byte[] bytes = new byte[byteLength];
         GARBAGE_GENERATOR.nextBytes(bytes);
         return bytes;

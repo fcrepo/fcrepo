@@ -48,7 +48,7 @@ public class SuppressByMixinFilter extends DefaultFilter {
 
     @Override
     public boolean test(final Event event) {
-        return super.test(event) && !getResourceTypes(event).anyMatch(suppressedMixins::contains);
+        return super.test(event) && getResourceTypes(event).noneMatch(suppressedMixins::contains);
     }
 
 }

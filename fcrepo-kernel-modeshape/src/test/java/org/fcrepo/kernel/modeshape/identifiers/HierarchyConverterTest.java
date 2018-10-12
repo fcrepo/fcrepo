@@ -86,7 +86,7 @@ public class HierarchyConverterTest {
         }
     }
 
-    public void testRoundTrip(final byte levels, final byte length) {
+    private void testRoundTrip(final byte levels, final byte length) {
         testTranslator.setLevels(levels);
         testTranslator.setLength(length);
         final String result = testTranslator.reverse().convert(testId);

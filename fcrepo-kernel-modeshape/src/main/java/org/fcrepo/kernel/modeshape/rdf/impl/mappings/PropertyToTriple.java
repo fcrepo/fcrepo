@@ -118,5 +118,5 @@ public class PropertyToTriple implements Function<Property, Stream<Triple>> {
             LOGGER.warn("Reference to non-existent resource encounterd: {}", value);
             return false;
         }
-    };
+    }
 }

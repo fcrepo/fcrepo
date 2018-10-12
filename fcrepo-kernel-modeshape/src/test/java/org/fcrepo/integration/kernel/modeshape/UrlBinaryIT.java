@@ -17,7 +17,6 @@
  */
 package org.fcrepo.integration.kernel.modeshape;
 
-import static java.util.Arrays.asList;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
@@ -32,6 +31,7 @@ import static java.util.Collections.singletonList;
 
 import java.net.URI;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -93,7 +93,7 @@ public class UrlBinaryIT extends AbstractIT {
     private String dsId;
 
     @Before
-    public void setup() throws Exception {
+    public void setup() {
         session = repo.login();
 
         fileUrl = "http://localhost:" + wireMockRule.port() + "/file.txt";
@@ -117,7 +117,7 @@ public class UrlBinaryIT extends AbstractIT {
     }
 
     @After
-    public void after() throws Exception {
+    public void after() {
         session.expire();
     }
 
@@ -219,6 +219,6 @@ public class UrlBinaryIT extends AbstractIT {
     }
 
     private Set<URI> sha1Set(final String checksum) {
-        return new HashSet<>(asList(asURI(SHA1.algorithm, checksum)));
+        return new HashSet<>(Collections.singletonList(asURI(SHA1.algorithm, checksum)));
     }
 }

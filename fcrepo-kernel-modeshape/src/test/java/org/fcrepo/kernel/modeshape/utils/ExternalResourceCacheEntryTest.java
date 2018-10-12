@@ -55,7 +55,7 @@ public class ExternalResourceCacheEntryTest {
 
     private ExternalResourceCacheEntry testObj;
 
-    public static String RESOURCE_URL = "http://www.example.com/file";
+    private static final String RESOURCE_URL = "http://www.example.com/file";
 
     @Before
     public void setUp() throws RepositoryException {
@@ -65,7 +65,7 @@ public class ExternalResourceCacheEntryTest {
     }
 
     @Test
-    public void testGetExternalIdentifier() throws RepositoryException {
+    public void testGetExternalIdentifier() {
         assertEquals(RESOURCE_URL, testObj.getExternalIdentifier());
     }
 }

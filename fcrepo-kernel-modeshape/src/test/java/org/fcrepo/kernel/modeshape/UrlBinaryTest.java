@@ -269,7 +269,7 @@ public class UrlBinaryTest {
     }
 
     @Test
-    public void testGetMimeType() throws Exception {
+    public void testGetMimeType() {
         getContentNodeMock(mockContent, mockDescNode, EXPECTED_CONTENT);
 
         final String mimeType = testObj.getMimeType();
@@ -296,7 +296,7 @@ public class UrlBinaryTest {
         try {
             when(proxyURLProperty.getString()).thenReturn(fileUrl);
             when(proxyURLProperty.getValue()).thenReturn(mockURIValue);
-            when(proxyURLProperty.getName()).thenReturn(PROXY_FOR.toString());
+            when(proxyURLProperty.getName()).thenReturn(PROXY_FOR);
             when(mockURIValue.getString()).thenReturn(fileUrl);
 
             when(mockContent.hasProperty(PROXY_FOR)).thenReturn(true);
@@ -310,7 +310,7 @@ public class UrlBinaryTest {
         try {
             when(redirectURLProperty.getString()).thenReturn(fileUrl);
             when(redirectURLProperty.getValue()).thenReturn(mockURIValue);
-            when(redirectURLProperty.getName()).thenReturn(PROXY_FOR.toString());
+            when(redirectURLProperty.getName()).thenReturn(PROXY_FOR);
             when(mockContent.hasProperty(REDIRECTS_TO)).thenReturn(true);
             when(mockContent.getProperty(REDIRECTS_TO)).thenReturn(redirectURLProperty);
         } catch (final RepositoryException e) {

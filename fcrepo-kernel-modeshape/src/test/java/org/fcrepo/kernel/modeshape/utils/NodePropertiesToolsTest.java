@@ -18,6 +18,7 @@
 package org.fcrepo.kernel.modeshape.utils;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static javax.jcr.PropertyType.URI;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static org.junit.Assert.assertEquals;
@@ -138,26 +139,26 @@ public class NodePropertiesToolsTest {
         when(mockValue.getString()).thenReturn("xyz");
         when(mockValueFactory.createValue(mockNode, true)).thenReturn(mockRefValue);
         when(mockRefValue.getType()).thenReturn(WEAKREFERENCE);
-        when(mockNode.setProperty("mockPropertyName_ref", asList(mockRefValue).toArray(new Value[0]), WEAKREFERENCE))
-                .thenReturn(mockRefProperty);
+        when(mockNode.setProperty("mockPropertyName_ref",
+                singletonList(mockRefValue).toArray(new Value[0]), WEAKREFERENCE)).thenReturn(mockRefProperty);
         testNodePropertiesTools.appendOrReplaceNodeProperty(mockNode,
                 mockPropertyName, mockValue);
         verify(mockNode).setProperty(mockPropertyName, mockValue, 0);
 
         verify(mockNode, times(1)).setProperty("mockPropertyName_ref",
-                                        asList(mockRefValue).toArray(new Value[0]), WEAKREFERENCE);
+                singletonList(mockRefValue).toArray(new Value[0]), WEAKREFERENCE);
     }
 
     @Test
     public void addNewMultiValuedProperty() throws RepositoryException {
         when(mockDefinition.isMultiple()).thenReturn(true);
         when(mockNode.hasProperty(mockPropertyName)).thenReturn(false);
-        when(mockNode.setProperty(mockPropertyName, asList(mockValue).toArray(new Value[0]), 0))
+        when(mockNode.setProperty(mockPropertyName, singletonList(mockValue).toArray(new Value[0]), 0))
                 .thenReturn(mockProperty);
         testNodePropertiesTools.appendOrReplaceNodeProperty(mockNode,
                 mockPropertyName, mockValue);
         verify(mockNode).setProperty(mockPropertyName,
-                asList(mockValue).toArray(new Value[0]), 0);
+                singletonList(mockValue).toArray(new Value[0]), 0);
     }
 
     @Test
@@ -171,15 +172,15 @@ public class NodePropertiesToolsTest {
 
         when(mockDefinition.isMultiple()).thenReturn(true);
         when(mockNode.hasProperty(mockPropertyName)).thenReturn(false);
-        when(mockNode.setProperty(mockPropertyName, asList(mockValue).toArray(new Value[0]), 0))
+        when(mockNode.setProperty(mockPropertyName, singletonList(mockValue).toArray(new Value[0]), 0))
                 .thenReturn(mockProperty);
-        when(mockNode.setProperty("mockPropertyName_ref", asList(mockRefValue).toArray(new Value[0]), WEAKREFERENCE))
-                .thenReturn(mockRefProperty);
+        when(mockNode.setProperty("mockPropertyName_ref",
+                singletonList(mockRefValue).toArray(new Value[0]), WEAKREFERENCE)).thenReturn(mockRefProperty);
         testNodePropertiesTools.appendOrReplaceNodeProperty(mockNode, mockPropertyName, mockValue);
         verify(mockNode).setProperty(mockPropertyName,
-                                        asList(mockValue).toArray(new Value[0]), 0);
+                singletonList(mockValue).toArray(new Value[0]), 0);
         verify(mockNode).setProperty("mockPropertyName_ref",
-                                        asList(mockRefValue).toArray(new Value[0]), WEAKREFERENCE);
+                singletonList(mockRefValue).toArray(new Value[0]), WEAKREFERENCE);
     }
 
     @Test
@@ -203,14 +204,14 @@ public class NodePropertiesToolsTest {
         when(mockValue.getString()).thenReturn("xyz");
         when(mockValueFactory.createValue(mockNode, true)).thenReturn(mockRefValue);
         when(mockRefValue.getType()).thenReturn(WEAKREFERENCE);
-        when(mockNode.setProperty("mockPropertyName_ref", asList(mockRefValue).toArray(new Value[0]), WEAKREFERENCE))
-                .thenReturn(mockRefProperty);
+        when(mockNode.setProperty("mockPropertyName_ref",
+                singletonList(mockRefValue).toArray(new Value[0]), WEAKREFERENCE)).thenReturn(mockRefProperty);
         testNodePropertiesTools.appendOrReplaceNodeProperty(mockNode, mockPropertyName, mockValue);
         verify(mockProperty).setValue(mockValue);
         final InOrder inOrder = Mockito.inOrder(mockNode, mockNode);
         inOrder.verify(mockNode).setProperty("mockPropertyName_ref", (Value[])null);
         inOrder.verify(mockNode, times(1)).setProperty("mockPropertyName_ref",
-                                                       asList(mockRefValue).toArray(new Value[0]), WEAKREFERENCE);
+                singletonList(mockRefValue).toArray(new Value[0]), WEAKREFERENCE);
     }
 
 
@@ -248,10 +249,10 @@ public class NodePropertiesToolsTest {
         when(mockDefinition.isMultiple()).thenReturn(true);
         when(mockNode.hasProperty(mockPropertyName)).thenReturn(false);
         when(mockNode.hasProperty("mockPropertyName_ref")).thenReturn(false);
-        when(mockNode.setProperty(mockPropertyName, asList(mockValue).toArray(new Value[0]), 0))
+        when(mockNode.setProperty(mockPropertyName, singletonList(mockValue).toArray(new Value[0]), 0))
                 .thenReturn(mockProperty);
-        when(mockNode.setProperty("mockPropertyName_ref", asList(mockRefValue).toArray(new Value[0]), WEAKREFERENCE))
-                .thenReturn(mockRefProperty);
+        when(mockNode.setProperty("mockPropertyName_ref",
+                singletonList(mockRefValue).toArray(new Value[0]), WEAKREFERENCE)).thenReturn(mockRefProperty);
 
         when(mockNode.hasProperty(mockPropertyName)).thenReturn(true);
         final Value[] values = new Value[] {previousValue};

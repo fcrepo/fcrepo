@@ -25,7 +25,6 @@ import static org.mockito.Mockito.when;
 import java.net.URI;
 
 import javax.inject.Inject;
-import javax.jcr.RepositoryException;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.http.auth.BasicUserPrincipal;
@@ -54,7 +53,7 @@ public class FedoraSessionImplIT extends AbstractIT {
     private static final String FEDORA_USER = "fedoraUser";
 
     @Inject
-    FedoraRepository repo;
+    private FedoraRepository repo;
 
     private HttpServletRequest request;
 
@@ -63,17 +62,17 @@ public class FedoraSessionImplIT extends AbstractIT {
     public ExpectedException thrown = ExpectedException.none();
 
     @Before
-    public void setUp() throws RepositoryException {
+    public void setUp() {
         request = mock(HttpServletRequest.class);
     }
 
     @After
-    public void tearDown() throws RepositoryException {
+    public void tearDown() {
         System.setProperty(FedoraSessionUserUtil.USER_AGENT_BASE_URI_PROPERTY, "");
     }
 
     @Test
-    public void testGetIdExceptionWithUserIdNonURI() throws RepositoryException {
+    public void testGetIdExceptionWithUserIdNonURI() {
         when(request.getRemoteUser()).thenReturn(FEDORA_USER);
         when(request.getUserPrincipal()).thenReturn(new BasicUserPrincipal(FEDORA_USER));
         when(request.isUserInRole(eq("admin"))).thenReturn(true);
@@ -87,7 +86,7 @@ public class FedoraSessionImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetIdWithUserIdNonURI() throws RepositoryException {
+    public void testGetIdWithUserIdNonURI() {
         // Set basic URI for user agent with environment variable: fcrepo.auth.webac.userAgent.baseUri
         System.setProperty(FedoraSessionUserUtil.USER_AGENT_BASE_URI_PROPERTY, TEST_USER_AGENT_BASE_URI);
 
@@ -103,7 +102,7 @@ public class FedoraSessionImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetIdWithUserIdURI() throws RepositoryException {
+    public void testGetIdWithUserIdURI() {
 
         // test with an absolute user uri
         final String userUri = TEST_USER_AGENT_BASE_URI + FEDORA_USER;

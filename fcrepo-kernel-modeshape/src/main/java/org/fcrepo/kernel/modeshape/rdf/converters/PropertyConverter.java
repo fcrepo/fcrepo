@@ -112,9 +112,9 @@ public class PropertyConverter extends Converter<javax.jcr.Property, Property> {
      * @return JCR property name for an RDF predicate
      * @throws RepositoryException if repository exception occurred
      */
-    public static String getPropertyNameFromPredicate(final NamespaceRegistry namespaceRegistry,
-                                                      final Resource predicate,
-                                                      final Map<String, String> namespaceMapping)
+    private static String getPropertyNameFromPredicate(final NamespaceRegistry namespaceRegistry,
+                                                       final Resource predicate,
+                                                       final Map<String, String> namespaceMapping)
             throws RepositoryException {
 
         // reject if update request contains any fcr namespaces

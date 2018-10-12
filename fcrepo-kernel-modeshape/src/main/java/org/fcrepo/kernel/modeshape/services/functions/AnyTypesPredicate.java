@@ -40,7 +40,7 @@ import org.fcrepo.kernel.modeshape.utils.UncheckedPredicate;
  *
  */
 public class AnyTypesPredicate implements UncheckedPredicate<Node> {
-    protected final Collection<String> nodeTypes;
+    private final Collection<String> nodeTypes;
 
     /**
      * True if any of the types specified match.

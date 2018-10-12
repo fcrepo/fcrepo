@@ -46,19 +46,19 @@ public final class JcrPropertyFunctions {
      * Constructs an {@link java.util.stream.Stream} of {@link javax.jcr.Value}s from any {@link javax.jcr.Property},
      * multi- or single-valued.
      */
-    public static Function<Property, Stream<Value>> property2values = (Function<Property, Stream<Value>>)
+    public static final Function<Property, Stream<Value>> property2values =
             UncheckedFunction.uncheck((final Property p) -> p.isMultiple() ? of(p.getValues()) : of(p.getValue()));
 
     /**
      * Check if a JCR property is a binary jcr:data property
      */
-    public static Predicate<Property> isBinaryContentProperty = uncheck(p -> p.getType() == BINARY &&
+    public static final Predicate<Property> isBinaryContentProperty = uncheck(p -> p.getType() == BINARY &&
             p.getName().equals(JCR_DATA));
 
     /**
      * Predicate for determining whether this {@link javax.jcr.Node} is a frozen node
      * (a part of the system version history).
      */
-    public static Predicate<Node> isFrozen = uncheck(n -> n.isNodeType(FROZEN_NODE));
+    public static final Predicate<Node> isFrozen = uncheck(n -> n.isNodeType(FROZEN_NODE));
 
 }

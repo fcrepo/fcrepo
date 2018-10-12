@@ -110,10 +110,10 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
      * The bitstream service
      */
     @Inject
-    protected BinaryService binaryService;
+    private BinaryService binaryService;
 
     @Inject
-    protected RdfNamespaceRegistry namespaceRegistry;
+    private RdfNamespaceRegistry namespaceRegistry;
 
     @Override
     public FedoraResource createVersion(final FedoraSession session, final FedoraResource resource,
@@ -208,7 +208,7 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
      * @param rdfStream rdf stream
      * @param idTranslator translator for producing URI of resources
      * @param jcrSession jcr session
-     * @return
+     * @return RdfStream
      */
     private RdfStream remapResourceUris(final String resourceUri,
             final String mementoUri,
@@ -348,16 +348,16 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
         return resource.getPath() + "/" + LDPCV_TIME_MAP + "/" + MEMENTO_LABEL_FORMATTER.format(datetime);
     }
 
-    protected String getUri(final FedoraResource resource,
-            final IdentifierConverter<Resource, FedoraResource> idTranslator) {
+    private String getUri(final FedoraResource resource,
+                          final IdentifierConverter<Resource, FedoraResource> idTranslator) {
         if (idTranslator == null) {
             return resource.getPath();
         }
         return idTranslator.reverse().convert(resource).getURI();
     }
 
-    protected void decorateWithMementoProperties(final FedoraSession session, final String mementoPath,
-            final Instant dateTime) {
+    private void decorateWithMementoProperties(final FedoraSession session, final String mementoPath,
+                                               final Instant dateTime) {
         try {
             final Node mementoNode = findNode(session, mementoPath);
             if (mementoNode.canAddMixin(MEMENTO)) {
@@ -371,7 +371,7 @@ public class VersionServiceImpl extends AbstractService implements VersionServic
         }
     }
 
-    protected void assertMementoDoesNotExist(final FedoraSession session, final String mementoPath) {
+    private void assertMementoDoesNotExist(final FedoraSession session, final String mementoPath) {
         if (exists(session, mementoPath)) {
             throw new RepositoryRuntimeException(new ItemExistsException(
                     "Memento " + mementoPath + " already exists"));

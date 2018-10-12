@@ -27,7 +27,6 @@ import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
 import javax.inject.Inject;
-import javax.jcr.RepositoryException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -46,16 +45,16 @@ public class BatchServiceImplIT extends AbstractIT {
     private FedoraRepository repository;
 
     @Inject
-    NodeService nodeService;
+    private NodeService nodeService;
 
     @Inject
-    ContainerService containerService;
+    private ContainerService containerService;
 
     @Inject
-    BatchService batchService;
+    private BatchService batchService;
 
     @Test
-    public void testGetService() throws RepositoryException {
+    public void testGetService() {
         final FedoraSession session = repository.login();
         try {
             batchService.begin(session);
@@ -72,7 +71,7 @@ public class BatchServiceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetBatchUser() throws RepositoryException {
+    public void testGetBatchUser() {
         final FedoraSession session = repository.login();
         try {
             batchService.begin(session);
@@ -89,7 +88,7 @@ public class BatchServiceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testBatchExpire() throws RepositoryException {
+    public void testBatchExpire() {
         final String pid = getRandomPid();
         final FedoraSession session = repository.login();
         try {
@@ -111,7 +110,7 @@ public class BatchServiceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testAbort() throws RepositoryException {
+    public void testAbort() {
         final String pid = getRandomPid();
         final FedoraSession session = repository.login();
         try {
@@ -133,7 +132,7 @@ public class BatchServiceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testCommit() throws RepositoryException {
+    public void testCommit() {
         final String pid = getRandomPid();
         final FedoraSession session = repository.login();
         try {

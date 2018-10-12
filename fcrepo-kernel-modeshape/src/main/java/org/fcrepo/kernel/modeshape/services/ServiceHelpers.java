@@ -59,7 +59,7 @@ public class ServiceHelpers {
      * @return size in bytes
      * @throws RepositoryException if repository exception occurred
      */
-    public static Long getNodePropertySize(final Node node)
+    private static Long getNodePropertySize(final Node node)
         throws RepositoryException {
         Long size = 0L;
         for (final PropertyIterator i = node.getProperties(); i.hasNext();) {
@@ -109,7 +109,7 @@ public class ServiceHelpers {
      * @return size of the datastream's properties and binary properties
      * @throws RepositoryException if repository exception occurred
      */
-    public static Long getDatastreamSize(final Node ds)
+    private static Long getDatastreamSize(final Node ds)
         throws RepositoryException {
         return getNodePropertySize(ds) + getContentSize(ds);
     }
@@ -120,7 +120,7 @@ public class ServiceHelpers {
      * @param ds the given node
      * @return size of the binary content property
      */
-    public static Long getContentSize(final Node ds) {
+    private static Long getContentSize(final Node ds) {
         try {
             long size = 0L;
             if (ds.hasNode(JCR_CONTENT)) {

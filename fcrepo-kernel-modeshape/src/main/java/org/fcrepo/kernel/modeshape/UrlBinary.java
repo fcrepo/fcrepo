@@ -183,7 +183,7 @@ public class UrlBinary extends AbstractFedoraBinary {
     }
 
 
-    protected void verifyChecksums(final Collection<URI> checksums)
+    private void verifyChecksums(final Collection<URI> checksums)
             throws InvalidChecksumException, RepositoryException {
 
         Property property = null;
@@ -295,7 +295,7 @@ public class UrlBinary extends AbstractFedoraBinary {
      * Gets the URL for where this resource is actually located
      * @return String containing actual location of resource
      */
-    protected String getResourceLocation() {
+    private String getResourceLocation() {
         if (isProxy()) {
             return getProxyURL();
         } else {

@@ -70,8 +70,8 @@ public class PrefixingIdentifierTranslator extends IdentifierConverter<Resource,
     }
 
 
-    protected Converter<String, String> forward = identity();
-    protected Converter<String, String> reverse = identity();
+    private Converter<String, String> forward = identity();
+    private Converter<String, String> reverse = identity();
 
     /*
      * TODO: much of what happens with chains of translators inside these converters should be factored
@@ -90,9 +90,7 @@ public class PrefixingIdentifierTranslator extends IdentifierConverter<Resource,
 
     @SuppressWarnings("unchecked")
     private static final List<Converter<String, String>> minimalTranslationChain =
-            newArrayList((Converter<String, String>) new NamespaceConverter(),
-                    (Converter<String, String>) new HashConverter()
-            );
+            newArrayList(new NamespaceConverter(), new HashConverter() );
 
     @Override
     protected FedoraResource doForward(final Resource subject) {

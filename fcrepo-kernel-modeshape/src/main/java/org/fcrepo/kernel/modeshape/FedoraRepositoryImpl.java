@@ -69,7 +69,7 @@ public class FedoraRepositoryImpl implements FedoraRepository {
      *
      * @return the JCR Repository
      */
-    public Repository getJcrRepository() {
+    private Repository getJcrRepository() {
         return repository;
     }
 

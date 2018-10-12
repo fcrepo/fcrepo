@@ -144,7 +144,7 @@ public class AllNodeEventsOneEventTest {
     }
 
     @Test
-    public void testAlterEvents() throws RepositoryException {
+    public void testAlterEvents() {
         // Two events attached to 2 paths, one is a jcr:lastModified only
         final Stream<Event> mockStream = of(mockEvent3, mockEvent6);
 

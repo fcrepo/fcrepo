@@ -24,7 +24,6 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
 import javax.inject.Inject;
-import javax.jcr.RepositoryException;
 
 import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.FedoraSession;
@@ -50,13 +49,13 @@ import org.springframework.test.context.ContextConfiguration;
 public class FedoraTimeMapImplIT extends AbstractIT {
 
     @Inject
-    FedoraRepository repo;
+    private FedoraRepository repo;
 
     @Inject
-    ContainerService containerService;
+    private ContainerService containerService;
 
     @Inject
-    BinaryService binaryService;
+    private BinaryService binaryService;
 
     private FedoraSession session;
 
@@ -64,7 +63,7 @@ public class FedoraTimeMapImplIT extends AbstractIT {
     public ExpectedException thrown = ExpectedException.none();
 
     @Before
-    public void setUp() throws RepositoryException {
+    public void setUp() {
         session = repo.login();
     }
 
@@ -74,7 +73,7 @@ public class FedoraTimeMapImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetOriginalResource() throws Exception {
+    public void testGetOriginalResource() {
         final String pid = getRandomPid();
         final Container object = containerService.findOrCreate(session, "/" + pid);
         session.commit();

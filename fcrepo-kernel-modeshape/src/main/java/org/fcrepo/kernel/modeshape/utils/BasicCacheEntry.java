@@ -32,11 +32,11 @@ import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static java.util.Arrays.asList;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -78,7 +78,7 @@ public abstract class BasicCacheEntry implements CacheEntry {
                                     calculatedChecksum,
                                     algorithm);
 
-            return asList(result);
+            return Collections.singletonList(result);
         } catch (final IOException e) {
             LOGGER.debug("Got error closing input stream: {}", e);
             throw new RepositoryRuntimeException(e);

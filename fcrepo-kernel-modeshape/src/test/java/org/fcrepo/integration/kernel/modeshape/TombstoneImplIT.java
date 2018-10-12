@@ -31,7 +31,6 @@ import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
 import javax.inject.Inject;
-import javax.jcr.RepositoryException;
 
 import static org.fcrepo.kernel.modeshape.TombstoneImpl.hasMixin;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
@@ -46,18 +45,18 @@ import static org.junit.Assert.fail;
 public class TombstoneImplIT extends AbstractIT {
 
     @Inject
-    FedoraRepository repo;
+    private FedoraRepository repo;
 
     @Inject
-    NodeService nodeService;
+    private NodeService nodeService;
 
     @Inject
-    ContainerService containerService;
+    private ContainerService containerService;
 
     private FedoraSession session;
 
     @Before
-    public void setUp() throws RepositoryException {
+    public void setUp() {
         session = repo.login();
     }
 
@@ -101,7 +100,7 @@ public class TombstoneImplIT extends AbstractIT {
     }
 
     @Test (expected = RepositoryRuntimeException.class)
-    public void testDeleteObjectWithException() throws RepositoryException {
+    public void testDeleteObjectWithException() {
         final String pid = getRandomPid();
         containerService.findOrCreate(session, "/" + pid + "/a");
         session.commit();

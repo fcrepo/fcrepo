@@ -20,7 +20,6 @@ package org.fcrepo.kernel.modeshape.utils.iterators;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 
-import java.util.Iterator;
 import java.util.Map;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -45,7 +44,7 @@ import org.apache.jena.rdf.model.Statement;
 public class RdfAdder extends PersistingRdfStreamConsumer {
 
     private static final Logger LOGGER = getLogger(RdfAdder.class);
-    private Map<String, String> userNamespaces;
+    private final Map<String, String> userNamespaces;
 
     /**
      * Ordinary constructor.
@@ -64,8 +63,7 @@ public class RdfAdder extends PersistingRdfStreamConsumer {
     protected Map<String, String> getNamespaces(final Session session) {
         final Map<String, String> namespaces = NamespaceTools.getNamespaces(session);
         if (userNamespaces != null) {
-            for (final Iterator<String> it = userNamespaces.keySet().iterator(); it.hasNext(); ) {
-                final String prefix = it.next();
+            for (final String prefix : userNamespaces.keySet()) {
                 final String uri = userNamespaces.get(prefix);
                 if (!namespaces.containsKey(prefix) && !namespaces.containsValue(uri)) {
                     LOGGER.debug("Adding user-supplied namespace mapping {}: {}", prefix, uri);

@@ -65,8 +65,8 @@ public class FedoraSessionUserUtil {
 
     /**
      * Build default URI with the configured base uri for agent
-     * @param userId
-     * @return
+     * @param userId of which a URI will be created
+     * @return URI
      */
     private static URI buildDefaultURI(final String userId) {
         // Construct the default URI for the user ID that is not a URI.

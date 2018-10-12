@@ -15,9 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
- *
- */
 
 package org.fcrepo.kernel.modeshape.services;
 
@@ -61,7 +58,7 @@ public class BatchServiceImpl extends AbstractService implements BatchService {
      * be either persisted or written to a distributed map or sth, not just this
      * plain hashmap that follows
      */
-    private static Map<String, FedoraSession> sessions = new ConcurrentHashMap<>();
+    private static final Map<String, FedoraSession> sessions = new ConcurrentHashMap<>();
 
     @VisibleForTesting
     public static final long REAP_INTERVAL = 1000;

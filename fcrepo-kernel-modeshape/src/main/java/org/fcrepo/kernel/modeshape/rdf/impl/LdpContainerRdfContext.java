@@ -92,9 +92,9 @@ public class LdpContainerRdfContext extends NodeRdfContext {
 
     /**
      * Get the member relations assert on the subject by the given node
-     * @param container
-     * @return
-     * @throws RepositoryException
+     * @param container with relations
+     * @return Stream of triples
+     * @throws RepositoryException on error
      */
     private Stream<Triple> memberRelations(final FedoraResource container) throws RepositoryException {
         final org.apache.jena.graph.Node memberRelation;
@@ -122,7 +122,7 @@ public class LdpContainerRdfContext extends NodeRdfContext {
         }
 
         return container.getChildren().flatMap(
-            UncheckedFunction.<FedoraResource, Stream<Triple>>uncheck(child -> {
+            UncheckedFunction.uncheck(child -> {
                 final org.apache.jena.graph.Node childSubject = uriFor(child.getDescribedResource());
 
                 if (insertedContainerProperty.equals(MEMBER_SUBJECT.getURI())) {

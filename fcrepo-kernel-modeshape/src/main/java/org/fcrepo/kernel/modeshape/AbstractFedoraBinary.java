@@ -314,7 +314,7 @@ public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements
      * @param relPath - path to the property
      * @return Property object
      */
-    protected Property getDescriptionProperty(final String relPath) {
+    private Property getDescriptionProperty(final String relPath) {
         try {
             return getDescriptionNode().getProperty(relPath);
         } catch (final RepositoryException e) {
