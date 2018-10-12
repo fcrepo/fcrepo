@@ -21,7 +21,6 @@ import static com.google.common.collect.ImmutableSet.of;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 
-import java.net.URI;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -41,8 +40,6 @@ public final class RdfLexicon {
      * Repository namespace "fedora"
     **/
     public static final String REPOSITORY_NAMESPACE = "http://fedora.info/definitions/v4/repository#";
-
-    public static final String EVENT_NAMESPACE = "http://fedora.info/definitions/v4/event#";
 
     public static final String FCREPO_API_NAMESPACE = "http://fedora.info/definitions/fcrepo#";
 
@@ -64,8 +61,6 @@ public final class RdfLexicon {
      * Namespace for the W3C WebAC vocabulary.
      */
     public static final String WEBAC_NAMESPACE_VALUE = "http://www.w3.org/ns/auth/acl#";
-    public static final String FEDORA_WEBAC_NAMESPACE_VALUE = "http://fedora.info/definitions/v4/webac#";
-    public static final String FEDORA_WEBAC_ACL_VALUE = FEDORA_WEBAC_NAMESPACE_VALUE + "Acl";
 
     /**
      * Fedora configuration namespace "fedora-config", used for user-settable
@@ -82,24 +77,10 @@ public final class RdfLexicon {
     public static final String LDP_NAMESPACE = "http://www.w3.org/ns/ldp#";
 
     /**
-     * SPARQL service description namespace.
-     */
-    public static final String SPARQL_SD_NAMESPACE =
-            "http://www.w3.org/ns/sparql-service-description#";
-
-    /**
      * Is this namespace one that the repository manages?
      */
     public static final Predicate<String> isManagedNamespace = p -> p.equals(REPOSITORY_NAMESPACE) ||
             p.equals(LDP_NAMESPACE);
-
-    // MEMBERSHIP
-    public static final Property HAS_PARENT =
-            createProperty(REPOSITORY_NAMESPACE + "hasParent");
-    public static final Property HAS_CHILD =
-            createProperty(REPOSITORY_NAMESPACE + "hasChild");
-
-    public static final Set<Property> membershipProperties = of(HAS_PARENT, HAS_CHILD);
 
     // FIXITY
 
@@ -116,7 +97,7 @@ public final class RdfLexicon {
     public static final Property HAS_FIXITY_RESULT =
         createProperty(PREMIS_NAMESPACE + "hasFixity");
 
-    public static final Set<Property> fixityProperties = of(
+    private static final Set<Property> fixityProperties = of(
             HAS_FIXITY_RESULT, HAS_MESSAGE_DIGEST, HAS_SIZE);
 
     public static final Resource EVENT_OUTCOME_INFORMATION = createResource(PREMIS_NAMESPACE + "EventOutcomeDetail");
@@ -136,7 +117,7 @@ public final class RdfLexicon {
             createProperty(REPOSITORY_NAMESPACE + "lastModified");
     public static final Property LAST_MODIFIED_BY =
             createProperty(REPOSITORY_NAMESPACE + "lastModifiedBy");
-    public static final Set<Property> serverManagedProperties = of(
+    private static final Set<Property> serverManagedProperties = of(
             CREATED_DATE, CREATED_BY, LAST_MODIFIED_DATE, LAST_MODIFIED_BY);
 
     public static final Resource FEDORA_CONTAINER =
@@ -179,34 +160,16 @@ public final class RdfLexicon {
     private static final Set<Property> ldpManagedProperties = of(CONTAINS);
 
     // REPOSITORY INFORMATION
-    public static final Property HAS_OBJECT_COUNT =
-            createProperty(REPOSITORY_NAMESPACE + "objectCount");
-    public static final Property HAS_OBJECT_SIZE =
-            createProperty(REPOSITORY_NAMESPACE + "objectSize");
     public static final Property HAS_TRANSACTION_SERVICE =
             createProperty(REPOSITORY_NAMESPACE + "hasTransactionProvider");
-    public static final Property HAS_ACCESS_ROLES_SERVICE =
-            createProperty(REPOSITORY_NAMESPACE + "hasAccessRoles");
 
-    public static final Set<Property> repositoryProperties = of(
-            HAS_OBJECT_COUNT, HAS_OBJECT_SIZE, HAS_TRANSACTION_SERVICE);
-
-    // NAMESPACES
-    public static final Property HAS_NAMESPACE_PREFIX =
-            createProperty("http://purl.org/vocab/vann/preferredNamespacePrefix");
-    public static final Property HAS_NAMESPACE_URI =
-            createProperty("http://purl.org/vocab/vann/preferredNamespaceUri");
-
-    public static final Set<Property> namespaceProperties = of(
-            HAS_NAMESPACE_PREFIX, HAS_NAMESPACE_URI);
+    private static final Set<Property> repositoryProperties = of(HAS_TRANSACTION_SERVICE);
 
     // OTHER SERVICES
     public static final Property HAS_FIXITY_SERVICE =
             createProperty(REPOSITORY_NAMESPACE + "hasFixityService");
-    public static final Property HAS_SPARQL_ENDPOINT =
-        createProperty(SPARQL_SD_NAMESPACE + "endpoint");
 
-    public static final Set<Property> otherServiceProperties = of(HAS_FIXITY_SERVICE);
+    private static final Set<Property> otherServiceProperties = of(HAS_FIXITY_SERVICE);
 
 
     // BINARY DESCRIPTIONS
@@ -215,24 +178,12 @@ public final class RdfLexicon {
     public static final Property DESCRIBED_BY =
             createProperty("http://www.iana.org/assignments/relation/describedby");
 
-    public static final Set<Property> structProperties = of(DESCRIBES, DESCRIBED_BY);
-
-    // CONTENT
-    public static final Resource CONTENT_LOCATION_TYPE =
-            createResource(PREMIS_NAMESPACE + "ContentLocation");
     public static final Resource INACCESSIBLE_RESOURCE =
             createResource(REPOSITORY_NAMESPACE + "inaccessibleResource");
-    public static final Property HAS_CONTENT_LOCATION =
-            createProperty(PREMIS_NAMESPACE + "hasContentLocation");
-    public static final Property HAS_CONTENT_LOCATION_VALUE =
-        createProperty(PREMIS_NAMESPACE + "hasContentLocationValue");
     public static final Property HAS_MIME_TYPE =
             createProperty(EBUCORE_NAMESPACE + "hasMimeType");
     public static final Property HAS_ORIGINAL_NAME =
             createProperty(EBUCORE_NAMESPACE + "filename");
-
-    public static final Set<Property> contentProperties = of(HAS_CONTENT_LOCATION, HAS_CONTENT_LOCATION_VALUE,
-            HAS_SIZE);
 
     // EXTERNAL CONTENT
     public static final Property EXTERNAL_CONTENT = createProperty(FCREPO_API_NAMESPACE + "ExternalContent");
@@ -240,8 +191,6 @@ public final class RdfLexicon {
     public static final Property REDIRECTS_TO = createProperty(REPOSITORY_NAMESPACE + "redirectsTo");
 
     // RDF EXTRACTION
-    public static final Property COULD_NOT_STORE_PROPERTY =
-            createProperty(REPOSITORY_NAMESPACE + "couldNotStoreProperty");
     public static final Property INBOUND_REFERENCES = createProperty(FCREPO_API_NAMESPACE + "PreferInboundReferences");
     public static final Property SERVER_MANAGED = createProperty(REPOSITORY_NAMESPACE + "ServerManaged");
 
@@ -250,25 +199,23 @@ public final class RdfLexicon {
 
     // WEBAC
     public static final String WEBAC_ACCESS_CONTROL_VALUE = WEBAC_NAMESPACE_VALUE + "accessControl";
-    public static final URI WEBAC_ACCESS_CONTROL = URI.create(WEBAC_ACCESS_CONTROL_VALUE);
 
 
-    public static final Set<Property> managedProperties;
+    private static final Set<Property> managedProperties;
 
     static {
         final ImmutableSet.Builder<Property> b = ImmutableSet.builder();
-        b.addAll(membershipProperties).addAll(fixityProperties).addAll(ldpManagedProperties).addAll(
-                repositoryProperties).addAll(namespaceProperties).addAll(
-                otherServiceProperties).addAll(serverManagedProperties);
+        b.addAll(fixityProperties).addAll(ldpManagedProperties).addAll(repositoryProperties)
+                .addAll(otherServiceProperties).addAll(serverManagedProperties);
         managedProperties = b.build();
     }
 
-    public static final Set<Property> relaxableProperties
+    private static final Set<Property> relaxableProperties
             = of(LAST_MODIFIED_BY, LAST_MODIFIED_DATE, CREATED_BY, CREATED_DATE);
 
     public static final String SERVER_MANAGED_PROPERTIES_MODE = "fcrepo.properties.management";
 
-    private static Predicate<Property> hasFedoraNamespace =
+    private static final Predicate<Property> hasFedoraNamespace =
         p -> !p.isAnon() && p.getNameSpace().startsWith(REPOSITORY_NAMESPACE);
 
     public static final Predicate<Property> isRelaxed =

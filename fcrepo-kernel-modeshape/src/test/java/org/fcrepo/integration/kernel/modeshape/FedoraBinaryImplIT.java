@@ -54,7 +54,6 @@ import org.apache.commons.io.IOUtils;
 import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
-import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraBinary;
@@ -387,7 +386,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
     @Test
     public void testExceptionGetFixityWithWantDigest() throws RepositoryException, InvalidChecksumException,
-            UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+            UnsupportedAlgorithmException {
         final Collection<String> digestAlgs = Collections.singletonList("sha256");
         final String pid = "testFixityWithWantDigest-" + randomUUID();
         final FedoraSession session = repo.login();
@@ -418,7 +417,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
     @Test
     public void testGetFixityWithWantDigest() throws RepositoryException, InvalidChecksumException,
-            URISyntaxException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+            URISyntaxException, UnsupportedAlgorithmException {
         final Collection<String> digestAlgs = Collections.singletonList("SHA");
         final String pid = "testFixityWithWantDigest-" + randomUUID();
         final FedoraSession session = repo.login();
@@ -453,7 +452,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
     @Test
     public void testGetFixityWithWantDigestMultuple() throws RepositoryException, InvalidChecksumException,
-            URISyntaxException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+            URISyntaxException, UnsupportedAlgorithmException {
         final String[] digestAlgValues = {"SHA", "md5"};
         final Collection<String> digestAlgs = Arrays.asList(digestAlgValues);
         final String pid = "testFixityWithWantDigestMultiple-" + randomUUID();

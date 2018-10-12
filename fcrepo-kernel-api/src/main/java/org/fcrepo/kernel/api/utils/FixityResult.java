@@ -29,15 +29,9 @@ public interface FixityResult {
     /**
      * The possible fixity states (which may be ORed together later)
      */
-    public static enum FixityState {
+    enum FixityState {
         SUCCESS, BAD_CHECKSUM, BAD_SIZE
     }
-
-    /**
-     * Get the identifier for the entry's store
-     * @return String
-     */
-    String getStoreIdentifier();
 
     /**
      * Check if the fixity result matches the given checksum URI

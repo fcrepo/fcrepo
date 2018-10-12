@@ -49,12 +49,12 @@ public interface CacheEntry {
      * Get a raw input stream from the underlying store
      * @return the content for this entry
      */
-    abstract InputStream getInputStream();
+    InputStream getInputStream();
 
     /**
      * Generate a human-readable identifier for the location of this entry
      *
      * @return human-readable identifier for the location of this entry
      */
-    abstract String getExternalIdentifier();
+    String getExternalIdentifier();
 }

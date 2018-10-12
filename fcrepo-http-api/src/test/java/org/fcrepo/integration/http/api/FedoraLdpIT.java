@@ -83,7 +83,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MIME_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_ORIGINAL_NAME;
@@ -2025,7 +2024,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableDataset dataset = getDataset(getObjMethod)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             final Node resource = createURI(serverAddress + id);
-            assertFalse("Didn't expect members", graph.find(ANY, resource, HAS_CHILD.asNode(), ANY).hasNext());
             assertFalse("Didn't expect members", graph.find(ANY, resource, CONTAINS.asNode(), ANY).hasNext());
         }
     }
@@ -2052,8 +2050,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertTrue("Expected server managed",
                     graph.find(ANY, resource, LAST_MODIFIED_DATE.asNode(), ANY).hasNext());
             assertTrue("Expected server managed", graph.find(ANY, resource, LAST_MODIFIED_BY.asNode(), ANY).hasNext());
-            assertFalse("Didn't expect inlined member resources", graph.find(ANY,
-                    createURI(serverAddress + id), HAS_CHILD.asNode(), ANY).hasNext());
         }
     }
 

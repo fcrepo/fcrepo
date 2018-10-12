@@ -74,7 +74,7 @@ public class GraphDifferencerTest {
 
             assertEquals(0, added.count());
 
-            assertTrue(common.filter(x -> x.equals(t_xyz)).findFirst().isPresent());
+            assertTrue(common.anyMatch(x -> x.equals(t_xyz)));
         }
     }
 
@@ -92,11 +92,11 @@ public class GraphDifferencerTest {
             final Stream<Triple> added = diff.notCommon();
             final Stream<Triple> common = diff.common();
 
-            assertTrue(removed.filter(x -> x.equals(t_abc)).findFirst().isPresent());
+            assertTrue(removed.anyMatch(x -> x.equals(t_abc)));
 
             assertEquals(0, added.count());
 
-            assertTrue(common.filter(x -> x.equals(t_xyz)).findFirst().isPresent());
+            assertTrue(common.anyMatch(x -> x.equals(t_xyz)));
         }
     }
 
@@ -116,9 +116,9 @@ public class GraphDifferencerTest {
 
             assertEquals(0, removed.count());
 
-            assertTrue(added.filter(x -> x.equals(t_abc)).findFirst().isPresent());
+            assertTrue(added.anyMatch(x -> x.equals(t_abc)));
 
-            assertTrue(common.filter(x -> x.equals(t_xyz)).findFirst().isPresent());
+            assertTrue(common.anyMatch(x -> x.equals(t_xyz)));
         }
     }
 
@@ -135,9 +135,9 @@ public class GraphDifferencerTest {
             final Stream<Triple> added = diff.notCommon();
             final Stream<Triple> common = diff.common();
 
-            assertTrue(removed.filter(x -> x.equals(t_abc)).findFirst().isPresent());
+            assertTrue(removed.anyMatch(x -> x.equals(t_abc)));
 
-            assertTrue(added.filter(x -> x.equals(t_xyz)).findFirst().isPresent());
+            assertTrue(added.anyMatch(x -> x.equals(t_xyz)));
 
             assertEquals(0, common.count());
         }
@@ -158,7 +158,7 @@ public class GraphDifferencerTest {
 
             assertEquals(0, removed.count());
             assertEquals(0, added.count());
-            assertTrue(common.filter(x -> x.equals(t_typed_string)).findFirst().isPresent());
+            assertTrue(common.anyMatch(x -> x.equals(t_typed_string)));
         }
     }
 
@@ -177,7 +177,7 @@ public class GraphDifferencerTest {
 
             assertEquals(0, removed.count());
             assertEquals(0, added.count());
-            assertTrue(common.filter(x -> x.equals(t_int)).findFirst().isPresent());
+            assertTrue(common.anyMatch(x -> x.equals(t_int)));
         }
     }
 }

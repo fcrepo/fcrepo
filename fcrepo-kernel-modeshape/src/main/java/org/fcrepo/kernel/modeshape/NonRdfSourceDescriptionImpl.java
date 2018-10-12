@@ -68,12 +68,6 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements N
         return new FedoraBinaryImpl(getContentNode());
     }
 
-    @Override
-    public FedoraResource getBaseVersion() {
-        LOGGER.warn("Review if method (getBaseVersion) can be removed after implementing Memento!");
-        return null;
-    }
-
     private Node getContentNode() {
         LOGGER.trace("Retrieved datastream content node.");
         try {

@@ -20,7 +20,6 @@ package org.fcrepo.kernel.modeshape;
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraBinary;
@@ -216,7 +215,7 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
     @Override
     public Collection<URI> checkFixity( final IdentifierConverter<Resource, FedoraResource> idTranslator,
                                         final Collection<String> algorithms)
-                                            throws UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+                                            throws UnsupportedAlgorithmException {
 
         return getBinary().checkFixity(idTranslator, algorithms);
     }
@@ -227,11 +226,6 @@ public class FedoraBinaryImpl extends AbstractFedoraBinary {
     @Override
     public void delete() {
         getBinary().delete();
-    }
-
-    @Override
-    public FedoraResource getBaseVersion() {
-        return getBinary().getBaseVersion();
     }
 
     @Override

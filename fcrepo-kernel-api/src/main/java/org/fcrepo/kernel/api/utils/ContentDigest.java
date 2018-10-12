@@ -73,17 +73,6 @@ public final class ContentDigest {
         }
 
         /**
-         * Return enum value for the provided algorithm (e.g. SHA-1)
-         *
-         * @param argAlgorithm for which enum is requested
-         * @return enum value associated with the arg algorithm
-         */
-        public static DIGEST_ALGORITHM fromAlgorithm(final String argAlgorithm) {
-            return Arrays.stream(values()).filter(value -> value.algorithm.equalsIgnoreCase(argAlgorithm)
-            ).findFirst().orElse(MISSING);
-        }
-
-        /**
          * Return true if the provided algorithm is included in this enum
          *
          * @param alg to test

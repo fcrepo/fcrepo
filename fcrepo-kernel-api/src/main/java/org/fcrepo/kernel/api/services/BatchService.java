@@ -94,15 +94,6 @@ public interface BatchService {
     void refresh(String sessionId, String username);
 
     /**
-     * Refresh an existing anonymous session using an implementation-defined default
-     *
-     * @param sessionId the Id of the {@link FedoraSession}
-     */
-    default void refresh(String sessionId) {
-        refresh(sessionId, null);
-    }
-
-    /**
      * Commit any changes during a {@link FedoraSession} with the given id and username
      *
      * @param sessionId the id of the {@link FedoraSession}

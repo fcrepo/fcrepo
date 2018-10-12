@@ -80,16 +80,6 @@ public class FixityResultImpl implements FixityResult {
         usedAlgorithm = algorithm;
     }
 
-
-    /**
-     * Get the identifier for the entry's store
-     * @return the store identifier
-     */
-    @Override
-    public String getStoreIdentifier() {
-        return storeIdentifier;
-    }
-
     @Override
     public boolean equals(final Object obj) {
         if (obj instanceof FixityResult) {

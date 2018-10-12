@@ -35,9 +35,6 @@ public enum RequiredRdfContext implements TripleCategory {
     /* Versions Context */
     VERSIONS,
 
-    /* Fixity Context */
-    FIXITY,
-
     /* fedora:EmbedResources Context: embedded child resources */
     EMBED_RESOURCES,
 

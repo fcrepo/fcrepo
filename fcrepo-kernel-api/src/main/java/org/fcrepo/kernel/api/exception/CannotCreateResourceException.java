@@ -36,13 +36,4 @@ public class CannotCreateResourceException extends ConstraintViolationException 
         super(msg);
     }
 
-    /**
-     * Ordinary constructor.
-     *
-     * @param rootCause the root cause
-     */
-    public CannotCreateResourceException(final Throwable rootCause) {
-        super(rootCause);
-    }
-
 }

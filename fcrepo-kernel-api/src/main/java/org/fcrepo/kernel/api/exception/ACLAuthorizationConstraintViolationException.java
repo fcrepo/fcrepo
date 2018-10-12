@@ -35,13 +35,4 @@ public class ACLAuthorizationConstraintViolationException extends ConstraintViol
         super(msg);
     }
 
-    /**
-     * Ordinary constructor.
-     *
-     * @param rootCause the root cause
-     */
-    public ACLAuthorizationConstraintViolationException(final Throwable rootCause) {
-        super(rootCause);
-    }
-
 }

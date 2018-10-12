@@ -36,13 +36,4 @@ public class InteractionModelViolationException extends ConstraintViolationExcep
         super(msg);
     }
 
-    /**
-     * Ordinary constructor.
-     *
-     * @param rootCause the root cause
-     */
-    public InteractionModelViolationException(final Throwable rootCause) {
-        super(rootCause);
-    }
-
 }

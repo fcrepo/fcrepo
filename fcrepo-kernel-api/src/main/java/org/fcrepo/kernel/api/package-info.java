@@ -16,9 +16,6 @@
  * limitations under the License.
  */
 /**
- * 
- */
-/**
  * @author ajs6f
  * @since Jan 9, 2014
  */

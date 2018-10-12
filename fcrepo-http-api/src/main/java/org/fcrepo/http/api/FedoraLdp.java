@@ -124,7 +124,6 @@ import org.fcrepo.kernel.api.exception.MementoDatetimeFormatException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.RequestWithAclLinkHeaderException;
-import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
@@ -176,13 +175,12 @@ public class FedoraLdp extends ContentExposingResource {
      *
      * @return response
      * @throws UnsupportedAlgorithmException if unsupported digest algorithm occurred
-     * @throws UnsupportedAccessTypeException if unsupported access-type occurred
      */
     @HEAD
     @Produces({ TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
         N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
         TURTLE_X, TEXT_HTML_WITH_CHARSET })
-    public Response head() throws UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+    public Response head() throws UnsupportedAlgorithmException {
         LOGGER.info("HEAD for: {}", externalPath);
 
         checkMementoPath();
@@ -248,14 +246,13 @@ public class FedoraLdp extends ContentExposingResource {
      * @return a binary or the triples for the specified node
      * @throws IOException if IO exception occurred
      * @throws UnsupportedAlgorithmException if unsupported digest algorithm occurred
-     * @throws UnsupportedAccessTypeException if unsupported access-type occurred
      */
     @GET
     @Produces({TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
             N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
             TURTLE_X, TEXT_HTML_WITH_CHARSET})
     public Response getResource(@HeaderParam("Range") final String rangeValue)
-            throws IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+            throws IOException, UnsupportedAlgorithmException {
 
         checkMementoPath();
 
@@ -375,7 +372,6 @@ public class FedoraLdp extends ContentExposingResource {
      * @throws InvalidChecksumException if invalid checksum exception occurred
      * @throws MalformedRdfException if malformed rdf exception occurred
      * @throws UnsupportedAlgorithmException if an unsupported algorithm exception occurs
-     * @throws UnsupportedAccessTypeException if the access type of the resource is not supported
      */
     @PUT
     @Consumes
@@ -386,8 +382,7 @@ public class FedoraLdp extends ContentExposingResource {
             @HeaderParam("If-Match") final String ifMatch,
             @HeaderParam(LINK) final List<String> rawLinks,
             @HeaderParam("Digest") final String digest)
-            throws InvalidChecksumException, MalformedRdfException, UnsupportedAlgorithmException,
-            UnsupportedAccessTypeException {
+            throws InvalidChecksumException, MalformedRdfException, UnsupportedAlgorithmException {
 
         hasRestrictedPath(externalPath);
 
@@ -592,7 +587,6 @@ public class FedoraLdp extends ContentExposingResource {
      * @throws IOException if IO exception occurred
      * @throws MalformedRdfException if malformed rdf exception occurred
      * @throws UnsupportedAlgorithmException if an unsupported algorithm exception occurs
-     * @throws UnsupportedAccessTypeException if the access type of the resource is not supported
      */
     @POST
     @Consumes({MediaType.APPLICATION_OCTET_STREAM + ";qs=1.000", WILDCARD})
@@ -605,8 +599,7 @@ public class FedoraLdp extends ContentExposingResource {
             final InputStream requestBodyStream,
                                  @HeaderParam(LINK) final List<String> rawLinks,
                                  @HeaderParam("Digest") final String digest)
-            throws InvalidChecksumException, IOException, MalformedRdfException, UnsupportedAlgorithmException,
-            UnsupportedAccessTypeException {
+            throws InvalidChecksumException, IOException, MalformedRdfException, UnsupportedAlgorithmException {
 
         final List<String> links = unpackLinks(rawLinks);
 
@@ -857,7 +850,7 @@ public class FedoraLdp extends ContentExposingResource {
     }
 
     private String handleWantDigestHeader(final FedoraBinary binary, final String wantDigest)
-            throws UnsupportedAlgorithmException, UnsupportedAccessTypeException {
+            throws UnsupportedAlgorithmException {
         // handle the Want-Digest header with fixity check
         final Collection<String> preferredDigests = parseWantDigestHeader(wantDigest);
         if (preferredDigests.isEmpty()) {

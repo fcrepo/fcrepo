@@ -36,13 +36,4 @@ public class InvalidMementoPathException extends ConstraintViolationException {
         super(msg);
     }
 
-    /**
-     * Ordinary constructor.
-     *
-     * @param rootCause the root cause
-     */
-    public InvalidMementoPathException(final Throwable rootCause) {
-        super(rootCause);
-    }
-
 }

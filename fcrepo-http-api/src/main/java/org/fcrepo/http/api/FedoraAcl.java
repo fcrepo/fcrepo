@@ -75,7 +75,6 @@ import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
-import org.fcrepo.kernel.api.exception.UnsupportedAccessTypeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
@@ -243,14 +242,13 @@ public class FedoraAcl extends ContentExposingResource {
      * @return a binary or the triples for the specified node
      * @throws IOException if IO exception occurred
      * @throws UnsupportedAlgorithmException  if unsupported digest algorithm occurred
-     * @throws UnsupportedAccessTypeException if unsupported access-type occurred
      */
     @GET
     @Produces({ TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
                 N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
                 TURTLE_X, TEXT_HTML_WITH_CHARSET })
     public Response getResource(@HeaderParam("Range") final String rangeValue)
-            throws IOException, UnsupportedAlgorithmException, UnsupportedAccessTypeException, ItemNotFoundException {
+            throws IOException, UnsupportedAlgorithmException, ItemNotFoundException {
 
         LOGGER.info("GET resource '{}'", externalPath);
 
