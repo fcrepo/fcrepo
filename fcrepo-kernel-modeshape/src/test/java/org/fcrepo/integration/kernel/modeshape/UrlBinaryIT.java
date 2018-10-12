@@ -31,7 +31,6 @@ import static java.util.Collections.singletonList;
 
 import java.net.URI;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -219,6 +218,6 @@ public class UrlBinaryIT extends AbstractIT {
     }
 
     private Set<URI> sha1Set(final String checksum) {
-        return new HashSet<>(Collections.singletonList(asURI(SHA1.algorithm, checksum)));
+        return new HashSet<>(singletonList(asURI(SHA1.algorithm, checksum)));
     }
 }

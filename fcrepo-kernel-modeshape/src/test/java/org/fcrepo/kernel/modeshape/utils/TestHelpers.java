@@ -35,7 +35,6 @@ import java.security.SecureRandom;
 import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.Property;
-import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
 
@@ -115,37 +114,6 @@ public abstract class TestHelpers {
             e.printStackTrace();
         }
         return "";
-    }
-
-    @SuppressWarnings("unchecked")
-    public static PropertyIterator getPropertyIterator(final int numValues,
-            final long size) {
-        final PropertyIterator mock = mock(PropertyIterator.class);
-        final Property mockProp = mock(Property.class);
-        try {
-            when(mockProp.isMultiple()).thenReturn(numValues > 1);
-            if (numValues != 1) {
-                final Value[] values = new Value[numValues];
-                for (int i = 0; i < numValues; i++) {
-                    final Value mockVal = mock(Value.class);
-                    final Binary mockBin = mock(Binary.class);
-                    when(mockVal.getBinary()).thenReturn(mockBin);
-                    when(mockBin.getSize()).thenReturn(size);
-                    values[i] = mockVal;
-                }
-                when(mockProp.getValues()).thenReturn(values);
-            } else {
-                final Binary mockBin = mock(Binary.class);
-                when(mockBin.getSize()).thenReturn(size);
-                when(mockProp.getBinary()).thenReturn(mockBin);
-            }
-        } catch (final RepositoryException e) {
-        } // shhh
-        when(mock.getSize()).thenReturn(1L);
-        when(mock.hasNext()).thenReturn(true, false);
-        when(mock.nextProperty()).thenReturn(mockProp).thenThrow(
-                IndexOutOfBoundsException.class);
-        return mock;
     }
 
     private static byte[] randomData(final int byteLength) {

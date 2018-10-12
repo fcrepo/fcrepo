@@ -17,6 +17,7 @@
  */
 package org.fcrepo.integration.kernel.modeshape.observer;
 
+import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static com.jayway.awaitility.Awaitility.await;
@@ -41,7 +42,6 @@ import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.junit.Assert.assertEquals;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import java.io.ByteArrayInputStream;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -59,7 +59,6 @@ import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.observer.EventType;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
-import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.ContainerService;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
@@ -98,9 +97,6 @@ public class SimpleObserverIT extends AbstractIT {
 
     @Inject
     private ContainerService containerService;
-
-    @Inject
-    private BinaryService binaryService;
 
     @Test
     public void testEventBusPublishing() throws RepositoryException {
@@ -142,7 +138,7 @@ public class SimpleObserverIT extends AbstractIT {
 
         final FedoraBinary binary = new FedoraBinaryImpl(n);
         binary.setContent( new ByteArrayInputStream(content.getBytes()), "text/plain",
-                new HashSet<>(Collections.singletonList(asURI(SHA1.algorithm, checksum))), "text.txt", null);
+                new HashSet<>(singletonList(asURI(SHA1.algorithm, checksum))), "text.txt", null);
 
         try {
             session.commit();

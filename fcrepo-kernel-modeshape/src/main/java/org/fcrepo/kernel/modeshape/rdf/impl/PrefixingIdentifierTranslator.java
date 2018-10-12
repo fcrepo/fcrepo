@@ -87,8 +87,6 @@ public class PrefixingIdentifierTranslator extends IdentifierConverter<Resource,
         }
     }
 
-
-    @SuppressWarnings("unchecked")
     private static final List<Converter<String, String>> minimalTranslationChain =
             newArrayList(new NamespaceConverter(), new HashConverter() );
 

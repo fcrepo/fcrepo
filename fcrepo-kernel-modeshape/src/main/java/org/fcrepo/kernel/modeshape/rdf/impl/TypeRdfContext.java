@@ -21,14 +21,11 @@ import org.apache.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.slf4j.Logger;
 
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.graph.Triple.create;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalType;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author cabeer
@@ -36,7 +33,6 @@ import static org.slf4j.LoggerFactory.getLogger;
  * @since 10/1/14
  */
 public class TypeRdfContext extends NodeRdfContext {
-    private static final Logger LOGGER = getLogger(TypeRdfContext.class);
 
     /**
      * Default constructor.

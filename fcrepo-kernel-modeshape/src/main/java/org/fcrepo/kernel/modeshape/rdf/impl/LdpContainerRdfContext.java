@@ -27,8 +27,6 @@ import org.fcrepo.kernel.modeshape.rdf.impl.mappings.PropertyValueIterator;
 import org.fcrepo.kernel.modeshape.utils.UncheckedFunction;
 import org.fcrepo.kernel.modeshape.utils.UncheckedPredicate;
 
-import org.slf4j.Logger;
-
 import java.util.stream.Stream;
 
 import javax.jcr.Node;
@@ -54,7 +52,6 @@ import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getReferencePropertyName;
 import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author cabeer
@@ -62,7 +59,6 @@ import static org.slf4j.LoggerFactory.getLogger;
  * @since 9/25/14
  */
 public class LdpContainerRdfContext extends NodeRdfContext {
-    private static final Logger LOGGER = getLogger(LdpContainerRdfContext.class);
 
     /**
      * Default constructor.

@@ -48,7 +48,6 @@ import javax.jcr.nodetype.NodeTypeTemplate;
 import javax.jcr.security.AccessControlList;
 import javax.jcr.security.AccessControlManager;
 import javax.jcr.security.Privilege;
-import javax.jcr.version.Version;
 
 import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.FedoraSession;
@@ -84,7 +83,6 @@ import org.apache.jena.util.iterator.ExtendedIterator;
 import org.apache.jena.vocabulary.RDF;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.modeshape.jcr.security.SimplePrincipal;
 import org.springframework.test.context.ContextConfiguration;
@@ -540,7 +538,6 @@ public class FedoraResourceImplIT extends AbstractIT {
                     x.startsWith(MODE_NAMESPACE) || x.startsWith(JCR_NT_NAMESPACE)));
     }
     @Test
-    @Ignore("Until implemented with Memento")
     public void testGetObjectVersionGraph() throws RepositoryException {
 
         final FedoraResource object =
@@ -559,7 +556,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         logger.debug(graphStore.toString());
 
         // go querying for the version URI
-        final Resource s = createResource(createGraphSubjectNode(object).getURI());
+        createResource(createGraphSubjectNode(object).getURI());
 //        final ExtendedIterator<Statement> triples = graphStore.listStatements(s,HAS_VERSION, (RDFNode)null);
 
 //        final List<Statement> list = triples.toList();
@@ -1028,7 +1025,6 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    // @Ignore ("Until implemented with Memento")
     public void testDeleteLinkedVersionedResources() {
         final Container object1 = containerService.findOrCreate(session, "/" + getRandomPid());
         final Container object2 = containerService.findOrCreate(session, "/" + getRandomPid());
@@ -1267,15 +1263,6 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         final javax.jcr.Node aclNode = jcrSession.getNode("/" + pid).getNode(CONTAINER_WEBAC_ACL);
         assertTrue(aclNode.isNodeType(FEDORA_WEBAC_ACL));
-    }
-
-    private void addVersionLabel(final String label, final FedoraResource r) throws RepositoryException {
-        final Session jcrSession = getJcrSession(session);
-        addVersionLabel(label, jcrSession.getWorkspace().getVersionManager().getBaseVersion(r.getPath()));
-    }
-
-    private static void addVersionLabel(final String label, final Version v) throws RepositoryException {
-        v.getContainingHistory().addVersionLabel(v.getName(), label, false);
     }
 
     private static Instant roundDate(final Instant date) {

@@ -187,7 +187,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     protected interface RdfGenerator extends Function<FedoraResource,
     Function<IdentifierConverter<Resource, FedoraResource>, Function<Boolean, Stream<Triple>>>> {}
 
-    @SuppressWarnings("resource")
     private static final RdfGenerator getDefaultTriples = resource -> translator -> uncheck(minimal -> {
         final Stream<Stream<Triple>> min = of(
             new TypeRdfContext(resource, translator),
@@ -212,7 +211,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         return new ChildrenRdfContext(resource, translator);
     });
 
-    @SuppressWarnings("resource")
     private static final RdfGenerator getServerManagedTriples = resource -> translator -> uncheck(minimal -> {
         if (minimal) {
             return new LdpRdfContext(resource, translator);
@@ -225,7 +223,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         return streams.reduce(empty(), Stream::concat);
     });
 
-    @SuppressWarnings("resource")
     private static final RdfGenerator getLdpMembershipTriples = resource -> translator -> uncheck(_minimal -> {
         final Stream<Stream<Triple>> streams = of(
             new LdpContainerRdfContext(resource, translator),
@@ -1310,7 +1307,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                     // Return the closest version older than the requested date.
                     return closest.get();
                 } else {
-                    // Otherwise you requested before the first version, so return the first version if is exists.
+                    // Otherwise you requested before the first version, so return the first version if it exists.
                     // If there are no Mementos return null.
                     final Optional<FedoraResource> earliest =  timemap.getChildren().min(
                             Comparator.comparing(FedoraResource::getMementoDatetime));
