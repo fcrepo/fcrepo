@@ -71,19 +71,19 @@ public class SanityCheckIT {
     private static final String CONTEXT_PATH = System
             .getProperty("fcrepo.test.context.path");
 
-    protected Logger logger;
+    private Logger logger;
 
     @Before
     public void setLogger() {
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
-    protected static final String HOSTNAME = "localhost";
+    private static final String HOSTNAME = "localhost";
 
-    protected static final String serverAddress = "http://" + HOSTNAME + ":" +
+    private static final String serverAddress = "http://" + HOSTNAME + ":" +
             SERVER_PORT + CONTEXT_PATH;
 
-    protected static HttpClient client;
+    private static final HttpClient client;
 
     static {
         final CredentialsProvider creds = new DefaultCredentialsProvider();
