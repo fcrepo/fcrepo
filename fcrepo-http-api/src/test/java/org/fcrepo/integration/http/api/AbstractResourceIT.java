@@ -400,7 +400,7 @@ public abstract class AbstractResourceIT {
         return createObjectWithLinkHeader(pid, null);
     }
 
-    protected CloseableHttpResponse createObjectWithLinkHeader(final String pid, final String linkHeader) {
+    private CloseableHttpResponse createObjectWithLinkHeader(final String pid, final String linkHeader) {
         final HttpPost httpPost = postObjMethod("/");
         if (isNotEmpty(pid)) {
             httpPost.addHeader("Slug", pid);
@@ -481,16 +481,6 @@ public abstract class AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(createTx)) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
             return getLocation(response);
-        }
-    }
-
-    protected static void addMixin(final String pid, final String mixinUrl) throws IOException {
-        final HttpPatch updateObjectGraphMethod = new HttpPatch(serverAddress + pid);
-        updateObjectGraphMethod.addHeader(CONTENT_TYPE, "application/sparql-update");
-        updateObjectGraphMethod.setEntity(new StringEntity(
-                "INSERT DATA { <> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <" + mixinUrl + "> . } "));
-        try (final CloseableHttpResponse response = execute(updateObjectGraphMethod)) {
-            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
         }
     }
 
