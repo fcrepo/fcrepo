@@ -33,7 +33,6 @@ import static org.apache.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static org.apache.jena.update.UpdateAction.execute;
 import static org.apache.jena.update.UpdateFactory.create;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
-import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODELS;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
@@ -181,8 +180,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
     static final String RDF_TYPE_URI = RDF_NAMESPACE + "type";
 
-    private static final List<String> RESTRICTED_PREDICATES = asList(HAS_MEMBER_RELATION.toString(), RDF_TYPE_URI);
-
     // A curried type accepting resource, translator, and "minimality", returning triples.
     protected static interface RdfGenerator extends Function<FedoraResource,
     Function<IdentifierConverter<Resource, FedoraResource>, Function<Boolean, Stream<Triple>>>> {}
@@ -294,7 +291,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             isManagedNamespace.test(object.getNameSpace())) {
             return new ServerManagedTypeException(
                 "The " + predicateUri + " predicate may not take an object in the server managed namespaces (" +
-                object.isURI() + ").");
+                object.getNameSpace() + ").");
         }
         return null;
     });
@@ -316,7 +313,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             isManagedPredicate.test(createProperty(object.getURI()))) {
             return new ServerManagedPropertyException(
                 "The " + HAS_MEMBER_RELATION + " predicate may not take the server managed type. (" +
-                CONTAINS + ").");
+                object.getURI() + ").");
         }
 
         return null;
