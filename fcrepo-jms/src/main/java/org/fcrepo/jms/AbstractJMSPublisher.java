@@ -19,8 +19,6 @@ package org.fcrepo.jms;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.IOException;
-
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
@@ -49,21 +47,21 @@ import com.google.common.eventbus.Subscribe;
 abstract class AbstractJMSPublisher {
 
     @Inject
-    protected EventBus eventBus;
+    private EventBus eventBus;
 
     @Inject
-    protected ActiveMQConnectionFactory connectionFactory;
+    private ActiveMQConnectionFactory connectionFactory;
 
     @Inject
-    protected JMSEventMessageFactory eventFactory;
+    private JMSEventMessageFactory eventFactory;
 
-    protected Connection connection;
+    private Connection connection;
 
     protected Session jmsSession;
 
-    protected MessageProducer producer;
+    private MessageProducer producer;
 
-    protected static final Logger LOGGER = getLogger(AbstractJMSPublisher.class);
+    private static final Logger LOGGER = getLogger(AbstractJMSPublisher.class);
 
     protected abstract Destination createDestination() throws JMSException;
 
@@ -73,10 +71,9 @@ abstract class AbstractJMSPublisher {
      *
      * @param fedoraEvent the fedora event
      * @throws JMSException if JMS exception occurred
-     * @throws IOException if IO exception occurred
      */
     @Subscribe
-    public void publishJCREvent(final FedoraEvent fedoraEvent) throws JMSException, IOException {
+    public void publishJCREvent(final FedoraEvent fedoraEvent) throws JMSException {
         LOGGER.debug("Received an event from the internal bus.");
         final Message tm =
                 eventFactory.getMessage(fedoraEvent, jmsSession);

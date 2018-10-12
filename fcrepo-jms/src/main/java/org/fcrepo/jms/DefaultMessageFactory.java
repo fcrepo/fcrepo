@@ -45,7 +45,7 @@ import org.slf4j.Logger;
  */
 public class DefaultMessageFactory implements JMSEventMessageFactory {
 
-    public static final String JMS_NAMESPACE = "org.fcrepo.jms.";
+    private static final String JMS_NAMESPACE = "org.fcrepo.jms.";
 
     public static final String TIMESTAMP_HEADER_NAME = JMS_NAMESPACE
             + "timestamp";

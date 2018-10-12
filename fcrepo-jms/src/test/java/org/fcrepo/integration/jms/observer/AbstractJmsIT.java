@@ -42,7 +42,6 @@ import java.io.ByteArrayInputStream;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import javax.inject.Inject;
-import javax.jcr.RepositoryException;
 import javax.jms.Connection;
 import javax.jms.Destination;
 import javax.jms.JMSException;
@@ -111,14 +110,14 @@ abstract class AbstractJmsIT implements MessageListener {
 
     private MessageConsumer consumer;
 
-    private volatile Set<Message> messages = new CopyOnWriteArraySet<>();
+    private final Set<Message> messages = new CopyOnWriteArraySet<>();
 
     private static final Logger LOGGER = getLogger(AbstractJmsIT.class);
 
     protected abstract Destination createDestination() throws JMSException;
 
     @Test(timeout = TIMEOUT)
-    public void testIngestion() throws RepositoryException {
+    public void testIngestion() {
 
         LOGGER.debug("Expecting a {} event", RESOURCE_CREATION.getType());
 
@@ -136,7 +135,7 @@ abstract class AbstractJmsIT implements MessageListener {
     }
 
     @Test(timeout = TIMEOUT)
-    public void testFileEvents() throws InvalidChecksumException, RepositoryException {
+    public void testFileEvents() throws InvalidChecksumException {
 
         final FedoraSession session = repository.login();
         session.addSessionData(BASE_URL, TEST_BASE_URL);
@@ -162,7 +161,7 @@ abstract class AbstractJmsIT implements MessageListener {
     }
 
     @Test(timeout = TIMEOUT)
-    public void testMetadataEvents() throws RepositoryException {
+    public void testMetadataEvents() {
 
         final FedoraSession session = repository.login();
         session.addSessionData(BASE_URL, TEST_BASE_URL);
@@ -199,7 +198,7 @@ abstract class AbstractJmsIT implements MessageListener {
     }
 
     @Test(timeout = TIMEOUT)
-    public void testRemoval() throws RepositoryException {
+    public void testRemoval() {
 
         LOGGER.debug("Expecting a {} event", RESOURCE_DELETION.getType());
         final FedoraSession session = repository.login();
