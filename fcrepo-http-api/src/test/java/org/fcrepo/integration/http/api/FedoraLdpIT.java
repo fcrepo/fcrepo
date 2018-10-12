@@ -4069,7 +4069,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             "> \"Thu, 21 Jan 2010 00:09:40 GMT\". } WHERE {}"));
         try (CloseableHttpResponse response = execute(patch)) {
             assertEquals("Must not be able to PATCH RDF that contains a memento namespace predicate",
-                         CONFLICT.getStatusCode(), getStatus(patch));
+                         CONFLICT.getStatusCode(), getStatus(response));
         }
     }
 
@@ -4092,7 +4092,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                     "ldp:insertedContentRelation ore:proxyFor. } WHERE {}"));
         try (CloseableHttpResponse response = execute(patch)) {
             assertEquals("Must not be able to PATCH IndirectContainer updating Server Managed triples",
-                         CONFLICT.getStatusCode(), getStatus(patch));
+                         CONFLICT.getStatusCode(), getStatus(response));
         }
     }
 }
