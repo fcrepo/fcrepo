@@ -46,12 +46,9 @@ public class ParamExceptionMapper implements
         LOGGER.error("ParamException intercepted by ParamExceptionMapper: {}\n", e.getMessage());
         debugException(this, e, LOGGER);
 
-        final StringBuilder msg = new StringBuilder("Error parsing parameter: ");
-        msg.append(e.getParameterName());
-        msg.append(", of type: ");
-        msg.append(e.getParameterType().getSimpleName());
-
-        return fromResponse(e.getResponse()).entity(msg.toString()).type(TEXT_PLAIN_WITH_CHARSET).build();
+        final String msg = "Error parsing parameter: " + e.getParameterName() + ", of type: " +
+                e.getParameterType().getSimpleName();
+        return fromResponse(e.getResponse()).entity(msg).type(TEXT_PLAIN_WITH_CHARSET).build();
     }
 
 }

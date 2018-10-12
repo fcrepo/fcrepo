@@ -56,7 +56,7 @@ public class PreferTag implements Comparable<PreferTag> {
      * Create a new PreferTag from an existing tag
      * @param preferTag the preferTag
      */
-    public PreferTag(final PreferTag preferTag) {
+    protected PreferTag(final PreferTag preferTag) {
         tag = preferTag.getTag();
         value = preferTag.getValue();
         params = preferTag.getParams();
@@ -66,7 +66,7 @@ public class PreferTag implements Comparable<PreferTag> {
      * Parse the prefer tag and parameters out of the header
      * @param reader the reader
      */
-    public PreferTag(final HttpHeaderReader reader) {
+    private PreferTag(final HttpHeaderReader reader) {
 
         // Skip any white space
         reader.hasNext();
@@ -144,17 +144,17 @@ public class PreferTag implements Comparable<PreferTag> {
         final StringBuilder omitBuilder = new StringBuilder();
 
         if (!(value.equals("minimal") || receivedParam.equals("minimal"))) {
-            final List<String> appliedPrefs = asList(new String[] { SERVER_MANAGED.toString(),
-                                                                    LDP_NAMESPACE + "PreferMinimalContainer",
-                                                                    LDP_NAMESPACE + "PreferMembership",
-                                                                    LDP_NAMESPACE + "PreferContainment" });
-            final List<String> includePrefs = asList(new String[] { EMBED_CONTAINED.toString(),
-                                                                    INBOUND_REFERENCES.toString() });
-            includes.stream().forEach(param -> includeBuilder.append(
+            final List<String> appliedPrefs = asList(SERVER_MANAGED.toString(),
+                    LDP_NAMESPACE + "PreferMinimalContainer",
+                    LDP_NAMESPACE + "PreferMembership",
+                    LDP_NAMESPACE + "PreferContainment");
+            final List<String> includePrefs = asList(EMBED_CONTAINED.toString(),
+                    INBOUND_REFERENCES.toString());
+            includes.forEach(param -> includeBuilder.append(
                     (appliedPrefs.contains(param) || includePrefs.contains(param)) ? param + " " : ""));
 
             // Note: include params prioritized over omits during implementation
-            omits.stream().forEach(param -> omitBuilder.append(
+            omits.forEach(param -> omitBuilder.append(
                     (appliedPrefs.contains(param) && !includes.contains(param)) ? param + " " : ""));
         }
 
@@ -192,7 +192,7 @@ public class PreferTag implements Comparable<PreferTag> {
 
     @Override
     public boolean equals(final Object obj) {
-        if ((obj != null) && (obj instanceof PreferTag)) {
+        if ((obj instanceof PreferTag)) {
             return getTag().equals(((PreferTag) obj).getTag());
         }
         return false;

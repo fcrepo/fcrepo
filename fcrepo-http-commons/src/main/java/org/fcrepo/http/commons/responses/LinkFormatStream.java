@@ -53,7 +53,7 @@ public class LinkFormatStream implements AutoCloseable {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         stream.close();
     }
 

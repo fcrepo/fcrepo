@@ -84,26 +84,25 @@ public class WebAppConfig extends Displayable {
         return filterMappings.stream().filter(new FMapFilter(filterName)).collect(Collectors.toList());
     }
 
-    private static List<ContextParam> NO_CP = unmodifiableList(new ArrayList<ContextParam>(0));
+    private static final List<ContextParam> NO_CP = unmodifiableList(new ArrayList<>(0));
 
     public Collection<ContextParam> contextParams() {
         return (contextParams != null) ? contextParams : NO_CP;
     }
 
-    private static List<Servlet> NO_S = unmodifiableList(new ArrayList<Servlet>(0));
+    private static final List<Servlet> NO_S = unmodifiableList(new ArrayList<>(0));
 
     public Collection<Servlet> servlets() {
         return (servlets != null) ? servlets : NO_S;
     }
 
-    private static List<Filter> NO_F = unmodifiableList(new ArrayList<Filter>(0));
+    private static final List<Filter> NO_F = unmodifiableList(new ArrayList<>(0));
 
     public Collection<Filter> filters() {
         return (filters != null) ? filters : NO_F;
     }
 
-    private static List<Listener> NO_L =
-        unmodifiableList(new ArrayList<Listener>(0));
+    private static final List<Listener> NO_L = unmodifiableList(new ArrayList<>(0));
 
     public Collection<Listener> listeners() {
         return (listeners != null) ? listeners : NO_L;
@@ -111,7 +110,7 @@ public class WebAppConfig extends Displayable {
 
     private static class SMapFilter implements Predicate<ServletMapping> {
 
-        String servletName;
+        final String servletName;
 
         SMapFilter(final String sName) {
             servletName = sName;
@@ -127,7 +126,7 @@ public class WebAppConfig extends Displayable {
 
     private static class FMapFilter implements Predicate<FilterMapping> {
 
-        String filterName;
+        final String filterName;
 
         FMapFilter(final String sName) {
             filterName = sName;

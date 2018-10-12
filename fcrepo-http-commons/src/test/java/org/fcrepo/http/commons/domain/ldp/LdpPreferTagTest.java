@@ -20,8 +20,6 @@ package org.fcrepo.http.commons.domain.ldp;
 import org.fcrepo.http.commons.domain.PreferTag;
 import org.junit.Test;
 
-import java.text.ParseException;
-
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
 import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
@@ -37,7 +35,7 @@ public class LdpPreferTagTest {
 
 
     @Test
-    public void testMinimalHandling() throws ParseException {
+    public void testMinimalHandling() {
         testObj = new LdpPreferTag(new PreferTag("handling=lenient; received=\"minimal\""));
 
         assertFalse(testObj.prefersServerManaged());
@@ -49,7 +47,7 @@ public class LdpPreferTagTest {
     }
 
     @Test
-    public void testMinimalContainer() throws ParseException {
+    public void testMinimalContainer() {
         final PreferTag prefer
                 = new PreferTag("return=representation; include=\"" + LDP_NAMESPACE + "PreferMinimalContainer\"");
         testObj = new LdpPreferTag(prefer);
@@ -62,7 +60,7 @@ public class LdpPreferTagTest {
     }
 
     @Test
-    public void testPreferMembership() throws ParseException {
+    public void testPreferMembership() {
         final PreferTag prefer
                 = new PreferTag("return=representation; include=\"" + LDP_NAMESPACE + "PreferMinimalContainer "
                                                                     + LDP_NAMESPACE + "PreferMembership\"");
@@ -72,7 +70,7 @@ public class LdpPreferTagTest {
     }
 
     @Test
-    public void testPreferContainment() throws ParseException {
+    public void testPreferContainment() {
         final PreferTag prefer
                 = new PreferTag("return=representation; include=\"" + LDP_NAMESPACE + "PreferMinimalContainer "
                                                                     + LDP_NAMESPACE + "PreferContainment\"");
@@ -82,7 +80,7 @@ public class LdpPreferTagTest {
     }
 
     @Test
-    public void testPreferContainmentAndMembership() throws ParseException {
+    public void testPreferContainmentAndMembership() {
         final PreferTag prefer
                 = new PreferTag("return=representation; include=\"" + LDP_NAMESPACE + "PreferMembership "
                                                                     + LDP_NAMESPACE + "PreferContainment\"");
@@ -93,7 +91,7 @@ public class LdpPreferTagTest {
     }
 
     @Test
-    public void testPreferOmitContainmentAndMembership() throws ParseException {
+    public void testPreferOmitContainmentAndMembership() {
         final PreferTag prefer
                 = new PreferTag("return=representation; omit=\"" + LDP_NAMESPACE + "PreferMembership "
                                                                  + LDP_NAMESPACE + "PreferContainment\"");
@@ -104,7 +102,7 @@ public class LdpPreferTagTest {
     }
 
     @Test
-    public void testPreferReference() throws ParseException {
+    public void testPreferReference() {
         final PreferTag prefer
                 = new PreferTag("return=representation; include=\"" + INBOUND_REFERENCES + "\"");
         testObj = new LdpPreferTag(prefer);
@@ -113,13 +111,13 @@ public class LdpPreferTagTest {
     }
 
     @Test
-    public void testEmbedDefault() throws ParseException {
+    public void testEmbedDefault() {
         testObj = new LdpPreferTag(PreferTag.emptyTag());
         assertFalse(testObj.prefersEmbed());
     }
 
     @Test
-    public void testEmbedContained() throws ParseException {
+    public void testEmbedContained() {
         testObj = new LdpPreferTag(new PreferTag("return=representation; include=\"" + EMBED_CONTAINED + "\""));
         assertTrue(testObj.prefersEmbed());
     }

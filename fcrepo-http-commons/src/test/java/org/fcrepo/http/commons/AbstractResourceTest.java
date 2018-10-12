@@ -31,7 +31,6 @@ import org.fcrepo.kernel.api.services.NodeService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.modeshape.jcr.api.NamespaceRegistry;
 
 /**
  * <p>AbstractResourceTest class.</p>
@@ -53,9 +52,6 @@ public class AbstractResourceTest {
 
     @Mock
     private HttpHeaders mockHeaders;
-
-    @Mock
-    private NamespaceRegistry mockNames;
 
     @Before
     public void setUp() {

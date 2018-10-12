@@ -174,7 +174,7 @@ public class ViewHelpersTest {
     @Test
     public void testIsVersionedNode() {
         final Graph mem = createDefaultModel().getGraph();
-        mem.add(new Triple(createURI("a/b/c"), type.asNode(), createURI(MEMENTO_TYPE.toString())));
+        mem.add(new Triple(createURI("a/b/c"), type.asNode(), createURI(MEMENTO_TYPE)));
         assertTrue("Node is a versioned node.", testObj.isVersionedNode(mem, createURI("a/b/c")));
     }
 

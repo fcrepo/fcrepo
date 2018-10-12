@@ -213,7 +213,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
      *
      * @param resource Jena Resource to convert
      * @param values a map that will receive the matching URI template variables for future use.
-     * @return
+     * @return String of JCR path
      */
     private String asString(final Resource resource, final Map<String, String> values) {
         if (uriTemplate.match(resource.getURI(), values) && values.containsKey("path")) {
@@ -281,8 +281,8 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
 
     /**
      * Get only the resource path to this resource, before embedding it in a full URI
-     * @param resource
-     * @return
+     * @param resource with desired path
+     * @return path
      */
     private String doBackwardPathOnly(final FedoraResource resource) {
 

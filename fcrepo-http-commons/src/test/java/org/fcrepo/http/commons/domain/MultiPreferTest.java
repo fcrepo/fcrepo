@@ -21,8 +21,6 @@ import static com.google.common.collect.Sets.newHashSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.text.ParseException;
-
 import org.junit.Test;
 
 
@@ -34,12 +32,12 @@ import org.junit.Test;
 public class MultiPreferTest extends SinglePreferTest {
 
     @Override
-    protected SinglePrefer createTestPreferTypeFromHeader(final String header) throws ParseException {
+    protected SinglePrefer createTestPreferTypeFromHeader(final String header) {
         return new MultiPrefer(header);
     }
 
     @Test
-    public void testMultiConstructor() throws ParseException {
+    public void testMultiConstructor() {
         final SinglePrefer first = new SinglePrefer("return=representation");
         final SinglePrefer second = new SinglePrefer("handling=strict");
         final MultiPrefer testPrefer = new MultiPrefer(newHashSet(first, second));

@@ -34,13 +34,13 @@ public class Range {
 
     private final long end;
 
-    private static Pattern rangePattern =
+    private static final Pattern rangePattern =
         compile("^bytes\\s*=\\s*(\\d*)\\s*-\\s*(\\d*)");
 
     /**
      * Unbounded Range
      */
-    public Range() {
+    private Range() {
         this(0, -1);
     }
 
@@ -57,7 +57,7 @@ public class Range {
      * @param start the start
      * @param end the end
      */
-    public Range(final long start, final long end) {
+    private Range(final long start, final long end) {
         this.start = start;
         this.end = end;
     }

@@ -26,8 +26,6 @@ import static org.apache.jena.vocabulary.DC.title;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.apache.jena.vocabulary.RDFS.label;
 import static org.apache.jena.vocabulary.SKOS.prefLabel;
-import static java.time.Instant.now;
-import static java.time.ZoneId.of;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static java.util.Collections.emptyMap;
@@ -44,7 +42,7 @@ import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FOR
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.time.Instant;
-import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -86,9 +84,6 @@ public class ViewHelpers {
 
     private static final List<Property>  TITLE_PROPERTIES = asList(label, title, DCTerms.title, prefLabel);
 
-    private static final String DEFAULT =
-        DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(of("GMT")).format(now());
-
     private ViewHelpers() {
         // Exists only to defeat instantiation.
     }
@@ -125,7 +120,7 @@ public class ViewHelpers {
      */
     public Iterator<Node> getOrderedVersions(final Graph g, final Node subject, final Resource predicate) {
         final List<Node> vs = listObjects(g, subject, predicate.asNode()).toList();
-        vs.sort((v1, v2) -> getVersionDate(g, v1).compareTo(getVersionDate(g, v2)));
+        vs.sort(Comparator.comparing(v -> getVersionDate(g, v)));
         return vs.iterator();
     }
 
@@ -171,8 +166,7 @@ public class ViewHelpers {
      */
     public Instant getVersionDate(final Graph graph, final Node subject) {
         final String[] pathParts = subject.getURI().split("/");
-        final Instant datetime = MEMENTO_LABEL_FORMATTER.parse(pathParts[pathParts.length - 1], Instant::from);
-        return datetime;
+        return MEMENTO_LABEL_FORMATTER.parse(pathParts[pathParts.length - 1], Instant::from);
     }
 
     private static Optional<String> getValue(final Graph graph, final Node subject, final Node predicate) {
@@ -217,7 +211,7 @@ public class ViewHelpers {
      */
     public boolean isVersionedNode(final Graph graph, final Node subject) {
         return listObjects(graph, subject, RDF.type.asNode()).toList().stream().map(Node::getURI)
-            .anyMatch((MEMENTO_TYPE.toString())::equals);
+            .anyMatch((MEMENTO_TYPE)::equals);
     }
 
     /**

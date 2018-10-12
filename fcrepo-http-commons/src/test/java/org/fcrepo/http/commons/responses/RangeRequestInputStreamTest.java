@@ -54,7 +54,7 @@ public class RangeRequestInputStreamTest {
 
     @Test
     public void getGetLongRange() throws IOException {
-        final StringBuffer buf = new StringBuffer();
+        final StringBuilder buf = new StringBuilder();
         while ( buf.length() < 9000 ) {
             buf.append("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
         }

@@ -45,8 +45,6 @@ import javax.jcr.Property;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Workspace;
-import javax.jcr.version.Version;
-import javax.jcr.version.VersionHistory;
 import javax.jcr.version.VersionManager;
 import javax.ws.rs.core.UriBuilder;
 
@@ -74,7 +72,7 @@ public class HttpResourceConverterTest {
     private Session session, txSession;
 
     @Mock
-    private Node node, mementoNode, contentNode, timeMapNode, descriptionNode, webacAclNode;
+    private Node node, mementoNode, timeMapNode, descriptionNode, webacAclNode;
 
     @Mock
     private Property mockOriginal;
@@ -97,12 +95,6 @@ public class HttpResourceConverterTest {
 
     @Mock
     private VersionManager mockVersionManager;
-
-    @Mock
-    private VersionHistory mockVersionHistory;
-
-    @Mock
-    private Version mockVersion;
 
     @Before
     public void setUp() throws RepositoryException {

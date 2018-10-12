@@ -26,7 +26,6 @@ import javax.ws.rs.core.UriInfo;
 
 import org.apache.jena.rdf.model.Resource;
 
-import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.services.BinaryService;
@@ -37,8 +36,6 @@ import org.fcrepo.kernel.api.services.functions.ConfigurableHierarchicalSupplier
 import org.fcrepo.kernel.api.services.functions.UniqueValueSupplier;
 
 import org.jvnet.hk2.annotations.Optional;
-
-import com.google.common.eventbus.EventBus;
 
 /**
  * Superclass for Fedora JAX-RS Resources, providing convenience fields and methods.
@@ -58,9 +55,6 @@ public class AbstractResource {
      */
     @Context
     protected HttpHeaders headers;
-
-    @Inject
-    protected SessionFactory sessions;
 
     /**
      * The JCR node service
@@ -86,10 +80,6 @@ public class AbstractResource {
     @Inject
     protected VersionService versionService;
 
-    @Inject
-    @Optional
-    protected EventBus eventBus;
-
     /**
      * A resource that can mint new Fedora PIDs.
      */
@@ -108,8 +98,8 @@ public class AbstractResource {
      * @param originalPath the original path
      * @return String jcr path
      */
-    public static final String toPath(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-                                      final String originalPath) {
+    public static String toPath(final IdentifierConverter<Resource, FedoraResource> idTranslator,
+                                final String originalPath) {
 
         final Resource resource = idTranslator.toDomain(originalPath);
 

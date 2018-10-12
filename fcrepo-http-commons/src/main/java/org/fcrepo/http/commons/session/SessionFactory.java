@@ -44,7 +44,7 @@ import org.slf4j.Logger;
  */
 public class SessionFactory {
 
-    protected static enum Prefix{
+    protected enum Prefix{
         TX("tx:");
 
         private final String prefix;
@@ -72,7 +72,7 @@ public class SessionFactory {
     /**
      * Default constructor
      */
-    public SessionFactory() {
+    private SessionFactory() {
     }
 
     /**
