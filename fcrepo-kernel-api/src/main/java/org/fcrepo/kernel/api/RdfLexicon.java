@@ -41,13 +41,13 @@ public final class RdfLexicon {
     **/
     public static final String REPOSITORY_NAMESPACE = "http://fedora.info/definitions/v4/repository#";
 
-    private static final String FCREPO_API_NAMESPACE = "http://fedora.info/definitions/fcrepo#";
+    public static final String FCREPO_API_NAMESPACE = "http://fedora.info/definitions/fcrepo#";
 
     public static final String ACTIVITY_STREAMS_NAMESPACE = "https://www.w3.org/ns/activitystreams#";
 
-    private static final String EBUCORE_NAMESPACE = "http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#";
+    public static final String EBUCORE_NAMESPACE = "http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#";
 
-    private static final String OA_NAMESPACE = "http://www.w3.org/ns/oa#";
+    public static final String OA_NAMESPACE = "http://www.w3.org/ns/oa#";
 
     public static final String PROV_NAMESPACE = "http://www.w3.org/ns/prov#";
 
@@ -81,14 +81,6 @@ public final class RdfLexicon {
      */
     public static final Predicate<String> isManagedNamespace = p -> p.equals(REPOSITORY_NAMESPACE) ||
             p.equals(LDP_NAMESPACE);
-
-    // MEMBERSHIP
-    private static final Property HAS_PARENT =
-            createProperty(REPOSITORY_NAMESPACE + "hasParent");
-    public static final Property HAS_CHILD =
-            createProperty(REPOSITORY_NAMESPACE + "hasChild");
-
-    private static final Set<Property> membershipProperties = of(HAS_PARENT, HAS_CHILD);
 
     // FIXITY
 
@@ -168,24 +160,10 @@ public final class RdfLexicon {
     private static final Set<Property> ldpManagedProperties = of(CONTAINS);
 
     // REPOSITORY INFORMATION
-    private static final Property HAS_OBJECT_COUNT =
-            createProperty(REPOSITORY_NAMESPACE + "objectCount");
-    private static final Property HAS_OBJECT_SIZE =
-            createProperty(REPOSITORY_NAMESPACE + "objectSize");
     public static final Property HAS_TRANSACTION_SERVICE =
             createProperty(REPOSITORY_NAMESPACE + "hasTransactionProvider");
 
-    private static final Set<Property> repositoryProperties = of(
-            HAS_OBJECT_COUNT, HAS_OBJECT_SIZE, HAS_TRANSACTION_SERVICE);
-
-    // NAMESPACES
-    private static final Property HAS_NAMESPACE_PREFIX =
-            createProperty("http://purl.org/vocab/vann/preferredNamespacePrefix");
-    private static final Property HAS_NAMESPACE_URI =
-            createProperty("http://purl.org/vocab/vann/preferredNamespaceUri");
-
-    private static final Set<Property> namespaceProperties = of(
-            HAS_NAMESPACE_PREFIX, HAS_NAMESPACE_URI);
+    private static final Set<Property> repositoryProperties = of(HAS_TRANSACTION_SERVICE);
 
     // OTHER SERVICES
     public static final Property HAS_FIXITY_SERVICE =
@@ -227,9 +205,8 @@ public final class RdfLexicon {
 
     static {
         final ImmutableSet.Builder<Property> b = ImmutableSet.builder();
-        b.addAll(membershipProperties).addAll(fixityProperties).addAll(ldpManagedProperties).addAll(
-                repositoryProperties).addAll(namespaceProperties).addAll(
-                otherServiceProperties).addAll(serverManagedProperties);
+        b.addAll(fixityProperties).addAll(ldpManagedProperties).addAll(repositoryProperties)
+                .addAll(otherServiceProperties).addAll(serverManagedProperties);
         managedProperties = b.build();
     }
 

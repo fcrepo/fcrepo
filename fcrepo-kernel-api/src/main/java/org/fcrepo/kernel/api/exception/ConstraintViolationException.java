@@ -23,7 +23,6 @@ package org.fcrepo.kernel.api.exception;
  * @author whikloj
  * @since 2015-05-29
  */
-@SuppressWarnings("WeakerAccess")
 public class ConstraintViolationException extends RepositoryRuntimeException {
 
     private static final long serialVersionUID = 1L;

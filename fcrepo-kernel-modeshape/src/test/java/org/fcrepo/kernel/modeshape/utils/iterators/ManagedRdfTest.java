@@ -21,7 +21,6 @@ import static java.util.stream.Stream.of;
 import static org.apache.jena.graph.NodeFactory.createBlankNode;
 import static org.apache.jena.graph.Triple.create;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.modeshape.rdf.ManagedRdf.isManagedMixin;
 import static org.fcrepo.kernel.modeshape.rdf.ManagedRdf.isManagedTriple;
@@ -45,9 +44,6 @@ import org.apache.jena.graph.Triple;
  */
 public class ManagedRdfTest {
 
-    private final static Triple managedTriple = create(createBlankNode(), HAS_CHILD
-            .asNode(), createBlankNode());
-
     private final static Triple unManagedTriple = create(createBlankNode(),
             createBlankNode(), createBlankNode());
 
@@ -56,7 +52,7 @@ public class ManagedRdfTest {
     @Before
     public void setUp() {
         initMocks(this);
-        testStream = of(managedTriple, unManagedTriple).filter(isManagedTriple.negate());
+        testStream = of(unManagedTriple).filter(isManagedTriple.negate());
     }
 
     @Test
