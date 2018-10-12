@@ -38,7 +38,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODELS;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
-import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
@@ -182,6 +181,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
     static final String RDF_TYPE_URI = RDF_NAMESPACE + "type";
 
+    private static final List<String> RESTRICTED_PREDICATES = asList(HAS_MEMBER_RELATION.toString(), RDF_TYPE_URI);
+
     // A curried type accepting resource, translator, and "minimality", returning triples.
     protected static interface RdfGenerator extends Function<FedoraResource,
     Function<IdentifierConverter<Resource, FedoraResource>, Function<Boolean, Stream<Triple>>>> {}
@@ -286,22 +287,24 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     });
 
 
-    private static final Function<Triple, ConstraintViolationException> validateNoMementRdfTypes = uncheck(x ->  {
+    private static final Function<Triple, ConstraintViolationException> validateNoManagedTypes = uncheck(x ->  {
         final org.apache.jena.graph.Node object = x.getObject();
-        if (object.isURI() && x.getPredicate().getURI().equals(RDF_TYPE_URI) &&
-            object.getURI().startsWith(MEMENTO_NAMESPACE)) {
+        final String predicateUri = x.getPredicate().getURI();
+        if (object.isURI() && RDF_TYPE_URI.equals(predicateUri) &&
+            isManagedNamespace.test(object.getNameSpace())) {
             return new ServerManagedTypeException(
-                "The " + RDF_TYPE_URI + " predicate may not take an object in the memento namespace (" +
-                MEMENTO_NAMESPACE + ").");
+                "The " + predicateUri + " predicate may not take an object in the server managed namespaces (" +
+                object.isURI() + ").");
         }
         return null;
     });
 
-    private static final Function<Triple, ConstraintViolationException> validateNoMementoPredicates  = uncheck(x ->  {
-        if (x.getPredicate().getURI().startsWith(MEMENTO_NAMESPACE)) {
+    private static final Function<Triple, ConstraintViolationException> validateNoManagedPredicates  = uncheck(x ->  {
+        final String predicateUri = x.getPredicate().getURI();
+        final org.apache.jena.rdf.model.Property predicateProperty = createProperty(predicateUri);
+        if (isManagedPredicate.test(predicateProperty) && !isRelaxed.test(predicateProperty)) {
             return new ServerManagedPropertyException(
-                "The  predicates in the memento namespace (" +
-                MEMENTO_NAMESPACE + ") are server-managed and cannot be modified by the client.");
+                "The server managed predicates (" + predicateUri + ") cannot be modified by the client.");
         }
 
         return null;
@@ -310,9 +313,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     private static final Function<Triple, ConstraintViolationException> validateMemberRelation = uncheck(x -> {
         final org.apache.jena.graph.Node object = x.getObject();
         if (object.isURI() && x.getPredicate().getURI().equals(HAS_MEMBER_RELATION.toString()) &&
-            object.getURI().equals(CONTAINS.toString())) {
+            isManagedPredicate.test(createProperty(object.getURI()))) {
             return new ServerManagedPropertyException(
-                "The " + HAS_MEMBER_RELATION + " predicate may not take the ldp:contains type. (" +
+                "The " + HAS_MEMBER_RELATION + " predicate may not take the server managed type. (" +
                 CONTAINS + ").");
         }
 
@@ -324,8 +327,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                     .add(validatePredicateEndsWithSlash)
                     .add(validateObjectUrl)
                     .add(validateMimeTypeTriple)
-                    .add(validateNoMementRdfTypes)
-                    .add(validateNoMementoPredicates)
+                    .add(validateNoManagedTypes)
+                    .add(validateNoManagedPredicates)
                     .add(validateMemberRelation).build();
 
     /**

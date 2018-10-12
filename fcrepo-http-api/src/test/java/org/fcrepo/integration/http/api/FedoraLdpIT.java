@@ -257,8 +257,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testHeadBasicContainer() throws IOException {
         final String id = getRandomUniqueId();
 
-        createObjectAndClose(id);
-        addMixin(id, BASIC_CONTAINER.getURI());
+        createObjectAndClose(id, BASIC_CONTAINER_LINK_HEADER);
 
         final HttpHead headObjMethod = headObjMethod(id);
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
@@ -291,7 +290,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     private void testHeadDefaultContentType(final String mimeType) throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
-        addMixin(id, CONTAINER.getURI());
 
         final HttpHead headObjMethod = headObjMethod(id);
         String mt = mimeType;
@@ -2017,8 +2015,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     @Test
     public void testGetObjectGraphMinimal() throws IOException {
         final String id = getRandomUniqueId();
-        createObjectAndClose(id);
-        addMixin(id, BASIC_CONTAINER.getURI());
+        createObjectAndClose(id, BASIC_CONTAINER_LINK_HEADER);
         createObjectAndClose(id + "/a");
         final HttpGet getObjMethod = getObjMethod(id);
         getObjMethod.addHeader("Prefer", "return=minimal");
@@ -2034,8 +2031,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testGetObjectOmitMembership() throws IOException {
         final String id = getRandomUniqueId();
         final Node resource = createURI(serverAddress + id);
-        createObjectAndClose(id);
-        addMixin(id, BASIC_CONTAINER.getURI());
+        createObjectAndClose(id, BASIC_CONTAINER_LINK_HEADER);
         createObjectAndClose(id + "/a");
         final HttpGet getObjMethod = getObjMethod(id);
         getObjMethod.addHeader("Prefer", "return=representation; "
@@ -4039,7 +4035,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createMethod.addHeader(CONTENT_TYPE, "text/turtle");
         createMethod.addHeader("Slug", subjectURI);
         createMethod.setEntity(
-            new StringEntity("<>  <" + MEMENTO_NAMESPACE + "mementoDate" + "> \"Thu, 21 Jan 2010 00:09:40 GMT\""));
+            new StringEntity("<>  <" + MEMENTO_NAMESPACE + "mementoDatetime" + "> \"Thu, 21 Jan 2010 00:09:40 GMT\""));
         try (final CloseableHttpResponse response = execute(createMethod)) {
             assertEquals("Must not be able to POST RDF that contains a memento namespace predicate",
                          CONFLICT.getStatusCode(),
@@ -4053,9 +4049,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpPut putMethod = new HttpPut(subjectURI);
         putMethod.addHeader(CONTENT_TYPE, "text/turtle");
         putMethod.setEntity(
-            new StringEntity("<>  <" + MEMENTO_NAMESPACE + "mementoDate" + "> \"Thu, 21 Jan 2010 00:09:40 GMT\""));
+            new StringEntity("<>  <" + MEMENTO_NAMESPACE + "mementoDatetime" + "> \"Thu, 21 Jan 2010 00:09:40 GMT\""));
         try (final CloseableHttpResponse response = execute(putMethod)) {
-            assertEquals("Must not be able to POST RDF that contains a memento namespace predicate",
+            assertEquals("Must not be able to PUT RDF that contains a memento namespace predicate",
                          CONFLICT.getStatusCode(),
                          getStatus(response));
         }
@@ -4069,9 +4065,33 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpPatch patch = new HttpPatch(subjectURI);
         patch.addHeader(CONTENT_TYPE, "application/sparql-update");
         patch.setEntity(new StringEntity(
-            "INSERT { <>  <" + MEMENTO_NAMESPACE + "mementoDate" + "> \"Thu, 21 Jan 2010 00:09:40 GMT\". } WHERE {}"));
+            "INSERT { <>  <" + MEMENTO_NAMESPACE + "mementoDatetime" +
+            "> \"Thu, 21 Jan 2010 00:09:40 GMT\". } WHERE {}"));
         try (CloseableHttpResponse response = execute(patch)) {
-            assertEquals("Must not be able to POST RDF that contains a memento namespace predicate",
+            assertEquals("Must not be able to PATCH RDF that contains a memento namespace predicate",
+                         CONFLICT.getStatusCode(), getStatus(patch));
+        }
+    }
+
+    @Test
+    public void testPatchUpdateIndirectContainerServerManaged() throws IOException {
+        final String pid = getRandomUniqueId();
+        final String subjectURI = serverAddress + pid;
+        createObjectAndClose(pid);
+        final String indirectContainerPid = getRandomUniqueId();
+        final String indirectContainerURI = serverAddress + indirectContainerPid;
+        createObjectAndClose(indirectContainerPid, INDIRECT_CONTAINER_LINK_HEADER);
+        final HttpPatch patch = new HttpPatch(indirectContainerURI);
+        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
+        patch.setEntity(new StringEntity(
+                "PREFIX ldp: <http://www.w3.org/ns/ldp#>\n" +
+                "PREFIX fedora: <http://fedora.info/definitions/v4/repository#>\n" +
+                "PREFIX ore: <http://www.openarchives.org/ore/terms/>\n" +
+                "INSERT { <> ldp:membershipResource <" + subjectURI + "> ;\n" +
+                    "ldp:hasMemberRelation fedora:createdBy ;\n" +
+                    "ldp:insertedContentRelation ore:proxyFor. } WHERE {}"));
+        try (CloseableHttpResponse response = execute(patch)) {
+            assertEquals("Must not be able to PATCH IndirectContainer updating Server Managed triples",
                          CONFLICT.getStatusCode(), getStatus(patch));
         }
     }

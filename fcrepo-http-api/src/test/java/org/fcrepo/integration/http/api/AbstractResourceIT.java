@@ -31,6 +31,7 @@ import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.GONE;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
@@ -396,9 +397,16 @@ public abstract class AbstractResourceIT {
     }
 
     protected CloseableHttpResponse createObject(final String pid) {
+        return createObjectWithLinkHeader(pid, null);
+    }
+
+    protected CloseableHttpResponse createObjectWithLinkHeader(final String pid, final String linkHeader) {
         final HttpPost httpPost = postObjMethod("/");
-        if (pid.length() > 0) {
+        if (isNotEmpty(pid)) {
             httpPost.addHeader("Slug", pid);
+        }
+        if (isNotEmpty(linkHeader)) {
+            httpPost.addHeader(LINK, linkHeader);
         }
         try {
             final CloseableHttpResponse response = execute(httpPost);
@@ -412,6 +420,14 @@ public abstract class AbstractResourceIT {
     protected void createObjectAndClose(final String pid) {
         try {
             createObject(pid).close();
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    protected void createObjectAndClose(final String pid, final String linkHeader) {
+        try {
+            createObjectWithLinkHeader(pid, linkHeader).close();
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }
