@@ -17,7 +17,6 @@
  */
 package org.fcrepo.integration.kernel.modeshape;
 
-import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.fcrepo.kernel.api.utils.ContentDigest.asURI;
 import static org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM.SHA1;
@@ -93,7 +92,7 @@ public class LocalFileBinaryIT extends AbstractIT {
     }
 
     @After
-    public void after() throws Exception {
+    public void after() {
         session.expire();
     }
 
@@ -201,7 +200,7 @@ public class LocalFileBinaryIT extends AbstractIT {
     }
 
     private Set<URI> sha1Set(final String checksum) {
-        return new HashSet<>(asList(asURI(SHA1.algorithm, checksum)));
+        return new HashSet<>(singletonList(asURI(SHA1.algorithm, checksum)));
     }
 
     private String contentString(final FedoraBinary ds) throws Exception {

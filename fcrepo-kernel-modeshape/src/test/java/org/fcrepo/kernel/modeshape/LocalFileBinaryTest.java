@@ -176,7 +176,7 @@ public class LocalFileBinaryTest {
         when(mockDescNode.getNode(JCR_CONTENT)).thenReturn(mockContent);
 
         final long contentSize = testObj.getContentSize();
-        assertEquals(12l, contentSize);
+        assertEquals(12L, contentSize);
     }
 
     @Test
@@ -198,7 +198,7 @@ public class LocalFileBinaryTest {
     }
 
     @Test
-    public void testGetMimeType() throws Exception {
+    public void testGetMimeType() {
         getContentNodeMock(mockContent, mockDescNode, EXPECTED_CONTENT);
 
         final String mimeType = testObj.getMimeType();
@@ -210,7 +210,7 @@ public class LocalFileBinaryTest {
             when(proxyURIProperty.toString()).thenReturn(contentFile.toURI().toString());
             when(proxyURIProperty.getString()).thenReturn(contentFile.toURI().toString());
             when(proxyURIProperty.getValue()).thenReturn(mockURIValue);
-            when(proxyURIProperty.getName()).thenReturn(PROXY_FOR.toString());
+            when(proxyURIProperty.getName()).thenReturn(PROXY_FOR);
 
             when(mockURIValue.toString()).thenReturn(contentFile.toURI().toString());
             when(mockURIValue.getString()).thenReturn(contentFile.toURI().toString());

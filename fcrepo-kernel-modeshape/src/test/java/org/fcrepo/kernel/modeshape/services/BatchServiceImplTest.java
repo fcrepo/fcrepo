@@ -63,7 +63,7 @@ public class BatchServiceImplTest {
 
     private static final String ANOTHER_USER_NAME = "another";
 
-    BatchService service;
+    private BatchService service;
 
     @Mock
     private FedoraSession mockTx;

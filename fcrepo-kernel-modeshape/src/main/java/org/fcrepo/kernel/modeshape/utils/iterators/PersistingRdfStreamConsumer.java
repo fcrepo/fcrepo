@@ -67,7 +67,7 @@ public abstract class PersistingRdfStreamConsumer implements RdfStreamConsumer {
     private final IdentifierConverter<Resource, FedoraResource> idTranslator;
 
     // if it's not about a Fedora resource, we don't care.
-    protected final Predicate<Triple> isFedoraSubjectTriple;
+    private final Predicate<Triple> isFedoraSubjectTriple;
 
     private final JcrRdfTools jcrRdfTools;
 

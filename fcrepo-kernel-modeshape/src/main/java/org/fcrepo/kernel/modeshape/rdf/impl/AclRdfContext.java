@@ -47,7 +47,7 @@ public class AclRdfContext extends NodeRdfContext {
                          final IdentifierConverter<Resource, FedoraResource> idTranslator) throws RepositoryException {
         super(resource, idTranslator);
 
-        boolean writable = false;
+        boolean writable;
         try {
             getJcrNode(resource()).getSession().checkPermission( resource().getPath(), "add_node,set_property,remove" );
             writable = true;

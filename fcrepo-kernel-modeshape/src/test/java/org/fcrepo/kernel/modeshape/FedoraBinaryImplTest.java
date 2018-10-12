@@ -99,12 +99,10 @@ public class FedoraBinaryImplTest implements FedoraTypes {
 
     @Before
     public void setUp() {
-        final NodeType[] nodeTypes = new NodeType[] { mockDescNodeType };
         try {
             when(mockContent.getSession()).thenReturn(mockSession);
             when(mockContent.getNode(FEDORA_DESCRIPTION)).thenReturn(mockDescNode);
             when(mockContent.isNodeType(FEDORA_BINARY)).thenReturn(true);
-            final NodeType mockNodeType = mock(NodeType.class);
             testObj = new FedoraBinaryImpl(mockContent);
 
         } catch (final RepositoryException e) {
@@ -257,7 +255,7 @@ public class FedoraBinaryImplTest implements FedoraTypes {
     }
 
     @Test
-    public void testHasMixin() throws Exception {
+    public void testHasMixin() {
         assertTrue(FedoraBinaryImpl.hasMixin(mockContent));
     }
 

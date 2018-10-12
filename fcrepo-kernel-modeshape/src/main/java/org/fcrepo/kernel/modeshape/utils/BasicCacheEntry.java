@@ -36,7 +36,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -78,7 +78,7 @@ public abstract class BasicCacheEntry implements CacheEntry {
                                     calculatedChecksum,
                                     algorithm);
 
-            return asList(result);
+            return singletonList(result);
         } catch (final IOException e) {
             LOGGER.debug("Got error closing input stream: {}", e);
             throw new RepositoryRuntimeException(e);

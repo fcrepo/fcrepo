@@ -58,15 +58,15 @@ public class DefaultPropertiesLoader {
         ALLOWED_EXTERNAL_CONTENT("fcrepo.external.content.allowed", false),
         NAMESPACE_REGISTRY("fcrepo.namespace.registry", false);
 
-        private String text;
+        private final String text;
 
-        private boolean setDefaultValue;
+        private final boolean setDefaultValue;
 
-        private PROPERTIES(final String text) {
+        PROPERTIES(final String text) {
             this(text, true);
         }
 
-        private PROPERTIES(final String text, final boolean setDefaultValue) {
+        PROPERTIES(final String text, final boolean setDefaultValue) {
             this.text = text;
             this.setDefaultValue = setDefaultValue;
         }

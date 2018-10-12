@@ -48,7 +48,6 @@ import javax.jcr.nodetype.NodeTypeTemplate;
 import javax.jcr.security.AccessControlList;
 import javax.jcr.security.AccessControlManager;
 import javax.jcr.security.Privilege;
-import javax.jcr.version.Version;
 
 import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.FedoraSession;
@@ -84,7 +83,6 @@ import org.apache.jena.util.iterator.ExtendedIterator;
 import org.apache.jena.vocabulary.RDF;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.modeshape.jcr.security.SimplePrincipal;
 import org.springframework.test.context.ContextConfiguration;
@@ -148,26 +146,26 @@ import static org.junit.Assert.fail;
 public class FedoraResourceImplIT extends AbstractIT {
 
     @Inject
-    FedoraRepository repo;
+    private FedoraRepository repo;
 
     @Inject
-    NodeService nodeService;
+    private NodeService nodeService;
 
     @Inject
-    ContainerService containerService;
+    private ContainerService containerService;
 
     @Inject
-    BinaryService binaryService;
+    private BinaryService binaryService;
 
     @Inject
-    VersionService versionService;
+    private VersionService versionService;
 
     private FedoraSession session;
 
     private DefaultIdentifierTranslator subjects;
 
     @Before
-    public void setUp() throws RepositoryException {
+    public void setUp() {
         session = repo.login();
         subjects = new DefaultIdentifierTranslator(getJcrSession(session));
     }
@@ -178,7 +176,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetRootNode() throws RepositoryException {
+    public void testGetRootNode() {
         final FedoraSession session = repo.login();
         final FedoraResource object = nodeService.find(session, "/");
         assertEquals("/", object.getPath());
@@ -204,7 +202,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testLastModified() throws RepositoryException {
+    public void testLastModified() {
         final String pid = getRandomPid();
         containerService.findOrCreate(session, "/" + pid);
 
@@ -540,7 +538,6 @@ public class FedoraResourceImplIT extends AbstractIT {
                     x.startsWith(MODE_NAMESPACE) || x.startsWith(JCR_NT_NAMESPACE)));
     }
     @Test
-    @Ignore("Until implemented with Memento")
     public void testGetObjectVersionGraph() throws RepositoryException {
 
         final FedoraResource object =
@@ -559,7 +556,7 @@ public class FedoraResourceImplIT extends AbstractIT {
         logger.debug(graphStore.toString());
 
         // go querying for the version URI
-        final Resource s = createResource(createGraphSubjectNode(object).getURI());
+        createResource(createGraphSubjectNode(object).getURI());
 //        final ExtendedIterator<Statement> triples = graphStore.listStatements(s,HAS_VERSION, (RDFNode)null);
 
 //        final List<Statement> list = triples.toList();
@@ -731,7 +728,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testEtagValue() throws RepositoryException {
+    public void testEtagValue() {
         final FedoraResource object =
             containerService.findOrCreate(session, "/testEtagObject");
 
@@ -1028,8 +1025,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    // @Ignore ("Until implemented with Memento")
-    public void testDeleteLinkedVersionedResources() throws RepositoryException {
+    public void testDeleteLinkedVersionedResources() {
         final Container object1 = containerService.findOrCreate(session, "/" + getRandomPid());
         final Container object2 = containerService.findOrCreate(session, "/" + getRandomPid());
         session.commit();
@@ -1071,7 +1067,7 @@ public class FedoraResourceImplIT extends AbstractIT {
 
 
     @Test
-    public void testHash() throws RepositoryException {
+    public void testHash() {
         final String pid = getRandomPid();
         final Container object = containerService.findOrCreate(session, "/" + pid);
         session.commit();
@@ -1143,7 +1139,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetMementoByDatetime() throws RepositoryException {
+    public void testGetMementoByDatetime() {
         final FedoraResource object1 = containerService.findOrCreate(session, "/" + getRandomPid());
 
         final DateTimeFormatter FMT = new DateTimeFormatterBuilder()
@@ -1206,7 +1202,7 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetAcl() throws RepositoryException {
+    public void testGetAcl() {
         final String pid = getRandomPid();
         final FedoraResource resource = containerService.findOrCreate(session, "/" + pid);
         session.commit();
@@ -1267,15 +1263,6 @@ public class FedoraResourceImplIT extends AbstractIT {
 
         final javax.jcr.Node aclNode = jcrSession.getNode("/" + pid).getNode(CONTAINER_WEBAC_ACL);
         assertTrue(aclNode.isNodeType(FEDORA_WEBAC_ACL));
-    }
-
-    private void addVersionLabel(final String label, final FedoraResource r) throws RepositoryException {
-        final Session jcrSession = getJcrSession(session);
-        addVersionLabel(label, jcrSession.getWorkspace().getVersionManager().getBaseVersion(r.getPath()));
-    }
-
-    private static void addVersionLabel(final String label, final Version v) throws RepositoryException {
-        v.getContainingHistory().addVersionLabel(v.getName(), label, false);
     }
 
     private static Instant roundDate(final Instant date) {

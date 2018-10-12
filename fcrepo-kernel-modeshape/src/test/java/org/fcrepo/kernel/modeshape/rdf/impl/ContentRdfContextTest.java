@@ -143,8 +143,7 @@ public class ContentRdfContextTest {
     @Mock
     private NamespaceRegistry mockNamespaceRegistry;
 
-    private static void
-            logRdf(final String message, final Model model) throws IOException {
+    private static void logRdf(final String message, final Model model) throws IOException {
         LOGGER.debug(message);
         try (Writer w = new StringWriter()) {
             model.write(w);

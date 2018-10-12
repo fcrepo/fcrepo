@@ -119,9 +119,9 @@ public class LdpIsMemberOfRdfContext extends NodeRdfContext {
 
     /**
      * Get the membership resource relation asserted by the container
-     * @param parent
-     * @return
-     * @throws RepositoryException
+     * @param parent resource with relations
+     * @return Node of member
+     * @throws RepositoryException on error
      */
     private Node getMemberResource(final FedoraResource parent) throws RepositoryException {
         final Node membershipResource;

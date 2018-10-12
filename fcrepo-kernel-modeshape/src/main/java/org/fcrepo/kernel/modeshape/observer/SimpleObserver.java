@@ -132,7 +132,7 @@ public class SimpleObserver implements EventListener {
      * Note: Certain RDF types are generated dynamically. These are added here, based on
      * certain type hints.
      */
-    private static Function<String, Stream<String>> dynamicTypes = type -> {
+    private static final Function<String, Stream<String>> dynamicTypes = type -> {
         if (type.equals(ROOT)) {
             return of(FEDORA_REPOSITORY_ROOT, FEDORA_RESOURCE, FEDORA_CONTAINER, LDP_CONTAINER, LDP_RDF_SOURCE,
                     LDP_BASIC_CONTAINER);

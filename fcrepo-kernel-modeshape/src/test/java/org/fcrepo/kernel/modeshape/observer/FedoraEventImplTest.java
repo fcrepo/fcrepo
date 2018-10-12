@@ -46,7 +46,7 @@ import org.fcrepo.kernel.api.observer.EventType;
  */
 public class FedoraEventImplTest {
 
-    final FedoraEvent e = from(new TestEvent(1, "Path/Child", "UserId", "Identifier",
+    private final FedoraEvent e = from(new TestEvent(1, "Path/Child", "UserId", "Identifier",
             of("1", "2"), "{\"baseUrl\":\"http://localhost:8080/fcrepo/rest\"}", 0L));
 
 
@@ -74,7 +74,7 @@ public class FedoraEventImplTest {
 
     @Test(expected = java.lang.NullPointerException.class)
     public void testWrapNullFedoraEvent() {
-        from((Event)null);
+        from(null);
     }
 
     @Test

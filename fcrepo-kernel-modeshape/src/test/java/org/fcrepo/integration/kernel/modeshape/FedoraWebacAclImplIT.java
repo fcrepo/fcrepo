@@ -21,7 +21,6 @@ import static org.fcrepo.kernel.modeshape.FedoraWebacAclImpl.hasMixin;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 
 import javax.inject.Inject;
-import javax.jcr.RepositoryException;
 
 import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.FedoraSession;
@@ -46,10 +45,10 @@ import org.springframework.test.context.ContextConfiguration;
 public class FedoraWebacAclImplIT extends AbstractIT {
 
     @Inject
-    FedoraRepository repo;
+    private FedoraRepository repo;
 
     @Inject
-    ContainerService containerService;
+    private ContainerService containerService;
 
     private FedoraSession session;
 
@@ -57,7 +56,7 @@ public class FedoraWebacAclImplIT extends AbstractIT {
     public ExpectedException thrown = ExpectedException.none();
 
     @Before
-    public void setUp() throws RepositoryException {
+    public void setUp() {
         session = repo.login();
     }
 

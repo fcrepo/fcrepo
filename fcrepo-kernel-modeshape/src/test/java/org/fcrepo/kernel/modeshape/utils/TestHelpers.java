@@ -35,7 +35,6 @@ import java.security.SecureRandom;
 import javax.jcr.Binary;
 import javax.jcr.Node;
 import javax.jcr.Property;
-import javax.jcr.PropertyIterator;
 import javax.jcr.RepositoryException;
 import javax.jcr.Value;
 
@@ -62,7 +61,7 @@ public abstract class TestHelpers {
         return getContentNodeMock(mock, mockDesc, content.getBytes());
     }
 
-    public static Node getContentNodeMock(final Node mock, final Node mockDesc, final byte[] content) {
+    private static Node getContentNodeMock(final Node mock, final Node mockDesc, final byte[] content) {
         final long size = content.length;
         final String digest = checksumString(content);
         final Value digestValue = mock(Value.class);
@@ -106,7 +105,7 @@ public abstract class TestHelpers {
         return checksumString(content.getBytes());
     }
 
-    public static String checksumString(final byte[] content) {
+    private static String checksumString(final byte[] content) {
         try {
             final MessageDigest d = MessageDigest.getInstance(SHA1.algorithm);
             final byte[] digest = d.digest(content);
@@ -117,38 +116,7 @@ public abstract class TestHelpers {
         return "";
     }
 
-    @SuppressWarnings("unchecked")
-    public static PropertyIterator getPropertyIterator(final int numValues,
-            final long size) {
-        final PropertyIterator mock = mock(PropertyIterator.class);
-        final Property mockProp = mock(Property.class);
-        try {
-            when(mockProp.isMultiple()).thenReturn(numValues > 1);
-            if (numValues != 1) {
-                final Value[] values = new Value[numValues];
-                for (int i = 0; i < numValues; i++) {
-                    final Value mockVal = mock(Value.class);
-                    final Binary mockBin = mock(Binary.class);
-                    when(mockVal.getBinary()).thenReturn(mockBin);
-                    when(mockBin.getSize()).thenReturn(size);
-                    values[i] = mockVal;
-                }
-                when(mockProp.getValues()).thenReturn(values);
-            } else {
-                final Binary mockBin = mock(Binary.class);
-                when(mockBin.getSize()).thenReturn(size);
-                when(mockProp.getBinary()).thenReturn(mockBin);
-            }
-        } catch (final RepositoryException e) {
-        } // shhh
-        when(mock.getSize()).thenReturn(1L);
-        when(mock.hasNext()).thenReturn(true, false);
-        when(mock.nextProperty()).thenReturn(mockProp).thenThrow(
-                IndexOutOfBoundsException.class);
-        return mock;
-    }
-
-    public static byte[] randomData(final int byteLength) {
+    private static byte[] randomData(final int byteLength) {
         final byte[] bytes = new byte[byteLength];
         GARBAGE_GENERATOR.nextBytes(bytes);
         return bytes;

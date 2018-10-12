@@ -26,7 +26,6 @@ import java.io.File;
 import java.util.Collection;
 
 import javax.inject.Inject;
-import javax.jcr.RepositoryException;
 
 import org.fcrepo.integration.kernel.modeshape.AbstractIT;
 import org.fcrepo.kernel.api.FedoraRepository;
@@ -57,7 +56,7 @@ public class RepositoryServiceImplIT extends AbstractIT {
     private BinaryService binaryService;
 
     @Test
-    public void testGetAllObjectsDatastreamSize() throws RepositoryException, InvalidChecksumException {
+    public void testGetAllObjectsDatastreamSize() throws InvalidChecksumException {
         final long originalSize;
         FedoraSession session = repository.login();
         try {

@@ -41,12 +41,9 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.stream.Stream;
 
-import javax.jcr.AccessDeniedException;
-import javax.jcr.ItemNotFoundException;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 import javax.jcr.Value;
-import javax.jcr.ValueFormatException;
 
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
@@ -332,8 +329,7 @@ public class PropertyToTripleTest {
     }
 
     @Test(expected = RepositoryException.class)
-    public void badProperty() throws AccessDeniedException,
-                             ItemNotFoundException, RepositoryException {
+    public void badProperty() throws RepositoryException {
         when(mockProperty.getParent()).thenThrow(
                 new RepositoryException("Bad property!"));
         // we exhaust the mock of mockProperty.getParent() to replace it with an
@@ -353,7 +349,7 @@ public class PropertyToTripleTest {
     }
 
     @Before
-    public void setUp() throws ValueFormatException, RepositoryException {
+    public void setUp() throws RepositoryException {
         initMocks(this);
         idTranslator = new DefaultIdentifierTranslator(mockSession);
         testPropertyToTriple = new PropertyToTriple(mockSession, idTranslator);

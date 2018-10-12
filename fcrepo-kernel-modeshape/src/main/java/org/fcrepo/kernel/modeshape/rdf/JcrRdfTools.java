@@ -96,14 +96,14 @@ public class JcrRdfTools {
     /**
      * A map of JCR namespaces to Fedora's RDF namespaces
      */
-    public static BiMap<String, String> jcrNamespacesToRDFNamespaces =
+    public static final BiMap<String, String> jcrNamespacesToRDFNamespaces =
         ImmutableBiMap.of(JCR_NAMESPACE,
                 RdfLexicon.REPOSITORY_NAMESPACE);
 
     /**
      * A map of Fedora's RDF namespaces to the JCR equivalent
      */
-    public static BiMap<String, String> rdfNamespacesToJcrNamespaces =
+    public static final BiMap<String, String> rdfNamespacesToJcrNamespaces =
         jcrNamespacesToRDFNamespaces.inverse();
 
     private final IdentifierConverter<Resource, FedoraResource> idTranslator;
@@ -334,7 +334,7 @@ public class JcrRdfTools {
         }
     }
 
-    protected boolean repositoryHasType(final Session session, final String mixinName) throws RepositoryException {
+    private boolean repositoryHasType(final Session session, final String mixinName) throws RepositoryException {
         return session.getWorkspace().getNodeTypeManager().hasNodeType(mixinName);
     }
 

@@ -86,7 +86,7 @@ import static org.modeshape.jcr.RepositoryConfiguration.read;
 @RunWith(Parameterized.class)
 public class ValueConverterTest {
 
-    static Repository repo;
+    private static Repository repo;
 
     private Session session;
 

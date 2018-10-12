@@ -113,7 +113,7 @@ public class SimpleObserverTest {
     }
 
     @Test
-    public void testOnEvent() throws RepositoryException {
+    public void testOnEvent() {
         testObserver.onEvent(mockEvents);
         verify(mockBus).post(any(FedoraEvent.class));
     }

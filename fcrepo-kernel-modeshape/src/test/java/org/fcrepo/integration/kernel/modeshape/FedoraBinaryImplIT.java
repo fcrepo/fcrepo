@@ -17,7 +17,7 @@
  */
 package org.fcrepo.integration.kernel.modeshape;
 
-import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static java.util.UUID.randomUUID;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
@@ -39,7 +39,6 @@ import java.net.URISyntaxException;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 
 import javax.inject.Inject;
@@ -77,13 +76,13 @@ import org.springframework.test.context.ContextConfiguration;
 public class FedoraBinaryImplIT extends AbstractIT {
 
     @Inject
-    FedoraRepository repo;
+    private FedoraRepository repo;
 
     @Inject
-    BinaryService binaryService;
+    private BinaryService binaryService;
 
     @Inject
-    ContainerService containerService;
+    private ContainerService containerService;
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -91,12 +90,12 @@ public class FedoraBinaryImplIT extends AbstractIT {
     private IdentifierConverter<Resource, FedoraResource> idTranslator;
 
     @Before
-    public void setUp() throws RepositoryException {
+    public void setUp() {
         idTranslator = new DefaultIdentifierTranslator(getJcrSession(repo.login()));
     }
 
     @Test
-    public void testCreatedDate() throws RepositoryException, InvalidChecksumException {
+    public void testCreatedDate() throws InvalidChecksumException {
         FedoraSession session = repo.login();
         containerService.findOrCreate(session, "/testDatastreamObject");
 
@@ -119,7 +118,6 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
     @Test
     public void testDatastreamContent() throws IOException,
-            RepositoryException,
             InvalidChecksumException {
         final FedoraSession session = repo.login();
         containerService.findOrCreate(session, "/testDatastreamObject");
@@ -143,7 +141,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
     }
 
     @Test
-    public void testDatastreamContentType() throws RepositoryException, InvalidChecksumException {
+    public void testDatastreamContentType() throws InvalidChecksumException {
         final FedoraSession session = repo.login();
         try {
             containerService.findOrCreate(session, "/testDatastreamObject");
@@ -169,8 +167,8 @@ public class FedoraBinaryImplIT extends AbstractIT {
     }
 
     @Test
-    public void testDatastreamContentDigestAndLength() throws IOException, RepositoryException,
-    InvalidChecksumException {
+    public void testDatastreamContentDigestAndLength() throws IOException,
+            InvalidChecksumException {
         final FedoraSession session = repo.login();
         try {
             containerService.findOrCreate(session, "/testDatastreamObject");
@@ -201,7 +199,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
     @Test
     public void
-    testModifyDatastreamContentDigestAndLength() throws IOException, RepositoryException, InvalidChecksumException {
+    testModifyDatastreamContentDigestAndLength() throws IOException, InvalidChecksumException {
         final FedoraSession session = repo.login();
         try {
             containerService.findOrCreate(session, "/testDatastreamObject");
@@ -230,7 +228,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
     }
 
     @Test
-    public void testDatastreamContentWithChecksum() throws IOException, RepositoryException, InvalidChecksumException {
+    public void testDatastreamContentWithChecksum() throws IOException, InvalidChecksumException {
         final FedoraSession session = repo.login();
         try {
             containerService.findOrCreate(session, "/testDatastreamObject");
@@ -238,7 +236,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
             binaryService.findOrCreate(session, "/testDatastreamObject/testDatastreamNode4").setContent(
                     new ByteArrayInputStream("asdf".getBytes()),
                     "application/octet-stream",
-                    new HashSet<>(asList(asURI(SHA1.algorithm, "3da541559918a808c2402bba5012f6c60b27661c"))),
+                    new HashSet<>(singletonList(asURI(SHA1.algorithm, "3da541559918a808c2402bba5012f6c60b27661c"))),
                     null,
                     null
                     );
@@ -259,7 +257,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
     }
 
     @Test
-    public void testDatastreamFileName() throws RepositoryException, InvalidChecksumException {
+    public void testDatastreamFileName() throws InvalidChecksumException {
         final FedoraSession session = repo.login();
         try {
             containerService.findOrCreate(session, "/testDatastreamObject");
@@ -324,7 +322,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
     }
 
     @Test
-    public void testChecksumBlobsForInMemoryValues() throws RepositoryException, InvalidChecksumException {
+    public void testChecksumBlobsForInMemoryValues() throws InvalidChecksumException {
 
         final FedoraSession session = repo.login();
         try {
@@ -385,9 +383,9 @@ public class FedoraBinaryImplIT extends AbstractIT {
     }
 
     @Test
-    public void testExceptionGetFixityWithWantDigest() throws RepositoryException, InvalidChecksumException,
+    public void testExceptionGetFixityWithWantDigest() throws InvalidChecksumException,
             UnsupportedAlgorithmException {
-        final Collection<String> digestAlgs = Collections.singletonList("sha256");
+        final Collection<String> digestAlgs = singletonList("sha256");
         final String pid = "testFixityWithWantDigest-" + randomUUID();
         final FedoraSession session = repo.login();
         try {
@@ -416,9 +414,9 @@ public class FedoraBinaryImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetFixityWithWantDigest() throws RepositoryException, InvalidChecksumException,
+    public void testGetFixityWithWantDigest() throws InvalidChecksumException,
             URISyntaxException, UnsupportedAlgorithmException {
-        final Collection<String> digestAlgs = Collections.singletonList("SHA");
+        final Collection<String> digestAlgs = singletonList("SHA");
         final String pid = "testFixityWithWantDigest-" + randomUUID();
         final FedoraSession session = repo.login();
         try {
@@ -451,7 +449,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
     }
 
     @Test
-    public void testGetFixityWithWantDigestMultuple() throws RepositoryException, InvalidChecksumException,
+    public void testGetFixityWithWantDigestMultuple() throws InvalidChecksumException,
             URISyntaxException, UnsupportedAlgorithmException {
         final String[] digestAlgValues = {"SHA", "md5"};
         final Collection<String> digestAlgs = Arrays.asList(digestAlgValues);
@@ -487,7 +485,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
     }
 
     @Test
-    public void testModifyDatastreamDescriptionLastMod() throws RepositoryException, InvalidChecksumException {
+    public void testModifyDatastreamDescriptionLastMod() throws InvalidChecksumException {
         final FedoraSession session = repo.login();
         try {
             containerService.findOrCreate(session, "/testDatastreamObject");

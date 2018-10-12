@@ -64,24 +64,24 @@ import org.springframework.test.context.ContextConfiguration;
 public class ContainerImplIT extends AbstractIT {
 
     @Inject
-    FedoraRepository repo;
+    private FedoraRepository repo;
 
     @Inject
-    ContainerService containerService;
+    private ContainerService containerService;
 
     private FedoraSession session;
 
     private DefaultIdentifierTranslator subjects;
 
     @Before
-    public void setUp() throws RepositoryException {
+    public void setUp() {
         session = repo.login();
         subjects = new DefaultIdentifierTranslator(getJcrSession(session));
 
     }
 
     @Test
-    public void testCreatedObject() throws RepositoryException {
+    public void testCreatedObject() {
         containerService.findOrCreate(session, "/testObject");
         session.commit();
         session.expire();

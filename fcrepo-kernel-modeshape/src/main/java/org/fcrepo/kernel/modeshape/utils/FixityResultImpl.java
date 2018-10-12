@@ -62,7 +62,7 @@ public class FixityResultImpl implements FixityResult {
      * @param size the size
      * @param checksum the checksum
      */
-    public FixityResultImpl(final String storeIdentifier, final long size, final URI checksum) {
+    private FixityResultImpl(final String storeIdentifier, final long size, final URI checksum) {
         this(storeIdentifier, size, checksum, null);
     }
 

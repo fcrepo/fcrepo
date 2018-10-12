@@ -128,5 +128,5 @@ public final class NamespaceTools {
         return namespaces;
     }
 
-    private static Predicate<String> internalPrefix = INTERNAL_PREFIXES::contains;
+    private static final Predicate<String> internalPrefix = INTERNAL_PREFIXES::contains;
 }

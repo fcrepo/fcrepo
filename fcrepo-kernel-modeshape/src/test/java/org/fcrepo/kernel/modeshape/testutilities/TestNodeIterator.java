@@ -36,7 +36,7 @@ public class TestNodeIterator implements NodeIterator {
 
     private static final Logger LOGGER = getLogger(TestNodeIterator.class);
 
-    private Iterator<Node> iter;
+    private final Iterator<Node> iter;
 
     private int counter;
 

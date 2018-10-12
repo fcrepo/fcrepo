@@ -17,8 +17,8 @@
  */
 package org.fcrepo.integration.kernel.modeshape.observer;
 
+import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
-import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static com.jayway.awaitility.Awaitility.await;
 import static com.jayway.awaitility.Duration.ONE_HUNDRED_MILLISECONDS;
@@ -59,7 +59,6 @@ import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.observer.EventType;
 import org.fcrepo.kernel.api.observer.FedoraEvent;
-import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.ContainerService;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
@@ -98,9 +97,6 @@ public class SimpleObserverIT extends AbstractIT {
 
     @Inject
     private ContainerService containerService;
-
-    @Inject
-    private BinaryService binaryService;
 
     @Test
     public void testEventBusPublishing() throws RepositoryException {
@@ -142,7 +138,7 @@ public class SimpleObserverIT extends AbstractIT {
 
         final FedoraBinary binary = new FedoraBinaryImpl(n);
         binary.setContent( new ByteArrayInputStream(content.getBytes()), "text/plain",
-                new HashSet<>(asList(asURI(SHA1.algorithm, checksum))), "text.txt", null);
+                new HashSet<>(singletonList(asURI(SHA1.algorithm, checksum))), "text.txt", null);
 
         try {
             session.commit();
@@ -219,7 +215,7 @@ public class SimpleObserverIT extends AbstractIT {
     }
 
     @Test
-    public void testHashUriEvent() throws RepositoryException {
+    public void testHashUriEvent() {
         final FedoraSession session = repository.login();
         final Session se = getJcrSession(session);
         final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator(se);
@@ -251,7 +247,7 @@ public class SimpleObserverIT extends AbstractIT {
     }
 
     @Test
-    public void testDirectContainerEvent() throws RepositoryException {
+    public void testDirectContainerEvent() {
         final FedoraSession session = repository.login();
         final Session se = getJcrSession(session);
         final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator(se);
@@ -299,7 +295,7 @@ public class SimpleObserverIT extends AbstractIT {
     }
 
     @Test
-    public void testIndirectContainerEvent() throws RepositoryException {
+    public void testIndirectContainerEvent() {
         final FedoraSession session = repository.login();
         final Session se = getJcrSession(session);
         final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator(se);
@@ -378,7 +374,7 @@ public class SimpleObserverIT extends AbstractIT {
     }
 
     @Test
-    public void testInboundReferenceEvents() throws RepositoryException {
+    public void testInboundReferenceEvents() {
         final FedoraSession session = repository.login();
         final Session se = getJcrSession(session);
         final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator(se);

@@ -39,7 +39,7 @@ import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
  * @since Feb 20, 2014
  */
 public class AbstractService {
-    protected final static JcrTools jcrTools = new JcrTools();
+    private final static JcrTools jcrTools = new JcrTools();
 
     protected Node findOrCreateNode(final FedoraSession session,
                                     final String path,
@@ -76,7 +76,7 @@ public class AbstractService {
      * @param createdNode Node whose parents should be tagged up to but not including {@code baseNode}
      * @throws RepositoryException if repository exception occurred
      */
-    public static void tagHierarchyWithPairtreeMixin(final Node baseNode, final Node createdNode)
+    private static void tagHierarchyWithPairtreeMixin(final Node baseNode, final Node createdNode)
             throws RepositoryException {
         Node parent = createdNode.getParent();
 

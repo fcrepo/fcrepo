@@ -27,8 +27,6 @@ import org.fcrepo.kernel.modeshape.rdf.impl.mappings.PropertyValueIterator;
 import org.fcrepo.kernel.modeshape.utils.UncheckedFunction;
 import org.fcrepo.kernel.modeshape.utils.UncheckedPredicate;
 
-import org.slf4j.Logger;
-
 import java.util.stream.Stream;
 
 import javax.jcr.Node;
@@ -54,7 +52,6 @@ import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getReferencePropertyName;
 import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author cabeer
@@ -62,7 +59,6 @@ import static org.slf4j.LoggerFactory.getLogger;
  * @since 9/25/14
  */
 public class LdpContainerRdfContext extends NodeRdfContext {
-    private static final Logger LOGGER = getLogger(LdpContainerRdfContext.class);
 
     /**
      * Default constructor.
@@ -92,9 +88,9 @@ public class LdpContainerRdfContext extends NodeRdfContext {
 
     /**
      * Get the member relations assert on the subject by the given node
-     * @param container
-     * @return
-     * @throws RepositoryException
+     * @param container with relations
+     * @return Stream of triples
+     * @throws RepositoryException on error
      */
     private Stream<Triple> memberRelations(final FedoraResource container) throws RepositoryException {
         final org.apache.jena.graph.Node memberRelation;
@@ -122,7 +118,7 @@ public class LdpContainerRdfContext extends NodeRdfContext {
         }
 
         return container.getChildren().flatMap(
-            UncheckedFunction.<FedoraResource, Stream<Triple>>uncheck(child -> {
+            UncheckedFunction.uncheck(child -> {
                 final org.apache.jena.graph.Node childSubject = uriFor(child.getDescribedResource());
 
                 if (insertedContainerProperty.equals(MEMBER_SUBJECT.getURI())) {

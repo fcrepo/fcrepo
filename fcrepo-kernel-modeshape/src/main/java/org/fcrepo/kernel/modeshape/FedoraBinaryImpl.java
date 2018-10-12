@@ -27,7 +27,6 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.api.TripleCategory;
-import org.slf4j.Logger;
 
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFedoraBinary;
 
@@ -38,15 +37,12 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Set;
-import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author cabeer
  * @since 9/19/14
  */
 public class FedoraBinaryImpl extends AbstractFedoraBinary {
-
-    private static final Logger LOGGER = getLogger(FedoraBinaryImpl.class);
 
     private static final String LOCAL_FILE_ACCESS_TYPE = "file";
 

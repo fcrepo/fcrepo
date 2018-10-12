@@ -61,13 +61,13 @@ public class VersionServiceImplIT extends AbstractIT {
     NodeService nodeService;
 
     @Inject
-    ContainerService containerService;
+    private ContainerService containerService;
 
     @Inject
-    BinaryService binaryService;
+    private BinaryService binaryService;
 
     @Inject
-    VersionService versionService;
+    private VersionService versionService;
 
     private DefaultIdentifierTranslator subjects;
 
@@ -79,7 +79,7 @@ public class VersionServiceImplIT extends AbstractIT {
             .atZone(ZoneOffset.UTC).toInstant();
 
     @Before
-    public void setUp() throws RepositoryException {
+    public void setUp() {
         session = repository.login();
         subjects = new DefaultIdentifierTranslator(getJcrSession(session));
     }
@@ -102,7 +102,7 @@ public class VersionServiceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testCreateMementoWithChildReference() throws RepositoryException {
+    public void testCreateMementoWithChildReference() {
         final String pid = getRandomPid();
         final FedoraResource resource = containerService.findOrCreate(session, "/" + pid);
         session.commit();
@@ -175,8 +175,7 @@ public class VersionServiceImplIT extends AbstractIT {
         assertEquals(1L, countVersions(session, descResc));
     }
 
-    private static long countVersions(final FedoraSession session, final FedoraResource resource )
-            throws RepositoryException {
+    private static long countVersions(final FedoraSession session, final FedoraResource resource ) {
         final FedoraResource timeMap = resource.getTimeMap();
         return timeMap.getChildren().count();
     }

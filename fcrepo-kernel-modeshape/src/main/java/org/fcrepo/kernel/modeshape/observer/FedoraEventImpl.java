@@ -290,8 +290,7 @@ public class FedoraEventImpl implements FedoraEvent {
      * @return the types recorded on the resource associated to this event
      */
     public static Stream<String> getResourceTypes(final Event event) {
-        if (event instanceof org.modeshape.jcr.api.observation.Event ||
-            event instanceof org.fcrepo.kernel.modeshape.observer.WrappedJcrEvent) {
+        if (event instanceof org.modeshape.jcr.api.observation.Event) {
             try {
                 final org.modeshape.jcr.api.observation.Event modeEvent =
                         (org.modeshape.jcr.api.observation.Event) event;

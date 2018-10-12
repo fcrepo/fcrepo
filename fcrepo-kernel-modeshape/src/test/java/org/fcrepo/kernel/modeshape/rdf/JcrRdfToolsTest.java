@@ -217,7 +217,7 @@ public class JcrRdfToolsTest implements FedoraTypes {
         testObj.addProperty(mockFedoraResource,
                 createProperty("some:property"),
                 testSubjects.toDomain("x"),
-                Collections.<String,String>emptyMap());
+                Collections.emptyMap());
 
         verify(mockNode).setProperty("some:property_ref", new Value[]{mockReferenceValue}, mockReferenceValue.getType
                 ());
@@ -238,7 +238,7 @@ public class JcrRdfToolsTest implements FedoraTypes {
         testObj.addProperty(mockFedoraResource,
                 createProperty("some:property"),
                 createResource("some:resource"),
-                Collections.<String,String>emptyMap());
+                Collections.emptyMap());
 
         verify(mockNode, never()).setProperty(eq("some:property_ref"), any(Value[].class), anyInt());
     }

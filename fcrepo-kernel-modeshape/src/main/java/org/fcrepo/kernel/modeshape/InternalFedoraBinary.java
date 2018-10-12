@@ -103,8 +103,7 @@ public class InternalFedoraBinary extends AbstractFedoraBinary {
     @Override
     public void setExternalContent(final String contentType, final Collection<URI> checksums,
                                    final String originalFileName, final String externalHandling,
-                                   final String externalUrl)
-            throws InvalidChecksumException {
+                                   final String externalUrl) {
         throw new UnsupportedOperationException("Cannot call setExternalContent from this context");
     }
 
@@ -196,11 +195,10 @@ public class InternalFedoraBinary extends AbstractFedoraBinary {
      *
      * @param checksums that the user provided
      * @param dataProperty containing the binary against which the checksums will be verified
-     * @throws InvalidChecksumException
-     * @throws RepositoryException
+     * @throws InvalidChecksumException on error
      */
     private void verifyChecksums(final Collection<URI> checksums, final Property dataProperty)
-            throws InvalidChecksumException, RepositoryException {
+            throws InvalidChecksumException {
 
         final Map<URI, URI> checksumErrors = new HashMap<>();
 
@@ -285,7 +283,7 @@ public class InternalFedoraBinary extends AbstractFedoraBinary {
      * @param dsNode The target binary node to add information to
      * @param descNode The description node associated with the binary node
      * @param checksums The checksum information
-     * @throws RepositoryException
+     * @throws RepositoryException on error
      */
     private static void decorateContentNode(final Node dsNode, final Node descNode, final Collection<URI> checksums)
         throws RepositoryException {

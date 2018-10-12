@@ -83,6 +83,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -180,14 +181,13 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
     public static final String CONTAINER_WEBAC_ACL = "fedora:acl";
 
-    static final String RDF_TYPE_URI = RDF_NAMESPACE + "type";
+    private static final String RDF_TYPE_URI = RDF_NAMESPACE + "type";
 
     // A curried type accepting resource, translator, and "minimality", returning triples.
-    protected static interface RdfGenerator extends Function<FedoraResource,
+    protected interface RdfGenerator extends Function<FedoraResource,
     Function<IdentifierConverter<Resource, FedoraResource>, Function<Boolean, Stream<Triple>>>> {}
 
-    @SuppressWarnings("resource")
-    private static RdfGenerator getDefaultTriples = resource -> translator -> uncheck(minimal -> {
+    private static final RdfGenerator getDefaultTriples = resource -> translator -> uncheck(minimal -> {
         final Stream<Stream<Triple>> min = of(
             new TypeRdfContext(resource, translator),
             new PropertiesRdfContext(resource, translator));
@@ -200,19 +200,18 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         return min.reduce(empty(), Stream::concat);
     });
 
-    private static RdfGenerator getEmbeddedResourceTriples = resource -> translator -> uncheck(minimal ->
+    private static final RdfGenerator getEmbeddedResourceTriples = resource -> translator -> uncheck(minimal ->
             resource.getChildren().flatMap(child -> child.getTriples(translator, PROPERTIES)));
 
-    private static RdfGenerator getInboundTriples = resource -> translator -> uncheck(_minimal -> {
+    private static final RdfGenerator getInboundTriples = resource -> translator -> uncheck(_minimal -> {
         return new ReferencesRdfContext(resource, translator);
     });
 
-    private static RdfGenerator getLdpContainsTriples = resource -> translator -> uncheck(_minimal -> {
+    private static final RdfGenerator getLdpContainsTriples = resource -> translator -> uncheck(_minimal -> {
         return new ChildrenRdfContext(resource, translator);
     });
 
-    @SuppressWarnings("resource")
-    private static RdfGenerator getServerManagedTriples = resource -> translator -> uncheck(minimal -> {
+    private static final RdfGenerator getServerManagedTriples = resource -> translator -> uncheck(minimal -> {
         if (minimal) {
             return new LdpRdfContext(resource, translator);
         }
@@ -224,8 +223,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         return streams.reduce(empty(), Stream::concat);
     });
 
-    @SuppressWarnings("resource")
-    private static RdfGenerator getLdpMembershipTriples = resource -> translator -> uncheck(_minimal -> {
+    private static final RdfGenerator getLdpMembershipTriples = resource -> translator -> uncheck(_minimal -> {
         final Stream<Stream<Triple>> streams = of(
             new LdpContainerRdfContext(resource, translator),
             new LdpIsMemberOfRdfContext(resource, translator));
@@ -242,7 +240,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                     .put(LDP_CONTAINMENT, getLdpContainsTriples)
                     .build();
 
-    protected Node node;
+    protected final Node node;
 
     /*
      * A terminating slash means ModeShape has trouble extracting the localName, e.g., for http://myurl.org/.
@@ -396,9 +394,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
     /**
      * Get the "good" children for a node by skipping all pairtree nodes in the way.
-     * @param input
-     * @return
-     * @throws RepositoryException
+     * @param input Node containing children
+     * @return Stream of good children
+     * @throws RepositoryException on error
      */
     @SuppressWarnings("unchecked")
     private Stream<FedoraResource> nodeToGoodChildren(final Node input) throws RepositoryException {
@@ -417,7 +415,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     /**
      * Children for whom we will not generate triples.
      */
-    protected static Predicate<Node> nastyChildren = isInternalNode
+    private static final Predicate<Node> nastyChildren = isInternalNode
                     .or(TombstoneImpl::hasMixin)
                     .or(FedoraTimeMapImpl::hasMixin)
                     .or(FedoraWebacAclImpl::hasMixin)
@@ -927,13 +925,13 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
             final Optional<String> resourceInteractionModel = getResourceInteraction();
             if (resourceInteractionModel.isPresent()) {
-                updateQuads.stream().forEach(e -> {
+                updateQuads.forEach(e -> {
                     // check for interaction model change violation
                     checkInteractionModel(e.asTriple(), resourceInteractionModel);
                 });
             }
 
-            deleteQuads.stream().forEach(e -> {
+            deleteQuads.forEach(e -> {
                 final String interactionModel = getInteractionModel.apply(e.asTriple());
                 if (StringUtils.isNotBlank(interactionModel)) {
                     throw new InteractionModelViolationException("Deleting the interaction model "
@@ -1309,11 +1307,10 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
                     // Return the closest version older than the requested date.
                     return closest.get();
                 } else {
-                    // Otherwise you requested before the first version, so return the first version if is exists.
+                    // Otherwise you requested before the first version, so return the first version if it exists.
                     // If there are no Mementos return null.
-                    final Optional<FedoraResource> earliest = timemap.getChildren()
-                        .sorted((a, b) -> a.getMementoDatetime().compareTo(b.getMementoDatetime()))
-                        .findFirst();
+                    final Optional<FedoraResource> earliest =  timemap.getChildren().min(
+                            Comparator.comparing(FedoraResource::getMementoDatetime));
                     return earliest.orElse(null);
                 }
             }
@@ -1328,7 +1325,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
      * @param d2 second datetime
      * @return the difference
      */
-  static long dateTimeDifference(final Temporal d1, final Temporal d2) {
+  private static long dateTimeDifference(final Temporal d1, final Temporal d2) {
       return ChronoUnit.SECONDS.between(d1, d2);
   }
 

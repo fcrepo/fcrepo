@@ -51,7 +51,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
  * @author ajs6f
  */
 public class PropertyConverterTest {
-    public static final Map<String, String> EMPTY_NAMESPACE_MAP = emptyMap();
+    private static final Map<String, String> EMPTY_NAMESPACE_MAP = emptyMap();
 
     @Mock
     private JcrPropertyMock mockNamespacedProperty;

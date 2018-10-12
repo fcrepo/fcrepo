@@ -28,7 +28,6 @@ import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
 import javax.inject.Inject;
-import javax.jcr.RepositoryException;
 
 /**
  * @author cabeer
@@ -41,10 +40,10 @@ public class NodeServiceImplIT extends AbstractIT {
     private FedoraRepository repository;
 
     @Inject
-    NodeService nodeService;
+    private NodeService nodeService;
 
     @Test(expected = FedoraInvalidNamespaceException.class)
-    public void testExistsWithBadNamespace() throws RepositoryException {
+    public void testExistsWithBadNamespace() {
         final FedoraSession session = repository.login();
         final String path = "/bad_ns: " + getRandomPid();
 
@@ -52,7 +51,7 @@ public class NodeServiceImplIT extends AbstractIT {
     }
 
     @Test (expected = RepositoryRuntimeException.class)
-    public void testGetRootNodeException() throws RepositoryException {
+    public void testGetRootNodeException() {
         final FedoraSession session = repository.login();
         nodeService.find(session, "\\/");
     }

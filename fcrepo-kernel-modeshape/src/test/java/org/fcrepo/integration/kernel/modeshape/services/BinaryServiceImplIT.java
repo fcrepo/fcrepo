@@ -54,10 +54,10 @@ public class BinaryServiceImplIT extends AbstractIT {
     private FedoraRepository repository;
 
     @Inject
-    ContainerService containerService;
+    private ContainerService containerService;
 
     @Inject
-    BinaryService binaryService;
+    private BinaryService binaryService;
 
     @Test
     public void testCreateDatastreamNode() throws Exception {

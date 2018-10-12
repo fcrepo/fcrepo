@@ -20,8 +20,8 @@
         "providers" : [
             {
                 "name" : "Servlet Provider",
-                "classname" : "org.modeshape.jcr.security.ServletProvider",
-            },
+                "classname" : "org.modeshape.jcr.security.ServletProvider"
+            }
         ]
     },
     "node-types" : ["fedora-node-types.cnd"]

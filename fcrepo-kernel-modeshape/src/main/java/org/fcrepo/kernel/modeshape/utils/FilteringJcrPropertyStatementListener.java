@@ -50,7 +50,7 @@ public class FilteringJcrPropertyStatementListener extends JcrPropertyStatementL
 
     private static final Logger LOGGER = getLogger(FilteringJcrPropertyStatementListener.class);
 
-    private List<Statement> filteredAddStatements;
+    private final List<Statement> filteredAddStatements;
 
     /**
      * Construct a statement listener within the given session that filters out changes to

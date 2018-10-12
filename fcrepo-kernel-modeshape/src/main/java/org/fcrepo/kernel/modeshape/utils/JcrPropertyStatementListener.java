@@ -58,7 +58,7 @@ public class JcrPropertyStatementListener extends StatementListener {
 
     private static final Logger LOGGER = getLogger(JcrPropertyStatementListener.class);
 
-    private static enum Operation {
+    private enum Operation {
         ADD, REMOVE
     }
 
@@ -196,7 +196,7 @@ public class JcrPropertyStatementListener extends StatementListener {
     /**
      * If it's not the right kind of node, throw an appropriate unchecked exception.
      *
-     * @param subject
+     * @param subject to validate
      */
     private void validateSubject(final Resource subject) {
         final String subjectURI = subject.getURI();
