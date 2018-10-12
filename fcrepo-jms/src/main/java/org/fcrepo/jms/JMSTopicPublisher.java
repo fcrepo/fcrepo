@@ -29,7 +29,7 @@ import javax.jms.JMSException;
  */
 public class JMSTopicPublisher extends AbstractJMSPublisher {
 
-    private String topicName;
+    private final String topicName;
 
     /**
      * Create a JMS Topic with the default name of "fedora"
@@ -43,7 +43,7 @@ public class JMSTopicPublisher extends AbstractJMSPublisher {
      *
      * @param topicName the name of the topic
      */
-    public JMSTopicPublisher(final String topicName) {
+    private JMSTopicPublisher(final String topicName) {
         this.topicName = topicName;
     }
 
