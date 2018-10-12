@@ -80,7 +80,7 @@ public final class RdfLexicon {
      * Is this namespace one that the repository manages?
      */
     public static final Predicate<String> isManagedNamespace = p -> p.equals(REPOSITORY_NAMESPACE) ||
-            p.equals(LDP_NAMESPACE);
+            p.equals(LDP_NAMESPACE) || p.equals(MEMENTO_NAMESPACE);
 
     // FIXITY
 
@@ -218,6 +218,9 @@ public final class RdfLexicon {
     private static final Predicate<Property> hasFedoraNamespace =
         p -> !p.isAnon() && p.getNameSpace().startsWith(REPOSITORY_NAMESPACE);
 
+    private static Predicate<Property> hasMementoNamespace =
+        p -> !p.isAnon() && p.getNameSpace().startsWith(MEMENTO_NAMESPACE);
+
     public static final Predicate<Property> isRelaxed =
             p -> relaxableProperties.contains(p)
                     && ("relaxed".equals(System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)));
@@ -226,7 +229,7 @@ public final class RdfLexicon {
      * Detects whether an RDF property is managed by the repository.
      */
     public static final Predicate<Property> isManagedPredicate =
-        hasFedoraNamespace.or(p -> managedProperties.contains(p));
+        hasFedoraNamespace.or(hasMementoNamespace).or(p -> managedProperties.contains(p));
 
     /**
      * Fedora defined JCR node type with supertype of nt:file with two nt:folder named fedora:timemap and
@@ -263,8 +266,8 @@ public final class RdfLexicon {
     /**
      * This is an internal RDF type for versionable resources, this may be replaced by a Memento type.
      */
-    public static final Property VERSIONED_RESOURCE =
-        createProperty(MEMENTO_NAMESPACE + "OriginalResource");
+    public static final Resource VERSIONED_RESOURCE =
+        createResource(MEMENTO_NAMESPACE + "OriginalResource");
 
     /*
      * Interaction Models.

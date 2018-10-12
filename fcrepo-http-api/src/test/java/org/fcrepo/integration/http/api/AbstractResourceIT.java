@@ -31,6 +31,7 @@ import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.GONE;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
@@ -396,9 +397,16 @@ public abstract class AbstractResourceIT {
     }
 
     protected CloseableHttpResponse createObject(final String pid) {
+        return createObjectWithLinkHeader(pid, null);
+    }
+
+    private CloseableHttpResponse createObjectWithLinkHeader(final String pid, final String linkHeader) {
         final HttpPost httpPost = postObjMethod("/");
-        if (pid.length() > 0) {
+        if (isNotEmpty(pid)) {
             httpPost.addHeader("Slug", pid);
+        }
+        if (isNotEmpty(linkHeader)) {
+            httpPost.addHeader(LINK, linkHeader);
         }
         try {
             final CloseableHttpResponse response = execute(httpPost);
@@ -412,6 +420,14 @@ public abstract class AbstractResourceIT {
     protected void createObjectAndClose(final String pid) {
         try {
             createObject(pid).close();
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    protected void createObjectAndClose(final String pid, final String linkHeader) {
+        try {
+            createObjectWithLinkHeader(pid, linkHeader).close();
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }
@@ -465,16 +481,6 @@ public abstract class AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(createTx)) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
             return getLocation(response);
-        }
-    }
-
-    protected static void addMixin(final String pid, final String mixinUrl) throws IOException {
-        final HttpPatch updateObjectGraphMethod = new HttpPatch(serverAddress + pid);
-        updateObjectGraphMethod.addHeader(CONTENT_TYPE, "application/sparql-update");
-        updateObjectGraphMethod.setEntity(new StringEntity(
-                "INSERT DATA { <> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <" + mixinUrl + "> . } "));
-        try (final CloseableHttpResponse response = execute(updateObjectGraphMethod)) {
-            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
         }
     }
 

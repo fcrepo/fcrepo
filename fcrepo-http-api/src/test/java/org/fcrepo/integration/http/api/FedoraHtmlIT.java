@@ -18,7 +18,6 @@
 package org.fcrepo.integration.http.api;
 
 import static org.apache.commons.lang3.StringUtils.contains;
-import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
@@ -75,7 +74,6 @@ public class FedoraHtmlIT extends AbstractResourceIT {
     public void testGetContainerTemplate() throws IOException {
         final String pid = getRandomUniqueId();
         createObject(pid);
-        addMixin(pid, REPOSITORY_NAMESPACE + "Container");
 
         final HttpGet method = new HttpGet(serverAddress + pid);
         method.addHeader(ACCEPT, "text/html");

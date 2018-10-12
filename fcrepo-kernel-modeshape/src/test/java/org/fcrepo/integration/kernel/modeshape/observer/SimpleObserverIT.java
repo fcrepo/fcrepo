@@ -257,10 +257,10 @@ public class SimpleObserverIT extends AbstractIT {
 
         final Resource subject2 = subjects.reverse().convert(obj2);
 
+        obj1.addType("ldp:DirectContainer");
         obj1.updateProperties(subjects, "PREFIX ldp: <http://www.w3.org/ns/ldp#>\n" +
                 "PREFIX pcdm: <http://pcdm.org/models#>\n" +
-                "INSERT { <> a ldp:DirectContainer ;\n" +
-                    "ldp:membershipResource <" + subject2 + "> ;\n" +
+                "INSERT { <> ldp:membershipResource <" + subject2 + "> ;\n" +
                     "ldp:hasMemberRelation pcdm:hasMember . } WHERE {}", obj1.getTriples(subjects, PROPERTIES));
 
         try {
@@ -305,11 +305,11 @@ public class SimpleObserverIT extends AbstractIT {
 
         final Resource subject2 = subjects.reverse().convert(obj2);
 
+        obj1.addType("ldp:IndirectContainer");
         obj1.updateProperties(subjects, "PREFIX ldp: <http://www.w3.org/ns/ldp#>\n" +
                 "PREFIX pcdm: <http://pcdm.org/models#>\n" +
                 "PREFIX ore: <http://www.openarchives.org/ore/terms/>\n" +
-                "INSERT { <> a ldp:IndirectContainer ;\n" +
-                    "ldp:membershipResource <" + subject2 + "> ;\n" +
+                "INSERT { <> ldp:membershipResource <" + subject2 + "> ;\n" +
                     "ldp:hasMemberRelation pcdm:hasMember ;\n" +
                     "ldp:insertedContentRelation ore:proxyFor. } WHERE {}", obj1.getTriples(subjects, PROPERTIES));
 
