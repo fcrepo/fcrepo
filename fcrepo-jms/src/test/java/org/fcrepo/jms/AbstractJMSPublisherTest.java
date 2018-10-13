@@ -26,8 +26,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
-import java.io.IOException;
-
 import javax.jms.Connection;
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -94,7 +92,7 @@ abstract class AbstractJMSPublisherTest {
     }
 
     @Test
-    public void testPublishJCREvent() throws IOException, JMSException {
+    public void testPublishJCREvent() throws JMSException {
         final Message mockMsg = mock(Message.class);
         final FedoraEvent mockEvent = mock(FedoraEvent.class);
         when(mockEventFactory.getMessage(eq(mockEvent), isNull())).thenReturn(mockMsg);

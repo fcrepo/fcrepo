@@ -146,9 +146,9 @@ public class FedoraLdp extends ContentExposingResource {
 
     private static final Logger LOGGER = getLogger(FedoraLdp.class);
 
-    static final String WANT_DIGEST = "Want-Digest";
+    private static final String WANT_DIGEST = "Want-Digest";
 
-    static final String DIGEST = "Digest";
+    private static final String DIGEST = "Digest";
 
     @PathParam("path") protected String externalPath;
 
@@ -283,7 +283,7 @@ public class FedoraLdp extends ContentExposingResource {
                     servletResponse.addHeader(DIGEST, handleWantDigestHeader((FedoraBinary)resource(), wantDigest));
                 }
 
-                if (!acceptableMediaTypes.stream().anyMatch(t -> t.isCompatible(mediaType))) {
+                if (acceptableMediaTypes.stream().noneMatch(t -> t.isCompatible(mediaType))) {
                     return notAcceptable(VariantListBuilder.newInstance().mediaTypes(mediaType).build()).build();
                 }
             }
@@ -429,7 +429,7 @@ public class FedoraLdp extends ContentExposingResource {
                 final MediaType effectiveContentType
                         = requestBodyStream == null || requestContentType == null ? null : contentType;
                 resource = createFedoraResource(path, interactionModel, effectiveContentType,
-                        !(requestBodyStream == null || requestContentType == null), extContent != null ? true : false);
+                        !(requestBodyStream == null || requestContentType == null), extContent != null);
             }
 
             if (httpConfiguration.putRequiresIfMatch() && StringUtils.isBlank(ifMatch) && !resource.isNew()) {
@@ -584,7 +584,6 @@ public class FedoraLdp extends ContentExposingResource {
      * @param digest the digest header
      * @return 201
      * @throws InvalidChecksumException if invalid checksum exception occurred
-     * @throws IOException if IO exception occurred
      * @throws MalformedRdfException if malformed rdf exception occurred
      * @throws UnsupportedAlgorithmException if an unsupported algorithm exception occurs
      */
@@ -599,7 +598,7 @@ public class FedoraLdp extends ContentExposingResource {
             final InputStream requestBodyStream,
                                  @HeaderParam(LINK) final List<String> rawLinks,
                                  @HeaderParam("Digest") final String digest)
-            throws InvalidChecksumException, IOException, MalformedRdfException, UnsupportedAlgorithmException {
+            throws InvalidChecksumException, MalformedRdfException, UnsupportedAlgorithmException {
 
         final List<String> links = unpackLinks(rawLinks);
 
@@ -639,7 +638,7 @@ public class FedoraLdp extends ContentExposingResource {
             LOGGER.info("Ingest with path: {}", newObjectPath);
 
             final FedoraResource resource = createFedoraResource(newObjectPath, interactionModel, contentType,
-                    !(requestBodyStream == null || requestContentType == null), extContent != null ? true : false);
+                    !(requestBodyStream == null || requestContentType == null), extContent != null);
 
             try (final RdfStream resourceTriples =
                      resource.isNew() ? new DefaultRdfStream(asNode(resource())) : getResourceTriples(resource())) {
@@ -811,7 +810,7 @@ public class FedoraLdp extends ContentExposingResource {
      */
     private String getInteractionModel(final FedoraResource resource) {
         final Optional<String> result = INTERACTION_MODELS.stream().filter(x -> resource.hasType(x)).findFirst();
-        return result.isPresent() ? result.get() : null;
+        return result.orElse(null);
     }
 
     private String mintNewPid(final String slug) {
@@ -859,9 +858,8 @@ public class FedoraLdp extends ContentExposingResource {
         }
 
         final Collection<URI> checksumResults = binary.checkFixity(idTranslator, preferredDigests);
-        final String digestValue = checksumResults.stream().map(uri -> uri.toString().replaceFirst("urn:", "")
+        return checksumResults.stream().map(uri -> uri.toString().replaceFirst("urn:", "")
                 .replaceFirst(":", "=").replaceFirst("sha1=", "sha=")).collect(Collectors.joining(","));
-        return digestValue;
     }
 
     private static String checkInteractionModel(final List<String> links) {
@@ -937,13 +935,13 @@ public class FedoraLdp extends ContentExposingResource {
      * @return Digest algorithms that are supported
      */
     private static Collection<String> parseWantDigestHeader(final String wantDigest) {
-        final Map<String, Double> digestPairs = new HashMap<String, Double>();
+        final Map<String, Double> digestPairs = new HashMap<>();
         try {
             final List<String> algs = Splitter.on(',').omitEmptyStrings().trimResults().splitToList(wantDigest);
             // Parse the optional q value with default 1.0, and 0 ignore. Format could be: SHA-1;qvalue=0.1
             for (final String alg : algs) {
                 final String[] tokens = alg.split(";", 2);
-                final double qValue = tokens.length == 1 || tokens[1].indexOf("=") < 0 ?
+                final double qValue = tokens.length == 1 || !tokens[1].contains("=") ?
                         1.0 : Double.parseDouble(tokens[1].split("=", 2)[1]);
                 digestPairs.put(tokens[0], qValue);
             }

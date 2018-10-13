@@ -101,7 +101,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testExternalDatastreamProxyWithWantDigestForLocalFile() throws IOException, ParseException {
+    public void testExternalDatastreamProxyWithWantDigestForLocalFile() throws IOException {
 
         final File externalFile = createExternalLocalFile(TEST_BINARY_CONTENT);
 
@@ -126,7 +126,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testExternalDatastreamCopyWithWantDigestForLocalFile() throws IOException, ParseException {
+    public void testExternalDatastreamCopyWithWantDigestForLocalFile() throws IOException {
 
         final File externalFile = createExternalLocalFile(TEST_BINARY_CONTENT);
 
@@ -151,7 +151,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testExternalDatastreamProxyWithWantDigest() throws IOException, ParseException {
+    public void testExternalDatastreamProxyWithWantDigest() throws IOException {
 
         final String dsId = getRandomUniqueId();
         createDatastream(dsId, "x", TEST_BINARY_CONTENT);
@@ -177,7 +177,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testExternalDatastreamCopyWithWantDigest() throws IOException, ParseException {
+    public void testExternalDatastreamCopyWithWantDigest() throws IOException {
 
         final String dsId = getRandomUniqueId();
         createDatastream(dsId, "x", TEST_BINARY_CONTENT);
@@ -203,7 +203,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testExternalDatastreamProxyWithWantDigestMultipleForLocalFile() throws IOException, ParseException {
+    public void testExternalDatastreamProxyWithWantDigestMultipleForLocalFile() throws IOException {
 
         final File externalFile = createExternalLocalFile(TEST_BINARY_CONTENT);
 
@@ -224,9 +224,9 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
 
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
             assertTrue("SHA-1 Fixity Checksum doesn't match",
-                    digesterHeaderValue.indexOf(TEST_SHA_DIGEST_HEADER_VALUE) >= 0);
+                    digesterHeaderValue.contains(TEST_SHA_DIGEST_HEADER_VALUE));
             assertTrue("MD5 fixity checksum doesn't match",
-                    digesterHeaderValue.indexOf(TEST_MD5_DIGEST_HEADER_VALUE) >= 0);
+                    digesterHeaderValue.contains(TEST_MD5_DIGEST_HEADER_VALUE));
         }
 
         // GET request with Want-Digest
@@ -239,9 +239,9 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
 
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
             assertTrue("SHA-1 Fixity Checksum doesn't match",
-                    digesterHeaderValue.indexOf(TEST_SHA_DIGEST_HEADER_VALUE) >= 0);
+                    digesterHeaderValue.contains(TEST_SHA_DIGEST_HEADER_VALUE));
             assertTrue("MD5 fixity checksum doesn't match",
-                    digesterHeaderValue.indexOf(TEST_MD5_DIGEST_HEADER_VALUE) >= 0);
+                    digesterHeaderValue.contains(TEST_MD5_DIGEST_HEADER_VALUE));
         }
     }
 
@@ -330,16 +330,16 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
 
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
             assertTrue("SHA-1 Fixity Checksum doesn't match",
-                    digesterHeaderValue.indexOf(sha1) >= 0);
+                    digesterHeaderValue.contains(sha1));
             if (md5 != null) {
                 assertTrue("MD5 fixity checksum doesn't match",
-                        digesterHeaderValue.indexOf(md5) >= 0);
+                        digesterHeaderValue.contains(md5));
             }
         }
     }
 
     @Test
-    public void testRedirectWithWantDigest() throws IOException, ParseException {
+    public void testRedirectWithWantDigest() throws IOException {
 
         final String dsId = getRandomUniqueId();
         createDatastream(dsId, "x", TEST_BINARY_CONTENT);
@@ -656,7 +656,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
             final HttpGet get = new HttpGet(getLocation(response));
             try (final CloseableHttpClient noFollowClient =
                     HttpClientBuilder.create().disableRedirectHandling().build();
-                    final CloseableHttpResponse getResponse = noFollowClient.execute(get);) {
+                    final CloseableHttpResponse getResponse = noFollowClient.execute(get)) {
                 assertEquals(TEMPORARY_REDIRECT.getStatusCode(), getStatus(getResponse));
             }
         }

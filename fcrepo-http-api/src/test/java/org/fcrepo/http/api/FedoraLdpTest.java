@@ -22,6 +22,7 @@ import static java.net.URI.create;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
 import static java.util.stream.Stream.of;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static javax.ws.rs.core.HttpHeaders.LINK;
@@ -78,7 +79,6 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -160,7 +160,7 @@ public class FedoraLdpTest {
     private final String binaryDescriptionPath = binaryPath + "/fedora:description";
     private FedoraLdp testObj;
 
-    private final List<String> nonRDFSourceLink = Arrays.asList(
+    private final List<String> nonRDFSourceLink = singletonList(
             Link.fromUri(NON_RDF_SOURCE.toString()).rel("type").build().toString());
 
     @Mock
@@ -293,7 +293,7 @@ public class FedoraLdpTest {
     private FedoraResource setResource(final Class<? extends FedoraResource> klass) {
         final FedoraResource mockResource = mock(klass);
         if (mockResource instanceof FedoraBinary) {
-            when(((FedoraBinary) mockResource).getContentSize()).thenReturn(1l);
+            when(((FedoraBinary) mockResource).getContentSize()).thenReturn(1L);
         }
 
         final Answer<RdfStream> answer = invocationOnMock -> new DefaultRdfStream(
@@ -472,7 +472,7 @@ public class FedoraLdpTest {
     }
 
     @Test
-    public void testOption() throws Exception {
+    public void testOption() {
         setResource(FedoraResource.class);
         final Response actual = testObj.options();
         assertEquals(OK.getStatusCode(), actual.getStatus());
@@ -481,7 +481,7 @@ public class FedoraLdpTest {
     }
 
     @Test
-    public void testOptionWithLDPRS() throws Exception {
+    public void testOptionWithLDPRS() {
         setResource(Container.class);
         final Response actual = testObj.options();
         assertEquals(OK.getStatusCode(), actual.getStatus());
@@ -491,7 +491,7 @@ public class FedoraLdpTest {
     }
 
     @Test
-    public void testOptionWithBinary() throws Exception {
+    public void testOptionWithBinary() {
         final FedoraBinary mockResource = (FedoraBinary)setResource(FedoraBinary.class);
         when(mockResource.getDescription()).thenReturn(mockNonRdfSourceDescription);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
@@ -504,7 +504,7 @@ public class FedoraLdpTest {
     }
 
     @Test
-    public void testOptionWithBinaryDescription() throws Exception {
+    public void testOptionWithBinaryDescription() {
         final NonRdfSourceDescription mockResource
                 = (NonRdfSourceDescription)setResource(NonRdfSourceDescription.class);
         when(mockResource.getDescribedResource()).thenReturn(mockBinary);
@@ -592,7 +592,7 @@ public class FedoraLdpTest {
             final Model model = entity.stream.collect(toModel());
             final List<String> rdfNodes = model.listObjects().mapWith(RDFNode::toString).toList();
             assertTrue("Expected RDF contexts missing", rdfNodes.stream()
-                    .filter(x -> x.contains("PROPERTIES") && x.contains("MINIMAL")).findFirst().isPresent());
+                    .anyMatch(x -> x.contains("PROPERTIES") && x.contains("MINIMAL")));
             assertFalse("Included non-minimal contexts", rdfNodes.contains("LDP_MEMBERSHIP"));
             assertFalse("Included non-minimal contexts", rdfNodes.contains("LDP_CONTAINMENT"));
         }
@@ -603,10 +603,9 @@ public class FedoraLdpTest {
      * Emulates an 'If-None-Match' precondition failing for a GET request.  There should not be any entity body set
      * on the response.
      *
-     * @throws Exception if something exceptional happens
      */
     @Test
-    public void testGetWhenIfNoneMatchPreconditionFails() throws Exception {
+    public void testGetWhenIfNoneMatchPreconditionFails() {
         setResource(FedoraResource.class);
 
         // Set up the expectations for the ResponseBuilder
@@ -643,10 +642,9 @@ public class FedoraLdpTest {
      * Emulates an 'If-Modified-Since' precondition failing for a GET request.  There should not be any entity body set
      * on the response.
      *
-     * @throws Exception if something exceptional happens
      */
     @Test
-    public void testGetWhenIfModifiedSincePreconditionFails() throws Exception {
+    public void testGetWhenIfModifiedSincePreconditionFails() {
         setResource(FedoraResource.class);
 
         // Set up the expectations for the ResponseBuilder
@@ -713,7 +711,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testGetWithObjectIncludeReferences()
-            throws ParseException, IOException, UnsupportedAlgorithmException {
+            throws IOException, UnsupportedAlgorithmException {
         setResource(Container.class);
         setField(testObj, "prefer", new MultiPrefer("return=representation; include=\"" + INBOUND_REFERENCES + "\""));
         final Response actual = testObj.getResource(null);
@@ -783,7 +781,7 @@ public class FedoraLdpTest {
                 .toString()
                 .replaceAll("<.*>", "< >");
 
-        testObj.createObject(null, null, null, null, Arrays.asList(badExternal), null);
+        testObj.createObject(null, null, null, null, singletonList(badExternal), null);
     }
 
     @Test(expected = ExternalMessageBodyException.class)
@@ -793,7 +791,7 @@ public class FedoraLdpTest {
 
          final String badExternal = Link.fromUri("http://test.com")
             .rel(EXTERNAL_CONTENT.toString()).param("handling", "boogie").type("text/plain").build().toString();
-        testObj.createObject(null, null, null, null, Arrays.asList(badExternal), null);
+        testObj.createObject(null, null, null, null, singletonList(badExternal), null);
     }
 
     @Test
@@ -841,7 +839,7 @@ public class FedoraLdpTest {
     }
 
     @Test
-    public void testDelete() throws Exception {
+    public void testDelete() {
         final FedoraResource fedoraResource = setResource(FedoraResource.class);
         final Response actual = testObj.deleteObject();
         assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
@@ -866,7 +864,7 @@ public class FedoraLdpTest {
     @Test(expected = CannotCreateResourceException.class)
     public void testPutNewObjectLdpr() throws Exception {
         testObj.createOrReplaceObjectRdf(null, null, null, null,
-                asList("<http://www.w3.org/ns/ldp#Resource>; rel=\"type\""), null);
+                singletonList("<http://www.w3.org/ns/ldp#Resource>; rel=\"type\""), null);
     }
 
     @Test
@@ -984,7 +982,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testCreateNewObject() throws MalformedRdfException, InvalidChecksumException,
-           IOException, UnsupportedAlgorithmException {
+            UnsupportedAlgorithmException {
         setResource(Container.class);
         when(mockContainerService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockContainer);
         final Response actual = testObj.createObject(null, null, "b", null, null, null);
@@ -993,17 +991,17 @@ public class FedoraLdpTest {
 
     @Test
     public void testCreateNewObjectWithVersionedResource() throws MalformedRdfException, InvalidChecksumException,
-           IOException, UnsupportedAlgorithmException {
+            UnsupportedAlgorithmException {
         setResource(Container.class);
         when(mockContainerService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockContainer);
         final String versionedResourceLink = "<" + VERSIONED_RESOURCE.getURI() + ">;rel=\"type\"";
-        final Response actual = testObj.createObject(null, null, "b", null, Arrays.asList(versionedResourceLink), null);
+        final Response actual = testObj.createObject(null, null, "b", null, singletonList(versionedResourceLink), null);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
     }
 
     @Test
     public void testCreateNewObjectWithSparql() throws MalformedRdfException,
-           InvalidChecksumException, UnsupportedAlgorithmException, IOException {
+           InvalidChecksumException, UnsupportedAlgorithmException {
         setResource(Container.class);
         when(mockContainerService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockContainer);
         final Response actual = testObj.createObject(null,
@@ -1014,7 +1012,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testCreateNewObjectWithRdf() throws MalformedRdfException,
-           InvalidChecksumException, IOException, UnsupportedAlgorithmException {
+           InvalidChecksumException, UnsupportedAlgorithmException {
         setResource(Container.class);
         when(mockContainerService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockContainer);
         final Response actual = testObj.createObject(null, NTRIPLES_TYPE, "b",
@@ -1155,7 +1153,7 @@ public class FedoraLdpTest {
     }
 
     @Test(expected = ClientErrorException.class)
-    public void testPostToBinary() throws MalformedRdfException, InvalidChecksumException, IOException,
+    public void testPostToBinary() throws MalformedRdfException, InvalidChecksumException,
             UnsupportedAlgorithmException {
         final FedoraBinary mockObject = (FedoraBinary)setResource(FedoraBinary.class);
         doReturn(mockObject).when(testObj).resource();
@@ -1164,18 +1162,19 @@ public class FedoraLdpTest {
 
     @Test(expected = CannotCreateResourceException.class)
     public void testLDPRNotImplemented() throws MalformedRdfException, InvalidChecksumException,
-            IOException, UnsupportedAlgorithmException {
+            UnsupportedAlgorithmException {
         setResource(Container.class);
         when(mockContainerService.findOrCreate(mockFedoraSession, "/x")).thenReturn(mockContainer);
-        testObj.createObject(null, null, "x", null, asList("<http://www.w3.org/ns/ldp#Resource>; rel=\"type\""), null);
+        testObj.createObject(null, null, "x", null,
+                singletonList("<http://www.w3.org/ns/ldp#Resource>; rel=\"type\""), null);
     }
 
     @Test(expected = ClientErrorException.class)
     public void testLDPRNotImplementedInvalidLink() throws MalformedRdfException, InvalidChecksumException,
-            IOException, UnsupportedAlgorithmException {
+            UnsupportedAlgorithmException {
         setResource(Container.class);
         when(mockContainerService.findOrCreate(mockFedoraSession, "/x")).thenReturn(mockContainer);
-        testObj.createObject(null, null, "x", null, asList("<http://foo;rel=\"type\""), null);
+        testObj.createObject(null, null, "x", null, singletonList("<http://foo;rel=\"type\""), null);
     }
 
     @Test

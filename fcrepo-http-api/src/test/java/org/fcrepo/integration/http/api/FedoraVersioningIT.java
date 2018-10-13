@@ -85,6 +85,7 @@ import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -531,7 +532,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         // Ensure that the resource reference is gone
         try (final CloseableHttpResponse getResponse1 = execute(new HttpGet(subjectUri));
-                final CloseableDataset dataset = getDataset(getResponse1);) {
+                final CloseableDataset dataset = getDataset(getResponse1)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             assertFalse("Expected NOT to have child resource: " + graph, graph.contains(ANY,
                     ANY, createURI(CONTAINS.getURI()), createURI(childUri)));
@@ -539,7 +540,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         // Ensure that the resource reference is still in memento
         try (final CloseableHttpResponse getResponse1 = execute(new HttpGet(mementoUri));
-                final CloseableDataset dataset = getDataset(getResponse1);) {
+                final CloseableDataset dataset = getDataset(getResponse1)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             assertTrue("Expected child resource NOT found: " + graph, graph.contains(ANY,
                     ANY, createURI(CONTAINS.getURI()), createURI(childUri)));
@@ -636,14 +637,14 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         // Ensure that the resource reference is gone
         try (final CloseableHttpResponse getResponse1 = execute(new HttpGet(subjectUri));
-                final CloseableDataset dataset = getDataset(getResponse1);) {
+                final CloseableDataset dataset = getDataset(getResponse1)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             assertFalse("Expected NOT to have resource: " + graph, graph.contains(ANY,
                     ANY, createURI("http://pcdm.org/models#hasMember"), createURI(resource)));
         }
 
         try (final CloseableHttpResponse getResponse1 = execute(new HttpGet(mementoUri));
-                final CloseableDataset dataset = getDataset(getResponse1);) {
+                final CloseableDataset dataset = getDataset(getResponse1)) {
 
             final DatasetGraph graph = dataset.asDatasetGraph();
 
@@ -687,7 +688,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final Node originalBinaryNode = createURI(serverAddress + id);
         // Ensure that the resource reference is gone
         try (final CloseableHttpResponse getResponse1 = execute(new HttpGet(metadataUri));
-                final CloseableDataset dataset = getDataset(getResponse1);) {
+                final CloseableDataset dataset = getDataset(getResponse1)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             assertFalse("Expected NOT to have resource: " + graph, graph.contains(ANY,
                     originalBinaryNode, createURI(relation), createURI(referencedResource)));
@@ -696,7 +697,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final String descMementoUrl = mementoUri.replace(FCR_VERSIONS, "fcr:metadata/fcr:versions");
         // Ensure that the resource reference is still in memento
         try (final CloseableHttpResponse getResponse1 = execute(new HttpGet(descMementoUrl));
-                final CloseableDataset dataset = getDataset(getResponse1);) {
+                final CloseableDataset dataset = getDataset(getResponse1)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             assertTrue("Expected resource NOT found: " + graph, graph.contains(ANY,
                     originalBinaryNode, createURI(relation), createURI(referencedResource)));
@@ -814,7 +815,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
 
         final Link[] expectedLinks = listLinks.stream()
-                                              .sorted((a,b) ->a.toString().compareTo(b.toString()))
+                                              .sorted(Comparator.comparing(Link::toString))
                                               .toArray(Link[]::new);
 
         final HttpGet httpGet = getObjMethod(id + "/" + FCR_VERSIONS);
@@ -827,7 +828,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             //the links from the body are not
 
             final Link[] bodyLinks = bodyList.stream().map(String::trim).filter(t -> !t.isEmpty())
-                                                      .sorted((a,b) ->a.toString().compareTo(b.toString()))
+                                                      .sorted(Comparator.naturalOrder())
                                                       .map(Link::valueOf).toArray(Link[]::new);
             assertArrayEquals(expectedLinks, bodyLinks);
         }
@@ -1043,18 +1044,6 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
-    private void assertNoMementoHeaders(final String uri) throws Exception {
-        final HttpGet getOriginal = new HttpGet(uri);
-
-        try (final CloseableHttpResponse response = execute(getOriginal)) {
-            assertEquals(OK.getStatusCode(), getStatus(response));
-
-            assertNoLinkHeader(response, MEMENTO_TYPE, "type");
-            assertNoLinkHeader(response, uri, "original");
-            assertNoMementoDatetimeHeaderPresent(response);
-        }
-    }
-
     @Test
     public void testAddAndRetrieveVersion() throws Exception {
         createVersionedContainer(id);
@@ -1119,7 +1108,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         createVersionedContainer(id);
         final String versionUri = createContainerMementoWithBody(subjectUri, MEMENTO_DATETIME);
 
-        final String[] rdfResponseTypes = rdfTypes.toArray(new String[rdfTypes.size()]);;
+        final String[] rdfResponseTypes = rdfTypes.toArray(new String[rdfTypes.size()]);
         for (final String type : rdfResponseTypes) {
             final HttpGet method = new HttpGet(versionUri);
             method.addHeader(ACCEPT, type);
@@ -1343,7 +1332,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         final String body = createContainerMementoBodyContent(subjectUri, N3);
         final String anyMementoUri = subjectUri + "/fcr:versions/any";
-        final HttpPost anyPost = new HttpPost(anyMementoUri);;
+        final HttpPost anyPost = new HttpPost(anyMementoUri);
         anyPost.addHeader(CONTENT_TYPE, N3);
         anyPost.setEntity(new StringEntity(body));
 
@@ -1397,7 +1386,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             checkForLinkHeader(response, RESOURCE.toString(), "type");
             checkForLinkHeader(response, RDF_SOURCE.toString(), "type");
             assertNoLinkHeader(response, VERSIONED_RESOURCE.toString(), "type");
-            assertNoLinkHeader(response, VERSIONING_TIMEMAP_TYPE.toString(), "type");
+            assertNoLinkHeader(response, VERSIONING_TIMEMAP_TYPE, "type");
             assertNoLinkHeader(response, version1Uri + "/" + FCR_ACL, "acl");
         }
     }
@@ -1419,7 +1408,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             checkForLinkHeader(response, subjectUri + "/" + FCR_VERSIONS, "timemap");
             checkForLinkHeader(response, NON_RDF_SOURCE.toString(), "type");
             assertNoLinkHeader(response, VERSIONED_RESOURCE.toString(), "type");
-            assertNoLinkHeader(response, VERSIONING_TIMEMAP_TYPE.toString(), "type");
+            assertNoLinkHeader(response, VERSIONING_TIMEMAP_TYPE, "type");
             assertNoLinkHeader(response, version1Uri + "/" + FCR_ACL, "acl");
         }
     }
@@ -1737,7 +1726,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
      *
      * @param id the desired slug
      * @return Location of the new resource
-     * @throws Exception
+     * @throws Exception on error
      */
     private String createVersionedContainer(final String id) throws Exception {
         final HttpPost createMethod = postObjMethod();
@@ -1758,7 +1747,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
      * @param mimeType the mimeType of the content
      * @param content the actual content
      * @return Location of the new resource
-     * @throws Exception
+     * @throws Exception on error
      */
     private String createVersionedBinary(final String id, final String mimeType, final String content)
         throws Exception {
@@ -1784,7 +1773,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
      *
      * @param id the desired slug
      * @return Location of the new resource
-     * @throws Exception
+     * @throws Exception on error
      */
     private String createVersionedBinary(final String id) throws Exception {
         return createVersionedBinary(id, null, null);
@@ -1833,11 +1822,11 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         return rdfTypes.toArray(new String[rdfTypes.size()]);
     }
 
-    protected static void assertMementoUri(final String mementoUri, final String subjectUri) {
+    private static void assertMementoUri(final String mementoUri, final String subjectUri) {
         assertTrue(mementoUri.matches(subjectUri + "/fcr:versions/\\d+"));
     }
 
-    protected static void assertMementoEqualsOriginal(final String mementoURI) throws Exception {
+    private static void assertMementoEqualsOriginal(final String mementoURI) throws Exception {
 
         final HttpGet getMemento = new HttpGet(mementoURI);
         getMemento.addHeader(ACCEPT, "application/n-triples");

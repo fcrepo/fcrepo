@@ -34,7 +34,6 @@ import javax.jcr.ItemExistsException;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.Value;
 import javax.jcr.ValueFactory;
 import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeType;
@@ -64,9 +63,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.sparql.util.Context;
 
 
 /**
@@ -102,19 +98,10 @@ public class FedoraNodesTest {
     private Request mockRequest;
 
     @Mock
-    private FedoraResource mockResource;
-
-    @Mock
     Session mockSession;
 
     @Mock
     private FedoraResource mockContainer;
-
-    @Mock
-    private Model mockModel;
-
-    @Mock
-    private Context mockContext;
 
     @Mock
     private HttpServletResponse mockResponse;
@@ -125,15 +112,9 @@ public class FedoraNodesTest {
     private UriInfo mockUriInfo;
 
     @Mock
-    private Value mockValue;
-
-    @Mock
-    private ValueFactory mockValueFactory;
-
-    @Mock
     private SecurityContext mockSecurityContext;
 
-    private String path = "/some/path";
+    private final String path = "/some/path";
 
     @Before
     public void setUp() throws Exception {

@@ -47,6 +47,7 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -229,7 +230,7 @@ public class FedoraVersioning extends ContentExposingResource {
             final Instant mementoInstant,
             final InputStream requestBodyStream,
             final ExternalContentHandler extContent,
-            final String digest) throws InvalidChecksumException, UnsupportedAlgorithmException, IOException {
+            final String digest) throws InvalidChecksumException, UnsupportedAlgorithmException {
 
         final Collection<String> checksums = parseDigestHeader(digest);
         final Collection<URI> checksumURIs = checksums == null ? new HashSet<>() : checksums.stream().map(
@@ -290,7 +291,7 @@ public class FedoraVersioning extends ContentExposingResource {
             });
             // Based on the dates of the above mementos, add the range to the below link.
             final Instant[] Mementos = Arrays.stream(children).map(FedoraResource::getMementoDatetime)
-                .sorted((a, b) -> a.compareTo(b))
+                .sorted(Comparator.naturalOrder())
                 .toArray(Instant[]::new);
             final Builder linkBuilder =
                 Link.fromUri(parentUri + "/" + FCR_VERSIONS).rel("self").type(APPLICATION_LINK_FORMAT);

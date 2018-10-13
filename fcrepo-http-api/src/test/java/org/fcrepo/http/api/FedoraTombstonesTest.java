@@ -42,10 +42,7 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
 @RunWith(MockitoJUnitRunner.class)
 public class FedoraTombstonesTest {
 
-    @Mock
-    private Tombstone mockResource;
-
-    private String path = "/test/object";
+    private final String path = "/test/object";
 
     private FedoraTombstones testObj;
 
@@ -64,7 +61,7 @@ public class FedoraTombstonesTest {
     }
 
     @Test
-    public void testDelete() throws Exception {
+    public void testDelete() {
         final Tombstone mockResource = mock(Tombstone.class);
 
         doReturn(mockResource).when(testObj).resource();

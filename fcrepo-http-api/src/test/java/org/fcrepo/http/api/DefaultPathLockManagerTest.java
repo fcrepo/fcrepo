@@ -46,7 +46,7 @@ public class DefaultPathLockManagerTest {
      * Tests are written such that we'll only wait this long if there's something
      * broken in the code and the test would fail.
      */
-    public static final int WAIT = 1000;
+    private static final int WAIT = 1000;
 
     @Mock
     private FedoraSession session;
@@ -171,7 +171,7 @@ public class DefaultPathLockManagerTest {
      * An interface whose single method acquires an AcquiredLock.
      */
     private interface Locker {
-        public AcquiredLock acquireLock();
+        AcquiredLock acquireLock();
     }
 
     /**
@@ -181,7 +181,7 @@ public class DefaultPathLockManagerTest {
 
         private boolean interrupted;
 
-        private Locker l;
+        private final Locker l;
 
         public Actor(final Locker l) {
             this.l = l;
@@ -220,7 +220,7 @@ public class DefaultPathLockManagerTest {
          * Determines if the thread has/can complete (ie, is not blocked).
          * The current implementation joins this thread (with a timeout)
          * and verifies that it is no longer alive.
-         * @return
+         * @return true if thread can complete
          */
         private boolean canComplete() {
             try {

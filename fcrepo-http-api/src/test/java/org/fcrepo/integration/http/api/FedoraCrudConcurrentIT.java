@@ -58,8 +58,8 @@ public class FedoraCrudConcurrentIT extends AbstractResourceIT {
 
         final int[] numThreadsToTest = {2, 4, 8, 16, 32};
         logger.info("# Start CRUD concurrent performance testing...");
-        for (int i = 0; i < numThreadsToTest.length; i++) {
-            startCrudConcurrentPerformanceTest(numThreadsToTest[i]);
+        for (int aNumThreadsToTest : numThreadsToTest) {
+            startCrudConcurrentPerformanceTest(aNumThreadsToTest);
         }
     }
 
@@ -67,8 +67,8 @@ public class FedoraCrudConcurrentIT extends AbstractResourceIT {
      * Test CRUD concurrent access performance:
      * create/update/delete object, create/update/delete content file
      *
-     * @param numThreads
-     * @throws Exception
+     * @param numThreads to run
+     * @throws Exception on error
      */
     private void startCrudConcurrentPerformanceTest(final int numThreads) throws Exception {
         String pid = null;
@@ -243,10 +243,9 @@ public class FedoraCrudConcurrentIT extends AbstractResourceIT {
     }
 
     private static void startThreads(final List<HttpRunner> tasks) throws InterruptedException {
-        final int taskSize = tasks.size();
-        for (int i = 0; i < taskSize; i++) {
+        for (HttpRunner task : tasks) {
 
-            final Thread thread = new Thread(tasks.get(i));
+            final Thread thread = new Thread(task);
             thread.run();
             thread.join();
         }

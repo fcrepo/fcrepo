@@ -33,7 +33,6 @@ import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -87,16 +86,6 @@ public class HttpApiResourcesTest {
             testObj.createModelForResource(mockResource, uriInfo, mockSubjects);
 
         assertTrue(model.contains(graphSubject, HAS_TRANSACTION_SERVICE));
-    }
-
-    @Test
-    @Ignore("Until implemented with Memento")
-    public void shouldDecorateNodesWithLinksToVersions() {
-    }
-
-    @Test
-    @Ignore ("Until implemented with Memento")
-    public void shouldNotDecorateNodesWithLinksToVersionsUnlessVersionable() {
     }
 
     @Test

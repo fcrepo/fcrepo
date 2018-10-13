@@ -141,7 +141,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
         return "";
     }
 
-    protected HttpSession session() {
+    private HttpSession session() {
         if (session == null) {
             throw new SessionMissingException("Invalid session");
         }

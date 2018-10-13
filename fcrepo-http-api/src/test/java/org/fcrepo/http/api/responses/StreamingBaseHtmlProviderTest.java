@@ -50,7 +50,6 @@ import javax.jcr.Workspace;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedHashMap;
-import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
@@ -170,7 +169,7 @@ public class StreamingBaseHtmlProviderTest {
                 mockTemplate));
         testProvider.writeTo(testData, RdfNamespacedStream.class, mock(Type.class),
                 new Annotation[]{}, MediaType.valueOf("text/html"),
-                (MultivaluedMap) new MultivaluedHashMap<>(), outStream);
+                new MultivaluedHashMap<>(), outStream);
         final byte[] results = outStream.toByteArray();
         assertTrue("Got no output from serialization!", results.length > 0);
 
@@ -199,7 +198,7 @@ public class StreamingBaseHtmlProviderTest {
         testProvider.writeTo(testData, RdfNamespacedStream.class, mock(Type.class),
                 new Annotation[]{mockAnnotation}, MediaType
                         .valueOf("text/html"),
-                (MultivaluedMap) new MultivaluedHashMap<>(), outStream);
+                new MultivaluedHashMap<>(), outStream);
         final byte[] results = outStream.toByteArray();
         assertTrue("Got no output from serialization!", results.length > 0);
 
@@ -226,7 +225,7 @@ public class StreamingBaseHtmlProviderTest {
         testProvider.writeTo(testData2, RdfNamespacedStream.class, mock(Type.class),
                 new Annotation[] {}, MediaType
                         .valueOf("text/html"),
-                (MultivaluedMap) new MultivaluedHashMap<>(), outStream);
+                new MultivaluedHashMap<>(), outStream);
         final byte[] results = outStream.toByteArray();
         assertTrue("Got no output from serialization!", results.length > 0);
     }

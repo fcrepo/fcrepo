@@ -71,7 +71,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
-import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEGATE_TYPE;
@@ -202,8 +201,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     static final Property WEBAC_ACCESS_TO_PROPERTY = createProperty(WEBAC_ACCESS_TO);
 
-    static final Node RDF_TYPE_URI = createURI(RDF_NAMESPACE + "type");
-
     @Context protected Request request;
     @Context protected HttpServletResponse servletResponse;
     @Context protected ServletContext context;
@@ -294,7 +291,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             varyValues.add(ACCEPT_DATETIME);
         }
 
-        varyValues.stream().forEach(x -> servletResponse.addHeader("Vary", x));
+        varyValues.forEach(x -> servletResponse.addHeader("Vary", x));
     }
 
 
@@ -451,11 +448,11 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         }
 
-    protected RdfStream getTriples(final FedoraResource resource, final Set<? extends TripleCategory> x) {
+    private RdfStream getTriples(final FedoraResource resource, final Set<? extends TripleCategory> x) {
         return resource.getTriples(translator(), x);
     }
 
-    protected RdfStream getTriples(final FedoraResource resource, final TripleCategory x) {
+    private RdfStream getTriples(final FedoraResource resource, final TripleCategory x) {
         return resource.getTriples(translator(), x);
     }
 
@@ -478,7 +475,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     /**
      * Add the standard Accept-Post header, for reuse.
      */
-    protected void addAcceptPostHeader() {
+    private void addAcceptPostHeader() {
         final String rdfTypes = TURTLE + "," + N3 + "," + N3_ALT2 + "," + RDF_XML + "," + NTRIPLES + "," + JSON_LD;
         servletResponse.addHeader("Accept-Post", rdfTypes);
     }
@@ -486,11 +483,11 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     /**
      * Add the standard Accept-External-Content-Handling header, for reuse.
      */
-    protected void addAcceptExternalHeader() {
+    private void addAcceptExternalHeader() {
         servletResponse.addHeader(ACCEPT_EXTERNAL_CONTENT, COPY + "," + REDIRECT + "," + PROXY);
     }
 
-    protected void addMementoHeaders(final FedoraResource resource) {
+    private void addMementoHeaders(final FedoraResource resource) {
         if (resource.isMemento()) {
             final Instant mementoInstant = resource.getMementoDatetime();
             if (mementoInstant != null) {
@@ -514,7 +511,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
     }
 
-    protected void addAclHeader(final FedoraResource resource) {
+    private void addAclHeader(final FedoraResource resource) {
         if (!(resource instanceof FedoraWebacAcl) && !resource.isMemento()) {
             final String resourceUri = getUri(resource.getDescribedResource()).toString();
             final String aclLocation =  resourceUri + (resourceUri.endsWith("/") ? "" : "/") + FCR_ACL;
@@ -522,11 +519,11 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
     }
 
-    protected void addResourceLinkHeaders(final FedoraResource resource) {
+    private void addResourceLinkHeaders(final FedoraResource resource) {
         addResourceLinkHeaders(resource, false);
     }
 
-    protected void addResourceLinkHeaders(final FedoraResource resource, final boolean includeAnchor) {
+    private void addResourceLinkHeaders(final FedoraResource resource, final boolean includeAnchor) {
         if (resource instanceof NonRdfSourceDescription) {
             // Link to the original described resource
             final FedoraResource described = resource.getOriginalResource().getDescribedResource();
@@ -632,7 +629,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
 
         return rawLinks.stream()
-                .flatMap(x -> Arrays.asList(x.split(",")).stream())
+                .flatMap(x -> Arrays.stream(x.split(",")))
                 .collect(Collectors.toList());
     }
 
@@ -830,7 +827,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * Returns an acceptable plain text media type if possible, or null if not.
      * @return an acceptable plain-text media type, or null
      */
-    protected MediaType acceptabePlainTextMediaType() {
+    private MediaType acceptabePlainTextMediaType() {
         final List<MediaType> acceptable = headers.getAcceptableMediaTypes();
         if (acceptable == null || acceptable.size() == 0) {
             return TEXT_PLAIN_TYPE;
@@ -974,7 +971,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      *   and a server-managed property as the object.
      *
      * @param inputModel to be checked
-     * @throws ServerManagedPropertyException
+     * @throws ServerManagedPropertyException on error
      */
     private void ensureValidMemberRelation(final Model inputModel) {
         // check that ldp:hasMemberRelation value is not server managed predicate.
@@ -1039,7 +1036,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * Returns a Statement with the resource containing the acl to be the accessTo target for the given auth subject.
      * 
      * @param authSubject - acl authorization subject uri string
-     * @return
+     * @return acl statement
      */
     private Statement createDefaultAccessToStatement(final String authSubject) {
         final String currentResourcePath = authSubject.substring(0, authSubject.indexOf("/" + FCR_ACL));
@@ -1117,7 +1114,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      */
     protected static void hasRestrictedPath(final String externalPath) {
         final String[] pathSegments = externalPath.split("/");
-        if (Arrays.asList(pathSegments).stream().anyMatch(p -> p.startsWith("fedora:"))) {
+        if (Arrays.stream(pathSegments).anyMatch(p -> p.startsWith("fedora:"))) {
             throw new ServerManagedTypeException("Path cannot contain a fedora: prefixed segment.");
         }
     }

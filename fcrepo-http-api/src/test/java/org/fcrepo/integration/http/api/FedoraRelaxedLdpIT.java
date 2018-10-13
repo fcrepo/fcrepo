@@ -48,7 +48,6 @@ import javax.xml.bind.DatatypeConverter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashSet;
@@ -91,7 +90,7 @@ import static org.junit.Assert.assertTrue;
 @RunWith(SpringJUnit4ClassRunner.class)
 public class FedoraRelaxedLdpIT extends AbstractResourceIT {
 
-    private String providedUsername = "provided-username";
+    private final String providedUsername = "provided-username";
     private Calendar providedDate;
 
     public FedoraRelaxedLdpIT() {
@@ -127,7 +126,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testCreateResourceWithSpecificCreationInformationIsAllowed() throws IOException, ParseException {
+    public void testCreateResourceWithSpecificCreationInformationIsAllowed() throws IOException {
         assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
         final String subjectURI;
         try (CloseableHttpResponse response = postResourceWithTTL(
@@ -144,7 +143,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testUpdateNonRdfResourceWithSpecificInformationIsAllowed() throws IOException, ParseException {
+    public void testUpdateNonRdfResourceWithSpecificInformationIsAllowed() throws IOException {
         assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
 
         final String subjectURI;
@@ -230,7 +229,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testUpdateResourceWithSpecificModificationInformationIsAllowed() throws IOException, ParseException {
+    public void testUpdateResourceWithSpecificModificationInformationIsAllowed() throws IOException {
         assertEquals("relaxed", System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)); // sanity check
 
         final String subjectURI;
@@ -385,9 +384,9 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
     /**
      * Parses the provided triples and filters it to just include statements with the
      * specified predicates.
-     * @param triples
-     * @param predicates
-     * @return
+     * @param triples to filter
+     * @param predicates to filter on
+     * @return filtered triples
      */
     private String filterRdf(final String triples, final Property ... predicates) {
         try (CloseableDataset original = parseTriples(new ByteArrayInputStream(triples.getBytes()))) {
@@ -458,7 +457,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         return execute(httpPut);
     }
 
-    private ResultGraphWrapper triples(final String uri, final Dataset dataset) throws IOException {
+    private ResultGraphWrapper triples(final String uri, final Dataset dataset) {
         return new ResultGraphWrapper(uri, dataset.asDatasetGraph());
     }
 
@@ -468,11 +467,11 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
 
     private class ResultGraphWrapper {
 
-        private DatasetGraph graph;
-        private Node nodeUri;
-        private String statements;
+        private final DatasetGraph graph;
+        private final Node nodeUri;
+        private final String statements;
 
-        public ResultGraphWrapper(final String subjectURI, final DatasetGraph graph) throws IOException {
+        public ResultGraphWrapper(final String subjectURI, final DatasetGraph graph) {
             this.graph = graph;
             final Model model = createModelForGraph(graph.getDefaultGraph());
             nodeUri = createURI(subjectURI);

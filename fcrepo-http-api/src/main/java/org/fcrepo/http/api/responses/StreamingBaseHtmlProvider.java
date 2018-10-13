@@ -43,7 +43,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Produces;
@@ -107,24 +106,24 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
                 uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class));
     }
 
-    private static EscapeTool escapeTool = new EscapeTool();
+    private static final EscapeTool escapeTool = new EscapeTool();
 
-    protected VelocityEngine velocity = new VelocityEngine();
+    private final VelocityEngine velocity = new VelocityEngine();
 
     /**
      * Location in the classpath where Velocity templates are to be found.
      */
-    public static final String templatesLocation = "/views";
+    private static final String templatesLocation = "/views";
 
     /**
      * A map from String names for primary node types to the Velocity templates
      * that should be used for those node types.
      */
-    protected Map<String, Template> templatesMap;
+    private Map<String, Template> templatesMap;
 
-    public static final String templateFilenameExtension = ".vsl";
+    private static final String templateFilenameExtension = ".vsl";
 
-    public static final String velocityPropertiesLocation =
+    private static final String velocityPropertiesLocation =
             "/velocity.properties";
 
     private static final ViewHelpers VIEW_HELPERS = ViewHelpers.getInstance();
@@ -190,10 +189,10 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
         final Context context = getContext(model, subject);
 
         final FedoraResource resource = getResourceFromSubject(subject.toString());
-        context.put("isOriginalResource", (resource != null ? resource.isOriginalResource() : false));
-        context.put("isVersion", (resource != null ? resource.isMemento() : false));
-        context.put("isLDPNR", (resource != null
-            ? resource instanceof FedoraBinary || !resource.getDescribedResource().equals(resource) : false));
+        context.put("isOriginalResource", (resource != null && resource.isOriginalResource()));
+        context.put("isVersion", (resource != null && resource.isMemento()));
+        context.put("isLDPNR", (resource != null &&
+                (resource instanceof FedoraBinary || !resource.getDescribedResource().equals(resource))));
 
         // the contract of MessageBodyWriter<T> is _not_ to close the stream
         // after writing to it
@@ -211,7 +210,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
     private FedoraResource getResourceFromSubject(final String subjectUri) {
         final UriTemplate uriTemplate =
             new UriTemplate(uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class).toTemplate());
-        final Map<String, String> values = new HashMap<String, String>();
+        final Map<String, String> values = new HashMap<>();
         uriTemplate.match(subjectUri, values);
         if (values.containsKey("path")) {
             return translator().convert(translator().toDomain(values.get("path")));
@@ -219,14 +218,13 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
         return null;
     }
 
-    protected Context getContext(final Model model, final Node subject) {
+    private Context getContext(final Model model, final Node subject) {
         final FieldTool fieldTool = new FieldTool();
 
         final Context context = new VelocityContext();
         final String[] baseUrl = uriInfo.getBaseUri().getPath().split("/");
         if (baseUrl.length > 0) {
-            final String staticBaseUrl =
-                Arrays.asList(Arrays.copyOf(baseUrl, baseUrl.length - 1)).stream().collect(Collectors.joining("/"));
+            final String staticBaseUrl = String.join("/", Arrays.copyOf(baseUrl, baseUrl.length - 1));
             context.put("staticBaseUrl", staticBaseUrl);
         } else {
             context.put("staticBaseUrl", "/");

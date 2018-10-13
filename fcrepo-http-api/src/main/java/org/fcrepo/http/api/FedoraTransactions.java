@@ -50,7 +50,7 @@ public class FedoraTransactions extends FedoraBaseResource {
     private static final Logger LOGGER = getLogger(FedoraTransactions.class);
 
     @Inject
-    protected BatchService batchService;
+    private BatchService batchService;
 
     /**
      * Create a new transaction resource and add it to the registry

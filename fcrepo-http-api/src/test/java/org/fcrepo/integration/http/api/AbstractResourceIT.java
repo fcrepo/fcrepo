@@ -105,15 +105,15 @@ public abstract class AbstractResourceIT {
         logger = getLogger(this.getClass());
     }
 
-    protected static final int SERVER_PORT = parseInt(System.getProperty("fcrepo.dynamic.test.port", "8080"));
+    private static final int SERVER_PORT = parseInt(System.getProperty("fcrepo.dynamic.test.port", "8080"));
 
-    protected static final String HOSTNAME = "localhost";
+    private static final String HOSTNAME = "localhost";
 
-    protected static final String PROTOCOL = "http";
+    private static final String PROTOCOL = "http";
 
     protected static final String serverAddress = PROTOCOL + "://" + HOSTNAME + ":" + SERVER_PORT + "/";
 
-    protected static CloseableHttpClient client = createClient();
+    protected static final CloseableHttpClient client = createClient();
 
     protected static CloseableHttpClient createClient() {
         return createClient(false);
@@ -154,13 +154,6 @@ public abstract class AbstractResourceIT {
 
     protected static HttpPatch patchObjMethod(final String id) {
         return new HttpPatch(serverAddress + id);
-    }
-
-    protected static HttpPost postObjMethod(final String id, final String query) {
-        if (query.equals("")) {
-            return new HttpPost(serverAddress + id);
-        }
-        return new HttpPost(serverAddress + id + "?" + query);
     }
 
     protected static HttpPut putDSMethod(final String pid, final String ds, final String content)
@@ -350,7 +343,7 @@ public abstract class AbstractResourceIT {
      * @return the graph retrieved
      * @throws IOException in case of IOException
      */
-    protected CloseableDataset getDataset(final CloseableHttpClient client, final HttpUriRequest req)
+    private CloseableDataset getDataset(final CloseableHttpClient client, final HttpUriRequest req)
             throws IOException {
         if (!req.containsHeader(ACCEPT)) {
             req.addHeader(ACCEPT, "application/n-triples");
@@ -443,8 +436,8 @@ public abstract class AbstractResourceIT {
         return setProperty(pid, null, propertyUri, value);
     }
 
-    protected CloseableHttpResponse setProperty(final String id, final String txId, final String propertyUri,
-            final String value) throws IOException {
+    private CloseableHttpResponse setProperty(final String id, final String txId, final String propertyUri,
+                                              final String value) throws IOException {
         final HttpPatch postProp = new HttpPatch(serverAddress + (txId != null ? txId + "/" : "") + id);
         postProp.setHeader(CONTENT_TYPE, "application/sparql-update");
         final String updateString =
@@ -491,15 +484,6 @@ public abstract class AbstractResourceIT {
      * @return string containing new id
      */
     protected static String getRandomUniqueId() {
-        return randomUUID().toString();
-    }
-
-    /**
-     * Gets a random (but valid) property name for use in testing.
-     *
-     * @return string containing random property name
-     */
-    protected static String getRandomPropertyName() {
         return randomUUID().toString();
     }
 
@@ -572,19 +556,6 @@ public abstract class AbstractResourceIT {
     }
 
     /**
-     * Test a response for N instances of a specific LINK header
-     *
-     * @param response the HTTP response
-     * @param uri the URI expected in the LINK header
-     * @param rel the rel argument to check for
-     * @param count how many LINK headers should exist
-     */
-    protected static void checkForNLinkHeaders(final HttpResponse response, final String uri, final String rel,
-        final int count) {
-        assertEquals(count, countLinkHeader(response, uri, rel));
-    }
-
-    /**
      * Utility for counting LINK headers
      *
      * @param response the HTTP response
@@ -594,7 +565,7 @@ public abstract class AbstractResourceIT {
      */
     private static int countLinkHeader(final HttpResponse response, final String uri, final String rel) {
         final Link linkA = Link.valueOf("<" + uri + ">; rel=" + rel);
-        return (int) Arrays.asList(response.getHeaders(LINK)).stream().filter(x -> {
+        return (int) Arrays.stream(response.getHeaders(LINK)).filter(x -> {
             final Link linkB = Link.valueOf(x.getValue());
             return linkB.equals(linkA);
         }).count();

@@ -52,7 +52,7 @@ public class ExternalContentHandlerFactoryTest {
     }
 
     @Test
-    public void testValidLinkHeader() throws Exception {
+    public void testValidLinkHeader() {
         final ExternalContentHandler handler = factory.createFromLinks(
                 makeLinks("http://test.com"));
 
@@ -62,14 +62,14 @@ public class ExternalContentHandlerFactoryTest {
     }
 
     @Test(expected = ExternalMessageBodyException.class)
-    public void testValidationFailure() throws Exception {
+    public void testValidationFailure() {
         doThrow(new ExternalMessageBodyException("")).when(validator).validate(anyString());
 
         factory.createFromLinks(makeLinks("http://test.com"));
     }
 
     @Test(expected = ExternalMessageBodyException.class)
-    public void testMultipleExtLinkHeaders() throws Exception {
+    public void testMultipleExtLinkHeaders() {
         final List<String> links = makeLinks("http://test.com", "http://test2.com");
 
         factory.createFromLinks(links);
