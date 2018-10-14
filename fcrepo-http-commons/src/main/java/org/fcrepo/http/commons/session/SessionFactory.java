@@ -70,12 +70,6 @@ public class SessionFactory {
     private CredentialsService credentialsService;
 
     /**
-     * Default constructor
-     */
-    private SessionFactory() {
-    }
-
-    /**
      * Initialize a session factory for the given Repository
      *
      * @param repo the repository

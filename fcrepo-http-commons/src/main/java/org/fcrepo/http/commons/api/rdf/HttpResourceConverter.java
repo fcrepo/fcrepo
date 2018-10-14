@@ -83,14 +83,13 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
     private static final Logger LOGGER = getLogger(HttpResourceConverter.class);
 
     // Regex pattern which decomposes a http resource uri into components
-    // The first group is the path of the resource or original resource.
-    // The second group determines if it is an fcr:metadata non-rdf source.
-    // The third group determines if the path is for a memento or timemap.
-    // The fourth group allows for a memento identifier.
-    // The fifth group for allows ACL.
-    // The sixth group allows for any hashed suffixes on the acls.
+    // The first group determines if it is an fcr:metadata non-rdf source.
+    // The second group determines if the path is for a memento or timemap.
+    // The third group allows for a memento identifier.
+    // The fourth group for allows ACL.
+    // The fifth group allows for any hashed suffixes on the acls.
     private final static Pattern FORWARD_COMPONENT_PATTERN = Pattern.compile(
-            "(.*?)(/" + FCR_METADATA + ")?(/" + FCR_VERSIONS + "(/\\d{14})?)?(/" + FCR_ACL + "(\\#\\w+)?)?$");
+            ".*?(/" + FCR_METADATA + ")?(/" + FCR_VERSIONS + "(/\\d{14})?)?(/" + FCR_ACL + "(\\#\\w+)?)?$");
 
     protected List<Converter<String, String>> translationChain;
 
@@ -222,10 +221,9 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
             final Matcher matcher = FORWARD_COMPONENT_PATTERN.matcher(path);
 
             if (matcher.matches()) {
-                final boolean metadata = matcher.group(2) != null;
-                final boolean versioning = matcher.group(3) != null;
-                final boolean webacAcl = matcher.group(5) != null;
-                final String basePath = matcher.group(1);
+                final boolean metadata = matcher.group(1) != null;
+                final boolean versioning = matcher.group(2) != null;
+                final boolean webacAcl = matcher.group(4) != null;
 
                 if (versioning) {
                     path = replaceOnce(path, "/" + FCR_VERSIONS, "/" + LDPCV_TIME_MAP);
