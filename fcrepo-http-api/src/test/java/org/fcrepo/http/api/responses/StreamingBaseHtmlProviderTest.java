@@ -150,7 +150,6 @@ public class StreamingBaseHtmlProviderTest {
 
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
     @Test
     public void testWriteTo() throws WebApplicationException,
             IllegalArgumentException, IOException {
@@ -175,7 +174,6 @@ public class StreamingBaseHtmlProviderTest {
 
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
     @Test
     public void testWriteToWithAnnotation() throws WebApplicationException,
             IllegalArgumentException, IOException {
@@ -204,7 +202,6 @@ public class StreamingBaseHtmlProviderTest {
 
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
     @Test
     public void testWriteToWithParentTemplate() throws WebApplicationException,
             IllegalArgumentException, IOException {

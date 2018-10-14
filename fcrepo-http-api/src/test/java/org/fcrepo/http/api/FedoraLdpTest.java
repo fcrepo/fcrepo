@@ -62,8 +62,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyListOf;
-import static org.mockito.ArgumentMatchers.anySetOf;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
@@ -307,7 +307,7 @@ public class FedoraLdpTest {
         when(mockResource.getEtagValue()).thenReturn("");
         when(mockResource.getDescription()).thenReturn(mockResource);
         when(mockResource.getDescribedResource()).thenReturn(mockResource);
-        when(mockResource.getTriples(eq(idTranslator), anySetOf(TripleCategory.class))).thenAnswer(answer);
+        when(mockResource.getTriples(eq(idTranslator), anySet())).thenAnswer(answer);
         when(mockResource.getTriples(eq(idTranslator), any(TripleCategory.class))).thenAnswer(answer);
 
         return mockResource;
@@ -770,7 +770,7 @@ public class FedoraLdpTest {
 
     @Test(expected = ExternalMessageBodyException.class)
     public void testGetWithExternalMessageMissingURLBinary() throws Exception {
-        when(extContentHandlerFactory.createFromLinks(anyListOf(String.class)))
+        when(extContentHandlerFactory.createFromLinks(anyList()))
                 .thenThrow(new ExternalMessageBodyException(""));
 
         final String badExternal = Link.fromUri("http://test.com")
@@ -786,7 +786,7 @@ public class FedoraLdpTest {
 
     @Test(expected = ExternalMessageBodyException.class)
     public void testPostWithExternalMessageBadHandling() throws Exception {
-        when(extContentHandlerFactory.createFromLinks(anyListOf(String.class)))
+        when(extContentHandlerFactory.createFromLinks(anyList()))
                 .thenThrow(new ExternalMessageBodyException(""));
 
          final String badExternal = Link.fromUri("http://test.com")
