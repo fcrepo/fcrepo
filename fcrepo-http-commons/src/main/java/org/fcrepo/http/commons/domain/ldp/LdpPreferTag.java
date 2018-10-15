@@ -22,7 +22,7 @@ import static java.util.Optional.ofNullable;
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
 import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
-import static org.fcrepo.kernel.api.RdfLexicon.SERVER_MANAGED;
+import static org.fcrepo.kernel.api.RdfLexicon.PREFER_SERVER_MANAGED;
 
 import java.util.List;
 import java.util.Optional;
@@ -69,14 +69,15 @@ public class LdpPreferTag extends PreferTag {
                 includes.contains(LDP_NAMESPACE + "PreferMembership");
 
         containment = (!preferMinimalContainer && !omits.contains(LDP_NAMESPACE + "PreferContainment") &&
-                !omits.contains(SERVER_MANAGED.toString())) || includes.contains(LDP_NAMESPACE + "PreferContainment");
+                !omits.contains(PREFER_SERVER_MANAGED.toString()))
+                || includes.contains(LDP_NAMESPACE + "PreferContainment");
 
         references = includes.contains(INBOUND_REFERENCES.toString());
 
         embed = includes.contains(EMBED_CONTAINED.toString());
 
-        managedProperties = includes.contains(SERVER_MANAGED.toString())
-                || (!omits.contains(SERVER_MANAGED.toString()) && !minimal);
+        managedProperties = includes.contains(PREFER_SERVER_MANAGED.toString())
+                || (!omits.contains(PREFER_SERVER_MANAGED.toString()) && !minimal);
     }
 
     /**

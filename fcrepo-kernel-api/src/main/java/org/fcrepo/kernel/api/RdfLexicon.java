@@ -117,8 +117,6 @@ public final class RdfLexicon {
             createProperty(REPOSITORY_NAMESPACE + "lastModified");
     public static final Property LAST_MODIFIED_BY =
             createProperty(REPOSITORY_NAMESPACE + "lastModifiedBy");
-    private static final Set<Property> serverManagedProperties = of(
-            CREATED_DATE, CREATED_BY, LAST_MODIFIED_DATE, LAST_MODIFIED_BY);
 
     public static final Resource FEDORA_CONTAINER =
             createResource(REPOSITORY_NAMESPACE + "Container");
@@ -163,14 +161,9 @@ public final class RdfLexicon {
     public static final Property HAS_TRANSACTION_SERVICE =
             createProperty(REPOSITORY_NAMESPACE + "hasTransactionProvider");
 
-    private static final Set<Property> repositoryProperties = of(HAS_TRANSACTION_SERVICE);
-
     // OTHER SERVICES
     public static final Property HAS_FIXITY_SERVICE =
             createProperty(REPOSITORY_NAMESPACE + "hasFixityService");
-
-    private static final Set<Property> otherServiceProperties = of(HAS_FIXITY_SERVICE);
-
 
     // BINARY DESCRIPTIONS
     public static final Property DESCRIBES =
@@ -192,7 +185,7 @@ public final class RdfLexicon {
 
     // RDF EXTRACTION
     public static final Property INBOUND_REFERENCES = createProperty(FCREPO_API_NAMESPACE + "PreferInboundReferences");
-    public static final Property SERVER_MANAGED = createProperty(REPOSITORY_NAMESPACE + "ServerManaged");
+    public static final Property PREFER_SERVER_MANAGED = createProperty(REPOSITORY_NAMESPACE + "ServerManaged");
 
     public static final Property EMBED_CONTAINED = createProperty(OA_NAMESPACE + "PreferContainedDescriptions");
 
@@ -200,20 +193,15 @@ public final class RdfLexicon {
     // WEBAC
     public static final String WEBAC_ACCESS_CONTROL_VALUE = WEBAC_NAMESPACE_VALUE + "accessControl";
 
+    public static final String SERVER_MANAGED_PROPERTIES_MODE = "fcrepo.properties.management";
 
-    private static final Set<Property> managedProperties;
-
+    // Properties which are managed by the server but are not from managed namespaces
+    private static final Set<Property> serverManagedProperties;
     static {
         final ImmutableSet.Builder<Property> b = ImmutableSet.builder();
-        b.addAll(fixityProperties).addAll(ldpManagedProperties).addAll(repositoryProperties)
-                .addAll(otherServiceProperties).addAll(serverManagedProperties);
-        managedProperties = b.build();
+        b.addAll(fixityProperties).addAll(ldpManagedProperties);
+        serverManagedProperties = b.build();
     }
-
-    private static final Set<Property> relaxableProperties
-            = of(LAST_MODIFIED_BY, LAST_MODIFIED_DATE, CREATED_BY, CREATED_DATE);
-
-    public static final String SERVER_MANAGED_PROPERTIES_MODE = "fcrepo.properties.management";
 
     private static final Predicate<Property> hasFedoraNamespace =
         p -> !p.isAnon() && p.getNameSpace().startsWith(REPOSITORY_NAMESPACE);
@@ -221,6 +209,11 @@ public final class RdfLexicon {
     private static Predicate<Property> hasMementoNamespace =
         p -> !p.isAnon() && p.getNameSpace().startsWith(MEMENTO_NAMESPACE);
 
+    // Server managed properties which may be overridden by clients when the server is in "relaxed" mode
+    private static final Set<Property> relaxableProperties = of(LAST_MODIFIED_BY, LAST_MODIFIED_DATE, CREATED_BY,
+            CREATED_DATE);
+
+    // Detects if a server managed property is allowed to be updated in "relaxed" mode
     public static final Predicate<Property> isRelaxed =
             p -> relaxableProperties.contains(p)
                     && ("relaxed".equals(System.getProperty(SERVER_MANAGED_PROPERTIES_MODE)));
@@ -229,7 +222,7 @@ public final class RdfLexicon {
      * Detects whether an RDF property is managed by the repository.
      */
     public static final Predicate<Property> isManagedPredicate =
-        hasFedoraNamespace.or(hasMementoNamespace).or(p -> managedProperties.contains(p));
+            hasFedoraNamespace.or(hasMementoNamespace).or(p -> serverManagedProperties.contains(p));
 
     /**
      * Fedora defined JCR node type with supertype of nt:file with two nt:folder named fedora:timemap and
