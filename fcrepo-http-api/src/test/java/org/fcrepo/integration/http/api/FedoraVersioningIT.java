@@ -851,6 +851,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         checkForLinkHeader(response, VERSIONING_TIMEMAP_TYPE, "type");
         checkForLinkHeader(response, ldpcvUri + "/" + FCR_ACL, "acl");
         assertFalse(response.getFirstHeader("Allow").getValue().contains("DELETE"));
+        assertTrue(response.getFirstHeader("Allow").getValue().contains("POST,HEAD,GET"));
         assertEquals(1, response.getHeaders("Accept-Post").length);
     }
 
