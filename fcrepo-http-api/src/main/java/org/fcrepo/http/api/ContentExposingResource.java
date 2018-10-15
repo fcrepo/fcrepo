@@ -578,7 +578,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         if (resource.isMemento()) {
             options = "GET,HEAD,OPTIONS,DELETE";
         } else if (resource instanceof FedoraTimeMap) {
-            options = "POST,HEAD,GET,OPTIONS,DELETE";
+            options = "POST,HEAD,GET,OPTIONS";
             servletResponse.addHeader("Vary-Post", MEMENTO_DATETIME_HEADER);
             addAcceptPostHeader();
         } else if (resource instanceof FedoraBinary) {
