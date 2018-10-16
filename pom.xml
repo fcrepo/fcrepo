@@ -442,6 +442,7 @@
       <plugins>
         <plugin>
           <artifactId>maven-failsafe-plugin</artifactId>
+          <version>${failsafe.plugin.version}</version>
           <configuration>
             <systemPropertyVariables>
               <fcrepo.dynamic.test.port>${fcrepo.dynamic.test.port}</fcrepo.dynamic.test.port>
@@ -468,6 +469,7 @@
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>build-helper-maven-plugin</artifactId>
+          <version>${build-helper.plugin.version}</version>
           <!-- reserve a port under the property ${fcrepo.dynamic.test.port} for integration
             tests -->
           <configuration>
