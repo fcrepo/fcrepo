@@ -270,9 +270,14 @@ public class WebACRolesProvider {
             triple -> triple.matches(triple.getSubject(), RDF_TYPE_NODE, VCARD_GROUP_NODE));
         //return members only if there is an associated vcard:Group
         if (hasVcardGroup) {
-            return triples.stream()
+            final List<String> values = new ArrayList();
+
+            final List<org.apache.jena.graph.Node>  objects = triples.stream()
                           .filter(triple -> triple.predicateMatches(VCARD_MEMBER_NODE))
-                          .map(Triple::getObject).flatMap(WebACRolesProvider::nodeToStringStream);
+                          .map(Triple::getObject).collect(Collectors.toList());
+            objects.stream().flatMap(WebACRolesProvider::nodeToStringStream).forEach(values::add);
+            objects.stream().flatMap(WebACRolesProvider::additionalAgentValues).forEach(values::add);
+            return values.stream();
         } else {
             return empty();
         }
