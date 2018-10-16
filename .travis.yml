@@ -1,12 +1,27 @@
 language: java
 sudo: true
+
 jdk:
+  - openjdk8
   - oraclejdk8
+  - openjdk11
+
+matrix:
+  allow_failures: 
+    - jdk: openjdk11
+  fast_finish: true
+
 before_install:  
  - "echo $JAVA_OPTS"
  - "export JAVA_OPTS=-Xmx512m"
 
-script:
+# Default installation command is 
+# mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+# this is what we test as our build phase so skip it here.
+install:
+ - true
+
+before_script:
  - sudo service mysql stop
  - sudo service postgresql stop
  - sudo service acpid stop
@@ -18,6 +33,8 @@ script:
  - sudo service resolvconf stop
  - sudo service sshguard stop
  - sudo service ssh stop
+
+script:
  - mvn -Dfcrepo.streaming.parallel=true install -B -V
 
 notifications:
