@@ -19,8 +19,6 @@ package org.fcrepo.http.commons.domain;
 
 import org.junit.Test;
 
-import java.text.ParseException;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -30,26 +28,26 @@ import static org.junit.Assert.assertTrue;
  */
 public class SinglePreferTest  {
 
-    protected SinglePrefer createTestPreferTypeFromHeader(final String header) throws ParseException {
+    protected SinglePrefer createTestPreferTypeFromHeader(final String header) {
         return new SinglePrefer(header);
     }
 
     @Test
-    public void testHasReturn() throws ParseException {
+    public void testHasReturn() {
         final SinglePrefer prefer = createTestPreferTypeFromHeader("return=representation");
 
         assertTrue(prefer.hasReturn());
     }
 
     @Test
-    public void testGetReturn() throws ParseException {
+    public void testGetReturn() {
         final SinglePrefer prefer = createTestPreferTypeFromHeader("return=representation");
 
         assertEquals("representation", prefer.getReturn().getValue());
     }
 
     @Test
-    public void testGetReturnParameters() throws ParseException {
+    public void testGetReturnParameters() {
         final SinglePrefer prefer =
                 createTestPreferTypeFromHeader("return=representation; "
                         + "include=\"http://www.w3.org/ns/ldp#PreferMinimalContainer\"");
@@ -62,21 +60,21 @@ public class SinglePreferTest  {
     }
 
     @Test
-    public void testHasHandling() throws ParseException {
+    public void testHasHandling() {
         final SinglePrefer prefer = createTestPreferTypeFromHeader("handling=strict");
 
         assertTrue(prefer.hasHandling());
     }
 
     @Test
-    public void testGetHandling() throws ParseException {
+    public void testGetHandling() {
         final SinglePrefer prefer = createTestPreferTypeFromHeader("handling=lenient");
 
         assertEquals("lenient", prefer.getHandling().getValue());
     }
 
     @Test
-    public void testGetHandlingParameters() throws ParseException {
+    public void testGetHandlingParameters() {
         final SinglePrefer prefer =
                 createTestPreferTypeFromHeader("handling=lenient; some=\"parameter\"");
 

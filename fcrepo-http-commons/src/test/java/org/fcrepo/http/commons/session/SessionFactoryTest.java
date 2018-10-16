@@ -25,8 +25,6 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.security.Principal;
-
 import javax.jcr.Credentials;
 import javax.servlet.http.HttpServletRequest;
 
@@ -50,10 +48,7 @@ import com.google.common.base.Throwables;
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class SessionFactoryTest {
 
-    SessionFactory testObj;
-
-    @Mock
-    private FedoraSession txSession;
+    private SessionFactory testObj;
 
     @Mock
     private FedoraSession mockSession;
@@ -72,9 +67,6 @@ public class SessionFactoryTest {
 
     @Mock
     private HttpServletRequest mockRequest;
-
-    @Mock
-    private Principal mockUser;
 
     @Before
     public void setUp() {

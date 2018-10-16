@@ -44,7 +44,7 @@ import org.slf4j.Logger;
  */
 public class SessionFactory {
 
-    protected static enum Prefix{
+    protected enum Prefix{
         TX("tx:");
 
         private final String prefix;
@@ -68,12 +68,6 @@ public class SessionFactory {
 
     @Inject
     private CredentialsService credentialsService;
-
-    /**
-     * Default constructor
-     */
-    public SessionFactory() {
-    }
 
     /**
      * Initialize a session factory for the given Repository

@@ -23,7 +23,6 @@ import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.ext.Provider;
 
-import org.fcrepo.kernel.api.services.BatchService;
 import org.glassfish.hk2.api.Factory;
 import org.glassfish.jersey.process.internal.RequestScoped;
 import org.slf4j.Logger;
@@ -38,12 +37,9 @@ import org.slf4j.Logger;
 public class SessionProvider implements Factory<HttpSession> {
 
     @Inject
-    SessionFactory sessionFactory;
+    private SessionFactory sessionFactory;
 
-    @Inject
-    BatchService batchService;
-
-    private HttpServletRequest request;
+    private final HttpServletRequest request;
 
     /**
      * Create a new session provider for a request

@@ -38,7 +38,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class SessionProviderTest {
 
-    SessionProvider testObj;
+    private SessionProvider testObj;
 
     @Mock
     private HttpSession mockSession;

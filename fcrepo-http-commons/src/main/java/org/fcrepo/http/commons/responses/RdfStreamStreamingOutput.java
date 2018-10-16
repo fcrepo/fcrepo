@@ -32,7 +32,6 @@ import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 
-import java.io.IOException;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -73,7 +72,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
 
     private static final String JSONLD_FLATTENED = "http://www.w3.org/ns/json-ld#flattened";
 
-    public static final String RDF_TYPE = RDF_NAMESPACE + "type";
+    private static final String RDF_TYPE = RDF_NAMESPACE + "type";
 
     private final Lang format;
 
@@ -118,7 +117,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
         try {
             LOGGER.debug("Serializing RDF stream in: {}", format);
             write(rdfStream, output, format, mediaType, namespaces);
-        } catch (final IOException | RiotException e) {
+        } catch (final RiotException e) {
             setException(e);
             LOGGER.debug("Error serializing RDF", e.getMessage());
             throw new WebApplicationException(e);
@@ -129,7 +128,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
                        final OutputStream output,
                        final Lang dataFormat,
                        final MediaType dataMediaType,
-                       final Map<String, String> nsPrefixes) throws IOException {
+                       final Map<String, String> nsPrefixes) {
 
         final RDFFormat format = defaultSerialization(dataFormat);
 

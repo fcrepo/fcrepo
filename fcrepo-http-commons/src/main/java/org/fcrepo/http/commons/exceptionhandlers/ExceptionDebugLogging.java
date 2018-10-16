@@ -31,8 +31,8 @@ public interface ExceptionDebugLogging {
      * @param error Throwable the intercepted error.
      * @param logger Logger the logger to use
      */
-    public default void debugException(ExceptionDebugLogging context, Throwable error, Logger logger) {
-        /**
+    default void debugException(ExceptionDebugLogging context, Throwable error, Logger logger) {
+        /*
          * Because the majority case is not debug logging, trade one additional
          * accessor call in a guard clause for multiple in message construction
          * and internal log level checks

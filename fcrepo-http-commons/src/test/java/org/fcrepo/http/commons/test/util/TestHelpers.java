@@ -20,13 +20,9 @@ package org.fcrepo.http.commons.test.util;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.http.entity.ContentType.parse;
 import static java.net.URI.create;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.ws.rs.core.UriBuilder.fromUri;
-import static org.fcrepo.kernel.api.utils.ContentDigest.DIGEST_ALGORITHM.SHA1;
 import static org.junit.Assert.assertNotNull;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
-import static org.fcrepo.kernel.api.utils.ContentDigest.asURI;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -34,46 +30,23 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.net.URI;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
-import java.time.Instant;
-import java.util.Arrays;
-import java.util.Collection;
 
-import javax.jcr.LoginException;
-import javax.jcr.Node;
-import javax.jcr.NodeIterator;
-import javax.jcr.RepositoryException;
 import javax.jcr.Session;
-import javax.jcr.ValueFactory;
 import javax.jcr.Workspace;
-import javax.jcr.nodetype.NodeType;
-import javax.jcr.nodetype.NodeTypeIterator;
-import javax.jcr.nodetype.NodeTypeManager;
-import javax.jcr.query.Query;
-import javax.jcr.query.QueryResult;
 import javax.servlet.ServletContext;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
-import org.apache.http.util.EntityUtils;
 import org.apache.jena.riot.Lang;
 
 import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
-import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.services.functions.ConfigurableHierarchicalSupplier;
 
-import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.modeshape.jcr.api.NamespaceRegistry;
-import org.modeshape.jcr.api.Repository;
-import org.modeshape.jcr.api.query.QueryManager;
 
 import org.apache.jena.rdf.model.Model;
 
@@ -83,10 +56,6 @@ import org.apache.jena.rdf.model.Model;
  * @author awoods
  */
 public abstract class TestHelpers {
-
-    public static String MOCK_PREFIX = "mockPrefix";
-
-    public static String MOCK_URI_STRING = "mock.namespace.org";
 
     public static ServletContext getServletContextImpl() {
         final ServletContext sc = mock(ServletContext.class);
@@ -115,86 +84,6 @@ public abstract class TestHelpers {
         return ui;
     }
 
-    public static Session getQuerySessionMock() {
-        final Session mock = mock(Session.class);
-        final Workspace mockWS = mock(Workspace.class);
-        final QueryManager mockQM = mock(QueryManager.class);
-        try {
-            final Query mockQ = getQueryMock();
-            when(mockQM.createQuery(anyString(), anyString()))
-                    .thenReturn((org.modeshape.jcr.api.query.Query) mockQ);
-            when(mockWS.getQueryManager()).thenReturn(mockQM);
-        } catch (final RepositoryException e) {
-            e.printStackTrace();
-        }
-        when(mock.getWorkspace()).thenReturn(mockWS);
-        final ValueFactory mockVF = mock(ValueFactory.class);
-        try {
-            when(mock.getValueFactory()).thenReturn(mockVF);
-        } catch (final RepositoryException e) {
-            e.printStackTrace();
-        }
-        return mock;
-    }
-
-    @SuppressWarnings("unchecked")
-    public static Query getQueryMock() {
-        final Query mockQ = mock(Query.class);
-        final QueryResult mockResults = mock(QueryResult.class);
-        final NodeIterator mockNodes = mock(NodeIterator.class);
-        when(mockNodes.getSize()).thenReturn(2L);
-        when(mockNodes.hasNext()).thenReturn(true, true, false);
-        final Node node1 = mock(Node.class);
-        final Node node2 = mock(Node.class);
-        try {
-            when(node1.getName()).thenReturn("node1");
-            when(node2.getName()).thenReturn("node2");
-        } catch (final RepositoryException e) {
-            e.printStackTrace();
-        }
-        when(mockNodes.nextNode()).thenReturn(node1, node2).thenThrow(
-                IndexOutOfBoundsException.class);
-        try {
-            when(mockResults.getNodes()).thenReturn(mockNodes);
-            when(mockQ.execute()).thenReturn(mockResults);
-        } catch (final RepositoryException e) {
-            e.printStackTrace();
-        }
-        return mockQ;
-    }
-
-    @SuppressWarnings("unchecked")
-    public static Session getSessionMock() throws RepositoryException {
-        final String[] mockPrefixes = {MOCK_PREFIX};
-        final Session mockSession = mock(Session.class);
-        final Workspace mockWorkspace = mock(Workspace.class);
-        final NamespaceRegistry mockNameReg = mock(NamespaceRegistry.class);
-        final NodeTypeManager mockNTM = mock(NodeTypeManager.class);
-        final NodeTypeIterator mockNTI = mock(NodeTypeIterator.class);
-        final NodeType mockNodeType = mock(NodeType.class);
-        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
-        when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNameReg);
-        when(mockNameReg.getPrefixes()).thenReturn(mockPrefixes);
-        when(mockNameReg.getURI(MOCK_PREFIX)).thenReturn(MOCK_URI_STRING);
-        when(mockWorkspace.getNodeTypeManager()).thenReturn(mockNTM);
-        when(mockNodeType.getName()).thenReturn("mockName");
-        when(mockNodeType.toString()).thenReturn("mockString");
-        when(mockNTM.getAllNodeTypes()).thenReturn(mockNTI);
-        when(mockNTI.hasNext()).thenReturn(true, false);
-        when(mockNTI.nextNodeType()).thenReturn(mockNodeType).thenThrow(
-                ArrayIndexOutOfBoundsException.class);
-        return mockSession;
-    }
-
-    public static Collection<String>
-            parseChildren(final HttpEntity entity) throws IOException {
-        final String body = EntityUtils.toString(entity);
-        System.err.println(body);
-        final String[] names =
-            body.replace("[", "").replace("]", "").trim().split(",\\s?");
-        return Arrays.asList(names);
-    }
-
     public static Session mockSession(final AbstractResource testObj) {
 
         final SecurityContext mockSecurityContext = mock(SecurityContext.class);
@@ -215,61 +104,6 @@ public abstract class TestHelpers {
         setField(testObj, "pidMinter", new ConfigurableHierarchicalSupplier());
         return mockSession;
 
-    }
-
-    public static Repository mockRepository() throws LoginException,
-                                             RepositoryException {
-        final Repository mockRepo = mock(Repository.class);
-        when(mockRepo.login()).thenReturn(
-                mock(org.modeshape.jcr.api.Session.class, Mockito.withSettings().extraInterfaces(Session.class)));
-        return mockRepo;
-    }
-
-    public static NonRdfSourceDescription mockDatastream(final String pid,
-                                            final String dsId, final String content) {
-        final FedoraBinary mockBinary = mockBinary(pid, dsId, content);
-        final NonRdfSourceDescription mockDs = mock(NonRdfSourceDescription.class);
-        when(mockDs.getDescribedResource()).thenReturn(mockBinary);
-        when(mockDs.getDescribedResource().getDescription()).thenReturn(mockDs);
-        when(mockDs.getPath()).thenReturn("/" + pid + "/" + dsId);
-        when(mockDs.getCreatedDate()).thenReturn(Instant.now());
-        when(mockDs.getLastModifiedDate()).thenReturn(Instant.now());
-        if (content != null) {
-            final MessageDigest md;
-            try {
-                md = MessageDigest.getInstance(SHA1.algorithm);
-            } catch (final NoSuchAlgorithmException e) {
-                throw new RuntimeException(e);
-            }
-            final byte[] digest = md.digest(content.getBytes());
-            final URI cd = asURI(SHA1.algorithm, digest);
-            when(mockDs.getEtagValue()).thenReturn(cd.toString());
-        }
-        return mockDs;
-    }
-
-    public static FedoraBinary mockBinary(final String pid,
-                                          final String dsId, final String content) {
-        final FedoraBinary mockBinary = mock(FedoraBinary.class);
-        when(mockBinary.getPath()).thenReturn("/" + pid + "/" + dsId + "/jcr:content");
-        when(mockBinary.getMimeType()).thenReturn("application/octet-stream");
-        when(mockBinary.getCreatedDate()).thenReturn(Instant.now());
-        when(mockBinary.getLastModifiedDate()).thenReturn(Instant.now());
-        if (content != null) {
-            final MessageDigest md;
-            try {
-                md = MessageDigest.getInstance(SHA1.algorithm);
-            } catch (final NoSuchAlgorithmException e) {
-                throw new RuntimeException(e);
-            }
-            final byte[] digest = md.digest(content.getBytes());
-            final URI cd = asURI(SHA1.algorithm, digest);
-            when(mockBinary.getContent()).thenReturn(
-                    IOUtils.toInputStream(content, UTF_8));
-            when(mockBinary.getContentDigest()).thenReturn(cd);
-            when(mockBinary.getEtagValue()).thenReturn(cd.toString());
-        }
-        return mockBinary;
     }
 
     private static String getRdfSerialization(final HttpEntity entity) {

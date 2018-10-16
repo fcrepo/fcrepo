@@ -105,7 +105,7 @@ public class RdfStreamProviderTest {
         final Map<String, String> namespaces = new HashMap<>();
         try (final RdfStream rdfStream = new DefaultRdfStream(createURI("info:test"), of(t));
                 final RdfNamespacedStream nsStream = new RdfNamespacedStream(rdfStream, namespaces)) {
-            try (ByteArrayOutputStream entityStream = new ByteArrayOutputStream();) {
+            try (ByteArrayOutputStream entityStream = new ByteArrayOutputStream()) {
                 testProvider.writeTo(nsStream, RdfNamespacedStream.class, null, null,
                         MediaType.valueOf("application/rdf+xml"), null, entityStream);
                 final byte[] result = entityStream.toByteArray();

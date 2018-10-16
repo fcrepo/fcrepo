@@ -47,6 +47,8 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 
 import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.MoreExecutors;
+
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.riot.RiotException;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
@@ -189,11 +191,11 @@ public class RdfStreamStreamingOutputTest {
 
             @Override
             public void onFailure(final Throwable e) {
-                LOGGER.info("Got exception:", e.getMessage());
+                LOGGER.debug("Got exception:", e.getMessage());
                 assertTrue("Got wrong kind of exception!", e instanceof RiotException);
             }
         };
-        addCallback(testRdfStreamStreamingOutput, callback);
+        addCallback(testRdfStreamStreamingOutput, callback, MoreExecutors.directExecutor());
         try (final OutputStream mockOutputStream = mock(OutputStream.class, (Answer<Object>) invocation -> {
             throw new RiotException("Expected.");
         })) {

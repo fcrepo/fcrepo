@@ -78,12 +78,6 @@ public class TestAuthenticationRequestFilter implements Filter {
         chain.doFilter(proxy, response);
     }
 
-    /**
-     * @param request
-     * @param username
-     * @param containerRoles
-     * @return
-     */
     private static ServletRequest proxy(final HttpServletRequest request,
             final String username, final Set<String> containerRoles) {
         final Principal user = username != null ? new GrizzlyPrincipal(username) : null;

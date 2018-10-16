@@ -37,7 +37,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class HttpSessionTest {
 
-    private String SESSION_ID = "session-id";
+    private final String SESSION_ID = "session-id";
 
     @Mock
     private FedoraSession mockSession;
