@@ -104,7 +104,7 @@ public abstract class AutoReloadingConfiguration {
                 public void run() {
                     try {
                         for (;;) {
-                            WatchKey key;
+                            final WatchKey key;
                             try {
                                 key = watchService.take();
                             } catch (final InterruptedException e) {

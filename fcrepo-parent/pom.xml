@@ -34,7 +34,7 @@
     <build-helper.plugin.version>3.0.0</build-helper.plugin.version>
     <bundle.plugin.version>4.0.0</bundle.plugin.version>
     <changelog.plugin.version>2.3</changelog.plugin.version>
-    <checkstyle.plugin.version>2.17</checkstyle.plugin.version>
+    <checkstyle.plugin.version>3.0.0</checkstyle.plugin.version>
     <clean.plugin.version>3.1.0</clean.plugin.version>
     <compiler.plugin.version>3.8.0</compiler.plugin.version>
     <dependency.plugin.version>3.1.1</dependency.plugin.version>

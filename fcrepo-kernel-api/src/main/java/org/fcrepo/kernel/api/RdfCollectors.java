@@ -36,7 +36,10 @@ public class RdfCollectors {
     public static Collector<Triple, ?, Model> toModel() {
         return Collector.of(ModelFactory::createDefaultModel,
             (m, t) -> m.add(m.asStatement(t)),
-            (left, right) -> { left.add(right); return left; },
+            (left, right) -> {
+                    left.add(right);
+                    return left;
+                },
             Collector.Characteristics.UNORDERED);
     }
 
