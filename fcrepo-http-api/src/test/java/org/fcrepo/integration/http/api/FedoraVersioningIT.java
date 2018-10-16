@@ -90,7 +90,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.core.Link;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
@@ -850,6 +849,10 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         checkForLinkHeader(response, uri + "/" + FCR_VERSIONS, "timemap");
         checkForLinkHeader(response, VERSIONING_TIMEMAP_TYPE, "type");
         checkForLinkHeader(response, ldpcvUri + "/" + FCR_ACL, "acl");
+        assertFalse(response.getFirstHeader("Allow").getValue().contains("DELETE"));
+        assertTrue(response.getFirstHeader("Allow").getValue().contains("GET"));
+        assertTrue(response.getFirstHeader("Allow").getValue().contains("HEAD"));
+        assertTrue(response.getFirstHeader("Allow").getValue().contains("POST"));
         assertEquals(1, response.getHeaders("Accept-Post").length);
     }
 
