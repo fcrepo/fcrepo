@@ -20,7 +20,7 @@ package org.fcrepo.http.commons.domain;
 import static java.util.Arrays.asList;
 import static java.util.Optional.ofNullable;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
-import static org.fcrepo.kernel.api.RdfLexicon.SERVER_MANAGED;
+import static org.fcrepo.kernel.api.RdfLexicon.PREFER_SERVER_MANAGED;
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
 import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
 
@@ -144,7 +144,7 @@ public class PreferTag implements Comparable<PreferTag> {
         final StringBuilder omitBuilder = new StringBuilder();
 
         if (!(value.equals("minimal") || receivedParam.equals("minimal"))) {
-            final List<String> appliedPrefs = asList(SERVER_MANAGED.toString(),
+            final List<String> appliedPrefs = asList(PREFER_SERVER_MANAGED.toString(),
                     LDP_NAMESPACE + "PreferMinimalContainer",
                     LDP_NAMESPACE + "PreferMembership",
                     LDP_NAMESPACE + "PreferContainment");
