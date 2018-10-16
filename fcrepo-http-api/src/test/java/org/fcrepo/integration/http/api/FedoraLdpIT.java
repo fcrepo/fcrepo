@@ -20,6 +20,7 @@ package org.fcrepo.integration.http.api;
 import static java.lang.Thread.sleep;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.ZoneId.of;
+import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 import static java.util.Arrays.asList;
 import static java.util.regex.Pattern.compile;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
@@ -119,6 +120,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.text.ParseException;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -218,7 +220,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     private static final Logger LOGGER = getLogger(FedoraLdpIT.class);
 
     private static final DateTimeFormatter headerFormat =
-      DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US).withZone(of("GMT"));
+            RFC_1123_DATE_TIME.withLocale(Locale.US).withZone(ZoneId.of("GMT"));
 
     private static final DateTimeFormatter tripleFormat =
       DateTimeFormatter.ISO_INSTANT.withZone(of("GMT"));
