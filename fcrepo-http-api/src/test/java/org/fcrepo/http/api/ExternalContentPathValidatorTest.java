@@ -316,7 +316,7 @@ public class ExternalContentPathValidatorTest {
         // Check that the new allowed path was detected
         boolean pass = false;
         // Polling to see if change occurred for 20 seconds
-        final long endTimes = System.nanoTime() + 20000000000l;
+        final long endTimes = System.nanoTime() + 20000000000L;
         while (System.nanoTime() < endTimes) {
             Thread.sleep(50);
             try {

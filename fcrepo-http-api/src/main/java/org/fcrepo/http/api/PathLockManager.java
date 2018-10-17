@@ -37,12 +37,12 @@ public interface PathLockManager {
      * anyone else receiving one of these such locks from a LockManager
      * should not retain a reference to the used lock after releasing it.
      */
-    public interface AcquiredLock {
+    interface AcquiredLock {
 
         /**
          * Releases the lock, after which it's useless.
          */
-        public void release();
+        void release();
     }
 
     /**
@@ -54,7 +54,7 @@ public interface PathLockManager {
      * @param path the path to a resource to be viewed
      * @return an acquired Lock on the relevant resources
      */
-    public AcquiredLock lockForRead(String path);
+    AcquiredLock lockForRead(String path);
 
     /**
      * Locks the necessary resources affected in order to safely write to a resource
@@ -69,7 +69,7 @@ public interface PathLockManager {
      * @param nodeService the repository NodeService implementation
      * @return an acquired Lock on the relevant resources
      */
-    public AcquiredLock lockForWrite(String path, FedoraSession session, NodeService nodeService);
+    AcquiredLock lockForWrite(String path, FedoraSession session, NodeService nodeService);
 
     /**
      * Locks the necessary resources affected in order to safely delete a resource
@@ -82,6 +82,6 @@ public interface PathLockManager {
      *        all descendant resources)
      * @return an acquired Lock on the relevant resources
      */
-    public AcquiredLock lockForDelete(String path);
+    AcquiredLock lockForDelete(String path);
 
 }

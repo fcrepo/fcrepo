@@ -22,7 +22,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
 import javax.inject.Inject;
-import javax.jcr.RepositoryException;
 
 import org.fcrepo.integration.kernel.modeshape.AbstractIT;
 import org.fcrepo.kernel.api.FedoraRepository;
@@ -90,7 +89,7 @@ public class VersionServiceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testCreateVersion() throws RepositoryException {
+    public void testCreateVersion() {
         final String pid = getRandomPid();
         final FedoraResource resource = containerService.findOrCreate(session, "/" + pid);
         session.commit();
@@ -138,7 +137,7 @@ public class VersionServiceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testRemoveVersion() throws RepositoryException {
+    public void testRemoveVersion() {
         final String pid = getRandomPid();
         final FedoraResource resource = containerService.findOrCreate(session, "/" + pid);
         session.commit();
@@ -155,7 +154,7 @@ public class VersionServiceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testCreateDescriptionVersion() throws Exception {
+    public void testCreateDescriptionVersion() {
         final String pid = getRandomPid();
         final FedoraResource resource = binaryService.findOrCreate(session, "/" + pid);
         session.commit();

@@ -46,7 +46,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import javax.jcr.ItemNotFoundException;
-import javax.jcr.nodetype.ConstraintViolationException;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
@@ -75,7 +74,6 @@ import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
-import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.slf4j.Logger;
@@ -94,7 +92,7 @@ public class FedoraAcl extends ContentExposingResource {
 
     public static final String ROOT_AUTHORIZATION_PROPERTY = "fcrepo.auth.webac.authorization";
 
-    public static final String ROOT_AUTHORIZATION_LOCATION = "/root-authorization.ttl";
+    private static final String ROOT_AUTHORIZATION_LOCATION = "/root-authorization.ttl";
 
     @Context protected Request request;
     @Context protected HttpServletResponse servletResponse;
@@ -114,12 +112,10 @@ public class FedoraAcl extends ContentExposingResource {
      * @param requestContentType The content type of the resource body
      * @param requestBodyStream  The request body as stream
      * @return the response for a request to create a Fedora WebAc acl
-     * @throws ConstraintViolationException in case this action would violate a constraint on repository structure
      */
     @PUT
     public Response createFedoraWebacAcl(@HeaderParam(CONTENT_TYPE) final MediaType requestContentType,
-                                         final InputStream requestBodyStream)
-        throws ConstraintViolationException {
+                                         final InputStream requestBodyStream) {
 
         if (resource().isAcl() || resource().isMemento()) {
             throw new BadRequestException("ACL resource creation is not allowed for resource " + resource().getPath());
@@ -241,14 +237,13 @@ public class FedoraAcl extends ContentExposingResource {
      * @param rangeValue the range value
      * @return a binary or the triples for the specified node
      * @throws IOException if IO exception occurred
-     * @throws UnsupportedAlgorithmException  if unsupported digest algorithm occurred
      */
     @GET
     @Produces({ TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
                 N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
                 TURTLE_X, TEXT_HTML_WITH_CHARSET })
     public Response getResource(@HeaderParam("Range") final String rangeValue)
-            throws IOException, UnsupportedAlgorithmException, ItemNotFoundException {
+            throws IOException, ItemNotFoundException {
 
         LOGGER.info("GET resource '{}'", externalPath);
 

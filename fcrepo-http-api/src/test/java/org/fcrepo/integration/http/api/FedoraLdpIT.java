@@ -20,6 +20,7 @@ package org.fcrepo.integration.http.api;
 import static java.lang.Thread.sleep;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.ZoneId.of;
+import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 import static java.util.Arrays.asList;
 import static java.util.regex.Pattern.compile;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
@@ -119,6 +120,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.text.ParseException;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -217,10 +219,10 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     private static final Logger LOGGER = getLogger(FedoraLdpIT.class);
 
-    private static DateTimeFormatter headerFormat =
-      DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US).withZone(of("GMT"));
+    private static final DateTimeFormatter headerFormat =
+            RFC_1123_DATE_TIME.withLocale(Locale.US).withZone(ZoneId.of("GMT"));
 
-    private static DateTimeFormatter tripleFormat =
+    private static final DateTimeFormatter tripleFormat =
       DateTimeFormatter.ISO_INSTANT.withZone(of("GMT"));
 
     @Test
@@ -398,7 +400,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testHeadDatastreamWithWantDigest() throws IOException, ParseException {
+    public void testHeadDatastreamWithWantDigest() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", TEST_BINARY_CONTENT);
 
@@ -415,7 +417,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testHeadDatastreamWithWantDigestMultiple() throws IOException, ParseException {
+    public void testHeadDatastreamWithWantDigestMultiple() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", TEST_BINARY_CONTENT);
 
@@ -428,14 +430,14 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
             assertTrue("SHA-1 Fixity Checksum doesn't match",
-                    digesterHeaderValue.indexOf(TEST_SHA_DIGEST_HEADER_VALUE) >= 0);
+                    digesterHeaderValue.contains(TEST_SHA_DIGEST_HEADER_VALUE));
             assertTrue("MD5 fixity checksum doesn't match",
-                    digesterHeaderValue.indexOf(TEST_MD5_DIGEST_HEADER_VALUE) >= 0);
+                    digesterHeaderValue.contains(TEST_MD5_DIGEST_HEADER_VALUE));
         }
     }
 
     @Test
-    public void testHeadDatastreamWithWantDigestSha256() throws IOException, ParseException {
+    public void testHeadDatastreamWithWantDigestSha256() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "x", TEST_BINARY_CONTENT);
 
@@ -448,7 +450,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
             assertTrue("SHA-256 Fixity Checksum doesn't match",
-                    digesterHeaderValue.indexOf(TEST_SHA256_DIGEST_HEADER_VALUE) >= 0);
+                    digesterHeaderValue.contains(TEST_SHA256_DIGEST_HEADER_VALUE));
         }
     }
 
@@ -709,13 +711,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
             assertTrue("SHA-1 Fixity Checksum doesn't match",
-                    digesterHeaderValue.indexOf(TEST_SHA_DIGEST_HEADER_VALUE) >= 0);
+                    digesterHeaderValue.contains(TEST_SHA_DIGEST_HEADER_VALUE));
             assertTrue("MD5 fixity checksum doesn't match",
-                    digesterHeaderValue.indexOf(TEST_MD5_DIGEST_HEADER_VALUE) >= 0);
-            assertTrue("SHA-256 fixity checksum doesn't match",
-                digesterHeaderValue
-                            .indexOf(
-                                    "sha-256=fb871ff8cce8fea83dfaeab41784305a1461e008dc02a371ed26d856c766c903") >= 0);
+                    digesterHeaderValue.contains(TEST_MD5_DIGEST_HEADER_VALUE));
+            assertTrue("SHA-256 fixity checksum doesn't match",digesterHeaderValue.contains(
+                    "sha-256=fb871ff8cce8fea83dfaeab41784305a1461e008dc02a371ed26d856c766c903"));
         }
     }
 
@@ -1085,7 +1085,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         checkForLinkHeader(response, subjectURI, "timegate");
         checkForLinkHeader(response, subjectURI + "/" + FCR_VERSIONS, "timemap");
         checkForLinkHeader(response, subjectURI + "/" + FCR_ACL, "acl");
-        assertEquals(1, Arrays.asList(response.getHeaders("Vary")).stream().filter(x -> x.getValue().contains(
+        assertEquals(1, Arrays.stream(response.getHeaders("Vary")).filter(x -> x.getValue().contains(
                 "Accept-Datetime")).count());
     }
 
@@ -1433,7 +1433,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String etag1;
         try (final CloseableHttpResponse response = execute(get)) {
             etag1 = response.getFirstHeader("ETag").getValue();
-            final String resp = IOUtils.toString(response.getEntity().getContent(), UTF_8);
+            IOUtils.toString(response.getEntity().getContent(), UTF_8);
         }
 
         assertEquals("Child resource not deleted!", NO_CONTENT.getStatusCode(),
@@ -1442,7 +1442,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String etag2;
         try (final CloseableHttpResponse response = execute(get)) {
             etag2 = response.getFirstHeader("ETag").getValue();
-            final String resp = IOUtils.toString(response.getEntity().getContent(), UTF_8);
+            IOUtils.toString(response.getEntity().getContent(), UTF_8);
         }
 
         assertNotEquals("ETag didn't change!", etag1, etag2);
@@ -1875,10 +1875,10 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testGetLongRange() throws IOException, ParseException {
+    public void testGetLongRange() throws IOException {
         final String id = getRandomUniqueId();
         createObjectAndClose(id);
-        final StringBuffer buf = new StringBuffer();
+        final StringBuilder buf = new StringBuilder();
         while ( buf.length() < 9000 ) {
             buf.append("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
         }
@@ -2627,7 +2627,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 subjectURI + "> <" + REPOSITORY_NAMESPACE + "uuid> \"value-doesn't-matter\" } WHERE {}\n"));
         try (final CloseableHttpResponse response = execute(patchObjMethod)) {
             assertEquals(CONFLICT.getStatusCode(), getStatus(response));
-            assertEquals(ex.toString(), response.getFirstHeader(LINK).getValue().toString());
+            assertEquals(ex.toString(), response.getFirstHeader(LINK).getValue());
         }
     }
 
@@ -2897,7 +2897,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testCreatedAndModifiedDates() throws IOException, ParseException {
+    public void testCreatedAndModifiedDates() throws IOException {
         final String location = getLocation(postObjMethod());
         final HttpGet getObjMethod = new HttpGet(location);
         try (final CloseableHttpResponse response = execute(getObjMethod)) {
@@ -3036,7 +3036,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         // Ensure container has been updated with relationship... indirectly
         try (final CloseableHttpResponse getResponse1 = execute(new HttpGet(container));
-                final CloseableDataset dataset = getDataset(getResponse1);) {
+                final CloseableDataset dataset = getDataset(getResponse1)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             assertFalse("Expected NOT to have resource: " + graph, graph.contains(ANY,
                     createURI(container), createURI("info:some/relation"), createURI(resource)));
@@ -3282,7 +3282,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     private static Optional<Instant> getDateFromModel(final Model model, final Resource subj, final Property pred)
-            throws NoSuchElementException, ParseException {
+            throws NoSuchElementException {
         final StmtIterator stmts = model.listStatements(subj, pred, (String) null);
         return Optional.ofNullable(
            stmts.hasNext() ? Instant.from(tripleFormat.parse(stmts.nextStatement().getString())) : null);
@@ -3467,7 +3467,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testCreationResponseDefault() throws Exception {
+    public void testCreationResponseDefault() {
         testCreationResponse(null, null, CREATED, "text/plain");
         testCreationResponse(null, "application/ld+json", NOT_ACCEPTABLE, "text/html");
     }
@@ -3582,7 +3582,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         try (final CloseableDataset dataset = getDataset(getObjMethod(parent))) {
             final DatasetGraph graphStore = dataset.asDatasetGraph();
-            final List<String> childPaths = new ArrayList<String>();
+            final List<String> childPaths = new ArrayList<>();
             final Iterator<Quad> children = graphStore.find(ANY, ANY, CONTAINS.asNode(), ANY);
             assertTrue("Four children should have been created (none found).", children.hasNext());
             childPaths.add(children.next().getObject().getURI());
@@ -3710,7 +3710,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableDataset dataset = getDataset(getObjMethod(path))) {
             final DatasetGraph graphStore = dataset.asDatasetGraph();
             final List<String> missingDcIdentifiers
-                    = new ArrayList<>(Arrays.asList(new String[] { "one", "two", "three", "four" }));
+                    = new ArrayList<>(Arrays.asList("one", "two", "three", "four"));
             final Iterator<Quad> dcIdentifierIt = graphStore.find(ANY, createURI(serverAddress + path),
                     createProperty("http://purl.org/dc/elements/1.1/identifier").asNode(), ANY);
             while (dcIdentifierIt.hasNext()) {

@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -63,6 +64,7 @@ public class DefaultPathLockManager implements PathLockManager {
      * application.
      */
     @VisibleForTesting
+    final
     Map<String, ActivePath> activePaths = new HashMap<>();
 
     /**
@@ -73,6 +75,7 @@ public class DefaultPathLockManager implements PathLockManager {
      * without actually discovering (and locking) all the descendant nodes.
      */
     @VisibleForTesting
+    final
     List<String> activeDeletePaths = new ArrayList<>();
 
     /**
@@ -82,9 +85,9 @@ public class DefaultPathLockManager implements PathLockManager {
      */
     private class ActivePath {
 
-        private String path;
+        private final String path;
 
-        private ReadWriteLock rwLock;
+        private final ReadWriteLock rwLock;
 
         /**
          * A list with references to every thread that has requested
@@ -93,7 +96,7 @@ public class DefaultPathLockManager implements PathLockManager {
          * relinquished it by invoking LockManager.release().  This
          * list is actually managed by methods outside of ActivePath.
          */
-        private List<Thread> threads;
+        private final List<Thread> threads;
 
         private ActivePath(final String path) {
             this.path = path;
@@ -171,7 +174,7 @@ public class DefaultPathLockManager implements PathLockManager {
          * acquired, but to avoid possible deadlocks releases all acquired
          * locks when it fails to acquire even one of them.
          * @param locks each PathLock that must be acquired
-         * @throws InterruptedException
+         * @throws InterruptedException on error
          */
         private AcquiredMultiPathLock(final List<ActivePath.PathScopedLock> locks) throws InterruptedException {
             this.locks = locks;
@@ -200,7 +203,7 @@ public class DefaultPathLockManager implements PathLockManager {
          * all acquired locks when it fails to acquire even one of them.
          * @param deletePath the path for which all descendant paths must also be
          *        write locked.
-         * @throws InterruptedException
+         * @throws InterruptedException on error
          */
         private AcquiredMultiPathLock(final String deletePath) throws InterruptedException {
             this.deletePath = deletePath;
@@ -306,7 +309,7 @@ public class DefaultPathLockManager implements PathLockManager {
     }
 
     @VisibleForTesting
-    static String normalizePath(final String path) {
+    private static String normalizePath(final String path) {
         if (path.endsWith("/")) {
             return path.substring(0, path.length() - 1);
         } else {
@@ -341,7 +344,8 @@ public class DefaultPathLockManager implements PathLockManager {
             for (String currentPath = startingPath ;
                     currentPath == null || currentPath.length() > 0;
                     currentPath = getParentPath(currentPath)) {
-                if (currentPath == null || (currentPath != startingPath && nodeService.exists(session, currentPath))) {
+                if (currentPath == null ||
+                        (!Objects.equals(currentPath, startingPath) && nodeService.exists(session, currentPath))) {
                     // either we've followed the path back to the root, or we've found an ancestor that exists...
                     // so there are no more locks to create.
                     break;

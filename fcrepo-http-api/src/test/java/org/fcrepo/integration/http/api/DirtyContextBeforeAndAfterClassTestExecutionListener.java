@@ -37,12 +37,12 @@ public class DirtyContextBeforeAndAfterClassTestExecutionListener
     }
 
     @Override
-    public void beforeTestClass(final TestContext testContext) throws Exception {
+    public void beforeTestClass(final TestContext testContext) {
         testContext.markApplicationContextDirty(HierarchyMode.EXHAUSTIVE);
     }
 
     @Override
-    public void afterTestClass(final TestContext testContext) throws Exception {
+    public void afterTestClass(final TestContext testContext) {
         testContext.markApplicationContextDirty(HierarchyMode.EXHAUSTIVE);
     }
 

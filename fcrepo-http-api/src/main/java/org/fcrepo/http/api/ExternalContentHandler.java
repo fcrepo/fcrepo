@@ -54,8 +54,8 @@ public class ExternalContentHandler {
 
     private static final Logger LOGGER = getLogger(FedoraLdp.class);
 
-    public final static String HANDLING = "handling";
-    public final static String EXT_CONTENT_TYPE = "type";
+    private final static String HANDLING = "handling";
+    private final static String EXT_CONTENT_TYPE = "type";
 
     private final Link link;
     private final String handling;
@@ -114,7 +114,7 @@ public class ExternalContentHandler {
      * @return boolean value representing whether or not the content handling is "copy"
      */
     public boolean isCopy() {
-        return handling != null ? handling.equals(COPY) : false;
+        return handling != null && handling.equals(COPY);
     }
 
     /**
@@ -122,7 +122,7 @@ public class ExternalContentHandler {
      * @return boolean value representing whether or not the content handling is "redirect"
      */
     public boolean isRedirect() {
-        return handling != null ? handling.equals(REDIRECT) : false;
+        return handling != null && handling.equals(REDIRECT);
     }
 
     /**
@@ -130,15 +130,14 @@ public class ExternalContentHandler {
      * @return boolean value representing whether or not the content handling is "proxy"
      */
     public boolean isProxy() {
-        return handling != null ? handling.equals(PROXY) : false;
+        return handling != null && handling.equals(PROXY);
     }
 
     /**
      * Fetch the external content
      * @return InputStream containing the external content
-     * @throws IOException
      */
-    public InputStream fetchExternalContent() throws IOException {
+    public InputStream fetchExternalContent() {
 
         final URI uri = link.getUri();
         final String scheme = uri.getScheme();
@@ -159,11 +158,10 @@ public class ExternalContentHandler {
 
     /**
      * Validate that an external content link header is appropriately formatted
-     * @param link
+     * @param link to be validated
      * @return Link object if the header is formatted correctly, else null
-     * @throws ExternalMessageBodyException
+     * @throws ExternalMessageBodyException on error
      */
-
     private Link parseLinkHeader(final String link) throws ExternalMessageBodyException {
         final Link realLink = Link.valueOf(link);
 
@@ -182,7 +180,7 @@ public class ExternalContentHandler {
 
     /**
      * Find the content type for a remote resource
-     * @param url
+     * @param url of remote resource
      * @return the content type reported by remote system or "application/octet-stream" if not supplied
      */
     private MediaType findContentType(final String url) {

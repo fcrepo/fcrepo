@@ -53,13 +53,13 @@ public class FedoraRepositoryRestore extends AbstractResource {
     private static final Logger LOGGER = getLogger(FedoraRepositoryRestore.class);
 
     @Inject
-    protected HttpSession session;
+    private HttpSession session;
 
     /**
      * The fcrepo repository service
      */
     @Inject
-    protected RepositoryService repositoryService;
+    private RepositoryService repositoryService;
 
     /**
      * This method runs a repository restore.

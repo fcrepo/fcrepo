@@ -415,7 +415,7 @@ public class FedoraBinaryImplIT extends AbstractIT {
 
     @Test
     public void testGetFixityWithWantDigest() throws InvalidChecksumException,
-            URISyntaxException, UnsupportedAlgorithmException {
+            UnsupportedAlgorithmException {
         final Collection<String> digestAlgs = singletonList("SHA");
         final String pid = "testFixityWithWantDigest-" + randomUUID();
         final FedoraSession session = repo.login();

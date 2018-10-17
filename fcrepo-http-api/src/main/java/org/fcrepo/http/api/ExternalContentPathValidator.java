@@ -140,7 +140,7 @@ public class ExternalContentPathValidator extends AutoReloadingConfiguration {
                                 line, configPath);
                         return false;
                     }
-                    if (schemeMatches && "file".equals(schemeMatcher.group(1))) {
+                    if ("file".equals(schemeMatcher.group(1))) {
                         // If a file uri ends with / it must be a directory, otherwise it must be a file.
                         final File allowing = new File(URI.create(line).getPath());
                         if ((line.endsWith("/") && !allowing.isDirectory())

@@ -204,7 +204,7 @@ public class FedoraAclIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testGetNonExistentAcl() throws Exception {
+    public void testGetNonExistentAcl() {
         createObjectAndClose(id);
         final HttpGet getNotFound = new HttpGet(subjectUri + "/" + FCR_ACL);
         assertEquals(NOT_FOUND.getStatusCode(), getStatus(getNotFound));
@@ -241,14 +241,14 @@ public class FedoraAclIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testDeleteDefaultRootAcl() throws Exception {
+    public void testDeleteDefaultRootAcl() {
         final String rootAclUri = serverAddress + FCR_ACL;
         assertEquals("DELETE should fail for default generated root ACL.",
                 CONFLICT.getStatusCode(), getStatus(new HttpDelete(rootAclUri)));
     }
 
     @Test
-    public void testPatchDefaultRootAcl() throws Exception {
+    public void testPatchDefaultRootAcl() {
         final String rootAclUri = serverAddress + FCR_ACL;
         assertEquals("PATCH should fail for default generated root ACL.",
                 CONFLICT.getStatusCode(), getStatus(new HttpPatch(rootAclUri)));
@@ -485,7 +485,7 @@ public class FedoraAclIT extends AbstractResourceIT {
 
         try (final CloseableHttpResponse response = execute(put)) {
             assertEquals(BAD_REQUEST.getStatusCode(), getStatus(response));
-            assertEquals(ex.toString(), response.getFirstHeader(LINK).getValue().toString());
+            assertEquals(ex.toString(), response.getFirstHeader(LINK).getValue());
         }
     }
 }
