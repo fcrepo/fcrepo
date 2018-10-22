@@ -270,17 +270,21 @@ public class WebACRolesProvider {
             triple -> triple.matches(triple.getSubject(), RDF_TYPE_NODE, VCARD_GROUP_NODE));
         //return members only if there is an associated vcard:Group
         if (hasVcardGroup) {
-            final List<String> values = new ArrayList();
-
-            final List<org.apache.jena.graph.Node>  objects = triples.stream()
+            return triples.stream()
                           .filter(triple -> triple.predicateMatches(VCARD_MEMBER_NODE))
-                          .map(Triple::getObject).collect(Collectors.toList());
-            objects.stream().flatMap(WebACRolesProvider::nodeToStringStream).forEach(values::add);
-            objects.stream().flatMap(WebACRolesProvider::additionalAgentValues).forEach(values::add);
-            return values.stream();
+                          .map(Triple::getObject).flatMap(WebACRolesProvider::nodeToStringStream)
+                                                 .map(WebACRolesProvider::stripUserAgentBaseURI);
         } else {
             return empty();
         }
+    }
+
+    private static String stripUserAgentBaseURI(final String object) {
+        final String userBaseUri = System.getProperty(USER_AGENT_BASE_URI_PROPERTY);
+        if (userBaseUri != null && object.startsWith(userBaseUri)) {
+            return object.substring(userBaseUri.length());
+        }
+        return object;
     }
 
     /**
