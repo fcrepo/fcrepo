@@ -1209,8 +1209,6 @@ public class WebACRecipesIT extends AbstractResourceIT {
         final HttpPut childPut = new HttpPut(authorized + "/child");
         setAuth(childPut, "testuser");
         assertEquals(HttpStatus.SC_CREATED, getStatus(childPut));
-
-        System.clearProperty(USER_AGENT_BASE_URI_PROPERTY);
     }
 
     @Test
