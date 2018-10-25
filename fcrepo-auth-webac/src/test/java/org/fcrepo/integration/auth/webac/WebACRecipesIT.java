@@ -25,8 +25,10 @@ import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.apache.jena.vocabulary.DC_11.title;
 import static org.fcrepo.auth.webac.WebACRolesProvider.GROUP_AGENT_BASE_URI_PROPERTY;
 import static org.fcrepo.http.api.FedoraAcl.ROOT_AUTHORIZATION_PROPERTY;
+import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.modeshape.utils.FedoraSessionUserUtil.USER_AGENT_BASE_URI_PROPERTY;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -55,6 +57,8 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.AbstractHttpMessage;
+import org.apache.http.util.EntityUtils;
+
 import org.fcrepo.integration.http.api.AbstractResourceIT;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -1324,5 +1328,96 @@ public class WebACRecipesIT extends AbstractResourceIT {
         final HttpHead headDesc2 = new HttpHead(binaryUri + "/fcr:metadata");
         setAuth(headDesc2, "testuser");
         assertEquals(HttpStatus.SC_OK, getStatus(headDesc2));
+    }
+
+    @Test
+    public void testIndirectRelationship() throws IOException {
+        final String readOnlyResource = "/rest/" + getRandomUniqueId();
+        final String writeableResource = "/rest/" + getRandomUniqueId();
+        final String username = "user28";
+
+        final String readonlyUri = ingestObj(readOnlyResource);
+
+        final String readonlyString = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
+                "<#readauthz> a acl:Authorization ;\n" +
+                "   acl:agent \"" + username + "\" ;\n" +
+                "   acl:mode acl:Read ;\n" +
+                "   acl:accessTo <" + readOnlyResource + "> .";
+        ingestAclString(readonlyUri, readonlyString, "fedoraAdmin");
+
+        // User can read readonly resource.
+        final HttpGet get1 = getObjMethod(readOnlyResource);
+        setAuth(get1, username);
+        assertEquals(HttpStatus.SC_OK, getStatus(get1));
+
+        // User can't patch readonly resource.
+        final String patch = "INSERT DATA { <> <http://purl.org/dc/elements/1.1/title> \"Changed it\"}";
+        final HttpEntity patchEntity = new StringEntity(patch);
+        try (final CloseableHttpResponse resp = (CloseableHttpResponse) PATCH(readonlyUri, patchEntity,
+                username)) {
+            assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(resp));
+        }
+
+        // Make a user writable container.
+        final String writeableUri = ingestObj(writeableResource);
+        final String writeableAcl = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
+                "<#writeauth> a acl:Authorization ;\n" +
+                "   acl:agent \"" + username + "\" ;\n" +
+                "   acl:mode acl:Read, acl:Write ;\n" +
+                "   acl:accessTo <" + writeableResource + "> ;\n" +
+                "   acl:default <" + writeableResource + "> .";
+        ingestAclString(writeableUri, writeableAcl, "fedoraAdmin");
+
+        // User makes an indirect container referencing readonly resource.
+        final HttpPost userPost = postObjMethod(writeableResource);
+        setAuth(userPost, username);
+        userPost.addHeader("Link", "<" + INDIRECT_CONTAINER.toString() + ">; rel=type");
+        final String indirect = "@prefix ldp: <http://www.w3.org/ns/ldp#> .\n" +
+                "@prefix test: <http://example.org/test#> .\n" +
+                "<> ldp:insertedContentRelation test:something ;" +
+                "ldp:membershipResource <" + readOnlyResource + "> ;" +
+                "ldp:hasMemberRelation test:predicateToCreate .";
+        final HttpEntity indirectEntity = new StringEntity(indirect);
+        userPost.setEntity(indirectEntity);
+        userPost.setHeader("Content-type", "text/turtle");
+        final String indirectUri;
+        try (final CloseableHttpResponse resp = execute(userPost)) {
+            assertEquals(HttpStatus.SC_CREATED, getStatus(resp));
+            indirectUri = getLocation(resp);
+        }
+
+        final HttpPost childPost = new HttpPost(indirectUri);
+        final HttpEntity childEntity = new StringEntity(
+                "@prefix test: <http://example.org/test#> .\n" +
+                        "<> test:something <" + indirectUri + "> .");
+        childPost.setEntity(childEntity);
+        setAuth(childPost, username);
+        assertEquals(HttpStatus.SC_CREATED, getStatus(childPost));
+
+        try (final CloseableHttpResponse resp = (CloseableHttpResponse) GET(readonlyUri, username)) {
+            assertEquals(HttpStatus.SC_OK, getStatus(resp));
+            final String responseBody = EntityUtils.toString(resp.getEntity());
+            EntityUtils.consume(resp.getEntity());
+            assertFalse(responseBody.contains(indirectUri));
+        }
+    }
+
+    /**
+     * Utility function to ingest a ACL from a string.
+     *
+     * @param resourcePath Path to the resource if doesn't end with "/fcr:acl" it is added.
+     * @param acl the text/turtle ACL as a string
+     * @param username user to ingest as
+     * @return
+     * @throws IOException on StringEntity encoding or client execute
+     */
+    private HttpResponse ingestAclString(final String resourcePath, final String acl, final String username)
+            throws IOException {
+        final String aclPath = (resourcePath.endsWith("/fcr:acl") ? resourcePath : resourcePath + "/fcr:acl");
+        final HttpPut putReq = new HttpPut(aclPath);
+        setAuth(putReq, username);
+        putReq.setHeader("Content-type", "text/turtle");
+        putReq.setEntity(new StringEntity(acl));
+        return execute(putReq);
     }
 }
