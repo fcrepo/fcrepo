@@ -272,10 +272,19 @@ public class WebACRolesProvider {
         if (hasVcardGroup) {
             return triples.stream()
                           .filter(triple -> triple.predicateMatches(VCARD_MEMBER_NODE))
-                          .map(Triple::getObject).flatMap(WebACRolesProvider::nodeToStringStream);
+                          .map(Triple::getObject).flatMap(WebACRolesProvider::nodeToStringStream)
+                                                 .map(WebACRolesProvider::stripUserAgentBaseURI);
         } else {
             return empty();
         }
+    }
+
+    private static String stripUserAgentBaseURI(final String object) {
+        final String userBaseUri = System.getProperty(USER_AGENT_BASE_URI_PROPERTY);
+        if (userBaseUri != null && object.startsWith(userBaseUri)) {
+            return object.substring(userBaseUri.length());
+        }
+        return object;
     }
 
     /**

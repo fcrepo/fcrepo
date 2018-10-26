@@ -1199,6 +1199,19 @@ public class WebACRecipesIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testAgentGroupWithMembersAsURIs() throws Exception {
+        System.setProperty(USER_AGENT_BASE_URI_PROPERTY, "http://example.com/");
+        ingestTurtleResource("fedoraAdmin", "/acls/agent-group-list-with-member-uris.ttl",
+                             serverAddress + "/rest/agent-group-list-with-member-uris");
+        final String authorized = ingestObj("/rest/agent-group-with-vcard-member-as-uri");
+        ingestAcl("fedoraAdmin", "/acls/agent-group-with-vcard-member-as-uri.ttl", authorized + "/fcr:acl");
+        //check that test user is authorized to write
+        final HttpPut childPut = new HttpPut(authorized + "/child");
+        setAuth(childPut, "testuser");
+        assertEquals(HttpStatus.SC_CREATED, getStatus(childPut));
+    }
+
+    @Test
     public void testAgentGroup() throws Exception {
         ingestTurtleResource("fedoraAdmin", "/acls/agent-group-list-flat.ttl",
                              serverAddress + "/rest/agent-group-list-flat");

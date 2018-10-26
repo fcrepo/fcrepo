@@ -1,0 +1,7 @@
+@prefix acl: <http://www.w3.org/ns/auth/acl#> .
+
+<#authorization>    a               acl:Authorization;
+    acl:accessTo    </rest/agent-group-with-vcard-member-as-uri>;
+    acl:mode        acl:Read;
+    acl:mode        acl:Write;
+    acl:agentGroup  </rest/agent-group-list-with-member-uris>.
