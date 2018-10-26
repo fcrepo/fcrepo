@@ -32,6 +32,7 @@ import static javax.ws.rs.core.Response.Status.GONE;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
@@ -80,6 +81,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.apache.jena.rdf.model.Model;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.junit.Before;
 import org.junit.runner.RunWith;
@@ -98,7 +100,8 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 public abstract class AbstractResourceIT {
 
     protected static Logger logger;
-    private static final String NON_RDF_SOURCE_LINK_HEADER = "<" + NON_RDF_SOURCE.getURI() + ">;rel=\"type\"";
+
+    protected static final String NON_RDF_SOURCE_LINK_HEADER = "<" + NON_RDF_SOURCE.getURI() + ">;rel=\"type\"";
 
     @Before
     public void setLogger() {
@@ -383,6 +386,14 @@ public abstract class AbstractResourceIT {
      */
     protected CloseableDataset getDataset(final HttpUriRequest req) throws IOException {
         return getDataset(client, req);
+    }
+
+    protected Model getModel(final String pid) throws Exception {
+        final Model model = createDefaultModel();
+        try (final CloseableHttpResponse response = execute(new HttpGet(serverAddress + pid))) {
+            model.read(response.getEntity().getContent(), serverAddress + pid, "TURTLE");
+        }
+        return model;
     }
 
     protected CloseableHttpResponse createObject() {

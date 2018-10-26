@@ -98,7 +98,7 @@ public final class RdfLexicon {
         createProperty(PREMIS_NAMESPACE + "hasFixity");
 
     private static final Set<Property> fixityProperties = of(
-            HAS_FIXITY_RESULT, HAS_MESSAGE_DIGEST, HAS_SIZE);
+            HAS_FIXITY_RESULT, HAS_MESSAGE_DIGEST);
 
     public static final Resource EVENT_OUTCOME_INFORMATION = createResource(PREMIS_NAMESPACE + "EventOutcomeDetail");
 
