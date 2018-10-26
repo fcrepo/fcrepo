@@ -18,7 +18,6 @@
 package org.fcrepo.kernel.modeshape.rdf.converters;
 
 import com.google.common.base.Converter;
-import com.google.common.collect.ImmutableBiMap;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 
@@ -32,7 +31,6 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
 import java.util.Map;
-
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getJcrNamespaceForRDFNamespace;
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
@@ -144,12 +142,12 @@ public class PropertyConverter extends Converter<javax.jcr.Property, Property> {
             prefix = namespaceRegistry.getPrefix(namespace);
         } else {
             LOGGER.debug("Didn't discover namespace: {} in namespace registry.",namespace);
-            final ImmutableBiMap<String, String> nsMap =
-                    ImmutableBiMap.copyOf(namespaceMapping);
-            if (nsMap.containsValue(namespace)) {
+            if (namespaceMapping != null && namespaceMapping.containsValue(namespace)) {
                 LOGGER.debug("Discovered namespace: {} in namespace map: {}.", namespace,
-                        nsMap);
-                prefix = nsMap.inverse().get(namespace);
+                    namespaceMapping);
+                prefix = namespaceMapping.entrySet().stream()
+                    .filter(t -> t.getValue().equals(namespace))
+                    .map(Map.Entry::getKey).findFirst().orElse(null);
                 namespaceRegistry.registerNamespace(prefix, namespace);
             } else {
                 prefix = namespaceRegistry.registerNamespace(namespace);

@@ -28,7 +28,6 @@ import static org.fcrepo.http.api.FedoraAcl.ROOT_AUTHORIZATION_PROPERTY;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.modeshape.utils.FedoraSessionUserUtil.USER_AGENT_BASE_URI_PROPERTY;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -1331,29 +1330,29 @@ public class WebACRecipesIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testIndirectRelationship() throws IOException {
-        final String readOnlyResource = "/rest/" + getRandomUniqueId();
+    public void testIndirectRelationshipForbidden() throws IOException {
+        final String targetResource = "/rest/" + getRandomUniqueId();
         final String writeableResource = "/rest/" + getRandomUniqueId();
         final String username = "user28";
 
-        final String readonlyUri = ingestObj(readOnlyResource);
+        final String targetUri = ingestObj(targetResource);
 
         final String readonlyString = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
                 "<#readauthz> a acl:Authorization ;\n" +
                 "   acl:agent \"" + username + "\" ;\n" +
                 "   acl:mode acl:Read ;\n" +
-                "   acl:accessTo <" + readOnlyResource + "> .";
-        ingestAclString(readonlyUri, readonlyString, "fedoraAdmin");
+                "   acl:accessTo <" + targetResource + "> .";
+        ingestAclString(targetUri, readonlyString, "fedoraAdmin");
 
-        // User can read readonly resource.
-        final HttpGet get1 = getObjMethod(readOnlyResource);
+        // User can read target resource.
+        final HttpGet get1 = getObjMethod(targetResource);
         setAuth(get1, username);
         assertEquals(HttpStatus.SC_OK, getStatus(get1));
 
-        // User can't patch readonly resource.
+        // User can't patch target resource.
         final String patch = "INSERT DATA { <> <http://purl.org/dc/elements/1.1/title> \"Changed it\"}";
-        final HttpEntity patchEntity = new StringEntity(patch);
-        try (final CloseableHttpResponse resp = (CloseableHttpResponse) PATCH(readonlyUri, patchEntity,
+        final HttpEntity patchEntity = new StringEntity(patch, ContentType.create("application/sparql-update"));
+        try (final CloseableHttpResponse resp = (CloseableHttpResponse) PATCH(targetUri, patchEntity,
                 username)) {
             assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(resp));
         }
@@ -1373,9 +1372,64 @@ public class WebACRecipesIT extends AbstractResourceIT {
         setAuth(userPost, username);
         userPost.addHeader("Link", "<" + INDIRECT_CONTAINER.toString() + ">; rel=type");
         final String indirect = "@prefix ldp: <http://www.w3.org/ns/ldp#> .\n" +
-                "@prefix test: <http://example.org/test#> .\n" +
+                "@prefix test: <http://example.org/test#> .\n\n" +
                 "<> ldp:insertedContentRelation test:something ;" +
-                "ldp:membershipResource <" + readOnlyResource + "> ;" +
+                "ldp:membershipResource <" + targetResource + "> ;" +
+                "ldp:hasMemberRelation test:predicateToCreate .";
+        final HttpEntity indirectEntity = new StringEntity(indirect);
+        userPost.setEntity(indirectEntity);
+        userPost.setHeader("Content-type", "text/turtle");
+        try (final CloseableHttpResponse resp = execute(userPost)) {
+            assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(resp));
+        }
+    }
+
+    @Test
+    public void testIndirectRelationshipOK() throws IOException {
+        final String targetResource = "/rest/" + getRandomUniqueId();
+        final String writeableResource = "/rest/" + getRandomUniqueId();
+        final String username = "user28";
+
+        final String targetUri = ingestObj(targetResource);
+
+        final String targetAclString = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
+                "<#readauthz> a acl:Authorization ;\n" +
+                "   acl:agent \"" + username + "\" ;\n" +
+                "   acl:mode acl:Read, acl:Write ;\n" +
+                "   acl:accessTo <" + targetResource + "> .";
+        ingestAclString(targetUri, targetAclString, "fedoraAdmin");
+
+        // User can read target resource.
+        final HttpGet get1 = getObjMethod(targetResource);
+        setAuth(get1, username);
+        assertEquals(HttpStatus.SC_OK, getStatus(get1));
+
+        // User can patch target resource.
+        final String patch = "INSERT DATA { <> <http://purl.org/dc/elements/1.1/title> \"Changed it\"}";
+        final HttpEntity patchEntity = new StringEntity(patch, ContentType.create("application/sparql-update"));
+        try (final CloseableHttpResponse resp = (CloseableHttpResponse) PATCH(targetUri, patchEntity,
+                username)) {
+            assertEquals(HttpStatus.SC_NO_CONTENT, getStatus(resp));
+        }
+
+        // Make a user writable container.
+        final String writeableUri = ingestObj(writeableResource);
+        final String writeableAcl = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
+                "<#writeauth> a acl:Authorization ;\n" +
+                "   acl:agent \"" + username + "\" ;\n" +
+                "   acl:mode acl:Read, acl:Write ;\n" +
+                "   acl:accessTo <" + writeableResource + "> ;\n" +
+                "   acl:default <" + writeableResource + "> .";
+        ingestAclString(writeableUri, writeableAcl, "fedoraAdmin");
+
+        // User makes an indirect container referencing readonly resource.
+        final HttpPost userPost = postObjMethod(writeableResource);
+        setAuth(userPost, username);
+        userPost.addHeader("Link", "<" + INDIRECT_CONTAINER.toString() + ">; rel=type");
+        final String indirect = "@prefix ldp: <http://www.w3.org/ns/ldp#> .\n" +
+                "@prefix test: <http://example.org/test#> .\n\n" +
+                "<> ldp:insertedContentRelation test:something ;" +
+                "ldp:membershipResource <" + targetResource + "> ;" +
                 "ldp:hasMemberRelation test:predicateToCreate .";
         final HttpEntity indirectEntity = new StringEntity(indirect);
         userPost.setEntity(indirectEntity);
@@ -1394,11 +1448,11 @@ public class WebACRecipesIT extends AbstractResourceIT {
         setAuth(childPost, username);
         assertEquals(HttpStatus.SC_CREATED, getStatus(childPost));
 
-        try (final CloseableHttpResponse resp = (CloseableHttpResponse) GET(readonlyUri, username)) {
+        try (final CloseableHttpResponse resp = (CloseableHttpResponse) GET(targetUri, username)) {
             assertEquals(HttpStatus.SC_OK, getStatus(resp));
             final String responseBody = EntityUtils.toString(resp.getEntity());
             EntityUtils.consume(resp.getEntity());
-            assertFalse(responseBody.contains(indirectUri));
+            assertTrue(responseBody.contains(indirectUri));
         }
     }
 

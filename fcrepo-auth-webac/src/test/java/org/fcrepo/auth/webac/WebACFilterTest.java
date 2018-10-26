@@ -27,11 +27,14 @@ import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_CONTROL;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
+import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Arrays;
 
 import javax.servlet.ServletException;
 
@@ -93,7 +96,7 @@ public class WebACFilterTest {
     private FedoraResource mockBinary;
 
     @InjectMocks
-    private WebACFilter webacFilter = new WebACFilter();
+    private final WebACFilter webacFilter = new WebACFilter();
 
     private static final WebACPermission readPermission = new WebACPermission(WEBAC_MODE_READ, testURI);
 
@@ -145,6 +148,9 @@ public class WebACFilterTest {
 
         when(mockNodeService.exists(mockFedoraSession, testPath)).thenReturn(true);
         when(mockNodeService.exists(mockFedoraSession, testChildPath)).thenReturn(false);
+
+        when(mockContainer.getTypes()).thenReturn(Arrays.asList(URI.create(BASIC_CONTAINER.toString())));
+        when(mockBinary.getTypes()).thenReturn(Arrays.asList(URI.create(NON_RDF_SOURCE.toString())));
     }
 
     private void setupContainerResource() {
@@ -626,6 +632,7 @@ public class WebACFilterTest {
     @Test
     public void testAuthUserReadWritePost() throws ServletException, IOException {
         setupAuthUserReadWrite();
+        setupContainerResource();
         // POST => 200
         request.setMethod("POST");
         webacFilter.doFilter(request, response, filterChain);
@@ -635,6 +642,7 @@ public class WebACFilterTest {
     @Test
     public void testAuthUserReadWritePut() throws ServletException, IOException {
         setupAuthUserReadWrite();
+        setupContainerResource();
         // PUT => 200
         request.setMethod("PUT");
         webacFilter.doFilter(request, response, filterChain);
@@ -644,6 +652,7 @@ public class WebACFilterTest {
     @Test
     public void testAuthUserReadWritePatch() throws ServletException, IOException {
         setupAuthUserReadWrite();
+        setupContainerResource();
         // PATCH => 200
         request.setMethod("PATCH");
         webacFilter.doFilter(request, response, filterChain);
@@ -769,8 +778,6 @@ public class WebACFilterTest {
         webacFilter.doFilter(request, response, filterChain);
         assertEquals(SC_FORBIDDEN, response.getStatus());
     }
-
-
 
     @After
     public void clearSubject() {

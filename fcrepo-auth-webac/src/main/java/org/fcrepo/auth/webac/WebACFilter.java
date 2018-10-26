@@ -20,6 +20,8 @@ package org.fcrepo.auth.webac;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_ADMIN_ROLE;
 import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_USER_ROLE;
@@ -30,12 +32,18 @@ import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
+import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.security.Principal;
-
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -45,13 +53,20 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.jena.atlas.RuntimeIOException;
 import org.apache.jena.query.QueryParseException;
+import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RiotException;
 import org.apache.jena.sparql.modify.request.UpdateDataDelete;
 import org.apache.jena.sparql.modify.request.UpdateModify;
 import org.apache.jena.update.UpdateFactory;
@@ -65,9 +80,13 @@ import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.exception.MalformedRdfException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.slf4j.Logger;
+
+import com.fasterxml.jackson.core.JsonParseException;
 
 /**
  * @author peichman
@@ -104,6 +123,13 @@ public class WebACFilter implements Filter {
 
     @Inject
     private SessionFactory sessionFactory;
+
+    private static Set<URI> directOrIndirect = new HashSet<>();
+
+    static {
+        directOrIndirect.add(URI.create(INDIRECT_CONTAINER.toString()));
+        directOrIndirect.add(URI.create(DIRECT_CONTAINER.toString()));
+    }
 
     @Override
     public void init(final FilterConfig filterConfig) {
@@ -245,6 +271,10 @@ public class WebACFilter implements Filter {
                 }
             } else if (currentUser.isPermitted(toWrite)) {
                 log.debug("PUT allowed by {} permission", toWrite);
+                if (!isAuthorizedForMembershipResource(httpRequest, currentUser)) {
+                    log.debug("Not authorized to write to membershipRelation");
+                    return false;
+                }
                 return true;
             } else {
                 if (resourceExists(httpRequest)) {
@@ -258,6 +288,10 @@ public class WebACFilter implements Filter {
                     log.debug("Resource doesn't exist; checking parent resources for acl:Append permission");
                     if (currentUser.isPermitted(toAppend)) {
                         log.debug("PUT allowed for new resource by inherited {} permission", toAppend);
+                        if (!isAuthorizedForMembershipResource(httpRequest, currentUser)) {
+                            log.debug("Not authorized to write to membershipRelation");
+                            return false;
+                        }
                         return true;
                     } else {
                         log.debug("PUT prohibited for new resource without inherited {} permission", toAppend);
@@ -268,6 +302,10 @@ public class WebACFilter implements Filter {
         case "POST":
             if (currentUser.isPermitted(toWrite)) {
                 log.debug("POST allowed by {} permission", toWrite);
+                if (!isAuthorizedForMembershipResource(httpRequest, currentUser)) {
+                    log.debug("Not authorized to write to membershipRelation");
+                    return false;
+                }
                 return true;
             }
             if (resourceExists(httpRequest)) {
@@ -281,6 +319,10 @@ public class WebACFilter implements Filter {
                     // user with the acl:Append permission may POST to containers
                     if (currentUser.isPermitted(toAppend)) {
                         log.debug("POST allowed to container by {} permission", toAppend);
+                        if (!isAuthorizedForMembershipResource(httpRequest, currentUser)) {
+                            log.debug("Not authorized to write to membershipRelation");
+                            return false;
+                        }
                         return true;
                     } else {
                         log.debug("POST prohibited to container without {} permission", toAppend);
@@ -315,6 +357,10 @@ public class WebACFilter implements Filter {
                     return false;
                 }
             } else if (currentUser.isPermitted(toWrite)) {
+                if (!isAuthorizedForMembershipResource(httpRequest, currentUser)) {
+                    log.debug("Not authorized to write to membershipRelation");
+                    return false;
+                }
                 return true;
             } else {
                 if (currentUser.isPermitted(toAppend)) {
@@ -368,4 +414,72 @@ public class WebACFilter implements Filter {
             return false;
         }
     }
+
+    /**
+     * Is the request on or to create an indirect or direct container.
+     * 
+     * @param request The current request
+     * @return whether we are acting on/creating an indirect/direct container.
+     */
+    private boolean isIndirectOrDirect(final HttpServletRequest request) {
+        if (resourceExists(request) && !request.getMethod().equalsIgnoreCase("POST")) {
+            final FedoraResource resource = resource(request);
+            return resource.getTypes().stream().anyMatch(l -> directOrIndirect.contains(l));
+        } else {
+            return Collections.list(request.getHeaders("Link")).stream().map(Link::valueOf).map(Link::getUri)
+                    .anyMatch(l -> directOrIndirect
+                .contains(l));
+        }
+    }
+
+    /**
+     * Check if we are authorized to access the target of membershipRelation if required. Really this is a test for
+     * failure. The default is true because we might not be looking at an indirect or direct container.
+     *
+     * @param request The current request
+     * @param currentUser The current principal
+     * @return Whether we are creating an indirect/direct container and can write the membershipRelation
+     * @throws IOException when getting request's inputstream
+     */
+    private boolean isAuthorizedForMembershipResource(final HttpServletRequest request, final Subject currentUser)
+            throws IOException {
+        if (isIndirectOrDirect(request)) {
+            final URI membershipRel = getHasMember(request.getRequestURL().toString(),
+                    request
+                    .getInputStream(),
+                    request.getContentType());
+            if (membershipRel != null) {
+                final WebACPermission toWrite = new WebACPermission(WEBAC_MODE_WRITE, membershipRel);
+                return currentUser.isPermitted(toWrite);
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Get the memberRelation object from the contents.
+     *
+     * @param baseUri The current request URL
+     * @param body The request body
+     * @param contentType The content type.
+     * @return The URI of the memberRelation object
+     */
+    private URI getHasMember(final String baseUri, final InputStream body, final String contentType) {
+        final Lang format = contentTypeToLang(contentType.toString());
+        final Model inputModel;
+        try {
+            inputModel = createDefaultModel();
+            inputModel.read(body, baseUri, format.getName().toUpperCase());
+            final Statement st = inputModel.getProperty(null, MEMBERSHIP_RESOURCE);
+            return (st != null ? URI.create(st.getObject().toString()) : null);
+        } catch (final RiotException e) {
+            throw new BadRequestException("RDF was not parsable: " + e.getMessage(), e);
+        } catch (final RuntimeIOException e) {
+            if (e.getCause() instanceof JsonParseException) {
+                throw new MalformedRdfException(e.getCause());
+            }
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
 }
