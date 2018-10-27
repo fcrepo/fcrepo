@@ -30,6 +30,7 @@ import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
 import static javax.ws.rs.core.Response.Status.CREATED;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.WRITABLE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_NAMESPACE;
@@ -194,7 +195,7 @@ public class ServerManagedTriplesIT extends AbstractResourceIT {
     @Test
     public void testNonRdfSourceServerGeneratedTriples() throws Exception {
         final String pid = getRandomUniqueId();
-        final String describedPid = pid + "/fcr:metadata";
+        final String describedPid = pid + "/" + FCR_METADATA;
         final String location = serverAddress + pid;
 
         final String filename = "some-file.txt";
