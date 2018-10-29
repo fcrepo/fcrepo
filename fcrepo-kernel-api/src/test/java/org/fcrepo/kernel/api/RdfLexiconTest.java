@@ -35,7 +35,7 @@ public class RdfLexiconTest {
 
     @Test
     public void repoPredicatesAreManaged() {
-        assertTrue(isManagedPredicate.test(createProperty(PREMIS_NAMESPACE + "hasSize")));
+        assertTrue(isManagedPredicate.test(createProperty(PREMIS_NAMESPACE + "hasMessageDigest")));
         assertTrue(isManagedPredicate.test(createProperty(REPOSITORY_NAMESPACE + "hasParent")));
     }
     @Test
