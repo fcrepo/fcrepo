@@ -51,6 +51,7 @@ public class ExternalContentPathValidator extends AutoReloadingConfiguration {
 
     private static final Pattern SCHEME_PATTERN = Pattern.compile("^(http|https|file):/.*");
 
+    // Pattern to check that an http uri contains a / after the domain if a domain is present
     private static final Pattern HTTP_DOMAIN_PATTERN = Pattern.compile("^(http|https)://([^/]+/.*|$)");
 
     private static final Pattern RELATIVE_MOD_PATTERN = Pattern.compile(".*(^|/)\\.\\.($|/).*");
