@@ -30,6 +30,7 @@ import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_APPEND;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_CONTROL;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE;
+import static org.fcrepo.auth.webac.WebACAuthorizingRealm.URIS_TO_AUTHORIZE;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
@@ -136,6 +137,15 @@ public class WebACFilter implements Filter {
         // this method intentionally left empty
     }
 
+    public void addURIToAuthorize(final HttpServletRequest httpRequest, final URI uri) {
+        Set<URI> targetURIs = (Set<URI>) httpRequest.getAttribute(URIS_TO_AUTHORIZE);
+        if (targetURIs == null) {
+            targetURIs = new HashSet<URI>();
+            httpRequest.setAttribute(URIS_TO_AUTHORIZE, targetURIs);
+        }
+        targetURIs.add(uri);
+    }
+
     @Override
     public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain chain)
             throws IOException, ServletException {
@@ -144,6 +154,9 @@ public class WebACFilter implements Filter {
         if (isSparqlUpdate(httpRequest)) {
             httpRequest = new CachedSparqlRequest(httpRequest);
         }
+
+        // add the request URI to the list of URIs to retrieve the ACLs for
+        addURIToAuthorize(httpRequest, URI.create(httpRequest.getRequestURL().toString()));
 
         if (currentUser.isAuthenticated()) {
             log.debug("User is authenticated");
@@ -301,11 +314,11 @@ public class WebACFilter implements Filter {
             }
         case "POST":
             if (currentUser.isPermitted(toWrite)) {
-                log.debug("POST allowed by {} permission", toWrite);
                 if (!isAuthorizedForMembershipResource(httpRequest, currentUser)) {
                     log.debug("Not authorized to write to membershipRelation");
                     return false;
                 }
+                log.debug("POST allowed by {} permission", toWrite);
                 return true;
             }
             if (resourceExists(httpRequest)) {
@@ -318,11 +331,11 @@ public class WebACFilter implements Filter {
                     // LDP-RS
                     // user with the acl:Append permission may POST to containers
                     if (currentUser.isPermitted(toAppend)) {
-                        log.debug("POST allowed to container by {} permission", toAppend);
                         if (!isAuthorizedForMembershipResource(httpRequest, currentUser)) {
                             log.debug("Not authorized to write to membershipRelation");
                             return false;
                         }
+                        log.debug("POST allowed to container by {} permission", toAppend);
                         return true;
                     } else {
                         log.debug("POST prohibited to container without {} permission", toAppend);
@@ -444,12 +457,14 @@ public class WebACFilter implements Filter {
     private boolean isAuthorizedForMembershipResource(final HttpServletRequest request, final Subject currentUser)
             throws IOException {
         if (isIndirectOrDirect(request)) {
-            final URI membershipRel = getHasMember(request.getRequestURL().toString(),
-                    request
-                    .getInputStream(),
+            final URI membershipResource = getHasMember(request.getRequestURL().toString(),
+                    request.getInputStream(),
                     request.getContentType());
-            if (membershipRel != null) {
-                final WebACPermission toWrite = new WebACPermission(WEBAC_MODE_WRITE, membershipRel);
+            if (membershipResource != null) {
+                log.debug("Found membership resource: {}", membershipResource);
+                // add the membership URI to the list URIs to retrieve ACLs for
+                addURIToAuthorize(request, membershipResource);
+                final WebACPermission toWrite = new WebACPermission(WEBAC_MODE_WRITE, membershipResource);
                 return currentUser.isPermitted(toWrite);
             }
         }
