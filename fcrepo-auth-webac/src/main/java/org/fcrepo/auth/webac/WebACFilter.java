@@ -60,6 +60,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.jena.atlas.RuntimeIOException;
 import org.apache.jena.query.QueryParseException;
 import org.apache.jena.rdf.model.Model;
@@ -137,7 +138,14 @@ public class WebACFilter implements Filter {
         // this method intentionally left empty
     }
 
+    /**
+     * Add URIs to collect permissions information for.
+     *
+     * @param httpRequest the request.
+     * @param uri the uri to check.
+     */
     public void addURIToAuthorize(final HttpServletRequest httpRequest, final URI uri) {
+        @SuppressWarnings("unchecked")
         Set<URI> targetURIs = (Set<URI>) httpRequest.getAttribute(URIS_TO_AUTHORIZE);
         if (targetURIs == null) {
             targetURIs = new HashSet<URI>();
@@ -430,7 +438,7 @@ public class WebACFilter implements Filter {
 
     /**
      * Is the request on or to create an indirect or direct container.
-     * 
+     *
      * @param request The current request
      * @return whether we are acting on/creating an indirect/direct container.
      */
@@ -458,7 +466,7 @@ public class WebACFilter implements Filter {
             throws IOException {
         if (isIndirectOrDirect(request)) {
             final URI membershipResource = getHasMember(request.getRequestURL().toString(),
-                    request.getInputStream(),
+                    new CloseShieldInputStream(request.getInputStream()),
                     request.getContentType());
             if (membershipResource != null) {
                 log.debug("Found membership resource: {}", membershipResource);

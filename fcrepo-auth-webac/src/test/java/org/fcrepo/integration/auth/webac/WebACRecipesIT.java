@@ -1422,18 +1422,27 @@ public class WebACRecipesIT extends AbstractResourceIT {
                 "   acl:default <" + writeableResource + "> .";
         ingestAclString(writeableUri, writeableAcl, "fedoraAdmin");
 
+        // Make a resource to make the target point to.
+        final HttpPost trickPost = postObjMethod(writeableResource);
+        setAuth(trickPost, username);
+        final String trickTarget;
+        try (final CloseableHttpResponse resp = execute(trickPost)) {
+            assertEquals(HttpStatus.SC_CREATED, getStatus(resp));
+            trickTarget = getLocation(resp);
+        }
+
         // User makes an indirect container referencing readonly resource.
         final HttpPost userPost = postObjMethod(writeableResource);
         setAuth(userPost, username);
         userPost.addHeader("Link", "<" + INDIRECT_CONTAINER.toString() + ">; rel=type");
         final String indirect = "@prefix ldp: <http://www.w3.org/ns/ldp#> .\n" +
-                "@prefix test: <http://example.org/test#> .\n\n" +
-                "<> ldp:insertedContentRelation test:something ;" +
-                "ldp:membershipResource <" + targetResource + "> ;" +
+                "@prefix test: <http://example.org/test#> .\n" +
+                "@prefix ore: <http://www.openarchives.org/ore/terms/> .\n" +
+                "<> ldp:insertedContentRelation ore:proxyFor ;\n" +
+                "ldp:membershipResource <" + targetResource + "> ;\n" +
                 "ldp:hasMemberRelation test:predicateToCreate .";
-        final HttpEntity indirectEntity = new StringEntity(indirect);
+        final HttpEntity indirectEntity = new StringEntity(indirect, ContentType.create("text/turtle"));
         userPost.setEntity(indirectEntity);
-        userPost.setHeader("Content-type", "text/turtle");
         final String indirectUri;
         try (final CloseableHttpResponse resp = execute(userPost)) {
             assertEquals(HttpStatus.SC_CREATED, getStatus(resp));
@@ -1442,8 +1451,8 @@ public class WebACRecipesIT extends AbstractResourceIT {
 
         final HttpPost childPost = new HttpPost(indirectUri);
         final HttpEntity childEntity = new StringEntity(
-                "@prefix test: <http://example.org/test#> .\n" +
-                        "<> test:something <" + indirectUri + "> .");
+                "@prefix ore: <http://www.openarchives.org/ore/terms/> .\n" +
+                        "<> ore:proxyFor <" + trickTarget + "> .", ContentType.create("text/turtle"));
         childPost.setEntity(childEntity);
         setAuth(childPost, username);
         assertEquals(HttpStatus.SC_CREATED, getStatus(childPost));
@@ -1452,7 +1461,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
             assertEquals(HttpStatus.SC_OK, getStatus(resp));
             final String responseBody = EntityUtils.toString(resp.getEntity());
             EntityUtils.consume(resp.getEntity());
-            assertTrue(responseBody.contains(indirectUri));
+            assertTrue(responseBody.contains(trickTarget));
         }
     }
 
