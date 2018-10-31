@@ -70,6 +70,7 @@ import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RiotException;
 import org.apache.jena.sparql.modify.request.UpdateDataDelete;
+import org.apache.jena.sparql.modify.request.UpdateDataInsert;
 import org.apache.jena.sparql.modify.request.UpdateModify;
 import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
@@ -465,9 +466,7 @@ public class WebACFilter implements Filter {
     private boolean isAuthorizedForMembershipResource(final HttpServletRequest request, final Subject currentUser)
             throws IOException {
         if (isIndirectOrDirect(request)) {
-            final URI membershipResource = getHasMember(request.getRequestURL().toString(),
-                    new CloseShieldInputStream(request.getInputStream()),
-                    request.getContentType());
+            final URI membershipResource = getHasMember(request);
             if (membershipResource != null) {
                 log.debug("Found membership resource: {}", membershipResource);
                 // add the membership URI to the list URIs to retrieve ACLs for
@@ -486,23 +485,65 @@ public class WebACFilter implements Filter {
      * @param body The request body
      * @param contentType The content type.
      * @return The URI of the memberRelation object
+     * @throws IOException when getting request's inputstream
      */
-    private URI getHasMember(final String baseUri, final InputStream body, final String contentType) {
-        final Lang format = contentTypeToLang(contentType.toString());
-        final Model inputModel;
-        try {
-            inputModel = createDefaultModel();
-            inputModel.read(body, baseUri, format.getName().toUpperCase());
-            final Statement st = inputModel.getProperty(null, MEMBERSHIP_RESOURCE);
-            return (st != null ? URI.create(st.getObject().toString()) : null);
-        } catch (final RiotException e) {
-            throw new BadRequestException("RDF was not parsable: " + e.getMessage(), e);
-        } catch (final RuntimeIOException e) {
-            if (e.getCause() instanceof JsonParseException) {
-                throw new MalformedRdfException(e.getCause());
+    private URI getHasMember(final HttpServletRequest request) throws IOException {
+        if (isSparqlUpdate(request)) {
+            return getHasMemberPatch(request);
+        } else {
+            final String baseUri = request.getRequestURL().toString();
+            final InputStream body = new CloseShieldInputStream(request.getInputStream());
+            final String contentType = request.getContentType();
+            final Lang format = contentTypeToLang(contentType);
+            final Model inputModel;
+            try {
+                inputModel = createDefaultModel();
+                inputModel.read(body, baseUri, format.getName().toUpperCase());
+                final Statement st = inputModel.getProperty(null, MEMBERSHIP_RESOURCE);
+                return (st != null ? URI.create(st.getObject().toString()) : null);
+            } catch (final RiotException e) {
+                throw new BadRequestException("RDF was not parsable: " + e.getMessage(), e);
+            } catch (final RuntimeIOException e) {
+                if (e.getCause() instanceof JsonParseException) {
+                    throw new MalformedRdfException(e.getCause());
+                }
+                throw new RepositoryRuntimeException(e);
             }
-            throw new RepositoryRuntimeException(e);
         }
+    }
+
+    /**
+     * Get the membershipRelation from a PATCH request
+     *
+     * @param request the http request
+     * @return URI of the membershipRelation
+     * @throws IOException converting the request body to a string.
+     */
+    private URI getHasMemberPatch(final HttpServletRequest request) throws IOException {
+        final String sparqlString = IOUtils.toString(request.getInputStream(), UTF_8);
+        final String baseURI = request.getRequestURL().toString().replace(request.getContextPath(), "").replaceAll(
+                request.getPathInfo(), "").replaceAll("rest$", "");
+        final UpdateRequest sparqlUpdate = UpdateFactory.create(sparqlString);
+        final String insertData = sparqlUpdate.getOperations().stream()
+                .filter(update -> update instanceof UpdateDataInsert)
+                .map(update -> (UpdateDataInsert) update)
+                .flatMap(update -> update.getQuads().stream())
+                .filter(update -> update.getPredicate().equals(MEMBERSHIP_RESOURCE.asNode()) && update.getPredicate()
+                        .isURI())
+                .map(update -> update.getObject().getURI())
+                .map(update -> update.replace("file:///", baseURI))
+                .findFirst().orElse(null);
+        final String updateData = sparqlUpdate.getOperations().stream()
+                .filter(update -> (update instanceof UpdateModify))
+                .peek(update -> log.debug("Inspecting update statement for DELETE clause: {}", update.toString()))
+                .map(update -> (UpdateModify) update)
+                .flatMap(update -> update.getInsertQuads().stream())
+                .filter(update -> update.getPredicate().equals(MEMBERSHIP_RESOURCE.asNode()) && update.getObject()
+                        .isURI())
+                .map(update -> update.getObject().getURI())
+                .map(update -> update.replace("file:///", baseURI))
+                .findFirst().orElse(null);
+        return (insertData == null ? (updateData == null ? null : URI.create(updateData)) : URI.create(insertData));
     }
 
 }
