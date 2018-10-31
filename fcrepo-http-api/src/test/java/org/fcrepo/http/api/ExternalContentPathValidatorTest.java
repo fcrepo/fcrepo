@@ -167,6 +167,17 @@ public class ExternalContentPathValidatorTest {
     }
 
     @Test(expected = ExternalMessageBodyException.class)
+    public void testHttpUriMissingSlash() throws Exception {
+        // Slash after domain is required
+        final String goodPath = "http://good.example.com";
+        final String extPath = "http://good.example.com:8080/offlimits";
+
+        addAllowedPath(goodPath);
+
+        validator.validate(extPath);
+    }
+
+    @Test(expected = ExternalMessageBodyException.class)
     public void testRelativeModifier() throws Exception {
         final String extPath = dataUri + "../sneaky.txt";
 

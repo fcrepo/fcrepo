@@ -47,13 +47,16 @@ public class ExternalContentPathValidator extends AutoReloadingConfiguration {
 
     private static final Logger LOGGER = getLogger(ExternalContentPathValidator.class);
 
-    private final Set<String> ALLOWED_SCHEMES = new HashSet<>(Arrays.asList("file", "http", "https"));
+    private static final Set<String> ALLOWED_SCHEMES = new HashSet<>(Arrays.asList("file", "http", "https"));
 
-    private final Pattern SCHEME_PATTERN = Pattern.compile("^(http|https|file):/.*");
+    private static final Pattern SCHEME_PATTERN = Pattern.compile("^(http|https|file):/.*");
 
-    private final Pattern RELATIVE_MOD_PATTERN = Pattern.compile(".*(^|/)\\.\\.($|/).*");
+    // Pattern to check that an http uri contains a / after the domain if a domain is present
+    private static final Pattern HTTP_DOMAIN_PATTERN = Pattern.compile("^(http|https)://([^/]+/.*|$)");
 
-    private final Pattern NORMALIZE_FILE_URI = Pattern.compile("^file:/{2,3}");
+    private static final Pattern RELATIVE_MOD_PATTERN = Pattern.compile(".*(^|/)\\.\\.($|/).*");
+
+    private static final Pattern NORMALIZE_FILE_URI = Pattern.compile("^file:/{2,3}");
 
     private List<String> allowedList;
 
@@ -132,26 +135,37 @@ public class ExternalContentPathValidator extends AutoReloadingConfiguration {
         LOGGER.info("Loading list of allowed external content locations from {}", configPath);
         try (final Stream<String> stream = Files.lines(Paths.get(configPath))) {
             allowedList = stream.map(line -> normalizePath(line.trim().toLowerCase()))
-                .filter(line -> {
-                    final Matcher schemeMatcher = SCHEME_PATTERN.matcher(line);
-                    final boolean schemeMatches = schemeMatcher.matches();
-                    if (!schemeMatches || RELATIVE_MOD_PATTERN.matcher(line).matches()) {
-                        LOGGER.error("Invalid path {} specified in external path configuration {}",
-                                line, configPath);
-                        return false;
-                    }
-                    if ("file".equals(schemeMatcher.group(1))) {
-                        // If a file uri ends with / it must be a directory, otherwise it must be a file.
-                        final File allowing = new File(URI.create(line).getPath());
-                        if ((line.endsWith("/") && !allowing.isDirectory())
-                                || (!line.endsWith("/") && !allowing.isFile())) {
-                            LOGGER.error("Invalid path {} in configuration {}, directories must end with a '/'",
-                                    line, configPath);
-                            return false;
-                        }
-                    }
-                    return true;
-                }).collect(Collectors.toList());
+                    .filter(line -> isAllowanceValid(line))
+                    .collect(Collectors.toList());
         }
+    }
+
+    private boolean isAllowanceValid(final String allowance) {
+        final Matcher schemeMatcher = SCHEME_PATTERN.matcher(allowance);
+        final boolean schemeMatches = schemeMatcher.matches();
+        if (!schemeMatches || RELATIVE_MOD_PATTERN.matcher(allowance).matches()) {
+            LOGGER.error("Invalid path {} specified in external path configuration {}",
+                    allowance, configPath);
+            return false;
+        }
+
+        final String protocol = schemeMatcher.group(1);
+        if ("file".equals(protocol)) {
+            // If a file uri ends with / it must be a directory, otherwise it must be a file.
+            final File allowing = new File(URI.create(allowance).getPath());
+            if ((allowance.endsWith("/") && !allowing.isDirectory()) || (!allowance.endsWith("/") && !allowing
+                    .isFile())) {
+                LOGGER.error("Invalid path {} in configuration {}, directories must end with a '/'",
+                        allowance, configPath);
+                return false;
+            }
+        } else if ("http".equals(protocol) || "https".equals(protocol)) {
+            if (!HTTP_DOMAIN_PATTERN.matcher(allowance).matches()) {
+                LOGGER.error("Invalid path {} in configuration {}, domain must end with a '/'",
+                        allowance, configPath);
+                return false;
+            }
+        }
+        return true;
     }
 }
