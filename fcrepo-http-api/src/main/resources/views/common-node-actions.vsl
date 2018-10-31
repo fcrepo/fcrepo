@@ -92,9 +92,9 @@ WHERE { }
 	  <hr />
 	#elseif ($isOriginalResource == true)
       <form id="action_create_version" name="action_create_version" method="POST">
-        <h3>Create Version Snapshot</h3>
+        <h3>Versions</h3>
         <button id="create-version-button" type="submit" class="btn btn-primary">Create Version</button>
-        <h4><a href="$topic/fcr:versions">View Mementos</a></h4>
+        <h4><a href="$topic/fcr:versions">View Versions</a></h4>
         <hr />
       </form>
     #end
