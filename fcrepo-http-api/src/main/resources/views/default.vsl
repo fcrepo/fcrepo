@@ -42,7 +42,7 @@
                     <h4 class="panel-title">Properties</h4>
                 </div>
                 <div class="panel-body">
-                    #triples($topic)
+                    #triples($originalResource)
                 </div>
             </div>
 
@@ -52,24 +52,25 @@
             <h2>Other Resources</h2>
             <div class="panel-group" id="accordion">
             #foreach($subject in $model.listSubjects())
-                #if( $subject != $topic )
-                    <div class="panel panel-default" resource="$subject.getURI()">
-                        <div class="panel-heading collapsed" data-toggle="collapse" data-target="#$helpers.parameterize($subject.getURI())_triples" >
-                            #if( $subject.getURI() && $subject.getURI().startsWith("http") )
-                                <h3 class="ctitle panel-title"><a href="$subject.getURI()">$esc.html($helpers.getObjectTitle($rdf, $subject.asNode()))</a></h3>
+                #set( $originalSubject = $helpers.getOriginalResource($subject.asResource().getURI()))
+                #if( $originalSubject.getURI() != $originalResource.getURI() )
+                    <div class="panel panel-default" resource="$originalSubject.getURI()">
+                        <div class="panel-heading collapsed" data-toggle="collapse" data-target="#$helpers.parameterize($originalSubject.getURI())_triples" >
+                            #if( $originalSubject.getURI() && $originalSubject.getURI().startsWith("http") )
+                                <h3 class="ctitle panel-title"><a href="$originalSubject.getURI()">$esc.html($helpers.getObjectTitle($rdf, $originalSubject))</a></h3>
                             #else
-                                <h3 class="ctitle panel-title">$esc.html($helpers.getObjectTitle($rdf, $subject.asNode()))</h3>
+                                <h3 class="ctitle panel-title">$esc.html($helpers.getObjectTitle($rdf, $originalSubject))</h3>
                             #end
                         </div>
-                        <div class="panel-collapse collapse"  id="$helpers.parameterize($subject.getURI())_triples">
+                        <div class="panel-collapse collapse"  id="$helpers.parameterize($originalSubject.getURI())_triples">
                             <div class="panel-body">
-                                #triples($subject.asNode())
+                                #triples($originalSubject)
                             </div>
                         </div>
                     </div>
                 #end
             #end
-                </div>
+            </div>
         </div>
 
 

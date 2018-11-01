@@ -32,6 +32,7 @@ import static java.util.Collections.emptyMap;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toMap;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
@@ -237,6 +238,36 @@ public class ViewHelpers {
             return uriAsLink ? "&lt;<a href=\"" + obj.getURI() + "\">" + obj.getURI() + "</a>&gt;" : obj.getURI();
         }
         return "";
+    }
+
+    /**
+     * Returns the original resource as a URI Node if
+     * the subject represents a memento uri; otherwise it
+     * returns the subject parameter.
+     * @param subject the subject
+     * @return a URI node of the original resource.
+     */
+    public Node getOriginalResource(final Node subject) {
+        if (!subject.isURI()) {
+            return subject;
+        }
+
+        final String subjectUri = subject.getURI();
+        final int index = subjectUri.indexOf(FCR_VERSIONS);
+        if (index > 0) {
+            return NodeFactory.createURI(subjectUri.substring(0, index - 1));
+        } else {
+            return subject;
+        }
+    }
+
+    /**
+     * Same as above but takes a string.
+     * @param subjectUri the URI
+     * @return a node
+     */
+    public Node getOriginalResource(final String subjectUri) {
+        return getOriginalResource(createURI(subjectUri));
     }
 
     /**

@@ -238,6 +238,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
         context.put("subjects", model.listSubjects());
         context.put("nodeany", ANY);
         context.put("topic", subject);
+        context.put("originalResource", VIEW_HELPERS.getOriginalResource(subject));
         context.put("uriInfo", uriInfo);
         return context;
     }
