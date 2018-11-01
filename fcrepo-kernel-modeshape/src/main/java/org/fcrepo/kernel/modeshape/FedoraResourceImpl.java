@@ -27,6 +27,7 @@ import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.empty;
 import static java.util.stream.Stream.of;
 import static org.apache.commons.codec.digest.DigestUtils.sha1Hex;
+import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.rdf.model.ResourceFactory.createTypedLiteral;
@@ -1181,10 +1182,25 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             final IdentifierConverter<Resource, FedoraResource> internalTranslator) {
 
          return t -> {
-             final Resource subject = createResource(t.getSubject().getURI());
+            final String subjectURI = t.getSubject().getURI();
+            // Remove any hash components from the subject while locating the original resource
+            final String subjectPath;
+            final int hashIndex = subjectURI.indexOf("#");
+            if (hashIndex != -1) {
+                subjectPath = subjectURI.substring(0, hashIndex);
+            } else {
+                subjectPath = subjectURI;
+            }
+            final Resource subject = createResource(subjectPath);
              final FedoraResource subjResc = translator.convert(subject);
-             final org.apache.jena.graph.Node subjectNode =
+            org.apache.jena.graph.Node subjectNode =
                  translator.reverse().convert(subjResc.getOriginalResource()).asNode();
+
+            // Add the hash component back into the subject uri. Note: we cannot convert the memento hash URI
+            // to the original as a jcr node, as the hash may not exist for the original at this point.
+            if (hashIndex != -1) {
+                subjectNode = createURI(subjectNode.getURI() + subjectURI.substring(hashIndex));
+            }
 
              org.apache.jena.graph.Node objectNode = t.getObject();
              if (t.getObject().isURI()) {
