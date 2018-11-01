@@ -57,9 +57,16 @@ public class SubjectMappingUtil {
      * @return triple with subject remapped to destinationNode or the original subject.
      */
     public static Triple mapSubject(final Triple t, final String resourceUri, final Node destinationNode) {
+        final Node tripleSubj = t.getSubject();
+        final String tripleSubjUri = tripleSubj.getURI();
         final Node subject;
-        if (t.getSubject().getURI().equals(resourceUri)) {
+        if (tripleSubjUri.equals(resourceUri)) {
             subject = destinationNode;
+        } else if (tripleSubjUri.startsWith(resourceUri)) {
+            // If the subject begins with the originating resource uri, such as a hash uri, then rebase
+            // the portions of the subject after the resource uri to the destination uri.
+            final String suffix = tripleSubjUri.substring(resourceUri.length());
+            subject = createURI(destinationNode.getURI() + suffix);
         } else {
             subject = t.getSubject();
         }

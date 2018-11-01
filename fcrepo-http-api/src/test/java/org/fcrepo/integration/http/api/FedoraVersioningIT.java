@@ -222,6 +222,32 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
     }
 
+    @Test
+    public void testCreateVersionFromResourceWithHashURI() throws Exception {
+        final HttpPost createMethod = postObjMethod();
+        createMethod.addHeader("Slug", id);
+        createMethod.addHeader(CONTENT_TYPE, N3);
+        createMethod.setEntity(new StringEntity("<#test> <info:test#label> \"foo\""));
+
+        try (final CloseableHttpResponse response = execute(createMethod)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+        }
+
+        final String mementoUri = createContainerMementoWithBody(subjectUri, null);
+        assertMementoUri(mementoUri, subjectUri);
+
+        try (final CloseableDataset dataset = getDataset(new HttpGet(mementoUri))) {
+            final DatasetGraph results = dataset.asDatasetGraph();
+
+            final Node mementoSubject = createURI(mementoUri);
+
+            assertFalse("Memento type should not be visible",
+                    results.contains(ANY, mementoSubject, RDF.type.asNode(), MEMENTO_TYPE_NODE));
+
+            assertMementoEqualsOriginal(mementoUri);
+        }
+    }
+
     /**
      * This will test for weird date/time scenario.  If the date time stamp has
      * a ms field which is a multiple of 10 and only has one or two digits (ie, .5 or .86)

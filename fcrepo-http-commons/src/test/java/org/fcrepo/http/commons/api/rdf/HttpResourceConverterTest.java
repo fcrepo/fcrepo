@@ -335,6 +335,17 @@ public class HttpResourceConverterTest {
     }
 
     @Test
+    public void testDoForwardWithMementoWithHash() throws Exception {
+        final Resource resource = createResource(
+                "http://localhost:8080/some/container/fcr:versions/20180315180915#test");
+        when(session.getNode("/container/fedora:timemap/20180315180915/#/test")).thenReturn(node);
+
+        final FedoraResource converted = converter.convert(resource);
+        final Node resultNode = getJcrNode(converted);
+        assertEquals(node, resultNode);
+    }
+
+    @Test
     public void testDoForwardWithBinaryMemento() throws Exception {
         final Resource resource = createResource(
                 "http://localhost:8080/some/binary/fcr:versions/20180315180915");

@@ -87,9 +87,9 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
     // The second group determines if the path is for a memento or timemap.
     // The third group allows for a memento identifier.
     // The fourth group for allows ACL.
-    // The fifth group allows for any hashed suffixes on the acls.
+    // The fifth group allows for any hashed suffixes.
     private final static Pattern FORWARD_COMPONENT_PATTERN = Pattern.compile(
-            ".*?(/" + FCR_METADATA + ")?(/" + FCR_VERSIONS + "(/\\d{14})?)?(/" + FCR_ACL + "(\\#\\w+)?)?$");
+            ".*?(/" + FCR_METADATA + ")?(/" + FCR_VERSIONS + "(/\\d{14})?)?(/" + FCR_ACL + ")?(\\#\\w+)?$");
 
     protected List<Converter<String, String>> translationChain;
 
