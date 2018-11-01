@@ -2912,8 +2912,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
                         getDateFromModel(model, nodeUri, createProperty(REPOSITORY_NAMESPACE + "lastModified"));
                 assertTrue(createdDateTriples.isPresent());
                 assertTrue(lastmodDateTriples.isPresent());
-                assertEquals(lastmodString, headerFormat.format(createdDateTriples.get()));
-                assertEquals(lastmodString, headerFormat.format(lastmodDateTriples.get()));
+                // Reformatting lastModified header to ensure consistent formatting between it and fedora timestamps
+                final Instant lastMod = headerFormat.parse(lastmodString, Instant::from);
+                final String formattedLastModifiedHeader = headerFormat.format(lastMod);
+                assertEquals(formattedLastModifiedHeader, headerFormat.format(createdDateTriples.get()));
+                assertEquals(formattedLastModifiedHeader, headerFormat.format(lastmodDateTriples.get()));
             }
         }
     }
