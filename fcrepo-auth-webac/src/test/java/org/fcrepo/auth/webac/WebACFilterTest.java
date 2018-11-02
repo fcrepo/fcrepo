@@ -172,6 +172,9 @@ public class WebACFilterTest {
         of("RepositoryRoot", "Resource", "Container").forEach(x -> rootTypes.add(URI.create(REPOSITORY_NAMESPACE +
                 x)));
         when(mockRoot.getTypes()).thenReturn(rootTypes);
+
+        // Setup Container by default
+        setupContainerResource();
     }
 
     private void setupContainerResource() {
@@ -379,7 +382,6 @@ public class WebACFilterTest {
     @Test
     public void testAuthUserNoPermsPost() throws ServletException, IOException {
         setupAuthUserNoPerms();
-        setupContainerResource();
         // POST => 403
         request.setMethod("POST");
         webacFilter.doFilter(request, response, filterChain);
@@ -443,7 +445,6 @@ public class WebACFilterTest {
     @Test
     public void testAuthUserReadOnlyPost() throws ServletException, IOException {
         setupAuthUserReadOnly();
-        setupContainerResource();
         // POST => 403
         request.setMethod("POST");
         webacFilter.doFilter(request, response, filterChain);
@@ -542,7 +543,6 @@ public class WebACFilterTest {
     @Test
     public void testAuthUserAppendPostContainer() throws IOException, ServletException {
         setupAuthUserAppendOnly();
-        setupContainerResource();
         // POST => 200
         request.setRequestURI(testPath);
         request.setMethod("POST");
@@ -574,7 +574,6 @@ public class WebACFilterTest {
     @Test
     public void testAuthUserReadAppendPostContainer() throws IOException, ServletException {
         setupAuthUserReadAppend();
-        setupContainerResource();
         // POST => 200
         request.setRequestURI(testPath);
         request.setMethod("POST");
@@ -606,7 +605,6 @@ public class WebACFilterTest {
     @Test
     public void testAuthUserReadAppendWritePostContainer() throws IOException, ServletException {
         setupAuthUserReadAppendWrite();
-        setupContainerResource();
         // POST => 200
         request.setRequestURI(testPath);
         request.setMethod("POST");
@@ -655,7 +653,6 @@ public class WebACFilterTest {
     @Test
     public void testAuthUserReadWritePost() throws ServletException, IOException {
         setupAuthUserReadWrite();
-        setupContainerResource();
         // POST => 200
         request.setMethod("POST");
         webacFilter.doFilter(request, response, filterChain);
@@ -665,7 +662,6 @@ public class WebACFilterTest {
     @Test
     public void testAuthUserReadWritePut() throws ServletException, IOException {
         setupAuthUserReadWrite();
-        setupContainerResource();
         // PUT => 200
         request.setMethod("PUT");
         request.setRequestURI(testPath);
@@ -676,7 +672,6 @@ public class WebACFilterTest {
     @Test
     public void testAuthUserReadWritePatch() throws ServletException, IOException {
         setupAuthUserReadWrite();
-        setupContainerResource();
         // PATCH => 200
         request.setMethod("PATCH");
         webacFilter.doFilter(request, response, filterChain);
@@ -705,7 +700,6 @@ public class WebACFilterTest {
     @Test
     public void testAuthUserAppendPutNewChild() throws IOException, ServletException {
         setupAuthUserAppendOnly();
-        setupContainerResource();
         // PUT => 200
         request.setRequestURI(testChildPath);
         request.setPathInfo(testChildPath);
