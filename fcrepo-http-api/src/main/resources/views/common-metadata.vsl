@@ -1,18 +1,18 @@
 <dl>
-    <dt>Created at</dt> <dd>$helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.CREATED_DATE, true)
-    by $esc.html($helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.CREATED_BY, true))</dd>
+    <dt>Created at</dt> <dd>$helpers.getObjectsAsString($rdf, $originalResource, $rdfLexicon.CREATED_DATE, true)
+    by $esc.html($helpers.getObjectsAsString($rdf, $originalResource, $rdfLexicon.CREATED_BY, true))</dd>
 
-    <dt>Last Modified at</dt> <dd>$helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.LAST_MODIFIED_DATE, true)
-    by $esc.html($helpers.getObjectsAsString($rdf, $topic, $rdfLexicon.LAST_MODIFIED_BY, true))</dd>
+    <dt>Last Modified at</dt> <dd>$helpers.getObjectsAsString($rdf, $originalResource, $rdfLexicon.LAST_MODIFIED_DATE, true)
+    by $esc.html($helpers.getObjectsAsString($rdf, $originalResource, $rdfLexicon.LAST_MODIFIED_BY, true))</dd>
 
-    <dt>Children <span class="badge">$helpers.getNumChildren($rdf, $topic) </span></dt>
+    <dt>Children <span class="badge">$helpers.getNumChildren($rdf, $originalResource) </span></dt>
     <dd>
         <ol id="childList">
-            #foreach($quad in $rdf.find($topic, $rdfLexicon.CONTAINS.asNode(), null))
+            #foreach($quad in $rdf.find($originalResource, $rdfLexicon.CONTAINS.asNode(), null))
                 <li><a href="$quad.getObject().getURI()">$esc.html($helpers.getObjectTitle($rdf, $quad.getObject()))</a></li>
             #end
 ##          Magic number '100' below is tied to FedoraLDP.getChildrenLimit()
-            #if ($helpers.getNumChildren($rdf, $topic) >= 100 )
+            #if ($helpers.getNumChildren($rdf, $originalResource) >= 100 )
                 <li>...</li>
             #end
         </ol>
