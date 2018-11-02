@@ -138,9 +138,10 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
         }
 
         // for non-admins, we must check the ACL for the requested resource
+        @SuppressWarnings("unchecked")
         Set<URI> targetURIs = (Set<URI>) request.getAttribute(URIS_TO_AUTHORIZE);
         if (targetURIs == null) {
-            targetURIs = new HashSet<URI>();
+            targetURIs = new HashSet<>();
         }
         final Map<URI, Map<String, Collection<String>>> rolesForURI =
                 new HashMap<URI, Map<String, Collection<String>>>();
@@ -154,7 +155,7 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
             rolesForURI.put(uri, getRolesForPath(path));
         }
 
-        for (Object o : principals.asList()) {
+        for (final Object o : principals.asList()) {
             log.debug("User has principal with name: {}", ((Principal) o).getName());
         }
         final Principal userPrincipal = principals.oneByType(BasicUserPrincipal.class);
@@ -210,7 +211,7 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
                 final Collection<String> modesForUser = roles.get(agentName);
                 if (modesForUser != null) {
                     // add WebACPermission instance for each mode in the Authorization
-                    for (String mode : modesForUser) {
+                    for (final String mode : modesForUser) {
                         final WebACPermission perm = new WebACPermission(URI.create(mode), uri);
                         authzInfo.addObjectPermission(perm);
                         log.debug("Added permission {}", perm);
@@ -243,7 +244,7 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
         try {
             resource = translator().convert(translator().toDomain(path));
             log.debug("Got FedoraResource for {}", path);
-        } catch (RepositoryRuntimeException e) {
+        } catch (final RepositoryRuntimeException e) {
             if (e.getCause() instanceof PathNotFoundException) {
                 log.debug("Path {} does not exist", path);
                 // go up the path looking for a node that exists

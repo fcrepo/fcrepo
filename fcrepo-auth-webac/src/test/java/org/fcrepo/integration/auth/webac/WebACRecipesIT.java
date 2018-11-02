@@ -1443,6 +1443,44 @@ public class WebACRecipesIT extends AbstractResourceIT {
         setAuth(patchIndirect3, username);
         patchIndirect3.setEntity(new StringEntity(patch_insert_relation, sparqlContentType));
         assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(patchIndirect3));
+
+        // Patch the indirect to the readonly target as admin
+        final HttpPatch patchAsAdmin = new HttpPatch(indirectUri);
+        setAuth(patchAsAdmin, "fedoraAdmin");
+        patchAsAdmin.setEntity(new StringEntity(patch_text, sparqlContentType));
+        assertEquals(HttpStatus.SC_NO_CONTENT, getStatus(patchAsAdmin));
+
+        // Try to POST a child as user
+        final HttpPost postChild = new HttpPost(indirectUri);
+        final String postTarget = "@prefix ldp: <http://www.w3.org/ns/ldp#> .\n" +
+                "@prefix test: <http://example.org/test#> .\n\n" +
+                "<> test:something <" + tempTarget + "> .";
+        final HttpEntity putPostChild = new StringEntity(postTarget, turtleContentType);
+        setAuth(postChild, username);
+        postChild.setEntity(putPostChild);
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(postChild));
+
+        // Try to PUT a child as user
+        final String id = getRandomUniqueId();
+        final HttpPut putChild = new HttpPut(indirectUri + "/" + id);
+        setAuth(putChild, username);
+        putChild.setEntity(putPostChild);
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(putChild));
+
+        // Put the child as Admin
+        setAuth(putChild, "fedoraAdmin");
+        assertEquals(HttpStatus.SC_CREATED, getStatus(putChild));
+
+        // Try to delete the child as user
+        final HttpDelete deleteChild = new HttpDelete(indirectUri + "/" + id);
+        setAuth(deleteChild, username);
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(deleteChild));
+
+        // Try to delete the indirect container
+        final HttpDelete deleteIndirect = new HttpDelete(indirectUri);
+        setAuth(deleteIndirect, username);
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(deleteIndirect));
+
     }
 
     @Test
@@ -1667,6 +1705,43 @@ public class WebACRecipesIT extends AbstractResourceIT {
         setAuth(patchDirect3, username);
         patchDirect3.setEntity(new StringEntity(patch_insert_relation, sparqlContentType));
         assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(patchDirect3));
+
+        // Patch the indirect to the readonly target as admin
+        final HttpPatch patchAsAdmin = new HttpPatch(directUri);
+        setAuth(patchAsAdmin, "fedoraAdmin");
+        patchAsAdmin.setEntity(new StringEntity(patch_text, sparqlContentType));
+        assertEquals(HttpStatus.SC_NO_CONTENT, getStatus(patchAsAdmin));
+
+        // Try to POST a child as user
+        final HttpPost postChild = new HttpPost(directUri);
+        final String postTarget = "@prefix ldp: <http://www.w3.org/ns/ldp#> .\n" +
+                "@prefix test: <http://example.org/test#> .\n\n" +
+                "<> test:something <" + tempTarget + "> .";
+        final HttpEntity putPostChild = new StringEntity(postTarget, turtleContentType);
+        setAuth(postChild, username);
+        postChild.setEntity(putPostChild);
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(postChild));
+
+        // Try to PUT a child as user
+        final String id = getRandomUniqueId();
+        final HttpPut putChild = new HttpPut(directUri + "/" + id);
+        setAuth(putChild, username);
+        putChild.setEntity(putPostChild);
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(putChild));
+
+        // Put the child as Admin
+        setAuth(putChild, "fedoraAdmin");
+        assertEquals(HttpStatus.SC_CREATED, getStatus(putChild));
+
+        // Try to delete the child as user
+        final HttpDelete deleteChild = new HttpDelete(directUri + "/" + id);
+        setAuth(deleteChild, username);
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(deleteChild));
+
+        // Try to delete the indirect container
+        final HttpDelete deleteIndirect = new HttpDelete(directUri);
+        setAuth(deleteIndirect, username);
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(deleteIndirect));
     }
 
     @Test

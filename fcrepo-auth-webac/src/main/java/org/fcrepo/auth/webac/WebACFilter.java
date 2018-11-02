@@ -19,6 +19,8 @@
 package org.fcrepo.auth.webac;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.EnumSet.of;
+import static java.util.stream.Collectors.toList;
 import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
@@ -36,6 +38,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
+import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_MEMBERSHIP;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -44,7 +47,10 @@ import java.net.URI;
 import java.security.Principal;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
+
 import javax.inject.Inject;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -62,6 +68,8 @@ import javax.ws.rs.core.UriBuilder;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.jena.atlas.RuntimeIOException;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.query.QueryParseException;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -69,6 +77,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RiotException;
+import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.sparql.modify.request.UpdateDataDelete;
 import org.apache.jena.sparql.modify.request.UpdateDataInsert;
 import org.apache.jena.sparql.modify.request.UpdateModify;
@@ -85,6 +94,7 @@ import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.slf4j.Logger;
@@ -145,11 +155,11 @@ public class WebACFilter implements Filter {
      * @param httpRequest the request.
      * @param uri the uri to check.
      */
-    public void addURIToAuthorize(final HttpServletRequest httpRequest, final URI uri) {
+    private void addURIToAuthorize(final HttpServletRequest httpRequest, final URI uri) {
         @SuppressWarnings("unchecked")
         Set<URI> targetURIs = (Set<URI>) httpRequest.getAttribute(URIS_TO_AUTHORIZE);
         if (targetURIs == null) {
-            targetURIs = new HashSet<URI>();
+            targetURIs = new HashSet<>();
             httpRequest.setAttribute(URIS_TO_AUTHORIZE, targetURIs);
         }
         targetURIs.add(uri);
@@ -234,6 +244,30 @@ public class WebACFilter implements Filter {
         return baseURL;
     }
 
+    private String getContainerUrl(final HttpServletRequest servletRequest) {
+        final String pathInfo = servletRequest.getPathInfo();
+        final String baseUrl = servletRequest.getRequestURL().toString().replace(pathInfo, "");
+        final String[] paths = pathInfo.split("/");
+        final String[] parentPaths = java.util.Arrays.copyOfRange(paths, 0, paths.length - 1);
+        return baseUrl + String.join("/", parentPaths);
+    }
+
+    private boolean containerExists(final HttpServletRequest servletRequest) {
+        if (resourceExists(servletRequest)) {
+            return true;
+        }
+        final String parentURI = getContainerUrl(servletRequest);
+        return nodeService.exists(session(), getRepoPath(servletRequest, parentURI));
+    }
+
+    private FedoraResource getContainer(final HttpServletRequest servletRequest) {
+        if (resourceExists(servletRequest)) {
+            return resource(servletRequest).getContainer();
+        }
+        final String parentURI = getContainerUrl(servletRequest);
+        return nodeService.find(session(), getRepoPath(servletRequest, parentURI));
+    }
+
     private FedoraResource resource(final HttpServletRequest servletRequest) {
         return nodeService.find(session(), getRepoPath(servletRequest));
     }
@@ -242,15 +276,20 @@ public class WebACFilter implements Filter {
         return nodeService.exists(session(), getRepoPath(servletRequest));
     }
 
+    private IdentifierConverter<Resource, FedoraResource> translator(final HttpServletRequest servletRequest) {
+        final HttpSession httpSession = new HttpSession(session());
+        final UriBuilder uriBuilder = UriBuilder.fromUri(getBaseURL(servletRequest)).path(FedoraLdp.class);
+        return new HttpResourceConverter(httpSession, uriBuilder);
+    }
+
     private String getRepoPath(final HttpServletRequest servletRequest) {
         final String httpURI = servletRequest.getRequestURL().toString();
-        final HttpSession httpSession = new HttpSession(session());
+        return getRepoPath(servletRequest, httpURI);
+    }
 
-        final UriBuilder uriBuilder = UriBuilder.fromUri(getBaseURL(servletRequest)).path(FedoraLdp.class);
-        final HttpResourceConverter conv = new HttpResourceConverter(httpSession, uriBuilder);
+    private String getRepoPath(final HttpServletRequest servletRequest, final String httpURI) {
         final Resource resource = ModelFactory.createDefaultModel().createResource(httpURI);
-
-        final String repoPath = conv.asString(resource);
+        final String repoPath = translator(servletRequest).asString(resource);
         log.debug("Converted request URI {} to repo path {}", httpURI, repoPath);
         return repoPath;
     }
@@ -292,11 +331,11 @@ public class WebACFilter implements Filter {
                     return false;
                 }
             } else if (currentUser.isPermitted(toWrite)) {
-                log.debug("PUT allowed by {} permission", toWrite);
                 if (!isAuthorizedForMembershipResource(httpRequest, currentUser)) {
-                    log.debug("Not authorized to write to membershipRelation");
+                    log.debug("PUT denied, not authorized to write to membershipRelation");
                     return false;
                 }
+                log.debug("PUT allowed by {} permission", toWrite);
                 return true;
             } else {
                 if (resourceExists(httpRequest)) {
@@ -309,11 +348,11 @@ public class WebACFilter implements Filter {
                     // added as the resource, not the accessTo or other URI in the original authorization
                     log.debug("Resource doesn't exist; checking parent resources for acl:Append permission");
                     if (currentUser.isPermitted(toAppend)) {
-                        log.debug("PUT allowed for new resource by inherited {} permission", toAppend);
                         if (!isAuthorizedForMembershipResource(httpRequest, currentUser)) {
-                            log.debug("Not authorized to write to membershipRelation");
+                            log.debug("PUT denied, not authorized to write to membershipRelation");
                             return false;
                         }
+                        log.debug("PUT allowed for new resource by inherited {} permission", toAppend);
                         return true;
                     } else {
                         log.debug("PUT prohibited for new resource without inherited {} permission", toAppend);
@@ -324,7 +363,7 @@ public class WebACFilter implements Filter {
         case "POST":
             if (currentUser.isPermitted(toWrite)) {
                 if (!isAuthorizedForMembershipResource(httpRequest, currentUser)) {
-                    log.debug("Not authorized to write to membershipRelation");
+                    log.debug("POST denied, not authorized to write to membershipRelation");
                     return false;
                 }
                 log.debug("POST allowed by {} permission", toWrite);
@@ -341,7 +380,7 @@ public class WebACFilter implements Filter {
                     // user with the acl:Append permission may POST to containers
                     if (currentUser.isPermitted(toAppend)) {
                         if (!isAuthorizedForMembershipResource(httpRequest, currentUser)) {
-                            log.debug("Not authorized to write to membershipRelation");
+                            log.debug("POST denied, not authorized to write to membershipRelation");
                             return false;
                         }
                         log.debug("POST allowed to container by {} permission", toAppend);
@@ -366,6 +405,10 @@ public class WebACFilter implements Filter {
                     return false;
                 }
             } else {
+                if (!isAuthorizedForMembershipResource(httpRequest, currentUser)) {
+                    log.debug("DELETE denied, not authorized to write to membershipRelation");
+                    return false;
+                }
                 return currentUser.isPermitted(toWrite);
             }
         case "PATCH":
@@ -380,12 +423,16 @@ public class WebACFilter implements Filter {
                 }
             } else if (currentUser.isPermitted(toWrite)) {
                 if (!isAuthorizedForMembershipResource(httpRequest, currentUser)) {
-                    log.debug("Not authorized to write to membershipRelation");
+                    log.debug("PATCH denied, not authorized to write to membershipRelation");
                     return false;
                 }
                 return true;
             } else {
                 if (currentUser.isPermitted(toAppend)) {
+                    if (!isAuthorizedForMembershipResource(httpRequest, currentUser)) {
+                        log.debug("PATCH denied, not authorized to write to membershipRelation");
+                        return false;
+                    }
                     return isPatchContentPermitted(httpRequest);
                 }
             }
@@ -438,20 +485,24 @@ public class WebACFilter implements Filter {
     }
 
     /**
-     * Is the request on or to create an indirect or direct container.
+     * Is the request to create an indirect or direct container.
      *
      * @param request The current request
      * @return whether we are acting on/creating an indirect/direct container.
      */
-    private boolean isIndirectOrDirect(final HttpServletRequest request) {
-        if (resourceExists(request) && !request.getMethod().equalsIgnoreCase("POST")) {
-            final FedoraResource resource = resource(request);
-            return resource.getTypes().stream().anyMatch(l -> directOrIndirect.contains(l));
-        } else {
-            return Collections.list(request.getHeaders("Link")).stream().map(Link::valueOf).map(Link::getUri)
-                    .anyMatch(l -> directOrIndirect
-                .contains(l));
-        }
+    private boolean isPayloadIndirectOrDirect(final HttpServletRequest request) {
+        return Collections.list(request.getHeaders("Link")).stream().map(Link::valueOf).map(Link::getUri)
+                .anyMatch(l -> directOrIndirect.contains(l));
+    }
+
+    /**
+     * Is the current resource a direct or indirect container
+     *
+     * @param request
+     * @return
+     */
+    private boolean isResourceIndirectOrDirect(final FedoraResource resource) {
+        return resource.getTypes().stream().anyMatch(l -> directOrIndirect.contains(l));
     }
 
     /**
@@ -465,16 +516,68 @@ public class WebACFilter implements Filter {
      */
     private boolean isAuthorizedForMembershipResource(final HttpServletRequest request, final Subject currentUser)
             throws IOException {
-        if (isIndirectOrDirect(request)) {
-            final URI membershipResource = getHasMember(request);
+        if (resourceExists(request) && request.getMethod().equalsIgnoreCase("POST")) {
+            // Check resource if it exists and we are POSTing to it.
+            if (isResourceIndirectOrDirect(resource(request))) {
+                final URI membershipResource = getHasMemberFromResource(request);
+                addURIToAuthorize(request, membershipResource);
+                if (!currentUser.isPermitted(new WebACPermission(WEBAC_MODE_WRITE, membershipResource))) {
+                    return false;
+                }
+            }
+        } else if (request.getMethod().equalsIgnoreCase("PUT")) {
+            // PUT to a URI check that the immediate container is not direct or indirect.
+            if (containerExists(request) && isResourceIndirectOrDirect(getContainer(request))) {
+                final URI membershipResource = getHasMemberFromResource(request, getContainer(request));
+                addURIToAuthorize(request, membershipResource);
+                if (!currentUser.isPermitted(new WebACPermission(WEBAC_MODE_WRITE, membershipResource))) {
+                    return false;
+                }
+            }
+        } else if (isSparqlUpdate(request) && isResourceIndirectOrDirect(resource(request))) {
+            // PATCH to a direct/indirect might change the ldp:membershipResource
+            final URI membershipResource = getHasMemberFromPatch(request);
             if (membershipResource != null) {
                 log.debug("Found membership resource: {}", membershipResource);
                 // add the membership URI to the list URIs to retrieve ACLs for
                 addURIToAuthorize(request, membershipResource);
-                final WebACPermission toWrite = new WebACPermission(WEBAC_MODE_WRITE, membershipResource);
-                return currentUser.isPermitted(toWrite);
+                if (!currentUser.isPermitted(new WebACPermission(WEBAC_MODE_WRITE, membershipResource))) {
+                    return false;
+                }
+            }
+        } else if (request.getMethod().equalsIgnoreCase("DELETE")) {
+            if (isResourceIndirectOrDirect(resource(request))) {
+                // If we delete a direct/indirect container we have to have access to the ldp:membershipResource
+                final URI membershipResource = getHasMemberFromResource(request);
+                addURIToAuthorize(request, membershipResource);
+                if (!currentUser.isPermitted(new WebACPermission(WEBAC_MODE_WRITE, membershipResource))) {
+                    return false;
+                }
+            } else if (isResourceIndirectOrDirect(getContainer(request))) {
+                // or if we delete a child of a direct/indirect container we have to have access to the
+                // ldp:membershipResource
+                final FedoraResource container = getContainer(request);
+                final URI membershipResource = getHasMemberFromResource(request, container);
+                addURIToAuthorize(request, membershipResource);
+                if (!currentUser.isPermitted(new WebACPermission(WEBAC_MODE_WRITE, membershipResource))) {
+                    return false;
+                }
             }
         }
+
+        if (isPayloadIndirectOrDirect(request)) {
+            // Check if we are creating a direct/indirect container.
+            final URI membershipResource = getHasMemberFromRequest(request);
+            if (membershipResource != null) {
+                log.debug("Found membership resource: {}", membershipResource);
+                // add the membership URI to the list URIs to retrieve ACLs for
+                addURIToAuthorize(request, membershipResource);
+                if (!currentUser.isPermitted(new WebACPermission(WEBAC_MODE_WRITE, membershipResource))) {
+                    return false;
+                }
+            }
+        }
+        // Not indirect/directs or we are authorized.
         return true;
     }
 
@@ -487,28 +590,24 @@ public class WebACFilter implements Filter {
      * @return The URI of the memberRelation object
      * @throws IOException when getting request's inputstream
      */
-    private URI getHasMember(final HttpServletRequest request) throws IOException {
-        if (isSparqlUpdate(request)) {
-            return getHasMemberPatch(request);
-        } else {
-            final String baseUri = request.getRequestURL().toString();
-            final InputStream body = new CloseShieldInputStream(request.getInputStream());
-            final String contentType = request.getContentType();
-            final Lang format = contentTypeToLang(contentType);
-            final Model inputModel;
-            try {
-                inputModel = createDefaultModel();
-                inputModel.read(body, baseUri, format.getName().toUpperCase());
-                final Statement st = inputModel.getProperty(null, MEMBERSHIP_RESOURCE);
-                return (st != null ? URI.create(st.getObject().toString()) : null);
-            } catch (final RiotException e) {
-                throw new BadRequestException("RDF was not parsable: " + e.getMessage(), e);
-            } catch (final RuntimeIOException e) {
-                if (e.getCause() instanceof JsonParseException) {
-                    throw new MalformedRdfException(e.getCause());
-                }
-                throw new RepositoryRuntimeException(e);
+    private URI getHasMemberFromRequest(final HttpServletRequest request) throws IOException {
+        final String baseUri = request.getRequestURL().toString();
+        final InputStream body = new CloseShieldInputStream(request.getInputStream());
+        final String contentType = request.getContentType();
+        final Lang format = contentTypeToLang(contentType);
+        final Model inputModel;
+        try {
+            inputModel = createDefaultModel();
+            inputModel.read(body, baseUri, format.getName().toUpperCase());
+            final Statement st = inputModel.getProperty(null, MEMBERSHIP_RESOURCE);
+            return (st != null ? URI.create(st.getObject().toString()) : null);
+        } catch (final RiotException e) {
+            throw new BadRequestException("RDF was not parsable: " + e.getMessage(), e);
+        } catch (final RuntimeIOException e) {
+            if (e.getCause() instanceof JsonParseException) {
+                throw new MalformedRdfException(e.getCause());
             }
+            throw new RepositoryRuntimeException(e);
         }
     }
 
@@ -519,31 +618,46 @@ public class WebACFilter implements Filter {
      * @return URI of the membershipRelation
      * @throws IOException converting the request body to a string.
      */
-    private URI getHasMemberPatch(final HttpServletRequest request) throws IOException {
+    private URI getHasMemberFromPatch(final HttpServletRequest request) throws IOException {
         final String sparqlString = IOUtils.toString(request.getInputStream(), UTF_8);
         final String baseURI = request.getRequestURL().toString().replace(request.getContextPath(), "").replaceAll(
                 request.getPathInfo(), "").replaceAll("rest$", "");
         final UpdateRequest sparqlUpdate = UpdateFactory.create(sparqlString);
-        final String insertData = sparqlUpdate.getOperations().stream()
+        final Stream<Quad> insertData = sparqlUpdate.getOperations().stream()
                 .filter(update -> update instanceof UpdateDataInsert)
                 .map(update -> (UpdateDataInsert) update)
-                .flatMap(update -> update.getQuads().stream())
-                .filter(update -> update.getPredicate().equals(MEMBERSHIP_RESOURCE.asNode()) && update.getPredicate()
-                        .isURI())
-                .map(update -> update.getObject().getURI())
-                .map(update -> update.replace("file:///", baseURI))
-                .findFirst().orElse(null);
-        final String updateData = sparqlUpdate.getOperations().stream()
+                .flatMap(update -> update.getQuads().stream());
+        final Stream<Quad> updateData = sparqlUpdate.getOperations().stream()
                 .filter(update -> (update instanceof UpdateModify))
                 .peek(update -> log.debug("Inspecting update statement for DELETE clause: {}", update.toString()))
                 .map(update -> (UpdateModify) update)
-                .flatMap(update -> update.getInsertQuads().stream())
+                .flatMap(update -> update.getInsertQuads().stream());
+        return Stream.concat(insertData, updateData)
                 .filter(update -> update.getPredicate().equals(MEMBERSHIP_RESOURCE.asNode()) && update.getObject()
                         .isURI())
                 .map(update -> update.getObject().getURI())
                 .map(update -> update.replace("file:///", baseURI))
-                .findFirst().orElse(null);
-        return (insertData == null ? (updateData == null ? null : URI.create(updateData)) : URI.create(insertData));
+                .findFirst().map(URI::create).orElse(null);
     }
 
+    /**
+     * Get ldp:membershipResource from an existing resource
+     *
+     * @param request Req
+     * @return
+     */
+    private URI getHasMemberFromResource(final HttpServletRequest request) {
+        final FedoraResource resource = resource(request);
+        return getHasMemberFromResource(request, resource);
+    }
+
+    private URI getHasMemberFromResource(final HttpServletRequest request, final FedoraResource resource) {
+        final List<Triple> trip = resource.getTriples(translator(request), of(LDP_MEMBERSHIP)).collect(toList());
+        final List<Triple> trip2 = trip.stream()
+                .filter(triple -> triple.getPredicate().equals(MEMBERSHIP_RESOURCE.asNode()) && triple.getObject()
+                        .isURI()).collect(toList());
+        final List<String> nodes = trip2.stream()
+                .map(Triple::getObject).map(Node::getURI).collect(toList());
+        return nodes.stream().findFirst().map(URI::create).orElse(null);
+    }
 }
