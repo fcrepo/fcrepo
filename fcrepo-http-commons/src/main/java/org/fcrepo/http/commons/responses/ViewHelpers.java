@@ -263,6 +263,7 @@ public class ViewHelpers {
 
     /**
      * Same as above but takes a string.
+     * NB: This method is currently used in fcrepo-http-api/src/main/resources/views/default.vsl
      * @param subjectUri the URI
      * @return a node
      */
