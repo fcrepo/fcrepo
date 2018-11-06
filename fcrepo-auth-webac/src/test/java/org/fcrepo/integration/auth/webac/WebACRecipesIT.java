@@ -22,6 +22,7 @@ import static javax.ws.rs.core.Response.Status.CREATED;
 import static org.apache.http.HttpStatus.SC_FORBIDDEN;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
+import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static org.apache.jena.vocabulary.DC_11.title;
 import static org.fcrepo.auth.webac.WebACRolesProvider.GROUP_AGENT_BASE_URI_PROPERTY;
 import static org.fcrepo.http.api.FedoraAcl.ROOT_AUTHORIZATION_PROPERTY;
@@ -77,9 +78,9 @@ public class WebACRecipesIT extends AbstractResourceIT {
     @Rule
     public final RestoreSystemProperties restoreSystemProperties = new RestoreSystemProperties();
 
-    private final ContentType turtleContentType = ContentType.create("text/turtle");
+    private final ContentType turtleContentType = ContentType.create("text/turtle", "UTF-8");
 
-    private final ContentType sparqlContentType = ContentType.create("application/sparql-update");
+    private final ContentType sparqlContentType = ContentType.create("application/sparql-update", "UTF-8");
 
     /**
      * Convenience method to create an ACL with 0 or more authorization resources in the respository.
@@ -1375,13 +1376,15 @@ public class WebACRecipesIT extends AbstractResourceIT {
         setAuth(userPost, username);
         userPost.addHeader("Link", "<" + INDIRECT_CONTAINER.toString() + ">; rel=type");
         final String indirect = "@prefix ldp: <http://www.w3.org/ns/ldp#> .\n" +
-                "@prefix test: <http://example.org/test#> .\n\n" +
-                "<> ldp:insertedContentRelation test:something ;" +
-                "ldp:membershipResource <" + targetResource + "> ;" +
-                "ldp:hasMemberRelation test:predicateToCreate .";
+                "@prefix example: <http://www.example.org/example1#> .\n" +
+                "@prefix dc: <http://purl.org/dc/elements/1.1/> .\n" +
+                "<> ldp:insertedContentRelation <http://example.org/test#something> ;\n" +
+                "ldp:membershipResource <" + targetResource + "> ;\n" +
+                "ldp:hasMemberRelation <http://example.org/test#predicateToCreate> ;\n" +
+                "dc:title \"The indirect container\" .";
         final HttpEntity indirectEntity = new StringEntity(indirect, turtleContentType);
         userPost.setEntity(indirectEntity);
-        userPost.setHeader("Content-type", "text/turtle");
+        userPost.setHeader(CONTENT_TYPE, "text/turtle");
         assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(userPost));
 
         // Try to create indirect container referencing readonly resource with PUT.
@@ -1390,7 +1393,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
         setAuth(userPut, username);
         userPut.addHeader("Link", "<" + INDIRECT_CONTAINER.toString() + ">; rel=type");
         userPut.setEntity(indirectEntity);
-        userPut.setHeader("Content-type", "text/turtle");
+        userPut.setHeader(CONTENT_TYPE, "text/turtle");
         assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(userPut));
 
         // Create an user writeable resource.
@@ -1404,15 +1407,18 @@ public class WebACRecipesIT extends AbstractResourceIT {
 
         // Try to create indirect container referencing an available resource.
         final String indirect_ok = "@prefix ldp: <http://www.w3.org/ns/ldp#> .\n" +
-                "@prefix test: <http://example.org/test#> .\n\n" +
-                "<> ldp:insertedContentRelation test:something ;" +
-                "ldp:membershipResource <" + tempTarget + "> ;" +
-                "ldp:hasMemberRelation test:predicateToCreate .";
+                "@prefix example: <http://www.example.org/example1#> .\n" +
+                "@prefix dc: <http://purl.org/dc/elements/1.1/> .\n" +
+                "<> ldp:insertedContentRelation <http://example.org/test#something> ;\n" +
+                "ldp:membershipResource <" + tempTarget + "> ;\n" +
+                "ldp:hasMemberRelation <http://example.org/test#predicateToCreate> ;\n" +
+                "dc:title \"The indirect container\" .";
         final HttpPost userPatchPost = postObjMethod(writeableResource);
         setAuth(userPatchPost, username);
         userPatchPost.addHeader("Link", "<" + INDIRECT_CONTAINER.toString() + ">; rel=type");
-        userPatchPost.setEntity(new StringEntity(indirect_ok, turtleContentType));
-        userPatchPost.setHeader("Content-type", "text/turtle");
+        final HttpEntity in_ok = new StringEntity(indirect_ok, turtleContentType);
+        userPatchPost.setEntity(in_ok);
+        userPatchPost.setHeader(CONTENT_TYPE, "text/turtle");
         final String indirectUri;
         try (final CloseableHttpResponse resp = execute(userPatchPost)) {
             assertEquals(HttpStatus.SC_CREATED, getStatus(resp));
@@ -1447,7 +1453,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
         // Patch the indirect to the readonly target as admin
         final HttpPatch patchAsAdmin = new HttpPatch(indirectUri);
         setAuth(patchAsAdmin, "fedoraAdmin");
-        patchAsAdmin.setEntity(new StringEntity(patch_text, sparqlContentType));
+        patchAsAdmin.setEntity(new StringEntity(patch_insert_relation, sparqlContentType));
         assertEquals(HttpStatus.SC_NO_CONTENT, getStatus(patchAsAdmin));
 
         // Try to POST a child as user
@@ -1582,7 +1588,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
 
         // Delete the ldp:membershipRelation and add it with INSERT DATA {}
         final String patch_delete_relation = "prefix ldp: <http://www.w3.org/ns/ldp#> \n" +
-                "DELETE DATA { <> ldp:membershipResource <" + tempTarget + "> }";
+                "DELETE DATA { <> ldp:membershipResource <" + targetResource + "> }";
         final HttpPatch patchIndirect2 = new HttpPatch(indirectUri);
         setAuth(patchIndirect2, username);
         patchIndirect2.setEntity(new StringEntity(patch_delete_relation, sparqlContentType));
@@ -1709,13 +1715,13 @@ public class WebACRecipesIT extends AbstractResourceIT {
         // Patch the indirect to the readonly target as admin
         final HttpPatch patchAsAdmin = new HttpPatch(directUri);
         setAuth(patchAsAdmin, "fedoraAdmin");
-        patchAsAdmin.setEntity(new StringEntity(patch_text, sparqlContentType));
+        patchAsAdmin.setEntity(new StringEntity(patch_insert_relation, sparqlContentType));
         assertEquals(HttpStatus.SC_NO_CONTENT, getStatus(patchAsAdmin));
 
         // Try to POST a child as user
         final HttpPost postChild = new HttpPost(directUri);
         final String postTarget = "@prefix ldp: <http://www.w3.org/ns/ldp#> .\n" +
-                "@prefix test: <http://example.org/test#> .\n\n" +
+                "@prefix test: <http://example.org/test#> .\n" +
                 "<> test:something <" + tempTarget + "> .";
         final HttpEntity putPostChild = new StringEntity(postTarget, turtleContentType);
         setAuth(postChild, username);
@@ -1841,7 +1847,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
 
         // Delete the ldp:membershipRelation and add it with INSERT DATA {}
         final String patch_delete_relation = "prefix ldp: <http://www.w3.org/ns/ldp#> \n" +
-                "DELETE DATA { <> ldp:membershipResource <" + tempTarget + "> }";
+                "DELETE DATA { <> ldp:membershipResource <" + targetResource + "> }";
         final HttpPatch patchDirect2 = new HttpPatch(directUri);
         setAuth(patchDirect2, username);
         patchDirect2.setEntity(new StringEntity(patch_delete_relation, sparqlContentType));

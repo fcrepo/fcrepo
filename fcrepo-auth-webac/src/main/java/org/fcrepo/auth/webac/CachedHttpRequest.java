@@ -37,7 +37,7 @@ import org.apache.commons.io.IOUtils;
  * 
  * @author mohideen
  */
-public class CachedSparqlRequest extends HttpServletRequestWrapper {
+public class CachedHttpRequest extends HttpServletRequestWrapper {
 
     private byte[] cachedContent;
 
@@ -47,7 +47,7 @@ public class CachedSparqlRequest extends HttpServletRequestWrapper {
      * Create a new CachedSparqlRequest for the given servlet request.
      * @param request the original servlet request
      */
-    public CachedSparqlRequest(final ServletRequest request) {
+    public CachedHttpRequest(final ServletRequest request) {
         super((HttpServletRequest) request);
     }
 

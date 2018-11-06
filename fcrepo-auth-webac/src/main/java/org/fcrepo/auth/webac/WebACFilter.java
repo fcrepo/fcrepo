@@ -25,6 +25,11 @@ import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
+import static org.apache.jena.riot.WebContent.contentTypeJSONLD;
+import static org.apache.jena.riot.WebContent.contentTypeTurtle;
+import static org.apache.jena.riot.WebContent.contentTypeRDFXML;
+import static org.apache.jena.riot.WebContent.contentTypeN3;
+import static org.apache.jena.riot.WebContent.contentTypeNTriples;
 import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_ADMIN_ROLE;
 import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_USER_ROLE;
 import static org.fcrepo.auth.webac.URIConstants.FOAF_AGENT_VALUE;
@@ -38,11 +43,10 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
-import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_MEMBERSHIP;
+import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.security.Principal;
 import java.util.Collections;
@@ -66,20 +70,20 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.jena.atlas.RuntimeIOException;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.QueryParseException;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.RDFReader;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RiotException;
 import org.apache.jena.sparql.core.Quad;
+import org.apache.jena.sparql.modify.request.UpdateData;
 import org.apache.jena.sparql.modify.request.UpdateDataDelete;
-import org.apache.jena.sparql.modify.request.UpdateDataInsert;
 import org.apache.jena.sparql.modify.request.UpdateModify;
 import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
@@ -139,11 +143,18 @@ public class WebACFilter implements Filter {
 
     private static Set<URI> directOrIndirect = new HashSet<>();
 
+    private static Set<String> rdfContentTypes = new HashSet<>();
+
     static {
         directOrIndirect.add(URI.create(INDIRECT_CONTAINER.toString()));
         directOrIndirect.add(URI.create(DIRECT_CONTAINER.toString()));
-    }
 
+        rdfContentTypes.add(contentTypeTurtle);
+        rdfContentTypes.add(contentTypeJSONLD);
+        rdfContentTypes.add(contentTypeN3);
+        rdfContentTypes.add(contentTypeRDFXML);
+        rdfContentTypes.add(contentTypeNTriples);
+    }
     @Override
     public void init(final FilterConfig filterConfig) {
         // this method intentionally left empty
@@ -170,8 +181,9 @@ public class WebACFilter implements Filter {
             throws IOException, ServletException {
         final Subject currentUser = SecurityUtils.getSubject();
         HttpServletRequest httpRequest = (HttpServletRequest) request;
-        if (isSparqlUpdate(httpRequest)) {
-            httpRequest = new CachedSparqlRequest(httpRequest);
+        if (isSparqlUpdate(httpRequest) || isRdfRequest(httpRequest)) {
+            // If this is a sparql request or contains RDF.
+            httpRequest = new CachedHttpRequest(httpRequest);
         }
 
         // add the request URI to the list of URIs to retrieve the ACLs for
@@ -485,6 +497,16 @@ public class WebACFilter implements Filter {
     }
 
     /**
+     * Does the request's content-type match one of the RDF types.
+     *
+     * @param request the http servlet request
+     * @return whether the content-type matches.
+     */
+    private boolean isRdfRequest(final HttpServletRequest request) {
+        return rdfContentTypes.contains(request.getContentType());
+    }
+
+    /**
      * Is the request to create an indirect or direct container.
      *
      * @param request The current request
@@ -592,13 +614,14 @@ public class WebACFilter implements Filter {
      */
     private URI getHasMemberFromRequest(final HttpServletRequest request) throws IOException {
         final String baseUri = request.getRequestURL().toString();
-        final InputStream body = new CloseShieldInputStream(request.getInputStream());
+        final RDFReader reader;
         final String contentType = request.getContentType();
         final Lang format = contentTypeToLang(contentType);
         final Model inputModel;
         try {
             inputModel = createDefaultModel();
-            inputModel.read(body, baseUri, format.getName().toUpperCase());
+            reader = inputModel.getReader(format.getName().toUpperCase());
+            reader.read(inputModel, request.getInputStream(), baseUri);
             final Statement st = inputModel.getProperty(null, MEMBERSHIP_RESOURCE);
             return (st != null ? URI.create(st.getObject().toString()) : null);
         } catch (final RiotException e) {
@@ -615,7 +638,7 @@ public class WebACFilter implements Filter {
      * Get the membershipRelation from a PATCH request
      *
      * @param request the http request
-     * @return URI of the membershipRelation
+     * @return URI of the first ldp:membershipRelation object.
      * @throws IOException converting the request body to a string.
      */
     private URI getHasMemberFromPatch(final HttpServletRequest request) throws IOException {
@@ -623,16 +646,25 @@ public class WebACFilter implements Filter {
         final String baseURI = request.getRequestURL().toString().replace(request.getContextPath(), "").replaceAll(
                 request.getPathInfo(), "").replaceAll("rest$", "");
         final UpdateRequest sparqlUpdate = UpdateFactory.create(sparqlString);
-        final Stream<Quad> insertData = sparqlUpdate.getOperations().stream()
-                .filter(update -> update instanceof UpdateDataInsert)
-                .map(update -> (UpdateDataInsert) update)
+        // The INSERT|DELETE DATA quads
+        final Stream<Quad> insertDeleteData = sparqlUpdate.getOperations().stream()
+                .filter(update -> update instanceof UpdateData)
+                .map(update -> (UpdateData) update)
                 .flatMap(update -> update.getQuads().stream());
-        final Stream<Quad> updateData = sparqlUpdate.getOperations().stream()
+        // Get the UpdateModify instance to re-use below.
+        final List<UpdateModify> updateModifyStream = sparqlUpdate.getOperations().stream()
                 .filter(update -> (update instanceof UpdateModify))
                 .peek(update -> log.debug("Inspecting update statement for DELETE clause: {}", update.toString()))
                 .map(update -> (UpdateModify) update)
+                .collect(toList());
+        // The INSERT {} WHERE {} quads
+        final Stream<Quad> insertQuadData = updateModifyStream.stream()
                 .flatMap(update -> update.getInsertQuads().stream());
-        return Stream.concat(insertData, updateData)
+        // The DELETE {} WHERE {} quads
+        final Stream<Quad> deleteQuadData = updateModifyStream.stream()
+                .flatMap(update -> update.getDeleteQuads().stream());
+        // The ldp:membershipResource triples.
+        return Stream.concat(Stream.concat(insertDeleteData, insertQuadData), deleteQuadData)
                 .filter(update -> update.getPredicate().equals(MEMBERSHIP_RESOURCE.asNode()) && update.getObject()
                         .isURI())
                 .map(update -> update.getObject().getURI())
@@ -643,21 +675,26 @@ public class WebACFilter implements Filter {
     /**
      * Get ldp:membershipResource from an existing resource
      *
-     * @param request Req
-     * @return
+     * @param request the request
+     * @return URI of the ldp:membershipResource triple or null if not found.
      */
     private URI getHasMemberFromResource(final HttpServletRequest request) {
         final FedoraResource resource = resource(request);
         return getHasMemberFromResource(request, resource);
     }
 
+    /**
+     * Get ldp:membershipResource from an existing resource
+     *
+     * @param request the request
+     * @param resource the FedoraResource
+     * @return URI of the ldp:membershipResource triple or null if not found.
+     */
     private URI getHasMemberFromResource(final HttpServletRequest request, final FedoraResource resource) {
-        final List<Triple> trip = resource.getTriples(translator(request), of(LDP_MEMBERSHIP)).collect(toList());
-        final List<Triple> trip2 = trip.stream()
+        return resource.getTriples(translator(request), of(PROPERTIES))
                 .filter(triple -> triple.getPredicate().equals(MEMBERSHIP_RESOURCE.asNode()) && triple.getObject()
-                        .isURI()).collect(toList());
-        final List<String> nodes = trip2.stream()
-                .map(Triple::getObject).map(Node::getURI).collect(toList());
-        return nodes.stream().findFirst().map(URI::create).orElse(null);
+                        .isURI())
+                .map(Triple::getObject).map(Node::getURI)
+                .findFirst().map(URI::create).orElse(null);
     }
 }
