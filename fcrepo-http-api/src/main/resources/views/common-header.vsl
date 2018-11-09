@@ -8,7 +8,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
         </button>
-        <a class="navbar-brand" href="$uriInfo.baseUriBuilder.build()">Fedora 4</a>
+        <a class="navbar-brand" href="$uriInfo.baseUriBuilder.build()">Fedora</a>
     </div>
 
     <!-- Collect the nav links, forms, and other content for toggling -->
