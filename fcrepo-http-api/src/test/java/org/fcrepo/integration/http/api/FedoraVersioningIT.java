@@ -618,6 +618,20 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testGetOnMementoWithAcceptDatetimePresent() throws Exception {
+        createVersionedContainer(id);
+        final String mementoDateTime =
+            MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2017-06-10T11:41:00Z", Instant::from));
+        final String mementoUri = createLDPRSMementoWithExistingBody(mementoDateTime);
+        // Status 200: GET request on existing memento
+        final HttpGet getMemento = new HttpGet(mementoUri);
+        getMemento.addHeader(ACCEPT_DATETIME, mementoDateTime);
+        assertEquals("Expected memento could not be retrieved when Accept-Datetime header is present: " + mementoUri,
+                     OK.getStatusCode(),
+                     getStatus(getMemento));
+    }
+
+    @Test
     public void testOptionsOnMemento() throws Exception {
 
         createVersionedContainer(id);
