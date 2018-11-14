@@ -7,7 +7,7 @@
   </parent>
   <artifactId>fcrepo-kernel-api</artifactId>
   <name>Fedora Repository Kernel API</name>
-  <description>Fedora Repository Kernel API, containing types and constants for working with Fedora 4</description>
+  <description>Fedora Repository Kernel API, containing types and constants for working with Fedora</description>
 
   <packaging>bundle</packaging>
 
