@@ -18,12 +18,17 @@
     </div>
     <div id="historic-versions">
         <h2>Historic Versions</h2>
-        <ul>
-        #foreach($subject in $helpers.getVersions($rdf, $topic))
-            #set($label = $helpers.getVersionLabel($rdf, $subject))
-            <li><a href="$subject.getURI()" class="version_link">$esc.html($label)</a></li>
+        #set( $versions = $helpers.getVersions($rdf, $topic) )
+        #if($versions.hasNext())
+            <ul>
+            #foreach($subject in $versions)
+                #set($label = $helpers.getVersionLabel($rdf, $subject))
+                <li><a href="$subject.getURI()" class="version_link">$esc.html($label)</a></li>
+            #end
+            </ul>
+        #else
+            <p>No versions have been created for this resource.</p>
         #end
-        </ul>
   </div>
 </body>
 </html>

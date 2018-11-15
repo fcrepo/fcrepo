@@ -35,6 +35,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.List;
 
+import com.gargoylesoftware.htmlunit.html.DomElement;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.client.CredentialsProvider;
@@ -238,6 +239,20 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         assertEquals("Didn't get a 410!", 410, page2.getWebResponse()
                 .getStatusCode());
 
+        webClient.getOptions().setThrowExceptionOnFailingStatusCode(throwExceptionOnFailingStatusCode);
+    }
+
+    @Test
+    public void testVersionsListWorksWhenNoVersionsPresent() throws IOException {
+        final boolean throwExceptionOnFailingStatusCode = webClient.getOptions().isThrowExceptionOnFailingStatusCode();
+        webClient.getOptions().setThrowExceptionOnFailingStatusCode(true);
+
+        final String pid = createNewObject();
+        final HtmlPage page = webClient.getPage(serverAddress + pid);
+        final DomElement viewVersions = page.getElementById("view_versions");
+        final Page versionsPage = viewVersions.click();
+        assertEquals("Didn't get a 200!", 200, versionsPage.getWebResponse()
+                                                    .getStatusCode());
         webClient.getOptions().setThrowExceptionOnFailingStatusCode(throwExceptionOnFailingStatusCode);
     }
 
