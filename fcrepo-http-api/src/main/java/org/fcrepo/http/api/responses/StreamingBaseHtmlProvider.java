@@ -222,7 +222,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
                     // node will not exist while the end point is visible to the user.
                     return null;
                 } else {
-                    throw new RuntimeException(e);
+                    throw e;
                 }
             }
         }
