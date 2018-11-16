@@ -31,10 +31,8 @@ import static org.apache.jena.vocabulary.SKOS.prefLabel;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
-import static org.fcrepo.kernel.api.RdfLexicon.DESCRIBES;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.fcrepo.kernel.api.RdfLexicon.WRITABLE;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
@@ -148,27 +146,6 @@ public class ViewHelpersTest {
                     "http://somewhere/else/a/b/c").asNode());
 
         assertTrue(nodeBreadcrumbs.isEmpty());
-    }
-
-    @Test
-    public void testIsWritable() {
-        final Graph mem = createDefaultModel().getGraph();
-        mem.add(new Triple(createURI("a/b/c"), WRITABLE.asNode(), createLiteral(Boolean.TRUE.toString())));
-        assertTrue("Node is should be writable.", testObj.isWritable(mem, createURI("a/b/c")));
-    }
-
-    @Test
-    public void testIsWritableFalse() {
-        final Graph mem = createDefaultModel().getGraph();
-        mem.add(new Triple(createURI("a/b/c"), WRITABLE.asNode(), createLiteral(Boolean.FALSE.toString())));
-        assertFalse("Node should not be writable.", testObj.isWritable(mem, createURI("a/b/c")));
-    }
-
-    @Test
-    public void testIsWritableFalseJunk() {
-        final Graph mem = createDefaultModel().getGraph();
-        mem.add(new Triple(createURI("a/b/c"), DESCRIBES.asNode(), createLiteral("junk")));
-        assertFalse("Node should not be writable.", testObj.isWritable(mem, createURI("a/b/c")));
     }
 
     @Test
