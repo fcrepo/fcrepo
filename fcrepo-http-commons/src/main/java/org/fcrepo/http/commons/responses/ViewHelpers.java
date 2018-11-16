@@ -36,7 +36,6 @@ import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
-import static org.fcrepo.kernel.api.RdfLexicon.WRITABLE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
@@ -200,7 +199,8 @@ public class ViewHelpers {
      * @return whether the subject is writable
      */
     public boolean isWritable(final Graph graph, final Node subject) {
-        return getValue(graph, subject, WRITABLE.asNode()).filter("true"::equals).isPresent();
+        // XXX: always return true until we can determine a better way to control the HTML UI
+        return true;
     }
 
     /**
