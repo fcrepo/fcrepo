@@ -254,7 +254,7 @@
     </dependency>
 
     <dependency>
-      <groupId>org.modeshape</groupId>
+      <groupId>org.fcrepo</groupId>
       <artifactId>modeshape-jcr</artifactId>
       <scope>runtime</scope>
     </dependency>

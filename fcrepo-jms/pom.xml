@@ -100,7 +100,7 @@
       <artifactId>slf4j-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.modeshape</groupId>
+      <groupId>org.fcrepo</groupId>
       <artifactId>modeshape-jcr</artifactId>
       <scope>test</scope>
     </dependency>
