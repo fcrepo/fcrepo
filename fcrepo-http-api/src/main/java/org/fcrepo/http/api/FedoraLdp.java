@@ -186,7 +186,7 @@ public class FedoraLdp extends ContentExposingResource {
         checkMementoPath();
 
         final String datetimeHeader = headers.getHeaderString(ACCEPT_DATETIME);
-        if (!isBlank(datetimeHeader)) {
+        if (!isBlank(datetimeHeader) && resource().isOriginalResource()) {
             return getMemento(datetimeHeader, resource());
         }
 
