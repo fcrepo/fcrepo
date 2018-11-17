@@ -68,7 +68,7 @@
           <artifactId>narayana-jta</artifactId>
         </exclusion>
         <exclusion>
-          <groupId>org.modeshape</groupId>
+          <groupId>org.fcrepo</groupId>
           <artifactId>modeshape-jcr</artifactId>
         </exclusion>
         <exclusion>
@@ -263,7 +263,7 @@
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>org.modeshape</groupId>
+      <groupId>org.fcrepo</groupId>
       <artifactId>modeshape-jcr</artifactId>
       <exclusions>
         <exclusion>
