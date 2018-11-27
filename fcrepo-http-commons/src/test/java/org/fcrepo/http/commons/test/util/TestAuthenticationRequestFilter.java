@@ -70,6 +70,8 @@ public class TestAuthenticationRequestFilter implements Filter {
         } else if (FEDORA_ADMIN_USER.equals(username)) {
             containerRoles = singleton("fedoraAdmin");
             log.debug("ADMIN AUTHENTICATED");
+        } else if ("noroles".equals(username)) {
+            log.debug("USER (without roles); AUTHENTICATED");
         } else {
             containerRoles = singleton("fedoraUser");
             log.debug("USER AUTHENTICATED");
