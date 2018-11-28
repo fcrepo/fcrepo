@@ -17,6 +17,8 @@
  */
 package org.fcrepo.auth.integration;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.IOException;
 
 import org.apache.commons.codec.binary.Base64;
@@ -47,7 +49,7 @@ public class ServletContainerAuthenticatingRealmIT extends AbstractResourceIT {
         // make sure this doesn't cause Shiro to explode
         final HttpGet request = new HttpGet(serverAddress);
         setAuth(request, "noroles");
-        execute(request);
+        assertEquals(200, getStatus(request));
     }
 
 }

@@ -38,7 +38,7 @@ public class ServletContainerAuthenticatingRealmTest {
         final String roleName = "fedoraUser";
 
         final ServletContainerAuthenticatingRealm realm = new ServletContainerAuthenticatingRealm();
-        final Set<String> roles = new HashSet<String>();
+        final Set<String> roles = new HashSet<>();
         roles.add(roleName);
         final ContainerAuthToken token = new ContainerAuthToken(username, roles);
         final AuthenticationInfo info = realm.doGetAuthenticationInfo(token);
@@ -58,7 +58,7 @@ public class ServletContainerAuthenticatingRealmTest {
         final String username = "foo";
 
         final ServletContainerAuthenticatingRealm realm = new ServletContainerAuthenticatingRealm();
-        final ContainerAuthToken token = new ContainerAuthToken(username, new HashSet<String>());
+        final ContainerAuthToken token = new ContainerAuthToken(username, new HashSet<>());
         // make sure this doesn't blow up on an empty set of roles
         final AuthenticationInfo info = realm.doGetAuthenticationInfo(token);
         // should have 1 principal (user)
