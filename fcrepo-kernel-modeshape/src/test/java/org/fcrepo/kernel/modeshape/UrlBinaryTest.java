@@ -280,7 +280,7 @@ public class UrlBinaryTest {
     @Test(expected = ExternalContentAccessException.class)
     public void testDisappearingRemoteUri() throws Exception {
 
-        // wiremock connection reset fault dows not work on Windows
+        // Wiremock connection reset fault does not work on Windows
         assumeFalse(System.getProperty("os.name").startsWith("Windows"));
 
         final String remoteHost = "http://localhost:" + wireMockRule.port();
