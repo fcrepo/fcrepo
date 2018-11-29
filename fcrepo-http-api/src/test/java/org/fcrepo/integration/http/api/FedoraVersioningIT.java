@@ -850,7 +850,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             assertEquals("Didn't get a OK response!", OK.getStatusCode(), getStatus(response));
             // verify headers in link format.
             verifyTimeMapHeaders(response, uri);
-            final List<String> bodyList = Arrays.asList(EntityUtils.toString(response.getEntity()).split(",\n"));
+            final List<String> bodyList = Arrays.asList(EntityUtils.toString(response.getEntity())
+                    .split("," + System.lineSeparator()));
             //the links from the body are not
 
             final Link[] bodyLinks = bodyList.stream().map(String::trim).filter(t -> !t.isEmpty())
