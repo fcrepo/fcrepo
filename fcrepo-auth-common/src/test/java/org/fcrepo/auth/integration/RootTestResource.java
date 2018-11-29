@@ -30,6 +30,7 @@ import org.springframework.context.annotation.Scope;
 import javax.inject.Inject;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -57,6 +58,13 @@ public class RootTestResource extends AbstractResource {
     private HttpSession session;
 
     private static final Logger LOGGER = getLogger(RootTestResource.class);
+
+    @GET
+    public Response get(@PathParam("path") final String externalPath) {
+        final String path = toPath(translator(), externalPath);
+        LOGGER.trace("GET: {}", path);
+        return Response.ok().build();
+    }
 
     @PUT
     public Response put(@PathParam("path") final String externalPath) throws Exception {
