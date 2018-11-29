@@ -132,7 +132,7 @@ public class DefaultPropertiesLoaderTest {
 
     @Test
     public void testValueSetForNoDefault() {
-        final String value = "/absolute/path";
+        final String value = new File("/absolute/path").getAbsolutePath();
         System.setProperty(NO_DEFAULT_PROP, value);
 
         loader.loadSystemProperties();
