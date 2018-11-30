@@ -199,6 +199,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
     private static final String BASIC_CONTAINER_LINK_HEADER = "<" + BASIC_CONTAINER.getURI() + ">;rel=\"type\"";
     private static final String DIRECT_CONTAINER_LINK_HEADER = "<" + DIRECT_CONTAINER.getURI() + ">;rel=\"type\"";
     private static final String INDIRECT_CONTAINER_LINK_HEADER = "<" + INDIRECT_CONTAINER.getURI() + ">;rel=\"type\"";
+
+    private static final String RDF_SOURCE_LINK_HEADER = "<" + RDF_SOURCE.getURI() + ">;rel=\"type\"";
     private static final String NON_RDF_SOURCE_LINK_HEADER = "<" + NON_RDF_SOURCE.getURI() + ">;rel=\"type\"";
     private static final String VERSIONED_RESOURCE_LINK_HEADER = "<" + VERSIONED_RESOURCE.getURI() + ">; rel=\"type\"";
 
@@ -2317,6 +2319,26 @@ public class FedoraLdpIT extends AbstractResourceIT {
         put.setHeader(LINK, BASIC_CONTAINER_LINK_HEADER);
         assertEquals("Changed the NonRdfSource ixn to basic container",
                 CONFLICT.getStatusCode(), getStatus(put));
+    }
+
+    @Test
+    public void testPutChangeTypeNotAllowed() throws IOException {
+        final HttpPost postMethod = new HttpPost(serverAddress);
+        postMethod.setEntity(new StringEntity("TestString."));
+        postMethod.setHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        postMethod.addHeader(CONTENT_DISPOSITION, "attachment; filename=\"postCreate.txt\"");
+
+        final String location;
+        try (final CloseableHttpResponse response = execute(postMethod)) {
+            location = getLocation(response);
+        }
+
+        final HttpPut putMethod = new HttpPut(location);
+        putMethod.setEntity(new StringEntity("TestString2."));
+        putMethod.addHeader(CONTENT_DISPOSITION, "attachment; filename=\"putUpdate.txt\"");
+        putMethod.setHeader(LINK, RDF_SOURCE_LINK_HEADER);
+        assertEquals("Changed the NonRdfSource ixn to RdfSource",
+                CONFLICT.getStatusCode(), getStatus(putMethod));
     }
 
     @Test

@@ -111,6 +111,8 @@
  */
 [fedora:Binary] > fedora:Resource mixin
 
+[ldp:NonRDFSource] > fedora:Resource mixin
+
 [fedora:Skolem] > mix:referenceable mixin
   - fedora:lastModified (DATE)
 
