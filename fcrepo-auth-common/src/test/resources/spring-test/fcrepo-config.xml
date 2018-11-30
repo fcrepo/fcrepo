@@ -8,31 +8,75 @@
     http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd
     http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
 
-  <!-- Context that supports the actual ModeShape JCR itself -->
-
   <context:annotation-config />
 
   <context:property-placeholder />
 
   <context:component-scan base-package="org.fcrepo" />
 
+  <!-- Context that supports the actual ModeShape JCR itself -->
   <bean name="modeshapeRepofactory" class="org.fcrepo.kernel.modeshape.spring.ModeShapeRepositoryFactoryBean"
-    depends-on="authenticationProvider" p:repositoryConfiguration="${fcrepo.modeshape.configuration:repository.json}"/>
-  
-  <bean name="fad" class="org.fcrepo.auth.integration.PermitRootAndPathEndsWithPermitSuffixFAD"/>
+    depends-on="authenticationProvider">
+    <property name="repositoryConfiguration" value="${fcrepo.modeshape.configuration:repository-test.json}" />
+  </bean>
 
-  <bean name="authenticationProvider" class="org.fcrepo.auth.common.ServletContainerAuthenticationProvider"
-    p:fad-ref="fad"/>
+  <bean name="authenticationProvider" class="org.fcrepo.auth.common.ShiroAuthenticationProvider"/>
 
   <bean class="org.modeshape.jcr.ModeShapeEngine" init-method="start"/>
 
-  <bean id="connectionManager" class="org.apache.http.impl.conn.PoolingHttpClientConnectionManager" />
-
+  <bean id="connectionManager" class="org.apache.http.impl.conn.PoolingHttpClientConnectionManager"/>
+  
+  <!-- Context that houses JAX-RS Resources that compose the API
+      as well as some utility gear. -->
   <bean class="org.fcrepo.http.commons.session.SessionFactory"/>
 
   <!-- Identifier translation chain -->
   <util:list id="translationChain" value-type="org.fcrepo.kernel.api.identifiers.InternalIdentifierConverter">
+    <bean class="org.fcrepo.kernel.modeshape.identifiers.HashConverter"/>
     <bean class="org.fcrepo.kernel.modeshape.identifiers.NamespaceConverter"/>
   </util:list>
+  
+  <!-- Configuration of namespace prefixes -->
+  <bean name="rdfNamespaceRegistry" class="org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry"
+      init-method="init">
+    <property name="configPath" value="${fcrepo.namespace.registry:#{null}}" />
+    <property name="monitorForChanges" value="false" />
+  </bean>
+  
+  <!-- Shiro config -->
+
+   <bean name="headerProvider" class="org.fcrepo.auth.common.HttpHeaderPrincipalProvider">
+      <property name="headerName" value="some-header"/>
+      <property name="separator" value=","/>
+  </bean>
+
+  <bean name="delegatedPrincipalProvider" class="org.fcrepo.auth.common.DelegateHeaderPrincipalProvider"/>
+  
+  <bean id="testAuthFilter" class="org.fcrepo.http.commons.test.util.TestAuthenticationRequestFilter"/>
+  <bean id="servletAuthFilter" class="org.fcrepo.auth.common.ServletContainerAuthFilter"/>
+  
+  <bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+    <property name="securityManager" ref="securityManager"/>
+    <property name="filterChainDefinitions">
+      <value>
+        /** = testAuthFilter, servletAuthFilter
+      </value>
+    </property>
+  </bean>
+  
+  <bean id="servletRealm" class="org.fcrepo.auth.common.ServletContainerAuthenticatingRealm"/>
+  
+  <bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+    <property name="realms">
+      <list>
+        <ref bean="servletRealm"/>
+      </list>
+    </property>
+    <!-- By default the servlet container sessions will be used.  Uncomment this line
+         to use shiro's native sessions (see the JavaDoc for more): -->
+    <!-- <property name="sessionMode" value="native"/> -->
+  </bean>
+  
+  <bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor"/>
 
 </beans>
