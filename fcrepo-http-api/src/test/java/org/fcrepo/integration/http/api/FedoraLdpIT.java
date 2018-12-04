@@ -2333,12 +2333,21 @@ public class FedoraLdpIT extends AbstractResourceIT {
             location = getLocation(response);
         }
 
-        final HttpPut putMethod = new HttpPut(location);
-        putMethod.setEntity(new StringEntity("TestString2."));
-        putMethod.addHeader(CONTENT_DISPOSITION, "attachment; filename=\"putUpdate.txt\"");
-        putMethod.setHeader(LINK, RDF_SOURCE_LINK_HEADER);
+        // Change to RDFSource
+        final HttpPut put1Method = new HttpPut(location);
+        put1Method.setEntity(new StringEntity("TestString2."));
+        put1Method.addHeader(CONTENT_DISPOSITION, "attachment; filename=\"putUpdate.txt\"");
+        put1Method.setHeader(LINK, RDF_SOURCE_LINK_HEADER);
         assertEquals("Changed the NonRdfSource ixn to RdfSource",
-                CONFLICT.getStatusCode(), getStatus(putMethod));
+                CONFLICT.getStatusCode(), getStatus(put1Method));
+
+        // Change to Basic Container
+        final HttpPut put2Method = new HttpPut(location);
+        put2Method.setEntity(new StringEntity("TestString2."));
+        put2Method.addHeader(CONTENT_DISPOSITION, "attachment; filename=\"putUpdate.txt\"");
+        put2Method.setHeader(LINK, BASIC_CONTAINER_LINK_HEADER);
+        assertEquals("Changed the NonRdfSource ixn to RdfSource",
+                CONFLICT.getStatusCode(), getStatus(put2Method));
     }
 
     @Test
