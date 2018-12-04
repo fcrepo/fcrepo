@@ -2325,7 +2325,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testPutChangeTypeNotAllowed() throws IOException {
+    public void testPutChangeBinaryTypeNotAllowed() throws IOException {
         final HttpPost postMethod = new HttpPost(serverAddress);
         postMethod.setEntity(new StringEntity("TestString."));
         postMethod.addHeader(CONTENT_DISPOSITION, "attachment; filename=\"postCreate.txt\"");
@@ -2340,15 +2340,15 @@ public class FedoraLdpIT extends AbstractResourceIT {
         put1Method.setEntity(new StringEntity("TestString2."));
         put1Method.addHeader(CONTENT_DISPOSITION, "attachment; filename=\"putUpdate.txt\"");
         put1Method.setHeader(LINK, RDF_SOURCE_LINK_HEADER);
-        assertEquals("Changed the NonRdfSource ixn to RdfSource",
-                CONFLICT.getStatusCode(), getStatus(put1Method));
+        assertEquals("Changed the NonRdfSource interaction model to RdfSource",
+                BAD_REQUEST.getStatusCode(), getStatus(put1Method));
 
         // Change to Basic Container
         final HttpPut put2Method = new HttpPut(location);
         put2Method.setEntity(new StringEntity("TestString2."));
         put2Method.addHeader(CONTENT_DISPOSITION, "attachment; filename=\"putUpdate.txt\"");
         put2Method.setHeader(LINK, BASIC_CONTAINER_LINK_HEADER);
-        assertEquals("Changed the NonRdfSource ixn to RdfSource",
+        assertEquals("Changed the NonRdfSource interaction model to RdfSource",
                 CONFLICT.getStatusCode(), getStatus(put2Method));
     }
 
@@ -2361,13 +2361,18 @@ public class FedoraLdpIT extends AbstractResourceIT {
         // Change to RDFSource
         final HttpPut put1Method = new HttpPut(location);
         put1Method.setHeader(LINK, CONTAINER_LINK_HEADER);
-        assertEquals("Changed the BasicContainer ixn to Container",
-                CONFLICT.getStatusCode(), getStatus(put1Method));
+        assertEquals("Changed the BasicContainer interaction model to Container",
+                BAD_REQUEST.getStatusCode(), getStatus(put1Method));
 
         final HttpPut put2Method = new HttpPut(location);
         put2Method.setHeader(LINK, RESOURCE_LINK_HEADER);
-        assertEquals("Changed the BasicContainer ixn to Resource",
-                CONFLICT.getStatusCode(), getStatus(put2Method));
+        assertEquals("Changed the BasicContainer interaction model to Resource",
+                BAD_REQUEST.getStatusCode(), getStatus(put2Method));
+
+        final HttpPut put3Method = new HttpPut(location);
+        put3Method.setHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
+        assertEquals("Changed the BasicContainer interaction model to DirectContainer",
+                CONFLICT.getStatusCode(), getStatus(put3Method));
     }
 
     @Test

@@ -156,9 +156,8 @@ public final class RdfLexicon {
     public static final Property MEMBER_SUBJECT =
             createProperty(LDP_NAMESPACE + "MemberSubject");
 
-    public static final Set<Resource> LDP_INTERACTION_MODELS = new HashSet<>(Arrays.asList(
-            CONTAINER, BASIC_CONTAINER, INDIRECT_CONTAINER, DIRECT_CONTAINER, RESOURCE,
-            NON_RDF_SOURCE, RDF_SOURCE));
+    public static final Set<Resource> SUPPORTED_INTERACTION_MODELS = new HashSet<>(Arrays.asList(
+            BASIC_CONTAINER, INDIRECT_CONTAINER, DIRECT_CONTAINER, NON_RDF_SOURCE));
 
     private static final Set<Property> ldpManagedProperties = of(CONTAINS);
 
