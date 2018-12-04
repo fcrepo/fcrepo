@@ -21,9 +21,10 @@ import static com.google.common.collect.ImmutableSet.of;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
-
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 
@@ -154,6 +155,10 @@ public final class RdfLexicon {
             createProperty(LDP_NAMESPACE + "constrainedBy");
     public static final Property MEMBER_SUBJECT =
             createProperty(LDP_NAMESPACE + "MemberSubject");
+
+    public static final Set<Resource> LDP_INTERACTION_MODELS = new HashSet<>(Arrays.asList(
+            CONTAINER, BASIC_CONTAINER, INDIRECT_CONTAINER, DIRECT_CONTAINER, RESOURCE,
+            NON_RDF_SOURCE, RDF_SOURCE));
 
     private static final Set<Property> ldpManagedProperties = of(CONTAINS);
 

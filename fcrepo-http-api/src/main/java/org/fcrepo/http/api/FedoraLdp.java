@@ -57,12 +57,8 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSE
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_PAIRTREE;
-import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODELS;
-import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
-import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.LDP_INTERACTION_MODELS;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.FedoraExternalContent.COPY;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
@@ -877,9 +873,7 @@ public class FedoraLdp extends ContentExposingResource {
                 final Link linq = Link.valueOf(link);
                 if ("type".equals(linq.getRel())) {
                     final Resource type = createResource(linq.getUri().toString());
-                    if (type.equals(NON_RDF_SOURCE) || type.equals(BASIC_CONTAINER) ||
-                            type.equals(DIRECT_CONTAINER) || type.equals(INDIRECT_CONTAINER) ||
-                            type.equals(RDF_SOURCE)) {
+                    if (LDP_INTERACTION_MODELS.contains(type)) {
                         return "ldp:" + type.getLocalName();
                     } else if (type.equals(VERSIONED_RESOURCE)) {
                         // skip if versioned resource link header

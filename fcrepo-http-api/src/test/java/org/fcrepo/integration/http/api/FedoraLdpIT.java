@@ -99,6 +99,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEGATE_TYPE;
 import static org.junit.Assert.assertEquals;
@@ -196,10 +197,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     private static final Node DCTITLE = title.asNode();
 
+    private static final String CONTAINER_LINK_HEADER = "<" + CONTAINER.getURI() + ">;rel=\"type\"";
     private static final String BASIC_CONTAINER_LINK_HEADER = "<" + BASIC_CONTAINER.getURI() + ">;rel=\"type\"";
     private static final String DIRECT_CONTAINER_LINK_HEADER = "<" + DIRECT_CONTAINER.getURI() + ">;rel=\"type\"";
     private static final String INDIRECT_CONTAINER_LINK_HEADER = "<" + INDIRECT_CONTAINER.getURI() + ">;rel=\"type\"";
 
+    private static final String RESOURCE_LINK_HEADER = "<" + RESOURCE.getURI() + ">;rel=\"type\"";
     private static final String RDF_SOURCE_LINK_HEADER = "<" + RDF_SOURCE.getURI() + ">;rel=\"type\"";
     private static final String NON_RDF_SOURCE_LINK_HEADER = "<" + NON_RDF_SOURCE.getURI() + ">;rel=\"type\"";
     private static final String VERSIONED_RESOURCE_LINK_HEADER = "<" + VERSIONED_RESOURCE.getURI() + ">; rel=\"type\"";
@@ -2346,6 +2349,24 @@ public class FedoraLdpIT extends AbstractResourceIT {
         put2Method.addHeader(CONTENT_DISPOSITION, "attachment; filename=\"putUpdate.txt\"");
         put2Method.setHeader(LINK, BASIC_CONTAINER_LINK_HEADER);
         assertEquals("Changed the NonRdfSource ixn to RdfSource",
+                CONFLICT.getStatusCode(), getStatus(put2Method));
+    }
+
+    @Test
+    public void testPutChangeBasicContainerToParent() throws Exception {
+        final String pid = getRandomUniqueId();
+        final String location = serverAddress + pid;
+        createObjectAndClose(pid);
+
+        // Change to RDFSource
+        final HttpPut put1Method = new HttpPut(location);
+        put1Method.setHeader(LINK, CONTAINER_LINK_HEADER);
+        assertEquals("Changed the BasicContainer ixn to Container",
+                CONFLICT.getStatusCode(), getStatus(put1Method));
+
+        final HttpPut put2Method = new HttpPut(location);
+        put2Method.setHeader(LINK, RESOURCE_LINK_HEADER);
+        assertEquals("Changed the BasicContainer ixn to Resource",
                 CONFLICT.getStatusCode(), getStatus(put2Method));
     }
 
