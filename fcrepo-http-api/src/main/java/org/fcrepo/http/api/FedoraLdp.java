@@ -58,7 +58,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_PAIRTREE;
 import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODELS;
-import static org.fcrepo.kernel.api.RdfLexicon.SUPPORTED_INTERACTION_MODELS;
+import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODEL_RESOURCES;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.FedoraExternalContent.COPY;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
@@ -873,7 +873,7 @@ public class FedoraLdp extends ContentExposingResource {
                 final Link linq = Link.valueOf(link);
                 if ("type".equals(linq.getRel())) {
                     final Resource type = createResource(linq.getUri().toString());
-                    if (SUPPORTED_INTERACTION_MODELS.contains(type)) {
+                    if (INTERACTION_MODEL_RESOURCES.contains(type)) {
                         return "ldp:" + type.getLocalName();
                     } else if (type.equals(VERSIONED_RESOURCE)) {
                         // skip if versioned resource link header
