@@ -66,6 +66,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.FedoraExternalContent.COPY;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -502,6 +503,8 @@ public class FedoraLdp extends ContentExposingResource {
             }
         } else if (defaultContent) {
             resource.addType(LDP_BASIC_CONTAINER);
+        } else if (resource instanceof FedoraBinary) {
+            resource.addType(LDP_NON_RDF_SOURCE);
         }
     }
 

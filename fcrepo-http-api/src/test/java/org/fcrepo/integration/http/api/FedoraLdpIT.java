@@ -2325,7 +2325,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testPutChangeTypeNotAllowed() throws IOException {
         final HttpPost postMethod = new HttpPost(serverAddress);
         postMethod.setEntity(new StringEntity("TestString."));
-        postMethod.setHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
         postMethod.addHeader(CONTENT_DISPOSITION, "attachment; filename=\"postCreate.txt\"");
 
         final String location;
