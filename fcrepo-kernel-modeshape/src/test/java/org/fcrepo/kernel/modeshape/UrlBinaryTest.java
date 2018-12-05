@@ -36,6 +36,7 @@ import static org.fcrepo.kernel.api.FedoraExternalContent.PROXY;
 import static org.fcrepo.kernel.modeshape.utils.TestHelpers.getContentNodeMock;
 import static org.fcrepo.kernel.modeshape.utils.TestHelpers.checksumString;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assume.assumeFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -278,6 +279,10 @@ public class UrlBinaryTest {
 
     @Test(expected = ExternalContentAccessException.class)
     public void testDisappearingRemoteUri() throws Exception {
+
+        // Wiremock connection reset fault does not work on Windows
+        assumeFalse(System.getProperty("os.name").startsWith("Windows"));
+
         final String remoteHost = "http://localhost:" + wireMockRule.port();
         final String remoteUri = "/resource1";
         stubFor(get(urlEqualTo(remoteUri))
