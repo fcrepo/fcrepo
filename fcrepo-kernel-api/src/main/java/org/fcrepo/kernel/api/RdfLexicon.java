@@ -23,6 +23,7 @@ import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
@@ -265,11 +266,12 @@ public final class RdfLexicon {
     /*
      * Interaction Models.
      */
-    public static final Set<String>  INTERACTION_MODELS = of(
-            NON_RDF_SOURCE.getURI().replace(LDP_NAMESPACE, "ldp:"),
-            BASIC_CONTAINER.getURI().replace(LDP_NAMESPACE, "ldp:"),
-            DIRECT_CONTAINER.getURI().replace(LDP_NAMESPACE, "ldp:"),
-            INDIRECT_CONTAINER.getURI().replace(LDP_NAMESPACE, "ldp:"));
+    public static final Set<Resource> INTERACTION_MODEL_RESOURCES = of(
+            BASIC_CONTAINER, INDIRECT_CONTAINER, DIRECT_CONTAINER, NON_RDF_SOURCE);
+
+    public static final Set<String> INTERACTION_MODELS = INTERACTION_MODEL_RESOURCES.stream()
+            .map(m -> m.getURI().replace(LDP_NAMESPACE, "ldp:"))
+            .collect(Collectors.toSet());
 
     private RdfLexicon() {
 
