@@ -11,7 +11,7 @@
   <groupId>org.fcrepo</groupId>
   <artifactId>fcrepo</artifactId>
   <version>5.0.0-SNAPSHOT</version>
-  <name>Fedora Commons 4</name>
+  <name>Fedora Commons</name>
   <description>Parent project for Fedora Commons Repository</description>
   <url>http://fedorarepository.org</url>
   <packaging>pom</packaging>
