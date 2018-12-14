@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ServiceHelpers.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository HTTP Commons Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-modeshape</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.services</a> &gt; <span class="el_source">ServiceHelpers.java</span></div><h1>ServiceHelpers.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.services;
+
+import static javax.jcr.query.Query.JCR_SQL2;
+import static org.fcrepo.kernel.api.FedoraTypes.CONTENT_SIZE;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
+import static org.fcrepo.kernel.api.RdfLexicon.NT_VERSION_FILE;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
+import static org.modeshape.jcr.api.JcrConstants.JCR_PATH;
+
+import javax.jcr.Node;
+import javax.jcr.NodeIterator;
+import javax.jcr.Property;
+import javax.jcr.PropertyIterator;
+import javax.jcr.Repository;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.Value;
+import javax.jcr.query.QueryManager;
+import javax.jcr.query.QueryResult;
+import javax.jcr.query.RowIterator;
+
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.springframework.stereotype.Component;
+
+/**
+ * Uncategorized helper methods
+ *
+ * @author awoods
+ */
+@Component
+public class ServiceHelpers {
+
+    private ServiceHelpers() {
+    }
+
+    /**
+     * Get the total size of a Node's properties
+     *
+     * @param node the node
+     * @return size in bytes
+     * @throws RepositoryException if repository exception occurred
+     */
+    private static Long getNodePropertySize(final Node node)
+        throws RepositoryException {
+<span class="nc" id="L64">        Long size = 0L;</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">        for (final PropertyIterator i = node.getProperties(); i.hasNext();) {</span>
+<span class="nc" id="L66">            final Property p = i.nextProperty();</span>
+<span class="nc bnc" id="L67" title="All 2 branches missed.">            if (p.isMultiple()) {</span>
+<span class="nc bnc" id="L68" title="All 2 branches missed.">                for (final Value v : p.getValues()) {</span>
+<span class="nc" id="L69">                    size += v.getBinary().getSize();</span>
+                }
+            } else {
+<span class="nc" id="L72">                size += p.getBinary().getSize();</span>
+            }
+<span class="nc" id="L74">        }</span>
+<span class="nc" id="L75">        return size;</span>
+    }
+
+    /**
+     * @param obj the object
+     * @return object size in bytes
+     * @throws RepositoryException if repository exception occurred
+     */
+    public static Long getObjectSize(final Node obj) throws RepositoryException {
+<span class="nc" id="L84">        return getNodePropertySize(obj) + getObjectDSSize(obj);</span>
+    }
+
+    /**
+     * @param obj the object
+     * @return object's datastreams' total size in bytes
+     * @throws RepositoryException if repository exception occurred
+     */
+    private static Long getObjectDSSize(final Node obj)
+        throws RepositoryException {
+<span class="nc" id="L94">        Long size = 0L;</span>
+<span class="nc bnc" id="L95" title="All 2 branches missed.">        for (final NodeIterator i = obj.getNodes(); i.hasNext();) {</span>
+<span class="nc" id="L96">            final Node node = i.nextNode();</span>
+<span class="nc bnc" id="L97" title="All 2 branches missed.">            if (node.isNodeType(NT_VERSION_FILE)) {</span>
+<span class="nc" id="L98">                size += getDatastreamSize(node);</span>
+            }
+<span class="nc" id="L100">        }</span>
+<span class="nc" id="L101">        return size;</span>
+    }
+
+    /**
+     * Get the size of a datastream by calculating the size of the properties
+     * and the binary properties
+     *
+     * @param ds the node
+     * @return size of the datastream's properties and binary properties
+     * @throws RepositoryException if repository exception occurred
+     */
+    private static Long getDatastreamSize(final Node ds)
+        throws RepositoryException {
+<span class="nc" id="L114">        return getNodePropertySize(ds) + getContentSize(ds);</span>
+    }
+
+    /**
+     * Get the size of the JCR content binary property
+     *
+     * @param ds the given node
+     * @return size of the binary content property
+     */
+    private static Long getContentSize(final Node ds) {
+        try {
+<span class="nc" id="L125">            long size = 0L;</span>
+<span class="nc bnc" id="L126" title="All 2 branches missed.">            if (ds.hasNode(JCR_CONTENT)) {</span>
+<span class="nc" id="L127">                final Node contentNode = ds.getNode(JCR_CONTENT);</span>
+
+<span class="nc bnc" id="L129" title="All 2 branches missed.">                if (contentNode.hasProperty(JCR_DATA)) {</span>
+<span class="nc" id="L130">                    size =</span>
+<span class="nc" id="L131">                            ds.getNode(JCR_CONTENT).getProperty(JCR_DATA)</span>
+<span class="nc" id="L132">                                    .getBinary().getSize();</span>
+                }
+            }
+
+<span class="nc" id="L136">            return size;</span>
+
+<span class="nc" id="L138">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L139">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    /**
+     * @param repository the repository
+     * @return a double of the size of the fedora:datastream binary content
+     * @throws RepositoryException if repository exception occurred
+     */
+    public static long getRepositoryCount(final Repository repository)
+        throws RepositoryException {
+<span class="fc" id="L150">        final Session session = repository.login();</span>
+        try {
+<span class="fc" id="L152">            final QueryManager queryManager =</span>
+<span class="fc" id="L153">                session.getWorkspace().getQueryManager();</span>
+
+<span class="fc" id="L155">            final String querystring =</span>
+                &quot;SELECT [&quot; + JCR_PATH + &quot;] FROM [&quot;
+                        + FEDORA_CONTAINER + &quot;]&quot;;
+
+<span class="fc" id="L159">            final QueryResult queryResults =</span>
+<span class="fc" id="L160">                queryManager.createQuery(querystring, JCR_SQL2).execute();</span>
+
+<span class="fc" id="L162">            return queryResults.getRows().getSize();</span>
+        } finally {
+<span class="fc" id="L164">            session.logout();</span>
+        }
+    }
+
+    /**
+     * @param repository the repository
+     * @return a double of the size of the fedora:datastream binary content
+     * @throws RepositoryException if repository exception occurred
+     */
+    public static long getRepositorySize(final Repository repository)
+        throws RepositoryException {
+<span class="fc" id="L175">        final Session session = repository.login();</span>
+        try {
+<span class="fc" id="L177">            long sum = 0;</span>
+<span class="fc" id="L178">            final QueryManager queryManager =</span>
+<span class="fc" id="L179">                    session.getWorkspace().getQueryManager();</span>
+
+<span class="fc" id="L181">            final String querystring =</span>
+                    &quot;SELECT [&quot; + CONTENT_SIZE + &quot;] FROM [&quot; +
+                            FEDORA_NON_RDF_SOURCE_DESCRIPTION + &quot;]&quot;;
+
+<span class="fc" id="L185">            final QueryResult queryResults =</span>
+<span class="fc" id="L186">                    queryManager.createQuery(querystring, JCR_SQL2).execute();</span>
+
+<span class="fc bfc" id="L188" title="All 2 branches covered.">            for (final RowIterator rows = queryResults.getRows(); rows.hasNext(); ) {</span>
+<span class="fc" id="L189">                final Value value =</span>
+<span class="fc" id="L190">                        rows.nextRow().getValue(CONTENT_SIZE);</span>
+<span class="fc" id="L191">                sum += value.getLong();</span>
+<span class="fc" id="L192">            }</span>
+<span class="fc" id="L193">            return sum;</span>
+        } finally {
+<span class="fc" id="L195">            session.logout();</span>
+        }
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
