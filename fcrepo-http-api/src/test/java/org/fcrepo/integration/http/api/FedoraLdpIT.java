@@ -167,6 +167,7 @@ import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.vocabulary.DC_11;
 import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
+import org.fcrepo.kernel.api.RdfLexicon;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -4149,5 +4150,37 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertEquals("Must not be able to PATCH IndirectContainer updating Server Managed triples",
                          CONFLICT.getStatusCode(), getStatus(response));
         }
+    }
+
+    @Test
+    public void testPatchUpdateBinaryWithType() throws Exception {
+        final String objid = getRandomUniqueId();
+        final String objURI = serverAddress + objid;
+        final String binURI = objURI + "/binary1";
+        final String descURI = objURI + "/binary1/fcr:metadata";
+
+        try (final CloseableHttpResponse response = execute(putDSMethod(objid, "binary1", "some test content"))) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+        }
+
+        final String rdfType = RdfLexicon.RDF_NAMESPACE + "type";
+        final HttpPatch patchBinary = new HttpPatch(descURI);
+        patchBinary.addHeader(CONTENT_TYPE, "application/sparql-update");
+        patchBinary.setEntity(new StringEntity("INSERT { <" + binURI + "> " +
+                "<" + rdfType + "> <http://pcdm.org/models#File> } WHERE {}"));
+
+        try (final CloseableHttpResponse response = execute(patchBinary)) {
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
+        }
+
+        final HttpGet getObjMethod = new HttpGet(descURI);
+        getObjMethod.addHeader(ACCEPT, "text/turtle");
+        final Model model = createDefaultModel();
+        try (final CloseableHttpResponse getResponse = execute(getObjMethod)) {
+            model.read(getResponse.getEntity().getContent(), binURI, "TURTLE");
+        }
+
+        final Resource resc = model.getResource(binURI);
+        assertTrue(resc.hasProperty(createProperty(rdfType), createResource("http://pcdm.org/models#File")));
     }
 }
