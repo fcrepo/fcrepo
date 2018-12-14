@@ -1,0 +1,381 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>VersionServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation (ModeShape)</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.services</a> &gt; <span class="el_source">VersionServiceImpl.java</span></div><h1>VersionServiceImpl.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.services;
+
+import static java.util.Arrays.asList;
+import static java.util.Arrays.stream;
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.fcrepo.kernel.api.FedoraExternalContent.PROXY;
+import static org.fcrepo.kernel.api.FedoraExternalContent.REDIRECT;
+import static org.fcrepo.kernel.api.FedoraTypes.CONTENT_DIGEST;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.api.FedoraTypes.MEMENTO;
+import static org.fcrepo.kernel.api.FedoraTypes.MEMENTO_DATETIME;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_SERVICE;
+import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_CONTAINMENT;
+import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_MEMBERSHIP;
+import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
+import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
+import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.LDPCV_TIME_MAP;
+import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
+import static org.fcrepo.kernel.modeshape.rdf.impl.RequiredPropertiesUtil.assertRequiredContainerTriples;
+import static org.fcrepo.kernel.modeshape.rdf.impl.RequiredPropertiesUtil.assertRequiredDescriptionTriples;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
+import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.fcrepo.kernel.api.utils.SubjectMappingUtil.mapSubject;
+import java.io.InputStream;
+import java.net.URI;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.GregorianCalendar;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Stream;
+import java.util.stream.Collectors;
+
+import javax.inject.Inject;
+import javax.jcr.ItemExistsException;
+import javax.jcr.Node;
+import javax.jcr.Property;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.riot.Lang;
+import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.TripleCategory;
+import org.fcrepo.kernel.api.exception.ConstraintViolationException;
+import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.Container;
+import org.fcrepo.kernel.api.models.FedoraBinary;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry;
+import org.fcrepo.kernel.api.services.BinaryService;
+import org.fcrepo.kernel.api.services.VersionService;
+import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
+import org.fcrepo.kernel.modeshape.ContainerImpl;
+import org.fcrepo.kernel.modeshape.rdf.impl.InternalIdentifierTranslator;
+import org.fcrepo.kernel.modeshape.utils.iterators.RelaxedRdfAdder;
+import org.slf4j.Logger;
+import org.springframework.stereotype.Component;
+
+import com.google.common.annotations.VisibleForTesting;
+
+/**
+ * This service exposes management of node versioning for resources and binaries.
+ *
+ * @author Mike Durbin
+ * @author bbpennel
+ */
+
+@Component
+<span class="fc" id="L101">public class VersionServiceImpl extends AbstractService implements VersionService {</span>
+
+<span class="fc" id="L103">    private static final Logger LOGGER = getLogger(VersionService.class);</span>
+
+    @VisibleForTesting
+<span class="fc" id="L106">    public static final Set&lt;TripleCategory&gt; VERSION_TRIPLES = new HashSet&lt;&gt;(asList(</span>
+            PROPERTIES, SERVER_MANAGED, LDP_MEMBERSHIP, LDP_CONTAINMENT));
+
+    /**
+     * The bitstream service
+     */
+    @Inject
+    private BinaryService binaryService;
+
+    @Inject
+    private RdfNamespaceRegistry namespaceRegistry;
+
+    @Override
+    public FedoraResource createVersion(final FedoraSession session, final FedoraResource resource,
+            final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator, final Instant dateTime) {
+<span class="fc" id="L121">        return createVersion(session, resource, idTranslator, dateTime, null, null);</span>
+    }
+
+    @Override
+    public FedoraResource createVersion(final FedoraSession session,
+            final FedoraResource resource,
+            final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator,
+            final Instant dateTime,
+            final InputStream rdfInputStream,
+            final Lang rdfFormat) {
+
+<span class="fc" id="L132">        final String mementoPath = makeMementoPath(resource, dateTime);</span>
+<span class="fc" id="L133">        assertMementoDoesNotExist(session, mementoPath);</span>
+
+        // Construct an unpopulated resource of the appropriate type for new memento
+        final FedoraResource mementoResource;
+<span class="fc bfc" id="L137" title="All 2 branches covered.">        if (resource instanceof Container) {</span>
+<span class="fc" id="L138">            mementoResource = createContainer(session, mementoPath);</span>
+        } else {
+<span class="fc" id="L140">            mementoResource = binaryService.findOrCreateDescription(session, mementoPath);</span>
+        }
+
+<span class="fc" id="L143">        final String mementoUri = getUri(mementoResource, idTranslator);</span>
+<span class="fc" id="L144">        final String resourceUri = getUri(resource.getDescribedResource(), idTranslator);</span>
+
+        final RdfStream mementoRdfStream;
+<span class="pc bpc" id="L147" title="1 of 2 branches missed.">        if (rdfInputStream == null) {</span>
+            // With no rdf body provided, create version from current resource state.
+<span class="fc" id="L149">            mementoRdfStream = resource.getTriples(idTranslator, VERSION_TRIPLES);</span>
+        } else {
+<span class="nc" id="L151">            final Model inputModel = ModelFactory.createDefaultModel();</span>
+<span class="nc" id="L152">            inputModel.read(rdfInputStream, mementoUri, rdfFormat.getName());</span>
+
+<span class="nc bnc" id="L154" title="All 2 branches missed.">            if (inputModel.isEmpty()) {</span>
+<span class="nc" id="L155">                throw new ConstraintViolationException(</span>
+                        &quot;Cannot create historic memento from an empty body&quot;);
+            }
+
+            // Validate server managed triples are provided
+<span class="nc bnc" id="L160" title="All 2 branches missed.">            if (resource instanceof Container) {</span>
+<span class="nc" id="L161">                assertRequiredContainerTriples(inputModel);</span>
+            } else {
+<span class="nc" id="L163">                assertRequiredDescriptionTriples(inputModel);</span>
+
+                // Remove fixity service reference due to disallowed fcr prefix
+<span class="nc" id="L166">                inputModel.removeAll(null, HAS_FIXITY_SERVICE, null);</span>
+            }
+
+<span class="nc" id="L169">            mementoRdfStream = DefaultRdfStream.fromModel(createURI(mementoUri), inputModel);</span>
+        }
+
+<span class="fc" id="L172">        final Session jcrSession = getJcrSession(session);</span>
+<span class="fc" id="L173">        final RdfStream mappedStream = remapResourceUris(resourceUri, mementoUri, mementoRdfStream,</span>
+                idTranslator, jcrSession);
+
+<span class="fc" id="L176">        new RelaxedRdfAdder(idTranslator, jcrSession, mappedStream, namespaceRegistry.getNamespaces()).consume();</span>
+
+<span class="fc" id="L178">        decorateWithMementoProperties(session, mementoPath, dateTime);</span>
+
+<span class="fc" id="L180">        return mementoResource;</span>
+    }
+
+    /*
+     * Creates a minimal container node for further population elsewhere
+     */
+    private Container createContainer(final FedoraSession session, final String path) {
+        try {
+<span class="fc" id="L188">            final Node node = findOrCreateNode(session, path, NT_FOLDER);</span>
+
+<span class="pc bpc" id="L190" title="1 of 2 branches missed.">            if (node.canAddMixin(FEDORA_RESOURCE)) {</span>
+<span class="fc" id="L191">                node.addMixin(FEDORA_RESOURCE);</span>
+<span class="fc" id="L192">                node.addMixin(FEDORA_CONTAINER);</span>
+            }
+
+<span class="fc" id="L195">            return new ContainerImpl(node);</span>
+<span class="nc" id="L196">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L197">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    /**
+     * Remaps the subjects of triples in rdfStream from the original resource URL to the URL of the new memento, and
+     * converts objects which reference resources to an internal identifier to prevent enforcement of referential
+     * integrity constraints.
+     *
+     * @param resourceUri uri of the original resource
+     * @param mementoUri uri of the memento resource
+     * @param rdfStream rdf stream
+     * @param idTranslator translator for producing URI of resources
+     * @param jcrSession jcr session
+     * @return RdfStream
+     */
+    private RdfStream remapResourceUris(final String resourceUri,
+            final String mementoUri,
+            final RdfStream rdfStream,
+            final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator,
+            final Session jcrSession) {
+<span class="fc" id="L218">        final IdentifierConverter&lt;Resource, FedoraResource&gt; internalIdTranslator = new InternalIdentifierTranslator(</span>
+                jcrSession);
+
+<span class="fc" id="L221">        final org.apache.jena.graph.Node mementoNode = createURI(mementoUri);</span>
+<span class="fc" id="L222">        final Stream&lt;Triple&gt; mappedStream = rdfStream.map(t -&gt; mapSubject(t, resourceUri, mementoUri))</span>
+<span class="fc" id="L223">                .map(t -&gt; convertToInternalReference(t, idTranslator, internalIdTranslator));</span>
+<span class="fc" id="L224">        return new DefaultRdfStream(mementoNode, mappedStream);</span>
+    }
+
+    /**
+     * Convert the referencing resource uri to un-dereferenceable internal identifier.
+     *
+     * @param t the Triple to convert
+     * @param idTranslator the Converter that convert the resource uri to a path
+     * @param internalIdTranslator the Converter that convert a path to internal identifier
+     * @return Triple a triple with referencing resource uri converted to internal identifier
+     */
+    private Triple convertToInternalReference(final Triple t,
+            final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator,
+            final IdentifierConverter&lt;Resource, FedoraResource&gt; internalIdTranslator) {
+<span class="fc bfc" id="L238" title="All 2 branches covered.">        if (t.getObject().isURI()) {</span>
+<span class="fc" id="L239">            final Resource object = createResource(t.getObject().getURI());</span>
+<span class="fc bfc" id="L240" title="All 2 branches covered.">            if (idTranslator.inDomain(object)) {</span>
+<span class="fc" id="L241">                final String path = idTranslator.convert(object).getPath();</span>
+<span class="fc" id="L242">                final Resource obj = createResource(internalIdTranslator.toDomain(path).getURI());</span>
+<span class="fc" id="L243">                LOGGER.debug(&quot;Converting referencing resource uri {} to internal identifier {}.&quot;,</span>
+<span class="fc" id="L244">                        t.getObject().getURI(), obj.getURI());</span>
+
+<span class="fc" id="L246">                return new Triple(t.getSubject(), t.getPredicate(), obj.asNode());</span>
+            }
+        }
+
+<span class="fc" id="L250">        return t;</span>
+    }
+
+    @Override
+    public FedoraBinary createExternalBinaryVersion(final FedoraSession session,
+            final FedoraBinary resource,
+            final Instant dateTime,
+            final Collection&lt;URI&gt; checksums,
+            final String externalHandling,
+            final String externalUrl)
+            throws InvalidChecksumException {
+<span class="nc" id="L261">        final String mementoPath = makeMementoPath(resource, dateTime);</span>
+<span class="nc" id="L262">        assertMementoDoesNotExist(session, mementoPath);</span>
+
+<span class="nc" id="L264">        final FedoraBinary memento = binaryService.findOrCreateBinary(session, mementoPath);</span>
+<span class="nc" id="L265">        decorateWithMementoProperties(session, mementoPath, dateTime);</span>
+
+<span class="nc" id="L267">        memento.setExternalContent(null, checksums, null, externalHandling, externalUrl);</span>
+
+<span class="nc" id="L269">        return memento;</span>
+    }
+
+    @Override
+    public FedoraBinary createBinaryVersion(final FedoraSession session,
+            final FedoraBinary resource,
+            final Instant dateTime,
+            final StoragePolicyDecisionPoint storagePolicyDecisionPoint)
+            throws InvalidChecksumException {
+<span class="nc" id="L278">        return createBinaryVersion(session, resource, dateTime, null, null, storagePolicyDecisionPoint);</span>
+    }
+
+    @Override
+    public FedoraBinary createBinaryVersion(final FedoraSession session,
+            final FedoraBinary resource,
+            final Instant dateTime,
+            final InputStream contentStream,
+            final Collection&lt;URI&gt; checksums,
+            final StoragePolicyDecisionPoint storagePolicyDecisionPoint) throws InvalidChecksumException {
+
+<span class="nc" id="L289">        final String mementoPath = makeMementoPath(resource, dateTime);</span>
+<span class="nc" id="L290">        assertMementoDoesNotExist(session, mementoPath);</span>
+
+<span class="nc" id="L292">        final FedoraBinary memento = binaryService.findOrCreateBinary(session, mementoPath);</span>
+<span class="nc" id="L293">        decorateWithMementoProperties(session, mementoPath, dateTime);</span>
+
+<span class="nc bnc" id="L295" title="All 2 branches missed.">        if (contentStream == null) {</span>
+            // Creating memento from existing resource
+<span class="nc" id="L297">            populateBinaryMementoFromExisting(resource, memento, storagePolicyDecisionPoint);</span>
+        } else {
+<span class="nc" id="L299">            memento.setContent(contentStream, null, checksums, null, storagePolicyDecisionPoint);</span>
+        }
+
+<span class="nc" id="L302">        return memento;</span>
+    }
+
+    private void populateBinaryMementoFromExisting(final FedoraBinary resource, final FedoraBinary memento,
+            final StoragePolicyDecisionPoint storagePolicyDecisionPoint) throws InvalidChecksumException {
+
+<span class="nc" id="L308">        final Node contentNode = getJcrNode(resource);</span>
+<span class="nc" id="L309">        List&lt;URI&gt; checksums = null;</span>
+        // Retrieve all existing digests from the original
+        try {
+<span class="nc bnc" id="L312" title="All 2 branches missed.">            if (contentNode.hasProperty(CONTENT_DIGEST)) {</span>
+<span class="nc" id="L313">                final Property digestProperty = contentNode.getProperty(CONTENT_DIGEST);</span>
+<span class="nc" id="L314">                checksums = stream(digestProperty.getValues())</span>
+<span class="nc" id="L315">                        .map(d -&gt; {</span>
+                            try {
+<span class="nc" id="L317">                                return URI.create(d.getString());</span>
+<span class="nc" id="L318">                            } catch (final RepositoryException e) {</span>
+<span class="nc" id="L319">                                throw new RepositoryRuntimeException(e);</span>
+                            }
+<span class="nc" id="L321">                        }).collect(Collectors.toList());</span>
+            }
+
+            // if current binary is external, gather details
+<span class="nc" id="L325">            String handling = null;</span>
+<span class="nc" id="L326">            String externalUrl = null;</span>
+<span class="nc bnc" id="L327" title="All 2 branches missed.">            if (resource.isProxy()) {</span>
+<span class="nc" id="L328">                handling = PROXY;</span>
+<span class="nc" id="L329">                externalUrl = resource.getProxyURL();</span>
+<span class="nc bnc" id="L330" title="All 2 branches missed.">            } else if (resource.isRedirect()) {</span>
+<span class="nc" id="L331">                handling = REDIRECT;</span>
+<span class="nc" id="L332">                externalUrl = resource.getRedirectURL();</span>
+            }
+
+            // Create memento as external or internal based on state of original
+<span class="nc bnc" id="L336" title="All 4 branches missed.">            if (handling != null &amp;&amp; externalUrl != null) {</span>
+<span class="nc" id="L337">                memento.setExternalContent(null, checksums, null, handling, externalUrl);</span>
+            } else {
+<span class="nc" id="L339">                memento.setContent(resource.getContent(), null, checksums,</span>
+                        null, storagePolicyDecisionPoint);
+            }
+<span class="nc" id="L342">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L343">            throw new RepositoryRuntimeException(e);</span>
+<span class="nc" id="L344">        }</span>
+<span class="nc" id="L345">    }</span>
+
+    private String makeMementoPath(final FedoraResource resource, final Instant datetime) {
+<span class="fc" id="L348">        return resource.getPath() + &quot;/&quot; + LDPCV_TIME_MAP + &quot;/&quot; + MEMENTO_LABEL_FORMATTER.format(datetime);</span>
+    }
+
+    private String getUri(final FedoraResource resource,
+                          final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator) {
+<span class="pc bpc" id="L353" title="1 of 2 branches missed.">        if (idTranslator == null) {</span>
+<span class="nc" id="L354">            return resource.getPath();</span>
+        }
+<span class="fc" id="L356">        return idTranslator.reverse().convert(resource).getURI();</span>
+    }
+
+    private void decorateWithMementoProperties(final FedoraSession session, final String mementoPath,
+                                               final Instant dateTime) {
+        try {
+<span class="fc" id="L362">            final Node mementoNode = findNode(session, mementoPath);</span>
+<span class="pc bpc" id="L363" title="1 of 2 branches missed.">            if (mementoNode.canAddMixin(MEMENTO)) {</span>
+<span class="fc" id="L364">                mementoNode.addMixin(MEMENTO);</span>
+            }
+<span class="fc" id="L366">            final Calendar mementoDatetime = GregorianCalendar.from(</span>
+<span class="fc" id="L367">                    ZonedDateTime.ofInstant(dateTime, ZoneId.of(&quot;UTC&quot;)));</span>
+<span class="fc" id="L368">            mementoNode.setProperty(MEMENTO_DATETIME, mementoDatetime);</span>
+<span class="nc" id="L369">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L370">            throw new RepositoryRuntimeException(e);</span>
+<span class="fc" id="L371">        }</span>
+<span class="fc" id="L372">    }</span>
+
+    private void assertMementoDoesNotExist(final FedoraSession session, final String mementoPath) {
+<span class="pc bpc" id="L375" title="1 of 2 branches missed.">        if (exists(session, mementoPath)) {</span>
+<span class="nc" id="L376">            throw new RepositoryRuntimeException(new ItemExistsException(</span>
+                    &quot;Memento &quot; + mementoPath + &quot; already exists&quot;));
+        }
+<span class="fc" id="L379">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

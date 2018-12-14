@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LocalFileBinary.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation (ModeShape)</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape</a> &gt; <span class="el_source">LocalFileBinary.java</span></div><h1>LocalFileBinary.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape;
+
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.File;
+import java.io.InputStream;
+import java.net.URI;
+import java.util.Collection;
+
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
+import org.slf4j.Logger;
+
+/**
+ * External binary from a local file
+ *
+ * @author bbpennel
+ * @since 11/29/2017
+ */
+public class LocalFileBinary extends UrlBinary {
+<span class="fc" id="L41">    private static final Logger LOGGER = getLogger(LocalFileBinary.class);</span>
+
+    /**
+     * Constructs a LocalFileBinaryImpl
+     *
+     * @param node node
+     */
+    public LocalFileBinary(final Node node) {
+<span class="fc" id="L49">        super(node);</span>
+<span class="fc" id="L50">    }</span>
+
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.fcrepo.kernel.modeshape.FedoraBinaryImpl#setContent(java.io.InputStream, java.lang.String,
+     * java.util.Collection, java.lang.String, org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint)
+     */
+    @Override
+    public void setContent(final InputStream content, final String contentType,
+                           final Collection&lt;URI&gt; checksums, final String originalFileName,
+                           final StoragePolicyDecisionPoint storagePolicyDecisionPoint)
+            throws UnsupportedOperationException {
+<span class="nc" id="L63">        throw new UnsupportedOperationException(</span>
+                &quot;Cannot call setContent() on local file, call setExternalContent() instead&quot;);
+    }
+
+    @Override
+    public void setExternalContent(final String contentType,
+                                   final Collection&lt;URI&gt; checksums, final String originalFileName,
+                                   final String externalHandling, final String externalUrl)
+            throws InvalidChecksumException {
+        try {
+<span class="fc" id="L73">            super.setExternalContent(contentType, checksums, originalFileName, externalHandling, externalUrl);</span>
+
+<span class="fc" id="L75">            final Node descNode = getDescriptionNodeOrNull();</span>
+            // Store the size of the file
+<span class="fc" id="L77">            final long size = getContentSize();</span>
+<span class="pc bpc" id="L78" title="1 of 2 branches missed.">            if (descNode != null) {</span>
+<span class="fc" id="L79">                descNode.setProperty(CONTENT_SIZE, size);</span>
+            }
+
+<span class="fc" id="L82">            LOGGER.debug(&quot;Decorated local file data property at path: {}&quot;, descNode.getPath());</span>
+
+<span class="nc" id="L84">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L85">            throw new RepositoryRuntimeException(e);</span>
+<span class="fc" id="L86">        }</span>
+<span class="fc" id="L87">    }</span>
+
+    @Override
+    public String getMimeType() {
+<span class="fc" id="L91">        return getMimeTypeValue();</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.modeshape.FedoraBinaryImpl#getContentSize()
+     */
+    @Override
+    public long getContentSize() {
+<span class="fc" id="L100">        final long sizeValue = super.getContentSize();</span>
+<span class="pc bpc" id="L101" title="1 of 2 branches missed.">        if (sizeValue &gt; -1L) {</span>
+<span class="fc" id="L102">            return sizeValue;</span>
+        }
+<span class="nc" id="L104">        return getRemoteContentSize();</span>
+    }
+
+    @Override
+    protected long getRemoteContentSize() {
+<span class="fc" id="L109">        final File file = new File(getResourceUri().getPath());</span>
+<span class="fc" id="L110">        return file.length();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

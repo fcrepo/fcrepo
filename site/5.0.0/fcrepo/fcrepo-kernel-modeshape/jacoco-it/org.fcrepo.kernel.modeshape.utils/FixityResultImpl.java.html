@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FixityResultImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation (ModeShape)</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.utils</a> &gt; <span class="el_source">FixityResultImpl.java</span></div><h1>FixityResultImpl.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.utils;
+
+import org.fcrepo.kernel.api.utils.FixityResult;
+
+import static java.util.Objects.hash;
+
+import java.net.URI;
+import java.util.EnumSet;
+import java.util.Set;
+
+/**
+ * Structure for presenting the results of a fixity check
+ * (and any repair operations that may have occurred)
+ *
+ * @author bbpennel
+ */
+public class FixityResultImpl implements FixityResult {
+
+    /**
+     * the size computed by the fixity check
+     */
+    private final long computedSize;
+
+    /**
+     * the checksum computed by the fixity check
+     */
+    private final URI computedChecksum;
+
+    private final String storeIdentifier;
+
+    private final String usedAlgorithm;
+
+    /**
+     * Prepare a fixity result given the computed checksum and size
+     * @param size the given size
+     * @param checksum the given checksum
+     */
+    public FixityResultImpl(final long size, final URI checksum) {
+<span class="nc" id="L56">        this(&quot;comparison-only-identifier&quot;, size, checksum);</span>
+<span class="nc" id="L57">    }</span>
+
+    /**
+     *
+     * @param storeIdentifier the store identifier
+     * @param size the size
+     * @param checksum the checksum
+     */
+    private FixityResultImpl(final String storeIdentifier, final long size, final URI checksum) {
+<span class="nc" id="L66">        this(storeIdentifier, size, checksum, null);</span>
+<span class="nc" id="L67">    }</span>
+
+    /**
+     *
+     * @param storeIdentifier the store identifier
+     * @param size the size
+     * @param checksum the checksum
+     * @param algorithm the algorithm used to calculate the checksum
+     */
+<span class="fc" id="L76">    public FixityResultImpl(final String storeIdentifier, final long size, final URI checksum, final String algorithm) {</span>
+<span class="fc" id="L77">        this.storeIdentifier = storeIdentifier;</span>
+<span class="fc" id="L78">        computedSize = size;</span>
+<span class="fc" id="L79">        computedChecksum = checksum;</span>
+<span class="fc" id="L80">        usedAlgorithm = algorithm;</span>
+<span class="fc" id="L81">    }</span>
+
+    @Override
+    public boolean equals(final Object obj) {
+<span class="nc bnc" id="L85" title="All 2 branches missed.">        if (obj instanceof FixityResult) {</span>
+<span class="nc" id="L86">            final FixityResult that = (FixityResult) obj;</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">            return computedSize == that.getComputedSize() &amp;&amp;</span>
+<span class="nc bnc" id="L88" title="All 2 branches missed.">                    computedChecksum.equals(that.getComputedChecksum()) &amp;&amp;</span>
+<span class="nc bnc" id="L89" title="All 2 branches missed.">                    equalsNullAware(usedAlgorithm, that.getUsedAlgorithm());</span>
+        }
+<span class="nc" id="L91">        return false;</span>
+    }
+
+    private boolean equalsNullAware(final Object a, final Object b) {
+<span class="nc bnc" id="L95" title="All 6 branches missed.">        return (a == null &amp;&amp; b == null) ||</span>
+<span class="nc bnc" id="L96" title="All 4 branches missed.">                (a != null &amp;&amp; a.equals(b)) ||</span>
+<span class="nc bnc" id="L97" title="All 2 branches missed.">                (b != null &amp;&amp; b.equals(a));</span>
+    }
+
+    @Override
+    public int hashCode() {
+<span class="nc" id="L102">        return hash(computedSize, computedChecksum);</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L107">        return &quot;Fixity: checksum: &quot; + computedChecksum + &quot; / &quot; + computedSize;</span>
+    }
+
+    /**
+     * Check if the fixity result matches the given checksum URI
+     * @param checksum the checksum uri
+     * @return true if the checksums match
+     */
+    @Override
+    public boolean matches(final URI checksum) {
+<span class="fc" id="L117">        return computedChecksum.equals(checksum);</span>
+    }
+
+    /**
+     * Check if the fixity result matches the given size
+     * @param size the size
+     * @return true if fixity result matches the given size
+     */
+    @Override
+    public boolean matches(final long size) {
+<span class="pc bpc" id="L127" title="1 of 2 branches missed.">        return computedSize == size;</span>
+    }
+
+    /**
+     * Does the fixity entry match the given size and checksum?
+     * @param size bitstream size in bytes
+     * @param checksum checksum URI in the form urn:DIGEST:RESULT
+     * @return true if both conditions matched
+     */
+    @Override
+    public boolean matches(final long size, final URI checksum) {
+<span class="pc bpc" id="L138" title="1 of 4 branches missed.">        return matches(size) &amp;&amp; matches(checksum);</span>
+    }
+
+    /**
+     * @return the status
+     */
+    @Override
+    public Set&lt;FixityState&gt; getStatus(final long size, final URI checksum) {
+
+<span class="fc" id="L147">        final Set&lt;FixityState&gt; status = EnumSet.noneOf(FixityState.class);</span>
+
+
+<span class="fc bfc" id="L150" title="All 2 branches covered.">        if (matches(size, checksum)) {</span>
+<span class="fc" id="L151">            status.add(FixityState.SUCCESS);</span>
+        } else {
+<span class="pc bpc" id="L153" title="1 of 2 branches missed.">            if (!matches(size)) {</span>
+<span class="nc" id="L154">                status.add(FixityState.BAD_SIZE);</span>
+            }
+
+<span class="pc bpc" id="L157" title="1 of 2 branches missed.">            if (!matches(checksum)) {</span>
+<span class="fc" id="L158">                status.add(FixityState.BAD_CHECKSUM);</span>
+            }
+        }
+
+<span class="fc" id="L162">        return status;</span>
+    }
+
+    /**
+     * @return the computedSize
+     */
+    @Override
+    public long getComputedSize() {
+<span class="fc" id="L170">        return computedSize;</span>
+    }
+
+    /**
+     * @return the computedChecksum
+     */
+    @Override
+    public URI getComputedChecksum() {
+<span class="fc" id="L178">        return computedChecksum;</span>
+    }
+
+    @Override
+    public String getUsedAlgorithm() {
+<span class="fc" id="L183">        return usedAlgorithm;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
