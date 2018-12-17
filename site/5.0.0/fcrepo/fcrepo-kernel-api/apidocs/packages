@@ -1,0 +1,10 @@
+org.fcrepo.kernel.api
+org.fcrepo.kernel.api.observer
+org.fcrepo.kernel.api.utils
+org.fcrepo.kernel.api.models
+org.fcrepo.kernel.api.identifiers
+org.fcrepo.kernel.api.exception
+org.fcrepo.kernel.api.rdf
+org.fcrepo.kernel.api.services
+org.fcrepo.kernel.api.services.functions
+org.fcrepo.kernel.api.services.policy
