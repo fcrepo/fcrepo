@@ -48,7 +48,10 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -82,6 +85,8 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.junit.Before;
 import org.junit.runner.RunWith;
@@ -394,6 +399,13 @@ public abstract class AbstractResourceIT {
             model.read(response.getEntity().getContent(), serverAddress + pid, "TURTLE");
         }
         return model;
+    }
+
+    protected static InputStream streamModel(final Model model, final RDFFormat format) throws IOException {
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+            RDFDataMgr.write(bos, model, format);
+            return new ByteArrayInputStream(bos.toByteArray());
+        }
     }
 
     protected CloseableHttpResponse createObject() {

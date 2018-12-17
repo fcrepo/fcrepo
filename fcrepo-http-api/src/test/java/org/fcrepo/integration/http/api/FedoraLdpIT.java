@@ -152,6 +152,7 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.FileEntity;
+import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
@@ -162,12 +163,13 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.vocabulary.DC_11;
+import org.apache.jena.vocabulary.RDF;
 import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
-import org.fcrepo.kernel.api.RdfLexicon;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -197,6 +199,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
     private static final Node rdfType = type.asNode();
 
     private static final Node DCTITLE = title.asNode();
+
+    private static final Resource PCDM_FILE_TYPE = createResource("http://pcdm.org/models#File");
 
     private static final String CONTAINER_LINK_HEADER = "<" + CONTAINER.getURI() + ">;rel=\"type\"";
     private static final String BASIC_CONTAINER_LINK_HEADER = "<" + BASIC_CONTAINER.getURI() + ">;rel=\"type\"";
@@ -4153,6 +4157,48 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testPutUpdateBinaryWithType() throws Exception {
+        final String objid = getRandomUniqueId();
+        final String objURI = serverAddress + objid;
+        final String binURI = objURI + "/binary1";
+        final String descURI = objURI + "/binary1/fcr:metadata";
+
+        try (final CloseableHttpResponse response = execute(putDSMethod(objid, "binary1", "some test content"))) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+        }
+
+        // Add type using PUT
+        final Model model1 = getModel(objid + "/binary1/fcr:metadata");
+        final Resource resc = model1.getResource(binURI);
+        resc.addProperty(RDF.type, PCDM_FILE_TYPE);
+
+        final HttpPut addMethod = new HttpPut(descURI);
+        addMethod.addHeader(CONTENT_TYPE, "text/turtle");
+        addMethod.setEntity(new InputStreamEntity(streamModel(model1, RDFFormat.TURTLE)));
+        try (final CloseableHttpResponse response = execute(addMethod)) {
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
+        }
+
+        final Model model2 = getModel(objid + "/binary1/fcr:metadata");
+        final Resource resc2 = model2.getResource(binURI);
+        assertTrue(resc2.hasProperty(RDF.type, PCDM_FILE_TYPE));
+
+        // Remove type using PUT
+        model2.remove(resc2, RDF.type, PCDM_FILE_TYPE);
+
+        final HttpPut removeMethod = new HttpPut(descURI);
+        removeMethod.addHeader(CONTENT_TYPE, "text/turtle");
+        removeMethod.setEntity(new InputStreamEntity(streamModel(model2, RDFFormat.TURTLE)));
+        try (final CloseableHttpResponse response = execute(removeMethod)) {
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
+        }
+
+        final Model model3 = getModel(objid + "/binary1/fcr:metadata");
+        final Resource resc3 = model3.getResource(binURI);
+        assertFalse(resc3.hasProperty(RDF.type, PCDM_FILE_TYPE));
+    }
+
+    @Test
     public void testPatchUpdateBinaryWithType() throws Exception {
         final String objid = getRandomUniqueId();
         final String objURI = serverAddress + objid;
@@ -4163,24 +4209,32 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
         }
 
-        final String rdfType = RdfLexicon.RDF_NAMESPACE + "type";
+        // Test adding an rdf:type
         final HttpPatch patchBinary = new HttpPatch(descURI);
         patchBinary.addHeader(CONTENT_TYPE, "application/sparql-update");
         patchBinary.setEntity(new StringEntity("INSERT { <" + binURI + "> " +
-                "<" + rdfType + "> <http://pcdm.org/models#File> } WHERE {}"));
+                "<" + RDF.type.getURI() + "> <" + PCDM_FILE_TYPE.getURI() + "> } WHERE {}"));
 
         try (final CloseableHttpResponse response = execute(patchBinary)) {
             assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
         }
 
-        final HttpGet getObjMethod = new HttpGet(descURI);
-        getObjMethod.addHeader(ACCEPT, "text/turtle");
-        final Model model = createDefaultModel();
-        try (final CloseableHttpResponse getResponse = execute(getObjMethod)) {
-            model.read(getResponse.getEntity().getContent(), binURI, "TURTLE");
+        final Model model = getModel(objid + "/binary1/fcr:metadata");
+        final Resource resc = model.getResource(binURI);
+        assertTrue(resc.hasProperty(RDF.type, PCDM_FILE_TYPE));
+
+        // Test removing an rdf:type
+        final HttpPatch patchBinary2 = new HttpPatch(descURI);
+        patchBinary2.addHeader(CONTENT_TYPE, "application/sparql-update");
+        patchBinary2.setEntity(new StringEntity("DELETE { <" + binURI + "> " +
+                "<" + RDF.type.getURI() + "> <" + PCDM_FILE_TYPE.getURI() + "> } WHERE {}"));
+
+        try (final CloseableHttpResponse response = execute(patchBinary2)) {
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
         }
 
-        final Resource resc = model.getResource(binURI);
-        assertTrue(resc.hasProperty(createProperty(rdfType), createResource("http://pcdm.org/models#File")));
+        final Model model2 = getModel(objid + "/binary1/fcr:metadata");
+        final Resource resc2 = model2.getResource(binURI);
+        assertFalse(resc2.hasProperty(RDF.type, PCDM_FILE_TYPE));
     }
 }
