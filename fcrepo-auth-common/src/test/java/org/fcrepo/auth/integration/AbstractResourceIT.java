@@ -53,7 +53,7 @@ public abstract class AbstractResourceIT {
 
     private static final String HOSTNAME = "localhost";
 
-    private static final String serverAddress = "http://" + HOSTNAME +
+    protected static final String serverAddress = "http://" + HOSTNAME +
             ":" + SERVER_PORT + "/";
 
     private static HttpClient client;
@@ -76,7 +76,7 @@ public abstract class AbstractResourceIT {
         return new HttpPost(serverAddress + pid + "?" + query);
     }
 
-    private HttpResponse execute(final HttpUriRequest method)
+    protected HttpResponse execute(final HttpUriRequest method)
             throws IOException {
         logger.debug("Executing: " + method.getMethod() + " to " +
                 method.getURI());

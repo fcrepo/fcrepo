@@ -621,6 +621,34 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testGetOnMementoWithAcceptDatetimePresent() throws Exception {
+        createVersionedContainer(id);
+        final String mementoDateTime =
+            MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2017-06-10T11:41:00Z", Instant::from));
+        final String mementoUri = createLDPRSMementoWithExistingBody(mementoDateTime);
+        // Status 200: GET request on existing memento
+        final HttpGet getMemento = new HttpGet(mementoUri);
+        getMemento.addHeader(ACCEPT_DATETIME, mementoDateTime);
+        assertEquals("Expected memento could not be retrieved when Accept-Datetime header is present: " + mementoUri,
+                     OK.getStatusCode(),
+                     getStatus(getMemento));
+    }
+
+    @Test
+    public void testHeadOnMementoWithAcceptDatetimePresent() throws Exception {
+        createVersionedContainer(id);
+        final String mementoDateTime =
+                MEMENTO_RFC_1123_FORMATTER.format(ISO_INSTANT.parse("2017-06-10T11:41:00Z", Instant::from));
+        final String mementoUri = createLDPRSMementoWithExistingBody(mementoDateTime);
+        // Status 200: HEAD request on existing memento
+        final HttpHead headMemento = new HttpHead(mementoUri);
+        headMemento.addHeader(ACCEPT_DATETIME, mementoDateTime);
+        assertEquals("Expected memento could not be retrieved when Accept-Datetime header is present: " + mementoUri,
+                OK.getStatusCode(),
+                getStatus(headMemento));
+    }
+
+    @Test
     public void testOptionsOnMemento() throws Exception {
 
         createVersionedContainer(id);
@@ -853,7 +881,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             assertEquals("Didn't get a OK response!", OK.getStatusCode(), getStatus(response));
             // verify headers in link format.
             verifyTimeMapHeaders(response, uri);
-            final List<String> bodyList = Arrays.asList(EntityUtils.toString(response.getEntity()).split(",\n"));
+            final List<String> bodyList = Arrays.asList(EntityUtils.toString(response.getEntity())
+                    .split("," + System.lineSeparator()));
             //the links from the body are not
 
             final Link[] bodyLinks = bodyList.stream().map(String::trim).filter(t -> !t.isEmpty())

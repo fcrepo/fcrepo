@@ -25,6 +25,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
+import java.net.URI;
 
 /**
  * @author Andrew Woods
@@ -132,7 +133,9 @@ public class DefaultPropertiesLoaderTest {
 
     @Test
     public void testValueSetForNoDefault() {
-        final String value = "/absolute/path";
+        // This is merely to get an absolute file path in a platform-independent way,
+        // e.g. /absolute/path vs C:\absolute\path
+        final String value = new File(URI.create("file:/absolute/path")).getAbsolutePath();
         System.setProperty(NO_DEFAULT_PROP, value);
 
         loader.loadSystemProperties();

@@ -19,12 +19,15 @@ package org.fcrepo.auth.common;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.util.Set;
+
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.SimpleAuthenticationInfo;
 import org.apache.shiro.realm.AuthenticatingRealm;
 import org.apache.shiro.subject.SimplePrincipalCollection;
+import org.fcrepo.auth.common.ContainerRolesPrincipalProvider.ContainerRolesPrincipal;
 import org.slf4j.Logger;
 
 /**
@@ -48,7 +51,10 @@ public class ServletContainerAuthenticatingRealm extends AuthenticatingRealm {
         // container-managed auth username
         principals.add(authToken.getPrincipal(), getName());
         // container-managed auth roles
-        principals.addAll(authToken.getRoles(), getName());
+        final Set<ContainerRolesPrincipal> roles = authToken.getRoles();
+        if (!roles.isEmpty()) {
+            principals.addAll(roles, getName());
+        }
         return new SimpleAuthenticationInfo(principals, ContainerAuthToken.AUTHORIZED);
     }
 
