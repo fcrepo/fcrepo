@@ -113,7 +113,12 @@
           // WARNING: Fragile code relying on magic suffix '/fcr:metadata' and absence of 'Link' header 
           // on external resource.
           if(!url.match(/.*fcr:(metadata|tx)/)){
-            newLocation = url + "/fcr:metadata";
+             http('HEAD', url + "/fcr/metadata", function(res) {
+		            if(res.status == 200) {
+			              newLocation = url + "/fcr:metadata";
+		            } else {
+		              newLocation = url;
+	            }
           }
           location.href = newLocation ;
           return;
