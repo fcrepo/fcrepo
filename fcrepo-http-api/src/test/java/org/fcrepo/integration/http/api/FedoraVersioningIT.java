@@ -47,6 +47,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.APPLICATION_LINK_FORMA
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_FIXITY;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
@@ -92,6 +93,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.core.Link;
+
+import com.google.common.collect.ImmutableList;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
@@ -248,6 +251,38 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                     results.contains(ANY, mementoSubject, RDF.type.asNode(), MEMENTO_TYPE_NODE));
 
             assertMementoEqualsOriginal(mementoUri);
+        }
+    }
+
+    @Test
+    public void testCreateVersionFromResourceWithBlankNode() throws Exception {
+        final HttpPost createMethod = postObjMethod();
+        createMethod.addHeader("Slug", id);
+        createMethod.addHeader(CONTENT_TYPE, TURTLE);
+        createMethod.setEntity(new StringEntity("<> <http://purl.org/dc/terms/subject> " +
+                "[ a <info:test#Something> ]"));
+
+        try (final CloseableHttpResponse response = execute(createMethod)) {
+            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+        }
+
+        final String mementoUri = createMemento(subjectUri, null, null, null);
+        assertMementoUri(mementoUri, subjectUri);
+
+        try (final CloseableDataset dataset = getDataset(new HttpGet(mementoUri))) {
+            final DatasetGraph results = dataset.asDatasetGraph();
+
+            // Expect triple with Blank Node as Object
+            final Iterator<Quad> quads =
+                    results.find(ANY, createURI(subjectUri), createURI("http://purl.org/dc/terms/subject"), ANY);
+
+            final List<Quad> quadList = ImmutableList.copyOf(quads);
+            assertEquals("Should only be one element: " + quadList.size(), 1, quadList.size());
+
+            final Quad quad = quadList.get(0);
+            // The quad:Object is the subject of the Blank Node triple we are expecting
+            assertTrue("Should have found blank node triple",
+                    results.contains(ANY, quad.getObject(), RDF.type.asNode(), createURI("info:test#Something")));
         }
     }
 
