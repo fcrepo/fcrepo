@@ -79,7 +79,8 @@ public class RdfAdder extends PersistingRdfStreamConsumer {
     @Override
     protected void operateOnMixin(final Resource mixinResource, final FedoraResource resource)
             throws RepositoryException {
-        jcrRdfTools().addMixin(resource, mixinResource, getNamespaces(getJcrNode(resource).getSession()));
+        final FedoraResource description = resource.getDescription();
+        jcrRdfTools().addMixin(description, mixinResource, getNamespaces(getJcrNode(description).getSession()));
     }
 
 

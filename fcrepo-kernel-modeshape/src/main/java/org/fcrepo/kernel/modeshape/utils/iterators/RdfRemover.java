@@ -60,7 +60,8 @@ public class RdfRemover extends PersistingRdfStreamConsumer {
     protected void operateOnMixin(final Resource mixinResource,
         final FedoraResource resource) throws RepositoryException {
 
-        jcrRdfTools().removeMixin(resource, mixinResource, getNamespaces(getJcrNode(resource).getSession()));
+        final FedoraResource description = resource.getDescription();
+        jcrRdfTools().removeMixin(description, mixinResource, getNamespaces(getJcrNode(description).getSession()));
     }
 
     @Override

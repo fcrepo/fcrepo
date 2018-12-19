@@ -134,7 +134,7 @@ public class JcrPropertyStatementListener extends StatementListener {
             final RDFNode objectNode = s.getObject();
             if (property.equals(RDF.type) && objectNode.isResource()) {
                 final Resource mixinResource = objectNode.asResource();
-                jcrRdfTools.addMixin(resource, mixinResource, input.getModel().getNsPrefixMap());
+                jcrRdfTools.addMixin(description, mixinResource, input.getModel().getNsPrefixMap());
                 statements.put(input, Operation.ADD);
                 return;
             }
@@ -178,7 +178,7 @@ public class JcrPropertyStatementListener extends StatementListener {
 
             if (property.equals(RDF.type) && objectNode.isResource()) {
                 final Resource mixinResource = objectNode.asResource();
-                jcrRdfTools.removeMixin(resource, mixinResource, s.getModel().getNsPrefixMap());
+                jcrRdfTools.removeMixin(description, mixinResource, s.getModel().getNsPrefixMap());
                 statements.put(s, Operation.REMOVE);
                 return;
             }
