@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ReferencesRdfContext.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-modeshape</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.rdf.impl</a> &gt; <span class="el_source">ReferencesRdfContext.java</span></div><h1>ReferencesRdfContext.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.rdf.impl;
+
+import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
+import static org.fcrepo.kernel.modeshape.rdf.converters.ValueConverter.nodeForValue;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
+import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
+import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
+import static java.util.Arrays.asList;
+import static javax.jcr.PropertyType.PATH;
+import static javax.jcr.PropertyType.REFERENCE;
+import static javax.jcr.PropertyType.WEAKREFERENCE;
+
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Resource;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.modeshape.rdf.impl.mappings.PropertyToTriple;
+import org.fcrepo.kernel.modeshape.rdf.impl.mappings.PropertyValueIterator;
+
+import javax.jcr.Node;
+import javax.jcr.Property;
+import javax.jcr.RepositoryException;
+import javax.jcr.Value;
+
+import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
+
+/**
+ * Accumulate inbound references to a given resource
+ *
+ * @author cabeer
+ * @author escowles
+ */
+public class ReferencesRdfContext extends NodeRdfContext {
+
+    private final PropertyToTriple property2triple;
+
+<span class="fc" id="L56">    public static final List&lt;Integer&gt; REFERENCE_TYPES = asList(PATH, REFERENCE, WEAKREFERENCE);</span>
+
+    /**
+     * Add the inbound references from other nodes to this resource to the stream
+     *
+     * @param resource the resource
+     * @param idTranslator the id translator
+     * @throws RepositoryException if repository exception occurred
+     */
+
+    public ReferencesRdfContext(final FedoraResource resource,
+                                final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator)
+        throws RepositoryException {
+<span class="fc" id="L69">        super(resource, idTranslator);</span>
+<span class="fc" id="L70">        property2triple = new PropertyToTriple(getJcrNode(resource).getSession(), idTranslator);</span>
+<span class="fc" id="L71">        concat(putReferencesIntoContext(getJcrNode(resource)));</span>
+<span class="fc" id="L72">    }</span>
+
+<span class="fc" id="L74">    private final Predicate&lt;Triple&gt; INBOUND = t -&gt; {</span>
+<span class="fc" id="L75">        return t.getObject().getURI().equals(uriFor(resource()).getURI());</span>
+    };
+
+    /* References from LDP indirect containers are generated dynamically by LdpContainerRdfContext, so they won't
+       show up in getReferences()/getWeakReferences().  Instead, we should check referencers to see if they are
+       members of an IndirectContainer and generate the appropriate inbound references. */
+    private Stream&lt;Triple&gt; putReferencesIntoContext(final Node node) throws RepositoryException {
+<span class="fc" id="L82">        return Stream.concat(</span>
+<span class="fc" id="L83">            getAllReferences(node).flatMap(property2triple),</span>
+<span class="fc" id="L84">            getAllReferences(node).flatMap(uncheck((final Property x) -&gt; {</span>
+                    @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L86">                    final Stream&lt;Value&gt; values = iteratorToStream(new PropertyValueIterator(x.getParent()</span>
+<span class="fc" id="L87">                            .getProperties())).filter((final Value y) -&gt; REFERENCE_TYPES.contains(y.getType()));</span>
+<span class="fc" id="L88">                    return values;</span>
+                }))
+<span class="fc" id="L90">                .flatMap(uncheck((final Value x) -&gt; {</span>
+<span class="fc" id="L91">                    return new LdpContainerRdfContext(nodeConverter.convert(nodeForValue(node.getSession(), x)),</span>
+<span class="fc" id="L92">                        translator());</span>
+                }))
+<span class="fc" id="L94">                .filter(INBOUND));</span>
+    }
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    private static Stream&lt;Property&gt; getAllReferences(final Node node) throws RepositoryException {
+<span class="fc" id="L99">        return Stream.concat(iteratorToStream(node.getReferences()), iteratorToStream(node.getWeakReferences()));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

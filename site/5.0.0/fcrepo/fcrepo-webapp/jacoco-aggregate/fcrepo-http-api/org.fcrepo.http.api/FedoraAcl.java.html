@@ -1,0 +1,351 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>FedoraAcl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api</a> &gt; <span class="el_source">FedoraAcl.java</span></div><h1>FedoraAcl.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.http.api;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.noContent;
+import static javax.ws.rs.core.Response.ok;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.riot.Lang.TTL;
+import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
+import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
+import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import javax.jcr.ItemNotFoundException;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.ClientErrorException;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.shared.JenaException;
+import org.fcrepo.http.api.PathLockManager.AcquiredLock;
+import org.fcrepo.http.commons.domain.PATCH;
+import org.fcrepo.http.commons.domain.RDFMediaType;
+import org.fcrepo.http.commons.responses.RdfNamespacedStream;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.exception.AccessDeniedException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.slf4j.Logger;
+import org.springframework.context.annotation.Scope;
+
+/**
+ * @author lsitu
+ * @author peichman
+ * @since 4/20/18
+ */
+@Scope(&quot;request&quot;)
+@Path(&quot;/{path: (.+/)?}fcr:acl&quot;)
+public class FedoraAcl extends ContentExposingResource {
+
+<span class="fc" id="L91">    private static final Logger LOGGER = getLogger(FedoraAcl.class);</span>
+
+    public static final String ROOT_AUTHORIZATION_PROPERTY = &quot;fcrepo.auth.webac.authorization&quot;;
+
+    private static final String ROOT_AUTHORIZATION_LOCATION = &quot;/root-authorization.ttl&quot;;
+
+    @Context protected Request request;
+    @Context protected HttpServletResponse servletResponse;
+    @Context protected UriInfo uriInfo;
+
+    @PathParam(&quot;path&quot;) protected String externalPath;
+
+    /**
+     * Default JAX-RS entry point
+     */
+    public FedoraAcl() {
+<span class="fc" id="L107">        super();</span>
+<span class="fc" id="L108">    }</span>
+
+    /**
+     * PUT to create FedoraWebacACL resource.
+     * @param requestContentType The content type of the resource body
+     * @param requestBodyStream  The request body as stream
+     * @return the response for a request to create a Fedora WebAc acl
+     */
+    @PUT
+    public Response createFedoraWebacAcl(@HeaderParam(CONTENT_TYPE) final MediaType requestContentType,
+                                         final InputStream requestBodyStream) {
+
+<span class="pc bpc" id="L120" title="2 of 4 branches missed.">        if (resource().isAcl() || resource().isMemento()) {</span>
+<span class="nc" id="L121">            throw new BadRequestException(&quot;ACL resource creation is not allowed for resource &quot; + resource().getPath());</span>
+        }
+
+        final boolean created;
+        final FedoraResource aclResource;
+
+<span class="fc" id="L127">        final String path = toPath(translator(), externalPath);</span>
+<span class="fc" id="L128">        final AcquiredLock lock = lockManager.lockForWrite(path, session.getFedoraSession(), nodeService);</span>
+        try {
+<span class="fc" id="L130">            LOGGER.info(&quot;PUT acl resource '{}'&quot;, externalPath);</span>
+
+<span class="fc" id="L132">            aclResource = resource().findOrCreateAcl();</span>
+<span class="fc" id="L133">            created = aclResource.isNew();</span>
+
+<span class="fc bfc" id="L135" title="All 2 branches covered.">            final MediaType contentType =</span>
+<span class="fc" id="L136">                getSimpleContentType(requestContentType == null ? RDFMediaType.TURTLE_TYPE : requestContentType);</span>
+<span class="pc bpc" id="L137" title="1 of 2 branches missed.">            if (isRdfContentType(contentType.toString())) {</span>
+
+<span class="pc bpc" id="L139" title="1 of 2 branches missed.">                try (final RdfStream resourceTriples =</span>
+<span class="pc" id="L140">                         created ? new DefaultRdfStream(asNode(aclResource)) : getResourceTriples(aclResource)) {</span>
+<span class="fc" id="L141">                    replaceResourceWithStream(aclResource, requestBodyStream, contentType, resourceTriples);</span>
+
+<span class="fc" id="L143">                }</span>
+            } else {
+<span class="nc" id="L145">                throw new BadRequestException(&quot;Content-Type (&quot; + requestContentType + &quot;) is invalid. Try text/turtle &quot; +</span>
+                                              &quot;or other RDF compatible type.&quot;);
+            }
+<span class="fc" id="L148">            session.commit();</span>
+        } finally {
+<span class="fc" id="L150">            lock.release();</span>
+        }
+
+<span class="fc" id="L153">        addCacheControlHeaders(servletResponse, aclResource, session);</span>
+<span class="fc" id="L154">        final URI location = getUri(aclResource);</span>
+<span class="pc bpc" id="L155" title="1 of 2 branches missed.">        if (created) {</span>
+<span class="fc" id="L156">            return created(location).build();</span>
+        } else {
+<span class="nc" id="L158">            return noContent().location(location).build();</span>
+        }
+    }
+
+    /**
+     * PATCH to update an FedoraWebacACL resource using SPARQL-UPDATE
+     *
+     * @param requestBodyStream the request body stream
+     * @return 204
+     * @throws IOException if IO exception occurred
+     */
+    @PATCH
+    @Consumes({ contentTypeSPARQLUpdate })
+    public Response updateSparql(final InputStream requestBodyStream)
+        throws IOException, ItemNotFoundException {
+<span class="fc" id="L173">        hasRestrictedPath(externalPath);</span>
+
+<span class="pc bpc" id="L175" title="1 of 2 branches missed.">        if (null == requestBodyStream) {</span>
+<span class="nc" id="L176">            throw new BadRequestException(&quot;SPARQL-UPDATE requests must have content!&quot;);</span>
+        }
+
+<span class="fc" id="L179">        final FedoraResource aclResource = resource().getAcl();</span>
+
+<span class="fc bfc" id="L181" title="All 2 branches covered.">        if (aclResource == null) {</span>
+<span class="pc bpc" id="L182" title="1 of 2 branches missed.">            if (resource().hasType(FEDORA_REPOSITORY_ROOT)) {</span>
+<span class="fc" id="L183">                throw new ClientErrorException(&quot;The default root ACL is system generated and cannot be modified. &quot; +</span>
+                        &quot;To override the default root ACL you must PUT a user-defined ACL to this endpoint.&quot;,
+                        CONFLICT);
+            }
+
+<span class="nc" id="L188">            throw new ItemNotFoundException();</span>
+        }
+
+<span class="fc" id="L191">        final AcquiredLock lock = lockManager.lockForWrite(aclResource.getPath(), session.getFedoraSession(),</span>
+                                                           nodeService);
+
+        try {
+<span class="fc" id="L195">            final String requestBody = IOUtils.toString(requestBodyStream, UTF_8);</span>
+<span class="pc bpc" id="L196" title="1 of 2 branches missed.">            if (isBlank(requestBody)) {</span>
+<span class="nc" id="L197">                throw new BadRequestException(&quot;SPARQL-UPDATE requests must have content!&quot;);</span>
+            }
+
+<span class="fc" id="L200">            evaluateRequestPreconditions(request, servletResponse, aclResource, session);</span>
+
+<span class="fc" id="L202">            try (final RdfStream resourceTriples =</span>
+<span class="pc bpc" id="L203" title="1 of 2 branches missed.">                     aclResource.isNew() ? new DefaultRdfStream(asNode(aclResource)) :</span>
+<span class="fc" id="L204">                     getResourceTriples(aclResource)) {</span>
+<span class="fc" id="L205">                LOGGER.info(&quot;PATCH for '{}'&quot;, externalPath);</span>
+<span class="fc" id="L206">                patchResourcewithSparql(aclResource, requestBody, resourceTriples);</span>
+            }
+<span class="fc" id="L208">            session.commit();</span>
+
+<span class="fc" id="L210">            addCacheControlHeaders(servletResponse, aclResource, session);</span>
+
+<span class="fc" id="L212">            return noContent().build();</span>
+<span class="nc" id="L213">        } catch (final IllegalArgumentException iae) {</span>
+<span class="nc" id="L214">            throw new BadRequestException(iae.getMessage());</span>
+<span class="nc" id="L215">        } catch (final AccessDeniedException e) {</span>
+<span class="nc" id="L216">            throw e;</span>
+<span class="nc" id="L217">        } catch (final RuntimeException ex) {</span>
+<span class="nc" id="L218">            final Throwable cause = ex.getCause();</span>
+<span class="nc bnc" id="L219" title="All 2 branches missed.">            if (cause instanceof PathNotFoundRuntimeException) {</span>
+                // the sparql update referred to a repository resource that doesn't exist
+<span class="nc" id="L221">                throw new BadRequestException(cause.getMessage());</span>
+            }
+<span class="nc" id="L223">            throw ex;</span>
+        } finally {
+<span class="fc" id="L225">            lock.release();</span>
+        }
+    }
+
+    @Override
+    protected String externalPath() {
+<span class="fc" id="L231">        return externalPath;</span>
+    }
+
+    /**
+     * GET to retrieve the ACL resource.
+     *
+     * @param rangeValue the range value
+     * @return a binary or the triples for the specified node
+     * @throws IOException if IO exception occurred
+     */
+    @GET
+    @Produces({ TURTLE_WITH_CHARSET + &quot;;qs=1.0&quot;, JSON_LD + &quot;;qs=0.8&quot;,
+                N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
+                TURTLE_X, TEXT_HTML_WITH_CHARSET })
+    public Response getResource(@HeaderParam(&quot;Range&quot;) final String rangeValue)
+            throws IOException, ItemNotFoundException {
+
+<span class="fc" id="L248">        LOGGER.info(&quot;GET resource '{}'&quot;, externalPath);</span>
+
+<span class="fc" id="L250">        final FedoraResource aclResource = resource().getAcl();</span>
+
+<span class="fc bfc" id="L252" title="All 2 branches covered.">        if (aclResource == null) {</span>
+<span class="fc bfc" id="L253" title="All 2 branches covered.">            if (resource().hasType(FEDORA_REPOSITORY_ROOT)) {</span>
+<span class="fc" id="L254">                final String resourceUri = getUri(resource()).toString();</span>
+<span class="pc bpc" id="L255" title="1 of 2 branches missed.">                final String aclUri = resourceUri + (resourceUri.endsWith(&quot;/&quot;) ? &quot;&quot; : &quot;/&quot;) + FCR_ACL;</span>
+
+<span class="fc" id="L257">                final RdfStream defaultRdfStream = DefaultRdfStream.fromModel(createResource(aclUri).asNode(),</span>
+<span class="fc" id="L258">                    getDefaultAcl(aclUri));</span>
+<span class="fc" id="L259">                final RdfNamespacedStream output = new RdfNamespacedStream(defaultRdfStream,</span>
+<span class="fc" id="L260">                    namespaceRegistry.getNamespaces());</span>
+<span class="fc" id="L261">                return ok(output).build();</span>
+            }
+
+<span class="fc" id="L264">            throw new ItemNotFoundException();</span>
+        }
+
+<span class="fc" id="L267">        checkCacheControlHeaders(request, servletResponse, aclResource, session);</span>
+
+<span class="fc" id="L269">        LOGGER.info(&quot;GET resource '{}'&quot;, externalPath);</span>
+<span class="fc" id="L270">        final AcquiredLock readLock = lockManager.lockForRead(aclResource.getPath());</span>
+<span class="fc" id="L271">        try (final RdfStream rdfStream = new DefaultRdfStream(asNode(aclResource))) {</span>
+
+<span class="fc" id="L273">            addResourceHttpHeaders(aclResource);</span>
+<span class="fc" id="L274">            return getContent(rangeValue, getChildrenLimit(), rdfStream, aclResource);</span>
+
+        } finally {
+<span class="fc" id="L277">            readLock.release();</span>
+        }
+    }
+
+    /**
+     * Deletes an object.
+     *
+     * @return response
+     */
+    @DELETE
+    public Response deleteObject() throws ItemNotFoundException {
+
+<span class="fc" id="L289">        hasRestrictedPath(externalPath);</span>
+<span class="fc" id="L290">        LOGGER.info(&quot;Delete resource '{}'&quot;, externalPath);</span>
+
+<span class="fc" id="L292">        final AcquiredLock lock = lockManager.lockForDelete(resource().getPath());</span>
+
+        try {
+<span class="fc" id="L295">            final FedoraResource aclResource = resource().getAcl();</span>
+<span class="fc bfc" id="L296" title="All 2 branches covered.">            if (aclResource != null) {</span>
+<span class="fc" id="L297">                aclResource.delete();</span>
+            }
+<span class="fc" id="L299">            session.commit();</span>
+
+<span class="fc bfc" id="L301" title="All 2 branches covered.">            if (aclResource == null) {</span>
+<span class="pc bpc" id="L302" title="1 of 2 branches missed.">                if (resource().hasType(FEDORA_REPOSITORY_ROOT)) {</span>
+<span class="fc" id="L303">                    throw new ClientErrorException(&quot;The default root ACL is system generated and cannot be deleted. &quot; +</span>
+                            &quot;To override the default root ACL you must PUT a user-defined ACL to this endpoint.&quot;,
+                            CONFLICT);
+                }
+
+<span class="nc" id="L308">                throw new ItemNotFoundException();</span>
+            }
+
+<span class="fc" id="L311">            return noContent().build();</span>
+
+        } finally {
+<span class="fc" id="L314">            lock.release();</span>
+        }
+    }
+
+    /**
+     * Retrieve the default root ACL from a user specified location if it exists,
+     * otherwise the one provided by Fedora will be used.
+     * @param baseUri the URI of the default ACL
+     * @return Model the rdf model of the default root ACL
+     */
+    public static Model getDefaultAcl(final String baseUri) {
+<span class="fc" id="L325">        final String rootAcl = System.getProperty(ROOT_AUTHORIZATION_PROPERTY);</span>
+<span class="fc" id="L326">        final Model model = createDefaultModel();</span>
+
+<span class="pc bpc" id="L328" title="1 of 4 branches missed.">        if (rootAcl != null &amp;&amp; new File(rootAcl).isFile()) {</span>
+            try {
+<span class="fc" id="L330">                LOGGER.debug(&quot;Getting root authorization from file: {}&quot;, rootAcl);</span>
+
+<span class="fc" id="L332">                RDFDataMgr.read(model, rootAcl, baseUri, null);</span>
+
+<span class="fc" id="L334">                return model;</span>
+<span class="fc" id="L335">            } catch (final JenaException ex) {</span>
+<span class="fc" id="L336">                throw new RuntimeException(&quot;Error parsing the default root ACL &quot; + rootAcl + &quot;.&quot;, ex);</span>
+            }
+        }
+
+<span class="fc" id="L340">        try (final InputStream is = FedoraAcl.class.getResourceAsStream(ROOT_AUTHORIZATION_LOCATION)) {</span>
+<span class="fc" id="L341">            LOGGER.debug(&quot;Getting root ACL from classpath: {}&quot;, ROOT_AUTHORIZATION_LOCATION);</span>
+
+<span class="fc" id="L343">            return model.read(is, baseUri, TTL.getName());</span>
+<span class="nc" id="L344">        } catch (final IOException ex) {</span>
+<span class="nc" id="L345">            throw new RuntimeException(&quot;Error reading the default root Acl &quot; + ROOT_AUTHORIZATION_LOCATION + &quot;.&quot;, ex);</span>
+<span class="nc" id="L346">        } catch (final JenaException ex) {</span>
+<span class="nc" id="L347">            throw new RuntimeException(&quot;Error parsing the default root ACL &quot; + ROOT_AUTHORIZATION_LOCATION + &quot;.&quot;, ex);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

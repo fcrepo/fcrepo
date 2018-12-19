@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ExternalContentServiceImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-modeshape</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.services</a> &gt; <span class="el_source">ExternalContentServiceImpl.java</span></div><h1>ExternalContentServiceImpl.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.services;
+
+import org.fcrepo.kernel.api.services.ExternalContentService;
+
+import com.google.common.annotations.VisibleForTesting;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.conn.HttpClientConnectionManager;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.springframework.stereotype.Component;
+
+import javax.inject.Inject;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+
+/**
+ * @author cabeer
+ */
+@Component
+<span class="fc" id="L39">public class ExternalContentServiceImpl implements ExternalContentService {</span>
+
+    @Inject
+    private HttpClientConnectionManager connManager;
+
+    /**
+     * Retrieve the content at the URI using the global connection pool.
+     * @param sourceUri the source uri
+     * @return the content at the URI using the global connection pool
+     * @throws IOException if IO exception occurred
+     */
+    @SuppressWarnings(&quot;resource&quot;)
+    @Override
+    public InputStream retrieveExternalContent(final URI sourceUri) throws IOException {
+<span class="fc" id="L53">        final HttpGet httpGet = new HttpGet(sourceUri);</span>
+<span class="fc" id="L54">        final CloseableHttpClient client = getCloseableHttpClient();</span>
+<span class="fc" id="L55">        final HttpResponse response = client.execute(httpGet);</span>
+<span class="fc" id="L56">        return response.getEntity().getContent();</span>
+    }
+
+    @VisibleForTesting
+    protected CloseableHttpClient getCloseableHttpClient() {
+<span class="fc" id="L61">        return HttpClients.createMinimal(connManager);</span>
+    }
+
+    @VisibleForTesting
+    protected void setConnManager(final HttpClientConnectionManager connManager) {
+<span class="fc" id="L66">        this.connManager = connManager;</span>
+<span class="fc" id="L67">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
