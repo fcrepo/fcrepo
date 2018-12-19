@@ -38,6 +38,7 @@ import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.vocabulary.DC_11.title;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.http.api.FedoraLdp.ACCEPT_DATETIME;
@@ -139,6 +140,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     private static final Node TEST_PROPERTY_NODE = createURI("info:test#label");
 
     private static final Property TEST_PROPERTY = createProperty("info:test#label");
+
+    private static final Resource TEST_TYPE_RESOURCE = createResource("http://example.com/custom_type");
 
     private final String MEMENTO_DATETIME =
         MEMENTO_RFC_1123_FORMATTER.format(LocalDateTime.of(2000, 1, 1, 00, 00).atZone(ZoneOffset.UTC));
@@ -968,6 +971,16 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         final String descriptionUri = subjectUri + "/fcr:metadata";
 
+        final HttpPatch patchProps = new HttpPatch(descriptionUri);
+        patchProps.setHeader(CONTENT_TYPE, "application/sparql-update");
+        final String updateString =
+                "INSERT { <> <" + DC.title.getURI() + "> \"Original\" ." +
+                        " <> <" + RDF.type.getURI() + "> <" + TEST_TYPE_RESOURCE.getURI() + "> } WHERE { }";
+        patchProps.setEntity(new StringEntity(updateString));
+        try (final CloseableHttpResponse patchResp = execute(patchProps)) {
+            assertEquals(patchResp.getStatusLine().toString(), NO_CONTENT.getStatusCode(), getStatus(patchResp));
+        }
+
         final String mementoUri = createContainerMementoWithBody(descriptionUri, null);
         assertMementoUri(mementoUri, descriptionUri);
 
@@ -978,12 +991,16 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
             final Node mementoSubject = createURI(subjectUri);
 
-            assertFalse("Property added to original must not appear in memento",
-                    results.contains(ANY, mementoSubject, DC.title.asNode(), ANY));
+            assertTrue("Property added to original before versioning must appear",
+                    results.contains(ANY, mementoSubject, DC.title.asNode(), createLiteral("Original")));
+            assertFalse("Property added after memento created must not appear",
+                    results.contains(ANY, mementoSubject, DC.title.asNode(), createLiteral("Updated")));
             assertFalse("Memento type should not be visible",
                     results.contains(ANY, mementoSubject, RDF.type.asNode(), MEMENTO_TYPE_NODE));
             assertTrue("Must have binary type",
                     results.contains(ANY, mementoSubject, RDF.type.asNode(), FEDORA_BINARY.asNode()));
+            assertTrue("Must have custom type",
+                    results.contains(ANY, mementoSubject, RDF.type.asNode(), TEST_TYPE_RESOURCE.asNode()));
         }
 
         // No binary memento should be created when specifically creating a description memento.
@@ -1031,6 +1048,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
             assertFalse("Memento type should not be visible",
                     results.contains(ANY, mementoSubject, RDF.type.asNode(), MEMENTO_TYPE_NODE));
+            assertTrue("Type must be a custom type",
+                    results.contains(ANY, mementoSubject, RDF.type.asNode(), TEST_TYPE_RESOURCE.asNode()));
             assertTrue("Memento must have first updated property",
                     results.contains(ANY, mementoSubject, TEST_PROPERTY_NODE, createLiteral("bar")));
         }
@@ -1056,6 +1075,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
             assertTrue("Type must be a fedora:Binary",
                     results.contains(ANY, mementoSubject, RDF.type.asNode(), FEDORA_BINARY.asNode()));
+            assertTrue("Type must be a custom type",
+                    results.contains(ANY, mementoSubject, RDF.type.asNode(), TEST_TYPE_RESOURCE.asNode()));
             assertTrue("Memento must have first updated property",
                     results.contains(ANY, mementoSubject, TEST_PROPERTY_NODE, createLiteral("bar")));
         }
@@ -1738,6 +1759,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final Resource subjectResc = model.getResource(resourceUri);
         subjectResc.removeAll(TEST_PROPERTY);
         subjectResc.addLiteral(TEST_PROPERTY, "bar");
+        subjectResc.addProperty(RDF.type, TEST_TYPE_RESOURCE);
 
         try (StringWriter stringOut = new StringWriter()) {
             RDFDataMgr.write(stringOut, model, RDFFormat.NTRIPLES);
