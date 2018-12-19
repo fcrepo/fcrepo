@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WebACAuthorizingRealm.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository WebAC Authorization Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.auth.webac</a> &gt; <span class="el_source">WebACAuthorizingRealm.java</span></div><h1>WebACAuthorizingRealm.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.auth.webac;
+
+import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_ADMIN_ROLE;
+import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_USER_ROLE;
+import static org.fcrepo.auth.webac.URIConstants.FOAF_AGENT_VALUE;
+import static org.fcrepo.auth.webac.URIConstants.WEBAC_AUTHENTICATED_AGENT_VALUE;
+import static org.fcrepo.auth.common.HttpHeaderPrincipalProvider.HttpHeaderPrincipal;
+import static org.fcrepo.auth.common.DelegateHeaderPrincipalProvider.DelegatedHeaderPrincipal;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.net.URI;
+import java.security.Principal;
+import java.util.Collection;
+import java.util.Map;
+import javax.inject.Inject;
+import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
+
+import org.apache.http.auth.BasicUserPrincipal;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.shiro.authc.AuthenticationException;
+import org.apache.shiro.authc.AuthenticationInfo;
+import org.apache.shiro.authc.AuthenticationToken;
+import org.apache.shiro.authz.AuthorizationInfo;
+import org.apache.shiro.authz.SimpleAuthorizationInfo;
+import org.apache.shiro.realm.AuthorizingRealm;
+import org.apache.shiro.subject.PrincipalCollection;
+import org.fcrepo.auth.common.ContainerRolesPrincipalProvider.ContainerRolesPrincipal;
+import org.fcrepo.http.api.FedoraLdp;
+import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
+import org.fcrepo.http.commons.session.HttpSession;
+import org.fcrepo.http.commons.session.SessionFactory;
+import org.fcrepo.kernel.api.exception.RepositoryConfigurationException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
+import org.slf4j.Logger;
+/**
+ * Authorization-only realm that performs authorization checks using WebAC ACLs stored in a Fedora repository. It
+ * locates the ACL for the currently requested resource and parses the ACL RDF into a set of {@link WebACPermission}
+ * instances.
+ *
+ * @author peichman
+ */
+<span class="fc" id="L67">public class WebACAuthorizingRealm extends AuthorizingRealm {</span>
+
+<span class="fc" id="L69">    private static final Logger log = getLogger(WebACAuthorizingRealm.class);</span>
+
+<span class="fc" id="L71">    private static final ContainerRolesPrincipal adminPrincipal = new ContainerRolesPrincipal(FEDORA_ADMIN_ROLE);</span>
+
+<span class="fc" id="L73">    private static final ContainerRolesPrincipal userPrincipal = new ContainerRolesPrincipal(FEDORA_USER_ROLE);</span>
+
+    @Inject
+    private SessionFactory sessionFactory;
+
+    @Inject
+    private HttpServletRequest request;
+
+    @Inject
+    private WebACRolesProvider rolesProvider;
+
+    private HttpSession session;
+
+    private HttpSession session() {
+<span class="pc bpc" id="L87" title="1 of 2 branches missed.">        if (session == null) {</span>
+<span class="fc" id="L88">            session = sessionFactory.getSession(request);</span>
+        }
+<span class="fc" id="L90">        return session;</span>
+    }
+
+    private IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator;
+
+    private IdentifierConverter&lt;Resource, FedoraResource&gt; translator() {
+<span class="fc bfc" id="L96" title="All 2 branches covered.">        if (idTranslator == null) {</span>
+<span class="fc" id="L97">            idTranslator = new HttpResourceConverter(session(), UriBuilder.fromResource(FedoraLdp.class));</span>
+        }
+
+<span class="fc" id="L100">        return idTranslator;</span>
+    }
+
+    /**
+     * Useful for constructing URLs
+     */
+    @Context
+    private UriInfo uriInfo;
+
+
+    @Override
+    protected AuthorizationInfo doGetAuthorizationInfo(final PrincipalCollection principals) {
+<span class="fc" id="L112">        final SimpleAuthorizationInfo authzInfo = new SimpleAuthorizationInfo();</span>
+        final Map&lt;String, Collection&lt;String&gt;&gt; roles;
+<span class="fc" id="L114">        boolean isAdmin = false;</span>
+
+<span class="fc" id="L116">        final Collection&lt;DelegatedHeaderPrincipal&gt; delegatePrincipals =</span>
+<span class="fc" id="L117">                principals.byType(DelegatedHeaderPrincipal.class);</span>
+
+        // if the user was assigned the &quot;fedoraAdmin&quot; container role, they get the
+        // &quot;fedoraAdmin&quot; application role
+<span class="fc bfc" id="L121" title="All 2 branches covered.">        if (principals.byType(ContainerRolesPrincipal.class).contains(adminPrincipal)) {</span>
+<span class="pc bpc" id="L122" title="1 of 2 branches missed.">            if (delegatePrincipals.size() &gt; 1) {</span>
+<span class="nc" id="L123">                throw new RepositoryConfigurationException(&quot;Too many delegates! &quot; + delegatePrincipals);</span>
+<span class="fc bfc" id="L124" title="All 2 branches covered.">            } else if (delegatePrincipals.size() &lt; 1) {</span>
+<span class="fc" id="L125">                authzInfo.addRole(FEDORA_ADMIN_ROLE);</span>
+<span class="fc" id="L126">                return authzInfo;</span>
+            }
+<span class="fc" id="L128">            isAdmin = true;</span>
+            // if Admin is delegating, they are a normal user
+<span class="fc" id="L130">            authzInfo.addRole(FEDORA_USER_ROLE);</span>
+<span class="fc bfc" id="L131" title="All 2 branches covered.">        } else if (principals.byType(ContainerRolesPrincipal.class).contains(userPrincipal)) {</span>
+<span class="fc" id="L132">            authzInfo.addRole(FEDORA_USER_ROLE);</span>
+        }
+
+        // for non-admins, we must check the ACL for the requested resource
+<span class="fc" id="L136">        roles = getRolesForPath();</span>
+
+<span class="fc bfc" id="L138" title="All 2 branches covered.">        for (Object o : principals.asList()) {</span>
+<span class="fc" id="L139">            log.debug(&quot;User has principal with name: {}&quot;, ((Principal) o).getName());</span>
+<span class="fc" id="L140">        }</span>
+<span class="fc" id="L141">        final Principal userPrincipal = principals.oneByType(BasicUserPrincipal.class);</span>
+<span class="fc" id="L142">        final Collection&lt;HttpHeaderPrincipal&gt; headerPrincipals = principals.byType(HttpHeaderPrincipal.class);</span>
+        // Add permissions for user or delegated user principal
+<span class="pc bpc" id="L144" title="1 of 4 branches missed.">        if (isAdmin &amp;&amp; delegatePrincipals.size() == 1) {</span>
+<span class="fc" id="L145">            final DelegatedHeaderPrincipal delegatedPrincipal = delegatePrincipals.iterator().next();</span>
+<span class="fc" id="L146">            log.debug(&quot;Admin user is delegating to {}&quot;, delegatedPrincipal);</span>
+<span class="fc" id="L147">            addPermissions(authzInfo, roles, delegatedPrincipal.getName());</span>
+<span class="fc" id="L148">            addPermissions(authzInfo, roles, WEBAC_AUTHENTICATED_AGENT_VALUE);</span>
+<span class="fc bfc" id="L149" title="All 2 branches covered.">        } else if (userPrincipal != null) {</span>
+<span class="fc" id="L150">            log.debug(&quot;Basic user principal username: {}&quot;, userPrincipal.getName());</span>
+<span class="fc" id="L151">            addPermissions(authzInfo, roles, userPrincipal.getName());</span>
+<span class="fc" id="L152">            addPermissions(authzInfo, roles, WEBAC_AUTHENTICATED_AGENT_VALUE);</span>
+        } else {
+<span class="fc" id="L154">            log.debug(&quot;No basic user principal found&quot;);</span>
+        }
+        // Add permissions for header principals
+<span class="fc bfc" id="L157" title="All 2 branches covered.">        if (headerPrincipals.isEmpty()) {</span>
+<span class="fc" id="L158">            log.debug(&quot;No header principals found!&quot;);</span>
+        }
+<span class="fc" id="L160">        headerPrincipals.forEach((headerPrincipal) -&gt; {</span>
+<span class="fc" id="L161">            addPermissions(authzInfo, roles, headerPrincipal.getName());</span>
+<span class="fc" id="L162">        });</span>
+
+        // Added FOAF_AGENT permissions for both authenticated and unauthenticated users
+<span class="fc" id="L165">        addPermissions(authzInfo, roles, FOAF_AGENT_VALUE);</span>
+
+<span class="fc" id="L167">        return authzInfo;</span>
+
+    }
+
+    private Map&lt;String, Collection&lt;String&gt;&gt; getRolesForPath() {
+<span class="fc" id="L172">        Map&lt;String, Collection&lt;String&gt;&gt; roles = null;</span>
+<span class="fc" id="L173">        final FedoraResource fedoraResource = getResourceOrParentFromPath(request.getPathInfo());</span>
+
+<span class="pc bpc" id="L175" title="1 of 2 branches missed.">        if (fedoraResource != null) {</span>
+<span class="fc" id="L176">            final Node node = ((FedoraResourceImpl) fedoraResource).getNode();</span>
+
+            // check ACL for the request URI and get a mapping of agent =&gt; modes
+<span class="fc" id="L179">            roles = rolesProvider.getRoles(node);</span>
+        }
+<span class="fc" id="L181">        return roles;</span>
+    }
+
+    private void addPermissions(final SimpleAuthorizationInfo authzInfo, final Map&lt;String, Collection&lt;String&gt;&gt; roles,
+            final String agentName) {
+<span class="pc bpc" id="L186" title="1 of 2 branches missed.">        if (roles != null) {</span>
+<span class="fc" id="L187">            final Collection&lt;String&gt; modesForUser = roles.get(agentName);</span>
+<span class="fc bfc" id="L188" title="All 2 branches covered.">                if (modesForUser != null) {</span>
+                    // add WebACPermission instance for each mode in the Authorization
+<span class="fc" id="L190">                    final URI fullRequestURI = URI.create(request.getRequestURL().toString());</span>
+<span class="fc bfc" id="L191" title="All 2 branches covered.">                    for (String mode : modesForUser) {</span>
+<span class="fc" id="L192">                        final WebACPermission perm = new WebACPermission(URI.create(mode), fullRequestURI);</span>
+<span class="fc" id="L193">                        authzInfo.addObjectPermission(perm);</span>
+<span class="fc" id="L194">                        log.debug(&quot;Added permission {}&quot;, perm);</span>
+<span class="fc" id="L195">                    }</span>
+                }
+        }
+<span class="fc" id="L198">    }</span>
+
+    /**
+     * This realm is authorization-only.
+     */
+    @Override
+    protected AuthenticationInfo doGetAuthenticationInfo(final AuthenticationToken token)
+            throws AuthenticationException {
+<span class="nc" id="L206">        return null;</span>
+    }
+
+    /**
+     * This realm is authorization-only.
+     */
+    @Override
+    public boolean supports(final AuthenticationToken token) {
+<span class="fc" id="L214">        return false;</span>
+    }
+
+    private FedoraResource getResourceOrParentFromPath(final String path) {
+<span class="fc" id="L218">        FedoraResource resource = null;</span>
+<span class="fc" id="L219">        log.debug(&quot;Attempting to get FedoraResource for {}&quot;, path);</span>
+        try {
+<span class="fc" id="L221">            resource = translator().convert(translator().toDomain(path));</span>
+<span class="fc" id="L222">            log.debug(&quot;Got FedoraResource for {}&quot;, path);</span>
+<span class="fc" id="L223">        } catch (RepositoryRuntimeException e) {</span>
+<span class="pc bpc" id="L224" title="1 of 2 branches missed.">            if (e.getCause() instanceof PathNotFoundException) {</span>
+<span class="fc" id="L225">                log.debug(&quot;Path {} does not exist&quot;, path);</span>
+                // go up the path looking for a node that exists
+<span class="pc bpc" id="L227" title="1 of 2 branches missed.">                if (path.length() &gt; 1) {</span>
+<span class="fc" id="L228">                    final int lastSlash = path.lastIndexOf(&quot;/&quot;);</span>
+<span class="pc bpc" id="L229" title="1 of 2 branches missed.">                    final int end = lastSlash &gt; 0 ? lastSlash : lastSlash + 1;</span>
+<span class="fc" id="L230">                    resource = getResourceOrParentFromPath(path.substring(0, end));</span>
+                }
+            }
+<span class="fc" id="L233">        }</span>
+<span class="fc" id="L234">        return resource;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

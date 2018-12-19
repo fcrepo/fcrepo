@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>JcrPropertyStatementListener.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository WebAC Authorization Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-modeshape</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.utils</a> &gt; <span class="el_source">JcrPropertyStatementListener.java</span></div><h1>JcrPropertyStatementListener.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.utils;
+
+import static java.util.stream.Collectors.joining;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+
+import org.fcrepo.kernel.api.exception.AccessDeniedException;
+import org.fcrepo.kernel.api.exception.ConstraintViolationException;
+import org.fcrepo.kernel.api.exception.IncorrectTripleSubjectException;
+import org.fcrepo.kernel.api.exception.MalformedRdfException;
+import org.fcrepo.kernel.api.exception.OutOfDomainSubjectException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.modeshape.rdf.JcrRdfTools;
+
+import org.slf4j.Logger;
+
+import org.apache.jena.graph.Node;
+import org.apache.jena.rdf.listeners.StatementListener;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.vocabulary.RDF;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * Listen to Jena statement events, and when the statement is changed in the
+ * graph store, make the change within JCR as well.
+ *
+ * @author awoods
+ */
+public class JcrPropertyStatementListener extends StatementListener {
+
+<span class="fc" id="L59">    private static final Logger LOGGER = getLogger(JcrPropertyStatementListener.class);</span>
+
+<span class="fc" id="L61">    private enum Operation {</span>
+<span class="fc" id="L62">        ADD, REMOVE</span>
+    }
+
+    /*
+     * map statement hashcodes to the last successful operation on the statement
+     * to prevent large, redundant SPARQL solution sets from exhausting the heap
+     */
+    private final Map&lt;Statement,Operation&gt; statements;
+
+    private final JcrRdfTools jcrRdfTools;
+
+    private final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator;
+
+    private final List&lt;Exception&gt; exceptions;
+
+    private final Node topic;
+
+    /**
+     * Construct a statement listener within the given session
+     *
+     * @param idTranslator the id translator
+     * @param session the session
+     * @param topic the topic of the RDF statement
+     */
+    public JcrPropertyStatementListener(final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator,
+                                        final Session session, final Node topic) {
+<span class="fc" id="L88">        this(idTranslator, new JcrRdfTools(idTranslator, session), topic);</span>
+<span class="fc" id="L89">    }</span>
+
+    /**
+     * Construct a statement listener within the given session
+     * This listener is not reusable across requests.
+     *
+     * @param idTranslator the id translator
+     * @param jcrRdfTools the jcr rdf tools
+     * @param topic the topic of the RDF statement
+     */
+    public JcrPropertyStatementListener(final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator,
+                                        final JcrRdfTools jcrRdfTools, final Node topic) {
+<span class="fc" id="L101">        super();</span>
+<span class="fc" id="L102">        this.idTranslator = idTranslator;</span>
+<span class="fc" id="L103">        this.jcrRdfTools = jcrRdfTools;</span>
+<span class="fc" id="L104">        this.exceptions = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L105">        this.topic = topic;</span>
+<span class="fc" id="L106">        this.statements = new ConcurrentHashMap&lt;&gt;();</span>
+<span class="fc" id="L107">    }</span>
+
+
+    /**
+     * When a statement is added to the graph, serialize it to a JCR property
+     *
+     * @param input the input statement
+     */
+    @Override
+    public void addedStatement(final Statement input) {
+<span class="pc bpc" id="L117" title="1 of 2 branches missed.">        if (Operation.ADD == statements.get(input)) {</span>
+<span class="nc" id="L118">            return;</span>
+        }
+        try {
+<span class="fc" id="L121">            final Resource subject = input.getSubject();</span>
+<span class="fc" id="L122">            validateSubject(subject);</span>
+<span class="fc" id="L123">            LOGGER.debug(&quot;&gt;&gt; adding statement {}&quot;, input);</span>
+
+<span class="fc" id="L125">            final Statement s = jcrRdfTools.skolemize(idTranslator, input, topic.toString());</span>
+
+<span class="fc" id="L127">            final FedoraResource resource = idTranslator.convert(s.getSubject());</span>
+<span class="fc" id="L128">            final FedoraResource description = resource.getDescription();</span>
+
+            // special logic for handling rdf:type updates.
+            // if the object is an already-existing mixin, update
+            // the node's mixins. If it isn't, just treat it normally.
+<span class="fc" id="L133">            final Property property = s.getPredicate();</span>
+<span class="fc" id="L134">            final RDFNode objectNode = s.getObject();</span>
+<span class="pc bpc" id="L135" title="1 of 4 branches missed.">            if (property.equals(RDF.type) &amp;&amp; objectNode.isResource()) {</span>
+<span class="fc" id="L136">                final Resource mixinResource = objectNode.asResource();</span>
+<span class="fc" id="L137">                jcrRdfTools.addMixin(resource, mixinResource, input.getModel().getNsPrefixMap());</span>
+<span class="fc" id="L138">                statements.put(input, Operation.ADD);</span>
+<span class="fc" id="L139">                return;</span>
+            }
+
+<span class="fc" id="L142">            jcrRdfTools.addProperty(description, property, objectNode, input.getModel().getNsPrefixMap());</span>
+<span class="fc" id="L143">            statements.put(input, Operation.ADD);</span>
+<span class="fc" id="L144">        } catch (final ConstraintViolationException e) {</span>
+<span class="fc" id="L145">            throw e;</span>
+<span class="fc" id="L146">        } catch (final javax.jcr.AccessDeniedException e) {</span>
+<span class="fc" id="L147">            throw new AccessDeniedException(e);</span>
+<span class="fc" id="L148">        } catch (final RepositoryException | RepositoryRuntimeException e) {</span>
+<span class="fc" id="L149">            exceptions.add(e);</span>
+<span class="fc" id="L150">        }</span>
+
+<span class="fc" id="L152">    }</span>
+
+    /**
+     * When a statement is removed, remove it from the JCR properties
+     *
+     * @param s the given statement
+     */
+    @Override
+    public void removedStatement(final Statement s) {
+<span class="fc bfc" id="L161" title="All 2 branches covered.">        if (Operation.REMOVE == statements.get(s)) {</span>
+<span class="fc" id="L162">            return;</span>
+        }
+        try {
+            // if it's not about the right kind of node, ignore it.
+<span class="fc" id="L166">            final Resource subject = s.getSubject();</span>
+<span class="fc" id="L167">            validateSubject(subject);</span>
+<span class="fc" id="L168">            LOGGER.trace(&quot;&gt;&gt; removing statement {}&quot;, s);</span>
+
+<span class="fc" id="L170">            final FedoraResource resource = idTranslator.convert(subject);</span>
+<span class="fc" id="L171">            final FedoraResource description = resource.getDescription();</span>
+
+            // special logic for handling rdf:type updates.
+            // if the object is an already-existing mixin, update
+            // the node's mixins. If it isn't, just treat it normally.
+<span class="fc" id="L176">            final Property property = s.getPredicate();</span>
+<span class="fc" id="L177">            final RDFNode objectNode = s.getObject();</span>
+
+<span class="pc bpc" id="L179" title="1 of 4 branches missed.">            if (property.equals(RDF.type) &amp;&amp; objectNode.isResource()) {</span>
+<span class="fc" id="L180">                final Resource mixinResource = objectNode.asResource();</span>
+<span class="fc" id="L181">                jcrRdfTools.removeMixin(resource, mixinResource, s.getModel().getNsPrefixMap());</span>
+<span class="fc" id="L182">                statements.put(s, Operation.REMOVE);</span>
+<span class="fc" id="L183">                return;</span>
+            }
+
+<span class="fc" id="L186">            jcrRdfTools.removeProperty(description, property, objectNode, s.getModel().getNsPrefixMap());</span>
+<span class="fc" id="L187">            statements.put(s, Operation.REMOVE);</span>
+<span class="nc" id="L188">        } catch (final ConstraintViolationException e) {</span>
+<span class="nc" id="L189">            throw e;</span>
+<span class="nc" id="L190">        } catch (final RepositoryException | RepositoryRuntimeException e) {</span>
+<span class="nc" id="L191">            exceptions.add(e);</span>
+<span class="fc" id="L192">        }</span>
+
+<span class="fc" id="L194">    }</span>
+
+    /**
+     * If it's not the right kind of node, throw an appropriate unchecked exception.
+     *
+     * @param subject to validate
+     */
+    private void validateSubject(final Resource subject) {
+<span class="fc" id="L202">        final String subjectURI = subject.getURI();</span>
+        // blank nodes are okay
+<span class="fc bfc" id="L204" title="All 2 branches covered.">        if (!subject.isAnon()) {</span>
+            // hash URIs with the same base as the topic are okay
+<span class="fc" id="L206">            final int hashIndex = subjectURI.lastIndexOf(&quot;#&quot;);</span>
+<span class="pc bpc" id="L207" title="1 of 4 branches missed.">            if (!(hashIndex &gt; 0 &amp;&amp; topic.getURI().equals(subjectURI.substring(0, hashIndex)))) {</span>
+                // the topic itself is okay
+<span class="fc bfc" id="L209" title="All 2 branches covered.">                if (!topic.equals(subject.asNode())) {</span>
+                    // it's a bad subject, but it could still be in-domain
+<span class="fc bfc" id="L211" title="All 2 branches covered.">                    if (idTranslator.inDomain(subject)) {</span>
+<span class="fc" id="L212">                        LOGGER.error(&quot;{} is not in the topic of this RDF, which is {}.&quot;, subject, topic);</span>
+<span class="fc" id="L213">                        throw new IncorrectTripleSubjectException(subject +</span>
+                                &quot; is not in the topic of this RDF, which is &quot; + topic);
+                    }
+                    // it's not even in the right domain!
+<span class="fc" id="L217">                    LOGGER.error(&quot;subject ({}) is not in repository domain.&quot;, subject);</span>
+<span class="fc" id="L218">                    throw new OutOfDomainSubjectException(subject.asNode());</span>
+                }
+            }
+        }
+<span class="fc" id="L222">    }</span>
+
+    /**
+     * Assert that no exceptions were thrown while this listener was processing change
+     */
+    public void assertNoExceptions() {
+<span class="fc bfc" id="L228" title="All 2 branches covered.">        if (!exceptions.isEmpty()) {</span>
+<span class="fc" id="L229">            throw new MalformedRdfException(exceptions.stream().map(Exception::getMessage).collect(joining(&quot;\n&quot;)));</span>
+        }
+<span class="fc" id="L231">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

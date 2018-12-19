@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>NonRdfSourceDescriptionImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository WebAC Authorization Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-modeshape</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape</a> &gt; <span class="el_source">NonRdfSourceDescriptionImpl.java</span></div><h1>NonRdfSourceDescriptionImpl.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape;
+
+import static org.fcrepo.kernel.api.utils.SubjectMappingUtil.mapSubject;
+import static java.util.stream.Stream.empty;
+import static org.fcrepo.kernel.api.RequiredRdfContext.MINIMAL;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isNonRdfSourceDescription;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
+import javax.jcr.RepositoryException;
+
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Resource;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.TripleCategory;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.modeshape.rdf.impl.InternalIdentifierTranslator;
+import org.slf4j.Logger;
+
+import java.util.Calendar;
+import java.util.Set;
+import java.util.stream.Stream;
+
+/**
+ * Abstraction for a Fedora datastream backed by a JCR node.
+ *
+ * @author ajs6f
+ * @since Feb 21, 2013
+ */
+public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements NonRdfSourceDescription {
+
+<span class="fc" id="L55">    private static final Logger LOGGER = getLogger(NonRdfSourceDescriptionImpl.class);</span>
+
+    /**
+     * The JCR node for this datastream
+     *
+     * @param n an existing {@link Node}
+     */
+    public NonRdfSourceDescriptionImpl(final Node n) {
+<span class="fc" id="L63">        super(n);</span>
+<span class="fc" id="L64">    }</span>
+
+    @Override
+    public FedoraResource getDescribedResource() {
+<span class="fc" id="L68">        return new FedoraBinaryImpl(getContentNode());</span>
+    }
+
+    private Node getContentNode() {
+<span class="fc" id="L72">        LOGGER.trace(&quot;Retrieved datastream content node.&quot;);</span>
+        try {
+<span class="pc bpc" id="L74" title="1 of 2 branches missed.">            if (isMemento()) {</span>
+<span class="nc" id="L75">                final String mementoName = node.getName();</span>
+<span class="nc" id="L76">                return node.getParent().getParent().getParent().getNode(LDPCV_TIME_MAP).getNode(mementoName);</span>
+            }
+<span class="fc" id="L78">            return node.getParent();</span>
+<span class="nc" id="L79">        } catch (final PathNotFoundException e) {</span>
+<span class="nc" id="L80">            throw new PathNotFoundRuntimeException(e);</span>
+<span class="nc" id="L81">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L82">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    @Override
+    public RdfStream getTriples(final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator,
+                                final Set&lt;? extends TripleCategory&gt; contexts) {
+<span class="fc" id="L89">        final FedoraResource described = getOriginalResource().getDescribedResource();</span>
+
+<span class="fc" id="L91">        final org.apache.jena.graph.Node describedNode = idTranslator.reverse().convert(described).asNode();</span>
+<span class="fc" id="L92">        final String resourceUri = idTranslator.reverse().convert(this).getURI();</span>
+
+<span class="fc" id="L94">        Stream&lt;Triple&gt; triples = contexts.stream()</span>
+<span class="fc" id="L95">                .filter(contextMap::containsKey)</span>
+<span class="fc" id="L96">                .map(x -&gt; contextMap.get(x).apply(this).apply(idTranslator).apply(contexts.contains(MINIMAL)))</span>
+<span class="fc" id="L97">                .reduce(empty(), Stream::concat)</span>
+<span class="fc" id="L98">                .map(t -&gt; mapSubject(t, resourceUri, describedNode));</span>
+
+        // if a memento, convert subjects to original resource and object references from referential integrity
+        // ignoring internal URL back the original external URL.
+<span class="fc bfc" id="L102" title="All 2 branches covered.">        if (isMemento()) {</span>
+<span class="fc" id="L103">            final IdentifierConverter&lt;Resource, FedoraResource&gt; internalIdTranslator =</span>
+<span class="fc" id="L104">                    new InternalIdentifierTranslator(getSession());</span>
+<span class="fc" id="L105">            triples = triples.map(convertMementoReferences(idTranslator, internalIdTranslator));</span>
+        }
+
+<span class="fc" id="L108">        return new DefaultRdfStream(idTranslator.reverse().convert(described).asNode(), triples);</span>
+    }
+
+    /**
+     * Check if the node has a fedora:datastream mixin
+     *
+     * @param node node to check
+     * @return whether the node has a fedora:datastream mixin
+     */
+    public static boolean hasMixin(final Node node) {
+<span class="fc" id="L118">        return isNonRdfSourceDescription.test(node);</span>
+    }
+
+    /**
+     * Overrides the superclass to propagate updates to certain properties to the binary if explicitly set.
+     */
+    @Override
+    public void touch(final boolean includeMembershipResource, final Calendar createdDate, final String createdUser,
+                      final Calendar modifiedDate, final String modifyingUser) throws RepositoryException {
+<span class="fc" id="L127">        super.touch(includeMembershipResource, createdDate, createdUser, modifiedDate, modifyingUser);</span>
+<span class="pc bpc" id="L128" title="3 of 8 branches missed.">        if (createdDate != null || createdUser != null || modifiedDate != null || modifyingUser != null) {</span>
+<span class="fc" id="L129">            ((FedoraBinaryImpl) getDescribedResource()).touch(false, createdDate, createdUser,</span>
+                    modifiedDate, modifyingUser);
+        }
+<span class="fc" id="L132">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
