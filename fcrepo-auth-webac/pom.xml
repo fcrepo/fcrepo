@@ -16,9 +16,6 @@
   <packaging>bundle</packaging>
 
   <properties>
-    <!-- this is used for the scm definition -->
-    <project_name>fcrepo-auth-webac</project_name>
-    <project_organization>fcrepo4</project_organization>
     <!-- OSGi -->
     <osgi.import.packages>
       *
@@ -245,12 +242,5 @@
 
     </plugins>
   </build>
-
-  <scm>
-    <connection>scm:git:git://github.com/${project_organization}/${project_name}.git</connection>
-    <developerConnection>scm:git:git@github.com:${project_organization}/${project_name}.git</developerConnection>
-    <url>https://github.com/${project_organization}/${project_name}</url>
-    <tag>HEAD</tag>
-  </scm>
 
 </project>
