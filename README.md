@@ -1,11 +1,11 @@
-# Fedora 4
+# Fedora
 
 [![Build Status](https://travis-ci.org/fcrepo4/fcrepo4.png?branch=master)](https://travis-ci.org/fcrepo4/fcrepo4)
 
 [JavaDocs](http://docs.fcrepo.org/) | 
 [Fedora Wiki](https://wiki.duraspace.org/display/FF) | 
 [Use cases](https://wiki.duraspace.org/display/FF/Use+Cases) |
-[REST API](https://wiki.duraspace.org/display/FEDORA4x/RESTful+HTTP+API) |
+[REST API](https://wiki.duraspace.org/display/FEDORA5x/RESTful+HTTP+API) |
 
 Fedora is a robust, modular, open source repository system for the management and dissemination of digital content.
 It is especially suited for digital libraries and archives, both for access and preservation. It is also used to
@@ -24,7 +24,7 @@ The Fedora community is supported by the stewardship of the [DuraSpace](http://w
 
 The current web-deployable version of Fedora can be downloaded from the [Duraspace website](https://wiki.duraspace.org/display/FF/Downloads)
 or from [Github](https://github.com/fcrepo4/fcrepo4/releases). These artifacts can be deployed directly in a Jetty or Tomcat container
-as described in the guide to [deploying Fedora](https://wiki.duraspace.org/display/FEDORA4x/Deploying+Fedora+4+Complete+Guide).
+as described in the guide to [deploying Fedora](https://wiki.duraspace.org/display/FEDORA5x/Deploying+Fedora+-+Complete+Guide).
 
 ## Contributing
 
@@ -61,7 +61,8 @@ $ MAVEN_OPTS="-Xmx1024m -XX:MaxMetaspaceSize=1024m" mvn install
 ```
 
 The compiled Fedora war file can be found in `./fcrepo-webapp/target`. This can be deployed directly to a servlet container as
-described in the [deployment guide](https://wiki.duraspace.org/display/FEDORA4x/Deploying+Fedora+4+Complete+Guide).
+described in the [deployment guide](https://wiki.duraspace.org/display/FEDORA5x/Deploying+Fedora+-+Complete+Guide).
+
 
 If deployed locally using a war file called `fcrepo.war`, the web application will typically be available at
 http://localhost:8080/fcrepo/rest.

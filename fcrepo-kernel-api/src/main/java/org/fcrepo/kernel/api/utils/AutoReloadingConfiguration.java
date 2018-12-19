@@ -87,7 +87,14 @@ public abstract class AutoReloadingConfiguration {
             return;
         }
 
-        final Path path = Paths.get(configPath);
+        final Path path;
+        try {
+            path = Paths.get(configPath);
+        } catch (final Exception e) {
+            LOGGER.warn("Cannot monitor configuration {}, disabling monitoring; {}", configPath, e.getMessage());
+            return;
+        }
+
         if (!path.toFile().exists()) {
             LOGGER.debug("Configuration {} does not exist, disabling monitoring", configPath);
             return;
