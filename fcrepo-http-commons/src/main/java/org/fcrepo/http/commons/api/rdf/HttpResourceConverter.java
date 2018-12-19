@@ -89,7 +89,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
     // The fourth group for allows ACL.
     // The fifth group allows for any hashed suffixes.
     private final static Pattern FORWARD_COMPONENT_PATTERN = Pattern.compile(
-            ".*?(/" + FCR_METADATA + ")?(/" + FCR_VERSIONS + "(/\\d{14})?)?(/" + FCR_ACL + ")?(\\#\\w+)?$");
+            ".*?(/" + FCR_METADATA + ")?(/" + FCR_VERSIONS + "(/\\d{14})?)?(/" + FCR_ACL + ")?(\\#\\S+)?$");
 
     protected List<Converter<String, String>> translationChain;
 
