@@ -139,7 +139,6 @@ import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.utils.GraphDifferencer;
 import org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper;
 import org.fcrepo.kernel.modeshape.rdf.converters.PropertyConverter;
-import org.fcrepo.kernel.modeshape.rdf.impl.AclRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.ChildrenRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.ContentRdfContext;
 import org.fcrepo.kernel.modeshape.rdf.impl.HashRdfContext;
@@ -216,7 +215,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         }
         final Stream<Stream<Triple>> streams = of(
             new LdpRdfContext(resource, translator),
-            new AclRdfContext(resource, translator),
             new RootRdfContext(resource, translator),
             new ContentRdfContext(resource, translator));
         return streams.reduce(empty(), Stream::concat);

@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.fcrepo</groupId>
     <artifactId>fcrepo</artifactId>
-    <version>5.1.0-SNAPSHOT</version>
+    <version>6.0.0-SNAPSHOT</version>
   </parent>
   <artifactId>fcrepo-jms</artifactId>
   <name>Fedora Repository JMS Module</name>
@@ -100,7 +100,7 @@
       <artifactId>slf4j-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.modeshape</groupId>
+      <groupId>org.fcrepo</groupId>
       <artifactId>modeshape-jcr</artifactId>
       <scope>test</scope>
     </dependency>

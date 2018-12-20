@@ -99,6 +99,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEGATE_TYPE;
 import static org.junit.Assert.assertEquals;
@@ -201,9 +202,14 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     private static final Resource PCDM_FILE_TYPE = createResource("http://pcdm.org/models#File");
 
+    private static final String CONTAINER_LINK_HEADER = "<" + CONTAINER.getURI() + ">;rel=\"type\"";
+
     private static final String BASIC_CONTAINER_LINK_HEADER = "<" + BASIC_CONTAINER.getURI() + ">;rel=\"type\"";
     private static final String DIRECT_CONTAINER_LINK_HEADER = "<" + DIRECT_CONTAINER.getURI() + ">;rel=\"type\"";
     private static final String INDIRECT_CONTAINER_LINK_HEADER = "<" + INDIRECT_CONTAINER.getURI() + ">;rel=\"type\"";
+
+    private static final String RESOURCE_LINK_HEADER = "<" + RESOURCE.getURI() + ">;rel=\"type\"";
+    private static final String RDF_SOURCE_LINK_HEADER = "<" + RDF_SOURCE.getURI() + ">;rel=\"type\"";
     private static final String NON_RDF_SOURCE_LINK_HEADER = "<" + NON_RDF_SOURCE.getURI() + ">;rel=\"type\"";
     private static final String VERSIONED_RESOURCE_LINK_HEADER = "<" + VERSIONED_RESOURCE.getURI() + ">; rel=\"type\"";
 
@@ -2322,6 +2328,57 @@ public class FedoraLdpIT extends AbstractResourceIT {
         put.setHeader(LINK, BASIC_CONTAINER_LINK_HEADER);
         assertEquals("Changed the NonRdfSource ixn to basic container",
                 CONFLICT.getStatusCode(), getStatus(put));
+    }
+
+    @Test
+    public void testPutChangeBinaryTypeNotAllowed() throws IOException {
+        final HttpPost postMethod = new HttpPost(serverAddress);
+        postMethod.setEntity(new StringEntity("TestString."));
+        postMethod.addHeader(CONTENT_DISPOSITION, "attachment; filename=\"postCreate.txt\"");
+
+        final String location;
+        try (final CloseableHttpResponse response = execute(postMethod)) {
+            location = getLocation(response);
+        }
+
+        // Change to RDFSource
+        final HttpPut put1Method = new HttpPut(location);
+        put1Method.setEntity(new StringEntity("TestString2."));
+        put1Method.addHeader(CONTENT_DISPOSITION, "attachment; filename=\"putUpdate.txt\"");
+        put1Method.setHeader(LINK, RDF_SOURCE_LINK_HEADER);
+        assertEquals("Changed the NonRdfSource interaction model to RdfSource",
+                BAD_REQUEST.getStatusCode(), getStatus(put1Method));
+
+        // Change to Basic Container
+        final HttpPut put2Method = new HttpPut(location);
+        put2Method.setEntity(new StringEntity("TestString2."));
+        put2Method.addHeader(CONTENT_DISPOSITION, "attachment; filename=\"putUpdate.txt\"");
+        put2Method.setHeader(LINK, BASIC_CONTAINER_LINK_HEADER);
+        assertEquals("Changed the NonRdfSource interaction model to RdfSource",
+                CONFLICT.getStatusCode(), getStatus(put2Method));
+    }
+
+    @Test
+    public void testPutChangeBasicContainerToParent() throws Exception {
+        final String pid = getRandomUniqueId();
+        final String location = serverAddress + pid;
+        createObjectAndClose(pid);
+
+        // Change to RDFSource
+        final HttpPut put1Method = new HttpPut(location);
+        put1Method.setHeader(LINK, CONTAINER_LINK_HEADER);
+        assertEquals("Changed the BasicContainer interaction model to Container",
+                BAD_REQUEST.getStatusCode(), getStatus(put1Method));
+
+        final HttpPut put2Method = new HttpPut(location);
+        put2Method.setHeader(LINK, RESOURCE_LINK_HEADER);
+        assertEquals("Changed the BasicContainer interaction model to Resource",
+                BAD_REQUEST.getStatusCode(), getStatus(put2Method));
+
+        final HttpPut put3Method = new HttpPut(location);
+        put3Method.setHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
+        assertEquals("Changed the BasicContainer interaction model to DirectContainer",
+                CONFLICT.getStatusCode(), getStatus(put3Method));
     }
 
     @Test

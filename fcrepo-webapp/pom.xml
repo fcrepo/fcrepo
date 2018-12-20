@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.fcrepo</groupId>
     <artifactId>fcrepo</artifactId>
-    <version>5.1.0-SNAPSHOT</version>
+    <version>6.0.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>fcrepo-webapp</artifactId>
@@ -254,7 +254,7 @@
     </dependency>
 
     <dependency>
-      <groupId>org.modeshape</groupId>
+      <groupId>org.fcrepo</groupId>
       <artifactId>modeshape-jcr</artifactId>
       <scope>runtime</scope>
     </dependency>
@@ -513,6 +513,13 @@
               <webResources>
                 <resource>
                   <directory>src/main/jetty-console</directory>
+                  <filtering>true</filtering>
+                </resource>
+                <resource>
+                  <directory>src/main/webapp</directory>
+                  <includes>
+                    <include>*.html</include>
+                  </includes>
                   <filtering>true</filtering>
                 </resource>
               </webResources>

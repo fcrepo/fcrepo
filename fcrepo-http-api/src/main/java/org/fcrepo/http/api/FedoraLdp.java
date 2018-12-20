@@ -57,13 +57,12 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSE
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_PAIRTREE;
-import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODELS;
-import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODEL_RESOURCES;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.FedoraExternalContent.COPY;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -186,7 +185,7 @@ public class FedoraLdp extends ContentExposingResource {
         checkMementoPath();
 
         final String datetimeHeader = headers.getHeaderString(ACCEPT_DATETIME);
-        if (!isBlank(datetimeHeader)) {
+        if (!isBlank(datetimeHeader) && resource().isOriginalResource()) {
             return getMemento(datetimeHeader, resource());
         }
 
@@ -257,7 +256,7 @@ public class FedoraLdp extends ContentExposingResource {
         checkMementoPath();
 
         final String datetimeHeader = headers.getHeaderString(ACCEPT_DATETIME);
-        if (!isBlank(datetimeHeader)) {
+        if (!isBlank(datetimeHeader) && resource().isOriginalResource()) {
             return getMemento(datetimeHeader, resource());
         }
 
@@ -495,11 +494,13 @@ public class FedoraLdp extends ContentExposingResource {
     private static void ensureInteractionType(final FedoraResource resource, final String interactionModel,
             final boolean defaultContent) {
         if (interactionModel != null) {
-            if (!interactionModel.equals("ldp:NonRDFSource") && !resource.hasType(interactionModel)) {
+            if (!resource.hasType(interactionModel)) {
                 resource.addType(interactionModel);
             }
         } else if (defaultContent) {
-            resource.addType("ldp:BasicContainer");
+            resource.addType(LDP_BASIC_CONTAINER);
+        } else if (resource instanceof FedoraBinary) {
+            resource.addType(LDP_NON_RDF_SOURCE);
         }
     }
 
@@ -872,8 +873,7 @@ public class FedoraLdp extends ContentExposingResource {
                 final Link linq = Link.valueOf(link);
                 if ("type".equals(linq.getRel())) {
                     final Resource type = createResource(linq.getUri().toString());
-                    if (type.equals(NON_RDF_SOURCE) || type.equals(BASIC_CONTAINER) ||
-                            type.equals(DIRECT_CONTAINER) || type.equals(INDIRECT_CONTAINER)) {
+                    if (INTERACTION_MODEL_RESOURCES.contains(type)) {
                         return "ldp:" + type.getLocalName();
                     } else if (type.equals(VERSIONED_RESOURCE)) {
                         // skip if versioned resource link header

@@ -232,7 +232,7 @@ public class ExternalContentPathValidatorTest {
 
     @Test
     public void testCaseInsensitive() throws Exception {
-        final String goodPath = "FILE://" + dataDir.getAbsolutePath() + "/";
+        final String goodPath = "FILE://" + dataDir.toURI().getPath() + "/";
         final String extPath = dataUri + "/file.txt";
 
         addAllowedPath(goodPath);
@@ -251,25 +251,25 @@ public class ExternalContentPathValidatorTest {
         new File(threeFolder, "file").createNewFile();
         new File(manyFolder, "file").createNewFile();
 
-        addAllowedPath("file:" + oneFolder.getAbsolutePath() + "/");
-        addAllowedPath("file:/" + twoFolder.getAbsolutePath() + "/");
-        addAllowedPath("file://" + threeFolder.getAbsolutePath() + "/");
-        addAllowedPath("file:///" + manyFolder.getAbsolutePath() + "/");
+        addAllowedPath("file:" + oneFolder.toURI().getPath() + "/");
+        addAllowedPath("file:/" + twoFolder.toURI().getPath() + "/");
+        addAllowedPath("file://" + threeFolder.toURI().getPath() + "/");
+        addAllowedPath("file:///" + manyFolder.toURI().getPath() + "/");
 
-        validator.validate("file:" + oneFolder.getAbsolutePath() + "/file");
-        validator.validate("file:/" + oneFolder.getAbsolutePath() + "/file");
-        validator.validate("file://" + oneFolder.getAbsolutePath() + "/file");
+        validator.validate("file:" + oneFolder.toURI().getPath() + "/file");
+        validator.validate("file:/" + oneFolder.toURI().getPath() + "/file");
+        validator.validate("file://" + oneFolder.toURI().getPath() + "/file");
 
-        validator.validate("file:" + twoFolder.getAbsolutePath() + "/file");
-        validator.validate("file:/" + twoFolder.getAbsolutePath() + "/file");
-        validator.validate("file://" + twoFolder.getAbsolutePath() + "/file");
+        validator.validate("file:" + twoFolder.toURI().getPath() + "/file");
+        validator.validate("file:/" + twoFolder.toURI().getPath() + "/file");
+        validator.validate("file://" + twoFolder.toURI().getPath() + "/file");
 
-        validator.validate("file:" + threeFolder.getAbsolutePath() + "/file");
-        validator.validate("file:/" + threeFolder.getAbsolutePath() + "/file");
-        validator.validate("file://" + threeFolder.getAbsolutePath() + "/file");
+        validator.validate("file:" + threeFolder.toURI().getPath() + "/file");
+        validator.validate("file:/" + threeFolder.toURI().getPath() + "/file");
+        validator.validate("file://" + threeFolder.toURI().getPath() + "/file");
 
         try {
-            validator.validate("file:" + manyFolder.getAbsolutePath() + "file");
+            validator.validate("file:" + manyFolder.toURI().getPath() + "file");
             fail();
         } catch (final ExternalMessageBodyException e) {
             // expected
