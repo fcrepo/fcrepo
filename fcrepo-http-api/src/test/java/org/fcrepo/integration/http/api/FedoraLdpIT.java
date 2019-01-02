@@ -745,6 +745,54 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals(NOT_ACCEPTABLE.getStatusCode(), getStatus(get));
     }
 
+    @Test
+    public void testGetRDFSourceWithUserTypes() throws IOException {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+
+        verifyPresenceOfUserTypeHeader(id);
+    }
+
+    @Test
+    public void testGetNonRDFSourceDescriptionWithUserTypes() throws IOException {
+        final String id = getRandomUniqueId();
+        createDatastream(id, "ds", "sample-content");
+
+        verifyPresenceOfUserTypeHeader(id + "/ds/" + FCR_METADATA);
+    }
+
+    private void verifyPresenceOfUserTypeHeader(final String id) throws IOException {
+        final HttpHead headMethod = new HttpHead(serverAddress + id);
+
+        final int numInitialHeaders;
+        try (final CloseableHttpResponse response = execute(headMethod)) {
+            assertEquals(headMethod.toString(), OK.getStatusCode(), response.getStatusLine().getStatusCode());
+            numInitialHeaders = response.getAllHeaders().length;
+        }
+
+        // Add user type
+        final URI userType = URI.create("http://example.org/ObjectType");
+        setProperty(id, type.toString(), userType);
+
+        try (final CloseableHttpResponse response = execute(headMethod)) {
+            assertEquals(headMethod.toString(), OK.getStatusCode(), response.getStatusLine().getStatusCode());
+
+            // Should be an additional header from the previous GET request
+            assertEquals(numInitialHeaders + 1, response.getAllHeaders().length);
+
+            // Verify presence of user type
+            boolean found = false;
+            final Header[] headers = response.getHeaders("Link");
+            for (final Header header : headers) {
+                final Link link = Link.valueOf(header.getValue());
+                if (link.getUri().equals(userType)) {
+                    found = true;
+                }
+            }
+
+            assertTrue("Header not found: " + userType, found);
+        }
+    }
 
     @Test
     public void testDeleteObject() {
