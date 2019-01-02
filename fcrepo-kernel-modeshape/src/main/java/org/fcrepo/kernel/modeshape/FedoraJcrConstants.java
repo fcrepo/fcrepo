@@ -34,17 +34,7 @@ public final class FedoraJcrConstants {
 
     public static final String JCR_CREATEDBY = "jcr:createdBy";
 
-    public static final String JCR_FROZEN_NODE = "jcr:frozenNode";
-
-    public static final String FROZEN_NODE = "nt:frozenNode";
-
-    public static final String FROZEN_MIXIN_TYPES = "jcr:frozenMixinTypes";
-
-    public static final String FROZEN_PRIMARY_TYPE = "jcr:frozenPrimaryType";
-
     public static final String ROOT = "mode:root";
-
-    public static final String VERSIONABLE = "mix:versionable";
 
     public static final String FIELD_DELIMITER = "\30^^\30";
 

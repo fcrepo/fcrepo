@@ -19,16 +19,10 @@ package org.fcrepo.kernel.modeshape.services.functions;
 
 import static java.util.Arrays.asList;
 import static java.util.Objects.requireNonNull;
-import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_MIXIN_TYPES;
-import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.isFrozen;
-import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.property2values;
-import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedPredicate.uncheck;
 
 import java.util.Collection;
 import javax.jcr.Node;
-import javax.jcr.RepositoryException;
-import javax.jcr.Value;
 
 import org.fcrepo.kernel.modeshape.utils.UncheckedPredicate;
 
@@ -51,14 +45,8 @@ public class AnyTypesPredicate implements UncheckedPredicate<Node> {
     }
 
     @Override
-    public boolean testThrows(final Node input) throws RepositoryException {
+    public boolean testThrows(final Node input) {
         requireNonNull(input, "null node has no types!");
-        if (isFrozen.test(input) && input.hasProperty(FROZEN_MIXIN_TYPES)) {
-            if (property2values.apply(input.getProperty(FROZEN_MIXIN_TYPES)).map(uncheck(Value::getString))
-                    .anyMatch(nodeTypes::contains)) {
-                return true;
-            }
-        }
         return nodeTypes.stream().anyMatch(uncheck(input::isNodeType));
     }
 }

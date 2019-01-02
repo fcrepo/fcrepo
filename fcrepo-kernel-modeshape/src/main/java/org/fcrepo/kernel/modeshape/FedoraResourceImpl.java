@@ -49,14 +49,12 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_MEMBERSHIP;
 import static org.fcrepo.kernel.api.RequiredRdfContext.MINIMAL;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
-import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_MIXIN_TYPES;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
 import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.jcrProperties;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
-import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.isFrozen;
 import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.property2values;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getContainingNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
@@ -764,9 +762,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         try {
             if (type.equals(FEDORA_REPOSITORY_ROOT)) {
                 return node.isNodeType(ROOT);
-            } else if (isFrozen.test(node) && hasProperty(FROZEN_MIXIN_TYPES)) {
-                return property2values.apply(getProperty(FROZEN_MIXIN_TYPES)).map(uncheck(Value::getString))
-                    .anyMatch(type::equals);
             }
             return node.isNodeType(type);
         } catch (final PathNotFoundException e) {

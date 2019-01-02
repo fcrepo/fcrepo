@@ -160,7 +160,7 @@ public interface FedoraResource {
      *
      * <p>Note: the type parameter should be in prefixed short form, so ldp:Container or ex:Image
      * are both acceptable types. This method does not assume any jcr to fedora prefix mappings are
-     * managed by the implementation, so hasType("jcr:frozenNode") is a valid use of this method.</p>
+     * managed by the implementation, so hasType("jcr:lastModified") is a valid use of this method.</p>
      *
      * @param type the given type
      * @return whether the object has the given type
@@ -178,7 +178,7 @@ public interface FedoraResource {
      *
      * <p>Note: the type parameter should be in prefixed short form, so ldp:Container or ex:Image
      * are both acceptable types. This method does not assume any jcr to fedora prefix mappings are
-     * managed by the implementation, so hasType("jcr:frozenNode") is a valid use of this method.</p>
+     * managed by the implementation, so hasType("jcr:lastModified") is a valid use of this method.</p>
      *
      * @param type the type to add
      */
