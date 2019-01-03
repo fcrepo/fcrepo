@@ -754,7 +754,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testGetNonRDFSourceDescriptionWithUserTypes() throws IOException {
+    public void testGetNonRDFSourceAndDescriptionWithUserTypes() throws IOException {
         final String id = getRandomUniqueId();
         createDatastream(id, "ds", "sample-content");
 
@@ -781,16 +781,20 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertEquals(numInitialHeaders + 1, response.getAllHeaders().length);
 
             // Verify presence of user type
-            boolean found = false;
-            final Header[] headers = response.getHeaders("Link");
-            for (final Header header : headers) {
-                final Link link = Link.valueOf(header.getValue());
-                if (link.getUri().equals(userType)) {
-                    found = true;
-                }
-            }
+            checkForLinkHeader(response, userType.toString(), "type");
+        }
 
-            assertTrue("Header not found: " + userType, found);
+        // Verify presence of user type on NonRDFSource... if applicable
+        if (id.endsWith(FCR_METADATA)) {
+            // Strip the trailing /fcr:metadata
+            final HttpHead headBinary = new HttpHead(serverAddress + id.replace("/" + FCR_METADATA, ""));
+
+            try (final CloseableHttpResponse response = execute(headBinary)) {
+                assertEquals(headBinary.toString(), OK.getStatusCode(), response.getStatusLine().getStatusCode());
+
+                // Verify presence of user type
+                checkForLinkHeader(response, userType.toString(), "type");
+            }
         }
     }
 

@@ -560,19 +560,15 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
 
         // Add user-provided types as Link headers... when a description exists
-        if (resource.getDescription() != null) {
-            for (final URI typeURI : resource.getDescription().getTypes()) {
+        final FedoraResource resourceDescription = resource.getDescription();
+        if (resourceDescription != null) {
+            for (final URI typeURI : resourceDescription.getTypes()) {
 
                 // Get namespace of type
                 final String type = typeURI.toString();
-                final String namespace;
-                if (type.contains("#")) {
-                    namespace = type.substring(0, type.indexOf('#') + 1);
-                } else {
-                    namespace = type.substring(0, type.lastIndexOf('/') + 1);
-                }
+                final String namespace = createURI(type).getNameSpace();
 
-                // Omit server-managed types
+                // Omit server-managed types, as they are added elsewhere
                 if (!isManagedNamespace.test(namespace)) {
                     servletResponse.addHeader(LINK, buildLink(type, "type"));
                 }
