@@ -44,13 +44,13 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 
 import org.apache.http.Header;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
@@ -346,6 +346,33 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
             assertEquals("max-age=0 expected", "max-age=0", headers[1].getValue());
             consume(responseFromGet.getEntity());
         }
+    }
+
+    @Test
+    public void testBinaryHeadAndDeleteInTransaction() throws Exception {
+        final String id = getRandomUniqueId();
+
+        // Create the child resource
+        try (final CloseableHttpResponse response = execute(putDSMethod(id, "child", "some test content"))) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+        }
+
+        final String txLocation = createTransaction();
+
+        // Make a head request against the binary within the transaction
+        final String childTxPath = txLocation + "/" + id;
+        try (final CloseableHttpResponse resp = execute(new HttpHead(childTxPath))) {
+            assertEquals(OK.getStatusCode(), resp.getStatusLine().getStatusCode());
+        }
+
+        // Delete the binary within the transaction
+        final String objTxPath = txLocation + "/" + id;
+        try (final CloseableHttpResponse resp = execute(new HttpDelete(objTxPath))) {
+            assertEquals(NO_CONTENT.getStatusCode(), resp.getStatusLine().getStatusCode());
+        }
+
+        // Commit the transaction containing deletion
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPost(txLocation + "/fcr:tx/fcr:commit")));
     }
 
     /**
