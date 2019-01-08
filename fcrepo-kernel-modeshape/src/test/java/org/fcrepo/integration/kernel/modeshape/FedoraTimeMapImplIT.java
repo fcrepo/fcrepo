@@ -33,6 +33,7 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.FedoraTimeMap;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.ContainerService;
+import org.fcrepo.kernel.api.services.TimeMapService;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -57,6 +58,9 @@ public class FedoraTimeMapImplIT extends AbstractIT {
     @Inject
     private BinaryService binaryService;
 
+    @Inject
+    private TimeMapService timeMapService;
+
     private FedoraSession session;
 
     @Rule
@@ -76,6 +80,7 @@ public class FedoraTimeMapImplIT extends AbstractIT {
     public void testGetOriginalResource() {
         final String pid = getRandomPid();
         final Container object = containerService.findOrCreate(session, "/" + pid);
+        timeMapService.findOrCreate(session, "/" + pid);
         session.commit();
 
         final FedoraTimeMap timeMap = (FedoraTimeMap) object.getTimeMap();
@@ -93,9 +98,10 @@ public class FedoraTimeMapImplIT extends AbstractIT {
         try (InputStream contentStream = new ByteArrayInputStream("content".getBytes())) {
             object.setContent(contentStream, "text/plain", null, null, null);
         }
+        timeMapService.findOrCreate(session, "/" + pid);
+        session.commit();
 
         final FedoraTimeMap timeMap = (FedoraTimeMap) object.getTimeMap();
-        session.commit();
 
         final FedoraResource originalResource = timeMap.getOriginalResource();
         assertTrue(originalResource instanceof FedoraBinary);
@@ -110,6 +116,7 @@ public class FedoraTimeMapImplIT extends AbstractIT {
         try (InputStream contentStream = new ByteArrayInputStream("content".getBytes())) {
             binary.setContent(contentStream, "text/plain", null, null, null);
         }
+        timeMapService.findOrCreate(session, "/" + pid);
         session.commit();
 
         final FedoraResource description = binary.getDescribedResource();

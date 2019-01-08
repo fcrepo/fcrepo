@@ -348,18 +348,21 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
         }
     }
 
+    /**
+     * Test for issue https://jira.duraspace.org/browse/FCREPO-2975
+     */
     @Test
-    public void testBinaryHeadAndDeleteInTransaction() throws Exception {
+    public void testHeadAndDeleteInTransaction() throws Exception {
         final String id = getRandomUniqueId();
+        createObject(id);
 
-        // Create the child resource
-        try (final CloseableHttpResponse response = execute(putDSMethod(id, "child", "some test content"))) {
-            assertEquals(CREATED.getStatusCode(), getStatus(response));
+        try (final CloseableHttpResponse resp = execute(new HttpHead(serverAddress + "/" + id))) {
+            assertEquals(OK.getStatusCode(), resp.getStatusLine().getStatusCode());
         }
 
         final String txLocation = createTransaction();
 
-        // Make a head request against the binary within the transaction
+        // Make a head request against the object within the transaction
         final String childTxPath = txLocation + "/" + id;
         try (final CloseableHttpResponse resp = execute(new HttpHead(childTxPath))) {
             assertEquals(OK.getStatusCode(), resp.getStatusLine().getStatusCode());

@@ -149,6 +149,7 @@ import org.fcrepo.kernel.api.exception.ACLAuthorizationConstraintViolationExcept
 import org.fcrepo.kernel.api.exception.InsufficientStorageException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.PreconditionException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
@@ -546,16 +547,20 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         // Add versioning headers for versioned originals and mementos
         if (isOriginal || resource.isMemento() || resource instanceof FedoraTimeMap) {
             final URI originalUri = getUri(resource.getOriginalResource());
-            final URI timemapUri = getUri(resource.getTimeMap());
-            servletResponse.addHeader(LINK, buildLink(originalUri, "timegate"));
-            servletResponse.addHeader(LINK, buildLink(originalUri, "original"));
-            servletResponse.addHeader(LINK, buildLink(timemapUri, "timemap"));
+            try {
+                final URI timemapUri = getUri(resource.getTimeMap());
+                servletResponse.addHeader(LINK, buildLink(originalUri, "timegate"));
+                servletResponse.addHeader(LINK, buildLink(originalUri, "original"));
+                servletResponse.addHeader(LINK, buildLink(timemapUri, "timemap"));
 
-            if (isOriginal) {
-                servletResponse.addHeader(LINK, buildLink(VERSIONED_RESOURCE.getURI(), "type"));
-                servletResponse.addHeader(LINK, buildLink(VERSIONING_TIMEGATE_TYPE, "type"));
-            } else if (resource instanceof FedoraTimeMap) {
-                servletResponse.addHeader(LINK, buildLink(VERSIONING_TIMEMAP_TYPE, "type"));
+                if (isOriginal) {
+                    servletResponse.addHeader(LINK, buildLink(VERSIONED_RESOURCE.getURI(), "type"));
+                    servletResponse.addHeader(LINK, buildLink(VERSIONING_TIMEGATE_TYPE, "type"));
+                } else if (resource instanceof FedoraTimeMap) {
+                    servletResponse.addHeader(LINK, buildLink(VERSIONING_TIMEMAP_TYPE, "type"));
+                }
+            } catch (final PathNotFoundRuntimeException e) {
+                LOGGER.debug("TimeMap not found for {}, resource not versioned", getUri(resource));
             }
         }
     }

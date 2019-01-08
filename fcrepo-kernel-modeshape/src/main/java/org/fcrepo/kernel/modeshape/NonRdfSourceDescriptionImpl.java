@@ -21,6 +21,7 @@ import static org.fcrepo.kernel.api.utils.SubjectMappingUtil.mapSubject;
 import static java.util.stream.Stream.empty;
 import static org.fcrepo.kernel.api.RequiredRdfContext.MINIMAL;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isNonRdfSourceDescription;
+import static org.fcrepo.kernel.api.RdfLexicon.LDPCV_TIME_MAP;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import javax.jcr.Node;
