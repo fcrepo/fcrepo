@@ -53,12 +53,8 @@ import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static com.google.common.collect.ImmutableSet.of;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
-import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_MIXIN_TYPES;
-import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_PRIMARY_TYPE;
-import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_NODE;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATEDBY;
-import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_FROZEN_NODE;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIEDBY;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
@@ -86,7 +82,6 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
     private static final Set<String> privateProperties = of(
             "jcr:mime",
             "jcr:mimeType",
-            "jcr:frozenUuid",
             "jcr:uuid",
             JCR_CONTENT,
             JCR_PRIMARY_TYPE,
@@ -95,8 +90,6 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
             JCR_CREATED,
             JCR_CREATEDBY,
             JCR_MIXIN_TYPES,
-            FROZEN_MIXIN_TYPES,
-            FROZEN_PRIMARY_TYPE,
             MEMENTO_DATETIME);
 
     private static final Set<String> validJcrProperties = of(
@@ -123,12 +116,6 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
      * binary.
      */
     public static final Predicate<Node> isFedoraBinary = new AnyTypesPredicate(FEDORA_BINARY);
-
-    /**
-     * Predicate for determining whether this {@link FedoraResource} has a frozen node
-     */
-    public static Predicate<FedoraResource> isFrozenNode = f -> f.hasType(FROZEN_NODE) ||
-            f.getPath().contains(JCR_FROZEN_NODE);
 
     /**
      * Predicate for determining whether this {@link Node} is a Fedora Skolem node.
@@ -171,12 +158,6 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
      */
     private static final Predicate<Property> isProtectedAndShouldBeHidden = uncheck(p -> {
         if (!p.getDefinition().isProtected()) {
-            return false;
-        } else if (p.getParent().isNodeType(FROZEN_NODE)) {
-            // everything on a frozen node is protected
-            // but we wish to display it anyway and there's
-            // another mechanism in place to make clear that
-            // things cannot be edited.
             return false;
         } else if (isPublicJcrProperty.test(p.getName())) {
             return false;

@@ -17,7 +17,6 @@
  */
 package org.fcrepo.kernel.modeshape.services.functions;
 
-import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.Value;
 
@@ -29,7 +28,6 @@ import java.util.stream.Stream;
 
 import static java.util.stream.Stream.of;
 import static javax.jcr.PropertyType.BINARY;
-import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_NODE;
 import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedPredicate.uncheck;
 
@@ -54,11 +52,5 @@ public final class JcrPropertyFunctions {
      */
     public static final Predicate<Property> isBinaryContentProperty = uncheck(p -> p.getType() == BINARY &&
             p.getName().equals(JCR_DATA));
-
-    /**
-     * Predicate for determining whether this {@link javax.jcr.Node} is a frozen node
-     * (a part of the system version history).
-     */
-    public static final Predicate<Node> isFrozen = uncheck(n -> n.isNodeType(FROZEN_NODE));
 
 }

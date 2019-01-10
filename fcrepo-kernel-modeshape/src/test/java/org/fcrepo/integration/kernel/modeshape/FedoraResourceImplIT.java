@@ -1071,8 +1071,8 @@ public class FedoraResourceImplIT extends AbstractIT {
         final String pid = getRandomPid();
         final Container object = containerService.findOrCreate(session, "/" + pid);
         session.commit();
-        final FedoraResourceImpl frozenResource = new FedoraResourceImpl(getJcrNode(object));
-        assertFalse(frozenResource.hashCode() == 0);
+        final FedoraResourceImpl resource = new FedoraResourceImpl(getJcrNode(object));
+        assertFalse(resource.hashCode() == 0);
     }
 
     @Test

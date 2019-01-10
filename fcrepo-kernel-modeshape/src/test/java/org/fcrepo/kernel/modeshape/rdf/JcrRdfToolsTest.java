@@ -30,7 +30,6 @@ import static javax.jcr.PropertyType.URI;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FIELD_DELIMITER;
-import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_NODE;
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getJcrNamespaceForRDFNamespace;
 import static org.fcrepo.kernel.modeshape.rdf.JcrRdfTools.getRDFNamespaceForJcrNamespace;
 import static org.junit.Assert.assertEquals;
@@ -149,7 +148,6 @@ public class JcrRdfToolsTest implements FedoraTypes {
         when(mockProperty.getValue()).thenReturn(mockValue);
         when(mockProperty.getType()).thenReturn(STRING);
         when(mockProperty.getParent()).thenReturn(mockNode);
-        when(mockNode.isNodeType(FROZEN_NODE)).thenReturn(false);
         when(mockProperty.getDefinition()).thenReturn(mockPropertyDefinition);
         when(mockPropertyDefinition.isProtected()).thenReturn(false);
         when(mockValue.getString()).thenReturn("abc");
@@ -514,9 +512,6 @@ public class JcrRdfToolsTest implements FedoraTypes {
 
     @Mock
     private Version mockVersion;
-
-    @Mock
-    private Node mockFrozenNode;
 
     @Mock
     private VersionManager mockVersionManager;
