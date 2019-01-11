@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.fcrepo</groupId>
     <artifactId>fcrepo</artifactId>
-    <version>5.0.1</version>
+    <version>5.1.0-SNAPSHOT</version>
   </parent>
   <artifactId>fcrepo-auth-webac</artifactId>
   <name>Fedora Repository WebAC Authorization Module</name>
@@ -44,19 +44,19 @@
     <dependency>
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-auth-common</artifactId>
-      <version>5.0.1</version>
+      <version>5.1.0-SNAPSHOT</version>
     </dependency>
 
     <dependency>
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-kernel-api</artifactId>
-      <version>5.0.1</version>
+      <version>5.1.0-SNAPSHOT</version>
     </dependency>
 
     <dependency>
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-kernel-modeshape</artifactId>
-      <version>5.0.1</version>
+      <version>5.1.0-SNAPSHOT</version>
     </dependency>
 
     <dependency>
@@ -150,14 +150,14 @@
     <dependency>
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-configs</artifactId>
-      <version>5.0.1</version>
+      <version>5.1.0-SNAPSHOT</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-kernel-modeshape</artifactId>
-      <version>5.0.1</version>
+      <version>5.1.0-SNAPSHOT</version>
       <scope>test</scope>
       <classifier>tests</classifier>
     </dependency>
@@ -165,7 +165,7 @@
     <dependency>
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-http-commons</artifactId>
-      <version>5.0.1</version>
+      <version>5.1.0-SNAPSHOT</version>
       <scope>test</scope>
       <type>test-jar</type>
     </dependency>
@@ -173,13 +173,13 @@
     <dependency>
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-http-api</artifactId>
-      <version>5.0.1</version>
+      <version>5.1.0-SNAPSHOT</version>
     </dependency>
 
     <dependency>
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-http-api</artifactId>
-      <version>5.0.1</version>
+      <version>5.1.0-SNAPSHOT</version>
       <scope>test</scope>
       <type>test-jar</type>
     </dependency>
