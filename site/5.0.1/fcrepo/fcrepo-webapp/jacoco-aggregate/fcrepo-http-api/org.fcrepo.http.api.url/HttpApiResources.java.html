@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>HttpApiResources.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api.url</a> &gt; <span class="el_source">HttpApiResources.java</span></div><h1>HttpApiResources.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.http.api.url;
+
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_REPOSITORY_ROOT;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_SERVICE;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_TRANSACTION_SERVICE;
+
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
+
+import org.fcrepo.http.api.repository.FedoraRepositoryTransactions;
+import org.fcrepo.http.commons.api.rdf.UriAwareResourceModelFactory;
+import org.fcrepo.kernel.api.models.FedoraBinary;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+
+import org.springframework.stereotype.Component;
+
+import javax.ws.rs.core.UriInfo;
+
+/**
+ * Inject our HTTP API methods into the object graphs
+ *
+ * @author awoods
+ */
+@Component
+<span class="fc" id="L46">public class HttpApiResources implements UriAwareResourceModelFactory {</span>
+
+    @Override
+    public Model createModelForResource(final FedoraResource resource,
+        final UriInfo uriInfo, final IdentifierConverter&lt;Resource,FedoraResource&gt; idTranslator) {
+
+<span class="fc" id="L52">        final Model model = createDefaultModel();</span>
+
+<span class="fc" id="L54">        final Resource s = idTranslator.reverse().convert(resource);</span>
+
+<span class="fc bfc" id="L56" title="All 2 branches covered.">        if (resource.hasType(FEDORA_REPOSITORY_ROOT)) {</span>
+<span class="fc" id="L57">            addRepositoryStatements(uriInfo, model, s);</span>
+        }
+
+<span class="fc bfc" id="L60" title="All 4 branches covered.">        if (resource instanceof NonRdfSourceDescription &amp;&amp; !resource.isMemento()) {</span>
+<span class="fc" id="L61">            addContentStatements(idTranslator, (FedoraBinary)resource.getDescribedResource(), model);</span>
+        }
+<span class="fc" id="L63">        return model;</span>
+    }
+
+    private static void addContentStatements(final IdentifierConverter&lt;Resource,FedoraResource&gt; idTranslator,
+                                             final FedoraBinary resource,
+                                             final Model model) {
+        // fcr:fixity
+<span class="fc" id="L70">        final Resource subject = idTranslator.reverse().convert(resource);</span>
+<span class="fc" id="L71">        model.add(subject, HAS_FIXITY_SERVICE, createResource(subject.getURI() +</span>
+                &quot;/fcr:fixity&quot;));
+<span class="fc" id="L73">    }</span>
+
+
+    private void addRepositoryStatements(final UriInfo uriInfo, final Model model,
+        final Resource s) {
+        // fcr:tx
+<span class="fc" id="L79">        model.add(s, HAS_TRANSACTION_SERVICE, createResource(uriInfo</span>
+<span class="fc" id="L80">                .getBaseUriBuilder().path(FedoraRepositoryTransactions.class)</span>
+<span class="fc" id="L81">                .build().toASCIIString()));</span>
+<span class="fc" id="L82">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>BinaryServiceImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-modeshape</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.services</a> &gt; <span class="el_source">BinaryServiceImpl.java</span></div><h1>BinaryServiceImpl.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.services;
+
+import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.ResourceTypeException;
+import org.fcrepo.kernel.api.models.FedoraBinary;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.api.services.BinaryService;
+import org.fcrepo.kernel.modeshape.FedoraBinaryImpl;
+import org.fcrepo.kernel.modeshape.NonRdfSourceDescriptionImpl;
+import org.slf4j.Logger;
+import org.springframework.stereotype.Component;
+
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_DESCRIPTION;
+import static org.fcrepo.kernel.api.RdfLexicon.NT_LEAF_NODE;
+import static org.fcrepo.kernel.api.RdfLexicon.NT_VERSION_FILE;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getContainingNode;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.touch;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.touchLdpMembershipResource;
+import static org.slf4j.LoggerFactory.getLogger;
+
+/**
+ * @author cabeer
+ * @author ajs6f
+ * @since 10/10/14
+ */
+@Component
+<span class="fc" id="L52">public class BinaryServiceImpl extends AbstractService implements BinaryService {</span>
+
+<span class="fc" id="L54">    private static final Logger LOGGER = getLogger(BinaryServiceImpl.class);</span>
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public FedoraBinary findOrCreate(final FedoraSession session, final String path) {
+        try {
+<span class="fc" id="L62">            final FedoraBinary binary = findOrCreateBinary(session, path);</span>
+
+<span class="fc" id="L64">            final Node dsNode = getJcrNode(binary);</span>
+<span class="fc bfc" id="L65" title="All 2 branches covered.">            if (dsNode.isNew()) {</span>
+<span class="fc" id="L66">                final String descPath = dsNode.getPath() + &quot;/&quot; + FEDORA_DESCRIPTION;</span>
+<span class="fc" id="L67">                findOrCreateDescription(session, descPath);</span>
+            }
+
+<span class="fc" id="L70">            return binary;</span>
+<span class="nc" id="L71">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L72">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public FedoraBinary findOrCreateBinary(final FedoraSession session, final String path) {
+        try {
+<span class="fc" id="L82">            final Node dsNode = findOrCreateNode(session, path, NT_VERSION_FILE);</span>
+
+<span class="fc bfc" id="L84" title="All 2 branches covered.">            if (dsNode.isNew()) {</span>
+<span class="fc" id="L85">                initializeNewBinaryProperties(dsNode);</span>
+
+<span class="fc" id="L87">                getContainingNode(dsNode).ifPresent(parent -&gt; {</span>
+<span class="fc" id="L88">                    touch(parent);</span>
+<span class="fc" id="L89">                    touchLdpMembershipResource(dsNode);</span>
+<span class="fc" id="L90">                });</span>
+            }
+
+<span class="fc" id="L93">            final FedoraBinaryImpl binary = new FedoraBinaryImpl(dsNode);</span>
+
+<span class="fc bfc" id="L95" title="All 2 branches covered.">            if (dsNode.isNew()) {</span>
+<span class="fc" id="L96">                touch(binary.getNode());</span>
+            }
+
+<span class="fc" id="L99">            return binary;</span>
+<span class="fc" id="L100">        } catch (final RepositoryException e) {</span>
+<span class="fc" id="L101">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public NonRdfSourceDescription findOrCreateDescription(final FedoraSession session, final String path) {
+        try {
+<span class="fc" id="L111">            final Node descNode = findOrCreateNode(session, path, NT_LEAF_NODE);</span>
+
+<span class="fc" id="L113">            initializeNewDescriptionProperties(descNode);</span>
+
+<span class="fc" id="L115">            return new NonRdfSourceDescriptionImpl(descNode);</span>
+<span class="nc" id="L116">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L117">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    /**
+     * Retrieve a Datastream instance by pid and dsid
+     *
+     * @param path jcr path to the datastream
+     * @return datastream
+     */
+    @Override
+    public FedoraBinary find(final FedoraSession session, final String path) {
+<span class="fc" id="L129">        return cast(findNode(session, path));</span>
+    }
+
+    private static void initializeNewBinaryProperties(final Node node) {
+        try {
+
+<span class="pc bpc" id="L135" title="1 of 2 branches missed.">            if (node.canAddMixin(FEDORA_RESOURCE)) {</span>
+<span class="fc" id="L136">                node.addMixin(FEDORA_RESOURCE);</span>
+            }
+<span class="pc bpc" id="L138" title="1 of 2 branches missed.">            if (node.canAddMixin(FEDORA_BINARY)) {</span>
+<span class="fc" id="L139">                node.addMixin(FEDORA_BINARY);</span>
+            }
+<span class="nc" id="L141">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L142">            LOGGER.warn(&quot;Could not decorate {} with binary properties: {}&quot;, node, e);</span>
+<span class="fc" id="L143">        }</span>
+<span class="fc" id="L144">    }</span>
+
+    private static void initializeNewDescriptionProperties(final Node descNode) {
+        try {
+<span class="pc bpc" id="L148" title="1 of 2 branches missed.">            if (descNode.canAddMixin(FEDORA_NON_RDF_SOURCE_DESCRIPTION)) {</span>
+<span class="fc" id="L149">                descNode.addMixin(FEDORA_NON_RDF_SOURCE_DESCRIPTION);</span>
+            }
+
+<span class="pc bpc" id="L152" title="1 of 2 branches missed.">            if (descNode.canAddMixin(FEDORA_BINARY)) {</span>
+<span class="fc" id="L153">                descNode.addMixin(FEDORA_BINARY);</span>
+            }
+<span class="nc" id="L155">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L156">            LOGGER.warn(&quot;Could not decorate {} with description properties: {}&quot;, descNode, e);</span>
+<span class="fc" id="L157">        }</span>
+<span class="fc" id="L158">    }</span>
+
+    /**
+     * Retrieve a Datastream instance by pid and dsid
+     *
+     * @param node datastream node
+     * @return node as datastream
+     */
+    private FedoraBinary cast(final Node node) {
+<span class="fc" id="L167">        assertIsType(node);</span>
+<span class="fc" id="L168">        return new FedoraBinaryImpl(node);</span>
+    }
+
+    private static void assertIsType(final Node node) {
+<span class="fc bfc" id="L172" title="All 2 branches covered.">        if (!FedoraBinaryImpl.hasMixin(node)) {</span>
+<span class="fc" id="L173">            throw new ResourceTypeException(node + &quot; can not be used as a binary&quot;);</span>
+        }
+<span class="fc" id="L175">    }</span>
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
