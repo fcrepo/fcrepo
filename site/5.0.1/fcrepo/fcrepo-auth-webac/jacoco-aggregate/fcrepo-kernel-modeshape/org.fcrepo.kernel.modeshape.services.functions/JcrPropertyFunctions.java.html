@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>JcrPropertyFunctions.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository WebAC Authorization Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-modeshape</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.services.functions</a> &gt; <span class="el_source">JcrPropertyFunctions.java</span></div><h1>JcrPropertyFunctions.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.services.functions;
+
+import javax.jcr.Node;
+import javax.jcr.Property;
+import javax.jcr.Value;
+
+import org.fcrepo.kernel.modeshape.utils.UncheckedFunction;
+
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
+
+import static java.util.stream.Stream.of;
+import static javax.jcr.PropertyType.BINARY;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FROZEN_NODE;
+import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
+import static org.fcrepo.kernel.modeshape.utils.UncheckedPredicate.uncheck;
+
+/**
+ * @author cabeer
+ * @since 9/25/14
+ */
+public final class JcrPropertyFunctions {
+
+    private JcrPropertyFunctions() {
+    }
+
+    /**
+     * Constructs an {@link java.util.stream.Stream} of {@link javax.jcr.Value}s from any {@link javax.jcr.Property},
+     * multi- or single-valued.
+     */
+<span class="fc" id="L49">    public static final Function&lt;Property, Stream&lt;Value&gt;&gt; property2values =</span>
+<span class="fc bfc" id="L50" title="All 2 branches covered.">            UncheckedFunction.uncheck((final Property p) -&gt; p.isMultiple() ? of(p.getValues()) : of(p.getValue()));</span>
+
+    /**
+     * Check if a JCR property is a binary jcr:data property
+     */
+<span class="fc bfc" id="L55" title="All 2 branches covered.">    public static final Predicate&lt;Property&gt; isBinaryContentProperty = uncheck(p -&gt; p.getType() == BINARY &amp;&amp;</span>
+<span class="fc bfc" id="L56" title="All 2 branches covered.">            p.getName().equals(JCR_DATA));</span>
+
+    /**
+     * Predicate for determining whether this {@link javax.jcr.Node} is a frozen node
+     * (a part of the system version history).
+     */
+<span class="fc" id="L62">    public static final Predicate&lt;Node&gt; isFrozen = uncheck(n -&gt; n.isNodeType(FROZEN_NODE));</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

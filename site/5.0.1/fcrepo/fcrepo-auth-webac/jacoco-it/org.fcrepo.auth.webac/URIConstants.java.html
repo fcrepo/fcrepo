@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>URIConstants.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository WebAC Authorization Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.auth.webac</a> &gt; <span class="el_source">URIConstants.java</span></div><h1>URIConstants.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.auth.webac;
+
+import org.fcrepo.kernel.api.RdfLexicon;
+
+import java.net.URI;
+
+/**
+ * URIs used by the WebAC module.
+ *
+ * @author Peter Eichman
+ * @author whikloj
+ * @since Aug 25, 2015
+ * @see &lt;a href=&quot;http://www.w3.org/wiki/WebAccessControl/Vocabulary&quot;&gt;
+ *      http://www.w3.org/wiki/WebAccessControl/Vocabulary&lt;/a&gt;
+ * @see &lt;a href=&quot;http://www.w3.org/ns/auth/acl&quot;&gt;http://www.w3.org/ns/auth/acl&lt;/a&gt;
+ * @see &lt;a href=&quot;http://fedora.info/definitions/v4/webac&quot;&gt;http://fedora.info/definitions/v4/webac&lt;/a&gt;
+ */
+final public class URIConstants {
+
+    /**
+     * Namespace for the W3C WebAC vocabulary.
+     */
+    public static final String WEBAC_NAMESPACE_VALUE = RdfLexicon.WEBAC_NAMESPACE_VALUE;
+
+    /**
+     * Read access mode.
+     */
+    public static final String WEBAC_MODE_READ_VALUE = WEBAC_NAMESPACE_VALUE + &quot;Read&quot;;
+
+    /**
+     * Read access mode.
+     */
+<span class="fc" id="L50">    public static final URI WEBAC_MODE_READ = URI.create(WEBAC_MODE_READ_VALUE);</span>
+
+    /**
+     * Write access mode.
+     */
+    public static final String WEBAC_MODE_WRITE_VALUE = WEBAC_NAMESPACE_VALUE + &quot;Write&quot;;
+
+    /**
+     * Write access mode.
+     */
+<span class="fc" id="L60">    public static final URI WEBAC_MODE_WRITE = URI.create(WEBAC_MODE_WRITE_VALUE);</span>
+
+    /**
+     * Append access mode.
+     */
+    private static final String WEBAC_MODE_APPEND_VALUE = WEBAC_NAMESPACE_VALUE + &quot;Append&quot;;
+
+    /**
+     * Append access mode.
+     */
+<span class="fc" id="L70">    public static final URI WEBAC_MODE_APPEND = URI.create(WEBAC_MODE_APPEND_VALUE);</span>
+
+    /**
+     * Control access mode.
+     */
+    private static final String WEBAC_MODE_CONTROL_VALUE = WEBAC_NAMESPACE_VALUE + &quot;Control&quot;;
+
+    /**
+     * Control access mode.
+     */
+<span class="fc" id="L80">    public static final URI WEBAC_MODE_CONTROL = URI.create(WEBAC_MODE_CONTROL_VALUE);</span>
+
+    /**
+     * Authorization class.
+     */
+    public static final String WEBAC_AUTHORIZATION_VALUE = WEBAC_NAMESPACE_VALUE + &quot;Authorization&quot;;
+
+    /**
+     * WebAC agent
+     */
+    public static final String WEBAC_AGENT_VALUE = WEBAC_NAMESPACE_VALUE + &quot;agent&quot;;
+
+    /**
+     * WebAC agentClass
+     */
+    public static final String WEBAC_AGENT_CLASS_VALUE = WEBAC_NAMESPACE_VALUE + &quot;agentClass&quot;;
+
+    /**
+     * WebAC agentGroup
+     */
+    public static final String WEBAC_AGENT_GROUP_VALUE = WEBAC_NAMESPACE_VALUE + &quot;agentGroup&quot;;
+
+    /**
+     * WebAC accessTo
+     */
+    public static final String WEBAC_ACCESSTO_VALUE = WEBAC_NAMESPACE_VALUE + &quot;accessTo&quot;;
+
+    /**
+     * WebAC accessToClass
+     */
+    public static final String WEBAC_ACCESSTO_CLASS_VALUE = WEBAC_NAMESPACE_VALUE + &quot;accessToClass&quot;;
+
+    /**
+     * WebAC default
+     */
+    public static final String WEBAC_DEFAULT_VALUE = WEBAC_NAMESPACE_VALUE + &quot;default&quot;;
+
+    /**
+     * WebAC accessControl
+     */
+    public static final String WEBAC_ACCESS_CONTROL_VALUE = RdfLexicon.WEBAC_ACCESS_CONTROL_VALUE;
+
+    /**
+     * WebAC mode
+     */
+    public static final String WEBAC_MODE_VALUE = WEBAC_NAMESPACE_VALUE + &quot;mode&quot;;
+
+    /**
+     * WebAC AuthenticatedAgent
+     */
+    public static final String WEBAC_AUTHENTICATED_AGENT_VALUE = WEBAC_NAMESPACE_VALUE + &quot;AuthenticatedAgent&quot;;
+
+    /**
+     * FOAF Namespace
+     */
+    private static final String FOAF_NAMESPACE_VALUE = &quot;http://xmlns.com/foaf/0.1/&quot;;
+
+    /**
+     * FOAF Agent
+     */
+    public static final String FOAF_AGENT_VALUE = FOAF_NAMESPACE_VALUE + &quot;Agent&quot;;
+
+    /**
+     * vCard Namespace
+     */
+    private static final String VCARD_NAMESPACE_VALUE = &quot;http://www.w3.org/2006/vcard/ns#&quot;;
+
+    /**
+     * vCard Group
+     */
+    public static final String VCARD_GROUP_VALUE = VCARD_NAMESPACE_VALUE + &quot;Group&quot;;
+<span class="fc" id="L151">    public static final URI VCARD_GROUP = URI.create(VCARD_GROUP_VALUE);</span>
+
+    /**
+     * vCard member
+     */
+    public static final String VCARD_MEMBER_VALUE = VCARD_NAMESPACE_VALUE + &quot;hasMember&quot;;
+
+    private URIConstants() {
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

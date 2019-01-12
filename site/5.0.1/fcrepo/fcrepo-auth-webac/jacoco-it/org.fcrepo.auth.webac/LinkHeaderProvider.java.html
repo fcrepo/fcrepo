@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LinkHeaderProvider.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository WebAC Authorization Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.auth.webac</a> &gt; <span class="el_source">LinkHeaderProvider.java</span></div><h1>LinkHeaderProvider.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.auth.webac;
+
+import static org.fcrepo.auth.webac.URIConstants.WEBAC_ACCESS_CONTROL_VALUE;
+import static org.fcrepo.kernel.api.RdfCollectors.toModel;
+import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
+import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
+
+import java.net.URI;
+
+import javax.inject.Inject;
+import javax.ws.rs.core.Link;
+import javax.ws.rs.core.UriInfo;
+
+import org.fcrepo.http.commons.api.UriAwareHttpHeaderFactory;
+import org.fcrepo.http.commons.session.SessionFactory;
+import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.services.NodeService;
+import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
+
+import org.slf4j.Logger;
+
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Multimap;
+import org.apache.jena.rdf.model.Resource;
+
+import org.springframework.stereotype.Component;
+
+/**
+ * Insert WebAC Link headers to responses
+ *
+ * @author whikloj
+ * @since 2015-10-30
+ */
+@Component
+<span class="fc" id="L57">public class LinkHeaderProvider implements UriAwareHttpHeaderFactory {</span>
+
+<span class="fc" id="L59">    private static final Logger LOGGER = getLogger(LinkHeaderProvider.class);</span>
+
+    @Inject
+    private SessionFactory sessionFactory;
+
+    @Inject
+    private NodeService nodeService;
+
+    @Override
+    public Multimap&lt;String, String&gt; createHttpHeadersForResource(final UriInfo uriInfo, final FedoraResource resource) {
+
+<span class="fc" id="L70">        final FedoraSession internalSession = sessionFactory.getInternalSession();</span>
+<span class="fc" id="L71">        final IdentifierConverter&lt;Resource, FedoraResource&gt; translator =</span>
+<span class="fc" id="L72">                new DefaultIdentifierTranslator(getJcrSession(internalSession));</span>
+<span class="fc" id="L73">        final ListMultimap&lt;String, String&gt; headers = ArrayListMultimap.create();</span>
+
+<span class="fc" id="L75">        LOGGER.debug(&quot;Adding WebAC Link Header for Resource: {}&quot;, resource.getPath());</span>
+        // Get the correct Acl for this resource
+<span class="fc" id="L77">        WebACRolesProvider.getEffectiveAcl(resource, false, sessionFactory).ifPresent(acls -&gt; {</span>
+            // If the Acl is present we need to use the internal session to get its URI
+<span class="fc" id="L79">            nodeService.find(internalSession, acls.resource.getPath())</span>
+<span class="fc" id="L80">            .getTriples(translator, PROPERTIES)</span>
+<span class="fc" id="L81">            .collect(toModel()).listObjectsOfProperty(createProperty(WEBAC_ACCESS_CONTROL_VALUE))</span>
+<span class="fc" id="L82">            .forEachRemaining(linkObj -&gt; {</span>
+<span class="nc bnc" id="L83" title="All 2 branches missed.">                if (linkObj.isURIResource()) {</span>
+<span class="nc" id="L84">                    final Resource acl = linkObj.asResource();</span>
+<span class="nc" id="L85">                    final String aclPath = translator.convert(acl).getPath();</span>
+<span class="nc" id="L86">                    final URI aclUri = uriInfo.getBaseUriBuilder().path(aclPath).build();</span>
+<span class="nc" id="L87">                    headers.put(&quot;Link&quot;, Link.fromUri(aclUri).rel(&quot;acl&quot;).build().toString());</span>
+                }
+<span class="nc" id="L89">            });</span>
+<span class="fc" id="L90">        });</span>
+
+<span class="fc" id="L92">        return headers;</span>
+    }
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
