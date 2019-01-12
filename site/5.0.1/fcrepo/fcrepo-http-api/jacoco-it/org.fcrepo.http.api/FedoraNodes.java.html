@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FedoraNodes.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api</a> &gt; <span class="el_source">FedoraNodes.java</span></div><h1>FedoraNodes.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.http.api;
+
+import static javax.ws.rs.core.Response.Status.BAD_GATEWAY;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
+import static javax.ws.rs.core.Response.created;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+
+import javax.annotation.PostConstruct;
+import javax.jcr.ItemExistsException;
+import javax.jcr.PathNotFoundException;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.ClientErrorException;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.ServerErrorException;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+
+import org.fcrepo.http.commons.domain.COPY;
+import org.fcrepo.http.commons.domain.MOVE;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.slf4j.Logger;
+import org.springframework.context.annotation.Scope;
+
+import com.google.common.annotations.VisibleForTesting;
+import org.apache.jena.rdf.model.ResourceFactory;
+
+/**
+ * CRUD operations on Fedora Nodes
+ *
+ * @author cbeer
+ */
+@Scope(&quot;request&quot;)
+@Path(&quot;/{path: .*}&quot;)
+public class FedoraNodes extends ContentExposingResource {
+
+<span class="fc" id="L62">    private static final Logger LOGGER = getLogger(FedoraNodes.class);</span>
+
+    @Context protected Request request;
+    @Context protected HttpServletResponse servletResponse;
+    @Context protected UriInfo uriInfo;
+
+    @PathParam(&quot;path&quot;) protected String externalPath;
+
+    protected FedoraResource resource;
+
+    /**
+     * Default JAX-RS entry point
+     */
+    public FedoraNodes() {
+<span class="fc" id="L76">        super();</span>
+<span class="fc" id="L77">    }</span>
+
+    /**
+     * Create a new FedoraNodes instance for a given path
+     * @param externalPath the external path
+     */
+    @VisibleForTesting
+<span class="nc" id="L84">    public FedoraNodes(final String externalPath) {</span>
+<span class="nc" id="L85">        this.externalPath = externalPath;</span>
+<span class="nc" id="L86">    }</span>
+
+
+    /**
+     * Run these actions after initializing this resource
+     */
+    @PostConstruct
+    public void postConstruct() {
+<span class="fc" id="L94">        setUpJMSInfo(uriInfo, headers);</span>
+<span class="fc" id="L95">    }</span>
+
+    /**
+     * @deprecated
+     * Copies an object from one path to another
+     * @param destinationUri the destination uri
+     * @throws URISyntaxException if uri syntax exception occurred
+     * @return the response
+     */
+    @COPY
+    @Deprecated
+    public Response copyObject(@HeaderParam(&quot;Destination&quot;) final String destinationUri)
+            throws URISyntaxException {
+
+        try {
+<span class="fc" id="L110">            final String source = translator().asString(translator().toDomain(externalPath));</span>
+
+<span class="pc bpc" id="L112" title="1 of 2 branches missed.">            if (!nodeService.exists(session.getFedoraSession(), source)) {</span>
+<span class="nc" id="L113">                throw new ClientErrorException(&quot;The source path does not exist&quot;, CONFLICT);</span>
+            }
+
+<span class="fc" id="L116">            final String destination = translator().asString(ResourceFactory.createResource(destinationUri));</span>
+
+<span class="pc bpc" id="L118" title="1 of 2 branches missed.">            if (destination == null) {</span>
+<span class="nc" id="L119">                throw new ServerErrorException(&quot;Destination was not a valid resource path&quot;, BAD_GATEWAY);</span>
+<span class="fc bfc" id="L120" title="All 2 branches covered.">            } else if (nodeService.exists(session.getFedoraSession(), destination)) {</span>
+<span class="fc" id="L121">                throw new ClientErrorException(&quot;Destination resource already exists&quot;, PRECONDITION_FAILED);</span>
+            }
+
+<span class="fc" id="L124">            LOGGER.info(&quot;Copy from '{}' to '{}'&quot;, source, destination);</span>
+<span class="fc" id="L125">            nodeService.copyObject(session.getFedoraSession(), source, destination);</span>
+<span class="fc" id="L126">            session.commit();</span>
+
+<span class="fc" id="L128">            return created(new URI(destinationUri)).build();</span>
+<span class="fc" id="L129">        } catch (final RepositoryRuntimeException e) {</span>
+<span class="fc" id="L130">            final Throwable cause = e.getCause();</span>
+
+<span class="pc bpc" id="L132" title="1 of 2 branches missed.">            if (cause instanceof ItemExistsException) {</span>
+
+<span class="nc" id="L134">                throw new ClientErrorException(&quot;Destination resource already exists&quot;, PRECONDITION_FAILED, e);</span>
+
+<span class="pc bpc" id="L136" title="1 of 2 branches missed.">            } else if (cause instanceof PathNotFoundException) {</span>
+
+<span class="fc" id="L138">                throw new ClientErrorException(&quot;There is no node that will serve as the parent of the copied item&quot;,</span>
+                        CONFLICT, e);
+            } else {
+<span class="nc" id="L141">                throw e;</span>
+            }
+        }
+
+    }
+
+    /**
+     * @deprecated
+     * Moves an object from one path to another
+     * @param destinationUri the destination uri
+     * @throws URISyntaxException if uri syntax exception occurred
+     * @return the response
+     */
+    @MOVE
+    @Deprecated
+    public Response moveObject(@HeaderParam(&quot;Destination&quot;) final String destinationUri)
+            throws URISyntaxException {
+
+        try {
+
+<span class="fc" id="L161">            final String source = toPath(translator(), externalPath);</span>
+
+<span class="pc bpc" id="L163" title="1 of 2 branches missed.">            if (!nodeService.exists(session.getFedoraSession(), source)) {</span>
+<span class="nc" id="L164">                throw new ClientErrorException(&quot;The source path does not exist&quot;, CONFLICT);</span>
+            }
+
+
+<span class="fc" id="L168">            evaluateRequestPreconditions(request, servletResponse, resource(), session);</span>
+
+<span class="fc" id="L170">            final String destination = translator().asString(ResourceFactory.createResource(destinationUri));</span>
+
+<span class="pc bpc" id="L172" title="1 of 2 branches missed.">            if (destination == null) {</span>
+<span class="nc" id="L173">                throw new ServerErrorException(&quot;Destination was not a valid resource path&quot;, BAD_GATEWAY);</span>
+<span class="fc bfc" id="L174" title="All 2 branches covered.">            } else if (nodeService.exists(session.getFedoraSession(), destination)) {</span>
+<span class="fc" id="L175">                throw new ClientErrorException(&quot;Destination resource already exists&quot;, PRECONDITION_FAILED);</span>
+            }
+
+<span class="fc" id="L178">            LOGGER.info(&quot;Move from '{}' to '{}'&quot;, source, destination);</span>
+<span class="fc" id="L179">            nodeService.moveObject(session.getFedoraSession(), source, destination);</span>
+<span class="fc" id="L180">            session.commit();</span>
+<span class="fc" id="L181">            return created(new URI(destinationUri)).build();</span>
+<span class="fc" id="L182">        } catch (final RepositoryRuntimeException e) {</span>
+<span class="fc" id="L183">            final Throwable cause = e.getCause();</span>
+
+<span class="pc bpc" id="L185" title="1 of 2 branches missed.">            if (cause instanceof ItemExistsException) {</span>
+<span class="nc" id="L186">                throw new ClientErrorException(&quot;Destination resource already exists&quot;, PRECONDITION_FAILED, e);</span>
+<span class="fc bfc" id="L187" title="All 2 branches covered.">            } else if (cause instanceof PathNotFoundException) {</span>
+<span class="fc" id="L188">                throw new ClientErrorException(&quot;There is no node that will serve as the parent of the moved item&quot;,</span>
+                        CONFLICT, e);
+            } else {
+<span class="fc" id="L191">                throw e;</span>
+            }
+        }
+    }
+
+    @Override
+    protected void addResourceHttpHeaders(final FedoraResource resource) {
+<span class="nc" id="L198">        throw new UnsupportedOperationException();</span>
+    }
+
+    @Override
+    protected String externalPath() {
+<span class="fc" id="L203">        return externalPath;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

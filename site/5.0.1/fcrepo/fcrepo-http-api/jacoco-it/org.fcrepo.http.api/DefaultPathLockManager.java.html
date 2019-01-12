@@ -1,0 +1,373 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DefaultPathLockManager.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api</a> &gt; <span class="el_source">DefaultPathLockManager.java</span></div><h1>DefaultPathLockManager.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.http.api;
+
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.exception.InterruptedRuntimeException;
+import org.fcrepo.kernel.api.services.NodeService;
+import org.slf4j.Logger;
+import org.springframework.stereotype.Component;
+
+import com.google.common.annotations.VisibleForTesting;
+
+/**
+ * A class that serves as a pool lockable paths to guarantee synchronized
+ * accesses to the resources at those paths.  Because there may be an
+ * extremely high number of paths in the repository, this implementation
+ * is complicated by a need to ensure that for a given path, only one set
+ * of locks exists and only until all the locks have been acquired and released.
+ *
+ * Because this is very complex code, extensive logging is produced at
+ * the TRACE level.
+ *
+ * @author Mike Durbin
+ */
+
+@Component
+<span class="fc" id="L54">public class DefaultPathLockManager implements PathLockManager {</span>
+
+<span class="fc" id="L56">    private static final Logger LOGGER = getLogger(DefaultPathLockManager.class);</span>
+
+    /**
+     * A map of all the paths for which requests to lock are underway.  This
+     * is an exhaustive set of all paths that may be accessed at this time.
+     * Changes to the contents of this map must be synchronized on the instance
+     * of this class, though blocking acquisition of locks against those paths
+     * must NOT be, lest we degrade to an essentially single-threaded
+     * application.
+     */
+<span class="fc" id="L66">    @VisibleForTesting</span>
+    final
+    Map&lt;String, ActivePath&gt; activePaths = new HashMap&lt;&gt;();
+
+    /**
+     * A list of paths for which delete operations are underway.  Attempts to
+     * acquire locks on resources that would be deleted with those paths will
+     * block until the delete lock is released.  This is a handy shortcut that
+     * allows this class to meet the locking requirements for delete operations
+     * without actually discovering (and locking) all the descendant nodes.
+     */
+<span class="fc" id="L77">    @VisibleForTesting</span>
+    final
+    List&lt;String&gt; activeDeletePaths = new ArrayList&lt;&gt;();
+
+    /**
+     * A class that represents a path that can be locked for reading or writing
+     * and is the subject of a currently active lock request (though locks may
+     * not necessarily have been granted yet).
+     */
+    private class ActivePath {
+
+        private final String path;
+
+        private final ReadWriteLock rwLock;
+
+        /**
+         * A list with references to every thread that has requested
+         * (though not necessary acquired) a read or write lock through
+         * the mechanism of the outer class' contract and not yet
+         * relinquished it by invoking LockManager.release().  This
+         * list is actually managed by methods outside of ActivePath.
+         */
+        private final List&lt;Thread&gt; threads;
+
+<span class="fc" id="L101">        private ActivePath(final String path) {</span>
+<span class="fc" id="L102">            this.path = path;</span>
+<span class="fc" id="L103">            rwLock = new ReentrantReadWriteLock();</span>
+<span class="fc" id="L104">            threads = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L105">        }</span>
+
+        public PathScopedLock getReadLock() {
+<span class="fc" id="L108">            threads.add(Thread.currentThread());</span>
+<span class="fc" id="L109">            LOGGER.trace(&quot;Thread {} requesting read lock on {}.&quot;, Thread.currentThread().getId(), path);</span>
+<span class="fc" id="L110">            return new PathScopedLock(rwLock.readLock());</span>
+        }
+
+        public PathScopedLock getWriteLock() {
+<span class="fc" id="L114">            threads.add(Thread.currentThread());</span>
+<span class="fc" id="L115">            LOGGER.trace(&quot;Thread {} requesting write lock on {}.&quot;, Thread.currentThread().getId(), path);</span>
+<span class="fc" id="L116">            return new PathScopedLock(rwLock.writeLock());</span>
+        }
+
+        /**
+         * Wraps a lock (read or write) to expose a subset of its
+         * functionality and to add special handling for our &quot;delete&quot;
+         * locks.
+         */
+        private class PathScopedLock {
+
+            final private Lock lock;
+
+<span class="fc" id="L128">            public PathScopedLock(final Lock l) {</span>
+<span class="fc" id="L129">                lock = l;</span>
+<span class="fc" id="L130">            }</span>
+
+            public ActivePath getPath() {
+<span class="fc" id="L133">                return ActivePath.this;</span>
+            }
+
+            public boolean tryLock() {
+<span class="pc bpc" id="L137" title="1 of 2 branches missed.">                for (final String deletePath : activeDeletePaths) {</span>
+<span class="nc bnc" id="L138" title="All 2 branches missed.">                    if (isOrIsDescendantOf(path, deletePath)) {</span>
+<span class="nc" id="L139">                        LOGGER.trace(&quot;Thread {} could not be granted lock on {} because that path is being deleted.&quot;,</span>
+<span class="nc" id="L140">                                Thread.currentThread().getId(), path);</span>
+<span class="nc" id="L141">                        return false;</span>
+                    }
+<span class="nc" id="L143">                }</span>
+<span class="fc" id="L144">                return lock.tryLock();</span>
+            }
+
+            public void unlock() {
+<span class="fc" id="L148">                lock.unlock();</span>
+<span class="fc" id="L149">            }</span>
+        }
+    }
+
+    /**
+     * The AcquiredLock implementation that's returned by the surrounding class.
+     * Two main constructors exist, one that accepts a bunch of locks, all of which
+     * must be acquired and a second representing a &quot;delete&quot; lock, for which at
+     * acquisition time the locks necessary are determined from the current pool of
+     * active locks.
+     *
+     * Never, outside of a block of code synchronized with the surrounding class
+     * instance, does this class hold an incomplete subset of the locks required:
+     * in other words, it gets all of the locks or none of them, never blocking
+     * while holding locks.
+     */
+    private class AcquiredMultiPathLock implements AcquiredLock {
+
+        private String deletePath;
+
+        private List&lt;ActivePath.PathScopedLock&gt; locks;
+
+        /**
+         * Instantiates and initializes an AcquiredMultiPathLock.  This
+         * constructor blocks until all of the necessary locks have been
+         * acquired, but to avoid possible deadlocks releases all acquired
+         * locks when it fails to acquire even one of them.
+         * @param locks each PathLock that must be acquired
+         * @throws InterruptedException on error
+         */
+<span class="fc" id="L179">        private AcquiredMultiPathLock(final List&lt;ActivePath.PathScopedLock&gt; locks) throws InterruptedException {</span>
+<span class="fc" id="L180">            this.locks = locks;</span>
+
+<span class="fc" id="L182">            boolean success = false;</span>
+<span class="fc bfc" id="L183" title="All 2 branches covered.">            while (!success) {</span>
+<span class="fc" id="L184">                synchronized (DefaultPathLockManager.this) {</span>
+<span class="fc" id="L185">                    success = tryAcquireAll();</span>
+<span class="fc bfc" id="L186" title="All 2 branches covered.">                    if (!success) {</span>
+<span class="fc" id="L187">                        LOGGER.debug(&quot;Failed to acquire all necessary path locks: waiting.  (Thread {})&quot;,</span>
+<span class="fc" id="L188">                                Thread.currentThread().getId());</span>
+<span class="fc" id="L189">                        DefaultPathLockManager.this.wait();</span>
+                    }
+<span class="fc" id="L191">                }</span>
+
+            }
+<span class="fc" id="L194">            LOGGER.debug(&quot;Acquired all necessary path locks  (Thread {})&quot;, Thread.currentThread().getId());</span>
+
+<span class="fc" id="L196">        }</span>
+
+        /**
+         * Instantiates and initializes an AcquiredMultiPathLock that requires
+         * locks on the given path and all active paths that are descendants of
+         * the given path.  This constructor blocks until all of the necessary
+         * locks have been acquired, but to avoid possible deadlocks releases
+         * all acquired locks when it fails to acquire even one of them.
+         * @param deletePath the path for which all descendant paths must also be
+         *        write locked.
+         * @throws InterruptedException on error
+         */
+<span class="fc" id="L208">        private AcquiredMultiPathLock(final String deletePath) throws InterruptedException {</span>
+<span class="fc" id="L209">            this.deletePath = deletePath;</span>
+
+<span class="fc" id="L211">            boolean success = false;</span>
+<span class="fc bfc" id="L212" title="All 2 branches covered.">            while (!success) {</span>
+<span class="fc" id="L213">                synchronized (DefaultPathLockManager.this) {</span>
+<span class="fc" id="L214">                    this.locks = new ArrayList&lt;&gt;();</span>
+
+                    // find all paths to lock
+<span class="fc" id="L217">                    activePaths.forEach((path, lock) -&gt; {</span>
+<span class="nc bnc" id="L218" title="All 2 branches missed.">                        if (isOrIsDescendantOf(path, deletePath)) {</span>
+<span class="nc" id="L219">                            locks.add(lock.getWriteLock());</span>
+                        }
+<span class="nc" id="L221">                        });</span>
+
+<span class="fc" id="L223">                    success = tryAcquireAll();</span>
+<span class="pc bpc" id="L224" title="1 of 2 branches missed.">                    if (!success) {</span>
+<span class="nc" id="L225">                        LOGGER.debug(&quot;Failed to acquire all necessary path locks: waiting.  (Thread {})&quot;,</span>
+<span class="nc" id="L226">                                Thread.currentThread().getId());</span>
+<span class="nc" id="L227">                        DefaultPathLockManager.this.wait();</span>
+                    } else {
+                        // So, we have acquired locks on every currently active path that is
+                        // the target of the DELETE operation or its ancestor... but what if
+                        // one is added once we fall out of this synchronized block?
+                        //
+                        // ...well, in that case we set a special note that this path is being
+                        // deleted so that whenever a new lock is attempted on a to-be-deleted
+                        // path, those locks fail to acquire.
+<span class="fc" id="L236">                        LOGGER.trace(&quot;Thread {} acquired delete lock on path {}.&quot;,</span>
+<span class="fc" id="L237">                                Thread.currentThread().getId(), deletePath);</span>
+<span class="fc" id="L238">                        activeDeletePaths.add(deletePath);</span>
+                    }
+<span class="fc" id="L240">                }</span>
+
+            }
+<span class="fc" id="L243">            LOGGER.debug(&quot;Acquired all necessary path locks  (Thread {})&quot;, Thread.currentThread().getId());</span>
+
+<span class="fc" id="L245">        }</span>
+
+        private boolean tryAcquireAll() {
+<span class="fc" id="L248">            final List&lt;ActivePath.PathScopedLock&gt; acquired = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L249" title="All 2 branches covered.">            for (final ActivePath.PathScopedLock lock : locks) {</span>
+<span class="fc bfc" id="L250" title="All 2 branches covered.">                if (lock.tryLock()) {</span>
+<span class="fc" id="L251">                    acquired.add(lock);</span>
+                } else {
+                    // roll back
+<span class="fc" id="L254">                    acquired.forEach(ActivePath.PathScopedLock::unlock);</span>
+<span class="fc" id="L255">                    return false;</span>
+                }
+<span class="fc" id="L257">            }</span>
+<span class="fc" id="L258">            return true;</span>
+        }
+
+        /*
+         * This is the only method that removes paths from the pool
+         * of currently active paths that can be locked.
+         */
+        @Override
+        public void release() {
+<span class="fc" id="L267">            synchronized (DefaultPathLockManager.this) {</span>
+<span class="fc bfc" id="L268" title="All 2 branches covered.">                for (final ActivePath.PathScopedLock lock : locks) {</span>
+<span class="fc" id="L269">                    lock.unlock();</span>
+<span class="fc" id="L270">                    lock.getPath().threads.remove(Thread.currentThread());</span>
+<span class="fc bfc" id="L271" title="All 2 branches covered.">                    if (lock.getPath().threads.isEmpty()) {</span>
+<span class="fc" id="L272">                        activePaths.remove(lock.getPath().path);</span>
+                    }
+<span class="fc" id="L274">                }</span>
+<span class="fc bfc" id="L275" title="All 2 branches covered.">                if (deletePath != null) {</span>
+<span class="fc" id="L276">                    LOGGER.trace(&quot;Thread {} releasing delete lock on path {}.&quot;,</span>
+<span class="fc" id="L277">                            Thread.currentThread().getId(), deletePath);</span>
+<span class="fc" id="L278">                    activeDeletePaths.remove(deletePath);</span>
+                }
+<span class="fc" id="L280">                LOGGER.trace(&quot;Thread {} released locks.&quot;, Thread.currentThread().getId());</span>
+<span class="fc" id="L281">                DefaultPathLockManager.this.notify();</span>
+<span class="fc" id="L282">            }</span>
+<span class="fc" id="L283">        }</span>
+
+    }
+
+    /*
+     * This is the only method that adds paths to the pool of
+     * currently active paths that can be locked.
+     */
+    private synchronized ActivePath getActivePath(final String path) {
+<span class="fc" id="L292">        ActivePath activePath = activePaths.get(path);</span>
+<span class="fc bfc" id="L293" title="All 2 branches covered.">        if (activePath == null) {</span>
+<span class="fc" id="L294">            activePath = new ActivePath(path);</span>
+<span class="fc" id="L295">            activePaths.put(path, activePath);</span>
+        }
+<span class="fc" id="L297">        return activePath;</span>
+    }
+
+    private boolean isOrIsDescendantOf(final String possibleDescendant, final String path) {
+<span class="nc bnc" id="L301" title="All 4 branches missed.">        return path.equals(possibleDescendant) || possibleDescendant.startsWith(path + &quot;/&quot;);</span>
+    }
+
+    private String getParentPath(final String path) {
+<span class="pc bpc" id="L305" title="1 of 2 branches missed.">        if (path.indexOf('/') == -1) {</span>
+<span class="nc" id="L306">            return null;</span>
+        }
+<span class="fc" id="L308">        return path.substring(0, path.lastIndexOf('/'));</span>
+    }
+
+    @VisibleForTesting
+    private static String normalizePath(final String path) {
+<span class="fc bfc" id="L313" title="All 2 branches covered.">        if (path.endsWith(&quot;/&quot;)) {</span>
+<span class="fc" id="L314">            return path.substring(0, path.length() - 1);</span>
+        } else {
+<span class="fc" id="L316">            return path;</span>
+        }
+    }
+
+    @Override
+    public AcquiredLock lockForRead(final String path) {
+<span class="fc" id="L322">        final List&lt;ActivePath.PathScopedLock&gt; locks = new ArrayList&lt;&gt;();</span>
+
+<span class="fc" id="L324">        synchronized (this) {</span>
+<span class="fc" id="L325">            locks.add(getActivePath(normalizePath(path)).getReadLock());</span>
+<span class="fc" id="L326">        }</span>
+
+        try {
+<span class="fc" id="L329">            return new AcquiredMultiPathLock(locks);</span>
+<span class="nc" id="L330">        } catch (InterruptedException e) {</span>
+<span class="nc" id="L331">            throw new InterruptedRuntimeException(e);</span>
+        }
+    }
+
+    @Override
+    public AcquiredLock lockForWrite(final String path, final FedoraSession session, final NodeService nodeService) {
+<span class="fc" id="L337">        final List&lt;ActivePath.PathScopedLock&gt; locks = new ArrayList&lt;&gt;();</span>
+
+<span class="fc" id="L339">        synchronized (this) {</span>
+            // lock the specified path while iterating through the path's
+            // ancestry to also lock each path that would be created implicitly
+            // by this write (ie, non-existent ancestral paths)
+<span class="fc" id="L343">            final String startingPath = normalizePath(path);</span>
+<span class="fc" id="L344">            for (String currentPath = startingPath ;</span>
+<span class="pc bpc" id="L345" title="1 of 4 branches missed.">                    currentPath == null || currentPath.length() &gt; 0;</span>
+<span class="fc" id="L346">                    currentPath = getParentPath(currentPath)) {</span>
+<span class="pc bpc" id="L347" title="1 of 2 branches missed.">                if (currentPath == null ||</span>
+<span class="fc bfc" id="L348" title="All 4 branches covered.">                        (!Objects.equals(currentPath, startingPath) &amp;&amp; nodeService.exists(session, currentPath))) {</span>
+                    // either we've followed the path back to the root, or we've found an ancestor that exists...
+                    // so there are no more locks to create.
+<span class="fc" id="L351">                    break;</span>
+                }
+<span class="fc" id="L353">                locks.add(getActivePath(currentPath).getWriteLock());</span>
+            }
+<span class="fc" id="L355">        }</span>
+
+        try {
+<span class="fc" id="L358">            return new AcquiredMultiPathLock(locks);</span>
+<span class="nc" id="L359">        } catch (InterruptedException e) {</span>
+<span class="nc" id="L360">            throw new InterruptedRuntimeException(e);</span>
+        }
+    }
+
+    @Override
+    public AcquiredLock lockForDelete(final String path) {
+        try {
+<span class="fc" id="L367">            return new AcquiredMultiPathLock(normalizePath(path));</span>
+<span class="nc" id="L368">        } catch (InterruptedException e) {</span>
+<span class="nc" id="L369">            throw new InterruptedRuntimeException(e);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
