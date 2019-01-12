@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>RepositoryRuntimeExceptionMapper.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Event Serialization</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-commons</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.commons.exceptionhandlers</a> &gt; <span class="el_source">RepositoryRuntimeExceptionMapper.java</span></div><h1>RepositoryRuntimeExceptionMapper.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.http.commons.exceptionhandlers;
+
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+
+import org.slf4j.Logger;
+
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.ext.Provider;
+import javax.ws.rs.ext.Providers;
+
+import static com.google.common.base.Throwables.getStackTraceAsString;
+import static javax.ws.rs.core.Response.serverError;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+import static org.slf4j.LoggerFactory.getLogger;
+
+/**
+ * @author cabeer
+ * @since 9/13/14
+ */
+
+@Provider
+public class RepositoryRuntimeExceptionMapper implements
+        ExceptionMapper&lt;RepositoryRuntimeException&gt;, ExceptionDebugLogging {
+
+    private final Providers providers;
+
+    /**
+     * Get the context Providers so we can rethrow the cause to an appropriate handler
+     * @param providers the providers
+     */
+<span class="fc" id="L50">    public RepositoryRuntimeExceptionMapper(@Context final Providers providers) {</span>
+<span class="fc" id="L51">        this.providers = providers;</span>
+<span class="fc" id="L52">    }</span>
+
+<span class="fc" id="L54">    private static final Logger LOGGER = getLogger(RepositoryExceptionMapper.class);</span>
+
+    @Override
+    public Response toResponse(final RepositoryRuntimeException e) {
+<span class="fc" id="L58">        final Throwable cause = e.getCause();</span>
+        @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L60">        final ExceptionMapper&lt;Throwable&gt; exceptionMapper =</span>
+<span class="fc" id="L61">                (ExceptionMapper&lt;Throwable&gt;) providers.getExceptionMapper(cause.getClass());</span>
+<span class="fc bfc" id="L62" title="All 2 branches covered.">        if (exceptionMapper != null) {</span>
+<span class="fc" id="L63">            return exceptionMapper.toResponse(cause);</span>
+        }
+<span class="fc" id="L65">        LOGGER.error(&quot;Caught a repository exception: {}&quot;, e.getMessage());</span>
+<span class="fc" id="L66">        debugException(this, cause, LOGGER);</span>
+<span class="fc" id="L67">        return serverError().entity(getStackTraceAsString(e)).type(TEXT_PLAIN_WITH_CHARSET).build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
