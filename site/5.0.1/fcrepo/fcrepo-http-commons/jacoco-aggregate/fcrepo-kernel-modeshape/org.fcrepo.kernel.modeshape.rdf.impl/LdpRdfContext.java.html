@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>LdpRdfContext.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository HTTP Commons Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-modeshape</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.rdf.impl</a> &gt; <span class="el_source">LdpRdfContext.java</span></div><h1>LdpRdfContext.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.rdf.impl;
+
+import static org.apache.jena.graph.Triple.create;
+import static org.apache.jena.vocabulary.RDF.type;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
+
+import java.util.stream.Stream;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.Container;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Resource;
+
+/**
+ * @author cabeer
+ * @since 9/16/14
+ */
+public class LdpRdfContext extends NodeRdfContext {
+
+
+    /**
+     * Default constructor.
+     *
+     * @param resource the resource
+     * @param idTranslator the id translator
+     */
+    public LdpRdfContext(final FedoraResource resource,
+                         final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator) {
+<span class="fc" id="L51">        super(resource, idTranslator);</span>
+
+<span class="fc" id="L53">        final Stream.Builder&lt;Triple&gt; builder = Stream.builder();</span>
+
+<span class="fc bfc" id="L55" title="All 2 branches covered.">        if (resource instanceof NonRdfSourceDescription) {</span>
+<span class="fc" id="L56">            builder.accept(nonRdfSourceContext());</span>
+        } else {
+<span class="fc" id="L58">            builder.accept(typeContext());</span>
+        }
+
+<span class="fc bfc" id="L61" title="All 2 branches covered.">        if (resource instanceof Container) {</span>
+<span class="fc" id="L62">            builder.accept(containerContext());</span>
+
+<span class="fc bfc" id="L64" title="All 2 branches covered.">            if (!resource.hasType(FEDORA_CONTAINER)) {</span>
+<span class="fc" id="L65">                builder.accept(defaultContainerContext());</span>
+            }
+        }
+<span class="fc" id="L68">        concat(builder.build());</span>
+<span class="fc" id="L69">    }</span>
+
+    private Triple typeContext() {
+<span class="fc" id="L72">        return create(subject(), type.asNode(), RDF_SOURCE.asNode());</span>
+    }
+
+    private Triple containerContext() {
+<span class="fc" id="L76">        return create(subject(), type.asNode(), CONTAINER.asNode());</span>
+    }
+
+    private Triple defaultContainerContext() {
+<span class="fc" id="L80">        return create(subject(), type.asNode(), BASIC_CONTAINER.asNode());</span>
+    }
+
+    private Triple nonRdfSourceContext() {
+<span class="fc" id="L84">        return create(subject(), type.asNode(), NON_RDF_SOURCE.asNode());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
