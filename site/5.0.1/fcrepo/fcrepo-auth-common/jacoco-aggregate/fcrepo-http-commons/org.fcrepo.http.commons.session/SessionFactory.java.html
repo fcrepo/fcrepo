@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>SessionFactory.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Authorization Commons Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-commons</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.commons.session</a> &gt; <span class="el_source">SessionFactory.java</span></div><h1>SessionFactory.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.http.commons.session;
+
+import static java.util.Objects.requireNonNull;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.security.Principal;
+
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
+
+import org.fcrepo.kernel.api.FedoraRepository;
+import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.exception.SessionMissingException;
+import org.fcrepo.kernel.api.services.CredentialsService;
+import org.fcrepo.kernel.api.services.BatchService;
+
+import org.slf4j.Logger;
+
+/**
+ * Factory for generating sessions for HTTP requests, taking
+ * into account transactions and authentication.
+ *
+ * @author awoods
+ * @author gregjan
+ * @author kaisternad
+ */
+public class SessionFactory {
+
+<span class="fc" id="L47">    protected enum Prefix{</span>
+<span class="fc" id="L48">        TX(&quot;tx:&quot;);</span>
+
+        private final String prefix;
+
+<span class="fc" id="L52">        Prefix(final String prefix) {</span>
+<span class="fc" id="L53">            this.prefix = prefix;</span>
+<span class="fc" id="L54">        }</span>
+
+        public String getPrefix() {
+<span class="fc" id="L57">            return prefix;</span>
+        }
+    }
+
+<span class="fc" id="L61">    private static final Logger LOGGER = getLogger(SessionFactory.class);</span>
+
+    @Inject
+    private FedoraRepository repo;
+
+    @Inject
+    private BatchService batchService;
+
+    @Inject
+    private CredentialsService credentialsService;
+
+    /**
+     * Initialize a session factory for the given Repository
+     *
+     * @param repo the repository
+     * @param batchService the transaction service
+     */
+<span class="fc" id="L78">    public SessionFactory(final FedoraRepository repo, final BatchService batchService) {</span>
+<span class="fc" id="L79">        this.repo = repo;</span>
+<span class="fc" id="L80">        this.batchService = batchService;</span>
+<span class="fc" id="L81">    }</span>
+
+    /**
+     * Validate the spring wiring
+     */
+    @PostConstruct
+    public void init() {
+<span class="fc" id="L88">        requireNonNull(repo, &quot;SessionFactory requires a Repository instance!&quot;);</span>
+<span class="fc" id="L89">    }</span>
+
+    /**
+     * Get a new JCR Session
+     *
+     * @return an internal session
+     */
+    public FedoraSession getInternalSession() {
+<span class="fc" id="L97">        return repo.login();</span>
+    }
+
+    /**
+     * Get a JCR session for the given HTTP servlet request with a
+     * SecurityContext attached
+     *
+     * @param servletRequest the servlet request
+     * @return the Session
+     * @throws RuntimeException if the transaction could not be found
+     */
+    public HttpSession getSession(final HttpServletRequest servletRequest) {
+        final HttpSession session;
+<span class="fc" id="L110">        final String txId = getEmbeddedId(servletRequest, Prefix.TX);</span>
+
+        try {
+<span class="pc bpc" id="L113" title="1 of 2 branches missed.">            if (txId == null) {</span>
+<span class="fc" id="L114">                session = createSession(servletRequest);</span>
+            } else {
+<span class="nc" id="L116">                session = getSessionFromTransaction(servletRequest, txId);</span>
+            }
+<span class="fc" id="L118">        } catch (final SessionMissingException e) {</span>
+<span class="fc" id="L119">            LOGGER.warn(&quot;Transaction missing: {}&quot;, e.getMessage());</span>
+<span class="fc" id="L120">            return null;</span>
+<span class="fc" id="L121">        }</span>
+
+<span class="fc" id="L123">        return session;</span>
+    }
+
+    /**
+     * Create a JCR session for the given HTTP servlet request with a
+     * SecurityContext attached.
+     *
+     * @param servletRequest the servlet request
+     * @return a newly created JCR session
+     */
+    protected HttpSession createSession(final HttpServletRequest servletRequest) {
+
+<span class="fc" id="L135">        LOGGER.debug(&quot;Returning an authenticated session in the default workspace&quot;);</span>
+<span class="fc" id="L136">        return  new HttpSession(repo.login(credentialsService.getCredentials(servletRequest)));</span>
+    }
+
+    /**
+     * Retrieve a JCR session from an active transaction
+     *
+     * @param servletRequest the servlet request
+     * @param txId the transaction id
+     * @return a JCR session that is associated with the transaction
+     */
+    protected HttpSession getSessionFromTransaction(final HttpServletRequest servletRequest, final String txId) {
+
+<span class="fc" id="L148">        final Principal userPrincipal = servletRequest.getUserPrincipal();</span>
+<span class="pc bpc" id="L149" title="1 of 2 branches missed.">        final String userName = userPrincipal == null ? null : userPrincipal.getName();</span>
+
+<span class="fc" id="L151">        final FedoraSession session = batchService.getSession(txId, userName);</span>
+<span class="fc" id="L152">        final HttpSession batchSession = new HttpSession(session);</span>
+<span class="fc" id="L153">        batchSession.makeBatchSession();</span>
+<span class="fc" id="L154">        LOGGER.debug(&quot;Returning a session in the batch {} for user {}&quot;, batchSession, userName);</span>
+<span class="fc" id="L155">        return batchSession;</span>
+    }
+
+    /**
+     * Extract the id embedded at the beginning of a request path
+     *
+     * @param servletRequest the servlet request
+     * @param prefix the prefix for the id
+     * @return the found id or null
+     */
+    protected String getEmbeddedId(
+            final HttpServletRequest servletRequest, final Prefix prefix) {
+<span class="fc" id="L167">        String requestPath = servletRequest.getPathInfo();</span>
+
+        // http://stackoverflow.com/questions/18963562/grizzlys-request-getpathinfo-returns-always-null
+<span class="pc bpc" id="L170" title="1 of 4 branches missed.">        if (requestPath == null &amp;&amp; servletRequest.getContextPath().isEmpty()) {</span>
+<span class="fc" id="L171">            requestPath = servletRequest.getRequestURI();</span>
+        }
+
+<span class="fc" id="L174">        String id = null;</span>
+<span class="fc bfc" id="L175" title="All 2 branches covered.">        if (requestPath != null) {</span>
+<span class="fc" id="L176">            final String pathPrefix = prefix.getPrefix();</span>
+<span class="fc" id="L177">            final String[] part = requestPath.split(&quot;/&quot;);</span>
+<span class="pc bpc" id="L178" title="1 of 4 branches missed.">            if (part.length &gt; 1 &amp;&amp; part[1].startsWith(pathPrefix)) {</span>
+<span class="fc" id="L179">                id = part[1].substring(pathPrefix.length());</span>
+            }
+        }
+<span class="fc" id="L182">        return id;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

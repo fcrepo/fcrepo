@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ServletContainerAuthFilter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Authorization Commons Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.auth.common</a> &gt; <span class="el_source">ServletContainerAuthFilter.java</span></div><h1>ServletContainerAuthFilter.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.auth.common;
+
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.security.Principal;
+import java.util.HashSet;
+import java.util.Set;
+
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.subject.Subject;
+import org.slf4j.Logger;
+
+/**
+ * @author peichman
+ */
+<span class="fc" id="L42">public class ServletContainerAuthFilter implements Filter {</span>
+
+<span class="fc" id="L44">    private static final Logger log = getLogger(ServletContainerAuthFilter.class);</span>
+
+    /**
+     * User role for Fedora's admin users
+     */
+    public static final String FEDORA_ADMIN_ROLE = &quot;fedoraAdmin&quot;;
+
+    /**
+     * User role for Fedora's ordinary users
+     */
+    public static final String FEDORA_USER_ROLE = &quot;fedoraUser&quot;;
+
+    // TODO: configurable set of role names: https://jira.duraspace.org/browse/FCREPO-2770
+<span class="fc" id="L57">    private static final String[] ROLE_NAMES = { FEDORA_ADMIN_ROLE, FEDORA_USER_ROLE };</span>
+
+    @Override
+    public void init(final FilterConfig filterConfig) {
+        // this method intentionally left empty
+<span class="nc" id="L62">    }</span>
+
+    @Override
+    public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain chain)
+            throws IOException, ServletException {
+<span class="fc" id="L67">        final HttpServletRequest httpRequest = (HttpServletRequest) request;</span>
+<span class="fc" id="L68">        final Principal servletUser = httpRequest.getUserPrincipal();</span>
+<span class="fc" id="L69">        final Subject currentUser = SecurityUtils.getSubject();</span>
+
+<span class="pc bpc" id="L71" title="1 of 2 branches missed.">        if (servletUser != null) {</span>
+<span class="fc" id="L72">            log.debug(&quot;There is a servlet user: {}&quot;, servletUser.getName());</span>
+<span class="fc" id="L73">            final Set&lt;String&gt; roles = new HashSet&lt;&gt;();</span>
+<span class="fc bfc" id="L74" title="All 2 branches covered.">            for (String roleName : ROLE_NAMES) {</span>
+<span class="fc" id="L75">                log.debug(&quot;Testing role {}&quot;, roleName);</span>
+<span class="pc bpc" id="L76" title="1 of 2 branches missed.">                if (httpRequest.isUserInRole(roleName)) {</span>
+<span class="nc" id="L77">                    log.debug(&quot;Servlet user {} has servlet role: {}&quot;, servletUser.getName(), roleName);</span>
+<span class="nc" id="L78">                    roles.add(roleName);</span>
+                }
+            }
+<span class="fc" id="L81">            final ContainerAuthToken token = new ContainerAuthToken(servletUser.getName(), roles);</span>
+<span class="fc" id="L82">            log.debug(&quot;Credentials for servletUser = {}&quot;, token.getCredentials());</span>
+<span class="fc" id="L83">            currentUser.login(token);</span>
+<span class="fc" id="L84">        } else {</span>
+<span class="nc" id="L85">            log.debug(&quot;Anonymous request&quot;);</span>
+            // ensure the user is actually logged out
+<span class="nc" id="L87">            currentUser.logout();</span>
+        }
+<span class="fc" id="L89">        chain.doFilter(request, response);</span>
+<span class="fc" id="L90">    }</span>
+
+    @Override
+    public void destroy() {
+        // this method intentionally left empty
+<span class="nc" id="L95">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
