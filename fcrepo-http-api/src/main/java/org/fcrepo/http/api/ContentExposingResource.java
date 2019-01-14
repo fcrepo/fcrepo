@@ -558,6 +558,22 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 servletResponse.addHeader(LINK, buildLink(VERSIONING_TIMEMAP_TYPE, "type"));
             }
         }
+
+        // Add user-provided types as Link headers... when a description exists
+        final FedoraResource resourceDescription = resource.getDescription();
+        if (resourceDescription != null) {
+            for (final URI typeURI : resourceDescription.getTypes()) {
+
+                // Get namespace of type
+                final String type = typeURI.toString();
+                final String namespace = createURI(type).getNameSpace();
+
+                // Omit server-managed types, as they are added elsewhere
+                if (!isManagedNamespace.test(namespace)) {
+                    servletResponse.addHeader(LINK, buildLink(type, "type"));
+                }
+            }
+        }
     }
 
     /**

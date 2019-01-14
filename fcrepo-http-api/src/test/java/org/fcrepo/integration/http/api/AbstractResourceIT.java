@@ -53,6 +53,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
@@ -456,7 +457,12 @@ public abstract class AbstractResourceIT {
 
     protected CloseableHttpResponse setProperty(final String pid, final String propertyUri, final String value)
             throws IOException {
-        return setProperty(pid, null, propertyUri, value);
+        return setProperty(pid, null, propertyUri, "\"" + value + "\"");
+    }
+
+    protected CloseableHttpResponse setProperty(final String pid, final String propertyUri, final URI value)
+            throws IOException {
+        return setProperty(pid, null, propertyUri, "<" + value.toString() + ">");
     }
 
     private CloseableHttpResponse setProperty(final String id, final String txId, final String propertyUri,
@@ -464,7 +470,8 @@ public abstract class AbstractResourceIT {
         final HttpPatch postProp = new HttpPatch(serverAddress + (txId != null ? txId + "/" : "") + id);
         postProp.setHeader(CONTENT_TYPE, "application/sparql-update");
         final String updateString =
-                "INSERT { <" + serverAddress + id + "> <" + propertyUri + "> \"" + value + "\" } WHERE { }";
+                "INSERT { <" + serverAddress + id.replace("/" + FCR_METADATA, "") +
+                        "> <" + propertyUri + "> " + value + " } WHERE { }";
         postProp.setEntity(new StringEntity(updateString));
         final CloseableHttpResponse dcResp = execute(postProp);
         assertEquals(dcResp.getStatusLine().toString(), NO_CONTENT.getStatusCode(), getStatus(dcResp));
