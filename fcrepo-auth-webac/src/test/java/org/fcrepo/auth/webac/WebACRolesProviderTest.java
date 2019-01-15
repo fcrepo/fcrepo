@@ -31,7 +31,6 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyObject;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -52,13 +51,13 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.fcrepo.http.commons.session.SessionFactory;
-import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.fcrepo.kernel.modeshape.FedoraSessionImpl;
+import org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -95,6 +94,9 @@ public class WebACRolesProviderTest {
     private NodeService mockNodeService;
 
     @Mock
+    private NodeResourceConverter mockNodeConverter;
+
+    @Mock
     private FedoraResourceImpl mockResource, mockParentResource;
 
     @Mock
@@ -115,12 +117,17 @@ public class WebACRolesProviderTest {
         roleProvider = new WebACRolesProvider();
         setField(roleProvider, "nodeService", mockNodeService);
         setField(roleProvider, "sessionFactory", mockSessionFactory);
+        setField(roleProvider, "nodeConverter", mockNodeConverter);
 
         when(mockNode.getSession()).thenReturn(mockJcrSession);
         when(mockSessionFactory.getInternalSession()).thenReturn(mockSession);
         when(mockSession.getJcrSession()).thenReturn(mockJcrSession);
 
+        when(mockNodeConverter.convert(mockNode)).thenReturn(mockResource);
+
         when(mockResource.getNode()).thenReturn(mockNode);
+        when(mockResource.getDescribedResource()).thenReturn(mockResource);
+        when(mockResource.getDescription()).thenReturn(mockResource);
         when(mockAclResource.getNode()).thenReturn(mockAclNode);
 
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
@@ -139,7 +146,6 @@ public class WebACRolesProviderTest {
         when(mockResource.getAcl()).thenReturn(null);
         when(mockParentResource.getAcl()).thenReturn(null);
 
-        when(mockNodeService.find(any(FedoraSession.class), eq(accessTo))).thenReturn(mockResource);
         when(mockNode.getPath()).thenReturn(accessTo);
 
         when(mockResource.getPath()).thenReturn(accessTo);
@@ -165,8 +171,6 @@ public class WebACRolesProviderTest {
         final String accessTo = parentPath + "/foo";
         final String acl = "/acls/01/acl.ttl";
 
-        when(mockNodeService.find(any(FedoraSession.class), eq(acl))).thenReturn(mockAclResource);
-        when(mockNodeService.find(any(FedoraSession.class), eq(accessTo))).thenReturn(mockResource);
         when(mockNode.getPath()).thenReturn(accessTo);
         when(mockAclNode.getPath()).thenReturn(acl);
 
@@ -203,8 +207,6 @@ public class WebACRolesProviderTest {
         final String accessTo = parentPath + "/foo";
         final String acl = "/acls/21/acl.ttl";
 
-        when(mockNodeService.find(any(FedoraSession.class), eq(acl))).thenReturn(mockAclResource);
-        when(mockNodeService.find(any(FedoraSession.class), eq(accessTo))).thenReturn(mockResource);
         when(mockNode.getPath()).thenReturn(accessTo);
         when(mockAclNode.getPath()).thenReturn(acl);
 
@@ -245,8 +247,6 @@ public class WebACRolesProviderTest {
         final String accessTo = "/webacl_box1";
         final String acl = "/acls/01/acl.ttl";
 
-        when(mockNodeService.find(any(FedoraSession.class), eq(acl))).thenReturn(mockAclResource);
-        when(mockNodeService.find(any(FedoraSession.class), eq(accessTo))).thenReturn(mockResource);
         when(mockNode.getPath()).thenReturn(accessTo);
         when(mockAclNode.getPath()).thenReturn(acl);
         when(mockResource.getAcl()).thenReturn(mockAclResource);
@@ -273,8 +273,6 @@ public class WebACRolesProviderTest {
         final String accessTo = "/webacl_box2";
         final String acl = "/acls/01/acl.ttl";
 
-        when(mockNodeService.find(any(FedoraSession.class), eq(acl))).thenReturn(mockAclResource);
-        when(mockNodeService.find(any(FedoraSession.class), eq(accessTo ))).thenReturn(mockResource);
         when(mockNode.getPath()).thenReturn(accessTo);
         when(mockAclNode.getPath()).thenReturn(acl);
         when(mockResource.getAcl()).thenReturn(mockAclResource);
@@ -296,8 +294,6 @@ public class WebACRolesProviderTest {
         final String accessTo = "/box/bag/collection";
         final String acl = "/acls/02/acl.ttl";
 
-        when(mockNodeService.find(any(FedoraSession.class), eq(acl))).thenReturn(mockAclResource);
-        when(mockNodeService.find(any(FedoraSession.class), eq(accessTo))).thenReturn(mockResource);
         when(mockNode.getPath()).thenReturn(accessTo);
         when(mockAclNode.getPath()).thenReturn(acl);
 
@@ -327,8 +323,6 @@ public class WebACRolesProviderTest {
         final String accessTo = "/dark/archive/sunshine";
         final String acl = "/acls/03/acl.ttl";
 
-        when(mockNodeService.find(any(FedoraSession.class), eq(acl))).thenReturn(mockAclResource);
-        when(mockNodeService.find(any(FedoraSession.class), eq(accessTo ))).thenReturn(mockResource);
         when(mockNode.getPath()).thenReturn(accessTo);
         when(mockAclNode.getPath()).thenReturn(acl);
         when(mockResource.getAcl()).thenReturn(mockAclResource);
@@ -354,8 +348,6 @@ public class WebACRolesProviderTest {
         final String accessTo = "/dark/archive";
         final String acl = "/acls/03/acl.ttl";
 
-        when(mockNodeService.find(any(FedoraSession.class), eq(acl))).thenReturn(mockAclResource);
-        when(mockNodeService.find(any(FedoraSession.class), eq(accessTo ))).thenReturn(mockResource);
         when(mockNode.getPath()).thenReturn(accessTo);
         when(mockAclNode.getPath()).thenReturn(acl);
         when(mockResource.getAcl()).thenReturn(mockAclResource);
@@ -380,8 +372,6 @@ public class WebACRolesProviderTest {
         final String accessTo = "/foaf-agent";
         final String acl = "/acls/03/foaf-agent.ttl";
 
-        when(mockNodeService.find(any(FedoraSession.class), eq(acl))).thenReturn(mockAclResource);
-        when(mockNodeService.find(any(FedoraSession.class), eq(accessTo))).thenReturn(mockResource);
         when(mockNode.getPath()).thenReturn(accessTo);
         when(mockAclNode.getPath()).thenReturn(acl);
         when(mockResource.getAcl()).thenReturn(mockAclResource);
@@ -408,8 +398,6 @@ public class WebACRolesProviderTest {
         final String accessTo = "/authenticated-agent";
         final String acl = "/acls/03/authenticated-agent.ttl";
 
-        when(mockNodeService.find(any(FedoraSession.class), eq(acl))).thenReturn(mockAclResource);
-        when(mockNodeService.find(any(FedoraSession.class), eq(accessTo))).thenReturn(mockResource);
         when(mockNode.getPath()).thenReturn(accessTo);
         when(mockAclNode.getPath()).thenReturn(acl);
         when(mockResource.getAcl()).thenReturn(mockAclResource);
@@ -437,8 +425,6 @@ public class WebACRolesProviderTest {
         final String accessTo = "/public_collection";
         final String acl = "/acls/04/acl.ttl";
 
-        when(mockNodeService.find(any(FedoraSession.class), eq(acl))).thenReturn(mockAclResource);
-        when(mockNodeService.find(any(FedoraSession.class), eq(accessTo))).thenReturn(mockResource);
         when(mockNode.getPath()).thenReturn(accessTo);
         when(mockAclNode.getPath()).thenReturn(acl);
         when(mockResource.getAcl()).thenReturn(mockAclResource);
@@ -467,8 +453,6 @@ public class WebACRolesProviderTest {
         final String accessTo = "/mixedCollection";
         final String acl = "/acls/05/acl.ttl";
 
-        when(mockNodeService.find(any(FedoraSession.class), eq(acl))).thenReturn(mockAclResource);
-        when(mockNodeService.find(any(FedoraSession.class), eq(accessTo))).thenReturn(mockResource);
         when(mockNode.getPath()).thenReturn(accessTo);
         when(mockAclNode.getPath()).thenReturn(acl);
         when(mockResource.getAcl()).thenReturn(mockAclResource);
@@ -496,8 +480,6 @@ public class WebACRolesProviderTest {
         final String accessTo = "/someOtherCollection";
         final String acl = "/acls/05/acl.ttl";
 
-        when(mockNodeService.find(any(FedoraSession.class), eq(acl))).thenReturn(mockAclResource);
-        when(mockNodeService.find(any(FedoraSession.class), eq(accessTo))).thenReturn(mockResource);
         when(mockNode.getPath()).thenReturn(accessTo);
         when(mockAclNode.getPath()).thenReturn(acl);
         when(mockResource.getAcl()).thenReturn(mockAclResource);
@@ -534,9 +516,6 @@ public class WebACRolesProviderTest {
 
         when(mockNodeService.find(mockSession, acl)).thenReturn(mockAclResource);
         when(mockNodeService.find(mockSession, groupResource)).thenReturn(mockAgentClassResource);
-        when(mockNodeService.find(any(FedoraSession.class), eq(acl))).thenReturn(mockAclResource);
-        when(mockNodeService.find(any(FedoraSession.class), eq(accessTo))).thenReturn(mockResource);
-        when(mockNode.getPath()).thenReturn(accessTo);
         when(mockAclNode.getPath()).thenReturn(acl);
         when(mockResource.getAcl()).thenReturn(mockAclResource);
         when(mockNodeService.find(mockSession, acl)).thenReturn(mockAclResource);
@@ -577,8 +556,6 @@ public class WebACRolesProviderTest {
 
         when(mockNodeService.find(mockSession, acl)).thenReturn(mockAclResource);
         when(mockNodeService.find(mockSession, groupResource)).thenReturn(mockAgentClassResource);
-        when(mockNodeService.find(any(FedoraSession.class), eq(acl))).thenReturn(mockAclResource);
-        when(mockNodeService.find(any(FedoraSession.class), eq(accessTo))).thenReturn(mockResource);
         when(mockNode.getPath()).thenReturn(accessTo);
         when(mockAclNode.getPath()).thenReturn(acl);
         when(mockResource.getAcl()).thenReturn(mockAclResource);
@@ -605,8 +582,6 @@ public class WebACRolesProviderTest {
         final String accessTo = "/dark/archive/sunshine";
         final String acl = "/acls/17/acl.ttl";
 
-        when(mockNodeService.find(any(FedoraSession.class), eq(acl))).thenReturn(mockAclResource);
-        when(mockNodeService.find(any(FedoraSession.class), eq(accessTo))).thenReturn(mockResource);
         when(mockNode.getPath()).thenReturn(accessTo);
         when(mockAclNode.getPath()).thenReturn(acl);
         when(mockResource.getAcl()).thenReturn(mockAclResource);
@@ -629,7 +604,6 @@ public class WebACRolesProviderTest {
     public void noAclTest1() {
         final String agent1 = "http://xmlns.com/foaf/0.1/Agent";
 
-        when(mockNodeService.find(any(FedoraSession.class), any())).thenReturn(mockResource);
         when(mockResource.getAcl()).thenReturn(null);
 
         when(mockResource.getPath()).thenReturn("/");
@@ -645,7 +619,6 @@ public class WebACRolesProviderTest {
     @Test(expected = RuntimeException.class)
     public void noAclTestMalformedRdf2() {
 
-        when(mockNodeService.find(any(FedoraSession.class), any())).thenReturn(mockResource);
         when(mockResource.getAcl()).thenReturn(null);
 
         when(mockResource.getPath()).thenReturn("/");
@@ -661,7 +634,6 @@ public class WebACRolesProviderTest {
     public void noAclTestOkRdf3() {
         final String agent1 = "testAdminUser";
 
-        when(mockNodeService.find(any(FedoraSession.class), any())).thenReturn(mockResource);
         when(mockResource.getAcl()).thenReturn(null);
         when(mockResource.getPath()).thenReturn("/");
         when(mockResource.getTypes()).thenReturn(
