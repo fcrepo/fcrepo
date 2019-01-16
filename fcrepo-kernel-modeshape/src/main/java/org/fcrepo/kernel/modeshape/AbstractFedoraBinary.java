@@ -21,6 +21,7 @@ import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDstring;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_DESCRIPTION;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FIELD_DELIMITER;
 import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.property2values;
+import static org.fcrepo.kernel.api.RdfLexicon.LDPCV_TIME_MAP;
 
 import static org.slf4j.LoggerFactory.getLogger;
 

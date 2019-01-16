@@ -25,7 +25,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.RdfLexicon.PROV_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.CONTAINER_WEBAC_ACL;
-import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.LDPCV_TIME_MAP;
+import static org.fcrepo.kernel.api.RdfLexicon.LDPCV_TIME_MAP;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 

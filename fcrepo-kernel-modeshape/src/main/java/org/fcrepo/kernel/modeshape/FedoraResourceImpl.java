@@ -70,6 +70,7 @@ import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.touchLdpMembers
 import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaceRegistry;
 import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
+import static org.fcrepo.kernel.api.RdfLexicon.LDPCV_TIME_MAP;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -174,8 +175,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     private static final long NO_TIME = 0L;
 
     private static final PropertyConverter propertyConverter = new PropertyConverter();
-
-    public static final String LDPCV_TIME_MAP = "fedora:timemap";
 
     public static final String CONTAINER_WEBAC_ACL = "fedora:acl";
 
@@ -447,7 +446,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
         try {
             if (isOriginalResource()) {
-                return findOrCreateTimeMap();
+                return Optional.of(node.getNode(LDPCV_TIME_MAP)).map(nodeConverter::convert).orElse(null);
             } else if (isMemento()) {
                 return Optional.of(node.getParent()).map(nodeConverter::convert).orElse(null);
             } else {
@@ -459,34 +458,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
-    }
-
-
-    private FedoraResource findOrCreateTimeMap() {
-        final Node ldpcvNode;
-        try {
-            ldpcvNode = findOrCreateChild(getNode(), LDPCV_TIME_MAP, NT_FOLDER);
-
-            if (ldpcvNode.isNew()) {
-                LOGGER.debug("Created TimeMap LDPCv {}", ldpcvNode.getPath());
-
-                // add mixin type fedora:Resource
-                if (node.canAddMixin(FEDORA_RESOURCE)) {
-                    node.addMixin(FEDORA_RESOURCE);
-                }
-
-                // add mixin type fedora:TimeMap
-                if (ldpcvNode.canAddMixin(FEDORA_TIME_MAP)) {
-                    ldpcvNode.addMixin(FEDORA_TIME_MAP);
-                }
-
-                // Set reference from timegate/map to original resource
-                ldpcvNode.setProperty(MEMENTO_ORIGINAL, getNode());
-            }
-        } catch (final RepositoryException e) {
-            throw new RepositoryRuntimeException(e);
-        }
-        return Optional.of(ldpcvNode).map(nodeConverter::convert).orElse(null);
     }
 
     @Override

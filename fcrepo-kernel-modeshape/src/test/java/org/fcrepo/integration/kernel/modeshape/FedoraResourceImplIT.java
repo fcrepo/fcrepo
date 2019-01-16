@@ -66,6 +66,7 @@ import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.ContainerService;
 import org.fcrepo.kernel.api.services.NodeService;
+import org.fcrepo.kernel.api.services.TimeMapService;
 import org.fcrepo.kernel.api.services.VersionService;
 import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
@@ -107,7 +108,7 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
 import static org.fcrepo.kernel.api.RequiredRdfContext.VERSIONS;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FIELD_DELIMITER;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
-import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.LDPCV_TIME_MAP;
+import static org.fcrepo.kernel.api.RdfLexicon.LDPCV_TIME_MAP;
 import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.CONTAINER_WEBAC_ACL;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.HAS_MIXIN_TYPE;
@@ -156,6 +157,9 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     @Inject
     private BinaryService binaryService;
+
+    @Inject
+    private TimeMapService timeMapService;
 
     @Inject
     private VersionService versionService;
@@ -1116,13 +1120,14 @@ public class FedoraResourceImplIT extends AbstractIT {
     }
 
     @Test
-    public void testFindOrCreateTimeMapLDPCv() throws RepositoryException {
+    public void testFindTimeMapLDPCv() throws RepositoryException {
         final String pid = getRandomPid();
         final Session jcrSession = getJcrSession(session);
         final FedoraResource resource = containerService.findOrCreate(session, "/" + pid);
+        timeMapService.findOrCreate(session, "/" + pid);
         session.commit();
 
-        // Create TimeMap (LDPCv)
+        // Find TimeMap (LDPCv)
         final FedoraResource ldpcvResource = resource.getTimeMap();
 
         assertNotNull(ldpcvResource);
@@ -1188,7 +1193,9 @@ public class FedoraResourceImplIT extends AbstractIT {
 
     @Test
     public void testGetMementoByDatetimeEmpty() {
-        final FedoraResource object1 = containerService.findOrCreate(session, "/" + getRandomPid());
+        final String pid = getRandomPid();
+        final FedoraResource object1 = containerService.findOrCreate(session, "/" + pid);
+        timeMapService.findOrCreate(session, "/" + pid);
 
         final DateTimeFormatter FMT = new DateTimeFormatterBuilder()
             .appendPattern("yyyy-MM-dd'T'HH:mm:ss")

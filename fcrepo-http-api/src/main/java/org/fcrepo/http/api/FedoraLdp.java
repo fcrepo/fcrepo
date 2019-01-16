@@ -57,6 +57,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSE
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_PAIRTREE;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_DESCRIPTION;
 import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODELS;
 import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODEL_RESOURCES;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
@@ -789,10 +790,12 @@ public class FedoraLdp extends ContentExposingResource {
         if ("ldp:NonRDFSource".equals(interactionModel) || contentExternal ||
                 (contentPresent && interactionModel == null && !isRDF(simpleContentType))) {
             result = binaryService.findOrCreate(session.getFedoraSession(), path);
+            timeMapService.findOrCreate(session.getFedoraSession(), path + "/" + FEDORA_DESCRIPTION);
         } else {
             result = containerService.findOrCreate(session.getFedoraSession(), path);
         }
 
+        timeMapService.findOrCreate(session.getFedoraSession(), path);
 
         final String resInteractionModel = getInteractionModel(result);
         if (StringUtils.isNoneBlank(interactionModel) && StringUtils.isNoneBlank(resInteractionModel)

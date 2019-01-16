@@ -241,6 +241,11 @@ public final class RdfLexicon {
      */
     public static final String FEDORA_DESCRIPTION = "fedora:description";
 
+    /**
+     * Fedora defined node path for a timemap
+     */
+    public static final String LDPCV_TIME_MAP = "fedora:timemap";
+
     // VERSIONING
     /**
      * Memento TimeMap type.
