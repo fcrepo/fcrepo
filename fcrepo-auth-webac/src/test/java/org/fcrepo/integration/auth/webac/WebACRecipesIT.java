@@ -1289,4 +1289,40 @@ public class WebACRecipesIT extends AbstractResourceIT {
             assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(postDescReq));
         }
     }
+
+    @Test
+    public void testCreateAclWithAccessToClassForBinary() throws Exception {
+        final String id = getRandomUniqueId();
+        final String subjectUri = serverAddress + id;
+        ingestObj(subjectUri);
+        ingestAcl("fedoraAdmin", "/acls/agent-access-to-class.ttl", subjectUri + "/fcr:acl");
+
+        final String binaryUri = ingestBinary("/rest/" + id + "/binary", new StringEntity("foo"));
+
+        final HttpHead headBinary = new HttpHead(binaryUri);
+        setAuth(headBinary, "testuser");
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(headBinary));
+
+        final HttpHead headDesc = new HttpHead(binaryUri + "/fcr:metadata");
+        setAuth(headDesc, "testuser");
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(headDesc));
+
+        // Add type to binary
+        final HttpPatch requestPatch = patchObjMethod(id + "/binary/fcr:metadata");
+        setAuth(requestPatch, "fedoraAdmin");
+        final String sparql = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n" +
+                "PREFIX foaf: <http://xmlns.com/foaf/0.1/>  \n" +
+                "INSERT { <> rdf:type foaf:Document } WHERE {}";
+        requestPatch.setEntity(new StringEntity(sparql));
+        requestPatch.setHeader("Content-type", "application/sparql-update");
+        assertEquals(HttpStatus.SC_NO_CONTENT, getStatus(requestPatch));
+
+        final HttpHead headBinary2 = new HttpHead(binaryUri);
+        setAuth(headBinary2, "testuser");
+        assertEquals(HttpStatus.SC_OK, getStatus(headBinary2));
+
+        final HttpHead headDesc2 = new HttpHead(binaryUri + "/fcr:metadata");
+        setAuth(headDesc2, "testuser");
+        assertEquals(HttpStatus.SC_OK, getStatus(headDesc2));
+    }
 }
