@@ -46,7 +46,6 @@ import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.fcrepo.kernel.modeshape.utils.FedoraSessionUserUtil.USER_AGENT_BASE_URI_PROPERTY;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.slf4j.LoggerFactory.getLogger;
-
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -69,11 +68,10 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.api.FedoraSession;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.NodeService;
-import org.fcrepo.kernel.modeshape.FedoraSessionImpl;
+import org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter;
 import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 import org.slf4j.Logger;
 
@@ -101,6 +99,8 @@ public class WebACRolesProvider {
     @Inject
     private SessionFactory sessionFactory;
 
+    private final NodeResourceConverter nodeConverter = NodeResourceConverter.nodeConverter;
+
     /**
      * Get the roles assigned to this Node.
      *
@@ -108,11 +108,7 @@ public class WebACRolesProvider {
      * @return a set of roles for each principal
      */
     public Map<String, Collection<String>> getRoles(final Node node) {
-        try {
-            return getAgentRoles(nodeService.find(new FedoraSessionImpl(node.getSession()), node.getPath()));
-        } catch (final RepositoryException ex) {
-            throw new RepositoryRuntimeException(ex);
-        }
+        return getAgentRoles(nodeConverter.convert(node));
     }
 
     /**
@@ -127,10 +123,10 @@ public class WebACRolesProvider {
 
         // Construct a list of acceptable acl:accessTo values for the target resource.
         final List<String> resourcePaths = new ArrayList<>();
-        resourcePaths.add(FEDORA_INTERNAL_PREFIX + resource.getPath());
+        resourcePaths.add(FEDORA_INTERNAL_PREFIX + resource.getDescribedResource().getPath());
 
         // Construct a list of acceptable acl:accessToClass values for the target resource.
-        final List<URI> rdfTypes = resource.getTypes();
+        final List<URI> rdfTypes = resource.getDescription().getTypes();
 
         // Add the resource location and types of the ACL-bearing parent,
         // if present and if different than the target resource.
