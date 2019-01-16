@@ -133,6 +133,7 @@ import org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.ContainerService;
 import org.fcrepo.kernel.api.services.NodeService;
+import org.fcrepo.kernel.api.services.TimeMapService;
 import org.glassfish.jersey.internal.PropertiesDelegate;
 import org.glassfish.jersey.server.ContainerRequest;
 import org.junit.Before;
@@ -195,6 +196,9 @@ public class FedoraLdpTest {
     private BinaryService mockBinaryService;
 
     @Mock
+    private TimeMapService mockTimeMapService;
+
+    @Mock
     private FedoraHttpConfiguration mockHttpConfiguration;
 
     @Mock
@@ -244,6 +248,7 @@ public class FedoraLdpTest {
         setField(testObj, "nodeService", mockNodeService);
         setField(testObj, "containerService", mockContainerService);
         setField(testObj, "binaryService", mockBinaryService);
+        setField(testObj, "timeMapService", mockTimeMapService);
         setField(testObj, "httpConfiguration", mockHttpConfiguration);
         setField(testObj, "session", mockSession);
         setField(testObj, "securityContext", mockSecurityContext);
