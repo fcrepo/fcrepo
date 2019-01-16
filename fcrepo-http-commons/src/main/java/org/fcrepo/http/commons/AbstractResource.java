@@ -30,6 +30,7 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.NodeService;
+import org.fcrepo.kernel.api.services.TimeMapService;
 import org.fcrepo.kernel.api.services.ContainerService;
 import org.fcrepo.kernel.api.services.VersionService;
 import org.fcrepo.kernel.api.services.functions.ConfigurableHierarchicalSupplier;
@@ -79,6 +80,12 @@ public class AbstractResource {
      */
     @Inject
     protected VersionService versionService;
+
+    /**
+     * The timemap service
+     */
+    @Inject
+    protected TimeMapService timeMapService;
 
     /**
      * A resource that can mint new Fedora PIDs.
