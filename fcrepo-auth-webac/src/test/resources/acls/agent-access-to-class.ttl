@@ -1,0 +1,9 @@
+@prefix acl: <http://www.w3.org/ns/auth/acl#> .
+@prefix webac: <http://fedora.info/definitions/v4/webac#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+
+<#readAccess> a acl:Authorization ;
+    acl:agentClass foaf:Agent ;
+    acl:default <.>;
+    acl:mode acl:Read ;
+    acl:accessToClass foaf:Document .
