@@ -38,7 +38,7 @@
     <httpcore.version>4.4.10</httpcore.version>
     <javax.servlet-api.version>4.0.1</javax.servlet-api.version>
     <javaee-api.version>8.0</javaee-api.version>
-    <jackson2.version>2.9.6</jackson2.version>
+    <jackson2.version>2.9.8</jackson2.version>
     <jboss-logging.version>3.3.2.Final</jboss-logging.version>
     <jcr.version>2.0</jcr.version>
     <jena.version>3.8.0</jena.version>
