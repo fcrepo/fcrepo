@@ -37,10 +37,12 @@ import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.INSERTED_CONTENT_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODELS;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.MEMBER_SUBJECT;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
@@ -859,19 +861,20 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
     private void ensureInteractionModelDefaults(final String uri, final Model model) {
         final Resource resc = model.getResource(uri);
-        if (resc.hasProperty(RDF.type, INDIRECT_CONTAINER)) {
+        final boolean isIndirect = resc.hasProperty(RDF.type, INDIRECT_CONTAINER);
+        final boolean isDirect = !isIndirect && resc.hasProperty(RDF.type, DIRECT_CONTAINER);
+
+        if (isIndirect || isDirect) {
             if (!resc.hasProperty(MEMBERSHIP_RESOURCE)) {
                 resc.addProperty(MEMBERSHIP_RESOURCE, resc);
             }
             if (!resc.hasProperty(HAS_MEMBER_RELATION)) {
                 resc.addProperty(HAS_MEMBER_RELATION, LDP_MEMBER);
             }
-        } else if (resc.hasProperty(RDF.type, DIRECT_CONTAINER)) {
-            if (!resc.hasProperty(MEMBERSHIP_RESOURCE)) {
-                resc.addProperty(MEMBERSHIP_RESOURCE, resc);
-            }
-            if (!resc.hasProperty(HAS_MEMBER_RELATION)) {
-                resc.addProperty(HAS_MEMBER_RELATION, LDP_MEMBER);
+        }
+        if (isIndirect) {
+            if (!resc.hasProperty(INSERTED_CONTENT_RELATION)) {
+                resc.addProperty(INSERTED_CONTENT_RELATION, MEMBER_SUBJECT);
             }
         }
     }

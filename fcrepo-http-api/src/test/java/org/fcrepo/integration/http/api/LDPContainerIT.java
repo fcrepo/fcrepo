@@ -28,6 +28,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INSERTED_CONTENT_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_MEMBER;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.MEMBER_SUBJECT;
 import static org.fcrepo.kernel.api.RdfLexicon.PROXY_FOR;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
@@ -80,6 +81,9 @@ public class LDPContainerIT extends AbstractResourceIT {
 
         assertTrue("Default ldp:hasMemberRelation must be set",
                 resc.hasProperty(HAS_MEMBER_RELATION, LDP_MEMBER));
+
+        assertTrue("Default ldp:insertedContentRelation must be set",
+                resc.hasProperty(INSERTED_CONTENT_RELATION, MEMBER_SUBJECT));
     }
 
     @Test
@@ -106,6 +110,11 @@ public class LDPContainerIT extends AbstractResourceIT {
                 resc.hasProperty(HAS_MEMBER_RELATION, PCDM_HAS_MEMBER_PROP));
         assertFalse("Default ldp:hasMemberRelation must not be present",
                 resc.hasProperty(HAS_MEMBER_RELATION, LDP_MEMBER));
+
+        assertTrue("Provided ldp:insertedContentRelation must be set",
+                resc.hasProperty(INSERTED_CONTENT_RELATION, PROXY_FOR));
+        assertFalse("Default ldp:insertedContentRelation must not be present",
+                resc.hasProperty(INSERTED_CONTENT_RELATION, MEMBER_SUBJECT));
     }
 
     @Test
@@ -146,6 +155,8 @@ public class LDPContainerIT extends AbstractResourceIT {
 
         assertFalse("Provided ldp:insertedContentRelation must be removed",
                 resc.hasProperty(INSERTED_CONTENT_RELATION, PROXY_FOR));
+        assertTrue("Default ldp:insertedContentRelation must be present",
+                resc.hasProperty(INSERTED_CONTENT_RELATION, MEMBER_SUBJECT));
     }
 
     private void createIndirectContainer(final String indirectId, final String membershipURI) throws Exception {
