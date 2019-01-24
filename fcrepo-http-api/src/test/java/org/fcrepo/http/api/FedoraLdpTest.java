@@ -859,7 +859,7 @@ public class FedoraLdpTest {
         when(mockContainer.isNew()).thenReturn(true);
 
         when(mockNodeService.exists(mockFedoraSession, "/some/path")).thenReturn(false);
-        when(mockContainerService.findOrCreate(mockFedoraSession, "/some/path")).thenReturn(mockContainer);
+        when(mockContainerService.findOrCreate(mockFedoraSession, "/some/path", null)).thenReturn(mockContainer);
 
         final Response actual = testObj.createOrReplaceObjectRdf(null, null, null, null, null, null);
 
@@ -881,7 +881,7 @@ public class FedoraLdpTest {
         when(mockContainer.isNew()).thenReturn(true);
 
         when(mockNodeService.exists(mockFedoraSession, "/some/path")).thenReturn(false);
-        when(mockContainerService.findOrCreate(mockFedoraSession, "/some/path")).thenReturn(mockContainer);
+        when(mockContainerService.findOrCreate(mockFedoraSession, "/some/path", null)).thenReturn(mockContainer);
 
         final Response actual = testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
                 toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null);
@@ -915,7 +915,7 @@ public class FedoraLdpTest {
         when(mockObject.isNew()).thenReturn(false);
 
         when(mockNodeService.exists(mockFedoraSession, "/some/path")).thenReturn(true);
-        when(mockContainerService.findOrCreate(mockFedoraSession, "/some/path")).thenReturn(mockObject);
+        when(mockContainerService.findOrCreate(mockFedoraSession, "/some/path", null)).thenReturn(mockObject);
 
         final Response actual = testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
                 toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null);
@@ -933,7 +933,7 @@ public class FedoraLdpTest {
         when(mockObject.isNew()).thenReturn(false);
 
         when(mockNodeService.exists(mockFedoraSession, "/some/path")).thenReturn(true);
-        when(mockContainerService.findOrCreate(mockFedoraSession, "/some/path")).thenReturn(mockObject);
+        when(mockContainerService.findOrCreate(mockFedoraSession, "/some/path", null)).thenReturn(mockObject);
 
         testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
                 toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null);
@@ -989,7 +989,8 @@ public class FedoraLdpTest {
     public void testCreateNewObject() throws MalformedRdfException, InvalidChecksumException,
             UnsupportedAlgorithmException {
         setResource(Container.class);
-        when(mockContainerService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockContainer);
+        when(mockContainerService.findOrCreate(mockFedoraSession, "/b", null))
+                .thenReturn(mockContainer);
         final Response actual = testObj.createObject(null, null, "b", null, null, null);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
     }
@@ -998,7 +999,7 @@ public class FedoraLdpTest {
     public void testCreateNewObjectWithVersionedResource() throws MalformedRdfException, InvalidChecksumException,
             UnsupportedAlgorithmException {
         setResource(Container.class);
-        when(mockContainerService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockContainer);
+        when(mockContainerService.findOrCreate(mockFedoraSession, "/b", null)).thenReturn(mockContainer);
         final String versionedResourceLink = "<" + VERSIONED_RESOURCE.getURI() + ">;rel=\"type\"";
         final Response actual = testObj.createObject(null, null, "b", null, singletonList(versionedResourceLink), null);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
@@ -1008,7 +1009,7 @@ public class FedoraLdpTest {
     public void testCreateNewObjectWithSparql() throws MalformedRdfException,
            InvalidChecksumException, UnsupportedAlgorithmException {
         setResource(Container.class);
-        when(mockContainerService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockContainer);
+        when(mockContainerService.findOrCreate(mockFedoraSession, "/b", null)).thenReturn(mockContainer);
         final Response actual = testObj.createObject(null,
                 MediaType.valueOf(contentTypeSPARQLUpdate), "b", toInputStream("x", UTF_8), null, null);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
@@ -1019,7 +1020,7 @@ public class FedoraLdpTest {
     public void testCreateNewObjectWithRdf() throws MalformedRdfException,
            InvalidChecksumException, UnsupportedAlgorithmException {
         setResource(Container.class);
-        when(mockContainerService.findOrCreate(mockFedoraSession, "/b")).thenReturn(mockContainer);
+        when(mockContainerService.findOrCreate(mockFedoraSession, "/b", null)).thenReturn(mockContainer);
         final Response actual = testObj.createObject(null, NTRIPLES_TYPE, "b",
                 toInputStream("_:a <info:b> _:c .", UTF_8), null, null);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
@@ -1178,7 +1179,7 @@ public class FedoraLdpTest {
     public void testLDPRNotImplementedInvalidLink() throws MalformedRdfException, InvalidChecksumException,
             UnsupportedAlgorithmException {
         setResource(Container.class);
-        when(mockContainerService.findOrCreate(mockFedoraSession, "/x")).thenReturn(mockContainer);
+        when(mockContainerService.findOrCreate(mockFedoraSession, "/x", null)).thenReturn(mockContainer);
         testObj.createObject(null, null, "x", null, singletonList("<http://foo;rel=\"type\""), null);
     }
 

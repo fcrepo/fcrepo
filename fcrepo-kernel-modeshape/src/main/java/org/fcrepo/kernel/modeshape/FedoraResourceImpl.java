@@ -34,10 +34,13 @@ import static org.apache.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static org.apache.jena.update.UpdateAction.execute;
 import static org.apache.jena.update.UpdateFactory.create;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
+import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
+import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODELS;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
@@ -117,6 +120,7 @@ import org.apache.jena.sparql.modify.request.UpdateDeleteWhere;
 import org.apache.jena.sparql.modify.request.UpdateModify;
 import org.apache.jena.update.Update;
 import org.apache.jena.update.UpdateRequest;
+import org.apache.jena.vocabulary.RDF;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.RdfStream;
@@ -793,9 +797,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         final Model model = originalTriples.collect(toModel());
 
         final FedoraResource described = getDescribedResource();
+        final String describedURI = idTranslator.reverse().convert(described).toString();
 
-        final UpdateRequest request = create(sparqlUpdateStatement,
-                idTranslator.reverse().convert(described).toString());
+        final UpdateRequest request = create(sparqlUpdateStatement, describedURI);
 
         final Collection<ConstraintViolationException> errors = validateUpdateRequest(request);
 
@@ -840,6 +844,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
         removeEmptyFragments();
 
+        ensureInteractionModelDefaults(describedURI, model);
+
         listener.assertNoExceptions();
 
         try {
@@ -850,6 +856,18 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         }
     }
 
+    private void ensureInteractionModelDefaults(final String uri, final Model model) {
+        final Resource resc = model.getResource(uri);
+        if (resc.hasProperty(RDF.type, INDIRECT_CONTAINER)) {
+            if (!resc.hasProperty(MEMBERSHIP_RESOURCE)) {
+                resc.addProperty(MEMBERSHIP_RESOURCE, resc);
+            }
+        } else if (resc.hasProperty(RDF.type, DIRECT_CONTAINER)) {
+            if (!resc.hasProperty(MEMBERSHIP_RESOURCE)) {
+                resc.addProperty(MEMBERSHIP_RESOURCE, resc);
+            }
+        }
+    }
 
     private Optional<String> getResourceInteraction() {
         return INTERACTION_MODELS.stream().filter(x -> hasType(x)).findFirst();

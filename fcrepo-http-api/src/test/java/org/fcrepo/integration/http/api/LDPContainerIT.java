@@ -1,0 +1,231 @@
+/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.integration.http.api;
+
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.HttpHeaders.LINK;
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
+import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
+import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.INSERTED_CONTENT_RELATION;
+import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.PROXY_FOR;
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPatch;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.StringEntity;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.vocabulary.RDF;
+import org.junit.Test;
+
+/**
+ * @author bbpennel
+ */
+public class ContainerTypeIT extends AbstractResourceIT {
+
+    private final String PCDM_HAS_MEMBER = "http://pcdm.org/models#hasMember";
+
+    private final Property PCDM_HAS_MEMBER_PROP = createProperty(PCDM_HAS_MEMBER);
+
+    private static final String CONTAINER_LINK_HEADER = "<" + CONTAINER.getURI() + ">;rel=\"type\"";
+
+    private static final String BASIC_CONTAINER_LINK_HEADER = "<" + BASIC_CONTAINER.getURI() + ">;rel=\"type\"";
+
+    private static final String DIRECT_CONTAINER_LINK_HEADER = "<" + DIRECT_CONTAINER.getURI() + ">;rel=\"type\"";
+
+    private static final String INDIRECT_CONTAINER_LINK_HEADER = "<" + INDIRECT_CONTAINER.getURI() + ">;rel=\"type\"";
+
+    @Test
+    public void testIndirectContainerDefaults() throws Exception {
+        final String id = getRandomUniqueId();
+        final String subjectURI = serverAddress + id;
+        final HttpPut put = putObjMethod(id);
+        put.setHeader(LINK, INDIRECT_CONTAINER_LINK_HEADER);
+        executeAndClose(put);
+
+        final Model model = getModel(id);
+
+        final Resource resc = model.getResource(subjectURI);
+        assertTrue("Must have container type", resc.hasProperty(RDF.type, INDIRECT_CONTAINER));
+        assertTrue("Default ldp:membershipResource must be set",
+                resc.hasProperty(MEMBERSHIP_RESOURCE, resc));
+    }
+
+    @Test
+    public void testIndirectContainerOverrides() throws Exception {
+        final String parentId = getRandomUniqueId();
+        final String parentURI = serverAddress + parentId;
+        final HttpPut putParent = putObjMethod(parentId);
+        executeAndClose(putParent);
+
+        final String indirectId = parentId + "/indirect";
+        final String indirectURI = serverAddress + indirectId;
+        createIndirectContainer(indirectId, parentURI);
+
+        final Model model = getModel(indirectId);
+        final Resource resc = model.getResource(indirectURI);
+        assertTrue("Must have container type", resc.hasProperty(RDF.type, INDIRECT_CONTAINER));
+
+        assertTrue("Provided ldp:membershipResource must be present",
+                resc.hasProperty(MEMBERSHIP_RESOURCE, createResource(parentURI)));
+        assertFalse("Default ldp:membershipResource must not be present",
+                resc.hasProperty(MEMBERSHIP_RESOURCE, resc));
+    }
+
+    @Test
+    public void testIndirectContainerDefaultsAfterPatch() throws Exception {
+        final String parentId = getRandomUniqueId();
+        final String parentURI = serverAddress + parentId;
+        final HttpPut putParent = putObjMethod(parentId);
+        executeAndClose(putParent);
+
+        final String indirectId = parentId + "/indirect";
+        final String indirectURI = serverAddress + indirectId;
+        createIndirectContainer(indirectId, parentURI);
+
+        final HttpPatch patch = new HttpPatch(indirectURI);
+        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
+        patch.setEntity(new StringEntity(
+                "PREFIX ldp: <http://www.w3.org/ns/ldp#>\n" +
+                "DELETE { <> ldp:membershipResource <" + parentURI + "> ;\n" +
+                "ldp:hasMemberRelation <" + PCDM_HAS_MEMBER + "> ;\n" +
+                "ldp:insertedContentRelation <" + PROXY_FOR.getURI() + "> . } WHERE {}"));
+        try (CloseableHttpResponse response = execute(patch)) {
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
+        }
+
+        final Model model = getModel(indirectId);
+        final Resource resc = model.getResource(indirectURI);
+        assertTrue("Must have container type", resc.hasProperty(RDF.type, INDIRECT_CONTAINER));
+
+        assertFalse("Provided ldp:membershipResource must be removed",
+                resc.hasProperty(MEMBERSHIP_RESOURCE, createResource(parentURI)));
+        assertTrue("Default ldp:membershipResource must be set",
+                resc.hasProperty(MEMBERSHIP_RESOURCE, resc));
+
+        assertFalse("Provided ldp:hasMemberRelation must be removed",
+                resc.hasProperty(HAS_MEMBER_RELATION, createResource(parentURI)));
+
+        assertFalse("Provided ldp:insertedContentRelation must be removed",
+                resc.hasProperty(INSERTED_CONTENT_RELATION, PROXY_FOR));
+    }
+
+    private void createIndirectContainer(final String indirectId, final String membershipURI) throws Exception {
+        final HttpPut putIndirect = putObjMethod(indirectId);
+        putIndirect.setHeader(LINK, INDIRECT_CONTAINER_LINK_HEADER);
+        putIndirect.addHeader(CONTENT_TYPE, "text/turtle");
+        final String membersRDF = "PREFIX ldp: <http://www.w3.org/ns/ldp#>\n" +
+                "<> ldp:hasMemberRelation <" + PCDM_HAS_MEMBER + "> ; " +
+                "ldp:insertedContentRelation <" + PROXY_FOR.getURI() + ">; " +
+                "ldp:membershipResource <" + membershipURI + "> . ";
+        putIndirect.setEntity(new StringEntity(membersRDF));
+        executeAndClose(putIndirect);
+    }
+
+    @Test
+    public void testDirectContainerDefaults() throws Exception {
+        final String id = getRandomUniqueId();
+        final String subjectURI = serverAddress + id;
+        final HttpPut put = putObjMethod(id);
+        put.setHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
+        executeAndClose(put);
+
+        final Model model = getModel(id);
+
+        final Resource resc = model.getResource(subjectURI);
+        assertTrue("Must have container type", resc.hasProperty(RDF.type, DIRECT_CONTAINER));
+        assertTrue("Default ldp:membershipResource must be set",
+                resc.hasProperty(MEMBERSHIP_RESOURCE, resc));
+    }
+
+    @Test
+    public void testDirectContainerOverrides() throws Exception {
+        final String parentId = getRandomUniqueId();
+        final String parentURI = serverAddress + parentId;
+        final HttpPut putParent = putObjMethod(parentId);
+        executeAndClose(putParent);
+
+        final String directId = parentId + "/direct";
+        final String directURI = serverAddress + directId;
+        createDirectContainer(directId, parentURI);
+
+        final Model model = getModel(directId);
+        final Resource resc = model.getResource(directURI);
+        assertTrue("Must have container type", resc.hasProperty(RDF.type, DIRECT_CONTAINER));
+        assertTrue("Provided ldp:membershipResource must be present",
+                resc.hasProperty(MEMBERSHIP_RESOURCE, createResource(parentURI)));
+        assertFalse("Default ldp:membershipResource must not be present",
+                resc.hasProperty(MEMBERSHIP_RESOURCE, resc));
+    }
+
+    @Test
+    public void testDirectContainerDefaultsAfterPatch() throws Exception {
+        final String parentId = getRandomUniqueId();
+        final String parentURI = serverAddress + parentId;
+        final HttpPut putParent = putObjMethod(parentId);
+        executeAndClose(putParent);
+
+        final String directId = parentId + "/direct";
+        final String directURI = serverAddress + directId;
+        createDirectContainer(directId, parentURI);
+
+        final HttpPatch patch = new HttpPatch(directURI);
+        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
+        patch.setEntity(new StringEntity(
+                "PREFIX ldp: <http://www.w3.org/ns/ldp#>\n" +
+                "DELETE { <> ldp:membershipResource <" + parentURI + "> ;\n" +
+                "ldp:hasMemberRelation <" + PCDM_HAS_MEMBER + "> . } WHERE {}"));
+        try (CloseableHttpResponse response = execute(patch)) {
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
+        }
+
+        final Model model = getModel(directId);
+        final Resource resc = model.getResource(directURI);
+        assertTrue("Must have container type", resc.hasProperty(RDF.type, DIRECT_CONTAINER));
+
+        assertFalse("Provided ldp:membershipResource must be removed",
+                resc.hasProperty(MEMBERSHIP_RESOURCE, createResource(parentURI)));
+        assertTrue("Default ldp:membershipResource must be set",
+                resc.hasProperty(MEMBERSHIP_RESOURCE, resc));
+
+        assertFalse("Provided ldp:hasMemberRelation must be removed",
+                resc.hasProperty(HAS_MEMBER_RELATION, createResource(parentURI)));
+    }
+
+    private void createDirectContainer(final String directId, final String membershipURI) throws Exception {
+        final HttpPut putIndirect = putObjMethod(directId);
+        putIndirect.setHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
+        putIndirect.addHeader(CONTENT_TYPE, "text/turtle");
+        final String membersRDF = "PREFIX ldp: <http://www.w3.org/ns/ldp#>\n" +
+                "<> ldp:hasMemberRelation <" + PCDM_HAS_MEMBER + "> ; " +
+                "ldp:membershipResource <" + membershipURI + "> . ";
+        putIndirect.setEntity(new StringEntity(membersRDF));
+        executeAndClose(putIndirect);
+    }
+}

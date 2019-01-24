@@ -792,7 +792,7 @@ public class FedoraLdp extends ContentExposingResource {
             result = binaryService.findOrCreate(session.getFedoraSession(), path);
             timeMapService.findOrCreate(session.getFedoraSession(), path + "/" + FEDORA_DESCRIPTION);
         } else {
-            result = containerService.findOrCreate(session.getFedoraSession(), path);
+            result = containerService.findOrCreate(session.getFedoraSession(), path, interactionModel);
         }
 
         timeMapService.findOrCreate(session.getFedoraSession(), path);
