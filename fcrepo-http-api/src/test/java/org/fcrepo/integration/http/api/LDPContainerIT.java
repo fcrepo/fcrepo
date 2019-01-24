@@ -26,6 +26,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INSERTED_CONTENT_RELATION;
+import static org.fcrepo.kernel.api.RdfLexicon.LDP_MEMBER;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.PROXY_FOR;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
@@ -47,7 +48,7 @@ import org.junit.Test;
 /**
  * @author bbpennel
  */
-public class ContainerTypeIT extends AbstractResourceIT {
+public class LDPContainerIT extends AbstractResourceIT {
 
     private final String PCDM_HAS_MEMBER = "http://pcdm.org/models#hasMember";
 
@@ -73,8 +74,12 @@ public class ContainerTypeIT extends AbstractResourceIT {
 
         final Resource resc = model.getResource(subjectURI);
         assertTrue("Must have container type", resc.hasProperty(RDF.type, INDIRECT_CONTAINER));
+
         assertTrue("Default ldp:membershipResource must be set",
                 resc.hasProperty(MEMBERSHIP_RESOURCE, resc));
+
+        assertTrue("Default ldp:hasMemberRelation must be set",
+                resc.hasProperty(HAS_MEMBER_RELATION, LDP_MEMBER));
     }
 
     @Test
@@ -96,6 +101,11 @@ public class ContainerTypeIT extends AbstractResourceIT {
                 resc.hasProperty(MEMBERSHIP_RESOURCE, createResource(parentURI)));
         assertFalse("Default ldp:membershipResource must not be present",
                 resc.hasProperty(MEMBERSHIP_RESOURCE, resc));
+
+        assertTrue("Provided ldp:hasMemberRelation must be set",
+                resc.hasProperty(HAS_MEMBER_RELATION, PCDM_HAS_MEMBER_PROP));
+        assertFalse("Default ldp:hasMemberRelation must not be present",
+                resc.hasProperty(HAS_MEMBER_RELATION, LDP_MEMBER));
     }
 
     @Test
@@ -131,6 +141,8 @@ public class ContainerTypeIT extends AbstractResourceIT {
 
         assertFalse("Provided ldp:hasMemberRelation must be removed",
                 resc.hasProperty(HAS_MEMBER_RELATION, createResource(parentURI)));
+        assertTrue("Default ldp:hasMemberRelation must be set",
+                resc.hasProperty(HAS_MEMBER_RELATION, LDP_MEMBER));
 
         assertFalse("Provided ldp:insertedContentRelation must be removed",
                 resc.hasProperty(INSERTED_CONTENT_RELATION, PROXY_FOR));
@@ -160,8 +172,11 @@ public class ContainerTypeIT extends AbstractResourceIT {
 
         final Resource resc = model.getResource(subjectURI);
         assertTrue("Must have container type", resc.hasProperty(RDF.type, DIRECT_CONTAINER));
+
         assertTrue("Default ldp:membershipResource must be set",
                 resc.hasProperty(MEMBERSHIP_RESOURCE, resc));
+        assertTrue("Default ldp:hasMemberRelation must be set",
+                resc.hasProperty(HAS_MEMBER_RELATION, LDP_MEMBER));
     }
 
     @Test
@@ -178,10 +193,16 @@ public class ContainerTypeIT extends AbstractResourceIT {
         final Model model = getModel(directId);
         final Resource resc = model.getResource(directURI);
         assertTrue("Must have container type", resc.hasProperty(RDF.type, DIRECT_CONTAINER));
+
         assertTrue("Provided ldp:membershipResource must be present",
                 resc.hasProperty(MEMBERSHIP_RESOURCE, createResource(parentURI)));
         assertFalse("Default ldp:membershipResource must not be present",
                 resc.hasProperty(MEMBERSHIP_RESOURCE, resc));
+
+        assertTrue("Provided ldp:hasMemberRelation must be set",
+                resc.hasProperty(HAS_MEMBER_RELATION, PCDM_HAS_MEMBER_PROP));
+        assertFalse("Default ldp:hasMemberRelation must not be present",
+                resc.hasProperty(HAS_MEMBER_RELATION, LDP_MEMBER));
     }
 
     @Test
@@ -216,6 +237,8 @@ public class ContainerTypeIT extends AbstractResourceIT {
 
         assertFalse("Provided ldp:hasMemberRelation must be removed",
                 resc.hasProperty(HAS_MEMBER_RELATION, createResource(parentURI)));
+        assertTrue("Default ldp:hasMemberRelation must be set",
+                resc.hasProperty(HAS_MEMBER_RELATION, LDP_MEMBER));
     }
 
     private void createDirectContainer(final String directId, final String membershipURI) throws Exception {

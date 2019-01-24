@@ -72,6 +72,7 @@ import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaceRegis
 import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
 import static org.fcrepo.kernel.api.RdfLexicon.LDPCV_TIME_MAP;
+import static org.fcrepo.kernel.api.RdfLexicon.LDP_MEMBER;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -862,9 +863,15 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
             if (!resc.hasProperty(MEMBERSHIP_RESOURCE)) {
                 resc.addProperty(MEMBERSHIP_RESOURCE, resc);
             }
+            if (!resc.hasProperty(HAS_MEMBER_RELATION)) {
+                resc.addProperty(HAS_MEMBER_RELATION, LDP_MEMBER);
+            }
         } else if (resc.hasProperty(RDF.type, DIRECT_CONTAINER)) {
             if (!resc.hasProperty(MEMBERSHIP_RESOURCE)) {
                 resc.addProperty(MEMBERSHIP_RESOURCE, resc);
+            }
+            if (!resc.hasProperty(HAS_MEMBER_RELATION)) {
+                resc.addProperty(HAS_MEMBER_RELATION, LDP_MEMBER);
             }
         }
     }
