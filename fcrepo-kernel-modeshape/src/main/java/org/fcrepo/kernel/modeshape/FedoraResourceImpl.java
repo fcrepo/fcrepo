@@ -989,6 +989,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     public void replaceProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
         final Model inputModel, final RdfStream originalTriples) throws MalformedRdfException {
 
+        final Resource selfResource = idTranslator.reverse().convert(this);
+        ensureInteractionModelDefaults(selfResource.toString(), inputModel);
+
         // remove any statements that update "relaxed" server-managed triples so they can be updated separately
         final List<Statement> filteredStatements = new ArrayList<>();
         final StmtIterator it = inputModel.listStatements();
@@ -1012,7 +1015,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
 
         try (final RdfStream replacementStream =
-                new DefaultRdfStream(idTranslator.reverse().convert(this).asNode())) {
+                new DefaultRdfStream(selfResource.asNode())) {
 
             final GraphDifferencer differencer =
                 new GraphDifferencer(inputModel, filteredTriples);

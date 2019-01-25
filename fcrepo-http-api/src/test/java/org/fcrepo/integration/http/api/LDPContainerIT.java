@@ -20,8 +20,6 @@ package org.fcrepo.integration.http.api;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
-import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
@@ -36,8 +34,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.StringWriter;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPatch;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.jena.rdf.model.Model;
@@ -54,10 +54,6 @@ public class LDPContainerIT extends AbstractResourceIT {
     private final String PCDM_HAS_MEMBER = "http://pcdm.org/models#hasMember";
 
     private final Property PCDM_HAS_MEMBER_PROP = createProperty(PCDM_HAS_MEMBER);
-
-    private static final String CONTAINER_LINK_HEADER = "<" + CONTAINER.getURI() + ">;rel=\"type\"";
-
-    private static final String BASIC_CONTAINER_LINK_HEADER = "<" + BASIC_CONTAINER.getURI() + ">;rel=\"type\"";
 
     private static final String DIRECT_CONTAINER_LINK_HEADER = "<" + DIRECT_CONTAINER.getURI() + ">;rel=\"type\"";
 
@@ -114,6 +110,43 @@ public class LDPContainerIT extends AbstractResourceIT {
         assertTrue("Provided ldp:insertedContentRelation must be set",
                 resc.hasProperty(INSERTED_CONTENT_RELATION, PROXY_FOR));
         assertFalse("Default ldp:insertedContentRelation must not be present",
+                resc.hasProperty(INSERTED_CONTENT_RELATION, MEMBER_SUBJECT));
+    }
+
+    @Test
+    public void testIndirectContainerDefaultsAfterPUT() throws Exception {
+        final String parentId = getRandomUniqueId();
+        final String parentURI = serverAddress + parentId;
+        createObjectAndClose(parentId);
+
+        final String indirectId = parentId + "/direct";
+        final String indirectURI = serverAddress + indirectId;
+        createIndirectContainer(indirectId, parentURI);
+
+        final Model replaceModel = getModel(indirectId);
+        replaceModel.removeAll(null, MEMBERSHIP_RESOURCE, null);
+        replaceModel.removeAll(null, HAS_MEMBER_RELATION, null);
+        replaceModel.removeAll(null, INSERTED_CONTENT_RELATION, null);
+
+        replacePropertiesWithPUT(indirectURI, replaceModel);
+
+        final Model model = getModel(indirectId);
+        final Resource resc = model.getResource(indirectURI);
+        assertTrue("Must have container type", resc.hasProperty(RDF.type, INDIRECT_CONTAINER));
+
+        assertFalse("Provided ldp:membershipResource must be removed",
+                resc.hasProperty(MEMBERSHIP_RESOURCE, createResource(parentURI)));
+        assertTrue("Default ldp:membershipResource must be set",
+                resc.hasProperty(MEMBERSHIP_RESOURCE, resc));
+
+        assertFalse("Provided ldp:hasMemberRelation must be removed",
+                resc.hasProperty(HAS_MEMBER_RELATION, createResource(parentURI)));
+        assertTrue("Default ldp:hasMemberRelation must be set",
+                resc.hasProperty(HAS_MEMBER_RELATION, LDP_MEMBER));
+
+        assertFalse("Provided ldp:insertedContentRelation must be removed",
+                resc.hasProperty(INSERTED_CONTENT_RELATION, PROXY_FOR));
+        assertTrue("Default ldp:insertedContentRelation must be present",
                 resc.hasProperty(INSERTED_CONTENT_RELATION, MEMBER_SUBJECT));
     }
 
@@ -194,8 +227,7 @@ public class LDPContainerIT extends AbstractResourceIT {
     public void testDirectContainerOverrides() throws Exception {
         final String parentId = getRandomUniqueId();
         final String parentURI = serverAddress + parentId;
-        final HttpPut putParent = putObjMethod(parentId);
-        executeAndClose(putParent);
+        createObjectAndClose(parentId);
 
         final String directId = parentId + "/direct";
         final String directURI = serverAddress + directId;
@@ -213,6 +245,37 @@ public class LDPContainerIT extends AbstractResourceIT {
         assertTrue("Provided ldp:hasMemberRelation must be set",
                 resc.hasProperty(HAS_MEMBER_RELATION, PCDM_HAS_MEMBER_PROP));
         assertFalse("Default ldp:hasMemberRelation must not be present",
+                resc.hasProperty(HAS_MEMBER_RELATION, LDP_MEMBER));
+    }
+
+    @Test
+    public void testDirectContainerDefaultsAfterPUT() throws Exception {
+        final String parentId = getRandomUniqueId();
+        final String parentURI = serverAddress + parentId;
+        createObjectAndClose(parentId);
+
+        final String directId = parentId + "/direct";
+        final String directURI = serverAddress + directId;
+        createDirectContainer(directId, parentURI);
+
+        final Model replaceModel = getModel(directId);
+        replaceModel.removeAll(null, MEMBERSHIP_RESOURCE, null);
+        replaceModel.removeAll(null, HAS_MEMBER_RELATION, null);
+
+        replacePropertiesWithPUT(directURI, replaceModel);
+
+        final Model model = getModel(directId);
+        final Resource resc = model.getResource(directURI);
+        assertTrue("Must have container type", resc.hasProperty(RDF.type, DIRECT_CONTAINER));
+
+        assertFalse("Provided ldp:membershipResource must be removed",
+                resc.hasProperty(MEMBERSHIP_RESOURCE, createResource(parentURI)));
+        assertTrue("Default ldp:membershipResource must be set",
+                resc.hasProperty(MEMBERSHIP_RESOURCE, resc));
+
+        assertFalse("Provided ldp:hasMemberRelation must be removed",
+                resc.hasProperty(HAS_MEMBER_RELATION, createResource(parentURI)));
+        assertTrue("Default ldp:hasMemberRelation must be set",
                 resc.hasProperty(HAS_MEMBER_RELATION, LDP_MEMBER));
     }
 
@@ -252,14 +315,28 @@ public class LDPContainerIT extends AbstractResourceIT {
                 resc.hasProperty(HAS_MEMBER_RELATION, LDP_MEMBER));
     }
 
-    private void createDirectContainer(final String directId, final String membershipURI) throws Exception {
-        final HttpPut putIndirect = putObjMethod(directId);
-        putIndirect.setHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
-        putIndirect.addHeader(CONTENT_TYPE, "text/turtle");
+    private void createDirectContainer(final String directId, final String membershipURI)
+            throws Exception {
+        final String[] idParts = directId.split("/");
+        final HttpPost postIndirect = postObjMethod(idParts[0]);
+        postIndirect.setHeader("Slug", idParts[1]);
+        postIndirect.setHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
+        postIndirect.addHeader(CONTENT_TYPE, "text/turtle");
         final String membersRDF = "PREFIX ldp: <http://www.w3.org/ns/ldp#>\n" +
                 "<> ldp:hasMemberRelation <" + PCDM_HAS_MEMBER + "> ; " +
                 "ldp:membershipResource <" + membershipURI + "> . ";
-        putIndirect.setEntity(new StringEntity(membersRDF));
-        executeAndClose(putIndirect);
+        postIndirect.setEntity(new StringEntity(membersRDF));
+        executeAndClose(postIndirect);
+    }
+
+    private void replacePropertiesWithPUT(final String resourceURI, final Model replaceModel)
+            throws Exception {
+        final HttpPut replaceMethod = new HttpPut(resourceURI);
+        replaceMethod.addHeader(CONTENT_TYPE, "text/turtle");
+        try (final StringWriter w = new StringWriter()) {
+            replaceModel.write(w, "TURTLE");
+            replaceMethod.setEntity(new StringEntity(w.toString()));
+        }
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(replaceMethod));
     }
 }
