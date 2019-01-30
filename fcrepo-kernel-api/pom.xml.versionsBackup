@@ -3,20 +3,24 @@
   <parent>
     <groupId>org.fcrepo</groupId>
     <artifactId>fcrepo</artifactId>
-    <version>5.0.2-SNAPSHOT</version>
+    <version>5.1.0-SNAPSHOT</version>
   </parent>
-  <artifactId>fcrepo-event-serialization</artifactId>
-  <name>Fedora Event Serialization</name>
-  <description>A module for serializing Fedora events as RDF</description>
+  <artifactId>fcrepo-kernel-api</artifactId>
+  <name>Fedora Repository Kernel API</name>
+  <description>Fedora Repository Kernel API, containing types and constants for working with Fedora</description>
 
   <packaging>bundle</packaging>
 
   <properties>
     <osgi.import.packages>
+      com.google.common.*,
+      org.apache.jena.*,
+      org.apache.commons.codec.binary,
+
       *
     </osgi.import.packages>
     <osgi.export.packages>
-      org.fcrepo.event.serialization;version=${project.version}
+      org.fcrepo.kernel.api.*;version=${project.version}
     </osgi.export.packages>
   </properties>
 
@@ -31,16 +35,6 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-kernel-api</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-http-commons</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
     </dependency>
@@ -53,22 +47,14 @@
       <artifactId>jena-arq</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-core</artifactId>
+      <groupId>commons-codec</groupId>
+      <artifactId>commons-codec</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
+      <groupId>com.fasterxml.jackson.dataformat</groupId>
+      <artifactId>jackson-dataformat-yaml</artifactId>
+      <version>${jackson2.version}</version>
     </dependency>
-    <dependency>
-        <groupId>com.fasterxml.jackson.datatype</groupId>
-        <artifactId>jackson-datatype-jsr310</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-annotations</artifactId>
-    </dependency>
-
 
     <!-- test gear -->
     <dependency>
@@ -82,11 +68,6 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.github.jsonld-java</groupId>
-      <artifactId>jsonld-java</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>
