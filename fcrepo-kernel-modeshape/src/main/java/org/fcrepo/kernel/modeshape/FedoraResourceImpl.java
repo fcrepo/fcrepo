@@ -34,10 +34,15 @@ import static org.apache.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static org.apache.jena.update.UpdateAction.execute;
 import static org.apache.jena.update.UpdateFactory.create;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
+import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
+import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.INSERTED_CONTENT_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODELS;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.MEMBER_SUBJECT;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
@@ -69,6 +74,7 @@ import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaceRegis
 import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
 import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
 import static org.fcrepo.kernel.api.RdfLexicon.LDPCV_TIME_MAP;
+import static org.fcrepo.kernel.api.RdfLexicon.LDP_MEMBER;
 import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -117,6 +123,7 @@ import org.apache.jena.sparql.modify.request.UpdateDeleteWhere;
 import org.apache.jena.sparql.modify.request.UpdateModify;
 import org.apache.jena.update.Update;
 import org.apache.jena.update.UpdateRequest;
+import org.apache.jena.vocabulary.RDF;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.RdfStream;
@@ -793,9 +800,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         final Model model = originalTriples.collect(toModel());
 
         final FedoraResource described = getDescribedResource();
+        final String describedURI = idTranslator.reverse().convert(described).toString();
 
-        final UpdateRequest request = create(sparqlUpdateStatement,
-                idTranslator.reverse().convert(described).toString());
+        final UpdateRequest request = create(sparqlUpdateStatement, describedURI);
 
         final Collection<ConstraintViolationException> errors = validateUpdateRequest(request);
 
@@ -840,6 +847,8 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
         removeEmptyFragments();
 
+        ensureInteractionModelDefaults(describedURI, model);
+
         listener.assertNoExceptions();
 
         try {
@@ -850,6 +859,25 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         }
     }
 
+    private void ensureInteractionModelDefaults(final String uri, final Model model) {
+        final Resource resc = model.getResource(uri);
+        final boolean isIndirect = resc.hasProperty(RDF.type, INDIRECT_CONTAINER);
+        final boolean isDirect = !isIndirect && resc.hasProperty(RDF.type, DIRECT_CONTAINER);
+
+        if (isIndirect || isDirect) {
+            if (!resc.hasProperty(MEMBERSHIP_RESOURCE)) {
+                resc.addProperty(MEMBERSHIP_RESOURCE, resc);
+            }
+            if (!resc.hasProperty(HAS_MEMBER_RELATION)) {
+                resc.addProperty(HAS_MEMBER_RELATION, LDP_MEMBER);
+            }
+        }
+        if (isIndirect) {
+            if (!resc.hasProperty(INSERTED_CONTENT_RELATION)) {
+                resc.addProperty(INSERTED_CONTENT_RELATION, MEMBER_SUBJECT);
+            }
+        }
+    }
 
     private Optional<String> getResourceInteraction() {
         return INTERACTION_MODELS.stream().filter(x -> hasType(x)).findFirst();
@@ -961,6 +989,9 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     public void replaceProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
         final Model inputModel, final RdfStream originalTriples) throws MalformedRdfException {
 
+        final Resource selfResource = idTranslator.reverse().convert(this);
+        ensureInteractionModelDefaults(selfResource.toString(), inputModel);
+
         // remove any statements that update "relaxed" server-managed triples so they can be updated separately
         final List<Statement> filteredStatements = new ArrayList<>();
         final StmtIterator it = inputModel.listStatements();
@@ -984,7 +1015,7 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
 
 
         try (final RdfStream replacementStream =
-                new DefaultRdfStream(idTranslator.reverse().convert(this).asNode())) {
+                new DefaultRdfStream(selfResource.asNode())) {
 
             final GraphDifferencer differencer =
                 new GraphDifferencer(inputModel, filteredTriples);

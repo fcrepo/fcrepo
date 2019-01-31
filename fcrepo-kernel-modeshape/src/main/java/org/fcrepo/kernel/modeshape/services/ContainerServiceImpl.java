@@ -19,6 +19,14 @@ package org.fcrepo.kernel.modeshape.services;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_HAS_MEMBER_RELATION;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_INSERTED_CONTENT_RELATION;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_MEMBER_RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.LDP_MEMBER;
+import static org.fcrepo.kernel.api.RdfLexicon.MEMBER_SUBJECT;
 import static org.fcrepo.kernel.modeshape.ContainerImpl.hasMixin;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getContainingNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.touch;
@@ -52,13 +60,8 @@ public class ContainerServiceImpl extends AbstractService implements ContainerSe
 
     private static final Logger LOGGER = getLogger(ContainerServiceImpl.class);
 
-    /**
-     * @param path the path
-     * @param session the session
-     * @return A {@link org.fcrepo.kernel.api.models.Container} with the proffered PID
-     */
     @Override
-    public Container findOrCreate(final FedoraSession session, final String path) {
+    public Container findOrCreate(final FedoraSession session, final String path, final String interactionModel) {
         LOGGER.trace("Executing findOrCreateObject() with path: {}", path);
 
         try {
@@ -71,6 +74,19 @@ public class ContainerServiceImpl extends AbstractService implements ContainerSe
                     touch(parent);
                     touchLdpMembershipResource(node);
                 });
+
+                if (LDP_INDIRECT_CONTAINER.equals(interactionModel)) {
+                    node.addMixin(LDP_INDIRECT_CONTAINER);
+                    node.setProperty(LDP_MEMBER_RESOURCE, node);
+                    node.setProperty(LDP_HAS_MEMBER_RELATION, LDP_MEMBER.getURI());
+                    node.setProperty(LDP_INSERTED_CONTENT_RELATION, MEMBER_SUBJECT.getURI());
+                } else if (LDP_DIRECT_CONTAINER.equals(interactionModel)) {
+                    node.addMixin(LDP_DIRECT_CONTAINER);
+                    node.setProperty(LDP_MEMBER_RESOURCE, node);
+                    node.setProperty(LDP_HAS_MEMBER_RELATION, LDP_MEMBER.getURI());
+                } else {
+                    node.addMixin(LDP_BASIC_CONTAINER);
+                }
             }
 
             if (node.isNew()) {
@@ -81,6 +97,16 @@ public class ContainerServiceImpl extends AbstractService implements ContainerSe
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
+    }
+
+    /**
+     * @param path the path
+     * @param session the session
+     * @return A {@link org.fcrepo.kernel.api.models.Container} with the proffered PID
+     */
+    @Override
+    public Container findOrCreate(final FedoraSession session, final String path) {
+        return findOrCreate(session, path, null);
     }
 
     /**
