@@ -94,7 +94,7 @@ public class TimeMapServiceImpl extends AbstractService implements TimeMapServic
         if (path.endsWith("/" + LDPCV_TIME_MAP)) {
             return path;
         } else {
-            return path + "/" + LDPCV_TIME_MAP;
+            return path.replaceFirst("/*$", "") + "/" + LDPCV_TIME_MAP;
         }
     }
 
