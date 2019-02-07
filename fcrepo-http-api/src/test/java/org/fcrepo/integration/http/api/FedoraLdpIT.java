@@ -4474,4 +4474,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     }
 
+    @Test
+    public void testCreateWithTrailingSlash() throws IOException {
+        final String subjectURI = serverAddress + getRandomUniqueId() + "/";
+        final HttpPut putMethod = new HttpPut(subjectURI);
+        try (final CloseableHttpResponse response = execute(putMethod)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+        }
+    }
 }
