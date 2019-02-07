@@ -24,7 +24,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.LDPCV_TIME_MAP;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.nio.file.Paths;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import org.fcrepo.kernel.api.FedoraSession;
@@ -95,7 +94,7 @@ public class TimeMapServiceImpl extends AbstractService implements TimeMapServic
         if (path.endsWith("/" + LDPCV_TIME_MAP)) {
             return path;
         } else {
-            return Paths.get(path, LDPCV_TIME_MAP).toString();
+            return path.replaceFirst("/*$", "") + "/" + LDPCV_TIME_MAP;
         }
     }
 
