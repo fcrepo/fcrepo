@@ -1,0 +1,325 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FedoraEventImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation (ModeShape)</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.observer</a> &gt; <span class="el_source">FedoraEventImpl.java</span></div><h1>FedoraEventImpl.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.observer;
+
+import static com.google.common.base.MoreObjects.toStringHelper;
+import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_CREATION;
+import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_DELETION;
+import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_MODIFICATION;
+import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_RELOCATION;
+import static org.fcrepo.kernel.api.observer.EventType.INBOUND_REFERENCE;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FEDORA_JCR_REFERENCE;
+import static org.fcrepo.kernel.api.observer.OptionalValues.BASE_URL;
+import static org.fcrepo.kernel.api.observer.OptionalValues.USER_AGENT;
+import static javax.jcr.observation.Event.NODE_ADDED;
+import static javax.jcr.observation.Event.NODE_MOVED;
+import static javax.jcr.observation.Event.NODE_REMOVED;
+import static javax.jcr.observation.Event.PROPERTY_ADDED;
+import static javax.jcr.observation.Event.PROPERTY_CHANGED;
+import static javax.jcr.observation.Event.PROPERTY_REMOVED;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+import static org.slf4j.LoggerFactory.getLogger;
+import static java.time.Instant.ofEpochMilli;
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyMap;
+import static java.util.Collections.singleton;
+import static java.util.Objects.isNull;
+import static java.util.Objects.requireNonNull;
+import static java.util.UUID.randomUUID;
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toSet;
+import static java.util.stream.Stream.empty;
+
+import java.io.IOException;
+import java.net.URI;
+import java.time.Instant;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Stream;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.nodetype.NodeType;
+import javax.jcr.observation.Event;
+
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.observer.EventType;
+import org.fcrepo.kernel.api.observer.FedoraEvent;
+import org.fcrepo.kernel.modeshape.identifiers.HashConverter;
+import org.fcrepo.kernel.modeshape.utils.FedoraSessionUserUtil;
+
+import org.slf4j.Logger;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.collect.ImmutableMap;
+
+/**
+ * A very simple abstraction to prevent event-driven machinery downstream from the repository from relying directly
+ * on a JCR interface {@link Event}. Can represent either a single JCR event or several.
+ *
+ * @author ajs6f
+ * @since Feb 19, 2013
+ */
+public class FedoraEventImpl implements FedoraEvent {
+
+<span class="fc" id="L83">    private final static ObjectMapper MAPPER = new ObjectMapper();</span>
+
+<span class="fc" id="L85">    private final static Logger LOGGER = getLogger(FedoraEventImpl.class);</span>
+
+    private final String path;
+    private final String userID;
+    private final URI userURI;
+    private final Instant date;
+    private final Map&lt;String, String&gt; info;
+    private final String eventID;
+    private final Set&lt;String&gt; eventResourceTypes;
+
+<span class="fc" id="L95">    private final Set&lt;EventType&gt; eventTypes = new HashSet&lt;&gt;();</span>
+
+<span class="fc" id="L97">    private static final List&lt;Integer&gt; PROPERTY_TYPES = asList(Event.PROPERTY_ADDED,</span>
+<span class="fc" id="L98">        Event.PROPERTY_CHANGED, Event.PROPERTY_REMOVED, FEDORA_JCR_REFERENCE);</span>
+
+    /**
+     * Create a new FedoraEvent
+     * @param type the Fedora EventType
+     * @param path the node path corresponding to this event
+     * @param resourceTypes the rdf types of the corresponding resource
+     * @param userID the acting user for this event
+     * @param userURI the uri of the acting user for this event
+     * @param date the timestamp for this event
+     * @param info supplementary information
+     */
+    public FedoraEventImpl(final EventType type, final String path, final Set&lt;String&gt; resourceTypes,
+            final String userID, final URI userURI, final Instant date, final Map&lt;String, String&gt; info) {
+<span class="fc" id="L112">        this(singleton(type), path, resourceTypes, userID, userURI, date, info);</span>
+<span class="fc" id="L113">    }</span>
+
+   /**
+     * Create a new FedoraEvent
+     * @param types a collection of Fedora EventTypes
+     * @param path the node path corresponding to this event
+     * @param resourceTypes the rdf types of the corresponding resource
+     * @param userID the acting user for this event
+     * @param userURI the uri of the acting user for this event
+     * @param date the timestamp for this event
+     * @param info supplementary information
+     */
+    public FedoraEventImpl(final Collection&lt;EventType&gt; types, final String path, final Set&lt;String&gt; resourceTypes,
+<span class="fc" id="L126">            final String userID, final URI userURI, final Instant date, final Map&lt;String, String&gt; info) {</span>
+<span class="fc" id="L127">        requireNonNull(types, &quot;FedoraEvent requires a non-null event type&quot;);</span>
+<span class="fc" id="L128">        requireNonNull(path, &quot;FedoraEvent requires a non-null path&quot;);</span>
+
+<span class="fc" id="L130">        this.eventTypes.addAll(types);</span>
+<span class="fc" id="L131">        this.path = path;</span>
+<span class="fc" id="L132">        this.eventResourceTypes = resourceTypes;</span>
+<span class="fc" id="L133">        this.userID = userID;</span>
+<span class="fc" id="L134">        this.userURI = userURI;</span>
+<span class="fc" id="L135">        this.date = date;</span>
+<span class="pc bpc" id="L136" title="1 of 2 branches missed.">        this.info = isNull(info) ? emptyMap() : info;</span>
+<span class="fc" id="L137">        this.eventID = &quot;urn:uuid:&quot; + randomUUID().toString();</span>
+<span class="fc" id="L138">    }</span>
+
+
+    /**
+     * @return the event types of the underlying JCR {@link Event}s
+     */
+    @Override
+    public Set&lt;EventType&gt; getTypes() {
+<span class="fc" id="L146">        return eventTypes;</span>
+    }
+
+    /**
+     * @return the RDF types of the underlying Fedora Resource
+    **/
+    @Override
+    public Set&lt;String&gt; getResourceTypes() {
+<span class="fc" id="L154">        return eventResourceTypes;</span>
+    }
+
+    /**
+     * @return the path of the underlying JCR {@link Event}s
+     */
+    @Override
+    public String getPath() {
+<span class="fc" id="L162">        return path;</span>
+    }
+
+    /**
+     * @return the user ID of the underlying JCR {@link Event}s
+     */
+    @Override
+    public String getUserID() {
+<span class="fc" id="L170">        return userID;</span>
+    }
+
+    /**
+     * @return the user URI of the underlying JCR {@link Event}s
+     */
+    @Override
+    public URI getUserURI() {
+<span class="nc" id="L178">        return userURI;</span>
+    }
+
+    /**
+     * @return the date of the FedoraEvent
+     */
+    @Override
+    public Instant getDate() {
+<span class="fc" id="L186">        return date;</span>
+    }
+
+    /**
+     * Get the event ID.
+     * @return Event identifier to use for building event URIs (e.g., in an external triplestore).
+    **/
+    @Override
+    public String getEventID() {
+<span class="nc" id="L195">        return eventID;</span>
+    }
+
+    /**
+     * Return a Map with any additional information about the event.
+     * @return a Map of additional information.
+     */
+    @Override
+    public Map&lt;String, String&gt; getInfo() {
+
+<span class="fc" id="L205">        return info;</span>
+    }
+
+    @Override
+    public String toString() {
+
+<span class="nc" id="L211">        return toStringHelper(this)</span>
+<span class="nc" id="L212">            .add(&quot;Event types:&quot;, getTypes().stream()</span>
+<span class="nc" id="L213">                            .map(EventType::getName)</span>
+<span class="nc" id="L214">                            .collect(joining(&quot;, &quot;)))</span>
+<span class="nc" id="L215">            .add(&quot;Event resource types:&quot;, String.join(&quot;,&quot;, eventResourceTypes))</span>
+<span class="nc" id="L216">            .add(&quot;Path:&quot;, getPath())</span>
+<span class="nc" id="L217">            .add(&quot;Date: &quot;, getDate()).toString();</span>
+    }
+
+<span class="fc" id="L220">    private static final Map&lt;Integer, EventType&gt; translation = ImmutableMap.&lt;Integer, EventType&gt;builder()</span>
+<span class="fc" id="L221">            .put(NODE_ADDED, RESOURCE_CREATION)</span>
+<span class="fc" id="L222">            .put(NODE_REMOVED, RESOURCE_DELETION)</span>
+<span class="fc" id="L223">            .put(PROPERTY_ADDED, RESOURCE_MODIFICATION)</span>
+<span class="fc" id="L224">            .put(PROPERTY_REMOVED, RESOURCE_MODIFICATION)</span>
+<span class="fc" id="L225">            .put(PROPERTY_CHANGED, RESOURCE_MODIFICATION)</span>
+<span class="fc" id="L226">            .put(NODE_MOVED, RESOURCE_RELOCATION)</span>
+<span class="fc" id="L227">            .put(FEDORA_JCR_REFERENCE, INBOUND_REFERENCE).build();</span>
+
+    /**
+     * Get the Fedora event type for a JCR type
+     *
+     * @param i the integer value of a JCR type
+     * @return EventType
+     */
+    public static EventType valueOf(final Integer i) {
+<span class="fc" id="L236">        final EventType type = translation.get(i);</span>
+<span class="pc bpc" id="L237" title="1 of 2 branches missed.">        if (isNull(type)) {</span>
+<span class="nc" id="L238">            throw new IllegalArgumentException(&quot;Invalid event type: &quot; + i);</span>
+        }
+<span class="fc" id="L240">        return type;</span>
+    }
+
+
+    /**
+     * Convert a JCR Event to a FedoraEvent
+     * @param event the JCR Event
+     * @return a FedoraEvent
+     */
+    public static FedoraEvent from(final Event event) {
+<span class="fc" id="L250">        requireNonNull(event);</span>
+        try {
+            @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L253">            final Map&lt;String, String&gt; info = new HashMap&lt;&gt;(event.getInfo());</span>
+
+<span class="fc" id="L255">            final String userdata = event.getUserData();</span>
+            try {
+<span class="pc bpc" id="L257" title="1 of 4 branches missed.">                if (userdata != null &amp;&amp; !userdata.isEmpty()) {</span>
+<span class="fc" id="L258">                    final JsonNode json = MAPPER.readTree(userdata);</span>
+<span class="pc bpc" id="L259" title="1 of 2 branches missed.">                    if (json.has(BASE_URL)) {</span>
+<span class="nc" id="L260">                        String url = json.get(BASE_URL).asText();</span>
+<span class="nc bnc" id="L261" title="All 2 branches missed.">                        while (url.endsWith(&quot;/&quot;)) {</span>
+<span class="nc" id="L262">                            url = url.substring(0, url.length() - 1);</span>
+                        }
+<span class="nc" id="L264">                        info.put(BASE_URL, url);</span>
+                    }
+<span class="pc bpc" id="L266" title="1 of 2 branches missed.">                    if (json.has(USER_AGENT)) {</span>
+<span class="nc" id="L267">                        info.put(USER_AGENT, json.get(USER_AGENT).asText());</span>
+                    }
+<span class="fc" id="L269">                } else {</span>
+<span class="fc" id="L270">                    LOGGER.debug(&quot;Event UserData is empty!&quot;);</span>
+                }
+<span class="nc" id="L272">            } catch (final IOException ex) {</span>
+<span class="nc" id="L273">                LOGGER.warn(&quot;Error extracting user data: &quot; + userdata, ex.getMessage());</span>
+<span class="fc" id="L274">            }</span>
+
+<span class="fc" id="L276">            final Set&lt;String&gt; resourceTypes = getResourceTypes(event).collect(toSet());</span>
+
+<span class="fc" id="L278">            return new FedoraEventImpl(valueOf(event.getType()), cleanPath(event), resourceTypes,</span>
+<span class="fc" id="L279">                    event.getUserID(), FedoraSessionUserUtil.getUserURI(event.getUserID()), ofEpochMilli(event</span>
+<span class="fc" id="L280">                            .getDate()), info);</span>
+
+<span class="nc" id="L282">        } catch (final RepositoryException ex) {</span>
+<span class="nc" id="L283">            throw new RepositoryRuntimeException(&quot;Error converting JCR Event to FedoraEvent&quot;, ex);</span>
+        }
+    }
+
+    /**
+     * Get the RDF Types of the resource corresponding to this JCR Event
+     * @param event the JCR event
+     * @return the types recorded on the resource associated to this event
+     */
+    public static Stream&lt;String&gt; getResourceTypes(final Event event) {
+<span class="pc bpc" id="L293" title="1 of 2 branches missed.">        if (event instanceof org.modeshape.jcr.api.observation.Event) {</span>
+            try {
+<span class="fc" id="L295">                final org.modeshape.jcr.api.observation.Event modeEvent =</span>
+                        (org.modeshape.jcr.api.observation.Event) event;
+<span class="fc" id="L297">                final Stream.Builder&lt;NodeType&gt; types = Stream.builder();</span>
+<span class="fc bfc" id="L298" title="All 2 branches covered.">                for (final NodeType type : modeEvent.getMixinNodeTypes()) {</span>
+<span class="fc" id="L299">                    types.add(type);</span>
+                }
+<span class="fc" id="L301">                types.add(modeEvent.getPrimaryNodeType());</span>
+<span class="fc" id="L302">                return types.build().map(NodeType::getName);</span>
+<span class="nc" id="L303">            } catch (final RepositoryException e) {</span>
+<span class="nc" id="L304">                throw new RepositoryRuntimeException(e);</span>
+            }
+        }
+<span class="nc" id="L307">        return empty(); // wasn't a ModeShape event, so we have no access to resource types</span>
+    }
+
+    /**
+     * The JCR-based Event::getPath contains some Modeshape artifacts that must be removed or modified in
+     * order to correspond to the public resource path. For example, JCR Events will contain a trailing
+     * /jcr:content for Binaries, a trailing /propName for properties, and /#/ notation for URI fragments.
+     */
+    private static String cleanPath(final Event event) throws RepositoryException {
+        // remove any trailing data for property changes
+<span class="fc bfc" id="L317" title="All 2 branches covered.">        final String path = PROPERTY_TYPES.contains(event.getType()) ?</span>
+<span class="fc" id="L318">            event.getPath().substring(0, event.getPath().lastIndexOf(&quot;/&quot;)) : event.getPath();</span>
+
+        // reformat any hash URIs and remove any trailing /jcr:content
+<span class="fc" id="L321">        final HashConverter converter = new HashConverter();</span>
+<span class="fc" id="L322">        return converter.reverse().convert(path.replaceAll(&quot;/&quot; + JCR_CONTENT, &quot;&quot;));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
