@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>Range.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Event Serialization</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-commons</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.commons.domain</a> &gt; <span class="el_source">Range.java</span></div><h1>Range.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.http.commons.domain;
+
+import static java.lang.Long.parseLong;
+import static java.util.regex.Pattern.compile;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/**
+ * Range header parsing logic
+ *
+ * @author awoods
+ */
+public class Range {
+
+    private final long start;
+
+    private final long end;
+
+<span class="fc" id="L37">    private static final Pattern rangePattern =</span>
+<span class="fc" id="L38">        compile(&quot;^bytes\\s*=\\s*(\\d*)\\s*-\\s*(\\d*)&quot;);</span>
+
+    /**
+     * Unbounded Range
+     */
+    private Range() {
+<span class="fc" id="L44">        this(0, -1);</span>
+<span class="fc" id="L45">    }</span>
+
+    /**
+     * Left-bounded range
+     * @param start the start
+     */
+    public Range(final long start) {
+<span class="fc" id="L52">        this(start, -1L);</span>
+<span class="fc" id="L53">    }</span>
+
+    /**
+     * Left and right bounded range
+     * @param start the start
+     * @param end the end
+     */
+<span class="fc" id="L60">    private Range(final long start, final long end) {</span>
+<span class="fc" id="L61">        this.start = start;</span>
+<span class="fc" id="L62">        this.end = end;</span>
+<span class="fc" id="L63">    }</span>
+
+    /**
+     * Does this range actually impose limits
+     * @return true if the range imposes limits
+     */
+    public boolean hasRange() {
+<span class="fc bfc" id="L70" title="All 4 branches covered.">        return !(start == 0 &amp;&amp; end == -1);</span>
+    }
+
+    /**
+     * Length contained in the range
+     * @return length of the range
+     */
+    public long size() {
+<span class="fc bfc" id="L78" title="All 2 branches covered.">        if (end == -1) {</span>
+<span class="fc" id="L79">            return -1;</span>
+        }
+<span class="fc" id="L81">        return end - start + 1;</span>
+    }
+
+    /**
+     * Start of the range
+     * @return start of the range
+     */
+    public long start() {
+<span class="fc" id="L89">        return start;</span>
+    }
+
+    /**
+     * End of the range
+     * @return end of the range
+     */
+    public long end() {
+<span class="fc" id="L97">        return end;</span>
+    }
+
+    /**
+     * Convert an HTTP Range header to a Range object
+     * @param source the source
+     * @return range object
+     */
+    public static Range convert(final String source) {
+
+<span class="fc" id="L107">        final Matcher matcher = rangePattern.matcher(source);</span>
+
+<span class="fc bfc" id="L109" title="All 2 branches covered.">        if (!matcher.matches()) {</span>
+<span class="fc" id="L110">            return new Range();</span>
+        }
+
+<span class="fc" id="L113">        final String from = matcher.group(1);</span>
+<span class="fc" id="L114">        final String to = matcher.group(2);</span>
+
+        final long start;
+
+<span class="fc bfc" id="L118" title="All 2 branches covered.">        if (from.equals(&quot;&quot;)) {</span>
+<span class="fc" id="L119">            start = 0;</span>
+        } else {
+<span class="fc" id="L121">            start = parseLong(from);</span>
+        }
+
+        final long end;
+<span class="fc bfc" id="L125" title="All 2 branches covered.">        if (to.equals(&quot;&quot;)) {</span>
+<span class="fc" id="L126">            end = -1;</span>
+        } else {
+<span class="fc" id="L128">            end = parseLong(to);</span>
+        }
+
+<span class="fc" id="L131">        return new Range(start, end);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

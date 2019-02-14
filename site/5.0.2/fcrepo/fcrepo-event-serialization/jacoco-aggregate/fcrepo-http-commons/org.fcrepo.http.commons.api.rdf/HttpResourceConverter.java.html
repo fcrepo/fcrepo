@@ -1,0 +1,393 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>HttpResourceConverter.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Event Serialization</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-commons</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.commons.api.rdf</a> &gt; <span class="el_source">HttpResourceConverter.java</span></div><h1>HttpResourceConverter.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.http.commons.api.rdf;
+
+import static com.google.common.collect.ImmutableList.of;
+import static java.util.Collections.singleton;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.apache.commons.lang3.StringUtils.replaceOnce;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.CONTAINER_WEBAC_ACL;
+import static org.fcrepo.kernel.api.RdfLexicon.LDPCV_TIME_MAP;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_DESCRIPTION;
+import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
+import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getClosestExistingAncestor;
+import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.validatePath;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.springframework.web.context.ContextLoader.getCurrentWebApplicationContext;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.ws.rs.core.UriBuilder;
+
+import org.fcrepo.http.commons.session.HttpSession;
+import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.exception.IdentifierConversionException;
+import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.TombstoneException;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.modeshape.TombstoneImpl;
+import org.fcrepo.kernel.modeshape.identifiers.HashConverter;
+import org.fcrepo.kernel.modeshape.identifiers.NamespaceConverter;
+
+import org.apache.jena.rdf.model.Resource;
+import org.glassfish.jersey.uri.UriTemplate;
+import org.slf4j.Logger;
+import org.springframework.context.ApplicationContext;
+
+import com.google.common.base.Converter;
+import com.google.common.collect.Lists;
+
+/**
+ * Convert between Jena Resources and JCR Nodes using a JAX-RS UriBuilder to mediate the
+ * URI translation.
+ *
+ * @author cabeer
+ * @since 10/5/14
+ */
+public class HttpResourceConverter extends IdentifierConverter&lt;Resource,FedoraResource&gt; {
+
+<span class="fc" id="L83">    private static final Logger LOGGER = getLogger(HttpResourceConverter.class);</span>
+
+    // Regex pattern which decomposes a http resource uri into components
+    // The first group determines if it is an fcr:metadata non-rdf source.
+    // The second group determines if the path is for a memento or timemap.
+    // The third group allows for a memento identifier.
+    // The fourth group for allows ACL.
+    // The fifth group allows for any hashed suffixes.
+<span class="fc" id="L91">    private final static Pattern FORWARD_COMPONENT_PATTERN = Pattern.compile(</span>
+            &quot;.*?(/&quot; + FCR_METADATA + &quot;)?(/&quot; + FCR_VERSIONS + &quot;(/\\d{14})?)?(/&quot; + FCR_ACL + &quot;)?(\\#\\S+)?$&quot;);
+
+    protected List&lt;Converter&lt;String, String&gt;&gt; translationChain;
+
+    private final FedoraSession session;
+    private final UriBuilder uriBuilder;
+
+<span class="fc" id="L99">    protected Converter&lt;String, String&gt; forward = identity();</span>
+<span class="fc" id="L100">    protected Converter&lt;String, String&gt; reverse = identity();</span>
+
+    private final UriTemplate uriTemplate;
+    private final boolean batch;
+
+    /**
+     * Create a new identifier converter within the given session with the given URI template
+     * @param session the session
+     * @param uriBuilder the uri builder
+     */
+    public HttpResourceConverter(final HttpSession session,
+<span class="fc" id="L111">                                 final UriBuilder uriBuilder) {</span>
+
+<span class="fc" id="L113">        this.session = session.getFedoraSession();</span>
+<span class="fc" id="L114">        this.uriBuilder = uriBuilder;</span>
+<span class="fc" id="L115">        this.batch = session.isBatchSession();</span>
+<span class="fc" id="L116">        this.uriTemplate = new UriTemplate(uriBuilder.toTemplate());</span>
+
+<span class="fc" id="L118">        resetTranslationChain();</span>
+<span class="fc" id="L119">    }</span>
+
+    private UriBuilder uriBuilder() {
+<span class="fc" id="L122">        return UriBuilder.fromUri(uriBuilder.toTemplate());</span>
+    }
+
+    @Override
+    protected FedoraResource doForward(final Resource resource) {
+<span class="fc" id="L127">        final Map&lt;String, String&gt; values = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L128">        final String path = asString(resource, values);</span>
+<span class="fc" id="L129">        final Session jcrSession = getJcrSession(session);</span>
+        try {
+<span class="pc bpc" id="L131" title="1 of 2 branches missed.">            if (path != null) {</span>
+<span class="fc" id="L132">                final Node node = getNode(path);</span>
+
+<span class="fc bfc" id="L134" title="All 2 branches covered.">                final boolean metadata = values.containsKey(&quot;path&quot;)</span>
+<span class="fc bfc" id="L135" title="All 2 branches covered.">                        &amp;&amp; values.get(&quot;path&quot;).contains(&quot;/&quot; + FCR_METADATA);</span>
+
+<span class="fc" id="L137">                final FedoraResource fedoraResource = nodeConverter.convert(node);</span>
+
+<span class="pc bpc" id="L139" title="1 of 4 branches missed.">                if (!metadata &amp;&amp; fedoraResource instanceof NonRdfSourceDescription) {</span>
+<span class="nc" id="L140">                    return fedoraResource.getDescribedResource();</span>
+                }
+<span class="fc" id="L142">                return fedoraResource;</span>
+            }
+<span class="nc" id="L144">            throw new IdentifierConversionException(&quot;Asked to translate a resource &quot; + resource</span>
+                    + &quot; that doesn't match the URI template&quot;);
+<span class="nc" id="L146">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L147">            validatePath(jcrSession, path);</span>
+
+<span class="nc bnc" id="L149" title="All 2 branches missed.">            if ( e instanceof PathNotFoundException ) {</span>
+                try {
+<span class="nc" id="L151">                    final Node preexistingNode = getClosestExistingAncestor(jcrSession, path);</span>
+<span class="nc bnc" id="L152" title="All 2 branches missed.">                    if (TombstoneImpl.hasMixin(preexistingNode)) {</span>
+<span class="nc" id="L153">                        throw new TombstoneException(new TombstoneImpl(preexistingNode));</span>
+                    }
+<span class="nc" id="L155">                } catch (final RepositoryException inner) {</span>
+<span class="nc" id="L156">                    LOGGER.debug(&quot;Error checking for parent tombstones&quot;, inner);</span>
+<span class="nc" id="L157">                }</span>
+            }
+<span class="nc" id="L159">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    @Override
+    protected Resource doBackward(final FedoraResource resource) {
+<span class="fc" id="L165">        return toDomain(doBackwardPathOnly(resource));</span>
+    }
+
+    @Override
+    public boolean inDomain(final Resource resource) {
+<span class="fc" id="L170">        final Map&lt;String, String&gt; values = new HashMap&lt;&gt;();</span>
+
+<span class="pc bpc" id="L172" title="1 of 4 branches missed.">        return uriTemplate.match(resource.getURI(), values) &amp;&amp; values.containsKey(&quot;path&quot;) ||</span>
+<span class="pc bpc" id="L173" title="1 of 2 branches missed.">            isRootWithoutTrailingSlash(resource);</span>
+    }
+
+    @Override
+    public Resource toDomain(final String path) {
+
+        final String realPath;
+<span class="pc bpc" id="L180" title="1 of 2 branches missed.">        if (path == null) {</span>
+<span class="nc" id="L181">            realPath = &quot;&quot;;</span>
+<span class="fc bfc" id="L182" title="All 2 branches covered.">        } else if (path.startsWith(&quot;/&quot;)) {</span>
+<span class="fc" id="L183">            realPath = path.substring(1);</span>
+        } else {
+<span class="fc" id="L185">            realPath = path;</span>
+        }
+
+<span class="fc" id="L188">        final UriBuilder uri = uriBuilder();</span>
+
+<span class="fc bfc" id="L190" title="All 2 branches covered.">        if (realPath.contains(&quot;#&quot;)) {</span>
+
+<span class="fc" id="L192">            final String[] split = realPath.split(&quot;#&quot;, 2);</span>
+
+<span class="fc" id="L194">            uri.resolveTemplate(&quot;path&quot;, split[0], false);</span>
+<span class="fc" id="L195">            uri.fragment(split[1]);</span>
+<span class="fc" id="L196">        } else {</span>
+<span class="fc" id="L197">            uri.resolveTemplate(&quot;path&quot;, realPath, false);</span>
+
+        }
+<span class="fc" id="L200">        return createResource(uri.build().toString());</span>
+    }
+
+    @Override
+    public String asString(final Resource resource) {
+<span class="fc" id="L205">        final Map&lt;String, String&gt; values = new HashMap&lt;&gt;();</span>
+
+<span class="fc" id="L207">        return asString(resource, values);</span>
+    }
+
+    /**
+     * Convert the incoming Resource to a JCR path (but don't attempt to load the node).
+     *
+     * @param resource Jena Resource to convert
+     * @param values a map that will receive the matching URI template variables for future use.
+     * @return String of JCR path
+     */
+    private String asString(final Resource resource, final Map&lt;String, String&gt; values) {
+<span class="pc bpc" id="L218" title="1 of 4 branches missed.">        if (uriTemplate.match(resource.getURI(), values) &amp;&amp; values.containsKey(&quot;path&quot;)) {</span>
+<span class="fc" id="L219">            String path = &quot;/&quot; + values.get(&quot;path&quot;);</span>
+
+<span class="fc" id="L221">            final Matcher matcher = FORWARD_COMPONENT_PATTERN.matcher(path);</span>
+
+<span class="pc bpc" id="L223" title="1 of 2 branches missed.">            if (matcher.matches()) {</span>
+<span class="fc bfc" id="L224" title="All 2 branches covered.">                final boolean metadata = matcher.group(1) != null;</span>
+<span class="fc bfc" id="L225" title="All 2 branches covered.">                final boolean versioning = matcher.group(2) != null;</span>
+<span class="fc bfc" id="L226" title="All 2 branches covered.">                final boolean webacAcl = matcher.group(4) != null;</span>
+
+<span class="fc bfc" id="L228" title="All 2 branches covered.">                if (versioning) {</span>
+<span class="fc" id="L229">                    path = replaceOnce(path, &quot;/&quot; + FCR_VERSIONS, &quot;/&quot; + LDPCV_TIME_MAP);</span>
+                }
+
+<span class="fc bfc" id="L232" title="All 2 branches covered.">                if (metadata) {</span>
+<span class="fc" id="L233">                    path = replaceOnce(path, &quot;/&quot; + FCR_METADATA, &quot;/&quot; + FEDORA_DESCRIPTION);</span>
+                }
+
+<span class="fc bfc" id="L236" title="All 2 branches covered.">                if (webacAcl) {</span>
+<span class="fc" id="L237">                    path = replaceOnce(path, &quot;/&quot; + FCR_ACL, &quot;/&quot; + CONTAINER_WEBAC_ACL);</span>
+                }
+            }
+
+<span class="fc" id="L241">            path = forward.convert(path);</span>
+
+<span class="pc bpc" id="L243" title="1 of 2 branches missed.">            if (path == null) {</span>
+<span class="nc" id="L244">                return null;</span>
+            }
+
+            try {
+<span class="fc" id="L248">                path = URLDecoder.decode(path, &quot;UTF-8&quot;);</span>
+<span class="nc" id="L249">            } catch (final UnsupportedEncodingException e) {</span>
+<span class="nc" id="L250">                LOGGER.debug(&quot;Unable to URL-decode path &quot; + e + &quot; as UTF-8&quot;, e);</span>
+<span class="fc" id="L251">            }</span>
+
+<span class="pc bpc" id="L253" title="1 of 2 branches missed.">            if (path.isEmpty()) {</span>
+<span class="nc" id="L254">                return &quot;/&quot;;</span>
+            }
+
+            // Validate path
+<span class="fc bfc" id="L258" title="All 2 branches covered.">            if (path.contains(&quot;//&quot;)) {</span>
+<span class="fc" id="L259">                throw new InvalidResourceIdentifierException(&quot;Path contains empty element! &quot; + path);</span>
+            }
+<span class="fc" id="L261">            return path;</span>
+        }
+
+<span class="pc bpc" id="L264" title="1 of 2 branches missed.">        if (isRootWithoutTrailingSlash(resource)) {</span>
+<span class="fc" id="L265">            return &quot;/&quot;;</span>
+        }
+
+<span class="nc" id="L268">        return null;</span>
+    }
+
+
+    private Node getNode(final String path) throws RepositoryException {
+        try {
+<span class="fc" id="L274">            return getJcrSession(session).getNode(path);</span>
+<span class="nc" id="L275">        } catch (final IllegalArgumentException ex) {</span>
+<span class="nc" id="L276">            throw new InvalidResourceIdentifierException(&quot;Illegal path: &quot; + path);</span>
+        }
+    }
+
+    /**
+     * Get only the resource path to this resource, before embedding it in a full URI
+     * @param resource with desired path
+     * @return path
+     */
+    private String doBackwardPathOnly(final FedoraResource resource) {
+
+<span class="fc" id="L287">        final String path = reverse.convert(resource.getPath());</span>
+<span class="pc bpc" id="L288" title="1 of 2 branches missed.">        if (path == null) {</span>
+<span class="nc" id="L289">            throw new RepositoryRuntimeException(&quot;Unable to process reverse chain for resource &quot; + resource);</span>
+        }
+
+<span class="fc" id="L292">        return convertToExternalPath(path);</span>
+    }
+
+    /**
+     * Converts internal path segments to their external formats.
+     * @param path the internal path
+     * @return the external path
+     */
+    public static  String convertToExternalPath(final String path) {
+<span class="fc" id="L301">        String newPath = replaceOnce(path, &quot;/&quot; + CONTAINER_WEBAC_ACL, &quot;/&quot; + FCR_ACL);</span>
+
+<span class="fc" id="L303">        newPath = replaceOnce(newPath, &quot;/&quot; + LDPCV_TIME_MAP, &quot;/&quot; + FCR_VERSIONS);</span>
+
+<span class="fc" id="L305">        newPath = replaceOnce(newPath, &quot;/&quot; + FEDORA_DESCRIPTION, &quot;/&quot; + FCR_METADATA);</span>
+
+<span class="fc" id="L307">        return newPath;</span>
+    }
+
+    protected void resetTranslationChain() {
+<span class="pc bpc" id="L311" title="1 of 2 branches missed.">        if (translationChain == null) {</span>
+<span class="fc" id="L312">            translationChain = getTranslationChain();</span>
+<span class="fc" id="L313">            final List&lt;Converter&lt;String, String&gt;&gt; newChain =</span>
+<span class="fc" id="L314">                    new ArrayList&lt;&gt;(singleton(new TransactionIdentifierConverter(session, batch)));</span>
+<span class="fc" id="L315">            newChain.addAll(translationChain);</span>
+<span class="fc" id="L316">            setTranslationChain(newChain);</span>
+        }
+<span class="fc" id="L318">    }</span>
+
+    private void setTranslationChain(final List&lt;Converter&lt;String, String&gt;&gt; chained) {
+
+<span class="fc" id="L322">        translationChain = chained;</span>
+
+<span class="fc bfc" id="L324" title="All 2 branches covered.">        for (final Converter&lt;String, String&gt; t : translationChain) {</span>
+<span class="fc" id="L325">            forward = forward.andThen(t);</span>
+<span class="fc" id="L326">        }</span>
+<span class="fc bfc" id="L327" title="All 2 branches covered.">        for (final Converter&lt;String, String&gt; t : Lists.reverse(translationChain)) {</span>
+<span class="fc" id="L328">            reverse = reverse.andThen(t.reverse());</span>
+<span class="fc" id="L329">        }</span>
+<span class="fc" id="L330">    }</span>
+
+
+<span class="fc" id="L333">    private static final List&lt;Converter&lt;String, String&gt;&gt; minimalTranslationChain =</span>
+<span class="fc" id="L334">            of(new NamespaceConverter(), new HashConverter());</span>
+
+    protected List&lt;Converter&lt;String,String&gt;&gt; getTranslationChain() {
+<span class="fc" id="L337">        final ApplicationContext context = getApplicationContext();</span>
+<span class="pc bpc" id="L338" title="1 of 2 branches missed.">        if (context != null) {</span>
+            @SuppressWarnings(&quot;unchecked&quot;)
+<span class="nc" id="L340">            final List&lt;Converter&lt;String,String&gt;&gt; tchain =</span>
+<span class="nc" id="L341">                    getApplicationContext().getBean(&quot;translationChain&quot;, List.class);</span>
+<span class="nc" id="L342">            return tchain;</span>
+        }
+<span class="fc" id="L344">        return minimalTranslationChain;</span>
+    }
+
+    protected ApplicationContext getApplicationContext() {
+<span class="fc" id="L348">        return getCurrentWebApplicationContext();</span>
+    }
+
+    /**
+     * Translate the current transaction into the identifier
+     */
+    static class TransactionIdentifierConverter extends Converter&lt;String, String&gt; {
+        public static final String TX_PREFIX = &quot;tx:&quot;;
+
+        private final FedoraSession session;
+        private final boolean batch;
+
+<span class="fc" id="L360">        public TransactionIdentifierConverter(final FedoraSession session, final boolean batch) {</span>
+<span class="fc" id="L361">            this.session = session;</span>
+<span class="fc" id="L362">            this.batch = batch;</span>
+<span class="fc" id="L363">        }</span>
+
+        @Override
+        protected String doForward(final String path) {
+
+<span class="pc bpc" id="L368" title="1 of 4 branches missed.">            if (path.contains(TX_PREFIX) &amp;&amp; !path.contains(txSegment())) {</span>
+<span class="nc" id="L369">                throw new RepositoryRuntimeException(&quot;Path &quot; + path</span>
+<span class="nc" id="L370">                        + &quot; is not in current transaction &quot; +  session.getId());</span>
+            }
+
+<span class="fc" id="L373">            return replaceOnce(path, txSegment(), EMPTY);</span>
+        }
+
+        @Override
+        protected String doBackward(final String path) {
+<span class="fc" id="L378">            return txSegment() + path;</span>
+        }
+
+        private String txSegment() {
+<span class="fc bfc" id="L382" title="All 2 branches covered.">            return batch ? &quot;/&quot; + TX_PREFIX + session.getId() : EMPTY;</span>
+        }
+    }
+
+    private boolean isRootWithoutTrailingSlash(final Resource resource) {
+<span class="fc" id="L387">        final Map&lt;String, String&gt; values = new HashMap&lt;&gt;();</span>
+
+<span class="pc bpc" id="L389" title="2 of 4 branches missed.">        return uriTemplate.match(resource.getURI() + &quot;/&quot;, values) &amp;&amp; values.containsKey(&quot;path&quot;) &amp;&amp;</span>
+<span class="pc bpc" id="L390" title="1 of 2 branches missed.">            values.get(&quot;path&quot;).isEmpty();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
