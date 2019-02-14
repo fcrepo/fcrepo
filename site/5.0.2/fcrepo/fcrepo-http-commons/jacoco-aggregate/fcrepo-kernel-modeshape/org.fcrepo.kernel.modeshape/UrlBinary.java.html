@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>UrlBinary.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository HTTP Commons Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-modeshape</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape</a> &gt; <span class="el_source">UrlBinary.java</span></div><h1>UrlBinary.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape;
+
+//import static org.modeshape.jcr.api.JcrConstants.JCR_DATA;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.fcrepo.kernel.api.FedoraExternalContent.PROXY;
+import static org.fcrepo.kernel.api.FedoraExternalContent.REDIRECT;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import javax.jcr.Node;
+import javax.jcr.Property;
+import javax.jcr.RepositoryException;
+import org.apache.jena.rdf.model.Resource;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.exception.ExternalContentAccessException;
+import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
+import org.fcrepo.kernel.api.utils.CacheEntry;
+import org.fcrepo.kernel.api.utils.ContentDigest;
+import org.fcrepo.kernel.api.utils.FixityResult;
+import org.fcrepo.kernel.modeshape.rdf.impl.FixityRdfContext;
+import org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils;
+import org.fcrepo.kernel.modeshape.utils.impl.CacheEntryFactory;
+import org.slf4j.Logger;
+
+/**
+ * External binary from a url
+ *
+ * @author bbpennel
+ * @since 12/14/2017
+ */
+public class UrlBinary extends AbstractFedoraBinary {
+<span class="fc" id="L63">    private static final Logger LOGGER = getLogger(UrlBinary.class);</span>
+
+    /**
+     * Construct UrlBinary
+     *
+     * @param node node
+     */
+    public UrlBinary(final Node node) {
+<span class="fc" id="L71">        super(node);</span>
+<span class="fc" id="L72">    }</span>
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.modeshape.FedoraBinaryImpl#getContent()
+     */
+    @Override
+    public InputStream getContent() {
+        // todo - this needs to be more complete so the proxy information will
+        // make it up to the higher levels. Ie, so one can pass back the response information
+        try {
+<span class="fc" id="L83">            return getResourceUri().toURL().openStream();</span>
+<span class="fc" id="L84">        } catch (final IOException e) {</span>
+<span class="fc" id="L85">            throw new ExternalContentAccessException(&quot;Problems getting external content : &quot; + e.getMessage(), e);</span>
+        }
+    }
+
+    protected long getRemoteContentSize() {
+<span class="fc" id="L90">        final URI resourceUri = getResourceUri();</span>
+        try {
+<span class="fc" id="L92">            final HttpURLConnection httpConn = (HttpURLConnection) resourceUri.toURL().openConnection();</span>
+<span class="fc" id="L93">            httpConn.setRequestMethod(&quot;HEAD&quot;);</span>
+<span class="fc" id="L94">            httpConn.connect();</span>
+
+<span class="fc" id="L96">            final int status = httpConn.getResponseCode();</span>
+
+<span class="pc bpc" id="L98" title="1 of 2 branches missed.">            if (status == HttpURLConnection.HTTP_OK) {</span>
+<span class="fc" id="L99">                final String contentLength = httpConn.getHeaderField(&quot;Content-Length&quot;);</span>
+<span class="pc bpc" id="L100" title="1 of 2 branches missed.">                if (contentLength != null) {</span>
+                    try {
+<span class="fc" id="L102">                        return Long.parseLong(contentLength);</span>
+<span class="nc" id="L103">                    } catch (final NumberFormatException e) {</span>
+<span class="nc" id="L104">                        LOGGER.warn(&quot;Unable to parse Content-Length of remote file {}&quot;, resourceUri, e);</span>
+                    }
+                }
+            }
+
+<span class="nc" id="L109">        } catch (final IOException e) {</span>
+<span class="nc" id="L110">            LOGGER.warn(&quot;Error getting content size for '{}' : '{}'&quot;, getPath(), resourceUri, e);</span>
+<span class="nc" id="L111">        }</span>
+<span class="nc" id="L112">        return -1L;</span>
+    }
+
+    @Override
+    public void setExternalContent(final String contentType,
+                           final Collection&lt;URI&gt; checksums, final String originalFileName,
+                           final String externalHandling, final String externalUrl)
+            throws InvalidChecksumException {
+
+        // set a few things on the description node, then set a few more in the other setContent() function
+<span class="fc" id="L122">        final Node descNode = getDescriptionNodeOrNull();</span>
+<span class="fc" id="L123">        final Node contentNode = getNode();</span>
+        try {
+<span class="fc bfc" id="L125" title="All 2 branches covered.">            if (externalHandling.equals(PROXY)) {</span>
+<span class="fc" id="L126">                contentNode.setProperty(PROXY_FOR, externalUrl);</span>
+<span class="pc bpc" id="L127" title="1 of 2 branches missed.">            } else if (externalHandling.equals(REDIRECT)) {</span>
+<span class="fc" id="L128">                contentNode.setProperty(REDIRECTS_TO, externalUrl);</span>
+            } else {
+<span class="nc" id="L130">                throw new RepositoryException(&quot;Unknown external content handling type: &quot; + externalHandling);</span>
+            }
+
+<span class="fc bfc" id="L133" title="All 2 branches covered.">            if (contentNode.canAddMixin(FEDORA_BINARY)) {</span>
+<span class="fc" id="L134">                contentNode.addMixin(FEDORA_BINARY);</span>
+            }
+
+<span class="fc" id="L137">            LOGGER.debug(&quot;Created content node at path: {}&quot;, contentNode.getPath());</span>
+
+            // Ensure provided checksums are valid
+<span class="fc bfc" id="L140" title="All 2 branches covered.">            final Collection&lt;URI&gt; nonNullChecksums = (null == checksums) ? new HashSet&lt;&gt;() : checksums;</span>
+<span class="fc" id="L141">            verifyChecksums(nonNullChecksums);</span>
+
+            // Store checksums on node
+<span class="fc" id="L144">            final String[] checksumArray = new String[nonNullChecksums.size()];</span>
+<span class="fc" id="L145">            nonNullChecksums.stream().map(Object::toString).collect(Collectors.toSet()).toArray(checksumArray);</span>
+
+<span class="fc" id="L147">            FedoraTypesUtils.touch(contentNode);</span>
+
+<span class="pc bpc" id="L149" title="1 of 2 branches missed.">            if (descNode != null) {</span>
+<span class="fc" id="L150">                descNode.setProperty(CONTENT_DIGEST, checksumArray);</span>
+<span class="fc bfc" id="L151" title="All 2 branches covered.">                if (contentType != null) {</span>
+<span class="fc" id="L152">                    descNode.setProperty(HAS_MIME_TYPE, contentType);</span>
+                } else {
+<span class="fc" id="L154">                    descNode.setProperty(HAS_MIME_TYPE, DEFAULT_MIME_TYPE);</span>
+                }
+
+<span class="fc bfc" id="L157" title="All 2 branches covered.">                if (originalFileName != null) {</span>
+<span class="fc" id="L158">                    descNode.setProperty(FILENAME, originalFileName);</span>
+                }
+<span class="fc" id="L160">                setContentSize(getRemoteContentSize());</span>
+
+<span class="fc" id="L162">                FedoraTypesUtils.touch(descNode);</span>
+            }
+
+<span class="fc" id="L165">            LOGGER.debug(&quot;Set url binary content from path: {}&quot;, getResourceLocation());</span>
+
+<span class="nc" id="L167">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L168">            throw new RepositoryRuntimeException(e);</span>
+<span class="fc" id="L169">        }</span>
+<span class="fc" id="L170">    }</span>
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.modeshape.FedoraBinaryImpl#setContent(java.io.InputStream, java.lang.String,
+     * java.util.Collection, java.lang.String, org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint)
+     */
+    @Override
+    public void setContent(final InputStream content, final String contentType,
+            final Collection&lt;URI&gt; checksums, final String originalFileName,
+            final StoragePolicyDecisionPoint storagePolicyDecisionPoint)
+            throws UnsupportedOperationException {
+<span class="fc" id="L181">        throw new UnsupportedOperationException(</span>
+                &quot;Cannot call setContent() on external binary. Call setExternalContent() instead.&quot;);
+    }
+
+
+    private void verifyChecksums(final Collection&lt;URI&gt; checksums)
+            throws InvalidChecksumException, RepositoryException {
+
+<span class="fc" id="L189">        Property property = null;</span>
+<span class="fc bfc" id="L190" title="All 2 branches covered.">        if (isProxy()) {</span>
+<span class="fc" id="L191">            property = getProperty(PROXY_FOR);</span>
+<span class="pc bpc" id="L192" title="1 of 2 branches missed.">        } else if (isRedirect()) {</span>
+<span class="fc" id="L193">            property = getProperty(REDIRECTS_TO);</span>
+        } // what else could it be?
+
+<span class="fc" id="L196">        final Map&lt;URI, URI&gt; checksumErrors = new HashMap&lt;&gt;();</span>
+
+<span class="fc" id="L198">        final CacheEntry cacheEntry = CacheEntryFactory.forProperty(property);</span>
+        // Loop through provided checksums validating against computed values
+<span class="fc bfc" id="L200" title="All 2 branches covered.">        for (final URI check : checksums) {</span>
+<span class="fc" id="L201">            final String algorithm = ContentDigest.getAlgorithm(check);</span>
+<span class="fc bfc" id="L202" title="All 2 branches covered.">            for (final FixityResult result : cacheEntry.checkFixity(algorithm)) {</span>
+<span class="fc bfc" id="L203" title="All 2 branches covered.">                if (!result.matches(check)) {</span>
+<span class="fc" id="L204">                    LOGGER.debug(&quot;Failed checksum test&quot;);</span>
+<span class="fc" id="L205">                    checksumErrors.put(check, result.getComputedChecksum());</span>
+                }
+<span class="fc" id="L207">            }</span>
+<span class="fc" id="L208">        }</span>
+
+        // Throw an exception if any checksum errors occurred
+<span class="fc bfc" id="L211" title="All 2 branches covered.">        if (!checksumErrors.isEmpty()) {</span>
+<span class="fc" id="L212">            final String template = &quot;Checksum Mismatch of %1$s and %2$s\n&quot;;</span>
+<span class="fc" id="L213">            final StringBuilder error = new StringBuilder();</span>
+<span class="fc" id="L214">            checksumErrors.forEach((key, value) -&gt; error.append(String.format(template, key, value)));</span>
+<span class="fc" id="L215">            throw new InvalidChecksumException(error.toString());</span>
+        }
+
+<span class="fc" id="L218">    }</span>
+
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.fcrepo.kernel.modeshape.FedoraBinaryImpl#getFixity(org.fcrepo.kernel.api.identifiers.IdentifierConverter)
+     */
+    @Override
+    public RdfStream getFixity(final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator) {
+<span class="fc" id="L227">        return getFixity(idTranslator, getContentDigest(), getContentSize());</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.fcrepo.kernel.modeshape.FedoraBinaryImpl#getFixity(org.fcrepo.kernel.api.identifiers.IdentifierConverter,
+     * java.net.URI, long)
+     */
+    @Override
+    public RdfStream getFixity(final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator, final URI digestUri,
+            final long size) {
+
+        try {
+
+<span class="fc" id="L242">            LOGGER.debug(&quot;Checking resource: &quot; + getPath());</span>
+
+<span class="fc" id="L244">            final String algorithm = ContentDigest.getAlgorithm(digestUri);</span>
+
+<span class="pc bpc" id="L246" title="1 of 2 branches missed.">            final long contentSize = size &lt; 0 ? getContentSize() : size;</span>
+
+<span class="fc" id="L248">            Collection&lt;FixityResult&gt; fixityResults = null;</span>
+<span class="pc bpc" id="L249" title="1 of 2 branches missed.">            if (isProxy()) {</span>
+<span class="fc" id="L250">                fixityResults = CacheEntryFactory.forProperty(getProperty(PROXY_FOR)).checkFixity(algorithm);</span>
+<span class="nc bnc" id="L251" title="All 2 branches missed.">            } else if (isRedirect()) {</span>
+<span class="nc" id="L252">                fixityResults =</span>
+<span class="nc" id="L253">                    CacheEntryFactory.forProperty(getProperty(REDIRECTS_TO)).checkFixity(algorithm);</span>
+            } else {
+<span class="nc" id="L255">                LOGGER.warn(&quot;URL Binary -- not proxy or redirect, so what is it?&quot;);</span>
+<span class="nc" id="L256">                throw new RepositoryException(&quot;Binary resource marked as external is not proxy or redirect.&quot;);</span>
+            }
+<span class="fc" id="L258">            return new FixityRdfContext(this, idTranslator, fixityResults, digestUri, contentSize);</span>
+<span class="nc" id="L259">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L260">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    @Override
+    public Collection&lt;URI&gt; checkFixity(final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator,
+            final Collection&lt;String&gt; algorithms)
+            throws UnsupportedAlgorithmException {
+
+        try {
+
+<span class="fc" id="L271">            Collection&lt;URI&gt; list = null;</span>
+<span class="pc bpc" id="L272" title="1 of 2 branches missed.">            if (isProxy()) {</span>
+<span class="fc" id="L273">                list = CacheEntryFactory.forProperty(getProperty(PROXY_FOR)).checkFixity(algorithms);</span>
+<span class="nc bnc" id="L274" title="All 2 branches missed.">            } else if (isRedirect()) {</span>
+<span class="nc" id="L275">                list = CacheEntryFactory.forProperty(getProperty(REDIRECTS_TO)).checkFixity(algorithms);</span>
+            } else {
+<span class="nc" id="L277">                throw new RepositoryRuntimeException(&quot;External content error: not proxy or redirect&quot;);</span>
+            }
+<span class="fc" id="L279">            return list;</span>
+<span class="nc" id="L280">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L281">            throw new RepositoryRuntimeException(e);</span>
+        }
+
+    }
+
+    /**
+     * Returns the specified mimetype in place of the original external-body if provided
+     */
+    @Override
+    public String getMimeType() {
+<span class="fc" id="L291">        return getMimeTypeValue();</span>
+    }
+
+    /**
+     * Gets the URL for where this resource is actually located
+     * @return String containing actual location of resource
+     */
+    private String getResourceLocation() {
+<span class="fc bfc" id="L299" title="All 2 branches covered.">        if (isProxy()) {</span>
+<span class="fc" id="L300">            return getProxyURL();</span>
+        } else {
+<span class="fc" id="L302">            return getRedirectURL();</span>
+        }
+    }
+
+    /**
+     * Get a URI for the resource
+     * @return URI object representing resource's location
+     */
+    protected URI getResourceUri() {
+        try {
+<span class="fc" id="L312">            return new URI(getResourceLocation());</span>
+<span class="nc" id="L313">        } catch (final URISyntaxException e) {</span>
+<span class="nc" id="L314">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

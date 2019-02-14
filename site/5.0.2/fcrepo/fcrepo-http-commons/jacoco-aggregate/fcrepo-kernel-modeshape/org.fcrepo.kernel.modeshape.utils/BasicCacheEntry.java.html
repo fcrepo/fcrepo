@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>BasicCacheEntry.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository HTTP Commons Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-modeshape</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.utils</a> &gt; <span class="el_source">BasicCacheEntry.java</span></div><h1>BasicCacheEntry.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.utils;
+
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
+import org.fcrepo.kernel.api.utils.CacheEntry;
+import org.fcrepo.kernel.api.utils.ContentDigest;
+import org.fcrepo.kernel.api.utils.FixityResult;
+
+import org.slf4j.Logger;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import static java.util.Collections.singletonList;
+import static org.slf4j.LoggerFactory.getLogger;
+
+/**
+ * Cache entry that wraps a binary stream and provides
+ * fixity methods against it
+ *
+ * @author fasseg
+ */
+<span class="fc" id="L48">public abstract class BasicCacheEntry implements CacheEntry {</span>
+
+    private static final int DEV_NULL_BUFFER_SIZE = 4096;
+
+<span class="fc" id="L52">    private static final byte[] devNull = new byte[DEV_NULL_BUFFER_SIZE];</span>
+
+<span class="fc" id="L54">    private static final Logger LOGGER = getLogger(BasicCacheEntry.class);</span>
+
+    /**
+     * Calculate the fixity of a CacheEntry by piping it through
+     * a simple fixity-calculating InputStream
+     *
+     * @param algorithm the digest algorithm to be used
+     * @return the fixity of this cache entry
+     */
+    @Override
+    public Collection&lt;FixityResult&gt; checkFixity(final String algorithm) {
+
+<span class="fc" id="L66">        try (FixityInputStream fixityInputStream = new FixityInputStream(</span>
+<span class="fc" id="L67">                this.getInputStream(), MessageDigest.getInstance(algorithm))) {</span>
+
+            // actually calculate the digest by consuming the stream
+<span class="fc bfc" id="L70" title="All 2 branches covered.">            while (fixityInputStream.read(devNull) != -1) { }</span>
+
+<span class="fc" id="L72">            final URI calculatedChecksum =</span>
+<span class="fc" id="L73">                    ContentDigest.asURI(algorithm, fixityInputStream.getMessageDigest().digest());</span>
+
+<span class="fc" id="L75">            final FixityResult result =</span>
+<span class="fc" id="L76">                new FixityResultImpl(getExternalIdentifier(),</span>
+<span class="fc" id="L77">                                    fixityInputStream.getByteCount(),</span>
+                                    calculatedChecksum,
+                                    algorithm);
+
+<span class="fc" id="L81">            return singletonList(result);</span>
+<span class="nc" id="L82">        } catch (final IOException e) {</span>
+<span class="nc" id="L83">            LOGGER.debug(&quot;Got error closing input stream: {}&quot;, e);</span>
+<span class="nc" id="L84">            throw new RepositoryRuntimeException(e);</span>
+<span class="nc" id="L85">        } catch (final NoSuchAlgorithmException e1) {</span>
+<span class="nc" id="L86">            throw new RepositoryRuntimeException(e1);</span>
+        }
+    }
+
+    /**
+     * Calculate fixity with list of digest algorithms of a CacheEntry by piping it through
+     * a simple fixity-calculating InputStream
+     *
+     * @param algorithms the digest algorithms to be used
+     * @return the checksums for the digest algorithms
+     * @throws UnsupportedAlgorithmException exception
+     */
+    @Override
+    public Collection&lt;URI&gt; checkFixity(final Collection&lt;String&gt; algorithms) throws UnsupportedAlgorithmException {
+
+<span class="fc" id="L101">        try (InputStream binaryStream = this.getInputStream()) {</span>
+
+<span class="fc" id="L103">            final Map&lt;String, DigestInputStream&gt; digestInputStreams = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L104">            InputStream digestStream = binaryStream;</span>
+<span class="fc bfc" id="L105" title="All 2 branches covered.">            for (String digestAlg : algorithms) {</span>
+
+                try {
+<span class="fc" id="L108">                    digestStream = new DigestInputStream(digestStream, MessageDigest.getInstance(digestAlg));</span>
+<span class="fc" id="L109">                    digestInputStreams.put(digestAlg, (DigestInputStream)digestStream);</span>
+<span class="fc" id="L110">                } catch (NoSuchAlgorithmException e) {</span>
+<span class="fc" id="L111">                    throw new UnsupportedAlgorithmException(&quot;Unsupported digest algorithm: &quot; + digestAlg);</span>
+<span class="fc" id="L112">                }</span>
+<span class="fc" id="L113">            }</span>
+
+            // calculate the digest by consuming the stream
+<span class="fc bfc" id="L116" title="All 2 branches covered.">            while (digestStream.read(devNull) != -1) { }</span>
+
+<span class="fc" id="L118">            return digestInputStreams.entrySet().stream()</span>
+<span class="fc" id="L119">                .map(entry -&gt; ContentDigest.asURI(entry.getKey(), entry.getValue().getMessageDigest().digest()))</span>
+<span class="fc" id="L120">                .collect(Collectors.toSet());</span>
+<span class="nc" id="L121">        } catch (final IOException e) {</span>
+<span class="nc" id="L122">            LOGGER.debug(&quot;Got error closing input stream: {}&quot;, e);</span>
+<span class="nc" id="L123">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>AllNodeEventsOneEvent.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository HTTP Commons Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-modeshape</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.observer.eventmappings</a> &gt; <span class="el_source">AllNodeEventsOneEvent.java</span></div><h1>AllNodeEventsOneEvent.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.observer.eventmappings;
+
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FEDORA_JCR_REFERENCE;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
+import static org.fcrepo.kernel.modeshape.utils.UncheckedFunction.uncheck;
+import static org.fcrepo.kernel.modeshape.observer.FedoraEventImpl.from;
+import static org.fcrepo.kernel.modeshape.observer.FedoraEventImpl.getResourceTypes;
+import static org.slf4j.LoggerFactory.getLogger;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toSet;
+import static java.util.stream.Stream.empty;
+import static java.util.stream.Stream.of;
+import static javax.jcr.observation.Event.PROPERTY_CHANGED;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Stream;
+
+import javax.jcr.RepositoryException;
+import javax.jcr.observation.Event;
+
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.observer.FedoraEvent;
+import org.fcrepo.kernel.modeshape.observer.FedoraEventImpl;
+import org.fcrepo.kernel.modeshape.observer.WrappedJcrEvent;
+
+import org.slf4j.Logger;
+
+/**
+ * Maps all JCR {@link Event}s concerning one JCR node to one {@link FedoraEvent}. Adds the types of those JCR events
+ * together to calculate the final type of the emitted FedoraEvent.
+ *
+ * @author ajs6f
+ * @author acoburn
+ * @since Feb 27, 2014
+ */
+<span class="fc" id="L55">public class AllNodeEventsOneEvent implements InternalExternalEventMapper {</span>
+
+<span class="fc" id="L57">    private final static Logger LOGGER = getLogger(AllNodeEventsOneEvent.class);</span>
+
+    /**
+     * If the only event is a modification of the jcr:lastModified it is most likely the effect of an inbound reference.
+     * Wrap the old event in a new one that replaces the event type with FEDORA_JCR_REFERENCE for later mapping.
+     *
+     * @param ev The list of events to check.
+     * @return The original list or a list with the altered event.
+     */
+    private static List&lt;Event&gt; AlterReferenceEvents(final List&lt;Event&gt; ev) {
+        try {
+<span class="fc bfc" id="L68" title="All 4 branches covered.">            if (ev.size() == 1 &amp;&amp; ev.get(0).getPath().endsWith(&quot;/&quot; + JCR_LASTMODIFIED) &amp;&amp;</span>
+<span class="pc bpc" id="L69" title="1 of 2 branches missed.">                ev.get(0).getType() == PROPERTY_CHANGED) {</span>
+<span class="fc" id="L70">                final Event original = ev.get(0);</span>
+<span class="fc" id="L71">                final Event tempEv =</span>
+                    new WrappedJcrEvent((org.modeshape.jcr.api.observation.Event) original, FEDORA_JCR_REFERENCE);
+<span class="fc" id="L73">                final List&lt;Event&gt; list = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L74">                list.add(tempEv);</span>
+<span class="fc" id="L75">                return list;</span>
+            }
+<span class="fc" id="L77">            return ev;</span>
+<span class="nc" id="L78">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L79">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    /**
+     * Extracts an identifier from a JCR {@link Event} by building an id from nodepath and user to collapse multiple
+     * events from repository mutations
+     */
+<span class="fc" id="L87">    private static final Function&lt;Event, String&gt; EXTRACT_NODE_ID = uncheck(ev -&gt; {</span>
+<span class="fc" id="L88">            final FedoraEvent event = from(ev);</span>
+<span class="fc" id="L89">            final String id = event.getPath() + &quot;-&quot; + event.getUserID();</span>
+<span class="fc" id="L90">            LOGGER.debug(&quot;Sorting an event by identifier: {}&quot;, id);</span>
+<span class="fc" id="L91">            return id;</span>
+    });
+
+    @Override
+    public Stream&lt;FedoraEvent&gt; apply(final Stream&lt;Event&gt; events) {
+        // first, index all the events by path-userID and then flatMap over that list of values
+        // each of which returns either a singleton Stream or an empty Stream. The final result
+        // will be a concatenated Stream of FedoraEvent objects.
+<span class="fc" id="L99">        return events.collect(groupingBy(EXTRACT_NODE_ID)).entrySet().stream().flatMap(entry -&gt; {</span>
+<span class="fc" id="L100">            final List&lt;Event&gt; evts = AlterReferenceEvents(entry.getValue());</span>
+<span class="pc bpc" id="L101" title="1 of 2 branches missed.">            if (!evts.isEmpty()) {</span>
+                // build a FedoraEvent from the first JCR Event
+<span class="fc" id="L103">                final FedoraEvent fedoraEvent = from(evts.get(0));</span>
+<span class="fc" id="L104">                evts.stream().skip(1).forEach(evt -&gt; {</span>
+                    // add types to the FedoraEvent from the subsequent JCR Events
+<span class="fc" id="L106">                    fedoraEvent.getTypes().add(FedoraEventImpl.valueOf(evt.getType()));</span>
+<span class="fc" id="L107">                    fedoraEvent.getResourceTypes().addAll(getResourceTypes(evt).collect(toSet()));</span>
+<span class="fc" id="L108">                });</span>
+<span class="fc" id="L109">                return of(fedoraEvent);</span>
+            }
+<span class="nc" id="L111">            return empty();</span>
+        });
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

@@ -1,0 +1,478 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>JcrRdfTools.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository HTTP Commons Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-modeshape</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.rdf</a> &gt; <span class="el_source">JcrRdfTools.java</span></div><h1>JcrRdfTools.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.rdf;
+
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static java.util.UUID.randomUUID;
+import static javax.jcr.PropertyType.DATE;
+import static javax.jcr.PropertyType.REFERENCE;
+import static javax.jcr.PropertyType.STRING;
+import static javax.jcr.PropertyType.UNDEFINED;
+import static javax.jcr.PropertyType.WEAKREFERENCE;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIED;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIEDBY;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CREATED;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CREATEDBY;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_PAIRTREE;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIEDBY;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATEDBY;
+import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.jcrProperties;
+import static org.fcrepo.kernel.modeshape.RdfJcrLexicon.JCR_NAMESPACE;
+import static org.fcrepo.kernel.modeshape.rdf.converters.PropertyConverter.getPropertyNameFromPredicate;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getClosestExistingAncestor;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getPropertyType;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isReferenceProperty;
+import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.Value;
+import javax.jcr.ValueFormatException;
+import javax.jcr.ValueFactory;
+import javax.jcr.nodetype.NodeTypeManager;
+import javax.jcr.nodetype.NodeTypeTemplate;
+
+import com.google.common.annotations.VisibleForTesting;
+import org.apache.jena.rdf.model.AnonId;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Statement;
+
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.RdfLexicon;
+import org.fcrepo.kernel.api.exception.MalformedRdfException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.modeshape.rdf.converters.ValueConverter;
+import org.fcrepo.kernel.modeshape.utils.NodePropertiesTools;
+
+import org.modeshape.jcr.api.JcrTools;
+import org.slf4j.Logger;
+
+import com.google.common.collect.BiMap;
+import com.google.common.collect.ImmutableBiMap;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Resource;
+
+/**
+ * A set of helpful tools for converting JCR properties to RDF
+ *
+ * @author Chris Beer
+ * @author ajs6f
+ * @since May 10, 2013
+ */
+<span class="pc bpc" id="L92" title="1 of 2 branches missed.">public class JcrRdfTools {</span>
+
+<span class="fc" id="L94">    private static final Logger LOGGER = getLogger(JcrRdfTools.class);</span>
+
+    /**
+     * A map of JCR namespaces to Fedora's RDF namespaces
+     */
+<span class="fc" id="L99">    public static final BiMap&lt;String, String&gt; jcrNamespacesToRDFNamespaces =</span>
+<span class="fc" id="L100">        ImmutableBiMap.of(JCR_NAMESPACE,</span>
+                RdfLexicon.REPOSITORY_NAMESPACE);
+
+    /**
+     * A map of Fedora's RDF namespaces to the JCR equivalent
+     */
+<span class="fc" id="L106">    public static final BiMap&lt;String, String&gt; rdfNamespacesToJcrNamespaces =</span>
+<span class="fc" id="L107">        jcrNamespacesToRDFNamespaces.inverse();</span>
+
+    private final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator;
+    private final ValueConverter valueConverter;
+
+    private final Session session;
+<span class="fc" id="L113">    private final NodePropertiesTools nodePropertiesTools = new NodePropertiesTools();</span>
+
+<span class="fc" id="L115">    @VisibleForTesting</span>
+    protected JcrTools jcrTools = new JcrTools();
+
+    private final Map&lt;AnonId, Resource&gt; skolemizedBnodeMap;
+
+<span class="fc" id="L120">    private static final Model m = createDefaultModel();</span>
+
+    /**
+     * Constructor with even more context.
+     *
+     * @param idTranslator the id translator
+     * @param session the session
+     */
+    public JcrRdfTools(final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator,
+<span class="fc" id="L129">                       final Session session) {</span>
+<span class="fc" id="L130">        this.idTranslator = idTranslator;</span>
+<span class="fc" id="L131">        this.session = session;</span>
+<span class="fc" id="L132">        this.valueConverter = new ValueConverter(session, idTranslator);</span>
+<span class="fc" id="L133">        this.skolemizedBnodeMap = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L134">    }</span>
+
+    /**
+     * Convert a Fedora RDF Namespace into its JCR equivalent
+     *
+     * @param rdfNamespaceUri a namespace from an RDF document
+     * @return the JCR namespace, or the RDF namespace if no matching JCR
+     *         namespace is found
+     */
+    public static String getJcrNamespaceForRDFNamespace(
+            final String rdfNamespaceUri) {
+<span class="fc bfc" id="L145" title="All 2 branches covered.">        if (rdfNamespacesToJcrNamespaces.containsKey(rdfNamespaceUri)) {</span>
+<span class="fc" id="L146">            return rdfNamespacesToJcrNamespaces.get(rdfNamespaceUri);</span>
+        }
+<span class="fc" id="L148">        return rdfNamespaceUri;</span>
+    }
+
+    /**
+     * Convert a JCR namespace into an RDF namespace fit for downstream
+     * consumption.
+     *
+     * @param jcrNamespaceUri a namespace from the JCR NamespaceRegistry
+     * @return an RDF namespace for downstream consumption.
+     */
+    public static String getRDFNamespaceForJcrNamespace(
+            final String jcrNamespaceUri) {
+<span class="fc bfc" id="L160" title="All 2 branches covered.">        if (jcrNamespacesToRDFNamespaces.containsKey(jcrNamespaceUri)) {</span>
+<span class="fc" id="L161">            return jcrNamespacesToRDFNamespaces.get(jcrNamespaceUri);</span>
+        }
+<span class="fc" id="L163">        return jcrNamespaceUri;</span>
+    }
+
+    /**
+     * Create a JCR value from an RDFNode for a given JCR property
+     * @param node the JCR node we want a property for
+     * @param data an RDF Node (possibly with a DataType)
+     * @param propertyName name of the property to populate (used to use the right type for the value)
+     * @return the JCR value from an RDFNode for a given JCR property
+     * @throws RepositoryException if repository exception occurred
+     */
+    public Value createValue(final Node node,
+                             final RDFNode data,
+                             final String propertyName) throws RepositoryException {
+<span class="fc" id="L177">        final ValueFactory valueFactory = node.getSession().getValueFactory();</span>
+<span class="fc" id="L178">        return createValue(valueFactory, data, getPropertyType(node, propertyName).orElse(UNDEFINED));</span>
+    }
+
+    /**
+     * Create a JCR value from an RDF node with the given JCR type
+     * @param valueFactory the given value factory
+     * @param data the rdf node data
+     * @param type the given JCR type
+     * @return created value
+     * @throws RepositoryException if repository exception occurred
+     */
+    public Value createValue(final ValueFactory valueFactory, final RDFNode data, final int type)
+        throws RepositoryException {
+<span class="pc bpc" id="L191" title="2 of 4 branches missed.">        assert (valueFactory != null);</span>
+
+
+<span class="fc bfc" id="L194" title="All 4 branches covered.">        if (type == UNDEFINED || type == STRING) {</span>
+<span class="fc" id="L195">            return valueConverter.reverse().convert(data);</span>
+<span class="fc bfc" id="L196" title="All 4 branches covered.">        } else if (type == REFERENCE || type == WEAKREFERENCE) {</span>
+            // reference to another node (by path)
+<span class="fc bfc" id="L198" title="All 2 branches covered.">            if (!data.isURIResource()) {</span>
+<span class="fc" id="L199">                throw new ValueFormatException(&quot;Reference properties can only refer to URIs, not literals&quot;);</span>
+            }
+
+            try {
+<span class="fc" id="L203">                final Node nodeFromGraphSubject = getJcrNode(idTranslator.convert(data.asResource()));</span>
+<span class="fc bfc" id="L204" title="All 2 branches covered.">                return valueFactory.createValue(nodeFromGraphSubject, type == WEAKREFERENCE);</span>
+<span class="nc" id="L205">            } catch (final RepositoryRuntimeException e) {</span>
+<span class="nc" id="L206">                throw new MalformedRdfException(&quot;Unable to find referenced node&quot;, e);</span>
+            }
+<span class="fc bfc" id="L208" title="All 2 branches covered.">        } else if (data.isResource()) {</span>
+<span class="fc" id="L209">            LOGGER.debug(&quot;Using default JCR value creation for RDF resource: {}&quot;,</span>
+                    data);
+<span class="fc" id="L211">            return valueFactory.createValue(data.asResource().getURI(), type);</span>
+        } else {
+<span class="fc" id="L213">            LOGGER.debug(&quot;Using default JCR value creation for RDF literal: {}&quot;,</span>
+                    data);
+
+            // If the date time stamp has a ms field which is a multiple of 10 (ie, .5 or .86) and is truncated to
+            // one or two characters, then Modeshape 5.0 will incorrectly parse the timestamp
+            // and pad the number incorrectly: ie. .5 ms becomes .005 ms, .86 becomes .086), thereby changing the
+            // time stamp.  All this does is make the ms section 3 digits and then Modeshape behaves.
+<span class="fc" id="L220">            String theValue = data.asLiteral().getString();</span>
+
+<span class="fc bfc" id="L222" title="All 2 branches covered.">            if (type == DATE) {</span>
+<span class="fc" id="L223">                theValue = Instant.parse(data.asLiteral().getString()).toString();</span>
+            }
+<span class="fc" id="L225">            return valueFactory.createValue(theValue, type);</span>
+        }
+    }
+
+    /**
+     * Add a mixin to a node
+     * @param resource the fedora resource
+     * @param mixinResource the mixin resource
+     * @param namespaces the namespace
+     * @throws RepositoryException if repository exception occurred
+     */
+    public void addMixin(final FedoraResource resource,
+                         final Resource mixinResource,
+                         final Map&lt;String,String&gt; namespaces)
+            throws RepositoryException {
+
+<span class="fc" id="L241">        final Node node = getJcrNode(resource);</span>
+<span class="fc" id="L242">        final Session session = node.getSession();</span>
+<span class="fc" id="L243">        final String mixinName = getPropertyNameFromPredicate(node, mixinResource, namespaces);</span>
+<span class="fc bfc" id="L244" title="All 2 branches covered.">        if (!repositoryHasType(session, mixinName)) {</span>
+<span class="fc" id="L245">            final NodeTypeManager mgr = session.getWorkspace().getNodeTypeManager();</span>
+<span class="fc" id="L246">            final NodeTypeTemplate type = mgr.createNodeTypeTemplate();</span>
+<span class="fc" id="L247">            type.setName(mixinName);</span>
+<span class="fc" id="L248">            type.setMixin(true);</span>
+<span class="fc" id="L249">            type.setQueryable(true);</span>
+<span class="fc" id="L250">            mgr.registerNodeType(type, false);</span>
+        }
+
+<span class="fc bfc" id="L253" title="All 2 branches covered.">        if (node.isNodeType(mixinName)) {</span>
+<span class="fc" id="L254">            LOGGER.trace(&quot;Subject {} is already a {}; skipping&quot;, node, mixinName);</span>
+<span class="fc" id="L255">            return;</span>
+        }
+
+<span class="fc bfc" id="L258" title="All 2 branches covered.">        if (node.canAddMixin(mixinName)) {</span>
+<span class="fc" id="L259">            LOGGER.debug(&quot;Adding mixin: {} to node: {}.&quot;, mixinName, node.getPath());</span>
+<span class="fc" id="L260">            node.addMixin(mixinName);</span>
+        } else {
+<span class="fc" id="L262">            throw new MalformedRdfException(&quot;Could not persist triple containing type assertion: &quot;</span>
+<span class="fc" id="L263">                    + mixinResource.toString()</span>
+                    + &quot; because no such mixin/type can be added to this node: &quot;
+<span class="fc" id="L265">                    + node.getPath() + &quot;!&quot;);</span>
+        }
+<span class="fc" id="L267">    }</span>
+
+    /**
+     * Add property to a node
+     * @param resource the fedora resource
+     * @param predicate the predicate
+     * @param value the value
+     * @param namespaces the namespace
+     * @throws RepositoryException if repository exception occurred
+     */
+    public void addProperty(final FedoraResource resource,
+            final org.apache.jena.rdf.model.Property predicate,
+            final RDFNode value,
+            final Map&lt;String, String&gt; namespaces) throws RepositoryException {
+<span class="fc" id="L281">        addProperty(resource, predicate, value, namespaces, false);</span>
+<span class="fc" id="L282">    }</span>
+
+    /**
+     * Add property to a node
+     * @param resource the fedora resource
+     * @param predicate the predicate
+     * @param value the value
+     * @param namespaces the namespace
+     * @param allowRelaxedProperties if true, relaxed server managed properties are allowed
+     * @throws RepositoryException if repository exception occurred
+     */
+    public void addProperty(final FedoraResource resource,
+                            final org.apache.jena.rdf.model.Property predicate,
+                            final RDFNode value,
+                            final Map&lt;String, String&gt; namespaces,
+                            final boolean allowRelaxedProperties) throws RepositoryException {
+
+<span class="fc" id="L299">        final Node node = getJcrNode(resource);</span>
+
+<span class="pc bpc" id="L301" title="2 of 6 branches missed.">        if ((!allowRelaxedProperties &amp;&amp; isManagedPredicate.test(predicate)) || jcrProperties.contains(predicate)) {</span>
+
+<span class="nc" id="L303">            throw new ServerManagedPropertyException(&quot;Could not persist triple containing predicate &quot;</span>
+<span class="nc" id="L304">                    + predicate.toString()</span>
+                    + &quot; to node &quot;
+<span class="nc" id="L306">                    + node.getPath());</span>
+        }
+
+<span class="fc" id="L309">        String propertyName =</span>
+<span class="fc" id="L310">                getPropertyNameFromPredicate(node, predicate, namespaces);</span>
+
+        // In earlier versions of Fedora the following JCR properties were
+        // used for properties.  When the behavior changed such that they could
+        // be set explicitly in some cases, we changed the underlying representation
+        // such that the &quot;fedora&quot;-namespaced property could be set, and when present
+        // would be presented instead of the underlying JCR-managed property.
+<span class="fc bfc" id="L317" title="All 2 branches covered.">        if (propertyName.equals(JCR_LASTMODIFIEDBY)) {</span>
+<span class="fc" id="L318">            propertyName = FEDORA_LASTMODIFIEDBY;</span>
+<span class="fc bfc" id="L319" title="All 2 branches covered.">        } else if (propertyName.equals(JCR_LASTMODIFIED)) {</span>
+<span class="fc" id="L320">            propertyName = FEDORA_LASTMODIFIED;</span>
+<span class="fc bfc" id="L321" title="All 2 branches covered.">        } else if (propertyName.equals(JCR_CREATEDBY)) {</span>
+<span class="fc" id="L322">            propertyName = FEDORA_CREATEDBY;</span>
+<span class="fc bfc" id="L323" title="All 2 branches covered.">        } else if (propertyName.equals(JCR_CREATED)) {</span>
+<span class="fc" id="L324">            propertyName = FEDORA_CREATED;</span>
+        }
+
+<span class="fc bfc" id="L327" title="All 2 branches covered.">        if (value.isURIResource()</span>
+<span class="fc bfc" id="L328" title="All 2 branches covered.">                &amp;&amp; idTranslator.inDomain(value.asResource())</span>
+<span class="fc bfc" id="L329" title="All 2 branches covered.">                &amp;&amp; !isReferenceProperty(node, propertyName)) {</span>
+<span class="fc" id="L330">            nodePropertiesTools.addReferencePlaceholders(idTranslator, node, propertyName, value.asResource());</span>
+        } else {
+<span class="fc" id="L332">            final Value v = createValue(node, value, propertyName);</span>
+<span class="fc" id="L333">            nodePropertiesTools.appendOrReplaceNodeProperty(node, propertyName, v);</span>
+        }
+<span class="fc" id="L335">    }</span>
+
+    private boolean repositoryHasType(final Session session, final String mixinName) throws RepositoryException {
+<span class="fc" id="L338">        return session.getWorkspace().getNodeTypeManager().hasNodeType(mixinName);</span>
+    }
+
+    /**
+     * Remove a mixin from a node
+     * @param resource the resource
+     * @param mixinResource the mixin resource
+     * @param nsPrefixMap the prefix map
+     * @throws RepositoryException if repository exception occurred
+     */
+    public void removeMixin(final FedoraResource resource,
+                            final Resource mixinResource,
+                            final Map&lt;String, String&gt; nsPrefixMap) throws RepositoryException {
+
+<span class="fc" id="L352">        final Node node = getJcrNode(resource);</span>
+<span class="fc" id="L353">        final String mixinName = getPropertyNameFromPredicate(node, mixinResource, nsPrefixMap);</span>
+<span class="fc bfc" id="L354" title="All 4 branches covered.">        if (repositoryHasType(session, mixinName) &amp;&amp; node.isNodeType(mixinName)) {</span>
+<span class="fc" id="L355">            node.removeMixin(mixinName);</span>
+        }
+
+<span class="fc" id="L358">    }</span>
+
+    /**
+     * Remove a property from a node
+     * @param resource the fedora resource
+     * @param predicate the predicate
+     * @param objectNode the object node
+     * @param nsPrefixMap the prefix map
+     * @throws RepositoryException if repository exception occurred
+     */
+    public void removeProperty(final FedoraResource resource,
+                               final org.apache.jena.rdf.model.Property predicate,
+                               final RDFNode objectNode,
+                               final Map&lt;String, String&gt; nsPrefixMap) throws RepositoryException {
+
+<span class="fc" id="L373">        final Node node = getJcrNode(resource);</span>
+<span class="fc" id="L374">        final String propertyName = getPropertyNameFromPredicate(node, predicate, nsPrefixMap);</span>
+
+<span class="pc bpc" id="L376" title="2 of 4 branches missed.">        if (isManagedPredicate.test(predicate) || jcrProperties.contains(predicate)) {</span>
+
+<span class="nc" id="L378">            throw new ServerManagedPropertyException(&quot;Could not remove triple containing predicate &quot;</span>
+<span class="nc" id="L379">                    + predicate.toString()</span>
+                    + &quot; to node &quot;
+<span class="nc" id="L381">                    + node.getPath());</span>
+        }
+
+<span class="fc bfc" id="L384" title="All 2 branches covered.">        if (objectNode.isURIResource()</span>
+<span class="pc bpc" id="L385" title="1 of 2 branches missed.">                &amp;&amp; idTranslator.inDomain(objectNode.asResource())</span>
+<span class="pc bpc" id="L386" title="1 of 2 branches missed.">                &amp;&amp; !isReferenceProperty(node, propertyName)) {</span>
+<span class="fc" id="L387">            nodePropertiesTools.removeReferencePlaceholders(idTranslator,</span>
+                    node,
+                    propertyName,
+<span class="fc" id="L390">                    objectNode.asResource());</span>
+        } else {
+<span class="fc" id="L392">            final Value v = createValue(node, objectNode, propertyName);</span>
+<span class="fc" id="L393">            nodePropertiesTools.removeNodeProperty(node, propertyName, v);</span>
+        }
+<span class="fc" id="L395">    }</span>
+
+    /**
+     * Convert an external statement into a persistable statement by skolemizing
+     * blank nodes, creating hash-uri subjects, etc
+     *
+     * @param idTranslator the property of idTranslator
+     * @param t the statement
+     * @param topic the topic
+     * @return the persistable statement
+     * @throws RepositoryException if repository exception occurred
+     */
+    public Statement skolemize(final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator, final Statement t,
+            final String topic) throws RepositoryException {
+
+<span class="fc" id="L410">        Statement skolemized = t;</span>
+
+<span class="fc bfc" id="L412" title="All 2 branches covered.">        if (t.getSubject().isAnon()) {</span>
+<span class="fc" id="L413">            skolemized = m.createStatement(getSkolemizedResource(idTranslator, skolemized.getSubject(), topic),</span>
+<span class="fc" id="L414">                    skolemized.getPredicate(),</span>
+<span class="fc" id="L415">                    skolemized.getObject());</span>
+<span class="pc bpc" id="L416" title="1 of 4 branches missed.">        } else if (idTranslator.inDomain(t.getSubject()) &amp;&amp; t.getSubject().getURI().contains(&quot;#&quot;)) {</span>
+<span class="fc" id="L417">            findOrCreateHashUri(idTranslator, t.getSubject());</span>
+        }
+
+<span class="fc bfc" id="L420" title="All 2 branches covered.">        if (t.getObject().isAnon()) {</span>
+<span class="fc" id="L421">            skolemized = m.createStatement(skolemized.getSubject(), skolemized.getPredicate(), getSkolemizedResource</span>
+<span class="fc" id="L422">                    (idTranslator, skolemized.getObject(), topic));</span>
+<span class="fc bfc" id="L423" title="All 2 branches covered.">        } else if (t.getObject().isResource()</span>
+<span class="fc bfc" id="L424" title="All 2 branches covered.">                &amp;&amp; idTranslator.inDomain(t.getObject().asResource())</span>
+<span class="fc bfc" id="L425" title="All 2 branches covered.">                &amp;&amp; t.getObject().asResource().getURI().contains(&quot;#&quot;)) {</span>
+<span class="fc" id="L426">            findOrCreateHashUri(idTranslator, t.getObject().asResource());</span>
+        }
+
+<span class="fc" id="L429">        return skolemized;</span>
+    }
+
+    private void findOrCreateHashUri(final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator,
+                                     final Resource s) throws RepositoryException {
+<span class="fc" id="L434">        final String absPath = idTranslator.asString(s);</span>
+
+<span class="pc bpc" id="L436" title="1 of 4 branches missed.">        if (!absPath.isEmpty() &amp;&amp; !session.nodeExists(absPath)) {</span>
+<span class="fc" id="L437">            final Node closestExistingAncestor = getClosestExistingAncestor(session, absPath);</span>
+
+<span class="fc" id="L439">            final Node orCreateNode = jcrTools.findOrCreateNode(session, absPath, NT_FOLDER);</span>
+<span class="fc" id="L440">            orCreateNode.addMixin(FEDORA_RESOURCE);</span>
+
+<span class="fc" id="L442">            final Node parent = orCreateNode.getParent();</span>
+
+<span class="pc bpc" id="L444" title="1 of 2 branches missed.">            if (!parent.getName().equals(&quot;#&quot;)) {</span>
+<span class="nc" id="L445">                throw new AssertionError(&quot;Hash URI resource created with too much hierarchy: &quot; + s);</span>
+            }
+
+            // We require the closest node to be either &quot;#&quot; resource, or its parent.
+<span class="fc bfc" id="L449" title="All 2 branches covered.">            if (!parent.equals(closestExistingAncestor)</span>
+<span class="fc bfc" id="L450" title="All 2 branches covered.">                    &amp;&amp; !parent.getParent().equals(closestExistingAncestor)) {</span>
+<span class="fc" id="L451">                throw new PathNotFoundException(&quot;Unexpected request to create new resource &quot; + s);</span>
+            }
+
+<span class="fc bfc" id="L454" title="All 2 branches covered.">            if (parent.isNew()) {</span>
+<span class="fc" id="L455">                parent.addMixin(FEDORA_PAIRTREE);</span>
+            }
+        }
+<span class="fc" id="L458">    }</span>
+
+    private Resource getSkolemizedResource(final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator,
+                                           final RDFNode resource, final String topic) throws RepositoryException {
+<span class="fc" id="L462">        final AnonId id = resource.asResource().getId();</span>
+
+<span class="fc bfc" id="L464" title="All 2 branches covered.">        if (!skolemizedBnodeMap.containsKey(id)) {</span>
+<span class="fc" id="L465">            final String base = idTranslator.asString(createResource(topic));</span>
+<span class="fc" id="L466">            final Resource skolemizedSubject = idTranslator.toDomain(base + &quot;#&quot; + blankNodeIdentifier());</span>
+<span class="fc" id="L467">            findOrCreateHashUri(idTranslator, skolemizedSubject);</span>
+<span class="fc" id="L468">            skolemizedBnodeMap.put(id, skolemizedSubject);</span>
+        }
+
+<span class="fc" id="L471">        return skolemizedBnodeMap.get(id);</span>
+    }
+
+    private String blankNodeIdentifier() {
+<span class="fc" id="L475">        return &quot;genid&quot; + randomUUID().toString();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

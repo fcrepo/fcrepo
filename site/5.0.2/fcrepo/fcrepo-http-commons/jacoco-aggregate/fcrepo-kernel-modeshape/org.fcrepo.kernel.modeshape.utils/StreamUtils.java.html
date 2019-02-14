@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>StreamUtils.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository HTTP Commons Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-modeshape</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.utils</a> &gt; <span class="el_source">StreamUtils.java</span></div><h1>StreamUtils.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.utils;
+
+import static java.util.Spliterator.IMMUTABLE;
+import static java.util.Spliterators.spliteratorUnknownSize;
+import static java.util.stream.StreamSupport.stream;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.Iterator;
+import java.util.stream.Stream;
+
+import org.slf4j.Logger;
+
+/**
+ * @author acoburn
+ * @since February 10, 2016
+ */
+public class StreamUtils {
+
+<span class="fc" id="L36">    private static final Logger LOGGER = getLogger(StreamUtils.class);</span>
+
+<span class="fc" id="L38">    private static Boolean enableParallel = false;</span>
+
+    private static final String FCREPO_STEAMING_PARALLEL_KEY =
+            &quot;fcrepo.streaming.parallel&quot;;
+    static {
+<span class="fc" id="L43">        final String enableParallelVal = System.getProperty(FCREPO_STEAMING_PARALLEL_KEY, &quot;false&quot;)</span>
+<span class="fc" id="L44">                .trim()</span>
+<span class="fc" id="L45">                .toLowerCase();</span>
+<span class="pc bpc" id="L46" title="2 of 4 branches missed.">        if (!enableParallelVal.equals(&quot;true&quot;) &amp;&amp; !enableParallelVal.equals(&quot;false&quot;)) {</span>
+<span class="nc" id="L47">            LOGGER.warn(</span>
+                    &quot;The {} parameter contains an invalid value of {}:  &quot; +
+                            &quot;allowed values are 'true' and 'false'. &quot; +
+                            &quot;The default value of {} remain unchanged.&quot;,
+                    FCREPO_STEAMING_PARALLEL_KEY, enableParallelVal, enableParallel);
+        } else {
+<span class="fc" id="L53">            StreamUtils.enableParallel = Boolean.valueOf(enableParallelVal);</span>
+        }
+<span class="fc" id="L55">    }</span>
+
+    /**
+     * Convert an Iterator to a Stream
+     *
+     * @param iterator the iterator
+     * @param &lt;T&gt; the type of the Stream
+     * @return the stream
+     */
+    public static &lt;T&gt; Stream&lt;T&gt; iteratorToStream(final Iterator&lt;T&gt; iterator) {
+<span class="fc" id="L65">        return iteratorToStream(iterator, enableParallel);</span>
+    }
+
+    /**
+     * Convert an Iterator to a Stream
+     *
+     * @param &lt;T&gt; the type of the Stream
+     * @param iterator the iterator
+     * @param parallel whether to parallelize the stream
+     * @return the stream
+     */
+    public static &lt;T&gt; Stream&lt;T&gt; iteratorToStream(final Iterator&lt;T&gt; iterator, final Boolean parallel) {
+<span class="fc" id="L77">        return stream(spliteratorUnknownSize(iterator, IMMUTABLE), parallel);</span>
+    }
+    private StreamUtils() {
+        // prevent instantiation
+    }
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
