@@ -4237,4 +4237,13 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final Resource resc2 = model2.getResource(binURI);
         assertFalse(resc2.hasProperty(RDF.type, PCDM_FILE_TYPE));
     }
+
+    @Test
+    public void testCreateWithTrailingSlash() throws IOException {
+        final String subjectURI = serverAddress + getRandomUniqueId() + "/";
+        final HttpPut putMethod = new HttpPut(subjectURI);
+        try (final CloseableHttpResponse response = execute(putMethod)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+        }
+    }
 }
