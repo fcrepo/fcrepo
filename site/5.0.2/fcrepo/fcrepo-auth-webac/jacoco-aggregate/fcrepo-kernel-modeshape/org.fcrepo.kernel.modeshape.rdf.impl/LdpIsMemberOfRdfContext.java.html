@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>LdpIsMemberOfRdfContext.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository WebAC Authorization Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-modeshape</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.rdf.impl</a> &gt; <span class="el_source">LdpIsMemberOfRdfContext.java</span></div><h1>LdpIsMemberOfRdfContext.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.rdf.impl;
+
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Resource;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.modeshape.rdf.converters.ValueConverter;
+import org.fcrepo.kernel.modeshape.rdf.impl.mappings.PropertyValueIterator;
+
+import javax.jcr.Property;
+import javax.jcr.RepositoryException;
+
+import java.util.stream.Stream;
+
+import static java.util.stream.Stream.empty;
+import static java.util.stream.Stream.of;
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.graph.Triple.create;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_INSERTED_CONTENT_RELATION;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_IS_MEMBER_OF_RELATION;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_MEMBER_RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.MEMBER_SUBJECT;
+import static org.fcrepo.kernel.modeshape.rdf.converters.PropertyConverter.getPropertyNameFromPredicate;
+import static org.fcrepo.kernel.modeshape.rdf.impl.ReferencesRdfContext.REFERENCE_TYPES;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
+import static org.fcrepo.kernel.modeshape.utils.StreamUtils.iteratorToStream;
+
+/**
+ * @author cabeer
+ * @author ajs6f
+ * @since 10/7/14
+ */
+public class LdpIsMemberOfRdfContext extends NodeRdfContext {
+    private final ValueConverter valueConverter;
+
+    /**
+     * Default constructor.
+     *
+     * @param resource the resource
+     * @param idTranslator the id translator
+     * @throws javax.jcr.RepositoryException if repository exception
+     */
+    public LdpIsMemberOfRdfContext(final FedoraResource resource,
+                                   final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator)
+            throws RepositoryException {
+<span class="fc" id="L67">        super(resource, idTranslator);</span>
+
+<span class="fc" id="L69">        valueConverter = new ValueConverter(getJcrNode(resource).getSession(), translator());</span>
+<span class="fc" id="L70">        final FedoraResource container = resource.getContainer();</span>
+
+<span class="fc bfc" id="L72" title="All 2 branches covered.">        if (container != null</span>
+<span class="fc bfc" id="L73" title="All 4 branches covered.">                &amp;&amp; (container.hasType(LDP_DIRECT_CONTAINER) || container.hasType(LDP_INDIRECT_CONTAINER))</span>
+<span class="pc bpc" id="L74" title="1 of 2 branches missed.">                &amp;&amp; container.hasProperty(LDP_IS_MEMBER_OF_RELATION)) {</span>
+<span class="fc" id="L75">            concat(concatIsMemberOfRelation(container));</span>
+        }
+<span class="fc" id="L77">    }</span>
+
+    private Stream&lt;Triple&gt; concatIsMemberOfRelation(final FedoraResource container) throws RepositoryException {
+<span class="fc" id="L80">        final Property property = getJcrNode(container).getProperty(LDP_IS_MEMBER_OF_RELATION);</span>
+
+<span class="fc" id="L82">        final Resource memberRelation = createResource(property.getString());</span>
+<span class="fc" id="L83">        final Node membershipResource = getMemberResource(container);</span>
+
+<span class="pc bpc" id="L85" title="1 of 2 branches missed.">        if (membershipResource == null) {</span>
+<span class="nc" id="L86">            return empty();</span>
+        }
+
+        final String insertedContainerProperty;
+
+<span class="fc bfc" id="L91" title="All 2 branches covered.">        if (container.hasType(LDP_INDIRECT_CONTAINER)) {</span>
+<span class="pc bpc" id="L92" title="1 of 2 branches missed.">            if (container.hasProperty(LDP_INSERTED_CONTENT_RELATION)) {</span>
+<span class="fc" id="L93">                insertedContainerProperty = getJcrNode(container).getProperty(LDP_INSERTED_CONTENT_RELATION)</span>
+<span class="fc" id="L94">                    .getString();</span>
+            } else {
+<span class="nc" id="L96">                return empty();</span>
+            }
+        } else {
+<span class="fc" id="L99">            insertedContainerProperty = MEMBER_SUBJECT.getURI();</span>
+        }
+
+<span class="fc bfc" id="L102" title="All 2 branches covered.">        if (insertedContainerProperty.equals(MEMBER_SUBJECT.getURI())) {</span>
+<span class="fc" id="L103">            return of(create(subject(), memberRelation.asNode(), membershipResource));</span>
+<span class="pc bpc" id="L104" title="1 of 2 branches missed.">        } else if (container.hasType(LDP_INDIRECT_CONTAINER)) {</span>
+<span class="fc" id="L105">            final String insertedContentProperty = getPropertyNameFromPredicate(getJcrNode(resource()), createResource</span>
+<span class="fc" id="L106">                    (insertedContainerProperty), null);</span>
+
+<span class="pc bpc" id="L108" title="1 of 2 branches missed.">            if (resource().hasProperty(insertedContentProperty)) {</span>
+<span class="fc" id="L109">                return iteratorToStream(new PropertyValueIterator(</span>
+<span class="fc" id="L110">                            getJcrNode(resource()).getProperty(insertedContentProperty)))</span>
+<span class="fc" id="L111">                        .map(valueConverter::convert)</span>
+<span class="fc" id="L112">                        .filter(n -&gt; n.isURIResource())</span>
+<span class="fc" id="L113">                        .filter(n -&gt; translator().inDomain(n.asResource()))</span>
+<span class="fc" id="L114">                        .map(s -&gt; create(s.asNode(), memberRelation.asNode(), membershipResource));</span>
+            }
+        }
+<span class="nc" id="L117">        return empty();</span>
+    }
+
+    /**
+     * Get the membership resource relation asserted by the container
+     * @param parent resource with relations
+     * @return Node of member
+     * @throws RepositoryException on error
+     */
+    private Node getMemberResource(final FedoraResource parent) throws RepositoryException {
+        final Node membershipResource;
+
+<span class="pc bpc" id="L129" title="1 of 2 branches missed.">        if (parent.hasProperty(LDP_MEMBER_RESOURCE)) {</span>
+<span class="fc" id="L130">            final Property memberResource = getJcrNode(parent).getProperty(LDP_MEMBER_RESOURCE);</span>
+
+<span class="fc bfc" id="L132" title="All 2 branches covered.">            if (REFERENCE_TYPES.contains(memberResource.getType())) {</span>
+<span class="fc" id="L133">                membershipResource = nodeConverter().convert(memberResource.getNode()).asNode();</span>
+            } else {
+<span class="fc" id="L135">                membershipResource = createURI(memberResource.getString());</span>
+            }
+<span class="fc" id="L137">        } else {</span>
+<span class="nc" id="L138">            membershipResource = uriFor(parent);</span>
+        }
+
+<span class="fc" id="L141">        return membershipResource;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
