@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>StreamingBaseHtmlProvider.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api.responses</a> &gt; <span class="el_source">StreamingBaseHtmlProvider.java</span></div><h1>StreamingBaseHtmlProvider.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.http.api.responses;
+
+import static java.lang.System.getProperty;
+import static java.util.stream.Stream.of;
+import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
+import static com.google.common.collect.ImmutableMap.builder;
+import static org.apache.jena.graph.Node.ANY;
+import static org.apache.jena.sparql.util.graph.GraphUtils.multiValueURI;
+import static org.apache.jena.vocabulary.RDF.type;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;
+import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfCollectors.toModel;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import javax.annotation.PostConstruct;
+import javax.jcr.PathNotFoundException;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.ext.MessageBodyWriter;
+import javax.ws.rs.ext.Provider;
+
+import com.google.common.collect.ImmutableMap;
+import org.apache.jena.graph.Node;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.velocity.Template;
+import org.apache.velocity.VelocityContext;
+import org.apache.velocity.app.VelocityEngine;
+import org.apache.velocity.context.Context;
+import org.apache.velocity.tools.generic.EscapeTool;
+import org.apache.velocity.tools.generic.FieldTool;
+import org.fcrepo.http.api.FedoraLdp;
+import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
+import org.fcrepo.http.commons.responses.HtmlTemplate;
+import org.fcrepo.http.commons.responses.RdfNamespacedStream;
+import org.fcrepo.http.commons.responses.ViewHelpers;
+import org.fcrepo.http.commons.session.HttpSession;
+import org.fcrepo.http.commons.session.SessionFactory;
+import org.fcrepo.kernel.api.RdfLexicon;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.FedoraBinary;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.glassfish.jersey.uri.UriTemplate;
+import org.slf4j.Logger;
+
+/**
+ * Simple HTML provider for RdfNamespacedStreams
+ *
+ * @author ajs6f
+ * @author whikloj
+ * @since Nov 19, 2013
+ */
+@Provider
+@Produces({TEXT_HTML_WITH_CHARSET})
+<span class="fc" id="L89">public class StreamingBaseHtmlProvider implements MessageBodyWriter&lt;RdfNamespacedStream&gt; {</span>
+
+
+    @javax.ws.rs.core.Context
+    UriInfo uriInfo;
+
+    @javax.ws.rs.core.Context
+    SessionFactory sessionFactory;
+
+    @javax.ws.rs.core.Context
+    HttpServletRequest request;
+
+    private HttpSession session() {
+<span class="fc" id="L102">        return sessionFactory.getSession(request);</span>
+    }
+
+    private IdentifierConverter&lt;Resource, FedoraResource&gt; translator() {
+<span class="fc" id="L106">        return new HttpResourceConverter(session(),</span>
+<span class="fc" id="L107">                uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class));</span>
+    }
+
+<span class="fc" id="L110">    private static final EscapeTool escapeTool = new EscapeTool();</span>
+
+<span class="fc" id="L112">    private final VelocityEngine velocity = new VelocityEngine();</span>
+
+    /**
+     * Location in the classpath where Velocity templates are to be found.
+     */
+    private static final String templatesLocation = &quot;/views&quot;;
+
+    /**
+     * A map from String names for primary node types to the Velocity templates
+     * that should be used for those node types.
+     */
+    private Map&lt;String, Template&gt; templatesMap;
+
+    private static final String templateFilenameExtension = &quot;.vsl&quot;;
+
+    private static final String velocityPropertiesLocation =
+            &quot;/velocity.properties&quot;;
+
+<span class="fc" id="L130">    private static final ViewHelpers VIEW_HELPERS = ViewHelpers.getInstance();</span>
+
+<span class="fc" id="L132">    private static final Logger LOGGER =</span>
+<span class="fc" id="L133">        getLogger(StreamingBaseHtmlProvider.class);</span>
+
+    @PostConstruct
+    void init() throws IOException {
+<span class="fc" id="L137">        LOGGER.trace(&quot;Velocity engine initializing...&quot;);</span>
+<span class="fc" id="L138">        final Properties properties = new Properties();</span>
+<span class="fc" id="L139">        final String fcrepoHome = getProperty(&quot;fcrepo.home&quot;);</span>
+<span class="fc" id="L140">        final String velocityLog = getProperty(&quot;fcrepo.velocity.runtime.log&quot;);</span>
+<span class="pc bpc" id="L141" title="1 of 2 branches missed.">        if (velocityLog != null) {</span>
+<span class="nc" id="L142">            LOGGER.debug(&quot;Setting Velocity runtime log: {}&quot;, velocityLog);</span>
+<span class="nc" id="L143">            properties.setProperty(&quot;runtime.log&quot;, velocityLog);</span>
+<span class="pc bpc" id="L144" title="1 of 2 branches missed.">        } else if (fcrepoHome != null) {</span>
+<span class="nc" id="L145">            LOGGER.debug(&quot;Using fcrepo.home directory for the velocity log&quot;);</span>
+<span class="nc" id="L146">            properties.setProperty(&quot;runtime.log&quot;, fcrepoHome + getProperty(&quot;file.separator&quot;) + &quot;velocity.log&quot;);</span>
+        }
+<span class="fc" id="L148">        final URL propertiesUrl =</span>
+<span class="fc" id="L149">                getClass().getResource(velocityPropertiesLocation);</span>
+<span class="fc" id="L150">        LOGGER.debug(&quot;Using Velocity configuration from {}&quot;, propertiesUrl);</span>
+<span class="fc" id="L151">        try (final InputStream propertiesStream = propertiesUrl.openStream()) {</span>
+<span class="fc" id="L152">            properties.load(propertiesStream);</span>
+        }
+<span class="fc" id="L154">        velocity.init(properties);</span>
+<span class="fc" id="L155">        LOGGER.trace(&quot;Velocity engine initialized.&quot;);</span>
+
+<span class="fc" id="L157">        LOGGER.trace(&quot;Assembling a map of node primary types -&gt; templates...&quot;);</span>
+<span class="fc" id="L158">        final ImmutableMap.Builder&lt;String, Template&gt; templatesMapBuilder = builder();</span>
+
+<span class="fc" id="L160">        of(&quot;fcr:versions&quot;, &quot;fcr:fixity&quot;, &quot;default&quot;)</span>
+<span class="fc" id="L161">            .forEach(key -&gt; templatesMapBuilder.put(key, velocity.getTemplate(getTemplateLocation(key))));</span>
+
+<span class="fc" id="L163">        templatesMap = templatesMapBuilder</span>
+<span class="fc" id="L164">            .put(REPOSITORY_NAMESPACE + &quot;RepositoryRoot&quot;, velocity.getTemplate(getTemplateLocation(&quot;root&quot;)))</span>
+<span class="fc" id="L165">            .put(REPOSITORY_NAMESPACE + &quot;Binary&quot;, velocity.getTemplate(getTemplateLocation(&quot;binary&quot;)))</span>
+<span class="fc" id="L166">            .put(REPOSITORY_NAMESPACE + &quot;Version&quot;, velocity.getTemplate(getTemplateLocation(&quot;resource&quot;)))</span>
+<span class="fc" id="L167">            .put(REPOSITORY_NAMESPACE + &quot;Pairtree&quot;, velocity.getTemplate(getTemplateLocation(&quot;resource&quot;)))</span>
+<span class="fc" id="L168">            .put(REPOSITORY_NAMESPACE + &quot;Container&quot;, velocity.getTemplate(getTemplateLocation(&quot;resource&quot;)))</span>
+<span class="fc" id="L169">            .put(LDP_NAMESPACE + &quot;NonRdfSource&quot;, velocity.getTemplate(getTemplateLocation(&quot;binary&quot;)))</span>
+<span class="fc" id="L170">            .put(LDP_NAMESPACE + &quot;RdfSource&quot;, velocity.getTemplate(getTemplateLocation(&quot;resource&quot;))).build();</span>
+
+<span class="fc" id="L172">        LOGGER.trace(&quot;Assembled template map.&quot;);</span>
+<span class="fc" id="L173">        LOGGER.trace(&quot;HtmlProvider initialization complete.&quot;);</span>
+<span class="fc" id="L174">    }</span>
+
+    @Override
+    public void writeTo(final RdfNamespacedStream nsStream, final Class&lt;?&gt; type,
+                        final Type genericType, final Annotation[] annotations,
+                        final MediaType mediaType,
+                        final MultivaluedMap&lt;String, Object&gt; httpHeaders,
+                        final OutputStream entityStream) throws IOException {
+
+<span class="fc" id="L183">        final Node subject = ViewHelpers.getContentNode(nsStream.stream.topic());</span>
+
+<span class="fc" id="L185">        final Model model = nsStream.stream.collect(toModel());</span>
+<span class="fc" id="L186">        model.setNsPrefixes(nsStream.namespaces);</span>
+
+<span class="fc" id="L188">        final Template nodeTypeTemplate = getTemplate(model, subject, Arrays.asList(annotations));</span>
+
+<span class="fc" id="L190">        final Context context = getContext(model, subject);</span>
+
+<span class="fc" id="L192">        final FedoraResource resource = getResourceFromSubject(subject.toString());</span>
+<span class="pc bpc" id="L193" title="2 of 4 branches missed.">        context.put(&quot;isOriginalResource&quot;, (resource != null &amp;&amp; resource.isOriginalResource()));</span>
+<span class="pc bpc" id="L194" title="2 of 4 branches missed.">        context.put(&quot;isVersion&quot;, (resource != null &amp;&amp; resource.isMemento()));</span>
+<span class="pc bpc" id="L195" title="1 of 4 branches missed.">        context.put(&quot;isLDPNR&quot;, (resource != null &amp;&amp;</span>
+<span class="pc bpc" id="L196" title="1 of 2 branches missed.">                (resource instanceof FedoraBinary || !resource.getDescribedResource().equals(resource))));</span>
+
+        // the contract of MessageBodyWriter&lt;T&gt; is _not_ to close the stream
+        // after writing to it
+<span class="fc" id="L200">        final Writer outWriter = new OutputStreamWriter(entityStream);</span>
+<span class="fc" id="L201">        nodeTypeTemplate.merge(context, outWriter);</span>
+<span class="fc" id="L202">        outWriter.flush();</span>
+<span class="fc" id="L203">    }</span>
+
+    /**
+     * Get a FedoraResource for the subject of the graph, if it exists.
+     *
+     * @param subjectUri the uri of the subject
+     * @return FedoraResource if exists or null
+     */
+    private FedoraResource getResourceFromSubject(final String subjectUri) {
+<span class="fc" id="L212">        final UriTemplate uriTemplate =</span>
+<span class="fc" id="L213">            new UriTemplate(uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class).toTemplate());</span>
+<span class="fc" id="L214">        final Map&lt;String, String&gt; values = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L215">        uriTemplate.match(subjectUri, values);</span>
+<span class="pc bpc" id="L216" title="1 of 2 branches missed.">        if (values.containsKey(&quot;path&quot;)) {</span>
+            try {
+<span class="fc" id="L218">                return translator().convert(translator().toDomain(values.get(&quot;path&quot;)));</span>
+<span class="nc" id="L219">            } catch (final RuntimeException e) {</span>
+<span class="nc bnc" id="L220" title="All 2 branches missed.">                if (e.getCause() instanceof PathNotFoundException) {</span>
+                    //there is at least one case (ie Time Map endpoints - aka /fcr:versions) where the underlying jcr
+                    // node will not exist while the end point is visible to the user.
+<span class="nc" id="L223">                    return null;</span>
+                } else {
+<span class="nc" id="L225">                    throw e;</span>
+                }
+            }
+        }
+<span class="nc" id="L229">        return null;</span>
+    }
+
+    private Context getContext(final Model model, final Node subject) {
+<span class="fc" id="L233">        final FieldTool fieldTool = new FieldTool();</span>
+
+<span class="fc" id="L235">        final Context context = new VelocityContext();</span>
+<span class="fc" id="L236">        final String[] baseUrl = uriInfo.getBaseUri().getPath().split(&quot;/&quot;);</span>
+<span class="pc bpc" id="L237" title="1 of 2 branches missed.">        if (baseUrl.length &gt; 0) {</span>
+<span class="nc" id="L238">            final String staticBaseUrl = String.join(&quot;/&quot;, Arrays.copyOf(baseUrl, baseUrl.length - 1));</span>
+<span class="nc" id="L239">            context.put(&quot;staticBaseUrl&quot;, staticBaseUrl);</span>
+<span class="nc" id="L240">        } else {</span>
+<span class="fc" id="L241">            context.put(&quot;staticBaseUrl&quot;, &quot;/&quot;);</span>
+        }
+<span class="fc" id="L243">        context.put(&quot;rdfLexicon&quot;, fieldTool.in(RdfLexicon.class));</span>
+<span class="fc" id="L244">        context.put(&quot;helpers&quot;, VIEW_HELPERS);</span>
+<span class="fc" id="L245">        context.put(&quot;esc&quot;, escapeTool);</span>
+<span class="fc" id="L246">        context.put(&quot;rdf&quot;, model.getGraph());</span>
+
+<span class="fc" id="L248">        context.put(&quot;model&quot;, model);</span>
+<span class="fc" id="L249">        context.put(&quot;subjects&quot;, model.listSubjects());</span>
+<span class="fc" id="L250">        context.put(&quot;nodeany&quot;, ANY);</span>
+<span class="fc" id="L251">        context.put(&quot;topic&quot;, subject);</span>
+<span class="fc" id="L252">        context.put(&quot;originalResource&quot;, VIEW_HELPERS.getOriginalResource(subject));</span>
+<span class="fc" id="L253">        context.put(&quot;uriInfo&quot;, uriInfo);</span>
+<span class="fc" id="L254">        return context;</span>
+    }
+
+    private Template getTemplate(final Model rdf, final Node subject,
+                                 final List&lt;Annotation&gt; annotations) {
+
+<span class="fc" id="L260">        final String tplName = annotations.stream().filter(x -&gt; x instanceof HtmlTemplate)</span>
+<span class="pc" id="L261">            .map(x -&gt; ((HtmlTemplate) x).value()).filter(templatesMap::containsKey).findFirst()</span>
+<span class="fc" id="L262">            .orElseGet(() -&gt; {</span>
+<span class="fc" id="L263">                final List&lt;String&gt; types = multiValueURI(rdf.getResource(subject.getURI()), type);</span>
+<span class="fc bfc" id="L264" title="All 2 branches covered.">                if (types.contains(REPOSITORY_NAMESPACE + &quot;RepositoryRoot&quot;)) {</span>
+<span class="fc" id="L265">                    return REPOSITORY_NAMESPACE + &quot;RepositoryRoot&quot;;</span>
+                }
+<span class="fc" id="L267">                return types.stream().filter(templatesMap::containsKey).findFirst().orElse(&quot;default&quot;);</span>
+            });
+<span class="fc" id="L269">        LOGGER.debug(&quot;Using template: {}&quot;, tplName);</span>
+<span class="fc" id="L270">        return templatesMap.get(tplName);</span>
+    }
+
+    @Override
+    public boolean isWriteable(final Class&lt;?&gt; type, final Type genericType,
+                               final Annotation[] annotations, final MediaType mediaType) {
+<span class="fc" id="L276">        LOGGER.debug(</span>
+                &quot;Checking to see if type: {} is serializable to mimeType: {}&quot;,
+<span class="fc" id="L278">                type.getName(), mediaType);</span>
+<span class="pc bpc" id="L279" title="1 of 4 branches missed.">        return isTextHtml(mediaType) &amp;&amp; RdfNamespacedStream.class.isAssignableFrom(type);</span>
+    }
+
+    @Override
+    public long getSize(final RdfNamespacedStream t, final Class&lt;?&gt; type,
+                        final Type genericType, final Annotation[] annotations,
+                        final MediaType mediaType) {
+        // we don't know in advance how large the result might be
+<span class="nc" id="L287">        return -1;</span>
+    }
+
+    private static String getTemplateLocation(final String nodeTypeName) {
+<span class="fc" id="L291">        return templatesLocation + &quot;/&quot; +</span>
+<span class="fc" id="L292">            nodeTypeName.replace(':', '-') + templateFilenameExtension;</span>
+    }
+
+    private static boolean isTextHtml(final MediaType mediaType) {
+<span class="pc bpc" id="L296" title="1 of 2 branches missed.">        return mediaType.getType().equals(TEXT_HTML_TYPE.getType()) &amp;&amp;</span>
+<span class="pc bpc" id="L297" title="1 of 2 branches missed.">            mediaType.getSubtype().equals(TEXT_HTML_TYPE.getSubtype());</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

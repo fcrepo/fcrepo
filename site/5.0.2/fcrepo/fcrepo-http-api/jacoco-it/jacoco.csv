@@ -1,0 +1,24 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+Fedora Repository HTTP API Module,org.fcrepo.http.api.repository,FedoraRepositoryRestore,50,39,3,3,9,11,3,3,0,3
+Fedora Repository HTTP API Module,org.fcrepo.http.api.repository,FedoraRepositoryTransactions,0,3,0,0,0,1,0,1,0,1
+Fedora Repository HTTP API Module,org.fcrepo.http.api.repository,FedoraRepositoryBackup,47,55,5,5,10,14,5,3,0,3
+Fedora Repository HTTP API Module,org.fcrepo.http.api.url,HttpApiResources,0,71,0,6,0,15,0,7,0,4
+Fedora Repository HTTP API Module,org.fcrepo.http.api,FedoraHttpConfiguration,0,6,0,0,0,2,0,2,0,2
+Fedora Repository HTTP API Module,org.fcrepo.http.api,FedoraBaseResource,24,153,7,11,4,33,5,13,0,9
+Fedora Repository HTTP API Module,org.fcrepo.http.api,FedoraLdp,206,1757,42,218,37,325,38,128,1,35
+Fedora Repository HTTP API Module,org.fcrepo.http.api,ContentExposingResource,161,1767,52,186,28,372,46,130,2,55
+Fedora Repository HTTP API Module,org.fcrepo.http.api,DefaultPathLockManager.AcquiredMultiPathLock,22,195,3,17,6,51,3,12,1,4
+Fedora Repository HTTP API Module,org.fcrepo.http.api,ExternalContentPathValidator,74,242,14,26,13,43,13,16,0,9
+Fedora Repository HTTP API Module,org.fcrepo.http.api,FedoraVersioning,35,440,2,36,6,90,4,27,2,10
+Fedora Repository HTTP API Module,org.fcrepo.http.api,FedoraAcl,117,380,14,26,22,82,13,15,0,8
+Fedora Repository HTTP API Module,org.fcrepo.http.api,DefaultPathLockManager,39,152,7,13,8,32,6,13,1,8
+Fedora Repository HTTP API Module,org.fcrepo.http.api,ExternalContentHandlerFactory,31,81,4,6,4,24,4,7,0,6
+Fedora Repository HTTP API Module,org.fcrepo.http.api,FedoraTombstones,6,31,0,0,3,8,1,4,1,4
+Fedora Repository HTTP API Module,org.fcrepo.http.api,FedoraNodes,50,184,7,13,11,38,9,9,2,6
+Fedora Repository HTTP API Module,org.fcrepo.http.api,DefaultPathLockManager.ActivePath,0,61,0,0,0,11,0,3,0,3
+Fedora Repository HTTP API Module,org.fcrepo.http.api,FedoraTransactions,22,172,5,7,4,33,4,10,0,8
+Fedora Repository HTTP API Module,org.fcrepo.http.api,DefaultPathLockManager.ActivePath.PathScopedLock,25,29,3,1,5,8,2,4,0,4
+Fedora Repository HTTP API Module,org.fcrepo.http.api,ExternalContentHandler,40,208,17,23,7,46,14,17,2,9
+Fedora Repository HTTP API Module,org.fcrepo.http.api,FedoraFixity,19,67,1,1,4,14,2,4,1,4
+Fedora Repository HTTP API Module,org.fcrepo.http.api.responses,StreamingBaseHtmlProvider,65,482,15,19,13,89,16,18,2,15
+Fedora Repository HTTP API Module,org.fcrepo.http.api.responses,StreamingHtmlProvider,0,3,0,0,0,1,0,1,0,1

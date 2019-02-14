@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>LdpPreferTag.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-commons</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.commons.domain.ldp</a> &gt; <span class="el_source">LdpPreferTag.java</span></div><h1>LdpPreferTag.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.http.commons.domain.ldp;
+
+import static java.util.Arrays.asList;
+import static java.util.Optional.ofNullable;
+import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
+import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
+import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.PREFER_SERVER_MANAGED;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.fcrepo.http.commons.domain.PreferTag;
+
+/**
+ * A subclass of {@link PreferTag} that contemplates the possible preferences for Linked Data Platform requests.
+ *
+ * @author ajs6f
+ */
+public class LdpPreferTag extends PreferTag {
+
+    private final boolean membership;
+
+    private final boolean containment;
+
+    private final boolean references;
+
+    private final boolean embed;
+
+    private final boolean managedProperties;
+
+    /**
+     * Standard constructor.
+     *
+     * @param preferTag the prefer tag
+     */
+    public LdpPreferTag(final PreferTag preferTag) {
+<span class="fc" id="L55">        super(preferTag);</span>
+
+<span class="fc" id="L57">        final Optional&lt;String&gt; include = ofNullable(preferTag.getParams().get(&quot;include&quot;));</span>
+<span class="fc" id="L58">        final Optional&lt;String&gt; omit = ofNullable(preferTag.getParams().get(&quot;omit&quot;));</span>
+<span class="fc" id="L59">        final Optional&lt;String&gt; received = ofNullable(preferTag.getParams().get(&quot;received&quot;));</span>
+
+<span class="fc" id="L61">        final List&lt;String&gt; includes = asList(include.orElse(&quot; &quot;).split(&quot; &quot;));</span>
+<span class="fc" id="L62">        final List&lt;String&gt; omits = asList(omit.orElse(&quot; &quot;).split(&quot; &quot;));</span>
+
+<span class="fc bfc" id="L64" title="All 4 branches covered.">        final boolean minimal = preferTag.getValue().equals(&quot;minimal&quot;) || received.orElse(&quot;&quot;).equals(&quot;minimal&quot;);</span>
+
+<span class="fc bfc" id="L66" title="All 4 branches covered.">        final boolean preferMinimalContainer = includes.contains(LDP_NAMESPACE + &quot;PreferMinimalContainer&quot;) || minimal;</span>
+
+<span class="fc bfc" id="L68" title="All 4 branches covered.">        membership = (!preferMinimalContainer &amp;&amp; !omits.contains(LDP_NAMESPACE + &quot;PreferMembership&quot;)) ||</span>
+<span class="fc bfc" id="L69" title="All 2 branches covered.">                includes.contains(LDP_NAMESPACE + &quot;PreferMembership&quot;);</span>
+
+<span class="fc bfc" id="L71" title="All 4 branches covered.">        containment = (!preferMinimalContainer &amp;&amp; !omits.contains(LDP_NAMESPACE + &quot;PreferContainment&quot;) &amp;&amp;</span>
+<span class="fc bfc" id="L72" title="All 2 branches covered.">                !omits.contains(PREFER_SERVER_MANAGED.toString()))</span>
+<span class="fc bfc" id="L73" title="All 2 branches covered.">                || includes.contains(LDP_NAMESPACE + &quot;PreferContainment&quot;);</span>
+
+<span class="fc" id="L75">        references = includes.contains(INBOUND_REFERENCES.toString());</span>
+
+<span class="fc" id="L77">        embed = includes.contains(EMBED_CONTAINED.toString());</span>
+
+<span class="pc bpc" id="L79" title="1 of 2 branches missed.">        managedProperties = includes.contains(PREFER_SERVER_MANAGED.toString())</span>
+<span class="fc bfc" id="L80" title="All 4 branches covered.">                || (!omits.contains(PREFER_SERVER_MANAGED.toString()) &amp;&amp; !minimal);</span>
+<span class="fc" id="L81">    }</span>
+
+    /**
+     * @return Whether this prefer tag demands membership triples.
+     */
+    public boolean prefersMembership() {
+<span class="fc" id="L87">        return membership;</span>
+    }
+
+    /**
+     * @return Whether this prefer tag demands containment triples.
+     */
+    public boolean prefersContainment() {
+<span class="fc" id="L94">        return containment;</span>
+    }
+
+    /**
+     * @return Whether this prefer tag demands references triples.
+     */
+    public boolean prefersReferences() {
+<span class="fc" id="L101">        return references;</span>
+    }
+    /**
+     * @return Whether this prefer tag demands embedded triples.
+     */
+    public boolean prefersEmbed() {
+<span class="fc" id="L107">        return embed;</span>
+    }
+    /**
+     * @return Whether this prefer tag demands server managed properties.
+     */
+    public boolean prefersServerManaged() {
+<span class="fc" id="L113">        return managedProperties;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
