@@ -1,0 +1,15 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+Fedora Repository Authorization Commons Module,org.fcrepo.auth.common,BypassSecurityServletAuthenticationProvider.AnonymousAdminSecurityContext,14,0,0,0,7,0,5,0,5,0
+Fedora Repository Authorization Commons Module,org.fcrepo.auth.common,ShiroSecurityContext,15,41,7,5,4,14,7,4,1,4
+Fedora Repository Authorization Commons Module,org.fcrepo.auth.common,AbstractPrincipalProvider,69,7,6,0,20,2,6,2,3,2
+Fedora Repository Authorization Commons Module,org.fcrepo.auth.common,HttpHeaderPrincipalProvider.HttpHeaderPrincipal,33,0,4,0,12,0,7,0,5,0
+Fedora Repository Authorization Commons Module,org.fcrepo.auth.common,ContainerRolesPrincipalProvider.ContainerRolesPrincipal,33,0,4,0,11,0,7,0,5,0
+Fedora Repository Authorization Commons Module,org.fcrepo.auth.common,ContainerAuthToken,18,36,1,1,3,10,1,5,0,5
+Fedora Repository Authorization Commons Module,org.fcrepo.auth.common,DelegateHeaderPrincipalProvider.DelegatedHeaderPrincipal,33,0,4,0,12,0,7,0,5,0
+Fedora Repository Authorization Commons Module,org.fcrepo.auth.common,ServletContainerAuthenticatingRealm,5,40,1,1,1,11,1,5,0,5
+Fedora Repository Authorization Commons Module,org.fcrepo.auth.common,BypassSecurityServletAuthenticationProvider,15,0,2,0,5,0,3,0,2,0
+Fedora Repository Authorization Commons Module,org.fcrepo.auth.common,ServletContainerAuthFilter,17,82,2,4,6,18,4,4,2,3
+Fedora Repository Authorization Commons Module,org.fcrepo.auth.common,DelegateHeaderPrincipalProvider,36,9,4,0,7,4,4,1,2,1
+Fedora Repository Authorization Commons Module,org.fcrepo.auth.common,ShiroAuthenticationProvider,2,12,1,1,1,3,1,2,0,2
+Fedora Repository Authorization Commons Module,org.fcrepo.auth.common,HttpHeaderPrincipalProvider,88,18,10,0,19,7,7,4,2,4
+Fedora Repository Authorization Commons Module,org.fcrepo.auth.common,ContainerRolesPrincipalProvider,65,0,8,0,20,0,8,0,4,0
