@@ -1371,6 +1371,9 @@ public class WebACRecipesIT extends AbstractResourceIT {
                 "   acl:default <" + writeableResource + "> .";
         ingestAclString(writeableUri, writeableAcl, "fedoraAdmin");
 
+        // Ensure we can still POST/PUT to writeable resource.
+        testCanWrite(writeableResource, username);
+
         // Try to create indirect container referencing readonly resource with POST.
         final HttpPost userPost = postObjMethod(writeableResource);
         setAuth(userPost, username);
@@ -1487,6 +1490,9 @@ public class WebACRecipesIT extends AbstractResourceIT {
         setAuth(deleteIndirect, username);
         assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(deleteIndirect));
 
+        // Ensure we can still write to the writeable resource.
+        testCanWrite(writeableResource, username);
+
     }
 
     @Test
@@ -1526,6 +1532,9 @@ public class WebACRecipesIT extends AbstractResourceIT {
                 "   acl:accessTo <" + writeableResource + "> ;\n" +
                 "   acl:default <" + writeableResource + "> .";
         ingestAclString(writeableUri, writeableAcl, "fedoraAdmin");
+
+        // Ensure we can write to the writeable resource.
+        testCanWrite(writeableResource, username);
 
         // Try to create indirect container referencing readonly resource with POST.
         final HttpPost userPost = postObjMethod(writeableResource);
@@ -1600,6 +1609,10 @@ public class WebACRecipesIT extends AbstractResourceIT {
         setAuth(patchIndirect3, username);
         patchIndirect3.setEntity(new StringEntity(patch_insert_relation, sparqlContentType));
         assertEquals(HttpStatus.SC_NO_CONTENT, getStatus(patchIndirect3));
+
+        // Ensure we can still write to the writeable resource.
+        testCanWrite(writeableResource, username);
+
     }
 
     @Test
@@ -1639,6 +1652,9 @@ public class WebACRecipesIT extends AbstractResourceIT {
                 "   acl:accessTo <" + writeableResource + "> ;\n" +
                 "   acl:default <" + writeableResource + "> .";
         ingestAclString(writeableUri, writeableAcl, "fedoraAdmin");
+
+        // Ensure we can write to writeable resource.
+        testCanWrite(writeableResource, username);
 
         // Try to create direct container referencing readonly resource with POST.
         final HttpPost userPost = postObjMethod(writeableResource);
@@ -1748,6 +1764,10 @@ public class WebACRecipesIT extends AbstractResourceIT {
         final HttpDelete deleteIndirect = new HttpDelete(directUri);
         setAuth(deleteIndirect, username);
         assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(deleteIndirect));
+
+        // Ensure we can still write to the writeable resource.
+        testCanWrite(writeableResource, username);
+
     }
 
     @Test
@@ -1787,6 +1807,9 @@ public class WebACRecipesIT extends AbstractResourceIT {
                 "   acl:accessTo <" + writeableResource + "> ;\n" +
                 "   acl:default <" + writeableResource + "> .";
         ingestAclString(writeableUri, writeableAcl, "fedoraAdmin");
+
+        // Ensure we can write to the writeable resource.
+        testCanWrite(writeableResource, username);
 
         // Try to create direct container referencing readonly resource with POST.
         final HttpPost userPost = postObjMethod(writeableResource);
@@ -1859,6 +1882,9 @@ public class WebACRecipesIT extends AbstractResourceIT {
         setAuth(patchDirect3, username);
         patchDirect3.setEntity(new StringEntity(patch_insert_relation, sparqlContentType));
         assertEquals(HttpStatus.SC_NO_CONTENT, getStatus(patchDirect3));
+
+        // Ensure we can write to the writeable resource.
+        testCanWrite(writeableResource, username);
     }
 
     /**
@@ -1878,5 +1904,24 @@ public class WebACRecipesIT extends AbstractResourceIT {
         putReq.setHeader("Content-type", "text/turtle");
         putReq.setEntity(new StringEntity(acl, turtleContentType));
         return execute(putReq);
+    }
+
+    /**
+     * Ensure that a writeable resource is still writeable
+     *
+     * @param writeableResource the URI of the writeable resource.
+     * @param username the user will write access.
+     */
+    private void testCanWrite(final String writeableResource, final String username) {
+        // Try to create a basic container inside the writeable resource with POST.
+        final HttpPost okPost = postObjMethod(writeableResource);
+        setAuth(okPost, username);
+        assertEquals(HttpStatus.SC_CREATED, getStatus(okPost));
+
+        // Try to create a basic container inside the writeable resource with PUT.
+        final String temp_resource = getRandomUniqueId();
+        final HttpPut okPut = putObjMethod(writeableResource + "/" + temp_resource);
+        setAuth(okPut, username);
+        assertEquals(HttpStatus.SC_CREATED, getStatus(okPut));
     }
 }
