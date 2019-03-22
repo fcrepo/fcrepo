@@ -34,6 +34,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Optional;
 import javax.ws.rs.core.Link;
@@ -1503,12 +1504,12 @@ public class WebACRecipesIT extends AbstractResourceIT {
 
         final String targetUri = ingestObj(targetResource);
 
-        final String readonlyString = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
+        final String readwriteString = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
                 "<#readauthz> a acl:Authorization ;\n" +
                 "   acl:agent \"" + username + "\" ;\n" +
                 "   acl:mode acl:Read, acl:Write ;\n" +
                 "   acl:accessTo <" + targetResource + "> .";
-        ingestAclString(targetUri, readonlyString, "fedoraAdmin");
+        ingestAclString(targetUri, readwriteString, "fedoraAdmin");
 
         // User can read target resource.
         final HttpGet get1 = getObjMethod(targetResource);
@@ -1536,7 +1537,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
         // Ensure we can write to the writeable resource.
         testCanWrite(writeableResource, username);
 
-        // Try to create indirect container referencing readonly resource with POST.
+        // Try to create indirect container referencing writeable resource with POST.
         final HttpPost userPost = postObjMethod(writeableResource);
         setAuth(userPost, username);
         userPost.addHeader("Link", "<" + INDIRECT_CONTAINER.toString() + ">; rel=type");
@@ -1550,7 +1551,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
         userPost.setHeader("Content-type", "text/turtle");
         assertEquals(HttpStatus.SC_CREATED, getStatus(userPost));
 
-        // Try to create indirect container referencing readonly resource with PUT.
+        // Try to create indirect container referencing writeable resource with PUT.
         final String indirectString = getRandomUniqueId();
         final HttpPut userPut = putObjMethod(writeableResource + "/" + indirectString);
         setAuth(userPut, username);
@@ -1585,7 +1586,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
             indirectUri = getLocation(resp);
         }
 
-        // Then PATCH to the readonly resource.
+        // Then PATCH to the writeable resource.
         final HttpPatch patchIndirect = new HttpPatch(indirectUri);
         setAuth(patchIndirect, username);
         final String patch_text = "prefix ldp: <http://www.w3.org/ns/ldp#> \n" +
@@ -1778,12 +1779,12 @@ public class WebACRecipesIT extends AbstractResourceIT {
 
         final String targetUri = ingestObj(targetResource);
 
-        final String readonlyString = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
+        final String readwriteString = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
                 "<#readauthz> a acl:Authorization ;\n" +
                 "   acl:agent \"" + username + "\" ;\n" +
                 "   acl:mode acl:Read, acl:Write ;\n" +
                 "   acl:accessTo <" + targetResource + "> .";
-        ingestAclString(targetUri, readonlyString, "fedoraAdmin");
+        ingestAclString(targetUri, readwriteString, "fedoraAdmin");
 
         // User can read target resource.
         final HttpGet get1 = getObjMethod(targetResource);
@@ -1811,7 +1812,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
         // Ensure we can write to the writeable resource.
         testCanWrite(writeableResource, username);
 
-        // Try to create direct container referencing readonly resource with POST.
+        // Try to create direct container referencing writeable resource with POST.
         final HttpPost userPost = postObjMethod(writeableResource);
         setAuth(userPost, username);
         userPost.addHeader("Link", "<" + DIRECT_CONTAINER.toString() + ">; rel=type");
@@ -1824,7 +1825,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
         userPost.setHeader("Content-type", "text/turtle");
         assertEquals(HttpStatus.SC_CREATED, getStatus(userPost));
 
-        // Try to create direct container referencing readonly resource with PUT.
+        // Try to create direct container referencing writeable resource with PUT.
         final String directString = getRandomUniqueId();
         final HttpPut userPut = putObjMethod(writeableResource + "/" + directString);
         setAuth(userPut, username);
@@ -1911,17 +1912,23 @@ public class WebACRecipesIT extends AbstractResourceIT {
      *
      * @param writeableResource the URI of the writeable resource.
      * @param username the user will write access.
+     * @throws UnsupportedEncodingException if default charset for String Entity is unsupported
      */
-    private void testCanWrite(final String writeableResource, final String username) {
+    private void testCanWrite(final String writeableResource, final String username)
+            throws UnsupportedEncodingException {
         // Try to create a basic container inside the writeable resource with POST.
         final HttpPost okPost = postObjMethod(writeableResource);
         setAuth(okPost, username);
         assertEquals(HttpStatus.SC_CREATED, getStatus(okPost));
 
-        // Try to create a basic container inside the writeable resource with PUT.
-        final String temp_resource = getRandomUniqueId();
-        final HttpPut okPut = putObjMethod(writeableResource + "/" + temp_resource);
-        setAuth(okPut, username);
-        assertEquals(HttpStatus.SC_CREATED, getStatus(okPut));
+        // Try to PATCH the writeableResource
+        final HttpPatch okPatch = patchObjMethod(writeableResource);
+        final String patchString = "PREFIX dc: <http://purl.org/dc/elements/1.1/> DELETE { <> dc:title ?o1 } " +
+                "INSERT { <> dc:title \"Changed title\" }  WHERE { <> dc:title ?o1 }";
+        final HttpEntity patchEntity = new StringEntity(patchString, sparqlContentType);
+        setAuth(okPatch, username);
+        okPatch.setHeader("Content-type", "application/sparql-update");
+        okPatch.setEntity(patchEntity);
+        assertEquals(HttpStatus.SC_NO_CONTENT, getStatus(okPatch));
     }
 }
