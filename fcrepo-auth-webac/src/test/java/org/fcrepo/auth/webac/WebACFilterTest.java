@@ -17,6 +17,7 @@
  */
 package org.fcrepo.auth.webac;
 
+import static java.util.stream.Stream.of;
 import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
 import static javax.servlet.http.HttpServletResponse.SC_OK;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
@@ -27,11 +28,17 @@ import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_CONTROL;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
+import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.servlet.ServletException;
 
@@ -90,10 +97,14 @@ public class WebACFilterTest {
 
     private FedoraResource mockContainer;
 
+    private FedoraResource mockChildContainer;
+
     private FedoraResource mockBinary;
 
+    private FedoraResource mockRoot;
+
     @InjectMocks
-    private WebACFilter webacFilter = new WebACFilter();
+    private final WebACFilter webacFilter = new WebACFilter();
 
     private static final WebACPermission readPermission = new WebACPermission(WEBAC_MODE_READ, testURI);
 
@@ -139,16 +150,36 @@ public class WebACFilterTest {
         request.setRequestURI(testPath);
 
         mockContainer = Mockito.mock(ContainerImpl.class);
+        mockChildContainer = Mockito.mock(ContainerImpl.class);
         mockBinary = Mockito.mock(FedoraBinaryImpl.class);
+        mockRoot = Mockito.mock(ContainerImpl.class);
 
         when(mockSessionFactory.getInternalSession()).thenReturn(mockFedoraSession);
 
         when(mockNodeService.exists(mockFedoraSession, testPath)).thenReturn(true);
         when(mockNodeService.exists(mockFedoraSession, testChildPath)).thenReturn(false);
+        when(mockNodeService.exists(mockFedoraSession, "/")).thenReturn(true);
+
+        when(mockNodeService.find(mockFedoraSession, "/")).thenReturn(mockRoot);
+        when(mockContainer.getContainer()).thenReturn(mockRoot);
+        when(mockChildContainer.getContainer()).thenReturn(mockContainer);
+
+        when(mockContainer.getTypes()).thenReturn(Arrays.asList(URI.create(BASIC_CONTAINER.toString())));
+        when(mockChildContainer.getTypes()).thenReturn(Arrays.asList(URI.create(BASIC_CONTAINER.toString())));
+        when(mockBinary.getTypes()).thenReturn(Arrays.asList(URI.create(NON_RDF_SOURCE.toString())));
+
+        final List<URI> rootTypes = new ArrayList<>();
+        of("RepositoryRoot", "Resource", "Container").forEach(x -> rootTypes.add(URI.create(REPOSITORY_NAMESPACE +
+                x)));
+        when(mockRoot.getTypes()).thenReturn(rootTypes);
+
+        // Setup Container by default
+        setupContainerResource();
     }
 
     private void setupContainerResource() {
         when(mockNodeService.find(mockFedoraSession, testPath)).thenReturn(mockContainer);
+        when(mockNodeService.find(mockFedoraSession, testChildPath)).thenReturn(mockChildContainer);
         when(mockBinary.hasType(FEDORA_BINARY)).thenReturn(false);
     }
 
@@ -351,7 +382,6 @@ public class WebACFilterTest {
     @Test
     public void testAuthUserNoPermsPost() throws ServletException, IOException {
         setupAuthUserNoPerms();
-        setupContainerResource();
         // POST => 403
         request.setMethod("POST");
         webacFilter.doFilter(request, response, filterChain);
@@ -415,7 +445,6 @@ public class WebACFilterTest {
     @Test
     public void testAuthUserReadOnlyPost() throws ServletException, IOException {
         setupAuthUserReadOnly();
-        setupContainerResource();
         // POST => 403
         request.setMethod("POST");
         webacFilter.doFilter(request, response, filterChain);
@@ -427,6 +456,7 @@ public class WebACFilterTest {
         setupAuthUserReadOnly();
         // PUT => 403
         request.setMethod("PUT");
+        request.setRequestURI(testPath);
         webacFilter.doFilter(request, response, filterChain);
         assertEquals(SC_FORBIDDEN, response.getStatus());
     }
@@ -513,7 +543,6 @@ public class WebACFilterTest {
     @Test
     public void testAuthUserAppendPostContainer() throws IOException, ServletException {
         setupAuthUserAppendOnly();
-        setupContainerResource();
         // POST => 200
         request.setRequestURI(testPath);
         request.setMethod("POST");
@@ -545,7 +574,6 @@ public class WebACFilterTest {
     @Test
     public void testAuthUserReadAppendPostContainer() throws IOException, ServletException {
         setupAuthUserReadAppend();
-        setupContainerResource();
         // POST => 200
         request.setRequestURI(testPath);
         request.setMethod("POST");
@@ -577,7 +605,6 @@ public class WebACFilterTest {
     @Test
     public void testAuthUserReadAppendWritePostContainer() throws IOException, ServletException {
         setupAuthUserReadAppendWrite();
-        setupContainerResource();
         // POST => 200
         request.setRequestURI(testPath);
         request.setMethod("POST");
@@ -637,6 +664,7 @@ public class WebACFilterTest {
         setupAuthUserReadWrite();
         // PUT => 200
         request.setMethod("PUT");
+        request.setRequestURI(testPath);
         webacFilter.doFilter(request, response, filterChain);
         assertEquals(SC_OK, response.getStatus());
     }
@@ -769,8 +797,6 @@ public class WebACFilterTest {
         webacFilter.doFilter(request, response, filterChain);
         assertEquals(SC_FORBIDDEN, response.getStatus());
     }
-
-
 
     @After
     public void clearSubject() {
