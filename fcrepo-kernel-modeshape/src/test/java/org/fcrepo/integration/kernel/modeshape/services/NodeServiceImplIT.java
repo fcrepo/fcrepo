@@ -17,10 +17,11 @@
  */
 package org.fcrepo.integration.kernel.modeshape.services;
 
+import static org.junit.Assert.assertEquals;
+
 import org.fcrepo.integration.kernel.modeshape.AbstractIT;
 import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.FedoraSession;
-import org.fcrepo.kernel.api.exception.FedoraInvalidNamespaceException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.services.NodeService;
 
@@ -42,12 +43,12 @@ public class NodeServiceImplIT extends AbstractIT {
     @Inject
     private NodeService nodeService;
 
-    @Test(expected = FedoraInvalidNamespaceException.class)
-    public void testExistsWithBadNamespace() {
+    @Test
+    public void testExistsWithNewNamespace() {
         final FedoraSession session = repository.login();
         final String path = "/bad_ns: " + getRandomPid();
 
-        nodeService.exists(session, path);
+        assertEquals(false, nodeService.exists(session, path));
     }
 
     @Test (expected = RepositoryRuntimeException.class)

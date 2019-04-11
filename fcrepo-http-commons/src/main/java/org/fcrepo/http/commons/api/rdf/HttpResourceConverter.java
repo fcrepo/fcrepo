@@ -30,6 +30,8 @@ import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_DESCRIPTION;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
+import static org.fcrepo.kernel.modeshape.services.AbstractService.encodePath;
+import static org.fcrepo.kernel.modeshape.services.AbstractService.decodePath;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getClosestExistingAncestor;
 import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.validatePath;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -127,9 +129,10 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
         final Map<String, String> values = new HashMap<>();
         final String path = asString(resource, values);
         final Session jcrSession = getJcrSession(session);
+        final String encodedPath = encodePath(path, session);
         try {
             if (path != null) {
-                final Node node = getNode(path);
+                final Node node = getNode(encodedPath);
 
                 final boolean metadata = values.containsKey("path")
                         && values.get("path").contains("/" + FCR_METADATA);
@@ -144,7 +147,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
             throw new IdentifierConversionException("Asked to translate a resource " + resource
                     + " that doesn't match the URI template");
         } catch (final RepositoryException e) {
-            validatePath(jcrSession, path);
+            validatePath(jcrSession, encodedPath);
 
             if ( e instanceof PathNotFoundException ) {
                 try {
@@ -185,16 +188,18 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
             realPath = path;
         }
 
+        final String decodedPath = decodePath(realPath, session);
+
         final UriBuilder uri = uriBuilder();
 
-        if (realPath.contains("#")) {
+        if (decodedPath.contains("#")) {
 
-            final String[] split = realPath.split("#", 2);
+            final String[] split = decodedPath.split("#", 2);
 
             uri.resolveTemplate("path", split[0], false);
             uri.fragment(split[1]);
         } else {
-            uri.resolveTemplate("path", realPath, false);
+            uri.resolveTemplate("path", decodedPath, false);
 
         }
         return createResource(uri.build().toString());

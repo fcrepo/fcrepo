@@ -40,6 +40,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
 import javax.jcr.Property;
 import javax.jcr.RepositoryException;
@@ -77,6 +78,9 @@ public class HttpResourceConverterTest {
     @Mock
     private Property mockOriginal;
 
+    @Mock
+    private NamespaceRegistry mockRegistry;
+
     private FedoraSession testSession, testTxSession;
 
     private HttpSession testHttpSession, testHttpBatchSession;
@@ -95,6 +99,8 @@ public class HttpResourceConverterTest {
 
     @Mock
     private VersionManager mockVersionManager;
+
+    private final String[] prefixes = { "fedora", "fcr", "test" };
 
     @Before
     public void setUp() throws RepositoryException {
@@ -120,6 +126,13 @@ public class HttpResourceConverterTest {
         when(timeMapNode.getProperty(MEMENTO_ORIGINAL)).thenReturn(mockOriginal);
         when(timeMapNode.isNodeType(FEDORA_TIME_MAP)).thenReturn(true);
         when(webacAclNode.isNodeType(FEDORA_WEBAC_ACL)).thenReturn(true);
+
+        when(session.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockRegistry);
+        when(mockRegistry.getPrefixes()).thenReturn(prefixes);
+        when(mockRegistry.getURI("fedora")).thenReturn("info/fedora#");
+        when(mockRegistry.getURI("fcr")).thenReturn("info/fcr#");
+        when(mockRegistry.getURI("test")).thenReturn("info/test#");
     }
 
     @Test
@@ -466,4 +479,24 @@ public class HttpResourceConverterTest {
             createResource("http://localhost:8080/some/" + path + "/fcr:acl#hash_resource");
         assertEquals(expectedResource, converted);
     }
+
+    @Test
+    public void testWithForwardUnregisteredPrefix() throws Exception {
+        final Resource resource = createResource("http://localhost:8080/some/new_ns:uuid");
+        when(session.getNode("/new_ns%3Auuid")).thenReturn(node);
+
+        final FedoraResource converted = converter.convert(resource);
+        assertEquals(node, getJcrNode(converted));
+    }
+
+    @Test
+    public void testWithReverseUnregisteredPrefix() throws Exception {
+        when(node.getPath()).thenReturn("/new_ns%3Auuid");
+        final Resource resource = createResource("http://localhost:8080/some/new_ns:uuid");
+        final FedoraResource fedoraRes = new ContainerImpl(node);
+
+        final Resource converted = converter.reverse().convert(fedoraRes);
+        assertEquals(resource, converted);
+    }
+
 }

@@ -55,9 +55,10 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
     @Override
     public boolean exists(final FedoraSession session, final String path) {
         final Session jcrSession = getJcrSession(session);
+        final String encodedPath = encodePath(path, session);
         try {
-            validatePath(jcrSession, path);
-            return jcrSession.nodeExists(path);
+            validatePath(jcrSession, encodedPath);
+            return jcrSession.nodeExists(encodedPath);
         } catch (final IllegalArgumentException e) {
             throw new InvalidResourceIdentifierException("Illegal path: " + path);
         } catch (final RepositoryException e) {
@@ -76,7 +77,7 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
     public FedoraResource find(final FedoraSession session, final String path) {
         final Session jcrSession = getJcrSession(session);
         try {
-            return new FedoraResourceImpl(jcrSession.getNode(path));
+            return new FedoraResourceImpl(jcrSession.getNode(encodePath(path, session)));
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -93,8 +94,8 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
     public void copyObject(final FedoraSession session, final String source, final String destination) {
         final Session jcrSession = getJcrSession(session);
         try {
-            jcrSession.getWorkspace().copy(source, destination);
-            touchLdpMembershipResource(getJcrNode(find(session, destination)));
+            jcrSession.getWorkspace().copy(encodePath(source, session), encodePath(destination, session));
+            touchLdpMembershipResource(getJcrNode(find(session, encodePath(destination, session))));
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
@@ -111,19 +112,19 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
     public void moveObject(final FedoraSession session, final String source, final String destination) {
         final Session jcrSession = getJcrSession(session);
         try {
-            final FedoraResource srcResource = find(session, source);
+            final FedoraResource srcResource = find(session, encodePath(source, session));
             final Node sourceNode = getJcrNode(srcResource);
             final String name = sourceNode.getName();
             final Node parent = sourceNode.getDepth() > 0 ? sourceNode.getParent() : null;
 
-            jcrSession.getWorkspace().move(source, destination);
+            jcrSession.getWorkspace().move(source, encodePath(destination, session));
 
             if (parent != null) {
-                createTombstone(parent, name);
+                createTombstone(parent, encodePath(name, session));
             }
 
-            touchLdpMembershipResource(getJcrNode(find(session, source)));
-            touchLdpMembershipResource(getJcrNode(find(session, destination)));
+            touchLdpMembershipResource(getJcrNode(find(session, encodePath(source, session))));
+            touchLdpMembershipResource(getJcrNode(find(session, encodePath(destination, session))));
 
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
@@ -132,7 +133,7 @@ public class NodeServiceImpl extends AbstractService implements NodeService {
 
     private static void createTombstone(final Node parent, final String path) throws RepositoryException {
         final FedoraResourceImpl fedoraResource = new FedoraResourceImpl(parent);
-        final Node n  = fedoraResource.findOrCreateChild(parent, path, FEDORA_TOMBSTONE);
+        final Node n = fedoraResource.findOrCreateChild(parent, path, FEDORA_TOMBSTONE);
         LOGGER.info("Created tombstone at {} ", n.getPath());
     }
 
