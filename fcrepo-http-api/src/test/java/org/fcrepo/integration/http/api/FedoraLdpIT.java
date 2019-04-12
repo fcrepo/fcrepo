@@ -4290,4 +4290,51 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final Resource resc2 = model2.getResource(binURI);
         assertFalse(resc2.hasProperty(RDF.type, PCDM_FILE_TYPE));
     }
+
+    /**
+     * Utility to assert a GET of id and id/fcr:versions
+     * 
+     * @param id the path
+     * @throws Exception
+     */
+    private void doGetIdAndVersions(final String id) throws Exception {
+        final HttpGet getMethod = getObjMethod(id);
+        try (final CloseableHttpResponse response = execute(getMethod)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+        }
+
+        final HttpGet getVersion = getObjMethod(id + "/" + FCR_VERSIONS);
+        try (final CloseableHttpResponse response = execute(getVersion)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+        }
+    }
+
+    @Test
+    public void testPutGetRdfSourceWithUndefinedPrefix() throws Exception {
+        final String id = "some_prefix:" + getRandomUniqueId();
+        final HttpPut putMethod = putObjMethod(id);
+        try (final CloseableHttpResponse response = execute(putMethod)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+        }
+
+        doGetIdAndVersions(id);
+    }
+
+    @Test
+    public void testPutGetNonRdfSourceWithUndefinedPrefix() throws Exception {
+        final String id = "some_prefix:" + getRandomUniqueId();
+        final String dsid = "anotherPrefix:" + getRandomUniqueId();
+
+        try (final CloseableHttpResponse response = execute(putDSMethod(id, dsid, "some test content"))) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+        }
+
+        // Check id/dsid
+        doGetIdAndVersions(id + "/" + dsid);
+
+        // Check id/dsid/fcr:metadata
+        doGetIdAndVersions(id + "/" + dsid + "/" + FCR_METADATA);
+
+    }
+
 }

@@ -17,43 +17,52 @@
  */
 package org.fcrepo.integration.kernel.modeshape.services;
 
-import static org.junit.Assert.assertEquals;
+import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
+
+import javax.inject.Inject;
+import javax.jcr.Session;
 
 import org.fcrepo.integration.kernel.modeshape.AbstractIT;
 import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.FedoraSession;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.services.NodeService;
+import org.fcrepo.kernel.api.services.ContainerService;
 
 import org.junit.Test;
 import org.springframework.test.context.ContextConfiguration;
 
-import javax.inject.Inject;
+import static org.junit.Assert.assertEquals;
 
 /**
- * @author cabeer
+ * @author whikloj
  */
-
-@ContextConfiguration({"/spring-test/fcrepo-config.xml"})
-public class NodeServiceImplIT extends AbstractIT {
+@ContextConfiguration({ "/spring-test/fcrepo-config.xml" })
+public class ContainerServiceImplIT extends AbstractIT {
 
     @Inject
     private FedoraRepository repository;
 
     @Inject
-    private NodeService nodeService;
+    private ContainerService containerService;
 
     @Test
-    public void testNotExistsWithNewNamespace() {
-        final FedoraSession session = repository.login();
-        final String path = "/bad_ns: " + getRandomPid();
+    public void testCreateUndefinedPrefix() throws Exception {
+        FedoraSession session = repository.login();
+        final String id = getRandomPid();
+        final String path = "/new_ns:" + id;
+        final String encodedPath = "new_ns%3A" + id;
 
-        assertEquals(false, nodeService.exists(session, path));
-    }
+        assertEquals(false, containerService.exists(session, path));
 
-    @Test (expected = RepositoryRuntimeException.class)
-    public void testGetRootNodeException() {
-        final FedoraSession session = repository.login();
-        nodeService.find(session, "\\/");
+        containerService.findOrCreate(session, path);
+
+        session.commit();
+        session.expire();
+
+        session = repository.login();
+        final Session jcrSession = getJcrSession(session);
+
+        assertEquals(true, containerService.exists(session, path));
+        assertEquals(true, jcrSession.getRootNode().hasNode(encodedPath));
+        session.expire();
     }
 }

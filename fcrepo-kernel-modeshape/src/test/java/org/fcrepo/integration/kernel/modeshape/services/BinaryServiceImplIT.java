@@ -170,4 +170,30 @@ public class BinaryServiceImplIT extends AbstractIT {
         session.expire();
     }
 
+    @Test
+    public void testCreateDatastreamNodeWithUndefinedPrefix() throws Exception {
+        FedoraSession session = repository.login();
+        final String id = getRandomPid();
+        final String pathUri = "/new_ns:" + id;
+        final String encodedPath = "new_ns%3A" + id;
+        final String encodedUri = "/" + encodedPath;
+
+        binaryService.findOrCreate(session, pathUri).setContent(
+            new ByteArrayInputStream("asdf".getBytes()),
+            "application/octet-stream",
+            null,
+            null,
+            null);
+
+        session.commit();
+        session.expire();
+
+        session = repository.login();
+        final Session jcrSession = getJcrSession(session);
+
+        assertTrue(jcrSession.getRootNode().hasNode(encodedPath));
+        assertEquals("asdf", jcrSession.getNode(encodedUri)
+            .getProperty(JCR_DATA).getString());
+        session.expire();
+    }
 }
