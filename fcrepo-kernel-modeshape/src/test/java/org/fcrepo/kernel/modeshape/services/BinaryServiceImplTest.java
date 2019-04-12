@@ -28,9 +28,11 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import javax.jcr.NamespaceRegistry;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
+import javax.jcr.Workspace;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
@@ -68,6 +70,14 @@ public class BinaryServiceImplTest {
     @Mock
     private Node mockRoot;
 
+    @Mock
+    private NamespaceRegistry mockRegistry;
+
+    @Mock
+    private Workspace mockWorkspace;
+
+    private final String[] prefixes = { "fedora", "fcr", "test" };
+
     @Before
     public void setUp() throws RepositoryException {
         testObj = new BinaryServiceImpl();
@@ -78,6 +88,13 @@ public class BinaryServiceImplTest {
         when(mockDsNode.canAddMixin(anyString())).thenReturn(true);
         when(mockDescNode.canAddMixin(anyString())).thenReturn(true);
         when(mockRoot.isNew()).thenReturn(false);
+
+        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockRegistry);
+        when(mockRegistry.getPrefixes()).thenReturn(prefixes);
+        when(mockRegistry.getURI("fedora")).thenReturn("info/fedora#");
+        when(mockRegistry.getURI("fcr")).thenReturn("info/fcr#");
+        when(mockRegistry.getURI("test")).thenReturn("info/test#");
     }
 
     @Test
