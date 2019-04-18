@@ -19,12 +19,15 @@ package org.fcrepo.kernel.modeshape.services;
 
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 
+import static org.fcrepo.kernel.modeshape.services.AbstractService.registeredPrefixes;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
@@ -80,6 +83,8 @@ public class ContainerServiceImplTest implements FedoraTypes {
         when(mockRoot.getNode(testPath.substring(1))).thenReturn(mockNode);
         when(mockNode.getParent()).thenReturn(mockRoot);
         when(mockRoot.isNew()).thenReturn(false);
+        // Needed due to static nature and previous tests.
+        registeredPrefixes = new HashSet<>(Arrays.asList("a_valid_namespace"));
     }
 
     @Test
