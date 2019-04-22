@@ -174,6 +174,8 @@ public class RepositoryServiceImplTest implements FedoraTypes {
             expectedNS
                     .put(MOCKPREFIX, mockNamespaceRegistry.getURI(MOCKPREFIX));
 
+            AbstractService.registeredPrefixes = null;
+
         } catch (final RepositoryException e) {
             e.printStackTrace();
             fail(e.getMessage());

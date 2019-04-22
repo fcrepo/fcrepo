@@ -37,6 +37,7 @@ import javax.jcr.Workspace;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_NON_RDF_SOURCE_DESCRIPTION;
+import static org.fcrepo.kernel.modeshape.services.AbstractService.registeredPrefixes;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
@@ -95,6 +96,8 @@ public class BinaryServiceImplTest {
         when(mockRegistry.getURI("fedora")).thenReturn("info/fedora#");
         when(mockRegistry.getURI("fcr")).thenReturn("info/fcr#");
         when(mockRegistry.getURI("test")).thenReturn("info/test#");
+        // Needed due to static nature and previous tests.
+        registeredPrefixes = null;
     }
 
     @Test

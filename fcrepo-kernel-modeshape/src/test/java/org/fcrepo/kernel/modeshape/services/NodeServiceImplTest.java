@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.modeshape.services;
 
+import static org.fcrepo.kernel.modeshape.services.AbstractService.registeredPrefixes;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -100,7 +101,8 @@ public class NodeServiceImplTest {
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNameReg);
         when(mockNameReg.getPrefixes()).thenReturn(mockPrefixes);
         when(mockNameReg.getURI(MOCK_PREFIX)).thenReturn(MOCK_URI);
-
+        // Needed due to static nature and previous tests.
+        registeredPrefixes = null;
     }
 
     @Test
