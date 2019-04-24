@@ -765,7 +765,13 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
 
         if (!etag.getValue().isEmpty()) {
-            servletResponse.addHeader("ETag", etag.toString());
+            final String etagStrVal = etag.toString();
+            servletResponse.addHeader("ETag", etagStrVal);
+
+            //State Tokens, while not used for caching per se,  nevertheless belong
+            //here since we can conveniently reuse the value of the etag for
+            //our state token
+            servletResponse.addHeader("X-State-Token", etagStrVal);
         }
 
         if (date != null) {
