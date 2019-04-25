@@ -35,7 +35,7 @@ import org.junit.Test;
  */
 public class StateTokensIT extends AbstractResourceIT {
 
-    public static final String X_STATE_TOKEN_HEADER = "X-State-Token";
+    private static final String X_STATE_TOKEN_HEADER = "X-State-Token";
 
     @Test
     public void testGetHasStateTokenRDFSource() throws IOException {
