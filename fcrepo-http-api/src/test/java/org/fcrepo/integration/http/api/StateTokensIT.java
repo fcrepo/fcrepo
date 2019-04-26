@@ -33,15 +33,11 @@ import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author dbernstein
  */
 public class StateTokensIT extends AbstractResourceIT {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(StateTokensIT.class);
 
     private static final String X_STATE_TOKEN_HEADER = "X-State-Token";
     public static final String X_IF_STATE_TOKEN_HEADER = "X-If-State-Token";
@@ -203,8 +199,6 @@ public class StateTokensIT extends AbstractResourceIT {
             assertEquals(OK.getStatusCode(), getStatus(response));
             stateToken = response.getFirstHeader(X_STATE_TOKEN_HEADER).getValue();
         }
-
-        LOGGER.debug("stateToken={}", stateToken);
 
         //perform patch with an invalid X-If-State-Token
         final HttpPatch invalidPatch = patchObjMethod(id);
