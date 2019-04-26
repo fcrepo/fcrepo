@@ -244,6 +244,12 @@ public interface FedoraResource {
     String getEtagValue();
 
     /**
+     * Construct a State Token value for the resource.
+     *
+     * @return constructed etag value
+     */
+    String getStateToken();
+    /**
      * Check if a resource is an original resource
      * (ie versionable, as opposed to non-versionable resources
      * like mementos, timemaps, and acls).
