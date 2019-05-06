@@ -20,6 +20,7 @@ package org.fcrepo.auth.integration;
 import org.apache.http.auth.BasicUserPrincipal;
 
 import org.fcrepo.auth.common.FedoraAuthorizationDelegate;
+import org.fcrepo.auth.common.HttpHeaderPrincipalProvider.HttpHeaderPrincipal;
 import org.fcrepo.auth.common.ServletContainerAuthenticationProvider;
 import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.FedoraSession;
@@ -42,7 +43,14 @@ import javax.jcr.Session;
 import javax.jcr.security.Privilege;
 import javax.servlet.http.HttpServletRequest;
 
+import java.util.HashMap;
+import java.util.Set;
+
+import static org.fcrepo.auth.common.FedoraAuthorizationDelegate.FEDORA_ALL_PRINCIPALS;
+import static org.fcrepo.auth.common.ServletContainerAuthenticationProvider.FEDORA_USER_ROLE;
 import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
@@ -66,8 +74,6 @@ public class HttpHeaderPrincipalProviderIT {
     @Inject
     private FedoraAuthorizationDelegate fad;
 
-    private final HttpServletRequest request = mock(HttpServletRequest.class);
-
     @Test
     public void testFactory() {
         Assert.assertNotNull(
@@ -75,29 +81,70 @@ public class HttpHeaderPrincipalProviderIT {
                 ServletContainerAuthenticationProvider.getInstance());
     }
 
-    @Test
-    public void testEmptyPrincipalProvider() throws RepositoryException {
-        when(request.getRemoteUser()).thenReturn("fred");
-        when(request.getUserPrincipal()).thenReturn(
-                new BasicUserPrincipal("fred"));
-        when(
-                request.isUserInRole(Mockito
-                        .eq(ServletContainerAuthenticationProvider.FEDORA_USER_ROLE)))
-                .thenReturn(true);
+    private HttpServletRequest createMockRequest(final String username, final HashMap<String, String> headers) {
+        final HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getRemoteUser()).thenReturn(username);
+        if (username != null) {
+            when(request.getUserPrincipal()).thenReturn(new BasicUserPrincipal(username));
+        }
+        when(request.isUserInRole(Mockito.eq(FEDORA_USER_ROLE))).thenReturn(true);
+        if (headers != null) {
+            for (final String headerName : headers.keySet()) {
+                when(request.getHeader(headerName)).thenReturn(headers.get(headerName));
+            }
+        }
+
+        return request;
+    }
+
+    private FedoraSession processRequest(final HttpServletRequest request) {
         Mockito.reset(fad);
         when(fad.hasPermission(any(Session.class), any(Path.class), any(String[].class))).thenReturn(true);
+        when(fad.getEveryonePrincipal()).thenReturn(new BasicUserPrincipal("EVERYONE"));
 
-        final ServletCredentials credentials =
-                new ServletCredentials(request);
-        final FedoraSession session = repo.login(credentials);
-        final Session jcrSession = getJcrSession(session);
-        final Privilege[] rootPrivs = jcrSession.getAccessControlManager().getPrivileges("/");
+        final ServletCredentials credentials = new ServletCredentials(request);
+        return repo.login(credentials);
+    }
+
+    @Test
+    public void testEmptyPrincipalProvider() throws RepositoryException {
+        final HttpServletRequest request = createMockRequest("fred", null);
+        final FedoraSession session = processRequest(request);
+
+        final Privilege[] rootPrivs = getJcrSession(session).getAccessControlManager().getPrivileges("/");
         for (final Privilege p : rootPrivs) {
             logger.debug("got priv: " + p.getName());
         }
         final ContainerService os = new ContainerServiceImpl();
         os.findOrCreate(session, "/myobject");
         verify(fad, atLeastOnce()).hasPermission(any(Session.class), any(Path.class), any(String[].class));
+    }
+
+    @Test
+    public void testHeadersWithUserPrincipal() {
+        final HashMap<String, String> headers = new HashMap<>();
+        headers.put("test", "otherPrincipal");
+        final HttpServletRequest request = createMockRequest("fred", headers);
+        final Session jcrSession = getJcrSession(processRequest(request));
+        final Set allPrincipals = (Set) jcrSession.getAttribute(FEDORA_ALL_PRINCIPALS);
+
+        assertEquals(3, allPrincipals.size());
+        assertTrue(allPrincipals.contains(new BasicUserPrincipal("fred")));
+        assertTrue(allPrincipals.contains(new HttpHeaderPrincipal("otherPrincipal")));
+        assertTrue(allPrincipals.contains(fad.getEveryonePrincipal()));
+    }
+
+    @Test
+    public void testHeadersWithoutUserPrincipal() {
+        final HashMap<String, String> headers = new HashMap<>();
+        headers.put("test", "otherPrincipal");
+        final HttpServletRequest request = createMockRequest(null, headers);
+        final Session jcrSession = getJcrSession(processRequest(request));
+        final Set allPrincipals = (Set) jcrSession.getAttribute(FEDORA_ALL_PRINCIPALS);
+
+        assertEquals(2, allPrincipals.size());
+        assertTrue(allPrincipals.contains(new HttpHeaderPrincipal("otherPrincipal")));
+        assertTrue(allPrincipals.contains(fad.getEveryonePrincipal()));
     }
 
 }

@@ -172,10 +172,14 @@ public final class ServletContainerAuthenticationProvider implements
             sessionAttributes.put(FedoraAuthorizationDelegate.FEDORA_USER_PRINCIPAL,
                     fad.getEveryonePrincipal());
 
+            final Set<Principal> principals = collectPrincipals(credentials);
+            principals.add(fad.getEveryonePrincipal());
+
             sessionAttributes.put(
                     FedoraAuthorizationDelegate.FEDORA_ALL_PRINCIPALS,
-                    Collections.singleton(fad.getEveryonePrincipal()));
+                    principals);
 
+            LOGGER.debug("All principals: {}", principals);
         }
 
         return repositoryContext.with(new FedoraUserSecurityContext(
