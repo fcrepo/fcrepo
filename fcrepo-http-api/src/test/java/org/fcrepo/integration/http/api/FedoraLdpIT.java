@@ -132,6 +132,7 @@ import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
+import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.Variant;
@@ -1962,6 +1963,25 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createDatastream(id, "ds1", "foo");
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteObjMethod(id + "/ds1")));
         assertDeleted(id + "/ds1");
+    }
+
+    @Test(expected = ClientErrorException.class)
+    public void testDeleteBinaryDescription() throws IOException {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id, NON_RDF_SOURCE_LINK_HEADER);
+
+        final HttpHead headBinary = headObjMethod(id);
+        try (final CloseableHttpResponse response = execute(headBinary)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+        }
+
+        final HttpHead headBinaryDesc = headObjMethod(id + "/" + FCR_METADATA);
+        try (final CloseableHttpResponse response = execute(headBinaryDesc)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+        }
+
+        final HttpDelete deleteBinaryDesc = deleteObjMethod(id + "/" + FCR_METADATA);
+        execute(deleteBinaryDesc);
     }
 
     @Test
