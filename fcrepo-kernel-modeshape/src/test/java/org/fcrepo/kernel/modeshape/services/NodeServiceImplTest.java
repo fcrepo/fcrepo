@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.modeshape.services;
 
+import static org.fcrepo.kernel.modeshape.services.AbstractService.registeredPrefixes;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -31,7 +32,6 @@ import javax.jcr.Workspace;
 import javax.jcr.nodetype.NodeTypeIterator;
 
 import org.fcrepo.kernel.api.FedoraSession;
-import org.fcrepo.kernel.api.exception.FedoraInvalidNamespaceException;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.modeshape.FedoraSessionImpl;
 
@@ -101,7 +101,8 @@ public class NodeServiceImplTest {
         when(mockWorkspace.getNamespaceRegistry()).thenReturn(mockNameReg);
         when(mockNameReg.getPrefixes()).thenReturn(mockPrefixes);
         when(mockNameReg.getURI(MOCK_PREFIX)).thenReturn(MOCK_URI);
-
+        // Needed due to static nature and previous tests.
+        registeredPrefixes = null;
     }
 
     @Test
@@ -132,10 +133,10 @@ public class NodeServiceImplTest {
         assertEquals(false, testObj.exists(testSession, "/foo/bar"));
     }
 
-    @Test(expected = FedoraInvalidNamespaceException.class)
-    public void testInvalidPath() throws RepositoryException {
+    @Test
+    public void testUndefinedNs() throws RepositoryException {
         final String badPath = "/foo/bad_ns:bar";
-        when(mockNameReg.getURI("bad_ns")).thenThrow(new FedoraInvalidNamespaceException("Invalid namespace (bad_ns)"));
-        testObj.exists(testSession, badPath);
+        when(mockSession.nodeExists("/foo/bad_ns%3Abar")).thenReturn(true);
+        assertEquals(true, testObj.exists(testSession, badPath));
     }
 }
