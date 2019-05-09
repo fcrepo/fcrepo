@@ -128,6 +128,7 @@ import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.utils.ContentDigest;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
@@ -342,6 +343,12 @@ public class FedoraLdp extends ContentExposingResource {
                 throw new ClientErrorException("Depth header, if present, must be set to 'infinity' for containers",
                         SC_BAD_REQUEST);
             }
+        }
+        if (resource() instanceof NonRdfSourceDescription && resource().isOriginalResource()) {
+            LOGGER.debug("Trying to delete binary description directly.");
+            throw new ClientErrorException(
+                "NonRDFSource descriptions are removed when their associated NonRDFSource object is removed.",
+                METHOD_NOT_ALLOWED);
         }
 
         evaluateRequestPreconditions(request, servletResponse, resource(), session);
