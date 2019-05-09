@@ -109,6 +109,9 @@ public final class RdfLexicon {
     public static final Property WRITABLE =
             createProperty(REPOSITORY_NAMESPACE + "writable");
 
+    public static final String FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI = REPOSITORY_NAMESPACE +
+            "NonRdfSourceDescription";
+
     // Server managed properties
     public static final Property CREATED_DATE =
             createProperty(REPOSITORY_NAMESPACE + "created");
