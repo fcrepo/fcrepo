@@ -52,6 +52,7 @@ import static javax.jcr.PropertyType.REFERENCE;
 import static javax.jcr.PropertyType.WEAKREFERENCE;
 import static com.google.common.collect.ImmutableSet.of;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
 import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATEDBY;
@@ -176,7 +177,8 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
     /**
      * Check whether a type is an internal type that should be suppressed from external output.
      */
-    public static final Predicate<URI> isInternalType = t -> t.toString().equals(MEMENTO_TYPE);
+    public static final Predicate<URI> isInternalType =
+        t -> t.toString().equals(MEMENTO_TYPE) || t.toString().equals(FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI);
 
     /**
      * A functional predicate to check whether a property is a JCR property that should be exposed.
