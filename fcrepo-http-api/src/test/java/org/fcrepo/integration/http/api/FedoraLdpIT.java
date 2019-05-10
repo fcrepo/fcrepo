@@ -34,6 +34,8 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
+import static javax.ws.rs.core.Response.Status.GONE;
+import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
 import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NOT_MODIFIED;
@@ -1965,6 +1967,73 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testDeleteBinaryDescription() throws IOException {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id, NON_RDF_SOURCE_LINK_HEADER);
+
+        // Check that the binary and description exist.
+        binaryExists(id);
+
+        // Try to delete the description.
+        final HttpDelete deleteBinaryDesc = deleteObjMethod(id + "/" + FCR_METADATA);
+        try (final CloseableHttpResponse response = execute(deleteBinaryDesc)) {
+            assertEquals(METHOD_NOT_ALLOWED.getStatusCode(), getStatus(response));
+        }
+
+        // ensure the binary and description still exist.
+        binaryExists(id);
+
+        // Delete the binary
+        final HttpDelete deleteBinary = deleteObjMethod(id);
+        try (final CloseableHttpResponse response = execute(deleteBinary)) {
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
+        }
+
+        // Ensure the binary and description are gone.
+        binaryDoesntExist(id);
+
+    }
+
+    /**
+     * Check if a binary and its description exist.
+     *
+     * @param id id of the binary.
+     * @throws IOExceptionon error with http communication.
+     */
+    private void binaryExists(final String id) throws IOException {
+        binaryStatus(id, OK);
+    }
+
+    /**
+     * Check if a binary and its description don't exist.
+     *
+     * @param id id of the binary.
+     * @throws IOExceptionon error with http communication.
+     */
+    private void binaryDoesntExist(final String id) throws IOException {
+        binaryStatus(id, GONE);
+    }
+
+    /**
+     * Utility function to confirm status of both a binary and its description
+     *
+     * @param id id of the binary.
+     * @param status the expected status.
+     * @throws IOException on error with http communication.
+     */
+    private void binaryStatus(final String id, final Status status) throws IOException {
+        final HttpHead headBinary = headObjMethod(id);
+        try (final CloseableHttpResponse response = execute(headBinary)) {
+            assertEquals(status.getStatusCode(), getStatus(response));
+        }
+
+        final HttpHead headBinaryDesc = headObjMethod(id + "/" + FCR_METADATA);
+        try (final CloseableHttpResponse response = execute(headBinaryDesc)) {
+            assertEquals(status.getStatusCode(), getStatus(response));
+        }
+    }
+
+    @Test
     public void testGetObjectGraphHtml() throws IOException {
         final HttpGet getObjMethod = new HttpGet(getLocation(postObjMethod()));
         getObjMethod.addHeader(ACCEPT, "text/html");
@@ -3530,8 +3599,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
                         TEST_BINARY_CONTENT +
                         TEST_BINARY_CONTENT +
                         TEST_BINARY_CONTENT;
-
-        LOGGER.info("BINARY LITERAL TEST");
 
         patch.addHeader(CONTENT_TYPE, "application/sparql-update");
         patch.setEntity(new StringEntity(
