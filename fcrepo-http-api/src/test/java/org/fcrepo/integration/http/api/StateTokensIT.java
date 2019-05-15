@@ -40,7 +40,7 @@ import org.junit.Test;
 public class StateTokensIT extends AbstractResourceIT {
 
     private static final String X_STATE_TOKEN_HEADER = "X-State-Token";
-    public static final String X_IF_STATE_TOKEN_HEADER = "X-If-State-Token";
+    private static final String X_IF_STATE_TOKEN_HEADER = "X-If-State-Token";
 
     @Test
     public void testGetHasStateTokenRDFSource() throws IOException {

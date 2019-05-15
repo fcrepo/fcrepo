@@ -858,7 +858,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             final String clientSuppliedStateToken = headers.getHeaderString("X-If-State-Token");
             if (clientSuppliedStateToken != null && !stateToken.equals(clientSuppliedStateToken)) {
                 throw new PreconditionException(format(
-                    "The client-supplied value ({0}) does not match the resource's current state token ({1}).",
+                    "The client-supplied value ({0}) does not match the current state token ({1}).",
                     clientSuppliedStateToken, stateToken), 412);
             }
         }

@@ -239,14 +239,14 @@ public interface FedoraResource {
     /**
      * Construct an ETag value for the resource.
      *
-     * @return constructed etag value
+     * @return constructed state-token value
      */
     String getEtagValue();
 
     /**
      * Construct a State Token value for the resource.
      *
-     * @return constructed etag value
+     * @return constructed state-token value
      */
     String getStateToken();
     /**
