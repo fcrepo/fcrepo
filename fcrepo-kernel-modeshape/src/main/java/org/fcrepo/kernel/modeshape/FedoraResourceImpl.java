@@ -1162,6 +1162,13 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
         return "";
     }
 
+    /* (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraResource#getStateToken()
+     */
+    @Override
+    public String getStateToken() {
+        return getEtagValue();
+    }
 
     /**
      * Returns a function that converts the subject to the original URI and the object of a triple from an

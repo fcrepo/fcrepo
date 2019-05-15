@@ -203,6 +203,8 @@ public class FedoraNodesTest {
 
         when(mockSession.getValueFactory()).thenReturn(mockVF);
         when(mockNodes.exists(testSession, path)).thenReturn(true);
+        when(mockContainer.getStateToken()).thenReturn("");
+        when(mockRequest.getMethod()).thenReturn("MOVE");
 
         testObj.moveObject("http://localhost/fcrepo/bar");
         verify(mockNodes).moveObject(testSession, path, "/bar");
@@ -230,6 +232,8 @@ public class FedoraNodesTest {
         when(mockContainer.getEtagValue()).thenReturn("");
         doThrow(new RepositoryRuntimeException(new ItemExistsException()))
                 .when(mockNodes).moveObject(testSession, path, "/baz");
+        when(mockContainer.getStateToken()).thenReturn("");
+        when(mockRequest.getMethod()).thenReturn("MOVE");
 
         final Response response = testObj.moveObject("http://localhost/fcrepo/baz");
 
@@ -244,7 +248,8 @@ public class FedoraNodesTest {
             .thenReturn(mockContainer);
         when(mockNodes.exists(testSession, path)).thenReturn(true);
         when(mockContainer.getEtagValue()).thenReturn("");
-
+        when(mockContainer.getStateToken()).thenReturn("");
+        when(mockRequest.getMethod()).thenReturn("MOVE");
         testObj.moveObject("http://somewhere/else/baz");
     }
 

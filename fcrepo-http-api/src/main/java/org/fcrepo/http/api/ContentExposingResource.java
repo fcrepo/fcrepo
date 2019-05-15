@@ -18,6 +18,7 @@
 package org.fcrepo.http.api;
 
 import static com.google.common.base.Strings.nullToEmpty;
+import static java.text.MessageFormat.format;
 import static java.util.EnumSet.of;
 import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.empty;
@@ -95,7 +96,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.text.MessageFormat;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Arrays;
@@ -124,6 +124,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 
+import org.apache.http.client.methods.HttpPatch;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.jena.atlas.RuntimeIOException;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
@@ -766,7 +768,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         if (!etag.getValue().isEmpty()) {
             servletResponse.addHeader("ETag", etag.toString());
+        }
 
+        if (!resource.getStateToken().isEmpty()) {
             //State Tokens, while not used for caching per se,  nevertheless belong
             //here since we can conveniently reuse the value of the etag for
             //our state token
@@ -846,6 +850,17 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             final Object message = response.getEntity();
             throw new PreconditionException(message != null ? message.toString()
                     : "Request failed due to unspecified failed precondition.", response.getStatus());
+        }
+
+        final String method = request.getMethod();
+        if (method.equals(HttpPut.METHOD_NAME) || method.equals(HttpPatch.METHOD_NAME)) {
+            final String stateToken = resource.getStateToken();
+            final String clientSuppliedStateToken = headers.getHeaderString("X-If-State-Token");
+            if (clientSuppliedStateToken != null && !stateToken.equals(clientSuppliedStateToken)) {
+                throw new PreconditionException(format(
+                    "The client-supplied value ({0}) does not match the current state token ({1}).",
+                    clientSuppliedStateToken, stateToken), 412);
+            }
         }
     }
 
@@ -1012,7 +1027,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                     // Throw exception if object is a server-managed property
                     if (isManagedPredicate.test(createProperty(uri))) {
                             throw new ServerManagedPropertyException(
-                                    MessageFormat.format(
+                                    format(
                                             "{0} cannot take a server managed property " +
                                                     "as an object: property value = {1}.",
                                             HAS_MEMBER_RELATION, uri));
@@ -1046,7 +1061,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 if (graph.contains(subject, WEBAC_ACCESS_TO_URI, Node.ANY) &&
                         graph.contains(subject, WEBAC_ACCESS_TO_CLASS_URI, Node.ANY)) {
                     throw new ACLAuthorizationConstraintViolationException(
-                        MessageFormat.format(
+                        format(
                                 "Using both accessTo and accessToClass within " +
                                         "a single Authorization is not allowed: {0}.",
                                 subject.toString().substring(subject.toString().lastIndexOf("#"))));
