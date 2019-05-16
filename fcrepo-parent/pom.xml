@@ -35,13 +35,14 @@
     <bundle.plugin.version>4.0.0</bundle.plugin.version>
     <changelog.plugin.version>2.3</changelog.plugin.version>
     <checkstyle.plugin.version>3.0.0</checkstyle.plugin.version>
+    <duraspace-codestyle.version>1.0.0</duraspace-codestyle.version>
     <clean.plugin.version>3.1.0</clean.plugin.version>
     <compiler.plugin.version>3.8.0</compiler.plugin.version>
     <dependency.plugin.version>3.1.1</dependency.plugin.version>
     <deploy.plugin.version>2.8.2</deploy.plugin.version>
     <doxia-markdown.plugin.version>1.8</doxia-markdown.plugin.version>
     <failsafe.plugin.version>2.22.1</failsafe.plugin.version>
-    <fcrepo-build-tools.version>4.4.2</fcrepo-build-tools.version>
+    <fcrepo-build-tools.version>5.0.0</fcrepo-build-tools.version>
     <github-site.plugin.version>0.12</github-site.plugin.version>
     <gpg.plugin.version>1.6</gpg.plugin.version>
     <install.plugin.version>2.5.2</install.plugin.version>
@@ -225,9 +226,20 @@
           <version>${checkstyle.plugin.version}</version>
           <dependencies>
             <dependency>
+              <groupId>org.duraspace</groupId>
+              <artifactId>codestyle</artifactId>
+              <version>${duraspace-codestyle.version}</version>
+            </dependency>
+            <dependency>
               <groupId>org.fcrepo</groupId>
               <artifactId>fcrepo-build-tools</artifactId>
               <version>${fcrepo-build-tools.version}</version>
+            </dependency>
+            <!-- Override dependencies to use latest version of checkstyle -->
+            <dependency>
+              <groupId>com.puppycrawl.tools</groupId>
+              <artifactId>checkstyle</artifactId>
+              <version>8.8</version>
             </dependency>
           </dependencies>
           <configuration>
@@ -237,7 +249,7 @@
             <failsOnError>true</failsOnError>
             <failOnViolation>true</failOnViolation>
             <violationSeverity>warning</violationSeverity>
-            <configLocation>fcrepo-checkstyle/checkstyle.xml</configLocation>
+            <configLocation>duraspace-checkstyle/checkstyle.xml</configLocation>
             <suppressionsLocation>fcrepo-checkstyle/checkstyle-suppressions.xml</suppressionsLocation>
           </configuration>
           <executions>
