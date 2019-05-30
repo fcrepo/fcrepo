@@ -161,7 +161,6 @@ import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.FedoraTimeMap;
-import org.fcrepo.kernel.api.models.FedoraWebacAcl;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry;
@@ -515,9 +514,20 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     }
 
     private void addAclHeader(final FedoraResource resource) {
-        if (!(resource instanceof FedoraWebacAcl) && !resource.isMemento()) {
-            final String resourceUri = getUri(resource.getDescribedResource()).toString();
-            final String aclLocation =  resourceUri + (resourceUri.endsWith("/") ? "" : "/") + FCR_ACL;
+        if (!resource.isAcl()) {
+
+            final FedoraResource aclOwner;
+
+            if (resource.isTimeMap() || resource.isMemento()) {
+                final FedoraResource aclOwnerCandidate = resource.getOriginalResource();
+                aclOwner =
+                    aclOwnerCandidate.isDescription() ? aclOwnerCandidate.getDescribedResource() : aclOwnerCandidate;
+            } else {
+                aclOwner = resource.getDescribedResource();
+            }
+
+            final String aclOwnerUri = getUri(aclOwner).toString();
+            final String aclLocation = aclOwnerUri + (aclOwnerUri.endsWith("/") ? "" : "/") + FCR_ACL;
             servletResponse.addHeader(LINK, buildLink(aclLocation, "acl"));
         }
     }

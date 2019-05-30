@@ -97,6 +97,20 @@ public interface FedoraResource {
     boolean isMemento();
 
     /**
+     * Returns true if this resource is a NonRdfSourceDescription.
+     *
+     * @return true if the resource is a NonRdfSourceDescription.
+     */
+    boolean isDescription();
+
+    /**
+     * Returns true if this resource is a TimeMap.
+     *
+     * @return true if the resource is a TimeMap.
+     */
+    boolean isTimeMap();
+
+    /**
      * Returns true if this resource is an ACL.
      *
      * @return true if the resource is an ACL.
