@@ -699,6 +699,35 @@ public class WebACRecipesIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testDefaultInheritanceFcrepo3000() throws IOException {
+        final String idBook = "/rest/book2";
+        final String bookURI = ingestObj(idBook);
+
+        final String pages = idBook + "/pages";
+        final String pagesURI = ingestObj(idBook + "/pages");
+
+        final String page = pages + "/page";
+        final String pageURI = ingestObj(page);
+
+        ingestAcl("fedoraAdmin", "/acls/28/acl.ttl", bookURI + "/fcr:acl");
+
+        logger.debug("Can username 'user28'  read {}", bookURI);
+        final HttpGet requestGet1 = getObjMethod(idBook);
+        setAuth(requestGet1, "user28");
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestGet1));
+
+        logger.debug("Can username 'user28' read {}", pagesURI);
+        final HttpGet requestGet2 = getObjMethod(pages);
+        setAuth(requestGet2, "user28");
+        assertEquals(HttpStatus.SC_OK, getStatus(requestGet2));
+
+        logger.debug("Can username 'user28' read {}", pageURI);
+        final HttpGet requestGet3 = getObjMethod(page);
+        setAuth(requestGet3, "user28");
+        assertEquals(HttpStatus.SC_OK, getStatus(requestGet3));
+    }
+
+    @Test
     @Ignore("FAILING")
     public void testAccessToHashResource() throws IOException {
         final String id = "/rest/some/parent#hash-resource";

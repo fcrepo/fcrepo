@@ -1,0 +1,8 @@
+@prefix acl: <http://www.w3.org/ns/auth/acl#> .
+
+<#authorization1>
+        a      acl:Authorization ;
+        acl:accessTo  </rest/book2/pages> ;
+        acl:default   </rest/book2/pages> ;
+        acl:mode      acl:Read ;
+        acl:agent     "user28" .

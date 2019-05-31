@@ -116,10 +116,12 @@ public class WebACRolesProvider {
      *  for foaf:Agent and acl:AuthenticatedAgent include the acl:agentClass value to acl:mode.
      */
     private Map<String, Collection<String>> getAgentRoles(final FedoraResource resource) {
-        LOGGER.debug("Getting agent roles for: {}", resource.getPath());
+
+        final String resourcePath = resource.getPath();
+        LOGGER.debug("Getting agent roles for: {}", resourcePath);
 
         // Get the effective ACL by searching the target node and any ancestors.
-        final Optional<ACLHandle> effectiveAcl = getEffectiveAcl(resource, false, sessionFactory);
+        final Optional<ACLHandle> effectiveAcl = getEffectiveAcl(resource, resource, false, sessionFactory);
 
         // Construct a list of acceptable acl:accessTo values for the target resource.
         final List<String> resourcePaths = new ArrayList<>();
@@ -134,7 +136,12 @@ public class WebACRolesProvider {
             .map(aclHandle -> aclHandle.resource)
             .filter(effectiveResource -> !effectiveResource.getPath().equals(resource.getPath()))
             .ifPresent(effectiveResource -> {
-                resourcePaths.add(FEDORA_INTERNAL_PREFIX + effectiveResource.getPath());
+                //Build the resourcePaths list by adding ancestors starting from the target resource and
+                //ending with the effective resource.
+                final String effectiveResourcePath = FEDORA_INTERNAL_PREFIX + effectiveResource.getPath();
+                getAllPathAncestors(resource.getPath()).stream()
+                                                       .filter(ancestor -> ancestor.startsWith(effectiveResourcePath))
+                                                       .forEach(path -> resourcePaths.add(path));
                 rdfTypes.addAll(effectiveResource.getTypes());
             });
 
@@ -309,13 +316,15 @@ public class WebACRolesProvider {
      * The RDF from each child resource is put into a WebACAuthorization object, and the
      * full list is returned.
      *
+     * @param targetResource the resource being authorized
      * @param aclResource the ACL resource
      * @param ancestorAcl flag indicating whether or not the ACL resource associated with an ancestor of the target
      *                    resource
      * @param sessionFactory the session factory
      * @return a list of acl:Authorization objects
      */
-    private static List<WebACAuthorization> getAuthorizations(final FedoraResource aclResource,
+    private static List<WebACAuthorization> getAuthorizations(final FedoraResource targetResource,
+                                                              final FedoraResource aclResource,
                                                               final boolean ancestorAcl,
                                                               final SessionFactory sessionFactory) {
 
@@ -323,6 +332,8 @@ public class WebACRolesProvider {
         final List<WebACAuthorization> authorizations = new ArrayList<>();
         final IdentifierConverter<Resource, FedoraResource> translator =
                 new DefaultIdentifierTranslator(getJcrSession(internalSession));
+        final String resourceUri = translator.toDomain(targetResource.getPath()).getURI();
+
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("ACL: {}", aclResource.getPath());
@@ -361,8 +372,13 @@ public class WebACRolesProvider {
             authMap.values().forEach(aclTriples -> {
                 final WebACAuthorization authorization = createAuthorizationFromMap(aclTriples);
                 //only include authorizations if the acl resource is not an ancestor acl
-                //or the authorization has at least one acl:default
-                if (!ancestorAcl || authorization.getDefaults().size() > 0) {
+                //or the authorization has at least one acl:default that prefixes the target resource
+                final boolean hasMatchingDefault = authorization.getDefaults()
+                                                                 .stream()
+                                                                 .anyMatch(defaultResource -> {
+                                                                     return resourceUri.startsWith(defaultResource);
+                                                                 });
+                if (!ancestorAcl || hasMatchingDefault) {
                     authorizations.add(authorization);
                 }
             });
@@ -388,11 +404,13 @@ public class WebACRolesProvider {
      * This way, if the effective ACL is pointed to from a parent resource, the child will inherit
      * any permissions that correspond to access to that parent. This ACL resource may or may not exist,
      * and it may be external to the fedora repository.
+     * @param targetResource  the Fedora resource that is being authorized
      * @param resource the Fedora resource
      * @param ancestorAcl the flag for looking up ACL from ancestor hierarchy resources
      * @param sessionFactory session factory
      */
-    static Optional<ACLHandle> getEffectiveAcl(final FedoraResource resource, final boolean ancestorAcl,
+    static Optional<ACLHandle> getEffectiveAcl(final FedoraResource targetResource, final FedoraResource resource,
+                                               final boolean ancestorAcl,
                                                 final SessionFactory sessionFactory) {
         try {
 
@@ -400,7 +418,7 @@ public class WebACRolesProvider {
 
             if (aclResource != null) {
                 final List<WebACAuthorization> authorizations =
-                    getAuthorizations(aclResource, ancestorAcl, sessionFactory);
+                    getAuthorizations(targetResource, aclResource, ancestorAcl, sessionFactory);
                 if (authorizations.size() > 0) {
                     return Optional.of(
                         new ACLHandle(resource, authorizations));
@@ -412,7 +430,7 @@ public class WebACRolesProvider {
                 return Optional.empty();
             } else {
                 LOGGER.trace("Checking parent resource for ACL. No ACL found at {}", resource.getPath());
-                return getEffectiveAcl(resource.getContainer(), true, sessionFactory);
+                return getEffectiveAcl(targetResource, resource.getContainer(), true, sessionFactory);
             }
         } catch (final RepositoryException ex) {
             LOGGER.debug("Exception finding effective ACL: {}", ex.getMessage());
