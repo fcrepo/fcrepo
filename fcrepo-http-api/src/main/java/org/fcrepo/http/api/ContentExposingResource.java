@@ -519,9 +519,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             final FedoraResource aclOwner;
 
             if (resource.isTimeMap() || resource.isMemento()) {
-                final FedoraResource aclOwnerCandidate = resource.getOriginalResource();
-                aclOwner =
-                    aclOwnerCandidate.isDescription() ? aclOwnerCandidate.getDescribedResource() : aclOwnerCandidate;
+                aclOwner = resource.getOriginalResource().getDescribedResource();
             } else {
                 aclOwner = resource.getDescribedResource();
             }

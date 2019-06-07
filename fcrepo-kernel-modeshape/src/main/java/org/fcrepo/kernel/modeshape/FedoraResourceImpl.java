@@ -65,7 +65,6 @@ import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getContainingNo
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.hasInternalNamespace;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isAcl;
-import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isDescription;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isMemento;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isTimeMap;
@@ -485,11 +484,6 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @Override
     public boolean isOriginalResource() {
         return !isMemento();
-    }
-
-    @Override
-    public boolean isDescription() {
-        return isDescription.test(getNode());
     }
 
     @Override

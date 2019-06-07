@@ -128,9 +128,10 @@ public abstract class FedoraTypesUtils implements FedoraTypes {
      */
     public static final Predicate<Node> isMemento = new AnyTypesPredicate(MEMENTO);
 
+    /**
+     * Predicate for determining whether this {@link Node} is a TimeMap.
+     */
     public static final Predicate<Node> isTimeMap = new AnyTypesPredicate(FEDORA_TIME_MAP);
-
-    public static final Predicate<Node> isDescription = new AnyTypesPredicate(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
 
     /**
      * Predicate for determining whether this {@link Node} is an Web ACL.
