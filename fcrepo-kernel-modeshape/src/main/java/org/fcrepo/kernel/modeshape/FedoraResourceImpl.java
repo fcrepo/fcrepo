@@ -67,6 +67,7 @@ import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.hasInternalName
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isAcl;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalNode;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isMemento;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isTimeMap;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.ldpInsertedContentProperty;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.resourceToProperty;
 import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.touchLdpMembershipResource;
@@ -483,6 +484,11 @@ public class FedoraResourceImpl extends JcrTools implements FedoraTypes, FedoraR
     @Override
     public boolean isOriginalResource() {
         return !isMemento();
+    }
+
+    @Override
+    public boolean isTimeMap() {
+        return isTimeMap.test(getNode());
     }
 
     @Override

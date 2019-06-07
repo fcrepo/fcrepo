@@ -942,12 +942,16 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         checkForLinkHeader(response, uri, "timegate");
         checkForLinkHeader(response, uri + "/" + FCR_VERSIONS, "timemap");
         checkForLinkHeader(response, VERSIONING_TIMEMAP_TYPE, "type");
-        checkForLinkHeader(response, ldpcvUri + "/" + FCR_ACL, "acl");
         assertFalse(response.getFirstHeader("Allow").getValue().contains("DELETE"));
         assertTrue(response.getFirstHeader("Allow").getValue().contains("GET"));
         assertTrue(response.getFirstHeader("Allow").getValue().contains("HEAD"));
         assertTrue(response.getFirstHeader("Allow").getValue().contains("POST"));
         assertEquals(1, response.getHeaders("Accept-Post").length);
+
+        //ensure that the ACL points to the original described resource (ie resource/fcr:acl rather than
+        // resource/fcr:metadata/fcr:acl
+        final String originalDescribedResource = uri.endsWith("/fcr:metadata") ? uri.replace("/fcr:metadata", "") : uri;
+        checkForLinkHeader(response, originalDescribedResource + "/" + FCR_ACL, "acl");
     }
 
     @Test
@@ -1067,9 +1071,20 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                     results.contains(ANY, mementoSubject, RDF.type.asNode(), TEST_TYPE_RESOURCE.asNode()));
         }
 
+
         // No binary memento should be created when specifically creating a description memento.
         final String hypotheticalBinaryUri = mementoUri.replaceAll("fcr:metadata/fcr:versions", "fcr:versions");
         assertEquals(NOT_FOUND.getStatusCode(), getStatus(new HttpGet(hypotheticalBinaryUri)));
+
+        // verify acl link points to the acl below the original resource.
+        try (final CloseableHttpResponse response = execute(new HttpGet(descriptionUri + "/fcr:versions"))) {
+            checkForLinkHeader(response, subjectUri + "/fcr:acl", "acl");
+        }
+
+        try (final CloseableHttpResponse response = execute(new HttpGet(mementoUri))) {
+            checkForLinkHeader(response, subjectUri + "/fcr:acl", "acl");
+        }
+
     }
 
     /*
