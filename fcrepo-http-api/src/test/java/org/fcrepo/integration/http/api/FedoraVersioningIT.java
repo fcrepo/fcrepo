@@ -123,6 +123,7 @@ import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.vocabulary.DC;
 import org.apache.jena.vocabulary.RDF;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
+import org.fcrepo.kernel.api.RdfLexicon;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -149,6 +150,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     private final String MEMENTO_DATETIME =
         MEMENTO_RFC_1123_FORMATTER.format(LocalDateTime.of(2000, 1, 1, 00, 00).atZone(ZoneOffset.UTC));
     private final List<String> rdfTypes = new ArrayList<>(Arrays.asList(POSSIBLE_RDF_RESPONSE_VARIANTS_STRING));
+
+    private static final Node rdfType = type.asNode();
 
     private String subjectUri;
     private String id;
@@ -206,6 +209,20 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             final DatasetGraph results = dataset.asDatasetGraph();
             final Node subject = createURI(subjectUri + "/" + FCR_VERSIONS);
             assertTrue("Did not find correct subject", results.contains(ANY, subject, ANY, ANY));
+        }
+    }
+
+    @Test
+    public void testGetTimeMapRDFTypesInBodyFcrepo3006() throws Exception {
+        createVersionedContainer(id);
+
+        final HttpGet httpGet = getObjMethod(id + "/" + FCR_VERSIONS);
+
+        try (final CloseableDataset dataset = getDataset(httpGet)) {
+            final DatasetGraph results = dataset.asDatasetGraph();
+            final Node subject = createURI(subjectUri + "/" + FCR_VERSIONS);
+            final Node mementoTimeMap = createURI(RdfLexicon.VERSIONING_TIMEMAP_TYPE);
+            assertTrue("Did not find memento:TimeMap", results.contains(ANY, subject, rdfType, mementoTimeMap));
         }
     }
 

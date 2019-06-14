@@ -96,6 +96,11 @@
   - memento:original (REFERENCE)
 
 /*
+ * A Memento LDPCv TimeMap.
+ */
+[memento:TimeMap] > fedora:Resource mixin
+
+/*
  * A Fedora LDPRm Memento.
  */
 [memento:Memento] > fedora:Resource mixin

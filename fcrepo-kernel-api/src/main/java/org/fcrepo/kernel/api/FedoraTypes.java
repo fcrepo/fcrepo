@@ -51,6 +51,8 @@ public interface FedoraTypes {
 
     String MEMENTO_ORIGINAL = "memento:original";
 
+    String MEMENTO_TIME_MAP = "memento:TimeMap";
+
     String LDP_BASIC_CONTAINER = "ldp:BasicContainer";
 
     String LDP_CONTAINER = "ldp:Container";

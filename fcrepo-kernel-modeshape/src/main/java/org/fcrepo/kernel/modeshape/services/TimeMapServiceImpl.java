@@ -20,6 +20,7 @@ package org.fcrepo.kernel.modeshape.services;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TIME_MAP;
 import static org.fcrepo.kernel.api.FedoraTypes.MEMENTO_ORIGINAL;
+import static org.fcrepo.kernel.api.FedoraTypes.MEMENTO_TIME_MAP;
 import static org.fcrepo.kernel.api.RdfLexicon.LDPCV_TIME_MAP;
 import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -73,6 +74,11 @@ public class TimeMapServiceImpl extends AbstractService implements TimeMapServic
                 // add mixin type fedora:TimeMap
                 if (node.canAddMixin(FEDORA_TIME_MAP)) {
                     node.addMixin(FEDORA_TIME_MAP);
+                }
+
+                // add mixin type fedora:TimeMap
+                if (node.canAddMixin(MEMENTO_TIME_MAP)) {
+                    node.addMixin(MEMENTO_TIME_MAP);
                 }
 
                 // Set reference from timegate/map to original resource
