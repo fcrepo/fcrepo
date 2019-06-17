@@ -114,12 +114,15 @@ import static org.junit.Assert.fail;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
+import java.io.Writer;
 import java.net.URI;
 import java.text.ParseException;
 import java.time.Instant;
@@ -133,7 +136,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.Variant;
@@ -1408,6 +1410,74 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         assertNotEquals("ETags should have changed", descEtag2, descEtag3);
         assertNotEquals("Last-Modified should have changed", descLastModed2, descLastModed3);
+    }
+
+    @Test
+    public void testPutBinaryRdfChanges() throws Exception {
+        final String id = getRandomUniqueId();
+        final Model model = createDefaultModel();
+        final Resource subject = model.createResource(serverAddress + id);
+        final Property property = model.createProperty("http://purl.org/dcterms/", "title");
+
+        // Create the binary
+        createObjectAndClose(id, "<" + NON_RDF_SOURCE + ">; rel=\"type\"");
+
+        // Get the current description
+        final HttpGet get = getObjMethod(id + "/" + FCR_METADATA);
+        get.addHeader("Prefer",
+            "return=representation; omit=\"http://fedora.info/definitions/v4/repository#ServerManaged\"");
+        get.addHeader("Accept", "text/turtle");
+        try (final CloseableHttpResponse response = execute(get)) {
+            assertEquals("Expected 200 OK", OK.getStatusCode(), getStatus(response));
+            model.read(response.getEntity().getContent(), null, "TURTLE");
+        }
+
+        // Put triples to the description.
+        model.add(subject, property, model.createLiteral("ABC"));
+        final ByteArrayOutputStream out1 = new ByteArrayOutputStream();
+        final Writer writer1 = new OutputStreamWriter(out1, "UTF-8");
+        model.write(writer1, "TURTLE");
+
+        final HttpPut put = putObjMethod(id + "/" + FCR_METADATA);
+        final String outputModel = out1.toString("UTF-8");
+        put.setEntity(new StringEntity(outputModel, "UTF-8"));
+        put.setHeader("Content-type", "text/turtle");
+        put.setHeader("Prefer", "handling=lenient; received=\"minimal\"");
+        assertEquals("Did put the binary description", NO_CONTENT.getStatusCode(), getStatus(put));
+
+        // Get the description and verify the content.
+        final Model model2 = createDefaultModel();
+        try (final CloseableHttpResponse response = execute(get)) {
+            assertEquals("Expected 200 OK", OK.getStatusCode(), getStatus(response));
+            model2.read(response.getEntity().getContent(), serverAddress, "TURTLE");
+            final StmtIterator st = model.listStatements(subject, property, "ABC");
+            assertTrue(st.hasNext());
+        }
+
+        // Alter the triples.
+        model2.remove(subject, property, model.createLiteral("ABC"));
+        model2.add(subject, property, model.createLiteral("XYZ"));
+
+        // Put it again.
+        final ByteArrayOutputStream out2 = new ByteArrayOutputStream();
+        final Writer writer2 = new OutputStreamWriter(out2, "UTF-8");
+        model2.write(writer2, "TURTLE");
+        final HttpPut put2 = putObjMethod(id + "/" + FCR_METADATA);
+        put2.setHeader("Content-type", "text/turtle");
+        put2.setHeader("Prefer", "handling=lenient; received=\"minimal\"");
+        put2.setEntity(new ByteArrayEntity(out2.toByteArray()));
+        assertEquals("Did not update binary description", NO_CONTENT.getStatusCode(), getStatus(put2));
+
+        // Get the description and verify the content again.
+        final Model model3 = createDefaultModel();
+        try (final CloseableHttpResponse response = execute(get)) {
+            assertEquals("Expected 200 OK", OK.getStatusCode(), getStatus(response));
+            model3.read(response.getEntity().getContent(), serverAddress, "TURTLE");
+            final StmtIterator st1 = model3.listStatements(subject, property, "XYZ");
+            assertTrue(st1.hasNext());
+            final StmtIterator st2 = model3.listStatements(subject, property, "ABC");
+            assertFalse(st2.hasNext());
+        }
     }
 
     @Test
@@ -4360,7 +4430,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     /**
      * Utility to assert a GET of id and id/fcr:versions
-     * 
+     *
      * @param id the path
      * @throws Exception
      */
