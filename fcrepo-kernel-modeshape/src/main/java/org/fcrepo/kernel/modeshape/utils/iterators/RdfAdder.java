@@ -88,8 +88,8 @@ public class RdfAdder extends PersistingRdfStreamConsumer {
     protected void operateOnProperty(final Statement t, final FedoraResource resource) throws RepositoryException {
         LOGGER.debug("Adding property from triple: {} to resource: {}.", t, resource
                 .getPath());
-
-        jcrRdfTools().addProperty(resource, t.getPredicate(), t.getObject(),
-                getNamespaces(getJcrNode(resource).getSession()));
+        final FedoraResource description = resource.getDescription();
+        jcrRdfTools().addProperty(description, t.getPredicate(), t.getObject(),
+                getNamespaces(getJcrNode(description).getSession()));
     }
 }
