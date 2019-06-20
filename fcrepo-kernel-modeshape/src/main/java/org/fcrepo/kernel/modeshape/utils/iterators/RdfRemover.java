@@ -69,8 +69,9 @@ public class RdfRemover extends PersistingRdfStreamConsumer {
         throws RepositoryException {
         LOGGER.debug("Trying to remove property from triple: {} on resource: {}.", t, resource
                 .getPath());
-        jcrRdfTools().removeProperty(resource, t.getPredicate(), t.getObject(),
-                getNamespaces(getJcrNode(resource).getSession()));
+        final FedoraResource description = resource.getDescription();
+        jcrRdfTools().removeProperty(description, t.getPredicate(), t.getObject(),
+                getNamespaces(getJcrNode(description).getSession()));
     }
 
 }
