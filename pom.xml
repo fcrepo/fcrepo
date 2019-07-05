@@ -87,6 +87,7 @@
     <module>fcrepo-integration-ldp</module>
     <module>fcrepo-integration-rdf</module>
     <module>fcrepo-auth-webac</module>
+    <module>fcrepo-persistence-api</module>
   </modules>
   <dependencyManagement>
     <dependencies>
