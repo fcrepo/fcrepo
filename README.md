@@ -1,4 +1,14 @@
+
+
 # Fedora
+---
+<div style="color:red">
+**PLEASE BE ADVISED:**  this branch (master) is currently the main branch for 6.0 development. It is a  work in progress!  
+While it will build and any unignored tests willpass, the codebase in not currently in working order and will not 
+compile into a functioning application.
+</div>
+
+---
 
 [![Build Status](https://travis-ci.org/fcrepo4/fcrepo4.svg?branch=master)](https://travis-ci.org/fcrepo4/fcrepo4)
 

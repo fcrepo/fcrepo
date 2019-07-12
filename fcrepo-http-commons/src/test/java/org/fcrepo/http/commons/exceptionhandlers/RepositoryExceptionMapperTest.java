@@ -24,8 +24,7 @@ import static org.junit.Assert.assertNotNull;
 
 import javax.ws.rs.core.Response;
 
-import javax.jcr.RepositoryException;
-
+import org.fcrepo.kernel.api.exception.RepositoryException;
 import org.junit.Before;
 import org.junit.Test;
 

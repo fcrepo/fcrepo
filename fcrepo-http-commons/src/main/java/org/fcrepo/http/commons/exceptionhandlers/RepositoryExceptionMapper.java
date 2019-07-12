@@ -24,12 +24,12 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.jcr.RepositoryException;
-import javax.jcr.ValueFormatException;
 import javax.ws.rs.core.Response;
+
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
+import org.fcrepo.kernel.api.exception.RepositoryException;
 import org.slf4j.Logger;
 
 /**
@@ -39,18 +39,16 @@ import org.slf4j.Logger;
  */
 @Provider
 public class RepositoryExceptionMapper implements
-        ExceptionMapper<RepositoryException>, ExceptionDebugLogging {
+                                       ExceptionMapper<RepositoryException>, ExceptionDebugLogging {
 
     private static final Logger LOGGER = getLogger(RepositoryExceptionMapper.class);
 
     @Override
     public Response toResponse(final RepositoryException e) {
 
-        LOGGER.error("Caught a repository exception: {}", e.getMessage() );
+        LOGGER.error("Caught a repository exception: {}", e.getMessage());
         debugException(this, e, LOGGER);
-        if ( e.getMessage().matches("Error converting \".+\" from String to a Name")) {
-            return status(BAD_REQUEST).entity(e.getMessage()).type(TEXT_PLAIN_WITH_CHARSET).build();
-        } else if ( e instanceof ValueFormatException ) {
+        if (e.getMessage().matches("Error converting \".+\" from String to a Name")) {
             return status(BAD_REQUEST).entity(e.getMessage()).type(TEXT_PLAIN_WITH_CHARSET).build();
         }
 

@@ -20,7 +20,6 @@ package org.fcrepo.auth.webac;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_ACCESS_CONTROL_VALUE;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
-import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 
@@ -36,7 +35,6 @@ import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.NodeService;
-import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 
 import org.slf4j.Logger;
 
@@ -68,8 +66,9 @@ public class LinkHeaderProvider implements UriAwareHttpHeaderFactory {
     public Multimap<String, String> createHttpHeadersForResource(final UriInfo uriInfo, final FedoraResource resource) {
 
         final FedoraSession internalSession = sessionFactory.getInternalSession();
-        final IdentifierConverter<Resource, FedoraResource> translator =
-                new DefaultIdentifierTranslator(getJcrSession(internalSession));
+        //TODO figure out where the translator should be coming from.
+        final IdentifierConverter<Resource, FedoraResource> translator = null;
+
         final ListMultimap<String, String> headers = ArrayListMultimap.create();
 
         LOGGER.debug("Adding WebAC Link Header for Resource: {}", resource.getPath());

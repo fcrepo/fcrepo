@@ -42,7 +42,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import javax.jcr.Session;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 
@@ -88,9 +87,6 @@ public class RdfStreamStreamingOutputTest {
 
     @Mock
     private RdfStream mockRdfStream;
-
-    @Mock
-    private Session mockSession;
 
     private final MediaType testMediaType = valueOf("application/rdf+xml");
 

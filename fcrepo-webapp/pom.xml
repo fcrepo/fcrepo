@@ -22,7 +22,6 @@
     <maven.build.timestamp.format>yyyy-MM-dd</maven.build.timestamp.format>
     <!-- for standalone operation -->
     <jetty.users.file>${project.build.directory}/test-classes/jetty-users.properties</jetty.users.file>
-    <fcrepo.modeshape.configuration>classpath:/config/servlet-auth/repository.json</fcrepo.modeshape.configuration>
     <jetty-console.version>1.61</jetty-console.version>
   </properties>
 
@@ -30,11 +29,6 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-kernel-modeshape</artifactId>
-      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.fcrepo</groupId>
@@ -253,18 +247,6 @@
       <scope>provided</scope>
     </dependency>
 
-    <dependency>
-      <groupId>javax.jcr</groupId>
-      <artifactId>jcr</artifactId>
-      <scope>compile</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.fcrepo</groupId>
-      <artifactId>modeshape-jcr</artifactId>
-      <scope>runtime</scope>
-    </dependency>
-    
   </dependencies>
   <build>
     <resources>
@@ -392,10 +374,6 @@
           </webApp>
           <jettyXml>${project.build.directory}/test-classes/jetty-test.xml</jettyXml>
           <systemProperties>
-            <systemProperty>
-              <name>fcrepo.modeshape.configuration</name>
-              <value>classpath:/config/servlet-auth/repository.json</value>
-            </systemProperty>
           </systemProperties>
 
         </configuration>
@@ -410,11 +388,6 @@
               <stopPort>${jetty.dynamic.stop.port}</stopPort>
 
               <systemProperties>
-                <systemProperty>
-                  <name>fcrepo.modeshape.configuration</name>
-                  <value>classpath:/config/file-simple/repository.json</value>
-                </systemProperty>
-
                 <systemProperty>
                   <name>fcrepo.dynamic.test.port</name>
                   <value>${fcrepo.dynamic.test.port}</value>
@@ -497,7 +470,6 @@
         <activeByDefault>false</activeByDefault>
       </activation>
       <properties>
-        <fcrepo.modeshape.configuration>classpath:/config/file-simple/repository.json</fcrepo.modeshape.configuration>
       </properties>
 
       <build>
@@ -557,7 +529,6 @@
               </execution>
             </executions>
           </plugin>
-          <!--Ensure that the main war is removed... because it will have a default ModeShape config wired in.-->
           <plugin>
             <artifactId>maven-clean-plugin</artifactId>
             <executions>

@@ -17,31 +17,6 @@
  */
 package org.fcrepo.auth.common;
 
-import java.util.Map;
-
-import javax.jcr.Credentials;
-
-import org.apache.shiro.SecurityUtils;
-import org.modeshape.jcr.ExecutionContext;
-import org.modeshape.jcr.security.AuthenticationProvider;
-
-/**
- * Modeshape authentication provider that gets its security context from the current Shiro Subject.
- *
- * @author peichman
- */
-public class ShiroAuthenticationProvider implements AuthenticationProvider {
-
-    @Override
-    public ExecutionContext authenticate(final Credentials credentials, final String repositoryName,
-            final String workspaceName, final ExecutionContext repositoryContext,
-            final Map<String, Object> sessionAttributes) {
-
-        if (credentials == null) {
-            return null;
-        }
-
-        return repositoryContext.with(new ShiroSecurityContext(SecurityUtils.getSubject()));
-    }
+public class ShiroAuthenticationProvider {
 
 }

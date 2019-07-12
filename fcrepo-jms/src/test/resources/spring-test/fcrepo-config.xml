@@ -7,7 +7,6 @@
     http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
     http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd">
 
-    <!-- Context that supports the actual ModeShape JCR itself -->
 
     <context:component-scan base-package="org.fcrepo"/>
     
@@ -16,12 +15,6 @@
       <property name="monitorForChanges" value="false" />
     </bean>
     
-    <bean name="modeshapeRepofactory"
-        class="org.fcrepo.kernel.modeshape.spring.ModeShapeRepositoryFactoryBean"
-        p:repositoryConfiguration="${fcrepo.modeshape.configuration:config/testing/repository.json}"/>
-
-    <bean class="org.modeshape.jcr.ModeShapeEngine" init-method="start"/>
-
     <bean id="connectionManager" class="org.apache.http.impl.conn.PoolingHttpClientConnectionManager" />
 
 </beans>

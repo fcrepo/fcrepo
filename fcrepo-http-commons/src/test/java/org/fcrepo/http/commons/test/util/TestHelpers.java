@@ -17,12 +17,12 @@
  */
 package org.fcrepo.http.commons.test.util;
 
-import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
-import static org.apache.http.entity.ContentType.parse;
 import static java.net.URI.create;
 import static javax.ws.rs.core.UriBuilder.fromUri;
-import static org.junit.Assert.assertNotNull;
+import static org.apache.http.entity.ContentType.parse;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -30,25 +30,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.net.URI;
-import java.security.Principal;
-
-import javax.jcr.Session;
-import javax.jcr.Workspace;
 import javax.servlet.ServletContext;
-import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.http.HttpEntity;
+import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.Lang;
-
-import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.kernel.api.services.functions.ConfigurableHierarchicalSupplier;
-
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-
-import org.apache.jena.rdf.model.Model;
 
 /**
  * <p>Abstract TestHelpers class.</p>
@@ -84,27 +74,7 @@ public abstract class TestHelpers {
         return ui;
     }
 
-    public static Session mockSession(final AbstractResource testObj) {
 
-        final SecurityContext mockSecurityContext = mock(SecurityContext.class);
-        final Principal mockPrincipal = mock(Principal.class);
-
-        final String mockUser = "testuser";
-
-        final Session mockSession = mock(Session.class);
-        when(mockSession.getUserID()).thenReturn(mockUser);
-        when(mockSecurityContext.getUserPrincipal()).thenReturn(mockPrincipal);
-        when(mockPrincipal.getName()).thenReturn(mockUser);
-
-        final Workspace mockWorkspace = mock(Workspace.class);
-        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
-        when(mockWorkspace.getName()).thenReturn("default");
-
-        setField(testObj, "uriInfo", getUriInfoImpl());
-        setField(testObj, "pidMinter", new ConfigurableHierarchicalSupplier());
-        return mockSession;
-
-    }
 
     private static String getRdfSerialization(final HttpEntity entity) {
         final Lang lang = contentTypeToLang(parse(entity.getContentType().getValue()).getMimeType());

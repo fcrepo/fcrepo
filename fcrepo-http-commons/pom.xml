@@ -12,12 +12,10 @@
 
   <properties>
     <osgi.import.packages>
-      org.fcrepo.kernel.api,
-      org.fcrepo.kernel.modeshape,
+      org.fcrepo.kernel.api
 
       javax.annotation,
       javax.inject,
-      javax.jcr,
       javax.servlet.http,
       javax.ws.rs.*,
       
@@ -31,7 +29,6 @@
       org.glassfish.hk2.*,
       org.glassfish.jersey.*,
       org.jvnet.hk2.annotations,
-      org.modeshape.jcr.*,
 
       org.springframework.beans.*,
       org.springframework.context,
@@ -47,39 +44,25 @@
 
   <dependencies>
     <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-kernel-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>org.apache.jena</groupId>
+      <artifactId>apache-jena-libs</artifactId>
+      <type>pom</type>
+    </dependency>
+
     <dependency>
       <groupId>org.glassfish.jersey.core</groupId>
       <artifactId>jersey-server</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-kernel-modeshape</artifactId>
-      <version>${project.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>ch.qos.logback</groupId>
-          <artifactId>logback-classic</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.jboss.narayana.jta</groupId>
-          <artifactId>narayana-jta</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.fcrepo</groupId>
-          <artifactId>modeshape-jcr</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.springframework</groupId>
-          <artifactId>spring-beans</artifactId>
-        </exclusion>
-        <exclusion>
-          <artifactId>snappy-java</artifactId>
-          <groupId>org.xerial.snappy</groupId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -191,10 +174,6 @@
       <groupId>javax.servlet</groupId>
       <artifactId>javax.servlet-api</artifactId>
     </dependency>
-    <dependency>
-      <groupId>javax.jcr</groupId>
-      <artifactId>jcr</artifactId>
-    </dependency>
 
     <dependency>
       <groupId>org.apache.velocity</groupId>
@@ -259,16 +238,6 @@
         <exclusion>
           <groupId>commons-beanutils</groupId>
           <artifactId>commons-beanutils</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.fcrepo</groupId>
-      <artifactId>modeshape-jcr</artifactId>
-      <exclusions>
-        <exclusion>
-          <artifactId>snappy-java</artifactId>
-          <groupId>org.xerial.snappy</groupId>
         </exclusion>
       </exclusions>
     </dependency>

@@ -44,7 +44,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import javax.annotation.PostConstruct;
-import javax.jcr.PathNotFoundException;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
@@ -217,13 +216,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
             try {
                 return translator().convert(translator().toDomain(values.get("path")));
             } catch (final RuntimeException e) {
-                if (e.getCause() instanceof PathNotFoundException) {
-                    //there is at least one case (ie Time Map endpoints - aka /fcr:versions) where the underlying jcr
-                    // node will not exist while the end point is visible to the user.
-                    return null;
-                } else {
-                    throw e;
-                }
+                throw e;
             }
         }
         return null;

@@ -27,8 +27,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import javax.annotation.PostConstruct;
-import javax.jcr.ItemExistsException;
-import javax.jcr.PathNotFoundException;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.HeaderParam;
@@ -42,6 +40,8 @@ import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.http.commons.domain.COPY;
 import org.fcrepo.http.commons.domain.MOVE;
+import org.fcrepo.kernel.api.exception.ItemExistsException;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.slf4j.Logger;

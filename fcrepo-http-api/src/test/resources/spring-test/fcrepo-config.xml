@@ -19,22 +19,12 @@
   <context:property-placeholder />
   <context:component-scan base-package="org.fcrepo"/>
 
-  <bean name="modeshapeRepofactory"
-      class="org.fcrepo.kernel.modeshape.spring.ModeShapeRepositoryFactoryBean"
-      p:repositoryConfiguration="${fcrepo.modeshape.configuration:test_repository.json}"
-      p:serverManagedPropertiesMode="strict" />
-
-  <bean class="org.modeshape.jcr.ModeShapeEngine" init-method="start"/>
-
   <bean id="connectionManager" class="org.apache.http.impl.conn.PoolingHttpClientConnectionManager"/>
 
-
-  <bean class="org.fcrepo.http.commons.session.SessionFactory"/>
+ <bean class="org.fcrepo.http.commons.session.SessionFactory"/>
 
   <!-- Identifier translation chain -->
   <util:list id="translationChain" value-type="org.fcrepo.kernel.api.identifiers.InternalIdentifierConverter">
-    <bean class="org.fcrepo.kernel.modeshape.identifiers.HashConverter"/>
-    <bean class="org.fcrepo.kernel.modeshape.identifiers.NamespaceConverter"/>
   </util:list>
   
   <!-- Configuration of namespace prefixes -->
@@ -62,16 +52,6 @@
 
   <!-- supports event management, including the internal
     event bus (fedoraInternalEventBus) -->
-
-  <!-- listener that moves JCR Events to the Fedora internal event bus -->
-  <bean class="org.fcrepo.kernel.modeshape.observer.SimpleObserver"/>
-
-  <!-- used by bean above to filter which events get put on the bus -->
-  <bean name="fedoraEventFilter" class="org.fcrepo.kernel.modeshape.observer.DefaultFilter"/>
-
-  <!-- used by observer bean to map JCR events into Fedora events -->
-  <bean name="fedoraEventMapper" class="org.fcrepo.kernel.modeshape.observer.eventmappings.AllNodeEventsOneEvent"/>
-  
   <!-- Fedora's lightweight internal event bus. Currently memory-resident.-->
   <bean name="fedoraInternalEventBus" class="com.google.common.eventbus.EventBus"/>
 </beans>

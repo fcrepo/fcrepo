@@ -13,7 +13,6 @@
 
     <!-- Master context for fcrepo4. -->
 
-    <!-- Context that supports the actual ModeShape JCR itself -->
     <context:property-placeholder/>
     <context:annotation-config/>
     <context:component-scan base-package="org.fcrepo"/>
@@ -23,12 +22,6 @@
                         MODESHAPE configuration
                  ********************************** -->
         
-    <!-- Authentication Not Enabled -->
-    <!--
-    <bean name="modeshapeRepofactory"
-        class="org.fcrepo.kernel.modeshape.spring.ModeShapeRepositoryFactoryBean"
-        p:repositoryConfiguration="${fcrepo.modeshape.configuration}" />
-    -->
     <!-- To use Authentication:
       1. Comment out the above bean definition.
       2. Uncomment this bean definition.
@@ -36,11 +29,6 @@
       4. Uncomment the "authenticationProvider" bean definition below.
     -->
 
-    <bean name="modeshapeRepofactory"
-        class="org.fcrepo.kernel.modeshape.spring.ModeShapeRepositoryFactoryBean"
-        p:repositoryConfiguration="${fcrepo.modeshape.configuration}"
-        depends-on="authenticationProvider"/>
-  
     <bean name="authenticationProvider" class="org.fcrepo.auth.common.ShiroAuthenticationProvider"/>
         
 
@@ -164,11 +152,6 @@
           https://gitlab.amherst.edu/acdc/acrepo-apple-trees.
           NOTE: It is recommended to use the UUIDPidMinter above with this converter.
       -->
-      <!--
-        <bean class="edu.amherst.acdc.orchard.AppleTreeConverter"/>
-      -->
-        <bean class="org.fcrepo.kernel.modeshape.identifiers.HashConverter"/>
-        <bean class="org.fcrepo.kernel.modeshape.identifiers.NamespaceConverter"/>
     </util:list>
 
 
@@ -211,15 +194,6 @@
     <!-- translates events into JMS header-only format-->
     <bean class="org.fcrepo.jms.DefaultMessageFactory"/>
 
-    <!-- listener that moves JCR Events to the Fedora internal event bus -->
-    <bean class="org.fcrepo.kernel.modeshape.observer.SimpleObserver"/>
-
-    <!-- used by bean above to filter which events get put on the bus -->
-    <bean name="fedoraEventFilter" class="org.fcrepo.kernel.modeshape.observer.DefaultFilter"/>
-
-    <!-- used by observer bean to map JCR events into Fedora events -->
-    <bean name="fedoraEventMapper" class="org.fcrepo.kernel.modeshape.observer.eventmappings.AllNodeEventsOneEvent"/>
-
     <!-- Fedora's lightweight internal event bus. Currently memory-resident.-->
     <bean name="fedoraInternalEventBus" class="com.google.common.eventbus.EventBus"/>
 
@@ -248,9 +222,6 @@
     <task:executor id="taskExecutor" pool-size="1" />
     <task:annotation-driven executor="taskExecutor" scheduler="taskScheduler" />
 
-
-    <!-- Start the Modeshape JCR -->
-    <bean class="org.modeshape.jcr.ModeShapeEngine" init-method="start"/>
 
     <bean id="connectionManager" class="org.apache.http.impl.conn.PoolingHttpClientConnectionManager" />
 

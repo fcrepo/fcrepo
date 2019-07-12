@@ -17,20 +17,20 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-
-import javax.jcr.RepositoryException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
-import javax.ws.rs.ext.Providers;
-
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
+
+import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.ext.Providers;
+
+import org.fcrepo.kernel.api.exception.RepositoryException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
 
 /**
  * @author cabeer

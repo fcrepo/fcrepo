@@ -17,6 +17,7 @@
  */
 package org.fcrepo.integration.http.api;
 
+import static java.time.Duration.ofMinutes;
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
@@ -35,9 +36,6 @@ import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.http.util.EntityUtils.consume;
 import static org.apache.jena.vocabulary.DC.title;
-import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.DEFAULT_TIMEOUT;
-import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.TIMEOUT_SYSTEM_PROPERTY;
-import static org.fcrepo.kernel.modeshape.services.BatchServiceImpl.REAP_INTERVAL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -63,7 +61,14 @@ import org.junit.Test;
  *
  * @author awoods
  */
+@Ignore //TODO Fix these tests
 public class FedoraTransactionsIT extends AbstractResourceIT {
+
+    public static final long REAP_INTERVAL = 1000;
+
+    public static final String TIMEOUT_SYSTEM_PROPERTY = "fcrepo.session.timeout";
+
+    public static final String DEFAULT_TIMEOUT = Long.toString(ofMinutes(3).toMillis());
 
     @Test
     public void testCreateTransaction() throws IOException {

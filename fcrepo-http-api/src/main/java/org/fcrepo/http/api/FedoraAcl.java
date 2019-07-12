@@ -45,7 +45,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import javax.jcr.ItemNotFoundException;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
@@ -73,6 +72,7 @@ import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
+import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
@@ -185,7 +185,7 @@ public class FedoraAcl extends ContentExposingResource {
                         CONFLICT);
             }
 
-            throw new ItemNotFoundException();
+            throw new ItemNotFoundException("not found");
         }
 
         final AcquiredLock lock = lockManager.lockForWrite(aclResource.getPath(), session.getFedoraSession(),
@@ -261,7 +261,7 @@ public class FedoraAcl extends ContentExposingResource {
                 return ok(output).build();
             }
 
-            throw new ItemNotFoundException();
+            throw new ItemNotFoundException("not found");
         }
 
         checkCacheControlHeaders(request, servletResponse, aclResource, session);
@@ -305,7 +305,7 @@ public class FedoraAcl extends ContentExposingResource {
                             CONFLICT);
                 }
 
-                throw new ItemNotFoundException();
+                throw new ItemNotFoundException("not found");
             }
 
             return noContent().build();

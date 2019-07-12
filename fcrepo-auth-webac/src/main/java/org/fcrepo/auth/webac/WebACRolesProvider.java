@@ -42,10 +42,8 @@ import static org.fcrepo.auth.webac.URIConstants.WEBAC_NAMESPACE_VALUE;
 import static org.fcrepo.http.api.FedoraAcl.getDefaultAcl;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
-import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
-import static org.fcrepo.kernel.modeshape.utils.FedoraSessionUserUtil.USER_AGENT_BASE_URI_PROPERTY;
-import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
 import static org.slf4j.LoggerFactory.getLogger;
+
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -60,19 +58,16 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
-import javax.jcr.Node;
-import javax.jcr.RepositoryException;
 
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.exception.RepositoryException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.NodeService;
-import org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter;
-import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 import org.slf4j.Logger;
 
 /**
@@ -83,11 +78,11 @@ public class WebACRolesProvider {
 
     public static final String GROUP_AGENT_BASE_URI_PROPERTY = "fcrepo.auth.webac.groupAgent.baseUri";
 
+    public static final String USER_AGENT_BASE_URI_PROPERTY = "fcrepo.auth.webac.userAgent.baseUri";
+
     private static final Logger LOGGER = getLogger(WebACRolesProvider.class);
 
     private static final String FEDORA_INTERNAL_PREFIX = "info:fedora";
-
-    private static final String JCR_VERSIONABLE_UUID_PROPERTY = "jcr:versionableUuid";
 
     private static final org.apache.jena.graph.Node RDF_TYPE_NODE = createURI(RDF_NAMESPACE + "type");
     private static final org.apache.jena.graph.Node VCARD_GROUP_NODE = createURI(VCARD_GROUP_VALUE);
@@ -99,16 +94,14 @@ public class WebACRolesProvider {
     @Inject
     private SessionFactory sessionFactory;
 
-    private final NodeResourceConverter nodeConverter = NodeResourceConverter.nodeConverter;
-
     /**
      * Get the roles assigned to this Node.
      *
-     * @param node the subject Node
+     * @param resource the subject resource
      * @return a set of roles for each principal
      */
-    public Map<String, Collection<String>> getRoles(final Node node) {
-        return getAgentRoles(nodeConverter.convert(node));
+    public Map<String, Collection<String>> getRoles(final FedoraResource resource) {
+        return getAgentRoles(resource);
     }
 
     /**
@@ -223,8 +216,8 @@ public class WebACRolesProvider {
      */
     private List<String> dereferenceAgentGroups(final Collection<String> agentGroups) {
         final FedoraSession internalSession = sessionFactory.getInternalSession();
-        final IdentifierConverter<Resource, FedoraResource> translator =
-                new DefaultIdentifierTranslator(getJcrSession(internalSession));
+        //TODO figure out where the translator should be coming from.
+        final IdentifierConverter<Resource, FedoraResource> translator = null;
 
         final List<String> members = agentGroups.stream().flatMap(agentGroup -> {
             if (agentGroup.startsWith(FEDORA_INTERNAL_PREFIX)) {
@@ -321,8 +314,8 @@ public class WebACRolesProvider {
 
         final FedoraSession internalSession = sessionFactory.getInternalSession();
         final List<WebACAuthorization> authorizations = new ArrayList<>();
-        final IdentifierConverter<Resource, FedoraResource> translator =
-                new DefaultIdentifierTranslator(getJcrSession(internalSession));
+        //TODO figure out where the translator should be coming from
+        final IdentifierConverter<Resource, FedoraResource> translator = null;
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("ACL: {}", aclResource.getPath());
@@ -407,7 +400,7 @@ public class WebACRolesProvider {
                 }
             }
 
-            if (getJcrNode(resource).getDepth() == 0) {
+            if (resource.getAcl() == null) {
                 LOGGER.debug("No ACLs defined on this node or in parent hierarchy");
                 return Optional.empty();
             } else {
