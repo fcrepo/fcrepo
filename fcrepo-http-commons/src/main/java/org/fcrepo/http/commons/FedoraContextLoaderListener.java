@@ -43,11 +43,9 @@ public class FedoraContextLoaderListener extends ContextLoaderListener {
                     "=====================================================================\n" +
                     "=====================================================================\n" +
                     "---------- FEDORA CONFIGURATION ERROR ----------\n" +
-                    "If the above stacktrace mentions 'fcrepo.modeshape.configuration'\n" +
-                    "You must configure a 'repository.json'\n" +
                     "\n" +
                     "See documentation specific to your version of Fedora\n" +
-                    "https://wiki.duraspace.org/display/FEDORA5x/Application+Configuration\n" +
+                    "https://wiki.duraspace.org/display/FEDORA6x/Application+Configuration\n" +
                     "\n" +
                     "=====================================================================\n" +
                     "=====================================================================\n";

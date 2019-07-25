@@ -13,16 +13,8 @@
 
   <!-- Master context for the test application. -->
   
-  <!-- Context that supports the actual ModeShape JCR itself -->
-
   <context:property-placeholder />
   <context:annotation-config/>
-
-  <bean name="modeshapeRepofactory"
-        class="org.fcrepo.kernel.modeshape.spring.ModeShapeRepositoryFactoryBean"
-        p:repositoryConfiguration="${fcrepo.modeshape.configuration:test_repository.json}"/>
-
-  <bean class="org.modeshape.jcr.ModeShapeEngine" init-method="start"/>
 
   <bean id="connectionManager" class="org.apache.http.impl.conn.PoolingHttpClientConnectionManager"/>
   
@@ -30,8 +22,6 @@
 
   <!-- Identifier translation chain -->
   <util:list id="translationChain" value-type="org.fcrepo.kernel.api.identifiers.InternalIdentifierConverter">
-      <bean class="org.fcrepo.kernel.modeshape.identifiers.HashConverter"/>
-    <bean class="org.fcrepo.kernel.modeshape.identifiers.NamespaceConverter"/>
   </util:list>
 
   <context:annotation-config/>

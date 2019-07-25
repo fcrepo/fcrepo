@@ -24,23 +24,21 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import java.util.Map;
 
+import java.util.Map;
 import javax.ws.rs.core.UriInfo;
 
+import org.apache.jena.rdf.model.Resource;
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-import org.fcrepo.kernel.api.RdfStream;
-import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.context.ApplicationContext;
-
-import org.apache.jena.rdf.model.Resource;
 
 /**
  * <p>HttpTripleUtilTest class.</p>
@@ -69,7 +67,7 @@ public class HttpTripleUtilTest {
     private ApplicationContext mockContext;
 
     @Mock
-    private FedoraResourceImpl mockResource;
+    private FedoraResource mockResource;
 
     @Before
     public void setUp() {

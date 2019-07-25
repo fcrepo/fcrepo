@@ -17,61 +17,30 @@
  */
 package org.fcrepo.http.commons.api.rdf;
 
-import static com.google.common.collect.ImmutableList.of;
-import static java.util.Collections.singleton;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.replaceOnce;
-import static org.apache.jena.rdf.model.ResourceFactory.createResource;
-import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.CONTAINER_WEBAC_ACL;
-import static org.fcrepo.kernel.api.RdfLexicon.LDPCV_TIME_MAP;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
-import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_DESCRIPTION;
-import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
-import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
-import static org.fcrepo.kernel.modeshape.services.AbstractService.encodePath;
-import static org.fcrepo.kernel.modeshape.services.AbstractService.decodePath;
-import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getClosestExistingAncestor;
-import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.validatePath;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.springframework.web.context.ContextLoader.getCurrentWebApplicationContext;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.jcr.Node;
-import javax.jcr.PathNotFoundException;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
 import javax.ws.rs.core.UriBuilder;
 
+import com.google.common.base.Converter;
+import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.FedoraSession;
-import org.fcrepo.kernel.api.exception.IdentifierConversionException;
-import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.exception.TombstoneException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
-import org.fcrepo.kernel.modeshape.TombstoneImpl;
-import org.fcrepo.kernel.modeshape.identifiers.HashConverter;
-import org.fcrepo.kernel.modeshape.identifiers.NamespaceConverter;
-
-import org.apache.jena.rdf.model.Resource;
 import org.glassfish.jersey.uri.UriTemplate;
 import org.slf4j.Logger;
 import org.springframework.context.ApplicationContext;
-
-import com.google.common.base.Converter;
-import com.google.common.collect.Lists;
 
 /**
  * Convert between Jena Resources and JCR Nodes using a JAX-RS UriBuilder to mediate the
@@ -116,8 +85,6 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
         this.uriBuilder = uriBuilder;
         this.batch = session.isBatchSession();
         this.uriTemplate = new UriTemplate(uriBuilder.toTemplate());
-
-        resetTranslationChain();
     }
 
     private UriBuilder uriBuilder() {
@@ -126,227 +93,32 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
 
     @Override
     protected FedoraResource doForward(final Resource resource) {
-        final Map<String, String> values = new HashMap<>();
-        final String path = asString(resource, values);
-        final Session jcrSession = getJcrSession(session);
-        final String encodedPath = encodePath(path, session);
-        try {
-            if (path != null) {
-                final Node node = getNode(encodedPath);
-
-                final boolean metadata = values.containsKey("path")
-                        && values.get("path").contains("/" + FCR_METADATA);
-
-                final FedoraResource fedoraResource = nodeConverter.convert(node);
-
-                if (!metadata && fedoraResource instanceof NonRdfSourceDescription) {
-                    return fedoraResource.getDescribedResource();
-                }
-                return fedoraResource;
-            }
-            throw new IdentifierConversionException("Asked to translate a resource " + resource
-                    + " that doesn't match the URI template");
-        } catch (final RepositoryException e) {
-            validatePath(jcrSession, encodedPath);
-
-            if ( e instanceof PathNotFoundException ) {
-                try {
-                    final Node preexistingNode = getClosestExistingAncestor(jcrSession, path);
-                    if (TombstoneImpl.hasMixin(preexistingNode)) {
-                        throw new TombstoneException(new TombstoneImpl(preexistingNode));
-                    }
-                } catch (final RepositoryException inner) {
-                    LOGGER.debug("Error checking for parent tombstones", inner);
-                }
-            }
-            throw new RepositoryRuntimeException(e);
-        }
+        //@TODO Implement this
+        return null;
     }
 
     @Override
     protected Resource doBackward(final FedoraResource resource) {
-        return toDomain(doBackwardPathOnly(resource));
+            //@TODO Implement this
+            return null;
     }
 
     @Override
     public boolean inDomain(final Resource resource) {
-        final Map<String, String> values = new HashMap<>();
-
-        return uriTemplate.match(resource.getURI(), values) && values.containsKey("path") ||
-            isRootWithoutTrailingSlash(resource);
+        //@TODO Implement this
+        return false;
     }
 
     @Override
     public Resource toDomain(final String path) {
-
-        final String realPath;
-        if (path == null) {
-            realPath = "";
-        } else if (path.startsWith("/")) {
-            realPath = path.substring(1);
-        } else {
-            realPath = path;
-        }
-
-        final String decodedPath = decodePath(realPath, session);
-
-        final UriBuilder uri = uriBuilder();
-
-        if (decodedPath.contains("#")) {
-
-            final String[] split = decodedPath.split("#", 2);
-
-            uri.resolveTemplate("path", split[0], false);
-            uri.fragment(split[1]);
-        } else {
-            uri.resolveTemplate("path", decodedPath, false);
-
-        }
-        return createResource(uri.build().toString());
+        //@TODO Implement this
+        return null;
     }
 
     @Override
     public String asString(final Resource resource) {
-        final Map<String, String> values = new HashMap<>();
-
-        return asString(resource, values);
-    }
-
-    /**
-     * Convert the incoming Resource to a JCR path (but don't attempt to load the node).
-     *
-     * @param resource Jena Resource to convert
-     * @param values a map that will receive the matching URI template variables for future use.
-     * @return String of JCR path
-     */
-    private String asString(final Resource resource, final Map<String, String> values) {
-        if (uriTemplate.match(resource.getURI(), values) && values.containsKey("path")) {
-            String path = "/" + values.get("path");
-
-            final Matcher matcher = FORWARD_COMPONENT_PATTERN.matcher(path);
-
-            if (matcher.matches()) {
-                final boolean metadata = matcher.group(1) != null;
-                final boolean versioning = matcher.group(2) != null;
-                final boolean webacAcl = matcher.group(4) != null;
-
-                if (versioning) {
-                    path = replaceOnce(path, "/" + FCR_VERSIONS, "/" + LDPCV_TIME_MAP);
-                }
-
-                if (metadata) {
-                    path = replaceOnce(path, "/" + FCR_METADATA, "/" + FEDORA_DESCRIPTION);
-                }
-
-                if (webacAcl) {
-                    path = replaceOnce(path, "/" + FCR_ACL, "/" + CONTAINER_WEBAC_ACL);
-                }
-            }
-
-            path = forward.convert(path);
-
-            if (path == null) {
-                return null;
-            }
-
-            try {
-                path = URLDecoder.decode(path, "UTF-8");
-            } catch (final UnsupportedEncodingException e) {
-                LOGGER.debug("Unable to URL-decode path " + e + " as UTF-8", e);
-            }
-
-            if (path.isEmpty()) {
-                return "/";
-            }
-
-            // Validate path
-            if (path.contains("//")) {
-                throw new InvalidResourceIdentifierException("Path contains empty element! " + path);
-            }
-            return path;
-        }
-
-        if (isRootWithoutTrailingSlash(resource)) {
-            return "/";
-        }
-
+        //@TODO Implement this
         return null;
-    }
-
-
-    private Node getNode(final String path) throws RepositoryException {
-        try {
-            return getJcrSession(session).getNode(path);
-        } catch (final IllegalArgumentException ex) {
-            throw new InvalidResourceIdentifierException("Illegal path: " + path);
-        }
-    }
-
-    /**
-     * Get only the resource path to this resource, before embedding it in a full URI
-     * @param resource with desired path
-     * @return path
-     */
-    private String doBackwardPathOnly(final FedoraResource resource) {
-
-        final String path = reverse.convert(resource.getPath());
-        if (path == null) {
-            throw new RepositoryRuntimeException("Unable to process reverse chain for resource " + resource);
-        }
-
-        return convertToExternalPath(path);
-    }
-
-    /**
-     * Converts internal path segments to their external formats.
-     * @param path the internal path
-     * @return the external path
-     */
-    public static  String convertToExternalPath(final String path) {
-        String newPath = replaceOnce(path, "/" + CONTAINER_WEBAC_ACL, "/" + FCR_ACL);
-
-        newPath = replaceOnce(newPath, "/" + LDPCV_TIME_MAP, "/" + FCR_VERSIONS);
-
-        newPath = replaceOnce(newPath, "/" + FEDORA_DESCRIPTION, "/" + FCR_METADATA);
-
-        return newPath;
-    }
-
-    protected void resetTranslationChain() {
-        if (translationChain == null) {
-            translationChain = getTranslationChain();
-            final List<Converter<String, String>> newChain =
-                    new ArrayList<>(singleton(new TransactionIdentifierConverter(session, batch)));
-            newChain.addAll(translationChain);
-            setTranslationChain(newChain);
-        }
-    }
-
-    private void setTranslationChain(final List<Converter<String, String>> chained) {
-
-        translationChain = chained;
-
-        for (final Converter<String, String> t : translationChain) {
-            forward = forward.andThen(t);
-        }
-        for (final Converter<String, String> t : Lists.reverse(translationChain)) {
-            reverse = reverse.andThen(t.reverse());
-        }
-    }
-
-
-    private static final List<Converter<String, String>> minimalTranslationChain =
-            of(new NamespaceConverter(), new HashConverter());
-
-    protected List<Converter<String,String>> getTranslationChain() {
-        final ApplicationContext context = getApplicationContext();
-        if (context != null) {
-            @SuppressWarnings("unchecked")
-            final List<Converter<String,String>> tchain =
-                    getApplicationContext().getBean("translationChain", List.class);
-            return tchain;
-        }
-        return minimalTranslationChain;
     }
 
     protected ApplicationContext getApplicationContext() {
