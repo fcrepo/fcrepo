@@ -24,7 +24,6 @@ import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -32,10 +31,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.jcr.NamespaceRegistry;
-import javax.jcr.RepositoryException;
-import javax.jcr.Session;
-import javax.jcr.Workspace;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 
@@ -43,7 +38,6 @@ import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 
@@ -60,21 +54,9 @@ public class RdfStreamProviderTest {
 
     private final RdfStreamProvider testProvider = new RdfStreamProvider();
 
-    @Mock
-    private Session mockSession;
-
-    @Mock
-    private Workspace mockWorkspace;
-
-    @Mock
-    private NamespaceRegistry mockNamespaceRegistry;
 
     @Before
-    public void setUp() throws RepositoryException {
-        when(mockSession.getWorkspace()).thenReturn(mockWorkspace);
-        when(mockWorkspace.getNamespaceRegistry()).thenReturn(
-                mockNamespaceRegistry);
-        when(mockNamespaceRegistry.getPrefixes()).thenReturn(new String[] {});
+    public void setUp() throws Exception {
     }
 
     @Test

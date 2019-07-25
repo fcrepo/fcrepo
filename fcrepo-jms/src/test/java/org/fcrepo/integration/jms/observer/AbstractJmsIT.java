@@ -35,7 +35,6 @@ import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_DELETION;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_MODIFICATION;
 import static org.fcrepo.kernel.api.observer.OptionalValues.BASE_URL;
 import static org.fcrepo.kernel.api.observer.OptionalValues.USER_AGENT;
-import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.ByteArrayInputStream;
@@ -56,11 +55,11 @@ import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.FedoraRepository;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.ContainerService;
-import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
 
 import org.junit.After;
 import org.junit.Before;
@@ -166,7 +165,8 @@ abstract class AbstractJmsIT implements MessageListener {
         final FedoraSession session = repository.login();
         session.addSessionData(BASE_URL, TEST_BASE_URL);
         session.addSessionData(USER_AGENT, TEST_USER_AGENT);
-        final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator(getJcrSession(session));
+        final IdentifierConverter<Resource,FedoraResource>
+            subjects = null;
 
         try {
             final FedoraResource resource1 = containerService.findOrCreate(session, testMeta);
@@ -222,7 +222,8 @@ abstract class AbstractJmsIT implements MessageListener {
         final String uri2 = "/testInboundReference-" + randomUUID().toString();
 
         final FedoraSession session = repository.login();
-        final DefaultIdentifierTranslator subjects = new DefaultIdentifierTranslator(getJcrSession(session));
+        final IdentifierConverter<Resource,FedoraResource>
+            subjects = null;
         session.addSessionData(BASE_URL, TEST_BASE_URL);
         session.addSessionData(USER_AGENT, TEST_USER_AGENT);
         try {

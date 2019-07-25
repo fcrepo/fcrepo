@@ -14,15 +14,7 @@
 
   <context:component-scan base-package="org.fcrepo" />
 
-  <!-- Context that supports the actual ModeShape JCR itself -->
-  <bean name="modeshapeRepofactory" class="org.fcrepo.kernel.modeshape.spring.ModeShapeRepositoryFactoryBean"
-    depends-on="authenticationProvider">
-    <property name="repositoryConfiguration" value="${fcrepo.modeshape.configuration:repository-test.json}" />
-  </bean>
-
   <bean name="authenticationProvider" class="org.fcrepo.auth.common.ShiroAuthenticationProvider"/>
-
-  <bean class="org.modeshape.jcr.ModeShapeEngine" init-method="start"/>
 
   <bean id="connectionManager" class="org.apache.http.impl.conn.PoolingHttpClientConnectionManager"/>
   
@@ -32,8 +24,6 @@
 
   <!-- Identifier translation chain -->
   <util:list id="translationChain" value-type="org.fcrepo.kernel.api.identifiers.InternalIdentifierConverter">
-    <bean class="org.fcrepo.kernel.modeshape.identifiers.HashConverter"/>
-    <bean class="org.fcrepo.kernel.modeshape.identifiers.NamespaceConverter"/>
   </util:list>
   
   <!-- Configuration of namespace prefixes -->

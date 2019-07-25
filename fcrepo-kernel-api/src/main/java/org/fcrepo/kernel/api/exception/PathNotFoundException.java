@@ -15,16 +15,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.auth.common;
-
+package org.fcrepo.kernel.api.exception;
 
 
 /**
- * This authentication provider will always authenticate, giving
- * complete access privileges to the session.
+ * Indicates the path was not found in the repository.
  *
- * @author Gregory Jansen
+ * @author dbernstein
  */
-public class BypassSecurityServletAuthenticationProvider {
+public class PathNotFoundException extends RepositoryRuntimeException {
+
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * Ordinary constructor
+     *
+     * @param msg the message
+     */
+    public PathNotFoundException(final String msg) {
+        super(msg);
+    }
 
 }

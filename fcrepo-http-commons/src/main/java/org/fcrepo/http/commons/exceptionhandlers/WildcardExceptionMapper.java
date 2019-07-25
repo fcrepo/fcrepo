@@ -22,7 +22,6 @@ import static javax.ws.rs.core.Response.serverError;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 
-import javax.jcr.RepositoryException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
@@ -54,10 +53,6 @@ public class WildcardExceptionMapper implements
                     .toResponse((SessionMissingException) e.getCause());
         }
 
-        if ( e.getCause() instanceof RepositoryException) {
-            return new RepositoryExceptionMapper()
-                    .toResponse((RepositoryException)e.getCause());
-        }
 
         LOGGER.error("Exception intercepted by WildcardExceptionMapper: {}\n", e.getMessage());
         debugException(this, e, LOGGER);

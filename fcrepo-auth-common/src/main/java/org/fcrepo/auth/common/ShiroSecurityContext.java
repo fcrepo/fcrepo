@@ -20,14 +20,13 @@ package org.fcrepo.auth.common;
 import org.apache.http.auth.BasicUserPrincipal;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.Subject;
-import org.modeshape.jcr.security.SecurityContext;
 
 /**
  * Security context that is simply a thin wrapper around a Shiro Subject.
  * 
  * @author peichman
  */
-public class ShiroSecurityContext implements SecurityContext {
+public class ShiroSecurityContext  {
 
     private Subject user;
 
@@ -53,33 +52,4 @@ public class ShiroSecurityContext implements SecurityContext {
             }
         }
     }
-
-    @Override
-    public boolean isAnonymous() {
-        return !user.isAuthenticated();
-    }
-
-    @Override
-    public String getUserName() {
-        return userName;
-    }
-
-    @Override
-    public boolean hasRole(final String roleName) {
-        // Under this custom PEP regime, all users have modeshape read and write
-        // roles.
-        if ("read".equals(roleName)) {
-            return true;
-        } else if ("write".equals(roleName)) {
-            return true;
-        } else {
-            return "admin".equals(roleName);
-        }
-    }
-
-    @Override
-    public void logout() {
-        // this method intentionally does nothing
-    }
-
 }

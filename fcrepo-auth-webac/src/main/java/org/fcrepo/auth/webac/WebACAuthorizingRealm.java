@@ -34,8 +34,6 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.inject.Inject;
-import javax.jcr.Node;
-import javax.jcr.PathNotFoundException;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriBuilder;
@@ -55,11 +53,11 @@ import org.fcrepo.http.api.FedoraLdp;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.http.commons.session.SessionFactory;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.RepositoryConfigurationException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
 import org.slf4j.Logger;
 /**
  * Authorization-only realm that performs authorization checks using WebAC ACLs stored in a Fedora repository. It
@@ -194,10 +192,8 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
         final FedoraResource fedoraResource = getResourceOrParentFromPath(path);
 
         if (fedoraResource != null) {
-            final Node node = ((FedoraResourceImpl) fedoraResource).getNode();
-
             // check ACL for the request URI and get a mapping of agent => modes
-            roles = rolesProvider.getRoles(node);
+            roles = rolesProvider.getRoles(fedoraResource);
         }
         return roles;
     }

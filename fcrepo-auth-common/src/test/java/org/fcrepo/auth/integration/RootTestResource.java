@@ -21,15 +21,13 @@ import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.http.commons.session.HttpSession;
+import org.fcrepo.kernel.api.exception.RepositoryException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.modeshape.jcr.api.JcrTools;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
 import javax.inject.Inject;
-import javax.jcr.Node;
-import javax.jcr.RepositoryException;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -38,7 +36,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 
-import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -81,9 +78,8 @@ public class RootTestResource extends AbstractResource {
     }
 
     private Response doRequest(final String path) throws RepositoryException {
-        final JcrTools jcrTools = new JcrTools();
-        final Node node = jcrTools.findOrCreateNode(getJcrSession(session.getFedoraSession()), path);
-        final URI location = uriInfo.getBaseUriBuilder().path(node.getPath()).build();
+
+        final URI location = uriInfo.getBaseUriBuilder().path(path).build();
         return Response.created(location).build();
     }
 

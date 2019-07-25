@@ -34,6 +34,7 @@ import org.apache.http.annotation.Contract;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -42,6 +43,7 @@ import org.junit.Test;
  * @author awoods
  * @author ajs6f
  */
+@Ignore //TODO Fix these tests
 public class FedoraNodesIT extends AbstractResourceIT {
 
     @Test

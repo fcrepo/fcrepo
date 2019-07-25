@@ -25,7 +25,6 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import javax.jcr.Credentials;
 import javax.servlet.http.HttpServletRequest;
 
 import org.fcrepo.kernel.api.FedoraRepository;
@@ -79,7 +78,7 @@ public class SessionFactoryTest {
     public void testGetSessionWithNullPath() {
         when(mockRequest.getPathInfo()).thenReturn(null);
         when(mockRequest.getContextPath()).thenReturn("");
-        when(mockRepo.login(any(Credentials.class))).thenReturn(mockSession);
+        when(mockRepo.login(any(Object.class))).thenReturn(mockSession);
         testObj.getSession(mockRequest);
         verify(mockRepo).login(isNull());
     }

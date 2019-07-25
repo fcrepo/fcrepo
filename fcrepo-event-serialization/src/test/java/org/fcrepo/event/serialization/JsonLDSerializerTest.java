@@ -20,12 +20,8 @@ package org.fcrepo.event.serialization;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.RdfLexicon.PROV_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.fcrepo.kernel.modeshape.FedoraResourceImpl.CONTAINER_WEBAC_ACL;
-import static org.fcrepo.kernel.api.RdfLexicon.LDPCV_TIME_MAP;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -63,22 +59,6 @@ public class JsonLDSerializerTest extends FedoraEventSerializerTestBase {
     @Test
     public void testJsonSerializationAsJson() throws IOException {
         testJsonSerializationAsJson(path, path);
-    }
-
-    @Test
-    public void testJsonSerializationAsJsonWithAclPath() throws IOException {
-        testJsonSerializationAsJson("/resource/" + CONTAINER_WEBAC_ACL, "/resource/" + FCR_ACL);
-    }
-
-    @Test
-    public void testJsonSerializationAsJsonWithTimeMapPath() throws IOException {
-        testJsonSerializationAsJson("/resource/" + LDPCV_TIME_MAP, "/resource/" + FCR_VERSIONS);
-    }
-
-    @Test
-    public void testJsonSerializationAsJsonWithMementoPath() throws IOException {
-        testJsonSerializationAsJson("/resource/" + LDPCV_TIME_MAP + "/20001231000000",
-                                    "/resource/" + FCR_VERSIONS + "/20001231000000");
     }
 
     private void testJsonSerializationAsJson(final String inputPath, final String outputPath) throws IOException {
