@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TimeMapServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation (ModeShape)</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.services</a> &gt; <span class="el_source">TimeMapServiceImpl.java</span></div><h1>TimeMapServiceImpl.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.services;
+
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TIME_MAP;
+import static org.fcrepo.kernel.api.FedoraTypes.MEMENTO_ORIGINAL;
+import static org.fcrepo.kernel.api.RdfLexicon.LDPCV_TIME_MAP;
+import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.ResourceTypeException;
+import org.fcrepo.kernel.api.models.FedoraTimeMap;
+import org.fcrepo.kernel.api.services.TimeMapService;
+import org.fcrepo.kernel.modeshape.FedoraTimeMapImpl;
+import org.slf4j.Logger;
+import org.springframework.stereotype.Component;
+
+
+/**
+ * Service for creating and retrieving {@link org.fcrepo.kernel.api.models.FedoraTimeMap} without using the JCR API.
+ *
+ * @author bbpennel
+ */
+@Component
+<span class="fc" id="L45">public class TimeMapServiceImpl extends AbstractService implements TimeMapService {</span>
+
+<span class="fc" id="L47">    private static final Logger LOGGER = getLogger(TimeMapServiceImpl.class);</span>
+
+    @Override
+    public FedoraTimeMap find(final FedoraSession session, final String path) {
+<span class="fc" id="L51">        final String ldpcvPath = getLdpcvPath(path);</span>
+
+<span class="fc" id="L53">        return cast(findNode(session, ldpcvPath));</span>
+    }
+
+    @Override
+    public FedoraTimeMap findOrCreate(final FedoraSession session, final String path) {
+        try {
+            // Add fedora:timemap to path if not present
+<span class="fc" id="L60">            final String ldpcvPath = getLdpcvPath(path);</span>
+
+<span class="fc" id="L62">            final Node node = findOrCreateNode(session, ldpcvPath, NT_FOLDER);</span>
+
+<span class="pc bpc" id="L64" title="1 of 2 branches missed.">            if (node.isNew()) {</span>
+<span class="fc" id="L65">                LOGGER.debug(&quot;Created TimeMap LDPCv {}&quot;, node.getPath());</span>
+
+                // add mixin type fedora:Resource
+<span class="pc bpc" id="L68" title="1 of 2 branches missed.">                if (node.canAddMixin(FEDORA_RESOURCE)) {</span>
+<span class="fc" id="L69">                    node.addMixin(FEDORA_RESOURCE);</span>
+                }
+
+                // add mixin type fedora:TimeMap
+<span class="pc bpc" id="L73" title="1 of 2 branches missed.">                if (node.canAddMixin(FEDORA_TIME_MAP)) {</span>
+<span class="fc" id="L74">                    node.addMixin(FEDORA_TIME_MAP);</span>
+                }
+
+                // Set reference from timegate/map to original resource
+<span class="fc" id="L78">                node.setProperty(MEMENTO_ORIGINAL, node.getParent());</span>
+            }
+
+<span class="fc" id="L81">            return new FedoraTimeMapImpl(node);</span>
+<span class="nc" id="L82">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L83">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    @Override
+    public boolean exists(final FedoraSession session, final String path) {
+<span class="fc" id="L89">        final String ldpcvPath = getLdpcvPath(path);</span>
+<span class="fc" id="L90">        return super.exists(session, ldpcvPath);</span>
+    }
+
+    private static final String getLdpcvPath(final String path) {
+<span class="fc bfc" id="L94" title="All 2 branches covered.">        if (path.endsWith(&quot;/&quot; + LDPCV_TIME_MAP)) {</span>
+<span class="fc" id="L95">            return path;</span>
+        } else {
+<span class="fc" id="L97">            return path.replaceFirst(&quot;/*$&quot;, &quot;&quot;) + &quot;/&quot; + LDPCV_TIME_MAP;</span>
+        }
+    }
+
+    private FedoraTimeMap cast(final Node node) {
+<span class="fc" id="L102">        assertIsType(node);</span>
+<span class="fc" id="L103">        return new FedoraTimeMapImpl(node);</span>
+    }
+
+    private static void assertIsType(final Node node) {
+<span class="pc bpc" id="L107" title="1 of 2 branches missed.">        if (!FedoraTimeMapImpl.hasMixin(node)) {</span>
+<span class="nc" id="L108">            throw new ResourceTypeException(node + &quot; can not be used as a timemap&quot;);</span>
+        }
+<span class="fc" id="L110">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

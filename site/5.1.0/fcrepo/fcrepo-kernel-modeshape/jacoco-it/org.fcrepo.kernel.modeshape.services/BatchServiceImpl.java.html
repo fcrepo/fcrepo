@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BatchServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Kernel Implementation (ModeShape)</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.services</a> &gt; <span class="el_source">BatchServiceImpl.java</span></div><h1>BatchServiceImpl.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.kernel.modeshape.services;
+
+import static java.time.Instant.now;
+import static java.util.stream.Collectors.toSet;
+import static com.google.common.base.Strings.nullToEmpty;
+import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.operationTimeout;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.SessionMissingException;
+import org.fcrepo.kernel.api.services.BatchService;
+
+import com.google.common.annotations.VisibleForTesting;
+import org.slf4j.Logger;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+/**
+ * This is part of the strawman implementation for Fedora batch operations This
+ * service implements a simple {@link FedoraSession} service which is able to
+ * create/commit/rollback {@link FedoraSession} objects. A {@link Scheduled}
+ * annotation is used for removing timed out operations
+ *
+ * @author frank asseg
+ * @author ajs6f
+ * @author acoburn
+ */
+@Component
+<span class="fc" id="L52">public class BatchServiceImpl extends AbstractService implements BatchService {</span>
+
+<span class="fc" id="L54">    private static final Logger LOGGER = getLogger(BatchServiceImpl.class);</span>
+
+    /**
+     * TODO since sessions have to be available on all nodes, they have to
+     * be either persisted or written to a distributed map or sth, not just this
+     * plain hashmap that follows
+     */
+<span class="fc" id="L61">    private static final Map&lt;String, FedoraSession&gt; sessions = new ConcurrentHashMap&lt;&gt;();</span>
+
+    @VisibleForTesting
+    public static final long REAP_INTERVAL = 1000;
+
+    /**
+     * Every REAP_INTERVAL milliseconds, check for expired sessions. If the
+     * tx is expired, roll it back and remove it from the registry.
+     */
+    @Override
+    @Scheduled(fixedRate = REAP_INTERVAL)
+    public void removeExpired() {
+<span class="fc" id="L73">        final Set&lt;String&gt; reapable = sessions.entrySet().stream()</span>
+<span class="fc" id="L74">                .filter(e -&gt; e.getValue().getExpires().isPresent())</span>
+<span class="fc" id="L75">                .filter(e -&gt; e.getValue().getExpires().get().isBefore(now()))</span>
+<span class="fc" id="L76">                .map(Map.Entry::getKey).collect(toSet());</span>
+<span class="fc" id="L77">        reapable.forEach(key -&gt; {</span>
+<span class="fc" id="L78">            final FedoraSession s = sessions.get(key);</span>
+<span class="pc bpc" id="L79" title="1 of 2 branches missed.">            if (s != null) {</span>
+                try {
+<span class="fc" id="L81">                    s.expire();</span>
+<span class="nc" id="L82">                } catch (final RepositoryRuntimeException e) {</span>
+<span class="nc" id="L83">                    LOGGER.error(&quot;Got exception rolling back expired session {}: {}&quot;, s, e.getMessage());</span>
+<span class="fc" id="L84">                }</span>
+            }
+<span class="fc" id="L86">            sessions.remove(key);</span>
+<span class="fc" id="L87">        });</span>
+<span class="fc" id="L88">    }</span>
+
+    @Override
+    public void begin(final FedoraSession session, final String username) {
+<span class="fc" id="L92">        sessions.put(getTxKey(session.getId(), username), session);</span>
+<span class="fc" id="L93">    }</span>
+
+    @Override
+    public FedoraSession getSession(final String sessionId, final String username) {
+<span class="fc" id="L97">        final FedoraSession session = sessions.get(getTxKey(sessionId, username));</span>
+<span class="pc bpc" id="L98" title="1 of 2 branches missed.">        if (session == null) {</span>
+<span class="nc" id="L99">            throw new SessionMissingException(&quot;Batch session with id: &quot; + sessionId + &quot; is not available&quot;);</span>
+        }
+<span class="fc" id="L101">        return session;</span>
+    }
+
+    @Override
+    public boolean exists(final String sessionId, final String username) {
+<span class="fc" id="L106">        return sessions.containsKey(getTxKey(sessionId, username));</span>
+    }
+
+    @Override
+    public void commit(final String sessionId, final String username) {
+<span class="fc" id="L111">        final FedoraSession session = getSession(sessionId, username);</span>
+<span class="fc" id="L112">        session.commit();</span>
+<span class="fc" id="L113">        sessions.remove(getTxKey(sessionId, username));</span>
+<span class="fc" id="L114">    }</span>
+
+    @Override
+    public void refresh(final String sessionId, final String username) {
+<span class="nc" id="L118">        final FedoraSession session = getSession(sessionId, username);</span>
+<span class="nc" id="L119">        session.updateExpiry(operationTimeout());</span>
+<span class="nc" id="L120">    }</span>
+
+    @Override
+    public void abort(final String sessionId, final String username) {
+<span class="fc" id="L124">        final FedoraSession session = getSession(sessionId, username);</span>
+<span class="fc" id="L125">        session.expire();</span>
+<span class="fc" id="L126">        sessions.remove(getTxKey(sessionId, username));</span>
+<span class="fc" id="L127">    }</span>
+
+    private static String getTxKey(final String sessionId, final String username) {
+<span class="fc" id="L130">        return nullToEmpty(username) + &quot;:&quot; + sessionId;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
