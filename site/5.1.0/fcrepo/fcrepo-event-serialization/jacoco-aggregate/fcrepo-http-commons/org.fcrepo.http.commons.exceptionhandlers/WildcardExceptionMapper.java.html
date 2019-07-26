@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>WildcardExceptionMapper.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Event Serialization</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-commons</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.commons.exceptionhandlers</a> &gt; <span class="el_source">WildcardExceptionMapper.java</span></div><h1>WildcardExceptionMapper.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.http.commons.exceptionhandlers;
+
+import static com.google.common.base.Throwables.getStackTraceAsString;
+import static javax.ws.rs.core.Response.serverError;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+
+import javax.jcr.RepositoryException;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.ext.Provider;
+
+import org.fcrepo.kernel.api.exception.SessionMissingException;
+import org.slf4j.Logger;
+
+/**
+ * Catch all the exceptions!
+ *
+ * @author lsitu
+ * @author awoods
+ * @author cbeer
+ * @author fasseg
+ */
+@Provider
+<span class="fc" id="L42">public class WildcardExceptionMapper implements</span>
+        ExceptionMapper&lt;Exception&gt;, ExceptionDebugLogging {
+
+<span class="fc" id="L45">    Boolean showStackTrace = true;</span>
+
+<span class="fc" id="L47">    private static final Logger LOGGER =</span>
+<span class="fc" id="L48">        getLogger(WildcardExceptionMapper.class);</span>
+
+    @Override
+    public Response toResponse(final Exception e) {
+<span class="pc bpc" id="L52" title="1 of 2 branches missed.">        if (e.getCause() instanceof SessionMissingException) {</span>
+<span class="nc" id="L53">            return new SessionMissingExceptionMapper()</span>
+<span class="nc" id="L54">                    .toResponse((SessionMissingException) e.getCause());</span>
+        }
+
+<span class="pc bpc" id="L57" title="1 of 2 branches missed.">        if ( e.getCause() instanceof RepositoryException) {</span>
+<span class="nc" id="L58">            return new RepositoryExceptionMapper()</span>
+<span class="nc" id="L59">                    .toResponse((RepositoryException)e.getCause());</span>
+        }
+
+<span class="fc" id="L62">        LOGGER.error(&quot;Exception intercepted by WildcardExceptionMapper: {}\n&quot;, e.getMessage());</span>
+<span class="fc" id="L63">        debugException(this, e, LOGGER);</span>
+<span class="fc" id="L64">        return serverError().entity(</span>
+<span class="fc bfc" id="L65" title="All 2 branches covered.">                showStackTrace ? getStackTraceAsString(e) : null).type(TEXT_PLAIN_WITH_CHARSET).build();</span>
+    }
+
+    /**
+     * Set whether the full stack trace should be returned as part of the
+     * error response. This may be a bad idea if the stack trace is exposed
+     * to the public.
+     * @param showStackTrace the boolean value of showing stack trace
+     */
+    public void setShowStackTrace(final Boolean showStackTrace) {
+<span class="nc" id="L75">        this.showStackTrace = showStackTrace;</span>
+<span class="nc" id="L76">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
