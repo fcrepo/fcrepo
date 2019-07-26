@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ModeShapeRepositoryFactoryBean.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository HTTP Commons Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-modeshape</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.spring</a> &gt; <span class="el_source">ModeShapeRepositoryFactoryBean.java</span></div><h1>ModeShapeRepositoryFactoryBean.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.spring;
+
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.inject.Inject;
+
+import org.fcrepo.kernel.api.FedoraRepository;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.modeshape.FedoraRepositoryImpl;
+import org.modeshape.jcr.JcrRepository;
+import org.modeshape.jcr.ModeShapeEngine;
+import org.modeshape.jcr.NoSuchRepositoryException;
+import org.modeshape.jcr.RepositoryConfiguration;
+import org.slf4j.Logger;
+import org.springframework.beans.factory.FactoryBean;
+import org.springframework.core.io.Resource;
+
+import static org.fcrepo.kernel.api.RdfLexicon.SERVER_MANAGED_PROPERTIES_MODE;
+
+/**
+ * A Modeshape factory shim to make it play nice with our Spring-based
+ * configuration
+ *
+ * @author Edwin Shin
+ * @since Feb 7, 2013
+ */
+<span class="fc" id="L49">public class ModeShapeRepositoryFactoryBean implements</span>
+        FactoryBean&lt;FedoraRepository&gt; {
+
+<span class="fc" id="L52">    private static final Logger LOGGER =</span>
+<span class="fc" id="L53">            getLogger(ModeShapeRepositoryFactoryBean.class);</span>
+
+    private DefaultPropertiesLoader propertiesLoader;
+
+    @Inject
+    private ModeShapeEngine modeShapeEngine;
+
+    private Resource repositoryConfiguration;
+
+    private JcrRepository repository;
+
+    /**
+     * Generate a JCR repository from the given configuration
+     *
+     */
+    @PostConstruct
+    public void buildRepository() {
+        try {
+<span class="fc" id="L71">            LOGGER.info(&quot;Using repo config (classpath): {}&quot;, repositoryConfiguration.getURL());</span>
+<span class="fc" id="L72">            getPropertiesLoader().loadSystemProperties();</span>
+
+<span class="fc" id="L74">            final RepositoryConfiguration config =</span>
+<span class="fc" id="L75">                    RepositoryConfiguration.read(repositoryConfiguration.getURL());</span>
+<span class="fc" id="L76">            repository = modeShapeEngine.deploy(config);</span>
+
+            // next line ensures that repository starts before the factory is used.
+<span class="fc" id="L79">            final org.modeshape.common.collection.Problems problems =</span>
+<span class="fc" id="L80">                    repository.getStartupProblems();</span>
+<span class="pc bpc" id="L81" title="1 of 2 branches missed.">            for (final org.modeshape.common.collection.Problem p : problems) {</span>
+<span class="nc" id="L82">                LOGGER.error(&quot;ModeShape Start Problem: {}&quot;, p.getMessageString());</span>
+                // TODO determine problems that should be runtime errors
+<span class="nc" id="L84">            }</span>
+<span class="nc" id="L85">        } catch (final Exception e) {</span>
+<span class="nc" id="L86">            throw new RepositoryRuntimeException(e);</span>
+<span class="fc" id="L87">        }</span>
+<span class="fc" id="L88">    }</span>
+
+    /**
+     * Attempts to undeploy the repository and shutdown the ModeShape engine on
+     * context destroy.
+     *
+     * @throws InterruptedException if interrupted exception occurred
+     */
+    @PreDestroy
+    public void stopRepository() throws InterruptedException {
+<span class="fc" id="L98">        LOGGER.info(&quot;Initiating shutdown of ModeShape&quot;);</span>
+<span class="fc" id="L99">        final String repoName = repository.getName();</span>
+        try {
+<span class="fc" id="L101">            final Future&lt;Boolean&gt; futureUndeployRepo = modeShapeEngine.undeploy(repoName);</span>
+<span class="pc bpc" id="L102" title="1 of 2 branches missed.">            if (futureUndeployRepo.get()) {</span>
+<span class="fc" id="L103">                LOGGER.info(&quot;ModeShape repository {} has undeployed.&quot;, repoName);</span>
+            } else {
+<span class="nc" id="L105">                LOGGER.error(&quot;ModeShape repository {} undeploy failed without an exception, still deployed.&quot;, repoName);</span>
+            }
+<span class="fc" id="L107">            LOGGER.info(&quot;Repository {} undeployed.&quot;, repoName);</span>
+<span class="nc" id="L108">        } catch (final NoSuchRepositoryException e) {</span>
+<span class="nc" id="L109">            LOGGER.error(&quot;Repository {} unknown, cannot undeploy.&quot;, repoName, e);</span>
+<span class="nc" id="L110">        } catch (final ExecutionException e) {</span>
+<span class="nc" id="L111">            LOGGER.error(&quot;Repository {} cannot undeploy.&quot;, repoName, e.getCause());</span>
+<span class="pc" id="L112">        }</span>
+<span class="fc" id="L113">        final Future&lt;Boolean&gt; futureShutdownEngine = modeShapeEngine.shutdown();</span>
+        try {
+<span class="pc bpc" id="L115" title="1 of 2 branches missed.">            if (futureShutdownEngine.get()) {</span>
+<span class="fc" id="L116">                LOGGER.info(&quot;ModeShape Engine has shutdown.&quot;);</span>
+            } else {
+<span class="nc" id="L118">                LOGGER.error(&quot;ModeShape Engine shutdown failed without an exception, still running.&quot;);</span>
+            }
+<span class="nc" id="L120">        } catch (final ExecutionException e) {</span>
+<span class="nc" id="L121">            LOGGER.error(&quot;ModeShape Engine shutdown failed.&quot;, e.getCause());</span>
+<span class="fc" id="L122">        }</span>
+<span class="fc" id="L123">    }</span>
+
+    @Override
+    public FedoraRepository getObject() {
+<span class="fc" id="L127">        return new FedoraRepositoryImpl(repository);</span>
+    }
+
+    @Override
+    public Class&lt;?&gt; getObjectType() {
+<span class="fc" id="L132">        return FedoraRepository.class;</span>
+    }
+
+    @Override
+    public boolean isSingleton() {
+<span class="fc" id="L137">        return true;</span>
+    }
+
+    /**
+     * Set the configuration to use for creating the repository
+     *
+     * @param repositoryConfiguration the repository configuration
+     */
+    public void setRepositoryConfiguration(
+            final Resource repositoryConfiguration) {
+<span class="fc" id="L147">        this.repositoryConfiguration = repositoryConfiguration;</span>
+<span class="fc" id="L148">    }</span>
+
+    private DefaultPropertiesLoader getPropertiesLoader() {
+<span class="pc bpc" id="L151" title="1 of 2 branches missed.">        if (null == propertiesLoader) {</span>
+<span class="fc" id="L152">            propertiesLoader = new DefaultPropertiesLoader();</span>
+        }
+<span class="fc" id="L154">        return propertiesLoader;</span>
+    }
+
+    /**
+     * Set the mode for server managed properties.  The value &quot;strict&quot; (default)
+     * will result in the classic behavior where certain provenance-related
+     * properties cannot be set, while &quot;relaxed&quot; will allow for them to be
+     * set in some circumstances.
+     *
+     * @param value the value (must be either &quot;strict&quot; or &quot;relaxed&quot;)
+     */
+    public void setServerManagedPropertiesMode(final String value) {
+<span class="nc bnc" id="L166" title="All 4 branches missed.">        if (&quot;strict&quot;.equals(value) || &quot;relaxed&quot;.equals(value)) {</span>
+<span class="nc" id="L167">            final String propertyValue = System.getProperty(SERVER_MANAGED_PROPERTIES_MODE);</span>
+<span class="nc bnc" id="L168" title="All 2 branches missed.">            if (propertyValue != null) {</span>
+<span class="nc" id="L169">                LOGGER.warn(&quot;The system property \&quot;{}\&quot; with the value \&quot;{}\&quot; is being used instead of the&quot; +</span>
+                                &quot;serverManagedPropertiesMode of \&quot;{}\&quot; specified in the Spring configuration!&quot;,
+                        SERVER_MANAGED_PROPERTIES_MODE, propertyValue, value);
+            } else {
+<span class="nc" id="L173">                LOGGER.info(&quot;Set system property \&quot;{}\&quot; to \&quot;{}\&quot; to correspond to serverManagedPropertiesMode.&quot;,</span>
+                        SERVER_MANAGED_PROPERTIES_MODE, value);
+<span class="nc" id="L175">                System.setProperty(SERVER_MANAGED_PROPERTIES_MODE, value);</span>
+            }
+<span class="nc" id="L177">        } else {</span>
+<span class="nc" id="L178">            throw new IllegalArgumentException(&quot;Invalid value \&quot;&quot; + value</span>
+                    + &quot;\&quot; supplied for serverManagedPropertiesMode (expecting \&quot;strict\&quot; or \&quot;relaxed\&quot;)!&quot;);
+        }
+<span class="nc" id="L181">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

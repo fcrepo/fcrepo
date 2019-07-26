@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ContainerServiceImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository HTTP Commons Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-modeshape</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.services</a> &gt; <span class="el_source">ContainerServiceImpl.java</span></div><h1>ContainerServiceImpl.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.services;
+
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_HAS_MEMBER_RELATION;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_INSERTED_CONTENT_RELATION;
+import static org.fcrepo.kernel.api.FedoraTypes.LDP_MEMBER_RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.LDP_MEMBER;
+import static org.fcrepo.kernel.api.RdfLexicon.MEMBER_SUBJECT;
+import static org.fcrepo.kernel.modeshape.ContainerImpl.hasMixin;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getContainingNode;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.touch;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.touchLdpMembershipResource;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+
+import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.ResourceTypeException;
+import org.fcrepo.kernel.api.models.Container;
+import org.fcrepo.kernel.api.services.ContainerService;
+import org.fcrepo.kernel.modeshape.ContainerImpl;
+
+import org.slf4j.Logger;
+import org.springframework.stereotype.Component;
+
+/**
+ * Service for creating and retrieving {@link org.fcrepo.kernel.api.models.Container} without using the JCR API.
+ *
+ * @author cbeer
+ * @author ajs6f
+ * @since Feb 11, 2013
+ */
+@Component
+<span class="fc" id="L59">public class ContainerServiceImpl extends AbstractService implements ContainerService {</span>
+
+<span class="fc" id="L61">    private static final Logger LOGGER = getLogger(ContainerServiceImpl.class);</span>
+
+    @Override
+    public Container findOrCreate(final FedoraSession session, final String path, final String interactionModel) {
+<span class="fc" id="L65">        LOGGER.trace(&quot;Executing findOrCreateObject() with path: {}&quot;, path);</span>
+
+        try {
+<span class="fc" id="L68">            final Node node = findOrCreateNode(session, path, NT_FOLDER);</span>
+
+<span class="fc bfc" id="L70" title="All 2 branches covered.">            if (node.isNew()) {</span>
+<span class="fc" id="L71">                initializeNewObjectProperties(node);</span>
+
+<span class="fc" id="L73">                getContainingNode(node).ifPresent(parent -&gt; {</span>
+<span class="fc" id="L74">                    touch(parent);</span>
+<span class="fc" id="L75">                    touchLdpMembershipResource(node);</span>
+<span class="fc" id="L76">                });</span>
+
+<span class="pc bpc" id="L78" title="1 of 2 branches missed.">                if (LDP_INDIRECT_CONTAINER.equals(interactionModel)) {</span>
+<span class="nc" id="L79">                    node.addMixin(LDP_INDIRECT_CONTAINER);</span>
+<span class="nc" id="L80">                    node.setProperty(LDP_MEMBER_RESOURCE, node);</span>
+<span class="nc" id="L81">                    node.setProperty(LDP_HAS_MEMBER_RELATION, LDP_MEMBER.getURI());</span>
+<span class="nc" id="L82">                    node.setProperty(LDP_INSERTED_CONTENT_RELATION, MEMBER_SUBJECT.getURI());</span>
+<span class="pc bpc" id="L83" title="1 of 2 branches missed.">                } else if (LDP_DIRECT_CONTAINER.equals(interactionModel)) {</span>
+<span class="nc" id="L84">                    node.addMixin(LDP_DIRECT_CONTAINER);</span>
+<span class="nc" id="L85">                    node.setProperty(LDP_MEMBER_RESOURCE, node);</span>
+<span class="nc" id="L86">                    node.setProperty(LDP_HAS_MEMBER_RELATION, LDP_MEMBER.getURI());</span>
+                } else {
+<span class="fc" id="L88">                    node.addMixin(LDP_BASIC_CONTAINER);</span>
+                }
+            }
+
+<span class="fc bfc" id="L92" title="All 2 branches covered.">            if (node.isNew()) {</span>
+<span class="fc" id="L93">                touch(node);</span>
+            }
+
+<span class="fc" id="L96">            return new ContainerImpl(node);</span>
+<span class="nc" id="L97">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L98">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    /**
+     * @param path the path
+     * @param session the session
+     * @return A {@link org.fcrepo.kernel.api.models.Container} with the proffered PID
+     */
+    @Override
+    public Container findOrCreate(final FedoraSession session, final String path) {
+<span class="fc" id="L109">        return findOrCreate(session, path, null);</span>
+    }
+
+    /**
+     * Retrieve a {@link org.fcrepo.kernel.api.models.Container} instance by pid and dsid
+     *
+     * @param path the path
+     * @param session the session
+     * @return A {@link org.fcrepo.kernel.api.models.Container} with the proffered PID
+     */
+    @Override
+    public Container find(final FedoraSession session, final String path) {
+<span class="fc" id="L121">        final Node node = findNode(session, path);</span>
+
+<span class="fc" id="L123">        return cast(node);</span>
+    }
+
+    private static void initializeNewObjectProperties(final Node node) {
+        try {
+<span class="fc" id="L128">            LOGGER.debug(&quot;Setting object properties on node {}...&quot;, node.getPath());</span>
+
+<span class="fc bfc" id="L130" title="All 2 branches covered.">            if (node.canAddMixin(FEDORA_RESOURCE)) {</span>
+<span class="fc" id="L131">                node.addMixin(FEDORA_RESOURCE);</span>
+            }
+
+<span class="fc bfc" id="L134" title="All 2 branches covered.">            if (node.canAddMixin(FEDORA_CONTAINER)) {</span>
+<span class="fc" id="L135">                node.addMixin(FEDORA_CONTAINER);</span>
+            }
+
+<span class="nc" id="L138">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L139">            LOGGER.warn(&quot;Could not decorate {} with {} properties: {} &quot;,</span>
+                    JCR_CONTENT, FEDORA_CONTAINER, e);
+<span class="fc" id="L141">        }</span>
+<span class="fc" id="L142">    }</span>
+
+    private Container cast(final Node node) {
+<span class="fc" id="L145">        assertIsType(node);</span>
+<span class="fc" id="L146">        return new ContainerImpl(node);</span>
+    }
+
+    private static void assertIsType(final Node node) {
+<span class="pc bpc" id="L150" title="1 of 2 branches missed.">        if (!hasMixin(node)) {</span>
+<span class="nc" id="L151">            throw new ResourceTypeException(node + &quot; can not be used as a object&quot;);</span>
+        }
+<span class="fc" id="L153">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

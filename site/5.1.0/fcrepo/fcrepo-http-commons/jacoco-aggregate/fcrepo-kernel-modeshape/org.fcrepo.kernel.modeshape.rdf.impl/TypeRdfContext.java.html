@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>TypeRdfContext.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository HTTP Commons Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-modeshape</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.rdf.impl</a> &gt; <span class="el_source">TypeRdfContext.java</span></div><h1>TypeRdfContext.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.rdf.impl;
+
+import static java.util.stream.Stream.of;
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.graph.Triple.create;
+import static org.apache.jena.vocabulary.RDF.type;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_TIME_MAP;
+import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
+import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEMAP_TYPE;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isInternalType;
+
+import org.apache.jena.rdf.model.Resource;
+
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.FedoraResource;
+
+import java.net.URI;
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * @author cabeer
+ * @author ajs6f
+ * @since 10/1/14
+ */
+public class TypeRdfContext extends NodeRdfContext {
+
+    /**
+     * Full URI for internal fedora:TimeMap type.
+     */
+<span class="fc" id="L48">    private static URI fedoraTimemap = URI.create(FEDORA_TIME_MAP.replace(&quot;fedora:&quot;, REPOSITORY_NAMESPACE));</span>
+
+    /**
+     * Default constructor.
+     *
+     * @param resource the resource
+     * @param idTranslator the id translator
+     */
+    public TypeRdfContext(final FedoraResource resource,
+                          final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator) {
+<span class="fc" id="L58">        super(resource, idTranslator);</span>
+
+<span class="fc" id="L60">        final List&lt;URI&gt; typeStream =</span>
+<span class="fc" id="L61">                resource.getTypes().stream().filter(isInternalType.negate()).collect(Collectors.toList());</span>
+
+<span class="fc" id="L63">        concat(typeStream.stream().map(uri -&gt; create(subject(), type.asNode(), createURI(uri.toString()))));</span>
+
+        // If has rdf:type fedora:TimeMap and no memento:TimeMap, add a memento:TimeMap type.
+        // https://jira.duraspace.org/browse/FCREPO-3006
+<span class="pc bpc" id="L67" title="1 of 2 branches missed.">        final boolean hasTimeMap = typeStream.stream().anyMatch(uri -&gt; uri.equals(fedoraTimemap)) &amp;&amp;</span>
+<span class="pc bnc" id="L68" title="All 2 branches missed.">                typeStream.stream().noneMatch(uri -&gt; uri.equals(URI.create(VERSIONING_TIMEMAP_TYPE)));</span>
+<span class="pc bpc" id="L69" title="1 of 2 branches missed.">        if (hasTimeMap) {</span>
+<span class="nc" id="L70">            concat(of(create(subject(), type.asNode(), createURI(VERSIONING_TIMEMAP_TYPE))));</span>
+        }
+<span class="fc" id="L72">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

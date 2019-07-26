@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>FedoraBinaryImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository HTTP Commons Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-modeshape</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape</a> &gt; <span class="el_source">FedoraBinaryImpl.java</span></div><h1>FedoraBinaryImpl.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape;
+
+import org.apache.jena.rdf.model.Resource;
+import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.FedoraBinary;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
+import org.fcrepo.kernel.api.TripleCategory;
+
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.isFedoraBinary;
+
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+
+import java.io.InputStream;
+import java.net.URI;
+import java.util.Collection;
+import java.util.Set;
+
+/**
+ * @author cabeer
+ * @since 9/19/14
+ */
+public class FedoraBinaryImpl extends AbstractFedoraBinary {
+
+    private static final String LOCAL_FILE_ACCESS_TYPE = &quot;file&quot;;
+
+    private static final String URL_ACCESS_TYPE = &quot;http&quot;;
+
+    private FedoraBinary wrappedBinary;
+
+    /**
+     * Wrap an existing Node as a Fedora Binary
+     * @param node the node
+     */
+    public FedoraBinaryImpl(final Node node) {
+<span class="fc" id="L58">        super(node);</span>
+<span class="fc" id="L59">    }</span>
+
+    /**
+     * Get the proxied binary content object wrapped by this object
+     *
+     * @return the fedora binary
+     */
+    private FedoraBinary getBinary() {
+<span class="fc" id="L67">        return getBinary(null);</span>
+    }
+
+    /**
+     * Get the proxied binary content object wrapped by this object
+     *
+     * @return the fedora binary
+     */
+    private FedoraBinary getBinary(final String extUrl) {
+<span class="fc bfc" id="L76" title="All 2 branches covered.">        if (wrappedBinary == null) {</span>
+<span class="fc" id="L77">            wrappedBinary = getBinaryImplementation(extUrl);</span>
+        }
+<span class="fc" id="L79">        return wrappedBinary;</span>
+    }
+
+    /**
+     * Return the proper object that can handle this type of binary
+     * @param extUrl URL of external binary, else null if it's internal to modeshape.
+     * @return the fedora binary, of the proper kind based on the URL or lack there of
+     */
+    private FedoraBinary getBinaryImplementation(final String extUrl) {
+<span class="fc" id="L88">        String url = extUrl;</span>
+<span class="pc bpc" id="L89" title="1 of 4 branches missed.">        if (url == null || url.isEmpty()) {</span>
+<span class="fc" id="L90">            url = getURLInfo();</span>
+        }
+
+<span class="fc bfc" id="L93" title="All 2 branches covered.">        if (url != null) {</span>
+<span class="fc bfc" id="L94" title="All 2 branches covered.">            if (url.toLowerCase().startsWith(LOCAL_FILE_ACCESS_TYPE)) {</span>
+<span class="fc" id="L95">                return new LocalFileBinary(getNode());</span>
+<span class="pc bpc" id="L96" title="1 of 2 branches missed.">            } else if (url.toLowerCase().startsWith(URL_ACCESS_TYPE)) {</span>
+<span class="fc" id="L97">                return new UrlBinary(getNode());</span>
+            }
+        }
+
+<span class="fc" id="L101">        return new InternalFedoraBinary(getNode());</span>
+    }
+
+    /**
+     * Fetch the URL of the external binary
+     * @return String containing the URL location of external binary, else null if it's an internal binary
+     */
+    private String getURLInfo() {
+        try {
+<span class="fc bfc" id="L110" title="All 2 branches covered.">            if (hasProperty(PROXY_FOR)) {</span>
+<span class="fc" id="L111">                return getNode().getProperty(PROXY_FOR).getValue().getString();</span>
+<span class="fc bfc" id="L112" title="All 2 branches covered.">            } else if (hasProperty(REDIRECTS_TO)) {</span>
+<span class="fc" id="L113">                return getNode().getProperty(REDIRECTS_TO).getValue().getString();</span>
+            }
+<span class="nc" id="L115">        } catch (RepositoryException e) {</span>
+<span class="nc" id="L116">            throw new RepositoryRuntimeException(e);</span>
+<span class="fc" id="L117">        }</span>
+
+<span class="fc" id="L119">        return null;</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraBinary#getContent()
+     */
+    @Override
+    public InputStream getContent() {
+<span class="fc" id="L128">        return getBinary().getContent();</span>
+    }
+
+    @Override
+    public void setExternalContent(final String contentType,
+                                   final Collection&lt;URI&gt; checksums, final String originalFileName,
+                                   final String externalHandling, final String externalUrl)
+            throws InvalidChecksumException {
+
+        // Clear the wrapped binary object prior to setting the content
+<span class="fc" id="L138">        wrappedBinary = null;</span>
+<span class="fc" id="L139">        getBinary(externalUrl).setExternalContent(contentType, checksums, originalFileName,</span>
+                externalHandling, externalUrl);
+<span class="fc" id="L141">    }</span>
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraBinary#setContent(java.io.InputStream,
+     * java.lang.String, java.net.URI, java.lang.String,
+     * org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint)
+     */
+    @Override
+    public void setContent(final InputStream content, final String contentType,
+                           final Collection&lt;URI&gt; checksums, final String originalFileName,
+                           final StoragePolicyDecisionPoint storagePolicyDecisionPoint)
+            throws InvalidChecksumException {
+
+        // Clear the wrapped binary object prior to setting the content
+<span class="fc" id="L156">        wrappedBinary = null;</span>
+        // Need to pass the new filename to get the correct implementation.
+<span class="fc" id="L158">        getBinary().setContent(content, contentType, checksums, originalFileName,</span>
+                storagePolicyDecisionPoint);
+<span class="fc" id="L160">    }</span>
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraBinary#getContentSize()
+     */
+    @Override
+    public long getContentSize() {
+<span class="fc" id="L168">        return getBinary().getContentSize();</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraBinary#getContentDigest()
+     */
+    @Override
+    public URI getContentDigest() {
+<span class="fc" id="L177">        return getBinary().getContentDigest();</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraBinary#getMimeType()
+     */
+    @Override
+    public String getMimeType() {
+<span class="fc" id="L186">        return getBinary().getMimeType();</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraBinary#getFilename()
+     */
+    @Override
+    public String getFilename() {
+<span class="fc" id="L195">        return getBinary().getFilename();</span>
+    }
+
+    @Override
+    public RdfStream getFixity(final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator) {
+<span class="fc" id="L200">        return getBinary().getFixity(idTranslator);</span>
+    }
+
+    @Override
+    public RdfStream getFixity(final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator,
+                               final URI digestUri,
+                               final long size) {
+
+<span class="nc" id="L208">        return getBinary().getFixity(idTranslator, digestUri, size);</span>
+    }
+
+    @Override
+    public Collection&lt;URI&gt; checkFixity( final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator,
+                                        final Collection&lt;String&gt; algorithms)
+                                            throws UnsupportedAlgorithmException {
+
+<span class="fc" id="L216">        return getBinary().checkFixity(idTranslator, algorithms);</span>
+    }
+
+    /**
+     * When deleting the binary, we also need to clean up the description document.
+     */
+    @Override
+    public void delete() {
+<span class="nc" id="L224">        getBinary().delete();</span>
+<span class="nc" id="L225">    }</span>
+
+    @Override
+    protected boolean hasDescriptionProperty(final String relPath) {
+        try {
+<span class="nc" id="L230">            final Node descNode = getDescriptionNodeOrNull();</span>
+<span class="nc bnc" id="L231" title="All 2 branches missed.">            if (descNode == null) {</span>
+<span class="nc" id="L232">                return false;</span>
+            }
+<span class="nc" id="L234">            return descNode.hasProperty(relPath);</span>
+<span class="nc" id="L235">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L236">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    @Override
+    public RdfStream getTriples(final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator,
+                                final Set&lt;? extends TripleCategory&gt; contexts) {
+<span class="nc" id="L243">        return getDescription().getTriples(idTranslator, contexts);</span>
+    }
+
+    /**
+     * Check if the given node is a Fedora binary
+     *
+     * @param node the given node
+     * @return whether the given node is a Fedora binary
+     */
+    public static boolean hasMixin(final Node node) {
+<span class="fc" id="L253">        return isFedoraBinary.test(node);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

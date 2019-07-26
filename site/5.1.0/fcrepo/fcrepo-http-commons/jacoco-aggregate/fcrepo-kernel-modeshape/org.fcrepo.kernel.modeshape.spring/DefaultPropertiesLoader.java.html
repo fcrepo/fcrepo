@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>DefaultPropertiesLoader.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository HTTP Commons Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-modeshape</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.spring</a> &gt; <span class="el_source">DefaultPropertiesLoader.java</span></div><h1>DefaultPropertiesLoader.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.spring;
+
+import org.slf4j.Logger;
+
+import java.io.File;
+
+import static java.lang.System.getProperty;
+import static org.slf4j.LoggerFactory.getLogger;
+
+/**
+ * This class loads System Properties only if:
+ * - the context is not an integration-test, and
+ * - the property is not already set
+ * This class mutates explicitly specified system
+ * Properties only if:
+ * - they represent relative paths in order to
+ *   make them relative to the explicit or implicit
+ *   home directory
+ *
+ * @author Andrew Woods
+ *         Date: 10/15/13
+ */
+<span class="fc" id="L40">public class DefaultPropertiesLoader {</span>
+
+<span class="fc" id="L42">    private static final Logger LOGGER = getLogger(DefaultPropertiesLoader.class);</span>
+
+<span class="fc" id="L44">    private static final String SEP = getProperty(&quot;file.separator&quot;);</span>
+
+    /**
+     * @author awoods
+     * @since 2013
+     */
+<span class="fc" id="L50">    private enum PROPERTIES {</span>
+<span class="fc" id="L51">        ARJUNA_DEFAULT_OBJECT_STORE(</span>
+                &quot;com.arjuna.ats.arjuna.common.ObjectStoreEnvironmentBean.default.objectStoreDir&quot;),
+<span class="fc" id="L53">        ARJUNA_OBJECT_STORE(&quot;com.arjuna.ats.arjuna.objectstore.objectStoreDir&quot;),</span>
+<span class="fc" id="L54">        OBJECT_STORE(&quot;fcrepo.object.directory&quot;),</span>
+<span class="fc" id="L55">        BINARY_STORE(&quot;fcrepo.binary.directory&quot;),</span>
+<span class="fc" id="L56">        MODE_INDEX(&quot;fcrepo.modeshape.index.directory&quot;),</span>
+<span class="fc" id="L57">        ACTIVE_MQ(&quot;fcrepo.activemq.directory&quot;),</span>
+<span class="fc" id="L58">        ALLOWED_EXTERNAL_CONTENT(&quot;fcrepo.external.content.allowed&quot;, false),</span>
+<span class="fc" id="L59">        NAMESPACE_REGISTRY(&quot;fcrepo.namespace.registry&quot;, false);</span>
+
+        private final String text;
+
+        private final boolean setDefaultValue;
+
+        PROPERTIES(final String text) {
+<span class="fc" id="L66">            this(text, true);</span>
+<span class="fc" id="L67">        }</span>
+
+<span class="fc" id="L69">        PROPERTIES(final String text, final boolean setDefaultValue) {</span>
+<span class="fc" id="L70">            this.text = text;</span>
+<span class="fc" id="L71">            this.setDefaultValue = setDefaultValue;</span>
+<span class="fc" id="L72">        }</span>
+
+        public String getValue() {
+<span class="fc" id="L75">            return text;</span>
+        }
+
+        public boolean getSetDefaultValue() {
+<span class="fc" id="L79">            return setDefaultValue;</span>
+        }
+    }
+
+
+    /**
+     * This method loads default System Properties if:
+     * - the context is not an integration-test, and
+     * - the property is not already set
+     * This method mutates explicitly specified system
+     * Properties only if:
+     * - they represent relative paths in order to
+     *   make them relative to the explicit or implicit
+     *   home directory
+     */
+    public void loadSystemProperties() {
+<span class="fc" id="L95">        LOGGER.info(&quot;Loading properties&quot;);</span>
+
+<span class="fc bfc" id="L97" title="All 2 branches covered.">        if (getProperty(&quot;integration-test&quot;) == null) {</span>
+<span class="fc" id="L98">            LOGGER.trace(&quot;Setting default properties, if necessary.&quot;);</span>
+<span class="fc" id="L99">            final String fcrepoHome = getProperty(&quot;fcrepo.home&quot;);</span>
+<span class="fc bfc" id="L100" title="All 2 branches covered.">            final String baseDir = (fcrepoHome == null</span>
+<span class="fc" id="L101">                    ? getProperty(&quot;user.dir&quot;) + SEP + &quot;fcrepo4-data&quot; + SEP</span>
+                    : fcrepoHome + SEP);
+<span class="fc bfc" id="L103" title="All 2 branches covered.">            for (final PROPERTIES prop : PROPERTIES.values()) {</span>
+<span class="fc" id="L104">                final String value = getProperty(prop.getValue());</span>
+<span class="fc bfc" id="L105" title="All 2 branches covered.">                if (value == null) {</span>
+<span class="fc bfc" id="L106" title="All 2 branches covered.">                    if (prop.getSetDefaultValue()) {</span>
+<span class="fc" id="L107">                        setProperty(prop.getValue(), baseDir);</span>
+                    }
+                } else {
+<span class="fc" id="L110">                    updateRelativePropertyPath(prop.getValue(), value, baseDir);</span>
+                }
+            }
+        }
+
+<span class="fc bfc" id="L115" title="All 2 branches covered.">        for (final PROPERTIES prop : PROPERTIES.values()) {</span>
+<span class="fc" id="L116">            final String val = prop.getValue();</span>
+<span class="fc" id="L117">            LOGGER.info(&quot;{} = {}&quot;, val, getProperty(val));</span>
+        }
+<span class="fc" id="L119">    }</span>
+
+    private static void setProperty(final String prop, final String baseDir) {
+<span class="fc" id="L122">        System.setProperty(prop, baseDir + prop);</span>
+<span class="fc" id="L123">    }</span>
+
+    private static void updateRelativePropertyPath(final String prop, final String value, final String baseDir) {
+<span class="fc bfc" id="L126" title="All 2 branches covered.">        if (!new File(value).isAbsolute()) {</span>
+<span class="fc" id="L127">            System.setProperty(prop, baseDir + value);</span>
+        }
+<span class="fc" id="L129">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
