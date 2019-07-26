@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ExternalContentHandler.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository WebAC Authorization Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api</a> &gt; <span class="el_source">ExternalContentHandler.java</span></div><h1>ExternalContentHandler.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.http.api;
+
+import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
+import static org.fcrepo.kernel.api.FedoraExternalContent.COPY;
+import static org.fcrepo.kernel.api.FedoraExternalContent.REDIRECT;
+import static org.fcrepo.kernel.api.FedoraExternalContent.PROXY;
+import static org.apache.http.HttpHeaders.CONTENT_TYPE;
+import static org.apache.http.HttpStatus.SC_OK;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import org.apache.http.Header;
+import org.apache.http.client.methods.HttpHead;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.fcrepo.kernel.api.exception.ExternalContentAccessException;
+import org.fcrepo.kernel.api.exception.ExternalMessageBodyException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import javax.ws.rs.core.Link;
+import javax.ws.rs.core.MediaType;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.util.Map;
+import org.slf4j.Logger;
+
+/**
+ * This class is a helper for dealing with the External Content Link header and External Content itself, in the case
+ * of handling=&quot;copy&quot;. This class will verify that an External Content Link header is formatted correctly and
+ * help parse it, delivering parts of it when asked.
+ *
+ * @author bseeger
+ * @since 5/7/2018
+ */
+public class ExternalContentHandler {
+
+<span class="fc" id="L55">    private static final Logger LOGGER = getLogger(FedoraLdp.class);</span>
+
+    private final static String HANDLING = &quot;handling&quot;;
+    private final static String EXT_CONTENT_TYPE = &quot;type&quot;;
+
+    private final Link link;
+    private final String handling;
+    private final String type;
+    private final MediaType contentType;
+
+    /* link header for external content should look like this:
+          Link: &lt;http://example.org/some/content&gt;;
+          rel=&quot;http://fedora.info/definitions/fcrepo#ExternalContent&quot;;
+          handling=&quot;proxy&quot;;
+          type=&quot;image/tiff&quot;
+    */
+
+    /**
+     *  Construct an ExternalContentHandler (helper)
+     *
+     *  @param linkHeader actual link header from request
+     */
+<span class="fc" id="L77">    protected ExternalContentHandler(final String linkHeader) {</span>
+        // if it parses, then we're mostly good to go.
+<span class="fc" id="L79">        link = parseLinkHeader(linkHeader);</span>
+
+<span class="fc" id="L81">        final Map&lt;String, String&gt; map = link.getParams();</span>
+        // handling will be in the map, where as content type may not be
+<span class="fc" id="L83">        handling = map.get(HANDLING).toLowerCase();</span>
+<span class="fc bfc" id="L84" title="All 2 branches covered.">        type = map.get(EXT_CONTENT_TYPE) != null ? map.get(EXT_CONTENT_TYPE).toLowerCase() : null;</span>
+<span class="fc bfc" id="L85" title="All 2 branches covered.">        contentType = type != null ? MediaType.valueOf(type) : findContentType(getURL());</span>
+<span class="fc" id="L86">    }</span>
+
+    /**
+     * Returns the content type located in the link header.
+     * @return content type if in Link header, else null
+     */
+    public MediaType getContentType() {
+<span class="fc" id="L93">        return contentType;</span>
+    }
+
+    /**
+     * Retrieve handling information
+     * @return a String containing the type of handling requested [&quot;proxy&quot;, &quot;copy&quot; or &quot;redirect&quot;]
+     */
+    public String getHandling() {
+<span class="fc" id="L101">        return handling;</span>
+    }
+
+    /**
+     * Retrieve url in link header
+     * @return a String of the URL that was in the Link header
+     */
+    public String getURL() {
+<span class="pc bpc" id="L109" title="1 of 2 branches missed.">        return link != null ? link.getUri().toString() : null;</span>
+    }
+
+    /**
+     * Returns whether or not the handling parameter is &quot;copy&quot;
+     * @return boolean value representing whether or not the content handling is &quot;copy&quot;
+     */
+    public boolean isCopy() {
+<span class="pc bpc" id="L117" title="1 of 4 branches missed.">        return handling != null &amp;&amp; handling.equals(COPY);</span>
+    }
+
+    /**
+     * Returns whether or not the handling parameter is &quot;redirect&quot;
+     * @return boolean value representing whether or not the content handling is &quot;redirect&quot;
+     */
+    public boolean isRedirect() {
+<span class="nc bnc" id="L125" title="All 4 branches missed.">        return handling != null &amp;&amp; handling.equals(REDIRECT);</span>
+    }
+
+    /**
+     * Returns whether or not the handling parameter is &quot;proxy&quot;
+     * @return boolean value representing whether or not the content handling is &quot;proxy&quot;
+     */
+    public boolean isProxy() {
+<span class="nc bnc" id="L133" title="All 4 branches missed.">        return handling != null &amp;&amp; handling.equals(PROXY);</span>
+    }
+
+    /**
+     * Fetch the external content
+     * @return InputStream containing the external content
+     */
+    public InputStream fetchExternalContent() {
+
+<span class="fc" id="L142">        final URI uri = link.getUri();</span>
+<span class="fc" id="L143">        final String scheme = uri.getScheme();</span>
+<span class="fc" id="L144">        LOGGER.debug(&quot;scheme is {}&quot;, scheme);</span>
+<span class="pc bpc" id="L145" title="1 of 2 branches missed.">        if (scheme != null) {</span>
+            try {
+<span class="fc bfc" id="L147" title="All 2 branches covered.">                if (scheme.equals(&quot;file&quot;)) {</span>
+<span class="fc" id="L148">                    return new FileInputStream(uri.getPath());</span>
+<span class="pc bpc" id="L149" title="3 of 4 branches missed.">                } else if (scheme.equals(&quot;http&quot;) || scheme.equals(&quot;https&quot;)) {</span>
+<span class="fc" id="L150">                    return uri.toURL().openStream();</span>
+                }
+<span class="fc" id="L152">            } catch (final IOException e) {</span>
+<span class="fc" id="L153">                throw new ExternalContentAccessException(&quot;Failed to read external content from &quot; + uri, e);</span>
+<span class="nc" id="L154">            }</span>
+        }
+<span class="nc" id="L156">        return null;</span>
+    }
+
+    /**
+     * Validate that an external content link header is appropriately formatted
+     * @param link to be validated
+     * @return Link object if the header is formatted correctly, else null
+     * @throws ExternalMessageBodyException on error
+     */
+    private Link parseLinkHeader(final String link) throws ExternalMessageBodyException {
+<span class="fc" id="L166">        final Link realLink = Link.valueOf(link);</span>
+
+        try {
+<span class="fc" id="L169">            final String handling = realLink.getParams().get(HANDLING);</span>
+<span class="fc bfc" id="L170" title="All 4 branches covered.">            if (handling == null || !handling.matches(&quot;(?i)&quot; + PROXY + &quot;|&quot; + COPY + &quot;|&quot; + REDIRECT)) {</span>
+                // error
+<span class="fc" id="L172">                throw new ExternalMessageBodyException(</span>
+                        &quot;Link header formatted incorrectly: 'handling' parameter incorrect or missing&quot;);
+            }
+<span class="fc" id="L175">        } catch (final Exception e) {</span>
+<span class="fc" id="L176">            throw new ExternalMessageBodyException(&quot;External content link header url is malformed&quot;);</span>
+<span class="fc" id="L177">        }</span>
+<span class="fc" id="L178">        return realLink;</span>
+    }
+
+    /**
+     * Find the content type for a remote resource
+     * @param url of remote resource
+     * @return the content type reported by remote system or &quot;application/octet-stream&quot; if not supplied
+     */
+    private MediaType findContentType(final String url) {
+<span class="pc bpc" id="L187" title="1 of 2 branches missed.">        if (url == null) {</span>
+<span class="nc" id="L188">            return null;</span>
+        }
+
+<span class="fc bfc" id="L191" title="All 2 branches covered.">        if (url.startsWith(&quot;file&quot;)) {</span>
+<span class="fc" id="L192">            return APPLICATION_OCTET_STREAM_TYPE;</span>
+<span class="pc bpc" id="L193" title="1 of 2 branches missed.">        } else if (url.startsWith(&quot;http&quot;)) {</span>
+<span class="fc" id="L194">            try (CloseableHttpClient httpClient = HttpClients.createDefault()) {</span>
+<span class="fc" id="L195">                final HttpHead httpHead = new HttpHead(url);</span>
+<span class="fc" id="L196">                try (CloseableHttpResponse response = httpClient.execute(httpHead)) {</span>
+<span class="fc bfc" id="L197" title="All 2 branches covered.">                    if (response.getStatusLine().getStatusCode() == SC_OK) {</span>
+<span class="fc" id="L198">                        final Header contentType = response.getFirstHeader(CONTENT_TYPE);</span>
+<span class="pc bpc" id="L199" title="1 of 2 branches missed.">                        if (contentType != null) {</span>
+<span class="fc" id="L200">                            return MediaType.valueOf(contentType.getValue());</span>
+                        }
+                    }
+                }
+<span class="fc" id="L204">            } catch (final IOException e) {</span>
+<span class="fc" id="L205">                LOGGER.warn(&quot;Unable to retrieve external content from {} due to {}&quot;, url, e.getMessage());</span>
+<span class="nc" id="L206">            } catch (final Exception e) {</span>
+<span class="nc" id="L207">                throw new RepositoryRuntimeException(e);</span>
+<span class="fc" id="L208">            }</span>
+        }
+<span class="fc" id="L210">        LOGGER.debug(&quot;Defaulting to octet stream for media type&quot;);</span>
+<span class="fc" id="L211">        return APPLICATION_OCTET_STREAM_TYPE;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

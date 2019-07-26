@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>BypassSecurityServletAuthenticationProvider.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository WebAC Authorization Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-auth-common</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.auth.common</a> &gt; <span class="el_source">BypassSecurityServletAuthenticationProvider.java</span></div><h1>BypassSecurityServletAuthenticationProvider.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.auth.common;
+
+import java.util.Map;
+
+import javax.jcr.Credentials;
+
+import org.modeshape.jcr.ExecutionContext;
+import org.modeshape.jcr.api.ServletCredentials;
+import org.modeshape.jcr.security.AuthenticationProvider;
+import org.modeshape.jcr.security.SecurityContext;
+
+/**
+ * This authentication provider will always authenticate, giving
+ * complete access privileges to the session.
+ *
+ * @author Gregory Jansen
+ */
+<span class="fc" id="L35">public class BypassSecurityServletAuthenticationProvider implements</span>
+        AuthenticationProvider {
+
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.modeshape.jcr.security.AuthenticationProvider#authenticate(javax.
+     * jcr.Credentials, java.lang.String, java.lang.String,
+     * org.modeshape.jcr.ExecutionContext, java.util.Map)
+     */
+    @Override
+    public ExecutionContext authenticate(final Credentials credentials,
+            final String repositoryName, final String workspaceName,
+            final ExecutionContext repositoryContext,
+            final Map&lt;String, Object&gt; sessionAttributes) {
+<span class="fc bfc" id="L50" title="All 2 branches covered.">        if (credentials instanceof ServletCredentials) {</span>
+<span class="fc" id="L51">            return repositoryContext</span>
+<span class="fc" id="L52">                    .with(new AnonymousAdminSecurityContext(&quot;bypassAdmin&quot;));</span>
+        }
+<span class="fc" id="L54">        return null;</span>
+
+    }
+
+    /**
+     * Security context with complete
+     */
+<span class="fc" id="L61">    public static class AnonymousAdminSecurityContext implements</span>
+            SecurityContext {
+
+        private final String userName;
+
+        /**
+         * Create a new security context with the given user name
+         * @param userName User name to assign to the anonymous admin
+         */
+<span class="fc" id="L70">        public AnonymousAdminSecurityContext(final String userName) {</span>
+<span class="fc" id="L71">            this.userName = userName;</span>
+<span class="fc" id="L72">        }</span>
+
+        /*
+         * (non-Javadoc)
+         * @see org.modeshape.jcr.security.SecurityContext#isAnonymous()
+         */
+        @Override
+        public boolean isAnonymous() {
+<span class="nc" id="L80">            return false;</span>
+        }
+
+        /*
+         * (non-Javadoc)
+         * @see org.modeshape.jcr.security.SecurityContext#getUserName()
+         */
+        @Override
+        public String getUserName() {
+<span class="fc" id="L89">            return userName;</span>
+        }
+
+        /*
+         * (non-Javadoc)
+         * @see
+         * org.modeshape.jcr.security.SecurityContext#hasRole(java.lang.String)
+         */
+        @Override
+        public boolean hasRole(final String roleName) {
+<span class="fc" id="L99">            return true;</span>
+        }
+
+        /*
+         * (non-Javadoc)
+         * @see org.modeshape.jcr.security.SecurityContext#logout()
+         */
+        @Override
+        public void logout() {
+            /*NOOP*/
+<span class="fc" id="L109">        }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
