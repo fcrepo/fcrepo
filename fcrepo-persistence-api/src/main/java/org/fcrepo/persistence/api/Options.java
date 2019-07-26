@@ -15,34 +15,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.persistence.api;
 
 /**
- * An interface that mediates CRUD operations to and from persistence storage.
  *
  * @author dbernstein
  */
-public interface PersistentStorage {
-    /**
-     *
-     * @param psSessionId
-     * @return
-     */
-    PersistentStorageSession getSession(String psSessionId);
+public class Options {
 
     /**
      *
-     * @param storageSession
-     * @param path
-     * @return
      */
-    PersistentResource create(PersistentStorageSession storageSession, String path, Options options);
+    public enum Option {
+        ARCHIVAL_GROUP;
+    }
 
     /**
      *
-     * @param storageSession
-     * @param path
-     * @return
+     * @param option
      */
-    PersistentResource get(PersistentStorageSession storageSession, String path);
+    public void add(final Option option){
+        //TODO impelment
+    }
 }
