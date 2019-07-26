@@ -1,0 +1,532 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>FedoraTypesUtils.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-modeshape</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.utils</a> &gt; <span class="el_source">FedoraTypesUtils.java</span></div><h1>FedoraTypesUtils.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.utils;
+
+import java.net.URI;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Predicate;
+
+import org.apache.jena.rdf.model.Resource;
+import org.fcrepo.kernel.api.FedoraTypes;
+import org.fcrepo.kernel.api.exception.AccessDeniedException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.modeshape.FedoraResourceImpl;
+import org.fcrepo.kernel.modeshape.services.functions.AnyTypesPredicate;
+import org.modeshape.jcr.JcrRepository;
+import org.modeshape.jcr.cache.NodeKey;
+import org.slf4j.Logger;
+
+import javax.jcr.NamespaceRegistry;
+import javax.jcr.Node;
+import javax.jcr.Property;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+import javax.jcr.nodetype.NodeType;
+import javax.jcr.nodetype.PropertyDefinition;
+
+import static java.util.Arrays.stream;
+import static java.util.Calendar.getInstance;
+import static java.util.Optional.empty;
+import static java.util.TimeZone.getTimeZone;
+import static javax.jcr.PropertyType.REFERENCE;
+import static javax.jcr.PropertyType.WEAKREFERENCE;
+import static com.google.common.collect.ImmutableSet.of;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
+import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATED;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_CREATEDBY;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIED;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.JCR_LASTMODIFIEDBY;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.ROOT;
+import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.isBinaryContentProperty;
+import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaceRegistry;
+import static org.fcrepo.kernel.modeshape.utils.UncheckedPredicate.uncheck;
+import static org.modeshape.jcr.api.JcrConstants.JCR_CONTENT;
+import static org.modeshape.jcr.api.JcrConstants.JCR_PRIMARY_TYPE;
+import static org.modeshape.jcr.api.JcrConstants.JCR_MIXIN_TYPES;
+import static org.slf4j.LoggerFactory.getLogger;
+
+/**
+ * Convenience class with static methods for manipulating Fedora types in the
+ * JCR.
+ *
+ * @author ajs6f
+ * @since Feb 14, 2013
+ */
+<span class="nc" id="L77">public abstract class FedoraTypesUtils implements FedoraTypes {</span>
+
+    private static final String REFERENCE_PROPERTY_SUFFIX = &quot;_ref&quot;;
+
+<span class="fc" id="L81">    private static final Logger LOGGER = getLogger(FedoraTypesUtils.class);</span>
+
+<span class="fc" id="L83">    private static final Set&lt;String&gt; privateProperties = of(</span>
+            &quot;jcr:mime&quot;,
+            &quot;jcr:mimeType&quot;,
+            &quot;jcr:uuid&quot;,
+            JCR_CONTENT,
+            JCR_PRIMARY_TYPE,
+            JCR_LASTMODIFIED,
+            JCR_LASTMODIFIEDBY,
+            JCR_CREATED,
+            JCR_CREATEDBY,
+            JCR_MIXIN_TYPES,
+            MEMENTO_DATETIME);
+
+<span class="fc" id="L96">    private static final Set&lt;String&gt; validJcrProperties = of(</span>
+            JCR_CREATED,
+            JCR_CREATEDBY,
+            JCR_LASTMODIFIED,
+            JCR_LASTMODIFIEDBY);
+
+    /**
+     * Predicate for determining whether this {@link Node} is a {@link org.fcrepo.kernel.api.models.Container}.
+     */
+<span class="fc" id="L105">    public static final Predicate&lt;Node&gt; isContainer = new AnyTypesPredicate(FEDORA_CONTAINER);</span>
+
+    /**
+     * Predicate for determining whether this {@link Node} is a
+     * {@link org.fcrepo.kernel.api.models.NonRdfSourceDescription}.
+     */
+<span class="fc" id="L111">    public static final Predicate&lt;Node&gt; isNonRdfSourceDescription =</span>
+            new AnyTypesPredicate(FEDORA_NON_RDF_SOURCE_DESCRIPTION);
+
+
+    /**
+     * Predicate for determining whether this {@link Node} is a Fedora
+     * binary.
+     */
+<span class="fc" id="L119">    public static final Predicate&lt;Node&gt; isFedoraBinary = new AnyTypesPredicate(FEDORA_BINARY);</span>
+
+    /**
+     * Predicate for determining whether this {@link Node} is a Fedora Skolem node.
+     */
+<span class="fc" id="L124">    public static final Predicate&lt;Node&gt; isSkolemNode = new AnyTypesPredicate(FEDORA_SKOLEM);</span>
+
+    /**
+     * Predicate for determining whether this {@link Node} is a Memento.
+     */
+<span class="fc" id="L129">    public static final Predicate&lt;Node&gt; isMemento = new AnyTypesPredicate(MEMENTO);</span>
+
+    /**
+     * Predicate for determining whether this {@link Node} is a TimeMap.
+     */
+<span class="fc" id="L134">    public static final Predicate&lt;Node&gt; isTimeMap = new AnyTypesPredicate(FEDORA_TIME_MAP);</span>
+
+    /**
+     * Predicate for determining whether this {@link Node} is an Web ACL.
+     */
+<span class="fc" id="L139">    public static final Predicate&lt;Node&gt; isAcl = new AnyTypesPredicate(FEDORA_WEBAC_ACL);</span>
+
+    /**
+     * Check if a property is a reference property.
+     */
+<span class="fc bfc" id="L144" title="All 2 branches covered.">    public static final Predicate&lt;Property&gt; isInternalReferenceProperty = uncheck(p -&gt; (p.getType() == REFERENCE ||</span>
+<span class="fc bfc" id="L145" title="All 2 branches covered.">            p.getType() == WEAKREFERENCE) &amp;&amp;</span>
+<span class="fc bfc" id="L146" title="All 2 branches covered.">            p.getName().endsWith(REFERENCE_PROPERTY_SUFFIX));</span>
+
+    /**
+     *  Check whether a type should be internal.
+     */
+<span class="fc" id="L151">    public static final Predicate&lt;String&gt; hasInternalNamespace = type -&gt;</span>
+<span class="fc bfc" id="L152" title="All 6 branches covered.">        type.startsWith(&quot;jcr:&quot;) || type.startsWith(&quot;mode:&quot;) || type.startsWith(&quot;nt:&quot;) ||</span>
+<span class="fc bfc" id="L153" title="All 2 branches covered.">            type.startsWith(&quot;mix:&quot;);</span>
+
+    /**
+     * Predicate for determining whether a JCR property should be converted to the fedora namespace.
+     */
+<span class="fc" id="L158">    private static final Predicate&lt;String&gt; isPublicJcrProperty = validJcrProperties::contains;</span>
+
+    /**
+     * Check whether a property is protected (ie, cannot be modified directly) but
+     * is not one we've explicitly chosen to include.
+     */
+<span class="fc" id="L164">    private static final Predicate&lt;Property&gt; isProtectedAndShouldBeHidden = uncheck(p -&gt; {</span>
+<span class="fc bfc" id="L165" title="All 2 branches covered.">        if (!p.getDefinition().isProtected()) {</span>
+<span class="fc" id="L166">            return false;</span>
+<span class="fc bfc" id="L167" title="All 2 branches covered.">        } else if (isPublicJcrProperty.test(p.getName())) {</span>
+<span class="fc" id="L168">            return false;</span>
+        }
+<span class="fc" id="L170">        return hasInternalNamespace.test(p.getName());</span>
+    });
+
+    /**
+    * Check whether a property is an internal property that should be suppressed
+    * from external output.
+    */
+<span class="fc" id="L177">    public static final Predicate&lt;Property&gt; isInternalProperty = isBinaryContentProperty</span>
+<span class="fc" id="L178">                            .or(isProtectedAndShouldBeHidden::test)</span>
+<span class="fc" id="L179">                            .or(uncheck(p -&gt; privateProperties.contains(p.getName())));</span>
+
+    /**
+     * Check whether a type is an internal type that should be suppressed from external output.
+     */
+<span class="fc" id="L184">    public static final Predicate&lt;URI&gt; isInternalType =</span>
+<span class="fc bfc" id="L185" title="All 4 branches covered.">        t -&gt; t.toString().equals(MEMENTO_TYPE) || t.toString().equals(FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI);</span>
+
+    /**
+     * A functional predicate to check whether a property is a JCR property that should be exposed.
+     * Historically we exposed JCR properties when they seemed to match a fedora property we wanted to track,
+     * but when control over the property became a requirement, we introduced the direct storage
+     * of fedora properties that when present should overrule the JCR property.
+     */
+<span class="nc" id="L193">    public static class IsExposedJCRPropertyPredicate implements Predicate&lt;Property&gt; {</span>
+
+        private final FedoraResource subject;
+
+        /**
+         * Constructs this functional predicate for testing properties on the given
+         * resource.
+         * @param resource the resource whose properties can be tested by this predicate
+         */
+<span class="fc" id="L202">        public IsExposedJCRPropertyPredicate(final FedoraResource resource) {</span>
+<span class="fc" id="L203">            subject = resource;</span>
+<span class="fc" id="L204">        }</span>
+
+        @Override
+        public boolean test(final Property prop) {
+            try {
+<span class="fc bfc" id="L209" title="All 4 branches covered.">                return (prop.getName().equals(JCR_LASTMODIFIED) &amp;&amp; !subject.hasProperty(FEDORA_LASTMODIFIED))</span>
+<span class="fc bfc" id="L210" title="All 4 branches covered.">                        || (prop.getName().equals(JCR_LASTMODIFIEDBY) &amp;&amp; !subject.hasProperty(FEDORA_LASTMODIFIEDBY))</span>
+<span class="fc bfc" id="L211" title="All 4 branches covered.">                        || (prop.getName().equals(JCR_CREATED) &amp;&amp; !subject.hasProperty(FEDORA_CREATED))</span>
+<span class="fc bfc" id="L212" title="All 4 branches covered.">                        || (prop.getName().equals(JCR_CREATEDBY) &amp;&amp; !subject.hasProperty(FEDORA_CREATEDBY));</span>
+<span class="nc" id="L213">            } catch (final RepositoryException e) {</span>
+<span class="nc" id="L214">                throw new RepositoryRuntimeException(e);</span>
+            }
+        }
+    }
+
+    /**
+     * Check if a node is &quot;internal&quot; and should not be exposed e.g. via the REST
+     * API
+     */
+<span class="fc" id="L223">    public static final Predicate&lt;Node&gt; isInternalNode = uncheck(n -&gt; n.isNodeType(&quot;mode:system&quot;));</span>
+
+    /**
+     * Check if a node is externally managed.
+     *
+     * Note: modeshape uses a source-workspace-identifier scheme
+     * to identify whether a node is externally-managed.
+     * Ordinary (non-external) nodes will have simple UUIDs
+     * as an identifier. These are never external nodes.
+     *
+     * External nodes will have a 7-character hex code
+     * identifying the &quot;source&quot;, followed by another
+     * 7-character hex code identifying the &quot;workspace&quot;, followed
+     * by a &quot;/&quot; and then the rest of the &quot;identifier&quot;.
+     *
+     * Following that scheme, if a node's &quot;source&quot; key does not
+     * match the repository's configured store name, then it is an
+     * external node.
+     */
+<span class="fc" id="L242">    public static final Predicate&lt;Node&gt; isExternalNode = uncheck(n -&gt;  {</span>
+<span class="fc bfc" id="L243" title="All 2 branches covered.">        if (NodeKey.isValidRandomIdentifier(n.getIdentifier())) {</span>
+<span class="fc" id="L244">            return false;</span>
+<span class="fc bfc" id="L245" title="All 2 branches covered.">        } else if (n.getPrimaryNodeType().getName().equals(ROOT)) {</span>
+<span class="fc" id="L246">            return false;</span>
+        } else {
+<span class="fc" id="L248">            final NodeKey key = new NodeKey(n.getIdentifier());</span>
+<span class="fc" id="L249">            final String source = NodeKey.keyForSourceName(</span>
+<span class="fc" id="L250">                    ((JcrRepository)n.getSession().getRepository()).getConfiguration().getName());</span>
+<span class="fc bfc" id="L251" title="All 2 branches covered.">            return !key.getSourceKey().equals(source);</span>
+        }
+    });
+
+    /**
+     * Get the JCR property type ID for a given property name. If unsure, mark
+     * it as UNDEFINED.
+     *
+     * @param node the JCR node to add the property on
+     * @param propertyName the property name
+     * @return a PropertyType value
+     * @throws RepositoryException if repository exception occurred
+     */
+    public static Optional&lt;Integer&gt; getPropertyType(final Node node, final String propertyName)
+            throws RepositoryException {
+<span class="fc" id="L266">        LOGGER.debug(&quot;Getting type of property: {} from node: {}&quot;, propertyName, node);</span>
+<span class="fc" id="L267">        return getDefinitionForPropertyName(node, propertyName).map(PropertyDefinition::getRequiredType);</span>
+    }
+
+    /**
+     * Determine if a given JCR property name is single- or multi- valued.
+     * If unsure, choose the least restrictive option (multivalued = true)
+     *
+     * @param node the JCR node to check
+     * @param propertyName the property name (which may or may not already exist)
+     * @return true if the property is multivalued
+     * @throws RepositoryException if repository exception occurred
+     */
+    public static boolean isMultivaluedProperty(final Node node, final String propertyName)
+            throws RepositoryException {
+<span class="fc" id="L281">        return getDefinitionForPropertyName(node, propertyName).map(PropertyDefinition::isMultiple).orElse(true);</span>
+    }
+
+    /**
+     * Get the property definition information (containing type and multi-value
+     * information)
+     *
+     * @param node the node to use for inferring the property definition
+     * @param propertyName the property name to retrieve a definition for
+     * @return a JCR PropertyDefinition, if available
+     * @throws javax.jcr.RepositoryException if repository exception occurred
+     */
+    private static Optional&lt;PropertyDefinition&gt; getDefinitionForPropertyName(final Node node, final String propertyName)
+            throws RepositoryException {
+<span class="fc" id="L295">        LOGGER.debug(&quot;Looking for property name: {}&quot;, propertyName);</span>
+<span class="fc" id="L296">        final Predicate&lt;PropertyDefinition&gt; sameName = p -&gt; propertyName.equals(p.getName());</span>
+
+<span class="fc" id="L298">        final PropertyDefinition[] propDefs = node.getPrimaryNodeType().getPropertyDefinitions();</span>
+<span class="fc" id="L299">        final Optional&lt;PropertyDefinition&gt; primaryCandidate = stream(propDefs).filter(sameName).findFirst();</span>
+<span class="fc bfc" id="L300" title="All 2 branches covered.">        return primaryCandidate.isPresent() ? primaryCandidate :</span>
+<span class="fc" id="L301">                stream(node.getMixinNodeTypes()).map(NodeType::getPropertyDefinitions).flatMap(Arrays::stream)</span>
+<span class="fc" id="L302">                        .filter(sameName).findFirst();</span>
+    }
+
+    /**
+     * When we add certain URI properties, we also want to leave a reference node
+     * @param propertyName the property name
+     * @return property name as a reference
+     */
+    public static String getReferencePropertyName(final String propertyName) {
+<span class="fc" id="L311">        return propertyName + REFERENCE_PROPERTY_SUFFIX;</span>
+    }
+
+    /**
+     * Given an internal reference node property, get the original name
+     * @param refPropertyName the reference node property name
+     * @return original property name of the reference property
+     */
+    public static String getReferencePropertyOriginalName(final String refPropertyName) {
+<span class="fc" id="L320">        final int i = refPropertyName.lastIndexOf(REFERENCE_PROPERTY_SUFFIX);</span>
+<span class="pc bpc" id="L321" title="1 of 2 branches missed.">        return i &lt; 0 ? refPropertyName : refPropertyName.substring(0, i);</span>
+    }
+
+    /**
+     * Check if a property definition is a reference property
+     * @param node the given node
+     * @param propertyName the property name
+     * @return whether a property definition is a reference property
+     * @throws RepositoryException if repository exception occurred
+     */
+    public static boolean isReferenceProperty(final Node node, final String propertyName) throws RepositoryException {
+<span class="fc" id="L332">        final Optional&lt;PropertyDefinition&gt; propertyDefinition = getDefinitionForPropertyName(node, propertyName);</span>
+
+<span class="fc bfc" id="L334" title="All 2 branches covered.">        return propertyDefinition.isPresent() &amp;&amp;</span>
+<span class="fc bfc" id="L335" title="All 2 branches covered.">                (propertyDefinition.get().getRequiredType() == REFERENCE</span>
+<span class="fc bfc" id="L336" title="All 2 branches covered.">                        || propertyDefinition.get().getRequiredType() == WEAKREFERENCE);</span>
+    }
+
+
+    /**
+     * Get the closest ancestor that current exists
+     *
+     * @param session the given session
+     * @param path the given path
+     * @return the closest ancestor that current exists
+     * @throws RepositoryException if repository exception occurred
+     */
+    public static Node getClosestExistingAncestor(final Session session, final String path)
+            throws RepositoryException {
+
+<span class="fc bfc" id="L351" title="All 2 branches covered.">        String potentialPath = path.startsWith(&quot;/&quot;) ? path : &quot;/&quot; + path;</span>
+<span class="fc bfc" id="L352" title="All 2 branches covered.">        while (!potentialPath.isEmpty()) {</span>
+<span class="fc bfc" id="L353" title="All 2 branches covered.">            if (session.nodeExists(potentialPath)) {</span>
+<span class="fc" id="L354">                return session.getNode(potentialPath);</span>
+            }
+<span class="fc" id="L356">            potentialPath = potentialPath.substring(0, potentialPath.lastIndexOf('/'));</span>
+        }
+<span class="fc" id="L358">        return session.getRootNode();</span>
+    }
+
+    /**
+     * Retrieve the underlying JCR Node from the FedoraResource
+     *
+     * @param resource the Fedora resource
+     * @return the JCR Node
+     */
+    public static Node getJcrNode(final FedoraResource resource) {
+<span class="pc bpc" id="L368" title="1 of 2 branches missed.">        if (resource instanceof FedoraResourceImpl) {</span>
+<span class="fc" id="L369">            return ((FedoraResourceImpl)resource).getNode();</span>
+        }
+<span class="nc" id="L371">        throw new IllegalArgumentException(&quot;FedoraResource is of the wrong type&quot;);</span>
+    }
+
+    /**
+     * Given a JCR Node, fetch the parent's ldp:insertedContentRelation value, if
+     * one exists.
+     *
+     * @param node the JCR Node
+     * @return the ldp:insertedContentRelation Resource, if one exists.
+     */
+    public static Optional&lt;Resource&gt; ldpInsertedContentProperty(final Node node) {
+<span class="fc bfc" id="L382" title="All 2 branches covered.">        return getContainingNode(node).filter(uncheck(parent -&gt; parent.hasProperty(LDP_MEMBER_RESOURCE) &amp;&amp;</span>
+<span class="pc bpc" id="L383" title="1 of 4 branches missed.">                parent.isNodeType(LDP_INDIRECT_CONTAINER) &amp;&amp; parent.hasProperty(LDP_INSERTED_CONTENT_RELATION)))</span>
+<span class="fc" id="L384">            .map(UncheckedFunction.uncheck(parent -&gt;</span>
+<span class="fc" id="L385">                        createResource(parent.getProperty(LDP_INSERTED_CONTENT_RELATION).getString())));</span>
+    }
+
+    /**
+     * Using a JCR session, return a function that maps an RDF Resource to a corresponding property name.
+     *
+     * @param session The JCR session
+     * @return a Function that maps a Resource to an Optional-wrapped String
+     */
+    public static Function&lt;Resource, Optional&lt;String&gt;&gt; resourceToProperty(final Session session) {
+<span class="fc" id="L395">        return resource -&gt; {</span>
+            try {
+<span class="fc" id="L397">                final NamespaceRegistry registry = getNamespaceRegistry(session);</span>
+<span class="fc" id="L398">                return Optional.of(registry.getPrefix(resource.getNameSpace()) + &quot;:&quot; + resource.getLocalName());</span>
+<span class="fc" id="L399">            } catch (final RepositoryException ex) {</span>
+<span class="fc" id="L400">                LOGGER.debug(&quot;Could not resolve resource namespace ({}): {}&quot;, resource.toString(), ex.getMessage());</span>
+            }
+<span class="fc" id="L402">            return empty();</span>
+        };
+    }
+
+    /**
+     * Update the fedora:lastModified date and fedora:lastModifiedBy of the parent's ldp:membershipResource if that
+     * node is a direct or indirect container, provided the LDP constraints are valid.
+     *
+     * @param node The JCR node
+     */
+    public static void touchLdpMembershipResource(final Node node) {
+<span class="fc" id="L413">        touchLdpMembershipResource(node, null, null);</span>
+<span class="fc" id="L414">    }</span>
+
+    /**
+     * Update the fedora:lastModified date and fedora:lastModifiedBy of the parent's ldp:membershipResource if that
+     * node is a direct or indirect container, provided the LDP constraints are valid.
+     *
+     * @param node The JCR node
+     * @param date the date the modification was supposed to have occurred or null to indicate now
+     * @param user the user who performed the action or null to indicate the user associated with the current session
+     */
+    public static void touchLdpMembershipResource(final Node node, final Calendar date, final String user) {
+<span class="fc" id="L425">        getContainingNode(node).filter(uncheck(parent -&gt; parent.hasProperty(LDP_MEMBER_RESOURCE))).ifPresent(parent -&gt; {</span>
+            try {
+<span class="fc" id="L427">                final Optional&lt;String&gt; hasInsertedContentProperty = ldpInsertedContentProperty(node)</span>
+<span class="fc" id="L428">                        .flatMap(resourceToProperty(node.getSession())).filter(uncheck(node::hasProperty));</span>
+<span class="fc bfc" id="L429" title="All 2 branches covered.">                if (parent.isNodeType(LDP_DIRECT_CONTAINER) ||</span>
+<span class="pc bpc" id="L430" title="1 of 4 branches missed.">                        (parent.isNodeType(LDP_INDIRECT_CONTAINER) &amp;&amp; hasInsertedContentProperty.isPresent())) {</span>
+<span class="fc" id="L431">                    touch(parent.getProperty(LDP_MEMBER_RESOURCE).getNode(), date, user);</span>
+                }
+<span class="nc" id="L433">            } catch (final javax.jcr.AccessDeniedException ex) {</span>
+<span class="nc" id="L434">                throw new AccessDeniedException(ex);</span>
+<span class="nc" id="L435">            } catch (final RepositoryException ex) {</span>
+<span class="nc" id="L436">                throw new RepositoryRuntimeException(ex);</span>
+<span class="fc" id="L437">            }</span>
+<span class="fc" id="L438">        });</span>
+<span class="fc" id="L439">    }</span>
+
+    /**
+     * Updates the LAST_MODIFIED_DATE and LAST_MODIFIED_BY properties to now, and the current user
+     * respectively.
+     *
+     * @param node The JCR node
+     *
+     */
+    public static void touch(final Node node) {
+<span class="fc" id="L449">        touch(node, null, null, null, null);</span>
+<span class="fc" id="L450">    }</span>
+
+    /**
+     * Updates the LAST_MODIFIED_DATE and LAST_MODIFIED_BY properties to the provided values.
+     *
+     * @param node The JCR node
+     * @param modified the modification date, or null if not explicitly set
+     * @param modifyingUser the userID who modified this resource or null if not explicitly set
+     *
+     */
+    private static void touch(final Node node, final Calendar modified, final String modifyingUser) {
+<span class="fc" id="L461">        touch(node, null, null, modified, modifyingUser);</span>
+<span class="fc" id="L462">    }</span>
+
+    /**
+     * Updates the LAST_MODIFIED_DATE, LAST_MODIFIED_BY, CREATED_DATE and CREATED_BY properties to the provided values.
+     *
+     * @param node The JCR node
+     * @param created the date the resource was created, or null if not explicitly set
+     * @param creatingUser the userID of created this resource or null if not explicitly set
+     * @param modified the modification date, or null if not explicitly set
+     * @param modifyingUser the userID who modified this resource or null if not explicitly set
+     *
+     */
+    public static void touch(final Node node, final Calendar created, final String creatingUser,
+                             final Calendar modified, final String modifyingUser) {
+        try {
+<span class="fc bfc" id="L477" title="All 2 branches covered.">            if (created != null) {</span>
+<span class="fc" id="L478">                node.setProperty(FEDORA_CREATED, created);</span>
+            }
+
+<span class="fc bfc" id="L481" title="All 2 branches covered.">            if (creatingUser != null) {</span>
+<span class="fc" id="L482">                node.setProperty(FEDORA_CREATEDBY, creatingUser);</span>
+            }
+
+<span class="fc bfc" id="L485" title="All 2 branches covered.">            if (modified != null) {</span>
+<span class="fc" id="L486">                node.setProperty(FEDORA_LASTMODIFIED, modified);</span>
+            } else {
+<span class="fc" id="L488">                node.setProperty(FEDORA_LASTMODIFIED, getInstance(getTimeZone(&quot;UTC&quot;)));</span>
+            }
+
+<span class="fc bfc" id="L491" title="All 2 branches covered.">            if (modifyingUser != null) {</span>
+<span class="fc" id="L492">                node.setProperty(FEDORA_LASTMODIFIEDBY, modifyingUser);</span>
+            } else {
+                // revert to the modeshape-managed property
+<span class="fc bfc" id="L495" title="All 2 branches covered.">                if (node.hasProperty(FEDORA_LASTMODIFIEDBY)) {</span>
+<span class="fc" id="L496">                    node.getProperty(FEDORA_LASTMODIFIEDBY).remove();</span>
+                }
+            }
+<span class="nc" id="L499">        } catch (final javax.jcr.AccessDeniedException ex) {</span>
+<span class="nc" id="L500">            throw new AccessDeniedException(ex);</span>
+<span class="nc" id="L501">        } catch (final RepositoryException ex) {</span>
+<span class="nc" id="L502">            throw new RepositoryRuntimeException(ex);</span>
+<span class="fc" id="L503">        }</span>
+<span class="fc" id="L504">    }</span>
+
+    /**
+     * Get the JCR Node that corresponds to the containing node in the repository.
+     * This may be the direct parent node, but it may also be a more distant ancestor.
+     *
+     * @param node the JCR node
+     * @return the containing node, if one is present
+     */
+    public static Optional&lt;Node&gt; getContainingNode(final Node node) {
+        try {
+<span class="fc bfc" id="L515" title="All 2 branches covered.">            if (node.getDepth() == 0) {</span>
+<span class="fc" id="L516">                return empty();</span>
+            }
+
+            // check ancestors recursively only either of the following two cases applies:
+            // 1. the PARENT is a FEDORA_PAIRTREE
+            // 2. the PARENT is FEDORA_NON_RDF_SOURCE_DESCRIPTION
+<span class="fc" id="L522">            final Node parent = node.getParent();</span>
+<span class="fc bfc" id="L523" title="All 4 branches covered.">            if (parent.isNodeType(FEDORA_PAIRTREE) || parent.isNodeType(FEDORA_NON_RDF_SOURCE_DESCRIPTION)) {</span>
+<span class="fc" id="L524">                return getContainingNode(parent);</span>
+            }
+<span class="fc" id="L526">            return Optional.of(parent);</span>
+<span class="nc" id="L527">        } catch (final RepositoryException ex) {</span>
+<span class="nc" id="L528">            throw new RepositoryRuntimeException(ex);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

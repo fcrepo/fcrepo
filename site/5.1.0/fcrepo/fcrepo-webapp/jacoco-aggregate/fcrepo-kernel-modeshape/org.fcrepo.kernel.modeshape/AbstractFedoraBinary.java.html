@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>AbstractFedoraBinary.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-modeshape</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape</a> &gt; <span class="el_source">AbstractFedoraBinary.java</span></div><h1>AbstractFedoraBinary.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape;
+
+import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDstring;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_DESCRIPTION;
+import static org.fcrepo.kernel.modeshape.FedoraJcrConstants.FIELD_DELIMITER;
+import static org.fcrepo.kernel.modeshape.services.functions.JcrPropertyFunctions.property2values;
+import static org.fcrepo.kernel.api.RdfLexicon.LDPCV_TIME_MAP;
+
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.net.URI;
+import java.util.Optional;
+
+import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
+import javax.jcr.Property;
+import javax.jcr.RepositoryException;
+import javax.jcr.Value;
+
+import org.apache.jena.rdf.model.Resource;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.FedoraBinary;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.utils.ContentDigest;
+import org.slf4j.Logger;
+
+/**
+ * Abstract class representing the content of a binary resource
+ *
+ * @author bbpennel
+ */
+public abstract class AbstractFedoraBinary extends FedoraResourceImpl implements FedoraBinary {
+
+<span class="fc" id="L53">    private static final Logger LOGGER = getLogger(AbstractFedoraBinary.class);</span>
+
+    protected static final String DEFAULT_MIME_TYPE = &quot;application/octet-stream&quot;;
+
+    protected AbstractFedoraBinary(final Node node) {
+<span class="fc" id="L58">        super(node);</span>
+<span class="fc" id="L59">    }</span>
+
+    @Override
+    public FedoraResource getDescription() {
+<span class="fc" id="L63">        final Node descNode = getDescriptionNodeOrNull();</span>
+<span class="fc bfc" id="L64" title="All 2 branches covered.">        if (descNode == null) {</span>
+<span class="fc" id="L65">            return null;</span>
+        }
+<span class="fc" id="L67">        return new NonRdfSourceDescriptionImpl(getDescriptionNode());</span>
+    }
+
+    @Override
+    protected Node getDescriptionNode() {
+
+        try {
+<span class="fc" id="L74">            final Node node = getNode();</span>
+<span class="fc bfc" id="L75" title="All 2 branches covered.">            if (isMemento()) {</span>
+<span class="fc" id="L76">                final String mementoName = node.getName();</span>
+<span class="fc" id="L77">                return node.getParent().getParent().getNode(FEDORA_DESCRIPTION)</span>
+<span class="fc" id="L78">                        .getNode(LDPCV_TIME_MAP).getNode(mementoName);</span>
+            }
+<span class="fc" id="L80">            return getNode().getNode(FEDORA_DESCRIPTION);</span>
+<span class="fc" id="L81">        } catch (final RepositoryException e) {</span>
+
+            // ignore error as Desc memento may not be there yet
+<span class="pc bpc" id="L84" title="1 of 2 branches missed.">            if (isMemento()) {</span>
+<span class="fc" id="L85">                return null;</span>
+            }
+<span class="nc" id="L87">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    protected Node getDescriptionNodeOrNull() {
+        try {
+<span class="fc" id="L93">            return getDescriptionNode();</span>
+<span class="nc" id="L94">        } catch (final RepositoryRuntimeException e) {</span>
+<span class="nc bnc" id="L95" title="All 2 branches missed.">            if (e.getCause() instanceof PathNotFoundException) {</span>
+<span class="nc" id="L96">                return null;</span>
+            }
+<span class="nc" id="L98">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraBinary#getContentSize()
+     */
+    @Override
+    public long getContentSize() {
+        try {
+<span class="fc bfc" id="L110" title="All 2 branches covered.">            if (hasDescriptionProperty(CONTENT_SIZE)) {</span>
+<span class="fc" id="L111">                return getDescriptionProperty(CONTENT_SIZE).getLong();</span>
+            }
+<span class="nc" id="L113">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L114">            LOGGER.warn(&quot;Could not get contentSize(): {}&quot;, e.getMessage());</span>
+<span class="fc" id="L115">        }</span>
+<span class="fc" id="L116">        return -1L;</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraBinary#getContentDigest()
+     */
+    @Override
+    public URI getContentDigest() {
+
+<span class="fc" id="L126">        LOGGER.debug(&quot;getContentDigest getting digest info&quot;);</span>
+        try {
+            // Determine which digest algorithm to use
+<span class="fc bfc" id="L129" title="All 2 branches covered.">            final String algorithm = hasDescriptionProperty(DEFAULT_DIGEST_ALGORITHM) ? property2values.apply(</span>
+<span class="fc" id="L130">                getDescriptionProperty(DEFAULT_DIGEST_ALGORITHM)).findFirst().get().getString()</span>
+                : ContentDigest.DEFAULT_ALGORITHM;
+<span class="fc" id="L132">            final String algorithmWithoutStringType = algorithm.replace(FIELD_DELIMITER + XSDstring.getURI(), &quot;&quot;);</span>
+
+<span class="fc bfc" id="L134" title="All 2 branches covered.">            if (hasDescriptionProperty(CONTENT_DIGEST)) {</span>
+                // Select the stored digest that matches the digest algorithm
+<span class="fc" id="L136">                final Optional&lt;Value&gt; digestValue = property2values.apply(getDescriptionProperty(CONTENT_DIGEST))</span>
+<span class="fc" id="L137">                        .filter(digest -&gt; {</span>
+                        try {
+<span class="fc" id="L139">                            final URI digestUri = URI.create(digest.getString());</span>
+<span class="fc" id="L140">                            return algorithmWithoutStringType.equalsIgnoreCase(ContentDigest.getAlgorithm(digestUri));</span>
+
+<span class="nc" id="L142">                        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L143">                            LOGGER.warn(&quot;Exception thrown when getting digest property {}, {}&quot;, digest, e.getMessage());</span>
+<span class="nc" id="L144">                            return false;</span>
+                        }
+<span class="fc" id="L146">                    }).findFirst();</span>
+
+                // Success, return the digest value
+<span class="pc bpc" id="L149" title="1 of 2 branches missed.">                if (digestValue.isPresent()) {</span>
+<span class="fc" id="L150">                    return URI.create(digestValue.get().getString());</span>
+                }
+            }
+<span class="fc" id="L153">            LOGGER.warn(&quot;No digest value was found to match the algorithm: {}&quot;, algorithmWithoutStringType);</span>
+<span class="nc" id="L154">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L155">            LOGGER.warn(&quot;Could not get content digest: {}&quot;, e.getMessage());</span>
+<span class="fc" id="L156">        }</span>
+
+<span class="fc" id="L158">        return ContentDigest.missingChecksum();</span>
+    }
+
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraBinary#isProxy()
+     */
+    @Override
+    public Boolean isProxy() {
+<span class="fc" id="L168">        return hasProperty(PROXY_FOR);</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraBinary#isRedirect()
+     */
+    @Override
+    public Boolean isRedirect() {
+<span class="fc" id="L177">        return hasProperty(REDIRECTS_TO);</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraBinary#getProxyURL()
+     */
+    @Override
+    public String getProxyURL() {
+        try {
+<span class="pc bpc" id="L187" title="1 of 2 branches missed.">            if (hasProperty(PROXY_FOR)) {</span>
+<span class="fc" id="L188">                return getProperty(PROXY_FOR).getString();</span>
+            }
+<span class="nc" id="L190">            return null;</span>
+<span class="nc" id="L191">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L192">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraBinary#setProxyURL()
+     */
+    @Override
+    public void setProxyURL(final String url) throws RepositoryRuntimeException {
+        try {
+<span class="fc" id="L203">            getNode().setProperty(PROXY_FOR, url);</span>
+            // clear redirect property, in case it used to be a redirect
+<span class="fc" id="L205">            getNode().setProperty(REDIRECTS_TO, (Value) null);</span>
+<span class="nc" id="L206">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L207">            throw new RepositoryRuntimeException(e);</span>
+<span class="fc" id="L208">        }</span>
+<span class="fc" id="L209">    }</span>
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraBinary#getRedirectURL()
+     */
+    @Override
+    public String getRedirectURL() {
+        try {
+<span class="pc bpc" id="L218" title="1 of 2 branches missed.">            if (hasProperty(REDIRECTS_TO)) {</span>
+<span class="fc" id="L219">                return getProperty(REDIRECTS_TO).getString();</span>
+            }
+<span class="nc" id="L221">            return null;</span>
+<span class="nc" id="L222">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L223">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraBinary#setRedirectURL()
+     */
+    @Override
+    public void setRedirectURL(final String url) throws RepositoryRuntimeException {
+        try {
+<span class="fc" id="L234">            getNode().setProperty(REDIRECTS_TO, url);</span>
+            // clear proxy property in case it used to be a proxy
+<span class="fc" id="L236">            getNode().setProperty(PROXY_FOR, (Value) null);</span>
+<span class="nc" id="L237">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L238">            throw new RepositoryRuntimeException(e);</span>
+<span class="fc" id="L239">        }</span>
+<span class="fc" id="L240">    }</span>
+
+    protected String getMimeTypeValue() {
+        try {
+<span class="fc bfc" id="L244" title="All 2 branches covered.">            if (hasDescriptionProperty(HAS_MIME_TYPE)) {</span>
+<span class="fc" id="L245">                return getDescriptionProperty(HAS_MIME_TYPE).getString()</span>
+<span class="fc" id="L246">                        .replace(FIELD_DELIMITER + XSDstring.getURI(), &quot;&quot;);</span>
+            }
+<span class="nc" id="L248">        } catch (final RepositoryRuntimeException e) {</span>
+<span class="nc bnc" id="L249" title="All 4 branches missed.">            if (!(e.getCause() instanceof PathNotFoundException) || !isMemento()) {</span>
+<span class="nc" id="L250">                throw e;</span>
+            }
+<span class="nc" id="L252">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L253">            throw new RepositoryRuntimeException(e);</span>
+<span class="pc" id="L254">        }</span>
+<span class="fc" id="L255">        return DEFAULT_MIME_TYPE;</span>
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.fcrepo.kernel.api.models.FedoraBinary#getFilename()
+     */
+    @Override
+    public String getFilename() {
+        try {
+<span class="fc bfc" id="L265" title="All 2 branches covered.">            if (hasDescriptionProperty(FILENAME)) {</span>
+<span class="fc" id="L266">                return getDescriptionProperty(FILENAME).getString().replace(FIELD_DELIMITER + XSDstring.getURI(), &quot;&quot;);</span>
+            }
+<span class="fc" id="L268">            return node.getName();</span>
+<span class="nc" id="L269">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L270">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    @Override
+    public RdfStream getFixity(final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator) {
+<span class="fc" id="L276">        return getFixity(idTranslator, getContentDigest(), getContentSize());</span>
+    }
+
+    /**
+     * When deleting the binary, we also need to clean up the description document.
+     */
+    @Override
+    public void delete() {
+<span class="fc" id="L284">        final FedoraResource description = getDescription();</span>
+
+<span class="fc bfc" id="L286" title="All 2 branches covered.">        if (description != null) {</span>
+<span class="fc" id="L287">            description.delete();</span>
+        }
+
+<span class="fc" id="L290">        super.delete();</span>
+<span class="fc" id="L291">    }</span>
+
+    /**
+     * Check of the property exists on the description of this binary.
+     *
+     * @param relPath - path to the property
+     * @return true if property exists.
+     */
+    protected boolean hasDescriptionProperty(final String relPath) {
+
+        try {
+<span class="fc" id="L302">            final Node descNode = getDescriptionNodeOrNull();</span>
+<span class="fc bfc" id="L303" title="All 2 branches covered.">            if (descNode == null) {</span>
+<span class="fc" id="L304">                return false;</span>
+            }
+<span class="fc" id="L306">            return descNode.hasProperty(relPath);</span>
+<span class="nc" id="L307">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L308">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    /**
+     * Return the description property for this binary.
+     *
+     * @param relPath - path to the property
+     * @return Property object
+     */
+    private Property getDescriptionProperty(final String relPath) {
+        try {
+<span class="fc" id="L320">            return getDescriptionNode().getProperty(relPath);</span>
+<span class="nc" id="L321">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L322">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    /**
+     * Set the content size
+     *
+     * @param size the new value of the content size.
+     */
+    protected void setContentSize(final long size) {
+        try {
+<span class="fc" id="L333">            getDescriptionNode().setProperty(CONTENT_SIZE, size);</span>
+<span class="nc" id="L334">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L335">            throw new RepositoryRuntimeException(e);</span>
+<span class="fc" id="L336">        }</span>
+<span class="fc" id="L337">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

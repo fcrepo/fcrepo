@@ -1,0 +1,458 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>WebACRolesProvider.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-auth-webac</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.auth.webac</a> &gt; <span class="el_source">WebACRolesProvider.java</span></div><h1>WebACRolesProvider.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.auth.webac;
+
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
+import static java.util.stream.IntStream.range;
+import static java.util.stream.Stream.concat;
+import static java.util.stream.Stream.empty;
+import static java.util.stream.Stream.of;
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.fcrepo.auth.webac.URIConstants.FOAF_AGENT_VALUE;
+import static org.fcrepo.auth.webac.URIConstants.VCARD_GROUP_VALUE;
+import static org.fcrepo.auth.webac.URIConstants.VCARD_MEMBER_VALUE;
+import static org.fcrepo.auth.webac.URIConstants.WEBAC_ACCESSTO_CLASS_VALUE;
+import static org.fcrepo.auth.webac.URIConstants.WEBAC_ACCESSTO_VALUE;
+import static org.fcrepo.auth.webac.URIConstants.WEBAC_AGENT_CLASS_VALUE;
+import static org.fcrepo.auth.webac.URIConstants.WEBAC_AGENT_GROUP_VALUE;
+import static org.fcrepo.auth.webac.URIConstants.WEBAC_AGENT_VALUE;
+import static org.fcrepo.auth.webac.URIConstants.WEBAC_AUTHENTICATED_AGENT_VALUE;
+import static org.fcrepo.auth.webac.URIConstants.WEBAC_AUTHORIZATION_VALUE;
+import static org.fcrepo.auth.webac.URIConstants.WEBAC_DEFAULT_VALUE;
+import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_VALUE;
+import static org.fcrepo.auth.webac.URIConstants.WEBAC_NAMESPACE_VALUE;
+import static org.fcrepo.http.api.FedoraAcl.getDefaultAcl;
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
+import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
+import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
+import static org.fcrepo.kernel.modeshape.utils.FedoraSessionUserUtil.USER_AGENT_BASE_URI_PROPERTY;
+import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getJcrNode;
+import static org.slf4j.LoggerFactory.getLogger;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.inject.Inject;
+import javax.jcr.Node;
+import javax.jcr.RepositoryException;
+
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Statement;
+import org.fcrepo.http.commons.session.SessionFactory;
+import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.services.NodeService;
+import org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter;
+import org.fcrepo.kernel.modeshape.rdf.impl.DefaultIdentifierTranslator;
+import org.slf4j.Logger;
+
+/**
+ * @author acoburn
+ * @since 9/3/15
+ */
+<span class="fc" id="L82">public class WebACRolesProvider {</span>
+
+    public static final String GROUP_AGENT_BASE_URI_PROPERTY = &quot;fcrepo.auth.webac.groupAgent.baseUri&quot;;
+
+<span class="fc" id="L86">    private static final Logger LOGGER = getLogger(WebACRolesProvider.class);</span>
+
+    private static final String FEDORA_INTERNAL_PREFIX = &quot;info:fedora&quot;;
+
+    private static final String JCR_VERSIONABLE_UUID_PROPERTY = &quot;jcr:versionableUuid&quot;;
+
+<span class="fc" id="L92">    private static final org.apache.jena.graph.Node RDF_TYPE_NODE = createURI(RDF_NAMESPACE + &quot;type&quot;);</span>
+<span class="fc" id="L93">    private static final org.apache.jena.graph.Node VCARD_GROUP_NODE = createURI(VCARD_GROUP_VALUE);</span>
+<span class="fc" id="L94">    private static final org.apache.jena.graph.Node VCARD_MEMBER_NODE = createURI(VCARD_MEMBER_VALUE);</span>
+
+    @Inject
+    private NodeService nodeService;
+
+    @Inject
+    private SessionFactory sessionFactory;
+
+<span class="fc" id="L102">    private final NodeResourceConverter nodeConverter = NodeResourceConverter.nodeConverter;</span>
+
+    /**
+     * Get the roles assigned to this Node.
+     *
+     * @param node the subject Node
+     * @return a set of roles for each principal
+     */
+    public Map&lt;String, Collection&lt;String&gt;&gt; getRoles(final Node node) {
+<span class="fc" id="L111">        return getAgentRoles(nodeConverter.convert(node));</span>
+    }
+
+    /**
+     *  For a given FedoraResource, get a mapping of acl:agent values to acl:mode values and
+     *  for foaf:Agent and acl:AuthenticatedAgent include the acl:agentClass value to acl:mode.
+     */
+    private Map&lt;String, Collection&lt;String&gt;&gt; getAgentRoles(final FedoraResource resource) {
+<span class="fc" id="L119">        LOGGER.debug(&quot;Getting agent roles for: {}&quot;, resource.getPath());</span>
+
+        // Get the effective ACL by searching the target node and any ancestors.
+<span class="fc" id="L122">        final Optional&lt;ACLHandle&gt; effectiveAcl = getEffectiveAcl(resource, false, sessionFactory);</span>
+
+        // Construct a list of acceptable acl:accessTo values for the target resource.
+<span class="fc" id="L125">        final List&lt;String&gt; resourcePaths = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L126">        resourcePaths.add(FEDORA_INTERNAL_PREFIX + resource.getDescribedResource().getPath());</span>
+
+        // Construct a list of acceptable acl:accessToClass values for the target resource.
+<span class="fc" id="L129">        final List&lt;URI&gt; rdfTypes = resource.getDescription().getTypes();</span>
+
+        // Add the resource location and types of the ACL-bearing parent,
+        // if present and if different than the target resource.
+<span class="fc" id="L133">        effectiveAcl</span>
+<span class="fc" id="L134">            .map(aclHandle -&gt; aclHandle.resource)</span>
+<span class="fc bfc" id="L135" title="All 2 branches covered.">            .filter(effectiveResource -&gt; !effectiveResource.getPath().equals(resource.getPath()))</span>
+<span class="fc" id="L136">            .ifPresent(effectiveResource -&gt; {</span>
+<span class="fc" id="L137">                resourcePaths.add(FEDORA_INTERNAL_PREFIX + effectiveResource.getPath());</span>
+<span class="fc" id="L138">                rdfTypes.addAll(effectiveResource.getTypes());</span>
+<span class="fc" id="L139">            });</span>
+
+        // If we fall through to the system/classpath-based Authorization and it
+        // contains any acl:accessTo properties, it is necessary to add each ancestor
+        // path up the node hierarchy, starting at the resource location up to the
+        // root location. This way, the checkAccessTo predicate (below) can be properly
+        // created to match any acl:accessTo values that are part of the getDefaultAuthorization.
+        // This is not relevant if an effectiveAcl is present.
+<span class="fc bfc" id="L147" title="All 2 branches covered.">        if (!effectiveAcl.isPresent()) {</span>
+<span class="fc" id="L148">            resourcePaths.addAll(getAllPathAncestors(resource.getPath()));</span>
+        }
+
+        // Create a function to check acl:accessTo, scoped to the given resourcePaths
+<span class="fc" id="L152">        final Predicate&lt;WebACAuthorization&gt; checkAccessTo = accessTo.apply(resourcePaths);</span>
+
+        // Create a function to check acl:accessToClass, scoped to the given rdf:type values,
+        // but transform the URIs to Strings first.
+<span class="fc" id="L156">        final Predicate&lt;WebACAuthorization&gt; checkAccessToClass =</span>
+<span class="fc" id="L157">            accessToClass.apply(rdfTypes.stream().map(URI::toString).collect(toList()));</span>
+
+        // Read the effective Acl and return a list of acl:Authorization statements
+<span class="fc" id="L160">        final List&lt;WebACAuthorization&gt; authorizations = effectiveAcl</span>
+<span class="fc" id="L161">                .map(auth -&gt; auth.authorizations)</span>
+<span class="fc" id="L162">                .orElseGet(() -&gt; getDefaultAuthorizations());</span>
+
+        // Filter the acl:Authorization statements so that they correspond only to statements that apply to
+        // the target (or acl-bearing ancestor) resource path or rdf:type.
+        // Then, assign all acceptable acl:mode values to the relevant acl:agent values: this creates a UNION
+        // of acl:modes for each particular acl:agent.
+<span class="fc" id="L168">        final Map&lt;String, Collection&lt;String&gt;&gt; effectiveRoles = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L169">        authorizations.stream()</span>
+<span class="fc" id="L170">                      .filter(checkAccessTo.or(checkAccessToClass))</span>
+<span class="fc" id="L171">                      .forEach(auth -&gt; {</span>
+<span class="fc" id="L172">                          concat(auth.getAgents().stream(), dereferenceAgentGroups(auth.getAgentGroups()).stream())</span>
+<span class="fc bfc" id="L173" title="All 2 branches covered.">                              .filter(agent -&gt; !agent.equals(FOAF_AGENT_VALUE) &amp;&amp;</span>
+<span class="pc bpc" id="L174" title="1 of 2 branches missed.">                                               !agent.equals(WEBAC_AUTHENTICATED_AGENT_VALUE))</span>
+<span class="fc" id="L175">                              .forEach(agent -&gt; {</span>
+<span class="fc" id="L176">                                  effectiveRoles.computeIfAbsent(agent, key -&gt; new HashSet&lt;&gt;())</span>
+<span class="fc" id="L177">                                                .addAll(auth.getModes().stream().map(URI::toString).collect(toSet()));</span>
+<span class="fc" id="L178">                              });</span>
+<span class="fc bfc" id="L179" title="All 2 branches covered.">                          auth.getAgentClasses().stream().filter(agentClass -&gt; agentClass.equals(FOAF_AGENT_VALUE) ||</span>
+<span class="pc bpc" id="L180" title="1 of 2 branches missed.">                                                                               agentClass.equals(</span>
+                                                                                   WEBAC_AUTHENTICATED_AGENT_VALUE))
+<span class="fc" id="L182">                              .forEach(agentClass -&gt; {</span>
+<span class="fc" id="L183">                                  effectiveRoles.computeIfAbsent(agentClass, key -&gt; new HashSet&lt;&gt;())</span>
+<span class="fc" id="L184">                                                .addAll(auth.getModes().stream().map(URI::toString).collect(toSet()));</span>
+<span class="fc" id="L185">                              });</span>
+<span class="fc" id="L186">                      });</span>
+
+<span class="fc" id="L188">        LOGGER.debug(&quot;Unfiltered ACL: {}&quot;, effectiveRoles);</span>
+
+<span class="fc" id="L190">        return effectiveRoles;</span>
+    }
+
+    /**
+     * Given a path (e.g. /a/b/c/d) retrieve a list of all ancestor paths.
+     * In this case, that would be a list of &quot;/a/b/c&quot;, &quot;/a/b&quot;, &quot;/a&quot; and &quot;/&quot;.
+     */
+    private static List&lt;String&gt; getAllPathAncestors(final String path) {
+<span class="fc" id="L198">        final List&lt;String&gt; segments = asList(path.split(&quot;/&quot;));</span>
+<span class="fc" id="L199">        return range(1, segments.size())</span>
+<span class="fc" id="L200">                .mapToObj(frameSize -&gt; FEDORA_INTERNAL_PREFIX + &quot;/&quot; + String.join(&quot;/&quot;, segments.subList(1, frameSize)))</span>
+<span class="fc" id="L201">                .collect(toList());</span>
+    }
+
+    /**
+     *  This is a function for generating a Predicate that filters WebACAuthorizations according
+     *  to whether the given acl:accessToClass values contain any of the rdf:type values provided
+     *  when creating the predicate.
+     */
+<span class="fc" id="L209">    private static final Function&lt;List&lt;String&gt;, Predicate&lt;WebACAuthorization&gt;&gt; accessToClass = uris -&gt; auth -&gt;</span>
+<span class="fc" id="L210">        uris.stream().anyMatch(uri -&gt; auth.getAccessToClassURIs().contains(uri));</span>
+
+    /**
+     *  This is a function for generating a Predicate that filters WebACAuthorizations according
+     *  to whether the given acl:accessTo values contain any of the target resource values provided
+     *  when creating the predicate.
+     */
+<span class="fc" id="L217">    private static final Function&lt;List&lt;String&gt;, Predicate&lt;WebACAuthorization&gt;&gt; accessTo = uris -&gt; auth -&gt;</span>
+<span class="fc" id="L218">        uris.stream().anyMatch(uri -&gt; auth.getAccessToURIs().contains(uri));</span>
+
+    /**
+     *  This maps a Collection of acl:agentGroup values to a List of agents.
+     *  Any out-of-domain URIs are silently ignored.
+     */
+    private List&lt;String&gt; dereferenceAgentGroups(final Collection&lt;String&gt; agentGroups) {
+<span class="fc" id="L225">        final FedoraSession internalSession = sessionFactory.getInternalSession();</span>
+<span class="fc" id="L226">        final IdentifierConverter&lt;Resource, FedoraResource&gt; translator =</span>
+<span class="fc" id="L227">                new DefaultIdentifierTranslator(getJcrSession(internalSession));</span>
+
+<span class="fc" id="L229">        final List&lt;String&gt; members = agentGroups.stream().flatMap(agentGroup -&gt; {</span>
+<span class="pc bpc" id="L230" title="1 of 2 branches missed.">            if (agentGroup.startsWith(FEDORA_INTERNAL_PREFIX)) {</span>
+                //strip off trailing hash.
+<span class="fc" id="L232">                final int hashIndex = agentGroup.indexOf(&quot;#&quot;);</span>
+<span class="fc bfc" id="L233" title="All 2 branches covered.">                final String agentGroupNoHash = hashIndex &gt; 0 ?</span>
+<span class="fc" id="L234">                                         agentGroup.substring(0, hashIndex) :</span>
+                                         agentGroup;
+<span class="fc bfc" id="L236" title="All 2 branches covered.">                final String hashedSuffix = hashIndex &gt; 0 ? agentGroup.substring(hashIndex) : null;</span>
+<span class="fc" id="L237">                final FedoraResource resource = nodeService.find(</span>
+<span class="fc" id="L238">                    internalSession, agentGroupNoHash.substring(FEDORA_INTERNAL_PREFIX.length()));</span>
+<span class="fc" id="L239">                return getAgentMembers(translator, resource, hashedSuffix);</span>
+<span class="nc bnc" id="L240" title="All 2 branches missed.">            } else if (agentGroup.equals(FOAF_AGENT_VALUE)) {</span>
+<span class="nc" id="L241">                return of(agentGroup);</span>
+            } else {
+<span class="nc" id="L243">                LOGGER.info(&quot;Ignoring agentGroup: {}&quot;, agentGroup);</span>
+<span class="nc" id="L244">                return empty();</span>
+            }
+<span class="fc" id="L246">        }).collect(toList());</span>
+
+<span class="pc bpc" id="L248" title="3 of 4 branches missed.">        if (LOGGER.isDebugEnabled() &amp;&amp; !agentGroups.isEmpty()) {</span>
+<span class="nc" id="L249">            LOGGER.debug(&quot;Found {} members in {} agentGroups resources&quot;, members.size(), agentGroups.size());</span>
+        }
+
+<span class="fc" id="L252">        return members;</span>
+    }
+
+    /**
+     * Given a FedoraResource, return a list of agents.
+     */
+    private static Stream&lt;String&gt; getAgentMembers(final IdentifierConverter&lt;Resource, FedoraResource&gt; translator,
+                                                  final FedoraResource resource, final String hashPortion) {
+
+        //resolve list of triples, accounting for hash-uris.
+<span class="fc" id="L262">        final List&lt;Triple&gt; triples = resource.getTriples(translator, PROPERTIES).filter(</span>
+<span class="fc bfc" id="L263" title="All 4 branches covered.">            triple -&gt; hashPortion == null || triple.getSubject().getURI().endsWith(hashPortion)).collect(toList());</span>
+        //determine if there is a rdf:type vcard:Group
+<span class="fc" id="L265">        final boolean hasVcardGroup = triples.stream().anyMatch(</span>
+<span class="fc" id="L266">            triple -&gt; triple.matches(triple.getSubject(), RDF_TYPE_NODE, VCARD_GROUP_NODE));</span>
+        //return members only if there is an associated vcard:Group
+<span class="pc bpc" id="L268" title="1 of 2 branches missed.">        if (hasVcardGroup) {</span>
+<span class="fc" id="L269">            return triples.stream()</span>
+<span class="fc" id="L270">                          .filter(triple -&gt; triple.predicateMatches(VCARD_MEMBER_NODE))</span>
+<span class="fc" id="L271">                          .map(Triple::getObject).flatMap(WebACRolesProvider::nodeToStringStream)</span>
+<span class="fc" id="L272">                                                 .map(WebACRolesProvider::stripUserAgentBaseURI);</span>
+        } else {
+<span class="nc" id="L274">            return empty();</span>
+        }
+    }
+
+    private static String stripUserAgentBaseURI(final String object) {
+<span class="fc" id="L279">        final String userBaseUri = System.getProperty(USER_AGENT_BASE_URI_PROPERTY);</span>
+<span class="pc bpc" id="L280" title="1 of 4 branches missed.">        if (userBaseUri != null &amp;&amp; object.startsWith(userBaseUri)) {</span>
+<span class="fc" id="L281">            return object.substring(userBaseUri.length());</span>
+        }
+<span class="fc" id="L283">        return object;</span>
+    }
+
+    /**
+     * Map a Jena Node to a Stream of Strings. Any non-URI, non-Literals map to an empty Stream,
+     * making this suitable to use with flatMap.
+     */
+    private static Stream&lt;String&gt; nodeToStringStream(final org.apache.jena.graph.Node object) {
+<span class="fc bfc" id="L291" title="All 2 branches covered.">        if (object.isURI()) {</span>
+<span class="fc" id="L292">            return of(object.getURI());</span>
+<span class="pc bpc" id="L293" title="1 of 2 branches missed.">        } else if (object.isLiteral()) {</span>
+<span class="fc" id="L294">            return of(object.getLiteralValue().toString());</span>
+        } else {
+<span class="nc" id="L296">            return empty();</span>
+        }
+    }
+
+
+    /**
+     *  A simple predicate for filtering out any non-acl triples.
+     */
+<span class="fc" id="L304">    private static final Predicate&lt;Triple&gt; hasAclPredicate = triple -&gt;</span>
+<span class="fc" id="L305">        triple.getPredicate().getNameSpace().equals(WEBAC_NAMESPACE_VALUE);</span>
+
+    /**
+     * This function reads a Fedora ACL resource and all of its acl:Authorization children.
+     * The RDF from each child resource is put into a WebACAuthorization object, and the
+     * full list is returned.
+     *
+     * @param aclResource the ACL resource
+     * @param ancestorAcl flag indicating whether or not the ACL resource associated with an ancestor of the target
+     *                    resource
+     * @param sessionFactory the session factory
+     * @return a list of acl:Authorization objects
+     */
+    private static List&lt;WebACAuthorization&gt; getAuthorizations(final FedoraResource aclResource,
+                                                              final boolean ancestorAcl,
+                                                              final SessionFactory sessionFactory) {
+
+<span class="fc" id="L322">        final FedoraSession internalSession = sessionFactory.getInternalSession();</span>
+<span class="fc" id="L323">        final List&lt;WebACAuthorization&gt; authorizations = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L324">        final IdentifierConverter&lt;Resource, FedoraResource&gt; translator =</span>
+<span class="fc" id="L325">                new DefaultIdentifierTranslator(getJcrSession(internalSession));</span>
+
+<span class="pc bpc" id="L327" title="1 of 2 branches missed.">        if (LOGGER.isDebugEnabled()) {</span>
+<span class="nc" id="L328">            LOGGER.debug(&quot;ACL: {}&quot;, aclResource.getPath());</span>
+        }
+
+<span class="fc bfc" id="L331" title="All 2 branches covered.">        if (aclResource.isAcl()) {</span>
+            //resolve set of subjects that are of type acl:authorization
+<span class="fc" id="L333">            final List&lt;Triple&gt; triples = aclResource.getTriples(translator, PROPERTIES).collect(toList());</span>
+
+<span class="fc" id="L335">            final Set&lt;org.apache.jena.graph.Node&gt; authSubjects = triples.stream().filter(t -&gt; {</span>
+<span class="fc bfc" id="L336" title="All 2 branches covered.">                return t.getPredicate().getURI().equals(RDF_NAMESPACE + &quot;type&quot;) &amp;&amp;</span>
+<span class="fc bfc" id="L337" title="All 2 branches covered.">                       t.getObject().getURI().equals(WEBAC_AUTHORIZATION_VALUE);</span>
+<span class="fc" id="L338">            }).map(t -&gt; t.getSubject()).collect(Collectors.toSet());</span>
+
+            // Read resource, keeping only acl-prefixed triples.
+<span class="fc" id="L341">            final Map&lt;String, Map&lt;String, List&lt;String&gt;&gt;&gt; authMap = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L342">            triples.stream().filter(hasAclPredicate)</span>
+<span class="fc" id="L343">                    .forEach(triple -&gt; {</span>
+<span class="fc bfc" id="L344" title="All 2 branches covered.">                        if (authSubjects.contains(triple.getSubject())) {</span>
+<span class="fc" id="L345">                            final Map&lt;String, List&lt;String&gt;&gt; aclTriples =</span>
+<span class="fc" id="L346">                                authMap.computeIfAbsent(triple.getSubject().getURI(), key -&gt; new HashMap&lt;&gt;());</span>
+
+<span class="fc" id="L348">                            final String predicate = triple.getPredicate().getURI();</span>
+<span class="fc" id="L349">                            final List&lt;String&gt; values = aclTriples.computeIfAbsent(predicate,</span>
+<span class="fc" id="L350">                                                                                   key -&gt; new ArrayList&lt;&gt;());</span>
+<span class="fc" id="L351">                            nodeToStringStream(triple.getObject()).forEach(values::add);</span>
+<span class="fc bfc" id="L352" title="All 2 branches covered.">                            if (predicate.equals(WEBAC_AGENT_VALUE)) {</span>
+<span class="fc" id="L353">                                additionalAgentValues(triple.getObject()).forEach(values::add);</span>
+                            }
+                        }
+<span class="fc" id="L356">                    });</span>
+            // Create a WebACAuthorization object from the provided triples.
+<span class="pc bpc" id="L358" title="1 of 2 branches missed.">            if (LOGGER.isDebugEnabled()) {</span>
+<span class="nc" id="L359">                LOGGER.debug(&quot;Adding acl:Authorization from {}&quot;, aclResource.getPath());</span>
+            }
+<span class="fc" id="L361">            authMap.values().forEach(aclTriples -&gt; {</span>
+<span class="fc" id="L362">                final WebACAuthorization authorization = createAuthorizationFromMap(aclTriples);</span>
+                //only include authorizations if the acl resource is not an ancestor acl
+                //or the authorization has at least one acl:default
+<span class="fc bfc" id="L365" title="All 4 branches covered.">                if (!ancestorAcl || authorization.getDefaults().size() &gt; 0) {</span>
+<span class="fc" id="L366">                    authorizations.add(authorization);</span>
+                }
+<span class="fc" id="L368">            });</span>
+        }
+
+<span class="fc" id="L371">        return authorizations;</span>
+    }
+
+    private static WebACAuthorization createAuthorizationFromMap(final Map&lt;String, List&lt;String&gt;&gt; data) {
+<span class="fc" id="L375">        return new WebACAuthorization(</span>
+<span class="fc" id="L376">                data.getOrDefault(WEBAC_AGENT_VALUE, emptyList()),</span>
+<span class="fc" id="L377">                data.getOrDefault(WEBAC_AGENT_CLASS_VALUE, emptyList()),</span>
+<span class="fc" id="L378">                data.getOrDefault(WEBAC_MODE_VALUE, emptyList()).stream()</span>
+<span class="fc" id="L379">                .map(URI::create).collect(toList()),</span>
+<span class="fc" id="L380">                data.getOrDefault(WEBAC_ACCESSTO_VALUE, emptyList()),</span>
+<span class="fc" id="L381">                data.getOrDefault(WEBAC_ACCESSTO_CLASS_VALUE, emptyList()),</span>
+<span class="fc" id="L382">                data.getOrDefault(WEBAC_AGENT_GROUP_VALUE, emptyList()),</span>
+<span class="fc" id="L383">                data.getOrDefault(WEBAC_DEFAULT_VALUE, emptyList()));</span>
+    }
+
+    /**
+     * Recursively find the effective ACL as a URI along with the FedoraResource that points to it.
+     * This way, if the effective ACL is pointed to from a parent resource, the child will inherit
+     * any permissions that correspond to access to that parent. This ACL resource may or may not exist,
+     * and it may be external to the fedora repository.
+     * @param resource the Fedora resource
+     * @param ancestorAcl the flag for looking up ACL from ancestor hierarchy resources
+     * @param sessionFactory session factory
+     */
+    static Optional&lt;ACLHandle&gt; getEffectiveAcl(final FedoraResource resource, final boolean ancestorAcl,
+                                                final SessionFactory sessionFactory) {
+        try {
+
+<span class="fc" id="L399">            final FedoraResource aclResource = resource.getAcl();</span>
+
+<span class="fc bfc" id="L401" title="All 2 branches covered.">            if (aclResource != null) {</span>
+<span class="fc" id="L402">                final List&lt;WebACAuthorization&gt; authorizations =</span>
+<span class="fc" id="L403">                    getAuthorizations(aclResource, ancestorAcl, sessionFactory);</span>
+<span class="fc bfc" id="L404" title="All 2 branches covered.">                if (authorizations.size() &gt; 0) {</span>
+<span class="fc" id="L405">                    return Optional.of(</span>
+                        new ACLHandle(resource, authorizations));
+                }
+            }
+
+<span class="fc bfc" id="L410" title="All 2 branches covered.">            if (getJcrNode(resource).getDepth() == 0) {</span>
+<span class="fc" id="L411">                LOGGER.debug(&quot;No ACLs defined on this node or in parent hierarchy&quot;);</span>
+<span class="fc" id="L412">                return Optional.empty();</span>
+            } else {
+<span class="fc" id="L414">                LOGGER.trace(&quot;Checking parent resource for ACL. No ACL found at {}&quot;, resource.getPath());</span>
+<span class="fc" id="L415">                return getEffectiveAcl(resource.getContainer(), true, sessionFactory);</span>
+            }
+<span class="nc" id="L417">        } catch (final RepositoryException ex) {</span>
+<span class="nc" id="L418">            LOGGER.debug(&quot;Exception finding effective ACL: {}&quot;, ex.getMessage());</span>
+<span class="nc" id="L419">            return Optional.empty();</span>
+        }
+    }
+
+    private static List&lt;WebACAuthorization&gt; getDefaultAuthorizations() {
+<span class="fc" id="L424">        final Map&lt;String, List&lt;String&gt;&gt; aclTriples = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L425">        final List&lt;WebACAuthorization&gt; authorizations = new ArrayList&lt;&gt;();</span>
+
+<span class="fc" id="L427">        getDefaultAcl(null).listStatements().mapWith(Statement::asTriple).forEachRemaining(triple -&gt; {</span>
+<span class="fc bfc" id="L428" title="All 2 branches covered.">            if (hasAclPredicate.test(triple)) {</span>
+<span class="fc" id="L429">                final String predicate = triple.getPredicate().getURI();</span>
+<span class="fc" id="L430">                final List&lt;String&gt; values = aclTriples.computeIfAbsent(predicate,</span>
+<span class="fc" id="L431">                    key -&gt; new ArrayList&lt;&gt;());</span>
+<span class="fc" id="L432">                nodeToStringStream(triple.getObject()).forEach(values::add);</span>
+<span class="fc bfc" id="L433" title="All 2 branches covered.">                if (predicate.equals(WEBAC_AGENT_VALUE)) {</span>
+<span class="fc" id="L434">                    additionalAgentValues(triple.getObject()).forEach(values::add);</span>
+                }
+            }
+<span class="fc" id="L437">        });</span>
+
+<span class="fc" id="L439">        authorizations.add(createAuthorizationFromMap(aclTriples));</span>
+<span class="fc" id="L440">        return authorizations;</span>
+    }
+
+    private static Stream&lt;String&gt; additionalAgentValues(final org.apache.jena.graph.Node object) {
+<span class="fc" id="L444">        final String groupBaseUri = System.getProperty(GROUP_AGENT_BASE_URI_PROPERTY);</span>
+<span class="fc" id="L445">        final String userBaseUri = System.getProperty(USER_AGENT_BASE_URI_PROPERTY);</span>
+
+<span class="fc bfc" id="L447" title="All 2 branches covered.">        if (object.isURI()) {</span>
+<span class="fc" id="L448">            final String uri = object.getURI();</span>
+<span class="fc bfc" id="L449" title="All 4 branches covered.">            if (userBaseUri != null &amp;&amp; uri.startsWith(userBaseUri)) {</span>
+<span class="fc" id="L450">                return of(uri.substring(userBaseUri.length()));</span>
+<span class="pc bpc" id="L451" title="1 of 4 branches missed.">            } else if (groupBaseUri != null &amp;&amp; uri.startsWith(groupBaseUri)) {</span>
+<span class="fc" id="L452">                return of(uri.substring(groupBaseUri.length()));</span>
+            }
+        }
+<span class="fc" id="L455">        return empty();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>FedoraBaseResource.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api</a> &gt; <span class="el_source">FedoraBaseResource.java</span></div><h1>FedoraBaseResource.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.http.api;
+
+import com.google.common.annotations.VisibleForTesting;
+import org.apache.jena.graph.Node;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.commons.lang3.StringUtils;
+import org.fcrepo.http.commons.AbstractResource;
+import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
+import org.fcrepo.http.commons.session.HttpSession;
+import org.fcrepo.kernel.api.exception.SessionMissingException;
+import org.fcrepo.kernel.api.exception.TombstoneException;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.Tombstone;
+import org.slf4j.Logger;
+
+import java.net.URI;
+import java.security.Principal;
+import java.util.regex.Pattern;
+import javax.inject.Inject;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.SecurityContext;
+import javax.ws.rs.core.UriInfo;
+
+import static org.fcrepo.kernel.api.observer.OptionalValues.BASE_URL;
+import static org.fcrepo.kernel.api.observer.OptionalValues.USER_AGENT;
+import static org.slf4j.LoggerFactory.getLogger;
+
+/**
+ * @author cabeer
+ * @since 10/5/14
+ */
+<span class="fc" id="L51">abstract public class FedoraBaseResource extends AbstractResource {</span>
+
+<span class="fc" id="L53">    private static final Logger LOGGER = getLogger(FedoraBaseResource.class);</span>
+
+    static final String JMS_BASEURL_PROP = &quot;fcrepo.jms.baseUrl&quot;;
+
+<span class="fc" id="L57">    private static final Pattern TRAILING_SLASH_REGEX = Pattern.compile(&quot;/+$&quot;);</span>
+
+    @Inject
+    protected HttpSession session;
+
+    @Context
+    protected SecurityContext securityContext;
+
+    protected IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator;
+
+    protected IdentifierConverter&lt;Resource, FedoraResource&gt; translator() {
+<span class="fc bfc" id="L68" title="All 2 branches covered.">        if (idTranslator == null) {</span>
+<span class="fc" id="L69">            idTranslator = new HttpResourceConverter(session(),</span>
+<span class="fc" id="L70">                    uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class));</span>
+        }
+
+<span class="fc" id="L73">        return idTranslator;</span>
+    }
+
+    /**
+     * This is a helper method for using the idTranslator to convert this resource into an associated Jena Node.
+     *
+     * @param resource to be converted into a Jena Node
+     * @return the Jena node
+     */
+    protected Node asNode(final FedoraResource resource) {
+<span class="fc" id="L83">        return translator().reverse().convert(resource).asNode();</span>
+    }
+
+    /**
+     * Get the FedoraResource for the resource at the external path
+     * @param externalPath the external path
+     * @return the fedora resource at the external path
+     */
+    @VisibleForTesting
+    public FedoraResource getResourceFromPath(final String externalPath) {
+<span class="fc" id="L93">        final Resource resource = translator().toDomain(externalPath);</span>
+<span class="fc" id="L94">        final FedoraResource fedoraResource = translator().convert(resource);</span>
+
+<span class="fc bfc" id="L96" title="All 2 branches covered.">        if (fedoraResource instanceof Tombstone) {</span>
+<span class="fc" id="L97">            final String resourceURI = TRAILING_SLASH_REGEX.matcher(resource.getURI()).replaceAll(&quot;&quot;);</span>
+<span class="fc" id="L98">            throw new TombstoneException(fedoraResource, resourceURI + &quot;/fcr:tombstone&quot;);</span>
+        }
+
+<span class="fc" id="L101">        return fedoraResource;</span>
+    }
+
+    /**
+     * Set the baseURL for JMS events.
+     * @param uriInfo the uri info
+     * @param headers HTTP headers
+     **/
+    protected void setUpJMSInfo(final UriInfo uriInfo, final HttpHeaders headers) {
+        try {
+<span class="fc" id="L111">            String baseURL = getBaseUrlProperty(uriInfo);</span>
+<span class="fc bfc" id="L112" title="All 2 branches covered.">            if (baseURL.length() == 0) {</span>
+<span class="fc" id="L113">                baseURL = uriInfo.getBaseUri().toString();</span>
+            }
+<span class="fc" id="L115">            LOGGER.debug(&quot;setting baseURL = &quot; + baseURL);</span>
+<span class="fc" id="L116">            session.getFedoraSession().addSessionData(BASE_URL, baseURL);</span>
+<span class="pc bpc" id="L117" title="1 of 2 branches missed.">            if (!StringUtils.isBlank(headers.getHeaderString(&quot;user-agent&quot;))) {</span>
+<span class="fc" id="L118">                session.getFedoraSession().addSessionData(USER_AGENT, headers.getHeaderString(&quot;user-agent&quot;));</span>
+            }
+<span class="fc" id="L120">        } catch (final Exception ex) {</span>
+<span class="fc" id="L121">            LOGGER.warn(&quot;Error setting baseURL&quot;, ex.getMessage());</span>
+<span class="fc" id="L122">        }</span>
+<span class="fc" id="L123">    }</span>
+
+    /**
+     * Produce a baseURL for JMS events using the system property fcrepo.jms.baseUrl of the form http[s]://host[:port],
+     * if it exists.
+     *
+     * @param uriInfo used to build the base url
+     * @return String the base Url
+     */
+    private String getBaseUrlProperty(final UriInfo uriInfo) {
+<span class="fc" id="L133">        final String propBaseURL = System.getProperty(JMS_BASEURL_PROP, &quot;&quot;);</span>
+<span class="pc bpc" id="L134" title="1 of 4 branches missed.">        if (propBaseURL.length() &gt; 0 &amp;&amp; propBaseURL.startsWith(&quot;http&quot;)) {</span>
+<span class="fc" id="L135">            final URI propBaseUri = URI.create(propBaseURL);</span>
+<span class="fc bfc" id="L136" title="All 2 branches covered.">            if (propBaseUri.getPort() &lt; 0) {</span>
+<span class="fc" id="L137">                return uriInfo.getBaseUriBuilder().port(-1).uri(propBaseUri).toString();</span>
+            }
+<span class="fc" id="L139">            return uriInfo.getBaseUriBuilder().uri(propBaseUri).toString();</span>
+        }
+<span class="fc" id="L141">        return &quot;&quot;;</span>
+    }
+
+    private HttpSession session() {
+<span class="fc bfc" id="L145" title="All 2 branches covered.">        if (session == null) {</span>
+<span class="fc" id="L146">            throw new SessionMissingException(&quot;Invalid session&quot;);</span>
+        }
+<span class="fc" id="L148">        return session;</span>
+    }
+
+    protected String getUserPrincipal() {
+<span class="fc" id="L152">        final Principal p = securityContext.getUserPrincipal();</span>
+<span class="fc bfc" id="L153" title="All 2 branches covered.">        return p == null ? null : p.getName();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

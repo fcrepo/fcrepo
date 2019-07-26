@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>RepositoryServiceImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-modeshape</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape.services</a> &gt; <span class="el_source">RepositoryServiceImpl.java</span></div><h1>RepositoryServiceImpl.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape.services;
+
+import static org.fcrepo.kernel.modeshape.FedoraRepositoryImpl.getJcrRepository;
+import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;
+import static org.fcrepo.kernel.modeshape.services.ServiceHelpers.getRepositoryCount;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.FedoraRepository;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+
+
+import javax.inject.Inject;
+import javax.jcr.Repository;
+import javax.jcr.RepositoryException;
+import javax.jcr.Session;
+
+import org.fcrepo.kernel.api.services.RepositoryService;
+import org.modeshape.jcr.api.RepositoryManager;
+import org.slf4j.Logger;
+import org.springframework.stereotype.Component;
+
+/**
+ * Service for repository-wide management and querying
+ *
+ * @author Chris Beer
+ * @since Mar 11, 2013
+ */
+@Component
+<span class="fc" id="L51">public class RepositoryServiceImpl extends AbstractService implements RepositoryService {</span>
+
+    @Inject
+    private FedoraRepository repository;
+
+<span class="fc" id="L56">    private static final Logger LOGGER = getLogger(RepositoryServiceImpl.class);</span>
+
+    /**
+     * Calculate the total size of all the binary properties in the repository
+     *
+     * @return size in bytes
+     */
+    @Override
+    public Long getRepositorySize() {
+        try {
+
+<span class="fc" id="L67">            LOGGER.debug(&quot;Calculating repository size from index&quot;);</span>
+<span class="fc" id="L68">            final Repository repo = getJcrRepository(repository);</span>
+
+            // Differentiating between the local getRepositorySize and
+            // ServiceHelpers
+<span class="fc" id="L72">            return ServiceHelpers.getRepositorySize(repo);</span>
+<span class="nc" id="L73">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L74">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.fcrepo.kernel.api.services.RepositoryService#getRepositoryObjectCount()
+     */
+    @Override
+    public Long getRepositoryObjectCount() {
+<span class="fc" id="L85">        final Repository repo = getJcrRepository(repository);</span>
+        try {
+<span class="fc" id="L87">            return getRepositoryCount(repo);</span>
+<span class="nc" id="L88">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L89">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.fcrepo.kernel.api.services.RepositoryService#backupRepository(javax.jcr
+     * .Session, java.io.File)
+     */
+    @Override
+    public Collection&lt;Throwable&gt; backupRepository(final FedoraSession session,
+                                     final File backupDirectory) {
+<span class="fc" id="L102">        final Session jcrSession = getJcrSession(session);</span>
+        try {
+<span class="fc" id="L104">            final RepositoryManager repoMgr = ((org.modeshape.jcr.api.Session) jcrSession)</span>
+<span class="fc" id="L105">                    .getWorkspace()</span>
+<span class="fc" id="L106">                    .getRepositoryManager();</span>
+
+<span class="fc" id="L108">            final Collection&lt;Throwable&gt; problems = new ArrayList&lt;&gt;();</span>
+
+<span class="pc" id="L110">            repoMgr.backupRepository(backupDirectory).forEach(x -&gt; problems.add(x.getThrowable()));</span>
+
+<span class="fc" id="L112">            return problems;</span>
+<span class="nc" id="L113">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L114">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.fcrepo.kernel.api.services.RepositoryService#restoreRepository(javax.
+     * jcr.Session, java.io.File)
+     */
+    @Override
+    public Collection&lt;Throwable&gt; restoreRepository(final FedoraSession session,
+                                      final File backupDirectory) {
+<span class="fc" id="L127">        final Session jcrSession = getJcrSession(session);</span>
+        try {
+<span class="fc" id="L129">            final RepositoryManager repoMgr = ((org.modeshape.jcr.api.Session) jcrSession)</span>
+<span class="fc" id="L130">                    .getWorkspace()</span>
+<span class="fc" id="L131">                    .getRepositoryManager();</span>
+
+<span class="fc" id="L133">            final Collection&lt;Throwable&gt; problems = new ArrayList&lt;&gt;();</span>
+
+<span class="pc" id="L135">            repoMgr.restoreRepository(backupDirectory).forEach(x -&gt; problems.add(x.getThrowable()));</span>
+
+<span class="fc" id="L137">            return problems;</span>
+<span class="nc" id="L138">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L139">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

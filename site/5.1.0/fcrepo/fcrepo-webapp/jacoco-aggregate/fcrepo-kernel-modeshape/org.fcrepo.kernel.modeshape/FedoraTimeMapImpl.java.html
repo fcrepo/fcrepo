@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>FedoraTimeMapImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-modeshape</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.modeshape</a> &gt; <span class="el_source">FedoraTimeMapImpl.java</span></div><h1>FedoraTimeMapImpl.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.modeshape;
+
+import static org.fcrepo.kernel.modeshape.identifiers.NodeResourceConverter.nodeConverter;
+
+import java.util.Optional;
+
+import javax.jcr.Node;
+import javax.jcr.Property;
+import javax.jcr.RepositoryException;
+
+import org.fcrepo.kernel.api.exception.AccessDeniedException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.FedoraTimeMap;
+
+/**
+ * @author lsitu
+ * @since Oct. 04, 2017
+ */
+public class FedoraTimeMapImpl extends FedoraResourceImpl implements FedoraTimeMap {
+
+    /**
+     * Construct a {@link org.fcrepo.kernel.api.models.FedoraResource} from an existing JCR Node
+     * @param node an existing JCR node to be treated as a fcrepo object
+     */
+    public FedoraTimeMapImpl(final Node node) {
+<span class="fc" id="L44">        super(node);</span>
+<span class="fc" id="L45">    }</span>
+
+    @Override
+    public boolean isOriginalResource() {
+<span class="fc" id="L49">        return false;</span>
+    }
+
+    @Override
+    public void delete() {
+        try {
+            // check to remove references to the TimeMap if it exists
+<span class="nc" id="L56">            removeReferences(node);</span>
+
+            // delete the TimeMap node
+<span class="nc" id="L59">            node.remove();</span>
+<span class="nc" id="L60">        } catch (final javax.jcr.AccessDeniedException e) {</span>
+<span class="nc" id="L61">            throw new AccessDeniedException(e);</span>
+<span class="nc" id="L62">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L63">            throw new RepositoryRuntimeException(e);</span>
+<span class="nc" id="L64">        }</span>
+<span class="nc" id="L65">    }</span>
+
+    /**
+     * Check if the JCR node has a fedora:TimeMap mixin
+     * @param node the JCR node
+     * @return true if the JCR node has the fedora:TimeMap mixin
+     */
+    public static boolean hasMixin(final Node node) {
+        try {
+<span class="fc" id="L74">            return node.isNodeType(FEDORA_TIME_MAP);</span>
+<span class="nc" id="L75">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L76">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+
+    @Override
+    public FedoraResource getOriginalResource() {
+        try {
+<span class="fc" id="L83">            final Property originalProperty = node.getProperty(MEMENTO_ORIGINAL);</span>
+<span class="fc" id="L84">            final Node originalNode = originalProperty.getNode();</span>
+
+<span class="fc" id="L86">            return Optional.of(originalNode).map(nodeConverter::convert).orElse(null);</span>
+<span class="nc" id="L87">        } catch (final RepositoryException e) {</span>
+<span class="nc" id="L88">            throw new RepositoryRuntimeException(e);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
