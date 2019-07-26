@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>QueryParseExceptionMapper.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Authorization Commons Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-commons</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.commons.exceptionhandlers</a> &gt; <span class="el_source">QueryParseExceptionMapper.java</span></div><h1>QueryParseExceptionMapper.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.http.commons.exceptionhandlers;
+
+import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.ext.Provider;
+
+import org.slf4j.Logger;
+
+import org.apache.jena.query.QueryParseException;
+
+
+/**
+ * Handles Sparql query parsing exceptions thrown when querying or updating.
+ *
+ * @author whikloj
+ * @since September 9, 2014
+ */
+@Provider
+<span class="fc" id="L44">public class QueryParseExceptionMapper implements</span>
+        ExceptionMapper&lt;QueryParseException&gt;, ExceptionDebugLogging {
+
+<span class="fc" id="L47">    private static final Logger LOGGER = getLogger(QueryParseExceptionMapper.class);</span>
+
+    @Override
+    public Response toResponse(final QueryParseException e) {
+
+<span class="fc" id="L52">        LOGGER.error(&quot;Captured a query parse exception {}&quot;, e.getMessage());</span>
+<span class="fc" id="L53">        debugException(this, e, LOGGER);</span>
+<span class="pc bpc" id="L54" title="1 of 2 branches missed.">        if (e.getMessage().matches(&quot;.* Unresolved prefixed name: .*&quot;)) {</span>
+<span class="nc" id="L55">            final Pattern namespacePattern =</span>
+<span class="nc" id="L56">                Pattern.compile(&quot;Unresolved prefixed name: (\\w+:\\w+)&quot;);</span>
+<span class="nc" id="L57">            final Matcher namespaceMatch =</span>
+<span class="nc" id="L58">                namespacePattern.matcher(e.getMessage());</span>
+<span class="nc bnc" id="L59" title="All 2 branches missed.">            if (namespaceMatch.find()) {</span>
+<span class="nc" id="L60">                final String msg =</span>
+<span class="nc" id="L61">                    String.format(</span>
+                        &quot;There are one or more undefined namespace(s) in your request [ %s ], &quot; +
+                        &quot;please define them before retrying&quot;,
+<span class="nc" id="L64">                        namespaceMatch.group(1));</span>
+<span class="nc" id="L65">                return status(BAD_REQUEST).entity(msg).type(TEXT_PLAIN_WITH_CHARSET).build();</span>
+            }
+        }
+
+<span class="fc" id="L69">        return status(BAD_REQUEST).entity(e.getMessage()).type(TEXT_PLAIN_WITH_CHARSET).build();</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>

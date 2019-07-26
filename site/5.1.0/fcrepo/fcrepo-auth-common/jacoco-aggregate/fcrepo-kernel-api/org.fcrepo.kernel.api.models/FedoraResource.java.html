@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>FedoraResource.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Authorization Commons Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.api.models</a> &gt; <span class="el_source">FedoraResource.java</span></div><h1>FedoraResource.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.fcrepo.kernel.api.models;
+
+import java.net.URI;
+import java.time.Instant;
+
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Stream;
+
+import org.apache.jena.rdf.model.Resource;
+
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.TripleCategory;
+import org.fcrepo.kernel.api.exception.AccessDeniedException;
+import org.fcrepo.kernel.api.exception.MalformedRdfException;
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+
+import org.apache.jena.rdf.model.Model;
+
+/**
+ * @author ajs6f
+ * @since Jan 10, 2014
+ */
+public interface FedoraResource {
+
+    /**
+     * Get the path to the resource
+     * @return path
+     */
+    String getPath();
+
+    /**
+     * Get the children of this resource
+     * @return a stream of Fedora resources
+     */
+    default Stream&lt;FedoraResource&gt; getChildren() {
+<span class="fc" id="L54">        return getChildren(false);</span>
+    }
+
+    /**
+     * Get the children of this resource, possibly recursively
+     * @param recursive whether to recursively fetch child resources
+     * @return a stream of Fedora resources
+     */
+    Stream&lt;FedoraResource&gt; getChildren(Boolean recursive);
+
+    /**
+     * Get the container of this resource
+     * @return the container of this resource
+     */
+    FedoraResource getContainer();
+
+    /**
+     * Get the Original Resource for which this resource is a memento. If this resource is not a memento,
+     * then it is the original.
+     *
+     * @return the original resource for this
+     */
+    FedoraResource getOriginalResource();
+
+    /**
+     * Get the TimeMap/LDPCv of this resource
+     *
+     * @return the container for TimeMap/LDPCv of this resource
+     */
+    FedoraResource getTimeMap();
+
+    /**
+     * Retrieve the mementoDatetime property and return it as an Instant
+     *
+     * @return the Instant for this resource
+     */
+    Instant getMementoDatetime();
+
+    /**
+     * Returns true if this resource is a Memento.
+     *
+     * @return true if the resource is a Memento.
+     */
+    boolean isMemento();
+
+    /**
+     * Returns true if this resource is a TimeMap.
+     *
+     * @return true if the resource is a TimeMap.
+     */
+    boolean isTimeMap();
+
+    /**
+     * Returns true if this resource is an ACL.
+     *
+     * @return true if the resource is an ACL.
+     */
+    boolean isAcl();
+
+    /**
+     * Retrieve the Memento with the closest datetime to the request.
+     *
+     * @param mementoDatetime The requested date time.
+     * @return The closest Memento or null.
+     */
+    FedoraResource findMementoByDatetime(Instant mementoDatetime);
+
+    /**
+     * Get the ACL of this resource
+     * @return the container for ACL of this resource
+     */
+    FedoraResource getAcl();
+
+    /**
+     * Create the ACL for this resource if it doesn't exist
+     * @return the container for ACL of this resource
+     */
+    FedoraResource findOrCreateAcl();
+
+    /**
+     * Get the child of this resource at the given path
+     *
+     * @param relPath the given path
+     * @return the child of this resource
+     */
+    FedoraResource getChild(String relPath);
+
+    /**
+     * Does this resource have a property
+     * @param relPath the given path
+     * @return the boolean value whether the resource has a property
+     */
+    boolean hasProperty(String relPath);
+
+    /**
+     * Delete this resource, and any inbound references to it
+     */
+    void delete();
+
+    /**
+     * Get the date this resource was created
+     * @return created date
+     */
+    Instant getCreatedDate();
+
+    /**
+     * Get the date this resource was last modified
+     * @return last modified date
+     */
+    Instant getLastModifiedDate();
+
+    /**
+     * Check if this object uses a given RDF type
+     *
+     * &lt;p&gt;Note: the type parameter should be in prefixed short form, so ldp:Container or ex:Image
+     * are both acceptable types. This method does not assume any jcr to fedora prefix mappings are
+     * managed by the implementation, so hasType(&quot;jcr:lastModified&quot;) is a valid use of this method.&lt;/p&gt;
+     *
+     * @param type the given type
+     * @return whether the object has the given type
+     */
+    boolean hasType(final String type);
+
+    /**
+     * Get the RDF:type values for this resource
+     * @return a list of types for this resource
+     */
+    List&lt;URI&gt; getTypes();
+
+    /**
+     * Add an RDF:type value to the resource
+     *
+     * &lt;p&gt;Note: the type parameter should be in prefixed short form, so ldp:Container or ex:Image
+     * are both acceptable types. This method does not assume any jcr to fedora prefix mappings are
+     * managed by the implementation, so hasType(&quot;jcr:lastModified&quot;) is a valid use of this method.&lt;/p&gt;
+     *
+     * @param type the type to add
+     */
+    void addType(final String type);
+
+    /**
+     * Update the provided properties with a SPARQL Update query. The updated
+     * properties may be serialized to the persistence layer.
+     *
+     * @param idTranslator the property of idTranslator
+     * @param sparqlUpdateStatement sparql update statement
+     * @param originalTriples original triples
+     * @throws MalformedRdfException if malformed rdf exception occurred
+     * @throws AccessDeniedException if access denied in updating properties
+     */
+    void updateProperties(final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator,
+                          final String sparqlUpdateStatement,
+                          final RdfStream originalTriples) throws MalformedRdfException, AccessDeniedException;
+
+    /**
+     * Return the RDF properties of this object using the provided context
+     * @param idTranslator the property of idTranslator
+     * @param context the context
+     * @return the rdf properties of this object using the provided context
+     */
+    RdfStream getTriples(final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator,
+                         final TripleCategory context);
+
+    /**
+     * Return the RDF properties of this object using the provided contexts
+     * @param idTranslator the property of idTranslator
+     * @param contexts the provided contexts
+     * @return the rdf properties of this object
+     */
+    RdfStream getTriples(final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator,
+                         final Set&lt;? extends TripleCategory&gt; contexts);
+
+    /**
+     * Check if a resource was created in this session
+     * 
+     * @return if resource created in this session
+     */
+    Boolean isNew();
+
+    /**
+     * Replace the properties of this object with the properties from the given
+     * model
+     *
+     * @param idTranslator the given property of idTranslator
+     * @param inputModel the input model
+     * @param originalTriples the original triples
+     * @throws MalformedRdfException if malformed rdf exception occurred
+     */
+    void replaceProperties(final IdentifierConverter&lt;Resource, FedoraResource&gt; idTranslator,
+                                final Model inputModel,
+                                final RdfStream originalTriples) throws MalformedRdfException;
+
+    /**
+     * Construct an ETag value for the resource.
+     *
+     * @return constructed state-token value
+     */
+    String getEtagValue();
+
+    /**
+     * Construct a State Token value for the resource.
+     *
+     * @return constructed state-token value
+     */
+    String getStateToken();
+    /**
+     * Check if a resource is an original resource
+     * (ie versionable, as opposed to non-versionable resources
+     * like mementos, timemaps, and acls).
+     * @return whether the resource is an original resource.
+     */
+    boolean isOriginalResource();
+
+    /**
+     * Get the description for this resource
+     * @return the description for this resource
+     */
+    FedoraResource getDescription();
+
+    /**
+     * Get the resource described by this resource
+     * @return the resource being described
+     */
+    FedoraResource getDescribedResource();
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
