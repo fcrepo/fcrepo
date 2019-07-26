@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>SynchonizedStreamRDFWrapper.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-commons</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.commons.responses</a> &gt; <span class="el_source">SynchonizedStreamRDFWrapper.java</span></div><h1>SynchonizedStreamRDFWrapper.java</h1><pre class="source lang-java linenums">/*
+ * Licensed to DuraSpace under one or more contributor license agreements.
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
+ * DuraSpace licenses this file to you under the Apache License,
+ * Version 2.0 (the &quot;License&quot;); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.fcrepo.http.commons.responses;
+
+import org.apache.jena.graph.Triple;
+import org.apache.jena.riot.system.StreamRDF;
+import org.apache.jena.riot.system.StreamRDFWrapper;
+import org.apache.jena.sparql.core.Quad;
+
+/**
+ * @author Daniel Bernstein
+ * @since Mar 22, 2017
+ */
+public class SynchonizedStreamRDFWrapper extends StreamRDFWrapper {
+
+    /**
+     *
+     * @param stream the StreamRDF
+     */
+    public SynchonizedStreamRDFWrapper(final StreamRDF stream) {
+<span class="fc" id="L37">        super(stream);</span>
+<span class="fc" id="L38">    }</span>
+
+    /*
+     * (non-Javadoc)
+     * @see org.apache.jena.riot.system.StreamRDFWrapper#start()
+     */
+    @Override
+    public synchronized void start() {
+<span class="fc" id="L46">        super.start();</span>
+<span class="fc" id="L47">    }</span>
+
+    /*
+     * (non-Javadoc)
+     * @see org.apache.jena.riot.system.StreamRDFWrapper#finish()
+     */
+    @Override
+    public synchronized void finish() {
+<span class="fc" id="L55">        super.finish();</span>
+<span class="fc" id="L56">    }</span>
+
+    /*
+     * (non-Javadoc)
+     * @see org.apache.jena.riot.system.StreamRDFWrapper#triple(org.apache.jena.graph.Triple)
+     */
+    @Override
+    public synchronized void triple(final Triple triple) {
+<span class="fc" id="L64">        super.triple(triple);</span>
+<span class="fc" id="L65">    }</span>
+
+    /*
+     * (non-Javadoc)
+     * @see org.apache.jena.riot.system.StreamRDFWrapper#prefix(java.lang.String, java.lang.String)
+     */
+    @Override
+    public synchronized void prefix(final String prefix, final String iri) {
+<span class="fc" id="L73">        super.prefix(prefix, iri);</span>
+<span class="fc" id="L74">    }</span>
+
+    /*
+     * (non-Javadoc)
+     * @see org.apache.jena.riot.system.StreamRDFWrapper#quad(org.apache.jena.sparql.core.Quad)
+     */
+    @Override
+    public synchronized void quad(final Quad quad) {
+<span class="nc" id="L82">        super.quad(quad);</span>
+<span class="nc" id="L83">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span></div></body></html>
