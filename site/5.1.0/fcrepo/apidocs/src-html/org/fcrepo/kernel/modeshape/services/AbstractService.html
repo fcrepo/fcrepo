@@ -1,0 +1,259 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Licensed to DuraSpace under one or more contributor license agreements.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * See the NOTICE file distributed with this work for additional information<a name="line.3"></a>
+<span class="sourceLineNo">004</span> * regarding copyright ownership.<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> * DuraSpace licenses this file to you under the Apache License,<a name="line.6"></a>
+<span class="sourceLineNo">007</span> * Version 2.0 (the "License"); you may not use this file except in<a name="line.7"></a>
+<span class="sourceLineNo">008</span> * compliance with the License.  You may obtain a copy of the License at<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *     http://www.apache.org/licenses/LICENSE-2.0<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> * Unless required by applicable law or agreed to in writing, software<a name="line.12"></a>
+<span class="sourceLineNo">013</span> * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.13"></a>
+<span class="sourceLineNo">014</span> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.14"></a>
+<span class="sourceLineNo">015</span> * See the License for the specific language governing permissions and<a name="line.15"></a>
+<span class="sourceLineNo">016</span> * limitations under the License.<a name="line.16"></a>
+<span class="sourceLineNo">017</span> */<a name="line.17"></a>
+<span class="sourceLineNo">018</span>package org.fcrepo.kernel.modeshape.services;<a name="line.18"></a>
+<span class="sourceLineNo">019</span><a name="line.19"></a>
+<span class="sourceLineNo">020</span>import static org.fcrepo.kernel.modeshape.utils.NamespaceTools.getNamespaces;<a name="line.20"></a>
+<span class="sourceLineNo">021</span><a name="line.21"></a>
+<span class="sourceLineNo">022</span>import org.fcrepo.kernel.api.FedoraSession;<a name="line.22"></a>
+<span class="sourceLineNo">023</span>import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;<a name="line.23"></a>
+<span class="sourceLineNo">024</span>import org.fcrepo.kernel.api.exception.TombstoneException;<a name="line.24"></a>
+<span class="sourceLineNo">025</span>import org.fcrepo.kernel.modeshape.TombstoneImpl;<a name="line.25"></a>
+<span class="sourceLineNo">026</span>import org.modeshape.jcr.api.JcrTools;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.util.ArrayList;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.util.Arrays;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.util.List;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.util.Set;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.util.TreeSet;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import java.util.stream.Collectors;<a name="line.33"></a>
+<span class="sourceLineNo">034</span><a name="line.34"></a>
+<span class="sourceLineNo">035</span>import javax.jcr.Node;<a name="line.35"></a>
+<span class="sourceLineNo">036</span>import javax.jcr.RepositoryException;<a name="line.36"></a>
+<span class="sourceLineNo">037</span>import javax.jcr.Session;<a name="line.37"></a>
+<span class="sourceLineNo">038</span><a name="line.38"></a>
+<span class="sourceLineNo">039</span>import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_PAIRTREE;<a name="line.39"></a>
+<span class="sourceLineNo">040</span>import static org.fcrepo.kernel.modeshape.FedoraSessionImpl.getJcrSession;<a name="line.40"></a>
+<span class="sourceLineNo">041</span>import static org.fcrepo.kernel.modeshape.utils.FedoraTypesUtils.getClosestExistingAncestor;<a name="line.41"></a>
+<span class="sourceLineNo">042</span>import static org.modeshape.jcr.api.JcrConstants.NT_FOLDER;<a name="line.42"></a>
+<span class="sourceLineNo">043</span><a name="line.43"></a>
+<span class="sourceLineNo">044</span><a name="line.44"></a>
+<span class="sourceLineNo">045</span>/**<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * @author bbpennel<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * @author ajs6f<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * @since Feb 20, 2014<a name="line.48"></a>
+<span class="sourceLineNo">049</span> */<a name="line.49"></a>
+<span class="sourceLineNo">050</span>public class AbstractService {<a name="line.50"></a>
+<span class="sourceLineNo">051</span>    private final static JcrTools jcrTools = new JcrTools();<a name="line.51"></a>
+<span class="sourceLineNo">052</span><a name="line.52"></a>
+<span class="sourceLineNo">053</span>    protected static Set&lt;String&gt; registeredPrefixes = null;<a name="line.53"></a>
+<span class="sourceLineNo">054</span><a name="line.54"></a>
+<span class="sourceLineNo">055</span>    protected Node findOrCreateNode(final FedoraSession session,<a name="line.55"></a>
+<span class="sourceLineNo">056</span>                                    final String path,<a name="line.56"></a>
+<span class="sourceLineNo">057</span>                                    final String finalNodeType) throws RepositoryException {<a name="line.57"></a>
+<span class="sourceLineNo">058</span><a name="line.58"></a>
+<span class="sourceLineNo">059</span>        final Session jcrSession = getJcrSession(session);<a name="line.59"></a>
+<span class="sourceLineNo">060</span>        final String encodedPath = encodePath(path, session);<a name="line.60"></a>
+<span class="sourceLineNo">061</span>        final Node preexistingNode = getClosestExistingAncestor(jcrSession, encodedPath);<a name="line.61"></a>
+<span class="sourceLineNo">062</span><a name="line.62"></a>
+<span class="sourceLineNo">063</span>        if (TombstoneImpl.hasMixin(preexistingNode)) {<a name="line.63"></a>
+<span class="sourceLineNo">064</span>            throw new TombstoneException(new TombstoneImpl(preexistingNode));<a name="line.64"></a>
+<span class="sourceLineNo">065</span>        }<a name="line.65"></a>
+<span class="sourceLineNo">066</span><a name="line.66"></a>
+<span class="sourceLineNo">067</span>        final Node node = jcrTools.findOrCreateNode(jcrSession, encodedPath, NT_FOLDER, finalNodeType);<a name="line.67"></a>
+<span class="sourceLineNo">068</span><a name="line.68"></a>
+<span class="sourceLineNo">069</span>        if (node.isNew()) {<a name="line.69"></a>
+<span class="sourceLineNo">070</span>            tagHierarchyWithPairtreeMixin(preexistingNode, node);<a name="line.70"></a>
+<span class="sourceLineNo">071</span>        }<a name="line.71"></a>
+<span class="sourceLineNo">072</span><a name="line.72"></a>
+<span class="sourceLineNo">073</span>        return node;<a name="line.73"></a>
+<span class="sourceLineNo">074</span>    }<a name="line.74"></a>
+<span class="sourceLineNo">075</span><a name="line.75"></a>
+<span class="sourceLineNo">076</span>    protected Node findNode(final FedoraSession session, final String path) {<a name="line.76"></a>
+<span class="sourceLineNo">077</span>        final Session jcrSession = getJcrSession(session);<a name="line.77"></a>
+<span class="sourceLineNo">078</span>        final String encodedPath = encodePath(path, session);<a name="line.78"></a>
+<span class="sourceLineNo">079</span>        try {<a name="line.79"></a>
+<span class="sourceLineNo">080</span>            return jcrSession.getNode(encodedPath);<a name="line.80"></a>
+<span class="sourceLineNo">081</span>        } catch (final RepositoryException e) {<a name="line.81"></a>
+<span class="sourceLineNo">082</span>            throw new RepositoryRuntimeException(e);<a name="line.82"></a>
+<span class="sourceLineNo">083</span>        }<a name="line.83"></a>
+<span class="sourceLineNo">084</span>    }<a name="line.84"></a>
+<span class="sourceLineNo">085</span><a name="line.85"></a>
+<span class="sourceLineNo">086</span>    /**<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * Encode colons when they are NOT preceded by a registered prefix.<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     *<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * @param path the path<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     * @param session a JCR session<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     * @return the encoded path<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     */<a name="line.92"></a>
+<span class="sourceLineNo">093</span>    public static String encodePath(final String path, final FedoraSession session) {<a name="line.93"></a>
+<span class="sourceLineNo">094</span>        return pathCoder(true, path, session);<a name="line.94"></a>
+<span class="sourceLineNo">095</span>    }<a name="line.95"></a>
+<span class="sourceLineNo">096</span><a name="line.96"></a>
+<span class="sourceLineNo">097</span>    /**<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     * Decode colons when they are NOT preceded by a registered prefix.<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     *<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     * @param path the path<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     * @param session a JCR session<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     * @return the decoded path<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     */<a name="line.103"></a>
+<span class="sourceLineNo">104</span>    public static String decodePath(final String path, final FedoraSession session) {<a name="line.104"></a>
+<span class="sourceLineNo">105</span>        return pathCoder(false, path, session);<a name="line.105"></a>
+<span class="sourceLineNo">106</span>    }<a name="line.106"></a>
+<span class="sourceLineNo">107</span><a name="line.107"></a>
+<span class="sourceLineNo">108</span>    /**<a name="line.108"></a>
+<span class="sourceLineNo">109</span>     * Does the actual path encoding/decoding.<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     *<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     * @param encode whether to encode or decode<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * @param path the path<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     * @param session the JCR session<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * @return the encoded/decoded path.<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     */<a name="line.115"></a>
+<span class="sourceLineNo">116</span>    private static String pathCoder(final boolean encode, final String path, final FedoraSession session) {<a name="line.116"></a>
+<span class="sourceLineNo">117</span>        final String searchString = encode ? ":" : "%3A";<a name="line.117"></a>
+<span class="sourceLineNo">118</span>        final String replaceString = encode ? "%3A" : ":";<a name="line.118"></a>
+<span class="sourceLineNo">119</span>        if (path.equals("/") || path.isEmpty() || !path.contains(searchString)) {<a name="line.119"></a>
+<span class="sourceLineNo">120</span>            // Short circuit if the path is nothing or doesn't contain the search string<a name="line.120"></a>
+<span class="sourceLineNo">121</span>            return path;<a name="line.121"></a>
+<span class="sourceLineNo">122</span>        }<a name="line.122"></a>
+<span class="sourceLineNo">123</span>        final Session jcrSession = getJcrSession(session);<a name="line.123"></a>
+<span class="sourceLineNo">124</span>        final boolean endsWithSlash = path.endsWith("/");<a name="line.124"></a>
+<span class="sourceLineNo">125</span>        final List&lt;String&gt; pathParts = Arrays.asList(path.split("/"));<a name="line.125"></a>
+<span class="sourceLineNo">126</span>        final List&lt;String&gt; newPath = new ArrayList&lt;&gt;();<a name="line.126"></a>
+<span class="sourceLineNo">127</span>        for (final String p : pathParts) {<a name="line.127"></a>
+<span class="sourceLineNo">128</span>            if (p.contains(searchString)) {<a name="line.128"></a>
+<span class="sourceLineNo">129</span>                final String[] prefix = p.split(searchString);<a name="line.129"></a>
+<span class="sourceLineNo">130</span>                if (!registeredPrefixes(jcrSession).contains(prefix[0])) {<a name="line.130"></a>
+<span class="sourceLineNo">131</span>                    newPath.add(p.replace(searchString, replaceString));<a name="line.131"></a>
+<span class="sourceLineNo">132</span>                    continue;<a name="line.132"></a>
+<span class="sourceLineNo">133</span>                }<a name="line.133"></a>
+<span class="sourceLineNo">134</span>            }<a name="line.134"></a>
+<span class="sourceLineNo">135</span>            newPath.add(p);<a name="line.135"></a>
+<span class="sourceLineNo">136</span>        }<a name="line.136"></a>
+<span class="sourceLineNo">137</span>        return newPath.stream().collect(Collectors.joining("/", "", endsWithSlash ? "/" : ""));<a name="line.137"></a>
+<span class="sourceLineNo">138</span>    }<a name="line.138"></a>
+<span class="sourceLineNo">139</span><a name="line.139"></a>
+<span class="sourceLineNo">140</span>    /**<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * Tag a hierarchy with {@link org.fcrepo.kernel.api.FedoraTypes#FEDORA_PAIRTREE}<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     *<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * @param baseNode Top most ancestor that should not be tagged<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * @param createdNode Node whose parents should be tagged up to but not including {@code baseNode}<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * @throws RepositoryException if repository exception occurred<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     */<a name="line.146"></a>
+<span class="sourceLineNo">147</span>    private static void tagHierarchyWithPairtreeMixin(final Node baseNode, final Node createdNode)<a name="line.147"></a>
+<span class="sourceLineNo">148</span>            throws RepositoryException {<a name="line.148"></a>
+<span class="sourceLineNo">149</span>        Node parent = createdNode.getParent();<a name="line.149"></a>
+<span class="sourceLineNo">150</span><a name="line.150"></a>
+<span class="sourceLineNo">151</span>        while (parent.isNew() &amp;&amp; !parent.equals(baseNode)) {<a name="line.151"></a>
+<span class="sourceLineNo">152</span>            parent.addMixin(FEDORA_PAIRTREE);<a name="line.152"></a>
+<span class="sourceLineNo">153</span>            parent = parent.getParent();<a name="line.153"></a>
+<span class="sourceLineNo">154</span>        }<a name="line.154"></a>
+<span class="sourceLineNo">155</span>    }<a name="line.155"></a>
+<span class="sourceLineNo">156</span><a name="line.156"></a>
+<span class="sourceLineNo">157</span>    /** test node existence at path<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     *<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     * @param session the session<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * @param path the path<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     * @return whether T exists at the given path<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     */<a name="line.162"></a>
+<span class="sourceLineNo">163</span>    public boolean exists(final FedoraSession session, final String path) {<a name="line.163"></a>
+<span class="sourceLineNo">164</span>        final Session jcrSession = getJcrSession(session);<a name="line.164"></a>
+<span class="sourceLineNo">165</span>        final String encodedPath = encodePath(path, session);<a name="line.165"></a>
+<span class="sourceLineNo">166</span>        try {<a name="line.166"></a>
+<span class="sourceLineNo">167</span>            return jcrSession.nodeExists(encodedPath);<a name="line.167"></a>
+<span class="sourceLineNo">168</span>        } catch (final RepositoryException e) {<a name="line.168"></a>
+<span class="sourceLineNo">169</span>            throw new RepositoryRuntimeException(e);<a name="line.169"></a>
+<span class="sourceLineNo">170</span>        }<a name="line.170"></a>
+<span class="sourceLineNo">171</span>    }<a name="line.171"></a>
+<span class="sourceLineNo">172</span><a name="line.172"></a>
+<span class="sourceLineNo">173</span>    /**<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     * Get the prefixes in the JCR NamespaceRegistry<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     *<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     * @param session current JCR Session<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     * @return Set of prefixes<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     */<a name="line.178"></a>
+<span class="sourceLineNo">179</span>    protected static Set&lt;String&gt; registeredPrefixes(final Session session) {<a name="line.179"></a>
+<span class="sourceLineNo">180</span>        if (registeredPrefixes == null || registeredPrefixes.isEmpty()) {<a name="line.180"></a>
+<span class="sourceLineNo">181</span>            registeredPrefixes = new TreeSet&lt;String&gt;(getNamespaces(session).keySet());<a name="line.181"></a>
+<span class="sourceLineNo">182</span>            // Add fcr: as it is not actually registered in Modeshape.<a name="line.182"></a>
+<span class="sourceLineNo">183</span>            registeredPrefixes.add("fcr");<a name="line.183"></a>
+<span class="sourceLineNo">184</span>        }<a name="line.184"></a>
+<span class="sourceLineNo">185</span>        return registeredPrefixes;<a name="line.185"></a>
+<span class="sourceLineNo">186</span>    }<a name="line.186"></a>
+<span class="sourceLineNo">187</span>}<a name="line.187"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>
