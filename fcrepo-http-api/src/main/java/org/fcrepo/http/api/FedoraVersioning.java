@@ -131,6 +131,7 @@ public class FedoraVersioning extends ContentExposingResource {
      * @param requestContentType Content-Type of the request body
      * @param digest digests of the request body
      * @param requestBodyStream request body stream
+     * @param rawLinks the list of unprocessed links
      * @return response
      * @throws InvalidChecksumException thrown if one of the provided digests does not match the content
      * @throws MementoDatetimeFormatException if the header value of memento-datetime is not RFC-1123 format

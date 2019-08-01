@@ -355,6 +355,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
 
     /**
      * Test for issue https://jira.duraspace.org/browse/FCREPO-2975
+     * @throws java.lang.Exception exception thrown during this function
      */
     @Test
     public void testHeadAndDeleteInTransaction() throws Exception {
