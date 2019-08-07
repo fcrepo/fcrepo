@@ -31,7 +31,7 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.anyObject;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
@@ -125,7 +125,7 @@ public class WebACRolesProviderTest {
 
         when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getContainer()).thenReturn(mockParentResource);
-        when(mockResource.getTriples(anyObject(), eq(PROPERTIES)))
+        when(mockResource.getTriples(any(), eq(PROPERTIES)))
                 .thenReturn(new DefaultRdfStream(createURI("subject")));
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
 
@@ -159,7 +159,7 @@ public class WebACRolesProviderTest {
         when(mockAclResource.isAcl()).thenReturn(true);
         when(mockAclResource.getPath()).thenReturn(parentPath + "/fcr:acl");
 
-        when(mockAclResource.getTriples(anyObject(), eq(PROPERTIES)))
+        when(mockAclResource.getTriples(any(), eq(PROPERTIES)))
                 .thenReturn(getRdfStreamFromResource(acl, TTL));
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource);
@@ -192,7 +192,7 @@ public class WebACRolesProviderTest {
         when(mockParentResource.getAcl()).thenReturn(null);
 
 
-        when(mockAclResource.getTriples(anyObject(), eq(PROPERTIES)))
+        when(mockAclResource.getTriples(any(), eq(PROPERTIES)))
                 .thenReturn(getRdfStreamFromResource(acl, TTL));
 
         System.setProperty(ROOT_AUTHORIZATION_PROPERTY, "./target/test-classes/test-root-authorization2.ttl");
@@ -218,7 +218,7 @@ public class WebACRolesProviderTest {
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
-        when(mockAclResource.getTriples(anyObject(), eq(PROPERTIES)))
+        when(mockAclResource.getTriples(any(), eq(PROPERTIES)))
             .thenReturn(getRdfStreamFromResource(acl, TTL));
         when(mockAclResource.isAcl()).thenReturn(true);
         when(mockAclResource.getPath()).thenReturn(accessTo + "/fcr:acl");
@@ -243,7 +243,7 @@ public class WebACRolesProviderTest {
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
-        when(mockAclResource.getTriples(anyObject(), eq(PROPERTIES)))
+        when(mockAclResource.getTriples(any(), eq(PROPERTIES)))
             .thenReturn(getRdfStreamFromResource(acl, TTL));
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource);
@@ -260,7 +260,7 @@ public class WebACRolesProviderTest {
         when(mockResource.getAcl()).thenReturn(mockAclResource);
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockResource.getPath()).thenReturn(accessTo);
-        when(mockAclResource.getTriples(anyObject(), eq(PROPERTIES)))
+        when(mockAclResource.getTriples(any(), eq(PROPERTIES)))
             .thenReturn(getRdfStreamFromResource(acl, TTL));
         when(mockAclResource.isAcl()).thenReturn(true);
         when(mockAclResource.getPath()).thenReturn(accessTo + "/fcr:acl");
@@ -287,7 +287,7 @@ public class WebACRolesProviderTest {
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
-        when(mockAclResource.getTriples(anyObject(), eq(PROPERTIES)))
+        when(mockAclResource.getTriples(any(), eq(PROPERTIES)))
             .thenReturn(getRdfStreamFromResource(acl, TTL));
         when(mockAclResource.isAcl()).thenReturn(true);
         when(mockAclResource.getPath()).thenReturn(accessTo + "/fcr:acl");
@@ -311,7 +311,7 @@ public class WebACRolesProviderTest {
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
-        when(mockAclResource.getTriples(anyObject(), eq(PROPERTIES)))
+        when(mockAclResource.getTriples(any(), eq(PROPERTIES)))
             .thenReturn(getRdfStreamFromResource(acl, TTL));
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource);
@@ -333,7 +333,7 @@ public class WebACRolesProviderTest {
         when(mockAclResource.isAcl()).thenReturn(true);
         when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
-        when(mockAclResource.getTriples(anyObject(), eq(PROPERTIES)))
+        when(mockAclResource.getTriples(any(), eq(PROPERTIES)))
             .thenReturn(getRdfStreamFromResource(acl, TTL));
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource);
@@ -357,7 +357,7 @@ public class WebACRolesProviderTest {
         when(mockAclResource.isAcl()).thenReturn(true);
         when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
-        when(mockAclResource.getTriples(anyObject(), eq(PROPERTIES)))
+        when(mockAclResource.getTriples(any(), eq(PROPERTIES)))
             .thenReturn(getRdfStreamFromResource(acl, TTL));
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource);
@@ -382,7 +382,7 @@ public class WebACRolesProviderTest {
         when(mockAclResource.isAcl()).thenReturn(true);
         when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
-        when(mockAclResource.getTriples(anyObject(), eq(PROPERTIES)))
+        when(mockAclResource.getTriples(any(), eq(PROPERTIES)))
             .thenReturn(getRdfStreamFromResource(acl, TTL));
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource);
@@ -409,7 +409,7 @@ public class WebACRolesProviderTest {
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
-        when(mockAclResource.getTriples(anyObject(), eq(PROPERTIES)))
+        when(mockAclResource.getTriples(any(), eq(PROPERTIES)))
             .thenReturn(getRdfStreamFromResource(acl, TTL));
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource);
@@ -434,7 +434,7 @@ public class WebACRolesProviderTest {
         when(mockAclResource.isAcl()).thenReturn(true);
         when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
-        when(mockAclResource.getTriples(anyObject(), eq(PROPERTIES)))
+        when(mockAclResource.getTriples(any(), eq(PROPERTIES)))
             .thenReturn(getRdfStreamFromResource(acl, TTL));
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource);
@@ -466,14 +466,14 @@ public class WebACRolesProviderTest {
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
-        when(mockAclResource.getTriples(anyObject(), eq(PROPERTIES)))
+        when(mockAclResource.getTriples(any(), eq(PROPERTIES)))
             .thenReturn(getRdfStreamFromResource(acl, TTL));
         when(mockAclResource.isAcl()).thenReturn(true);
         when(mockAclResource.getPath()).thenReturn(accessTo + "/fcr:acl");
 
         when(mockAgentClassResource.getTypes()).thenReturn(singletonList(VCARD_GROUP));
         when(mockAgentClassResource.getPath()).thenReturn(groupResource);
-        when(mockAgentClassResource.getTriples(anyObject(), eq(PROPERTIES)))
+        when(mockAgentClassResource.getTriples(any(), eq(PROPERTIES)))
                 .thenReturn(getRdfStreamFromResource(group, TTL));
 
 
@@ -506,12 +506,12 @@ public class WebACRolesProviderTest {
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
-        when(mockAclResource.getTriples(anyObject(), eq(PROPERTIES)))
+        when(mockAclResource.getTriples(any(), eq(PROPERTIES)))
             .thenReturn(getRdfStreamFromResource(acl, TTL));
 
         when(mockAgentClassResource.getTypes()).thenReturn(new ArrayList<>());
         when(mockAgentClassResource.getPath()).thenReturn(groupResource);
-        when(mockAgentClassResource.getTriples(anyObject(), eq(PROPERTIES)))
+        when(mockAgentClassResource.getTriples(any(), eq(PROPERTIES)))
             .thenReturn(getRdfStreamFromResource(group, TTL));
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource);
@@ -531,7 +531,7 @@ public class WebACRolesProviderTest {
         when(mockAclResource.isAcl()).thenReturn(true);
         when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
-        when(mockAclResource.getTriples(anyObject(), eq(PROPERTIES)))
+        when(mockAclResource.getTriples(any(), eq(PROPERTIES)))
             .thenReturn(getRdfStreamFromResource(acl, TTL));
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource);
