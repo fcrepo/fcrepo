@@ -17,10 +17,57 @@
  */
 package org.fcrepo.persistence.api;
 
+import java.io.InputStream;
+import java.util.Map;
+
+import javax.ws.rs.core.MediaType;
+
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.models.FedoraResource;
+
 /**
  * An interface that mediates CRUD operations to and from persistence storage.
  *
  * @author dbernstein
+ * @author whikloj
+ * @since 2019-09-11
  */
 public interface PersistentStorage {
+
+    /**
+     * Locate an existing resource on disk.
+     *
+     * @param identifier The id of the resource.
+     * @return the FedoraResource
+     */
+    public FedoraResource findResource(final String identifier);
+
+    /**
+     * Save/Update a RdfSource to storage.
+     *
+     * @param identifier The identifier of the resource.
+     * @param content The RdfStream of content.
+     * @param informationHeader The information required for headers or other Fedora actions.
+     */
+    public void saveRdfSource(final String identifier, final RdfStream content,
+            final Map<String, String> informationHeader);
+
+    /**
+     * Save/Update a NonRdfSource to storage.
+     *
+     * @param identifier The identifier of the resource.
+     * @param content The binary stream.
+     * @param informationHeaders The information required for headers or other Fedora actions.
+     * @param contentType The mime-type.
+     */
+    public void saveNonRdfSource(final String identifier, final InputStream content,
+            final Map<String, String> informationHeaders, final MediaType contentType);
+
+    /**
+     * Delete an object from storage.
+     *
+     * @param identifier The identifier of the resource.
+     */
+    public void deleteResource(final String identifier);
+
 }
