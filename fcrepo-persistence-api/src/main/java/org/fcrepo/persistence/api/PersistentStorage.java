@@ -17,12 +17,8 @@
  */
 package org.fcrepo.persistence.api;
 
-import java.io.InputStream;
-import java.util.Map;
+import java.time.Instant;
 
-import javax.ws.rs.core.MediaType;
-
-import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.models.FedoraResource;
 
 /**
@@ -37,37 +33,58 @@ public interface PersistentStorage {
     /**
      * Locate an existing resource on disk.
      *
+     * @param txID The transaction identifer or null if no transaction.
      * @param identifier The id of the resource.
+     * @param version The datetime of the version you want to retrieve or null if current.
      * @return the FedoraResource
      */
-    public FedoraResource findResource(final String identifier);
+    public FedoraResource findResource(final String txID, final String identifier, final Instant version);
 
     /**
-     * Save/Update a RdfSource to storage.
+     * Save/Update a Resource to storage.
      *
-     * @param identifier The identifier of the resource.
-     * @param content The RdfStream of content.
-     * @param informationHeader The information required for headers or other Fedora actions.
+     * @param txID The transaction identifier or null if no transaction.
+     * @param identifier The identifier of the resource (if known).
+     * @param resource The FedoraResource to persist.
+     * @return the identifier
      */
-    public void saveRdfSource(final String identifier, final RdfStream content,
-            final Map<String, String> informationHeader);
-
-    /**
-     * Save/Update a NonRdfSource to storage.
-     *
-     * @param identifier The identifier of the resource.
-     * @param content The binary stream.
-     * @param informationHeaders The information required for headers or other Fedora actions.
-     * @param contentType The mime-type.
-     */
-    public void saveNonRdfSource(final String identifier, final InputStream content,
-            final Map<String, String> informationHeaders, final MediaType contentType);
+    public String saveResource(final String txID, final String identifier, final FedoraResource resource);
 
     /**
      * Delete an object from storage.
      *
+     * @param txID The transaction identifer or null if no transaction.
      * @param identifier The identifier of the resource.
+     * @param version The datetime of the version to be deleted or null for entire resource.
      */
-    public void deleteResource(final String identifier);
+    public void deleteResource(final String txID, final String identifier, final Instant version);
 
+    /**
+     * Start a new transaction.
+     *
+     * @param idleTimeout The amount of time to wait between actions in the transaction.
+     * @return the identifier of the transaction.
+     */
+    public String startTransaction(final long idleTimeout);
+
+    /**
+     * Commit a transaction.
+     *
+     * @param identifier The identifier of the transaction.
+     */
+    public void commitTransaction(final String identifier);
+
+    /**
+     * Rollback a transaction.
+     *
+     * @param identifier The identifier of the transaction.
+     */
+    public void rollbackTransaction(final String identifier);
+
+    /**
+     * Extend a transaction by its idleTimeout length.
+     *
+     * @param identifier The identifier of the transaction.
+     */
+    public void extendTransaction(final String identifier);
 }
