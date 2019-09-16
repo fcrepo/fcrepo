@@ -291,6 +291,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
      * a ms field which is a multiple of 10 and only has one or two digits (ie, .5 or .86)
      * then Modeshape 5.0 will incorrectly parse that value (ie. .5 s becomes .005 s),
      * thereby changing the time.
+     * @throws java.lang.Exception exception thrown during this function
      */
     @Test
     public void testCreateVersionWithLastModifiedDateTimestamp() throws Exception {

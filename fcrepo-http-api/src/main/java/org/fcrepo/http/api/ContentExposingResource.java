@@ -1112,6 +1112,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     /**
      * Create a checksum URI object.
+     * @param checksum the checksum
+     * @return the new URI, or null
      **/
     protected static URI checksumURI( final String checksum ) {
         if (!isBlank(checksum)) {
