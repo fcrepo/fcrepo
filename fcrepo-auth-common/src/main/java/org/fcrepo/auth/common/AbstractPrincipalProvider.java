@@ -40,7 +40,7 @@ import org.slf4j.Logger;
 /**
  * This abstract class implements the Filter interface to add principals
  * to the session so that Shiro can evaluate the principals.
- * 
+ *
  * The getPrincipals method is left as the responsibility of the classes
  * that will be extending this abstract class.
  *
@@ -58,6 +58,7 @@ abstract class AbstractPrincipalProvider implements PrincipalProvider {
         // this method intentionally left empty
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain chain)
             throws IOException, ServletException {
@@ -72,7 +73,7 @@ abstract class AbstractPrincipalProvider implements PrincipalProvider {
                 log.debug("Shiro Principal object is not found!");
                 currentPrincipals = newPrincipals;
               } else {
-                currentPrincipals = new HashSet<>((Set<Principal>) principals.asSet());
+                currentPrincipals = new HashSet<>(principals.asSet());
                 log.debug("Number of Principals already in session object: {}", currentPrincipals.size());
                 currentPrincipals.addAll(newPrincipals);
             }

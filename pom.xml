@@ -29,7 +29,7 @@
     <commons-io.version>2.6</commons-io.version>
     <commons-lang.version>3.7</commons-lang.version>
     <narayana-jta.version>5.9.0.Final</narayana-jta.version>
-    <jetty.version>9.3.25.v20180904</jetty.version>
+    <jetty.version>9.3.27.v20190418</jetty.version>
     <guava.version>25.1-jre</guava.version>
     <hk2.version>2.5.0-b62</hk2.version>
     <htmlunit.version>2.33</htmlunit.version>
@@ -38,6 +38,9 @@
     <httpcore.version>4.4.10</httpcore.version>
     <javax.servlet-api.version>4.0.1</javax.servlet-api.version>
     <javaee-api.version>8.0</javaee-api.version>
+    <javaee.xml.version>2.3.1</javaee.xml.version>
+    <jaxb.core.version>2.3.0.1</jaxb.core.version>
+    <jaxb.impl.version>2.3.1</jaxb.impl.version>
     <jackson2.version>2.9.9</jackson2.version>
     <jboss-logging.version>3.3.2.Final</jboss-logging.version>
     <jena.version>3.8.0</jena.version>
@@ -99,6 +102,22 @@
         <version>${javaee-api.version}</version>
         <scope>provided</scope>
       </dependency>
+      <!--  modules needed for Java 11 support EE modules. -->
+      <dependency>
+        <groupId>javax.xml.bind</groupId>
+        <artifactId>jaxb-api</artifactId>
+        <version>${javaee.xml.version}</version>
+	  </dependency>
+	  <dependency>
+        <groupId>com.sun.xml.bind</groupId>
+        <artifactId>jaxb-core</artifactId>
+        <version>${jaxb.core.version}</version>
+	  </dependency>
+	  <dependency>
+        <groupId>com.sun.xml.bind</groupId>
+        <artifactId>jaxb-impl</artifactId>
+        <version>${jaxb.impl.version}</version>
+	  </dependency>
       <dependency>
         <groupId>org.glassfish.jersey.core</groupId>
         <artifactId>jersey-server</artifactId>

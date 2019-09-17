@@ -108,6 +108,7 @@
           <configuration>
             <linksource>true</linksource>
             <quiet>true</quiet>
+            <source>8</source>
           </configuration>
           <executions>
             <execution>
