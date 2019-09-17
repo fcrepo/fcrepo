@@ -62,7 +62,7 @@ In addition, there are weekly [technical calls](https://wiki.duraspace.org/displ
 ## Building and running Fedora from source
 
 System Requirements
-* Java 8
+* Java 8 or Java 11
 * Maven 3
 
 ```bash

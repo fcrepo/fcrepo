@@ -7,11 +7,6 @@ jdk:
   - oraclejdk8
   - openjdk11
 
-matrix:
-  allow_failures: 
-    - jdk: openjdk11
-  fast_finish: true
-
 before_install:  
  - "echo $JAVA_OPTS"
  - "export JAVA_OPTS=-Xmx512m"
