@@ -29,6 +29,9 @@ public class FedoraTransactionImpl implements FedoraTransaction {
     final String id;
 
     FedoraTransactionImpl(final String id) {
+        if (id == null || id.isEmpty()) {
+            throw new IllegalArgumentException("FedoraTransaction id should not be empty!");
+        }
         this.id = id;
     }
 

@@ -38,7 +38,7 @@ public class FedoraTransactionManagerImpl implements FedoraTransactionManager {
     }
 
     @Override
-    public FedoraTransaction create() {
+    public synchronized FedoraTransaction create() {
         String txId = randomUUID().toString();
         while(transactions.containsKey(txId)) {
             txId = randomUUID().toString();
