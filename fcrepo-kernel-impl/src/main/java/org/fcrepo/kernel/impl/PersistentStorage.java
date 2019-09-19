@@ -36,42 +36,46 @@ public interface PersistentStorage {
     /**
      * Create a new resource on the persistent storage.
      *
-     * @param psTxId The persistent storage transaction for this action.
+     * @param psTx The persistent storage transaction for this action.
      * @param resource The new fedora resource to persist to storage.
      * @return the resource with any new information related to the persisting..?
      * @throws CannotCreateResourceException Error persisting the resource.
      */
-    public FedoraResource create(final PersistentStorageTransaction psTxId, final FedoraResource resource);
+    public FedoraResource create(final PersistentStorageTransaction psTx, final FedoraResource resource)
+            throws CannotCreateResourceException;
 
     /**
      * Update an existing resource on persistent storage.
      *
-     * @param psTxId The persistent storage transaction for this action.
+     * @param psTx The persistent storage transaction for this action.
      * @param resource The changed fedora resource to persist to storage.
      * @return the updated resource with any new information related to the persisting..?
      * @throws CannotCreateResourceException Error persisting the resource.
      */
-    public FedoraResource update(final PersistentStorageTransaction psTxId, final FedoraResource resource);
+    public FedoraResource update(final PersistentStorageTransaction psTx, final FedoraResource resource)
+            throws CannotCreateResourceException;
 
     /**
      * Delete a resource from persistent storage.
      *
-     * @param psTxId The persistent storage transaction for this action.
+     * @param psTx The persistent storage transaction for this action.
      * @param resource The current fedora resource to delete.
      * @return The tombstone for the removed resource.
      * @throws RepositoryRuntimeException Error deleting the resource.
      */
-    public Tombstone delete(final PersistentStorageTransaction psTxId, final FedoraResource resource);
+    public Tombstone delete(final PersistentStorageTransaction psTx, final FedoraResource resource)
+            throws RepositoryRuntimeException;
 
     /**
      * Return a resource from persistent storage
      *
-     * @param psTxId The persistent storage transaction for this action.
+     * @param psTx The persistent storage transaction for this action.
      * @param identifier The identifier of the resource to retrieve.
      * @return The resource.
      * @throws ItemNotFoundException If the identifier doesn't exist.
      */
-    public FedoraResource read(final PersistentStorageTransaction psTxId, final String identifier);
+    public FedoraResource read(final PersistentStorageTransaction psTx, final String identifier)
+            throws ItemNotFoundException;
 
     /**
      * Return a version of a resource from persistent storage
@@ -81,6 +85,6 @@ public interface PersistentStorage {
      * @return The version of the resource.
      * @throws ItemNotFoundException If the identifier doesn't exist.
      */
-    public FedoraResource read(final String identifier, final Instant version);
+    public FedoraResource read(final String identifier, final Instant version) throws ItemNotFoundException;
 
 }

@@ -38,20 +38,20 @@ public interface PersistentStorageTransaction {
      *
      * @throws RepositoryRuntimeException Unable to prepare or lock.
      */
-    public void prepare();
+    public void prepare() throws RepositoryRuntimeException;
 
     /**
      * Commits any changes in the current transaction to persistent storage.
      *
      * @throws RepositoryRuntimeException Error during commit.
      */
-    public void commit();
+    public void commit() throws RepositoryRuntimeException;
 
     /**
      * Rolls back any changes in the current transaction.
      *
      * @throws RepositoryRuntimeException Error completing rollback.
      */
-    public void rollback();
+    public void rollback() throws RepositoryRuntimeException;
 
 }
