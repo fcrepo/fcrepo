@@ -76,6 +76,7 @@
   </properties>
   <modules>
     <module>fcrepo-kernel-api</module>
+    <module>fcrepo-kernel-impl</module>
     <module>fcrepo-webapp</module>
     <module>fcrepo-event-serialization</module>
     <module>fcrepo-jms</module>
