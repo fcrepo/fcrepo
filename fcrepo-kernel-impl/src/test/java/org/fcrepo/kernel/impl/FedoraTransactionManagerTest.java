@@ -57,4 +57,9 @@ public class FedoraTransactionManagerTest {
         assertNotNull(tx);
         assertEquals(testTx.getId(), tx.getId());
     }
+
+    @Test(expected = RuntimeException.class)
+    public void testGetTransactionWithInvalidID() {
+        final FedoraTransactionImpl tx = (FedoraTransactionImpl) testTxManager.get("invalid-id");
+    }
 }
