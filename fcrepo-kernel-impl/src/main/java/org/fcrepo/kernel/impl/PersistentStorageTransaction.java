@@ -17,10 +17,11 @@
  */
 package org.fcrepo.kernel.impl;
 
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 
 /**
  * Interface for persistent storage transaction implementation.
- * 
+ *
  * TODO: Implement javax.transaction.xa.XAResource
  * javax.transaction:javax.transaction-api:1.3
  *
@@ -31,16 +32,25 @@ public interface PersistentStorageTransaction {
 
     /**
      * Prepares the transaction to be committed by ensuring it can be locked.
+     *
+     * TODO: create exceptions for unable to lock, etag/state token change,
+     * general error.
+     *
+     * @throws RepositoryRuntimeException Unable to prepare or lock.
      */
     public void prepare();
 
     /**
      * Commits any changes in the current transaction to persistent storage.
+     *
+     * @throws RepositoryRuntimeException Error during commit.
      */
     public void commit();
 
     /**
      * Rolls back any changes in the current transaction.
+     *
+     * @throws RepositoryRuntimeException Error completing rollback.
      */
     public void rollback();
 
