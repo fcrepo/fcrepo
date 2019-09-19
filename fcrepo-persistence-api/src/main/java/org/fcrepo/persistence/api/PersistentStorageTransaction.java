@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.impl;
+package org.fcrepo.persistence.api;
 
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 
