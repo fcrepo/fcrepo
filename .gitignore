@@ -19,3 +19,4 @@ fcrepo-integration-ldp/report-*
 fcrepo-integration-ldp/report
 fcrepo-integration-ldp/test-output
 .idea/
+*/package-info.java
