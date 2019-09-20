@@ -97,4 +97,18 @@ abstract public class PersistentStorageSession {
      */
     abstract public FedoraResource read(final String identifier, final Instant version) throws ItemNotFoundException;
 
+    /**
+     * Commits any changes in the current sesssion to persistent storage.
+     *
+     * @throws RepositoryRuntimeException Error during commit.
+     */
+    abstract public void commit() throws RepositoryRuntimeException;
+
+    /**
+     * Rolls back any changes in the current session.
+     *
+     * @throws RepositoryRuntimeException Error completing rollback.
+     */
+    abstract public void rollback() throws RepositoryRuntimeException;
+
 }
