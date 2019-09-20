@@ -28,10 +28,10 @@ public interface PersistentStorageSessionFactory {
     /**
      * Factory method to get PersistentStorageSession.
      *
-     * @param txId the externally generated session ID.
+     * @param sessionId the externally generated session ID.
      * @return the PersistentStorageSession instance.
      */
-    public PersistentStorageSession getSession(final String txId);
+    public PersistentStorageSession getSession(final String sessionId);
 
     /**
      * Factory method to get PersistentStorageSession.

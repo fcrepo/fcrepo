@@ -36,7 +36,7 @@ public interface PersistentStorageSession {
      *
      * @return the session id.
      */
-    public String getTxId();
+    public String getId();
 
     /**
      * Create a new resource on the persistent storage.

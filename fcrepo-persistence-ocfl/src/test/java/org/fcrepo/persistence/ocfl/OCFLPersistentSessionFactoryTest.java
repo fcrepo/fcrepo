@@ -42,7 +42,7 @@ public class OCFLPersistentSessionFactoryTest {
 
     private PersistentStorageSession readOnlySession;
 
-    private final String testTxId = randomUUID().toString();
+    private final String testSessionId = randomUUID().toString();
 
     private final String testResourcePath = "/" + randomUUID().toString();
 
@@ -52,7 +52,7 @@ public class OCFLPersistentSessionFactoryTest {
     @Before
     public void setUp() {
         this.sessionFactory = new OCFLPersistentSessionFactory();
-        readWriteSession = this.sessionFactory.getSession(testTxId);
+        readWriteSession = this.sessionFactory.getSession(testSessionId);
         readOnlySession = this.sessionFactory.getReadOnlySession();
     }
 

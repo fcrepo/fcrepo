@@ -40,10 +40,10 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
     /**
      * Constructor
      *
-     * @param txId session id.
+     * @param sessionId session id.
      */
-    protected OCFLPersistentStorageSession(final String txId) {
-        this.sessionId = txId;
+    protected OCFLPersistentStorageSession(final String sessionId) {
+        this.sessionId = sessionId;
     }
 
     /**
@@ -54,7 +54,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
     }
 
     @Override
-    public String getTxId() {
+    public String getId() {
         return this.sessionId;
     }
 

@@ -29,8 +29,8 @@ import org.fcrepo.persistence.api.PersistentStorageSessionFactory;
 public class OCFLPersistentSessionFactory implements PersistentStorageSessionFactory {
 
     @Override
-    public PersistentStorageSession getSession(final String txId) {
-        return new OCFLPersistentStorageSession(txId);
+    public PersistentStorageSession getSession(final String sessionId) {
+        return new OCFLPersistentStorageSession(sessionId);
     }
 
     @Override
