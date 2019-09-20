@@ -31,21 +31,14 @@ import org.fcrepo.kernel.api.models.Tombstone;
  * @author dbernstein
  * @author whikloj
  */
-abstract public class PersistentStorageSession {
+public interface PersistentStorageSession {
 
     /**
-     * The FedoraTransaction ID.
-     */
-    private final String txId;
-
-    /**
-     * Basic constructor.
+     * Return the transaction Id for this session, or null for a read-only session.
      *
-     * @param txId the FedoraTransaction ID.
+     * @return the transaction id.
      */
-    protected PersistentStorageSession(final String txId) {
-        this.txId = txId;
-    }
+    public String getTxId();
 
     /**
      * Create a new resource on the persistent storage.
@@ -54,7 +47,7 @@ abstract public class PersistentStorageSession {
      * @return the resource with any new information related to the persisting..?
      * @throws CannotCreateResourceException Error persisting the resource.
      */
-    abstract public FedoraResource create(final FedoraResource resource)
+    public FedoraResource create(final FedoraResource resource)
             throws CannotCreateResourceException;
 
     /**
@@ -64,7 +57,7 @@ abstract public class PersistentStorageSession {
      * @return the updated resource with any new information related to the persisting..?
      * @throws CannotCreateResourceException Error persisting the resource.
      */
-    abstract public FedoraResource update(final FedoraResource resource)
+    public FedoraResource update(final FedoraResource resource)
             throws CannotCreateResourceException;
 
     /**
@@ -74,7 +67,7 @@ abstract public class PersistentStorageSession {
      * @return The tombstone for the removed resource.
      * @throws RepositoryRuntimeException Error deleting the resource.
      */
-    abstract public Tombstone delete(final FedoraResource resource)
+    public Tombstone delete(final FedoraResource resource)
             throws RepositoryRuntimeException;
 
     /**
@@ -84,7 +77,7 @@ abstract public class PersistentStorageSession {
      * @return The resource.
      * @throws ItemNotFoundException If the identifier doesn't exist.
      */
-    abstract public FedoraResource read(final String identifier)
+    public FedoraResource read(final String identifier)
             throws ItemNotFoundException;
 
     /**
@@ -95,20 +88,20 @@ abstract public class PersistentStorageSession {
      * @return The version of the resource.
      * @throws ItemNotFoundException If the identifier doesn't exist.
      */
-    abstract public FedoraResource read(final String identifier, final Instant version) throws ItemNotFoundException;
+    public FedoraResource read(final String identifier, final Instant version) throws ItemNotFoundException;
 
     /**
      * Commits any changes in the current sesssion to persistent storage.
      *
      * @throws RepositoryRuntimeException Error during commit.
      */
-    abstract public void commit() throws RepositoryRuntimeException;
+    public void commit() throws RepositoryRuntimeException;
 
     /**
      * Rolls back any changes in the current session.
      *
      * @throws RepositoryRuntimeException Error completing rollback.
      */
-    abstract public void rollback() throws RepositoryRuntimeException;
+    public void rollback() throws RepositoryRuntimeException;
 
 }

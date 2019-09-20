@@ -15,32 +15,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.persistence.api;
+package org.fcrepo.persistence.api.exceptions;
+
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 
 /**
- * Factory class to create PersistentStorageSessions.
+ * Generic exception for things PersistentStorage related.
  *
  * @author whikloj
- * @since 2019-09-19
+ * @since 2019-09-20
  */
-public abstract class PersistentStorageFactory {
+public class PersistentStorageException extends RepositoryRuntimeException {
 
     /**
-     * Factory method to get PersistentStorageSession.
-     *
-     * @param txId the FedoraTransaction ID.
-     * @return the PersistentStorageSession instance.
+     * version UID.
      */
-    public PersistentStorageSession getSession(final String txId) {
-        return createSession(txId);
-   }
+    private static final long serialVersionUID = -1L;
 
     /**
-     * Create an instance of the PersistentStorageSession implementation.
+     * Constructor.
      *
-     * @param txId the FedoraTransaction ID.
-     * @return the PersistentStorageSession instance.
+     * @param msg the message
      */
-    abstract protected PersistentStorageSession createSession(final String txId);
+    public PersistentStorageException(final String msg) {
+        super(msg);
+    }
 
 }
