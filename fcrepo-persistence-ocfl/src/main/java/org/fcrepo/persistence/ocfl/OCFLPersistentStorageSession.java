@@ -33,14 +33,14 @@ import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
     /**
-     * Externally generated transaction id for the session.
+     * Externally generated id for the session.
      */
     private final String sessionId;
 
     /**
      * Constructor
      *
-     * @param txId Fedora transaction id.
+     * @param txId session id.
      */
     protected OCFLPersistentStorageSession(final String txId) {
         this.sessionId = txId;

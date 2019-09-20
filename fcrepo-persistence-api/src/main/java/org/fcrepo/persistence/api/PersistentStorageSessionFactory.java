@@ -28,7 +28,7 @@ public interface PersistentStorageSessionFactory {
     /**
      * Factory method to get PersistentStorageSession.
      *
-     * @param txId the FedoraTransaction ID.
+     * @param txId the externally generated session ID.
      * @return the PersistentStorageSession instance.
      */
     public PersistentStorageSession getSession(final String txId);

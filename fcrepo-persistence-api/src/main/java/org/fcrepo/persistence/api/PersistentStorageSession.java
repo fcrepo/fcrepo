@@ -32,9 +32,9 @@ import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 public interface PersistentStorageSession {
 
     /**
-     * Return the transaction Id for this session, or null for a read-only session.
+     * Return the ID for this session, or null for a read-only session.
      *
-     * @return the transaction id.
+     * @return the session id.
      */
     public String getTxId();
 
