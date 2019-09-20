@@ -18,9 +18,29 @@
 package org.fcrepo.persistence.api;
 
 /**
- * An interface that mediates CRUD operations to and from persistence storage.
+ * Factory class to create PersistentStorageSessions.
  *
- * @author dbernstein
+ * @author whikloj
+ * @since 2019-09-19
  */
-public interface PersistentStorage {
+public abstract class PersistentStorageFactory {
+
+    /**
+     * Factory method to get PersistentStorageSession.
+     *
+     * @param txId the FedoraTransaction ID.
+     * @return the PersistentStorageSession instance.
+     */
+    public PersistentStorageSession getSession(final String txId) {
+        return createSession(txId);
+   }
+
+    /**
+     * Create an instance of the PersistentStorageSession implementation.
+     *
+     * @param txId the FedoraTransaction ID.
+     * @return the PersistentStorageSession instance.
+     */
+    abstract protected PersistentStorageSession createSession(final String txId);
+
 }
