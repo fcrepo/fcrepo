@@ -17,15 +17,13 @@
  */
 package org.fcrepo.persistence.api.exceptions;
 
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-
 /**
  * Generic exception for things PersistentStorage related.
  *
  * @author whikloj
  * @since 2019-09-20
  */
-public class PersistentStorageException extends RepositoryRuntimeException {
+public class PersistentStorageException extends Exception {
 
     /**
      * version UID.

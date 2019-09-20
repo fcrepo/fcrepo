@@ -18,8 +18,8 @@
 package org.fcrepo.persistence.ocfl;
 
 import static java.util.UUID.randomUUID;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-
 import java.time.Instant;
 
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -60,10 +60,10 @@ public class OCFLPersistentSessionFactoryTest {
     public void testNormalSession() throws Exception {
 
         final FedoraResource response1 = readWriteSession.create(resource);
-        assertNull(response1);
+        assertNotNull(response1);
 
         final FedoraResource response2 = readWriteSession.update(resource);
-        assertNull(response2);
+        assertNotNull(response2);
 
         final FedoraResource response3 = readWriteSession.delete(resource);
         assertNull(response3);
@@ -73,10 +73,11 @@ public class OCFLPersistentSessionFactoryTest {
 
     }
 
-    @Test(expected = PersistentStorageException.class)
+    @Test
     public void testReadVersionInSession() throws Exception {
         final Instant version = Instant.now();
-        readWriteSession.read(testResourcePath, version);
+        final FedoraResource response = readWriteSession.read(testResourcePath, version);
+        assertNull(response);
     }
 
     @Test(expected = PersistentStorageException.class)

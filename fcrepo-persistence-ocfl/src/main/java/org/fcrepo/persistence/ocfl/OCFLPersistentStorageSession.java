@@ -19,9 +19,6 @@ package org.fcrepo.persistence.ocfl;
 
 import java.time.Instant;
 
-import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
-import org.fcrepo.kernel.api.exception.ItemNotFoundException;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.Tombstone;
 import org.fcrepo.persistence.api.PersistentStorageSession;
@@ -36,7 +33,7 @@ import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
     /**
-     * Fedora transaction id for the session.
+     * Externally generated transaction id for the session.
      */
     private final String sessionId;
 
@@ -62,39 +59,39 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
     }
 
     @Override
-    public FedoraResource create(final FedoraResource resource) throws CannotCreateResourceException {
+    public FedoraResource create(final FedoraResource resource) throws PersistentStorageException {
+        actionNeedsWrite();
+        // Do stuff to persist this new resource.
+        return resource;
+    }
+
+    @Override
+    public FedoraResource update(final FedoraResource resource) throws PersistentStorageException {
+        actionNeedsWrite();
+        // Update the resource in peristent storage.
+        return resource;
+    }
+
+    @Override
+    public Tombstone delete(final FedoraResource resource) throws PersistentStorageException {
+        actionNeedsWrite();
+        // Delete the resource from storage.
+        return null;
+    }
+
+    @Override
+    public FedoraResource read(final String identifier) throws PersistentStorageException {
         actionNeedsWrite();
         return null;
     }
 
     @Override
-    public FedoraResource update(final FedoraResource resource) throws CannotCreateResourceException {
-        actionNeedsWrite();
+    public FedoraResource read(final String identifier, final Instant version) throws PersistentStorageException {
         return null;
     }
 
     @Override
-    public Tombstone delete(final FedoraResource resource) throws RepositoryRuntimeException {
-        actionNeedsWrite();
-        return null;
-    }
-
-    @Override
-    public FedoraResource read(final String identifier) throws ItemNotFoundException {
-        actionNeedsWrite();
-        return null;
-    }
-
-    @Override
-    public FedoraResource read(final String identifier, final Instant version) throws ItemNotFoundException {
-        if (!isReadOnly()) {
-            throw new PersistentStorageException("Can't read versions in a session");
-        }
-        return null;
-    }
-
-    @Override
-    public void commit() throws RepositoryRuntimeException {
+    public void commit() throws PersistentStorageException {
         if (isReadOnly()) {
             // No changes to commit.
             return;
@@ -103,7 +100,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
     }
 
     @Override
-    public void rollback() throws RepositoryRuntimeException {
+    public void rollback() throws PersistentStorageException {
         if (isReadOnly()) {
             // No changes to rollback
             return;
@@ -123,7 +120,7 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
     /**
      * Utility to throw exception if trying to perform write operation on read-only session.
      */
-    private void actionNeedsWrite() {
+    private void actionNeedsWrite() throws PersistentStorageException {
         if (isReadOnly()) {
             throw new PersistentStorageException("Session is read-only");
         }

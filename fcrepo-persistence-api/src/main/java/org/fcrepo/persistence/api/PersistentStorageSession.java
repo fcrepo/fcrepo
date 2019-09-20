@@ -19,14 +19,12 @@ package org.fcrepo.persistence.api;
 
 import java.time.Instant;
 
-import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
-import org.fcrepo.kernel.api.exception.ItemNotFoundException;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.Tombstone;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 
 /**
- * An abstract class that mediates CRUD operations to and from persistence storage.
+ * An interface that mediates CRUD operations to and from persistence storage.
  *
  * @author dbernstein
  * @author whikloj
@@ -45,40 +43,40 @@ public interface PersistentStorageSession {
      *
      * @param resource The new fedora resource to persist to storage.
      * @return the resource with any new information related to the persisting..?
-     * @throws CannotCreateResourceException Error persisting the resource.
+     * @throws PersistentStorageException Error persisting the resource.
      */
     public FedoraResource create(final FedoraResource resource)
-            throws CannotCreateResourceException;
+            throws PersistentStorageException;
 
     /**
      * Update an existing resource on persistent storage.
      *
      * @param resource The changed fedora resource to persist to storage.
      * @return the updated resource with any new information related to the persisting..?
-     * @throws CannotCreateResourceException Error persisting the resource.
+     * @throws PersistentStorageException Error persisting the resource.
      */
     public FedoraResource update(final FedoraResource resource)
-            throws CannotCreateResourceException;
+            throws PersistentStorageException;
 
     /**
      * Delete a resource from persistent storage.
      *
      * @param resource The current fedora resource to delete.
      * @return The tombstone for the removed resource.
-     * @throws RepositoryRuntimeException Error deleting the resource.
+     * @throws PersistentStorageException Error deleting the resource.
      */
     public Tombstone delete(final FedoraResource resource)
-            throws RepositoryRuntimeException;
+            throws PersistentStorageException;
 
     /**
      * Return a resource from persistent storage
      *
      * @param identifier The identifier of the resource to retrieve.
      * @return The resource.
-     * @throws ItemNotFoundException If the identifier doesn't exist.
+     * @throws PersistentStorageException If the identifier doesn't exist.
      */
     public FedoraResource read(final String identifier)
-            throws ItemNotFoundException;
+            throws PersistentStorageException;
 
     /**
      * Return a version of a resource from persistent storage
@@ -86,22 +84,22 @@ public interface PersistentStorageSession {
      * @param identifier The identifier of the resource to retrieve.
      * @param version The date/time of the version to retrieve.
      * @return The version of the resource.
-     * @throws ItemNotFoundException If the identifier doesn't exist.
+     * @throws PersistentStorageException If the identifier doesn't exist.
      */
-    public FedoraResource read(final String identifier, final Instant version) throws ItemNotFoundException;
+    public FedoraResource read(final String identifier, final Instant version) throws PersistentStorageException;
 
     /**
      * Commits any changes in the current sesssion to persistent storage.
      *
-     * @throws RepositoryRuntimeException Error during commit.
+     * @throws PersistentStorageException Error during commit.
      */
-    public void commit() throws RepositoryRuntimeException;
+    public void commit() throws PersistentStorageException;
 
     /**
      * Rolls back any changes in the current session.
      *
-     * @throws RepositoryRuntimeException Error completing rollback.
+     * @throws PersistentStorageException Error completing rollback.
      */
-    public void rollback() throws RepositoryRuntimeException;
+    public void rollback() throws PersistentStorageException;
 
 }

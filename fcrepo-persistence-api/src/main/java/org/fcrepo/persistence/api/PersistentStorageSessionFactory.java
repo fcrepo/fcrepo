@@ -18,7 +18,7 @@
 package org.fcrepo.persistence.api;
 
 /**
- * Factory class to create PersistentStorageSessions.
+ * Interface to create PersistentStorageSessions.
  *
  * @author whikloj
  * @since 2019-09-19
@@ -31,32 +31,13 @@ public interface PersistentStorageSessionFactory {
      * @param txId the FedoraTransaction ID.
      * @return the PersistentStorageSession instance.
      */
-    default PersistentStorageSession getSession(final String txId) {
-        return createSession(txId);
-    }
+    public PersistentStorageSession getSession(final String txId);
 
     /**
      * Factory method to get PersistentStorageSession.
      *
      * @return the PersistentStorageSession instance.
      */
-    default PersistentStorageSession getReadOnlySession() {
-        return createSession();
-    }
-
-    /**
-     * Create an instance of the PersistentStorageSession implementation.
-     *
-     * @param txId the FedoraTransaction ID.
-     * @return the PersistentStorageSession instance.
-     */
-    PersistentStorageSession createSession(final String txId);
-
-    /**
-     * Create an instance of the PersistentStorageSession implementation.
-     *
-     * @return the PersistentStorageSession instance.
-     */
-    PersistentStorageSession createSession();
+    public PersistentStorageSession getReadOnlySession();
 
 }
