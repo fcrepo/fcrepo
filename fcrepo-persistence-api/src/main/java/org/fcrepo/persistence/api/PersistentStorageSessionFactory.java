@@ -18,9 +18,26 @@
 package org.fcrepo.persistence.api;
 
 /**
- * An interface that mediates CRUD operations to and from persistence storage.
+ * Interface to create PersistentStorageSessions.
  *
- * @author dbernstein
+ * @author whikloj
+ * @since 2019-09-19
  */
-public interface PersistentStorage {
+public interface PersistentStorageSessionFactory {
+
+    /**
+     * Factory method to get PersistentStorageSession.
+     *
+     * @param sessionId the externally generated session ID.
+     * @return the PersistentStorageSession instance.
+     */
+    public PersistentStorageSession getSession(final String sessionId);
+
+    /**
+     * Factory method to get PersistentStorageSession.
+     *
+     * @return the PersistentStorageSession instance.
+     */
+    public PersistentStorageSession getReadOnlySession();
+
 }

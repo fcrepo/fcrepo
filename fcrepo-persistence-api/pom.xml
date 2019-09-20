@@ -21,6 +21,14 @@
       org.fcrepo.persistence.api.*;version=${project.version}
     </osgi.export.packages>
   </properties>
+  
+  <dependencies>
+    <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-kernel-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+  </dependencies>
 
   <build>
     <plugins>
