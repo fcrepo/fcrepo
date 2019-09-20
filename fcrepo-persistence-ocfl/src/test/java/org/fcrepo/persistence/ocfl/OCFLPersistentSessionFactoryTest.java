@@ -18,7 +18,6 @@
 package org.fcrepo.persistence.ocfl;
 
 import static java.util.UUID.randomUUID;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import java.time.Instant;
 
@@ -59,14 +58,11 @@ public class OCFLPersistentSessionFactoryTest {
     @Test
     public void testNormalSession() throws Exception {
 
-        final FedoraResource response1 = readWriteSession.create(resource);
-        assertNotNull(response1);
+        readWriteSession.create(resource);
 
-        final FedoraResource response2 = readWriteSession.update(resource);
-        assertNotNull(response2);
+        readWriteSession.update(resource);
 
-        final FedoraResource response3 = readWriteSession.delete(resource);
-        assertNull(response3);
+        readWriteSession.delete(resource);
 
         final FedoraResource response4 = readWriteSession.read(testResourcePath);
         assertNull(response4);

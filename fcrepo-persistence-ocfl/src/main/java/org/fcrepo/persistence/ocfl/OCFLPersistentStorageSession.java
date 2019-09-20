@@ -20,7 +20,6 @@ package org.fcrepo.persistence.ocfl;
 import java.time.Instant;
 
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.models.Tombstone;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 
@@ -59,24 +58,21 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
     }
 
     @Override
-    public FedoraResource create(final FedoraResource resource) throws PersistentStorageException {
+    public void create(final FedoraResource resource) throws PersistentStorageException {
         actionNeedsWrite();
         // Do stuff to persist this new resource.
-        return resource;
     }
 
     @Override
-    public FedoraResource update(final FedoraResource resource) throws PersistentStorageException {
+    public void update(final FedoraResource resource) throws PersistentStorageException {
         actionNeedsWrite();
         // Update the resource in peristent storage.
-        return resource;
     }
 
     @Override
-    public Tombstone delete(final FedoraResource resource) throws PersistentStorageException {
+    public void delete(final FedoraResource resource) throws PersistentStorageException {
         actionNeedsWrite();
         // Delete the resource from storage.
-        return null;
     }
 
     @Override

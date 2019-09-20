@@ -20,7 +20,6 @@ package org.fcrepo.persistence.api;
 import java.time.Instant;
 
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.models.Tombstone;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 
 /**
@@ -42,30 +41,27 @@ public interface PersistentStorageSession {
      * Create a new resource on the persistent storage.
      *
      * @param resource The new fedora resource to persist to storage.
-     * @return the resource with any new information related to the persisting..?
      * @throws PersistentStorageException Error persisting the resource.
      */
-    public FedoraResource create(final FedoraResource resource)
+    public void create(final FedoraResource resource)
             throws PersistentStorageException;
 
     /**
      * Update an existing resource on persistent storage.
      *
      * @param resource The changed fedora resource to persist to storage.
-     * @return the updated resource with any new information related to the persisting..?
      * @throws PersistentStorageException Error persisting the resource.
      */
-    public FedoraResource update(final FedoraResource resource)
+    public void update(final FedoraResource resource)
             throws PersistentStorageException;
 
     /**
      * Delete a resource from persistent storage.
      *
      * @param resource The current fedora resource to delete.
-     * @return The tombstone for the removed resource.
      * @throws PersistentStorageException Error deleting the resource.
      */
-    public Tombstone delete(final FedoraResource resource)
+    public void delete(final FedoraResource resource)
             throws PersistentStorageException;
 
     /**
