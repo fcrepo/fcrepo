@@ -15,13 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api;
-
-import org.fcrepo.kernel.api.models.Container;
-import org.fcrepo.kernel.api.models.FedoraBinary;
-import org.fcrepo.kernel.api.models.FedoraTimeMap;
-import org.fcrepo.kernel.api.models.FedoraWebacAcl;
-import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
+package org.fcrepo.kernel.api.models;
 
 /**
  * Interface to a factory to locate or create new resources.
