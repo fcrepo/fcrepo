@@ -44,7 +44,7 @@ import org.mockito.Mock;
  *         Date: 9/4/13
  */
 @Deprecated
-public class FedoraRepositoryBackupTest {
+public class RepositoryBackupTest {
 
     private FedoraRepositoryBackup repoBackup;
 

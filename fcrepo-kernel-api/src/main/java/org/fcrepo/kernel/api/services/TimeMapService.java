@@ -17,13 +17,13 @@
  */
 package org.fcrepo.kernel.api.services;
 
-import org.fcrepo.kernel.api.models.FedoraTimeMap;
+import org.fcrepo.kernel.api.models.TimeMap;
 
 /**
- * Service for creating and retrieving {@link org.fcrepo.kernel.api.models.FedoraTimeMap}
+ * Service for creating and retrieving {@link TimeMap}
  *
  * @author bbpennel
  */
-public interface TimeMapService extends Service<FedoraTimeMap> {
+public interface TimeMapService extends Service<TimeMap> {
 
 }

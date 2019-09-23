@@ -18,24 +18,16 @@
 package org.fcrepo.kernel.api;
 
 /**
- * The basic abstraction for a Fedora repository
- * @author acoburn
+ * @author bseeger
  */
-public interface FedoraRepository {
 
-    /**
-     * Login to the repository
-     *
-     * @return a FedoraSession
-     */
-    FedoraSession login();
+public final class ExternalContent {
 
+    public static final String PROXY = "proxy";
 
-    /**
-     * Login to the repository with credentials
-     *
-     * @param credentials the credentials
-     * @return a FedoraSession
-     */
-    FedoraSession login(final Object credentials);
+    public static final String REDIRECT = "redirect";
+
+    public static final String COPY = "copy";
+
+    private ExternalContent() { }
 }

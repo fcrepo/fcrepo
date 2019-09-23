@@ -20,7 +20,7 @@ package org.fcrepo.kernel.impl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import org.fcrepo.kernel.api.FedoraTransactionManager;
+import org.fcrepo.kernel.api.TransactionManager;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -33,33 +33,33 @@ import org.mockito.junit.MockitoJUnitRunner;
  * @author mohideen
  */
 @RunWith(MockitoJUnitRunner.Silent.class)
-public class FedoraTransactionManagerTest {
+public class TransactionManagerTest {
 
-    private FedoraTransactionImpl testTx;
+    private TransactionImpl testTx;
 
-    private FedoraTransactionManager testTxManager;
+    private TransactionManager testTxManager;
 
     @Before
     public void setUp() {
-        testTxManager = new FedoraTransactionManagerImpl();
-        testTx = (FedoraTransactionImpl) testTxManager.create();
+        testTxManager = new TransactionManagerImpl();
+        testTx = (TransactionImpl) testTxManager.create();
     }
 
     @Test
     public void testCreateTransaction() {
-        testTx = (FedoraTransactionImpl) testTxManager.create();
+        testTx = (TransactionImpl) testTxManager.create();
         assertNotNull(testTx);
     }
 
     @Test
     public void testGetTransaction() {
-        final FedoraTransactionImpl tx = (FedoraTransactionImpl) testTxManager.get(testTx.getId());
+        final TransactionImpl tx = (TransactionImpl) testTxManager.get(testTx.getId());
         assertNotNull(tx);
         assertEquals(testTx.getId(), tx.getId());
     }
 
     @Test(expected = RuntimeException.class)
     public void testGetTransactionWithInvalidID() {
-        final FedoraTransactionImpl tx = (FedoraTransactionImpl) testTxManager.get("invalid-id");
+        final TransactionImpl tx = (TransactionImpl) testTxManager.get("invalid-id");
     }
 }

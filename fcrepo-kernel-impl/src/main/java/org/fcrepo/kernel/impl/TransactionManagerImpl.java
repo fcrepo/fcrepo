@@ -19,8 +19,8 @@ package org.fcrepo.kernel.impl;
 
 import static java.util.UUID.randomUUID;
 
-import org.fcrepo.kernel.api.FedoraTransaction;
-import org.fcrepo.kernel.api.FedoraTransactionManager;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionManager;
 import java.util.HashMap;
 
 
@@ -29,27 +29,27 @@ import java.util.HashMap;
  *
  * @author mohideen
  */
-public class FedoraTransactionManagerImpl implements FedoraTransactionManager {
+public class TransactionManagerImpl implements TransactionManager {
 
-    private final HashMap<String, FedoraTransaction> transactions;
+    private final HashMap<String, Transaction> transactions;
 
-    FedoraTransactionManagerImpl() {
+    TransactionManagerImpl() {
         transactions = new HashMap();
     }
 
     @Override
-    public synchronized FedoraTransaction create() {
+    public synchronized Transaction create() {
         String txId = randomUUID().toString();
         while(transactions.containsKey(txId)) {
             txId = randomUUID().toString();
         }
-        final FedoraTransaction tx = new FedoraTransactionImpl(txId);
+        final Transaction tx = new TransactionImpl(txId);
         transactions.put(txId, tx);
         return tx;
     }
 
     @Override
-    public FedoraTransaction get(final String transactionId) {
+    public Transaction get(final String transactionId) {
         if(transactions.containsKey(transactionId)) {
             return transactions.get(transactionId);
         } else {

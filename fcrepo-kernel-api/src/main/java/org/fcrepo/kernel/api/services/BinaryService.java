@@ -18,23 +18,23 @@
 package org.fcrepo.kernel.api.services;
 
 import org.fcrepo.kernel.api.FedoraSession;
-import org.fcrepo.kernel.api.models.FedoraBinary;
+import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 
 /**
  * @author cabeer
  * @since 10/10/14
  */
-public interface BinaryService extends Service<FedoraBinary> {
+public interface BinaryService extends Service<Binary> {
 
     /**
-     * Retrieves a FedoraBinary instance by session and path.
+     * Retrieves a Binary instance by session and path.
      *
      * @param session session
      * @param path path of binary datastream
-     * @return retrieved FedoraBinary
+     * @return retrieved Binary
      */
-    FedoraBinary findOrCreateBinary(FedoraSession session, String path);
+    Binary findOrCreateBinary(FedoraSession session, String path);
 
     /**
      * Retrieves a binary description instance by session and path.

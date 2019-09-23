@@ -124,8 +124,8 @@ import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PreconditionException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.Container;
-import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
@@ -186,7 +186,7 @@ public class FedoraLdpTest {
     private NonRdfSourceDescription mockNonRdfSourceDescription;
 
     @Mock
-    private FedoraBinary mockBinary;
+    private Binary mockBinary;
 
     private IdentifierConverter<Resource, FedoraResource> idTranslator;
 
@@ -311,8 +311,8 @@ public class FedoraLdpTest {
 
     private FedoraResource setResource(final Class<? extends FedoraResource> klass) {
         final FedoraResource mockResource = mock(klass);
-        if (mockResource instanceof FedoraBinary) {
-            when(((FedoraBinary) mockResource).getContentSize()).thenReturn(1L);
+        if (mockResource instanceof Binary) {
+            when(((Binary) mockResource).getContentSize()).thenReturn(1L);
         }
 
         final Answer<RdfStream> answer = invocationOnMock -> new DefaultRdfStream(
@@ -414,7 +414,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testHeadWithBinary() throws Exception {
-        final FedoraBinary mockResource = (FedoraBinary)setResource(FedoraBinary.class);
+        final Binary mockResource = (Binary)setResource(Binary.class);
         when(mockRequest.getMethod()).thenReturn("HEAD");
         when(mockResource.getDescription()).thenReturn(mockNonRdfSourceDescription);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
@@ -455,7 +455,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testHeadWithExternalBinary() throws Exception {
-        final FedoraBinary mockResource = (FedoraBinary)setResource(FedoraBinary.class);
+        final Binary mockResource = (Binary)setResource(Binary.class);
         when(mockRequest.getMethod()).thenReturn("HEAD");
         final String url = "http://example.com/some/url";
         when(mockResource.getDescription()).thenReturn(mockNonRdfSourceDescription);
@@ -521,7 +521,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testOptionWithBinary() {
-        final FedoraBinary mockResource = (FedoraBinary)setResource(FedoraBinary.class);
+        final Binary mockResource = (Binary)setResource(Binary.class);
         when(mockResource.getDescription()).thenReturn(mockNonRdfSourceDescription);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
         final Response actual = testObj.options();
@@ -766,7 +766,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testGetWithBinary() throws Exception {
-        final FedoraBinary mockResource = (FedoraBinary)setResource(FedoraBinary.class);
+        final Binary mockResource = (Binary)setResource(Binary.class);
         when(mockRequest.getMethod()).thenReturn("GET");
         when(mockResource.getDescription()).thenReturn(mockNonRdfSourceDescription);
         when(mockResource.getMimeType()).thenReturn("text/plain");
@@ -788,7 +788,7 @@ public class FedoraLdpTest {
 
     @Test
     public void testGetWithExternalMessageBinary() throws Exception {
-        final FedoraBinary mockResource = (FedoraBinary)setResource(FedoraBinary.class);
+        final Binary mockResource = (Binary)setResource(Binary.class);
         when(mockRequest.getMethod()).thenReturn("GET");
         final String url = "http://example.com/some/url";
         when(mockResource.getDescription()).thenReturn(mockNonRdfSourceDescription);
@@ -890,7 +890,7 @@ public class FedoraLdpTest {
     @Test
     public void testPutNewObject() throws Exception {
         setField(testObj, "externalPath", "some/path");
-        final FedoraBinary mockObject = (FedoraBinary)setResource(FedoraBinary.class);
+        final Binary mockObject = (Binary)setResource(Binary.class);
         when(mockRequest.getMethod()).thenReturn("PUT");
         doReturn(mockObject).when(testObj).resource();
         when(mockContainer.isNew()).thenReturn(true);
@@ -913,7 +913,7 @@ public class FedoraLdpTest {
     public void testPutNewObjectWithRdf() throws Exception {
 
         setField(testObj, "externalPath", "some/path");
-        final FedoraBinary mockObject = (FedoraBinary)setResource(FedoraBinary.class);
+        final Binary mockObject = (Binary)setResource(Binary.class);
         when(mockRequest.getMethod()).thenReturn("PUT");
         doReturn(mockObject).when(testObj).resource();
         when(mockContainer.isNew()).thenReturn(true);
@@ -931,7 +931,7 @@ public class FedoraLdpTest {
     @Test
     public void testPutNewBinary() throws Exception {
         setField(testObj, "externalPath", "some/path");
-        final FedoraBinary mockObject = (FedoraBinary)setResource(FedoraBinary.class);
+        final Binary mockObject = (Binary)setResource(Binary.class);
         when(mockRequest.getMethod()).thenReturn("PUT");
         doReturn(mockObject).when(testObj).resource();
         when(mockBinary.isNew()).thenReturn(true);
@@ -1022,7 +1022,7 @@ public class FedoraLdpTest {
 
     @Test(expected = BadRequestException.class)
     public void testPatchBinary() throws MalformedRdfException, IOException {
-        setResource(FedoraBinary.class);
+        setResource(Binary.class);
         testObj.updateSparql(toInputStream("", UTF_8));
     }
 
@@ -1202,7 +1202,7 @@ public class FedoraLdpTest {
     @Test(expected = ClientErrorException.class)
     public void testPostToBinary() throws MalformedRdfException, InvalidChecksumException,
             UnsupportedAlgorithmException {
-        final FedoraBinary mockObject = (FedoraBinary)setResource(FedoraBinary.class);
+        final Binary mockObject = (Binary)setResource(Binary.class);
         doReturn(mockObject).when(testObj).resource();
         testObj.createObject(null, null, null, null, null, null);
     }

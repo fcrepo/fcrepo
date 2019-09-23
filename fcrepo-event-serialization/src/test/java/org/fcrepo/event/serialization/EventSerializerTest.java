@@ -27,7 +27,7 @@ import org.junit.Test;
  *
  * @author dbernstein
  */
-public class EventSerializerTest extends FedoraEventSerializerTestBase {
+public class EventSerializerTest extends EventSerializerTestBase {
 
     @Test
     public void testAsModel() {

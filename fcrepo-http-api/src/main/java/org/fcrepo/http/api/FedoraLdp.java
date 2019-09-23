@@ -61,7 +61,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_DESCRIPTION;
 import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODELS;
 import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODEL_RESOURCES;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
-import static org.fcrepo.kernel.api.FedoraExternalContent.COPY;
+import static org.fcrepo.kernel.api.ExternalContent.COPY;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
@@ -125,8 +125,8 @@ import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.RequestWithAclLinkHeaderException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
+import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.Container;
-import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
@@ -197,8 +197,8 @@ public class FedoraLdp extends ContentExposingResource {
 
         Response.ResponseBuilder builder = ok();
 
-        if (resource() instanceof FedoraBinary) {
-            final FedoraBinary binary = (FedoraBinary) resource();
+        if (resource() instanceof Binary) {
+            final Binary binary = (Binary) resource();
             final MediaType mediaType = getBinaryResourceMediaType(binary);
 
             if (binary.isRedirect()) {
@@ -274,14 +274,14 @@ public class FedoraLdp extends ContentExposingResource {
             final ImmutableList<MediaType> acceptableMediaTypes = ImmutableList.copyOf(headers
                     .getAcceptableMediaTypes());
 
-            if (resource() instanceof FedoraBinary && acceptableMediaTypes.size() > 0) {
+            if (resource() instanceof Binary && acceptableMediaTypes.size() > 0) {
 
                 final MediaType mediaType = getBinaryResourceMediaType(resource());
 
                 // Respect the Want-Digest header for fixity check
                 final String wantDigest = headers.getHeaderString(WANT_DIGEST);
                 if (!isNullOrEmpty(wantDigest)) {
-                    servletResponse.addHeader(DIGEST, handleWantDigestHeader((FedoraBinary)resource(), wantDigest));
+                    servletResponse.addHeader(DIGEST, handleWantDigestHeader((Binary)resource(), wantDigest));
                 }
 
                 if (acceptableMediaTypes.stream().noneMatch(t -> t.isCompatible(mediaType))) {
@@ -291,8 +291,8 @@ public class FedoraLdp extends ContentExposingResource {
 
             addResourceHttpHeaders(resource());
 
-            if (resource() instanceof FedoraBinary && ((FedoraBinary)resource()).isRedirect()) {
-                return temporaryRedirect(((FedoraBinary) resource()).getRedirectURI()).build();
+            if (resource() instanceof Binary && ((Binary)resource()).isRedirect()) {
+                return temporaryRedirect(((Binary) resource()).getRedirectURI()).build();
             } else {
                 return getContent(rangeValue, getChildrenLimit(), rdfStream, resource());
             }
@@ -448,7 +448,7 @@ public class FedoraLdp extends ContentExposingResource {
 
             try (final RdfStream resourceTriples =
                     created ? new DefaultRdfStream(asNode(resource())) : getResourceTriples(resource())) {
-                if (resource instanceof FedoraBinary) {
+                if (resource instanceof Binary) {
                     InputStream stream = requestBodyStream;
                     MediaType type = requestContentType;
                     // override a few things, if it's external content
@@ -461,7 +461,7 @@ public class FedoraLdp extends ContentExposingResource {
                         type = contentType;  // if external, then this already holds the correct value
                     }
                     final String handling = extContent != null ? extContent.getHandling() : null;
-                    replaceResourceBinaryWithStream((FedoraBinary) resource,
+                    replaceResourceBinaryWithStream((Binary) resource,
                             stream, contentDisposition, type, checksums,
                             (handling != null && !handling.equals(COPY)) ? handling : null,
                             (extContent != null && !handling.equals(COPY)) ? extContent.getURL() : null);
@@ -507,7 +507,7 @@ public class FedoraLdp extends ContentExposingResource {
             }
         } else if (defaultContent) {
             resource.addType(LDP_BASIC_CONTAINER);
-        } else if (resource instanceof FedoraBinary) {
+        } else if (resource instanceof Binary) {
             resource.addType(LDP_NON_RDF_SOURCE);
         }
     }
@@ -535,7 +535,7 @@ public class FedoraLdp extends ContentExposingResource {
             throw new BadRequestException("SPARQL-UPDATE requests must have content!");
         }
 
-        if (resource() instanceof FedoraBinary) {
+        if (resource() instanceof Binary) {
             throw new BadRequestException(resource().getPath() + " is not a valid object to receive a PATCH");
         }
 
@@ -660,7 +660,7 @@ public class FedoraLdp extends ContentExposingResource {
 
                     if ((resource instanceof Container) && isRdfContentType(contentTypeString)) {
                         replaceResourceWithStream(resource, requestBodyStream, contentType, resourceTriples);
-                    } else if (resource instanceof FedoraBinary) {
+                    } else if (resource instanceof Binary) {
                         LOGGER.trace("Created a datastream and have a binary payload.");
 
                         InputStream stream = requestBodyStream;
@@ -676,7 +676,7 @@ public class FedoraLdp extends ContentExposingResource {
                         }
 
                         final String handling = extContent != null ? extContent.getHandling() : null;
-                        replaceResourceBinaryWithStream((FedoraBinary) resource,
+                        replaceResourceBinaryWithStream((Binary) resource,
                                 stream, contentDisposition, type, checksum,
                             handling != null && !handling.equals(COPY) ? handling : null,
                             extContent != null ? extContent.getURL() : null);
@@ -859,7 +859,7 @@ public class FedoraLdp extends ContentExposingResource {
         return pid;
     }
 
-    private String handleWantDigestHeader(final FedoraBinary binary, final String wantDigest)
+    private String handleWantDigestHeader(final Binary binary, final String wantDigest)
             throws UnsupportedAlgorithmException {
         // handle the Want-Digest header with fixity check
         final Collection<String> preferredDigests = parseWantDigestHeader(wantDigest);

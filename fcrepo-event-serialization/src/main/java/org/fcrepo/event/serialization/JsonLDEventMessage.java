@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.fcrepo.kernel.api.observer.FedoraEvent;
+import org.fcrepo.kernel.api.observer.Event;
 
 import org.slf4j.Logger;
 
@@ -38,7 +38,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * A structure used for serializing a FedoraEvent into JSON
+ * A structure used for serializing a Event into JSON
  * 
  * @author acoburn
  * @author dbernstein
@@ -156,12 +156,12 @@ class JsonLDEventMessage {
     public List<java.lang.Object> context;
 
     /**
-     * Populate a JsonLDEventMessage from a FedoraEvent
+     * Populate a JsonLDEventMessage from a Event
      * 
      * @param evt The Fedora event
      * @return a JsonLDEventMessage
      */
-    public static JsonLDEventMessage from(final FedoraEvent evt) {
+    public static JsonLDEventMessage from(final Event evt) {
 
         final String baseUrl = evt.getInfo().get(BASE_URL);
 

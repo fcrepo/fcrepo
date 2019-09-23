@@ -22,22 +22,22 @@ import java.io.UnsupportedEncodingException;
 
 import org.apache.jena.rdf.model.Model;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.observer.FedoraEvent;
+import org.fcrepo.kernel.api.observer.Event;
 
 /**
- * Serialize a FedoraEvent as Turtle
+ * Serialize a Event as Turtle
  * @author acoburn
  * @since 6/16/16
  */
 public class TurtleSerializer implements EventSerializer {
 
     /**
-     * Serialize a FedoraEvent in RDF using Turtle syntax
+     * Serialize a Event in RDF using Turtle syntax
      * @param evt the Fedora event
      * @return a string of RDF, using Turtle syntax
      */
     @Override
-    public String serialize(final FedoraEvent evt) {
+    public String serialize(final Event evt) {
         try {
             final Model model = EventSerializer.toModel(evt);
             final ByteArrayOutputStream out = new ByteArrayOutputStream();

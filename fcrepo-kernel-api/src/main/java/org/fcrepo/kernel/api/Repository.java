@@ -18,20 +18,24 @@
 package org.fcrepo.kernel.api;
 
 /**
- * The Fedora Transaction abstraction
- *
- * @author mohideen
+ * The basic abstraction for a Fedora repository
+ * @author acoburn
  */
-public interface FedoraTransaction {
+public interface Repository {
 
     /**
-     * Commit the transaction
+     * Login to the repository
+     *
+     * @return a FedoraSession
      */
-    void commit();
+    FedoraSession login();
+
 
     /**
-     * Rollback the transaction
+     * Login to the repository with credentials
+     *
+     * @param credentials the credentials
+     * @return a FedoraSession
      */
-    void rollback();
-
+    FedoraSession login(final Object credentials);
 }

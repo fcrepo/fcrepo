@@ -30,7 +30,7 @@ import org.junit.Test;
  * @author acoburn
  * @author dbernstein
  */
-public class TurtleSerializerTest extends FedoraEventSerializerTestBase {
+public class TurtleSerializerTest extends EventSerializerTestBase {
     @Test
     public void testTurtle() {
         mockEvent(path);

@@ -18,16 +18,25 @@
 package org.fcrepo.kernel.api;
 
 /**
- * @author bseeger
+ * The Fedora Transaction Manager abstraction
+ *
+ * @author mohideen
  */
+public interface TransactionManager {
 
-public final class FedoraExternalContent {
+    /**
+     * Create a new fedora transaction
+     * 
+     * @return {@link Transaction} The new fedora transaction
+     */
+    Transaction create();
 
-    public static final String PROXY = "proxy";
+    /**
+     * Get an existing fedora transaction
+     * 
+     * @param transactionId the id of the transaction to be returned
+     * @return {@link Transaction} the fedora transaction associated with the provided id
+     */
+    Transaction get(String transactionId);
 
-    public static final String REDIRECT = "redirect";
-
-    public static final String COPY = "copy";
-
-    private FedoraExternalContent() { }
 }

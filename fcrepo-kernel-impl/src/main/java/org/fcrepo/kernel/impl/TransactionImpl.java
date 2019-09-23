@@ -17,20 +17,20 @@
  */
 package org.fcrepo.kernel.impl;
 
-import org.fcrepo.kernel.api.FedoraTransaction;
+import org.fcrepo.kernel.api.Transaction;
 
 /**
  * The Fedora Transaction implementation
  *
  * @author mohideen
  */
-public class FedoraTransactionImpl implements FedoraTransaction {
+public class TransactionImpl implements Transaction {
 
     final String id;
 
-    FedoraTransactionImpl(final String id) {
+    TransactionImpl(final String id) {
         if (id == null || id.isEmpty()) {
-            throw new IllegalArgumentException("FedoraTransaction id should not be empty!");
+            throw new IllegalArgumentException("Transaction id should not be empty!");
         }
         this.id = id;
     }

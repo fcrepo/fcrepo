@@ -57,12 +57,12 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 /**
- * <p>FedoraTransactionsIT class.</p>
+ * <p>TransactionsIT class.</p>
  *
  * @author awoods
  */
 @Ignore //TODO Fix these tests
-public class FedoraTransactionsIT extends AbstractResourceIT {
+public class TransactionsIT extends AbstractResourceIT {
 
     public static final long REAP_INTERVAL = 1000;
 

@@ -27,7 +27,7 @@ import static org.mockito.Mockito.when;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.fcrepo.kernel.api.FedoraRepository;
+import org.fcrepo.kernel.api.Repository;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.SessionMissingException;
 import org.fcrepo.kernel.api.services.BatchService;
@@ -53,7 +53,7 @@ public class SessionFactoryTest {
     private FedoraSession mockSession;
 
     @Mock
-    private FedoraRepository mockRepo;
+    private Repository mockRepo;
 
     @Mock
     private BatchService mockTxService;
