@@ -28,11 +28,7 @@ import org.apache.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.TripleCategory;
-import org.fcrepo.kernel.api.exception.AccessDeniedException;
-import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-
-import org.apache.jena.rdf.model.Model;
 
 /**
  * @author ajs6f
@@ -185,20 +181,6 @@ public interface FedoraResource {
     void addType(final String type);
 
     /**
-     * Update the provided properties with a SPARQL Update query. The updated
-     * properties may be serialized to the persistence layer.
-     *
-     * @param idTranslator the property of idTranslator
-     * @param sparqlUpdateStatement sparql update statement
-     * @param originalTriples original triples
-     * @throws MalformedRdfException if malformed rdf exception occurred
-     * @throws AccessDeniedException if access denied in updating properties
-     */
-    void updateProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-                          final String sparqlUpdateStatement,
-                          final RdfStream originalTriples) throws MalformedRdfException, AccessDeniedException;
-
-    /**
      * Return the RDF properties of this object using the provided context
      * @param idTranslator the property of idTranslator
      * @param context the context
@@ -222,19 +204,6 @@ public interface FedoraResource {
      * @return if resource created in this session
      */
     Boolean isNew();
-
-    /**
-     * Replace the properties of this object with the properties from the given
-     * model
-     *
-     * @param idTranslator the given property of idTranslator
-     * @param inputModel the input model
-     * @param originalTriples the original triples
-     * @throws MalformedRdfException if malformed rdf exception occurred
-     */
-    void replaceProperties(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-                                final Model inputModel,
-                                final RdfStream originalTriples) throws MalformedRdfException;
 
     /**
      * Construct an ETag value for the resource.

@@ -165,6 +165,8 @@ import org.fcrepo.kernel.api.models.FedoraWebacAcl;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry;
+import org.fcrepo.kernel.api.services.ReplacePropertiesService;
+import org.fcrepo.kernel.api.services.UpdatePropertiesService;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 import org.fcrepo.kernel.api.utils.ContentDigest;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
@@ -233,6 +235,12 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     @Inject
     protected RdfNamespaceRegistry namespaceRegistry;
+
+    @Inject
+    protected ReplacePropertiesService replacePropertiesService;
+
+    @Inject
+    protected UpdatePropertiesService updatePropertiesService;
 
     private static final Predicate<Triple> IS_MANAGED_TYPE = t -> t.getPredicate().equals(type.asNode()) &&
             isManagedNamespace.test(t.getObject().getNameSpace());
@@ -975,7 +983,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         ensureValidACLAuthorization(resource, inputModel);
 
-        resource.replaceProperties(translator(), inputModel, resourceTriples);
+        replacePropertiesService.replaceProperties(resource, inputModel, resourceTriples);
     }
 
     /**
@@ -1090,7 +1098,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected void patchResourcewithSparql(final FedoraResource resource,
             final String requestBody,
             final RdfStream resourceTriples) {
-        resource.updateProperties(translator(), requestBody, resourceTriples);
+        updatePropertiesService.updateProperties(resource, requestBody, resourceTriples);
     }
 
     /**
