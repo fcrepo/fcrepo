@@ -61,6 +61,8 @@ import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.services.BinaryService;
 import org.fcrepo.kernel.api.services.ContainerService;
 
+import org.fcrepo.kernel.api.services.ReplacePropertiesService;
+import org.fcrepo.kernel.api.services.UpdatePropertiesService;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -99,6 +101,12 @@ abstract class AbstractJmsIT implements MessageListener {
 
     @Inject
     private ContainerService containerService;
+
+    @Inject
+    private UpdatePropertiesService updatePropertiesService;
+
+    @Inject
+    private ReplacePropertiesService replacePropertiesService;
 
     @Inject
     private ActiveMQConnectionFactory connectionFactory;
@@ -171,14 +179,14 @@ abstract class AbstractJmsIT implements MessageListener {
         try {
             final FedoraResource resource1 = containerService.findOrCreate(session, testMeta);
             final String sparql1 = "insert data { <> <http://foo.com/prop> \"foo\" . }";
-            resource1.updateProperties(subjects, sparql1, resource1.getTriples(subjects, PROPERTIES));
+            updatePropertiesService.updateProperties(resource1, sparql1, resource1.getTriples(subjects, PROPERTIES));
             session.commit();
             awaitMessageOrFail(testMeta, RESOURCE_MODIFICATION.getType(), REPOSITORY_NAMESPACE + "Container");
 
             final FedoraResource resource2 = containerService.findOrCreate(session, testMeta);
             final String sparql2 = " delete { <> <http://foo.com/prop> \"foo\" . } "
                 + "insert { <> <http://foo.com/prop> \"bar\" . } where {}";
-            resource2.updateProperties(subjects, sparql2, resource2.getTriples(subjects, PROPERTIES));
+            updatePropertiesService.updateProperties(resource2, sparql2, resource2.getTriples(subjects, PROPERTIES));
             session.commit();
             awaitMessageOrFail(testMeta, RESOURCE_MODIFICATION.getType(), REPOSITORY_NAMESPACE + "Resource");
         } finally {
@@ -232,7 +240,7 @@ abstract class AbstractJmsIT implements MessageListener {
             session.commit();
             final Resource subject2 = subjects.reverse().convert(resource2);
             final String sparql = "insert { <> <http://foo.com/prop> <" + subject2 + "> . } where {}";
-            resource.updateProperties(subjects, sparql, resource.getTriples(subjects, PROPERTIES));
+            updatePropertiesService.updateProperties(resource, sparql, resource.getTriples(subjects, PROPERTIES));
             session.commit();
             awaitMessageOrFail(uri2, INBOUND_REFERENCE.getType(), null);
         } finally {
