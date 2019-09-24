@@ -115,6 +115,22 @@ public class ResourceFactoryImpl implements ResourceFactory {
 
     }
 
+    @Override
+    public <T extends FedoraResource> T getResource(final FedoraTransaction transaction, final String identifier,
+            final Class<T> clazz)
+            throws PathNotFoundException {
+        try {
+            final PersistentStorageSession psSession = getSession(transaction);
+            return clazz.cast(psSession.read(identifier));
+        } catch (final PersistentItemNotFoundException e) {
+            throw new PathNotFoundException(e);
+        } catch (final PersistentStorageException e) {
+            // This is a big error, wrap as RepositoryRuntime and send it through.
+            throw new RepositoryRuntimeException(e);
+        }
+
+    }
+
     /**
      * This is probably a bad idea, but for stubbing lets instantiate whatever we need.
      *
