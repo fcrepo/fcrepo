@@ -15,35 +15,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.exception;
-
+package org.fcrepo.persistence.api.exceptions;
 
 /**
- * Indicates the path was not found in the repository.
+ * If an item is not found in the storage.
  *
- * @author dbernstein
  * @author whikloj
+ * @since 2019-09-24
  */
-public class PathNotFoundException extends Exception {
+public class PersistentItemNotFoundException extends PersistentStorageException {
 
     private static final long serialVersionUID = 1L;
 
     /**
-     * Ordinary constructor
+     * Basic constructor
      *
-     * @param msg the message
+     * @param msg The text of the exception.
      */
-    public PathNotFoundException(final String msg) {
+    public PersistentItemNotFoundException(final String msg) {
         super(msg);
-    }
-
-    /**
-     * Constructor for wrapping exception.
-     *
-     * @param exception the original exception.
-     */
-    public PathNotFoundException(final Throwable exception) {
-        super(exception);
     }
 
 }

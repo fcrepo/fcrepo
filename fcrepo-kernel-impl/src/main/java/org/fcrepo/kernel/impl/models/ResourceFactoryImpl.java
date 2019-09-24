@@ -17,7 +17,11 @@
  */
 package org.fcrepo.kernel.impl.models;
 
-import org.fcrepo.kernel.api.exception.InteractionModelViolationException;
+import javax.inject.Inject;
+
+import org.fcrepo.kernel.api.FedoraTransaction;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -27,6 +31,7 @@ import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionFactory;
+import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 
 
@@ -38,53 +43,107 @@ import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
  */
 public class ResourceFactoryImpl implements ResourceFactory {
 
-    private final PersistentStorageSession psSession;
+    /**
+     * Singleton factory;
+     */
+    private static ResourceFactory instance = null;
+
+    @Inject
+    private static PersistentStorageSessionFactory factory;
 
     /**
-     * Special constructor for testing.
-     *
-     * @param psFactory Persistent storage session factory.
+     * Private constructor
      */
-    protected ResourceFactoryImpl(final PersistentStorageSessionFactory psFactory) {
-        this.psSession = psFactory.getReadOnlySession();
+    private ResourceFactoryImpl() {
     }
 
-    @Override
-    public Container findOrInitContainer(final String identifier, final String interactionModel) {
-        final FedoraResource container = findInPersistence(identifier);
-        if (!container.getTypes().stream().anyMatch(t -> interactionModel.equalsIgnoreCase(t.toString()))) {
-            throw new InteractionModelViolationException("Actual interaction models did not match requested.");
+    /**
+     * Get instance of ResourceFactory.
+     *
+     * @return the singleton ResourceFactory.
+     */
+    public static ResourceFactory getInstance() {
+        if (instance == null) {
+            instance = new ResourceFactoryImpl();
         }
-        return (Container) container;
+        return instance;
     }
 
     @Override
-    public FedoraBinary findOrInitBinary(final String identifier) {
-        return (FedoraBinary) findInPersistence(identifier);
+    public Container createContainer(final FedoraTransaction transaction, final String identifier) {
+        // TODO: Change to ContainerImpl.class when implemented
+        return (Container) createResource(Container.class);
     }
 
     @Override
-    public NonRdfSourceDescription findOrInitBinaryDescription(final String identifier) {
-        return (NonRdfSourceDescription) findInPersistence(identifier);
+    public FedoraBinary createBinary(final FedoraTransaction transaction, final String identifier) {
+        // TODO: Change to FedoraBinaryImpl.class when implemented
+        return (FedoraBinary) createResource(FedoraBinary.class);
     }
 
     @Override
-    public FedoraTimeMap findOrInitTimemap(final String identifier) {
-        return (FedoraTimeMap) findInPersistence(identifier);
+    public NonRdfSourceDescription createBinaryDescription(final FedoraTransaction transaction,
+            final String identifier) {
+        // TODO: Change to NonRdfSourceDescrptionImpl.class when implemented
+        return (NonRdfSourceDescription) createResource(NonRdfSourceDescription.class);
     }
 
     @Override
-    public FedoraWebacAcl findOrInitAcl(final String identifier) {
-        return (FedoraWebacAcl) findInPersistence(identifier);
+    public FedoraTimeMap createTimemap(final FedoraTransaction transaction, final String identifier) {
+        // TODO: Change to FedoraTimeMapImpl.class when implemented
+        return (FedoraTimeMap) createResource(FedoraTimeMap.class);
     }
 
-    private FedoraResource findInPersistence(final String identifier) {
+    @Override
+    public FedoraWebacAcl createAcl(final FedoraTransaction transaction, final String identifier) {
+        // TODO: Change to ContainerImpl.class when implemented
+        return (FedoraWebacAcl) createResource(FedoraWebacAcl.class);
+    }
+
+    @Override
+    public FedoraResource getResource(final FedoraTransaction transaction, final String identifier)
+            throws PathNotFoundException {
         try {
+            final PersistentStorageSession psSession = getSession(transaction);
             return psSession.read(identifier);
+        } catch (final PersistentItemNotFoundException e) {
+            throw new PathNotFoundException(e);
         } catch (final PersistentStorageException e) {
-            // Not found or error so create a new resource.
-            // return new FedoraResource();
-            return null;
+            // This is a big error, wrap as RepositoryRuntime and send it through.
+            throw new RepositoryRuntimeException(e);
         }
+
+    }
+
+    /**
+     * This is probably a bad idea, but for stubbing lets instantiate whatever we need.
+     *
+     * @param createClass The class of the object to make.
+     * @return FedoraResource sub-type object of class c
+     */
+    private FedoraResource createResource(final Class<? extends FedoraResource> createClass) {
+        try {
+            return createClass.newInstance();
+        } catch (final InstantiationException e) {
+            throw new RepositoryRuntimeException(e);
+        } catch (final IllegalAccessException e) {
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
+    /**
+     * Get a session for this interaction.
+     *
+     * @param transaction The supplied transaction id.
+     * @return a storage session.
+     */
+    private PersistentStorageSession getSession(final FedoraTransaction transaction) {
+        final PersistentStorageSession session;
+        if (transaction == null) {
+            session = factory.getReadOnlySession();
+        } else {
+            session = factory.getSession(transaction.getId());
+        }
+        return session;
     }
 }

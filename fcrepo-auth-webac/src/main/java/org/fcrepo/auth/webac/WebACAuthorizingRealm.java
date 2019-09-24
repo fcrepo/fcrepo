@@ -53,7 +53,7 @@ import org.fcrepo.http.api.FedoraLdp;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.http.commons.session.SessionFactory;
-import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryConfigurationException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
@@ -241,7 +241,7 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
             resource = translator().convert(translator().toDomain(path));
             log.debug("Got FedoraResource for {}", path);
         } catch (final RepositoryRuntimeException e) {
-            if (e.getCause() instanceof PathNotFoundException) {
+            if (e.getCause() instanceof PathNotFoundRuntimeException) {
                 log.debug("Path {} does not exist", path);
                 // go up the path looking for a node that exists
                 if (path.length() > 1) {

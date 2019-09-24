@@ -34,4 +34,11 @@ public interface FedoraTransaction {
      */
     void rollback();
 
+    /**
+     * Get the id of the transaction.
+     * 
+     * @return the ID
+     */
+    public String getId();
+
 }
