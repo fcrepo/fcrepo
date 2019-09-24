@@ -29,7 +29,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.FedoraTransaction;
 import org.fcrepo.kernel.api.exception.InterruptedRuntimeException;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.slf4j.Logger;
@@ -333,7 +333,7 @@ public class DefaultPathLockManager implements PathLockManager {
     }
 
     @Override
-    public AcquiredLock lockForWrite(final String path, final FedoraSession session, final NodeService nodeService) {
+    public AcquiredLock lockForWrite(final String path, final FedoraTransaction transaction, final NodeService nodeService) {
         final List<ActivePath.PathScopedLock> locks = new ArrayList<>();
 
         synchronized (this) {
@@ -345,7 +345,7 @@ public class DefaultPathLockManager implements PathLockManager {
                     currentPath == null || currentPath.length() > 0;
                     currentPath = getParentPath(currentPath)) {
                 if (currentPath == null ||
-                        (!Objects.equals(currentPath, startingPath) && nodeService.exists(session, currentPath))) {
+                        (!Objects.equals(currentPath, startingPath) && nodeService.exists(transaction, currentPath))) {
                     // either we've followed the path back to the root, or we've found an ancestor that exists...
                     // so there are no more locks to create.
                     break;

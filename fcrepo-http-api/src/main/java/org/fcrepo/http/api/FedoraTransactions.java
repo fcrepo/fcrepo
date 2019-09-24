@@ -33,7 +33,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
-import org.fcrepo.kernel.api.services.BatchService;
+import org.fcrepo.kernel.api.FedoraTransactionManager;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
@@ -49,9 +49,6 @@ public class FedoraTransactions extends FedoraBaseResource {
 
     private static final Logger LOGGER = getLogger(FedoraTransactions.class);
 
-    @Inject
-    private BatchService batchService;
-
     /**
      * Create a new transaction resource and add it to the registry
      *
@@ -61,31 +58,33 @@ public class FedoraTransactions extends FedoraBaseResource {
      */
     @POST
     public Response createTransaction(@PathParam("path") final String externalPath) throws URISyntaxException {
+        // TODO use FedoraTransactionManager instead of BatchService
+        return null;
 
-        if (batchService.exists(session.getId(), getUserPrincipal())) {
-            LOGGER.debug("renewing transaction {}", session.getId());
-            batchService.refresh(session.getId(), getUserPrincipal());
-            final Response.ResponseBuilder res = noContent();
-            session.getFedoraSession().getExpires().ifPresent(expires -> {
-                res.expires(from(expires));
-            });
-            return res.build();
-        }
+        // if (batchService.exists(session.getId(), getUserPrincipal())) {
+        //     LOGGER.debug("renewing transaction {}", session.getId());
+        //     batchService.refresh(session.getId(), getUserPrincipal());
+        //     final Response.ResponseBuilder res = noContent();
+        //     session.getFedoraSession().getExpires().ifPresent(expires -> {
+        //         res.expires(from(expires));
+        //     });
+        //     return res.build();
+        // }
 
-        if (externalPath != null && !externalPath.isEmpty()) {
-            return status(BAD_REQUEST).build();
-        }
+        // if (externalPath != null && !externalPath.isEmpty()) {
+        //     return status(BAD_REQUEST).build();
+        // }
 
-        batchService.begin(session.getFedoraSession(), getUserPrincipal());
-        session.makeBatchSession();
-        LOGGER.info("Created transaction '{}'", session.getId());
+        // batchService.begin(session.getFedoraSession(), getUserPrincipal());
+        // session.makeBatchSession();
+        // LOGGER.info("Created transaction '{}'", session.getId());
 
-        final Response.ResponseBuilder res = created(
-                new URI(translator().toDomain("/tx:" + session.getId()).toString()));
-        session.getFedoraSession().getExpires().ifPresent(expires -> {
-            res.expires(from(expires));
-        });
-        return res.build();
+        // final Response.ResponseBuilder res = created(
+        //         new URI(translator().toDomain("/tx:" + session.getId()).toString()));
+        // session.getFedoraSession().getExpires().ifPresent(expires -> {
+        //     res.expires(from(expires));
+        // });
+        // return res.build();
     }
 
     /**
@@ -97,8 +96,10 @@ public class FedoraTransactions extends FedoraBaseResource {
     @POST
     @Path("fcr:commit")
     public Response commit(@PathParam("path") final String externalPath) {
-        LOGGER.info("Commit transaction '{}'", externalPath);
-        return finalizeTransaction(externalPath, getUserPrincipal(), true);
+        // TODO use FedoraTransactionManager instead of BatchService
+        return null;
+        // LOGGER.info("Commit transaction '{}'", externalPath);
+        // return finalizeTransaction(externalPath, getUserPrincipal(), true);
     }
 
     /**
@@ -110,32 +111,35 @@ public class FedoraTransactions extends FedoraBaseResource {
     @POST
     @Path("fcr:rollback")
     public Response rollback(@PathParam("path") final String externalPath) {
-
-        LOGGER.info("Rollback transaction '{}'", externalPath);
-        return finalizeTransaction(externalPath, getUserPrincipal(), false);
+        // TODO use FedoraTransactionManager instead of BatchService
+        return null;
+        // LOGGER.info("Rollback transaction '{}'", externalPath);
+        // return finalizeTransaction(externalPath, getUserPrincipal(), false);
     }
 
     private Response finalizeTransaction(@PathParam("path")
         final String externalPath, final String username, final boolean commit) {
+            
+        // TODO use FedoraTransactionManager instead of BatchService
+        return null;
+        // final String path = toPath(translator(), externalPath);
+        // if (!path.equals("/")) {
+        //     return status(BAD_REQUEST).build();
+        // }
 
-        final String path = toPath(translator(), externalPath);
-        if (!path.equals("/")) {
-            return status(BAD_REQUEST).build();
-        }
+        // if (!session.isBatchSession()) {
+        //     LOGGER.debug("cannot finalize an empty tx id {} at path {}", session.getId(), path);
+        //     return status(BAD_REQUEST).build();
+        // }
 
-        if (!session.isBatchSession()) {
-            LOGGER.debug("cannot finalize an empty tx id {} at path {}", session.getId(), path);
-            return status(BAD_REQUEST).build();
-        }
+        // if (commit) {
+        //     LOGGER.debug("commiting transaction {} at path {}", session.getId(), path);
+        //     batchService.commit(session.getId(), username);
 
-        if (commit) {
-            LOGGER.debug("commiting transaction {} at path {}", session.getId(), path);
-            batchService.commit(session.getId(), username);
-
-        } else {
-            LOGGER.debug("rolling back transaction {} at path {}", session.getId(), path);
-            batchService.abort(session.getId(), username);
-        }
-        return noContent().build();
+        // } else {
+        //     LOGGER.debug("rolling back transaction {} at path {}", session.getId(), path);
+        //     batchService.abort(session.getId(), username);
+        // }
+        // return noContent().build();
     }
 }

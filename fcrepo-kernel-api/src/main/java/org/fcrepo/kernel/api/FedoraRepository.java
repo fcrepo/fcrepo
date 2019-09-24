@@ -23,19 +23,4 @@ package org.fcrepo.kernel.api;
  */
 public interface FedoraRepository {
 
-    /**
-     * Login to the repository
-     *
-     * @return a FedoraSession
-     */
-    FedoraSession login();
-
-
-    /**
-     * Login to the repository with credentials
-     *
-     * @param credentials the credentials
-     * @return a FedoraSession
-     */
-    FedoraSession login(final Object credentials);
 }

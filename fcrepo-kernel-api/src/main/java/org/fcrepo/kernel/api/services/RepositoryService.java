@@ -20,7 +20,7 @@ package org.fcrepo.kernel.api.services;
 import java.io.File;
 import java.util.Collection;
 
-import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.FedoraTransaction;
 
 /**
  * @author bbpennel
@@ -45,19 +45,19 @@ public interface RepositoryService {
     /**
      * This method backups up a running repository
      *
-     * @param session the session
+     * @param transaction the transaction
      * @param backupDirectory the backup directory
      * @return problems
      */
-    Collection<Throwable> backupRepository(FedoraSession session, File backupDirectory);
+    Collection<Throwable> backupRepository(FedoraTransaction transaction, File backupDirectory);
 
     /**
      * This methods restores the repository from a backup
      *
-     * @param session the session
+     * @param transaction the transaction
      * @param backupDirectory the backup directory
      * @return problems
      */
-    Collection<Throwable> restoreRepository(FedoraSession session, File backupDirectory);
+    Collection<Throwable> restoreRepository(FedoraTransaction transaction, File backupDirectory);
 
 }

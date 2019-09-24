@@ -20,17 +20,14 @@ package org.fcrepo.http.commons.session;
 import static java.util.Objects.requireNonNull;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.security.Principal;
-
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 
 import org.fcrepo.kernel.api.FedoraRepository;
-import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.FedoraTransaction;
+import org.fcrepo.kernel.api.FedoraTransactionManager;
 import org.fcrepo.kernel.api.exception.SessionMissingException;
-import org.fcrepo.kernel.api.services.CredentialsService;
-import org.fcrepo.kernel.api.services.BatchService;
 
 import org.slf4j.Logger;
 
@@ -64,20 +61,15 @@ public class SessionFactory {
     private FedoraRepository repo;
 
     @Inject
-    private BatchService batchService;
-
-    @Inject
-    private CredentialsService credentialsService;
+    private FedoraTransactionManager txManager;
 
     /**
      * Initialize a session factory for the given Repository
      *
      * @param repo the repository
-     * @param batchService the transaction service
      */
-    public SessionFactory(final FedoraRepository repo, final BatchService batchService) {
+    public SessionFactory(final FedoraRepository repo) {
         this.repo = repo;
-        this.batchService = batchService;
     }
 
     /**
@@ -89,12 +81,12 @@ public class SessionFactory {
     }
 
     /**
-     * Get a new JCR Session
+     * Get a new fedora transaction
      *
-     * @return an internal session
+     * @return an fedora transaction
      */
-    public FedoraSession getInternalSession() {
-        return repo.login();
+    public FedoraTransaction getNewTransaction() { // Should this be read-only?
+        return txManager.create();
     }
 
     /**
@@ -113,7 +105,7 @@ public class SessionFactory {
             if (txId == null) {
                 session = createSession(servletRequest);
             } else {
-                session = getSessionFromTransaction(servletRequest, txId);
+                session = getSessionFromTransaction(txId);
             }
         } catch (final SessionMissingException e) {
             LOGGER.warn("Transaction missing: {}", e.getMessage());
@@ -133,26 +125,17 @@ public class SessionFactory {
     protected HttpSession createSession(final HttpServletRequest servletRequest) {
 
         LOGGER.debug("Returning an authenticated session in the default workspace");
-        return  new HttpSession(repo.login(credentialsService.getCredentials(servletRequest)));
+        return  new HttpSession(txManager.create());
     }
 
     /**
      * Retrieve a JCR session from an active transaction
      *
-     * @param servletRequest the servlet request
      * @param txId the transaction id
      * @return a JCR session that is associated with the transaction
      */
-    protected HttpSession getSessionFromTransaction(final HttpServletRequest servletRequest, final String txId) {
-
-        final Principal userPrincipal = servletRequest.getUserPrincipal();
-        final String userName = userPrincipal == null ? null : userPrincipal.getName();
-
-        final FedoraSession session = batchService.getSession(txId, userName);
-        final HttpSession batchSession = new HttpSession(session);
-        batchSession.makeBatchSession();
-        LOGGER.debug("Returning a session in the batch {} for user {}", batchSession, userName);
-        return batchSession;
+    protected HttpSession getSessionFromTransaction(final String txId) {
+        return new HttpSession(txManager.get(txId));
     }
 
     /**

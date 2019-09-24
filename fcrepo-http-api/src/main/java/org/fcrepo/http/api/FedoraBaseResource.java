@@ -113,10 +113,13 @@ abstract public class FedoraBaseResource extends AbstractResource {
                 baseURL = uriInfo.getBaseUri().toString();
             }
             LOGGER.debug("setting baseURL = " + baseURL);
-            session.getFedoraSession().addSessionData(BASE_URL, baseURL);
-            if (!StringUtils.isBlank(headers.getHeaderString("user-agent"))) {
-                session.getFedoraSession().addSessionData(USER_AGENT, headers.getHeaderString("user-agent"));
-            }
+            // TODO determine if this data can be stored in the HttpSession 
+            // or if it would be necessary for the persistence layer
+
+            // session.getFedoraSession().addSessionData(BASE_URL, baseURL);
+            // if (!StringUtils.isBlank(headers.getHeaderString("user-agent"))) {
+            //     session.getFedoraSession().addSessionData(USER_AGENT, headers.getHeaderString("user-agent"));
+            // }
         } catch (final Exception ex) {
             LOGGER.warn("Error setting baseURL", ex.getMessage());
         }

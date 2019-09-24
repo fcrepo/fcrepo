@@ -28,7 +28,7 @@ import java.util.Collection;
 
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.riot.Lang;
-import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.FedoraTransaction;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraBinary;
@@ -58,19 +58,19 @@ public interface VersionService {
     /**
      * Explicitly creates a version for the resource at the path provided.
      *
-     * @param session the session in which the resource resides
+     * @param transaction the transaction in which the resource resides
      * @param resource the resource to version
      * @param idTranslator translator for producing URI of resources
      * @param dateTime the date/time of the version
      * @return the version
      */
-    FedoraResource createVersion(FedoraSession session, FedoraResource resource,
+    FedoraResource createVersion(FedoraTransaction transaction, FedoraResource resource,
             IdentifierConverter<Resource, FedoraResource> idTranslator, Instant dateTime);
 
     /**
      * Explicitly creates a version for the resource at the path provided for the date/time provided.
      *
-     * @param session the session in which the resource resides
+     * @param transaction the transaction in which the resource resides
      * @param resource the resource to version
      * @param idTranslator translator for producing URI of resources
      * @param dateTime the date/time of the version
@@ -79,7 +79,7 @@ public interface VersionService {
      * @param rdfFormat RDF language format name
      * @return the version
      */
-    FedoraResource createVersion(FedoraSession session, FedoraResource resource,
+    FedoraResource createVersion(FedoraTransaction transaction, FedoraResource resource,
             IdentifierConverter<Resource, FedoraResource> idTranslator, Instant dateTime, InputStream rdfInputStream,
             Lang rdfFormat);
 
@@ -87,7 +87,7 @@ public interface VersionService {
      * Explicitly creates a version of a binary resource. If contentStream is provided, then it will be used as the
      * content of the binary memento. Otherwise, the current state of the binary will be used.
      *
-     * @param session the session in which the resource resides
+     * @param transaction the transaction in which the resource resides
      * @param resource the binary resource to version
      * @param dateTime the date/time of the version
      * @param contentStream if provided, the content in this stream will be used as the content of the new binary
@@ -97,7 +97,7 @@ public interface VersionService {
      * @throws InvalidChecksumException if there are errors applying checksums
      * @return the version
      */
-    FedoraBinary createBinaryVersion(FedoraSession session,
+    FedoraBinary createBinaryVersion(FedoraTransaction transaction,
             FedoraBinary resource,
             Instant dateTime,
             InputStream contentStream,
@@ -108,19 +108,19 @@ public interface VersionService {
     /**
      * Explicitly creates a version of a binary resource from the current state of that binary.
      *
-     * @param session the session in which the resource resides
+     * @param transaction the transaction in which the resource resides
      * @param resource the binary resource to version
      * @param dateTime the date/time of the version
      * @param storagePolicyDecisionPoint optional storage policy
      * @return the version
      * @throws InvalidChecksumException on error
      */
-    FedoraBinary createBinaryVersion(FedoraSession session, FedoraBinary resource, Instant dateTime,
+    FedoraBinary createBinaryVersion(FedoraTransaction transaction, FedoraBinary resource, Instant dateTime,
             StoragePolicyDecisionPoint storagePolicyDecisionPoint)
             throws InvalidChecksumException;
 
     /**
-     * @param session the session in which the resource resides
+     * @param transaction the transaction in which the resource resides
      * @param resource the binary resource to version
      * @param dateTime the date/time of the version
      * @param checksums Collection of checksum URIs of the content (optional)
@@ -129,7 +129,7 @@ public interface VersionService {
      * @return the version
      * @throws InvalidChecksumException if there are errors applying checksums
      */
-    FedoraBinary createExternalBinaryVersion(final FedoraSession session,
+    FedoraBinary createExternalBinaryVersion(final FedoraTransaction transaction,
             final FedoraBinary resource,
             final Instant dateTime,
             final Collection<URI> checksums,

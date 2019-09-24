@@ -17,7 +17,7 @@
  */
 package org.fcrepo.kernel.api.services;
 
-import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.FedoraTransaction;
 import org.fcrepo.kernel.api.models.Container;
 
 /**
@@ -31,10 +31,10 @@ public interface ContainerService extends Service<Container> {
     /**
      * Find or create a container node using the provided interaction model.
      *
-     * @param session the session
+     * @param transaction the transaction
      * @param path the path
      * @param interactionModel interaction model for the container node
      * @return Container object for the given path.
      */
-    public Container findOrCreate(final FedoraSession session, final String path, final String interactionModel);
+    public Container findOrCreate(final FedoraTransaction transaction, final String path, final String interactionModel);
 }

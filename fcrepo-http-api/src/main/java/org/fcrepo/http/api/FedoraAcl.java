@@ -125,7 +125,7 @@ public class FedoraAcl extends ContentExposingResource {
         final FedoraResource aclResource;
 
         final String path = toPath(translator(), externalPath);
-        final AcquiredLock lock = lockManager.lockForWrite(path, session.getFedoraSession(), nodeService);
+        final AcquiredLock lock = lockManager.lockForWrite(path, session.getFedoraTransaction(), nodeService);
         try {
             LOGGER.info("PUT acl resource '{}'", externalPath);
 
@@ -188,7 +188,7 @@ public class FedoraAcl extends ContentExposingResource {
             throw new ItemNotFoundException("not found");
         }
 
-        final AcquiredLock lock = lockManager.lockForWrite(aclResource.getPath(), session.getFedoraSession(),
+        final AcquiredLock lock = lockManager.lockForWrite(aclResource.getPath(), session.getFedoraTransaction(),
                                                            nodeService);
 
         try {
