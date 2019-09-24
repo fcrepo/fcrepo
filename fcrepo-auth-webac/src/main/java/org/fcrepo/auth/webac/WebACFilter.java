@@ -233,7 +233,7 @@ public class WebACFilter implements Filter {
         // this method intentionally left empty
     }
 
-    private FedoraTransaction transaction(final HttpServletRequest servletRequest) {
+    private FedoraTransaction transaction() {
         if (transaction == null) {
             transaction = sessionFactory.getNewTransaction();
         }
@@ -269,7 +269,7 @@ public class WebACFilter implements Filter {
             return true;
         }
         final String parentURI = getContainerUrl(servletRequest);
-        return nodeService.exists(transaction(servletRequest), getRepoPath(servletRequest, parentURI));
+        return nodeService.exists(transaction(), getRepoPath(servletRequest, parentURI));
     }
 
     private FedoraResource getContainer(final HttpServletRequest servletRequest) {
@@ -277,19 +277,19 @@ public class WebACFilter implements Filter {
             return resource(servletRequest).getContainer();
         }
         final String parentURI = getContainerUrl(servletRequest);
-        return nodeService.find(transaction(servletRequest), getRepoPath(servletRequest, parentURI));
+        return nodeService.find(transaction(), getRepoPath(servletRequest, parentURI));
     }
 
     private FedoraResource resource(final HttpServletRequest servletRequest) {
-        return nodeService.find(transaction(servletRequest), getRepoPath(servletRequest));
+        return nodeService.find(transaction(), getRepoPath(servletRequest));
     }
 
     private boolean resourceExists(final HttpServletRequest servletRequest) {
-        return nodeService.exists(transaction(servletRequest), getRepoPath(servletRequest));
+        return nodeService.exists(transaction(), getRepoPath(servletRequest));
     }
 
     private IdentifierConverter<Resource, FedoraResource> translator(final HttpServletRequest servletRequest) {
-        final HttpSession httpSession = new HttpSession(transaction(servletRequest));
+        final HttpSession httpSession = new HttpSession(transaction());
         final UriBuilder uriBuilder = UriBuilder.fromUri(getBaseURL(servletRequest)).path(FedoraLdp.class);
         return new HttpResourceConverter(httpSession, uriBuilder);
     }
