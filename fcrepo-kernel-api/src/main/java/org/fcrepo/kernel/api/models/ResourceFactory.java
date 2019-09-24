@@ -40,6 +40,19 @@ public interface ResourceFactory {
             throws PathNotFoundException;
 
     /**
+     * Get a resource from the persistence layer as a particular type
+     *
+     * @param <T> type for the resource
+     * @param transaction The transaction this request is part of.
+     * @param identifier The path or identifier for the resource.
+     * @param clazz class the resource will be cast to
+     * @return The resource.
+     * @throws PathNotFoundException If the identifier cannot be found.
+     */
+    public <T extends FedoraResource> T getResource(final FedoraTransaction transaction, final String identifier,
+            final Class<T> clazz) throws PathNotFoundException;
+
+    /**
      * Create a new container.
      *
      * @param transaction The transaction this request is part of.
