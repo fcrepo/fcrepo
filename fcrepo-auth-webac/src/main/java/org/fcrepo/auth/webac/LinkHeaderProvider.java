@@ -65,6 +65,7 @@ public class LinkHeaderProvider implements UriAwareHttpHeaderFactory {
     @Override
     public Multimap<String, String> createHttpHeadersForResource(final UriInfo uriInfo, final FedoraResource resource) {
 
+        // TODO do not use transactions for internal reads
         final FedoraTransaction transaction = sessionFactory.getNewTransaction();
         //TODO figure out where the translator should be coming from.
         final IdentifierConverter<Resource, FedoraResource> translator = null;

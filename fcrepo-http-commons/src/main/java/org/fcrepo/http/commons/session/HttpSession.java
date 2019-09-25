@@ -75,8 +75,8 @@ public class HttpSession {
     }
 
     /**
-     * Return the underlying Fedoratransaction
-     * @return the Fedoratransaction
+     * Return the underlying transaction
+     * @return the transaction
      */
     public FedoraTransaction getFedoraTransaction() {
         return transaction;

@@ -128,13 +128,13 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
     /**
      * Translate the current transaction into the identifier
      */
-    static class TransactionIdentifierConverter extends Converter<String, String> {
+    static class FedoraTransactionIdentifierConverter extends Converter<String, String> {
         public static final String TX_PREFIX = "tx:";
 
         private final FedoraTransaction transaction;
         private final boolean batch;
 
-        public TransactionIdentifierConverter(final FedoraTransaction transaction, final boolean batch) {
+        public FedoraTransactionIdentifierConverter(final FedoraTransaction transaction, final boolean batch) {
             this.transaction = transaction;
             this.batch = batch;
         }

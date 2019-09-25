@@ -57,7 +57,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 /**
- * <p>FedoraTransactionsIT class.</p>
+ * <p>TransactionsIT class.</p>
  *
  * @author awoods
  */
@@ -106,7 +106,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
             assertEquals("Transaction did not expire", GONE.getStatusCode(), getStatus(new HttpGet(location)));
         } finally {
             System.setProperty(TIMEOUT_SYSTEM_PROPERTY, DEFAULT_TIMEOUT);
-            System.clearProperty("fcrepo.transactions.timeout");
+            System.clearProperty("fcrepo.FedoraTransactions.timeout");
         }
     }
 

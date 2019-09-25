@@ -25,7 +25,7 @@ import java.util.HashMap;
 
 
 /**
- * The Fedora Transaction Manager implementation
+ * The Fedora FedoraTransaction Manager implementation
  *
  * @author mohideen
  */
@@ -53,7 +53,7 @@ public class FedoraTransactionManagerImpl implements FedoraTransactionManager {
         if(transactions.containsKey(transactionId)) {
             return transactions.get(transactionId);
         } else {
-            throw new RuntimeException("No Transaction found with transactionId: " + transactionId);
+            throw new RuntimeException("No FedoraTransaction found with transactionId: " + transactionId);
         }
     }
 

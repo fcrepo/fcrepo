@@ -20,7 +20,7 @@ package org.fcrepo.http.api;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.commons.lang3.StringUtils;
+// import org.apache.commons.lang3.StringUtils;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.http.commons.session.HttpSession;
@@ -40,8 +40,8 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 
-import static org.fcrepo.kernel.api.observer.OptionalValues.BASE_URL;
-import static org.fcrepo.kernel.api.observer.OptionalValues.USER_AGENT;
+// import static org.fcrepo.kernel.api.observer.OptionalValues.BASE_URL;
+// import static org.fcrepo.kernel.api.observer.OptionalValues.USER_AGENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -113,7 +113,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
                 baseURL = uriInfo.getBaseUri().toString();
             }
             LOGGER.debug("setting baseURL = " + baseURL);
-            // TODO determine if this data can be stored in the HttpSession 
+            // TODO determine if this data can be stored in the HttpSession
             // or if it would be necessary for the persistence layer
 
             // session.getFedoraSession().addSessionData(BASE_URL, baseURL);

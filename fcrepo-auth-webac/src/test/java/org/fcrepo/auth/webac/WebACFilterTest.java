@@ -46,7 +46,7 @@ import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.subject.support.SubjectThreadState;
 import org.fcrepo.http.commons.session.SessionFactory;
-import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.FedoraTransaction;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -93,7 +93,7 @@ public class WebACFilterTest {
     @Mock
     private NodeService mockNodeService;
 
-    private FedoraSession mockFedoraSession;
+    private FedoraTransaction mockTransaction;
 
     private FedoraResource mockContainer;
 
@@ -154,13 +154,13 @@ public class WebACFilterTest {
         mockBinary = Mockito.mock(FedoraBinary.class);
         mockRoot = Mockito.mock(Container.class);
 
-        when(mockSessionFactory.getInternalSession()).thenReturn(mockFedoraSession);
+        when(mockSessionFactory.getNewTransaction()).thenReturn(mockTransaction);
 
-        when(mockNodeService.exists(mockFedoraSession, testPath)).thenReturn(true);
-        when(mockNodeService.exists(mockFedoraSession, testChildPath)).thenReturn(false);
-        when(mockNodeService.exists(mockFedoraSession, "/")).thenReturn(true);
+        when(mockNodeService.exists(mockTransaction, testPath)).thenReturn(true);
+        when(mockNodeService.exists(mockTransaction, testChildPath)).thenReturn(false);
+        when(mockNodeService.exists(mockTransaction, "/")).thenReturn(true);
 
-        when(mockNodeService.find(mockFedoraSession, "/")).thenReturn(mockRoot);
+        when(mockNodeService.find(mockTransaction, "/")).thenReturn(mockRoot);
         when(mockContainer.getContainer()).thenReturn(mockRoot);
         when(mockChildContainer.getContainer()).thenReturn(mockContainer);
 
@@ -178,13 +178,13 @@ public class WebACFilterTest {
     }
 
     private void setupContainerResource() {
-        when(mockNodeService.find(mockFedoraSession, testPath)).thenReturn(mockContainer);
-        when(mockNodeService.find(mockFedoraSession, testChildPath)).thenReturn(mockChildContainer);
+        when(mockNodeService.find(mockTransaction, testPath)).thenReturn(mockContainer);
+        when(mockNodeService.find(mockTransaction, testChildPath)).thenReturn(mockChildContainer);
         when(mockBinary.hasType(FEDORA_BINARY)).thenReturn(false);
     }
 
     private void setupBinaryResource() {
-        when(mockNodeService.find(mockFedoraSession, testPath)).thenReturn(mockBinary);
+        when(mockNodeService.find(mockTransaction, testPath)).thenReturn(mockBinary);
         when(mockBinary.hasType(FEDORA_BINARY)).thenReturn(true);
     }
 

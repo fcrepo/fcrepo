@@ -17,10 +17,14 @@
  */
 package org.fcrepo.kernel.impl;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Optional;
+
 import org.fcrepo.kernel.api.FedoraTransaction;
 
 /**
- * The Fedora Transaction implementation
+ * The Fedora FedoraTransaction implementation
  *
  * @author mohideen
  */
@@ -28,29 +32,54 @@ public class FedoraTransactionImpl implements FedoraTransaction {
 
     final String id;
 
+    boolean shortLived = true;
+
     FedoraTransactionImpl(final String id) {
         if (id == null || id.isEmpty()) {
-            throw new IllegalArgumentException("FedoraTransaction id should not be empty!");
+            throw new IllegalArgumentException("Transaction id should not be empty!");
         }
         this.id = id;
     }
 
     @Override
     public void commit() {
-        // Prepare Persistence Transactions
-        // Commit Persistence Transactions
+        // Prepare Persistence FedoraTransactions
+        // Commit Persistence FedoraTransactions
     }
 
     @Override
     public void rollback() {
-        // Rollback Persistence Transactions
+        // Rollback Persistence FedoraTransactions
 
-        // Delete Transaction from TransactionManager state?
+        // Delete FedoraTransaction from FedoraTransactionManager state?
     }
 
     @Override
     public String getId() {
         return id;
+    }
+
+    @Override
+    public boolean isShortLived() {
+        return this.shortLived;
+    }
+
+    @Override
+    public void expire() {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public Instant updateExpiry(final Duration amountToAdd) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Optional<Instant> getExpires() {
+        // TODO Auto-generated method stub
+        return null;
     }
 
 }

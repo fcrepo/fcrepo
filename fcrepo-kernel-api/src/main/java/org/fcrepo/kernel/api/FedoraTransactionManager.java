@@ -18,7 +18,7 @@
 package org.fcrepo.kernel.api;
 
 /**
- * The Fedora Transaction Manager abstraction
+ * The Fedora FedoraTransaction Manager abstraction
  *
  * @author mohideen
  */

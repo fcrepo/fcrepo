@@ -28,7 +28,7 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 /**
- * <p>FedoraTransactionTest class.</p>
+ * <p>TransactionTest class.</p>
  *
  * @author mohideen
  */

@@ -215,6 +215,7 @@ public class WebACRolesProvider {
      *  Any out-of-domain URIs are silently ignored.
      */
     private List<String> dereferenceAgentGroups(final Collection<String> agentGroups) {
+        // TODO do not use transactions for internal reads
         final FedoraTransaction transaction = sessionFactory.getNewTransaction();
         //TODO figure out where the translator should be coming from.
         final IdentifierConverter<Resource, FedoraResource> translator = null;

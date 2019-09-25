@@ -17,28 +17,28 @@
  */
 package org.fcrepo.http.api;
 
-import static java.util.Date.from;
-import static javax.ws.rs.core.Response.created;
-import static javax.ws.rs.core.Response.noContent;
-import static javax.ws.rs.core.Response.status;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+// import static java.util.Date.from;
+// import static javax.ws.rs.core.Response.created;
+// import static javax.ws.rs.core.Response.noContent;
+// import static javax.ws.rs.core.Response.status;
+// import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.net.URI;
+// import java.net.URI;
 import java.net.URISyntaxException;
 
-import javax.inject.Inject;
+// import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
-import org.fcrepo.kernel.api.FedoraTransactionManager;
+// import org.fcrepo.kernel.api.FedoraTransactionManager;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
 /**
- * Transactions over REST
+ * FedoraTransactions over REST
  *
  * @author awoods
  * @author gregjan
@@ -119,7 +119,7 @@ public class FedoraTransactions extends FedoraBaseResource {
 
     private Response finalizeTransaction(@PathParam("path")
         final String externalPath, final String username, final boolean commit) {
-            
+
         // TODO use FedoraTransactionManager instead of BatchService
         return null;
         // final String path = toPath(translator(), externalPath);

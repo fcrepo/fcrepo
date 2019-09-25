@@ -233,6 +233,7 @@ public class WebACFilter implements Filter {
         // this method intentionally left empty
     }
 
+    // TODO do not use transactions for internal reads
     private FedoraTransaction transaction() {
         if (transaction == null) {
             transaction = sessionFactory.getNewTransaction();

@@ -33,8 +33,8 @@ import static org.fcrepo.kernel.api.observer.EventType.INBOUND_REFERENCE;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_CREATION;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_DELETION;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_MODIFICATION;
-import static org.fcrepo.kernel.api.observer.OptionalValues.BASE_URL;
-import static org.fcrepo.kernel.api.observer.OptionalValues.USER_AGENT;
+// import static org.fcrepo.kernel.api.observer.OptionalValues.BASE_URL;
+// import static org.fcrepo.kernel.api.observer.OptionalValues.USER_AGENT;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.ByteArrayInputStream;
@@ -53,7 +53,8 @@ import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.api.FedoraRepository;
-import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.FedoraTransaction;
+import org.fcrepo.kernel.api.FedoraTransactionManager;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -97,6 +98,9 @@ abstract class AbstractJmsIT implements MessageListener {
     private FedoraRepository repository;
 
     @Inject
+    private FedoraTransactionManager txMananger;
+
+    @Inject
     private BinaryService binaryService;
 
     @Inject
@@ -128,9 +132,9 @@ abstract class AbstractJmsIT implements MessageListener {
 
         LOGGER.debug("Expecting a {} event", RESOURCE_CREATION.getType());
 
-        final FedoraSession session = repository.login();
-        session.addSessionData(BASE_URL, TEST_BASE_URL);
-        session.addSessionData(USER_AGENT, TEST_USER_AGENT);
+        final FedoraTransaction session = txMananger.create();
+        // session.addSessionData(BASE_URL, TEST_BASE_URL);
+        // session.addSessionData(USER_AGENT, TEST_USER_AGENT);
 
         try {
             containerService.findOrCreate(session, testIngested);
@@ -144,9 +148,9 @@ abstract class AbstractJmsIT implements MessageListener {
     @Test(timeout = TIMEOUT)
     public void testFileEvents() throws InvalidChecksumException {
 
-        final FedoraSession session = repository.login();
-        session.addSessionData(BASE_URL, TEST_BASE_URL);
-        session.addSessionData(USER_AGENT, TEST_USER_AGENT);
+        final FedoraTransaction session = txMananger.create();
+        // session.addSessionData(BASE_URL, TEST_BASE_URL);
+        // session.addSessionData(USER_AGENT, TEST_USER_AGENT);
 
         try {
             binaryService.findOrCreate(session, testFile)
@@ -170,9 +174,9 @@ abstract class AbstractJmsIT implements MessageListener {
     @Test(timeout = TIMEOUT)
     public void testMetadataEvents() {
 
-        final FedoraSession session = repository.login();
-        session.addSessionData(BASE_URL, TEST_BASE_URL);
-        session.addSessionData(USER_AGENT, TEST_USER_AGENT);
+        final FedoraTransaction session = txMananger.create();
+        // session.addSessionData(BASE_URL, TEST_BASE_URL);
+        // session.addSessionData(USER_AGENT, TEST_USER_AGENT);
         final IdentifierConverter<Resource,FedoraResource>
             subjects = null;
 
@@ -209,9 +213,9 @@ abstract class AbstractJmsIT implements MessageListener {
     public void testRemoval() {
 
         LOGGER.debug("Expecting a {} event", RESOURCE_DELETION.getType());
-        final FedoraSession session = repository.login();
-        session.addSessionData(BASE_URL, TEST_BASE_URL);
-        session.addSessionData(USER_AGENT, TEST_USER_AGENT);
+        final FedoraTransaction session = txMananger.create();
+        // session.addSessionData(BASE_URL, TEST_BASE_URL);
+        // session.addSessionData(USER_AGENT, TEST_USER_AGENT);
 
         try {
             final Container resource = containerService.findOrCreate(session, testRemoved);
@@ -229,11 +233,11 @@ abstract class AbstractJmsIT implements MessageListener {
         final String uri1 = "/testInboundReference-" + randomUUID().toString();
         final String uri2 = "/testInboundReference-" + randomUUID().toString();
 
-        final FedoraSession session = repository.login();
+        final FedoraTransaction session = txMananger.create();
         final IdentifierConverter<Resource,FedoraResource>
             subjects = null;
-        session.addSessionData(BASE_URL, TEST_BASE_URL);
-        session.addSessionData(USER_AGENT, TEST_USER_AGENT);
+        // session.addSessionData(BASE_URL, TEST_BASE_URL);
+        // session.addSessionData(USER_AGENT, TEST_USER_AGENT);
         try {
             final Container resource = containerService.findOrCreate(session, uri1);
             final Container resource2 = containerService.findOrCreate(session, uri2);
