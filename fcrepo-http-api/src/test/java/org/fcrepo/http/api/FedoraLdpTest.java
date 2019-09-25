@@ -113,7 +113,7 @@ import org.fcrepo.http.commons.domain.MultiPrefer;
 import org.fcrepo.http.commons.domain.PreferTag;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.http.commons.session.HttpSession;
-import org.fcrepo.kernel.api.FedoraTransaction;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
@@ -177,7 +177,7 @@ public class FedoraLdpTest {
     private HttpSession mockSession;
 
     @Mock
-    private FedoraTransaction mockTransaction;
+    private Transaction mockTransaction;
 
     @Mock
     private Container mockContainer;
@@ -298,7 +298,7 @@ public class FedoraLdpTest {
         when(mockLockManager.lockForWrite(any(), any(), any())).thenReturn(mockLock);
         when(mockLockManager.lockForDelete(any())).thenReturn(mockLock);
         when(mockSession.getId()).thenReturn("foo1234");
-        when(mockSession.getFedoraTransaction()).thenReturn(mockTransaction);
+        when(mockSession.getTransaction()).thenReturn(mockTransaction);
 
         when(mockServletContext.getContextPath()).thenReturn("/");
 

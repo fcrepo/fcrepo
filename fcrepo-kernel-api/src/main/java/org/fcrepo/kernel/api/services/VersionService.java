@@ -28,7 +28,7 @@ import java.util.Collection;
 
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.riot.Lang;
-import org.fcrepo.kernel.api.FedoraTransaction;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraBinary;
@@ -64,7 +64,7 @@ public interface VersionService {
      * @param dateTime the date/time of the version
      * @return the version
      */
-    FedoraResource createVersion(FedoraTransaction transaction, FedoraResource resource,
+    FedoraResource createVersion(Transaction transaction, FedoraResource resource,
             IdentifierConverter<Resource, FedoraResource> idTranslator, Instant dateTime);
 
     /**
@@ -79,7 +79,7 @@ public interface VersionService {
      * @param rdfFormat RDF language format name
      * @return the version
      */
-    FedoraResource createVersion(FedoraTransaction transaction, FedoraResource resource,
+    FedoraResource createVersion(Transaction transaction, FedoraResource resource,
             IdentifierConverter<Resource, FedoraResource> idTranslator, Instant dateTime, InputStream rdfInputStream,
             Lang rdfFormat);
 
@@ -97,7 +97,7 @@ public interface VersionService {
      * @throws InvalidChecksumException if there are errors applying checksums
      * @return the version
      */
-    FedoraBinary createBinaryVersion(FedoraTransaction transaction,
+    FedoraBinary createBinaryVersion(Transaction transaction,
             FedoraBinary resource,
             Instant dateTime,
             InputStream contentStream,
@@ -115,7 +115,7 @@ public interface VersionService {
      * @return the version
      * @throws InvalidChecksumException on error
      */
-    FedoraBinary createBinaryVersion(FedoraTransaction transaction, FedoraBinary resource, Instant dateTime,
+    FedoraBinary createBinaryVersion(Transaction transaction, FedoraBinary resource, Instant dateTime,
             StoragePolicyDecisionPoint storagePolicyDecisionPoint)
             throws InvalidChecksumException;
 
@@ -129,7 +129,7 @@ public interface VersionService {
      * @return the version
      * @throws InvalidChecksumException if there are errors applying checksums
      */
-    FedoraBinary createExternalBinaryVersion(final FedoraTransaction transaction,
+    FedoraBinary createExternalBinaryVersion(final Transaction transaction,
             final FedoraBinary resource,
             final Instant dateTime,
             final Collection<URI> checksums,

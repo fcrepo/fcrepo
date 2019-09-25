@@ -53,8 +53,8 @@ import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.jena.rdf.model.Resource;
 
 import org.fcrepo.kernel.api.FedoraRepository;
-import org.fcrepo.kernel.api.FedoraTransaction;
-import org.fcrepo.kernel.api.FedoraTransactionManager;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -98,7 +98,7 @@ abstract class AbstractJmsIT implements MessageListener {
     private FedoraRepository repository;
 
     @Inject
-    private FedoraTransactionManager txMananger;
+    private TransactionManager txMananger;
 
     @Inject
     private BinaryService binaryService;
@@ -132,7 +132,7 @@ abstract class AbstractJmsIT implements MessageListener {
 
         LOGGER.debug("Expecting a {} event", RESOURCE_CREATION.getType());
 
-        final FedoraTransaction session = txMananger.create();
+        final Transaction session = txMananger.create();
         // session.addSessionData(BASE_URL, TEST_BASE_URL);
         // session.addSessionData(USER_AGENT, TEST_USER_AGENT);
 
@@ -148,7 +148,7 @@ abstract class AbstractJmsIT implements MessageListener {
     @Test(timeout = TIMEOUT)
     public void testFileEvents() throws InvalidChecksumException {
 
-        final FedoraTransaction session = txMananger.create();
+        final Transaction session = txMananger.create();
         // session.addSessionData(BASE_URL, TEST_BASE_URL);
         // session.addSessionData(USER_AGENT, TEST_USER_AGENT);
 
@@ -174,7 +174,7 @@ abstract class AbstractJmsIT implements MessageListener {
     @Test(timeout = TIMEOUT)
     public void testMetadataEvents() {
 
-        final FedoraTransaction session = txMananger.create();
+        final Transaction session = txMananger.create();
         // session.addSessionData(BASE_URL, TEST_BASE_URL);
         // session.addSessionData(USER_AGENT, TEST_USER_AGENT);
         final IdentifierConverter<Resource,FedoraResource>
@@ -213,7 +213,7 @@ abstract class AbstractJmsIT implements MessageListener {
     public void testRemoval() {
 
         LOGGER.debug("Expecting a {} event", RESOURCE_DELETION.getType());
-        final FedoraTransaction session = txMananger.create();
+        final Transaction session = txMananger.create();
         // session.addSessionData(BASE_URL, TEST_BASE_URL);
         // session.addSessionData(USER_AGENT, TEST_USER_AGENT);
 
@@ -233,7 +233,7 @@ abstract class AbstractJmsIT implements MessageListener {
         final String uri1 = "/testInboundReference-" + randomUUID().toString();
         final String uri2 = "/testInboundReference-" + randomUUID().toString();
 
-        final FedoraTransaction session = txMananger.create();
+        final Transaction session = txMananger.create();
         final IdentifierConverter<Resource,FedoraResource>
             subjects = null;
         // session.addSessionData(BASE_URL, TEST_BASE_URL);

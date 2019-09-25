@@ -62,7 +62,7 @@ import org.junit.Test;
  * @author awoods
  */
 @Ignore //TODO Fix these tests
-public class FedoraTransactionsIT extends AbstractResourceIT {
+public class TransactionsIT extends AbstractResourceIT {
 
     public static final long REAP_INTERVAL = 1000;
 
@@ -106,7 +106,7 @@ public class FedoraTransactionsIT extends AbstractResourceIT {
             assertEquals("Transaction did not expire", GONE.getStatusCode(), getStatus(new HttpGet(location)));
         } finally {
             System.setProperty(TIMEOUT_SYSTEM_PROPERTY, DEFAULT_TIMEOUT);
-            System.clearProperty("fcrepo.FedoraTransactions.timeout");
+            System.clearProperty("fcrepo.transactions.timeout");
         }
     }
 

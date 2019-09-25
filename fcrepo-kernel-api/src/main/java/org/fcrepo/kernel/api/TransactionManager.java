@@ -18,25 +18,25 @@
 package org.fcrepo.kernel.api;
 
 /**
- * The Fedora FedoraTransaction Manager abstraction
+ * The Fedora Transaction Manager abstraction
  *
  * @author mohideen
  */
-public interface FedoraTransactionManager {
+public interface TransactionManager {
 
     /**
      * Create a new fedora transaction
      * 
-     * @return {@link FedoraTransaction} The new fedora transaction
+     * @return {@link Transaction} The new fedora transaction
      */
-    FedoraTransaction create();
+    Transaction create();
 
     /**
      * Get an existing fedora transaction
      * 
      * @param transactionId the id of the transaction to be returned
-     * @return {@link FedoraTransaction} the fedora transaction associated with the provided id
+     * @return {@link Transaction} the fedora transaction associated with the provided id
      */
-    FedoraTransaction get(String transactionId);
+    Transaction get(String transactionId);
 
 }

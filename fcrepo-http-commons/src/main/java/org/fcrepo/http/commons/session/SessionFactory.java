@@ -25,8 +25,8 @@ import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 
 import org.fcrepo.kernel.api.FedoraRepository;
-import org.fcrepo.kernel.api.FedoraTransaction;
-import org.fcrepo.kernel.api.FedoraTransactionManager;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.SessionMissingException;
 
 import org.slf4j.Logger;
@@ -61,7 +61,7 @@ public class SessionFactory {
     private FedoraRepository repo;
 
     @Inject
-    private FedoraTransactionManager txManager;
+    private TransactionManager txManager;
 
     /**
      * Initialize a session factory for the given Repository
@@ -85,7 +85,7 @@ public class SessionFactory {
      *
      * @return an fedora transaction
      */
-    public FedoraTransaction getNewTransaction() { // Should this be read-only?
+    public Transaction getNewTransaction() { // Should this be read-only?
         return txManager.create();
     }
 

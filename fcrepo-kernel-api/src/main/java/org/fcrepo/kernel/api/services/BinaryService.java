@@ -17,7 +17,7 @@
  */
 package org.fcrepo.kernel.api.services;
 
-import org.fcrepo.kernel.api.FedoraTransaction;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 
@@ -34,7 +34,7 @@ public interface BinaryService extends Service<FedoraBinary> {
      * @param path path of binary datastream
      * @return retrieved FedoraBinary
      */
-    FedoraBinary findOrCreateBinary(FedoraTransaction transaction, String path);
+    FedoraBinary findOrCreateBinary(Transaction transaction, String path);
 
     /**
      * Retrieves a binary description instance by transaction and path.
@@ -43,6 +43,6 @@ public interface BinaryService extends Service<FedoraBinary> {
      * @param path path of description
      * @return retrieved NonRdfSourceDescription
      */
-    NonRdfSourceDescription findOrCreateDescription(FedoraTransaction transaction, String path);
+    NonRdfSourceDescription findOrCreateDescription(Transaction transaction, String path);
 
 }

@@ -95,7 +95,7 @@ public class FedoraRepositoryBackup extends AbstractResource {
         }
 
         LOGGER.debug("Backing up to: {}", backupDirectory.getAbsolutePath());
-        final Collection<Throwable> problems = repositoryService.backupRepository(session.getFedoraTransaction(), backupDirectory);
+        final Collection<Throwable> problems = repositoryService.backupRepository(session.getTransaction(), backupDirectory);
 
         if (!problems.isEmpty()) {
             LOGGER.error("Problems backing up the repository:");

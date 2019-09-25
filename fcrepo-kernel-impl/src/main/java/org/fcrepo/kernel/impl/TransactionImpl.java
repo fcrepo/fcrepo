@@ -21,20 +21,20 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 
-import org.fcrepo.kernel.api.FedoraTransaction;
+import org.fcrepo.kernel.api.Transaction;
 
 /**
- * The Fedora FedoraTransaction implementation
+ * The Fedora Transaction implementation
  *
  * @author mohideen
  */
-public class FedoraTransactionImpl implements FedoraTransaction {
+public class TransactionImpl implements Transaction {
 
     final String id;
 
     boolean shortLived = true;
 
-    FedoraTransactionImpl(final String id) {
+    TransactionImpl(final String id) {
         if (id == null || id.isEmpty()) {
             throw new IllegalArgumentException("Transaction id should not be empty!");
         }
@@ -43,15 +43,15 @@ public class FedoraTransactionImpl implements FedoraTransaction {
 
     @Override
     public void commit() {
-        // Prepare Persistence FedoraTransactions
-        // Commit Persistence FedoraTransactions
+        // Prepare Persistence Transactions
+        // Commit Persistence Transactions
     }
 
     @Override
     public void rollback() {
-        // Rollback Persistence FedoraTransactions
+        // Rollback Persistence Transactions
 
-        // Delete FedoraTransaction from FedoraTransactionManager state?
+        // Delete Transaction from TransactionManager state?
     }
 
     @Override

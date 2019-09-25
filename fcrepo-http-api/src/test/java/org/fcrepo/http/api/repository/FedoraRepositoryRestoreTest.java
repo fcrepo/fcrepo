@@ -37,7 +37,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
 import org.fcrepo.http.commons.session.HttpSession;
-import org.fcrepo.kernel.api.FedoraTransaction;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.services.RepositoryService;
 import org.junit.Before;
 import org.junit.Test;
@@ -58,7 +58,7 @@ public class FedoraRepositoryRestoreTest {
     private HttpSession mockSession;
 
     @Mock
-    private FedoraTransaction mockTransaction;
+    private Transaction mockTransaction;
 
     @Before
     public void setUp() {
@@ -68,13 +68,13 @@ public class FedoraRepositoryRestoreTest {
         setField(repoRestore, "session", mockSession);
         setField(repoRestore, "repositoryService", mockService);
         setField(repoRestore, "uriInfo", getUriInfoImpl());
-        when(mockSession.getFedoraTransaction()).thenReturn(mockTransaction);
+        when(mockSession.getTransaction()).thenReturn(mockTransaction);
     }
 
     @Test
     public void testRunBackup() throws Exception {
         final Collection<Throwable> problems = new ArrayList<>();
-        when(mockService.backupRepository(any(FedoraTransaction.class), any(File.class)))
+        when(mockService.backupRepository(any(Transaction.class), any(File.class)))
                 .thenReturn(problems);
 
         boolean thrown = false;
@@ -90,7 +90,7 @@ public class FedoraRepositoryRestoreTest {
     @Test
     public void testRunBackupWithDir() throws Exception {
         final Collection<Throwable> problems = new ArrayList<>();
-        when(mockService.restoreRepository(any(FedoraTransaction.class), any(File.class)))
+        when(mockService.restoreRepository(any(Transaction.class), any(File.class)))
                 .thenReturn(problems);
 
         final String tmpDir = System.getProperty("java.io.tmpdir");

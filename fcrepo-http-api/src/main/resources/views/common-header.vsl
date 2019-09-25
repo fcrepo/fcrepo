@@ -38,7 +38,7 @@
                   #else
                     <li>
                       <form  id="action_create_transaction" action="$uriInfo.baseUriBuilder.build()fcr:tx" method="POST" class="nav-form">
-                        <button type="submit" class="btn btn-primary navbar-btn">Start FedoraTransaction</button>
+                        <button type="submit" class="btn btn-primary navbar-btn">Start Transaction</button>
                       </form>
                     </li>
                   #end

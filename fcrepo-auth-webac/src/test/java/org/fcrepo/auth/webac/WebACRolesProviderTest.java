@@ -47,7 +47,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.fcrepo.http.commons.session.SessionFactory;
-import org.fcrepo.kernel.api.FedoraTransaction;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.RepositoryException;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -75,7 +75,7 @@ public class WebACRolesProviderTest {
     private static final String FEDORA_URI_PREFIX = "file:///rest";
 
     @Mock
-    private FedoraTransaction mockTransaction;
+    private Transaction mockTransaction;
 
     @Mock
     private SessionFactory mockSessionFactory;

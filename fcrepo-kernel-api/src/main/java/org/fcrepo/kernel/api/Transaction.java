@@ -22,11 +22,11 @@ import java.time.Instant;
 import java.util.Optional;
 
 /**
- * The Fedora FedoraTransaction abstraction
+ * The Fedora Transaction abstraction
  *
  * @author mohideen
  */
-public interface FedoraTransaction {
+public interface Transaction {
 
     /**
      * Commit the transaction

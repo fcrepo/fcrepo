@@ -17,7 +17,7 @@
  */
 package org.fcrepo.http.commons.session;
 
-import org.fcrepo.kernel.api.FedoraTransaction;
+import org.fcrepo.kernel.api.Transaction;
 
 /**
  * Provide a batch-aware HTTP session
@@ -27,7 +27,7 @@ public class HttpSession {
 
     private boolean batch = false;
 
-    private final FedoraTransaction transaction;
+    private final Transaction transaction;
 
     /**
      * Create an HTTP session from a Fedora transaction
@@ -36,7 +36,7 @@ public class HttpSession {
      * Client code must call makeBatch in order to promote the session into
      * a batch operation.
      */
-    public HttpSession(final FedoraTransaction transaction) {
+    public HttpSession(final Transaction transaction) {
         this.transaction = transaction;
     }
 
@@ -54,7 +54,7 @@ public class HttpSession {
      */
     public void expire() {
         if (!isBatchSession()) {
-            // Mark FedoraTransaction as expired?
+            // Mark Transaction as expired?
         }
     }
 
@@ -78,7 +78,7 @@ public class HttpSession {
      * Return the underlying transaction
      * @return the transaction
      */
-    public FedoraTransaction getFedoraTransaction() {
+    public Transaction getTransaction() {
         return transaction;
     }
 }

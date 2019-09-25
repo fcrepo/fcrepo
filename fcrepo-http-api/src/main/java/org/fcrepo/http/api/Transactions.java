@@ -33,21 +33,21 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
-// import org.fcrepo.kernel.api.FedoraTransactionManager;
+// import org.fcrepo.kernel.api.TransactionManager;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
 /**
- * FedoraTransactions over REST
+ * Transactions over REST
  *
  * @author awoods
  * @author gregjan
  */
 @Scope("prototype")
 @Path("/{path: .*}/fcr:tx")
-public class FedoraTransactions extends FedoraBaseResource {
+public class Transactions extends FedoraBaseResource {
 
-    private static final Logger LOGGER = getLogger(FedoraTransactions.class);
+    private static final Logger LOGGER = getLogger(Transactions.class);
 
     /**
      * Create a new transaction resource and add it to the registry
@@ -58,7 +58,7 @@ public class FedoraTransactions extends FedoraBaseResource {
      */
     @POST
     public Response createTransaction(@PathParam("path") final String externalPath) throws URISyntaxException {
-        // TODO use FedoraTransactionManager instead of BatchService
+        // TODO use TransactionManager instead of BatchService
         return null;
 
         // if (batchService.exists(session.getId(), getUserPrincipal())) {
@@ -96,7 +96,7 @@ public class FedoraTransactions extends FedoraBaseResource {
     @POST
     @Path("fcr:commit")
     public Response commit(@PathParam("path") final String externalPath) {
-        // TODO use FedoraTransactionManager instead of BatchService
+        // TODO use TransactionManager instead of BatchService
         return null;
         // LOGGER.info("Commit transaction '{}'", externalPath);
         // return finalizeTransaction(externalPath, getUserPrincipal(), true);
@@ -111,7 +111,7 @@ public class FedoraTransactions extends FedoraBaseResource {
     @POST
     @Path("fcr:rollback")
     public Response rollback(@PathParam("path") final String externalPath) {
-        // TODO use FedoraTransactionManager instead of BatchService
+        // TODO use TransactionManager instead of BatchService
         return null;
         // LOGGER.info("Rollback transaction '{}'", externalPath);
         // return finalizeTransaction(externalPath, getUserPrincipal(), false);
@@ -120,7 +120,7 @@ public class FedoraTransactions extends FedoraBaseResource {
     private Response finalizeTransaction(@PathParam("path")
         final String externalPath, final String username, final boolean commit) {
 
-        // TODO use FedoraTransactionManager instead of BatchService
+        // TODO use TransactionManager instead of BatchService
         return null;
         // final String path = toPath(translator(), externalPath);
         // if (!path.equals("/")) {

@@ -46,7 +46,7 @@ import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.subject.support.SubjectThreadState;
 import org.fcrepo.http.commons.session.SessionFactory;
-import org.fcrepo.kernel.api.FedoraTransaction;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -93,7 +93,7 @@ public class WebACFilterTest {
     @Mock
     private NodeService mockNodeService;
 
-    private FedoraTransaction mockTransaction;
+    private Transaction mockTransaction;
 
     private FedoraResource mockContainer;
 

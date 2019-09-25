@@ -41,7 +41,7 @@ import javax.ws.rs.core.SecurityContext;
 
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.http.commons.session.HttpSession;
-import org.fcrepo.kernel.api.FedoraTransaction;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.ItemExistsException;
 import org.fcrepo.kernel.api.exception.RepositoryException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -69,7 +69,7 @@ public class FedoraNodesTest {
 
     FedoraNodes testObj;
 
-    FedoraTransaction testSession;
+    Transaction testSession;
 
     HttpSession testHttpSession;
 
@@ -164,7 +164,7 @@ public class FedoraNodesTest {
 
     @Test
     public void testMoveObject() throws RepositoryException, URISyntaxException {
-        when(mockNodes.find(isA(FedoraTransaction.class), isA(String.class)))
+        when(mockNodes.find(isA(Transaction.class), isA(String.class)))
             .thenReturn(mockContainer);
         when(mockContainer.getEtagValue()).thenReturn("");
         when(mockContainer.getPath()).thenReturn(path);
@@ -180,7 +180,7 @@ public class FedoraNodesTest {
     @Test(expected = ClientErrorException.class)
     public void testMoveMissingObject() throws RepositoryException, URISyntaxException {
         when(mockNodes.exists(testSession, path)).thenReturn(false);
-        when(mockNodes.find(isA(FedoraTransaction.class), isA(String.class)))
+        when(mockNodes.find(isA(Transaction.class), isA(String.class)))
             .thenReturn(mockContainer);
         when(mockContainer.getEtagValue()).thenReturn("");
 
@@ -190,7 +190,7 @@ public class FedoraNodesTest {
     @Test(expected = WebApplicationException.class)
     public void testMoveObjectToExistingDestination() throws RepositoryException, URISyntaxException {
         when(mockNodes.exists(testSession, path)).thenReturn(true);
-        when(mockNodes.find(isA(FedoraTransaction.class), isA(String.class)))
+        when(mockNodes.find(isA(Transaction.class), isA(String.class)))
             .thenReturn(mockContainer);
         when(mockContainer.getEtagValue()).thenReturn("");
         doThrow(new RepositoryRuntimeException(new ItemExistsException("test")))
@@ -205,7 +205,7 @@ public class FedoraNodesTest {
 
     @Test(expected = ServerErrorException.class)
     public void testMoveObjectWithBadDestination() throws RepositoryException, URISyntaxException {
-        when(mockNodes.find(isA(FedoraTransaction.class), isA(String.class)))
+        when(mockNodes.find(isA(Transaction.class), isA(String.class)))
             .thenReturn(mockContainer);
         when(mockNodes.exists(testSession, path)).thenReturn(true);
         when(mockContainer.getEtagValue()).thenReturn("");

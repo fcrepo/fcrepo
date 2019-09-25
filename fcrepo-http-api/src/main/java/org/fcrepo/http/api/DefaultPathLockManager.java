@@ -29,7 +29,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import org.fcrepo.kernel.api.FedoraTransaction;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.InterruptedRuntimeException;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.slf4j.Logger;
@@ -333,7 +333,7 @@ public class DefaultPathLockManager implements PathLockManager {
     }
 
     @Override
-    public AcquiredLock lockForWrite(final String path, final FedoraTransaction transaction, final NodeService nodeService) {
+    public AcquiredLock lockForWrite(final String path, final Transaction transaction, final NodeService nodeService) {
         final List<ActivePath.PathScopedLock> locks = new ArrayList<>();
 
         synchronized (this) {

@@ -31,7 +31,7 @@ import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.http.commons.api.UriAwareHttpHeaderFactory;
 import org.fcrepo.http.commons.session.SessionFactory;
-import org.fcrepo.kernel.api.FedoraTransaction;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.NodeService;
@@ -66,7 +66,7 @@ public class LinkHeaderProvider implements UriAwareHttpHeaderFactory {
     public Multimap<String, String> createHttpHeadersForResource(final UriInfo uriInfo, final FedoraResource resource) {
 
         // TODO do not use transactions for internal reads
-        final FedoraTransaction transaction = sessionFactory.getNewTransaction();
+        final Transaction transaction = sessionFactory.getNewTransaction();
         //TODO figure out where the translator should be coming from.
         final IdentifierConverter<Resource, FedoraResource> translator = null;
 

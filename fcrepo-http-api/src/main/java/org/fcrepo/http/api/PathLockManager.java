@@ -17,7 +17,7 @@
  */
 package org.fcrepo.http.api;
 
-import org.fcrepo.kernel.api.FedoraTransaction;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.services.NodeService;
 
 /**
@@ -69,7 +69,7 @@ public interface PathLockManager {
      * @param nodeService the repository NodeService implementation
      * @return an acquired Lock on the relevant resources
      */
-    AcquiredLock lockForWrite(String path, FedoraTransaction transaction, NodeService nodeService);
+    AcquiredLock lockForWrite(String path, Transaction transaction, NodeService nodeService);
 
     /**
      * Locks the necessary resources affected in order to safely delete a resource

@@ -109,7 +109,7 @@ public class FedoraNodes extends ContentExposingResource {
         try {
             final String source = translator().asString(translator().toDomain(externalPath));
 
-            if (!nodeService.exists(session.getFedoraTransaction(), source)) {
+            if (!nodeService.exists(session.getTransaction(), source)) {
                 throw new ClientErrorException("The source path does not exist", CONFLICT);
             }
 
@@ -117,12 +117,12 @@ public class FedoraNodes extends ContentExposingResource {
 
             if (destination == null) {
                 throw new ServerErrorException("Destination was not a valid resource path", BAD_GATEWAY);
-            } else if (nodeService.exists(session.getFedoraTransaction(), destination)) {
+            } else if (nodeService.exists(session.getTransaction(), destination)) {
                 throw new ClientErrorException("Destination resource already exists", PRECONDITION_FAILED);
             }
 
             LOGGER.info("Copy from '{}' to '{}'", source, destination);
-            nodeService.copyObject(session.getFedoraTransaction(), source, destination);
+            nodeService.copyObject(session.getTransaction(), source, destination);
             session.commit();
 
             return created(new URI(destinationUri)).build();
@@ -160,7 +160,7 @@ public class FedoraNodes extends ContentExposingResource {
 
             final String source = toPath(translator(), externalPath);
 
-            if (!nodeService.exists(session.getFedoraTransaction(), source)) {
+            if (!nodeService.exists(session.getTransaction(), source)) {
                 throw new ClientErrorException("The source path does not exist", CONFLICT);
             }
 
@@ -171,12 +171,12 @@ public class FedoraNodes extends ContentExposingResource {
 
             if (destination == null) {
                 throw new ServerErrorException("Destination was not a valid resource path", BAD_GATEWAY);
-            } else if (nodeService.exists(session.getFedoraTransaction(), destination)) {
+            } else if (nodeService.exists(session.getTransaction(), destination)) {
                 throw new ClientErrorException("Destination resource already exists", PRECONDITION_FAILED);
             }
 
             LOGGER.info("Move from '{}' to '{}'", source, destination);
-            nodeService.moveObject(session.getFedoraTransaction(), source, destination);
+            nodeService.moveObject(session.getTransaction(), source, destination);
             session.commit();
             return created(new URI(destinationUri)).build();
         } catch (final RepositoryRuntimeException e) {

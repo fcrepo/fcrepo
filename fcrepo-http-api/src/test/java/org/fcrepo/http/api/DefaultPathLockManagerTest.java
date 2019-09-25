@@ -24,7 +24,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
-import org.fcrepo.kernel.api.FedoraTransaction;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.InterruptedRuntimeException;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.junit.Before;
@@ -49,7 +49,7 @@ public class DefaultPathLockManagerTest {
     private static final int WAIT = 1000;
 
     @Mock
-    private FedoraTransaction transaction;
+    private Transaction transaction;
 
     @Mock
     private NodeService nodeService;

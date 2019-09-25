@@ -63,7 +63,7 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.fcrepo.http.commons.session.SessionFactory;
-import org.fcrepo.kernel.api.FedoraTransaction;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -216,7 +216,7 @@ public class WebACRolesProvider {
      */
     private List<String> dereferenceAgentGroups(final Collection<String> agentGroups) {
         // TODO do not use transactions for internal reads
-        final FedoraTransaction transaction = sessionFactory.getNewTransaction();
+        final Transaction transaction = sessionFactory.getNewTransaction();
         //TODO figure out where the translator should be coming from.
         final IdentifierConverter<Resource, FedoraResource> translator = null;
 

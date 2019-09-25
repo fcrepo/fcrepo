@@ -45,7 +45,7 @@
     <property name="validator" ref="externalContentPathValidator" />
   </bean>
 
-  <!-- FedoraTransaction handling -->
+  <!-- Transaction handling -->
   <task:scheduler id="taskScheduler" />
   <task:executor id="taskExecutor" pool-size="1" />
   <task:annotation-driven executor="taskExecutor" scheduler="taskScheduler" />

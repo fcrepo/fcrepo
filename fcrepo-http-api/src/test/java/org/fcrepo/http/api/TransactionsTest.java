@@ -34,8 +34,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 
 import org.fcrepo.http.commons.session.HttpSession;
-import org.fcrepo.kernel.api.FedoraTransaction;
-import org.fcrepo.kernel.api.FedoraTransactionManager;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionManager;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -50,22 +50,22 @@ import org.mockito.junit.MockitoJUnitRunner;
  */
 @Ignore // TODO fix these tests
 @RunWith(MockitoJUnitRunner.Silent.class)
-public class FedoraTransactionsTest {
+public class TransactionsTest {
 
     private static final String USER_NAME = "test";
 
-    private FedoraTransactions testObj;
+    private Transactions testObj;
 
     private HttpSession testSession;
 
     @Mock
-    private FedoraTransaction mockTransaction;
+    private Transaction mockTransaction;
 
     @Mock
-    private FedoraTransaction regularTransaction;
+    private Transaction regularTransaction;
 
     @Mock
-    private FedoraTransactionManager mockTxManager;
+    private TransactionManager mockTxManager;
 
     @Mock
     private Principal mockPrincipal;
@@ -75,7 +75,7 @@ public class FedoraTransactionsTest {
 
     @Before
     public void setUp() {
-        testObj = new FedoraTransactions();
+        testObj = new Transactions();
         testSession = new HttpSession(mockTransaction);
         // testSession.makeBatchSession();
         when(mockTransaction.getId()).thenReturn("123");

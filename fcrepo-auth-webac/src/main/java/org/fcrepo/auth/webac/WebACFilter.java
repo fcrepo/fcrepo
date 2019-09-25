@@ -95,7 +95,7 @@ import org.fcrepo.http.api.FedoraLdp;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.http.commons.session.SessionFactory;
-import org.fcrepo.kernel.api.FedoraTransaction;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
@@ -114,7 +114,7 @@ public class WebACFilter implements Filter {
 
     private static final MediaType sparqlUpdate = MediaType.valueOf(contentTypeSPARQLUpdate);
 
-    private FedoraTransaction transaction;
+    private Transaction transaction;
 
     private static final Principal FOAF_AGENT_PRINCIPAL = new Principal() {
 
@@ -234,7 +234,7 @@ public class WebACFilter implements Filter {
     }
 
     // TODO do not use transactions for internal reads
-    private FedoraTransaction transaction() {
+    private Transaction transaction() {
         if (transaction == null) {
             transaction = sessionFactory.getNewTransaction();
         }
