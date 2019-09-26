@@ -95,7 +95,7 @@ public class HttpIdentifierConverter extends Converter<String, String> {
 
             return FEDORA_ID_PREFIX + fedoraId.replaceFirst("\\/", "");
         }
-        return path;
+        return "";
 
     }
 
@@ -109,7 +109,7 @@ public class HttpIdentifierConverter extends Converter<String, String> {
             // Need to pass as Array or second arg is ignored. Second arg is DON'T encode slashes
             return uriBuilder().build(values, false).toString();
         }
-        return null;
+        return "";
     }
 
     /**
