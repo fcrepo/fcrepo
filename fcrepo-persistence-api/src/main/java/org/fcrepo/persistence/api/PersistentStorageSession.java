@@ -20,6 +20,7 @@ package org.fcrepo.persistence.api;
 import java.time.Instant;
 
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 
 /**
@@ -69,10 +70,11 @@ public interface PersistentStorageSession {
      *
      * @param identifier The identifier of the resource to retrieve.
      * @return The resource.
-     * @throws PersistentStorageException If the identifier doesn't exist.
+     * @throws PersistentItemNotFoundException If the identifier doesn't exist.
+     * @throws PersistentStorageException If some other error happens.
      */
-    public FedoraResource read(final String identifier)
-            throws PersistentStorageException;
+    public FedoraResource read(final String identifier) throws PersistentItemNotFoundException,
+            PersistentStorageException;
 
     /**
      * Return a version of a resource from persistent storage
@@ -80,9 +82,9 @@ public interface PersistentStorageSession {
      * @param identifier The identifier of the resource to retrieve.
      * @param version The date/time of the version to retrieve.
      * @return The version of the resource.
-     * @throws PersistentStorageException If the identifier doesn't exist.
+     * @throws PersistentItemNotFoundException If the identifier doesn't exist.
      */
-    public FedoraResource read(final String identifier, final Instant version) throws PersistentStorageException;
+    public FedoraResource read(final String identifier, final Instant version) throws PersistentItemNotFoundException;
 
     /**
      * Commits any changes in the current sesssion to persistent storage.

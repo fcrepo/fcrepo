@@ -48,11 +48,7 @@ public class TransactionImpl implements Transaction {
         // Delete Transaction from TransactionManager state?
     }
 
-    /**
-     * Get the id of the transaction
-     * 
-     * @return id of the fedora transacation
-     */
+    @Override
     public String getId() {
         return id;
     }
