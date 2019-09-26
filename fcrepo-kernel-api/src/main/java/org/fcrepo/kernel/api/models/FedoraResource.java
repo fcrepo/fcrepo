@@ -21,14 +21,9 @@ import java.net.URI;
 import java.time.Instant;
 
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Stream;
 
-import org.apache.jena.rdf.model.Resource;
-
 import org.fcrepo.kernel.api.RdfStream;
-import org.fcrepo.kernel.api.TripleCategory;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 
 /**
  * @author ajs6f
@@ -181,26 +176,22 @@ public interface FedoraResource {
     void addType(final String type);
 
     /**
-     * Return the RDF properties of this object using the provided context
-     * @param idTranslator the property of idTranslator
-     * @param context the context
-     * @return the rdf properties of this object using the provided context
+     * Return the RDF properties for this resource.
+     *
+     * @return the RDF properties of this object.
      */
-    RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-                         final TripleCategory context);
+    RdfStream getTriples();
 
     /**
-     * Return the RDF properties of this object using the provided contexts
-     * @param idTranslator the property of idTranslator
-     * @param contexts the provided contexts
-     * @return the rdf properties of this object
+     * Returns the managed properties for this resource.
+     *
+     * @return the managed properties for this resource as an RdfStream
      */
-    RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-                         final Set<? extends TripleCategory> contexts);
+    RdfStream getManagedProperties();
 
     /**
      * Check if a resource was created in this session
-     * 
+     *
      * @return if resource created in this session
      */
     Boolean isNew();
