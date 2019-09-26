@@ -144,7 +144,7 @@ import org.fcrepo.http.commons.domain.Range;
 import org.fcrepo.http.commons.domain.ldp.LdpPreferTag;
 import org.fcrepo.http.commons.responses.RangeRequestInputStream;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
-import org.fcrepo.http.commons.session.HttpSession;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.exception.ACLAuthorizationConstraintViolationException;
@@ -725,14 +725,14 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * @param request the request
      * @param servletResponse the servlet response
      * @param resource the fedora resource
-     * @param session the session
+     * @param transaction the transaction
      */
     protected void checkCacheControlHeaders(final Request request,
                                                    final HttpServletResponse servletResponse,
                                                    final FedoraResource resource,
-                                                   final HttpSession session) {
-        evaluateRequestPreconditions(request, servletResponse, resource, session, true);
-        addCacheControlHeaders(servletResponse, resource, session);
+                                                   final Transaction transaction) {
+        evaluateRequestPreconditions(request, servletResponse, resource, transaction, true);
+        addCacheControlHeaders(servletResponse, resource, transaction);
     }
 
     /**
@@ -749,13 +749,13 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * </p>
      * @param servletResponse the servlet response
      * @param resource the fedora resource
-     * @param session the session
+     * @param transaction the transaction
      */
     protected void addCacheControlHeaders(final HttpServletResponse servletResponse,
                                                  final FedoraResource resource,
-                                                 final HttpSession session) {
+                                                 final Transaction transaction) {
 
-        if (session.isBatchSession()) {
+        if (!transaction.isShortLived()) {
             // Do not add caching headers if in a transaction
             return;
         }
@@ -795,23 +795,23 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * @param request the request
      * @param servletResponse the servlet response
      * @param resource the resource
-     * @param session the session
+     * @param transaction the transaction
      */
     protected void evaluateRequestPreconditions(final Request request,
                                                        final HttpServletResponse servletResponse,
                                                        final FedoraResource resource,
-                                                       final HttpSession session) {
-        evaluateRequestPreconditions(request, servletResponse, resource, session, false);
+                                                       final Transaction transaction) {
+        evaluateRequestPreconditions(request, servletResponse, resource, transaction, false);
     }
 
     @VisibleForTesting
     void evaluateRequestPreconditions(final Request request,
                                                      final HttpServletResponse servletResponse,
                                                      final FedoraResource resource,
-                                                     final HttpSession session,
+                                                     final Transaction transaction,
                                                      final boolean cacheControl) {
 
-        if (session.isBatchSession()) {
+        if (!transaction.isShortLived()) {
             // Force cache revalidation if in a transaction
             servletResponse.addHeader(CACHE_CONTROL, "must-revalidate");
             servletResponse.addHeader(CACHE_CONTROL, "max-age=0");
@@ -904,7 +904,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      */
     @SuppressWarnings("resource")
     protected Response createUpdateResponse(final FedoraResource resource, final boolean created) {
-        addCacheControlHeaders(servletResponse, resource, session);
+        addCacheControlHeaders(servletResponse, resource, transaction);
         addResourceLinkHeaders(resource, created);
         addExternalContentHeaders(resource);
         addAclHeader(resource);

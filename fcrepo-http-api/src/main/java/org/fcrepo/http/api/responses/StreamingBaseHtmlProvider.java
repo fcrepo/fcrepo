@@ -67,8 +67,9 @@ import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.http.commons.responses.ViewHelpers;
-import org.fcrepo.http.commons.session.HttpSession;
-import org.fcrepo.http.commons.session.SessionFactory;
+import org.fcrepo.http.commons.session.TransactionProvider;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.Binary;
@@ -92,17 +93,17 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
     UriInfo uriInfo;
 
     @javax.ws.rs.core.Context
-    SessionFactory sessionFactory;
+    TransactionManager txManager;
 
     @javax.ws.rs.core.Context
     HttpServletRequest request;
 
-    private HttpSession session() {
-        return sessionFactory.getSession(request);
+    private Transaction transaction() {
+        return TransactionProvider.getTransactionForRequest(txManager, request);
     }
 
     private IdentifierConverter<Resource, FedoraResource> translator() {
-        return new HttpResourceConverter(session(),
+        return new HttpResourceConverter(transaction(),
                 uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class));
     }
 

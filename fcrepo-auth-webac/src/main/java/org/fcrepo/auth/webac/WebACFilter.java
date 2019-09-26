@@ -93,9 +93,8 @@ import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.apache.shiro.subject.Subject;
 import org.fcrepo.http.api.FedoraLdp;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
-import org.fcrepo.http.commons.session.HttpSession;
-import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
@@ -139,7 +138,7 @@ public class WebACFilter implements Filter {
     private NodeService nodeService;
 
     @Inject
-    private SessionFactory sessionFactory;
+    private TransactionManager txManager;
 
     private static Set<URI> directOrIndirect = new HashSet<>();
 
@@ -236,7 +235,7 @@ public class WebACFilter implements Filter {
     // TODO do not use transactions for internal reads
     private Transaction transaction() {
         if (transaction == null) {
-            transaction = sessionFactory.getNewTransaction();
+            transaction = txManager.create();
         }
         return transaction;
     }
@@ -290,9 +289,8 @@ public class WebACFilter implements Filter {
     }
 
     private IdentifierConverter<Resource, FedoraResource> translator(final HttpServletRequest servletRequest) {
-        final HttpSession httpSession = new HttpSession(transaction());
         final UriBuilder uriBuilder = UriBuilder.fromUri(getBaseURL(servletRequest)).path(FedoraLdp.class);
-        return new HttpResourceConverter(httpSession, uriBuilder);
+        return new HttpResourceConverter(transaction(), uriBuilder);
     }
 
     private String getRepoPath(final HttpServletRequest servletRequest) {

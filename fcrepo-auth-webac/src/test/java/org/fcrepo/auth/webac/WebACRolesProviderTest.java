@@ -46,7 +46,7 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
-import org.fcrepo.http.commons.session.SessionFactory;
+import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.RepositoryException;
@@ -78,7 +78,7 @@ public class WebACRolesProviderTest {
     private Transaction mockTransaction;
 
     @Mock
-    private SessionFactory mockSessionFactory;
+    private TransactionManager mockTransactionManager;
 
     @Mock
     private NodeService mockNodeService;
@@ -101,9 +101,9 @@ public class WebACRolesProviderTest {
 
         roleProvider = new WebACRolesProvider();
         setField(roleProvider, "nodeService", mockNodeService);
-        setField(roleProvider, "sessionFactory", mockSessionFactory);
+        setField(roleProvider, "txManager", mockTransactionManager);
 
-        when(mockSessionFactory.getNewTransaction()).thenReturn(mockTransaction);
+        when(mockTransactionManager.create()).thenReturn(mockTransaction);
 
         when(mockResource.getDescribedResource()).thenReturn(mockResource);
         when(mockResource.getDescription()).thenReturn(mockResource);

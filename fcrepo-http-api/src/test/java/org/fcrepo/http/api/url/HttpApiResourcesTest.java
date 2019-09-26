@@ -28,7 +28,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
-import org.fcrepo.http.commons.session.HttpSession;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
@@ -60,7 +60,7 @@ public class HttpApiResourcesTest {
     private HttpResourceConverter mockSubjects;
 
     @Mock
-    private HttpSession mockSession;
+    private Transaction mockTransaction;
 
     @Mock
     private FedoraResource mockResource;
@@ -75,7 +75,7 @@ public class HttpApiResourcesTest {
     public void setUp() {
         testObj = new HttpApiResources();
         uriInfo = getUriInfoImpl();
-        mockSubjects = new HttpResourceConverter(mockSession, UriBuilder.fromUri("http://localhost/{path: .*}"));
+        mockSubjects = new HttpResourceConverter(mockTransaction, UriBuilder.fromUri("http://localhost/{path: .*}"));
     }
 
     @Test

@@ -50,6 +50,14 @@ public interface Transaction {
      */
     boolean isShortLived();
 
+
+    /**
+     * Set transaction short-lived state.
+     * 
+     * @param shortLived boolean true (short-lived) or false (not short-lived)
+     */
+    void setShortLived(boolean shortLived);
+
     /**
      * Expire a transaction
      */

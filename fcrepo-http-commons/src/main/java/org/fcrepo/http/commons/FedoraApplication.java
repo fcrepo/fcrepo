@@ -17,8 +17,8 @@
  */
 package org.fcrepo.http.commons;
 
-import org.fcrepo.http.commons.session.HttpSession;
-import org.fcrepo.http.commons.session.SessionProvider;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.http.commons.session.TransactionProvider;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.logging.LoggingFeature;
@@ -57,8 +57,8 @@ public class FedoraApplication extends ResourceConfig {
 
         @Override
         protected void configure() {
-            bindFactory(SessionProvider.class)
-                    .to(HttpSession.class)
+            bindFactory(TransactionProvider.class)
+                    .to(Transaction.class)
                     .in(RequestScoped.class);
         }
     }

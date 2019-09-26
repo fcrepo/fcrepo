@@ -62,7 +62,7 @@ import javax.inject.Inject;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
-import org.fcrepo.http.commons.session.SessionFactory;
+import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
@@ -92,7 +92,7 @@ public class WebACRolesProvider {
     private NodeService nodeService;
 
     @Inject
-    private SessionFactory sessionFactory;
+    private TransactionManager txManager;
 
     /**
      * Get the roles assigned to this Node.
@@ -112,7 +112,7 @@ public class WebACRolesProvider {
         LOGGER.debug("Getting agent roles for: {}", resource.getPath());
 
         // Get the effective ACL by searching the target node and any ancestors.
-        final Optional<ACLHandle> effectiveAcl = getEffectiveAcl(resource, false, sessionFactory);
+        final Optional<ACLHandle> effectiveAcl = getEffectiveAcl(resource, false, txManager);
 
         // Construct a list of acceptable acl:accessTo values for the target resource.
         final List<String> resourcePaths = new ArrayList<>();
@@ -216,7 +216,7 @@ public class WebACRolesProvider {
      */
     private List<String> dereferenceAgentGroups(final Collection<String> agentGroups) {
         // TODO do not use transactions for internal reads
-        final Transaction transaction = sessionFactory.getNewTransaction();
+        final Transaction transaction = txManager.create();
         //TODO figure out where the translator should be coming from.
         final IdentifierConverter<Resource, FedoraResource> translator = null;
 
@@ -306,12 +306,12 @@ public class WebACRolesProvider {
      * @param aclResource the ACL resource
      * @param ancestorAcl flag indicating whether or not the ACL resource associated with an ancestor of the target
      *                    resource
-     * @param sessionFactory the session factory
+     * @param txManager the transaction manager
      * @return a list of acl:Authorization objects
      */
     private static List<WebACAuthorization> getAuthorizations(final FedoraResource aclResource,
                                                               final boolean ancestorAcl,
-                                                              final SessionFactory sessionFactory) {
+                                                              final TransactionManager txManager) {
 
         final List<WebACAuthorization> authorizations = new ArrayList<>();
         //TODO figure out where the translator should be coming from
@@ -383,17 +383,17 @@ public class WebACRolesProvider {
      * and it may be external to the fedora repository.
      * @param resource the Fedora resource
      * @param ancestorAcl the flag for looking up ACL from ancestor hierarchy resources
-     * @param sessionFactory session factory
+     * @param txManager transaction manager
      */
     static Optional<ACLHandle> getEffectiveAcl(final FedoraResource resource, final boolean ancestorAcl,
-                                                final SessionFactory sessionFactory) {
+                                                final TransactionManager txManager) {
         try {
 
             final FedoraResource aclResource = resource.getAcl();
 
             if (aclResource != null) {
                 final List<WebACAuthorization> authorizations =
-                    getAuthorizations(aclResource, ancestorAcl, sessionFactory);
+                    getAuthorizations(aclResource, ancestorAcl, txManager);
                 if (authorizations.size() > 0) {
                     return Optional.of(
                         new ACLHandle(resource, authorizations));
@@ -405,7 +405,7 @@ public class WebACRolesProvider {
                 return Optional.empty();
             } else {
                 LOGGER.trace("Checking parent resource for ACL. No ACL found at {}", resource.getPath());
-                return getEffectiveAcl(resource.getContainer(), true, sessionFactory);
+                return getEffectiveAcl(resource.getContainer(), true, txManager);
             }
         } catch (final RepositoryException ex) {
             LOGGER.debug("Exception finding effective ACL: {}", ex.getMessage());

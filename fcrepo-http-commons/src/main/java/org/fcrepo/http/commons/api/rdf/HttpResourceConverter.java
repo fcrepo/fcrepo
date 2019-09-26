@@ -33,7 +33,6 @@ import javax.ws.rs.core.UriBuilder;
 
 import com.google.common.base.Converter;
 import org.apache.jena.rdf.model.Resource;
-import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
@@ -71,19 +70,17 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
     protected Converter<String, String> reverse = identity();
 
     private final UriTemplate uriTemplate;
-    private final boolean batch;
 
     /**
-     * Create a new identifier converter within the given session with the given URI template
-     * @param session the session
+     * Create a new identifier converter within the given transaction with the given URI template
+     * @param transaction the transaction
      * @param uriBuilder the uri builder
      */
-    public HttpResourceConverter(final HttpSession session,
+    public HttpResourceConverter(final Transaction transaction,
                                  final UriBuilder uriBuilder) {
 
-        this.transaction = session.getTransaction();
+        this.transaction = transaction;
         this.uriBuilder = uriBuilder;
-        this.batch = session.isBatchSession();
         this.uriTemplate = new UriTemplate(uriBuilder.toTemplate());
     }
 
@@ -132,11 +129,9 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
         public static final String TX_PREFIX = "tx:";
 
         private final Transaction transaction;
-        private final boolean batch;
 
-        public TransactionIdentifierConverter(final Transaction transaction, final boolean batch) {
+        public TransactionIdentifierConverter(final Transaction transaction) {
             this.transaction = transaction;
-            this.batch = batch;
         }
 
         @Override
@@ -156,7 +151,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
         }
 
         private String txSegment() {
-            return batch ? "/" + TX_PREFIX + transaction.getId() : EMPTY;
+            return transaction.isShortLived() ? EMPTY : "/" + TX_PREFIX + transaction.getId();
         }
     }
 

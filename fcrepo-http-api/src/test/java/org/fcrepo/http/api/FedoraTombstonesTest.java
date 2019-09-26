@@ -17,7 +17,7 @@
  */
 package org.fcrepo.http.api;
 
-import org.fcrepo.http.commons.session.HttpSession;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.models.Tombstone;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,7 +47,7 @@ public class FedoraTombstonesTest {
     private FedoraTombstones testObj;
 
     @Mock
-    private HttpSession mockSession;
+    private Transaction mockTransaction;
 
     @Mock
     private SecurityContext mockSecurityContext;
@@ -56,7 +56,7 @@ public class FedoraTombstonesTest {
     @Before
     public void setUp() {
         testObj = spy(new FedoraTombstones(path));
-        setField(testObj, "session", mockSession);
+        setField(testObj, "transaction", mockTransaction);
         setField(testObj, "securityContext", mockSecurityContext);
     }
 
@@ -69,6 +69,6 @@ public class FedoraTombstonesTest {
         final Response actual = testObj.delete();
         assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
         verify(mockResource).delete();
-        verify(mockSession).commit();
+        verify(mockTransaction).commit();
     }
 }

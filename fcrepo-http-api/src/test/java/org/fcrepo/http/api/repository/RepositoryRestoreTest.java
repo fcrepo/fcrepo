@@ -36,7 +36,6 @@ import java.util.Collection;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
-import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.services.RepositoryService;
 import org.junit.Before;
@@ -55,9 +54,6 @@ public class RepositoryRestoreTest {
     private RepositoryService mockService;
 
     @Mock
-    private HttpSession mockSession;
-
-    @Mock
     private Transaction mockTransaction;
 
     @Before
@@ -65,10 +61,9 @@ public class RepositoryRestoreTest {
         initMocks(this);
 
         repoRestore = new FedoraRepositoryRestore();
-        setField(repoRestore, "session", mockSession);
+        setField(repoRestore, "transaction", mockTransaction);
         setField(repoRestore, "repositoryService", mockService);
         setField(repoRestore, "uriInfo", getUriInfoImpl());
-        when(mockSession.getTransaction()).thenReturn(mockTransaction);
     }
 
     @Test

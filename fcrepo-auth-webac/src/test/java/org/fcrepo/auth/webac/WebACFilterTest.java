@@ -45,7 +45,7 @@ import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.subject.support.SubjectThreadState;
-import org.fcrepo.http.commons.session.SessionFactory;
+import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.Binary;
@@ -88,7 +88,7 @@ public class WebACFilterTest {
     private SecurityManager mockSecurityManager;
 
     @Mock
-    private SessionFactory mockSessionFactory;
+    private TransactionManager mockTransactionManager;
 
     @Mock
     private NodeService mockNodeService;
@@ -154,7 +154,7 @@ public class WebACFilterTest {
         mockBinary = Mockito.mock(Binary.class);
         mockRoot = Mockito.mock(Container.class);
 
-        when(mockSessionFactory.getNewTransaction()).thenReturn(mockTransaction);
+        when(mockTransactionManager.create()).thenReturn(mockTransaction);
 
         when(mockNodeService.exists(mockTransaction, testPath)).thenReturn(true);
         when(mockNodeService.exists(mockTransaction, testChildPath)).thenReturn(false);
