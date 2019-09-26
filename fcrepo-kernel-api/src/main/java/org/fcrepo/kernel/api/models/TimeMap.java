@@ -19,7 +19,14 @@ package org.fcrepo.kernel.api.models;
 
 /**
  * @author lsitu
- * @since Apr. 19, 2018
+ * @since Oct. 04, 2017
  */
-public interface FedoraWebacAcl extends Container {
+public interface TimeMap extends FedoraResource {
+
+    /**
+     * Get the Original Resource to which this TimeMap/TimeGate applies.
+     *
+     * @return the original resource for this
+     */
+    FedoraResource getOriginalResource();
 }

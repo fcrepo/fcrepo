@@ -69,7 +69,7 @@ public interface ResourceFactory {
      * @param identifier The path or identifier for the resource.
      * @return The binary object.
      */
-    public FedoraBinary createBinary(final Transaction transaction, final String identifier);
+    public Binary createBinary(final Transaction transaction, final String identifier);
 
     /**
      * Create a binary description.
@@ -87,7 +87,7 @@ public interface ResourceFactory {
      * @param identifier The path or identifier of the resource this timemap is linked to.
      * @return The timemap object.
      */
-    public FedoraTimeMap createTimemap(final Transaction transaction, final String identifier);
+    public TimeMap createTimemap(final Transaction transaction, final String identifier);
 
     /**
      * Create a Webac ACL.
@@ -96,7 +96,7 @@ public interface ResourceFactory {
      * @param identifier The path or identifier of the resource this ACL is linked to.
      * @return The ACL object.
      */
-    public FedoraWebacAcl createAcl(final Transaction transaction, final String identifier);
+    public WebacAcl createAcl(final Transaction transaction, final String identifier);
 
     /*
      * TODO: Do we need a model for an archival group?

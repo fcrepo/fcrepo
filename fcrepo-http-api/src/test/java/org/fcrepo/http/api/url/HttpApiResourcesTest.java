@@ -29,7 +29,7 @@ import org.apache.jena.rdf.model.Resource;
 
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.http.commons.session.HttpSession;
-import org.fcrepo.kernel.api.models.FedoraBinary;
+import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.junit.Before;
@@ -66,7 +66,7 @@ public class HttpApiResourcesTest {
     private FedoraResource mockResource;
 
     @Mock
-    private FedoraBinary mockBinary;
+    private Binary mockBinary;
 
     @Mock
     private NonRdfSourceDescription mockDescription;

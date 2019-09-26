@@ -17,13 +17,32 @@
  */
 package org.fcrepo.kernel.api.services;
 
-import org.fcrepo.kernel.api.models.TimeMap;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.models.Binary;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 
 /**
- * Service for creating and retrieving {@link TimeMap}
- *
- * @author bbpennel
+ * @author cabeer
+ * @since 10/10/14
  */
-public interface TimeMapService extends Service<TimeMap> {
+public interface BinaryService extends Service<Binary> {
+
+    /**
+     * Retrieves a Binary instance by transaction and path.
+     *
+     * @param transaction transaction
+     * @param path path of binary datastream
+     * @return retrieved Binary
+     */
+    Binary findOrCreateBinary(Transaction transaction, String path);
+
+    /**
+     * Retrieves a binary description instance by transaction and path.
+     *
+     * @param transaction transaction
+     * @param path path of description
+     * @return retrieved NonRdfSourceDescription
+     */
+    NonRdfSourceDescription findOrCreateDescription(Transaction transaction, String path);
 
 }

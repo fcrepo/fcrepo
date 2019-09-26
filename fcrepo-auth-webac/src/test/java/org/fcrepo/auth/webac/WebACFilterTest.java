@@ -48,7 +48,7 @@ import org.apache.shiro.subject.support.SubjectThreadState;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.models.Container;
-import org.fcrepo.kernel.api.models.FedoraBinary;
+import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.junit.After;
@@ -151,7 +151,7 @@ public class WebACFilterTest {
 
         mockContainer = Mockito.mock(Container.class);
         mockChildContainer = Mockito.mock(Container.class);
-        mockBinary = Mockito.mock(FedoraBinary.class);
+        mockBinary = Mockito.mock(Binary.class);
         mockRoot = Mockito.mock(Container.class);
 
         when(mockSessionFactory.getNewTransaction()).thenReturn(mockTransaction);

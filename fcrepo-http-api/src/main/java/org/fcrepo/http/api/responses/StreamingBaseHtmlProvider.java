@@ -71,7 +71,7 @@ import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.api.models.FedoraBinary;
+import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.glassfish.jersey.uri.UriTemplate;
 import org.slf4j.Logger;
@@ -192,7 +192,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
         context.put("isOriginalResource", (resource != null && resource.isOriginalResource()));
         context.put("isVersion", (resource != null && resource.isMemento()));
         context.put("isLDPNR", (resource != null &&
-                (resource instanceof FedoraBinary || !resource.getDescribedResource().equals(resource))));
+                (resource instanceof Binary || !resource.getDescribedResource().equals(resource))));
 
         // the contract of MessageBodyWriter<T> is _not_ to close the stream
         // after writing to it

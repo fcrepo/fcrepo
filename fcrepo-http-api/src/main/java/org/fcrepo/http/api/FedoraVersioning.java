@@ -80,7 +80,7 @@ import org.fcrepo.kernel.api.exception.ItemExistsException;
 import org.fcrepo.kernel.api.exception.MementoDatetimeFormatException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
-import org.fcrepo.kernel.api.models.FedoraBinary;
+import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.slf4j.Logger;
@@ -175,9 +175,9 @@ public class FedoraVersioning extends ContentExposingResource {
 
                 // Create memento
                 FedoraResource memento = null;
-                final boolean isBinary = resource instanceof FedoraBinary;
+                final boolean isBinary = resource instanceof Binary;
                 if (isBinary) {
-                    final FedoraBinary binaryResource = (FedoraBinary) resource;
+                    final Binary binaryResource = (Binary) resource;
                     if (createFromExisting) {
                         memento = versionService.createBinaryVersion(session.getTransaction(),
                                 binaryResource, mementoInstant, storagePolicyDecisionPoint);
@@ -227,11 +227,11 @@ public class FedoraVersioning extends ContentExposingResource {
         }
     }
 
-    private FedoraBinary createBinaryMementoFromRequest(final FedoraBinary binaryResource,
-            final Instant mementoInstant,
-            final InputStream requestBodyStream,
-            final ExternalContentHandler extContent,
-            final String digest) throws InvalidChecksumException, UnsupportedAlgorithmException {
+    private Binary createBinaryMementoFromRequest(final Binary binaryResource,
+                                                  final Instant mementoInstant,
+                                                  final InputStream requestBodyStream,
+                                                  final ExternalContentHandler extContent,
+                                                  final String digest) throws InvalidChecksumException, UnsupportedAlgorithmException {
 
         final Collection<String> checksums = parseDigestHeader(digest);
         final Collection<URI> checksumURIs = checksums == null ? new HashSet<>() : checksums.stream().map(

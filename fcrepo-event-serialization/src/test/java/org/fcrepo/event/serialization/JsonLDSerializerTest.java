@@ -44,7 +44,7 @@ import org.junit.Test;
  * @author acoburn
  * @author dbernstein
  */
-public class JsonLDSerializerTest extends FedoraEventSerializerTestBase {
+public class JsonLDSerializerTest extends EventSerializerTestBase {
 
     @Test
     public void testJsonSerializationAsModel() {

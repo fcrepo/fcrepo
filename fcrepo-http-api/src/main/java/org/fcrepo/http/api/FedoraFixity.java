@@ -39,7 +39,7 @@ import javax.ws.rs.core.Link;
 import com.google.common.annotations.VisibleForTesting;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
-import org.fcrepo.kernel.api.models.FedoraBinary;
+import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
@@ -88,7 +88,7 @@ public class FedoraFixity extends ContentExposingResource {
             RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET, TURTLE_X, TEXT_HTML_WITH_CHARSET, "*/*"})
     public RdfNamespacedStream getDatastreamFixity() {
 
-        if (!(resource() instanceof FedoraBinary)) {
+        if (!(resource() instanceof Binary)) {
             throw new NotFoundException(resource() + " is not a binary");
         }
 
@@ -100,7 +100,7 @@ public class FedoraFixity extends ContentExposingResource {
         LOGGER.info("Get fixity for '{}'", externalPath);
         return new RdfNamespacedStream(
                 new DefaultRdfStream(asNode(resource()),
-                    ((FedoraBinary)resource()).getFixity(translator())),
+                    ((Binary)resource()).getFixity(translator())),
                 namespaceRegistry.getNamespaces());
     }
 

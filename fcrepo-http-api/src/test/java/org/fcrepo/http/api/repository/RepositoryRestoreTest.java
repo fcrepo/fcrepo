@@ -17,10 +17,11 @@
  */
 package org.fcrepo.http.api.repository;
 
-import static java.lang.System.getProperty;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -32,6 +33,9 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
+
 import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.services.RepositoryService;
@@ -40,13 +44,12 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 /**
- * @author Andrew Woods
- *         Date: 9/4/13
+ * @author Andrew Woods Date: 9/4/13
  */
 @Deprecated
-public class FedoraRepositoryBackupTest {
+public class RepositoryRestoreTest {
 
-    private FedoraRepositoryBackup repoBackup;
+    private FedoraRepositoryRestore repoRestore;
 
     @Mock
     private RepositoryService mockService;
@@ -61,38 +64,41 @@ public class FedoraRepositoryBackupTest {
     public void setUp() {
         initMocks(this);
 
-        repoBackup = new FedoraRepositoryBackup();
-        setField(repoBackup, "session", mockSession);
-        setField(repoBackup, "repositoryService", mockService);
-        setField(repoBackup, "uriInfo", getUriInfoImpl());
+        repoRestore = new FedoraRepositoryRestore();
+        setField(repoRestore, "session", mockSession);
+        setField(repoRestore, "repositoryService", mockService);
+        setField(repoRestore, "uriInfo", getUriInfoImpl());
         when(mockSession.getTransaction()).thenReturn(mockTransaction);
     }
 
     @Test
     public void testRunBackup() throws Exception {
         final Collection<Throwable> problems = new ArrayList<>();
-        when(mockService.backupRepository(any(Transaction.class),
-                                        any(File.class))).thenReturn(
-                problems);
+        when(mockService.backupRepository(any(Transaction.class), any(File.class)))
+                .thenReturn(problems);
 
-        final String backupPath = (String) repoBackup.runBackup(null).getEntity();
-        assertNotNull(backupPath);
+        boolean thrown = false;
+        try {
+            repoRestore.runRestore(null);
+            fail("Exception expected");
+        } catch (final WebApplicationException e) {
+            thrown = true;
+        }
+        assertTrue(thrown);
     }
 
     @Test
     public void testRunBackupWithDir() throws Exception {
         final Collection<Throwable> problems = new ArrayList<>();
-        when(mockService.backupRepository(any(Transaction.class),
-                                        any(File.class))).thenReturn(
-                problems);
+        when(mockService.restoreRepository(any(Transaction.class), any(File.class)))
+                .thenReturn(problems);
 
-        final String tmpDir = getProperty("java.io.tmpdir");
-        final String tmpDirPath = new File(tmpDir).getCanonicalPath();
+        final String tmpDir = System.getProperty("java.io.tmpdir");
         final InputStream inputStream = new ByteArrayInputStream(tmpDir.getBytes());
 
-        final String backupPath = (String) repoBackup.runBackup(inputStream).getEntity();
-        assertNotNull(backupPath);
-        assertEquals(tmpDirPath, backupPath);
+        final Response response = repoRestore.runRestore(inputStream);
+        assertNotNull(response);
+        assertEquals(204, response.getStatus());
     }
 
 }

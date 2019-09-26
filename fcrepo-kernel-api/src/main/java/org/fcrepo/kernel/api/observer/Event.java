@@ -29,7 +29,7 @@ import java.util.Set;
  * @author acoburn
  * @since Feb 19, 2013
  */
-public interface FedoraEvent {
+public interface Event {
 
     /**
      * @return the event types associated with this event.

@@ -24,7 +24,7 @@ import static org.fcrepo.kernel.api.observer.OptionalValues.BASE_URL;
 import java.io.ByteArrayInputStream;
 
 import org.apache.jena.rdf.model.Model;
-import org.fcrepo.kernel.api.observer.FedoraEvent;
+import org.fcrepo.kernel.api.observer.Event;
 
 /**
  * A basic serialization API for Fedora events
@@ -38,7 +38,7 @@ public interface EventSerializer {
      * @param evt the Fedora event
      * @return an RDF model representing the event
      */
-    static Model toModel(final FedoraEvent evt) {
+    static Model toModel(final Event evt) {
         final EventSerializer serializer = new JsonLDSerializer();
         final String json = serializer.serialize(evt);
         final Model model = createDefaultModel();
@@ -48,9 +48,9 @@ public interface EventSerializer {
     }
 
     /**
-     * Serialize a FedoraEvent into a JSON String
+     * Serialize a Event into a JSON String
      * @param evt the Fedora event
      * @return a JSON string
      */
-    String serialize(final FedoraEvent evt);
+    String serialize(final Event evt);
 }

@@ -23,10 +23,10 @@ import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.Container;
-import org.fcrepo.kernel.api.models.FedoraBinary;
+import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.models.FedoraTimeMap;
-import org.fcrepo.kernel.api.models.FedoraWebacAcl;
+import org.fcrepo.kernel.api.models.TimeMap;
+import org.fcrepo.kernel.api.models.WebacAcl;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.persistence.api.PersistentStorageSession;
@@ -76,9 +76,9 @@ public class ResourceFactoryImpl implements ResourceFactory {
     }
 
     @Override
-    public FedoraBinary createBinary(final Transaction transaction, final String identifier) {
+    public Binary createBinary(final Transaction transaction, final String identifier) {
         // TODO: Change to FedoraBinaryImpl.class when implemented
-        return (FedoraBinary) createResource(FedoraBinary.class);
+        return (Binary) createResource(Binary.class);
     }
 
     @Override
@@ -89,15 +89,15 @@ public class ResourceFactoryImpl implements ResourceFactory {
     }
 
     @Override
-    public FedoraTimeMap createTimemap(final Transaction transaction, final String identifier) {
+    public TimeMap createTimemap(final Transaction transaction, final String identifier) {
         // TODO: Change to FedoraTimeMapImpl.class when implemented
-        return (FedoraTimeMap) createResource(FedoraTimeMap.class);
+        return (TimeMap) createResource(TimeMap.class);
     }
 
     @Override
-    public FedoraWebacAcl createAcl(final Transaction transaction, final String identifier) {
+    public WebacAcl createAcl(final Transaction transaction, final String identifier) {
         // TODO: Change to ContainerImpl.class when implemented
-        return (FedoraWebacAcl) createResource(FedoraWebacAcl.class);
+        return (WebacAcl) createResource(WebacAcl.class);
     }
 
     @Override

@@ -30,7 +30,7 @@ import javax.jms.MessageProducer;
 import javax.jms.Session;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
-import org.fcrepo.kernel.api.observer.FedoraEvent;
+import org.fcrepo.kernel.api.observer.Event;
 import org.slf4j.Logger;
 
 import com.google.common.eventbus.EventBus;
@@ -69,14 +69,14 @@ abstract class AbstractJMSPublisher {
      * When an EventBus mesage is received, map it to our JMS
      * message payload and push it onto the queue.
      *
-     * @param fedoraEvent the fedora event
+     * @param event the fedora event
      * @throws JMSException if JMS exception occurred
      */
     @Subscribe
-    public void publishJCREvent(final FedoraEvent fedoraEvent) throws JMSException {
+    public void publishJCREvent(final Event event) throws JMSException {
         LOGGER.debug("Received an event from the internal bus.");
         final Message tm =
-                eventFactory.getMessage(fedoraEvent, jmsSession);
+                eventFactory.getMessage(event, jmsSession);
         LOGGER.debug("Transformed the event to a JMS message.");
         producer.send(tm);
 
