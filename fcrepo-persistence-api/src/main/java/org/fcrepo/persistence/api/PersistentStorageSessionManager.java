@@ -18,26 +18,28 @@
 package org.fcrepo.persistence.api;
 
 /**
- * Interface to create PersistentStorageSessions.
+ * Interface to access PersistentStorageSessions.
  *
  * @author whikloj
+ * @author dbernstein
  * @since 2019-09-19
  */
-public interface PersistentStorageSessionFactory {
+public interface PersistentStorageSessionManager {
 
     /**
-     * Factory method to get PersistentStorageSession.
+     * Retrieve a PersistentStorageSession.
      *
      * @param sessionId the externally generated session ID.
      * @return the PersistentStorageSession instance.
      */
-    public PersistentStorageSession getSession(final String sessionId);
+    PersistentStorageSession getSession(final String sessionId);
 
     /**
-     * Factory method to get PersistentStorageSession.
+     * Retrieve a read-only PersistentStorageSession. Clients should expect
+     * invocation on storage modifying methods to throw exception.
      *
      * @return the PersistentStorageSession instance.
      */
-    public PersistentStorageSession getReadOnlySession();
+    PersistentStorageSession getReadOnlySession();
 
 }
