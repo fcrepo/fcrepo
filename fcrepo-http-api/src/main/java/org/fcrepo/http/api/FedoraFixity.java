@@ -30,6 +30,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
@@ -41,6 +42,7 @@ import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.services.FixityService;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
@@ -58,6 +60,8 @@ public class FedoraFixity extends ContentExposingResource {
 
     @PathParam("path") protected String externalPath;
 
+
+    @Inject private FixityService fixityService;
 
     /**
      * Default JAX-RS entry point
@@ -99,9 +103,12 @@ public class FedoraFixity extends ContentExposingResource {
 
         LOGGER.info("Get fixity for '{}'", externalPath);
         return new RdfNamespacedStream(
-                new DefaultRdfStream(asNode(resource()),
-                    ((Binary)resource()).getFixity(translator())),
-                namespaceRegistry.getNamespaces());
+            new DefaultRdfStream(
+                asNode(resource()),
+                fixityService.getFixity((Binary)resource())
+            ),
+            namespaceRegistry.getNamespaces()
+        );
     }
 
     @Override
