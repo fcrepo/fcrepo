@@ -17,11 +17,7 @@
  */
 package org.fcrepo.kernel.api.models;
 
-import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
-import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 
 import java.io.InputStream;
@@ -132,32 +128,4 @@ public interface Binary extends FedoraResource {
      * @return original file name for the binary content, or the object's id.
      */
     String getFilename();
-
-    /**
-     * Get the fixity of this datastream compared to metadata stored in the repository
-     * @param idTranslator the id translator
-     * @return the fixity of this datastream compared to metadata stored in the repository
-     */
-    RdfStream getFixity(IdentifierConverter<Resource, FedoraResource> idTranslator);
-
-    /**
-     * Get the fixity of this datastream in a given repository's binary store.
-     * @param idTranslator the id translator
-     * @param contentDigest the checksum to compare against
-     * @param size the expected size of the binary
-     * @return the fixity of the datastream
-     */
-    RdfStream getFixity(IdentifierConverter<Resource, FedoraResource> idTranslator,
-                        URI contentDigest, long size);
-
-
-    /**
-     * Digest this datastream with the digest algorithms provided
-     * @param idTranslator the id translator
-     * @param algorithms the digest algorithms to be used
-     * @return the checksums of this datastream
-     * @throws org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException if unsupported digest algorithm occurred
-     */
-    Collection<URI> checkFixity(IdentifierConverter<Resource, FedoraResource> idTranslator,
-            Collection<String> algorithms) throws UnsupportedAlgorithmException;
 }

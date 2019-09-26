@@ -130,6 +130,7 @@ import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.services.FixityService;
 import org.fcrepo.kernel.api.utils.ContentDigest;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;
@@ -152,6 +153,8 @@ public class FedoraLdp extends ContentExposingResource {
     private static final String DIGEST = "Digest";
 
     @PathParam("path") protected String externalPath;
+
+    @Inject private FixityService fixityService;
 
     @Inject private FedoraHttpConfiguration httpConfiguration;
 
@@ -870,7 +873,7 @@ public class FedoraLdp extends ContentExposingResource {
                     "Unsupported digest algorithm provided in 'Want-Digest' header: " + wantDigest);
         }
 
-        final Collection<URI> checksumResults = binary.checkFixity(idTranslator, preferredDigests);
+        final Collection<URI> checksumResults = fixityService.checkFixity(binary, preferredDigests);
         return checksumResults.stream().map(uri -> uri.toString().replaceFirst("urn:", "")
                 .replaceFirst(":", "=").replaceFirst("sha1=", "sha=")).collect(Collectors.joining(","));
     }
