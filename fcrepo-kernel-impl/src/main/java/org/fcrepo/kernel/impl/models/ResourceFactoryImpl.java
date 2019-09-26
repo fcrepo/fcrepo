@@ -17,11 +17,19 @@
  */
 package org.fcrepo.kernel.impl.models;
 
+import java.lang.reflect.Constructor;
+import java.util.List;
 import javax.inject.Inject;
+
+import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.ResourceTypeException;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -32,7 +40,6 @@ import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionFactory;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
-import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 
 
 /**
@@ -72,32 +79,32 @@ public class ResourceFactoryImpl implements ResourceFactory {
     @Override
     public Container createContainer(final Transaction transaction, final String identifier) {
         // TODO: Change to ContainerImpl.class when implemented
-        return (Container) createResource(Container.class);
+        return (Container) createResource(transaction, identifier, Container.class);
     }
 
     @Override
     public Binary createBinary(final Transaction transaction, final String identifier) {
         // TODO: Change to FedoraBinaryImpl.class when implemented
-        return (Binary) createResource(Binary.class);
+        return (Binary) createResource(transaction, identifier, Binary.class);
     }
 
     @Override
     public NonRdfSourceDescription createBinaryDescription(final Transaction transaction,
             final String identifier) {
         // TODO: Change to NonRdfSourceDescrptionImpl.class when implemented
-        return (NonRdfSourceDescription) createResource(NonRdfSourceDescription.class);
+        return (NonRdfSourceDescription) createResource(transaction, identifier, NonRdfSourceDescription.class);
     }
 
     @Override
     public TimeMap createTimemap(final Transaction transaction, final String identifier) {
         // TODO: Change to FedoraTimeMapImpl.class when implemented
-        return (TimeMap) createResource(TimeMap.class);
+        return (TimeMap) createResource(transaction, identifier, TimeMap.class);
     }
 
     @Override
     public WebacAcl createAcl(final Transaction transaction, final String identifier) {
         // TODO: Change to ContainerImpl.class when implemented
-        return (WebacAcl) createResource(WebacAcl.class);
+        return (WebacAcl) createResource(transaction, identifier, WebacAcl.class);
     }
 
     @Override
@@ -105,45 +112,58 @@ public class ResourceFactoryImpl implements ResourceFactory {
             throws PathNotFoundException {
         try {
             final PersistentStorageSession psSession = getSession(transaction);
-            return psSession.read(identifier);
+            final List<String> types = psSession.getTypes(identifier);
+            final Class<? extends FedoraResource> clazz = getClassForTypes(types);
+
+            return createResource(transaction, identifier, clazz);
         } catch (final PersistentItemNotFoundException e) {
             throw new PathNotFoundException(e);
-        } catch (final PersistentStorageException e) {
-            // This is a big error, wrap as RepositoryRuntime and send it through.
-            throw new RepositoryRuntimeException(e);
         }
-
     }
 
     @Override
     public <T extends FedoraResource> T getResource(final Transaction transaction, final String identifier,
             final Class<T> clazz)
             throws PathNotFoundException {
-        try {
-            final PersistentStorageSession psSession = getSession(transaction);
-            return clazz.cast(psSession.read(identifier));
-        } catch (final PersistentItemNotFoundException e) {
-            throw new PathNotFoundException(e);
-        } catch (final PersistentStorageException e) {
-            // This is a big error, wrap as RepositoryRuntime and send it through.
-            throw new RepositoryRuntimeException(e);
-        }
-
+        return clazz.cast(getResource(transaction, identifier));
     }
 
     /**
-     * This is probably a bad idea, but for stubbing lets instantiate whatever we need.
+     * Returns the appropriate FedoraResource class for an object based on the provided types
      *
-     * @param createClass The class of the object to make.
-     * @return FedoraResource sub-type object of class c
+     * @param types List of types
+     * @return FedoraResource class
      */
-    private FedoraResource createResource(final Class<? extends FedoraResource> createClass) {
+    private Class<? extends FedoraResource> getClassForTypes(final List<String> types) {
+        if (types.contains(BASIC_CONTAINER.toString()) || types.contains(INDIRECT_CONTAINER.toString()) || types
+                .contains(DIRECT_CONTAINER.toString())) {
+            return Container.class;
+        }
+        if (types.contains(NON_RDF_SOURCE.toString())) {
+            return Binary.class;
+        }
+        // TODO add the rest of the types
+        throw new ResourceTypeException("Could not identify the resource type from values " + types.toString());
+    }
+
+    /**
+     * Instantiates a new FedoraResource object of the given class.
+     *
+     * @param transaction the transaction
+     * @param identifier identifier for the new instance
+     * @param createClass class of the new resource
+     * @return new FedoraResource instance
+     */
+    private FedoraResource createResource(final Transaction transaction, final String identifier,
+            final Class<? extends FedoraResource> createClass) {
         try {
-            return createClass.newInstance();
-        } catch (final InstantiationException e) {
-            throw new RepositoryRuntimeException(e);
-        } catch (final IllegalAccessException e) {
-            throw new RepositoryRuntimeException(e);
+            // Retrieve standard constructor
+            final Constructor<? extends FedoraResource> constructor = createClass.getConstructor(
+                    String.class, Transaction.class, PersistentStorageSessionFactory.class);
+
+            return constructor.newInstance(identifier, transaction, factory);
+        } catch (SecurityException | ReflectiveOperationException e) {
+            throw new RepositoryRuntimeException("Unable to construct object", e);
         }
     }
 

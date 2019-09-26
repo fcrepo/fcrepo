@@ -46,6 +46,13 @@ public class FedoraResourceImpl implements FedoraResource {
 
     private RdfStream managedPropertiesStream;
 
+    protected FedoraResourceImpl(final String id, final Transaction tx,
+            final PersistentStorageSessionFactory pSessionFactory) {
+        this.id = id;
+        this.tx = tx;
+        this.pSessionFactory = pSessionFactory;
+    }
+
     @Override
     public String getId() {
         return id;
