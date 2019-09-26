@@ -34,6 +34,13 @@ public interface Binary extends FedoraResource {
      * @return The InputStream of content associated with this datastream.
      */
     InputStream getContent();
+    
+    /**
+     * Set the content stream for this resource. 
+     * 
+     * @param content Inputstream 
+     */
+    void setContentStream(InputStream content);
 
     /**
      * Sets the content of this Datastream.

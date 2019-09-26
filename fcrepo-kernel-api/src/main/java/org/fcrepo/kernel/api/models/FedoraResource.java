@@ -26,15 +26,27 @@ import java.util.stream.Stream;
 import org.fcrepo.kernel.api.RdfStream;
 
 /**
+ * A resource in a Fedora repository.
+ *
  * @author ajs6f
  * @since Jan 10, 2014
  */
 public interface FedoraResource {
 
     /**
-     * Get the path to the resource
-     * @return path
+     * Get the fedora identifier for this resource
+     *
+     * @return the fedora identifier
      */
+    String getId();
+
+    /**
+     * Get the path to the resource
+     *
+     * @return path
+     * @deprecated use getId()
+     */
+    @Deprecated
     String getPath();
 
     /**
@@ -183,11 +195,25 @@ public interface FedoraResource {
     RdfStream getTriples();
 
     /**
+     * Store the stream of client managed triples for this resource
+     *
+     * @param triplesStream stream of triples
+     */
+    void setTriples(RdfStream triplesStream);
+
+    /**
      * Returns the managed properties for this resource.
      *
      * @return the managed properties for this resource as an RdfStream
      */
     RdfStream getManagedProperties();
+
+    /**
+     * Store the stream of server managed properties for this resource.
+     *
+     * @param managedStream stream of managed properties
+     */
+    void setManagedProperties(RdfStream managedStream);
 
     /**
      * Check if a resource was created in this session
@@ -209,6 +235,7 @@ public interface FedoraResource {
      * @return constructed state-token value
      */
     String getStateToken();
+
     /**
      * Check if a resource is an original resource
      * (ie versionable, as opposed to non-versionable resources

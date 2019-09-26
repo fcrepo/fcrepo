@@ -18,7 +18,9 @@
 package org.fcrepo.persistence.ocfl;
 
 import java.time.Instant;
+import java.util.List;
 
+import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
@@ -90,6 +92,30 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
     }
 
     @Override
+    public List<String> getTypes(final String identifier) throws PersistentItemNotFoundException {
+        // TODO Retrieve types, from index?
+        return null;
+    }
+
+    @Override
+    public void readTriples(final FedoraResource resource) throws PersistentItemNotFoundException {
+        // TODO Retrieve the triples
+        resource.setTriples(null);
+    }
+
+    @Override
+    public void readManagedProperties(final FedoraResource resource) throws PersistentItemNotFoundException {
+        // TODO Retrieve the server managed properties
+        resource.setManagedProperties(null);
+    }
+
+    @Override
+    public void readBinaryContent(final Binary resource) throws PersistentItemNotFoundException {
+        // TODO Retrieve content stream
+        resource.setContentStream(null);
+    }
+
+    @Override
     public void commit() throws PersistentStorageException {
         if (isReadOnly()) {
             // No changes to commit.
@@ -124,5 +150,4 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
             throw new PersistentStorageException("Session is read-only");
         }
     }
-
 }

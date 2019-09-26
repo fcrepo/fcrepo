@@ -19,6 +19,7 @@ package org.fcrepo.persistence.api;
 
 import java.time.Instant;
 
+import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
@@ -85,6 +86,30 @@ public interface PersistentStorageSession {
      * @throws PersistentItemNotFoundException If the identifier doesn't exist.
      */
     public FedoraResource read(final String identifier, final Instant version) throws PersistentItemNotFoundException;
+
+    /**
+     * Read the client managed triples for the provided resource, and store them to that resource.
+     *
+     * @param resource the resource.
+     * @throws PersistentItemNotFoundException If the identifier doesn't exist.
+     */
+    public void readTriples(final FedoraResource resource) throws PersistentItemNotFoundException;
+
+    /**
+     * Read the server managed properties for this provided resource, and store them to the resource.
+     *
+     * @param resource the resource.
+     * @throws PersistentItemNotFoundException If the identifier doesn't exist.
+     */
+    public void readManagedProperties(final FedoraResource resource) throws PersistentItemNotFoundException;
+
+    /**
+     * Read the persisted binary content for the provided resource, and store it to the resource.
+     *
+     * @param resource the resource.
+     * @throws PersistentItemNotFoundException If the identifier doesn't exist.
+     */
+    public void readBinaryContent(final Binary resource) throws PersistentItemNotFoundException;
 
     /**
      * Commits any changes in the current sesssion to persistent storage.
