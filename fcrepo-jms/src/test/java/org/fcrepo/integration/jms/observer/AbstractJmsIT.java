@@ -127,16 +127,16 @@ abstract class AbstractJmsIT implements MessageListener {
 
         LOGGER.debug("Expecting a {} event", RESOURCE_CREATION.getType());
 
-        final Transaction session = txMananger.create();
+        final Transaction tx = txMananger.create();
         // session.addSessionData(BASE_URL, TEST_BASE_URL);
         // session.addSessionData(USER_AGENT, TEST_USER_AGENT);
 
         try {
             // containerService.findOrCreate(session, testIngested);
-            session.commit();
+            tx.commit();
             awaitMessageOrFail(testIngested, RESOURCE_CREATION.getType(), null);
         } finally {
-            session.expire();
+            tx.expire();
         }
     }
 
@@ -144,26 +144,26 @@ abstract class AbstractJmsIT implements MessageListener {
     @Ignore
     public void testFileEvents() throws InvalidChecksumException {
 
-        final Transaction session = txMananger.create();
+        final Transaction tx = txMananger.create();
         // session.addSessionData(BASE_URL, TEST_BASE_URL);
         // session.addSessionData(USER_AGENT, TEST_USER_AGENT);
 
         try {
-            // binaryService.findOrCreate(session, testFile)
+            // binaryService.findOrCreate(tx, testFile)
             // .setContent(new ByteArrayInputStream("foo".getBytes()), "text/plain", null, null, null);
-            session.commit();
+            tx.commit();
             awaitMessageOrFail(testFile, RESOURCE_CREATION.getType(), REPOSITORY_NAMESPACE + "Binary");
 
-            // binaryService.find(session, testFile)
+            // binaryService.find(tx, testFile)
             // .setContent(new ByteArrayInputStream("barney".getBytes()), "text/plain", null, null, null);
-            session.commit();
+            tx.commit();
             awaitMessageOrFail(testFile, RESOURCE_MODIFICATION.getType(), REPOSITORY_NAMESPACE + "Binary");
 
-            // binaryService.find(session, testFile).delete();
-            session.commit();
+            // binaryService.find(tx, testFile).delete();
+            tx.commit();
             awaitMessageOrFail(testFile, RESOURCE_DELETION.getType(), null);
         } finally {
-            session.expire();
+            tx.expire();
         }
     }
 
@@ -171,29 +171,29 @@ abstract class AbstractJmsIT implements MessageListener {
     @Ignore
     public void testMetadataEvents() {
 
-        final Transaction session = txMananger.create();
+        final Transaction tx = txMananger.create();
         // session.addSessionData(BASE_URL, TEST_BASE_URL);
         // session.addSessionData(USER_AGENT, TEST_USER_AGENT);
         final IdentifierConverter<Resource,FedoraResource>
             subjects = null;
 
         try {
-            // final FedoraResource resource1 = containerService.findOrCreate(session, testMeta);
+            // final FedoraResource resource1 = containerService.findOrCreate(tx, testMeta);
             final String sparql1 = "insert data { <> <http://foo.com/prop> \"foo\" . }";
             // updatePropertiesService.updateProperties(resource1, sparql1, resource1.getTriples(subjects,
             // PROPERTIES));
-            session.commit();
+            tx.commit();
             awaitMessageOrFail(testMeta, RESOURCE_MODIFICATION.getType(), REPOSITORY_NAMESPACE + "Container");
 
-            // final FedoraResource resource2 = containerService.findOrCreate(session, testMeta);
+            // final FedoraResource resource2 = containerService.findOrCreate(tx, testMeta);
             final String sparql2 = " delete { <> <http://foo.com/prop> \"foo\" . } "
                 + "insert { <> <http://foo.com/prop> \"bar\" . } where {}";
             // updatePropertiesService.updateProperties(resource2, sparql2, resource2.getTriples(subjects,
             // PROPERTIES));
-            session.commit();
+            tx.commit();
             awaitMessageOrFail(testMeta, RESOURCE_MODIFICATION.getType(), REPOSITORY_NAMESPACE + "Resource");
         } finally {
-            session.expire();
+            tx.expire();
         }
     }
 
@@ -213,18 +213,18 @@ abstract class AbstractJmsIT implements MessageListener {
     public void testRemoval() {
 
         LOGGER.debug("Expecting a {} event", RESOURCE_DELETION.getType());
-        final Transaction session = txMananger.create();
+        final Transaction tx = txMananger.create();
         // session.addSessionData(BASE_URL, TEST_BASE_URL);
         // session.addSessionData(USER_AGENT, TEST_USER_AGENT);
 
         try {
-            // final Container resource = containerService.findOrCreate(session, testRemoved);
-            session.commit();
+            // final Container resource = containerService.findOrCreate(tx, testRemoved);
+            tx.commit();
             // resource.delete();
-            session.commit();
+            tx.commit();
             awaitMessageOrFail(testRemoved, RESOURCE_DELETION.getType(), null);
         } finally {
-            session.expire();
+            tx.expire();
         }
     }
 
@@ -234,22 +234,22 @@ abstract class AbstractJmsIT implements MessageListener {
         final String uri1 = "/testInboundReference-" + randomUUID().toString();
         final String uri2 = "/testInboundReference-" + randomUUID().toString();
 
-        final Transaction session = txMananger.create();
+        final Transaction tx = txMananger.create();
         final IdentifierConverter<Resource,FedoraResource>
             subjects = null;
         // session.addSessionData(BASE_URL, TEST_BASE_URL);
         // session.addSessionData(USER_AGENT, TEST_USER_AGENT);
         try {
-            // final Container resource = containerService.findOrCreate(session, uri1);
-            // final Container resource2 = containerService.findOrCreate(session, uri2);
-            session.commit();
+            // final Container resource = containerService.findOrCreate(tx, uri1);
+            // final Container resource2 = containerService.findOrCreate(tx, uri2);
+            tx.commit();
             // final Resource subject2 = subjects.reverse().convert(resource2);
             // final String sparql = "insert { <> <http://foo.com/prop> <" + subject2 + "> . } where {}";
             // updatePropertiesService.updateProperties(resource, sparql, resource.getTriples(subjects, PROPERTIES));
-            session.commit();
+            tx.commit();
             awaitMessageOrFail(uri2, INBOUND_REFERENCE.getType(), null);
         } finally {
-            session.expire();
+            tx.expire();
         }
     }
 
