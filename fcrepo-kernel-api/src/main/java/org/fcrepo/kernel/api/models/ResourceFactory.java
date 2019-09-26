@@ -100,7 +100,7 @@ public interface ResourceFactory {
 
     /*
      * TODO: Do we need a model for an archival group?
-     * public ArchivalGroup createArchivalGroup(final FedoraTransaction transaction, final String identifier);
+     * public ArchivalGroup createArchivalGroup(final Transaction transaction, final String identifier);
      */
 
 }

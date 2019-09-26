@@ -24,7 +24,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
-import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.InterruptedRuntimeException;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.junit.Before;
@@ -49,7 +49,7 @@ public class DefaultPathLockManagerTest {
     private static final int WAIT = 1000;
 
     @Mock
-    private FedoraSession session;
+    private Transaction transaction;
 
     @Mock
     private NodeService nodeService;
@@ -68,7 +68,7 @@ public class DefaultPathLockManagerTest {
         final AcquiredLock l1 = m.lockForRead("p1");
         assertEquals("There should be exactly 1 path in memory.", 1, m.activePaths.size());
 
-        final AcquiredLock l2 = m.lockForWrite("p2", session, nodeService);
+        final AcquiredLock l2 = m.lockForWrite("p2", transaction, nodeService);
         assertEquals("There should be exactly 2 paths in memory.", 2, m.activePaths.size());
 
         l1.release();
@@ -91,7 +91,7 @@ public class DefaultPathLockManagerTest {
     public void readShouldBlockWhileWriting() {
         final DefaultPathLockManager m = new DefaultPathLockManager();
         final String path = "path1";
-        final AcquiredLock l = m.lockForWrite(path, session, nodeService);
+        final AcquiredLock l = m.lockForWrite(path, transaction, nodeService);
         final Actor r = new Actor(() -> m.lockForRead(path));
         assertTrue("Read should block while writing to same path!", r.isBlocked());
         l.release();
@@ -102,8 +102,8 @@ public class DefaultPathLockManagerTest {
     public void writesShouldBlock() {
         final DefaultPathLockManager m = new DefaultPathLockManager();
         final String path = "path1";
-        final AcquiredLock l = m.lockForWrite(path, session, nodeService);
-        final Actor r = new Actor(() -> m.lockForWrite(path, session, nodeService));
+        final AcquiredLock l = m.lockForWrite(path, transaction, nodeService);
+        final Actor r = new Actor(() -> m.lockForWrite(path, transaction, nodeService));
         assertTrue("Concurrent writes to the same path should block!", r.isBlocked());
         l.release();
         assertTrue("Write should be able to complete sequentially.", r.canComplete());
@@ -114,8 +114,8 @@ public class DefaultPathLockManagerTest {
         final DefaultPathLockManager m = new DefaultPathLockManager();
         final String p1 = "0/0";
         final String p2 = "0/1";
-        m.lockForWrite(p1, session, nodeService);
-        final Actor writer = new Actor(() -> m.lockForWrite(p2, session, nodeService));
+        m.lockForWrite(p1, transaction, nodeService);
+        final Actor writer = new Actor(() -> m.lockForWrite(p2, transaction, nodeService));
         assertTrue("Sibling writes should not block!!", writer.canComplete());
     }
 
@@ -126,8 +126,8 @@ public class DefaultPathLockManagerTest {
         final DefaultPathLockManager m = new DefaultPathLockManager();
         final String p1 = "0/0";
         final String p2 = "0/1";
-        m.lockForWrite(p1, session, nodeService);
-        final Actor writer = new Actor(() -> m.lockForWrite(p2, session, nodeService));
+        m.lockForWrite(p1, transaction, nodeService);
+        final Actor writer = new Actor(() -> m.lockForWrite(p2, transaction, nodeService));
         assertTrue("Sibling creates should not block!!", writer.canComplete());
     }
 
@@ -162,9 +162,9 @@ public class DefaultPathLockManagerTest {
         final String p1 = "root/delete";
         m.lockForDelete(p1);
         assertTrue("Writing to parent of node-being-deleted should not block.",
-                new Actor(() -> m.lockForWrite("root", session, nodeService)).canComplete());
+                new Actor(() -> m.lockForWrite("root", transaction, nodeService)).canComplete());
         assertTrue("Writing to peer of node-being-deleted should not block.",
-                new Actor(() -> m.lockForWrite("root/other", session, nodeService)).canComplete());
+                new Actor(() -> m.lockForWrite("root/other", transaction, nodeService)).canComplete());
     }
 
     /**

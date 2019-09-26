@@ -19,11 +19,11 @@ package org.fcrepo.http.api.repository;
 
 import javax.ws.rs.Path;
 
-import org.fcrepo.http.api.FedoraTransactions;
+import org.fcrepo.http.api.Transactions;
 import org.springframework.context.annotation.Scope;
 
 /**
- * This stub is a hack to mount the functionality of FedoraTransactions at the
+ * This stub is a hack to mount the functionality of Transactions at the
  * root of this webapp. Without it, the globbing from FedoraNodes would own this
  * path instead.
  *
@@ -31,5 +31,5 @@ import org.springframework.context.annotation.Scope;
  */
 @Scope("prototype")
 @Path("/fcr:tx")
-public class FedoraRepositoryTransactions extends FedoraTransactions {
+public class FedoraRepositoryTransactions extends Transactions {
 }

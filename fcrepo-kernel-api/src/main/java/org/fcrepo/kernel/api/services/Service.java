@@ -17,7 +17,7 @@
  */
 package org.fcrepo.kernel.api.services;
 
-import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.Transaction;
 
 /**
  * @author bbpennel
@@ -30,24 +30,24 @@ public interface Service<T> {
      * repository
      *
      * @param path the path
-     * @param session the session
+     * @param transaction the transaction
      * @return whether T exists at the given path
      */
-    boolean exists(final FedoraSession session, final String path);
+    boolean exists(final Transaction transaction, final String path);
     /**
-     * Retrieve an existing T instance by session and path
+     * Retrieve an existing T instance by transaction and path
      *
      * @param path the path to the node
-     * @param session the session
+     * @param transaction the transaction
      * @return retrieved T
      */
-    T find(final FedoraSession session, final String path);
+    T find(final Transaction transaction, final String path);
     /**
-     * Retrieve a T instance by session and path
+     * Retrieve a T instance by transaction and path
      *
-     * @param session the session
+     * @param transaction the transaction
      * @param path the path to the node
      * @return retrieved T
      */
-    T findOrCreate(final FedoraSession session, final String path);
+    T findOrCreate(final Transaction transaction, final String path);
 }

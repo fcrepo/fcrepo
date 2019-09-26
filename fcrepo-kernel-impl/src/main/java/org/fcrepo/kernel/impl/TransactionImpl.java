@@ -17,6 +17,10 @@
  */
 package org.fcrepo.kernel.impl;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Optional;
+
 import org.fcrepo.kernel.api.Transaction;
 
 /**
@@ -27,6 +31,8 @@ import org.fcrepo.kernel.api.Transaction;
 public class TransactionImpl implements Transaction {
 
     final String id;
+
+    boolean shortLived = true;
 
     TransactionImpl(final String id) {
         if (id == null || id.isEmpty()) {
@@ -51,6 +57,29 @@ public class TransactionImpl implements Transaction {
     @Override
     public String getId() {
         return id;
+    }
+
+    @Override
+    public boolean isShortLived() {
+        return this.shortLived;
+    }
+
+    @Override
+    public void expire() {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public Instant updateExpiry(final Duration amountToAdd) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Optional<Instant> getExpires() {
+        // TODO Auto-generated method stub
+        return null;
     }
 
 }

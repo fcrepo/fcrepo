@@ -17,7 +17,7 @@
  */
 package org.fcrepo.http.api;
 
-import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.services.NodeService;
 
 /**
@@ -65,11 +65,11 @@ public interface PathLockManager {
      *
      * @param path the path to a resource to be created (may involve implicitly created
      *        resources at parent paths)
-     * @param session the current session
+     * @param transaction the current transaction
      * @param nodeService the repository NodeService implementation
      * @return an acquired Lock on the relevant resources
      */
-    AcquiredLock lockForWrite(String path, FedoraSession session, NodeService nodeService);
+    AcquiredLock lockForWrite(String path, Transaction transaction, NodeService nodeService);
 
     /**
      * Locks the necessary resources affected in order to safely delete a resource
