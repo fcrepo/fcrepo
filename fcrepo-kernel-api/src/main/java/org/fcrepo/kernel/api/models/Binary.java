@@ -34,11 +34,11 @@ public interface Binary extends FedoraResource {
      * @return The InputStream of content associated with this datastream.
      */
     InputStream getContent();
-    
+
     /**
-     * Set the content stream for this resource. 
-     * 
-     * @param content Inputstream 
+     * Set the content stream for this resource.
+     *
+     * @param content Inputstream
      */
     void setContentStream(InputStream content);
 
@@ -111,7 +111,7 @@ public interface Binary extends FedoraResource {
 
     /**
      * Get URL as a URI
-     * 
+     *
      * @return URI containing the object to redirect to.
      */
     default URI getRedirectURI() {
@@ -120,7 +120,7 @@ public interface Binary extends FedoraResource {
 
     /**
      * Set the URL that this is a redirect to
-     * 
+     *
      * @param url - the url of the resource this redirects to
      */
     void setRedirectURL(String url);
