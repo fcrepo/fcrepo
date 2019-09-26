@@ -26,7 +26,7 @@ import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 
-import org.fcrepo.kernel.api.FedoraRepository;
+import org.fcrepo.kernel.api.Repository;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.SessionMissingException;
 import org.fcrepo.kernel.api.services.CredentialsService;
@@ -61,7 +61,7 @@ public class SessionFactory {
     private static final Logger LOGGER = getLogger(SessionFactory.class);
 
     @Inject
-    private FedoraRepository repo;
+    private Repository repo;
 
     @Inject
     private BatchService batchService;
@@ -75,7 +75,7 @@ public class SessionFactory {
      * @param repo the repository
      * @param batchService the transaction service
      */
-    public SessionFactory(final FedoraRepository repo, final BatchService batchService) {
+    public SessionFactory(final Repository repo, final BatchService batchService) {
         this.repo = repo;
         this.batchService = batchService;
     }

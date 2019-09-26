@@ -44,13 +44,13 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 /**
- * <p>FedoraTransactionsTest class.</p>
+ * <p>TransactionsTest class.</p>
  *
  * @author awoods
  */
 @Ignore // TODO fix these tests
 @RunWith(MockitoJUnitRunner.Silent.class)
-public class FedoraTransactionsTest {
+public class TransactionsTest {
 
     private static final String USER_NAME = "test";
 

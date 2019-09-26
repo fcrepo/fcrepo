@@ -24,11 +24,11 @@ import static org.slf4j.LoggerFactory.getLogger;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.fcrepo.kernel.api.observer.FedoraEvent;
+import org.fcrepo.kernel.api.observer.Event;
 import org.slf4j.Logger;
 
 /**
- * Some serialization utilities for FedoraEvent objects
+ * Some serialization utilities for Event objects
  * @author acoburn
  */
 public class JsonLDSerializer implements EventSerializer {
@@ -47,12 +47,12 @@ public class JsonLDSerializer implements EventSerializer {
     }
 
     /**
-     * Serialize a FedoraEvent into a JSON String
+     * Serialize a Event into a JSON String
      * @param evt the Fedora event
      * @return a JSON string
      */
     @Override
-    public String serialize(final FedoraEvent evt) {
+    public String serialize(final Event evt) {
         try {
             return MAPPER.writeValueAsString(from(evt));
         } catch (final JsonProcessingException ex) {

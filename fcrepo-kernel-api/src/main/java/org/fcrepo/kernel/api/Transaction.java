@@ -15,42 +15,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.impl;
-
-import org.fcrepo.kernel.api.FedoraTransaction;
+package org.fcrepo.kernel.api;
 
 /**
- * The Fedora Transaction implementation
+ * The Fedora Transaction abstraction
  *
  * @author mohideen
  */
-public class FedoraTransactionImpl implements FedoraTransaction {
+public interface Transaction {
 
-    final String id;
+    /**
+     * Commit the transaction
+     */
+    void commit();
 
-    FedoraTransactionImpl(final String id) {
-        if (id == null || id.isEmpty()) {
-            throw new IllegalArgumentException("FedoraTransaction id should not be empty!");
-        }
-        this.id = id;
-    }
+    /**
+     * Rollback the transaction
+     */
+    void rollback();
 
-    @Override
-    public void commit() {
-        // Prepare Persistence Transactions
-        // Commit Persistence Transactions
-    }
-
-    @Override
-    public void rollback() {
-        // Rollback Persistence Transactions
-
-        // Delete Transaction from TransactionManager state?
-    }
-
-    @Override
-    public String getId() {
-        return id;
-    }
+    /**
+     * Get the id of the transaction.
+     * 
+     * @return the ID
+     */
+    public String getId();
 
 }

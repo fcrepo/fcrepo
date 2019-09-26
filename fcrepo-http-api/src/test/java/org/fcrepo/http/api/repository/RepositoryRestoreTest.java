@@ -47,7 +47,7 @@ import org.mockito.Mock;
  * @author Andrew Woods Date: 9/4/13
  */
 @Deprecated
-public class FedoraRepositoryRestoreTest {
+public class RepositoryRestoreTest {
 
     private FedoraRepositoryRestore repoRestore;
 

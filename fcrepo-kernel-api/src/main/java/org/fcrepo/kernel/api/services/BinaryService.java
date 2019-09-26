@@ -17,13 +17,32 @@
  */
 package org.fcrepo.kernel.api.services;
 
-import org.fcrepo.kernel.api.models.TimeMap;
+import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.models.Binary;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 
 /**
- * Service for creating and retrieving {@link TimeMap}
- *
- * @author bbpennel
+ * @author cabeer
+ * @since 10/10/14
  */
-public interface TimeMapService extends Service<TimeMap> {
+public interface BinaryService extends Service<Binary> {
+
+    /**
+     * Retrieves a Binary instance by session and path.
+     *
+     * @param session session
+     * @param path path of binary datastream
+     * @return retrieved Binary
+     */
+    Binary findOrCreateBinary(FedoraSession session, String path);
+
+    /**
+     * Retrieves a binary description instance by session and path.
+     *
+     * @param session session
+     * @param path path of description
+     * @return retrieved NonRdfSourceDescription
+     */
+    NonRdfSourceDescription findOrCreateDescription(FedoraSession session, String path);
 
 }

@@ -45,8 +45,8 @@ import javax.jms.Session;
 
 import org.apache.activemq.command.ActiveMQTextMessage;
 
+import org.fcrepo.kernel.api.observer.Event;
 import org.fcrepo.kernel.api.observer.EventType;
-import org.fcrepo.kernel.api.observer.FedoraEvent;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -66,7 +66,7 @@ public class DefaultMessageFactoryTest {
     private Session mockSession;
 
     @Mock
-    private FedoraEvent mockEvent;
+    private Event mockEvent;
 
     private DefaultMessageFactory testDefaultMessageFactory;
 

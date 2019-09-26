@@ -50,7 +50,7 @@ import javax.jms.Session;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.jena.rdf.model.Resource;
 
-import org.fcrepo.kernel.api.FedoraRepository;
+import org.fcrepo.kernel.api.Repository;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
@@ -90,7 +90,7 @@ abstract class AbstractJmsIT implements MessageListener {
     private static final String TEST_BASE_URL = "http://localhost:8080/rest";
 
     @Inject
-    private FedoraRepository repository;
+    private Repository repository;
 
     // @Inject
     // TODO: Replace with some other service/factory

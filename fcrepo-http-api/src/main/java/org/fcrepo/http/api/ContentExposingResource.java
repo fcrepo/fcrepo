@@ -58,9 +58,9 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
-import static org.fcrepo.kernel.api.FedoraExternalContent.COPY;
-import static org.fcrepo.kernel.api.FedoraExternalContent.PROXY;
-import static org.fcrepo.kernel.api.FedoraExternalContent.REDIRECT;
+import static org.fcrepo.kernel.api.ExternalContent.COPY;
+import static org.fcrepo.kernel.api.ExternalContent.PROXY;
+import static org.fcrepo.kernel.api.ExternalContent.REDIRECT;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
@@ -157,11 +157,11 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.ServerManagedPropertyException;
 import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
+import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.Container;
-import org.fcrepo.kernel.api.models.FedoraBinary;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.models.FedoraTimeMap;
-import org.fcrepo.kernel.api.models.FedoraWebacAcl;
+import org.fcrepo.kernel.api.models.TimeMap;
+import org.fcrepo.kernel.api.models.WebacAcl;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry;
@@ -277,7 +277,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         final RdfNamespacedStream outputStream;
 
-        if (resource instanceof FedoraBinary) {
+        if (resource instanceof Binary) {
             return getBinaryContent(rangeValue, resource);
         } else {
             outputStream = new RdfNamespacedStream(
@@ -404,7 +404,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      */
     private Response getBinaryContent(final String rangeValue, final FedoraResource resource)
             throws IOException {
-            final FedoraBinary binary = (FedoraBinary)resource;
+            final Binary binary = (Binary)resource;
             final CacheControl cc = new CacheControl();
             cc.setMaxAge(0);
             cc.setMustRevalidate(true);
@@ -511,8 +511,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     }
 
     protected void addExternalContentHeaders(final FedoraResource resource) {
-        if (resource instanceof FedoraBinary) {
-            final FedoraBinary binary = (FedoraBinary)resource;
+        if (resource instanceof Binary) {
+            final Binary binary = (Binary)resource;
 
             if (binary.isProxy()) {
                 servletResponse.addHeader(CONTENT_LOCATION, binary.getProxyURL());
@@ -523,7 +523,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     }
 
     private void addAclHeader(final FedoraResource resource) {
-        if (!(resource instanceof FedoraWebacAcl) && !resource.isMemento()) {
+        if (!(resource instanceof WebacAcl) && !resource.isMemento()) {
             final String resourceUri = getUri(resource.getDescribedResource()).toString();
             final String aclLocation =  resourceUri + (resourceUri.endsWith("/") ? "" : "/") + FCR_ACL;
             servletResponse.addHeader(LINK, buildLink(aclLocation, "acl"));
@@ -541,7 +541,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             final URI uri = getUri(described);
             final Link link = Link.fromUri(uri).rel("describes").build();
             servletResponse.addHeader(LINK, link.toString());
-        } else if (resource instanceof FedoraBinary) {
+        } else if (resource instanceof Binary) {
             // Link to the original description
             final FedoraResource description = resource.getOriginalResource().getDescription();
             final URI uri = getUri(description);
@@ -555,7 +555,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         final boolean isOriginal = resource.isOriginalResource();
         // Add versioning headers for versioned originals and mementos
-        if (isOriginal || resource.isMemento() || resource instanceof FedoraTimeMap) {
+        if (isOriginal || resource.isMemento() || resource instanceof TimeMap) {
             final URI originalUri = getUri(resource.getOriginalResource());
             try {
                 final URI timemapUri = getUri(resource.getTimeMap());
@@ -566,7 +566,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 if (isOriginal) {
                     servletResponse.addHeader(LINK, buildLink(VERSIONED_RESOURCE.getURI(), "type"));
                     servletResponse.addHeader(LINK, buildLink(VERSIONING_TIMEGATE_TYPE, "type"));
-                } else if (resource instanceof FedoraTimeMap) {
+                } else if (resource instanceof TimeMap) {
                     servletResponse.addHeader(LINK, buildLink(VERSIONING_TIMEMAP_TYPE, "type"));
                 }
             } catch (final PathNotFoundRuntimeException e) {
@@ -605,11 +605,11 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         final String options;
         if (resource.isMemento()) {
             options = "GET,HEAD,OPTIONS,DELETE";
-        } else if (resource instanceof FedoraTimeMap) {
+        } else if (resource instanceof TimeMap) {
             options = "POST,HEAD,GET,OPTIONS";
             servletResponse.addHeader("Vary-Post", MEMENTO_DATETIME_HEADER);
             addAcceptPostHeader();
-        } else if (resource instanceof FedoraBinary) {
+        } else if (resource instanceof Binary) {
             options = "DELETE,HEAD,GET,PUT,OPTIONS";
         } else if (resource instanceof NonRdfSourceDescription) {
             options = "HEAD,GET,DELETE,PUT,PATCH,OPTIONS";
@@ -669,8 +669,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * @param resource the resource
      */
     protected void addResourceHttpHeaders(final FedoraResource resource) {
-        if (resource instanceof FedoraBinary) {
-            final FedoraBinary binary = (FedoraBinary)resource;
+        if (resource instanceof Binary) {
+            final Binary binary = (Binary)resource;
             final Date createdDate = binary.getCreatedDate() != null ? Date.from(binary.getCreatedDate()) : null;
             final Date modDate = binary.getLastModifiedDate() != null ? Date.from(binary.getLastModifiedDate()) : null;
 
@@ -692,9 +692,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         servletResponse.addHeader(LINK, "<" + LDP_NAMESPACE + "Resource>;rel=\"type\"");
 
-        if (resource instanceof FedoraBinary) {
+        if (resource instanceof Binary) {
             servletResponse.addHeader(LINK, "<" + LDP_NAMESPACE + "NonRDFSource>;rel=\"type\"");
-        } else if (resource instanceof Container || resource instanceof FedoraTimeMap) {
+        } else if (resource instanceof Container || resource instanceof TimeMap) {
             servletResponse.addHeader(LINK, "<" + CONTAINER.getURI() + ">;rel=\"type\"");
             servletResponse.addHeader(LINK, buildLink(RDF_SOURCE.getURI(), "type"));
             if (resource.hasType(LDP_BASIC_CONTAINER)) {
@@ -764,7 +764,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         final Instant date;
 
         // See note about this code in the javadoc above.
-        if (resource instanceof FedoraBinary) {
+        if (resource instanceof Binary) {
             // Use a strong ETag for LDP-NR
             etag = new EntityTag(resource.getEtagValue());
             date = resource.getLastModifiedDate();
@@ -824,7 +824,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         // See the related note about the next block of code in the
         // ContentExposingResource::addCacheControlHeaders method
-        if (resource instanceof FedoraBinary) {
+        if (resource instanceof Binary) {
             // Use a strong ETag for the LDP-NR
             etag = new EntityTag(resource.getEtagValue());
             date = resource.getLastModifiedDate();
@@ -946,7 +946,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         return contentTypeToLang(contentTypeString) != null;
     }
 
-    protected void replaceResourceBinaryWithStream(final FedoraBinary result,
+    protected void replaceResourceBinaryWithStream(final Binary result,
                                                    final InputStream requestBodyStream,
                                                    final ContentDisposition contentDisposition,
                                                    final MediaType contentType,
@@ -1110,10 +1110,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      */
     protected MediaType getBinaryResourceMediaType(final FedoraResource resource) {
         try {
-            return MediaType.valueOf(((FedoraBinary) resource).getMimeType());
+            return MediaType.valueOf(((Binary) resource).getMimeType());
         } catch (final IllegalArgumentException e) {
             LOGGER.warn("Syntactically incorrect MediaType encountered on resource {}: '{}'",
-                    resource.getPath(), ((FedoraBinary)resource).getMimeType());
+                    resource.getPath(), ((Binary)resource).getMimeType());
             return MediaType.APPLICATION_OCTET_STREAM_TYPE;
         }
     }

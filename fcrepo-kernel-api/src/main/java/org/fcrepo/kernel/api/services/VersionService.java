@@ -31,7 +31,7 @@ import org.apache.jena.riot.Lang;
 import org.fcrepo.kernel.api.FedoraSession;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
-import org.fcrepo.kernel.api.models.FedoraBinary;
+import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.policy.StoragePolicyDecisionPoint;
 
@@ -97,12 +97,12 @@ public interface VersionService {
      * @throws InvalidChecksumException if there are errors applying checksums
      * @return the version
      */
-    FedoraBinary createBinaryVersion(FedoraSession session,
-            FedoraBinary resource,
-            Instant dateTime,
-            InputStream contentStream,
-            Collection<URI> checksums,
-            StoragePolicyDecisionPoint storagePolicyDecisionPoint)
+    Binary createBinaryVersion(FedoraSession session,
+                               Binary resource,
+                               Instant dateTime,
+                               InputStream contentStream,
+                               Collection<URI> checksums,
+                               StoragePolicyDecisionPoint storagePolicyDecisionPoint)
             throws InvalidChecksumException;
 
     /**
@@ -115,8 +115,8 @@ public interface VersionService {
      * @return the version
      * @throws InvalidChecksumException on error
      */
-    FedoraBinary createBinaryVersion(FedoraSession session, FedoraBinary resource, Instant dateTime,
-            StoragePolicyDecisionPoint storagePolicyDecisionPoint)
+    Binary createBinaryVersion(FedoraSession session, Binary resource, Instant dateTime,
+                               StoragePolicyDecisionPoint storagePolicyDecisionPoint)
             throws InvalidChecksumException;
 
     /**
@@ -129,11 +129,11 @@ public interface VersionService {
      * @return the version
      * @throws InvalidChecksumException if there are errors applying checksums
      */
-    FedoraBinary createExternalBinaryVersion(final FedoraSession session,
-            final FedoraBinary resource,
-            final Instant dateTime,
-            final Collection<URI> checksums,
-            final String externalHandling,
-            final String externalUrl)
+    Binary createExternalBinaryVersion(final FedoraSession session,
+                                       final Binary resource,
+                                       final Instant dateTime,
+                                       final Collection<URI> checksums,
+                                       final String externalHandling,
+                                       final String externalUrl)
             throws InvalidChecksumException;
 }

@@ -43,8 +43,8 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.SimpleSelector;
+import org.fcrepo.kernel.api.observer.Event;
 import org.fcrepo.kernel.api.observer.EventType;
-import org.fcrepo.kernel.api.observer.FedoraEvent;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -58,10 +58,10 @@ import org.mockito.junit.MockitoJUnitRunner;
  * @author dbernstein
  */
 @RunWith(MockitoJUnitRunner.Silent.class)
-public class FedoraEventSerializerTestBase {
+public class EventSerializerTestBase {
 
     @Mock
-    protected FedoraEvent mockEvent;
+    protected Event mockEvent;
 
     protected final String baseUrl = "http://localhost:8080/fcrepo/rest";
 

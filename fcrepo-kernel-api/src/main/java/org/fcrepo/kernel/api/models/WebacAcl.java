@@ -15,28 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api;
+package org.fcrepo.kernel.api.models;
 
 /**
- * The Fedora Transaction Manager abstraction
- *
- * @author mohideen
+ * @author lsitu
+ * @since Apr. 19, 2018
  */
-public interface FedoraTransactionManager {
-
-    /**
-     * Create a new fedora transaction
-     * 
-     * @return {@link FedoraTransaction} The new fedora transaction
-     */
-    FedoraTransaction create();
-
-    /**
-     * Get an existing fedora transaction
-     * 
-     * @param transactionId the id of the transaction to be returned
-     * @return {@link FedoraTransaction} the fedora transaction associated with the provided id
-     */
-    FedoraTransaction get(String transactionId);
-
+public interface WebacAcl extends Container {
 }

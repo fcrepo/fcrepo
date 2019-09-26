@@ -18,9 +18,9 @@
 package org.fcrepo.http.api;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
-import static org.fcrepo.kernel.api.FedoraExternalContent.COPY;
-import static org.fcrepo.kernel.api.FedoraExternalContent.REDIRECT;
-import static org.fcrepo.kernel.api.FedoraExternalContent.PROXY;
+import static org.fcrepo.kernel.api.ExternalContent.COPY;
+import static org.fcrepo.kernel.api.ExternalContent.REDIRECT;
+import static org.fcrepo.kernel.api.ExternalContent.PROXY;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.slf4j.LoggerFactory.getLogger;

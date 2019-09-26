@@ -28,8 +28,8 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.Session;
 
+import org.fcrepo.kernel.api.observer.Event;
 import org.fcrepo.kernel.api.observer.EventType;
-import org.fcrepo.kernel.api.observer.FedoraEvent;
 import org.fcrepo.event.serialization.EventSerializer;
 import org.fcrepo.event.serialization.JsonLDSerializer;
 
@@ -37,7 +37,7 @@ import org.slf4j.Logger;
 
 /**
  * Generates JMS {@link Message}s composed entirely of headers, based entirely
- * on information found in the {@link FedoraEvent} that triggers publication.
+ * on information found in the {@link Event} that triggers publication.
  *
  * @author ajs6f
  * @author escowles
@@ -66,7 +66,7 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
     public static final String EVENT_ID_HEADER_NAME = JMS_NAMESPACE + "eventID";
 
     @Override
-    public Message getMessage(final FedoraEvent event, final Session jmsSession)
+    public Message getMessage(final Event event, final Session jmsSession)
             throws JMSException {
 
         final EventSerializer serializer = new JsonLDSerializer();
@@ -78,7 +78,7 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
         if (event.getInfo().containsKey(BASE_URL)) {
             message.setStringProperty(BASE_URL_HEADER_NAME, event.getInfo().get(BASE_URL));
         } else {
-            LOGGER.warn("Could not extract baseUrl from FedoraEvent!");
+            LOGGER.warn("Could not extract baseUrl from Event!");
         }
         if (event.getInfo().containsKey(USER_AGENT)) {
             message.setStringProperty(USER_AGENT_HEADER_NAME, event.getInfo().get(USER_AGENT));

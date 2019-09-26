@@ -33,7 +33,7 @@ import javax.jms.MessageProducer;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 
-import org.fcrepo.kernel.api.observer.FedoraEvent;
+import org.fcrepo.kernel.api.observer.Event;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -94,7 +94,7 @@ abstract class AbstractJMSPublisherTest {
     @Test
     public void testPublishJCREvent() throws JMSException {
         final Message mockMsg = mock(Message.class);
-        final FedoraEvent mockEvent = mock(FedoraEvent.class);
+        final Event mockEvent = mock(Event.class);
         when(mockEventFactory.getMessage(eq(mockEvent), isNull())).thenReturn(mockMsg);
         testJMSPublisher.publishJCREvent(mockEvent);
         verify(mockProducer).send(mockMsg);

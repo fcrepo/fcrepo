@@ -15,18 +15,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.models;
+package org.fcrepo.kernel.impl;
+
+import org.fcrepo.kernel.api.Transaction;
 
 /**
- * @author lsitu
- * @since Oct. 04, 2017
+ * The Fedora Transaction implementation
+ *
+ * @author mohideen
  */
-public interface FedoraTimeMap extends FedoraResource {
+public class TransactionImpl implements Transaction {
 
-    /**
-     * Get the Original Resource to which this TimeMap/TimeGate applies.
-     *
-     * @return the original resource for this
-     */
-    FedoraResource getOriginalResource();
+    final String id;
+
+    TransactionImpl(final String id) {
+        if (id == null || id.isEmpty()) {
+            throw new IllegalArgumentException("Transaction id should not be empty!");
+        }
+        this.id = id;
+    }
+
+    @Override
+    public void commit() {
+        // Prepare Persistence Transactions
+        // Commit Persistence Transactions
+    }
+
+    @Override
+    public void rollback() {
+        // Rollback Persistence Transactions
+
+        // Delete Transaction from TransactionManager state?
+    }
+
+    @Override
+    public String getId() {
+        return id;
+    }
+
 }

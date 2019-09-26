@@ -19,14 +19,14 @@ package org.fcrepo.kernel.impl.models;
 
 import javax.inject.Inject;
 
-import org.fcrepo.kernel.api.FedoraTransaction;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.Container;
-import org.fcrepo.kernel.api.models.FedoraBinary;
+import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.models.FedoraTimeMap;
-import org.fcrepo.kernel.api.models.FedoraWebacAcl;
+import org.fcrepo.kernel.api.models.TimeMap;
+import org.fcrepo.kernel.api.models.WebacAcl;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.persistence.api.PersistentStorageSession;
@@ -70,38 +70,38 @@ public class ResourceFactoryImpl implements ResourceFactory {
     }
 
     @Override
-    public Container createContainer(final FedoraTransaction transaction, final String identifier) {
+    public Container createContainer(final Transaction transaction, final String identifier) {
         // TODO: Change to ContainerImpl.class when implemented
         return (Container) createResource(Container.class);
     }
 
     @Override
-    public FedoraBinary createBinary(final FedoraTransaction transaction, final String identifier) {
+    public Binary createBinary(final Transaction transaction, final String identifier) {
         // TODO: Change to FedoraBinaryImpl.class when implemented
-        return (FedoraBinary) createResource(FedoraBinary.class);
+        return (Binary) createResource(Binary.class);
     }
 
     @Override
-    public NonRdfSourceDescription createBinaryDescription(final FedoraTransaction transaction,
+    public NonRdfSourceDescription createBinaryDescription(final Transaction transaction,
             final String identifier) {
         // TODO: Change to NonRdfSourceDescrptionImpl.class when implemented
         return (NonRdfSourceDescription) createResource(NonRdfSourceDescription.class);
     }
 
     @Override
-    public FedoraTimeMap createTimemap(final FedoraTransaction transaction, final String identifier) {
+    public TimeMap createTimemap(final Transaction transaction, final String identifier) {
         // TODO: Change to FedoraTimeMapImpl.class when implemented
-        return (FedoraTimeMap) createResource(FedoraTimeMap.class);
+        return (TimeMap) createResource(TimeMap.class);
     }
 
     @Override
-    public FedoraWebacAcl createAcl(final FedoraTransaction transaction, final String identifier) {
+    public WebacAcl createAcl(final Transaction transaction, final String identifier) {
         // TODO: Change to ContainerImpl.class when implemented
-        return (FedoraWebacAcl) createResource(FedoraWebacAcl.class);
+        return (WebacAcl) createResource(WebacAcl.class);
     }
 
     @Override
-    public FedoraResource getResource(final FedoraTransaction transaction, final String identifier)
+    public FedoraResource getResource(final Transaction transaction, final String identifier)
             throws PathNotFoundException {
         try {
             final PersistentStorageSession psSession = getSession(transaction);
@@ -116,7 +116,7 @@ public class ResourceFactoryImpl implements ResourceFactory {
     }
 
     @Override
-    public <T extends FedoraResource> T getResource(final FedoraTransaction transaction, final String identifier,
+    public <T extends FedoraResource> T getResource(final Transaction transaction, final String identifier,
             final Class<T> clazz)
             throws PathNotFoundException {
         try {
@@ -153,7 +153,7 @@ public class ResourceFactoryImpl implements ResourceFactory {
      * @param transaction The supplied transaction id.
      * @return a storage session.
      */
-    private PersistentStorageSession getSession(final FedoraTransaction transaction) {
+    private PersistentStorageSession getSession(final Transaction transaction) {
         final PersistentStorageSession session;
         if (transaction == null) {
             session = factory.getReadOnlySession();
