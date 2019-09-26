@@ -21,6 +21,7 @@ import java.time.Instant;
 
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.persistence.api.PersistentStorageSession;
+import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 
 /**
@@ -76,13 +77,15 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
     }
 
     @Override
-    public FedoraResource read(final String identifier) throws PersistentStorageException {
+    public FedoraResource read(final String identifier) throws PersistentStorageException,
+            PersistentItemNotFoundException {
         actionNeedsWrite();
         return null;
     }
 
     @Override
-    public FedoraResource read(final String identifier, final Instant version) throws PersistentStorageException {
+    public FedoraResource read(final String identifier, final Instant version)
+            throws PersistentItemNotFoundException {
         return null;
     }
 

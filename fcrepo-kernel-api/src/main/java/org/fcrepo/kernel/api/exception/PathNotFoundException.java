@@ -22,8 +22,9 @@ package org.fcrepo.kernel.api.exception;
  * Indicates the path was not found in the repository.
  *
  * @author dbernstein
+ * @author whikloj
  */
-public class PathNotFoundException extends RepositoryRuntimeException {
+public class PathNotFoundException extends Exception {
 
     private static final long serialVersionUID = 1L;
 
@@ -34,6 +35,15 @@ public class PathNotFoundException extends RepositoryRuntimeException {
      */
     public PathNotFoundException(final String msg) {
         super(msg);
+    }
+
+    /**
+     * Constructor for wrapping exception.
+     *
+     * @param exception the original exception.
+     */
+    public PathNotFoundException(final Throwable exception) {
+        super(exception);
     }
 
 }

@@ -15,26 +15,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.services;
-
-import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.models.Container;
+package org.fcrepo.persistence.api.exceptions;
 
 /**
- * Service for creating and retrieving {@link org.fcrepo.kernel.api.models.Container}
+ * If an item is not found in the storage.
  *
- * @author bbpennel
- * @since Feb 20, 2014
+ * @author whikloj
+ * @since 2019-09-24
  */
-public interface ContainerService extends Service<Container> {
+public class PersistentItemNotFoundException extends PersistentStorageException {
+
+    private static final long serialVersionUID = 1L;
 
     /**
-     * Find or create a container node using the provided interaction model.
+     * Basic constructor
      *
-     * @param transaction the transaction
-     * @param path the path
-     * @param interactionModel interaction model for the container node
-     * @return Container object for the given path.
+     * @param msg The text of the exception.
      */
-    public Container findOrCreate(final Transaction transaction, final String path, final String interactionModel);
+    public PersistentItemNotFoundException(final String msg) {
+        super(msg);
+    }
+
 }

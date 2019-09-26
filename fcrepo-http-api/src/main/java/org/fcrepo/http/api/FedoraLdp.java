@@ -793,13 +793,15 @@ public class FedoraLdp extends ContentExposingResource {
 
         final MediaType simpleContentType = contentPresent ? getSimpleContentType(contentType) : null;
 
-        final FedoraResource result;
+        final FedoraResource result = null;
         if ("ldp:NonRDFSource".equals(interactionModel) || contentExternal ||
                 (contentPresent && interactionModel == null && !isRDF(simpleContentType))) {
-            result = binaryService.findOrCreate(session.getTransaction(), path);
+            // TODO: Replace with some other service/factory
+            // result = binaryService.findOrCreate(session.getTransaction(), path);
             timeMapService.findOrCreate(session.getTransaction(), path + "/" + FEDORA_DESCRIPTION);
         } else {
-            result = containerService.findOrCreate(session.getTransaction(), path, interactionModel);
+            // TODO: Replace with some other service/factory
+            // result = containerService.findOrCreate(session.getTransaction(), path, interactionModel);
         }
 
         timeMapService.findOrCreate(session.getTransaction(), path);

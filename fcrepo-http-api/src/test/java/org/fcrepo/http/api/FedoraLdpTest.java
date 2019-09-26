@@ -130,8 +130,6 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry;
-import org.fcrepo.kernel.api.services.BinaryService;
-import org.fcrepo.kernel.api.services.ContainerService;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.api.services.ReplacePropertiesService;
 import org.fcrepo.kernel.api.services.TimeMapService;
@@ -193,11 +191,13 @@ public class FedoraLdpTest {
     @Mock
     private NodeService mockNodeService;
 
-    @Mock
-    private ContainerService mockContainerService;
+    // @Mock
+    // TODO: Replace with some other service/factory
+    // private ContainerService mockContainerService;
 
-    @Mock
-    private BinaryService mockBinaryService;
+    // @Mock
+    // TODO: Replace with some other service/factory
+    // private BinaryService mockBinaryService;
 
     @Mock
     private TimeMapService mockTimeMapService;
@@ -256,8 +256,8 @@ public class FedoraLdpTest {
         setField(testObj, "headers", mockHeaders);
         setField(testObj, "idTranslator", idTranslator);
         setField(testObj, "nodeService", mockNodeService);
-        setField(testObj, "containerService", mockContainerService);
-        setField(testObj, "binaryService", mockBinaryService);
+        // setField(testObj, "containerService", mockContainerService);
+        // setField(testObj, "binaryService", mockBinaryService);
         setField(testObj, "timeMapService", mockTimeMapService);
         setField(testObj, "httpConfiguration", mockHttpConfiguration);
         setField(testObj, "session", mockSession);
@@ -896,7 +896,7 @@ public class FedoraLdpTest {
         when(mockContainer.isNew()).thenReturn(true);
 
         when(mockNodeService.exists(mockTransaction, "/some/path")).thenReturn(false);
-        when(mockContainerService.findOrCreate(mockTransaction, "/some/path", null)).thenReturn(mockContainer);
+        // when(mockContainerService.findOrCreate(mockTransaction, "/some/path", null)).thenReturn(mockContainer);
 
         final Response actual = testObj.createOrReplaceObjectRdf(null, null, null, null, null, null);
 
@@ -919,7 +919,7 @@ public class FedoraLdpTest {
         when(mockContainer.isNew()).thenReturn(true);
 
         when(mockNodeService.exists(mockTransaction, "/some/path")).thenReturn(false);
-        when(mockContainerService.findOrCreate(mockTransaction, "/some/path", null)).thenReturn(mockContainer);
+        // when(mockContainerService.findOrCreate(mockTransaction, "/some/path", null)).thenReturn(mockContainer);
 
         final Response actual = testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
                 toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null);
@@ -937,7 +937,7 @@ public class FedoraLdpTest {
         when(mockBinary.isNew()).thenReturn(true);
 
         when(mockNodeService.exists(mockTransaction, "/some/path")).thenReturn(false);
-        when(mockBinaryService.findOrCreate(mockTransaction, "/some/path")).thenReturn(mockBinary);
+        // when(mockBinaryService.findOrCreate(mockTransaction, "/some/path")).thenReturn(mockBinary);
 
         final Response actual = testObj.createOrReplaceObjectRdf(TEXT_PLAIN_TYPE,
                 toInputStream("xyz", UTF_8), null, null, nonRDFSourceLink, null);
@@ -955,7 +955,7 @@ public class FedoraLdpTest {
         when(mockObject.isNew()).thenReturn(false);
 
         when(mockNodeService.exists(mockTransaction, "/some/path")).thenReturn(true);
-        when(mockContainerService.findOrCreate(mockTransaction, "/some/path", null)).thenReturn(mockObject);
+        // when(mockContainerService.findOrCreate(mockTransaction, "/some/path", null)).thenReturn(mockObject);
 
         final Response actual = testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
                 toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null);
@@ -973,7 +973,7 @@ public class FedoraLdpTest {
         when(mockObject.isNew()).thenReturn(false);
 
         when(mockNodeService.exists(mockTransaction, "/some/path")).thenReturn(true);
-        when(mockContainerService.findOrCreate(mockTransaction, "/some/path", null)).thenReturn(mockObject);
+        // when(mockContainerService.findOrCreate(mockTransaction, "/some/path", null)).thenReturn(mockObject);
 
         testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
                 toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null);
@@ -1030,8 +1030,8 @@ public class FedoraLdpTest {
     public void testCreateNewObject() throws MalformedRdfException, InvalidChecksumException,
             UnsupportedAlgorithmException {
         setResource(Container.class);
-        when(mockContainerService.findOrCreate(mockTransaction, "/b", null))
-                .thenReturn(mockContainer);
+        // when(mockContainerService.findOrCreate(mockTransaction, "/b", null))
+        // .thenReturn(mockContainer);
         final Response actual = testObj.createObject(null, null, "b", null, null, null);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
     }
@@ -1040,7 +1040,7 @@ public class FedoraLdpTest {
     public void testCreateNewObjectWithVersionedResource() throws MalformedRdfException, InvalidChecksumException,
             UnsupportedAlgorithmException {
         setResource(Container.class);
-        when(mockContainerService.findOrCreate(mockTransaction, "/b", null)).thenReturn(mockContainer);
+        // when(mockContainerService.findOrCreate(mockTransaction, "/b", null)).thenReturn(mockContainer);
         final String versionedResourceLink = "<" + VERSIONED_RESOURCE.getURI() + ">;rel=\"type\"";
         final Response actual = testObj.createObject(null, null, "b", null, singletonList(versionedResourceLink), null);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
@@ -1050,7 +1050,7 @@ public class FedoraLdpTest {
     public void testCreateNewObjectWithSparql() throws MalformedRdfException,
            InvalidChecksumException, UnsupportedAlgorithmException {
         setResource(Container.class);
-        when(mockContainerService.findOrCreate(mockTransaction, "/b", null)).thenReturn(mockContainer);
+        // when(mockContainerService.findOrCreate(mockTransaction, "/b", null)).thenReturn(mockContainer);
         final Response actual = testObj.createObject(null,
                 MediaType.valueOf(contentTypeSPARQLUpdate), "b", toInputStream("x", UTF_8), null, null);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
@@ -1061,7 +1061,7 @@ public class FedoraLdpTest {
     public void testCreateNewObjectWithRdf() throws MalformedRdfException,
            InvalidChecksumException, UnsupportedAlgorithmException {
         setResource(Container.class);
-        when(mockContainerService.findOrCreate(mockTransaction, "/b", null)).thenReturn(mockContainer);
+        // when(mockContainerService.findOrCreate(mockTransaction, "/b", null)).thenReturn(mockContainer);
         final Response actual = testObj.createObject(null, NTRIPLES_TYPE, "b",
                 toInputStream("_:a <info:b> _:c .", UTF_8), null, null);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
@@ -1073,7 +1073,7 @@ public class FedoraLdpTest {
     public void testCreateNewBinary() throws MalformedRdfException, InvalidChecksumException,
            IOException, UnsupportedAlgorithmException {
         setResource(Container.class);
-        when(mockBinaryService.findOrCreate(mockTransaction, "/b")).thenReturn(mockBinary);
+        // when(mockBinaryService.findOrCreate(mockTransaction, "/b")).thenReturn(mockBinary);
         try (final InputStream content = toInputStream("x", UTF_8)) {
             final Response actual = testObj.createObject(null, APPLICATION_OCTET_STREAM_TYPE, "b", content,
                 nonRDFSourceLink, null);
@@ -1086,7 +1086,7 @@ public class FedoraLdpTest {
     public void testCreateNewBinaryWithInsufficientResources() throws MalformedRdfException,
            InvalidChecksumException, IOException, UnsupportedAlgorithmException {
         setResource(Container.class);
-        when(mockBinaryService.findOrCreate(mockTransaction, "/b")).thenReturn(mockBinary);
+        // when(mockBinaryService.findOrCreate(mockTransaction, "/b")).thenReturn(mockBinary);
 
 
         try (final InputStream content = toInputStream("x", UTF_8)) {
@@ -1108,7 +1108,7 @@ public class FedoraLdpTest {
            InvalidChecksumException, IOException, UnsupportedAlgorithmException {
 
         setResource(Container.class);
-        when(mockBinaryService.findOrCreate(mockTransaction, "/b")).thenReturn(mockBinary);
+        // when(mockBinaryService.findOrCreate(mockTransaction, "/b")).thenReturn(mockBinary);
         try (final InputStream content = toInputStream("x", UTF_8)) {
             final MediaType requestContentType = MediaType.valueOf("some/mime-type; with=some; param=s");
             final Response actual = testObj.createObject(null, requestContentType, "b", content, nonRDFSourceLink,
@@ -1123,7 +1123,7 @@ public class FedoraLdpTest {
            InvalidChecksumException, IOException, UnsupportedAlgorithmException {
 
         setResource(Container.class);
-        when(mockBinaryService.findOrCreate(mockTransaction, "/b")).thenReturn(mockBinary);
+        // when(mockBinaryService.findOrCreate(mockTransaction, "/b")).thenReturn(mockBinary);
         try (final InputStream content = toInputStream("x", UTF_8)) {
             final MediaType requestContentType = MediaType.valueOf("some/mime-type; with=some; param=s");
             final String sha = "07a4d371f3b7b6283a8e1230b7ec6764f8287bf2";
@@ -1141,7 +1141,7 @@ public class FedoraLdpTest {
         InvalidChecksumException, IOException, UnsupportedAlgorithmException {
 
         setResource(Container.class);
-        when(mockBinaryService.findOrCreate(mockTransaction, "/b")).thenReturn(mockBinary);
+        // when(mockBinaryService.findOrCreate(mockTransaction, "/b")).thenReturn(mockBinary);
         try (final InputStream content = toInputStream("x", UTF_8)) {
             final MediaType requestContentType = MediaType.valueOf("some/mime-type; with=some; param=s");
             final String sha = "73cb3858a687a8494ca3323053016282f3dad39d42cf62ca4e79dda2aac7d9ac";
@@ -1159,7 +1159,7 @@ public class FedoraLdpTest {
             InvalidChecksumException, IOException, UnsupportedAlgorithmException {
 
         setResource(Container.class);
-        when(mockBinaryService.findOrCreate(mockTransaction, "/b")).thenReturn(mockBinary);
+        // when(mockBinaryService.findOrCreate(mockTransaction, "/b")).thenReturn(mockBinary);
         try (final InputStream content = toInputStream("x", UTF_8)) {
             final MediaType requestContentType = MediaType.valueOf("some/mime-type; with=some; param=s");
             final String md5 = "HUXZLQLMuI/KZ5KDcJPcOA==";
@@ -1177,7 +1177,7 @@ public class FedoraLdpTest {
            InvalidChecksumException, IOException, UnsupportedAlgorithmException {
 
         setResource(Container.class);
-        when(mockBinaryService.findOrCreate(mockTransaction, "/b")).thenReturn(mockBinary);
+        // when(mockBinaryService.findOrCreate(mockTransaction, "/b")).thenReturn(mockBinary);
         try (final InputStream content = toInputStream("x", UTF_8)) {
             final MediaType requestContentType = MediaType.valueOf("some/mime-type; with=some; param=s");
 
@@ -1211,7 +1211,7 @@ public class FedoraLdpTest {
     public void testLDPRNotImplemented() throws MalformedRdfException, InvalidChecksumException,
             UnsupportedAlgorithmException {
         setResource(Container.class);
-        when(mockContainerService.findOrCreate(mockTransaction, "/x")).thenReturn(mockContainer);
+        // when(mockContainerService.findOrCreate(mockTransaction, "/x")).thenReturn(mockContainer);
         testObj.createObject(null, null, "x", null,
                 singletonList("<http://www.w3.org/ns/ldp#Resource>; rel=\"type\""), null);
     }
@@ -1220,7 +1220,7 @@ public class FedoraLdpTest {
     public void testLDPRNotImplementedInvalidLink() throws MalformedRdfException, InvalidChecksumException,
             UnsupportedAlgorithmException {
         setResource(Container.class);
-        when(mockContainerService.findOrCreate(mockTransaction, "/x", null)).thenReturn(mockContainer);
+        // when(mockContainerService.findOrCreate(mockTransaction, "/x", null)).thenReturn(mockContainer);
         testObj.createObject(null, null, "x", null, singletonList("<http://foo;rel=\"type\""), null);
     }
 
