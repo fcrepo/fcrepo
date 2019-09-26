@@ -19,7 +19,7 @@ package org.fcrepo.kernel.impl.models;
 
 import javax.inject.Inject;
 
-import org.fcrepo.kernel.api.FedoraTransaction;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.Container;
@@ -70,38 +70,38 @@ public class ResourceFactoryImpl implements ResourceFactory {
     }
 
     @Override
-    public Container createContainer(final FedoraTransaction transaction, final String identifier) {
+    public Container createContainer(final Transaction transaction, final String identifier) {
         // TODO: Change to ContainerImpl.class when implemented
         return (Container) createResource(Container.class);
     }
 
     @Override
-    public FedoraBinary createBinary(final FedoraTransaction transaction, final String identifier) {
+    public FedoraBinary createBinary(final Transaction transaction, final String identifier) {
         // TODO: Change to FedoraBinaryImpl.class when implemented
         return (FedoraBinary) createResource(FedoraBinary.class);
     }
 
     @Override
-    public NonRdfSourceDescription createBinaryDescription(final FedoraTransaction transaction,
+    public NonRdfSourceDescription createBinaryDescription(final Transaction transaction,
             final String identifier) {
         // TODO: Change to NonRdfSourceDescrptionImpl.class when implemented
         return (NonRdfSourceDescription) createResource(NonRdfSourceDescription.class);
     }
 
     @Override
-    public FedoraTimeMap createTimemap(final FedoraTransaction transaction, final String identifier) {
+    public FedoraTimeMap createTimemap(final Transaction transaction, final String identifier) {
         // TODO: Change to FedoraTimeMapImpl.class when implemented
         return (FedoraTimeMap) createResource(FedoraTimeMap.class);
     }
 
     @Override
-    public FedoraWebacAcl createAcl(final FedoraTransaction transaction, final String identifier) {
+    public FedoraWebacAcl createAcl(final Transaction transaction, final String identifier) {
         // TODO: Change to ContainerImpl.class when implemented
         return (FedoraWebacAcl) createResource(FedoraWebacAcl.class);
     }
 
     @Override
-    public FedoraResource getResource(final FedoraTransaction transaction, final String identifier)
+    public FedoraResource getResource(final Transaction transaction, final String identifier)
             throws PathNotFoundException {
         try {
             final PersistentStorageSession psSession = getSession(transaction);
@@ -116,7 +116,7 @@ public class ResourceFactoryImpl implements ResourceFactory {
     }
 
     @Override
-    public <T extends FedoraResource> T getResource(final FedoraTransaction transaction, final String identifier,
+    public <T extends FedoraResource> T getResource(final Transaction transaction, final String identifier,
             final Class<T> clazz)
             throws PathNotFoundException {
         try {
@@ -153,7 +153,7 @@ public class ResourceFactoryImpl implements ResourceFactory {
      * @param transaction The supplied transaction id.
      * @return a storage session.
      */
-    private PersistentStorageSession getSession(final FedoraTransaction transaction) {
+    private PersistentStorageSession getSession(final Transaction transaction) {
         final PersistentStorageSession session;
         if (transaction == null) {
             session = factory.getReadOnlySession();

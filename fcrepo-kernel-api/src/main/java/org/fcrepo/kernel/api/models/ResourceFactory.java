@@ -17,7 +17,7 @@
  */
 package org.fcrepo.kernel.api.models;
 
-import org.fcrepo.kernel.api.FedoraTransaction;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 
 /**
@@ -36,7 +36,7 @@ public interface ResourceFactory {
      * @return The resource.
      * @throws PathNotFoundException If the identifier cannot be found.
      */
-    public FedoraResource getResource(final FedoraTransaction transaction, final String identifier)
+    public FedoraResource getResource(final Transaction transaction, final String identifier)
             throws PathNotFoundException;
 
     /**
@@ -49,7 +49,7 @@ public interface ResourceFactory {
      * @return The resource.
      * @throws PathNotFoundException If the identifier cannot be found.
      */
-    public <T extends FedoraResource> T getResource(final FedoraTransaction transaction, final String identifier,
+    public <T extends FedoraResource> T getResource(final Transaction transaction, final String identifier,
             final Class<T> clazz) throws PathNotFoundException;
 
     /**
@@ -59,7 +59,7 @@ public interface ResourceFactory {
      * @param identifier The path or identifier for the resource.
      * @return The container object.
      */
-    public Container createContainer(final FedoraTransaction transaction, final String identifier);
+    public Container createContainer(final Transaction transaction, final String identifier);
 
     /**
      * Create a new binary. Newly created binaries will have nothing backing them until they are populated by a
@@ -69,7 +69,7 @@ public interface ResourceFactory {
      * @param identifier The path or identifier for the resource.
      * @return The binary object.
      */
-    public FedoraBinary createBinary(final FedoraTransaction transaction, final String identifier);
+    public FedoraBinary createBinary(final Transaction transaction, final String identifier);
 
     /**
      * Create a binary description.
@@ -78,7 +78,7 @@ public interface ResourceFactory {
      * @param identifier The path or identifier for the resource.
      * @return The description object.
      */
-    public NonRdfSourceDescription createBinaryDescription(final FedoraTransaction transaction, final String identifier);
+    public NonRdfSourceDescription createBinaryDescription(final Transaction transaction, final String identifier);
 
     /**
      * Create a timemap.
@@ -87,7 +87,7 @@ public interface ResourceFactory {
      * @param identifier The path or identifier of the resource this timemap is linked to.
      * @return The timemap object.
      */
-    public FedoraTimeMap createTimemap(final FedoraTransaction transaction, final String identifier);
+    public FedoraTimeMap createTimemap(final Transaction transaction, final String identifier);
 
     /**
      * Create a Webac ACL.
@@ -96,11 +96,11 @@ public interface ResourceFactory {
      * @param identifier The path or identifier of the resource this ACL is linked to.
      * @return The ACL object.
      */
-    public FedoraWebacAcl createAcl(final FedoraTransaction transaction, final String identifier);
+    public FedoraWebacAcl createAcl(final Transaction transaction, final String identifier);
 
     /*
      * TODO: Do we need a model for an archival group?
-     * public ArchivalGroup createArchivalGroup(final FedoraTransaction transaction, final String identifier);
+     * public ArchivalGroup createArchivalGroup(final Transaction transaction, final String identifier);
      */
 
 }
