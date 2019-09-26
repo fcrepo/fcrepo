@@ -36,4 +36,22 @@ public class ItemNotFoundException extends RepositoryRuntimeException {
         super(msg);
     }
 
+    /**
+     * Ordinary constructor.
+     *
+     * @param rootCause the root cause
+     */
+    public ItemNotFoundException(final Throwable rootCause) {
+        super(rootCause);
+    }
+
+    /**
+     * Ordinary constructor.
+     *
+     * @param msg the message
+     * @param rootCause the root cause
+     */
+    public ItemNotFoundException(final String msg, final Throwable rootCause) {
+        super(msg, rootCause);
+    }
 }
