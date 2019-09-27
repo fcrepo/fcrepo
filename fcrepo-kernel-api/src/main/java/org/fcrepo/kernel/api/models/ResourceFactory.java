@@ -29,6 +29,16 @@ import org.fcrepo.kernel.api.exception.PathNotFoundException;
 public interface ResourceFactory {
 
     /**
+     * Get a resource from the persistence layer without using a transaction.
+     *
+     * @param identifier The path or identifier for the resource.
+     * @return The resource.
+     * @throws PathNotFoundException If the identifier cannot be found.
+     */
+    public FedoraResource getResource(final String identifier)
+            throws PathNotFoundException;
+
+    /**
      * Get a resource from the persistence layer.
      *
      * @param transaction The transaction this request is part of.
