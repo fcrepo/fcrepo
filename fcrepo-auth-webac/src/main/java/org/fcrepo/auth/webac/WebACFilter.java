@@ -19,7 +19,6 @@
 package org.fcrepo.auth.webac;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.EnumSet.of;
 import static java.util.stream.Collectors.toList;
 import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
@@ -43,7 +42,6 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
-import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -691,7 +689,7 @@ public class WebACFilter implements Filter {
      * @return URI of the ldp:membershipResource triple or null if not found.
      */
     private URI getHasMemberFromResource(final HttpServletRequest request, final FedoraResource resource) {
-        return resource.getTriples(translator(request), of(PROPERTIES))
+        return resource.getTriples()
                 .filter(triple -> triple.getPredicate().equals(MEMBERSHIP_RESOURCE.asNode()) && triple.getObject()
                         .isURI())
                 .map(Triple::getObject).map(Node::getURI)

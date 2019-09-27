@@ -41,7 +41,6 @@ import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_NAMESPACE_VALUE;
 import static org.fcrepo.http.api.FedoraAcl.getDefaultAcl;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
-import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
@@ -252,7 +251,7 @@ public class WebACRolesProvider {
                                                   final FedoraResource resource, final String hashPortion) {
 
         //resolve list of triples, accounting for hash-uris.
-        final List<Triple> triples = resource.getTriples(translator, PROPERTIES).filter(
+        final List<Triple> triples = resource.getTriples().filter(
             triple -> hashPortion == null || triple.getSubject().getURI().endsWith(hashPortion)).collect(toList());
         //determine if there is a rdf:type vcard:Group
         final boolean hasVcardGroup = triples.stream().anyMatch(
@@ -323,7 +322,7 @@ public class WebACRolesProvider {
 
         if (aclResource.isAcl()) {
             //resolve set of subjects that are of type acl:authorization
-            final List<Triple> triples = aclResource.getTriples(translator, PROPERTIES).collect(toList());
+            final List<Triple> triples = aclResource.getTriples().collect(toList());
 
             final Set<org.apache.jena.graph.Node> authSubjects = triples.stream().filter(t -> {
                 return t.getPredicate().getURI().equals(RDF_NAMESPACE + "type") &&

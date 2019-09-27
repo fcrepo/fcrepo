@@ -460,11 +460,13 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
 
     private RdfStream getTriples(final FedoraResource resource, final Set<? extends TripleCategory> x) {
-        return resource.getTriples(translator(), x);
+        // TODO Reimplement filtering of triples by categories
+        return resource.getTriples();
     }
 
     private RdfStream getTriples(final FedoraResource resource, final TripleCategory x) {
-        return resource.getTriples(translator(), x);
+        // TODO Reimplement filtering of triples by categories
+        return resource.getTriples();
     }
 
     protected URI getUri(final FedoraResource resource) {
@@ -1049,7 +1051,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * This method does two things:
      * - Throws an exception if an authorization has both accessTo and accessToClass
      * - Adds a default accessTo target if an authorization has neither accessTo nor accessToClass
-     * 
+     *
      * @param resource the fedora resource
      * @param inputModel to be checked and updated
      */
@@ -1083,7 +1085,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     /**
      * Returns a Statement with the resource containing the acl to be the accessTo target for the given auth subject.
-     * 
+     *
      * @param authSubject - acl authorization subject uri string
      * @return acl statement
      */
