@@ -47,6 +47,8 @@ import static org.apache.jena.riot.WebContent.ctSPARQLUpdate;
 import static org.apache.jena.riot.WebContent.ctTextCSV;
 import static org.apache.jena.riot.WebContent.ctTextPlain;
 import static org.apache.jena.riot.WebContent.matchContentType;
+import static org.fcrepo.http.api.HttpConstants.ATOMIC_ID;
+import static org.fcrepo.http.api.HttpConstants.ATOMIC_START;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_WITH_CHARSET;
@@ -166,7 +168,7 @@ public class FedoraLdp extends ContentExposingResource {
     }
 
     /**
-     * Create a new FedoraNodes instance for a given path
+     * Create a new FedoraLdp instance for a given path
      * @param externalPath the external path
      */
     @VisibleForTesting
@@ -318,7 +320,8 @@ public class FedoraLdp extends ContentExposingResource {
             final Response builder;
             if (memento != null) {
                 builder =
-                    status(FOUND).header(LOCATION, translator().reverse().convert(memento).toString()).build();
+                    status(FOUND).header(LOCATION, translator().reverse().convert(memento.getPath()).toString())
+                        .build();
             } else {
                 builder = status(NOT_ACCEPTABLE).build();
             }
@@ -410,7 +413,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         final FedoraResource resource;
 
-        final String path = toPath(translator(), externalPath);
+        final String path = translator().convert(externalPath);
 
         final AcquiredLock lock = lockManager.lockForWrite(path, session.getTransaction(), nodeService);
 
@@ -580,13 +583,9 @@ public class FedoraLdp extends ContentExposingResource {
     }
 
     /**
-     * Creates a new object.
-     *
-     * This originally used application/octet-stream;qs=1001 as a workaround
-     * for JERSEY-2636, to ensure requests without a Content-Type get routed here.
-     * This qs value does not parse with newer versions of Jersey, as qs values
-     * must be between 0 and 1. We use qs=1.000 to mark where this historical
-     * anomaly had been.
+     * Creates a new object. This originally used application/octet-stream;qs=1001 as a workaround for JERSEY-2636, to
+     * ensure requests without a Content-Type get routed here. This qs value does not parse with newer versions of
+     * Jersey, as qs values must be between 0 and 1. We use qs=1.000 to mark where this historical anomaly had been.
      *
      * @param contentDisposition the content Disposition value
      * @param requestContentType the request content type
@@ -594,6 +593,8 @@ public class FedoraLdp extends ContentExposingResource {
      * @param requestBodyStream the request body stream
      * @param rawLinks the link values
      * @param digest the digest header
+     * @param AtomicStart Atomic-Start header or null.
+     * @param AtomicId Atomic-Id header or null.
      * @return 201
      * @throws InvalidChecksumException if invalid checksum exception occurred
      * @throws MalformedRdfException if malformed rdf exception occurred
@@ -607,9 +608,11 @@ public class FedoraLdp extends ContentExposingResource {
     public Response createObject(@HeaderParam(CONTENT_DISPOSITION) final ContentDisposition contentDisposition,
                                  @HeaderParam(CONTENT_TYPE) final MediaType requestContentType,
                                  @HeaderParam("Slug") final String slug,
-            final InputStream requestBodyStream,
+        final InputStream requestBodyStream,
                                  @HeaderParam(LINK) final List<String> rawLinks,
-                                 @HeaderParam("Digest") final String digest)
+                                 @HeaderParam("Digest") final String digest,
+                                 @HeaderParam(ATOMIC_START) final String AtomicStart,
+                                 @HeaderParam(ATOMIC_ID) final String AtomicId)
             throws InvalidChecksumException, MalformedRdfException, UnsupportedAlgorithmException {
 
         final List<String> links = unpackLinks(rawLinks);
@@ -627,11 +630,16 @@ public class FedoraLdp extends ContentExposingResource {
         // If request is an external binary, verify link header before proceeding
         final ExternalContentHandler extContent = extContentHandlerFactory.createFromLinks(links);
 
+        // Use existing transaction, Start a new long running or short lived transaction.
+        // Can be accessed via the transaction() function.
+        startTransaction(AtomicStart, AtomicId);
+
         if (!(resource() instanceof Container)) {
             throw new ClientErrorException("Object cannot have child nodes", CONFLICT);
         } else if (resource().hasType(FEDORA_PAIRTREE)) {
             throw new ClientErrorException("Objects cannot be created under pairtree nodes", FORBIDDEN);
         }
+
 
         final MediaType contentType = getSimpleContentType(
                 extContent != null ? extContent.getContentType() : requestContentType);
@@ -706,7 +714,7 @@ public class FedoraLdp extends ContentExposingResource {
             LOGGER.debug("Finished creating resource with path: {}", newObjectPath);
             return createUpdateResponse(resource, true);
         } finally {
-            lock.release();
+            // lock.release();
         }
     }
 
@@ -742,7 +750,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         if (session.isBatchSession()) {
             final String canonical = translator().reverse()
-                    .convert(resource)
+                .convert(resource.getPath())
                     .toString()
                     .replaceFirst("/tx:[^/]+", "");
 
@@ -796,15 +804,15 @@ public class FedoraLdp extends ContentExposingResource {
 
         final MediaType simpleContentType = contentPresent ? getSimpleContentType(contentType) : null;
 
-        final FedoraResource result = null;
+        final FedoraResource result;
         if ("ldp:NonRDFSource".equals(interactionModel) || contentExternal ||
                 (contentPresent && interactionModel == null && !isRDF(simpleContentType))) {
-            // TODO: Replace with some other service/factory
-            // result = binaryService.findOrCreate(session.getTransaction(), path);
+            // If we store binaries triples inside the binary, then perhaps we don't
+            // create a NonRdfSourceDescription explicitly and instead get it from the FedoraBinary?
+            result = resourceFactory.createBinary(transaction(), path);
             timeMapService.findOrCreate(session.getTransaction(), path + "/" + FEDORA_DESCRIPTION);
         } else {
-            // TODO: Replace with some other service/factory
-            // result = containerService.findOrCreate(session.getTransaction(), path, interactionModel);
+            result = resourceFactory.createContainer(transaction(), path);
         }
 
         timeMapService.findOrCreate(session.getTransaction(), path);
@@ -847,7 +855,7 @@ public class FedoraLdp extends ContentExposingResource {
         final URI newResourceUri = uriInfo.getAbsolutePathBuilder().clone().path(FedoraLdp.class)
                 .resolveTemplate("path", pid, false).build();
 
-        pid = translator().asString(createResource(newResourceUri.toString()));
+        pid = translator().convert(createResource(newResourceUri.toString()).getURI());
         try {
             pid = URLDecoder.decode(pid, "UTF-8");
         } catch (final UnsupportedEncodingException e) {
@@ -999,10 +1007,11 @@ public class FedoraLdp extends ContentExposingResource {
      */
     private void checkMementoPath() {
         if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
-            final String path = toPath(translator(), externalPath);
+            final String path = translator().convert(externalPath);
             if (path.contains(FedoraTypes.FCR_VERSIONS)) {
                 throw new InvalidMementoPathException("Invalid versioning request with path: " + path);
             }
         }
     }
+
 }

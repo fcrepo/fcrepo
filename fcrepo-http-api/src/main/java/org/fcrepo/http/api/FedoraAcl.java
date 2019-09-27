@@ -124,7 +124,7 @@ public class FedoraAcl extends ContentExposingResource {
         final boolean created;
         final FedoraResource aclResource;
 
-        final String path = toPath(translator(), externalPath);
+        final String path = translator().convert(externalPath);
         final AcquiredLock lock = lockManager.lockForWrite(path, session.getTransaction(), nodeService);
         try {
             LOGGER.info("PUT acl resource '{}'", externalPath);

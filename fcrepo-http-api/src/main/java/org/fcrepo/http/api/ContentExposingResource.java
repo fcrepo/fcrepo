@@ -19,7 +19,6 @@ package org.fcrepo.http.api;
 
 import static com.google.common.base.Strings.nullToEmpty;
 import static java.text.MessageFormat.format;
-import static java.util.EnumSet.of;
 import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.empty;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
@@ -79,13 +78,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEMAP_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_NAMESPACE_VALUE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedNamespace;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
-import static org.fcrepo.kernel.api.RequiredRdfContext.EMBED_RESOURCES;
-import static org.fcrepo.kernel.api.RequiredRdfContext.INBOUND_REFERENCES;
-import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_CONTAINMENT;
-import static org.fcrepo.kernel.api.RequiredRdfContext.LDP_MEMBERSHIP;
-import static org.fcrepo.kernel.api.RequiredRdfContext.MINIMAL;
-import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
-import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -146,7 +138,6 @@ import org.fcrepo.http.commons.responses.RangeRequestInputStream;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.RdfStream;
-import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.exception.ACLAuthorizationConstraintViolationException;
 import org.fcrepo.kernel.api.exception.InsufficientStorageException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
@@ -340,56 +331,55 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         final List<Stream<Triple>> streams = new ArrayList<>();
 
 
-        if (returnPreference.getValue().equals("minimal")) {
-            streams.add(getTriples(resource, of(PROPERTIES, MINIMAL)).filter(tripleFilter));
+        // This adds user properties rdf to the stream ONLY.
+        streams.add(getTriples(resource).filter(tripleFilter));
 
-            // Mementos already have the server managed properties in the PROPERTIES category
-            // since mementos are immutable and these triples are no longer managed
-            if (ldpPreferences.prefersServerManaged() && !resource.isMemento())  {
-                streams.add(getTriples(resource, of(SERVER_MANAGED, MINIMAL)));
-            }
-        } else {
-            streams.add(getTriples(resource, PROPERTIES).filter(tripleFilter));
-
-            // Additional server-managed triples about this resource
-            // Mementos already have the server managed properties in the PROPERTIES category
-            // since mementos are immutable and these triples are no longer managed
-             if (ldpPreferences.prefersServerManaged() && !resource.isMemento()) {
-                streams.add(getTriples(resource, SERVER_MANAGED));
-            }
-
+        // Mementos already have the server managed properties in the PROPERTIES category
+        // since mementos are immutable and these triples are no longer managed
+        if (ldpPreferences.prefersServerManaged() && !resource.isMemento()) {
+            // streams.add(getTriples(resource).filter, of(SERVER_MANAGED, MINIMAL)));
+            // Add server triples here.
+        }
+        if (!returnPreference.getValue().equals("minimal")) {
             // containment triples about this resource
             if (ldpPreferences.prefersContainment()) {
-                if (limit == -1) {
-                    streams.add(getTriples(resource, LDP_CONTAINMENT));
-                } else {
-                    streams.add(getTriples(resource, LDP_CONTAINMENT).limit(limit));
-                }
+                // TODO: Add containment triples for resource to stream
+                // if (limit == -1) {
+                // streams.add(getTriples(resource, LDP_CONTAINMENT));
+                // } else {
+                // streams.add(getTriples(resource, LDP_CONTAINMENT).limit(limit));
+                // }
             }
 
             // LDP container membership triples for this resource
             if (ldpPreferences.prefersMembership()) {
-                streams.add(getTriples(resource, LDP_MEMBERSHIP));
+                // TODO: Add membership triples for this resource.
+                // streams.add(getTriples(resource, LDP_MEMBERSHIP));
             }
 
             // Include inbound references to this object
             if (ldpPreferences.prefersReferences()) {
-                streams.add(getTriples(resource, INBOUND_REFERENCES));
+                // TODO: Add inbound references about this resource.
+                // streams.add(getTriples(resource, INBOUND_REFERENCES));
             }
 
             // Embed the children of this object
             if (ldpPreferences.prefersEmbed()) {
-                streams.add(getTriples(resource, EMBED_RESOURCES));
+                // TODO: Add embed children for this resource.
+                // streams.add(getTriples(resource, EMBED_RESOURCES));
             }
         }
 
         final RdfStream rdfStream = new DefaultRdfStream(
                 asNode(resource), streams.stream().reduce(empty(), Stream::concat));
 
-        if (httpTripleUtil != null && ldpPreferences.prefersServerManaged()) {
-            return httpTripleUtil.addHttpComponentModelsForResourceToStream(rdfStream, resource, uriInfo,
-                    translator());
-        }
+        // This inserts server managed triples into the result stream.
+        // As this is changing in 6.0 it can probably be removed.
+        //
+        // if (httpTripleUtil != null && ldpPreferences.prefersServerManaged()) {
+        // return httpTripleUtil.addHttpComponentModelsForResourceToStream(rdfStream, resource, uriInfo,
+        // translator());
+        // }
 
         return rdfStream;
     }
@@ -459,17 +449,13 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
         }
 
-    private RdfStream getTriples(final FedoraResource resource, final Set<? extends TripleCategory> x) {
-        return resource.getTriples(translator(), x);
-    }
-
-    private RdfStream getTriples(final FedoraResource resource, final TripleCategory x) {
-        return resource.getTriples(translator(), x);
+    private RdfStream getTriples(final FedoraResource resource) {
+        return resource.getTriples(translator());
     }
 
     protected URI getUri(final FedoraResource resource) {
         try {
-            final String uri = translator().reverse().convert(resource).getURI();
+            final String uri = translator().reverse().convert(resource.getPath());
             return new URI(uri);
         } catch (final URISyntaxException e) {
             throw new BadRequestException(e);
@@ -1049,7 +1035,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * This method does two things:
      * - Throws an exception if an authorization has both accessTo and accessToClass
      * - Adds a default accessTo target if an authorization has neither accessTo nor accessToClass
-     * 
+     *
      * @param resource the fedora resource
      * @param inputModel to be checked and updated
      */
@@ -1083,7 +1069,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     /**
      * Returns a Statement with the resource containing the acl to be the accessTo target for the given auth subject.
-     * 
+     *
      * @param authSubject - acl authorization subject uri string
      * @return acl statement
      */

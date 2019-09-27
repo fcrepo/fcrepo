@@ -43,6 +43,8 @@ public class FedoraTombstones extends FedoraBaseResource {
 
     @PathParam("path") protected String externalPath;
 
+    private FedoraResource fedoraResource = null;
+
     /**
      * Default JAX-RS entry point
      */
@@ -73,6 +75,9 @@ public class FedoraTombstones extends FedoraBaseResource {
     }
 
     protected FedoraResource resource() {
-        return translator().convert(translator().toDomain(externalPath));
+        if (fedoraResource == null) {
+            fedoraResource = getResourceFromPath(externalPath);
+        }
+        return fedoraResource;
     }
 }

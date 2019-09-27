@@ -19,15 +19,18 @@ package org.fcrepo.http.api;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.jena.graph.Node;
-import org.apache.jena.rdf.model.Resource;
 // import org.apache.commons.lang3.StringUtils;
 import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.http.commons.session.HttpSession;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.SessionMissingException;
-import org.fcrepo.kernel.api.exception.TombstoneException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.models.Tombstone;
 import org.slf4j.Logger;
 
@@ -57,20 +60,64 @@ abstract public class FedoraBaseResource extends AbstractResource {
     private static final Pattern TRAILING_SLASH_REGEX = Pattern.compile("/+$");
 
     @Inject
+    private TransactionManager transactionManager;
+
+    @Inject
+    protected ResourceFactory resourceFactory;
+
+    private Transaction transaction = null;
+
+    private boolean transactionShortLived = true;
+
+    @Inject
     protected HttpSession session;
 
     @Context
     protected SecurityContext securityContext;
 
-    protected IdentifierConverter<Resource, FedoraResource> idTranslator;
+    protected IdentifierConverter<String, String> idTranslator;
 
-    protected IdentifierConverter<Resource, FedoraResource> translator() {
+    protected IdentifierConverter<String, String> translator() {
         if (idTranslator == null) {
-            idTranslator = new HttpResourceConverter(session(),
+            idTranslator = new HttpIdentifierConverter(
                     uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class));
         }
 
         return idTranslator;
+    }
+
+    /**
+     * Create or Get a transaction.
+     *
+     * @return an existing or new transaction.
+     */
+    protected Transaction transaction() {
+        if (transaction == null) {
+            // If there isn't a transaction start a new shortlived one.
+            startTransaction(null, null);
+        }
+        return transaction;
+    }
+
+    /**
+     * Create or Get a transaction.
+     *
+     * @param AtomicStart Atomic-Start header or null.
+     * @param AtomicId Atomic-Id header or null.
+     */
+    protected void startTransaction(final String AtomicStart, final String AtomicId) {
+        if (transaction == null) {
+            if (AtomicStart != null || AtomicId != null) {
+                transactionShortLived = false;
+            }
+            if (AtomicId != null) {
+                final String[] idParts = AtomicId.split(":");
+                final String transactionId = idParts[1].trim();
+                transaction = transactionManager.get(transactionId);
+            } else {
+                transaction = transactionManager.create();
+            }
+        }
     }
 
     /**
@@ -80,7 +127,8 @@ abstract public class FedoraBaseResource extends AbstractResource {
      * @return the Jena node
      */
     protected Node asNode(final FedoraResource resource) {
-        return translator().reverse().convert(resource).asNode();
+        // return translator().reverse().convert(resource).asNode();
+        return null;
     }
 
     /**
@@ -90,15 +138,18 @@ abstract public class FedoraBaseResource extends AbstractResource {
      */
     @VisibleForTesting
     public FedoraResource getResourceFromPath(final String externalPath) {
-        final Resource resource = translator().toDomain(externalPath);
-        final FedoraResource fedoraResource = translator().convert(resource);
+        try {
+            final FedoraResource fedoraResource = resourceFactory.getResource(transaction(), externalPath);
 
-        if (fedoraResource instanceof Tombstone) {
-            final String resourceURI = TRAILING_SLASH_REGEX.matcher(resource.getURI()).replaceAll("");
-            throw new TombstoneException(fedoraResource, resourceURI + "/fcr:tombstone");
+            if (fedoraResource instanceof Tombstone) {
+                // final String resourceURI = TRAILING_SLASH_REGEX.matcher(resource.getURI()).replaceAll("");
+                // throw new TombstoneException(fedoraResource, resourceURI + "/fcr:tombstone");
+            }
+
+            return fedoraResource;
+        } catch (final PathNotFoundException e) {
+            throw new PathNotFoundRuntimeException(e);
         }
-
-        return fedoraResource;
     }
 
     /**

@@ -41,7 +41,6 @@ import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_NAMESPACE_VALUE;
 import static org.fcrepo.http.api.FedoraAcl.getDefaultAcl;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
-import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
@@ -60,7 +59,6 @@ import java.util.stream.Stream;
 import javax.inject.Inject;
 
 import org.apache.jena.graph.Triple;
-import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.api.Transaction;
@@ -218,7 +216,7 @@ public class WebACRolesProvider {
         // TODO do not use transactions for internal reads
         final Transaction transaction = sessionFactory.getNewTransaction();
         //TODO figure out where the translator should be coming from.
-        final IdentifierConverter<Resource, FedoraResource> translator = null;
+        final IdentifierConverter<String, String> translator = null;
 
         final List<String> members = agentGroups.stream().flatMap(agentGroup -> {
             if (agentGroup.startsWith(FEDORA_INTERNAL_PREFIX)) {
@@ -249,11 +247,11 @@ public class WebACRolesProvider {
     /**
      * Given a FedoraResource, return a list of agents.
      */
-    private static Stream<String> getAgentMembers(final IdentifierConverter<Resource, FedoraResource> translator,
+    private static Stream<String> getAgentMembers(final IdentifierConverter<String, String> translator,
                                                   final FedoraResource resource, final String hashPortion) {
 
         //resolve list of triples, accounting for hash-uris.
-        final List<Triple> triples = resource.getTriples(translator, PROPERTIES).filter(
+        final List<Triple> triples = resource.getTriples(translator).filter(
             triple -> hashPortion == null || triple.getSubject().getURI().endsWith(hashPortion)).collect(toList());
         //determine if there is a rdf:type vcard:Group
         final boolean hasVcardGroup = triples.stream().anyMatch(
@@ -315,7 +313,7 @@ public class WebACRolesProvider {
 
         final List<WebACAuthorization> authorizations = new ArrayList<>();
         //TODO figure out where the translator should be coming from
-        final IdentifierConverter<Resource, FedoraResource> translator = null;
+        final IdentifierConverter<String, String> translator = null;
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("ACL: {}", aclResource.getPath());
@@ -323,7 +321,7 @@ public class WebACRolesProvider {
 
         if (aclResource.isAcl()) {
             //resolve set of subjects that are of type acl:authorization
-            final List<Triple> triples = aclResource.getTriples(translator, PROPERTIES).collect(toList());
+            final List<Triple> triples = aclResource.getTriples(translator).collect(toList());
 
             final Set<org.apache.jena.graph.Node> authSubjects = triples.stream().filter(t -> {
                 return t.getPredicate().getURI().equals(RDF_NAMESPACE + "type") &&

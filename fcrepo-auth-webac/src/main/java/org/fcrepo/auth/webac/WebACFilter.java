@@ -19,7 +19,6 @@
 package org.fcrepo.auth.webac;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.EnumSet.of;
 import static java.util.stream.Collectors.toList;
 import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
@@ -43,7 +42,6 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
-import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -75,9 +73,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.QueryParseException;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFReader;
-import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RiotException;
@@ -92,8 +88,7 @@ import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.apache.shiro.subject.Subject;
 import org.fcrepo.http.api.FedoraLdp;
-import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
-import org.fcrepo.http.commons.session.HttpSession;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
@@ -289,10 +284,10 @@ public class WebACFilter implements Filter {
         return nodeService.exists(transaction(), getRepoPath(servletRequest));
     }
 
-    private IdentifierConverter<Resource, FedoraResource> translator(final HttpServletRequest servletRequest) {
-        final HttpSession httpSession = new HttpSession(transaction());
+
+    private IdentifierConverter<String, String> translator(final HttpServletRequest servletRequest) {
         final UriBuilder uriBuilder = UriBuilder.fromUri(getBaseURL(servletRequest)).path(FedoraLdp.class);
-        return new HttpResourceConverter(httpSession, uriBuilder);
+        return new HttpIdentifierConverter(uriBuilder);
     }
 
     private String getRepoPath(final HttpServletRequest servletRequest) {
@@ -301,8 +296,7 @@ public class WebACFilter implements Filter {
     }
 
     private String getRepoPath(final HttpServletRequest servletRequest, final String httpURI) {
-        final Resource resource = ModelFactory.createDefaultModel().createResource(httpURI);
-        final String repoPath = translator(servletRequest).asString(resource);
+        final String repoPath = translator(servletRequest).convert(httpURI);
         log.debug("Converted request URI {} to repo path {}", httpURI, repoPath);
         return repoPath;
     }
@@ -692,7 +686,7 @@ public class WebACFilter implements Filter {
      * @return URI of the ldp:membershipResource triple or null if not found.
      */
     private URI getHasMemberFromResource(final HttpServletRequest request, final FedoraResource resource) {
-        return resource.getTriples(translator(request), of(PROPERTIES))
+        return resource.getTriples(translator(request))
                 .filter(triple -> triple.getPredicate().equals(MEMBERSHIP_RESOURCE.asNode()) && triple.getObject()
                         .isURI())
                 .map(Triple::getObject).map(Node::getURI)

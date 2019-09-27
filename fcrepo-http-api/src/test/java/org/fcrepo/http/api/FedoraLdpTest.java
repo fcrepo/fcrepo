@@ -63,7 +63,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
@@ -82,7 +81,6 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -106,16 +104,14 @@ import org.apache.commons.io.IOUtils;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
-import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.http.commons.domain.MultiPrefer;
 import org.fcrepo.http.commons.domain.PreferTag;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.RdfStream;
-import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
 import org.fcrepo.kernel.api.exception.ExternalMessageBodyException;
 import org.fcrepo.kernel.api.exception.InsufficientStorageException;
@@ -186,7 +182,7 @@ public class FedoraLdpTest {
     @Mock
     private Binary mockBinary;
 
-    private IdentifierConverter<Resource, FedoraResource> idTranslator;
+    private IdentifierConverter<String, String> idTranslator;
 
     @Mock
     private NodeService mockNodeService;
@@ -247,8 +243,7 @@ public class FedoraLdpTest {
 
         mockResponse = new MockHttpServletResponse();
 
-        idTranslator = new HttpResourceConverter(mockSession,
-                UriBuilder.fromUri("http://localhost/fcrepo/{path: .*}"));
+        idTranslator = new HttpIdentifierConverter(UriBuilder.fromUri("http://localhost/fcrepo/{path: .*}"));
 
         setField(testObj, "request", mockRequest);
         setField(testObj, "servletResponse", mockResponse);
@@ -327,8 +322,8 @@ public class FedoraLdpTest {
         when(mockResource.getStateToken()).thenReturn("");
         when(mockResource.getDescription()).thenReturn(mockResource);
         when(mockResource.getDescribedResource()).thenReturn(mockResource);
-        when(mockResource.getTriples(eq(idTranslator), anySet())).thenAnswer(answer);
-        when(mockResource.getTriples(eq(idTranslator), any(TripleCategory.class))).thenAnswer(answer);
+        when(mockResource.getTriples(eq(idTranslator))).thenAnswer(answer);
+        when(mockResource.getTriples(eq(idTranslator))).thenAnswer(answer);
 
         return mockResource;
     }
@@ -820,7 +815,7 @@ public class FedoraLdpTest {
                 .toString()
                 .replaceAll("<.*>", "< >");
 
-        testObj.createObject(null, null, null, null, singletonList(badExternal), null);
+        testObj.createObject(null, null, null, null, singletonList(badExternal), null, null, null);
     }
 
     @Test(expected = ExternalMessageBodyException.class)
@@ -830,7 +825,7 @@ public class FedoraLdpTest {
 
          final String badExternal = Link.fromUri("http://test.com")
             .rel(EXTERNAL_CONTENT.toString()).param("handling", "boogie").type("text/plain").build().toString();
-        testObj.createObject(null, null, null, null, singletonList(badExternal), null);
+        testObj.createObject(null, null, null, null, singletonList(badExternal), null, null, null);
     }
 
     @Test
@@ -843,9 +838,9 @@ public class FedoraLdpTest {
         when(mockRequest.getMethod()).thenReturn("GET");
         when(mockResource.getDescribedResource()).thenReturn(mockBinary);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
-        when(mockBinary.getTriples(eq(idTranslator), any(TripleCategory.class)))
+        when(mockBinary.getTriples(eq(idTranslator)))
             .thenReturn(new DefaultRdfStream(createURI("mockBinary")));
-        when(mockBinary.getTriples(eq(idTranslator), any(EnumSet.class)))
+        when(mockBinary.getTriples(eq(idTranslator)))
             .thenReturn(new DefaultRdfStream(createURI("mockBinary"), of(new Triple
                     (createURI("mockBinary"), createURI("called"), createURI("child:properties")))));
         final Response actual = testObj.getResource(null);
@@ -997,9 +992,9 @@ public class FedoraLdpTest {
         when(mockRequest.getMethod()).thenReturn("PATCH");
         when(mockObject.getDescribedResource()).thenReturn(mockBinary);
 
-        when(mockBinary.getTriples(eq(idTranslator), any(TripleCategory.class)))
+        when(mockBinary.getTriples(eq(idTranslator)))
             .thenReturn(new DefaultRdfStream(createURI("mockBinary")));
-        when(mockBinary.getTriples(eq(idTranslator), any(EnumSet.class)))
+        when(mockBinary.getTriples(eq(idTranslator)))
             .thenReturn(new DefaultRdfStream(createURI("mockBinary"),
                         of(new Triple(createURI("mockBinary"), createURI("called"),
                             createURI("child:properties")))));
@@ -1032,7 +1027,7 @@ public class FedoraLdpTest {
         setResource(Container.class);
         // when(mockContainerService.findOrCreate(mockTransaction, "/b", null))
         // .thenReturn(mockContainer);
-        final Response actual = testObj.createObject(null, null, "b", null, null, null);
+        final Response actual = testObj.createObject(null, null, "b", null, null, null, null, null);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
     }
 
@@ -1042,7 +1037,8 @@ public class FedoraLdpTest {
         setResource(Container.class);
         // when(mockContainerService.findOrCreate(mockTransaction, "/b", null)).thenReturn(mockContainer);
         final String versionedResourceLink = "<" + VERSIONED_RESOURCE.getURI() + ">;rel=\"type\"";
-        final Response actual = testObj.createObject(null, null, "b", null, singletonList(versionedResourceLink), null);
+        final Response actual = testObj.createObject(null, null, "b", null, singletonList(versionedResourceLink), null,
+            null, null);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
     }
 
@@ -1052,7 +1048,8 @@ public class FedoraLdpTest {
         setResource(Container.class);
         // when(mockContainerService.findOrCreate(mockTransaction, "/b", null)).thenReturn(mockContainer);
         final Response actual = testObj.createObject(null,
-                MediaType.valueOf(contentTypeSPARQLUpdate), "b", toInputStream("x", UTF_8), null, null);
+            MediaType.valueOf(contentTypeSPARQLUpdate), "b", toInputStream("x", UTF_8), null, null,
+            null, null);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(updatePropertiesService).updateProperties(eq(mockContainer), eq("x"), any(RdfStream.class));
     }
@@ -1063,7 +1060,7 @@ public class FedoraLdpTest {
         setResource(Container.class);
         // when(mockContainerService.findOrCreate(mockTransaction, "/b", null)).thenReturn(mockContainer);
         final Response actual = testObj.createObject(null, NTRIPLES_TYPE, "b",
-                toInputStream("_:a <info:b> _:c .", UTF_8), null, null);
+            toInputStream("_:a <info:b> _:c .", UTF_8), null, null, null, null);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(replacePropertiesService).replaceProperties(eq(mockContainer), any(Model.class), any(RdfStream.class));
     }
@@ -1076,7 +1073,7 @@ public class FedoraLdpTest {
         // when(mockBinaryService.findOrCreate(mockTransaction, "/b")).thenReturn(mockBinary);
         try (final InputStream content = toInputStream("x", UTF_8)) {
             final Response actual = testObj.createObject(null, APPLICATION_OCTET_STREAM_TYPE, "b", content,
-                nonRDFSourceLink, null);
+                nonRDFSourceLink, null, null, null);
             assertEquals(CREATED.getStatusCode(), actual.getStatus());
             verify(mockBinary).setContent(content, APPLICATION_OCTET_STREAM, Collections.emptySet(), "", null);
         }
@@ -1099,7 +1096,8 @@ public class FedoraLdpTest {
                     "",
                     null);
 
-            testObj.createObject(null, APPLICATION_OCTET_STREAM_TYPE, "b", content, nonRDFSourceLink, null);
+            testObj.createObject(null, APPLICATION_OCTET_STREAM_TYPE, "b", content, nonRDFSourceLink, null,
+                null, null);
         }
     }
 
@@ -1112,7 +1110,7 @@ public class FedoraLdpTest {
         try (final InputStream content = toInputStream("x", UTF_8)) {
             final MediaType requestContentType = MediaType.valueOf("some/mime-type; with=some; param=s");
             final Response actual = testObj.createObject(null, requestContentType, "b", content, nonRDFSourceLink,
-                null);
+                null, null, null);
             assertEquals(CREATED.getStatusCode(), actual.getStatus());
             verify(mockBinary).setContent(content, requestContentType.toString(), Collections.emptySet(), "", null);
         }
@@ -1130,7 +1128,7 @@ public class FedoraLdpTest {
             final String requestSHA = "sha=" + sha;
             final Set<URI> shaURI = singleton(URI.create("urn:sha1:" + sha));
             final Response actual = testObj.createObject(null, requestContentType, "b", content, nonRDFSourceLink,
-                requestSHA);
+                requestSHA, null, null);
             assertEquals(CREATED.getStatusCode(), actual.getStatus());
             verify(mockBinary).setContent(content, requestContentType.toString(), shaURI, "", null);
         }
@@ -1148,7 +1146,7 @@ public class FedoraLdpTest {
             final String requestSHA = "sha-256=" + sha;
             final Set<URI> shaURI = singleton(URI.create("urn:sha-256:" + sha));
             final Response actual = testObj.createObject(null, requestContentType, "b", content, nonRDFSourceLink,
-                requestSHA);
+                requestSHA, null, null);
             assertEquals(CREATED.getStatusCode(), actual.getStatus());
             verify(mockBinary).setContent(content, requestContentType.toString(), shaURI, "", null);
         }
@@ -1166,7 +1164,7 @@ public class FedoraLdpTest {
             final String requestMD5 = "md5=" + md5;
             final Set<URI> md5URI = singleton(URI.create("urn:md5:" + md5));
             final Response actual = testObj.createObject(null, requestContentType, "b", content, nonRDFSourceLink,
-                requestMD5);
+                requestMD5, null, null);
             assertEquals(CREATED.getStatusCode(), actual.getStatus());
             verify(mockBinary).setContent(content, requestContentType.toString(), md5URI, "", null);
         }
@@ -1193,7 +1191,7 @@ public class FedoraLdpTest {
             final HashSet<URI> checksumURIs = new HashSet<>(asList(shaURI, md5URI));
 
             final Response actual = testObj.createObject(null, requestContentType, "b", content, nonRDFSourceLink,
-                requestChecksum);
+                requestChecksum, null, null);
             assertEquals(CREATED.getStatusCode(), actual.getStatus());
             verify(mockBinary).setContent(content, requestContentType.toString(), checksumURIs, "", null);
         }
@@ -1204,7 +1202,7 @@ public class FedoraLdpTest {
             UnsupportedAlgorithmException {
         final Binary mockObject = (Binary)setResource(Binary.class);
         doReturn(mockObject).when(testObj).resource();
-        testObj.createObject(null, null, null, null, null, null);
+        testObj.createObject(null, null, null, null, null, null, null, null);
     }
 
     @Test(expected = CannotCreateResourceException.class)
@@ -1213,15 +1211,15 @@ public class FedoraLdpTest {
         setResource(Container.class);
         // when(mockContainerService.findOrCreate(mockTransaction, "/x")).thenReturn(mockContainer);
         testObj.createObject(null, null, "x", null,
-                singletonList("<http://www.w3.org/ns/ldp#Resource>; rel=\"type\""), null);
+            singletonList("<http://www.w3.org/ns/ldp#Resource>; rel=\"type\""), null, null, null);
     }
 
     @Test(expected = ClientErrorException.class)
     public void testLDPRNotImplementedInvalidLink() throws MalformedRdfException, InvalidChecksumException,
             UnsupportedAlgorithmException {
         setResource(Container.class);
-        // when(mockContainerService.findOrCreate(mockTransaction, "/x", null)).thenReturn(mockContainer);
-        testObj.createObject(null, null, "x", null, singletonList("<http://foo;rel=\"type\""), null);
+        // when(mockContainerService.findOrCreate(mockFedoraSession, "/x", null)).thenReturn(mockContainer);
+        testObj.createObject(null, null, "x", null, singletonList("<http://foo;rel=\"type\""), null, null, null);
     }
 
     @Test

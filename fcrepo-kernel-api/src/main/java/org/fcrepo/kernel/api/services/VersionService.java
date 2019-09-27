@@ -80,7 +80,7 @@ public interface VersionService {
      * @return the version
      */
     FedoraResource createVersion(Transaction transaction, FedoraResource resource,
-            IdentifierConverter<Resource, FedoraResource> idTranslator, Instant dateTime, InputStream rdfInputStream,
+            IdentifierConverter<String, String> idTranslator, Instant dateTime, InputStream rdfInputStream,
             Lang rdfFormat);
 
     /**

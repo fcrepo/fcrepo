@@ -29,6 +29,9 @@ import java.util.function.BiFunction;
 import javax.ws.rs.core.UriBuilder;
 
 import com.google.common.base.Converter;
+
+import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+
 import org.glassfish.jersey.uri.UriTemplate;
 import org.slf4j.Logger;
 
@@ -39,7 +42,7 @@ import org.slf4j.Logger;
  * @author whikloj
  * @since 2019-09-26
  */
-public class HttpIdentifierConverter extends Converter<String, String> {
+public class HttpIdentifierConverter extends IdentifierConverter<String, String> {
 
     private static final Logger LOGGER = getLogger(HttpIdentifierConverter.class);
 
@@ -105,9 +108,7 @@ public class HttpIdentifierConverter extends Converter<String, String> {
         if (fedoraId.startsWith(FEDORA_ID_PREFIX)) {
             // If it starts with our prefix, strip the prefix and use it as the path
             // part of the URI.
-            final String[] values = { fedoraId.substring(FEDORA_ID_PREFIX.length()) };
-            // Need to pass as Array or second arg is ignored. Second arg is DON'T encode slashes
-            return uriBuilder().build(values, false).toString();
+            return toDomain(fedoraId.substring(FEDORA_ID_PREFIX.length()));
         }
         return "";
     }
@@ -140,6 +141,21 @@ public class HttpIdentifierConverter extends Converter<String, String> {
 
         return uriTemplate.match(httpUri + "/", values) && values.containsKey("path") &&
             values.get("path").isEmpty();
+    }
+
+    @Override
+    public String toDomain(final String resource) {
+        // Strip a leading /
+        final String cleanResource = resource.startsWith("/") ? resource.replaceFirst("/", "") : resource;
+        final String[] values = { cleanResource };
+        // Need to pass as Array or second arg is ignored. Second arg is DON'T encode slashes
+        return uriBuilder().build(values, false).toString();
+    }
+
+    @Override
+    public String asString(final String resource) {
+        // TODO Auto-generated method stub
+        return null;
     }
 
 }

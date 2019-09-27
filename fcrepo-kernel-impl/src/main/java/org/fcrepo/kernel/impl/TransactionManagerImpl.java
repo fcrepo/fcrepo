@@ -33,8 +33,11 @@ public class TransactionManagerImpl implements TransactionManager {
 
     private final HashMap<String, Transaction> transactions;
 
-    TransactionManagerImpl() {
-        transactions = new HashMap();
+    /**
+     * Basic constructor.
+     */
+    public TransactionManagerImpl() {
+        transactions = new HashMap<>();
     }
 
     @Override

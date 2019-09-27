@@ -17,15 +17,14 @@
  */
 package org.fcrepo.auth.integration;
 
-import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.AbstractResource;
-import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.exception.RepositoryException;
-import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
+
+import com.google.common.base.Converter;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -58,21 +57,21 @@ public class RootTestResource extends AbstractResource {
 
     @GET
     public Response get(@PathParam("path") final String externalPath) {
-        final String path = toPath(translator(), externalPath);
+        final String path = translator().convert(externalPath);
         LOGGER.trace("GET: {}", path);
         return Response.ok().build();
     }
 
     @PUT
     public Response put(@PathParam("path") final String externalPath) throws Exception {
-        final String path = toPath(translator(), externalPath);
+        final String path = translator().convert(externalPath);
         LOGGER.trace("PUT: {}", path);
         return doRequest(path);
     }
 
     @POST
     public Response post(@PathParam("path") final String externalPath) throws Exception {
-        final String path = toPath(translator(), externalPath);
+        final String path = translator().convert(externalPath);
         LOGGER.trace("POST: {}", path);
         return doRequest(path);
     }
@@ -83,9 +82,8 @@ public class RootTestResource extends AbstractResource {
         return Response.created(location).build();
     }
 
-    private IdentifierConverter<Resource,FedoraResource> translator() {
-        return new HttpResourceConverter(session,
-                    uriInfo.getBaseUriBuilder().clone().path(RootTestResource.class));
+    private Converter<String, String> translator() {
+        return new HttpIdentifierConverter(uriInfo.getBaseUriBuilder().clone().path(RootTestResource.class));
     }
 
 }

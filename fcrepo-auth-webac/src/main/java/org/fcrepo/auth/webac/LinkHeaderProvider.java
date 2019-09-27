@@ -19,14 +19,11 @@ package org.fcrepo.auth.webac;
 
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_ACCESS_CONTROL_VALUE;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
-import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 
-import java.net.URI;
-
 import javax.inject.Inject;
-import javax.ws.rs.core.Link;
+import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.http.commons.api.UriAwareHttpHeaderFactory;
@@ -67,8 +64,14 @@ public class LinkHeaderProvider implements UriAwareHttpHeaderFactory {
 
         // TODO do not use transactions for internal reads
         final Transaction transaction = sessionFactory.getNewTransaction();
-        //TODO figure out where the translator should be coming from.
-        final IdentifierConverter<Resource, FedoraResource> translator = null;
+
+        // TODO: Currently the HttpIdentifierConverter is in the http-layer. Can we avoid adding it as
+        // a dependency.
+        final UriBuilder builder = uriInfo.getBaseUriBuilder();
+        // final IdentifierConverter<String, String> translator = new HttpIdentifierConverter(builder);
+
+        // TODO: figure out where the translator should be coming from.
+        final IdentifierConverter<String, String> translator = null;
 
         final ListMultimap<String, String> headers = ArrayListMultimap.create();
 
@@ -77,14 +80,15 @@ public class LinkHeaderProvider implements UriAwareHttpHeaderFactory {
         WebACRolesProvider.getEffectiveAcl(resource, false, sessionFactory).ifPresent(acls -> {
             // If the Acl is present we need to use the internal session to get its URI
             nodeService.find(transaction, acls.resource.getPath())
-            .getTriples(translator, PROPERTIES)
+            .getTriples(translator)
             .collect(toModel()).listObjectsOfProperty(createProperty(WEBAC_ACCESS_CONTROL_VALUE))
             .forEachRemaining(linkObj -> {
                 if (linkObj.isURIResource()) {
                     final Resource acl = linkObj.asResource();
-                    final String aclPath = translator.convert(acl).getPath();
-                    final URI aclUri = uriInfo.getBaseUriBuilder().path(aclPath).build();
-                    headers.put("Link", Link.fromUri(aclUri).rel("acl").build().toString());
+                    // TODO: Fix the translator above.
+                    // final String aclPath = translator.convert(acl.getURI());
+                    // final URI aclUri = uriInfo.getBaseUriBuilder().path(aclPath).build();
+                    // headers.put("Link", Link.fromUri(aclUri).rel("acl").build().toString());
                 }
             });
         });
