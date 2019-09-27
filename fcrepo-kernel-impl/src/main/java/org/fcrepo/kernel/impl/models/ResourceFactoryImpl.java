@@ -30,7 +30,7 @@ import org.fcrepo.kernel.api.models.WebacAcl;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.persistence.api.PersistentStorageSession;
-import org.fcrepo.persistence.api.PersistentStorageSessionFactory;
+import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 
@@ -44,12 +44,12 @@ import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 public class ResourceFactoryImpl implements ResourceFactory {
 
     /**
-     * Singleton factory;
+     * Singleton persistentStorageSessionManager;
      */
     private static ResourceFactory instance = null;
 
     @Inject
-    private static PersistentStorageSessionFactory factory;
+    private static PersistentStorageSessionManager persistentStorageSessionManager;
 
     /**
      * Private constructor
@@ -156,9 +156,9 @@ public class ResourceFactoryImpl implements ResourceFactory {
     private PersistentStorageSession getSession(final Transaction transaction) {
         final PersistentStorageSession session;
         if (transaction == null) {
-            session = factory.getReadOnlySession();
+            session = persistentStorageSessionManager.getReadOnlySession();
         } else {
-            session = factory.getSession(transaction.getId());
+            session = persistentStorageSessionManager.getSession(transaction.getId());
         }
         return session;
     }
