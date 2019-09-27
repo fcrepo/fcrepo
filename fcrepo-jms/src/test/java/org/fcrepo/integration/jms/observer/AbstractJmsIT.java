@@ -50,7 +50,6 @@ import javax.jms.Session;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.jena.rdf.model.Resource;
 
-import org.fcrepo.kernel.api.Repository;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
@@ -89,9 +88,6 @@ abstract class AbstractJmsIT implements MessageListener {
 
     private static final String TEST_USER_AGENT = "FedoraClient/1.0";
     private static final String TEST_BASE_URL = "http://localhost:8080/rest";
-
-    @Inject
-    private Repository repository;
 
     @Inject
     private TransactionManager txMananger;

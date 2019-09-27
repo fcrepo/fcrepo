@@ -17,14 +17,11 @@
  */
 package org.fcrepo.http.commons.session;
 
-import static java.util.Objects.requireNonNull;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 
-import org.fcrepo.kernel.api.Repository;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.SessionMissingException;
@@ -58,27 +55,12 @@ public class SessionFactory {
     private static final Logger LOGGER = getLogger(SessionFactory.class);
 
     @Inject
-    private Repository repo;
-
-    @Inject
     private TransactionManager txManager;
 
     /**
-     * Initialize a session factory for the given Repository
-     *
-     * @param repo the repository
+     * Initialize a session factory
      */
-    public SessionFactory(final Repository repo) {
-        this.repo = repo;
-    }
-
-    /**
-     * Validate the spring wiring
-     */
-    @PostConstruct
-    public void init() {
-        requireNonNull(repo, "SessionFactory requires a Repository instance!");
-    }
+    public SessionFactory() { }
 
     /**
      * Get a new fedora transaction
