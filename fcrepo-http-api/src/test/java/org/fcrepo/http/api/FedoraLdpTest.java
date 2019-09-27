@@ -130,6 +130,7 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry;
+import org.fcrepo.kernel.api.services.DeleteResourceService;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.api.services.ReplacePropertiesService;
 import org.fcrepo.kernel.api.services.TimeMapService;
@@ -238,6 +239,9 @@ public class FedoraLdpTest {
     @Mock
     private UpdatePropertiesService updatePropertiesService;
 
+    @Mock
+    private DeleteResourceService deleteResourceService;
+
     private static final Logger log = getLogger(FedoraLdpTest.class);
 
 
@@ -267,6 +271,7 @@ public class FedoraLdpTest {
         setField(testObj, "prefer", prefer);
         setField(testObj, "extContentHandlerFactory", extContentHandlerFactory);
         setField(testObj, "namespaceRegistry", rdfNamespaceRegistry);
+        setField(testObj, "deleteResourceService", deleteResourceService);
 
         when(rdfNamespaceRegistry.getNamespaces()).thenReturn(new HashMap<>());
 
@@ -884,7 +889,7 @@ public class FedoraLdpTest {
         when(mockRequest.getMethod()).thenReturn("PATCH");
         final Response actual = testObj.deleteObject();
         assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
-        verify(fedoraResource).delete();
+        verify(deleteResourceService).perform(mockTransaction, fedoraResource);
     }
 
     @Test

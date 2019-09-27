@@ -131,6 +131,7 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.FixityService;
+import org.fcrepo.kernel.api.services.DeleteResourceService;
 import org.fcrepo.kernel.api.utils.ContentDigest;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;
@@ -157,6 +158,9 @@ public class FedoraLdp extends ContentExposingResource {
     @Inject private FixityService fixityService;
 
     @Inject private FedoraHttpConfiguration httpConfiguration;
+
+    @Inject
+    private DeleteResourceService deleteResourceService;
 
     /**
      * Default JAX-RS entry point
@@ -361,7 +365,7 @@ public class FedoraLdp extends ContentExposingResource {
         final AcquiredLock lock = lockManager.lockForDelete(resource().getPath());
 
         try {
-            resource().delete();
+            deleteResourceService.perform(getTransaction(), resource());
             session.commit();
             return noContent().build();
         } finally {

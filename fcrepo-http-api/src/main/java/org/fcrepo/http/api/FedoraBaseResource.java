@@ -24,6 +24,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.http.commons.session.HttpSession;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.SessionMissingException;
 import org.fcrepo.kernel.api.exception.TombstoneException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
@@ -149,6 +150,10 @@ abstract public class FedoraBaseResource extends AbstractResource {
             throw new SessionMissingException("Invalid session");
         }
         return session;
+    }
+
+    protected Transaction getTransaction() {
+        return session().getTransaction();
     }
 
     protected String getUserPrincipal() {

@@ -45,6 +45,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import javax.inject.Inject;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
@@ -76,6 +77,7 @@ import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.services.DeleteResourceService;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
@@ -99,6 +101,9 @@ public class FedoraAcl extends ContentExposingResource {
     @Context protected UriInfo uriInfo;
 
     @PathParam("path") protected String externalPath;
+
+    @Inject
+    private DeleteResourceService deleteResourceService;
 
     /**
      * Default JAX-RS entry point
@@ -294,7 +299,7 @@ public class FedoraAcl extends ContentExposingResource {
         try {
             final FedoraResource aclResource = resource().getAcl();
             if (aclResource != null) {
-                aclResource.delete();
+                deleteResourceService.perform(getTransaction(), aclResource);
             }
             session.commit();
 

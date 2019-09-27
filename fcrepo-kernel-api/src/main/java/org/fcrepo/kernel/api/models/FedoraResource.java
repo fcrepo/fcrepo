@@ -135,11 +135,6 @@ public interface FedoraResource {
     boolean hasProperty(String relPath);
 
     /**
-     * Delete this resource, and any inbound references to it
-     */
-    void delete();
-
-    /**
      * Get the date this resource was created
      * @return created date
      */
