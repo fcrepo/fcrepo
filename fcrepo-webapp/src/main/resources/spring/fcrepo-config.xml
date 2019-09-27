@@ -225,7 +225,7 @@
 
     <bean id="connectionManager" class="org.apache.http.impl.conn.PoolingHttpClientConnectionManager" />
 
-    <!-- Generates HTTP Sessions -->
+    <!-- Manages Transactions -->
     <bean class="org.fcrepo.kernel.api.TransactionManager"/>
     
 </beans>
