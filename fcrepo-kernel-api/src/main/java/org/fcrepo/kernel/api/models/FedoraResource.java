@@ -50,6 +50,20 @@ public interface FedoraResource {
     String getPath();
 
     /**
+     * Get an object containing header information describing this resource.
+     *
+     * @return header information
+     */
+    ResourceHeaders getHeaders();
+
+    /**
+     * Set the header information for this resource.
+     *
+     * @param headers headers for this resource.
+     */
+    void setHeaders(ResourceHeaders headers);
+
+    /**
      * Get the children of this resource
      * @return a stream of Fedora resources
      */

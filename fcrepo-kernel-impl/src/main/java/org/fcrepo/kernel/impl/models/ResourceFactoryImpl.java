@@ -18,7 +18,7 @@
 package org.fcrepo.kernel.impl.models;
 
 import java.lang.reflect.Constructor;
-import java.util.List;
+import java.util.Collection;
 import javax.inject.Inject;
 
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
@@ -37,6 +37,7 @@ import org.fcrepo.kernel.api.models.TimeMap;
 import org.fcrepo.kernel.api.models.WebacAcl;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionFactory;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
@@ -112,10 +113,13 @@ public class ResourceFactoryImpl implements ResourceFactory {
             throws PathNotFoundException {
         try {
             final PersistentStorageSession psSession = getSession(transaction);
-            final List<String> types = psSession.getTypes(identifier);
-            final Class<? extends FedoraResource> clazz = getClassForTypes(types);
+            final ResourceHeaders headers = psSession.getHeaders(identifier);
+            final Class<? extends FedoraResource> clazz = getClassForTypes(headers);
 
-            return createResource(transaction, identifier, clazz);
+            final FedoraResource resource = createResource(transaction, identifier, clazz);
+            resource.setHeaders(headers);
+
+            return resource;
         } catch (final PersistentItemNotFoundException e) {
             throw new PathNotFoundException(e);
         }
@@ -129,12 +133,13 @@ public class ResourceFactoryImpl implements ResourceFactory {
     }
 
     /**
-     * Returns the appropriate FedoraResource class for an object based on the provided types
+     * Returns the appropriate FedoraResource class for an object based on the provided headers
      *
-     * @param types List of types
+     * @param headers headers for the resource being constructed
      * @return FedoraResource class
      */
-    private Class<? extends FedoraResource> getClassForTypes(final List<String> types) {
+    private Class<? extends FedoraResource> getClassForTypes(final ResourceHeaders headers) {
+        final Collection<String> types = headers.getTypes();
         if (types.contains(BASIC_CONTAINER.toString()) || types.contains(INDIRECT_CONTAINER.toString()) || types
                 .contains(DIRECT_CONTAINER.toString())) {
             return Container.class;

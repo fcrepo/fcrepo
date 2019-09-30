@@ -26,6 +26,7 @@ import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.persistence.api.PersistentStorageSessionFactory;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 
@@ -38,6 +39,8 @@ public class FedoraResourceImpl implements FedoraResource {
     private PersistentStorageSessionFactory pSessionFactory;
 
     private String id;
+
+    private ResourceHeaders headers;
 
     // The transaction this representation of the resource belongs to
     private Transaction tx;
@@ -62,6 +65,16 @@ public class FedoraResourceImpl implements FedoraResource {
     public String getPath() {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    @Override
+    public ResourceHeaders getHeaders() {
+        return headers;
+    }
+
+    @Override
+    public void setHeaders(final ResourceHeaders headers) {
+        this.headers = headers;
     }
 
     @Override

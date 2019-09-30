@@ -18,10 +18,9 @@
 package org.fcrepo.persistence.api;
 
 import java.time.Instant;
-import java.util.List;
-
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 
@@ -89,13 +88,13 @@ public interface PersistentStorageSession {
     public FedoraResource read(final String identifier, final Instant version) throws PersistentItemNotFoundException;
 
     /**
-     * Returns the types for the selected resource.
+     * Get the header information for the identified resource.
      *
      * @param identifier identifier of the resource
-     * @return list of types
+     * @return header information
      * @throws PersistentItemNotFoundException If the identifier doesn't exist.
      */
-    public List<String> getTypes(final String identifier) throws PersistentItemNotFoundException;
+    public ResourceHeaders getHeaders(final String identifier) throws PersistentItemNotFoundException;
 
     /**
      * Read the client managed triples for the provided resource, and store them to that resource.
