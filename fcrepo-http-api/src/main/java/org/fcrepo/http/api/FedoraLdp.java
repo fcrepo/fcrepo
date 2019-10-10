@@ -362,7 +362,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         try {
             resource().delete();
-            transaction.commit();
+            transaction.commitIfShortLived();
             return noContent().build();
         } finally {
             lock.release();

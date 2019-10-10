@@ -34,6 +34,11 @@ public interface Transaction {
     void commit();
 
     /**
+     * Commit the transaction only if the transaction is shortLived
+     */
+    void commitIfShortLived();
+
+    /**
      * Rollback the transaction
      */
     void rollback();

@@ -209,7 +209,7 @@ public class FedoraVersioning extends ContentExposingResource {
                     }
                 }
 
-                transaction.commit();
+                transaction.commitIfShortLived();
                 return createUpdateResponse(memento, true);
             } catch (final Exception e) {
                 checkForInsufficientStorageException(e, e);
