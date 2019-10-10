@@ -94,7 +94,7 @@ public class TransactionImpl implements Transaction {
 
     @Override
     public void commitIfShortLived() {
-       if(this.isShortLived()) {
+       if (this.isShortLived()) {
            this.commit();
        }
     }

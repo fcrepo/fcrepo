@@ -69,6 +69,6 @@ public class FedoraTombstonesTest {
         final Response actual = testObj.delete();
         assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
         verify(mockResource).delete();
-        verify(mockTransaction).commit();
+        verify(mockTransaction).commitIfShortLived();
     }
 }
