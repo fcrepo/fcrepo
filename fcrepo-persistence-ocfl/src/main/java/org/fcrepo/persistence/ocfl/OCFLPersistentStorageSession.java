@@ -20,7 +20,15 @@ package org.fcrepo.persistence.ocfl;
 import java.time.Instant;
 
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.persistence.api.CommitOption;
+import org.fcrepo.persistence.api.CreateResourceRequest;
+import org.fcrepo.persistence.api.CreateResourceResponse;
+import org.fcrepo.persistence.api.DeleteResourceRequest;
+import org.fcrepo.persistence.api.DeleteResourceResponse;
 import org.fcrepo.persistence.api.PersistentStorageSession;
+import org.fcrepo.persistence.api.ReadOptions;
+import org.fcrepo.persistence.api.UpdateResourceRequest;
+import org.fcrepo.persistence.api.UpdateResourceResponse;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 
@@ -59,21 +67,24 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
     }
 
     @Override
-    public void create(final FedoraResource resource) throws PersistentStorageException {
+    public CreateResourceResponse create(final CreateResourceRequest request) throws PersistentStorageException {
         actionNeedsWrite();
         // Do stuff to persist this new resource.
+        return null;
     }
 
     @Override
-    public void update(final FedoraResource resource) throws PersistentStorageException {
+    public UpdateResourceResponse update(final UpdateResourceRequest request) throws PersistentStorageException {
         actionNeedsWrite();
         // Update the resource in peristent storage.
+        return null;
     }
 
     @Override
-    public void delete(final FedoraResource resource) throws PersistentStorageException {
+    public DeleteResourceResponse delete(final DeleteResourceRequest request) throws PersistentStorageException {
         actionNeedsWrite();
         // Delete the resource from storage.
+        return null;
     }
 
     @Override
@@ -84,13 +95,13 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
     }
 
     @Override
-    public FedoraResource read(final String identifier, final Instant version)
+    public FedoraResource read(final String identifier, final Instant version, final ReadOptions... options)
             throws PersistentItemNotFoundException {
         return null;
     }
 
     @Override
-    public void commit() throws PersistentStorageException {
+    public void commit(final CommitOption option) throws PersistentStorageException {
         if (isReadOnly()) {
             // No changes to commit.
             return;

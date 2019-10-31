@@ -41,29 +41,32 @@ public interface PersistentStorageSession {
     /**
      * Create a new resource on the persistent storage.
      *
-     * @param resource The new fedora resource to persist to storage.
+     * @param request The request that includes all information required for creating a resource.
+     * @return The create resource response.
      * @throws PersistentStorageException Error persisting the resource.
      */
-    public void create(final FedoraResource resource)
-            throws PersistentStorageException;
+    public CreateResourceResponse create(final CreateResourceRequest request)
+        throws PersistentStorageException;
 
     /**
      * Update an existing resource on persistent storage.
      *
-     * @param resource The changed fedora resource to persist to storage.
+     * @param request The request that includes all information required for updating a resource.
+     * @return The update resource response.
      * @throws PersistentStorageException Error persisting the resource.
      */
-    public void update(final FedoraResource resource)
-            throws PersistentStorageException;
+    public UpdateResourceResponse update(final UpdateResourceRequest request)
+        throws PersistentStorageException;
 
     /**
      * Delete a resource from persistent storage.
      *
-     * @param resource The current fedora resource to delete.
+     * @param request The request that includes all information required for deleting a resource.
+     * @return  The delete response
      * @throws PersistentStorageException Error deleting the resource.
      */
-    public void delete(final FedoraResource resource)
-            throws PersistentStorageException;
+    public DeleteResourceResponse delete(final DeleteResourceRequest request)
+        throws PersistentStorageException;
 
     /**
      * Return a resource from persistent storage
@@ -71,27 +74,27 @@ public interface PersistentStorageSession {
      * @param identifier The identifier of the resource to retrieve.
      * @return The resource.
      * @throws PersistentItemNotFoundException If the identifier doesn't exist.
-     * @throws PersistentStorageException If some other error happens.
+     * @throws PersistentStorageException      If some other error happens.
      */
     public FedoraResource read(final String identifier) throws PersistentItemNotFoundException,
-            PersistentStorageException;
+        PersistentStorageException;
 
     /**
      * Return a version of a resource from persistent storage
      *
      * @param identifier The identifier of the resource to retrieve.
-     * @param version The date/time of the version to retrieve.
+     * @param version    The date/time of the version to retrieve.
      * @return The version of the resource.
      * @throws PersistentItemNotFoundException If the identifier doesn't exist.
      */
-    public FedoraResource read(final String identifier, final Instant version) throws PersistentItemNotFoundException;
+    public FedoraResource read(final String identifier, final Instant version, ReadOptions... options) throws PersistentItemNotFoundException;
 
     /**
      * Commits any changes in the current sesssion to persistent storage.
      *
      * @throws PersistentStorageException Error during commit.
      */
-    public void commit() throws PersistentStorageException;
+    public void commit(CommitOption option) throws PersistentStorageException;
 
     /**
      * Rolls back any changes in the current session.

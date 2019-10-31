@@ -22,8 +22,11 @@ import static org.junit.Assert.assertNull;
 import java.time.Instant;
 
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.persistence.api.CreateResourceRequest;
+import org.fcrepo.persistence.api.DeleteResourceRequest;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+import org.fcrepo.persistence.api.UpdateResourceRequest;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 
 import org.junit.Before;
@@ -58,11 +61,11 @@ public class OCFLPersistentSessionManagerTest {
     @Test
     public void testNormalSession() throws Exception {
 
-        readWriteSession.create(resource);
+        readWriteSession.create(new CreateResourceRequest());
 
-        readWriteSession.update(resource);
+        readWriteSession.update(new UpdateResourceRequest());
 
-        readWriteSession.delete(resource);
+        readWriteSession.delete(new DeleteResourceRequest());
 
         final FedoraResource response4 = readWriteSession.read(testResourcePath);
         assertNull(response4);
@@ -78,17 +81,17 @@ public class OCFLPersistentSessionManagerTest {
 
     @Test(expected = PersistentStorageException.class)
     public void testWriteNoSession() throws Exception {
-        readOnlySession.create(resource);
+        readOnlySession.create(new CreateResourceRequest());
     }
 
     @Test(expected = PersistentStorageException.class)
     public void testUpdateNoSession() throws Exception {
-        readOnlySession.update(resource);
+        readOnlySession.update(new UpdateResourceRequest());
     }
 
     @Test(expected = PersistentStorageException.class)
     public void testDeleteNoSession() throws Exception {
-        readOnlySession.delete(resource);
+        readOnlySession.delete(new DeleteResourceRequest());
     }
 
 
