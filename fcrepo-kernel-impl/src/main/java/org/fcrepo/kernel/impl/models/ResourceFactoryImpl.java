@@ -101,6 +101,12 @@ public class ResourceFactoryImpl implements ResourceFactory {
     }
 
     @Override
+    public FedoraResource getResource(final String identifier)
+            throws PathNotFoundException {
+        return getResource(null, identifier);
+    }
+
+    @Override
     public FedoraResource getResource(final Transaction transaction, final String identifier)
             throws PathNotFoundException {
         try {
