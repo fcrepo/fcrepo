@@ -21,7 +21,7 @@ import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 
 /**
- * Interface to a factory to locate or create new resources.
+ * Interface to a factory to instantiate FedoraResources
  *
  * @author whikloj
  * @since 2019-09-23
@@ -29,7 +29,7 @@ import org.fcrepo.kernel.api.exception.PathNotFoundException;
 public interface ResourceFactory {
 
     /**
-     * Get a resource from the persistence layer.
+     * Get a FedoraResource for existing resource
      *
      * @param transaction The transaction this request is part of.
      * @param identifier The path or identifier for the resource.
@@ -40,7 +40,7 @@ public interface ResourceFactory {
             throws PathNotFoundException;
 
     /**
-     * Get a resource from the persistence layer as a particular type
+     * Get a resource as a particular type
      *
      * @param <T> type for the resource
      * @param transaction The transaction this request is part of.
@@ -51,56 +51,5 @@ public interface ResourceFactory {
      */
     public <T extends FedoraResource> T getResource(final Transaction transaction, final String identifier,
             final Class<T> clazz) throws PathNotFoundException;
-
-    /**
-     * Create a new container.
-     *
-     * @param transaction The transaction this request is part of.
-     * @param identifier The path or identifier for the resource.
-     * @return The container object.
-     */
-    public Container createContainer(final Transaction transaction, final String identifier);
-
-    /**
-     * Create a new binary. Newly created binaries will have nothing backing them until they are populated by a
-     * service.
-     *
-     * @param transaction The transaction this request is part of.
-     * @param identifier The path or identifier for the resource.
-     * @return The binary object.
-     */
-    public Binary createBinary(final Transaction transaction, final String identifier);
-
-    /**
-     * Create a binary description.
-     *
-     * @param transaction The transaction this request is part of.
-     * @param identifier The path or identifier for the resource.
-     * @return The description object.
-     */
-    public NonRdfSourceDescription createBinaryDescription(final Transaction transaction, final String identifier);
-
-    /**
-     * Create a timemap.
-     *
-     * @param transaction The transaction this request is part of.
-     * @param identifier The path or identifier of the resource this timemap is linked to.
-     * @return The timemap object.
-     */
-    public TimeMap createTimemap(final Transaction transaction, final String identifier);
-
-    /**
-     * Create a Webac ACL.
-     *
-     * @param transaction The transaction this request is part of.
-     * @param identifier The path or identifier of the resource this ACL is linked to.
-     * @return The ACL object.
-     */
-    public WebacAcl createAcl(final Transaction transaction, final String identifier);
-
-    /*
-     * TODO: Do we need a model for an archival group?
-     * public ArchivalGroup createArchivalGroup(final FedoraTransaction transaction, final String identifier);
-     */
 
 }

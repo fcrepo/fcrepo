@@ -17,10 +17,12 @@
  */
 package org.fcrepo.persistence.api;
 
+import java.io.InputStream;
 import java.time.Instant;
-import org.fcrepo.kernel.api.models.Binary;
-import org.fcrepo.kernel.api.models.FedoraResource;
+
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
+import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 
@@ -40,85 +42,70 @@ public interface PersistentStorageSession {
     public String getId();
 
     /**
-     * Create a new resource on the persistent storage.
+     * Perform a persistence operation on a resource
      *
-     * @param resource The new fedora resource to persist to storage.
+     * @param operation The persistence operation to perform
      * @throws PersistentStorageException Error persisting the resource.
      */
-    public void create(final FedoraResource resource)
-            throws PersistentStorageException;
-
-    /**
-     * Update an existing resource on persistent storage.
-     *
-     * @param resource The changed fedora resource to persist to storage.
-     * @throws PersistentStorageException Error persisting the resource.
-     */
-    public void update(final FedoraResource resource)
+    public void persist(final ResourceOperation operation)
             throws PersistentStorageException;
 
     /**
      * Delete a resource from persistent storage.
      *
-     * @param resource The current fedora resource to delete.
+     * @param identifier The identifier of the resource to delete.
      * @throws PersistentStorageException Error deleting the resource.
      */
-    public void delete(final FedoraResource resource)
+    public void delete(final String identifier)
             throws PersistentStorageException;
-
-    /**
-     * Return a resource from persistent storage
-     *
-     * @param identifier The identifier of the resource to retrieve.
-     * @return The resource.
-     * @throws PersistentItemNotFoundException If the identifier doesn't exist.
-     * @throws PersistentStorageException If some other error happens.
-     */
-    public FedoraResource read(final String identifier) throws PersistentItemNotFoundException,
-            PersistentStorageException;
-
-    /**
-     * Return a version of a resource from persistent storage
-     *
-     * @param identifier The identifier of the resource to retrieve.
-     * @param version The date/time of the version to retrieve.
-     * @return The version of the resource.
-     * @throws PersistentItemNotFoundException If the identifier doesn't exist.
-     */
-    public FedoraResource read(final String identifier, final Instant version) throws PersistentItemNotFoundException;
 
     /**
      * Get the header information for the identified resource.
      *
      * @param identifier identifier of the resource
+     * @param version instant identifying the version of the resource to read from.
+     *      If null, then the head version is used.
      * @return header information
      * @throws PersistentItemNotFoundException If the identifier doesn't exist.
      */
-    public ResourceHeaders getHeaders(final String identifier) throws PersistentItemNotFoundException;
+    public ResourceHeaders getHeaders(final String identifier, final Instant version)
+            throws PersistentItemNotFoundException;
 
     /**
-     * Read the client managed triples for the provided resource, and store them to that resource.
+     * Get the client managed triples for the provided resource.
      *
      * @param resource the resource.
+     * @param version instant identifying the version of the resource to read from.
+     *      If null, then the head version is used.
+     * @return the triples as an RdfStream.
      * @throws PersistentItemNotFoundException If the identifier doesn't exist.
      */
-    public void readTriples(final FedoraResource resource) throws PersistentItemNotFoundException;
+    public RdfStream getTriples(final String identifier, final Instant version)
+            throws PersistentItemNotFoundException;
 
     /**
-     * Read the server managed properties for this provided resource, and store them to the resource.
+     * Get the server managed properties for this provided resource.
      *
      * @param resource the resource.
+     * @param version instant identifying the version of the resource to read from.
+     *      If null, then the head version is used.
+     * @return the server managed properties as an RdfStream.
      * @throws PersistentItemNotFoundException If the identifier doesn't exist.
      */
-    public void readManagedProperties(final FedoraResource resource) throws PersistentItemNotFoundException;
+    public RdfStream getManagedProperties(final String identifier, final Instant version)
+            throws PersistentItemNotFoundException;
 
     /**
-     * Read the persisted binary content for the provided resource, and store it to the resource.
+     * Get the persisted binary content for the provided resource.
      *
      * @param resource the resource.
+     * @param version instant identifying the version of the resource to read from.
+     *      If null, then the head version is used.
+     * @return the binary content.
      * @throws PersistentItemNotFoundException If the identifier doesn't exist.
      */
-    public void readBinaryContent(final Binary resource) throws PersistentItemNotFoundException;
+    public InputStream getBinaryContent(final String identifier, final Instant version)
+            throws PersistentItemNotFoundException;
 
     /**
      * Commits any changes in the current sesssion to persistent storage.

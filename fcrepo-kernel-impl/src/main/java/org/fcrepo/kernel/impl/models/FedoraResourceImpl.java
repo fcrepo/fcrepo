@@ -27,6 +27,7 @@ import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
+import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionFactory;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 
@@ -45,13 +46,10 @@ public class FedoraResourceImpl implements FedoraResource {
     // The transaction this representation of the resource belongs to
     private Transaction tx;
 
-    private RdfStream triplesStream;
-
-    private RdfStream managedPropertiesStream;
-
-    protected FedoraResourceImpl(final String id, final Transaction tx,
+    protected FedoraResourceImpl(final ResourceHeaders headers, final Transaction tx,
             final PersistentStorageSessionFactory pSessionFactory) {
-        this.id = id;
+        this.id = headers.getId();
+        this.headers = headers;
         this.tx = tx;
         this.pSessionFactory = pSessionFactory;
     }
@@ -70,11 +68,6 @@ public class FedoraResourceImpl implements FedoraResource {
     @Override
     public ResourceHeaders getHeaders() {
         return headers;
-    }
-
-    @Override
-    public void setHeaders(final ResourceHeaders headers) {
-        this.headers = headers;
     }
 
     @Override
@@ -187,40 +180,20 @@ public class FedoraResourceImpl implements FedoraResource {
 
     @Override
     public RdfStream getTriples() {
-        if (triplesStream == null) {
-            try {
-                pSessionFactory.getSession(tx.getId())
-                        .readTriples(this);
-            } catch (final PersistentItemNotFoundException e) {
-                throw new ItemNotFoundException("Unable to retrieve triples for " + getId(), e);
-            }
+        try {
+            return getSession().getTriples(id, getMementoDatetime());
+        } catch (final PersistentItemNotFoundException e) {
+            throw new ItemNotFoundException("Unable to retrieve triples for " + getId(), e);
         }
-
-        return triplesStream;
-    }
-
-    @Override
-    public void setTriples(final RdfStream triplesStream) {
-        this.triplesStream = triplesStream;
     }
 
     @Override
     public RdfStream getManagedProperties() {
-        if (managedPropertiesStream == null) {
-            try {
-                pSessionFactory.getSession(tx.getId())
-                        .readManagedProperties(this);
-            } catch (final PersistentItemNotFoundException e) {
-                throw new ItemNotFoundException("Unable to retrieve triples for " + getId(), e);
-            }
+        try {
+            return getSession().getManagedProperties(id, getMementoDatetime());
+        } catch (final PersistentItemNotFoundException e) {
+            throw new ItemNotFoundException("Unable to retrieve managed properties for " + getId(), e);
         }
-
-        return managedPropertiesStream;
-    }
-
-    @Override
-    public void setManagedProperties(final RdfStream managedStream) {
-        this.managedPropertiesStream = managedStream;
     }
 
     @Override
@@ -259,4 +232,7 @@ public class FedoraResourceImpl implements FedoraResource {
         return null;
     }
 
+    private PersistentStorageSession getSession() {
+        return pSessionFactory.getSession(tx.getId());
+    }
 }

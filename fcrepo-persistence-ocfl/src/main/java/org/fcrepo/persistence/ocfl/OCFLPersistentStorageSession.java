@@ -17,11 +17,11 @@
  */
 package org.fcrepo.persistence.ocfl;
 
+import java.io.InputStream;
 import java.time.Instant;
-import java.util.List;
-
-import org.fcrepo.kernel.api.models.Binary;
-import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
+import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
@@ -61,58 +61,39 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
     }
 
     @Override
-    public void create(final FedoraResource resource) throws PersistentStorageException {
-        actionNeedsWrite();
-        // Do stuff to persist this new resource.
+    public void persist(final ResourceOperation operation) throws PersistentStorageException {
+        // TODO Auto-generated method stub
+
     }
 
     @Override
-    public void update(final FedoraResource resource) throws PersistentStorageException {
-        actionNeedsWrite();
-        // Update the resource in peristent storage.
+    public void delete(final String identifier) throws PersistentStorageException {
+        // TODO Auto-generated method stub
+
     }
 
     @Override
-    public void delete(final FedoraResource resource) throws PersistentStorageException {
-        actionNeedsWrite();
-        // Delete the resource from storage.
-    }
-
-    @Override
-    public FedoraResource read(final String identifier) throws PersistentStorageException,
-            PersistentItemNotFoundException {
-        actionNeedsWrite();
+    public ResourceHeaders getHeaders(final String identifier, final Instant version) throws PersistentItemNotFoundException {
+        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public FedoraResource read(final String identifier, final Instant version)
-            throws PersistentItemNotFoundException {
+    public RdfStream getTriples(final String identifier, final Instant version) throws PersistentItemNotFoundException {
+        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public List<String> getTypes(final String identifier) throws PersistentItemNotFoundException {
-        // TODO Retrieve types, from index?
+    public RdfStream getManagedProperties(final String identifier, final Instant version) throws PersistentItemNotFoundException {
+        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public void readTriples(final FedoraResource resource) throws PersistentItemNotFoundException {
-        // TODO Retrieve the triples
-        resource.setTriples(null);
-    }
-
-    @Override
-    public void readManagedProperties(final FedoraResource resource) throws PersistentItemNotFoundException {
-        // TODO Retrieve the server managed properties
-        resource.setManagedProperties(null);
-    }
-
-    @Override
-    public void readBinaryContent(final Binary resource) throws PersistentItemNotFoundException {
-        // TODO Retrieve content stream
-        resource.setContentStream(null);
+    public InputStream getBinaryContent(final String identifier, final Instant version) throws PersistentItemNotFoundException {
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override

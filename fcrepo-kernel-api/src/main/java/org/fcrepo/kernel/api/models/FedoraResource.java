@@ -57,13 +57,6 @@ public interface FedoraResource {
     ResourceHeaders getHeaders();
 
     /**
-     * Set the header information for this resource.
-     *
-     * @param headers headers for this resource.
-     */
-    void setHeaders(ResourceHeaders headers);
-
-    /**
      * Get the children of this resource
      * @return a stream of Fedora resources
      */
@@ -209,25 +202,11 @@ public interface FedoraResource {
     RdfStream getTriples();
 
     /**
-     * Store the stream of client managed triples for this resource
-     *
-     * @param triplesStream stream of triples
-     */
-    void setTriples(RdfStream triplesStream);
-
-    /**
      * Returns the managed properties for this resource.
      *
      * @return the managed properties for this resource as an RdfStream
      */
     RdfStream getManagedProperties();
-
-    /**
-     * Store the stream of server managed properties for this resource.
-     *
-     * @param managedStream stream of managed properties
-     */
-    void setManagedProperties(RdfStream managedStream);
 
     /**
      * Check if a resource was created in this session
