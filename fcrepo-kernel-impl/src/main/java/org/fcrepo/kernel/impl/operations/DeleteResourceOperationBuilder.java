@@ -29,6 +29,11 @@ public class DeleteResourceOperationBuilder implements ResourceOperationBuilder 
 
     private String rescId;
 
+    /**
+     * Construct the builder
+     *
+     * @param rescId identifier of the resource to delete
+     */
     public DeleteResourceOperationBuilder(final String rescId) {
         this.rescId = rescId;
     }
