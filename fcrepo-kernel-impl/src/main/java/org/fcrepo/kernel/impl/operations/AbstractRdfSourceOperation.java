@@ -22,8 +22,9 @@ import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 
 
 /**
- * @author bbpennel
+ * Abstract operation for interacting with an rdf source
  *
+ * @author bbpennel
  */
 public class AbstractRdfSourceOperation extends AbstractResourceOperation implements RdfSourceOperation {
 

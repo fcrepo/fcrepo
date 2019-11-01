@@ -23,8 +23,9 @@ import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
 
 
 /**
- * @author bbpennel
+ * Builder for operations to update rdf sources
  *
+ * @author bbpennel
  */
 public class UpdateRdfSourceOperationBuilder implements RdfSourceOperationBuilder {
 

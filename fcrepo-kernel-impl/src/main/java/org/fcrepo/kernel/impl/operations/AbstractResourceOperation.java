@@ -22,8 +22,9 @@ import org.fcrepo.kernel.api.operations.ResourceOperation;
 
 
 /**
- * @author bbpennel
+ * Abstract operation for interacting with a resource
  *
+ * @author bbpennel
  */
 public abstract class AbstractResourceOperation implements ResourceOperation {
 

@@ -19,8 +19,9 @@ package org.fcrepo.kernel.api.operations;
 
 
 /**
- * @author bbpennel
+ * Factory for operations for interacting with resources
  *
+ * @author bbpennel
  */
 public interface ResourceOperationFactory {
 

@@ -23,8 +23,9 @@ import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
 
 
 /**
- * @author bbpennel
+ * Builder for operations to create rdf sources
  *
+ * @author bbpennel
  */
 public class CreateRdfSourceOperationBuilder implements RdfSourceOperationBuilder {
 
