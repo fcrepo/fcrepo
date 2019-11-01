@@ -27,15 +27,7 @@ import org.fcrepo.kernel.api.RdfStream;
  */
 public class CreateRdfSourceOperation extends AbstractRdfSourceOperation {
 
-    private final String interactionModel;
-
-    protected CreateRdfSourceOperation(final String rescId, final String interactionModel, final RdfStream triples) {
+    protected CreateRdfSourceOperation(final String rescId, final RdfStream triples) {
         super(rescId, triples);
-        this.interactionModel = interactionModel;
-    }
-
-    @Override
-    public String getInteractionModel() {
-        return interactionModel;
     }
 }

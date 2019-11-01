@@ -17,7 +17,7 @@
  */
 package org.fcrepo.kernel.api.operations;
 
-import java.time.Instant;
+import org.fcrepo.kernel.api.RdfStream;
 
 /**
  * Operation for manipulating a resource
@@ -34,37 +34,9 @@ public interface ResourceOperation {
     String getResourceId();
 
     /**
-     * Interaction model for the resource.
+     * Get the server managed properties for the resource
      *
      * @return
      */
-    String getInteractionModel();
-
-    /**
-     * Get the created date for the resource
-     *
-     * @return created date
-     */
-    Instant getCreatedDate();
-
-    /**
-     * Get the last modified date for the resource
-     *
-     * @return last modified date
-     */
-    Instant getLastModifiedDate();
-
-    /**
-     * Get the created by user for the resource
-     *
-     * @return
-     */
-    String getCreatedBy();
-
-    /**
-     * Get the last modified by user for this resource
-     *
-     * @return
-     */
-    String getLastModifiedBy();
+    RdfStream getServerManagedProperties();
 }

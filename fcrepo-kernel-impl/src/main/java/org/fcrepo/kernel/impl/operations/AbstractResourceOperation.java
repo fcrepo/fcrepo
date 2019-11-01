@@ -17,8 +17,7 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
-import java.time.Instant;
-
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 
 
@@ -30,6 +29,8 @@ public abstract class AbstractResourceOperation implements ResourceOperation {
 
     private final String rescId;
 
+    private RdfStream serverManagedProperties;
+
     protected AbstractResourceOperation(final String rescId) {
         this.rescId = rescId;
     }
@@ -40,31 +41,16 @@ public abstract class AbstractResourceOperation implements ResourceOperation {
     }
 
     @Override
-    public Instant getCreatedDate() {
-        // TODO Auto-generated method stub
-        return null;
+    public RdfStream getServerManagedProperties() {
+        return serverManagedProperties;
     }
 
-    @Override
-    public Instant getLastModifiedDate() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public String getCreatedBy() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public String getLastModifiedBy() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public String getInteractionModel() {
-        return null;
+    /**
+     * Set the server managed properties for the resource
+     *
+     * @param serverManagedProperties stream of properties
+     */
+    public void setServerManagedProperties(final RdfStream serverManagedProperties) {
+        this.serverManagedProperties = serverManagedProperties;
     }
 }
