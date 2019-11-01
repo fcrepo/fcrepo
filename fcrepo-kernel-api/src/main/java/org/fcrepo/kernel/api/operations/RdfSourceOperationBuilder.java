@@ -17,6 +17,8 @@
  */
 package org.fcrepo.kernel.api.operations;
 
+import java.io.InputStream;
+
 import org.fcrepo.kernel.api.RdfStream;
 
 /**
@@ -36,4 +38,13 @@ public interface RdfSourceOperationBuilder extends ResourceOperationBuilder {
      * @return this builder
      */
     RdfSourceOperationBuilder triples(RdfStream triples);
+
+    /**
+     * Set the triples for the operation from the given input stream
+     *
+     * @param contentStream serialized triples stream
+     * @param mimetype mimetype of the serialization
+     * @return this builder
+     */
+    RdfSourceOperationBuilder triples(InputStream contentStream, String mimetype);
 }

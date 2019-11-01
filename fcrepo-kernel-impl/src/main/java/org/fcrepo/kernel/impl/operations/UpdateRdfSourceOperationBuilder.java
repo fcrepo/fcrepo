@@ -17,6 +17,8 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
+import java.io.InputStream;
+
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
@@ -41,4 +43,9 @@ public class UpdateRdfSourceOperationBuilder implements RdfSourceOperationBuilde
         return null;
     }
 
+    @Override
+    public RdfSourceOperationBuilder triples(final InputStream contentStream, final String mimetype) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }
