@@ -28,7 +28,7 @@ import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.persistence.api.PersistentStorageSession;
-import org.fcrepo.persistence.api.PersistentStorageSessionFactory;
+import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 
 /**
@@ -37,7 +37,8 @@ import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
  * @author bbpennel
  */
 public class FedoraResourceImpl implements FedoraResource {
-    private PersistentStorageSessionFactory pSessionFactory;
+
+    private PersistentStorageSessionManager pSessionManager;
 
     private String id;
 
@@ -47,11 +48,11 @@ public class FedoraResourceImpl implements FedoraResource {
     private Transaction tx;
 
     protected FedoraResourceImpl(final ResourceHeaders headers, final Transaction tx,
-            final PersistentStorageSessionFactory pSessionFactory) {
+            final PersistentStorageSessionManager pSessionManager) {
         this.id = headers.getId();
         this.headers = headers;
         this.tx = tx;
-        this.pSessionFactory = pSessionFactory;
+        this.pSessionManager = pSessionManager;
     }
 
     @Override
@@ -143,12 +144,6 @@ public class FedoraResourceImpl implements FedoraResource {
     }
 
     @Override
-    public void delete() {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
     public Instant getCreatedDate() {
         // TODO Auto-generated method stub
         return null;
@@ -233,6 +228,6 @@ public class FedoraResourceImpl implements FedoraResource {
     }
 
     private PersistentStorageSession getSession() {
-        return pSessionFactory.getSession(tx.getId());
+        return pSessionManager.getSession(tx.getId());
     }
 }

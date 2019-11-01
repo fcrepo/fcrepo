@@ -17,7 +17,7 @@
  */
 package org.fcrepo.http.commons.session;
 
-import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.Transaction;
 
 /**
  * Provide a batch-aware HTTP session
@@ -27,24 +27,17 @@ public class HttpSession {
 
     private boolean batch = false;
 
-    private final FedoraSession session;
+    private final Transaction transaction;
 
     /**
-     * Create an HTTP session from a Fedora session
-     * @param session the Fedora session
+     * Create an HTTP session from a Fedora transaction
+     * @param transaction the Fedora transaction
      * Note: by default, the HTTP Session is not marked as a batch operation.
      * Client code must call makeBatch in order to promote the session into
      * a batch operation.
      */
-    public HttpSession(final FedoraSession session) {
-        this.session = session;
-    }
-
-    /**
-     * Make this HTTP Session into a batch operation.
-     */
-    public void makeBatchSession() {
-        this.batch = true;
+    public HttpSession(final Transaction transaction) {
+        this.transaction = transaction;
     }
 
     /**
@@ -52,7 +45,7 @@ public class HttpSession {
      */
     public void commit() {
         if (!isBatchSession()) {
-            session.commit();
+            transaction.commit();
         }
     }
 
@@ -61,7 +54,7 @@ public class HttpSession {
      */
     public void expire() {
         if (!isBatchSession()) {
-            session.expire();
+            // Mark Transaction as expired?
         }
     }
 
@@ -78,14 +71,14 @@ public class HttpSession {
      * @return the session identifier
      */
     public String getId() {
-        return session.getId();
+        return transaction.getId();
     }
 
     /**
-     * Return the underlying FedoraSession
-     * @return the FedoraSession
+     * Return the underlying transaction
+     * @return the transaction
      */
-    public FedoraSession getFedoraSession() {
-        return session;
+    public Transaction getTransaction() {
+        return transaction;
     }
 }

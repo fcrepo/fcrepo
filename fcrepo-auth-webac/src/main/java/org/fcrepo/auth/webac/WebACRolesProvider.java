@@ -62,7 +62,7 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.fcrepo.http.commons.session.SessionFactory;
-import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -214,7 +214,8 @@ public class WebACRolesProvider {
      *  Any out-of-domain URIs are silently ignored.
      */
     private List<String> dereferenceAgentGroups(final Collection<String> agentGroups) {
-        final FedoraSession internalSession = sessionFactory.getInternalSession();
+        // TODO do not use transactions for internal reads
+        final Transaction transaction = sessionFactory.getNewTransaction();
         //TODO figure out where the translator should be coming from.
         final IdentifierConverter<Resource, FedoraResource> translator = null;
 
@@ -227,7 +228,7 @@ public class WebACRolesProvider {
                                          agentGroup;
                 final String hashedSuffix = hashIndex > 0 ? agentGroup.substring(hashIndex) : null;
                 final FedoraResource resource = nodeService.find(
-                    internalSession, agentGroupNoHash.substring(FEDORA_INTERNAL_PREFIX.length()));
+                    transaction, agentGroupNoHash.substring(FEDORA_INTERNAL_PREFIX.length()));
                 return getAgentMembers(translator, resource, hashedSuffix);
             } else if (agentGroup.equals(FOAF_AGENT_VALUE)) {
                 return of(agentGroup);
@@ -311,7 +312,6 @@ public class WebACRolesProvider {
                                                               final boolean ancestorAcl,
                                                               final SessionFactory sessionFactory) {
 
-        final FedoraSession internalSession = sessionFactory.getInternalSession();
         final List<WebACAuthorization> authorizations = new ArrayList<>();
         //TODO figure out where the translator should be coming from
         final IdentifierConverter<Resource, FedoraResource> translator = null;

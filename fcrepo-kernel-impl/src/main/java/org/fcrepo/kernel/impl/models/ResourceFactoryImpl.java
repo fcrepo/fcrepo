@@ -36,7 +36,7 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.persistence.api.PersistentStorageSession;
-import org.fcrepo.persistence.api.PersistentStorageSessionFactory;
+import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 
 
@@ -49,12 +49,12 @@ import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 public class ResourceFactoryImpl implements ResourceFactory {
 
     /**
-     * Singleton factory;
+     * Singleton persistentStorageSessionManager;
      */
     private static ResourceFactory instance = null;
 
     @Inject
-    private static PersistentStorageSessionFactory factory;
+    private static PersistentStorageSessionManager persistentStorageSessionManager;
 
     /**
      * Private constructor
@@ -75,9 +75,21 @@ public class ResourceFactoryImpl implements ResourceFactory {
     }
 
     @Override
+    public FedoraResource getResource(final String identifier)
+            throws PathNotFoundException {
+        return getResource(null, identifier);
+    }
+
+    @Override
     public FedoraResource getResource(final Transaction transaction, final String identifier)
             throws PathNotFoundException {
         return createResource(transaction, identifier);
+    }
+
+    @Override
+    public <T extends FedoraResource> T getResource(final String identifier, final Class<T> clazz)
+            throws PathNotFoundException {
+        return clazz.cast(getResource(null, identifier));
     }
 
     @Override
@@ -124,9 +136,9 @@ public class ResourceFactoryImpl implements ResourceFactory {
 
             // Retrieve standard constructor
             final Constructor<? extends FedoraResource> constructor = createClass.getConstructor(
-                    ResourceHeaders.class, Transaction.class, PersistentStorageSessionFactory.class);
+                    ResourceHeaders.class, Transaction.class, PersistentStorageSessionManager.class);
 
-            return constructor.newInstance(headers, transaction, factory);
+            return constructor.newInstance(headers, transaction, persistentStorageSessionManager);
         } catch (SecurityException | ReflectiveOperationException e) {
             throw new RepositoryRuntimeException("Unable to construct object", e);
         } catch (final PersistentItemNotFoundException e) {
@@ -143,9 +155,9 @@ public class ResourceFactoryImpl implements ResourceFactory {
     private PersistentStorageSession getSession(final Transaction transaction) {
         final PersistentStorageSession session;
         if (transaction == null) {
-            session = factory.getReadOnlySession();
+            session = persistentStorageSessionManager.getReadOnlySession();
         } else {
-            session = factory.getSession(transaction.getId());
+            session = persistentStorageSessionManager.getSession(transaction.getId());
         }
         return session;
     }

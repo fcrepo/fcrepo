@@ -84,7 +84,7 @@ public class FedoraRepositoryRestore extends AbstractResource {
                             + backupDirectory.getAbsolutePath()).build());
         }
 
-        final Collection<Throwable> problems = repositoryService.restoreRepository(session.getFedoraSession(),
+        final Collection<Throwable> problems = repositoryService.restoreRepository(session.getTransaction(),
                 backupDirectory);
         if (!problems.isEmpty()) {
             LOGGER.error("Problems restoring up the repository:");

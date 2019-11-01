@@ -33,7 +33,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import org.fcrepo.http.commons.session.HttpSession;
-import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.services.RepositoryService;
 import org.junit.Before;
 import org.junit.Test;
@@ -55,7 +55,7 @@ public class RepositoryBackupTest {
     private HttpSession mockSession;
 
     @Mock
-    private FedoraSession mockFedoraSession;
+    private Transaction mockTransaction;
 
     @Before
     public void setUp() {
@@ -65,13 +65,13 @@ public class RepositoryBackupTest {
         setField(repoBackup, "session", mockSession);
         setField(repoBackup, "repositoryService", mockService);
         setField(repoBackup, "uriInfo", getUriInfoImpl());
-        when(mockSession.getFedoraSession()).thenReturn(mockFedoraSession);
+        when(mockSession.getTransaction()).thenReturn(mockTransaction);
     }
 
     @Test
     public void testRunBackup() throws Exception {
         final Collection<Throwable> problems = new ArrayList<>();
-        when(mockService.backupRepository(any(FedoraSession.class),
+        when(mockService.backupRepository(any(Transaction.class),
                                         any(File.class))).thenReturn(
                 problems);
 
@@ -82,7 +82,7 @@ public class RepositoryBackupTest {
     @Test
     public void testRunBackupWithDir() throws Exception {
         final Collection<Throwable> problems = new ArrayList<>();
-        when(mockService.backupRepository(any(FedoraSession.class),
+        when(mockService.backupRepository(any(Transaction.class),
                                         any(File.class))).thenReturn(
                 problems);
 

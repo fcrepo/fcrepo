@@ -148,7 +148,7 @@ public class FedoraVersioning extends ContentExposingResource {
         final FedoraResource timeMap = resource.getTimeMap();
 
         final AcquiredLock lock = lockManager.lockForWrite(timeMap.getPath(),
-            session.getFedoraSession(), nodeService);
+            session.getTransaction(), nodeService);
 
         try {
             final MediaType contentType = getSimpleContentType(requestContentType);
@@ -179,7 +179,7 @@ public class FedoraVersioning extends ContentExposingResource {
                 if (isBinary) {
                     final Binary binaryResource = (Binary) resource;
                     if (createFromExisting) {
-                        memento = versionService.createBinaryVersion(session.getFedoraSession(),
+                        memento = versionService.createBinaryVersion(session.getTransaction(),
                                 binaryResource, mementoInstant, storagePolicyDecisionPoint);
                     } else {
                         final List<String> links = unpackLinks(rawLinks);
@@ -201,7 +201,7 @@ public class FedoraVersioning extends ContentExposingResource {
                                 UNSUPPORTED_MEDIA_TYPE);
                     }
 
-                    final FedoraResource rdfMemento = versionService.createVersion(session.getFedoraSession(),
+                    final FedoraResource rdfMemento = versionService.createVersion(session.getTransaction(),
                             originalResource, idTranslator, mementoInstant, bodyStream, format);
                     // If a binary memento was also generated, use the binary in the response
                     if (!isBinary) {
@@ -244,10 +244,10 @@ public class FedoraVersioning extends ContentExposingResource {
                 contentStream = extContent.fetchExternalContent();
             }
 
-            return versionService.createBinaryVersion(session.getFedoraSession(), binaryResource,
+            return versionService.createBinaryVersion(session.getTransaction(), binaryResource,
                     mementoInstant, contentStream, checksumURIs, storagePolicyDecisionPoint);
         } else {
-            return versionService.createExternalBinaryVersion(session.getFedoraSession(), binaryResource,
+            return versionService.createExternalBinaryVersion(session.getTransaction(), binaryResource,
                     mementoInstant, checksumURIs, extContent.getHandling(), extContent.getURL());
         }
     }

@@ -15,27 +15,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.persistence.ocfl;
+package org.fcrepo.kernel.api.services;
 
-import org.fcrepo.persistence.api.PersistentStorageSession;
-import org.fcrepo.persistence.api.PersistentStorageSessionFactory;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.models.FedoraResource;
 
 /**
- * OCFL implementation of PersistentStorageSessionFactory
- *
- * @author whikloj
- * @since 2019-09-20
+ * A service interface for deleting Fedora resources.
+ * @author dbernstein
+ * @since 6.0.0
  */
-public class OCFLPersistentSessionFactory implements PersistentStorageSessionFactory {
-
-    @Override
-    public PersistentStorageSession getSession(final String sessionId) {
-        return new OCFLPersistentStorageSession(sessionId);
-    }
-
-    @Override
-    public PersistentStorageSession getReadOnlySession() {
-        return new OCFLPersistentStorageSession();
-    }
-
+public interface DeleteResourceService {
+  /**
+   * Delete the specified resource
+   *
+   * @param tx the transaction associated with the operation
+   * @param resource the Fedora resource to delete
+   */
+  void perform(final Transaction tx, final FedoraResource resource);
 }

@@ -30,7 +30,7 @@ import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.http.commons.api.UriAwareHttpHeaderFactory;
 import org.fcrepo.http.commons.session.SessionFactory;
-import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.NodeService;
@@ -64,7 +64,8 @@ public class LinkHeaderProvider implements UriAwareHttpHeaderFactory {
     @Override
     public Multimap<String, String> createHttpHeadersForResource(final UriInfo uriInfo, final FedoraResource resource) {
 
-        final FedoraSession internalSession = sessionFactory.getInternalSession();
+        // TODO do not use transactions for internal reads
+        final Transaction transaction = sessionFactory.getNewTransaction();
         //TODO figure out where the translator should be coming from.
         final IdentifierConverter<Resource, FedoraResource> translator = null;
 
@@ -74,7 +75,7 @@ public class LinkHeaderProvider implements UriAwareHttpHeaderFactory {
         // Get the correct Acl for this resource
         WebACRolesProvider.getEffectiveAcl(resource, false, sessionFactory).ifPresent(acls -> {
             // If the Acl is present we need to use the internal session to get its URI
-            nodeService.find(internalSession, acls.resource.getPath())
+            nodeService.find(transaction, acls.resource.getPath())
             .getTriples()
             .collect(toModel()).listObjectsOfProperty(createProperty(WEBAC_ACCESS_CONTROL_VALUE))
             .forEachRemaining(linkObj -> {

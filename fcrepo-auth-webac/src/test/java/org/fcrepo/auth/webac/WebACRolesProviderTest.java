@@ -44,7 +44,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.fcrepo.http.commons.session.SessionFactory;
-import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.RepositoryException;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -72,7 +72,7 @@ public class WebACRolesProviderTest {
     private static final String FEDORA_URI_PREFIX = "file:///rest";
 
     @Mock
-    private FedoraSession mockSession;
+    private Transaction mockTransaction;
 
     @Mock
     private SessionFactory mockSessionFactory;
@@ -100,7 +100,7 @@ public class WebACRolesProviderTest {
         setField(roleProvider, "nodeService", mockNodeService);
         setField(roleProvider, "sessionFactory", mockSessionFactory);
 
-        when(mockSessionFactory.getInternalSession()).thenReturn(mockSession);
+        when(mockSessionFactory.getNewTransaction()).thenReturn(mockTransaction);
 
         when(mockResource.getDescribedResource()).thenReturn(mockResource);
         when(mockResource.getDescription()).thenReturn(mockResource);
@@ -211,7 +211,7 @@ public class WebACRolesProviderTest {
         final String acl = "/acls/01/acl.ttl";
 
         when(mockResource.getAcl()).thenReturn(mockAclResource);
-        when(mockNodeService.find(mockSession, acl)).thenReturn(mockAclResource);
+        when(mockNodeService.find(mockTransaction, acl)).thenReturn(mockAclResource);
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
@@ -236,7 +236,7 @@ public class WebACRolesProviderTest {
         final String acl = "/acls/01/acl.ttl";
 
         when(mockResource.getAcl()).thenReturn(mockAclResource);
-        when(mockNodeService.find(mockSession, acl)).thenReturn(mockAclResource);
+        when(mockNodeService.find(mockTransaction, acl)).thenReturn(mockAclResource);
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
@@ -280,7 +280,7 @@ public class WebACRolesProviderTest {
         final String acl = "/acls/03/acl.ttl";
 
         when(mockResource.getAcl()).thenReturn(mockAclResource);
-        when(mockNodeService.find(mockSession, acl)).thenReturn(mockAclResource);
+        when(mockNodeService.find(mockTransaction, acl)).thenReturn(mockAclResource);
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
@@ -304,7 +304,7 @@ public class WebACRolesProviderTest {
 
         when(mockResource.getAcl()).thenReturn(mockAclResource);
         when(mockAclResource.isAcl()).thenReturn(true);
-        when(mockNodeService.find(mockSession, acl)).thenReturn(mockAclResource);
+        when(mockNodeService.find(mockTransaction, acl)).thenReturn(mockAclResource);
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
@@ -325,7 +325,7 @@ public class WebACRolesProviderTest {
         final String acl = "/acls/03/foaf-agent.ttl";
 
         when(mockResource.getAcl()).thenReturn(mockAclResource);
-        when(mockNodeService.find(mockSession, acl)).thenReturn(mockAclResource);
+        when(mockNodeService.find(mockTransaction, acl)).thenReturn(mockAclResource);
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockAclResource.isAcl()).thenReturn(true);
         when(mockResource.getPath()).thenReturn(accessTo);
@@ -349,7 +349,7 @@ public class WebACRolesProviderTest {
         final String acl = "/acls/03/authenticated-agent.ttl";
 
         when(mockResource.getAcl()).thenReturn(mockAclResource);
-        when(mockNodeService.find(mockSession, acl)).thenReturn(mockAclResource);
+        when(mockNodeService.find(mockTransaction, acl)).thenReturn(mockAclResource);
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockAclResource.isAcl()).thenReturn(true);
         when(mockResource.getPath()).thenReturn(accessTo);
@@ -374,7 +374,7 @@ public class WebACRolesProviderTest {
         final String acl = "/acls/04/acl.ttl";
 
         when(mockResource.getAcl()).thenReturn(mockAclResource);
-        when(mockNodeService.find(mockSession, acl)).thenReturn(mockAclResource);
+        when(mockNodeService.find(mockTransaction, acl)).thenReturn(mockAclResource);
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockAclResource.isAcl()).thenReturn(true);
         when(mockResource.getPath()).thenReturn(accessTo);
@@ -400,7 +400,7 @@ public class WebACRolesProviderTest {
         final String acl = "/acls/05/acl.ttl";
 
         when(mockResource.getAcl()).thenReturn(mockAclResource);
-        when(mockNodeService.find(mockSession, acl)).thenReturn(mockAclResource);
+        when(mockNodeService.find(mockTransaction, acl)).thenReturn(mockAclResource);
         when(mockResource.getTypes()).thenReturn(singletonList(URI.create("http://example.com/terms#publicImage")));
         when(mockAclResource.isAcl()).thenReturn(true);
         when(mockAclResource.getPath()).thenReturn(acl);
@@ -425,7 +425,7 @@ public class WebACRolesProviderTest {
         final String acl = "/acls/05/acl.ttl";
 
         when(mockResource.getAcl()).thenReturn(mockAclResource);
-        when(mockNodeService.find(mockSession, acl)).thenReturn(mockAclResource);
+        when(mockNodeService.find(mockTransaction, acl)).thenReturn(mockAclResource);
         when(mockResource.getTypes()).thenReturn(singletonList(URI.create("http://example.com/terms#publicImage")));
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockAclResource.isAcl()).thenReturn(true);
@@ -456,10 +456,10 @@ public class WebACRolesProviderTest {
         final String acl = aclDir + "/acl.ttl";
         final String group = aclDir + "/group.ttl";
 
-        when(mockNodeService.find(mockSession, acl)).thenReturn(mockAclResource);
-        when(mockNodeService.find(mockSession, groupResource)).thenReturn(mockAgentClassResource);
+        when(mockNodeService.find(mockTransaction, acl)).thenReturn(mockAclResource);
+        when(mockNodeService.find(mockTransaction, groupResource)).thenReturn(mockAgentClassResource);
         when(mockResource.getAcl()).thenReturn(mockAclResource);
-        when(mockNodeService.find(mockSession, acl)).thenReturn(mockAclResource);
+        when(mockNodeService.find(mockTransaction, acl)).thenReturn(mockAclResource);
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
@@ -496,10 +496,10 @@ public class WebACRolesProviderTest {
         final String acl = "/acls/09/acl.ttl";
         final String group = "/acls/09/group.ttl";
 
-        when(mockNodeService.find(mockSession, acl)).thenReturn(mockAclResource);
-        when(mockNodeService.find(mockSession, groupResource)).thenReturn(mockAgentClassResource);
+        when(mockNodeService.find(mockTransaction, acl)).thenReturn(mockAclResource);
+        when(mockNodeService.find(mockTransaction, groupResource)).thenReturn(mockAgentClassResource);
         when(mockResource.getAcl()).thenReturn(mockAclResource);
-        when(mockNodeService.find(mockSession, acl)).thenReturn(mockAclResource);
+        when(mockNodeService.find(mockTransaction, acl)).thenReturn(mockAclResource);
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockResource.getPath()).thenReturn(accessTo);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
@@ -523,7 +523,7 @@ public class WebACRolesProviderTest {
         final String acl = "/acls/17/acl.ttl";
 
         when(mockResource.getAcl()).thenReturn(mockAclResource);
-        when(mockNodeService.find(mockSession, acl)).thenReturn(mockAclResource);
+        when(mockNodeService.find(mockTransaction, acl)).thenReturn(mockAclResource);
         when(mockAclResource.getPath()).thenReturn(acl);
         when(mockAclResource.isAcl()).thenReturn(true);
         when(mockResource.getPath()).thenReturn(accessTo);

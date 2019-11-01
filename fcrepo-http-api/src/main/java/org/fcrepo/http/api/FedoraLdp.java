@@ -131,6 +131,7 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.FixityService;
+import org.fcrepo.kernel.api.services.DeleteResourceService;
 import org.fcrepo.kernel.api.utils.ContentDigest;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;
@@ -157,6 +158,9 @@ public class FedoraLdp extends ContentExposingResource {
     @Inject private FixityService fixityService;
 
     @Inject private FedoraHttpConfiguration httpConfiguration;
+
+    @Inject
+    private DeleteResourceService deleteResourceService;
 
     /**
      * Default JAX-RS entry point
@@ -361,7 +365,7 @@ public class FedoraLdp extends ContentExposingResource {
         final AcquiredLock lock = lockManager.lockForDelete(resource().getPath());
 
         try {
-            resource().delete();
+            deleteResourceService.perform(getTransaction(), resource());
             session.commit();
             return noContent().build();
         } finally {
@@ -412,7 +416,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         final String path = toPath(translator(), externalPath);
 
-        final AcquiredLock lock = lockManager.lockForWrite(path, session.getFedoraSession(), nodeService);
+        final AcquiredLock lock = lockManager.lockForWrite(path, session.getTransaction(), nodeService);
 
         try {
 
@@ -422,7 +426,7 @@ public class FedoraLdp extends ContentExposingResource {
             final MediaType contentType =  getSimpleContentType(
                     extContent != null ? extContent.getContentType() : requestContentType);
 
-            if (nodeService.exists(session.getFedoraSession(), path)) {
+            if (nodeService.exists(session.getTransaction(), path)) {
                 resource = resource();
 
                 final String resInteractionModel = getInteractionModel(resource);
@@ -542,7 +546,7 @@ public class FedoraLdp extends ContentExposingResource {
             throw new BadRequestException(resource().getPath() + " is not a valid object to receive a PATCH");
         }
 
-        final AcquiredLock lock = lockManager.lockForWrite(resource().getPath(), session.getFedoraSession(),
+        final AcquiredLock lock = lockManager.lockForWrite(resource().getPath(), session.getTransaction(),
                 nodeService);
 
         try {
@@ -641,7 +645,7 @@ public class FedoraLdp extends ContentExposingResource {
         final String newObjectPath = mintNewPid(slug);
         hasRestrictedPath(newObjectPath);
 
-        final AcquiredLock lock = lockManager.lockForWrite(newObjectPath, session.getFedoraSession(), nodeService);
+        final AcquiredLock lock = lockManager.lockForWrite(newObjectPath, session.getTransaction(), nodeService);
 
         try {
 
@@ -780,7 +784,7 @@ public class FedoraLdp extends ContentExposingResource {
         // check the closest existing ancestor for containment violations.
         String parentPath = path.substring(0, path.lastIndexOf("/"));
         while (!(parentPath.isEmpty() || parentPath.equals("/"))) {
-            if (nodeService.exists(session.getFedoraSession(), parentPath)) {
+            if (nodeService.exists(session.getTransaction(), parentPath)) {
                 if (!(getResourceFromPath(parentPath) instanceof Container)) {
                     throw new ClientErrorException("Unable to add child " + path.replace(parentPath, "")
                             + " to resource " + parentPath + ".", CONFLICT);
@@ -800,14 +804,14 @@ public class FedoraLdp extends ContentExposingResource {
         if ("ldp:NonRDFSource".equals(interactionModel) || contentExternal ||
                 (contentPresent && interactionModel == null && !isRDF(simpleContentType))) {
             // TODO: Replace with some other service/factory
-            // result = binaryService.findOrCreate(session.getFedoraSession(), path);
-            timeMapService.findOrCreate(session.getFedoraSession(), path + "/" + FEDORA_DESCRIPTION);
+            // result = binaryService.findOrCreate(session.getTransaction(), path);
+            timeMapService.findOrCreate(session.getTransaction(), path + "/" + FEDORA_DESCRIPTION);
         } else {
             // TODO: Replace with some other service/factory
-            // result = containerService.findOrCreate(session.getFedoraSession(), path, interactionModel);
+            // result = containerService.findOrCreate(session.getTransaction(), path, interactionModel);
         }
 
-        timeMapService.findOrCreate(session.getFedoraSession(), path);
+        timeMapService.findOrCreate(session.getTransaction(), path);
 
         final String resInteractionModel = getInteractionModel(result);
         if (StringUtils.isNoneBlank(interactionModel) && StringUtils.isNoneBlank(resInteractionModel)
@@ -856,7 +860,7 @@ public class FedoraLdp extends ContentExposingResource {
         // remove leading slash left over from translation
         LOGGER.trace("Using internal identifier {} to create new resource.", pid);
 
-        if (nodeService.exists(session.getFedoraSession(), pid)) {
+        if (nodeService.exists(session.getTransaction(), pid)) {
             LOGGER.trace("Resource with path {} already exists; minting new path instead", pid);
             return mintNewPid(null);
         }

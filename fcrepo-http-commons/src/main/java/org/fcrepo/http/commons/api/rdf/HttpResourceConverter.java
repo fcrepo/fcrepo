@@ -34,7 +34,7 @@ import javax.ws.rs.core.UriBuilder;
 import com.google.common.base.Converter;
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.session.HttpSession;
-import org.fcrepo.kernel.api.FedoraSession;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -64,7 +64,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
 
     protected List<Converter<String, String>> translationChain;
 
-    private final FedoraSession session;
+    private final Transaction transaction;
     private final UriBuilder uriBuilder;
 
     protected Converter<String, String> forward = identity();
@@ -81,7 +81,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
     public HttpResourceConverter(final HttpSession session,
                                  final UriBuilder uriBuilder) {
 
-        this.session = session.getFedoraSession();
+        this.transaction = session.getTransaction();
         this.uriBuilder = uriBuilder;
         this.batch = session.isBatchSession();
         this.uriTemplate = new UriTemplate(uriBuilder.toTemplate());
@@ -131,11 +131,11 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
     static class TransactionIdentifierConverter extends Converter<String, String> {
         public static final String TX_PREFIX = "tx:";
 
-        private final FedoraSession session;
+        private final Transaction transaction;
         private final boolean batch;
 
-        public TransactionIdentifierConverter(final FedoraSession session, final boolean batch) {
-            this.session = session;
+        public TransactionIdentifierConverter(final Transaction transaction, final boolean batch) {
+            this.transaction = transaction;
             this.batch = batch;
         }
 
@@ -144,7 +144,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
 
             if (path.contains(TX_PREFIX) && !path.contains(txSegment())) {
                 throw new RepositoryRuntimeException("Path " + path
-                        + " is not in current transaction " +  session.getId());
+                        + " is not in current transaction " +  transaction.getId());
             }
 
             return replaceOnce(path, txSegment(), EMPTY);
@@ -156,7 +156,7 @@ public class HttpResourceConverter extends IdentifierConverter<Resource,FedoraRe
         }
 
         private String txSegment() {
-            return batch ? "/" + TX_PREFIX + session.getId() : EMPTY;
+            return batch ? "/" + TX_PREFIX + transaction.getId() : EMPTY;
         }
     }
 

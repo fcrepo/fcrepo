@@ -17,6 +17,10 @@
  */
 package org.fcrepo.kernel.api;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Optional;
+
 /**
  * The Fedora Transaction abstraction
  *
@@ -35,10 +39,33 @@ public interface Transaction {
     void rollback();
 
     /**
-     * Get the id of the transaction.
-     * 
-     * @return the ID
+     * Get the transaction id
      */
-    public String getId();
+    String getId();
+
+    /**
+     * Check if the transaction is short-lived.
+     * 
+     * @return is the transaction short-lived.
+     */
+    boolean isShortLived();
+
+    /**
+     * Expire a transaction
+     */
+    public void expire();
+
+    /**
+    * Update the expiry by the provided amount
+    * @param amountToAdd the amount of time to add
+    * @return the new expiration date
+    */
+    Instant updateExpiry(Duration amountToAdd);
+
+    /**
+     * Get the date this session expires
+     * @return expiration date, if one exists
+     */
+    Optional<Instant> getExpires();
 
 }
