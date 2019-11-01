@@ -62,8 +62,8 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
     @Override
     public void persist(final ResourceOperation operation) throws PersistentStorageException {
-        // TODO Auto-generated method stub
-
+        actionNeedsWrite();
+        // Perform the persistence operation
     }
 
     @Override
