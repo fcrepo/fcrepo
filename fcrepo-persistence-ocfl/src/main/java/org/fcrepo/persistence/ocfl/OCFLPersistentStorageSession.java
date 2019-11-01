@@ -17,9 +17,11 @@
  */
 package org.fcrepo.persistence.ocfl;
 
+import java.io.InputStream;
 import java.time.Instant;
-
-import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
+import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
@@ -59,33 +61,32 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
     }
 
     @Override
-    public void create(final FedoraResource resource) throws PersistentStorageException {
+    public void persist(final ResourceOperation operation) throws PersistentStorageException {
         actionNeedsWrite();
-        // Do stuff to persist this new resource.
+        // Perform the persistence operation
     }
 
     @Override
-    public void update(final FedoraResource resource) throws PersistentStorageException {
-        actionNeedsWrite();
-        // Update the resource in peristent storage.
-    }
-
-    @Override
-    public void delete(final FedoraResource resource) throws PersistentStorageException {
-        actionNeedsWrite();
-        // Delete the resource from storage.
-    }
-
-    @Override
-    public FedoraResource read(final String identifier) throws PersistentStorageException,
-            PersistentItemNotFoundException {
-        actionNeedsWrite();
+    public ResourceHeaders getHeaders(final String identifier, final Instant version) throws PersistentItemNotFoundException {
+        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public FedoraResource read(final String identifier, final Instant version)
-            throws PersistentItemNotFoundException {
+    public RdfStream getTriples(final String identifier, final Instant version) throws PersistentItemNotFoundException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public RdfStream getManagedProperties(final String identifier, final Instant version) throws PersistentItemNotFoundException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public InputStream getBinaryContent(final String identifier, final Instant version) throws PersistentItemNotFoundException {
+        // TODO Auto-generated method stub
         return null;
     }
 
@@ -124,5 +125,4 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
             throw new PersistentStorageException("Session is read-only");
         }
     }
-
 }

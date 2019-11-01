@@ -15,43 +15,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.exception;
+package org.fcrepo.kernel.impl.operations;
 
+import static org.fcrepo.kernel.api.operations.ResourceOperationType.UPDATE;
+
+import org.fcrepo.kernel.api.operations.ResourceOperationType;
 
 /**
- * Indicates an item was not found.
+ * Operation for updating a non-rdf source
  *
- * @author dbernstein
+ * @author bbpennel
  */
-public class ItemNotFoundException extends RepositoryRuntimeException {
+public class UpdateNonRdfSourceOperation extends AbstractNonRdfSourceOperation {
 
-    private static final long serialVersionUID = 1L;
-
-    /**
-     * Ordinary constructor
-     *
-     * @param msg the message
-     */
-    public ItemNotFoundException(final String msg) {
-        super(msg);
+    protected UpdateNonRdfSourceOperation(final String rescId) {
+        super(rescId);
     }
 
-    /**
-     * Ordinary constructor.
-     *
-     * @param rootCause the root cause
-     */
-    public ItemNotFoundException(final Throwable rootCause) {
-        super(rootCause);
-    }
-
-    /**
-     * Ordinary constructor.
-     *
-     * @param msg the message
-     * @param rootCause the root cause
-     */
-    public ItemNotFoundException(final String msg, final Throwable rootCause) {
-        super(msg, rootCause);
+    @Override
+    public ResourceOperationType getType() {
+        return UPDATE;
     }
 }

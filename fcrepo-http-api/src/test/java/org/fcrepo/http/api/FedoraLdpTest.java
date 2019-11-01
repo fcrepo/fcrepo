@@ -63,7 +63,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
@@ -82,7 +81,6 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -115,7 +113,6 @@ import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.RdfStream;
-import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
 import org.fcrepo.kernel.api.exception.ExternalMessageBodyException;
 import org.fcrepo.kernel.api.exception.InsufficientStorageException;
@@ -332,8 +329,8 @@ public class FedoraLdpTest {
         when(mockResource.getStateToken()).thenReturn("");
         when(mockResource.getDescription()).thenReturn(mockResource);
         when(mockResource.getDescribedResource()).thenReturn(mockResource);
-        when(mockResource.getTriples(eq(idTranslator), anySet())).thenAnswer(answer);
-        when(mockResource.getTriples(eq(idTranslator), any(TripleCategory.class))).thenAnswer(answer);
+        when(mockResource.getTriples()).thenAnswer(answer);
+        when(mockResource.getTriples()).thenAnswer(answer);
 
         return mockResource;
     }
@@ -848,9 +845,9 @@ public class FedoraLdpTest {
         when(mockRequest.getMethod()).thenReturn("GET");
         when(mockResource.getDescribedResource()).thenReturn(mockBinary);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
-        when(mockBinary.getTriples(eq(idTranslator), any(TripleCategory.class)))
+        when(mockBinary.getTriples())
             .thenReturn(new DefaultRdfStream(createURI("mockBinary")));
-        when(mockBinary.getTriples(eq(idTranslator), any(EnumSet.class)))
+        when(mockBinary.getTriples())
             .thenReturn(new DefaultRdfStream(createURI("mockBinary"), of(new Triple
                     (createURI("mockBinary"), createURI("called"), createURI("child:properties")))));
         final Response actual = testObj.getResource(null);
@@ -1002,9 +999,9 @@ public class FedoraLdpTest {
         when(mockRequest.getMethod()).thenReturn("PATCH");
         when(mockObject.getDescribedResource()).thenReturn(mockBinary);
 
-        when(mockBinary.getTriples(eq(idTranslator), any(TripleCategory.class)))
+        when(mockBinary.getTriples())
             .thenReturn(new DefaultRdfStream(createURI("mockBinary")));
-        when(mockBinary.getTriples(eq(idTranslator), any(EnumSet.class)))
+        when(mockBinary.getTriples())
             .thenReturn(new DefaultRdfStream(createURI("mockBinary"),
                         of(new Triple(createURI("mockBinary"), createURI("called"),
                             createURI("child:properties")))));

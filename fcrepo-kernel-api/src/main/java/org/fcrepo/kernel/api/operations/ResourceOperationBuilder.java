@@ -15,43 +15,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.exception;
+package org.fcrepo.kernel.api.operations;
 
 
 /**
- * Indicates an item was not found.
+ * A builder for constructing resource operations
  *
- * @author dbernstein
+ * @author bbpennel
  */
-public class ItemNotFoundException extends RepositoryRuntimeException {
-
-    private static final long serialVersionUID = 1L;
+public interface ResourceOperationBuilder {
 
     /**
-     * Ordinary constructor
+     * Build the ResourceOperation constructed by this builder
      *
-     * @param msg the message
+     * @return the constructed operation
      */
-    public ItemNotFoundException(final String msg) {
-        super(msg);
-    }
-
-    /**
-     * Ordinary constructor.
-     *
-     * @param rootCause the root cause
-     */
-    public ItemNotFoundException(final Throwable rootCause) {
-        super(rootCause);
-    }
-
-    /**
-     * Ordinary constructor.
-     *
-     * @param msg the message
-     * @param rootCause the root cause
-     */
-    public ItemNotFoundException(final String msg, final Throwable rootCause) {
-        super(msg, rootCause);
-    }
+    ResourceOperation build();
 }

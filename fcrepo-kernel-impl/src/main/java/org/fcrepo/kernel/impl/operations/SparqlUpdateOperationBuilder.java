@@ -15,43 +15,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.exception;
+package org.fcrepo.kernel.impl.operations;
+
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.operations.RdfSourceOperation;
+import org.fcrepo.kernel.api.operations.ResourceOperationBuilder;
 
 
 /**
- * Indicates an item was not found.
+ * Build an operation for updating
  *
- * @author dbernstein
+ * @author bbpennel
  */
-public class ItemNotFoundException extends RepositoryRuntimeException {
+public class SparqlUpdateOperationBuilder implements ResourceOperationBuilder {
 
-    private static final long serialVersionUID = 1L;
+    private final String rescId;
 
-    /**
-     * Ordinary constructor
-     *
-     * @param msg the message
-     */
-    public ItemNotFoundException(final String msg) {
-        super(msg);
+    private final String updateQuery;
+
+    protected SparqlUpdateOperationBuilder(final String rescId, final String updateQuery) {
+        this.rescId = rescId;
+        this.updateQuery = updateQuery;
     }
 
-    /**
-     * Ordinary constructor.
-     *
-     * @param rootCause the root cause
-     */
-    public ItemNotFoundException(final Throwable rootCause) {
-        super(rootCause);
-    }
-
-    /**
-     * Ordinary constructor.
-     *
-     * @param msg the message
-     * @param rootCause the root cause
-     */
-    public ItemNotFoundException(final String msg, final Throwable rootCause) {
-        super(msg, rootCause);
+    @Override
+    public RdfSourceOperation build() {
+        // TODO Perform the sparql update
+        final RdfStream triples = null;
+        return new UpdateRdfSourceOperation(rescId, triples);
     }
 }

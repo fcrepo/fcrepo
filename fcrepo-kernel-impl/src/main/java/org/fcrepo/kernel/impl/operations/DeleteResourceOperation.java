@@ -15,43 +15,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.exception;
+package org.fcrepo.kernel.impl.operations;
+
+import static org.fcrepo.kernel.api.operations.ResourceOperationType.DELETE;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.operations.ResourceOperation;
+import org.fcrepo.kernel.api.operations.ResourceOperationType;
 
 
 /**
- * Indicates an item was not found.
+ * Operation for deleting a resource
  *
- * @author dbernstein
+ * @author bbpennel
  */
-public class ItemNotFoundException extends RepositoryRuntimeException {
+public class DeleteResourceOperation implements ResourceOperation {
 
-    private static final long serialVersionUID = 1L;
+    private final String rescId;
 
-    /**
-     * Ordinary constructor
-     *
-     * @param msg the message
-     */
-    public ItemNotFoundException(final String msg) {
-        super(msg);
+    protected DeleteResourceOperation(final String rescId) {
+        this.rescId = rescId;
     }
 
-    /**
-     * Ordinary constructor.
-     *
-     * @param rootCause the root cause
-     */
-    public ItemNotFoundException(final Throwable rootCause) {
-        super(rootCause);
+    @Override
+    public String getResourceId() {
+        return rescId;
     }
 
-    /**
-     * Ordinary constructor.
-     *
-     * @param msg the message
-     * @param rootCause the root cause
-     */
-    public ItemNotFoundException(final String msg, final Throwable rootCause) {
-        super(msg, rootCause);
+    @Override
+    public RdfStream getServerManagedProperties() {
+        return null;
+    }
+
+    @Override
+    public ResourceOperationType getType() {
+        return DELETE;
     }
 }
