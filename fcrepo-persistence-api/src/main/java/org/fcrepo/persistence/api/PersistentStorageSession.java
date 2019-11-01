@@ -74,9 +74,9 @@ public interface PersistentStorageSession {
     /**
      * Get the client managed triples for the provided resource.
      *
-     * @param resource the resource.
-     * @param version instant identifying the version of the resource to read from.
-     *      If null, then the head version is used.
+     * @param identifier identifier for the resource.
+     * @param version instant identifying the version of the resource to read from. If null, then the head version is
+     *        used.
      * @return the triples as an RdfStream.
      * @throws PersistentItemNotFoundException If the identifier doesn't exist.
      */
@@ -86,9 +86,9 @@ public interface PersistentStorageSession {
     /**
      * Get the server managed properties for this provided resource.
      *
-     * @param resource the resource.
-     * @param version instant identifying the version of the resource to read from.
-     *      If null, then the head version is used.
+     * @param identifier identifier for the resource.
+     * @param version instant identifying the version of the resource to read from. If null, then the head version is
+     *        used.
      * @return the server managed properties as an RdfStream.
      * @throws PersistentItemNotFoundException If the identifier doesn't exist.
      */
@@ -98,9 +98,9 @@ public interface PersistentStorageSession {
     /**
      * Get the persisted binary content for the provided resource.
      *
-     * @param resource the resource.
-     * @param version instant identifying the version of the resource to read from.
-     *      If null, then the head version is used.
+     * @param identifier identifier for the resource.
+     * @param version instant identifying the version of the resource to read from. If null, then the head version is
+     *        used.
      * @return the binary content.
      * @throws PersistentItemNotFoundException If the identifier doesn't exist.
      */

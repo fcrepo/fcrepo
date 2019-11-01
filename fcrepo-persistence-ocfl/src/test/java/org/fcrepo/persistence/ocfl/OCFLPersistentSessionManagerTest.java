@@ -18,10 +18,8 @@
 package org.fcrepo.persistence.ocfl;
 
 import static java.util.UUID.randomUUID;
-import static org.junit.Assert.assertNull;
-import java.time.Instant;
-
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
@@ -48,6 +46,9 @@ public class OCFLPersistentSessionManagerTest {
     @Mock
     private FedoraResource resource;
 
+    @Mock
+    private ResourceOperation mockOperation;
+
     @Before
     public void setUp() {
         this.sessionFactory = new OCFLPersistentSessionManager();
@@ -58,39 +59,20 @@ public class OCFLPersistentSessionManagerTest {
     @Test
     public void testNormalSession() throws Exception {
 
-        readWriteSession.create(resource);
+        readWriteSession.persist(mockOperation);
 
-        readWriteSession.update(resource);
-
-        readWriteSession.delete(resource);
-
-        final FedoraResource response4 = readWriteSession.read(testResourcePath);
-        assertNull(response4);
-
-    }
-
-    @Test
-    public void testReadVersionInSession() throws Exception {
-        final Instant version = Instant.now();
-        final FedoraResource response = readWriteSession.read(testResourcePath, version);
-        assertNull(response);
+        readWriteSession.delete(testResourcePath);
     }
 
     @Test(expected = PersistentStorageException.class)
-    public void testWriteNoSession() throws Exception {
-        readOnlySession.create(resource);
-    }
-
-    @Test(expected = PersistentStorageException.class)
-    public void testUpdateNoSession() throws Exception {
-        readOnlySession.update(resource);
+    public void testPersistNoSession() throws Exception {
+        readOnlySession.persist(mockOperation);
     }
 
     @Test(expected = PersistentStorageException.class)
     public void testDeleteNoSession() throws Exception {
-        readOnlySession.delete(resource);
+        readOnlySession.delete(testResourcePath);
     }
-
 
     @Test(expected = IllegalArgumentException.class)
     public void testNullSessionId() {
