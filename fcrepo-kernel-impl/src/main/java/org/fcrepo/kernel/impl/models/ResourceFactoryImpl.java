@@ -83,7 +83,7 @@ public class ResourceFactoryImpl implements ResourceFactory {
     @Override
     public FedoraResource getResource(final Transaction transaction, final String identifier)
             throws PathNotFoundException {
-        return createResource(transaction, identifier);
+        return instantiateResource(transaction, identifier);
     }
 
     @Override
@@ -125,7 +125,7 @@ public class ResourceFactoryImpl implements ResourceFactory {
      * @return new FedoraResource instance
      * @throws PathNotFoundException
      */
-    private FedoraResource createResource(final Transaction transaction, final String identifier)
+    private FedoraResource instantiateResource(final Transaction transaction, final String identifier)
             throws PathNotFoundException {
         try {
             final PersistentStorageSession psSession = getSession(transaction);
