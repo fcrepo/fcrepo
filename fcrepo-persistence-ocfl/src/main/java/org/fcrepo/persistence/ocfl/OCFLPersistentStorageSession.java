@@ -67,12 +67,6 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
     }
 
     @Override
-    public void delete(final String identifier) throws PersistentStorageException {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
     public ResourceHeaders getHeaders(final String identifier, final Instant version) throws PersistentItemNotFoundException {
         // TODO Auto-generated method stub
         return null;

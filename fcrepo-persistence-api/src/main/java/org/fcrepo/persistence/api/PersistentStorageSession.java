@@ -51,15 +51,6 @@ public interface PersistentStorageSession {
             throws PersistentStorageException;
 
     /**
-     * Delete a resource from persistent storage.
-     *
-     * @param identifier The identifier of the resource to delete.
-     * @throws PersistentStorageException Error deleting the resource.
-     */
-    public void delete(final String identifier)
-            throws PersistentStorageException;
-
-    /**
      * Get the header information for the identified resource.
      *
      * @param identifier identifier of the resource

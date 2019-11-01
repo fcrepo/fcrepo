@@ -60,18 +60,11 @@ public class OCFLPersistentSessionManagerTest {
     public void testNormalSession() throws Exception {
 
         readWriteSession.persist(mockOperation);
-
-        readWriteSession.delete(testResourcePath);
     }
 
     @Test(expected = PersistentStorageException.class)
     public void testPersistNoSession() throws Exception {
         readOnlySession.persist(mockOperation);
-    }
-
-    @Test(expected = PersistentStorageException.class)
-    public void testDeleteNoSession() throws Exception {
-        readOnlySession.delete(testResourcePath);
     }
 
     @Test(expected = IllegalArgumentException.class)
