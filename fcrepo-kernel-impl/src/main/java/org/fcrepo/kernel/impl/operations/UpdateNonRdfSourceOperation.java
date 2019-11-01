@@ -17,6 +17,9 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
+import static org.fcrepo.kernel.api.operations.ResourceOperationType.UPDATE;
+
+import org.fcrepo.kernel.api.operations.ResourceOperationType;
 
 /**
  * Operation for updating a non-rdf source
@@ -27,5 +30,10 @@ public class UpdateNonRdfSourceOperation extends AbstractNonRdfSourceOperation {
 
     protected UpdateNonRdfSourceOperation(final String rescId) {
         super(rescId);
+    }
+
+    @Override
+    public ResourceOperationType getType() {
+        return UPDATE;
     }
 }

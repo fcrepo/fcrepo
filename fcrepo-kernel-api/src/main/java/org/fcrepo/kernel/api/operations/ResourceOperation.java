@@ -39,4 +39,11 @@ public interface ResourceOperation {
      * @return
      */
     RdfStream getServerManagedProperties();
+
+    /**
+     * Returns the type of operation represented by this request
+     *
+     * @return
+     */
+    ResourceOperationType getType();
 }

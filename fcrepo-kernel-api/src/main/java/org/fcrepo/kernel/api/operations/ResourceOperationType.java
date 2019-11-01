@@ -15,27 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.impl.operations;
-
-import static org.fcrepo.kernel.api.operations.ResourceOperationType.UPDATE;
-
-import org.fcrepo.kernel.api.RdfStream;
-import org.fcrepo.kernel.api.operations.ResourceOperationType;
+package org.fcrepo.kernel.api.operations;
 
 
 /**
- * Operation for updating an RDF source
+ * Specifies the type of modification action represented by a resource operation.
  *
  * @author bbpennel
  */
-public class UpdateRdfSourceOperation extends AbstractRdfSourceOperation {
-
-    protected UpdateRdfSourceOperation(final String rescId, final RdfStream triples) {
-        super(rescId, triples);
-    }
-
-    @Override
-    public ResourceOperationType getType() {
-        return UPDATE;
-    }
+public enum ResourceOperationType {
+    UPDATE, CREATE, DELETE
 }

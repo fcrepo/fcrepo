@@ -26,7 +26,7 @@ import org.fcrepo.kernel.api.operations.RdfSourceOperation;
  *
  * @author bbpennel
  */
-public class AbstractRdfSourceOperation extends AbstractResourceOperation implements RdfSourceOperation {
+public abstract class AbstractRdfSourceOperation extends AbstractResourceOperation implements RdfSourceOperation {
 
     protected RdfStream triples;
 

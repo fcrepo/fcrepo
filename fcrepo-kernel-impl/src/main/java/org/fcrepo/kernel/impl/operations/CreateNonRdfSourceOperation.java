@@ -17,6 +17,8 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
+import org.fcrepo.kernel.api.operations.ResourceOperationType;
+import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 
 /**
  * Operation for creating a new non-rdf source
@@ -27,5 +29,10 @@ public class CreateNonRdfSourceOperation extends AbstractNonRdfSourceOperation {
 
     protected CreateNonRdfSourceOperation(final String rescId) {
         super(rescId);
+    }
+
+    @Override
+    public ResourceOperationType getType() {
+        return CREATE;
     }
 }

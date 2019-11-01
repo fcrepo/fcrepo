@@ -17,7 +17,10 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
+import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
+
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.operations.ResourceOperationType;
 
 
 /**
@@ -29,5 +32,10 @@ public class CreateRdfSourceOperation extends AbstractRdfSourceOperation {
 
     protected CreateRdfSourceOperation(final String rescId, final RdfStream triples) {
         super(rescId, triples);
+    }
+
+    @Override
+    public ResourceOperationType getType() {
+        return CREATE;
     }
 }
