@@ -15,22 +15,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.services;
+package org.fcrepo.kernel.api;
 
-import org.fcrepo.kernel.api.Transaction;
+import java.util.stream.Stream;
+
 import org.fcrepo.kernel.api.models.FedoraResource;
 
 /**
- * A service interface for deleting Fedora resources.
+ * An interface defining the encapsulates containment relationships.
+ *
  * @author dbernstein
  * @since 6.0.0
  */
-public interface DeleteResourceService {
-  /**
-   * Delete the specified resource
-   *
-   * @param tx the transaction associated with the operation
-   * @param fedoraResource The Fedora resource to delete
-   */
-  void perform(final Transaction tx, final FedoraResource fedoraResource);
+public interface ContainmentIndex {
+
+    /**
+     * Return a stream of fedora identifiers contained by the specified fedora resource.
+     *
+     * @param tx The transaction.  If no transaction, null is okay.
+     * @param fedoraResource The containing fedora resource
+     * @return A stream of contained identifiers
+     */
+    Stream<String> getContainedBy(Transaction tx, FedoraResource fedoraResource);
 }
