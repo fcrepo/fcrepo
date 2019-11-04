@@ -18,17 +18,15 @@
 package org.fcrepo.http.commons.api.rdf;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.Arrays;
+import com.google.common.base.Converter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
+import java.util.stream.Stream;
 import javax.ws.rs.core.UriBuilder;
-
-import com.google.common.base.Converter;
 import org.glassfish.jersey.uri.UriTemplate;
 import org.slf4j.Logger;
 
@@ -58,7 +56,7 @@ public class HttpIdentifierConverter extends Converter<String, String> {
     private static BiFunction<String, String, String> removeDelim =
         (uri, delim) -> {
             final String newUri;
-            if (uri.indexOf(delim) >= 0) {
+            if (uri.contains(delim)) {
                 newUri = uri.split(delim)[0];
             } else {
                 newUri = uri;
@@ -87,16 +85,14 @@ public class HttpIdentifierConverter extends Converter<String, String> {
         final String path = getPath(httpUri);
         if (path != null) {
 
-            // Take the URL and remove any hash uris, or fcr: endpoints.
-            final String fedoraId = Arrays.asList(path).stream().map(p -> removeDelim.apply(p, "#"))
-                .map(p -> removeDelim.apply(p, "/" + FCR_METADATA))
+            // Take the URL and remove any hash uris, or fcr: endpoints, except fcr:metadata.
+            final String fedoraId = Stream.of(path).map(p -> removeDelim.apply(p, "#"))
                 .map(p -> removeDelim.apply(p, "/" + FCR_ACL))
                 .map(p -> removeDelim.apply(p, "/" + FCR_VERSIONS)).findFirst().orElse("");
 
             return FEDORA_ID_PREFIX + fedoraId.replaceFirst("\\/", "");
         }
-        return "";
-
+        throw new IllegalArgumentException("Cannot translate NULL path");
     }
 
     @Override
@@ -109,7 +105,7 @@ public class HttpIdentifierConverter extends Converter<String, String> {
             // Need to pass as Array or second arg is ignored. Second arg is DON'T encode slashes
             return uriBuilder().build(values, false).toString();
         }
-        return "";
+        throw new IllegalArgumentException("Cannot translate IDs without our prefix");
     }
 
     /**

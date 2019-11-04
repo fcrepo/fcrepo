@@ -22,7 +22,6 @@ import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import java.util.UUID;
 
@@ -50,11 +49,16 @@ public class HttpIdentifierConverterTest {
         converter = new HttpIdentifierConverter(uriBuilder);
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void testBlankUri() {
         final String testUri = "";
         final String fedoraId = converter.convert(testUri);
-        assertTrue(fedoraId.length() == 0);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testBlankId() {
+        final String testId = "";
+        final String fedoraId = converter.reverse().convert(testId);
     }
 
     @Test
@@ -103,9 +107,9 @@ public class HttpIdentifierConverterTest {
         final String baseUrl = uriBase + "/" + baseUid;
         final String testUri = baseUrl + "/" + FCR_METADATA;
         final String fedoraId = converter.convert(testUri);
-        assertEquals("info:fedora/" + baseUid, fedoraId);
+        assertEquals("info:fedora/" + baseUid + "/" + FCR_METADATA, fedoraId);
         final String httpUri = converter.reverse().convert(fedoraId);
-        assertEquals(baseUrl, httpUri);
+        assertEquals(testUri, httpUri);
     }
 
     @Test
@@ -124,7 +128,7 @@ public class HttpIdentifierConverterTest {
         final String memento = "20190926133245";
         final String baseUid = getUniqueId();
         final String baseUrl = uriBase + "/" + baseUid;
-        final String testUri = baseUrl + "/" + FCR_VERSIONS + memento;
+        final String testUri = baseUrl + "/" + FCR_VERSIONS + "/" + memento;
         final String fedoraId = converter.convert(testUri);
         assertEquals("info:fedora/" + baseUid, fedoraId);
         final String httpUri = converter.reverse().convert(fedoraId);
@@ -158,9 +162,9 @@ public class HttpIdentifierConverterTest {
         final String baseUrl = uriBase + "/" + baseUid;
         final String testUri = baseUrl + "/" + FCR_METADATA;
         final String fedoraId = converter.convert(testUri);
-        assertEquals("info:fedora/" + baseUid, fedoraId);
+        assertEquals("info:fedora/" + baseUid + "/" + FCR_METADATA, fedoraId);
         final String httpUri = converter.reverse().convert(fedoraId);
-        assertEquals(baseUrl, httpUri);
+        assertEquals(testUri, httpUri);
     }
 
     @Test
@@ -179,7 +183,7 @@ public class HttpIdentifierConverterTest {
         final String memento = "20190926133245";
         final String baseUid = getUniqueId() + "/" + getUniqueId();
         final String baseUrl = uriBase + "/" + baseUid;
-        final String testUri = baseUrl + "/" + FCR_VERSIONS + memento;
+        final String testUri = baseUrl + "/" + FCR_VERSIONS + "/" + memento;
         final String fedoraId = converter.convert(testUri);
         assertEquals("info:fedora/" + baseUid, fedoraId);
         final String httpUri = converter.reverse().convert(fedoraId);
@@ -197,6 +201,10 @@ public class HttpIdentifierConverterTest {
         assertEquals(baseUrl, httpUri);
     }
 
+    /**
+     * Utility function to get a UUID.
+     * @return a UUID.
+     */
     private static String getUniqueId() {
         return UUID.randomUUID().toString();
     }
