@@ -128,12 +128,6 @@ public interface FedoraResource {
     FedoraResource getAcl();
 
     /**
-     * Create the ACL for this resource if it doesn't exist
-     * @return the container for ACL of this resource
-     */
-    FedoraResource findOrCreateAcl();
-
-    /**
      * Get the child of this resource at the given path
      *
      * @param relPath the given path
