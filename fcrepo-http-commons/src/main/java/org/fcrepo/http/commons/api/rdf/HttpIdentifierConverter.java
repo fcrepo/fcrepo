@@ -24,8 +24,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import com.google.common.base.Converter;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.BiFunction;
-import java.util.stream.Stream;
 import javax.ws.rs.core.UriBuilder;
 import org.glassfish.jersey.uri.UriTemplate;
 import org.slf4j.Logger;
@@ -51,18 +49,26 @@ public class HttpIdentifierConverter extends Converter<String, String> {
     private static final String FEDORA_ID_PREFIX = "info:fedora/";
 
     /**
-     * Split uri on delim and return the first part.
+     * Things in a URL that we want to remove from the end of identifiers. Also removes everything after these.
      */
-    private static BiFunction<String, String, String> removeDelim =
-        (uri, delim) -> {
-            final String newUri;
-            if (uri.contains(delim)) {
-                newUri = uri.split(delim)[0];
-            } else {
-                newUri = uri;
+    private static final String[] FEDORA_STRIP_SUFFIX = {
+            "#",
+            "/" + FCR_VERSIONS,
+            "/" + FCR_ACL
+    };
+
+    /**
+     * Remove the various suffixes and anything after them.
+     */
+    private static String truncateSuffixes(final String uri) {
+        String internalUri = uri;
+        for (final String suffix : FEDORA_STRIP_SUFFIX) {
+            if (internalUri.contains(suffix)) {
+                internalUri = internalUri.split(suffix)[0];
             }
-            return newUri;
-        };
+        }
+        return internalUri;
+    }
 
     /**
      * Create a new identifier converter within the given session with the given URI template
@@ -85,10 +91,8 @@ public class HttpIdentifierConverter extends Converter<String, String> {
         final String path = getPath(httpUri);
         if (path != null) {
 
-            // Take the URL and remove any hash uris, or fcr: endpoints, except fcr:metadata.
-            final String fedoraId = Stream.of(path).map(p -> removeDelim.apply(p, "#"))
-                .map(p -> removeDelim.apply(p, "/" + FCR_ACL))
-                .map(p -> removeDelim.apply(p, "/" + FCR_VERSIONS)).findFirst().orElse("");
+            // Take the URL and remove any hash uris, or fcr: endpoints.
+            final String fedoraId = truncateSuffixes(path);
 
             return FEDORA_ID_PREFIX + fedoraId.replaceFirst("\\/", "");
         }
