@@ -15,12 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api;
+package org.fcrepo.kernel.api.operations;
+
 
 /**
- * The basic abstraction for a Fedora repository
- * @author acoburn
+ * Specifies the type of modification action represented by a resource operation.
+ *
+ * @author bbpennel
  */
-public interface Repository {
-
+public enum ResourceOperationType {
+    UPDATE, CREATE, DELETE
 }

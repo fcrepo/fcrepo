@@ -15,43 +15,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.exception;
+package org.fcrepo.kernel.api.operations;
 
+import org.fcrepo.kernel.api.RdfStream;
 
 /**
- * Indicates an item was not found.
+ * Operation for manipulating a resource
  *
- * @author dbernstein
+ * @author bbpennel
  */
-public class ItemNotFoundException extends RepositoryRuntimeException {
-
-    private static final long serialVersionUID = 1L;
+public interface ResourceOperation {
 
     /**
-     * Ordinary constructor
+     * Id of the resource
      *
-     * @param msg the message
+     * @return
      */
-    public ItemNotFoundException(final String msg) {
-        super(msg);
-    }
+    String getResourceId();
 
     /**
-     * Ordinary constructor.
+     * Get the server managed properties for the resource
      *
-     * @param rootCause the root cause
+     * @return
      */
-    public ItemNotFoundException(final Throwable rootCause) {
-        super(rootCause);
-    }
+    RdfStream getServerManagedProperties();
 
     /**
-     * Ordinary constructor.
+     * Returns the type of operation represented by this request
      *
-     * @param msg the message
-     * @param rootCause the root cause
+     * @return
      */
-    public ItemNotFoundException(final String msg, final Throwable rootCause) {
-        super(msg, rootCause);
-    }
+    ResourceOperationType getType();
 }

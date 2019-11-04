@@ -19,9 +19,11 @@ package org.fcrepo.http.api;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.services.DeleteResourceService;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
+import javax.inject.Inject;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -43,6 +45,9 @@ public class FedoraTombstones extends FedoraBaseResource {
 
     @PathParam("path") protected String externalPath;
 
+    @Inject
+    private DeleteResourceService deleteResourceService;
+
     /**
      * Default JAX-RS entry point
      */
@@ -59,7 +64,6 @@ public class FedoraTombstones extends FedoraBaseResource {
         this.externalPath = externalPath;
     }
 
-
     /**
      * Delete a tombstone resource (freeing the original resource to be reused)
      * @return the free resource
@@ -67,7 +71,7 @@ public class FedoraTombstones extends FedoraBaseResource {
     @DELETE
     public Response delete() {
         LOGGER.info("Delete tombstone: {}", resource());
-        resource().delete();
+        deleteResourceService.perform(getTransaction(), resource());
         transaction.commitIfShortLived();
         return noContent().build();
     }

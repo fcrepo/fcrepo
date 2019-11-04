@@ -18,12 +18,10 @@
 package org.fcrepo.persistence.ocfl;
 
 import static java.util.UUID.randomUUID;
-import static org.junit.Assert.assertNull;
-import java.time.Instant;
-
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
-import org.fcrepo.persistence.api.PersistentStorageSessionFactory;
+import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 
 import org.junit.Before;
@@ -33,9 +31,9 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
-public class OCFLPersistentSessionFactoryTest {
+public class OCFLPersistentSessionManagerTest {
 
-    private PersistentStorageSessionFactory sessionFactory;
+    private PersistentStorageSessionManager sessionFactory;
 
     private PersistentStorageSession readWriteSession;
 
@@ -48,9 +46,12 @@ public class OCFLPersistentSessionFactoryTest {
     @Mock
     private FedoraResource resource;
 
+    @Mock
+    private ResourceOperation mockOperation;
+
     @Before
     public void setUp() {
-        this.sessionFactory = new OCFLPersistentSessionFactory();
+        this.sessionFactory = new OCFLPersistentSessionManager();
         readWriteSession = this.sessionFactory.getSession(testSessionId);
         readOnlySession = this.sessionFactory.getReadOnlySession();
     }
@@ -58,37 +59,17 @@ public class OCFLPersistentSessionFactoryTest {
     @Test
     public void testNormalSession() throws Exception {
 
-        readWriteSession.create(resource);
-
-        readWriteSession.update(resource);
-
-        readWriteSession.delete(resource);
-
-        final FedoraResource response4 = readWriteSession.read(testResourcePath);
-        assertNull(response4);
-
-    }
-
-    @Test
-    public void testReadVersionInSession() throws Exception {
-        final Instant version = Instant.now();
-        final FedoraResource response = readWriteSession.read(testResourcePath, version);
-        assertNull(response);
+        readWriteSession.persist(mockOperation);
     }
 
     @Test(expected = PersistentStorageException.class)
-    public void testWriteNoSession() throws Exception {
-        readOnlySession.create(resource);
+    public void testPersistNoSession() throws Exception {
+        readOnlySession.persist(mockOperation);
     }
 
-    @Test(expected = PersistentStorageException.class)
-    public void testUpdateNoSession() throws Exception {
-        readOnlySession.update(resource);
-    }
-
-    @Test(expected = PersistentStorageException.class)
-    public void testDeleteNoSession() throws Exception {
-        readOnlySession.delete(resource);
+    @Test(expected = IllegalArgumentException.class)
+    public void testNullSessionId() {
+        this.sessionFactory.getSession(null);
     }
 
 }

@@ -15,43 +15,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.exception;
+package org.fcrepo.kernel.api.services;
 
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.models.FedoraResource;
 
 /**
- * Indicates an item was not found.
- *
+ * A service interface for deleting Fedora resources.
  * @author dbernstein
+ * @since 6.0.0
  */
-public class ItemNotFoundException extends RepositoryRuntimeException {
-
-    private static final long serialVersionUID = 1L;
-
-    /**
-     * Ordinary constructor
-     *
-     * @param msg the message
-     */
-    public ItemNotFoundException(final String msg) {
-        super(msg);
-    }
-
-    /**
-     * Ordinary constructor.
-     *
-     * @param rootCause the root cause
-     */
-    public ItemNotFoundException(final Throwable rootCause) {
-        super(rootCause);
-    }
-
-    /**
-     * Ordinary constructor.
-     *
-     * @param msg the message
-     * @param rootCause the root cause
-     */
-    public ItemNotFoundException(final String msg, final Throwable rootCause) {
-        super(msg, rootCause);
-    }
+public interface DeleteResourceService {
+  /**
+   * Delete the specified resource
+   *
+   * @param tx the transaction associated with the operation
+   * @param resource the Fedora resource to delete
+   */
+  void perform(final Transaction tx, final FedoraResource resource);
 }

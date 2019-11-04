@@ -21,26 +21,40 @@ import java.net.URI;
 import java.time.Instant;
 
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Stream;
 
-import org.apache.jena.rdf.model.Resource;
-
 import org.fcrepo.kernel.api.RdfStream;
-import org.fcrepo.kernel.api.TripleCategory;
-import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 
 /**
+ * A resource in a Fedora repository.
+ *
  * @author ajs6f
  * @since Jan 10, 2014
  */
 public interface FedoraResource {
 
     /**
-     * Get the path to the resource
-     * @return path
+     * Get the fedora identifier for this resource
+     *
+     * @return the fedora identifier
      */
+    String getId();
+
+    /**
+     * Get the path to the resource
+     *
+     * @return path
+     * @deprecated use getId()
+     */
+    @Deprecated
     String getPath();
+
+    /**
+     * Get an object containing header information describing this resource.
+     *
+     * @return header information
+     */
+    ResourceHeaders getHeaders();
 
     /**
      * Get the children of this resource
@@ -135,11 +149,6 @@ public interface FedoraResource {
     boolean hasProperty(String relPath);
 
     /**
-     * Delete this resource, and any inbound references to it
-     */
-    void delete();
-
-    /**
      * Get the date this resource was created
      * @return created date
      */
@@ -181,26 +190,22 @@ public interface FedoraResource {
     void addType(final String type);
 
     /**
-     * Return the RDF properties of this object using the provided context
-     * @param idTranslator the property of idTranslator
-     * @param context the context
-     * @return the rdf properties of this object using the provided context
+     * Return the RDF properties for this resource.
+     *
+     * @return the RDF properties of this object.
      */
-    RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-                         final TripleCategory context);
+    RdfStream getTriples();
 
     /**
-     * Return the RDF properties of this object using the provided contexts
-     * @param idTranslator the property of idTranslator
-     * @param contexts the provided contexts
-     * @return the rdf properties of this object
+     * Returns the managed properties for this resource.
+     *
+     * @return the managed properties for this resource as an RdfStream
      */
-    RdfStream getTriples(final IdentifierConverter<Resource, FedoraResource> idTranslator,
-                         final Set<? extends TripleCategory> contexts);
+    RdfStream getManagedProperties();
 
     /**
      * Check if a resource was created in this session
-     * 
+     *
      * @return if resource created in this session
      */
     Boolean isNew();
@@ -218,6 +223,7 @@ public interface FedoraResource {
      * @return constructed state-token value
      */
     String getStateToken();
+
     /**
      * Check if a resource is an original resource
      * (ie versionable, as opposed to non-versionable resources

@@ -50,12 +50,13 @@ import javax.jms.Session;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.jena.rdf.model.Resource;
 
-import org.fcrepo.kernel.api.Repository;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
+import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.services.DeleteResourceService;
 import org.fcrepo.kernel.api.services.ReplacePropertiesService;
 import org.fcrepo.kernel.api.services.UpdatePropertiesService;
 
@@ -91,9 +92,6 @@ abstract class AbstractJmsIT implements MessageListener {
     private static final String TEST_BASE_URL = "http://localhost:8080/rest";
 
     @Inject
-    private Repository repository;
-
-    @Inject
     private TransactionManager txMananger;
 
     // @Inject
@@ -105,6 +103,9 @@ abstract class AbstractJmsIT implements MessageListener {
 
     @Inject
     private ReplacePropertiesService replacePropertiesService;
+
+    @Inject
+    private DeleteResourceService deleteResourceService;
 
     @Inject
     private ActiveMQConnectionFactory connectionFactory;
@@ -159,7 +160,10 @@ abstract class AbstractJmsIT implements MessageListener {
             tx.commit();
             awaitMessageOrFail(testFile, RESOURCE_MODIFICATION.getType(), REPOSITORY_NAMESPACE + "Binary");
 
-            // binaryService.find(tx, testFile).delete();
+            final FedoraResource binaryResource = null;
+            //TODO update previous line to support new binary resource location
+            // approach that will replace binaryService.find(session, testFile)
+            deleteResourceService.perform(tx, binaryResource);
             tx.commit();
             awaitMessageOrFail(testFile, RESOURCE_DELETION.getType(), null);
         } finally {
@@ -220,7 +224,10 @@ abstract class AbstractJmsIT implements MessageListener {
         try {
             // final Container resource = containerService.findOrCreate(tx, testRemoved);
             tx.commit();
-            // resource.delete();
+            //TODO connect the next line with the new resource creation mechanism
+            // that will replace containerService.findOrCreate(session, testRemoved);
+            final Container resource = null;
+            deleteResourceService.perform(tx, resource);
             tx.commit();
             awaitMessageOrFail(testRemoved, RESOURCE_DELETION.getType(), null);
         } finally {

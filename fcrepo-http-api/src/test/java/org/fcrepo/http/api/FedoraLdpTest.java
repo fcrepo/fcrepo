@@ -63,7 +63,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
@@ -82,7 +81,6 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -114,7 +112,6 @@ import org.fcrepo.http.commons.domain.PreferTag;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.RdfStream;
-import org.fcrepo.kernel.api.TripleCategory;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
 import org.fcrepo.kernel.api.exception.ExternalMessageBodyException;
 import org.fcrepo.kernel.api.exception.InsufficientStorageException;
@@ -129,6 +126,7 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry;
+import org.fcrepo.kernel.api.services.DeleteResourceService;
 import org.fcrepo.kernel.api.services.NodeService;
 import org.fcrepo.kernel.api.services.ReplacePropertiesService;
 import org.fcrepo.kernel.api.services.TimeMapService;
@@ -234,6 +232,9 @@ public class FedoraLdpTest {
     @Mock
     private UpdatePropertiesService updatePropertiesService;
 
+    @Mock
+    private DeleteResourceService deleteResourceService;
+
     private static final Logger log = getLogger(FedoraLdpTest.class);
 
 
@@ -263,6 +264,7 @@ public class FedoraLdpTest {
         setField(testObj, "prefer", prefer);
         setField(testObj, "extContentHandlerFactory", extContentHandlerFactory);
         setField(testObj, "namespaceRegistry", rdfNamespaceRegistry);
+        setField(testObj, "deleteResourceService", deleteResourceService);
 
         when(rdfNamespaceRegistry.getNamespaces()).thenReturn(new HashMap<>());
 
@@ -322,8 +324,8 @@ public class FedoraLdpTest {
         when(mockResource.getStateToken()).thenReturn("");
         when(mockResource.getDescription()).thenReturn(mockResource);
         when(mockResource.getDescribedResource()).thenReturn(mockResource);
-        when(mockResource.getTriples(eq(idTranslator), anySet())).thenAnswer(answer);
-        when(mockResource.getTriples(eq(idTranslator), any(TripleCategory.class))).thenAnswer(answer);
+        when(mockResource.getTriples()).thenAnswer(answer);
+        when(mockResource.getTriples()).thenAnswer(answer);
 
         return mockResource;
     }
@@ -838,9 +840,9 @@ public class FedoraLdpTest {
         when(mockRequest.getMethod()).thenReturn("GET");
         when(mockResource.getDescribedResource()).thenReturn(mockBinary);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
-        when(mockBinary.getTriples(eq(idTranslator), any(TripleCategory.class)))
+        when(mockBinary.getTriples())
             .thenReturn(new DefaultRdfStream(createURI("mockBinary")));
-        when(mockBinary.getTriples(eq(idTranslator), any(EnumSet.class)))
+        when(mockBinary.getTriples())
             .thenReturn(new DefaultRdfStream(createURI("mockBinary"), of(new Triple
                     (createURI("mockBinary"), createURI("called"), createURI("child:properties")))));
         final Response actual = testObj.getResource(null);
@@ -879,7 +881,7 @@ public class FedoraLdpTest {
         when(mockRequest.getMethod()).thenReturn("PATCH");
         final Response actual = testObj.deleteObject();
         assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
-        verify(fedoraResource).delete();
+        verify(deleteResourceService).perform(mockTransaction, fedoraResource);
     }
 
     @Test
@@ -992,9 +994,9 @@ public class FedoraLdpTest {
         when(mockRequest.getMethod()).thenReturn("PATCH");
         when(mockObject.getDescribedResource()).thenReturn(mockBinary);
 
-        when(mockBinary.getTriples(eq(idTranslator), any(TripleCategory.class)))
+        when(mockBinary.getTriples())
             .thenReturn(new DefaultRdfStream(createURI("mockBinary")));
-        when(mockBinary.getTriples(eq(idTranslator), any(EnumSet.class)))
+        when(mockBinary.getTriples())
             .thenReturn(new DefaultRdfStream(createURI("mockBinary"),
                         of(new Triple(createURI("mockBinary"), createURI("called"),
                             createURI("child:properties")))));

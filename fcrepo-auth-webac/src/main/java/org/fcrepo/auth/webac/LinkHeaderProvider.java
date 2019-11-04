@@ -19,7 +19,6 @@ package org.fcrepo.auth.webac;
 
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_ACCESS_CONTROL_VALUE;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
-import static org.fcrepo.kernel.api.RequiredRdfContext.PROPERTIES;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 
@@ -77,7 +76,7 @@ public class LinkHeaderProvider implements UriAwareHttpHeaderFactory {
         WebACRolesProvider.getEffectiveAcl(resource, false, txManager).ifPresent(acls -> {
             // If the Acl is present we need to use the internal session to get its URI
             nodeService.find(transaction, acls.resource.getPath())
-            .getTriples(translator, PROPERTIES)
+            .getTriples()
             .collect(toModel()).listObjectsOfProperty(createProperty(WEBAC_ACCESS_CONTROL_VALUE))
             .forEachRemaining(linkObj -> {
                 if (linkObj.isURIResource()) {

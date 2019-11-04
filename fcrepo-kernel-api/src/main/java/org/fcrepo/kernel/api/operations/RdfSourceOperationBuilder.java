@@ -15,43 +15,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.exception;
+package org.fcrepo.kernel.api.operations;
 
+import java.io.InputStream;
+
+import org.fcrepo.kernel.api.RdfStream;
 
 /**
- * Indicates an item was not found.
+ * Builder for constructing an RdfSourceOperation
  *
- * @author dbernstein
+ * @author bbpennel
  */
-public class ItemNotFoundException extends RepositoryRuntimeException {
+public interface RdfSourceOperationBuilder extends ResourceOperationBuilder {
 
-    private static final long serialVersionUID = 1L;
-
-    /**
-     * Ordinary constructor
-     *
-     * @param msg the message
-     */
-    public ItemNotFoundException(final String msg) {
-        super(msg);
-    }
+    @Override
+    RdfSourceOperation build();
 
     /**
-     * Ordinary constructor.
+     * Set the triples for the operation
      *
-     * @param rootCause the root cause
+     * @param triples the resource's triples
+     * @return this builder
      */
-    public ItemNotFoundException(final Throwable rootCause) {
-        super(rootCause);
-    }
+    RdfSourceOperationBuilder triples(RdfStream triples);
 
     /**
-     * Ordinary constructor.
+     * Set the triples for the operation from the given input stream
      *
-     * @param msg the message
-     * @param rootCause the root cause
+     * @param contentStream serialized triples stream
+     * @param mimetype mimetype of the serialization
+     * @return this builder
      */
-    public ItemNotFoundException(final String msg, final Throwable rootCause) {
-        super(msg, rootCause);
-    }
+    RdfSourceOperationBuilder triples(InputStream contentStream, String mimetype);
 }

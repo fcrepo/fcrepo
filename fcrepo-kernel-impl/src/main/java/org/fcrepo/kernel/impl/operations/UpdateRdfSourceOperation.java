@@ -15,29 +15,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.persistence.api;
+package org.fcrepo.kernel.impl.operations;
+
+import static org.fcrepo.kernel.api.operations.ResourceOperationType.UPDATE;
+
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.operations.ResourceOperationType;
+
 
 /**
- * Interface to create PersistentStorageSessions.
+ * Operation for updating an RDF source
  *
- * @author whikloj
- * @since 2019-09-19
+ * @author bbpennel
  */
-public interface PersistentStorageSessionFactory {
+public class UpdateRdfSourceOperation extends AbstractRdfSourceOperation {
 
-    /**
-     * Factory method to get PersistentStorageSession.
-     *
-     * @param sessionId the externally generated session ID.
-     * @return the PersistentStorageSession instance.
-     */
-    public PersistentStorageSession getSession(final String sessionId);
+    protected UpdateRdfSourceOperation(final String rescId, final RdfStream triples) {
+        super(rescId, triples);
+    }
 
-    /**
-     * Factory method to get PersistentStorageSession.
-     *
-     * @return the PersistentStorageSession instance.
-     */
-    public PersistentStorageSession getReadOnlySession();
-
+    @Override
+    public ResourceOperationType getType() {
+        return UPDATE;
+    }
 }

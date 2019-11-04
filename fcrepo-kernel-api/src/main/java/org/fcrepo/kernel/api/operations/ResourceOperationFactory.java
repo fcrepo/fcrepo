@@ -15,27 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.persistence.ocfl;
+package org.fcrepo.kernel.api.operations;
 
-import org.fcrepo.persistence.api.PersistentStorageSession;
-import org.fcrepo.persistence.api.PersistentStorageSessionFactory;
 
 /**
- * OCFL implementation of PersistentStorageSessionFactory
+ * Factory for operations for interacting with resources
  *
- * @author whikloj
- * @since 2019-09-20
+ * @author bbpennel
  */
-public class OCFLPersistentSessionFactory implements PersistentStorageSessionFactory {
-
-    @Override
-    public PersistentStorageSession getSession(final String sessionId) {
-        return new OCFLPersistentStorageSession(sessionId);
-    }
-
-    @Override
-    public PersistentStorageSession getReadOnlySession() {
-        return new OCFLPersistentStorageSession();
-    }
+public interface ResourceOperationFactory {
 
 }

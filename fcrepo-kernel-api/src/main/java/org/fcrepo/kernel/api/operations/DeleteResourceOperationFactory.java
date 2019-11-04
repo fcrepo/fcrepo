@@ -15,43 +15,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.exception;
+package org.fcrepo.kernel.api.operations;
 
 
 /**
- * Indicates an item was not found.
+ * Factory for delete resource operations
  *
- * @author dbernstein
+ * @author bbpennel
  */
-public class ItemNotFoundException extends RepositoryRuntimeException {
-
-    private static final long serialVersionUID = 1L;
+public interface DeleteResourceOperationFactory extends ResourceOperationFactory {
 
     /**
-     * Ordinary constructor
+     * Get a builder for an operation to delete a resource
      *
-     * @param msg the message
+     * @param rescId id of the resource to delete
+     * @return new builder
      */
-    public ItemNotFoundException(final String msg) {
-        super(msg);
-    }
-
-    /**
-     * Ordinary constructor.
-     *
-     * @param rootCause the root cause
-     */
-    public ItemNotFoundException(final Throwable rootCause) {
-        super(rootCause);
-    }
-
-    /**
-     * Ordinary constructor.
-     *
-     * @param msg the message
-     * @param rootCause the root cause
-     */
-    public ItemNotFoundException(final String msg, final Throwable rootCause) {
-        super(msg, rootCause);
-    }
+    ResourceOperationBuilder deleteBuilder(String rescId);
 }

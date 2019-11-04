@@ -15,43 +15,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.exception;
-
+package org.fcrepo.persistence.api;
 
 /**
- * Indicates an item was not found.
+ * Interface to access PersistentStorageSessions.
  *
+ * @author whikloj
  * @author dbernstein
+ * @since 2019-09-19
  */
-public class ItemNotFoundException extends RepositoryRuntimeException {
-
-    private static final long serialVersionUID = 1L;
+public interface PersistentStorageSessionManager {
 
     /**
-     * Ordinary constructor
+     * Retrieve a PersistentStorageSession.
      *
-     * @param msg the message
+     * @param sessionId the externally generated session ID.
+     * @return the PersistentStorageSession instance.
      */
-    public ItemNotFoundException(final String msg) {
-        super(msg);
-    }
+    PersistentStorageSession getSession(final String sessionId);
 
     /**
-     * Ordinary constructor.
+     * Retrieve a read-only PersistentStorageSession. Clients should expect
+     * invocation on storage modifying methods to throw exception.
      *
-     * @param rootCause the root cause
+     * @return the PersistentStorageSession instance.
      */
-    public ItemNotFoundException(final Throwable rootCause) {
-        super(rootCause);
-    }
+    PersistentStorageSession getReadOnlySession();
 
-    /**
-     * Ordinary constructor.
-     *
-     * @param msg the message
-     * @param rootCause the root cause
-     */
-    public ItemNotFoundException(final String msg, final Throwable rootCause) {
-        super(msg, rootCause);
-    }
 }
