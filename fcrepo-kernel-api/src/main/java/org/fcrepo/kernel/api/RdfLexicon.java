@@ -201,6 +201,12 @@ public final class RdfLexicon {
 
     public static final String SERVER_MANAGED_PROPERTIES_MODE = "fcrepo.properties.management";
 
+    public static final String WEBAC_ACCESS_TO = WEBAC_NAMESPACE_VALUE + "accessTo";
+
+    public static final String WEBAC_ACCESS_TO_CLASS = WEBAC_NAMESPACE_VALUE + "accessToClass";
+
+    public static final Property WEBAC_ACCESS_TO_PROPERTY = createProperty(WEBAC_ACCESS_TO);
+
     // Properties which are managed by the server but are not from managed namespaces
     private static final Set<Property> serverManagedProperties;
     static {

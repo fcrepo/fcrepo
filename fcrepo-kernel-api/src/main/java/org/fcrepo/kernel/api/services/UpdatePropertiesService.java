@@ -40,4 +40,5 @@ public interface UpdatePropertiesService {
   void updateProperties(final FedoraResource fedoraResource,
                         final String sparqlUpdateStatement,
                         final RdfStream originalTriples) throws MalformedRdfException, AccessDeniedException;
+
 }

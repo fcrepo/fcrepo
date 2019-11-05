@@ -666,7 +666,9 @@ public class FedoraLdp extends ContentExposingResource {
                             contentTypeString);
 
                     if ((resource instanceof Container) && isRdfContentType(contentTypeString)) {
-                        replaceResourceWithStream(resource, requestBodyStream, contentType, resourceTriples);
+                        replacePropertiesService.replaceProperties(session.getTransaction(), resource,
+                            requestBodyStream, contentTypeString);
+                        //replaceResourceWithStream(resource, requestBodyStream, contentType, resourceTriples);
                     } else if (resource instanceof Binary) {
                         LOGGER.trace("Created a datastream and have a binary payload.");
 
@@ -703,6 +705,8 @@ public class FedoraLdp extends ContentExposingResource {
                         (requestBodyStream == null || requestContentType == null));
 
                 transaction.commit();
+            } catch (final MalformedRdfException e) {
+                throw BadRequestException(e.getMessage());
             } catch (final Exception e) {
                 checkForInsufficientStorageException(e, e);
             }
