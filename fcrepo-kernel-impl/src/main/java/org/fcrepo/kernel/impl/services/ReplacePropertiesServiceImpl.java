@@ -70,9 +70,9 @@ public class ReplacePropertiesServiceImpl implements ReplacePropertiesService {
 
     private static final Logger LOGGER = getLogger(ReplacePropertiesServiceImpl.class);
 
-    public static final Node WEBAC_ACCESS_TO_URI = createURI(WEBAC_ACCESS_TO);
+    private static final Node WEBAC_ACCESS_TO_URI = createURI(WEBAC_ACCESS_TO);
 
-    public static final Node WEBAC_ACCESS_TO_CLASS_URI = createURI(WEBAC_ACCESS_TO_CLASS);
+    private static final Node WEBAC_ACCESS_TO_CLASS_URI = createURI(WEBAC_ACCESS_TO_CLASS);
 
     @Inject
     private RdfSourceOperationFactory factory;
@@ -81,7 +81,7 @@ public class ReplacePropertiesServiceImpl implements ReplacePropertiesService {
     private PersistentStorageSessionManager psManager;
 
     @Override
-    void replaceProperties(final Transaction tx,
+    public void replaceProperties(final Transaction tx,
                            final FedoraResource fedoraResource,
                            final InputStream requestBodyStream,
                            final String contentType) throws MalformedRdfException {
