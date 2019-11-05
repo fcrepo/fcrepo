@@ -73,7 +73,7 @@ public interface ResourceHeaders {
     /**
      * Get the list of all digest URIs recorded for this resource
      *
-     * @return
+     * @return digest URIs
      */
     Collection<URI> getDigests();
 

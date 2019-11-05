@@ -29,21 +29,21 @@ public interface ResourceOperation {
     /**
      * Id of the resource
      *
-     * @return
+     * @return the ID.
      */
     String getResourceId();
 
     /**
      * Get the server managed properties for the resource
      *
-     * @return
+     * @return server managed properties
      */
     RdfStream getServerManagedProperties();
 
     /**
      * Returns the type of operation represented by this request
      *
-     * @return
+     * @return operation type
      */
     ResourceOperationType getType();
 }
