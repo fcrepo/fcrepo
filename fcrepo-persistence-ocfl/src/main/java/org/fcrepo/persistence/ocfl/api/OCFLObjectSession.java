@@ -38,7 +38,7 @@ public interface OCFLObjectSession {
     /**
      * Delete a file from this ocfl object.
      *
-     * @param subpath
+     * @param subpath path of the file relative to a version of an ocfl object
      */
     void delete(String subpath);
 
@@ -61,9 +61,8 @@ public interface OCFLObjectSession {
     InputStream read(String subpath, String version);
 
     /**
-     * Verify that the change set in this session can be committed.
-     *
-     * @throws PersistentStorageException thrown if there are any conflicts that would prevent a commit.
+     * Verify that the change set in this session can be committed. A PersistentStorageException is thrown if there
+     * are any conflicts that would prevent a commit.
      */
     void prepare();
 
