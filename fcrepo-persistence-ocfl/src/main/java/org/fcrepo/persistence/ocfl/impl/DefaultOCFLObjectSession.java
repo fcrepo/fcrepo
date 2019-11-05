@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.fcrepo.persistence.ocfl.api.CommitOption;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 
-import edu.wisc.library.ocfl.api.OcflRepository;
+import edu.wisc.library.ocfl.api.MutableOcflRepository;
 import edu.wisc.library.ocfl.api.model.ObjectId;
 
 /**
@@ -47,7 +47,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
 
     private Set<String> deletePaths;
 
-    private OcflRepository ocflRepository;
+    private MutableOcflRepository ocflRepository;
 
     /**
      * Instantiate an OCFL object session
@@ -57,7 +57,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
      * @param ocflRepository the OCFL repository in which the object is stored.
      */
     public DefaultOCFLObjectSession(final String objectIdentifier, final Path stagingPath,
-            final OcflRepository ocflRepository) {
+            final MutableOcflRepository ocflRepository) {
         this.objectIdentifier = objectIdentifier;
         this.stagingPath = stagingPath;
         this.ocflRepository = ocflRepository;
@@ -84,7 +84,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
 
     /**
      * {@inheritDoc}
-     * 
+     *
      * If the file was not newly created within this session, then the
      * deletion will be recorded for replay at commit time.
      */
@@ -110,7 +110,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
      */
     @Override
     public InputStream read(final String subpath) {
-        if (hasStagedVersion(subpath)) {
+        if (hasStagedChanges(subpath)) {
             // TODO read the staged version of the file
         } else {
             // TODO read the head version of the file from the ocfl object
@@ -118,7 +118,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         return null;
     }
 
-    private boolean hasStagedVersion(final String subpath) {
+    private boolean hasStagedChanges(final String subpath) {
         return false;
     }
 
