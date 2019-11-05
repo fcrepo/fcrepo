@@ -365,7 +365,7 @@ public class FedoraLdp extends ContentExposingResource {
         final AcquiredLock lock = lockManager.lockForDelete(resource().getPath());
 
         try {
-            deleteResourceService.perform(getTransaction(), resource());
+            deleteResourceService.perform(transaction, resource());
             transaction.commitIfShortLived();
             return noContent().build();
         } finally {

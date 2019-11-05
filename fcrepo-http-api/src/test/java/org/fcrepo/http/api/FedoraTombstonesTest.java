@@ -70,7 +70,6 @@ public class FedoraTombstonesTest {
     public void testDelete() {
         final Tombstone mockResource = mock(Tombstone.class);
         doReturn(mockResource).when(testObj).resource();
-        doReturn(mockTransaction).when(mockTransaction);
         final Response actual = testObj.delete();
         assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
         verify(deleteResourceService).perform(mockTransaction, mockResource);

@@ -52,7 +52,6 @@ import org.fcrepo.auth.common.ContainerRolesPrincipalProvider.ContainerRolesPrin
 import org.fcrepo.http.api.FedoraLdp;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.http.commons.session.TransactionProvider;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryConfigurationException;
@@ -78,7 +77,7 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
     public static final String URIS_TO_AUTHORIZE = "URIS_TO_AUTHORIZE";
 
     @Inject
-    private TransactionManager txManager;
+    private TransactionProvider txProvider;
 
     @Inject
     private HttpServletRequest request;
@@ -90,7 +89,7 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
 
     private Transaction transaction() {
         if (transaction == null) {
-            transaction = TransactionProvider.getTransactionForRequest(txManager, request);
+            transaction = txProvider.getTransactionForRequest(request);
         }
         return transaction;
     }
@@ -194,7 +193,7 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
 
         if (fedoraResource != null) {
             // check ACL for the request URI and get a mapping of agent => modes
-            roles = rolesProvider.getRoles(fedoraResource);
+            roles = rolesProvider.getRoles(fedoraResource, transaction());
         }
         return roles;
     }

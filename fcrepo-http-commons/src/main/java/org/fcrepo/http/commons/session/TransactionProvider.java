@@ -58,7 +58,7 @@ public class TransactionProvider implements Factory<Transaction> {
 
     @Override
     public Transaction provide() {
-        final Transaction transaction = getTransactionForRequest(txManager, request);
+        final Transaction transaction = getTransactionForRequest(request);
         LOGGER.trace("Providing new transaction {}", transaction);
         return transaction;
     }
@@ -76,12 +76,10 @@ public class TransactionProvider implements Factory<Transaction> {
      * the transaction corresponding to that ID is returned, otherwise, a new transaction is
      * created.
      * 
-     * @param txManager the transaction manager
      * @param request the request object
      * @return the transaction for the request
      */
-    public static Transaction getTransactionForRequest(final TransactionManager txManager,
-            final HttpServletRequest request) {
+    public Transaction getTransactionForRequest(final HttpServletRequest request) {
         final String txId = request.getHeader(ATOMIC_ID_HEADER);
         if (txId != null && !txId.isEmpty()) {
            return txManager.get(txId);
