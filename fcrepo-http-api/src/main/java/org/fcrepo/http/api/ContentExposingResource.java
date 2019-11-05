@@ -757,11 +757,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                                                  final FedoraResource resource,
                                                  final Transaction transaction) {
 
-        if (!transaction.isShortLived()) {
-            // Do not add caching headers if in a transaction
-            return;
-        }
-
         final EntityTag etag;
         final Instant date;
 

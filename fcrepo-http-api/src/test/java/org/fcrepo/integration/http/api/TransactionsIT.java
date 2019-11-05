@@ -430,6 +430,32 @@ public class TransactionsIT extends AbstractResourceIT {
                 NO_CONTENT.getStatusCode(), getStatus(new HttpPost(deleterTxLocation + "/fcr:tx/fcr:commit")));
     }
 
+    @Test
+    public void testCacheHeadersInTransaction() throws IOException {
+        /* create a tx */
+        final HttpPost createTx = new HttpPost(serverAddress + "fcr:tx");
+
+        final String txLocation;
+        try (final CloseableHttpResponse response = execute(createTx)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            txLocation = getLocation(response);
+        }
+
+        /* create a new object inside the tx */
+        final HttpPost postNew = new HttpPost(txLocation);
+        final String id = getRandomUniqueId();
+        postNew.addHeader("Slug", id);
+        try (CloseableHttpResponse resp = execute(postNew)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(resp));
+        }
+
+        /* get the new object inside tx and check for caching-related headers */
+        try (final CloseableHttpResponse resp = execute(new HttpGet(txLocation + "/" + id))) {
+            assertTrue("Expected a Last-Modified header", resp.getHeaders("Last-Modified").length > 0);
+            assertTrue("Expected an ETag header", resp.getHeaders("ETag").length > 0);
+        }
+    }
+
     private void verifyProperty(final String assertionMessage, final String pid, final String txId,
             final String propertyUri, final String propertyValue, final boolean shouldExist) throws IOException {
         final HttpGet getObjCommitted = new HttpGet(serverAddress + (txId != null ? txId + "/" : "") + pid);
