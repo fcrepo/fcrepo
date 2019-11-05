@@ -40,6 +40,8 @@ public interface Transaction {
 
     /**
      * Get the transaction id
+     *
+     * @return the transaction id.
      */
     String getId();
 
