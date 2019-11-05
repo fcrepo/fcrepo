@@ -18,7 +18,7 @@
 package org.fcrepo.persistence.ocfl.impl;
 
 import static org.fcrepo.persistence.ocfl.api.CommitOption.NEW_VERSION;
-import static org.fcrepo.persistence.ocfl.api.CommitOption.TO_MUTABLE_HEAD;
+import static org.fcrepo.persistence.ocfl.api.CommitOption.MUTABLE_HEAD;
 
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -155,7 +155,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         } else {
             if (NEW_VERSION.equals(commitOption)) {
                 // TODO perform commit to new version
-            } else if (TO_MUTABLE_HEAD.equals(commitOption)) {
+            } else if (MUTABLE_HEAD.equals(commitOption)) {
                 // TODO perform commit to head version
             } else {
                 throw new IllegalArgumentException("Invalid commit option provided: " + commitOption);

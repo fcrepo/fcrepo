@@ -24,6 +24,6 @@ package org.fcrepo.persistence.ocfl.api;
  * @author bbpennel
  */
 public enum CommitOption {
-    TO_MUTABLE_HEAD,
+    MUTABLE_HEAD,
     NEW_VERSION
 }
