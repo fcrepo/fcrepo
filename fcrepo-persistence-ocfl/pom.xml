@@ -35,6 +35,17 @@
       <artifactId>fcrepo-persistence-api</artifactId>
       <version>${project.version}</version>
     </dependency>
+    
+    <dependency>
+      <groupId>edu.wisc.library.ocfl</groupId>
+      <artifactId>ocfl-java-core</artifactId>
+      <version>${ocfl-java.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>edu.wisc.library.ocfl</groupId>
+      <artifactId>ocfl-java-api</artifactId>
+      <version>${ocfl-java.version}</version>
+    </dependency>
 
     <!-- test gear -->
     <dependency>
