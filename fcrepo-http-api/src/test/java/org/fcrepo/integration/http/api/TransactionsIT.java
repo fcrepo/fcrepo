@@ -453,6 +453,7 @@ public class TransactionsIT extends AbstractResourceIT {
         try (final CloseableHttpResponse resp = execute(new HttpGet(txLocation + "/" + id))) {
             assertTrue("Expected a Last-Modified header", resp.getHeaders("Last-Modified").length > 0);
             assertTrue("Expected an ETag header", resp.getHeaders("ETag").length > 0);
+            assertTrue("Expected an X-State-Token header", resp.getHeaders("X-State-Token").length > 0);
         }
     }
 
