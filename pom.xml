@@ -30,7 +30,7 @@
     <commons-lang.version>3.7</commons-lang.version>
     <narayana-jta.version>5.9.0.Final</narayana-jta.version>
     <jetty.version>9.3.27.v20190418</jetty.version>
-    <guava.version>25.1-jre</guava.version>
+    <guava.version>28.1-jre</guava.version>
     <hk2.version>2.5.0-b62</hk2.version>
     <htmlunit.version>2.33</htmlunit.version>
     <httpclient.version>4.5.6</httpclient.version>
@@ -41,13 +41,14 @@
     <javaee.xml.version>2.3.1</javaee.xml.version>
     <jaxb.core.version>2.3.0.1</jaxb.core.version>
     <jaxb.impl.version>2.3.1</jaxb.impl.version>
-    <jackson2.version>2.9.9</jackson2.version>
+    <jackson2.version>2.10.0</jackson2.version>
     <jboss-logging.version>3.3.2.Final</jboss-logging.version>
     <jena.version>3.8.0</jena.version>
     <jersey.version>2.25.1</jersey.version>
     <jgroups.version>4.0.13.Final</jgroups.version>
     <jsonld.version>0.12.1</jsonld.version>
     <logback.version>1.2.3</logback.version>
+    <ocfl-java.version>1.0.0-SNAPSHOT</ocfl-java.version>
     <slf4j.version>1.7.25</slf4j.version>
     <snappy-java.version>1.1.7.2</snappy-java.version>
     <spring.version>5.0.9.RELEASE</spring.version>

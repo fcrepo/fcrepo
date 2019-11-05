@@ -78,6 +78,7 @@ import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.DeleteResourceService;
+import org.fcrepo.kernel.api.services.WebacAclService;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
@@ -105,6 +106,9 @@ public class FedoraAcl extends ContentExposingResource {
     @Inject
     private DeleteResourceService deleteResourceService;
 
+    @Inject
+    private WebacAclService webacAclService;
+
     /**
      * Default JAX-RS entry point
      */
@@ -123,7 +127,7 @@ public class FedoraAcl extends ContentExposingResource {
                                          final InputStream requestBodyStream) {
 
         if (resource().isAcl() || resource().isMemento()) {
-            throw new BadRequestException("ACL resource creation is not allowed for resource " + resource().getPath());
+            throw new BadRequestException("ACL resource creation is not allowed for resource " + resource().getId());
         }
 
         final boolean created;
@@ -134,7 +138,7 @@ public class FedoraAcl extends ContentExposingResource {
         try {
             LOGGER.info("PUT acl resource '{}'", externalPath);
 
-            aclResource = resource().findOrCreateAcl();
+            aclResource = webacAclService.findOrCreate(transaction, path);
             created = aclResource.isNew();
 
             final MediaType contentType =
@@ -193,8 +197,7 @@ public class FedoraAcl extends ContentExposingResource {
             throw new ItemNotFoundException("not found");
         }
 
-        final AcquiredLock lock = lockManager.lockForWrite(aclResource.getPath(), transaction,
-                                                           nodeService);
+        final AcquiredLock lock = lockManager.lockForWrite(aclResource.getPath(), transaction, nodeService);
 
         try {
             final String requestBody = IOUtils.toString(requestBodyStream, UTF_8);
@@ -272,7 +275,7 @@ public class FedoraAcl extends ContentExposingResource {
         checkCacheControlHeaders(request, servletResponse, aclResource, transaction);
 
         LOGGER.info("GET resource '{}'", externalPath);
-        final AcquiredLock readLock = lockManager.lockForRead(aclResource.getPath());
+        final AcquiredLock readLock = lockManager.lockForRead(aclResource.getId());
         try (final RdfStream rdfStream = new DefaultRdfStream(asNode(aclResource))) {
 
             addResourceHttpHeaders(aclResource);
@@ -294,7 +297,7 @@ public class FedoraAcl extends ContentExposingResource {
         hasRestrictedPath(externalPath);
         LOGGER.info("Delete resource '{}'", externalPath);
 
-        final AcquiredLock lock = lockManager.lockForDelete(resource().getPath());
+        final AcquiredLock lock = lockManager.lockForDelete(resource().getId());
 
         try {
             final FedoraResource aclResource = resource().getAcl();

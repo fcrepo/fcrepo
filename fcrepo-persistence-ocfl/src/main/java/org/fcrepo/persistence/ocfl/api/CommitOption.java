@@ -15,35 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.operations;
+package org.fcrepo.persistence.ocfl.api;
 
-import org.fcrepo.kernel.api.RdfStream;
 
 /**
- * Operation for manipulating a resource
+ * Options for defining the behavior when performing a commit to an OCFL object
  *
  * @author bbpennel
  */
-public interface ResourceOperation {
-
-    /**
-     * Id of the resource
-     *
-     * @return the ID.
-     */
-    String getResourceId();
-
-    /**
-     * Get the server managed properties for the resource
-     *
-     * @return server managed properties
-     */
-    RdfStream getServerManagedProperties();
-
-    /**
-     * Returns the type of operation represented by this request
-     *
-     * @return operation type
-     */
-    ResourceOperationType getType();
+public enum CommitOption {
+    MUTABLE_HEAD,
+    NEW_VERSION
 }

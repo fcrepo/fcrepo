@@ -126,12 +126,6 @@ public class FedoraResourceImpl implements FedoraResource {
     }
 
     @Override
-    public FedoraResource findOrCreateAcl() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
     public FedoraResource getChild(final String relPath) {
         // TODO Auto-generated method stub
         return null;

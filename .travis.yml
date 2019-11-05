@@ -3,8 +3,6 @@ sudo: true
 
 dist: trusty
 jdk:
-  - openjdk8
-  - oraclejdk8
   - openjdk11
 
 before_install:  

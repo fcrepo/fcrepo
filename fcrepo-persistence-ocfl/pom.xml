@@ -34,6 +34,27 @@
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-persistence-api</artifactId>
       <version>${project.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.checkerframework</groupId>
+          <artifactId>checker-qual</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.google.errorprone</groupId>
+          <artifactId>error_prone_annotations</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    
+    <dependency>
+      <groupId>edu.wisc.library.ocfl</groupId>
+      <artifactId>ocfl-java-core</artifactId>
+      <version>${ocfl-java.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>edu.wisc.library.ocfl</groupId>
+      <artifactId>ocfl-java-api</artifactId>
+      <version>${ocfl-java.version}</version>
     </dependency>
 
     <!-- test gear -->

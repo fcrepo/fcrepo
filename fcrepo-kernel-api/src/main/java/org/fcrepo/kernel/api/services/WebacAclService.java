@@ -15,35 +15,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.api.operations;
 
-import org.fcrepo.kernel.api.RdfStream;
+package org.fcrepo.kernel.api.services;
+
+import org.fcrepo.kernel.api.models.WebacAcl;
 
 /**
- * Operation for manipulating a resource
+ * Service for creating and retrieving {@link WebacAcl}
  *
- * @author bbpennel
+ * @author peichman
+ * @since 6.0.0
  */
-public interface ResourceOperation {
-
-    /**
-     * Id of the resource
-     *
-     * @return the ID.
-     */
-    String getResourceId();
-
-    /**
-     * Get the server managed properties for the resource
-     *
-     * @return server managed properties
-     */
-    RdfStream getServerManagedProperties();
-
-    /**
-     * Returns the type of operation represented by this request
-     *
-     * @return operation type
-     */
-    ResourceOperationType getType();
+public interface WebacAclService extends Service<WebacAcl> {
 }

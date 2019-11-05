@@ -21,6 +21,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <project.copyrightYear>2015</project.copyrightYear>
+    <project.java.source>11</project.java.source>
     <!-- scm, site distribution names -->
     <project_name>${project.artifactId}</project_name>
     <project_organization>fcrepo4</project_organization>
@@ -108,7 +109,7 @@
           <configuration>
             <linksource>true</linksource>
             <quiet>true</quiet>
-            <source>8</source>
+            <source>${project.java.source}</source>
           </configuration>
           <executions>
             <execution>
@@ -274,8 +275,7 @@
           <version>${compiler.plugin.version}</version>
           <configuration>
             <debug>true</debug>
-            <source>1.8</source>
-            <target>1.8</target>
+            <release>${project.java.source}</release>
             <compilerArgument>-Xlint:unchecked,deprecation</compilerArgument>
           </configuration>
         </plugin>

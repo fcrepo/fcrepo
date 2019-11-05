@@ -30,14 +30,16 @@ public interface NonRdfSourceOperationBuilder extends ResourceOperationBuilder {
     /**
      * Set the mimetype for content in this resource
      *
-     * @param mimetype
+     * @param mimetype the mime-type.
+     * @return the builder.
      */
     NonRdfSourceOperationBuilder mimeType(String mimetype);
 
     /**
      * Set the filename
      *
-     * @param filename name of the file
+     * @param filename name of the file.
+     * @return the builder.
      */
     NonRdfSourceOperationBuilder filename(String filename);
 
@@ -45,6 +47,7 @@ public interface NonRdfSourceOperationBuilder extends ResourceOperationBuilder {
      * Collection of digests for content in this resource
      *
      * @param digests collection of digests
+     * @return the builder.
      */
     NonRdfSourceOperationBuilder contentDigests(Collection<URI> digests);
 
@@ -52,6 +55,7 @@ public interface NonRdfSourceOperationBuilder extends ResourceOperationBuilder {
      * Set the number of bytes for the content
      *
      * @param size size of the content in bytes
+     * @return the builder
      */
     NonRdfSourceOperationBuilder contentSize(long size);
 
