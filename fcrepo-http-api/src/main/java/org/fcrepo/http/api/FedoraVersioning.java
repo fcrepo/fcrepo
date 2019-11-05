@@ -148,7 +148,7 @@ public class FedoraVersioning extends ContentExposingResource {
         final FedoraResource timeMap = resource.getTimeMap();
 
         final AcquiredLock lock = lockManager.lockForWrite(timeMap.getPath(),
-            session.getTransaction(), nodeService);
+            transaction, nodeService);
 
         try {
             final MediaType contentType = getSimpleContentType(requestContentType);
@@ -179,7 +179,7 @@ public class FedoraVersioning extends ContentExposingResource {
                 if (isBinary) {
                     final Binary binaryResource = (Binary) resource;
                     if (createFromExisting) {
-                        memento = versionService.createBinaryVersion(session.getTransaction(),
+                        memento = versionService.createBinaryVersion(transaction,
                                 binaryResource, mementoInstant, storagePolicyDecisionPoint);
                     } else {
                         final List<String> links = unpackLinks(rawLinks);
@@ -201,7 +201,7 @@ public class FedoraVersioning extends ContentExposingResource {
                                 UNSUPPORTED_MEDIA_TYPE);
                     }
 
-                    final FedoraResource rdfMemento = versionService.createVersion(session.getTransaction(),
+                    final FedoraResource rdfMemento = versionService.createVersion(transaction,
                             originalResource, idTranslator, mementoInstant, bodyStream, format);
                     // If a binary memento was also generated, use the binary in the response
                     if (!isBinary) {
@@ -209,7 +209,7 @@ public class FedoraVersioning extends ContentExposingResource {
                     }
                 }
 
-                session.commit();
+                transaction.commitIfShortLived();
                 return createUpdateResponse(memento, true);
             } catch (final Exception e) {
                 checkForInsufficientStorageException(e, e);
@@ -244,10 +244,10 @@ public class FedoraVersioning extends ContentExposingResource {
                 contentStream = extContent.fetchExternalContent();
             }
 
-            return versionService.createBinaryVersion(session.getTransaction(), binaryResource,
+            return versionService.createBinaryVersion(transaction, binaryResource,
                     mementoInstant, contentStream, checksumURIs, storagePolicyDecisionPoint);
         } else {
-            return versionService.createExternalBinaryVersion(session.getTransaction(), binaryResource,
+            return versionService.createExternalBinaryVersion(transaction, binaryResource,
                     mementoInstant, checksumURIs, extContent.getHandling(), extContent.getURL());
         }
     }
@@ -269,7 +269,7 @@ public class FedoraVersioning extends ContentExposingResource {
         @HeaderParam("Accept") final String acceptValue) throws IOException {
 
         final FedoraResource theTimeMap = resource().getTimeMap();
-        checkCacheControlHeaders(request, servletResponse, theTimeMap, session);
+        checkCacheControlHeaders(request, servletResponse, theTimeMap, transaction);
 
         LOGGER.debug("GET resource '{}'", externalPath);
 

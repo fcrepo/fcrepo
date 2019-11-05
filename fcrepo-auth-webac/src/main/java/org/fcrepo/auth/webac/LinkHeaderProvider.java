@@ -25,11 +25,12 @@ import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import java.net.URI;
 
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.http.commons.api.UriAwareHttpHeaderFactory;
-import org.fcrepo.http.commons.session.SessionFactory;
+import org.fcrepo.http.commons.session.TransactionProvider;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -56,7 +57,10 @@ public class LinkHeaderProvider implements UriAwareHttpHeaderFactory {
     private static final Logger LOGGER = getLogger(LinkHeaderProvider.class);
 
     @Inject
-    private SessionFactory sessionFactory;
+    private TransactionProvider txProvider;
+
+    @Inject
+    private HttpServletRequest request;
 
     @Inject
     private NodeService nodeService;
@@ -64,8 +68,7 @@ public class LinkHeaderProvider implements UriAwareHttpHeaderFactory {
     @Override
     public Multimap<String, String> createHttpHeadersForResource(final UriInfo uriInfo, final FedoraResource resource) {
 
-        // TODO do not use transactions for internal reads
-        final Transaction transaction = sessionFactory.getNewTransaction();
+        final Transaction transaction = txProvider.getTransactionForRequest(request);
         //TODO figure out where the translator should be coming from.
         final IdentifierConverter<Resource, FedoraResource> translator = null;
 
@@ -73,7 +76,7 @@ public class LinkHeaderProvider implements UriAwareHttpHeaderFactory {
 
         LOGGER.debug("Adding WebAC Link Header for Resource: {}", resource.getPath());
         // Get the correct Acl for this resource
-        WebACRolesProvider.getEffectiveAcl(resource, false, sessionFactory).ifPresent(acls -> {
+        WebACRolesProvider.getEffectiveAcl(resource, false).ifPresent(acls -> {
             // If the Acl is present we need to use the internal session to get its URI
             nodeService.find(transaction, acls.resource.getPath())
             .getTriples()

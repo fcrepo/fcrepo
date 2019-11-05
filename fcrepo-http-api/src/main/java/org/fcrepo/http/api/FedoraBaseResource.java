@@ -23,9 +23,7 @@ import org.apache.jena.rdf.model.Resource;
 // import org.apache.commons.lang3.StringUtils;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
-import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.exception.SessionMissingException;
 import org.fcrepo.kernel.api.exception.TombstoneException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -58,7 +56,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
     private static final Pattern TRAILING_SLASH_REGEX = Pattern.compile("/+$");
 
     @Inject
-    protected HttpSession session;
+    protected Transaction transaction;
 
     @Context
     protected SecurityContext securityContext;
@@ -67,7 +65,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
 
     protected IdentifierConverter<Resource, FedoraResource> translator() {
         if (idTranslator == null) {
-            idTranslator = new HttpResourceConverter(session(),
+            idTranslator = new HttpResourceConverter(transaction,
                     uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class));
         }
 
@@ -114,7 +112,7 @@ abstract public class FedoraBaseResource extends AbstractResource {
                 baseURL = uriInfo.getBaseUri().toString();
             }
             LOGGER.debug("setting baseURL = " + baseURL);
-            // TODO determine if this data can be stored in the HttpSession
+            // TODO determine if this data can be stored in the Transaction
             // or if it would be necessary for the persistence layer
 
             // session.getFedoraSession().addSessionData(BASE_URL, baseURL);
@@ -143,17 +141,6 @@ abstract public class FedoraBaseResource extends AbstractResource {
             return uriInfo.getBaseUriBuilder().uri(propBaseUri).toString();
         }
         return "";
-    }
-
-    private HttpSession session() {
-        if (session == null) {
-            throw new SessionMissingException("Invalid session");
-        }
-        return session;
-    }
-
-    protected Transaction getTransaction() {
-        return session().getTransaction();
     }
 
     protected String getUserPrincipal() {

@@ -91,8 +91,7 @@ import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.apache.shiro.subject.Subject;
 import org.fcrepo.http.api.FedoraLdp;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
-import org.fcrepo.http.commons.session.HttpSession;
-import org.fcrepo.http.commons.session.SessionFactory;
+import org.fcrepo.http.commons.session.TransactionProvider;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -111,8 +110,6 @@ public class WebACFilter implements Filter {
     private static final Logger log = getLogger(WebACFilter.class);
 
     private static final MediaType sparqlUpdate = MediaType.valueOf(contentTypeSPARQLUpdate);
-
-    private Transaction transaction;
 
     private static final Principal FOAF_AGENT_PRINCIPAL = new Principal() {
 
@@ -137,7 +134,10 @@ public class WebACFilter implements Filter {
     private NodeService nodeService;
 
     @Inject
-    private SessionFactory sessionFactory;
+    private HttpServletRequest request;
+
+    @Inject
+    private TransactionProvider txProvider;
 
     private static Set<URI> directOrIndirect = new HashSet<>();
 
@@ -231,12 +231,8 @@ public class WebACFilter implements Filter {
         // this method intentionally left empty
     }
 
-    // TODO do not use transactions for internal reads
-    private Transaction transaction() {
-        if (transaction == null) {
-            transaction = sessionFactory.getNewTransaction();
-        }
-        return transaction;
+    private Transaction transaction(final HttpServletRequest request) {
+        return txProvider.getTransactionForRequest(request);
     }
 
     private String getBaseURL(final HttpServletRequest servletRequest) {
@@ -268,7 +264,7 @@ public class WebACFilter implements Filter {
             return true;
         }
         final String parentURI = getContainerUrl(servletRequest);
-        return nodeService.exists(transaction(), getRepoPath(servletRequest, parentURI));
+        return nodeService.exists(transaction(servletRequest), getRepoPath(servletRequest, parentURI));
     }
 
     private FedoraResource getContainer(final HttpServletRequest servletRequest) {
@@ -276,21 +272,20 @@ public class WebACFilter implements Filter {
             return resource(servletRequest).getContainer();
         }
         final String parentURI = getContainerUrl(servletRequest);
-        return nodeService.find(transaction(), getRepoPath(servletRequest, parentURI));
+        return nodeService.find(transaction(servletRequest), getRepoPath(servletRequest, parentURI));
     }
 
     private FedoraResource resource(final HttpServletRequest servletRequest) {
-        return nodeService.find(transaction(), getRepoPath(servletRequest));
+        return nodeService.find(transaction(servletRequest), getRepoPath(servletRequest));
     }
 
     private boolean resourceExists(final HttpServletRequest servletRequest) {
-        return nodeService.exists(transaction(), getRepoPath(servletRequest));
+        return nodeService.exists(transaction(servletRequest), getRepoPath(servletRequest));
     }
 
     private IdentifierConverter<Resource, FedoraResource> translator(final HttpServletRequest servletRequest) {
-        final HttpSession httpSession = new HttpSession(transaction());
         final UriBuilder uriBuilder = UriBuilder.fromUri(getBaseURL(servletRequest)).path(FedoraLdp.class);
-        return new HttpResourceConverter(httpSession, uriBuilder);
+        return new HttpResourceConverter(transaction(servletRequest), uriBuilder);
     }
 
     private String getRepoPath(final HttpServletRequest servletRequest) {

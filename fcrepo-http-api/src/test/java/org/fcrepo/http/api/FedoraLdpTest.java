@@ -110,7 +110,6 @@ import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.http.commons.domain.MultiPrefer;
 import org.fcrepo.http.commons.domain.PreferTag;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
-import org.fcrepo.http.commons.session.HttpSession;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
@@ -168,9 +167,6 @@ public class FedoraLdpTest {
     private Request mockRequest;
 
     private HttpServletResponse mockResponse;
-
-    @Mock
-    private HttpSession mockSession;
 
     @Mock
     private Transaction mockTransaction;
@@ -248,7 +244,7 @@ public class FedoraLdpTest {
 
         mockResponse = new MockHttpServletResponse();
 
-        idTranslator = new HttpResourceConverter(mockSession,
+        idTranslator = new HttpResourceConverter(mockTransaction,
                 UriBuilder.fromUri("http://localhost/fcrepo/{path: .*}"));
 
         setField(testObj, "request", mockRequest);
@@ -261,7 +257,7 @@ public class FedoraLdpTest {
         // setField(testObj, "binaryService", mockBinaryService);
         setField(testObj, "timeMapService", mockTimeMapService);
         setField(testObj, "httpConfiguration", mockHttpConfiguration);
-        setField(testObj, "session", mockSession);
+        setField(testObj, "transaction", mockTransaction);
         setField(testObj, "securityContext", mockSecurityContext);
         setField(testObj, "lockManager", mockLockManager);
         setField(testObj, "context", mockServletContext);
@@ -299,8 +295,7 @@ public class FedoraLdpTest {
         when(mockLockManager.lockForRead(any())).thenReturn(mockLock);
         when(mockLockManager.lockForWrite(any(), any(), any())).thenReturn(mockLock);
         when(mockLockManager.lockForDelete(any())).thenReturn(mockLock);
-        when(mockSession.getId()).thenReturn("foo1234");
-        when(mockSession.getTransaction()).thenReturn(mockTransaction);
+        when(mockTransaction.getId()).thenReturn("foo1234");
 
         when(mockServletContext.getContextPath()).thenReturn("/");
 
@@ -663,7 +658,7 @@ public class FedoraLdpTest {
         // Execute the method under test.  Preconditions should fail, resulting in an exception being thrown.
         try {
             testObj.evaluateRequestPreconditions(mockRequest, mockResponse, testObj.resource(),
-                    mockSession, true);
+                    mockTransaction, true);
             fail("Expected " + PreconditionException.class.getName() + " to be thrown.");
         } catch (final PreconditionException e) {
             // expected
@@ -702,7 +697,7 @@ public class FedoraLdpTest {
         // Execute the method under test.  Preconditions should fail, resulting in an exception being thrown.
         try {
             testObj.evaluateRequestPreconditions(mockRequest, mockResponse, testObj.resource(),
-                    mockSession, true);
+                    mockTransaction, true);
             fail("Expected " + PreconditionException.class.getName() + " to be thrown.");
         } catch (final PreconditionException e) {
             // expected

@@ -198,7 +198,7 @@ public class FedoraLdp extends ContentExposingResource {
             return getMemento(datetimeHeader, resource());
         }
 
-        checkCacheControlHeaders(request, servletResponse, resource(), session);
+        checkCacheControlHeaders(request, servletResponse, resource(), transaction);
 
         addResourceHttpHeaders(resource());
 
@@ -269,7 +269,7 @@ public class FedoraLdp extends ContentExposingResource {
             return getMemento(datetimeHeader, resource());
         }
 
-        checkCacheControlHeaders(request, servletResponse, resource(), session);
+        checkCacheControlHeaders(request, servletResponse, resource(), transaction);
 
         LOGGER.info("GET resource '{}'", externalPath);
         final AcquiredLock readLock = lockManager.lockForRead(resource().getPath());
@@ -358,15 +358,15 @@ public class FedoraLdp extends ContentExposingResource {
                 METHOD_NOT_ALLOWED);
         }
 
-        evaluateRequestPreconditions(request, servletResponse, resource(), session);
+        evaluateRequestPreconditions(request, servletResponse, resource(), transaction);
 
         LOGGER.info("Delete resource '{}'", externalPath);
 
         final AcquiredLock lock = lockManager.lockForDelete(resource().getPath());
 
         try {
-            deleteResourceService.perform(getTransaction(), resource());
-            session.commit();
+            deleteResourceService.perform(transaction, resource());
+            transaction.commitIfShortLived();
             return noContent().build();
         } finally {
             lock.release();
@@ -416,7 +416,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         final String path = toPath(translator(), externalPath);
 
-        final AcquiredLock lock = lockManager.lockForWrite(path, session.getTransaction(), nodeService);
+        final AcquiredLock lock = lockManager.lockForWrite(path, transaction, nodeService);
 
         try {
 
@@ -426,7 +426,7 @@ public class FedoraLdp extends ContentExposingResource {
             final MediaType contentType =  getSimpleContentType(
                     extContent != null ? extContent.getContentType() : requestContentType);
 
-            if (nodeService.exists(session.getTransaction(), path)) {
+            if (nodeService.exists(transaction, path)) {
                 resource = resource();
 
                 final String resInteractionModel = getInteractionModel(resource);
@@ -450,7 +450,7 @@ public class FedoraLdp extends ContentExposingResource {
                 throw new ClientErrorException("An If-Match header is required", 428);
             }
 
-            evaluateRequestPreconditions(request, servletResponse, resource, session);
+            evaluateRequestPreconditions(request, servletResponse, resource, transaction);
             final boolean created = resource.isNew();
 
             try (final RdfStream resourceTriples =
@@ -495,7 +495,7 @@ public class FedoraLdp extends ContentExposingResource {
             ensureInteractionType(resource, interactionModel,
                     (requestBodyStream == null || requestContentType == null));
 
-            session.commit();
+            transaction.commit();
             return createUpdateResponse(resource, created);
 
         } finally {
@@ -546,7 +546,7 @@ public class FedoraLdp extends ContentExposingResource {
             throw new BadRequestException(resource().getPath() + " is not a valid object to receive a PATCH");
         }
 
-        final AcquiredLock lock = lockManager.lockForWrite(resource().getPath(), session.getTransaction(),
+        final AcquiredLock lock = lockManager.lockForWrite(resource().getPath(), transaction,
                 nodeService);
 
         try {
@@ -555,16 +555,16 @@ public class FedoraLdp extends ContentExposingResource {
                 throw new BadRequestException("SPARQL-UPDATE requests must have content!");
             }
 
-            evaluateRequestPreconditions(request, servletResponse, resource(), session);
+            evaluateRequestPreconditions(request, servletResponse, resource(), transaction);
 
             try (final RdfStream resourceTriples =
                     resource().isNew() ? new DefaultRdfStream(asNode(resource())) : getResourceTriples(resource())) {
                 LOGGER.info("PATCH for '{}'", externalPath);
                 patchResourcewithSparql(resource(), requestBody, resourceTriples);
             }
-            session.commit();
+            transaction.commit();
 
-            addCacheControlHeaders(servletResponse, resource(), session);
+            addCacheControlHeaders(servletResponse, resource(), transaction);
 
             return noContent().build();
         } catch (final IllegalArgumentException iae) {
@@ -645,7 +645,7 @@ public class FedoraLdp extends ContentExposingResource {
         final String newObjectPath = mintNewPid(slug);
         hasRestrictedPath(newObjectPath);
 
-        final AcquiredLock lock = lockManager.lockForWrite(newObjectPath, session.getTransaction(), nodeService);
+        final AcquiredLock lock = lockManager.lockForWrite(newObjectPath, transaction, nodeService);
 
         try {
 
@@ -702,7 +702,7 @@ public class FedoraLdp extends ContentExposingResource {
                 ensureInteractionType(resource, interactionModel,
                         (requestBodyStream == null || requestContentType == null));
 
-                session.commit();
+                transaction.commit();
             } catch (final Exception e) {
                 checkForInsufficientStorageException(e, e);
             }
@@ -744,7 +744,7 @@ public class FedoraLdp extends ContentExposingResource {
     protected void addResourceHttpHeaders(final FedoraResource resource) {
         super.addResourceHttpHeaders(resource);
 
-        if (session.isBatchSession()) {
+        if (!transaction.isShortLived()) {
             final String canonical = translator().reverse()
                     .convert(resource)
                     .toString()
@@ -784,7 +784,7 @@ public class FedoraLdp extends ContentExposingResource {
         // check the closest existing ancestor for containment violations.
         String parentPath = path.substring(0, path.lastIndexOf("/"));
         while (!(parentPath.isEmpty() || parentPath.equals("/"))) {
-            if (nodeService.exists(session.getTransaction(), parentPath)) {
+            if (nodeService.exists(transaction, parentPath)) {
                 if (!(getResourceFromPath(parentPath) instanceof Container)) {
                     throw new ClientErrorException("Unable to add child " + path.replace(parentPath, "")
                             + " to resource " + parentPath + ".", CONFLICT);
@@ -804,14 +804,14 @@ public class FedoraLdp extends ContentExposingResource {
         if ("ldp:NonRDFSource".equals(interactionModel) || contentExternal ||
                 (contentPresent && interactionModel == null && !isRDF(simpleContentType))) {
             // TODO: Replace with some other service/factory
-            // result = binaryService.findOrCreate(session.getTransaction(), path);
-            timeMapService.findOrCreate(session.getTransaction(), path + "/" + FEDORA_DESCRIPTION);
+            // result = binaryService.findOrCreate(transaction, path);
+            timeMapService.findOrCreate(transaction, path + "/" + FEDORA_DESCRIPTION);
         } else {
             // TODO: Replace with some other service/factory
-            // result = containerService.findOrCreate(session.getTransaction(), path, interactionModel);
+            // result = containerService.findOrCreate(transaction, path, interactionModel);
         }
 
-        timeMapService.findOrCreate(session.getTransaction(), path);
+        timeMapService.findOrCreate(transaction, path);
 
         final String resInteractionModel = getInteractionModel(result);
         if (StringUtils.isNoneBlank(interactionModel) && StringUtils.isNoneBlank(resInteractionModel)
@@ -860,7 +860,7 @@ public class FedoraLdp extends ContentExposingResource {
         // remove leading slash left over from translation
         LOGGER.trace("Using internal identifier {} to create new resource.", pid);
 
-        if (nodeService.exists(session.getTransaction(), pid)) {
+        if (nodeService.exists(transaction, pid)) {
             LOGGER.trace("Resource with path {} already exists; minting new path instead", pid);
             return mintNewPid(null);
         }

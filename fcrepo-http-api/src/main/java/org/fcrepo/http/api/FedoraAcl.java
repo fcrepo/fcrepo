@@ -134,11 +134,11 @@ public class FedoraAcl extends ContentExposingResource {
         final FedoraResource aclResource;
 
         final String path = toPath(translator(), externalPath);
-        final AcquiredLock lock = lockManager.lockForWrite(path, session.getTransaction(), nodeService);
+        final AcquiredLock lock = lockManager.lockForWrite(path, transaction, nodeService);
         try {
             LOGGER.info("PUT acl resource '{}'", externalPath);
 
-            aclResource = webacAclService.findOrCreate(session.getTransaction(), path);
+            aclResource = webacAclService.findOrCreate(transaction, path);
             created = aclResource.isNew();
 
             final MediaType contentType =
@@ -154,12 +154,12 @@ public class FedoraAcl extends ContentExposingResource {
                 throw new BadRequestException("Content-Type (" + requestContentType + ") is invalid. Try text/turtle " +
                                               "or other RDF compatible type.");
             }
-            session.commit();
+            transaction.commit();
         } finally {
             lock.release();
         }
 
-        addCacheControlHeaders(servletResponse, aclResource, session);
+        addCacheControlHeaders(servletResponse, aclResource, transaction);
         final URI location = getUri(aclResource);
         if (created) {
             return created(location).build();
@@ -197,8 +197,7 @@ public class FedoraAcl extends ContentExposingResource {
             throw new ItemNotFoundException("not found");
         }
 
-        final AcquiredLock lock = lockManager.lockForWrite(aclResource.getId(), session.getTransaction(),
-                                                           nodeService);
+        final AcquiredLock lock = lockManager.lockForWrite(aclResource.getPath(), transaction, nodeService);
 
         try {
             final String requestBody = IOUtils.toString(requestBodyStream, UTF_8);
@@ -206,7 +205,7 @@ public class FedoraAcl extends ContentExposingResource {
                 throw new BadRequestException("SPARQL-UPDATE requests must have content!");
             }
 
-            evaluateRequestPreconditions(request, servletResponse, aclResource, session);
+            evaluateRequestPreconditions(request, servletResponse, aclResource, transaction);
 
             try (final RdfStream resourceTriples =
                      aclResource.isNew() ? new DefaultRdfStream(asNode(aclResource)) :
@@ -214,9 +213,9 @@ public class FedoraAcl extends ContentExposingResource {
                 LOGGER.info("PATCH for '{}'", externalPath);
                 patchResourcewithSparql(aclResource, requestBody, resourceTriples);
             }
-            session.commit();
+            transaction.commit();
 
-            addCacheControlHeaders(servletResponse, aclResource, session);
+            addCacheControlHeaders(servletResponse, aclResource, transaction);
 
             return noContent().build();
         } catch (final IllegalArgumentException iae) {
@@ -273,7 +272,7 @@ public class FedoraAcl extends ContentExposingResource {
             throw new ItemNotFoundException("not found");
         }
 
-        checkCacheControlHeaders(request, servletResponse, aclResource, session);
+        checkCacheControlHeaders(request, servletResponse, aclResource, transaction);
 
         LOGGER.info("GET resource '{}'", externalPath);
         final AcquiredLock readLock = lockManager.lockForRead(aclResource.getId());
@@ -303,9 +302,9 @@ public class FedoraAcl extends ContentExposingResource {
         try {
             final FedoraResource aclResource = resource().getAcl();
             if (aclResource != null) {
-                deleteResourceService.perform(getTransaction(), aclResource);
+                deleteResourceService.perform(transaction, aclResource);
             }
-            session.commit();
+            transaction.commit();
 
             if (aclResource == null) {
                 if (resource().hasType(FEDORA_REPOSITORY_ROOT)) {

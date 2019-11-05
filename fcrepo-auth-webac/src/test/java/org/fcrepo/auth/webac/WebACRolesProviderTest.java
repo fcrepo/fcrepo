@@ -43,7 +43,6 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
-import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.RepositoryException;
@@ -75,11 +74,7 @@ public class WebACRolesProviderTest {
     private Transaction mockTransaction;
 
     @Mock
-    private SessionFactory mockSessionFactory;
-
-    @Mock
     private NodeService mockNodeService;
-
 
     @Mock
     private FedoraResource mockResource, mockParentResource;
@@ -98,9 +93,6 @@ public class WebACRolesProviderTest {
 
         roleProvider = new WebACRolesProvider();
         setField(roleProvider, "nodeService", mockNodeService);
-        setField(roleProvider, "sessionFactory", mockSessionFactory);
-
-        when(mockSessionFactory.getNewTransaction()).thenReturn(mockTransaction);
 
         when(mockResource.getDescribedResource()).thenReturn(mockResource);
         when(mockResource.getDescription()).thenReturn(mockResource);
@@ -129,7 +121,7 @@ public class WebACRolesProviderTest {
         when(mockParentResource.getOriginalResource()).thenReturn(mockParentResource);
         when(mockParentResource.getPath()).thenReturn(null);
 
-        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource);
+        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
         assertOnlyDefaultAgentInRoles(roles);
     }
@@ -159,7 +151,7 @@ public class WebACRolesProviderTest {
         when(mockAclResource.getTriples())
                 .thenReturn(getRdfStreamFromResource(acl, TTL));
 
-        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource);
+        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
         assertEquals("There should be exactly one agent in the role map", 1, roles.size());
         assertEquals("The agent should have exactly two modes", 2, roles.get(agent).size());
@@ -196,7 +188,7 @@ public class WebACRolesProviderTest {
 
         // The default root ACL should be used for authorization instead of the parent ACL
         final String rootAgent = "user06a";
-        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource);
+        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
         assertEquals("Contains no agents in the role map!", 1, roles.size());
         assertNull("Contains agent " + agent + " from ACL in parent node!", roles.get(agent));
         assertEquals("Should have agent " + rootAgent + " from the root ACL!", 1, roles.get(rootAgent).size());
@@ -221,7 +213,7 @@ public class WebACRolesProviderTest {
         when(mockAclResource.getPath()).thenReturn(accessTo + "/fcr:acl");
 
 
-        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource);
+        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
         assertEquals("There should be exactly one agent in the role map", 1, roles.size());
         assertEquals("The agent should have exactly two modes", 2, roles.get(agent).size());
@@ -243,7 +235,7 @@ public class WebACRolesProviderTest {
         when(mockAclResource.getTriples())
             .thenReturn(getRdfStreamFromResource(acl, TTL));
 
-        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource);
+        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
         assertOnlyDefaultAgentInRoles(roles);
     }
@@ -265,7 +257,7 @@ public class WebACRolesProviderTest {
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
 
 
-        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource);
+        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
         assertEquals("There should be exactly one agent in the role map", 1, roles.size());
         assertEquals("The agent should have exactly two modes", 2, roles.get(agent).size());
@@ -289,7 +281,7 @@ public class WebACRolesProviderTest {
         when(mockAclResource.isAcl()).thenReturn(true);
         when(mockAclResource.getPath()).thenReturn(accessTo + "/fcr:acl");
 
-        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource);
+        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
         assertEquals("There should be exactly one agent in the roles map", 1, roles.size());
         assertEquals("The agent should have exactly one mode", 1, roles.get(agent).size());
@@ -311,7 +303,7 @@ public class WebACRolesProviderTest {
         when(mockAclResource.getTriples())
             .thenReturn(getRdfStreamFromResource(acl, TTL));
 
-        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource);
+        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
         assertEquals("There should be exactly one agent", 1, roles.size());
         assertEquals("The agent should have one mode", 1, roles.get(agent).size());
@@ -333,7 +325,7 @@ public class WebACRolesProviderTest {
         when(mockAclResource.getTriples())
             .thenReturn(getRdfStreamFromResource(acl, TTL));
 
-        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource);
+        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
         assertEquals("There should be only one valid role", 1, roles.size());
         assertEquals("The foaf:Agent should have exactly one valid mode", 1,
@@ -357,7 +349,7 @@ public class WebACRolesProviderTest {
         when(mockAclResource.getTriples())
             .thenReturn(getRdfStreamFromResource(acl, TTL));
 
-        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource);
+        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
         assertEquals("There should be only one valid role", 1, roles.size());
         assertEquals("The acl:AuthenticatedAgent should have exactly one valid mode", 1,
@@ -382,7 +374,7 @@ public class WebACRolesProviderTest {
         when(mockAclResource.getTriples())
             .thenReturn(getRdfStreamFromResource(acl, TTL));
 
-        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource);
+        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
         assertEquals("There should be exactly two agents", 2, roles.size());
         assertEquals("The agent should have one mode", 1, roles.get(agent1).size());
@@ -409,7 +401,7 @@ public class WebACRolesProviderTest {
         when(mockAclResource.getTriples())
             .thenReturn(getRdfStreamFromResource(acl, TTL));
 
-        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource);
+        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
         assertEquals("There should be exactly two agents", 2, roles.size());
         assertEquals("The agent should have one mode", 1, roles.get(agent1).size());
@@ -434,7 +426,7 @@ public class WebACRolesProviderTest {
         when(mockAclResource.getTriples())
             .thenReturn(getRdfStreamFromResource(acl, TTL));
 
-        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource);
+        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
         assertEquals("There should be exactly one agent", 1, roles.size());
         assertEquals("The agent should have one mode", 1, roles.get(agent1).size());
@@ -474,7 +466,7 @@ public class WebACRolesProviderTest {
                 .thenReturn(getRdfStreamFromResource(group, TTL));
 
 
-        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource);
+        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
         assertEquals("There should be exactly two agents", 2, roles.size());
         assertEquals("The agent should have two modes", 2, roles.get(agent1).size());
@@ -511,7 +503,7 @@ public class WebACRolesProviderTest {
         when(mockAgentClassResource.getTriples())
             .thenReturn(getRdfStreamFromResource(group, TTL));
 
-        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource);
+        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
         assertOnlyDefaultAgentInRoles(roles);
     }
@@ -531,7 +523,7 @@ public class WebACRolesProviderTest {
         when(mockAclResource.getTriples())
             .thenReturn(getRdfStreamFromResource(acl, TTL));
 
-        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource);
+        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
         assertEquals("There should be only one valid role", 1, roles.size());
         assertEquals("The foafAgent should have exactly one valid mode", 1, roles.get(foafAgent).size());
@@ -548,7 +540,7 @@ public class WebACRolesProviderTest {
         when(mockResource.getTypes()).thenReturn(
                 singletonList(URI.create(REPOSITORY_NAMESPACE + "Resource")));
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
-        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource);
+        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
         assertEquals("There should be exactly one agent", 1, roles.size());
         assertEquals("The agent should have one mode", 1, roles.get(agent1).size());
@@ -565,7 +557,7 @@ public class WebACRolesProviderTest {
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
 
         System.setProperty(ROOT_AUTHORIZATION_PROPERTY, "./target/test-classes/logback-test.xml");
-        roleProvider.getRoles(mockResource);
+        roleProvider.getRoles(mockResource, mockTransaction);
     }
 
     @Test
@@ -578,7 +570,7 @@ public class WebACRolesProviderTest {
                 singletonList(URI.create(REPOSITORY_NAMESPACE + "Resource")));
 
         System.setProperty(ROOT_AUTHORIZATION_PROPERTY, "./target/test-classes/test-root-authorization.ttl");
-        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource);
+        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
         System.clearProperty(ROOT_AUTHORIZATION_PROPERTY);
 
         assertEquals("There should be exactly one agent", 1, roles.size());

@@ -61,7 +61,6 @@ import javax.inject.Inject;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
-import org.fcrepo.http.commons.session.SessionFactory;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryException;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
@@ -90,28 +89,25 @@ public class WebACRolesProvider {
     @Inject
     private NodeService nodeService;
 
-    @Inject
-    private SessionFactory sessionFactory;
-
     /**
      * Get the roles assigned to this Node.
      *
      * @param resource the subject resource
      * @return a set of roles for each principal
      */
-    public Map<String, Collection<String>> getRoles(final FedoraResource resource) {
-        return getAgentRoles(resource);
+    public Map<String, Collection<String>> getRoles(final FedoraResource resource, final Transaction transaction) {
+        return getAgentRoles(resource, transaction);
     }
 
     /**
      *  For a given FedoraResource, get a mapping of acl:agent values to acl:mode values and
      *  for foaf:Agent and acl:AuthenticatedAgent include the acl:agentClass value to acl:mode.
      */
-    private Map<String, Collection<String>> getAgentRoles(final FedoraResource resource) {
+    private Map<String, Collection<String>> getAgentRoles(final FedoraResource resource, final Transaction transaction) {
         LOGGER.debug("Getting agent roles for: {}", resource.getPath());
 
         // Get the effective ACL by searching the target node and any ancestors.
-        final Optional<ACLHandle> effectiveAcl = getEffectiveAcl(resource, false, sessionFactory);
+        final Optional<ACLHandle> effectiveAcl = getEffectiveAcl(resource, false);
 
         // Construct a list of acceptable acl:accessTo values for the target resource.
         final List<String> resourcePaths = new ArrayList<>();
@@ -161,7 +157,7 @@ public class WebACRolesProvider {
         authorizations.stream()
                       .filter(checkAccessTo.or(checkAccessToClass))
                       .forEach(auth -> {
-                          concat(auth.getAgents().stream(), dereferenceAgentGroups(auth.getAgentGroups()).stream())
+                          concat(auth.getAgents().stream(), dereferenceAgentGroups(transaction, auth.getAgentGroups()).stream())
                               .filter(agent -> !agent.equals(FOAF_AGENT_VALUE) &&
                                                !agent.equals(WEBAC_AUTHENTICATED_AGENT_VALUE))
                               .forEach(agent -> {
@@ -213,9 +209,7 @@ public class WebACRolesProvider {
      *  This maps a Collection of acl:agentGroup values to a List of agents.
      *  Any out-of-domain URIs are silently ignored.
      */
-    private List<String> dereferenceAgentGroups(final Collection<String> agentGroups) {
-        // TODO do not use transactions for internal reads
-        final Transaction transaction = sessionFactory.getNewTransaction();
+    private List<String> dereferenceAgentGroups(final Transaction transaction, final Collection<String> agentGroups) {
         //TODO figure out where the translator should be coming from.
         final IdentifierConverter<Resource, FedoraResource> translator = null;
 
@@ -305,12 +299,10 @@ public class WebACRolesProvider {
      * @param aclResource the ACL resource
      * @param ancestorAcl flag indicating whether or not the ACL resource associated with an ancestor of the target
      *                    resource
-     * @param sessionFactory the session factory
      * @return a list of acl:Authorization objects
      */
     private static List<WebACAuthorization> getAuthorizations(final FedoraResource aclResource,
-                                                              final boolean ancestorAcl,
-                                                              final SessionFactory sessionFactory) {
+                                                              final boolean ancestorAcl) {
 
         final List<WebACAuthorization> authorizations = new ArrayList<>();
         //TODO figure out where the translator should be coming from
@@ -382,17 +374,15 @@ public class WebACRolesProvider {
      * and it may be external to the fedora repository.
      * @param resource the Fedora resource
      * @param ancestorAcl the flag for looking up ACL from ancestor hierarchy resources
-     * @param sessionFactory session factory
      */
-    static Optional<ACLHandle> getEffectiveAcl(final FedoraResource resource, final boolean ancestorAcl,
-                                                final SessionFactory sessionFactory) {
+    static Optional<ACLHandle> getEffectiveAcl(final FedoraResource resource, final boolean ancestorAcl) {
         try {
 
             final FedoraResource aclResource = resource.getAcl();
 
             if (aclResource != null) {
                 final List<WebACAuthorization> authorizations =
-                    getAuthorizations(aclResource, ancestorAcl, sessionFactory);
+                    getAuthorizations(aclResource, ancestorAcl);
                 if (authorizations.size() > 0) {
                     return Optional.of(
                         new ACLHandle(resource, authorizations));
@@ -404,7 +394,7 @@ public class WebACRolesProvider {
                 return Optional.empty();
             } else {
                 LOGGER.trace("Checking parent resource for ACL. No ACL found at {}", resource.getPath());
-                return getEffectiveAcl(resource.getContainer(), true, sessionFactory);
+                return getEffectiveAcl(resource.getContainer(), true);
             }
         } catch (final RepositoryException ex) {
             LOGGER.debug("Exception finding effective ACL: {}", ex.getMessage());

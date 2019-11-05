@@ -21,7 +21,7 @@
   
   <!-- Context that houses JAX-RS Resources that compose the API
       as well as some utility gear. -->
-  <bean class="org.fcrepo.http.commons.session.SessionFactory"/>
+  <bean class="org.fcrepo.kernel.api.TransactionManager"/>
 
   <!-- Identifier translation chain -->
   <util:list id="translationChain" value-type="org.fcrepo.kernel.api.identifiers.InternalIdentifierConverter">

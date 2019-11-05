@@ -20,7 +20,7 @@ package org.fcrepo.auth.integration;
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
-import org.fcrepo.http.commons.session.HttpSession;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.identifiers.IdentifierConverter;
@@ -52,7 +52,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class RootTestResource extends AbstractResource {
 
     @Inject
-    private HttpSession session;
+    private Transaction transaction;
 
     private static final Logger LOGGER = getLogger(RootTestResource.class);
 
@@ -84,7 +84,7 @@ public class RootTestResource extends AbstractResource {
     }
 
     private IdentifierConverter<Resource,FedoraResource> translator() {
-        return new HttpResourceConverter(session,
+        return new HttpResourceConverter(transaction,
                     uriInfo.getBaseUriBuilder().clone().path(RootTestResource.class));
     }
 

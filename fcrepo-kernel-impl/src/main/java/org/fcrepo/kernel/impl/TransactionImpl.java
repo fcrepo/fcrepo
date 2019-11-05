@@ -59,6 +59,16 @@ public class TransactionImpl implements Transaction {
         return id;
     }
 
+    /**
+     * Set transaction short-lived state.
+     * 
+     * @param shortLived boolean true (short-lived - default) or false (not short-lived)
+     */
+    @Override
+    public void setShortLived(final boolean shortLived) {
+        this.shortLived = shortLived;
+    }
+
     @Override
     public boolean isShortLived() {
         return this.shortLived;
@@ -80,6 +90,13 @@ public class TransactionImpl implements Transaction {
     public Optional<Instant> getExpires() {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    @Override
+    public void commitIfShortLived() {
+       if (this.isShortLived()) {
+           this.commit();
+       }
     }
 
 }

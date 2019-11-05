@@ -34,6 +34,11 @@ public interface Transaction {
     void commit();
 
     /**
+     * Commit the transaction only if the transaction is shortLived
+     */
+    void commitIfShortLived();
+
+    /**
      * Rollback the transaction
      */
     void rollback();
@@ -51,6 +56,14 @@ public interface Transaction {
      * @return is the transaction short-lived.
      */
     boolean isShortLived();
+
+
+    /**
+     * Set transaction short-lived state.
+     * 
+     * @param shortLived boolean true (short-lived) or false (not short-lived)
+     */
+    void setShortLived(boolean shortLived);
 
     /**
      * Expire a transaction

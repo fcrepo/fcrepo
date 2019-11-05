@@ -33,6 +33,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import java.io.IOException;
 import java.net.URI;
@@ -45,7 +46,7 @@ import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.subject.support.SubjectThreadState;
-import org.fcrepo.http.commons.session.SessionFactory;
+import org.fcrepo.http.commons.session.TransactionProvider;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.Binary;
@@ -88,11 +89,12 @@ public class WebACFilterTest {
     private SecurityManager mockSecurityManager;
 
     @Mock
-    private SessionFactory mockSessionFactory;
+    private TransactionProvider mockTransactionProvider;
 
     @Mock
     private NodeService mockNodeService;
 
+    @Mock
     private Transaction mockTransaction;
 
     private FedoraResource mockContainer;
@@ -149,12 +151,14 @@ public class WebACFilterTest {
         request.setPathInfo(testPath);
         request.setRequestURI(testPath);
 
+        setField(webacFilter, "txProvider", mockTransactionProvider);
+
         mockContainer = Mockito.mock(Container.class);
         mockChildContainer = Mockito.mock(Container.class);
         mockBinary = Mockito.mock(Binary.class);
         mockRoot = Mockito.mock(Container.class);
 
-        when(mockSessionFactory.getNewTransaction()).thenReturn(mockTransaction);
+        when(mockTransactionProvider.getTransactionForRequest(request)).thenReturn(mockTransaction);
 
         when(mockNodeService.exists(mockTransaction, testPath)).thenReturn(true);
         when(mockNodeService.exists(mockTransaction, testChildPath)).thenReturn(false);

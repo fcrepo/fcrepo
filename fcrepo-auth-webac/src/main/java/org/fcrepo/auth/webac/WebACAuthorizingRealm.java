@@ -51,8 +51,8 @@ import org.apache.shiro.subject.PrincipalCollection;
 import org.fcrepo.auth.common.ContainerRolesPrincipalProvider.ContainerRolesPrincipal;
 import org.fcrepo.http.api.FedoraLdp;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
-import org.fcrepo.http.commons.session.HttpSession;
-import org.fcrepo.http.commons.session.SessionFactory;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.http.commons.session.TransactionProvider;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryConfigurationException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -77,7 +77,7 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
     public static final String URIS_TO_AUTHORIZE = "URIS_TO_AUTHORIZE";
 
     @Inject
-    private SessionFactory sessionFactory;
+    private TransactionProvider txProvider;
 
     @Inject
     private HttpServletRequest request;
@@ -85,20 +85,20 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
     @Inject
     private WebACRolesProvider rolesProvider;
 
-    private HttpSession session;
+    private Transaction transaction;
 
-    private HttpSession session() {
-        if (session == null) {
-            session = sessionFactory.getSession(request);
+    private Transaction transaction() {
+        if (transaction == null) {
+            transaction = txProvider.getTransactionForRequest(request);
         }
-        return session;
+        return transaction;
     }
 
     private IdentifierConverter<Resource, FedoraResource> idTranslator;
 
     private IdentifierConverter<Resource, FedoraResource> translator() {
         if (idTranslator == null) {
-            idTranslator = new HttpResourceConverter(session(), UriBuilder.fromResource(FedoraLdp.class));
+            idTranslator = new HttpResourceConverter(transaction(), UriBuilder.fromResource(FedoraLdp.class));
         }
 
         return idTranslator;
@@ -193,7 +193,7 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
 
         if (fedoraResource != null) {
             // check ACL for the request URI and get a mapping of agent => modes
-            roles = rolesProvider.getRoles(fedoraResource);
+            roles = rolesProvider.getRoles(fedoraResource, transaction());
         }
         return roles;
     }
