@@ -17,6 +17,7 @@
  */
 package org.fcrepo.persistence.ocfl;
 
+import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,6 +36,9 @@ public class OCFLPersistentSessionManager implements PersistentStorageSessionMan
     private OCFLPersistentStorageSession readOnlySession;
 
     private Map<String,OCFLPersistentStorageSession> sessionMap;
+
+    @Inject
+    private FedoraToOCFLObjectIndex fedoraOcflIndex;
 
     /**
      * Default constructor
@@ -56,7 +60,7 @@ public class OCFLPersistentSessionManager implements PersistentStorageSessionMan
             return session;
         }
 
-        final OCFLPersistentStorageSession newSession = new OCFLPersistentStorageSession(sessionId);
+        final OCFLPersistentStorageSession newSession = new OCFLPersistentStorageSession(sessionId, fedoraOcflIndex);
 
         sessionMap.put(sessionId, newSession);
 
@@ -66,7 +70,7 @@ public class OCFLPersistentSessionManager implements PersistentStorageSessionMan
     @Override
     public PersistentStorageSession getReadOnlySession() {
         if(this.readOnlySession == null) {
-            this.readOnlySession = new OCFLPersistentStorageSession();
+            this.readOnlySession = new OCFLPersistentStorageSession(fedoraOcflIndex);
         }
 
         return this.readOnlySession;
