@@ -22,7 +22,7 @@ import java.util.stream.Stream;
 import org.fcrepo.kernel.api.models.FedoraResource;
 
 /**
- * An interface defining the encapsulates containment relationships.
+ * An interface for retrieving resource IDs by their containment relationships.
  *
  * @author dbernstein
  * @since 6.0.0
