@@ -21,14 +21,21 @@ import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.when;
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static java.util.stream.Stream.of;
 
-import java.io.InputStream;
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import org.apache.jena.datatypes.xsd.XSDDatatype;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.impl.operations.UpdateRdfSourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
@@ -58,6 +65,7 @@ public class ReplacePropertiesServiceImplTest {
     private PersistentStorageSessionManager psManager;
 
     @Mock
+    d
     private RdfSourceOperationFactory factory;
 
     @Mock
@@ -75,6 +83,16 @@ public class ReplacePropertiesServiceImplTest {
     private final String id = "test-resource";
     private final String txId = "tx-1234";
     private final String contentType = "text/turtle";
+    private final String resourceName = "testResource";
+    private final Node subject = createURI(resourceName);
+    private final Triple triple1 = new Triple(createURI(resourceName),
+        createURI("http://purl.org/dc/elements/1.1/title"),
+        createLiteral("title one", XSDDatatype.XSDstring));
+    private final Triple triple2 = new Triple(createURI(resourceName),
+        createURI("http://purl.org/dc/elements/1.1/title"),
+        createLiteral("title two", XSDDatatype.XSDstring));
+
+    private final DefaultRdfStream rdfStream = new DefaultRdfStream(subject, of(triple1, triple2));
 
     private final String rdfString = "@prefix dc: <http://purl.org/dc/elements/1.1/> . \n" +
                     "</path/to/resource1>\n" +
@@ -90,6 +108,7 @@ public class ReplacePropertiesServiceImplTest {
         when(tx.getId()).thenReturn(txId);
         when(psManager.getSession(anyString())).thenReturn(pSession);
         when(resource.getId()).thenReturn(id);
+        when(resource.getTriples()).thenReturn(rdfStream);
         when(factory.updateBuilder(eq(id))).thenReturn(builder);
         when(builder.build()).thenReturn(operation);
 
