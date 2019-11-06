@@ -922,7 +922,8 @@ public class FedoraLdpTest {
                 toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null);
 
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        verify(replacePropertiesService).replaceProperties(eq(mockContainer), any(Model.class), any(RdfStream.class));
+        verify(replacePropertiesService).replaceProperties(eq(mockTransaction), eq(mockContainer),
+                any(InputStream.class),any(String.class));
     }
 
     @Test
@@ -958,7 +959,8 @@ public class FedoraLdpTest {
                 toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null);
 
         assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
-        verify(replacePropertiesService).replaceProperties(eq(mockObject), any(Model.class), any(RdfStream.class));
+        verify(replacePropertiesService).replaceProperties(eq(mockTransaction), eq(mockObject),
+                any(InputStream.class), any(String.class));
     }
 
     @Test(expected = ClientErrorException.class)
@@ -1062,7 +1064,8 @@ public class FedoraLdpTest {
         final Response actual = testObj.createObject(null, NTRIPLES_TYPE, "b",
                 toInputStream("_:a <info:b> _:c .", UTF_8), null, null);
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
-        verify(replacePropertiesService).replaceProperties(eq(mockContainer), any(Model.class), any(RdfStream.class));
+        verify(replacePropertiesService).replaceProperties(eq(mockTransaction), eq(mockContainer),
+                any(InputStream.class), any(String.class));
     }
 
 
