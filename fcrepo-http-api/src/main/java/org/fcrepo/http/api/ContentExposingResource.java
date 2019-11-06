@@ -120,7 +120,6 @@ import javax.ws.rs.core.Response;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.rdf.model.Statement;
 import org.fcrepo.http.commons.api.HttpHeaderInjector;
 import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
 import org.fcrepo.http.commons.domain.MultiPrefer;

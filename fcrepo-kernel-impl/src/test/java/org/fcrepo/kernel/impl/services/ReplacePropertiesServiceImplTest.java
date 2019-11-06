@@ -18,9 +18,9 @@
 package org.fcrepo.kernel.impl.services;
 
 import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static java.util.stream.Stream.of;
@@ -31,7 +31,6 @@ import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
@@ -65,7 +64,6 @@ public class ReplacePropertiesServiceImplTest {
     private PersistentStorageSessionManager psManager;
 
     @Mock
-    d
     private RdfSourceOperationFactory factory;
 
     @Mock
@@ -113,20 +111,7 @@ public class ReplacePropertiesServiceImplTest {
         when(builder.build()).thenReturn(operation);
 
         service.replaceProperties(tx, resource, requestBodyStream, contentType);
-        //verify(pSession).persist(operation);
-    }
-    @Test(expected = RepositoryRuntimeException.class)
-    @Ignore
-    public void testException() throws PersistentStorageException {
-
-        // TODO finish test
-        when(tx.getId()).thenReturn(txId);
-        when(psManager.getSession(anyString())).thenReturn(pSession);
-        when(resource.getId()).thenReturn(id);
-        when(factory.updateBuilder(eq(id))).thenReturn(builder);
-        when(builder.build()).thenReturn(operation);
-        doThrow(new PersistentStorageException("error")).when(pSession).persist(eq(operation));
-        service.replaceProperties(tx, resource,requestBodyStream, contentType);
+        verify(pSession).persist(operation);
     }
 }
 

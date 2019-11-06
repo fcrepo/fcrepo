@@ -474,7 +474,7 @@ public class FedoraLdp extends ContentExposingResource {
                             (extContent != null && !handling.equals(COPY)) ? extContent.getURL() : null);
 
                 } else if (isRdfContentType(contentType.toString())) {
-                    replacePropertiesService.replaceProperties(session.getTransaction(), resource,
+                    replacePropertiesService.replaceProperties(transaction, resource,
                             requestBodyStream, contentType.toString());
                 } else if (!created) {
                     boolean emptyRequest = true;
@@ -669,7 +669,7 @@ public class FedoraLdp extends ContentExposingResource {
                     if ((resource instanceof Container) && isRdfContentType(contentTypeString)) {
                         // TODO this should not stay here and will probably be rewritting with
                         // the createPropertyService is in place.
-                        replacePropertiesService.replaceProperties(session.getTransaction(), resource,
+                        replacePropertiesService.replaceProperties(transaction, resource,
                             requestBodyStream, contentTypeString);
                     } else if (resource instanceof Binary) {
                         LOGGER.trace("Created a datastream and have a binary payload.");
@@ -708,7 +708,7 @@ public class FedoraLdp extends ContentExposingResource {
 
                 transaction.commit();
             } catch (final MalformedRdfException e) {
-                throw BadRequestException(e.getMessage());
+                throw new BadRequestException(e.getMessage());
             } catch (final Exception e) {
                 checkForInsufficientStorageException(e, e);
             }

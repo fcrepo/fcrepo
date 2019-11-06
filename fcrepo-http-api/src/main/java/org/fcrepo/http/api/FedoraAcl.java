@@ -147,8 +147,8 @@ public class FedoraAcl extends ContentExposingResource {
 
                 try (final RdfStream resourceTriples =
                          created ? new DefaultRdfStream(asNode(aclResource)) : getResourceTriples(aclResource)) {
-                    replaceResourceWithStream(aclResource, requestBodyStream, contentType, resourceTriples);
-
+                    replacePropertiesService.replaceProperties(transaction, aclResource, requestBodyStream,
+                        contentType.toString());
                 }
             } else {
                 throw new BadRequestException("Content-Type (" + requestContentType + ") is invalid. Try text/turtle " +
