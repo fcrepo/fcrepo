@@ -17,20 +17,12 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import static java.lang.String.format;
-
-import javax.inject.Inject;
-import java.util.stream.Stream;
-
-
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.models.Binary;
-import org.fcrepo.kernel.api.models.Container;
-import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.models.*;
 import org.fcrepo.kernel.api.operations.DeleteResourceOperationFactory;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.services.DeleteResourceService;
@@ -40,6 +32,11 @@ import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import java.util.stream.Stream;
+
+import static java.lang.String.format;
+
 /**
  * This class mediates delete operations between the kernel and persistent storage layers
  *
@@ -47,7 +44,7 @@ import org.slf4j.LoggerFactory;
  */
 public class DeleteResourceServiceImpl implements DeleteResourceService {
 
-    private Logger LOGGER = LoggerFactory.getLogger(DeleteResourceService.class);
+    private final static Logger log = LoggerFactory.getLogger(DeleteResourceService.class);
 
     @Inject
     private ContainmentIndex containmentIndex;
@@ -63,21 +60,27 @@ public class DeleteResourceServiceImpl implements DeleteResourceService {
 
     @Override
     public void perform(final Transaction tx, final FedoraResource fedoraResource) {
-
         final String fedoraResourceId = fedoraResource.getId();
 
+        if( fedoraResource instanceof NonRdfSourceDescription){
+            throw new RepositoryRuntimeException(
+                    format("A NonRdfSourceDescription cannot be deleted independently of the NonRDFSource:  %s",
+                            fedoraResourceId));
+        }
+
+
         try {
-            LOGGER.debug(format("deleting of %s", fedoraResourceId));
+            log.debug(format("deleting of %s", fedoraResourceId));
             final PersistentStorageSession pSession = this.psManager.getSession(tx.getId());
-            deleteRecursivelyFromBottom(tx, pSession, fedoraResource);
+            deleteDepthFirst(tx, pSession, fedoraResource);
         } catch (final PersistentStorageException ex) {
             throw new RepositoryRuntimeException(format("failed to delete resource %s", fedoraResourceId), ex);
         }
     }
 
 
-    private void deleteRecursivelyFromBottom(final Transaction tx, final PersistentStorageSession pSession,
-                                             final FedoraResource fedoraResource) throws PersistentStorageException {
+    private void deleteDepthFirst(final Transaction tx, final PersistentStorageSession pSession,
+                                  final FedoraResource fedoraResource) throws PersistentStorageException {
 
         final String fedoraId = fedoraResource.getId();
 
@@ -86,9 +89,10 @@ public class DeleteResourceServiceImpl implements DeleteResourceService {
             children.forEach(childResourceId -> {
                 try {
                     final FedoraResource res = resourceFactory.getResource(tx, childResourceId);
-                    deleteRecursivelyFromBottom(tx, pSession, res);
+                    deleteDepthFirst(tx, pSession, res);
                 } catch (final PathNotFoundException ex) {
-                    LOGGER.warn(format("Path not found for %s: ignoring.", childResourceId));
+                    log.error("Path not found for {}: {}", fedoraId, ex.getMessage());
+                    throw new PathNotFoundRuntimeException(ex);
                 } catch (final PersistentStorageException ex) {
                     throw new RepositoryRuntimeException(format("failed to delete resource %s", fedoraId), ex);
                 }
@@ -103,8 +107,8 @@ public class DeleteResourceServiceImpl implements DeleteResourceService {
         //delete the acl if this is not the acl
         if (!fedoraResource.isAcl()) {
             final FedoraResource acl = fedoraResource.getAcl();
-            if (fedoraResource.getAcl() != null) {
-                delete(pSession, fedoraResource.getAcl().getId());
+            if (acl != null) {
+                delete(pSession, acl.getId());
             }
         }
 
@@ -113,10 +117,10 @@ public class DeleteResourceServiceImpl implements DeleteResourceService {
     }
 
     private void delete(final PersistentStorageSession pSession, final String fedoraId)
-        throws PersistentStorageException {
-        LOGGER.debug(format("starting delete of %s", fedoraId));
+            throws PersistentStorageException {
+        log.debug("starting delete of {}", fedoraId);
         final ResourceOperation deleteOp = deleteResourceFactory.deleteBuilder(fedoraId).build();
         pSession.persist(deleteOp);
-        LOGGER.debug(format("deleted %s", fedoraId));
+        log.debug("deleted {}", fedoraId);
     }
 }

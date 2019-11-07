@@ -343,7 +343,6 @@ public class FedoraLdp extends ContentExposingResource {
     @DELETE
     public Response deleteObject() {
         hasRestrictedPath(externalPath);
-
         if (resource() instanceof Container) {
             final String depth = headers.getHeaderString("Depth");
             LOGGER.debug("Depth header value is: {}", depth);
