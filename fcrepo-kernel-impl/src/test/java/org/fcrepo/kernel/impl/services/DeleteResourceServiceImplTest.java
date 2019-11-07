@@ -17,15 +17,15 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import java.util.stream.Stream;
-
-
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.fcrepo.kernel.api.models.*;
+import org.fcrepo.kernel.api.models.Binary;
+import org.fcrepo.kernel.api.models.Container;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.models.WebacAcl;
 import org.fcrepo.kernel.api.operations.DeleteResourceOperationFactory;
-import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.impl.operations.DeleteResourceOperation;
 import org.fcrepo.kernel.impl.operations.DeleteResourceOperationBuilder;
 import org.fcrepo.persistence.api.PersistentStorageSession;
@@ -37,7 +37,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import static org.mockito.Mockito.*;
+import java.util.stream.Stream;
+
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * DeleteResourceServiceTest
@@ -113,7 +119,7 @@ public class DeleteResourceServiceImplTest {
     @Test
     public void testAclDelete() throws Exception {
         when(acl.getId()).thenReturn(RESOURCE_ACL_ID);
-        when(container.isAcl()).thenReturn(true);
+        when(acl.isAcl()).thenReturn(true);
         when(factory.deleteBuilder(eq(RESOURCE_ACL_ID))).thenReturn(builder);
         when(builder.build()).thenReturn(operation);
         service.perform(tx, acl);
