@@ -42,7 +42,6 @@ public class FedoraOCFLMapping {
      * the fedora resource associated with this mapping in the case that the resource was
      * part of an Archival Group.  In the case of binary descriptive metadata, this identifer
      * will correspond to "root" or "parent" of the resource.
-     * @see {@link org.fcrepo.persistence.ocfl.FedoraToOCFLObjectIndex}
      * @return the fedora resource identifier
      */
     public String getParentFedoraResourceId() {

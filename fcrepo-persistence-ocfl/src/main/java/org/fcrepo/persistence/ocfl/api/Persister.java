@@ -30,7 +30,7 @@ public interface Persister<T extends ResourceOperation> {
 
     /**
      * The method returns true if the operation can be persisted by this persister.
-     * @param operation
+     * @param operation the operation to persist
      * @return true or false
      */
     boolean handle(ResourceOperation operation);

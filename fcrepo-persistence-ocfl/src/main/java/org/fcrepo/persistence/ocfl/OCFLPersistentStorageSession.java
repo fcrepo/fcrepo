@@ -55,15 +55,18 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
     private final FedoraToOCFLObjectIndex fedoraOcflIndex;
 
-    private final Map<String,OCFLObjectSession> sessionMap;
+    private final Map<String, OCFLObjectSession> sessionMap;
 
+    //TODO make the stagingPathRoot configurable.
     private final File stagingPathRoot = new File(System.getProperty("java.io.tmpdir"), "ocfl-staging");
 
     private final static List<Persister> PERSISTER_LIST = new LinkedList<>();
+
     static {
-        PERSISTER_LIST.add( new CreateRDFSourcePersister());
+        PERSISTER_LIST.add(new CreateRDFSourcePersister());
         //TODO add new persisters here as they are implemented.
     }
+
     /**
      * Constructor
      *
@@ -78,9 +81,10 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
 
     /**
      * Constructor
+     * @param fedoraOcflIndex  the index
      */
     protected OCFLPersistentStorageSession(final FedoraToOCFLObjectIndex fedoraOcflIndex) {
-       this(null, fedoraOcflIndex);
+        this(null, fedoraOcflIndex);
     }
 
     @Override
@@ -99,12 +103,11 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
         final OCFLObjectSession objSession = findOrCreateSession(mapping.getOcflObjectId());
 
         //resolve the persister based on the operation
-        final Persister persister = PERSISTER_LIST.stream().filter(p->p.handle(operation)).findFirst().orElse(null);
+        final Persister persister = PERSISTER_LIST.stream().filter(p -> p.handle(operation)).findFirst().orElse(null);
 
-        if(persister == null) {
+        if (persister == null) {
             throw new UnsupportedOperationException(format("The %s is not yet supported", operation.getClass()));
         }
-
 
 
         //perform the operation
@@ -112,14 +115,14 @@ public class OCFLPersistentStorageSession implements PersistentStorageSession {
     }
 
     private OCFLObjectSession findOrCreateSession(final String ocflId) {
-        final OCFLObjectSession sessionObj =  this.sessionMap.get(ocflId);
-        if(sessionObj != null) {
+        final OCFLObjectSession sessionObj = this.sessionMap.get(ocflId);
+        if (sessionObj != null) {
             return sessionObj;
         }
 
         final File stagingDirectory = new File(stagingPathRoot, sessionId);
         stagingDirectory.mkdir();
-        final OCFLObjectSession newSession = new DefaultOCFLObjectSession(ocflId, stagingDirectory.toPath(),null);
+        final OCFLObjectSession newSession = new DefaultOCFLObjectSession(ocflId, stagingDirectory.toPath(), null);
         sessionMap.put(ocflId, newSession);
         return newSession;
     }

@@ -33,23 +33,21 @@ import org.fcrepo.persistence.ocfl.api.Persister;
 public abstract class AbstractPersister<T extends ResourceOperation> implements Persister<T> {
 
     private ResourceOperationType resourceOperationType;
-    private Class clazz;
 
-    protected AbstractPersister(final ResourceOperationType resourceOperationType) {
+    AbstractPersister(final ResourceOperationType resourceOperationType) {
         this.resourceOperationType = resourceOperationType;
     }
 
     @Override
     public boolean handle(final ResourceOperation operation) {
         //get the class of T
-        final Class clazz = ((Class<T>) ((ParameterizedType) getClass()
-                .getGenericSuperclass()).getActualTypeArguments()[0]);
+        final var clazz = ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
 
         //retrieve the interfaces of the operation class
-        final Class[] interfaces = operation.getClass().getInterfaces();
+        final var interfaces = operation.getClass().getInterfaces();
 
         //ensure that at least one of them match.
-        for (Class i : interfaces) {
+        for (var i : interfaces) {
             if (clazz.equals(i)) {
                 //return true if the operation types match.
                 return this.resourceOperationType.equals(operation.getType());
