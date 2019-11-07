@@ -100,7 +100,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
 
         final ResourceOperation createOp;
 
-        if (interactionModel.equalsIgnoreCase(NON_RDF_SOURCE.toString())) {
+        if (interactionModel.equals(NON_RDF_SOURCE.toString())) {
             // TODO: Implement the NonRdfSourceOperationFactory
             createOp = null;
         } else {

@@ -17,18 +17,24 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
+import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.riot.Lang;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 
+import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -36,17 +42,38 @@ abstract public class AbstractRdfSourceOperationBuilder implements RdfSourceOper
 
     private static String rdfType = RDF_NAMESPACE + "type";
 
+    RdfStream tripleStream;
+
     String resourceId;
 
-    Node resourceNode;
+    private Node resourceNode;
 
     /**
      * Constructor.
      * @param resourceId the internal identifier.
      */
-    public AbstractRdfSourceOperationBuilder(final String resourceId) {
+    AbstractRdfSourceOperationBuilder(final String resourceId) {
         this.resourceId = resourceId;
         this.resourceNode = ResourceFactory.createResource(this.resourceId).asNode();
+    }
+
+    @Override
+    public RdfSourceOperationBuilder triples(final RdfStream triples) {
+        this.tripleStream = triples;
+        return this;
+    }
+
+    @Override
+    public RdfSourceOperationBuilder triples(final InputStream contentStream, final String mimetype) {
+        final Model model = ModelFactory.createDefaultModel();
+        final Lang lang = contentTypeToLang(mimetype);
+        model.read(contentStream, this.resourceId, lang.getName().toUpperCase());
+        final List<Triple> triples = new ArrayList<>();
+        model.listStatements().forEachRemaining(p ->
+                triples.add(new Triple(p.getSubject().asNode(), p.getPredicate().asNode(), p.getObject().asNode()))
+        );
+        this.tripleStream = new DefaultRdfStream(this.resourceNode, triples.stream());
+        return this;
     }
 
     /**
@@ -59,7 +86,7 @@ abstract public class AbstractRdfSourceOperationBuilder implements RdfSourceOper
     RdfStream validateIncomingRdf(final RdfStream stream) {
         final List<Triple> triples = stream.collect(Collectors.toList());
         final Node topic = stream.topic();
-        checkForLdpTypes(new DefaultRdfStream(topic, triples.stream()));
+        checkForSmtsLdpTypes(new DefaultRdfStream(topic, triples.stream()));
         return new DefaultRdfStream(topic, triples.stream());
     }
 
@@ -68,7 +95,7 @@ abstract public class AbstractRdfSourceOperationBuilder implements RdfSourceOper
      *
      * @param stream The RDF stream to check.
      */
-    void checkForLdpTypes(final RdfStream stream) {
+    void checkForSmtsLdpTypes(final RdfStream stream) {
         if (stream.anyMatch(p ->
                 // predicate is rdf:type and object starts with LDP namespace.
                 (p.getPredicate().hasURI(rdfType) && p.getObject().toString().startsWith(LDP_NAMESPACE)) ||

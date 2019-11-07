@@ -17,20 +17,8 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
-import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
-
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.jena.graph.Triple;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.riot.Lang;
-import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
-import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 
 
 /**
@@ -39,8 +27,6 @@ import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
  * @author bbpennel
  */
 public class CreateRdfSourceOperationBuilder extends AbstractRdfSourceOperationBuilder implements RdfSourceOperationBuilder {
-
-    private RdfStream tripleStream;
 
     /**
      * Constructor.
@@ -53,26 +39,7 @@ public class CreateRdfSourceOperationBuilder extends AbstractRdfSourceOperationB
 
     @Override
     public RdfSourceOperation build() {
-        // TODO Perform triples validation, relaxed SMTs, etc
-        return null;
+        return new CreateRdfSourceOperation(this.resourceId, validateIncomingRdf(tripleStream));
     }
 
-    @Override
-    public RdfSourceOperationBuilder triples(final RdfStream triples) {
-        this.tripleStream = triples;
-        return this;
-    }
-
-    @Override
-    public RdfSourceOperationBuilder triples(final InputStream contentStream, final String mimetype) {
-        final Model model = ModelFactory.createDefaultModel();
-        final Lang lang = contentTypeToLang(mimetype);
-        model.read(contentStream, this.resourceId, lang.getName().toUpperCase());
-        final List<Triple> triples = new ArrayList<>();
-        model.listStatements().forEachRemaining(p ->
-            triples.add(new Triple(p.getSubject().asNode(), p.getPredicate().asNode(), p.getObject().asNode()))
-        );
-        this.tripleStream = new DefaultRdfStream(this.resourceNode, triples.stream());
-        return this;
-    }
 }
