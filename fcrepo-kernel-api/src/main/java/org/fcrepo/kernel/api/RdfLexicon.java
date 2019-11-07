@@ -279,11 +279,25 @@ public final class RdfLexicon {
     public static final Set<Resource> INTERACTION_MODEL_RESOURCES = of(
             BASIC_CONTAINER, INDIRECT_CONTAINER, DIRECT_CONTAINER, NON_RDF_SOURCE);
 
-    public static final Set<String> INTERACTION_MODELS = INTERACTION_MODEL_RESOURCES.stream()
-            .map(m -> m.getURI().replace(LDP_NAMESPACE, "ldp:"))
+    /**
+     * String set of valid interaction models with full LDP URI.
+     */
+    public static final Set<String> INTERACTION_MODELS_FULL = INTERACTION_MODEL_RESOURCES.stream().map(Resource::getURI)
             .collect(Collectors.toSet());
 
-    private RdfLexicon() {
+    /**
+     * String set of valid interaction models with ldp: prefix.
+     */
+    public static final Set<String> INTERACTION_MODELS_SHORT = INTERACTION_MODELS_FULL.stream()
+            .map(m -> m.replace(LDP_NAMESPACE, "ldp:"))
+            .collect(Collectors.toSet());
 
+    /**
+     * This defines what we assume if you don't specify.
+     */
+    public static final Resource DEFAULT_INTERACTION_MODEL = BASIC_CONTAINER;
+
+    private RdfLexicon() {
+        // This constructor left intentionally blank.
     }
 }
