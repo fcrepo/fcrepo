@@ -15,21 +15,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.impl.services.functions;
+package org.fcrepo.kernel.impl.services;
 
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.fcrepo.kernel.api.RdfLexicon.DEFAULT_INTERACTION_MODEL;
 import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODELS_FULL;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import org.apache.jena.atlas.RuntimeIOException;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RiotException;
+import org.fcrepo.kernel.api.exception.MalformedRdfException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.RequestWithAclLinkHeaderException;
 import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
 
-import javax.ws.rs.core.Link;
-
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
-public class resourceServiceFunctions {
+public class AbstractService {
+
+
 
     /**
      * Utility to determine the correct interaction model from elements of a request.
@@ -40,7 +52,7 @@ public class resourceServiceFunctions {
      * @param isExternalContent Is there Link headers that define external content?
      * @return The determined or default interaction model.
      */
-    public static String determineInteractionModel(final List<String> linkTypes,
+    String determineInteractionModel(final List<String> linkTypes,
                                                    final boolean isRdfContentType, final boolean contentPresent,
                                                    final boolean isExternalContent) {
         final String interactionModel = linkTypes == null ? null : linkTypes.stream().filter(INTERACTION_MODELS_FULL::contains).findFirst()
@@ -62,8 +74,9 @@ public class resourceServiceFunctions {
      * @param links list of the link headers provided.
      * @throws RequestWithAclLinkHeaderException If we provide an rel="acl" link header.
      */
-    public static void checkAclLinkHeader(final List<String> links) throws RequestWithAclLinkHeaderException {
-        if (links != null && links.stream().anyMatch(l -> Link.valueOf(l).getRel().equals("acl"))) {
+    void checkAclLinkHeader(final List<String> links) throws RequestWithAclLinkHeaderException {
+        final Predicate matcher = Pattern.compile("rel=[\"']?acl[\"']?").asPredicate();
+        if (links != null && links.stream().anyMatch(matcher)) {
             throw new RequestWithAclLinkHeaderException(
                     "Unable to handle request with the specified LDP-RS as the ACL.");
         }
@@ -74,7 +87,7 @@ public class resourceServiceFunctions {
      *
      * @param externalPath the path.
      */
-    public static void hasRestrictedPath(final String externalPath) {
+    void hasRestrictedPath(final String externalPath) {
         final String[] pathSegments = externalPath.split("/");
         if (Arrays.stream(pathSegments).anyMatch(p -> p.startsWith("fedora:"))) {
             throw new ServerManagedTypeException("Path cannot contain a fedora: prefixed segment.");
@@ -82,9 +95,37 @@ public class resourceServiceFunctions {
     }
 
     /**
-     * Private constructor.
+     * Parse the request body as a Model.
+     *
+     * @param requestBodyStream rdf request body
+     * @param contentType content type of body
+     * @param fedoraId the fedora resource identifier
+     *
+     * @return Model containing triples from request body
+     *
+     * @throws MalformedRdfException in case rdf cannot be parsed
      */
-    private resourceServiceFunctions() {
-        // This function left intentionally blank.
+    Model parseBodyAsModel(final InputStream requestBodyStream,
+                                   final String contentType, final String fedoraId) throws MalformedRdfException {
+        if (requestBodyStream == null) {
+            return null;
+        }
+
+        final Lang format = contentTypeToLang(contentType);
+        final Model inputModel;
+        try {
+            inputModel = createDefaultModel();
+            inputModel.read(requestBodyStream, fedoraId, format.getName().toUpperCase());
+            return inputModel;
+        } catch (final RiotException e) {
+            throw new MalformedRdfException("RDF was not parsable: " + e.getMessage(), e);
+
+        } catch (final RuntimeIOException e) {
+            if (e.getCause() instanceof JsonParseException) {
+                throw new MalformedRdfException(e.getCause());
+            }
+            throw new RepositoryRuntimeException(e);
+        }
     }
+
 }

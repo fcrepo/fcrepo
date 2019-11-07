@@ -19,9 +19,10 @@ package org.fcrepo.kernel.impl.services;
 
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
+// TODO: Keep for eventually injecting implementation classes into services.
+//import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
 import org.fcrepo.kernel.api.exception.ItemNotFoundException;
@@ -29,6 +30,7 @@ import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
+import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.services.functions.UniqueValueSupplier;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
@@ -86,6 +88,9 @@ public class CreateResourceServiceImplTest {
 
     @Before
     public void setUp() {
+        // TODO: replace mocked RdfSourceOperationFactory with an actual implementation, once its complete.
+        //rdfSourceOperationFactory = new RdfSourceOperationFactoryImpl();
+        //setField(createResourceService, "rdfSourceOperationFactory", rdfSourceOperationFactory);
         when(psManager.getSession(ArgumentMatchers.any())).thenReturn(psSession);
         when(minter.get()).thenReturn(UUID.randomUUID().toString());
         when(rdfSourceOperationFactory.createBuilder(ArgumentMatchers.anyString(), ArgumentMatchers.anyString()))
@@ -119,8 +124,7 @@ public class CreateResourceServiceImplTest {
         when(resourceHeaders.getTypes()).thenReturn(basicContainerTypes);
         createResourceService.perform(txId, fedoraId, null, null, false, null,
                 null, null, null);
-        verify(psSession).persist(eq(operation));
-        verify(builder).build();
+        verify(psSession).persist(ArgumentMatchers.any(ResourceOperation.class));
     }
 
     @Test
@@ -131,8 +135,7 @@ public class CreateResourceServiceImplTest {
         when(resourceHeaders.getTypes()).thenReturn(basicContainerTypes);
         createResourceService.perform(txId, fedoraId, "testSlug", null, false, null,
                 null, null, null);
-        verify(psSession).persist(eq(operation));
-        verify(builder).build();
+        verify(psSession).persist(ArgumentMatchers.any(ResourceOperation.class));
     }
 
     @Test
@@ -144,7 +147,6 @@ public class CreateResourceServiceImplTest {
         when(resourceHeaders.getTypes()).thenReturn(basicContainerTypes);
         createResourceService.perform(txId, fedoraId, "testSlug", null, false, null,
                 null, null, null);
-        verify(psSession).persist(eq(operation));
-        verify(builder).build();
+        verify(psSession).persist(ArgumentMatchers.any(ResourceOperation.class));
     }
 }
