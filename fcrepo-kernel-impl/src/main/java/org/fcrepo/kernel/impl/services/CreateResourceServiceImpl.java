@@ -19,9 +19,6 @@ package org.fcrepo.kernel.impl.services;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_PAIRTREE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
-import static org.fcrepo.kernel.impl.services.functions.resourceServiceFunctions.checkAclLinkHeader;
-import static org.fcrepo.kernel.impl.services.functions.resourceServiceFunctions.determineInteractionModel;
-import static org.fcrepo.kernel.impl.services.functions.resourceServiceFunctions.hasRestrictedPath;
 
 import org.fcrepo.kernel.api.ExternalContent;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
@@ -45,7 +42,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CreateResourceServiceImpl implements CreateResourceService {
+public class CreateResourceServiceImpl extends AbstractService implements CreateResourceService {
 
     @Inject
     private PersistentStorageSessionManager psManager;
@@ -64,12 +61,11 @@ public class CreateResourceServiceImpl implements CreateResourceService {
         final PersistentStorageSession pSession = this.psManager.getSession(txId);
         final ResourceHeaders parent;
         try {
+            // Make sure the parent exists.
             parent = pSession.getHeaders(fedoraId, null);
         } catch (PersistentItemNotFoundException exc) {
             throw new ItemNotFoundException(String.format("Item %s was not found", fedoraId), exc);
         }
-
-        // TODO: Verify permissions Write or Append permissions on parent.
 
         final boolean isParentBinary = parent.getTypes().stream().anyMatch(t -> t.equalsIgnoreCase(NON_RDF_SOURCE.toString()));
         if (isParentBinary) {
@@ -108,7 +104,6 @@ public class CreateResourceServiceImpl implements CreateResourceService {
             // TODO: Implement the NonRdfSourceOperationFactory
             createOp = null;
         } else {
-            // TODO: Verify no server managed triples are in the requestBody.
             createOp = rdfSourceOperationFactory.createBuilder(fullPath, interactionModel)
                     .triples(requestBody, contentType).build();
         }
