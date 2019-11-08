@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
+import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
 
@@ -55,6 +56,24 @@ public class UpdateNonRdfSourceOperationBuilder implements NonRdfSourceOperation
 
     @Override
     public NonRdfSourceOperationBuilder contentSize(final long size) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public NonRdfSourceOperationBuilder content(final InputStream content) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public NonRdfSourceOperationBuilder externalContentURI(final URI externalUri) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public NonRdfSourceOperationBuilder externalContentHandling(final String externalType) {
         // TODO Auto-generated method stub
         return null;
     }

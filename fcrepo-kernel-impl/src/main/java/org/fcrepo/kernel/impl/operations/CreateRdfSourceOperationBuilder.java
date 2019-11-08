@@ -44,12 +44,12 @@ public class CreateRdfSourceOperationBuilder implements RdfSourceOperationBuilde
     /**
      * Holds the stream of user's triples.
      */
-    RdfStream tripleStream;
+    private RdfStream tripleStream;
 
     /**
      * String of the resource ID.
      */
-    String resourceId;
+    private String resourceId;
 
     /**
      * Constructor.

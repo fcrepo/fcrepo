@@ -45,14 +45,13 @@ public class NonRdfSourceOperationFactoryImpl implements NonRdfSourceOperationFa
 
     @Override
     public NonRdfSourceOperationBuilder createExternalBinaryBuilder(final String rescId, final String handling, final URI contentUri) {
-        // TODO Auto-generated method stub
-        return null;
+        return new CreateNonRdfSourceOperationBuilder(rescId).externalContentURI(contentUri)
+                .externalContentHandling(handling);
     }
 
     @Override
     public NonRdfSourceOperationBuilder createInternalBinaryBuilder(final String rescId, final InputStream contentStream) {
-        // TODO Auto-generated method stub
-        return null;
+        return new CreateNonRdfSourceOperationBuilder(rescId).content(contentStream);
     }
 
 }

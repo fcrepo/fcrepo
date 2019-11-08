@@ -21,6 +21,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CREATED;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_PAIRTREE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
+import static org.fcrepo.kernel.impl.services.functions.FedoraUtils.addToIdentifier;
 
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.graph.Triple;
@@ -31,6 +32,7 @@ import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
 import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
+import org.fcrepo.kernel.api.operations.NonRdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
@@ -75,15 +77,14 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
         final PersistentStorageSession pSession = this.psManager.getSession(txId);
         final String fullPath = doInternalPerform(pSession, fedoraId, slug, linkHeaders);
         final Collection<URI> uriDigests = digest.stream().map(URI::create).collect(Collectors.toCollection(HashSet::new));
-        final ResourceOperation createOp;
+        final NonRdfSourceOperationBuilder builder;
         if (externalContent == null) {
-            createOp = nonRdfSourceOperationFactory.createInternalBinaryBuilder(fullPath,
-                requestBody).contentDigests(uriDigests).build();
+            builder = nonRdfSourceOperationFactory.createInternalBinaryBuilder(fullPath, requestBody);
         } else {
-            createOp = nonRdfSourceOperationFactory.createExternalBinaryBuilder(fullPath, externalContent.getHandling(),
-                    URI.create(externalContent.getURL())).contentDigests(uriDigests).mimeType(contentType).build();
+            builder = nonRdfSourceOperationFactory.createExternalBinaryBuilder(fullPath, externalContent.getHandling(),
+                    URI.create(externalContent.getURL()));
         }
-
+        final ResourceOperation createOp = builder.contentDigests(uriDigests).mimeType(contentType).build();
         // Set server managed is only on AbstractResourceOperation.
         ((AbstractResourceOperation)createOp).setServerManagedProperties(getServerManagedStream(fullPath));
 
@@ -137,6 +138,15 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
         // );
     }
 
+    /**
+     * Do some common checks for RdfSource and NonRdfSource create requests.
+     *
+     * @param pSession a persistence session.
+     * @param fedoraId Id of parent.
+     * @param slug Id of the slug.
+     * @param linkHeaders link headers.
+     * @return the new full path identifier.
+     */
     private String doInternalPerform(final PersistentStorageSession pSession, final String fedoraId,
                                                        final String slug, final List<String> linkHeaders) {
         checkAclLinkHeader(linkHeaders);
@@ -173,14 +183,12 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
                 finalSlug = slug;
             }
         }
-        final String fullPath = fedoraId + (fedoraId.endsWith("/") ? "" : "/") + finalSlug;
+        final String fullPath = addToIdentifier(fedoraId, finalSlug);
 
         hasRestrictedPath(fullPath);
 
         return fullPath;
-
     }
-
 
     /**
      * Get the rel="type" link headers from a list of them.
