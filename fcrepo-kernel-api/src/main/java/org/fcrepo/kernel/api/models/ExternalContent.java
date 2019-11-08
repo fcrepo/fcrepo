@@ -19,6 +19,10 @@ package org.fcrepo.kernel.api.models;
 
 import java.io.InputStream;
 
+/**
+ * Interface for the ExternalContent information class.
+ * @author bseeger
+ */
 public interface ExternalContent {
 
     String PROXY = "proxy";
