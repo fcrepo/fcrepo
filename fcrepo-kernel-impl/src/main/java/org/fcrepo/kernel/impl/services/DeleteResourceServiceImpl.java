@@ -66,7 +66,7 @@ public class DeleteResourceServiceImpl implements DeleteResourceService {
     public void perform(final Transaction tx, final FedoraResource fedoraResource) {
         final String fedoraResourceId = fedoraResource.getId();
 
-        if( fedoraResource instanceof NonRdfSourceDescription){
+        if (fedoraResource instanceof NonRdfSourceDescription) {
             throw new RepositoryRuntimeException(
                     format("A NonRdfSourceDescription cannot be deleted independently of the NonRDFSource:  %s",
                             fedoraResourceId));

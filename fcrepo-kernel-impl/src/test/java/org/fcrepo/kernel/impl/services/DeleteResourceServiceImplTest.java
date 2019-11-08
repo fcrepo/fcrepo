@@ -33,6 +33,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -86,6 +87,9 @@ public class DeleteResourceServiceImplTest {
     @Mock
     private NonRdfSourceDescription binaryDesc;
 
+    @Captor
+    private ArgumentCaptor<DeleteResourceOperation> operationCaptor;
+
     @InjectMocks
     private DeleteResourceServiceImpl service;
 
@@ -111,9 +115,8 @@ public class DeleteResourceServiceImplTest {
 
         when(containmentIndex.getContainedBy(eq(tx), eq(container))).thenReturn(Stream.<String>builder().build());
 
-        final ArgumentCaptor<DeleteResourceOperation> containerOperationCaptor = ArgumentCaptor.forClass(DeleteResourceOperation.class);
         service.perform(tx, container);
-        verifyResourceOperation(RESOURCE_ID, containerOperationCaptor, pSession);
+        verifyResourceOperation(RESOURCE_ID, operationCaptor, pSession);
         verify(containmentIndex).getContainedBy(eq(tx), eq(container));
     }
 
@@ -132,11 +135,10 @@ public class DeleteResourceServiceImplTest {
                                                                                       .add(CHILD_RESOURCE_ID).build());
         when(container.isAcl()).thenReturn(false);
         when(container.getAcl()).thenReturn(null);
-        final ArgumentCaptor<DeleteResourceOperation> captor = ArgumentCaptor.forClass(DeleteResourceOperation.class);
         service.perform(tx, container);
 
-        verify(pSession, times(2)).persist(captor.capture());
-        final List<DeleteResourceOperation> operations = captor.getAllValues();
+        verify(pSession, times(2)).persist(operationCaptor.capture());
+        final List<DeleteResourceOperation> operations = operationCaptor.getAllValues();
         assertEquals(2, operations.size());
 
         assertEquals(CHILD_RESOURCE_ID, operations.get(0).getResourceId());
@@ -157,9 +159,8 @@ public class DeleteResourceServiceImplTest {
     public void testAclDelete() throws Exception {
         when(acl.getId()).thenReturn(RESOURCE_ACL_ID);
         when(acl.isAcl()).thenReturn(true);
-        final ArgumentCaptor<DeleteResourceOperation> aclCaptor = ArgumentCaptor.forClass(DeleteResourceOperation.class);
         service.perform(tx, acl);
-        verifyResourceOperation(RESOURCE_ACL_ID, aclCaptor, pSession);
+        verifyResourceOperation(RESOURCE_ACL_ID, operationCaptor, pSession);
     }
 
     @Test(expected = RepositoryRuntimeException.class)
@@ -170,7 +171,6 @@ public class DeleteResourceServiceImplTest {
 
     @Test
     public void testBinaryDeleteWithAcl() throws Exception {
-        final ArgumentCaptor<DeleteResourceOperation> captor = ArgumentCaptor.forClass(DeleteResourceOperation.class);
         when(binary.getId()).thenReturn(RESOURCE_ID);
         when(binary.isAcl()).thenReturn(false);
         when(binary.getDescribedResource()).thenReturn(binaryDesc);
@@ -180,8 +180,8 @@ public class DeleteResourceServiceImplTest {
 
         service.perform(tx, binary);
 
-        verify(pSession, times(3)).persist(captor.capture());
-        final List<DeleteResourceOperation> operations = captor.getAllValues();
+        verify(pSession, times(3)).persist(operationCaptor.capture());
+        final List<DeleteResourceOperation> operations = operationCaptor.getAllValues();
         assertEquals(3, operations.size());
 
         assertEquals(RESOURCE_DESCRIPTION_ID, operations.get(0).getResourceId());
