@@ -21,8 +21,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
-// TODO: Keep for eventually injecting implementation classes into services.
-//import static org.springframework.test.util.ReflectionTestUtils.setField;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
 import org.fcrepo.kernel.api.exception.ItemNotFoundException;
@@ -32,6 +31,7 @@ import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.services.functions.UniqueValueSupplier;
+import org.fcrepo.kernel.impl.operations.RdfSourceOperationFactoryImpl;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
@@ -88,15 +88,10 @@ public class CreateResourceServiceImplTest {
 
     @Before
     public void setUp() {
-        // TODO: replace mocked RdfSourceOperationFactory with an actual implementation, once its complete.
-        //rdfSourceOperationFactory = new RdfSourceOperationFactoryImpl();
-        //setField(createResourceService, "rdfSourceOperationFactory", rdfSourceOperationFactory);
+        rdfSourceOperationFactory = new RdfSourceOperationFactoryImpl();
+        setField(createResourceService, "rdfSourceOperationFactory", rdfSourceOperationFactory);
         when(psManager.getSession(ArgumentMatchers.any())).thenReturn(psSession);
         when(minter.get()).thenReturn(UUID.randomUUID().toString());
-        when(rdfSourceOperationFactory.createBuilder(ArgumentMatchers.anyString(), ArgumentMatchers.anyString()))
-                .thenReturn(builder);
-        when(builder.triples(ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(builder);
-        when(builder.build()).thenReturn(operation);
     }
 
     @Test(expected = ItemNotFoundException.class)
