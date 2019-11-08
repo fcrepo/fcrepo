@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
+import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 
@@ -25,7 +26,9 @@ import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
  *
  * @author bbpennel
  */
-public class CreateNonRdfSourceOperation extends AbstractNonRdfSourceOperation {
+public class CreateNonRdfSourceOperation extends AbstractNonRdfSourceOperation implements CreateResourceOperation {
+
+    private String interactionModel;
 
     protected CreateNonRdfSourceOperation(final String rescId) {
         super(rescId);
@@ -34,5 +37,15 @@ public class CreateNonRdfSourceOperation extends AbstractNonRdfSourceOperation {
     @Override
     public ResourceOperationType getType() {
         return CREATE;
+    }
+
+    @Override
+    public String getInteractionModel() {
+        return interactionModel;
+    }
+
+    @Override
+    public void setInteractionModel(final String interactionModel) {
+        this.interactionModel = interactionModel;
     }
 }

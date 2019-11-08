@@ -32,7 +32,7 @@ public abstract class AbstractNonRdfSourceOperation extends AbstractResourceOper
         NonRdfSourceOperation {
 
     /**
-     * @param rescId
+     * @param rescId The internal Fedora ID.
      */
     protected AbstractNonRdfSourceOperation(final String rescId) {
         super(rescId);
