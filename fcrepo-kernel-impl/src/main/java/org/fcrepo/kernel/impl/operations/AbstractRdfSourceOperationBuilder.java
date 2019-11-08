@@ -18,9 +18,6 @@
 package org.fcrepo.kernel.impl.operations;
 
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
-import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
-import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
-import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
 
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -29,18 +26,14 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.riot.Lang;
 import org.fcrepo.kernel.api.RdfStream;
-import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 abstract public class AbstractRdfSourceOperationBuilder implements RdfSourceOperationBuilder {
-
-    private static String rdfType = RDF_NAMESPACE + "type";
 
     /**
      * Holds the stream of user's triples.
@@ -93,38 +86,5 @@ abstract public class AbstractRdfSourceOperationBuilder implements RdfSourceOper
             this.tripleStream = null;
         }
         return this;
-    }
-
-    /**
-     * Perform validation on user RDF.
-     * @param stream the incoming RDF stream.
-     *
-     * @return The same RDF stream.
-     * @throws MalformedRdfException on server managed triple or restricted rdf:type
-     */
-    RdfStream validateIncomingRdf(final RdfStream stream) {
-        if (stream == null) {
-            return null;
-        }
-        final List<Triple> triples = stream.collect(Collectors.toList());
-        final Node topic = stream.topic();
-        checkForSmtsLdpTypes(new DefaultRdfStream(topic, triples.stream()));
-        return new DefaultRdfStream(topic, triples.stream());
-    }
-
-    /**
-     * Looks through an RdfStream for rdf:types in the LDP namespace or server managed predicates.
-     *
-     * @param stream The RDF stream to check.
-     */
-    void checkForSmtsLdpTypes(final RdfStream stream) {
-        if (stream.anyMatch(p ->
-                // predicate is rdf:type and object starts with LDP namespace.
-                (p.getPredicate().hasURI(rdfType) && p.getObject().toString().startsWith(LDP_NAMESPACE)) ||
-                // predicate is server managed.
-                isManagedPredicate.test(ResourceFactory.createProperty(p.getPredicate().toString())))
-        ) {
-            throw new MalformedRdfException("RDF contains a server managed triple or restricted rdf:type");
-        }
     }
 }

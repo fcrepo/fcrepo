@@ -21,11 +21,15 @@ import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.fcrepo.kernel.api.RdfLexicon.DEFAULT_INTERACTION_MODEL;
 import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODELS_FULL;
+import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import org.apache.jena.atlas.RuntimeIOException;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RiotException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
@@ -41,7 +45,7 @@ import java.util.regex.Pattern;
 
 public class AbstractService {
 
-
+    private static String rdfType = RDF_NAMESPACE + "type";
 
     /**
      * Utility to determine the correct interaction model from elements of a request.
@@ -96,6 +100,7 @@ public class AbstractService {
 
     /**
      * Parse the request body as a Model.
+     * TODO: Replace this with HttpRdfService.parseBodyAsModel once https://github.com/fcrepo4/fcrepo4/pull/1575 lands.
      *
      * @param requestBodyStream rdf request body
      * @param contentType content type of body
@@ -128,4 +133,19 @@ public class AbstractService {
         }
     }
 
+    /**
+     * Looks through an RdfStream for rdf:types in the LDP namespace or server managed predicates.
+     *
+     * @param model The RDF model.
+     */
+    void checkForSmtsLdpTypes(final Model model) {
+        final StmtIterator it = model.listStatements();
+        while (it.hasNext()) {
+            final Statement st = it.next();
+            if (st.getPredicate().hasURI(rdfType) && st.getObject().isURIResource() &&
+                    st.getObject().toString().startsWith(LDP_NAMESPACE)) {
+                throw new MalformedRdfException("RDF contains a server managed triple or restricted rdf:type");
+            }
+        }
+    }
 }

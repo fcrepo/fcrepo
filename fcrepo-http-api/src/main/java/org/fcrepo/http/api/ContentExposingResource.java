@@ -55,9 +55,9 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
-import static org.fcrepo.kernel.api.ExternalContent.COPY;
-import static org.fcrepo.kernel.api.ExternalContent.PROXY;
-import static org.fcrepo.kernel.api.ExternalContent.REDIRECT;
+import static org.fcrepo.kernel.api.models.ExternalContent.COPY;
+import static org.fcrepo.kernel.api.models.ExternalContent.PROXY;
+import static org.fcrepo.kernel.api.models.ExternalContent.REDIRECT;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_DIRECT_CONTAINER;
@@ -915,10 +915,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
     }
 
-    protected static MediaType getSimpleContentType(final MediaType requestContentType) {
+    protected static String getSimpleContentType(final MediaType requestContentType) {
         return requestContentType != null ?
-                new MediaType(requestContentType.getType(), requestContentType.getSubtype())
-                : APPLICATION_OCTET_STREAM_TYPE;
+                requestContentType.getType() + "/" + requestContentType.getSubtype()
+                : APPLICATION_OCTET_STREAM_TYPE.toString();
     }
 
     protected static boolean isRdfContentType(final String contentTypeString) {

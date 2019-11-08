@@ -19,12 +19,16 @@ package org.fcrepo.kernel.impl.services;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_PAIRTREE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
 
-import org.fcrepo.kernel.api.ExternalContent;
+import org.apache.jena.rdf.model.Model;
+import org.fcrepo.kernel.api.models.ExternalContent;
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
 import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
+import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.services.CreateResourceService;
@@ -39,6 +43,8 @@ import javax.ws.rs.core.Link;
 
 import java.io.InputStream;
 import java.net.URI;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -51,12 +57,62 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
     private RdfSourceOperationFactory rdfSourceOperationFactory;
 
     @Inject
+    private NonRdfSourceOperationFactory nonRdfSourceOperationFactory;
+
+    @Inject
     private UniqueValueSupplier minter;
+
+    /**
+     * Store the full identifier for this resource.
+     */
+    private String fullId;
 
     @Override
     public void perform(final String txId, final String fedoraId, final String slug, final String contentType,
-                        final boolean isRdfContentType, final List<String> linkHeaders, final String digest,
+                        final List<String> linkHeaders, final Collection<String> digest,
                         final InputStream requestBody, final ExternalContent externalContent) {
+
+        final PersistentStorageSession pSession = doInternalPerform(txId, fedoraId, slug, linkHeaders);
+        final Collection<URI> uriDigests = digest.stream().map(URI::create).collect(Collectors.toCollection(HashSet::new));
+        final ResourceOperation createOp;
+        if (externalContent == null) {
+            createOp = nonRdfSourceOperationFactory.createInternalBinaryBuilder(this.fullId,
+                requestBody).contentDigests(uriDigests).build();
+        } else {
+            createOp = nonRdfSourceOperationFactory.createExternalBinaryBuilder(this.fullId, externalContent.getHandling(),
+                    URI.create(externalContent.getURL())).contentDigests(uriDigests).mimeType(contentType).build();
+        }
+
+        try {
+            pSession.persist(createOp);
+        } catch (PersistentStorageException exc) {
+            throw new RepositoryRuntimeException(String.format("failed to create resource %s", fedoraId), exc);
+        }
+
+    }
+
+    @Override
+    public void perform(final String txId, final String fedoraId, final String slug, final String contentType,
+                        final List<String> linkHeaders, final Model model) {
+        final PersistentStorageSession pSession = doInternalPerform(txId, fedoraId, slug, linkHeaders);
+
+        final String interactionModel = determineInteractionModel(getTypes(linkHeaders), true,
+                model != null, false);
+
+        final RdfStream stream = fromModel(model.getResource(fedoraId).asNode(), model);
+
+        final ResourceOperation createOp = rdfSourceOperationFactory.createBuilder(this.fullId, interactionModel)
+                    .triples(stream).build();
+        try {
+            pSession.persist(createOp);
+        } catch (PersistentStorageException exc) {
+            throw new RepositoryRuntimeException(String.format("failed to create resource %s", fedoraId), exc);
+        }
+
+    }
+
+    private PersistentStorageSession doInternalPerform(final String txId, final String fedoraId,
+                                                       final String slug, final List<String> linkHeaders) {
         checkAclLinkHeader(linkHeaders);
         final PersistentStorageSession pSession = this.psManager.getSession(txId);
         final ResourceHeaders parent;
@@ -95,24 +151,11 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
 
         hasRestrictedPath(fullPath);
 
-        final String interactionModel = determineInteractionModel(getTypes(linkHeaders), isRdfContentType,
-                requestBody != null, externalContent != null);
+        this.fullId = fullPath;
 
-        final ResourceOperation createOp;
-
-        if (interactionModel.equals(NON_RDF_SOURCE.toString())) {
-            // TODO: Implement the NonRdfSourceOperationFactory
-            createOp = null;
-        } else {
-            createOp = rdfSourceOperationFactory.createBuilder(fullPath, interactionModel)
-                    .triples(requestBody, contentType).build();
-        }
-        try {
-            pSession.persist(createOp);
-        } catch (PersistentStorageException exc) {
-            throw new RepositoryRuntimeException(String.format("failed to create resource %s", fedoraId), exc);
-        }
+        return pSession;
     }
+
 
     /**
      * Get the rel="type" link headers from a list of them.

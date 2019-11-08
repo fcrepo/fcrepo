@@ -20,7 +20,6 @@ package org.fcrepo.kernel.impl.operations;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 
 import org.fcrepo.kernel.api.RdfStream;
-import org.fcrepo.kernel.api.operations.CreateResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
 
 
@@ -29,7 +28,7 @@ import org.fcrepo.kernel.api.operations.ResourceOperationType;
  *
  * @author bbpennel
  */
-public class CreateRdfSourceOperation extends AbstractRdfSourceOperation implements CreateResourceOperation {
+public class CreateRdfSourceOperation extends AbstractRdfSourceOperation {
 
     private String interactionModel;
 
@@ -42,13 +41,4 @@ public class CreateRdfSourceOperation extends AbstractRdfSourceOperation impleme
         return CREATE;
     }
 
-    @Override
-    public String getInteractionModel() {
-        return interactionModel;
-    }
-
-    @Override
-    public void setInteractionModel(final String interactionModel) {
-        this.interactionModel = interactionModel;
-    }
 }

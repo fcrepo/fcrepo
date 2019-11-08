@@ -23,6 +23,8 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
 import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
@@ -81,6 +83,8 @@ public class CreateResourceServiceImplTest {
 
     private final static Collection<String> basicContainerTypes;
 
+    private final Model model = ModelFactory.createDefaultModel();
+
     static {
         nonRdfSourceTypes = Collections.singleton(NON_RDF_SOURCE.toString());
         basicContainerTypes = Collections.singleton(BASIC_CONTAINER.toString());
@@ -98,8 +102,7 @@ public class CreateResourceServiceImplTest {
     public void testNoParent() throws Exception {
         final String fedoraId = UUID.randomUUID().toString();
         when(psSession.getHeaders(fedoraId, null)).thenThrow(PersistentItemNotFoundException.class);
-        createResourceService.perform(txId, fedoraId, null, null, false, null,
-                null, null, null);
+        createResourceService.perform(txId, fedoraId, null, null, null, model);
     }
 
     @Test(expected = CannotCreateResourceException.class)
@@ -107,8 +110,7 @@ public class CreateResourceServiceImplTest {
         final String fedoraId = UUID.randomUUID().toString();
         when(resourceHeaders.getTypes()).thenReturn(nonRdfSourceTypes);
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
-        createResourceService.perform(txId, fedoraId, null, null, false, null,
-                null, null, null);
+        createResourceService.perform(txId, fedoraId, null, null, null, model);
 
     }
 
@@ -117,8 +119,7 @@ public class CreateResourceServiceImplTest {
         final String fedoraId = UUID.randomUUID().toString();
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(resourceHeaders.getTypes()).thenReturn(basicContainerTypes);
-        createResourceService.perform(txId, fedoraId, null, null, false, null,
-                null, null, null);
+        createResourceService.perform(txId, fedoraId, null, null, null, model);
         verify(psSession).persist(ArgumentMatchers.any(ResourceOperation.class));
     }
 
@@ -128,8 +129,7 @@ public class CreateResourceServiceImplTest {
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(psSession.getHeaders(fedoraId + "/" + "testSlug", null)).thenReturn(resourceHeaders);
         when(resourceHeaders.getTypes()).thenReturn(basicContainerTypes);
-        createResourceService.perform(txId, fedoraId, "testSlug", null, false, null,
-                null, null, null);
+        createResourceService.perform(txId, fedoraId, "testSlug", null, null, model);
         verify(psSession).persist(ArgumentMatchers.any(ResourceOperation.class));
     }
 
@@ -140,8 +140,9 @@ public class CreateResourceServiceImplTest {
         when(psSession.getHeaders(fedoraId + "/" + "testSlug", null))
                 .thenThrow(PersistentItemNotFoundException.class);
         when(resourceHeaders.getTypes()).thenReturn(basicContainerTypes);
-        createResourceService.perform(txId, fedoraId, "testSlug", null, false, null,
-                null, null, null);
+        createResourceService.perform(txId, fedoraId, "testSlug", null, null, model);
         verify(psSession).persist(ArgumentMatchers.any(ResourceOperation.class));
     }
+
+    // TODO: Add more tests once CreateNonRdfSourceOperationBuilder is done.
 }
