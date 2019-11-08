@@ -17,23 +17,32 @@
  */
 package org.fcrepo.persistence.ocfl;
 
-import static java.util.UUID.randomUUID;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
-import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-
+import org.fcrepo.persistence.ocfl.impl.FedoraOCFLMapping;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(MockitoJUnitRunner.Silent.class)
+import static java.util.UUID.randomUUID;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+
+/**
+ * Test class for {@link org.fcrepo.persistence.ocfl.OCFLPersistentSessionManager}
+ *
+ * @author dbernstein
+ */
+@RunWith(MockitoJUnitRunner.class)
 public class OCFLPersistentSessionManagerTest {
 
-    private PersistentStorageSessionManager sessionFactory;
+    @InjectMocks
+    private OCFLPersistentSessionManager sessionFactory;
 
     private PersistentStorageSession readWriteSession;
 
@@ -49,16 +58,25 @@ public class OCFLPersistentSessionManagerTest {
     @Mock
     private ResourceOperation mockOperation;
 
+    @Mock
+    private FedoraToOCFLObjectIndex index;
+
+    @Mock
+    private FedoraOCFLMapping mapping;
+
     @Before
     public void setUp() {
-        this.sessionFactory = new OCFLPersistentSessionManager();
         readWriteSession = this.sessionFactory.getSession(testSessionId);
         readOnlySession = this.sessionFactory.getReadOnlySession();
     }
 
-    @Test
+    @Test(expected = UnsupportedOperationException.class)
     public void testNormalSession() throws Exception {
-
+        final String resourceId = "resource1";
+        final String ocflObjectId = "ocflObjectId";
+        when(mockOperation.getResourceId()).thenReturn(resourceId);
+        when(index.getMapping(eq(resourceId))).thenReturn(mapping);
+        when(mapping.getOcflObjectId()).thenReturn(ocflObjectId);
         readWriteSession.persist(mockOperation);
     }
 
