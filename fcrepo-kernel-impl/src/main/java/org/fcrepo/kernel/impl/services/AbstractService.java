@@ -19,6 +19,7 @@ package org.fcrepo.kernel.impl.services;
 
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_LASTMODIFIED;
 import static org.fcrepo.kernel.api.RdfLexicon.DEFAULT_INTERACTION_MODEL;
 import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODELS_FULL;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
@@ -27,17 +28,27 @@ import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import org.apache.jena.atlas.RuntimeIOException;
+import org.apache.jena.datatypes.RDFDatatype;
+import org.apache.jena.datatypes.xsd.XSDDatatype;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RiotException;
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.RequestWithAclLinkHeaderException;
 import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 
 import java.io.InputStream;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
@@ -45,7 +56,9 @@ import java.util.regex.Pattern;
 
 public class AbstractService {
 
-    private static String rdfType = RDF_NAMESPACE + "type";
+    static String rdfType = RDF_NAMESPACE + "type";
+
+    List<Triple> serverManagedProperties = new ArrayList<>();
 
     /**
      * Utility to determine the correct interaction model from elements of a request.
@@ -147,5 +160,53 @@ public class AbstractService {
                 throw new MalformedRdfException("RDF contains a server managed triple or restricted rdf:type");
             }
         }
+    }
+
+    /**
+     * Execute the populateServerManagedTriples and return the stream.
+     * @param fedoraId The current resource ID.
+     * @return The RDF stream of server managed properties.
+     */
+    RdfStream getServerManagedStream(final String fedoraId) {
+        populateServerManagedTriples(fedoraId);
+        return new DefaultRdfStream(asNode(fedoraId), serverManagedProperties.stream());
+    }
+
+    /**
+     * Populate server managed properties.
+     * Override in subclasses to add additional triples, always call super() first;
+     */
+    void populateServerManagedTriples(final String fedoraId) {
+        final ZonedDateTime now = ZonedDateTime.now();
+        serverManagedProperties.add(new Triple(
+                asNode(fedoraId),
+                asNode(FEDORA_LASTMODIFIED),
+                asLiteral(now.format(DateTimeFormatter.RFC_1123_DATE_TIME), XSDDatatype.XSDdateTime))
+        );
+        // TODO: get current user.
+        // this.serverManagedProperties.add(new Triple(
+        //      asNode(fedoraId),
+        //      asNode(FEDORA_LASTMODIFIEDBY),
+        //      asLiteral(user))
+        // );
+    }
+
+    /**
+     * Utility to turn a resource string to a Node.
+     * @param uri the resource.
+     * @return the resource as a Node.
+     */
+    Node asNode(final String uri) {
+        return ResourceFactory.createResource(uri).asNode();
+    }
+
+    /**
+     * Utility to turn a typed literal into a Node.
+     * @param literal The literal value.
+     * @param type The datatype.
+     * @return The literal as a node.
+     */
+    Node asLiteral(final String literal, final RDFDatatype type) {
+        return ResourceFactory.createTypedLiteral(literal, type).asNode();
     }
 }
