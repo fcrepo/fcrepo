@@ -39,7 +39,9 @@ public class CreateRdfSourceOperationBuilder extends AbstractRdfSourceOperationB
 
     @Override
     public RdfSourceOperation build() {
-        return new CreateRdfSourceOperation(this.resourceId, this.interactionModel, validateIncomingRdf(tripleStream));
+        final CreateRdfSourceOperation op = new CreateRdfSourceOperation(this.resourceId, validateIncomingRdf(tripleStream));
+        op.setInteractionModel(this.interactionModel);
+        return op;
     }
 
 }
