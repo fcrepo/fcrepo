@@ -15,27 +15,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.impl.operations;
+package org.fcrepo.kernel.impl.services.functions;
 
-import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
+public final class FedoraUtils {
 
-import org.fcrepo.kernel.api.RdfStream;
-import org.fcrepo.kernel.api.operations.ResourceOperationType;
-
-
-/**
- * Operation to create an RDF source.
- *
- * @author bbpennel
- */
-public class CreateRdfSourceOperation extends AbstractRdfSourceOperation {
-
-    protected CreateRdfSourceOperation(final String rescId, final RdfStream triples) {
-        super(rescId, triples);
+    /**
+     * Add a subpath to an existing identifier.
+     *
+     * @param oldId the old identifier
+     * @param newIdPart the new identifier part
+     * @return A combination of old and new.
+     */
+    public static String addToIdentifier(final String oldId, final String newIdPart) {
+        return oldId + (oldId.endsWith("/") ? "" : "/") + newIdPart;
     }
 
-    @Override
-    public ResourceOperationType getType() {
-        return CREATE;
+    /**
+     * Private Constructor.
+     */
+    private FedoraUtils() {
+        // This constructor left intentionally blank.
     }
 }
