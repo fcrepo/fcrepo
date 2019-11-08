@@ -17,8 +17,21 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
+import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
+
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.riot.Lang;
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -26,15 +39,25 @@ import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
  *
  * @author bbpennel
  */
-public class CreateRdfSourceOperationBuilder extends AbstractRdfSourceOperationBuilder implements RdfSourceOperationBuilder {
+public class CreateRdfSourceOperationBuilder implements RdfSourceOperationBuilder {
+
+    /**
+     * Holds the stream of user's triples.
+     */
+    RdfStream tripleStream;
+
+    /**
+     * String of the resource ID.
+     */
+    String resourceId;
 
     /**
      * Constructor.
      *
      * @param resourceId the internal identifier.
      */
-    public CreateRdfSourceOperationBuilder(final String resourceId, final String interactionModel) {
-        super(resourceId, interactionModel);
+    public CreateRdfSourceOperationBuilder(final String resourceId) {
+        this.resourceId = resourceId;
     }
 
     @Override
@@ -42,4 +65,27 @@ public class CreateRdfSourceOperationBuilder extends AbstractRdfSourceOperationB
         return new CreateRdfSourceOperation(this.resourceId, tripleStream);
     }
 
+    @Override
+    public RdfSourceOperationBuilder triples(final RdfStream triples) {
+        this.tripleStream = triples;
+        return this;
+    }
+
+    @Override
+    public RdfSourceOperationBuilder triples(final InputStream contentStream, final String mimetype) {
+        if (contentStream != null && mimetype != null) {
+            final Model model = ModelFactory.createDefaultModel();
+            final Lang lang = contentTypeToLang(mimetype);
+            model.read(contentStream, this.resourceId, lang.getName().toUpperCase());
+            final List<Triple> triples = new ArrayList<>();
+            model.listStatements().forEachRemaining(p ->
+                    triples.add(new Triple(p.getSubject().asNode(), p.getPredicate().asNode(), p.getObject().asNode()))
+            );
+            this.tripleStream = new DefaultRdfStream(ResourceFactory.createResource(this.resourceId).asNode(),
+                    triples.stream());
+        } else {
+            this.tripleStream = null;
+        }
+        return this;
+    }
 }
