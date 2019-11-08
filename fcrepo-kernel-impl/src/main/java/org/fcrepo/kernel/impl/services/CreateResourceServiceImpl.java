@@ -17,10 +17,13 @@
  */
 package org.fcrepo.kernel.impl.services;
 
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_CREATED;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_PAIRTREE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
 
+import org.apache.jena.datatypes.xsd.XSDDatatype;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.fcrepo.kernel.api.models.ExternalContent;
 import org.fcrepo.kernel.api.RdfStream;
@@ -33,6 +36,7 @@ import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.services.CreateResourceService;
 import org.fcrepo.kernel.api.services.functions.UniqueValueSupplier;
+import org.fcrepo.kernel.impl.operations.AbstractResourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
@@ -43,6 +47,8 @@ import javax.ws.rs.core.Link;
 
 import java.io.InputStream;
 import java.net.URI;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -62,26 +68,24 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
     @Inject
     private UniqueValueSupplier minter;
 
-    /**
-     * Store the full identifier for this resource.
-     */
-    private String fullId;
-
     @Override
     public void perform(final String txId, final String fedoraId, final String slug, final String contentType,
                         final List<String> linkHeaders, final Collection<String> digest,
                         final InputStream requestBody, final ExternalContent externalContent) {
-
-        final PersistentStorageSession pSession = doInternalPerform(txId, fedoraId, slug, linkHeaders);
+        final PersistentStorageSession pSession = this.psManager.getSession(txId);
+        final String fullPath = doInternalPerform(pSession, fedoraId, slug, linkHeaders);
         final Collection<URI> uriDigests = digest.stream().map(URI::create).collect(Collectors.toCollection(HashSet::new));
         final ResourceOperation createOp;
         if (externalContent == null) {
-            createOp = nonRdfSourceOperationFactory.createInternalBinaryBuilder(this.fullId,
+            createOp = nonRdfSourceOperationFactory.createInternalBinaryBuilder(fullPath,
                 requestBody).contentDigests(uriDigests).build();
         } else {
-            createOp = nonRdfSourceOperationFactory.createExternalBinaryBuilder(this.fullId, externalContent.getHandling(),
+            createOp = nonRdfSourceOperationFactory.createExternalBinaryBuilder(fullPath, externalContent.getHandling(),
                     URI.create(externalContent.getURL())).contentDigests(uriDigests).mimeType(contentType).build();
         }
+
+        // Set server managed is only on AbstractResourceOperation.
+        ((AbstractResourceOperation)createOp).setServerManagedProperties(getServerManagedStream(fullPath));
 
         try {
             pSession.persist(createOp);
@@ -94,15 +98,20 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
     @Override
     public void perform(final String txId, final String fedoraId, final String slug, final String contentType,
                         final List<String> linkHeaders, final Model model) {
-        final PersistentStorageSession pSession = doInternalPerform(txId, fedoraId, slug, linkHeaders);
+        final PersistentStorageSession pSession = this.psManager.getSession(txId);
+        final String fullPath = doInternalPerform(pSession, fedoraId, slug, linkHeaders);
 
         final String interactionModel = determineInteractionModel(getTypes(linkHeaders), true,
                 model != null, false);
 
         final RdfStream stream = fromModel(model.getResource(fedoraId).asNode(), model);
 
-        final ResourceOperation createOp = rdfSourceOperationFactory.createBuilder(this.fullId, interactionModel)
+        final ResourceOperation createOp = rdfSourceOperationFactory.createBuilder(fullPath, interactionModel)
                     .triples(stream).build();
+
+        // Set server managed is only on AbstractResourceOperation.
+        ((AbstractResourceOperation)createOp).setServerManagedProperties(getServerManagedStream(fullPath));
+
         try {
             pSession.persist(createOp);
         } catch (PersistentStorageException exc) {
@@ -111,10 +120,27 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
 
     }
 
-    private PersistentStorageSession doInternalPerform(final String txId, final String fedoraId,
+    @Override
+    void populateServerManagedTriples(final String fedoraId) {
+        super.populateServerManagedTriples(fedoraId);
+        final ZonedDateTime now = ZonedDateTime.now();
+        serverManagedProperties.add(new Triple(
+                asNode(fedoraId),
+                asNode(FEDORA_CREATED),
+                asLiteral(now.format(DateTimeFormatter.RFC_1123_DATE_TIME), XSDDatatype.XSDdateTime))
+        );
+        // TODO: get current user.
+        // this.serverManagedProperties.add(new Triple(
+        //      asNode(fedoraId),
+        //      asNode(FEDORA_CREATEDBY),
+        //      asLiteral(user))
+        // );
+    }
+
+    private String doInternalPerform(final PersistentStorageSession pSession, final String fedoraId,
                                                        final String slug, final List<String> linkHeaders) {
         checkAclLinkHeader(linkHeaders);
-        final PersistentStorageSession pSession = this.psManager.getSession(txId);
+
         final ResourceHeaders parent;
         try {
             // Make sure the parent exists.
@@ -151,9 +177,8 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
 
         hasRestrictedPath(fullPath);
 
-        this.fullId = fullPath;
+        return fullPath;
 
-        return pSession;
     }
 
 
