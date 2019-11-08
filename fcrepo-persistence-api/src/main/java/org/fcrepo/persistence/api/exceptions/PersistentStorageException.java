@@ -39,4 +39,13 @@ public class PersistentStorageException extends Exception {
         super(msg);
     }
 
+    /**
+     * Constructor
+     *
+     * @param msg message
+     * @param e cause
+     */
+    public PersistentStorageException(final String msg, final Throwable e) {
+        super(msg, e);
+    }
 }

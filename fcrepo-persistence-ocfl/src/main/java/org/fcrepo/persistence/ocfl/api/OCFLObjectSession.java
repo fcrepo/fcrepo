@@ -20,6 +20,9 @@ package org.fcrepo.persistence.ocfl.api;
 
 import java.io.InputStream;
 
+import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+
 /**
  * A session for building and tracking the state of an OCFL object within a persistence session.
  *
@@ -32,15 +35,17 @@ public interface OCFLObjectSession {
      *
      * @param subpath path of the resource to write, relative to the OCFL object
      * @param stream stream of content to write
+     * @throws PersistentStorageException thrown if unable to persist content
      */
-    void write(String subpath, InputStream stream);
+    void write(String subpath, InputStream stream) throws PersistentStorageException;
 
     /**
      * Delete a file from this ocfl object.
      *
      * @param subpath path of the file relative to a version of an ocfl object
+     * @throws PersistentStorageException if unable to delete file
      */
-    void delete(String subpath);
+    void delete(String subpath) throws PersistentStorageException;
 
     /**
      * Read the state of the file at the specified subpath within the ocfl object as it exists within the current
@@ -48,8 +53,9 @@ public interface OCFLObjectSession {
      *
      * @param subpath path of the file relative to a version of an ocfl object
      * @return contents of the file as an InputStream.
+     * @throws PersistentItemNotFoundException if the file or object is not found
      */
-    InputStream read(String subpath);
+    InputStream read(String subpath) throws PersistentItemNotFoundException;
 
     /**
      * Read the state of the file at subpath from the specified version of the OCFL object.
@@ -57,8 +63,9 @@ public interface OCFLObjectSession {
      * @param subpath path relative to the object
      * @param version identifier of the version
      * @return the contents of the file from the specified version
+     * @throws PersistentItemNotFoundException if the file or object is not found
      */
-    InputStream read(String subpath, String version);
+    InputStream read(String subpath, String version) throws PersistentItemNotFoundException;
 
     /**
      * Verify that the change set in this session can be committed. A PersistentStorageException is thrown if there
@@ -71,7 +78,8 @@ public interface OCFLObjectSession {
      * Creates the OCFL object if it did not previous exist.
      *
      * @param commitOption option indicating where changes should be committed.
+     * @return identifier of the version committed
      */
-    void commit(CommitOption commitOption);
+    String commit(CommitOption commitOption);
 
 }
