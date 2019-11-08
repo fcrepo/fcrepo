@@ -44,7 +44,6 @@ import static javax.ws.rs.core.Variant.mediaTypes;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.jena.graph.NodeFactory.createURI;
-import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.rdf.model.ResourceFactory.createStatement;
@@ -89,7 +88,6 @@ import static org.fcrepo.kernel.api.RequiredRdfContext.SERVER_MANAGED;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import java.io.IOException;
@@ -126,7 +124,6 @@ import javax.ws.rs.core.Response;
 
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPut;
-import org.apache.jena.atlas.RuntimeIOException;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
@@ -134,9 +131,9 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.RiotException;
+import org.fcrepo.http.api.services.HttpRdfService;
 import org.fcrepo.http.commons.api.HttpHeaderInjector;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
 import org.fcrepo.http.commons.domain.MultiPrefer;
 import org.fcrepo.http.commons.domain.PreferTag;
@@ -241,6 +238,12 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     @Inject
     protected UpdatePropertiesService updatePropertiesService;
+
+    @Inject
+    protected HttpIdentifierConverter httpIdentifierConverter;
+
+    @Inject
+    protected HttpRdfService httpRdfService;
 
     private static final Predicate<Triple> IS_MANAGED_TYPE = t -> t.getPredicate().equals(type.asNode()) &&
             isManagedNamespace.test(t.getObject().getNameSpace());
@@ -974,7 +977,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                                              final InputStream requestBodyStream,
                                              final MediaType contentType,
                                              final RdfStream resourceTriples) throws MalformedRdfException {
-        final Model inputModel = parseBodyAsModel(requestBodyStream, contentType, resource);
+
+        final Model inputModel = httpRdfService.bodyToInternalModel(resource, requestBodyStream, contentType,
+                                                                    httpIdentifierConverter);
 
         ensureValidMemberRelation(inputModel);
 
@@ -983,34 +988,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         replacePropertiesService.replaceProperties(resource, inputModel, resourceTriples);
     }
 
-    /**
-     * Parse the request body as a Model.
-     *
-     * @param requestBodyStream rdf request body
-     * @param contentType content type of body
-     * @param resource the fedora resource
-     * @return Model containing triples from request body
-     * @throws MalformedRdfException in case rdf json cannot be parsed
-     */
-    private Model parseBodyAsModel(final InputStream requestBodyStream,
-            final MediaType contentType, final FedoraResource resource) throws MalformedRdfException {
-        final Lang format = contentTypeToLang(contentType.toString());
-
-        final Model inputModel;
-        try {
-            inputModel = createDefaultModel();
-            inputModel.read(requestBodyStream, getUri(resource).toString(), format.getName().toUpperCase());
-            return inputModel;
-        } catch (final RiotException e) {
-            throw new BadRequestException("RDF was not parsable: " + e.getMessage(), e);
-
-        } catch (final RuntimeIOException e) {
-            if (e.getCause() instanceof JsonParseException) {
-                throw new MalformedRdfException(e.getCause());
-            }
-            throw new RepositoryRuntimeException(e);
-        }
-    }
 
     /**
      * This method throws an exception if the arg model contains a triple with 'ldp:hasMemberRelation' as a predicate
