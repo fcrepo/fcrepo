@@ -17,9 +17,11 @@
  */
 package org.fcrepo.kernel.api.services;
 
-import org.fcrepo.kernel.api.ExternalContent;
+import org.apache.jena.rdf.model.Model;
+import org.fcrepo.kernel.api.models.ExternalContent;
 
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -30,19 +32,30 @@ import java.util.List;
 public interface CreateResourceService {
 
     /**
-     * Create a new resource.
+     * Create a new NonRdfSource resource.
      *
      * @param txId The transaction ID for the request.
      * @param fedoraId The internal identifier of the parent.
      * @param slug The Slug header or null if none.
      * @param contentType The content-type header or null if none.
-     * @param isRdfContentType Is the content-type of a known RDF type.
      * @param linkHeaders The original LINK headers or null if none.
      * @param digest The binary digest or null if none.
      * @param requestBody The request body or null if none.
      * @param externalContent The external content handler or null if none.
      */
     void perform(final String txId, final String fedoraId, final String slug, final String contentType,
-                 final boolean isRdfContentType, final List<String> linkHeaders, final String digest,
+                 final List<String> linkHeaders, final Collection<String> digest,
                  final InputStream requestBody, final ExternalContent externalContent);
+
+    /**
+     * Create a new RdfSource resource.
+     *
+     * @param txId The transaction ID for the request.
+     * @param fedoraId The internal identifier of the parent.
+     * @param slug The Slug header or null if none.
+     * @param linkHeaders The original LINK headers or null if none.
+     * @param model The request body RDF as a Model
+     */
+    void perform(final String txId, final String fedoraId, final String slug, final String contentType,
+                 final List<String> linkHeaders, final Model model);
 }

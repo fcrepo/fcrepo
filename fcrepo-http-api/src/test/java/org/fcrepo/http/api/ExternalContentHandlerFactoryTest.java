@@ -57,7 +57,7 @@ public class ExternalContentHandlerFactoryTest {
                 makeLinks("http://test.com"));
 
         assertEquals("http://test.com", handler.getURL());
-        assertEquals("text/plain", handler.getContentType().toString());
+        assertEquals("text/plain", handler.getContentType());
         assertEquals("proxy", handler.getHandling());
     }
 

@@ -21,13 +21,7 @@ package org.fcrepo.kernel.api;
  * @author bseeger
  */
 
-public final class ExternalContent {
-
-    public static final String PROXY = "proxy";
-
-    public static final String REDIRECT = "redirect";
-
-    public static final String COPY = "copy";
+public class ExternalContent {
 
     private ExternalContent() { }
 }
