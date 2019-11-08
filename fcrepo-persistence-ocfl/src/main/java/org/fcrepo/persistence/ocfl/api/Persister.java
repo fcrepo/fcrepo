@@ -37,7 +37,7 @@ public interface Persister<T extends ResourceOperation> {
 
     /**
      * The persistence handling for the given operation using the provided session and mapping.
-     * @param session The OCFL object session associated with the fedora resource
+     * @param session The session associated with the OCFL object
      * @param operation The operation and associated data need to perform the operation.
      * @param mapping The mapping information needed to perform the persistence operation
      */

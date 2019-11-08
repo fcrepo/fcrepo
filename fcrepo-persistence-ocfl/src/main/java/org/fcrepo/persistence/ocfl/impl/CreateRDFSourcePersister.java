@@ -32,7 +32,7 @@ import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
  */
 public class CreateRDFSourcePersister extends AbstractPersister<NonRdfSourceOperation> {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(CreateRDFSourcePersister.class);
+    private static final Logger log = LoggerFactory.getLogger(CreateRDFSourcePersister.class);
 
     /**
      * Constructor
@@ -44,6 +44,6 @@ public class CreateRDFSourcePersister extends AbstractPersister<NonRdfSourceOper
     @Override
     public void persist(final OCFLObjectSession session, final NonRdfSourceOperation operation,
                         final FedoraOCFLMapping mapping) {
-        LOGGER.warn("Persisting of {} not implemented yet!", operation.getClass());
+        log.warn("Persisting of {} not implemented yet!", operation.getClass());
     }
 }

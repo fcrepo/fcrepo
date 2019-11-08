@@ -18,7 +18,7 @@
 package org.fcrepo.persistence.ocfl.impl;
 
 /**
- * A data structure that linking parent fedora resource identifiers to its corresponding OCFL Object Id.
+ * A mapping that links the parent fedora resource to its corresponding OCFL object.
  *
  * @author dbernstein
  */
@@ -37,11 +37,7 @@ public class FedoraOCFLMapping {
     }
 
     /**
-     * Retrieve the parent fedora resource identifier associated with the OCFL Object Id.
-     * It is a "parent" identifier because it refers to the Archival Group identifier for
-     * the fedora resource associated with this mapping in the case that the resource was
-     * part of an Archival Group.  In the case of binary descriptive metadata, this identifer
-     * will correspond to "root" or "parent" of the resource.
+     * The id for the fedora resource which represents this ocfl object
      * @return the fedora resource identifier
      */
     public String getParentFedoraResourceId() {
