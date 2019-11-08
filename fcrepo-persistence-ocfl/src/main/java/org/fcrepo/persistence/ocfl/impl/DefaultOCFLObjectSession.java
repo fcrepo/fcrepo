@@ -29,8 +29,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.fcrepo.persistence.ocfl.api.CommitOption;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 
+import edu.wisc.library.ocfl.api.model.ObjectVersionId;
 import edu.wisc.library.ocfl.api.MutableOcflRepository;
-import edu.wisc.library.ocfl.api.model.ObjectId;
 
 /**
  * Default implementation of an OCFL object session, which stages changes to the
@@ -129,7 +129,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
     public InputStream read(final String subpath, final String version) {
         final AtomicReference<InputStream> contentRef = new AtomicReference<>();
 
-        ocflRepository.readObject(ObjectId.version(objectIdentifier, version), reader -> {
+        ocflRepository.readObject(ObjectVersionId.version(objectIdentifier, version), reader -> {
             contentRef.set(reader.getFile(subpath));
         });
 
