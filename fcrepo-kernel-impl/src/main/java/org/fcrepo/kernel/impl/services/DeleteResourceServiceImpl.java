@@ -74,7 +74,7 @@ public class DeleteResourceServiceImpl implements DeleteResourceService {
 
 
         try {
-            log.debug(format("deleting of %s", fedoraResourceId));
+            log.debug("deleting of {}", fedoraResourceId);
             final PersistentStorageSession pSession = this.psManager.getSession(tx.getId());
             deleteDepthFirst(tx, pSession, fedoraResource);
         } catch (final PersistentStorageException ex) {
@@ -101,10 +101,8 @@ public class DeleteResourceServiceImpl implements DeleteResourceService {
                     throw new RepositoryRuntimeException(format("failed to delete resource %s", fedoraId), ex);
                 }
             });
-        }
-
-        //delete described resource if binary
-        if (fedoraResource instanceof Binary) {
+        } else if (fedoraResource instanceof Binary) {
+            //delete described resource if binary
             delete(pSession, fedoraResource.getDescribedResource().getId());
         }
 
