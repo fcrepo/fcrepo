@@ -42,18 +42,33 @@ abstract public class AbstractRdfSourceOperationBuilder implements RdfSourceOper
 
     private static String rdfType = RDF_NAMESPACE + "type";
 
+    /**
+     * Holds the stream of user's triples.
+     */
     RdfStream tripleStream;
 
+    /**
+     * String of the resource ID.
+     */
     String resourceId;
 
+    /**
+     * String of the requested interaction model.
+     */
+    String interactionModel;
+
+    /**
+     * Node version of the resource ID.
+     */
     private Node resourceNode;
 
     /**
      * Constructor.
      * @param resourceId the internal identifier.
      */
-    AbstractRdfSourceOperationBuilder(final String resourceId) {
+    AbstractRdfSourceOperationBuilder(final String resourceId, final String interactionModel) {
         this.resourceId = resourceId;
+        this.interactionModel = interactionModel;
         this.resourceNode = ResourceFactory.createResource(this.resourceId).asNode();
     }
 
@@ -65,14 +80,18 @@ abstract public class AbstractRdfSourceOperationBuilder implements RdfSourceOper
 
     @Override
     public RdfSourceOperationBuilder triples(final InputStream contentStream, final String mimetype) {
-        final Model model = ModelFactory.createDefaultModel();
-        final Lang lang = contentTypeToLang(mimetype);
-        model.read(contentStream, this.resourceId, lang.getName().toUpperCase());
-        final List<Triple> triples = new ArrayList<>();
-        model.listStatements().forEachRemaining(p ->
-                triples.add(new Triple(p.getSubject().asNode(), p.getPredicate().asNode(), p.getObject().asNode()))
-        );
-        this.tripleStream = new DefaultRdfStream(this.resourceNode, triples.stream());
+        if (contentStream != null && mimetype != null) {
+            final Model model = ModelFactory.createDefaultModel();
+            final Lang lang = contentTypeToLang(mimetype);
+            model.read(contentStream, this.resourceId, lang.getName().toUpperCase());
+            final List<Triple> triples = new ArrayList<>();
+            model.listStatements().forEachRemaining(p ->
+                    triples.add(new Triple(p.getSubject().asNode(), p.getPredicate().asNode(), p.getObject().asNode()))
+            );
+            this.tripleStream = new DefaultRdfStream(this.resourceNode, triples.stream());
+        } else {
+            this.tripleStream = null;
+        }
         return this;
     }
 
@@ -84,6 +103,9 @@ abstract public class AbstractRdfSourceOperationBuilder implements RdfSourceOper
      * @throws MalformedRdfException on server managed triple or restricted rdf:type
      */
     RdfStream validateIncomingRdf(final RdfStream stream) {
+        if (stream == null) {
+            return null;
+        }
         final List<Triple> triples = stream.collect(Collectors.toList());
         final Node topic = stream.topic();
         checkForSmtsLdpTypes(new DefaultRdfStream(topic, triples.stream()));

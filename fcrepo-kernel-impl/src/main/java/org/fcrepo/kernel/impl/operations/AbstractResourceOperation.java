@@ -28,8 +28,14 @@ import org.fcrepo.kernel.api.operations.ResourceOperation;
  */
 public abstract class AbstractResourceOperation implements ResourceOperation {
 
+    /**
+     * The internal Fedora ID.
+     */
     private final String rescId;
 
+    /**
+     * The server managed triples.
+     */
     private RdfStream serverManagedProperties;
 
     protected AbstractResourceOperation(final String rescId) {

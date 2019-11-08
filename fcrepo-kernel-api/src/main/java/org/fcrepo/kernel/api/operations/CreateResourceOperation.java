@@ -15,31 +15,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fcrepo.kernel.impl.operations;
+package org.fcrepo.kernel.api.operations;
 
-import org.fcrepo.kernel.api.operations.RdfSourceOperation;
-import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
-
-
-/**
- * Builder for operations to create rdf sources
- *
- * @author bbpennel
- */
-public class CreateRdfSourceOperationBuilder extends AbstractRdfSourceOperationBuilder implements RdfSourceOperationBuilder {
+public interface CreateResourceOperation {
 
     /**
-     * Constructor.
-     *
-     * @param resourceId the internal identifier.
+     * Get the interaction model for this resource creation.
+     * @return the interaction model.
      */
-    public CreateRdfSourceOperationBuilder(final String resourceId, final String interactionModel) {
-        super(resourceId, interactionModel);
-    }
+    String getInteractionModel();
 
-    @Override
-    public RdfSourceOperation build() {
-        return new CreateRdfSourceOperation(this.resourceId, this.interactionModel, validateIncomingRdf(tripleStream));
-    }
+    /**
+     * Set the interaction model.
+     * @param interactionModel The interaction model for this operation.
+     */
+    void setInteractionModel(final String interactionModel);
 
 }
