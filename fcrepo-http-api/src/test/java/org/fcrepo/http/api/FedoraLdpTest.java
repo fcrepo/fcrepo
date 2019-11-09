@@ -1227,7 +1227,7 @@ public class FedoraLdpTest {
     @Test
     public void testGetSimpleContentType() {
         final MediaType mediaType = new MediaType("text", "plain", ImmutableMap.of("charset", "UTF-8"));
-        final MediaType sanitizedMediaType = getSimpleContentType(mediaType);
+        final MediaType sanitizedMediaType = MediaType.valueOf(getSimpleContentType(mediaType));
         assertEquals("text/plain", sanitizedMediaType.toString());
     }
 

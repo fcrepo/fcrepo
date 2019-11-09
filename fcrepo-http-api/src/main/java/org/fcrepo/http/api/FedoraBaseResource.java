@@ -22,6 +22,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Resource;
 // import org.apache.commons.lang3.StringUtils;
 import org.fcrepo.http.commons.AbstractResource;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.http.commons.api.rdf.HttpResourceConverter;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.TombstoneException;
@@ -70,6 +71,17 @@ abstract public class FedoraBaseResource extends AbstractResource {
         }
 
         return idTranslator;
+    }
+
+    protected HttpIdentifierConverter identifierConverter;
+
+    protected HttpIdentifierConverter identifierConverter() {
+        if (identifierConverter == null) {
+            identifierConverter = new HttpIdentifierConverter(
+                    uriInfo.getBaseUriBuilder().clone().path(FedoraLdp.class));
+        }
+
+        return identifierConverter;
     }
 
     /**

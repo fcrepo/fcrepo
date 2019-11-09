@@ -18,9 +18,7 @@
 package org.fcrepo.http.api;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
-import static org.fcrepo.kernel.api.ExternalContent.COPY;
-import static org.fcrepo.kernel.api.ExternalContent.REDIRECT;
-import static org.fcrepo.kernel.api.ExternalContent.PROXY;
+
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -34,12 +32,14 @@ import org.fcrepo.kernel.api.exception.ExternalContentAccessException;
 import org.fcrepo.kernel.api.exception.ExternalMessageBodyException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import javax.ws.rs.core.Link;
-import javax.ws.rs.core.MediaType;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Map;
+
+import org.fcrepo.kernel.api.models.ExternalContent;
 import org.slf4j.Logger;
 
 /**
@@ -50,7 +50,7 @@ import org.slf4j.Logger;
  * @author bseeger
  * @since 5/7/2018
  */
-public class ExternalContentHandler {
+public class ExternalContentHandler implements ExternalContent {
 
     private static final Logger LOGGER = getLogger(FedoraLdp.class);
 
@@ -60,7 +60,7 @@ public class ExternalContentHandler {
     private final Link link;
     private final String handling;
     private final String type;
-    private final MediaType contentType;
+    private final String contentType;
 
     /* link header for external content should look like this:
           Link: <http://example.org/some/content>;
@@ -82,61 +82,40 @@ public class ExternalContentHandler {
         // handling will be in the map, where as content type may not be
         handling = map.get(HANDLING).toLowerCase();
         type = map.get(EXT_CONTENT_TYPE) != null ? map.get(EXT_CONTENT_TYPE).toLowerCase() : null;
-        contentType = type != null ? MediaType.valueOf(type) : findContentType(getURL());
+        contentType = type != null ? type : findContentType(getURL());
     }
 
-    /**
-     * Returns the content type located in the link header.
-     * @return content type if in Link header, else null
-     */
-    public MediaType getContentType() {
+    @Override
+    public String getContentType() {
         return contentType;
     }
 
-    /**
-     * Retrieve handling information
-     * @return a String containing the type of handling requested ["proxy", "copy" or "redirect"]
-     */
+    @Override
     public String getHandling() {
         return handling;
     }
 
-    /**
-     * Retrieve url in link header
-     * @return a String of the URL that was in the Link header
-     */
+    @Override
     public String getURL() {
         return link != null ? link.getUri().toString() : null;
     }
 
-    /**
-     * Returns whether or not the handling parameter is "copy"
-     * @return boolean value representing whether or not the content handling is "copy"
-     */
+    @Override
     public boolean isCopy() {
         return handling != null && handling.equals(COPY);
     }
 
-    /**
-     * Returns whether or not the handling parameter is "redirect"
-     * @return boolean value representing whether or not the content handling is "redirect"
-     */
+    @Override
     public boolean isRedirect() {
         return handling != null && handling.equals(REDIRECT);
     }
 
-    /**
-     * Returns whether or not the handling parameter is "proxy"
-     * @return boolean value representing whether or not the content handling is "proxy"
-     */
+    @Override
     public boolean isProxy() {
         return handling != null && handling.equals(PROXY);
     }
 
-    /**
-     * Fetch the external content
-     * @return InputStream containing the external content
-     */
+    @Override
     public InputStream fetchExternalContent() {
 
         final URI uri = link.getUri();
@@ -181,15 +160,15 @@ public class ExternalContentHandler {
     /**
      * Find the content type for a remote resource
      * @param url of remote resource
-     * @return the content type reported by remote system or "application/octet-stream" if not supplied
+     * @return the mime-type reported by remote system or "application/octet-stream" if not supplied
      */
-    private MediaType findContentType(final String url) {
+    private String findContentType(final String url) {
         if (url == null) {
             return null;
         }
 
         if (url.startsWith("file")) {
-            return APPLICATION_OCTET_STREAM_TYPE;
+            return APPLICATION_OCTET_STREAM_TYPE.toString();
         } else if (url.startsWith("http")) {
             try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
                 final HttpHead httpHead = new HttpHead(url);
@@ -197,7 +176,7 @@ public class ExternalContentHandler {
                     if (response.getStatusLine().getStatusCode() == SC_OK) {
                         final Header contentType = response.getFirstHeader(CONTENT_TYPE);
                         if (contentType != null) {
-                            return MediaType.valueOf(contentType.getValue());
+                            return contentType.getValue();
                         }
                     }
                 }
@@ -208,6 +187,6 @@ public class ExternalContentHandler {
             }
         }
         LOGGER.debug("Defaulting to octet stream for media type");
-        return APPLICATION_OCTET_STREAM_TYPE;
+        return APPLICATION_OCTET_STREAM_TYPE.toString();
     }
 }

@@ -31,38 +31,75 @@ import org.fcrepo.kernel.api.operations.NonRdfSourceOperationBuilder;
  */
 public class CreateNonRdfSourceOperationBuilder implements NonRdfSourceOperationBuilder {
 
-    protected CreateNonRdfSourceOperationBuilder(final String rescId, final InputStream contentStream) {
+    /**
+     * The resource id.
+     */
+    private String resourceId;
 
+    private String mimeType;
+    private String filename;
+    private Collection<URI> digests;
+    private long contentSize;
+    private InputStream content;
+    private URI externalURI;
+    private String externalType;
+
+
+    protected CreateNonRdfSourceOperationBuilder(final String rescId) {
+        this.resourceId = rescId;
     }
 
     @Override
     public CreateNonRdfSourceOperationBuilder mimeType(final String mimetype) {
-        // TODO Auto-generated method stub
-        return null;
+        this.mimeType = mimetype;
+        return this;
     }
 
     @Override
     public CreateNonRdfSourceOperationBuilder filename(final String filename) {
-        // TODO Auto-generated method stub
-        return null;
+        this.filename = filename;
+        return this;
     }
 
     @Override
     public CreateNonRdfSourceOperationBuilder contentDigests(final Collection<URI> digests) {
-        // TODO Auto-generated method stub
-        return null;
+        this.digests = digests;
+        return this;
     }
 
     @Override
     public CreateNonRdfSourceOperationBuilder contentSize(final long size) {
-        // TODO Auto-generated method stub
-        return null;
+        this.contentSize = size;
+        return this;
+    }
+
+    @Override
+    public NonRdfSourceOperationBuilder content(final InputStream content) {
+        this.content = content;
+        return this;
+    }
+
+    @Override
+    public NonRdfSourceOperationBuilder externalContentURI(final URI externalUri) {
+        this.externalURI = externalUri;
+        return this;
+    }
+
+    @Override
+    public NonRdfSourceOperationBuilder externalContentHandling(final String externalType) {
+        this.externalType = externalType;
+        return this;
     }
 
     @Override
     public CreateNonRdfSourceOperation build() {
-        // TODO Auto-generated method stub
-        return null;
+        if (content == null && externalURI != null && externalType != null) {
+            return new CreateNonRdfSourceOperation(this.resourceId, this.externalURI, this.externalType,
+                    this.mimeType, this.filename, this.digests);
+        } else {
+            return new CreateNonRdfSourceOperation(this.resourceId, this.content, this.mimeType, this.contentSize,
+                    this.filename, this.digests);
+        }
     }
 
 }

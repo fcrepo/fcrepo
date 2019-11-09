@@ -31,8 +31,65 @@ import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 public abstract class AbstractNonRdfSourceOperation extends AbstractResourceOperation implements
         NonRdfSourceOperation {
 
+    private InputStream content;
+
+    private URI externalHandlingURI;
+
+    private String externalHandlingType;
+
+    private String mimeType;
+
+    private String filename;
+
+    private Collection<URI> digests;
+
+    private long contentSize;
+
     /**
-     * @param rescId
+     * Constructor for external content.
+     *
+     * @param rescId the internal identifier.
+     * @param externalContentURI the URI of the external content.
+     * @param externalHandling the type of external content handling (REDIRECT, PROXY)
+     * @param mimeType the mime-type of the content.
+     * @param filename the filename.
+     * @param digests the checksum digests.
+     */
+    protected AbstractNonRdfSourceOperation(final String rescId, final URI externalContentURI,
+                                            final String externalHandling, final String mimeType, final String filename,
+                                            final Collection<URI> digests) {
+        super(rescId);
+        this.externalHandlingURI = externalContentURI;
+        this.mimeType = mimeType;
+        this.externalHandlingType = externalHandling;
+        this.filename = filename;
+        this.digests = digests;
+    }
+
+    /**
+     * Constructor for internal binaries.
+     *
+     * @param rescId the internal identifier.
+     * @param content the stream of the content.
+     * @param mimeType the mime-type of the content.
+     * @param contentSize the size of the inputstream.
+     * @param filename the filename.
+     * @param digests the checksum digests.
+     */
+    protected AbstractNonRdfSourceOperation(final String rescId, final InputStream content, final String mimeType,
+                                            final long contentSize, final String filename, final Collection<URI> digests) {
+        super(rescId);
+        this.content = content;
+        this.mimeType = mimeType;
+        this.contentSize = contentSize;
+        this.filename = filename;
+        this.digests = digests;
+    }
+
+    /**
+     * Basic constructor.
+     *
+     * @param rescId The internal Fedora ID.
      */
     protected AbstractNonRdfSourceOperation(final String rescId) {
         super(rescId);
@@ -40,43 +97,36 @@ public abstract class AbstractNonRdfSourceOperation extends AbstractResourceOper
 
     @Override
     public InputStream getContentStream() {
-        // TODO Auto-generated method stub
-        return null;
+        return content;
     }
 
     @Override
     public String getExternalHandling() {
-        // TODO Auto-generated method stub
-        return null;
+        return externalHandlingType;
     }
 
     @Override
     public URI getContentUri() {
-        // TODO Auto-generated method stub
-        return null;
+        return externalHandlingURI;
     }
 
     @Override
     public String getMimeType() {
-        // TODO Auto-generated method stub
-        return null;
+        return mimeType;
     }
 
     @Override
     public String getFilename() {
-        // TODO Auto-generated method stub
-        return null;
+        return filename;
     }
 
     @Override
     public Collection<URI> getContentDigests() {
-        // TODO Auto-generated method stub
-        return null;
+        return digests;
     }
 
     @Override
     public long getContentSize() {
-        // TODO Auto-generated method stub
-        return 0;
+        return contentSize;
     }
 }

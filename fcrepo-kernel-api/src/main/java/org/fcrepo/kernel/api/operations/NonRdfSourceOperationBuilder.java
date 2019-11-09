@@ -17,6 +17,7 @@
  */
 package org.fcrepo.kernel.api.operations;
 
+import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
 
@@ -58,6 +59,30 @@ public interface NonRdfSourceOperationBuilder extends ResourceOperationBuilder {
      * @return the builder
      */
     NonRdfSourceOperationBuilder contentSize(long size);
+
+    /**
+     * Set the content.
+     *
+     * @param content The input stream of the binary content.
+     * @return the builder
+     */
+    NonRdfSourceOperationBuilder content(final InputStream content);
+
+    /**
+     * Set the external content URI.
+     *
+     * @param externalUri The URI of the external content.
+     * @return the builder
+     */
+    NonRdfSourceOperationBuilder externalContentURI(final URI externalUri);
+
+    /**
+     * Set the handling of the external content.
+     *
+     * @param externalType The external content handling type (PROXY, REDIRECT)
+     * @return the builder
+     */
+    NonRdfSourceOperationBuilder externalContentHandling(final String externalType);
 
     @Override
     NonRdfSourceOperation build();

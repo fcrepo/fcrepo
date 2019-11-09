@@ -31,8 +31,8 @@ public class RdfSourceOperationFactoryImpl implements RdfSourceOperationFactory 
 
     @Override
     public RdfSourceOperationBuilder createBuilder(final String rescId, final String interactionModel) {
-        // TODO Auto-generated method stub
-        return null;
+        // TODO: Not sure what we need the interactionModel for here?
+        return new CreateRdfSourceOperationBuilder(rescId);
     }
 
     @Override

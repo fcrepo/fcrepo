@@ -33,15 +33,15 @@ import static javax.ws.rs.core.Response.status;
 import static javax.ws.rs.core.Response.temporaryRedirect;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
-import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static javax.ws.rs.core.Response.Status.FOUND;
 import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
-import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.jena.atlas.web.ContentType.create;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.apache.jena.riot.WebContent.ctSPARQLUpdate;
 import static org.apache.jena.riot.WebContent.ctTextCSV;
@@ -56,12 +56,9 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_X;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_PAIRTREE;
-import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_DESCRIPTION;
-import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODELS;
+import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODELS_SHORT;
 import static org.fcrepo.kernel.api.RdfLexicon.INTERACTION_MODEL_RESOURCES;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
-import static org.fcrepo.kernel.api.ExternalContent.COPY;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.FedoraTypes.LDP_NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
@@ -88,7 +85,6 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HEAD;
 import javax.ws.rs.HeaderParam;
-import javax.ws.rs.NotSupportedException;
 import javax.ws.rs.OPTIONS;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -102,13 +98,18 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilderException;
 import javax.ws.rs.core.Variant.VariantListBuilder;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.jena.atlas.RuntimeIOException;
 import org.apache.jena.atlas.web.ContentType;
+import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RiotException;
 import org.fcrepo.http.api.PathLockManager.AcquiredLock;
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.kernel.api.FedoraTypes;
@@ -116,7 +117,6 @@ import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
 import org.fcrepo.kernel.api.exception.InsufficientStorageException;
-import org.fcrepo.kernel.api.exception.InteractionModelViolationException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.InvalidMementoPathException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
@@ -127,9 +127,11 @@ import org.fcrepo.kernel.api.exception.RequestWithAclLinkHeaderException;
 import org.fcrepo.kernel.api.exception.UnsupportedAlgorithmException;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.Container;
+import org.fcrepo.kernel.api.models.ExternalContent;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.services.CreateResourceService;
 import org.fcrepo.kernel.api.services.FixityService;
 import org.fcrepo.kernel.api.services.DeleteResourceService;
 import org.fcrepo.kernel.api.utils.ContentDigest;
@@ -158,6 +160,8 @@ public class FedoraLdp extends ContentExposingResource {
     @Inject private FixityService fixityService;
 
     @Inject private FedoraHttpConfiguration httpConfiguration;
+
+    @Inject private CreateResourceService createResourceService;
 
     @Inject
     private DeleteResourceService deleteResourceService;
@@ -402,106 +406,59 @@ public class FedoraLdp extends ContentExposingResource {
 
         final List<String> links = unpackLinks(rawLinks);
 
+        final Collection<String> checksums = parseDigestHeader(digest);
+
         if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
             handleRequestDisallowedOnMemento();
 
             return status(METHOD_NOT_ALLOWED).build();
         }
 
+        // If request is an external binary, verify link header before proceeding
+        final ExternalContent extContent = extContentHandlerFactory.createFromLinks(links);
+
+        final String contentType = extContent == null ? requestContentType.toString() : extContent.getContentType();
+
         final String interactionModel = checkInteractionModel(links);
 
-        checkAclLinkHeader(links);
+        if ("We exist in persistent storage already".isEmpty()) {
 
-        final FedoraResource resource;
-
-        final String path = toPath(translator(), externalPath);
-
-        final AcquiredLock lock = lockManager.lockForWrite(path, transaction, nodeService);
-
-        try {
-
-            final Collection<String> checksums = parseDigestHeader(digest);
-            final ExternalContentHandler extContent = extContentHandlerFactory.createFromLinks(links);
-
-            final MediaType contentType =  getSimpleContentType(
-                    extContent != null ? extContent.getContentType() : requestContentType);
-
-            if (nodeService.exists(transaction, path)) {
-                resource = resource();
-
-                final String resInteractionModel = getInteractionModel(resource);
-                if (StringUtils.isNoneBlank(interactionModel) && StringUtils.isNoneBlank(resInteractionModel)
-                        && !resInteractionModel.equals(interactionModel)) {
-                    throw new InteractionModelViolationException("Changing the interaction model " + resInteractionModel
-                                + " to " + interactionModel + " is not allowed!");
-                }
-
-            } else {
-
-                checkExistingAncestor(path);
-
-                final MediaType effectiveContentType
-                        = requestBodyStream == null || requestContentType == null ? null : contentType;
-                resource = createFedoraResource(path, interactionModel, effectiveContentType,
-                        !(requestBodyStream == null || requestContentType == null), extContent != null);
-            }
-
-            if (httpConfiguration.putRequiresIfMatch() && StringUtils.isBlank(ifMatch) && !resource.isNew()) {
+            if (httpConfiguration.putRequiresIfMatch() && StringUtils.isBlank(ifMatch)) {
                 throw new ClientErrorException("An If-Match header is required", 428);
             }
 
-            evaluateRequestPreconditions(request, servletResponse, resource, transaction);
-            final boolean created = resource.isNew();
-
-            try (final RdfStream resourceTriples =
-                    created ? new DefaultRdfStream(asNode(resource())) : getResourceTriples(resource())) {
-                if (resource instanceof Binary) {
-                    InputStream stream = requestBodyStream;
-                    MediaType type = requestContentType;
-                    // override a few things, if it's external content
-                    if (extContent != null) {
-                        if (extContent.isCopy()) {
-                            LOGGER.debug("External content COPY '{}', '{}'", externalPath, extContent.getURL());
-                            stream = extContent.fetchExternalContent();
-                        }
-
-                        type = contentType;  // if external, then this already holds the correct value
-                    }
-                    final String handling = extContent != null ? extContent.getHandling() : null;
-                    replaceResourceBinaryWithStream((Binary) resource,
-                            stream, contentDisposition, type, checksums,
-                            (handling != null && !handling.equals(COPY)) ? handling : null,
-                            (extContent != null && !handling.equals(COPY)) ? extContent.getURL() : null);
-
-                } else if (isRdfContentType(contentType.toString())) {
-                    replacePropertiesService.replaceProperties(transaction, resource,
-                            requestBodyStream, contentType.toString());
-                } else if (!created) {
-                    boolean emptyRequest = true;
-                    try {
-                        emptyRequest = requestBodyStream.read() == -1;
-                    } catch (final IOException ex) {
-                        LOGGER.debug("Error checking for request body content", ex);
-                    }
-
-                    if (requestContentType == null && emptyRequest) {
-                        throw new ClientErrorException("Resource Already Exists", CONFLICT);
-                    }
-                    throw new NotSupportedException("Invalid Content Type " + requestContentType);
-                }
-            } catch (final Exception e) {
-                checkForInsufficientStorageException(e, e);
-            }
-
-            ensureInteractionType(resource, interactionModel,
-                    (requestBodyStream == null || requestContentType == null));
-
-            transaction.commit();
-            return createUpdateResponse(resource, created);
-
-        } finally {
-            lock.release();
+            // TODO: Check existing resources interaction model and make sure we aren't trying to change it.
+            //final String resInteractionModel = getInteractionModel(resource);
+            //if (StringUtils.isNoneBlank(interactionModel) && StringUtils.isNoneBlank(resInteractionModel)
+            //        && !resInteractionModel.equals(interactionModel)) {
+            //    throw new InteractionModelViolationException("Changing the interaction model " + resInteractionModel
+            //            + " to " + interactionModel + " is not allowed!");
+            //}
         }
+
+        final String fedoraId = identifierConverter().convert(externalPath());
+
+        // TODO: Refactor to check preconditions
+        //evaluateRequestPreconditions(request, servletResponse, resource, transaction);
+
+        if (isBinary(interactionModel, requestContentType.toString(), requestBodyStream != null,
+                extContent != null)) {
+            // TODO: Implement UpdateResourceService
+           // createResourceService.perform(transaction.getId(), fedoraId, slug, contentType, links, digest,
+           //         requestBodyStream, extContent);
+        } else {
+            final Model model = parseBodyAsModel(requestBodyStream, contentType, fedoraId);
+            // TODO: Do translation services.
+            // TODO: Implement UpdateResourceService
+            //createResourceService.perform(transaction.getId(), fedoraId, slug, contentType, links,
+            //        model);
+        }
+
+        // TODO: How to generate a response.
+        LOGGER.debug("Finished creating resource with path: ");
+        transaction.commit();
+        return createUpdateResponse(null, true);
+
     }
 
     /**
@@ -618,6 +575,7 @@ public class FedoraLdp extends ContentExposingResource {
             throws InvalidChecksumException, MalformedRdfException, UnsupportedAlgorithmException {
 
         final List<String> links = unpackLinks(rawLinks);
+        final Collection<String> checksums = parseDigestHeader(digest);
 
         if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
             handleRequestDisallowedOnMemento();
@@ -625,99 +583,30 @@ public class FedoraLdp extends ContentExposingResource {
             return status(METHOD_NOT_ALLOWED).build();
         }
 
+        // If request is an external binary, verify link header before proceeding
+        final ExternalContent extContent = extContentHandlerFactory.createFromLinks(links);
+
+        final String contentType = extContent == null ? requestContentType.toString() : extContent.getContentType();
+
         final String interactionModel = checkInteractionModel(links);
 
-        checkAclLinkHeader(links);
+        final String fedoraId = identifierConverter().convert(externalPath());
 
-        // If request is an external binary, verify link header before proceeding
-        final ExternalContentHandler extContent = extContentHandlerFactory.createFromLinks(links);
-
-        if (!(resource() instanceof Container)) {
-            throw new ClientErrorException("Object cannot have child nodes", CONFLICT);
-        } else if (resource().hasType(FEDORA_PAIRTREE)) {
-            throw new ClientErrorException("Objects cannot be created under pairtree nodes", FORBIDDEN);
+        if (isBinary(interactionModel, requestContentType.toString(), requestContentType != null,
+                extContent != null)) {
+            createResourceService.perform(transaction.getId(), fedoraId, slug, contentType, links, checksums,
+                    requestBodyStream, extContent);
+        } else {
+            final Model model = parseBodyAsModel(requestBodyStream, contentType, fedoraId);
+            // TODO: Do translation services.
+            createResourceService.perform(transaction.getId(), fedoraId, slug, contentType, links,
+                    model);
         }
 
-        final MediaType contentType = getSimpleContentType(
-                extContent != null ? extContent.getContentType() : requestContentType);
-
-        final String contentTypeString = contentType.toString();
-
-        final String newObjectPath = mintNewPid(slug);
-        hasRestrictedPath(newObjectPath);
-
-        final AcquiredLock lock = lockManager.lockForWrite(newObjectPath, transaction, nodeService);
-
-        try {
-
-            final Collection<String> checksum = parseDigestHeader(digest);
-
-            LOGGER.info("Ingest with path: {}", newObjectPath);
-
-            final FedoraResource resource = createFedoraResource(newObjectPath, interactionModel, contentType,
-                    !(requestBodyStream == null || requestContentType == null), extContent != null);
-
-            try (final RdfStream resourceTriples =
-                     resource.isNew() ? new DefaultRdfStream(asNode(resource())) : getResourceTriples(resource())) {
-
-                if (requestBodyStream == null && extContent == null) {
-                    LOGGER.trace("No request body detected");
-                } else {
-                    LOGGER.trace("Received createObject with a request body and content type \"{}\"",
-                            contentTypeString);
-
-                    if ((resource instanceof Container) && isRdfContentType(contentTypeString)) {
-                        // TODO this should not stay here and will probably be rewritting with
-                        // the createPropertyService is in place.
-                        replacePropertiesService.replaceProperties(transaction, resource,
-                            requestBodyStream, contentTypeString);
-                    } else if (resource instanceof Binary) {
-                        LOGGER.trace("Created a datastream and have a binary payload.");
-
-                        InputStream stream = requestBodyStream;
-                        MediaType type = requestContentType;
-
-                        if (extContent != null) {
-                            if (extContent.isCopy()) {
-                                LOGGER.debug("POST copying data {} ", externalPath);
-                                stream = extContent.fetchExternalContent();
-                            }
-
-                            type = contentType; // if external, then this already holds the correct value
-                        }
-
-                        final String handling = extContent != null ? extContent.getHandling() : null;
-                        replaceResourceBinaryWithStream((Binary) resource,
-                                stream, contentDisposition, type, checksum,
-                            handling != null && !handling.equals(COPY) ? handling : null,
-                            extContent != null ? extContent.getURL() : null);
-
-                    } else if (contentTypeString.equals(contentTypeSPARQLUpdate)) {
-                        LOGGER.trace("Found SPARQL-Update content, applying..");
-                        patchResourcewithSparql(resource, IOUtils.toString(requestBodyStream, UTF_8), resourceTriples);
-                    } else {
-                        if (requestBodyStream.read() != -1) {
-                            throw new ClientErrorException("Invalid Content Type " + contentTypeString,
-                                    UNSUPPORTED_MEDIA_TYPE);
-                        }
-                    }
-                }
-
-                ensureInteractionType(resource, interactionModel,
-                        (requestBodyStream == null || requestContentType == null));
-
-                transaction.commit();
-            } catch (final MalformedRdfException e) {
-                throw new BadRequestException(e.getMessage());
-            } catch (final Exception e) {
-                checkForInsufficientStorageException(e, e);
-            }
-
-            LOGGER.debug("Finished creating resource with path: {}", newObjectPath);
-            return createUpdateResponse(resource, true);
-        } finally {
-            lock.release();
-        }
+        // TODO: How to generate a response.
+        LOGGER.debug("Finished creating resource with path: ");
+        transaction.commit();
+        return createUpdateResponse(null, true);
     }
 
     /**
@@ -769,6 +658,40 @@ public class FedoraLdp extends ContentExposingResource {
     }
 
 
+    /**
+     * Parse the request body as a Model.
+     *
+     * @param requestBodyStream rdf request body
+     * @param contentType content type of body
+     * @param fedoraId the fedora resource identifier
+     *
+     * @return Model containing triples from request body
+     *
+     * @throws MalformedRdfException in case rdf cannot be parsed
+     */
+    private Model parseBodyAsModel(final InputStream requestBodyStream,
+                                   final String contentType, final String fedoraId) throws MalformedRdfException {
+        if (requestBodyStream == null) {
+            return null;
+        }
+
+        final Lang format = contentTypeToLang(contentType);
+        final Model inputModel;
+        try {
+            inputModel = createDefaultModel();
+            inputModel.read(requestBodyStream, fedoraId, format.getName().toUpperCase());
+            return inputModel;
+        } catch (final RiotException e) {
+            throw new MalformedRdfException("RDF was not parsable: " + e.getMessage(), e);
+
+        } catch (final RuntimeIOException e) {
+            if (e.getCause() instanceof JsonParseException) {
+                throw new MalformedRdfException(e.getCause());
+            }
+            throw new RepositoryRuntimeException(e);
+        }
+    }
+
     private static boolean isRDF(final MediaType requestContentType) {
         if (requestContentType == null) {
             return false;
@@ -801,32 +724,20 @@ public class FedoraLdp extends ContentExposingResource {
         }
     }
 
-    private FedoraResource createFedoraResource(final String path, final String interactionModel,
-            final MediaType contentType, final boolean contentPresent, final boolean contentExternal) {
-
-        final MediaType simpleContentType = contentPresent ? getSimpleContentType(contentType) : null;
-
-        final FedoraResource result = null;
-        if ("ldp:NonRDFSource".equals(interactionModel) || contentExternal ||
-                (contentPresent && interactionModel == null && !isRDF(simpleContentType))) {
-            // TODO: Replace with some other service/factory
-            // result = binaryService.findOrCreate(transaction, path);
-            timeMapService.findOrCreate(transaction, path + "/" + FEDORA_DESCRIPTION);
-        } else {
-            // TODO: Replace with some other service/factory
-            // result = containerService.findOrCreate(transaction, path, interactionModel);
-        }
-
-        timeMapService.findOrCreate(transaction, path);
-
-        final String resInteractionModel = getInteractionModel(result);
-        if (StringUtils.isNoneBlank(interactionModel) && StringUtils.isNoneBlank(resInteractionModel)
-                && !resInteractionModel.equals(interactionModel)) {
-            throw new InteractionModelViolationException("Changing the interaction model " + resInteractionModel
-                        + " to " + interactionModel + " is not allowed!");
-        }
-
-        return result;
+    /**
+     * Should we create a binary?
+     * @param interactionModel the interaction model from the links.
+     * @param contentType the content type.
+     * @param contentPresent is there a request body.
+     * @param contentExternal is there an external content header.
+     * @return Should we be making a NonRdfSource resource.
+     */
+    private boolean isBinary(final String interactionModel, final String contentType,
+                             final boolean contentPresent, final boolean contentExternal) {
+            final String simpleContentType = contentPresent ? contentType : null;
+            final boolean isRdfContent = isRdfContentType(simpleContentType);
+        return "ldp:NonRDFSource".equals(interactionModel) || contentExternal ||
+                (contentPresent && interactionModel == null && !isRdfContent);
     }
 
     /*
@@ -835,7 +746,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @return String the Interaction Model
      */
     private String getInteractionModel(final FedoraResource resource) {
-        final Optional<String> result = INTERACTION_MODELS.stream().filter(x -> resource.hasType(x)).findFirst();
+        final Optional<String> result = INTERACTION_MODELS_SHORT.stream().filter(x -> resource.hasType(x)).findFirst();
         return result.orElse(null);
     }
 

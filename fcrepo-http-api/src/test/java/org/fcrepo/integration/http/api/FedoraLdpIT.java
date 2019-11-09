@@ -70,9 +70,9 @@ import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_VARIANTS;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
-import static org.fcrepo.kernel.api.ExternalContent.COPY;
-import static org.fcrepo.kernel.api.ExternalContent.PROXY;
-import static org.fcrepo.kernel.api.ExternalContent.REDIRECT;
+import static org.fcrepo.kernel.api.models.ExternalContent.COPY;
+import static org.fcrepo.kernel.api.models.ExternalContent.PROXY;
+import static org.fcrepo.kernel.api.models.ExternalContent.REDIRECT;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
@@ -2069,7 +2069,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
      * Check if a binary and its description exist.
      *
      * @param id id of the binary.
-     * @throws IOExceptionon error with http communication.
+     * @throws IOException on error with http communication.
      */
     private void binaryExists(final String id) throws IOException {
         binaryStatus(id, OK);
@@ -2079,7 +2079,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
      * Check if a binary and its description don't exist.
      *
      * @param id id of the binary.
-     * @throws IOExceptionon error with http communication.
+     * @throws IOException on error with http communication.
      */
     private void binaryDoesntExist(final String id) throws IOException {
         binaryStatus(id, GONE);

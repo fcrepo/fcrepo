@@ -151,7 +151,7 @@ public class FedoraVersioning extends ContentExposingResource {
             transaction, nodeService);
 
         try {
-            final MediaType contentType = getSimpleContentType(requestContentType);
+            final MediaType contentType = MediaType.valueOf(getSimpleContentType(requestContentType));
 
             final String slug = headers.getHeaderString("Slug");
             if (slug != null) {
