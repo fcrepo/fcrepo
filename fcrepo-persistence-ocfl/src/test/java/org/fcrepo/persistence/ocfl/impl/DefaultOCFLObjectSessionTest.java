@@ -34,6 +34,7 @@ import java.nio.file.Path;
 
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -42,7 +43,9 @@ import org.junit.rules.TemporaryFolder;
 import edu.wisc.library.ocfl.api.MutableOcflRepository;
 import edu.wisc.library.ocfl.api.OcflObjectVersion;
 import edu.wisc.library.ocfl.api.model.CommitInfo;
+import edu.wisc.library.ocfl.api.model.ObjectDetails;
 import edu.wisc.library.ocfl.api.model.ObjectVersionId;
+import edu.wisc.library.ocfl.api.model.VersionId;
 import edu.wisc.library.ocfl.core.OcflRepositoryBuilder;
 import edu.wisc.library.ocfl.core.mapping.ObjectIdPathMapperBuilder;
 import edu.wisc.library.ocfl.core.storage.FileSystemOcflStorage;
@@ -76,7 +79,6 @@ public class DefaultOCFLObjectSessionTest {
     public void setup() throws Exception {
         tempFolder.create();
 
-        stagingPath = tempFolder.newFolder("obj1-staging").toPath();
         final var repoDir = tempFolder.newFolder("ocfl-repo").toPath();
         final var workDir = tempFolder.newFolder("ocfl-work").toPath();
 
@@ -88,13 +90,16 @@ public class DefaultOCFLObjectSessionTest {
         session = makeNewSession();
     }
 
-    private DefaultOCFLObjectSession makeNewSession() {
+    private DefaultOCFLObjectSession makeNewSession() throws Exception {
+        if (stagingPath == null || !stagingPath.toFile().exists()) {
+            stagingPath = tempFolder.newFolder("obj1-staging").toPath();
+        }
         return new DefaultOCFLObjectSession(OBJ_ID, stagingPath, ocflRepository);
     }
 
     @Test
     public void writeNewFile_ToNewVersion_NewObject() throws Exception {
-        session.write(FILE1_SUBPATH, fileStream());
+        session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
         final String versionId = session.commit(NEW_VERSION);
 
         assertEquals("v1", versionId);
@@ -104,21 +109,15 @@ public class DefaultOCFLObjectSessionTest {
 
     @Test
     public void writeNewFile_ToMHead_NewObject() throws Exception {
-        session.write(FILE1_SUBPATH, fileStream());
+        session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
         session.commit(MUTABLE_HEAD);
 
         assertMutableHeadPopulated(OBJ_ID);
         assertFileInHeadVersion(OBJ_ID, FILE1_SUBPATH, FILE_CONTENT1);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void commitWithoutOption() throws Exception {
-        session.write(FILE1_SUBPATH, fileStream());
-        session.commit(null);
-    }
-
     @Test
-    public void overwriteStagedFile_NewVersion_NewObject() throws Exception {
+    public void write_OverwriteStagedFile_NewVersion_NewObject() throws Exception {
         session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
         // Change the same file again
         session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT2));
@@ -130,7 +129,7 @@ public class DefaultOCFLObjectSessionTest {
     }
 
     @Test
-    public void replaceFile_NewVersion_ExistingObject() throws Exception {
+    public void write_ReplaceFile_NewVersion_ExistingObject() throws Exception {
         final var preStagingPath = tempFolder.newFolder("prestage").toPath();
         Files.writeString(preStagingPath.resolve(FILE1_SUBPATH), FILE_CONTENT1);
         ocflRepository.putObject(ObjectVersionId.head(OBJ_ID), preStagingPath, new CommitInfo());
@@ -145,7 +144,7 @@ public class DefaultOCFLObjectSessionTest {
     }
 
     @Test
-    public void replaceFile_MHead_ExistingObject() throws Exception {
+    public void write_ReplaceFileInMHead_ExistingObject() throws Exception {
         final var preStagingPath = tempFolder.newFolder("prestage").toPath();
         Files.writeString(preStagingPath.resolve(FILE1_SUBPATH), FILE_CONTENT1);
         ocflRepository.stageChanges(ObjectVersionId.head(OBJ_ID), new CommitInfo(), updater -> {
@@ -269,6 +268,17 @@ public class DefaultOCFLObjectSessionTest {
         session.read(FILE2_SUBPATH, "v99");
     }
 
+    // Verify that subpaths with parent directories are created and readable
+    @Test
+    public void nestedPath_NewVersion_NewObject() throws Exception {
+        final String nestedSubpath = "path/to/the/file.txt";
+        session.write(nestedSubpath, fileStream(FILE_CONTENT1));
+        session.commit(NEW_VERSION);
+
+        final var session2 = makeNewSession();
+        assertStreamMatches(FILE_CONTENT1, session2.read(nestedSubpath));
+    }
+
     @Test(expected = PersistentItemNotFoundException.class)
     public void delete_FileNotExist() throws Exception {
         session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
@@ -297,36 +307,242 @@ public class DefaultOCFLObjectSessionTest {
     }
 
     @Test
-    public void delete_FromStaged_VersionsExist() throws Exception {
+    public void delete_FromStaged_OtherFilesVersioned() throws Exception {
+        session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
+        session.commit(NEW_VERSION);
 
+        final var session2 = makeNewSession();
+        session2.write(FILE2_SUBPATH, fileStream(FILE_CONTENT2));
+
+        // Try a path that doesn't exist
+        session2.delete(FILE2_SUBPATH);
+        session2.commit(NEW_VERSION);
+
+        assertFileNotInHeadVersion(OBJ_ID, FILE2_SUBPATH);
+        assertFileInHeadVersion(OBJ_ID, FILE1_SUBPATH, FILE_CONTENT1);
     }
 
     @Test
     public void delete_FromMHead() throws Exception {
+        session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
+        session.commit(MUTABLE_HEAD);
 
+        final var session2 = makeNewSession();
+        session2.delete(FILE1_SUBPATH);
+        session2.commit(MUTABLE_HEAD);
+
+        assertFileNotInHeadVersion(OBJ_ID, FILE1_SUBPATH);
     }
 
     @Test
     public void delete_FromVersion() throws Exception {
+        session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
+        session.commit(NEW_VERSION);
 
+        final var session2 = makeNewSession();
+        session2.delete(FILE1_SUBPATH);
+        session2.commit(NEW_VERSION);
+
+        assertFileNotInHeadVersion(OBJ_ID, FILE1_SUBPATH);
+        assertFileInVersion(OBJ_ID, "v1", FILE1_SUBPATH, FILE_CONTENT1);
     }
 
     @Test
     public void delete_FromStagedAndVersion() throws Exception {
+        session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
+        session.commit(NEW_VERSION);
 
+        final var session2 = makeNewSession();
+        session2.write(FILE1_SUBPATH, fileStream(FILE_CONTENT2));
+        session2.delete(FILE1_SUBPATH);
+        session2.commit(NEW_VERSION);
+
+        assertFileNotInHeadVersion(OBJ_ID, FILE1_SUBPATH);
+        assertFileInVersion(OBJ_ID, "v1", FILE1_SUBPATH, FILE_CONTENT1);
     }
 
     @Test
     public void delete_FromStagedAndMHead() throws Exception {
+        session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
+        session.commit(MUTABLE_HEAD);
 
+        final var session2 = makeNewSession();
+        session2.write(FILE1_SUBPATH, fileStream(FILE_CONTENT2));
+        session2.delete(FILE1_SUBPATH);
+        session2.commit(MUTABLE_HEAD);
+
+        assertFileNotInHeadVersion(OBJ_ID, FILE1_SUBPATH);
+        assertFileNotInVersion(OBJ_ID, "v1", FILE1_SUBPATH);
     }
 
-    private InputStream fileStream() {
-        return fileStream(FILE_CONTENT1);
+    @Test(expected = PersistentItemNotFoundException.class)
+    public void delete_FromDeletedObject() throws Exception {
+        session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
+        session.commit(NEW_VERSION);
+
+        final var session2 = makeNewSession();
+        // Try to delete a file from an object that was just deleted
+        session2.deleteObject();
+        session2.delete(FILE1_SUBPATH);
+        session2.commit(NEW_VERSION);
+
+        assertFileNotInHeadVersion(OBJ_ID, FILE1_SUBPATH);
+        assertFileNotInVersion(OBJ_ID, "v1", FILE1_SUBPATH);
     }
 
-    private InputStream fileStream(final String content) {
+    @Test
+    public void delete_FileAddedAfterObjectDeleted() throws Exception {
+        session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
+        session.commit(NEW_VERSION);
+
+        final var session2 = makeNewSession();
+        // Try to delete a file from an object that was just deleted
+        session2.deleteObject();
+        // Adding 2 files so that staging won't be empty when committing
+        session2.write(FILE1_SUBPATH, fileStream(FILE_CONTENT2));
+        session2.write(FILE2_SUBPATH, fileStream(FILE_CONTENT2));
+        session2.delete(FILE1_SUBPATH);
+        session2.commit(NEW_VERSION);
+
+        assertFileNotInHeadVersion(OBJ_ID, FILE1_SUBPATH);
+        assertFileInHeadVersion(OBJ_ID, FILE2_SUBPATH, FILE_CONTENT2);
+
+        assertOnlyFirstVersionExists();
+    }
+
+    @Test
+    public void deleteObject_ObjectExists() throws Exception {
+        session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
+        session.commit(NEW_VERSION);
+
+        final var session2 = makeNewSession();
+        session2.deleteObject();
+        session2.commit(NEW_VERSION);
+
+        assertFalse("Deleted object must not exist",
+                ocflRepository.containsObject(OBJ_ID));
+    }
+
+    @Test(expected = PersistentItemNotFoundException.class)
+    public void deleteObject_NotExists() throws Exception {
+        session.deleteObject();
+    }
+
+    @Test
+    public void deleteObject_StagedChanges_ObjectNotCreated() throws Exception {
+        session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
+        session.deleteObject();
+        session.commit(NEW_VERSION);
+
+        assertFalse("Deleted object must not exist",
+                ocflRepository.containsObject(OBJ_ID));
+    }
+
+    @Test
+    public void deleteObject_CreateAndRecreateSameSession() throws Exception {
+        session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
+        session.deleteObject();
+        session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT2));
+        session.commit(NEW_VERSION);
+
+        // State of object should reflect post-delete object state
+        assertFileInHeadVersion(OBJ_ID, FILE1_SUBPATH, FILE_CONTENT2);
+    }
+
+    @Test
+    public void deleteObject_Recreate() throws Exception {
+        // Create object
+        session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
+        session.commit(NEW_VERSION);
+
+        // Delete object
+        final var session2 = makeNewSession();
+        session2.deleteObject();
+        session2.commit(NEW_VERSION);
+
+        // Recreate object
+        final var session3 = makeNewSession();
+        session3.write(FILE1_SUBPATH, fileStream(FILE_CONTENT2));
+        session3.commit(NEW_VERSION);
+
+        assertFileInHeadVersion(OBJ_ID, FILE1_SUBPATH, FILE_CONTENT2);
+
+        assertOnlyFirstVersionExists();
+    }
+
+    @Test(expected = PersistentItemNotFoundException.class)
+    public void read_FromDeletedObject() throws Exception {
+        session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
+        session.commit(NEW_VERSION);
+
+        final var session2 = makeNewSession();
+        session2.deleteObject();
+        session2.read(FILE1_SUBPATH);
+    }
+
+    @Test(expected = PersistentItemNotFoundException.class)
+    public void readVersion_FromDeletedObject() throws Exception {
+        session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
+        session.commit(NEW_VERSION);
+
+        final var session2 = makeNewSession();
+        session2.deleteObject();
+        session2.read(FILE1_SUBPATH, "v1");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void commit_WithoutOption() throws Exception {
+        session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
+        session.commit(null);
+    }
+
+    @Test(expected = PersistentStorageException.class)
+    public void commit_NewObject_NoContents() throws Exception {
+        session.commit(NEW_VERSION);
+    }
+
+    @Test
+    public void commit_NewVersion_NoChanges() throws Exception {
+        session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
+        session.commit(NEW_VERSION);
+
+        final var session2 = makeNewSession();
+        session2.commit(NEW_VERSION);
+
+        final ObjectDetails objDetails = ocflRepository.describeObject(OBJ_ID);
+        final var versionMap = objDetails.getVersionMap();
+        assertEquals("Two versions should exist", 2, versionMap.size());
+
+        assertFileInVersion(OBJ_ID, "v1", FILE1_SUBPATH, FILE_CONTENT1);
+        assertFileInVersion(OBJ_ID, "v2", FILE1_SUBPATH, FILE_CONTENT1);
+    }
+
+    @Test
+    public void commit_MHead_NoChanges() throws Exception {
+        session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
+        session.commit(MUTABLE_HEAD);
+
+        final var session2 = makeNewSession();
+        session2.commit(MUTABLE_HEAD);
+
+        final ObjectDetails objDetails = ocflRepository.describeObject(OBJ_ID);
+        final var versionMap = objDetails.getVersionMap();
+        assertEquals("Only the mutable head and initial version exist", 2, versionMap.size());
+
+        assertFileInVersion(OBJ_ID, "v2", FILE1_SUBPATH, FILE_CONTENT1);
+        assertFileNotInVersion(OBJ_ID, "v1", FILE1_SUBPATH);
+    }
+
+    private static InputStream fileStream(final String content) {
         return new ByteArrayInputStream(content.getBytes());
+    }
+
+    private void assertOnlyFirstVersionExists() {
+        final ObjectDetails objDetails = ocflRepository.describeObject(OBJ_ID);
+        final var versionMap = objDetails.getVersionMap();
+        assertEquals("Only a single version should remain", 1, versionMap.size());
+        assertTrue("First version must be present",
+                versionMap.containsKey(VersionId.fromString("v1")));
     }
 
     private void assertFileInHeadVersion(final String objId, final String subpath, final String content) {
@@ -338,6 +554,12 @@ public class DefaultOCFLObjectSessionTest {
             final String content) {
         final OcflObjectVersion objVersion = ocflRepository.getObject(ObjectVersionId.version(objId, versionId));
         assertFileContents(subpath, objVersion, content);
+    }
+
+    private void assertFileNotInHeadVersion(final String objId, final String subpath) {
+        final OcflObjectVersion objVersion = ocflRepository.getObject(ObjectVersionId.head(objId));
+        assertFalse(String.format("File %s must not be in %s head version", subpath, objId),
+                objVersion.containsFile(subpath));
     }
 
     private void assertFileNotInVersion(final String objId, final String versionId, final String subpath) {
@@ -365,34 +587,4 @@ public class DefaultOCFLObjectSessionTest {
     private void assertNoMutableHead(final String objId) {
         assertFalse("No mutable head should be present for " + objId, ocflRepository.hasStagedChanges(objId));
     }
-
-    // read file
-    //   does not exist
-    //   does exist
-    //   is in staged changes
-    //   is in both
-    // from past version
-    // from invalid version
-
-    // write file that doesn't exist
-    // write file that is already staged
-    // write file in sub dir
-
-    // multiple writes
-
-    // delete (are these meaningful before a commit?)
-    //   file that is staged
-    //   file that is not staged
-    //   file that is staged and already exists
-    //   doesn't exist
-
-    // commit
-    //   a new object to new version
-    //   a new object to head
-    //   commit to existing object new v
-    //   commit to existing obj head
-    //   commit to new version with existing head
-    //   no commit option new obj
-    //   no commit option existing
-
 }

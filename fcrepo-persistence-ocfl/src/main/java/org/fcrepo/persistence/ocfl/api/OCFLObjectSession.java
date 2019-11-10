@@ -48,6 +48,13 @@ public interface OCFLObjectSession {
     void delete(String subpath) throws PersistentStorageException;
 
     /**
+     * Delete the object specified by this session
+     *
+     * @throws PersistentStorageException if unable to delete the object
+     */
+    void deleteObject() throws PersistentStorageException;
+
+    /**
      * Read the state of the file at the specified subpath within the ocfl object as it exists within the current
      * session.
      *
@@ -79,7 +86,8 @@ public interface OCFLObjectSession {
      *
      * @param commitOption option indicating where changes should be committed.
      * @return identifier of the version committed
+     * @throws PersistentStorageException if unable to commit
      */
-    String commit(CommitOption commitOption);
+    String commit(CommitOption commitOption) throws PersistentStorageException;
 
 }

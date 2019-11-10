@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import org.apache.commons.io.FileUtils;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.CommitOption;
@@ -59,6 +60,8 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
 
     private Set<String> deletePaths;
 
+    private boolean objectDeleted;
+
     private MutableOcflRepository ocflRepository;
 
     /**
@@ -74,6 +77,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         this.stagingPath = stagingPath;
         this.ocflRepository = ocflRepository;
         this.deletePaths = new HashSet<>();
+        this.objectDeleted = false;
     }
 
     /**
@@ -107,6 +111,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         final var stagedPath = resolveStagedPath(subpath);
         final var hasStagedChanges = hasStagedChanges(stagedPath);
 
+        // If the subpath exists in the staging path for this session, then delete from there
         if (hasStagedChanges) {
             // delete the file from the staging path
             try {
@@ -120,13 +125,41 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         if (!newInSession(subpath)) {
             deletePaths.add(subpath);
         } else if (!hasStagedChanges) {
-            // Doesn't exist in staging or head version, so file doesn't exist
-            throw new PersistentItemNotFoundException(format("Could not find %s within object %s",
-                    subpath, objectIdentifier));
+            // File is neither in the staged or exists in the head version, so file cannot be found for deletion
+            if (objectDeleted && isStagingEmpty()) {
+                // File can't be found because the object no longer exists
+                throw new PersistentItemNotFoundException(format(
+                        "Could not delete from object %s, it does not exist", objectIdentifier));
+            } else {
+                throw new PersistentItemNotFoundException(format("Could not find %s within object %s",
+                        subpath, objectIdentifier));
+            }
+        }
+    }
+
+    @Override
+    public void deleteObject() throws PersistentStorageException {
+        objectDeleted = true;
+        // Reset state of the object
+        if (!isStagingEmpty()) {
+            try {
+                FileUtils.cleanDirectory(stagingPath.toFile());
+            } catch (final IOException e) {
+                throw new PersistentStorageException("Unable to cleanup staging path", e);
+            }
+            deletePaths = new HashSet<>();
+        } else if (!ocflRepository.containsObject(objectIdentifier)) {
+            // fail if attempting to delete object that does not exist and has no staged changes
+            throw new PersistentItemNotFoundException(format(
+                    "Cannot delete object %s, it does not exist", objectIdentifier));
         }
     }
 
     private boolean newInSession(final String subpath) {
+        // If the object was deleted in this session, then content can only be new
+        if (objectDeleted) {
+            return true;
+        }
         // If the object isn't created yet, then there is no history for the subpath
         if (!ocflRepository.containsObject(objectIdentifier)) {
             return true;
@@ -151,14 +184,13 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
                 throw new PersistentItemNotFoundException(format("Could not find %s within object %s",
                         subpath, objectIdentifier));
             }
-        } else {
+        } else if (!objectDeleted) {
             // Fall back to the head version
             return readVersion(subpath, ObjectVersionId.head(objectIdentifier));
         }
-    }
 
-    private boolean hasStagedChanges(final Path path) {
-        return path.toFile().exists();
+        throw new PersistentItemNotFoundException(format("Could not find %s within object %s",
+                subpath, objectIdentifier));
     }
 
     /**
@@ -166,6 +198,12 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
      */
     @Override
     public InputStream read(final String subpath, final String version) throws PersistentItemNotFoundException {
+        // If the object was deleted, then only uncommitted staged files can be available
+        if (objectDeleted) {
+            throw new PersistentItemNotFoundException(format("Could not find %s within object %s",
+                    subpath, objectIdentifier));
+        }
+
         return readVersion(subpath, ObjectVersionId.version(objectIdentifier, version));
     }
 
@@ -198,10 +236,20 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
      * {@inheritDoc}
      */
     @Override
-    public String commit(final CommitOption commitOption) {
+    public String commit(final CommitOption commitOption) throws PersistentStorageException {
         if (commitOption == null) {
             throw new IllegalArgumentException("Invalid commit option provided: " + commitOption);
         }
+        // Perform requested deletion of the object
+        if (objectDeleted) {
+            deleteExistingObject();
+            // no new state provided for the object, this is just committing the delete
+            if (isStagingEmpty()) {
+                return null;
+            }
+            // new state exists, object is being recreated after delete
+        }
+
         // Determine if a new object needs to be created
         if (isNewObject()) {
             return commitNewObject(commitOption);
@@ -210,8 +258,17 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         }
     }
 
-    private String commitNewObject(final CommitOption commitOption) {
+    private void deleteExistingObject() throws PersistentStorageException {
+        ocflRepository.purgeObject(objectIdentifier);
+    }
+
+    private String commitNewObject(final CommitOption commitOption) throws PersistentStorageException {
         final var commitInfo = new CommitInfo().setMessage("initial commit");
+
+        // Prevent creation of empty OCFL objects
+        if (isStagingEmpty()) {
+            throw new PersistentStorageException("Cannot create empty OCFL object " + objectIdentifier);
+        }
 
         if (NEW_VERSION.equals(commitOption)) {
             // perform commit to new version
@@ -232,7 +289,9 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
     private String commitUpdates(final CommitOption commitOption) {
         // Updater which pushes all updated files and then performs queued deletes
         final Consumer<OcflObjectUpdater> commitChangeUpdater = updater -> {
-            updater.addPath(stagingPath, "", MOVE_SOURCE, OVERWRITE);
+            if (!isStagingEmpty()) {
+                updater.addPath(stagingPath, "", MOVE_SOURCE, OVERWRITE);
+            }
             deletePaths.forEach(updater::removeFile);
         };
 
@@ -259,6 +318,14 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
                     commitChangeUpdater)
                     .getVersionId().toString();
         }
+    }
+
+    private boolean isStagingEmpty() {
+        return stagingPath.toFile().listFiles().length == 0;
+    }
+
+    private boolean hasStagedChanges(final Path path) {
+        return path.toFile().exists();
     }
 
     private boolean isNewObject() {
