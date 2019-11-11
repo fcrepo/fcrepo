@@ -17,12 +17,18 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import java.lang.reflect.ParameterizedType;
-
-
+import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.riot.system.StreamRDF;
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
 import org.fcrepo.persistence.ocfl.api.Persister;
+
+import java.io.OutputStream;
+import java.lang.reflect.ParameterizedType;
+
+import static java.lang.String.format;
+import static org.apache.jena.riot.system.StreamRDFWriter.getWriterStream;
 
 /**
  * A base abstract persister class
@@ -55,4 +61,22 @@ public abstract class AbstractPersister<T extends ResourceOperation> implements 
         }
         return false;
     }
+
+    protected String getSubpath(final String parentResourceId, final String resourceId){
+        if(resourceId.startsWith(parentResourceId)){
+            return resourceId.substring(parentResourceId.length() + 1);
+        }
+
+        throw new RuntimeException(format("resource (%s) is not prefixed by parent resource (%s)", resourceId,
+                parentResourceId));
+    }
+
+    protected void writeTriples(final RdfStream rdfStream, final RDFFormat format,
+                              final OutputStream output) {
+        final StreamRDF stream = getWriterStream(output, format);
+        stream.start();
+        rdfStream.forEach(stream::triple);
+        stream.finish();
+    }
+
 }
