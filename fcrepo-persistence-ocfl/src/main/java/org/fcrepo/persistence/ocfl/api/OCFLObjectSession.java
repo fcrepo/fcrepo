@@ -90,4 +90,11 @@ public interface OCFLObjectSession {
      */
     String commit(CommitOption commitOption) throws PersistentStorageException;
 
+    /**
+     * Close this session without committing changes.
+     *
+     * @throws PersistentStorageException if unable to close the session.
+     */
+    void close() throws PersistentStorageException;
+
 }

@@ -34,6 +34,7 @@ import java.nio.file.Path;
 
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
+import org.fcrepo.persistence.api.exceptions.PersistentSessionClosedException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.junit.Before;
 import org.junit.Rule;
@@ -183,6 +184,14 @@ public class DefaultOCFLObjectSessionTest {
         assertFileNotInVersion(OBJ_ID, "v1", FILE2_SUBPATH);
     }
 
+    @Test(expected = PersistentSessionClosedException.class)
+    public void write_CommittedSession() throws Exception {
+        session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
+        session.commit(NEW_VERSION);
+
+        session.write(FILE2_SUBPATH, fileStream(FILE_CONTENT1));
+    }
+
     @Test(expected = PersistentItemNotFoundException.class)
     public void read_ObjectNotExist() throws Exception {
         session.read(FILE1_SUBPATH);
@@ -266,6 +275,14 @@ public class DefaultOCFLObjectSessionTest {
 
         // version that hasn't been created yet
         session.read(FILE2_SUBPATH, "v99");
+    }
+
+    @Test
+    public void read_CommittedSession() throws Exception {
+        session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
+        session.commit(NEW_VERSION);
+
+        assertStreamMatches(FILE_CONTENT1, session.read(FILE1_SUBPATH));
     }
 
     // Verify that subpaths with parent directories are created and readable
@@ -410,6 +427,14 @@ public class DefaultOCFLObjectSessionTest {
         assertOnlyFirstVersionExists();
     }
 
+    @Test(expected = PersistentSessionClosedException.class)
+    public void delete_CommittedSession() throws Exception {
+        session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
+        session.commit(NEW_VERSION);
+
+        session.delete(FILE1_SUBPATH);
+    }
+
     @Test
     public void deleteObject_ObjectExists() throws Exception {
         session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
@@ -480,6 +505,14 @@ public class DefaultOCFLObjectSessionTest {
         session2.read(FILE1_SUBPATH);
     }
 
+    @Test(expected = PersistentSessionClosedException.class)
+    public void deleteObject_CommittedSession() throws Exception {
+        session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
+        session.commit(NEW_VERSION);
+
+        session.deleteObject();
+    }
+
     @Test(expected = PersistentItemNotFoundException.class)
     public void readVersion_FromDeletedObject() throws Exception {
         session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
@@ -531,6 +564,37 @@ public class DefaultOCFLObjectSessionTest {
 
         assertFileInVersion(OBJ_ID, "v2", FILE1_SUBPATH, FILE_CONTENT1);
         assertFileNotInVersion(OBJ_ID, "v1", FILE1_SUBPATH);
+    }
+
+    @Test(expected = PersistentSessionClosedException.class)
+    public void commit_CommittedSession() throws Exception {
+        session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
+        session.commit(NEW_VERSION);
+
+        session.commit(NEW_VERSION);
+    }
+
+    @Test
+    public void close_SessionWithChanges() throws Exception {
+        session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
+        session.commit(NEW_VERSION);
+
+        final var session2 = makeNewSession();
+        session2.write(FILE2_SUBPATH, fileStream(FILE_CONTENT2));
+        session2.close();
+
+        assertOnlyFirstVersionExists();
+
+        assertFileInHeadVersion(OBJ_ID, FILE1_SUBPATH, FILE_CONTENT1);
+        assertFileNotInHeadVersion(OBJ_ID, FILE2_SUBPATH);
+    }
+
+    @Test
+    public void close_CommittedSession() throws Exception {
+        session.write(FILE1_SUBPATH, fileStream(FILE_CONTENT1));
+        session.commit(NEW_VERSION);
+
+        session.close();
     }
 
     private static InputStream fileStream(final String content) {

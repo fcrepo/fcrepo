@@ -35,6 +35,7 @@ import java.util.function.Consumer;
 
 import org.apache.commons.io.FileUtils;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
+import org.fcrepo.persistence.api.exceptions.PersistentSessionClosedException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.CommitOption;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
@@ -62,6 +63,9 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
 
     private boolean objectDeleted;
 
+    // Indicates that the session has been committed or closed, and may not be written to
+    private boolean sessionClosed;
+
     private MutableOcflRepository ocflRepository;
 
     /**
@@ -78,13 +82,16 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         this.ocflRepository = ocflRepository;
         this.deletePaths = new HashSet<>();
         this.objectDeleted = false;
+        this.sessionClosed = false;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void write(final String subpath, final InputStream stream) throws PersistentStorageException {
+    public synchronized void write(final String subpath, final InputStream stream) throws PersistentStorageException {
+        assertSessionOpen();
+
         // Determine the staging path for the incoming content
         final var stagedPath = resolveStagedPath(subpath);
         final var parentPath = stagedPath.getParent();
@@ -107,7 +114,9 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
      * deletion will be recorded for replay at commit time.
      */
     @Override
-    public void delete(final String subpath) throws PersistentStorageException {
+    public synchronized void delete(final String subpath) throws PersistentStorageException {
+        assertSessionOpen();
+
         final var stagedPath = resolveStagedPath(subpath);
         final var hasStagedChanges = hasStagedChanges(stagedPath);
 
@@ -138,20 +147,29 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
     }
 
     @Override
-    public void deleteObject() throws PersistentStorageException {
+    public synchronized void deleteObject() throws PersistentStorageException {
+        assertSessionOpen();
+
         objectDeleted = true;
         // Reset state of the object
         if (!isStagingEmpty()) {
-            try {
-                FileUtils.cleanDirectory(stagingPath.toFile());
-            } catch (final IOException e) {
-                throw new PersistentStorageException("Unable to cleanup staging path", e);
-            }
+            cleanupStaging();
             deletePaths = new HashSet<>();
         } else if (!ocflRepository.containsObject(objectIdentifier)) {
             // fail if attempting to delete object that does not exist and has no staged changes
             throw new PersistentItemNotFoundException(format(
                     "Cannot delete object %s, it does not exist", objectIdentifier));
+        }
+    }
+
+    private void cleanupStaging() throws PersistentStorageException {
+        try {
+            final var stagingDir = stagingPath.toFile();
+            if (stagingDir.exists()) {
+                FileUtils.cleanDirectory(stagingDir);
+            }
+        } catch (final IOException e) {
+            throw new PersistentStorageException("Unable to cleanup staging path", e);
         }
     }
 
@@ -228,7 +246,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
      * {@inheritDoc}
      */
     @Override
-    public void prepare() {
+    public synchronized void prepare() {
         // TODO check for conflicts and lock the object
     }
 
@@ -236,10 +254,16 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
      * {@inheritDoc}
      */
     @Override
-    public String commit(final CommitOption commitOption) throws PersistentStorageException {
+    public synchronized String commit(final CommitOption commitOption) throws PersistentStorageException {
+        assertSessionOpen();
+
         if (commitOption == null) {
             throw new IllegalArgumentException("Invalid commit option provided: " + commitOption);
         }
+
+        // Close the session
+        sessionClosed = true;
+
         // Perform requested deletion of the object
         if (objectDeleted) {
             deleteExistingObject();
@@ -258,7 +282,7 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         }
     }
 
-    private void deleteExistingObject() throws PersistentStorageException {
+    private void deleteExistingObject() {
         ocflRepository.purgeObject(objectIdentifier);
     }
 
@@ -320,6 +344,18 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * Close the session and perform cleanup.
+     */
+    @Override
+    public synchronized void close() throws PersistentStorageException {
+        sessionClosed = true;
+
+        cleanupStaging();
+    }
+
     private boolean isStagingEmpty() {
         return stagingPath.toFile().listFiles().length == 0;
     }
@@ -334,5 +370,11 @@ public class DefaultOCFLObjectSession implements OCFLObjectSession {
 
     private Path resolveStagedPath(final String subpath) {
         return stagingPath.resolve(subpath);
+    }
+
+    private synchronized void assertSessionOpen() throws PersistentSessionClosedException {
+        if (sessionClosed) {
+            throw new PersistentSessionClosedException("Cannot perform operation, session is closed");
+        }
     }
 }
