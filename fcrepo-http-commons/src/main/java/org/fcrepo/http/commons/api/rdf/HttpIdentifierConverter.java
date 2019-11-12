@@ -84,8 +84,8 @@ public class HttpIdentifierConverter {
      * @param httpUri the external URI.
      * @return the internal identifier.
      */
-    protected String toInternalId(final String httpUri) {
-        LOGGER.debug(String.format("Translating http URI %s to Fedora ID", httpUri));
+    public String toInternalId(final String httpUri) {
+        LOGGER.debug("Translating http URI {} to Fedora ID", httpUri);
 
         final String path = getPath(httpUri);
         if (path != null) {
@@ -104,8 +104,8 @@ public class HttpIdentifierConverter {
      * @param fedoraId the internal identifier.
      * @return the external URI.
      */
-    protected String toExternalId(final String fedoraId) {
-        LOGGER.debug(String.format("Translating Fedora ID %s to Http URI", fedoraId));
+    public String toExternalId(final String fedoraId) {
+        LOGGER.debug("Translating Fedora ID {} to Http URI", fedoraId);
         if (fedoraId.startsWith(FEDORA_ID_PREFIX)) {
             // If it starts with our prefix, strip the prefix and use it as the path
             // part of the URI.
