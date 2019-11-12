@@ -17,14 +17,17 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
-import org.fcrepo.kernel.api.RdfLexicon;
+import org.apache.jena.vocabulary.DC;
+import org.apache.jena.vocabulary.RDF;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,6 +42,9 @@ import java.util.stream.Stream;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
+import static org.fcrepo.persistence.ocfl.OCFLPeristentStorageUtils.DEFAULT_RDF_EXTENSION;
+import static org.fcrepo.persistence.ocfl.OCFLPeristentStorageUtils.INTERNAL_FEDORA_DIRECTORY;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -69,23 +75,23 @@ public class CreateRDFSourcePersisterTest {
     private CreateRDFSourcePersister persister = new CreateRDFSourcePersister();
 
     @Test
-    public void test() {
+    public void test() throws PersistentStorageException {
         final String resourceId = "info:fedora/parent/child";
         final String parentResourceId = "info:fedora/parent";
 
+        final Node resourceUri = createURI(resourceId);
         //create some test user triples
         final String title = "my title";
-        final Stream<Triple> userTriples = Stream.of(Triple.create(createURI(resourceId),
-                createURI("http://purl.org/dc/elements/1.1/title"),
+        final Stream<Triple> userTriples = Stream.of(Triple.create(resourceUri,
+                DC.title.asNode(),
                 createLiteral(title)));
-        final RdfStream userTriplesStream = new DefaultRdfStream(createURI(resourceId), userTriples);
+        final RdfStream userTriplesStream = new DefaultRdfStream(resourceUri, userTriples);
 
         //create some test server triples
-        final String rdfTypeURI = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
-        final String rdfSourceUri = RdfLexicon.RDF_SOURCE.getURI();
-        final Stream<Triple> serverTriples = Stream.of(Triple.create(createURI(resourceId),
-                createURI(rdfTypeURI), createLiteral(rdfSourceUri)));
-        final RdfStream serverTriplesStream = new DefaultRdfStream(createURI(resourceId), serverTriples);
+        final Stream<Triple> serverTriples = Stream.of(Triple.create(resourceUri,
+                                                                     RDF.type.asNode(),
+                                                                     RDF_SOURCE.asNode()));
+        final RdfStream serverTriplesStream = new DefaultRdfStream(resourceUri, serverTriples);
 
         when(mapping.getOcflObjectId()).thenReturn("object-id");
         when(mapping.getParentFedoraResourceId()).thenReturn(parentResourceId);
@@ -95,24 +101,24 @@ public class CreateRDFSourcePersisterTest {
         persister.persist(session, operation, mapping);
 
         //verify user triples
-        verify(session).write(eq("child.n3"), userTriplesIsCaptor.capture());
+        verify(session).write(eq("child" + DEFAULT_RDF_EXTENSION), userTriplesIsCaptor.capture());
         final InputStream userTriplesIs = userTriplesIsCaptor.getValue();
 
         final Model userModel = createDefaultModel();
         RDFDataMgr.read(userModel, userTriplesIs, Lang.NTRIPLES);
 
         assertTrue(userModel.contains(userModel.createResource(resourceId),
-                userModel.createProperty("http://purl.org/dc/elements/1.1/title"), title));
+                DC.title, title));
 
         //verify server triples
-        verify(session).write(eq(".fcrepo/child.n3"), serverTriplesIsCaptor.capture());
+        verify(session).write(eq(INTERNAL_FEDORA_DIRECTORY + "/child" + DEFAULT_RDF_EXTENSION), serverTriplesIsCaptor.capture());
         final InputStream serverTriplesIs = serverTriplesIsCaptor.getValue();
 
         final Model serverModel = createDefaultModel();
         RDFDataMgr.read(serverModel, serverTriplesIs, Lang.NTRIPLES);
 
         assertTrue(serverModel.containsLiteral(serverModel.createResource(resourceId),
-                serverModel.createProperty(rdfTypeURI), rdfSourceUri));
+                RDF.type, RDF_SOURCE));
 
     }
 }

@@ -17,19 +17,18 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.OCFLObjectSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
+import java.io.File;
 
-import static java.lang.String.format;
-import static org.apache.jena.riot.RDFFormat.NTRIPLES;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
+import static org.fcrepo.persistence.ocfl.OCFLPeristentStorageUtils.INTERNAL_FEDORA_DIRECTORY;
+import static org.fcrepo.persistence.ocfl.OCFLPeristentStorageUtils.resolveSubpath;
+import static org.fcrepo.persistence.ocfl.OCFLPeristentStorageUtils.writeRDF;
 
 /**
  * This class implements the persistence of a new RDFSource
@@ -50,26 +49,14 @@ public class CreateRDFSourcePersister extends AbstractPersister<RdfSourceOperati
 
     @Override
     public void persist(final OCFLObjectSession session, final RdfSourceOperation operation,
-                        final FedoraOCFLMapping mapping) {
+                        final FedoraOCFLMapping mapping) throws PersistentStorageException {
         log.debug("creating RDFSource ({}) to {}", operation.getResourceId(), mapping.getOcflObjectId());
-        final String subpath = getSubpath(mapping.getParentFedoraResourceId(), operation.getResourceId());
+        final String subpath = resolveSubpath(mapping.getParentFedoraResourceId(), operation.getResourceId());
 
         //write user triples
-        write(session, operation.getTriples(), subpath + ".n3", mapping);
+        writeRDF(session, operation.getTriples(), subpath);
 
         //write server props
-        write(session, operation.getServerManagedProperties(), ".fcrepo/" + subpath + ".n3", mapping);
-    }
-
-    private void write(final OCFLObjectSession session, final RdfStream triples, final String subpath, final FedoraOCFLMapping mapping) {
-        try (final PipedOutputStream os = new PipedOutputStream()) {
-            final PipedInputStream is = new PipedInputStream();
-            os.connect(is);
-            writeTriples(triples, NTRIPLES, os);
-            session.write(subpath, is);
-            log.debug("wrote {} to {}", subpath, mapping.getOcflObjectId());
-        } catch (final IOException ex) {
-            throw new RuntimeException(format("failed to write subpath %s within %s", subpath, mapping.getOcflObjectId()));
-        }
+        writeRDF(session, operation.getServerManagedProperties(), INTERNAL_FEDORA_DIRECTORY + File.separator + subpath);
     }
 }
