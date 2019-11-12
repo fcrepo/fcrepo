@@ -17,11 +17,11 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
+import org.fcrepo.kernel.api.operations.NonRdfSourceOperationBuilder;
+
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
-
-import org.fcrepo.kernel.api.operations.NonRdfSourceOperationBuilder;
 
 
 /**
@@ -34,7 +34,7 @@ public class CreateNonRdfSourceOperationBuilder implements NonRdfSourceOperation
     /**
      * The resource id.
      */
-    private String resourceId;
+    private final String resourceId;
 
     private String mimeType;
     private String filename;
@@ -44,8 +44,36 @@ public class CreateNonRdfSourceOperationBuilder implements NonRdfSourceOperation
     private URI externalURI;
     private String externalType;
 
+    /**
+     * Constructor for external binary.
+     *
+     * @param rescId      the internal identifier
+     * @param handling    the external content handling type.
+     * @param externalUri the external content URI.
+     */
+    protected CreateNonRdfSourceOperationBuilder(final String rescId, final String handling, final URI externalUri) {
+        this(rescId);
+        this.externalURI = externalUri;
+        this.externalType = handling;
+    }
 
-    protected CreateNonRdfSourceOperationBuilder(final String rescId) {
+    /**
+     * Constructor for internal binary.
+     *
+     * @param rescId the internal identifier.
+     * @param stream the content stream.
+     */
+    protected CreateNonRdfSourceOperationBuilder(final String rescId, final InputStream stream) {
+        this(rescId);
+        this.content = stream;
+    }
+
+    /**
+     * Constructor
+     *
+     * @param rescId the internal identifier.
+     */
+    CreateNonRdfSourceOperationBuilder(final String rescId) {
         this.resourceId = rescId;
     }
 
@@ -70,24 +98,6 @@ public class CreateNonRdfSourceOperationBuilder implements NonRdfSourceOperation
     @Override
     public CreateNonRdfSourceOperationBuilder contentSize(final long size) {
         this.contentSize = size;
-        return this;
-    }
-
-    @Override
-    public NonRdfSourceOperationBuilder content(final InputStream content) {
-        this.content = content;
-        return this;
-    }
-
-    @Override
-    public NonRdfSourceOperationBuilder externalContentURI(final URI externalUri) {
-        this.externalURI = externalUri;
-        return this;
-    }
-
-    @Override
-    public NonRdfSourceOperationBuilder externalContentHandling(final String externalType) {
-        this.externalType = externalType;
         return this;
     }
 

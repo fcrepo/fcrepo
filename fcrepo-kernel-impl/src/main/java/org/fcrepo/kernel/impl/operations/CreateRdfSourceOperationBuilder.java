@@ -18,8 +18,8 @@
 package org.fcrepo.kernel.impl.operations;
 
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
+import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
 
-import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.ResourceFactory;
@@ -27,11 +27,8 @@ import org.apache.jena.riot.Lang;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
-import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
 
 
 /**
@@ -49,7 +46,7 @@ public class CreateRdfSourceOperationBuilder implements RdfSourceOperationBuilde
     /**
      * String of the resource ID.
      */
-    private String resourceId;
+    private final String resourceId;
 
     /**
      * Constructor.
@@ -73,19 +70,15 @@ public class CreateRdfSourceOperationBuilder implements RdfSourceOperationBuilde
 
     @Override
     public RdfSourceOperationBuilder triples(final InputStream contentStream, final String mimetype) {
+        final RdfStream stream;
         if (contentStream != null && mimetype != null) {
             final Model model = ModelFactory.createDefaultModel();
             final Lang lang = contentTypeToLang(mimetype);
             model.read(contentStream, this.resourceId, lang.getName().toUpperCase());
-            final List<Triple> triples = new ArrayList<>();
-            model.listStatements().forEachRemaining(p ->
-                    triples.add(new Triple(p.getSubject().asNode(), p.getPredicate().asNode(), p.getObject().asNode()))
-            );
-            this.tripleStream = new DefaultRdfStream(ResourceFactory.createResource(this.resourceId).asNode(),
-                    triples.stream());
+            stream = fromModel(ResourceFactory.createResource(this.resourceId).asNode(), model);
         } else {
-            this.tripleStream = null;
+            stream = null;
         }
-        return this;
+        return triples(stream);
     }
 }
