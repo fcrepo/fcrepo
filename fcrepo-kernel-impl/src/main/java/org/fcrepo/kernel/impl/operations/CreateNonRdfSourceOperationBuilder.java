@@ -17,11 +17,10 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
-import org.fcrepo.kernel.api.operations.NonRdfSourceOperationBuilder;
-
 import java.io.InputStream;
 import java.net.URI;
-import java.util.Collection;
+
+import org.fcrepo.kernel.api.operations.NonRdfSourceOperationBuilder;
 
 
 /**
@@ -29,20 +28,8 @@ import java.util.Collection;
  *
  * @author bbpennel
  */
-public class CreateNonRdfSourceOperationBuilder implements NonRdfSourceOperationBuilder {
+public class CreateNonRdfSourceOperationBuilder extends AbstractNonRdfSourceOperationBuilder implements NonRdfSourceOperationBuilder {
 
-    /**
-     * The resource id.
-     */
-    private final String resourceId;
-
-    private String mimeType;
-    private String filename;
-    private Collection<URI> digests;
-    private long contentSize;
-    private InputStream content;
-    private URI externalURI;
-    private String externalType;
 
     /**
      * Constructor for external binary.
@@ -68,37 +55,8 @@ public class CreateNonRdfSourceOperationBuilder implements NonRdfSourceOperation
         this.content = stream;
     }
 
-    /**
-     * Constructor
-     *
-     * @param rescId the internal identifier.
-     */
-    CreateNonRdfSourceOperationBuilder(final String rescId) {
-        this.resourceId = rescId;
-    }
-
-    @Override
-    public CreateNonRdfSourceOperationBuilder mimeType(final String mimetype) {
-        this.mimeType = mimetype;
-        return this;
-    }
-
-    @Override
-    public CreateNonRdfSourceOperationBuilder filename(final String filename) {
-        this.filename = filename;
-        return this;
-    }
-
-    @Override
-    public CreateNonRdfSourceOperationBuilder contentDigests(final Collection<URI> digests) {
-        this.digests = digests;
-        return this;
-    }
-
-    @Override
-    public CreateNonRdfSourceOperationBuilder contentSize(final long size) {
-        this.contentSize = size;
-        return this;
+    protected CreateNonRdfSourceOperationBuilder(final String rescId) {
+        super(rescId);
     }
 
     @Override

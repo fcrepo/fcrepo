@@ -45,7 +45,6 @@ import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 
 import javax.inject.Inject;
-import javax.ws.rs.core.Link;
 
 import java.io.InputStream;
 import java.net.URI;
@@ -78,8 +77,9 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
 
     @Override
     public void perform(final String txId, final String fedoraId, final String slug, final boolean isContained,
-                        final String contentType, final List<String> linkHeaders, final Collection<String> digest,
-                        final InputStream requestBody, final ExternalContent externalContent) {
+                        final String filename, final String contentType, final List<String> linkHeaders,
+                        final Collection<String> digest, final InputStream requestBody, final long size,
+                        final ExternalContent externalContent) {
         final PersistentStorageSession pSession = this.psManager.getSession(txId);
         checkAclLinkHeader(linkHeaders);
         // If we are PUTting then fedoraId is the path, we need to locate a containment parent if exists.
@@ -93,7 +93,9 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
                 digest.stream().map(URI::create).collect(Collectors.toCollection(HashSet::new)));
         final NonRdfSourceOperationBuilder builder;
         if (externalContent == null) {
-            builder = nonRdfSourceOperationFactory.createInternalBinaryBuilder(fullPath, requestBody);
+            builder = nonRdfSourceOperationFactory.createInternalBinaryBuilder(fullPath, requestBody)
+                        .filename(filename)
+                        .contentSize(size);
         } else {
             builder = nonRdfSourceOperationFactory.createExternalBinaryBuilder(fullPath, externalContent.getHandling(),
                     URI.create(externalContent.getURL()));
@@ -220,25 +222,5 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
             }
         }
         return addToIdentifier(fedoraId, finalSlug);
-    }
-
-    /**
-     * Get the rel="type" link headers from a list of them.
-     * @param headers a list of string LINK headers.
-     * @return a list of LINK headers with rel="type"
-     */
-    private List<String> getTypes(final List<String> headers) {
-        return getLinkHeaders(headers) == null ? null : getLinkHeaders(headers).stream()
-                .filter(p -> p.getRel().equalsIgnoreCase("type")).map(Link::getUri)
-                .map(URI::toString).collect(Collectors.toList());
-    }
-
-    /**
-     * Converts a list of string LINK headers to actual LINK objects.
-     * @param headers the list of string link headers.
-     * @return the list of LINK headers.
-     */
-    private List<Link> getLinkHeaders(final List<String> headers) {
-        return headers == null ? null : headers.stream().map(p -> Link.fromUri(p).build()).collect(Collectors.toList());
     }
 }

@@ -64,6 +64,10 @@ import org.fcrepo.kernel.api.exception.ServerManagedTypeException;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 
 import org.slf4j.Logger;
+import java.net.URI;
+import java.util.stream.Collectors;
+
+import javax.ws.rs.core.Link;
 
 
 /**
@@ -292,5 +296,26 @@ public abstract class AbstractService {
      */
     protected Node asLiteral(final String literal, final RDFDatatype type) {
         return ResourceFactory.createTypedLiteral(literal, type).asNode();
+    }
+
+    /**
+     * Get the rel="type" link headers from a list of them.
+     * @param headers a list of string LINK headers.
+     * @return a list of LINK headers with rel="type"
+     */
+    protected List<String> getTypes(final List<String> headers) {
+        final List<String> types = getLinkHeaders(headers) == null ? null : getLinkHeaders(headers).stream()
+                .filter(p -> p.getRel().equalsIgnoreCase("type")).map(Link::getUri)
+                .map(URI::toString).collect(Collectors.toList());
+        return types;
+    }
+
+    /**
+     * Converts a list of string LINK headers to actual LINK objects.
+     * @param headers the list of string link headers.
+     * @return the list of LINK headers.
+     */
+    protected List<Link> getLinkHeaders(final List<String> headers) {
+        return headers == null ? null : headers.stream().map(p -> Link.fromUri(p).build()).collect(Collectors.toList());
     }
 }

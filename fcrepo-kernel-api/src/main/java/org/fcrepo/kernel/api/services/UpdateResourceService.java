@@ -22,46 +22,37 @@ import org.fcrepo.kernel.api.models.ExternalContent;
 
 import java.io.InputStream;
 import java.util.Collection;
-import java.util.List;
 
 /**
- * Interface for a service to create a new resource via a POST request.
- * @author whikloj
- * @since 2019-11-05
+ * Interface for a service to update an existing resource via a PUT request.
+ * @author mohideen
+ * @since 2019-11-07
  */
-public interface CreateResourceService {
+public interface UpdateResourceService {
 
     /**
-     * Create a new NonRdfSource resource.
+     * Update an existing resource.
      *
      * @param txId The transaction ID for the request.
      * @param fedoraId The internal identifier of the parent.
-     * @param slug The Slug header or null if none.
-     * @param isContained The new resource is contained by fedoraId (ie. POST).
      * @param filename The filename of the binary.
      * @param contentType The content-type header or null if none.
-     * @param linkHeaders The original LINK headers or null if none.
      * @param digest The binary digest or null if none.
      * @param size The binary size.
      * @param requestBody The request body or null if none.
      * @param externalContent The external content handler or null if none.
      */
-    void perform(final String txId, final String fedoraId, final String slug, final boolean isContained,
-                 final String filename, final String contentType, final List<String> linkHeaders,
-                 final Collection<String> digest, final InputStream requestBody, final long size,
-                 final ExternalContent externalContent);
+    void perform(final String txId, final String fedoraId, final String filename,
+                 final String contentType, final Collection<String> digest, final InputStream requestBody,
+                 final long size, final ExternalContent externalContent);
+
 
     /**
-     * Create a new RdfSource resource.
+     * Update a RdfSource resource.
      *
      * @param txId The transaction ID for the request.
      * @param fedoraId The internal identifier of the parent.
-     * @param slug The Slug header or null if none.
-     * @param isContained The new resource is contained by fedoraId (ie. POST).
-     * @param linkHeaders The original LINK headers or null if none.
      * @param model The request body RDF as a Model
      */
-    void perform(final String txId, final String fedoraId, final String slug, final boolean isContained,
-                 final List<String> linkHeaders, final Model model);
-
+    void perform(final String txId, final String fedoraId, final String contentType, final Model model);
 }
