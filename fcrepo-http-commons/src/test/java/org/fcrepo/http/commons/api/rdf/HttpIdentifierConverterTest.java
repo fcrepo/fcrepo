@@ -21,6 +21,8 @@ import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -58,6 +60,30 @@ public class HttpIdentifierConverterTest {
     public void testBlankId() {
         final String testId = "";
         final String fedoraId = converter.toExternalId(testId);
+    }
+
+    @Test
+    public void testinExternalDomainSuccess() {
+        final String testURI = uriBase + "/someurl/thatWeWant";
+        assertTrue(converter.inExternalDomain(testURI));
+    }
+
+    @Test
+    public void testinExternalDomainFailure() {
+        final String testURI = "http://someplace.com/whatHappened";
+        assertFalse(converter.inExternalDomain(testURI));
+    }
+
+    @Test
+    public void testinInternalDomainSuccess() {
+        final String testID = "info:fedora/myLittleResource";
+        assertTrue(converter.inInternalDomain(testID));
+    }
+
+    @Test
+    public void testinInternalDomainFailure() {
+        final String testID = "info:test/myLittleResource";
+        assertFalse(converter.inInternalDomain(testID));
     }
 
     @Test

@@ -99,6 +99,19 @@ public class HttpIdentifierConverter {
     }
 
     /**
+     * Test if the provided external URI is in the domain of this repository.
+     *
+     * If it is not in the domain we can't convert it.
+     *
+     * @param httpUri the external URI.
+     * @return true if it is in domain.
+     */
+    public boolean inExternalDomain(final String httpUri) {
+        LOGGER.debug("Checking if http URI {} is in domain", httpUri);
+        return getPath(httpUri) != null;
+    }
+
+    /**
      * Convert an internal identifier to an external URI.
      *
      * @param fedoraId the internal identifier.
@@ -106,7 +119,7 @@ public class HttpIdentifierConverter {
      */
     public String toExternalId(final String fedoraId) {
         LOGGER.debug("Translating Fedora ID {} to Http URI", fedoraId);
-        if (fedoraId.startsWith(FEDORA_ID_PREFIX)) {
+        if (inInternalDomain(fedoraId)) {
             // If it starts with our prefix, strip the prefix and use it as the path
             // part of the URI.
             final String[] values = { fedoraId.substring(FEDORA_ID_PREFIX.length()) };
@@ -114,6 +127,19 @@ public class HttpIdentifierConverter {
             return uriBuilder().build(values, false).toString();
         }
         throw new IllegalArgumentException("Cannot translate IDs without our prefix");
+    }
+
+    /**
+     * Check if the provided internal identifier is in the domain of the repository.
+     *
+     * If it is not in the domain we can't convert it.
+     *
+     * @param fedoraId the internal identifier.
+     * @return true if it is in domain.
+     */
+    public boolean inInternalDomain(final String fedoraId) {
+        LOGGER.debug("Checking if fedora ID {} is in domain", fedoraId);
+        return (fedoraId.startsWith(FEDORA_ID_PREFIX));
     }
 
     /**
