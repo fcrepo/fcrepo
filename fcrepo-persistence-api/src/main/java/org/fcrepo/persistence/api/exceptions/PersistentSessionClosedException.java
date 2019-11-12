@@ -17,35 +17,32 @@
  */
 package org.fcrepo.persistence.api.exceptions;
 
+
 /**
- * Generic exception for things PersistentStorage related.
+ * Exception indicating that a persistence session is closed.
  *
- * @author whikloj
- * @since 2019-09-20
+ * @author bbpennel
  */
-public class PersistentStorageException extends Exception {
+public class PersistentSessionClosedException extends PersistentStorageException {
+
+    private static final long serialVersionUID = 1L;
 
     /**
-     * version UID.
-     */
-    private static final long serialVersionUID = -1L;
-
-    /**
-     * Constructor.
+     * Constructor with message
      *
-     * @param msg the message
+     * @param msg message
      */
-    public PersistentStorageException(final String msg) {
+    public PersistentSessionClosedException(final String msg) {
         super(msg);
     }
 
     /**
-     * Constructor
+     * Constructor with message and cause
      *
      * @param msg message
      * @param e cause
      */
-    public PersistentStorageException(final String msg, final Throwable e) {
+    public PersistentSessionClosedException(final String msg, final Throwable e) {
         super(msg, e);
     }
 }
