@@ -42,7 +42,11 @@
       <version>${project.version}</version>
     </dependency>
 
-    <!-- test gear -->
+    <!-- test gear -->  
+    <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-test</artifactId>
+    </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
