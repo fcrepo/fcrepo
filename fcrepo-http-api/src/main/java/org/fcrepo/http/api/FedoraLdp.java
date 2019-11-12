@@ -109,8 +109,9 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.CreateResourceService;
-import org.fcrepo.kernel.api.services.DeleteResourceService;
 import org.fcrepo.kernel.api.services.FixityService;
+import org.fcrepo.kernel.api.services.UpdateResourceService;
+import org.fcrepo.kernel.api.services.DeleteResourceService;
 import org.fcrepo.kernel.api.utils.ContentDigest;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
 import org.slf4j.Logger;
@@ -146,6 +147,8 @@ public class FedoraLdp extends ContentExposingResource {
 
     @Inject
     private CreateResourceService createResourceService;
+
+    @Inject private UpdateResourceService updateResourceService;
 
     @Inject
     private DeleteResourceService deleteResourceService;
@@ -414,6 +417,10 @@ public class FedoraLdp extends ContentExposingResource {
         final String externalUri = this.uriInfo.getRequestUri().toString();
         final String fedoraId = identifierConverter().toInternalId(externalUri);
 
+        final String filename = contentDisposition.getFileName();
+
+        final long size = contentDisposition.getSize();
+
         // TODO: Refactor to check preconditions
         //evaluateRequestPreconditions(request, servletResponse, resource, transaction);
 
@@ -421,10 +428,11 @@ public class FedoraLdp extends ContentExposingResource {
                 extContent != null)) {
             final Collection<String> checksums = parseDigestHeader(digest);
             if ("Resource Exists".isEmpty()) {
-                // TODO: Implement UpdateResourceService
+                updateResourceService.perform(transaction.getId(), fedoraId, filename, contentType, checksums,
+                requestBodyStream, size, extContent);
             } else {
                 createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, null, false,
-                        contentType, contentDisposition.getFileName(), contentDisposition.getSize(),
+                        contentType, filename, size,
                         links, checksums, requestBodyStream, extContent);
             }
         } else {
@@ -557,12 +565,15 @@ public class FedoraLdp extends ContentExposingResource {
 
         final String fedoraId = identifierConverter().toInternalId(externalPath());
 
+        final String filename = contentDisposition.getFileName();
+
+        final long size = contentDisposition.getSize();
+
         if (isBinary(interactionModel, requestContentType.toString(), requestContentType != null,
                 extContent != null)) {
             final Collection<String> checksums = parseDigestHeader(digest);
-            final String originalFileName = contentDisposition != null ? contentDisposition.getFileName() : "";
             createResourceService.perform(transaction.getId(), getUserPrincipal(), fedoraId, slug, true, contentType,
-                    originalFileName, contentDisposition.getSize(), links, checksums, requestBodyStream, extContent);
+                    filename, size, links, checksums, requestBodyStream, extContent);
         } else {
             final Model model = httpRdfService.bodyToInternalModel(externalPath(), requestBodyStream,
                     requestContentType, identifierConverter());

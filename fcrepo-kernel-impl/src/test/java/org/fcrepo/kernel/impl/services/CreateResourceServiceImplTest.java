@@ -256,7 +256,6 @@ public class CreateResourceServiceImplTest {
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         createResourceService.perform(TX_ID, USER_PRINCIPAL, fedoraId, null, false, CONTENT_TYPE, FILENAME,
                 CONTENT_SIZE, null, DIGESTS, null, null);
-
         verify(psSession).persist(operationCaptor.capture());
         final var operation = (CreateNonRdfSourceOperation) operationCaptor.getValue();
         final String persistedId = operation.getResourceId();

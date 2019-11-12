@@ -30,9 +30,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import javax.inject.Inject;
-import javax.ws.rs.core.Link;
-
 import org.apache.jena.rdf.model.Model;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
@@ -51,6 +48,8 @@ import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.springframework.stereotype.Component;
+
+import javax.inject.Inject;
 
 /**
  * Create a RdfSource resource.
@@ -74,9 +73,11 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
 
     @Override
     public void perform(final String txId, final String userPrincipal, final String fedoraId, final String slug,
-                        final boolean isContained, final String contentType, final String filename,
-                        final Long contentSize, final List<String> linkHeaders, final Collection<String> digest,
-                        final InputStream requestBody, final ExternalContent externalContent) {
+                        final boolean isContained,
+                        final String contentType, final String filename, final Long size,
+                        final List<String> linkHeaders,
+                        final Collection<String> digest, final InputStream requestBody,
+                        final ExternalContent externalContent) {
         final PersistentStorageSession pSession = this.psManager.getSession(txId);
         checkAclLinkHeader(linkHeaders);
         // If we are PUTting then fedoraId is the path, we need to locate a containment parent if exists.
@@ -91,7 +92,9 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
         final CreateNonRdfSourceOperationBuilder builder;
         final String mimeType;
         if (externalContent == null) {
-            builder = nonRdfSourceOperationFactory.createInternalBinaryBuilder(fullPath, requestBody);
+            builder = nonRdfSourceOperationFactory.createInternalBinaryBuilder(fullPath, requestBody)
+                        .filename(filename)
+                        .contentSize(size);
             mimeType = contentType;
         } else {
             builder = nonRdfSourceOperationFactory.createExternalBinaryBuilder(fullPath, externalContent.getHandling(),
@@ -103,7 +106,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
                 .userPrincipal(userPrincipal)
                 .contentDigests(uriDigests)
                 .mimeType(mimeType)
-                .contentSize(contentSize)
+                .contentSize(size)
                 .filename(filename)
                 .build();
 
@@ -208,25 +211,5 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
             }
         }
         return addToIdentifier(fedoraId, finalSlug);
-    }
-
-    /**
-     * Get the rel="type" link headers from a list of them.
-     * @param headers a list of string LINK headers.
-     * @return a list of LINK headers with rel="type"
-     */
-    private List<String> getTypes(final List<String> headers) {
-        return getLinkHeaders(headers) == null ? null : getLinkHeaders(headers).stream()
-                .filter(p -> p.getRel().equalsIgnoreCase("type")).map(Link::getUri)
-                .map(URI::toString).collect(Collectors.toList());
-    }
-
-    /**
-     * Converts a list of string LINK headers to actual LINK objects.
-     * @param headers the list of string link headers.
-     * @return the list of LINK headers.
-     */
-    private List<Link> getLinkHeaders(final List<String> headers) {
-        return headers == null ? null : headers.stream().map(p -> Link.fromUri(p).build()).collect(Collectors.toList());
     }
 }

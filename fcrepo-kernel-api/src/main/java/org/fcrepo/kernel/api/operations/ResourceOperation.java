@@ -17,6 +17,8 @@
  */
 package org.fcrepo.kernel.api.operations;
 
+import org.fcrepo.kernel.api.RdfStream;
+
 /**
  * Operation for manipulating a resource
  *
@@ -44,4 +46,11 @@ public interface ResourceOperation {
      * @return operation type
      */
     ResourceOperationType getType();
+
+    /**
+     * Get the server managed properties for the resource
+     *
+     * @return server managed properties
+     */
+    RdfStream getServerManagedProperties();
 }

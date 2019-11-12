@@ -71,6 +71,51 @@ public abstract class AbstractNonRdfSourceOperation extends AbstractResourceOper
     }
 
     /**
+     * Constructor for external content.
+     *
+     * @param rescId the internal identifier.
+     * @param externalContentURI the URI of the external content.
+     * @param externalHandling the type of external content handling (REDIRECT, PROXY)
+     * @param mimeType the mime-type of the content.
+     * @param filename the filename.
+     * @param digests the checksum digests.
+     */
+    protected AbstractNonRdfSourceOperation(final String rescId, final URI externalContentURI,
+                                          final String externalHandling, final String mimeType, final String filename,
+                                          final Collection<URI> digests) {
+        super(rescId);
+        this.externalHandlingURI = externalContentURI;
+        this.externalHandlingType = externalHandling;
+        this.mimeType = mimeType;
+        this.filename = filename;
+        this.digests = digests;
+    }
+
+    /**
+     * Constructor for internal binaries.
+     *
+     * @param rescId the internal identifier.
+     * @param content the stream of the content.
+     * @param mimeType the mime-type of the content.
+     * @param contentSize the size of the inputstream.
+     * @param filename the filename.
+     * @param digests the checksum digests.
+     */
+    protected AbstractNonRdfSourceOperation(final String rescId,
+                                            final InputStream content,
+                                            final String mimeType,
+                                            final long contentSize,
+                                            final String filename,
+                                            final Collection<URI> digests) {
+        super(rescId);
+        this.content= content;
+        this.mimeType = mimeType;
+        this.contentSize = contentSize;
+        this.filename = filename;
+        this.digests = digests;
+    }
+
+    /**
      * Basic constructor.
      *
      * @param rescId The internal Fedora ID.

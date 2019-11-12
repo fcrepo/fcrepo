@@ -21,29 +21,35 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
 
-import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationBuilder;
 
 /**
- * Builder for operations to update non-rdf sources
+ * An abstract operation for interacting with a non-rdf source
  *
  * @author bbpennel
  */
-public class UpdateNonRdfSourceOperationBuilder extends AbstractNonRdfSourceOperationBuilder implements NonRdfSourceOperationBuilder {
+public abstract class AbstractNonRdfSourceOperationBuilder implements NonRdfSourceOperationBuilder {
 
-    protected UpdateNonRdfSourceOperationBuilder(final String rescId, final InputStream stream) {
-        this(rescId);
-        this.content = stream;
-    }
+    protected String resourceId;
 
-    protected UpdateNonRdfSourceOperationBuilder(final String rescId, final String handling, final URI contentUri) {
-        this(rescId);
-        this.externalType = handling;
-        this.externalURI = contentUri;
-    }
+    protected InputStream content;
 
-    private UpdateNonRdfSourceOperationBuilder(final String rescId) {
-        super(rescId);
+    protected URI externalURI;
+
+    protected String externalType;
+
+    protected String mimeType;
+
+    protected String filename;
+
+    protected Collection<URI> digests;
+
+    protected long contentSize;
+
+    protected String userPrincipal;
+
+    protected AbstractNonRdfSourceOperationBuilder(final String rescId) {
+        this.resourceId = rescId;
     }
 
     @Override
@@ -68,23 +74,6 @@ public class UpdateNonRdfSourceOperationBuilder extends AbstractNonRdfSourceOper
     public NonRdfSourceOperationBuilder contentSize(final Long size) {
         this.contentSize = size;
         return this;
-    }
-
-    @Override
-    public NonRdfSourceOperationBuilder userPrincipal(final String userPrincipal) {
-        this.userPrincipal= userPrincipal;
-        return this;
-    }
-
-    @Override
-    public NonRdfSourceOperation build() {
-        if (content == null && externalURI != null && externalType != null) {
-            return new UpdateNonRdfSourceOperation(this.resourceId, this.externalURI, this.externalType,
-                    this.mimeType, this.filename, this.digests);
-        } else {
-            return new UpdateNonRdfSourceOperation(this.resourceId, this.content, this.mimeType, this.contentSize,
-                    this.filename, this.digests);
-        }
     }
 
 }

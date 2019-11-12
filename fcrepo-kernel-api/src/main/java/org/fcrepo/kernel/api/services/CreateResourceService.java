@@ -47,9 +47,18 @@ public interface CreateResourceService {
      * @param requestBody The request body or null if none.
      * @param externalContent The external content handler or null if none.
      */
-    void perform(String txId, String userPrincipal, String fedoraId, String slug, boolean isContained,
-            String contentType, String filename, Long contentSize, List<String> linkHeaders,
-            Collection<String> digest, InputStream requestBody, ExternalContent externalContent);
+    void perform(final String txId,
+                 final String userPrincipal,
+                 final String fedoraId,
+                 final String slug,
+                 final boolean isContained,
+                 final String contentType,
+                 final String filename,
+                 final Long contentSize,
+                 final List<String> linkHeaders,
+                 final Collection<String> digest,
+                 final InputStream requestBody,
+                 final ExternalContent externalContent);
 
     /**
      * Create a new RdfSource resource.
